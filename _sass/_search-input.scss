@@ -1,0 +1,31 @@
+.search-input {
+    position: relative;
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        margin-top: -0.5rem;
+        color: $gray-600;
+        pointer-events: none;
+    }
+
+    .form-control {
+        padding-left: 2.5rem;
+    }
+}
+
+.search-input-lg {
+    svg {
+        width: 1.2rem;
+        height: 1.2rem;
+        left: 1rem;
+        margin-top: -0.6rem;
+    }
+
+    .form-control {
+        padding-left: 3rem;
+    }
+}

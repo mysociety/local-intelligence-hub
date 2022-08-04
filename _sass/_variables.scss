@@ -1,0 +1,132 @@
+// Color system
+
+$gray-900: #073a41;
+
+$orange: #ed6832;
+$yellow: #fec835;
+$blue: #21a8df;
+$green-600: #068670; // 4.51 contrast with #fff
+$green: #1ba781;
+$green-400: #89c489;
+$green-100: #edf5e1;
+
+$primary: $green-600;
+
+// Options
+
+$enable-shadows: true;
+$enable-negative-margins: true;
+
+// Gradient
+
+// Spacing
+
+// Position
+
+// Body
+
+// Utilities maps
+
+// Links
+
+$link-color: $green-600;
+
+// Paragraphs
+
+// Grid breakpoints
+
+$grid-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px
+);
+
+// Grid containers
+
+$container-max-widths: (
+  sm: 540px,
+  md: 720px,
+  lg: 960px,
+  xl: 1140px
+);
+
+// Grid columns
+
+// Container padding
+
+// Components
+
+// Typography
+
+$font-family-sans-serif: "Public Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+$headings-font-weight: 800;
+$headings-line-height: 1.1;
+
+$display-font-weight: 800;
+
+$lead-font-weight: 500;
+
+// Tables
+
+// Buttons + Forms
+
+// Buttons
+
+$btn-font-weight: bold;
+
+// Forms
+
+$form-label-font-weight: bold;
+
+// Form validation
+
+// Z-index master list
+
+// Navs
+
+// Navbar
+
+// Dropdowns
+
+// Pagination
+
+// Placeholders
+
+// Cards
+
+// Accordion
+
+// Tooltips
+
+// Popovers
+
+// Toasts
+
+// Badges
+
+// Modals
+
+// Alerts
+
+// Progress bars
+
+// List group
+
+// Image thumbnails
+
+// Figures
+
+// Breadcrumbs
+
+// Carousel
+
+// Spinners
+
+// Close
+
+// Offcanvas
+
+// Code

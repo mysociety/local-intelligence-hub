@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -e
+
+cd "$(dirname "$0")/.."
+
+script/update
+
+SSL_PARAMS=''
+
+if [ -f ssl/localhost.crt ] && [ -f ssl/localhost.key ]; then
+    SSL_PARAMS='--ssl-cert=ssl/localhost.crt --ssl-key=ssl/localhost.key'
+fi
+
+bundle exec jekyll serve --config _config.yml,_config_dev.yml $SSL_PARAMS
