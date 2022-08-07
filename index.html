@@ -6,7 +6,7 @@ layout: default
     <div class="container">
         <div class="d-flex align-items-center mb-4 mb-lg-5">
             <a href="{{ '/' | relative_url }}">
-                {% include tcc-logo.html classes="me-auto" width="8rem" height="auto" %}
+                {% include icons/tcc-logo.html classes="me-auto" width="8rem" height="auto" %}
             </a>
             <ul class="nav list-unstyled ms-auto d-none d-lg-flex">
                 <li class="nav-item">
@@ -37,23 +37,23 @@ layout: default
                 <p style="max-width: 30em;">Slice and dice parliamentary constituencies by a number of factors, to find the areas most receptive to your message.</p>
                 <ul class="mb-4 list-unstyled">
                     <li class="my-1 d-flex align-items-center">
-                        {% include check-icon.html width="1.2em" height="1.2em" classes="me-2 flex-grow-0 flex-shrink-0 text-green-400" %}
+                        {% include icons/check.html width="1.2em" height="1.2em" classes="me-2 flex-grow-0 flex-shrink-0 text-green-400" %}
                         <span><strong class="text-primary">MP data</strong> – parties, memberships, and more</span>
                     </li>
                     <li class="my-1 d-flex align-items-center">
-                        {% include check-icon.html width="1.2em" height="1.2em" classes="me-2 flex-grow-0 flex-shrink-0 text-green-400" %}
+                        {% include icons/check.html width="1.2em" height="1.2em" classes="me-2 flex-grow-0 flex-shrink-0 text-green-400" %}
                         <span><strong class="text-primary">Social indicators</strong> – poverty, car ownership, and more</span>
                     </li>
                     <li class="my-1 d-flex align-items-center">
-                        {% include check-icon.html width="1.2em" height="1.2em" classes="me-2 flex-grow-0 flex-shrink-0 text-green-400" %}
+                        {% include icons/check.html width="1.2em" height="1.2em" classes="me-2 flex-grow-0 flex-shrink-0 text-green-400" %}
                         <span><strong class="text-primary">Physical indicators</strong> – rural/urban, flood risk</span>
                     </li>
                     <li class="my-1 d-flex align-items-center">
-                        {% include check-icon.html width="1.2em" height="1.2em" classes="me-2 flex-grow-0 flex-shrink-0 text-green-400" %}
+                        {% include icons/check.html width="1.2em" height="1.2em" classes="me-2 flex-grow-0 flex-shrink-0 text-green-400" %}
                         <span><strong class="text-primary">Polling data</strong> – constituency-level climate opinions</span>
                     </li>
                     <li class="my-1 d-flex align-items-center">
-                        {% include check-icon.html width="1.2em" height="1.2em" classes="me-2 flex-grow-0 flex-shrink-0 text-green-400" %}
+                        {% include icons/check.html width="1.2em" height="1.2em" classes="me-2 flex-grow-0 flex-shrink-0 text-green-400" %}
                         <span><strong class="text-primary">Movement</strong> – local groups, properties</span>
                     </li>
                 </ul>
@@ -67,7 +67,7 @@ layout: default
                 <form class="row mt-2 mb-2" style="max-width: 30rem;" action="{{ '/area' | relative_url }}">
                     <div class="col">
                         <div class="search-input search-input-lg">
-                            {% include search-icon.html %}
+                            {% include icons/search.html %}
                             <input type="search" id="search" class="form-control form-control-lg">
                         </div>
                     </div>
@@ -76,7 +76,7 @@ layout: default
                     </div>
                 </form>
                 <a class="d-flex align-items-center btn btn-link px-0" href="{{ '/area' | relative_url }}">
-                    {% include geolocate-icon.html classes="me-2" %}
+                    {% include icons/geolocate.html classes="me-2" %}
                     Use my current location
                 </a>
             </div>

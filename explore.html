@@ -6,33 +6,87 @@ slug: explore
 
 {% include header.html %}
 
-<div class="py-4 py-lg-5">
-    <div class="container">
-        <h1>{{ page.title }}</h1>
+<div class="explore">
 
-        <div class="mt-4 mt-lg-5 bg-gray-100 py-5 px-3 d-flex align-items-center justify-content-center text-muted" style="height: 20vh">Filters go here</div>
+    <div class="explore-filters p-4 p-lg-5">
+        <h1 class="h2 mb-3">{{ page.title }}</h1>
 
-        <ul class="mt-4 mt-lg-5 nav nav-tabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="map-tab" data-bs-toggle="tab" data-bs-target="#map-tab-pane" type="button" role="tab" aria-controls="map-tab-pane" aria-selected="true">Map view</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="table-tab" data-bs-toggle="tab" data-bs-target="#table-tab-pane" type="button" role="tab" aria-controls="table-tab-pane" aria-selected="false">Table view</button>
-            </li>
-        </ul>
+        <p>Use data from The Climate Coalition, its member organisations, and the wider sector, to narrow down your focus to the constituencies that matter to you.</p>
 
-        <div class="tab-content">
-            <div class="tab-pane show active" id="map-tab-pane" role="tabpanel" aria-labelledby="map-tab" tabindex="0">
-                <div class="mt-4 mt-lg-5 bg-gray-100 py-5 px-3 d-flex align-items-center justify-content-center text-muted" style="height: 80vh">Map goes here</div>
+        <h2 class="h4 mt-4 mt-lg-5 mb-4 text-primary">Step 1: Add filters</h2>
+
+        <div class="mb-4 js-active-filters"></div>
+
+        <button type="button" class="btn btn-outline-secondary p-3 w-100 js-add-filter">
+            Add data to filter by
+        </button>
+
+        <h2 class="h4 mt-4 mt-lg-5 mb-3 mb-lg-4 text-primary">Step 2: Shade results (optional)</h2>
+
+        <div class="mb-4 js-active-shaders"></div>
+
+        <button type="button" class="btn btn-outline-secondary p-3 w-100 js-add-shader">
+            Add a dataset to shade results
+        </button>
+
+        <h2 class="h4 mt-4 mt-lg-5 mb-3 mb-lg-4 text-primary">Step 3: Select an output format</h2>
+
+        <fieldset>
+            <legend class="form-label">Display results in</legend>
+            <div class="d-flex mx-n2">
+                <input type="radio" class="btn-check" name="results-view" id="results-view-map" autocomplete="off" checked>
+                <label class="btn btn-outline-secondary flex-grow-1 mx-2" for="results-view-map">Map view</label>
+                <input type="radio" class="btn-check" name="results-view" id="results-view-table" autocomplete="off">
+                <label class="btn btn-outline-secondary flex-grow-1 mx-2" for="results-view-table">Table view</label>
+                <input type="radio" class="btn-check" name="results-view" id="results-view-csv" autocomplete="off">
+                <label class="btn btn-outline-secondary flex-grow-1 mx-2" for="results-view-csv">CSV download</label>
             </div>
-            <div class="tab-pane" id="table-tab-pane" role="tabpanel" aria-labelledby="table-tab" tabindex="0">
-                <div class="mt-4 mt-lg-5 bg-gray-100 py-5 px-3 d-flex align-items-center justify-content-center text-muted" style="height: 80vh">Table goes here</div>
-            </div>
-        </div>
+        </fieldset>
 
-        
+        <button class="mt-4 mt-lg-5 btn btn-primary w-100">Update results</button>
+
+        <button class="mt-3 btn btn-outline-secondary w-100">Save this query to your account</button>
 
     </div>
+
+    <div class="explore-results bg-gray-100">
+        <div class="explore-map"></div>
+    </div>
+
 </div>
 
-<div class="footer"></div>
+{% include add-data-modal.html %}
+
+<script type="text/x-template" id="templateFilter">
+    <div class="bg-gray-100 border p-3 rounded mb-4 js-filter">
+        <div class="d-flex mb-3">
+            <h3 class="h6 mb-0 me-auto"><%= name %></h3>
+            <button type="button" class="btn-close p-0 js-remove-filter" aria-label="Remove filter"></button>
+        </div>
+        <div class="d-flex">
+            <select class="form-select form-select-sm flex-grow-0 flex-shrink-0 w-auto">
+              <% _.each(comparators, function(comparator){ %>
+                <option><%= comparator %></option>
+              <% }) %>
+            </select>
+          <% if ( typeof options !== 'undefined' ) { %>
+            <select class="form-select form-select-sm ms-3 flex-grow-1 flex-shrink-1">
+              <% _.each(options, function(option){ %>
+                <option><%= option %></option>
+              <% }) %>
+            </select>
+          <% } else { %>
+            <input type="text" value="<%= defaultValue %>" class="form-control form-control-sm ms-3 flex-grow-1 flex-shrink-1">
+          <% } %>
+        </div>
+    </div>
+</script>
+
+<script type="text/x-template" id="templateShader">
+    <div class="bg-gray-100 border p-3 rounded mb-4 js-shader">
+        <div class="d-flex">
+            <h3 class="h6 mb-0 me-auto"><%= name %></h3>
+            <button type="button" class="btn-close p-0 js-remove-shader" aria-label="Remove shader"></button>
+        </div>
+    </div>
+</script>

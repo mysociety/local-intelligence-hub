@@ -1,0 +1,37 @@
+.explore-filters {
+    overflow: auto;
+    border-bottom: 1px solid $border-color;
+}
+
+.explore-results {
+    overflow: auto;
+    position: relative;
+    min-height: 70vh;
+}
+
+.explore-map {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
+@include media-breakpoint-up(md) {
+    .explore {
+        height: calc( 100vh - 88px );
+        display: flex;
+    }
+
+    .explore-filters {
+        flex: 0 0 50%;
+        max-width: 35em;
+        border-right: 1px solid $border-color;
+        border-bottom: 0;
+    }
+
+    .explore-results {
+        flex: 1 1 50%;
+        min-height: 0;
+    }
+}

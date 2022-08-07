@@ -30,6 +30,8 @@ $enable-negative-margins: true;
 // Links
 
 $link-color: $green-600;
+$link-shade-percentage: 20%;
+$link-hover-color: shift-color($link-color, $link-shade-percentage);
 
 // Paragraphs
 
@@ -68,6 +70,8 @@ $headings-line-height: 1.1;
 $display-font-weight: 800;
 
 $lead-font-weight: 500;
+
+$legend-font-size: 1rem;
 
 // Tables
 
@@ -109,11 +113,15 @@ $form-label-font-weight: bold;
 
 // Modals
 
+$modal-title-line-height: 1;
+
 // Alerts
 
 // Progress bars
 
 // List group
+
+$list-group-action-hover-color: $link-hover-color;
 
 // Image thumbnails
 

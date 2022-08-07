@@ -11,7 +11,7 @@
     <link rel="apple-touch-icon" href="{{ '/static/img/apple-touch-icon.png' | relative_url }}">
     <script type="module">document.documentElement.classList.remove('no-js'); document.documentElement.classList.add('js');</script>
 </head>
-<body>
+<body class="{{ page.bodyclass | escape }}">
     {{ content }}
     <script async src="https://cdn.jsdelivr.net/npm/es-module-shims@1/dist/es-module-shims.min.js" crossorigin="anonymous"></script>
     <script type="importmap">{ "imports": { "@popperjs/core": "{{ '/static/vendor/popper/js/popper.min.js' | relative_url }}" } }</script>

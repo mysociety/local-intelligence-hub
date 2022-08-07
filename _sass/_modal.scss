@@ -1,0 +1,25 @@
+.wide-modal {
+    --bs-modal-width: calc( 100% - #{$modal-dialog-margin * 2} );
+
+    @include media-breakpoint-up(sm) {
+        --bs-modal-width: calc( 100% - #{$modal-dialog-margin-y-sm-up * 2} );
+    }
+
+    @include media-breakpoint-up(md) {
+        --bs-modal-padding: 1.5rem;
+        --bs-modal-header-padding: 1rem 1.5rem;
+
+        .modal-body > .row {
+            --bs-gutter-x: 2rem;
+        }
+    }
+
+    @include media-breakpoint-up(lg) {
+        --bs-modal-padding: 2rem;
+        --bs-modal-header-padding: 1.5rem 2rem;
+
+        .modal-body > .row {
+            --bs-gutter-x: 3rem;
+        }
+    }
+}
