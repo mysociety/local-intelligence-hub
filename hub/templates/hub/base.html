@@ -1,0 +1,23 @@
+{% load static compress %}
+
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="initial-scale=1, viewport-fit=cover">
+    <title>{{ page_title }}</title>
+    {% compress css %}
+    <link rel="stylesheet" type="text/x-scss" href="{% static 'css/main.scss' %}">
+    {% endcompress %}
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,700;0,800;1,400&display=swap">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+    <script type="module">document.documentElement.classList.remove('no-js'); document.documentElement.classList.add('js');</script>
+</head>
+<body class="{{ bodyclass }}">
+    {% block content %}{% endblock %}
+    <script async src="https://cdn.jsdelivr.net/npm/es-module-shims@1/dist/es-module-shims.min.js" crossorigin="anonymous"></script>
+    <script type="importmap">{ "imports": { "@popperjs/core": "{% static 'vendor/popper/js/popper.min.js' %}" } }</script>
+    <script type="module" src="{% static 'js/all.js' %}"></script>
+</body>

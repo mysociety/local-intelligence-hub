@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "compressor",
     "hub",
 ]
 
@@ -114,6 +115,28 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = "static/"
+
+STATIC_ROOT = BASE_DIR / ".static"
+
+STATICFILES_FINDERS = (
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    "compressor.finders.CompressorFinder",
+)
+
+STATICFILES_DIRS = [
+    BASE_DIR / "hub" / "static",
+    ("bootstrap", BASE_DIR / "vendor" / "bootstrap" / "scss"),
+    ("bootstrap", BASE_DIR / "vendor" / "bootstrap" / "js"),
+    ("underscore", BASE_DIR / "vendor" / "underscore" / "js"),
+    ("jquery", BASE_DIR / "vendor" / "jquery" / "js"),
+    ("leaflet", BASE_DIR / "vendor" / "leaflet" / "js"),
+    ("popper", BASE_DIR / "vendor" / "popper" / "js"),
+]
+
+COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
+COMPRESS_CSS_HASHING_METHOD = "content"
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field

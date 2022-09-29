@@ -1,7 +1,7 @@
-import * as _ from '../vendor/underscore/js/underscore.esm.min.js'
-import $ from '../vendor/jquery/js/jquery.esm.js'
-import { Modal, Tab } from '../vendor/bootstrap/js/bootstrap.esm.min.js'
-import L from '../vendor/leaflet/js/leaflet-1.8.0.esm.js'
+import * as _ from '../underscore/underscore.esm.min.js'
+import $ from '../jquery/jquery.esm.js'
+import { Modal, Tab } from '../bootstrap/bootstrap.esm.min.js'
+import L from '../leaflet/leaflet-1.8.0.esm.js'
 import constituencies from './constituencies.esm.js'
 
 $(function(){
