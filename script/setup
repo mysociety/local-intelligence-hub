@@ -6,7 +6,5 @@ set -e
 # check that we are in the expected directory
 cd `dirname $0`/..
 
-script/bootstrap
-
-poetry install --no-root
-poetry run python manage.py migrate
+# Run the update script
+./script/update

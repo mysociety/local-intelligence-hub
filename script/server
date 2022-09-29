@@ -1,15 +1,42 @@
-#!/bin/sh
+#!/bin/bash
 
+# abort on any errors
 set -e
 
-cd "$(dirname "$0")/.."
+# check that we are in the expected directory
+cd `dirname $0`/..
 
-script/update
+ACTION=$1
+[ -n "$ACTION" ] || ACTION="--local"
 
-SSL_PARAMS=''
+case "$ACTION" in
+    --local)
+        script/bootstrap
+        source .env
+        if [ "$DEVENV" == "docker" ] ; then
+            echo "==> Removing any stopped or crashed containers..."
+            docker-compose rm
+            echo "==> Removing node_modules volume if present..."
+            docker volume rm noiseworks_node_modules || true
+            echo "==> Starting development environment, hit ^C to stop..."
+            docker-compose up
+        else
+            echo "==> Starting development server..."
+            script/server --development
+        fi
+        ;;
+    --development)
+        ./manage.py migrate
+        ./manage.py runserver 0.0.0.0:8000
+        ;;
+    --staging)
+        ./manage.py migrate
+        ./manage.py runserver 0.0.0.0:8000 --insecure
+        ;;
+    *)
+        echo "Error: Unknown argument, ${ACTION}."
+        echo "Usage: script/server [ --local ] | --development | --staging"
+        exit 1
+        ;;
+esac
 
-if [ -f ssl/localhost.crt ] && [ -f ssl/localhost.key ]; then
-    SSL_PARAMS='--ssl-cert=ssl/localhost.crt --ssl-key=ssl/localhost.key'
-fi
-
-bundle exec jekyll serve --config _config.yml,_config_dev.yml $SSL_PARAMS

@@ -1,7 +1,28 @@
-#!/bin/sh
+#!/bin/bash
 
+# abort on any errors
 set -e
 
-cd "$(dirname "$0")/.."
+# check that we are in the expected directory
+cd `dirname $0`/..
 
-bundle install --quiet
+if [ ! -f .env ] ; then
+    echo "==> Seeding an initial .env from .env-example..."
+    cp .env-example .env
+fi
+
+if ! grep ^DEVENV .env ; then
+    echo "DEVENV key not found in your environment."
+    while [ -z "$devenv" ] ; do
+        read -p 'Would you prefer to run local intelligence natively ("native") or with Docker Compose ("docker")? ' devenv
+        case "$devenv" in
+            native|docker)
+                echo "DEVENV=${devenv}" >>.env
+                ;;
+            *)
+                echo 'Sorry, incorrect response - please enter "native" or "docker"'
+                unset devenv
+                ;;
+        esac
+    done
+fi
