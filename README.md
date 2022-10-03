@@ -1,32 +1,26 @@
 # Local Intelligence Hub
 
-A prototype built as part of mySociety’s August 2022 prototyping week exploring how The Climate Coalition might we give climate campaign organisations and communities better access to the data they need to enable local and national action on climate.
+A Beta verion of a tool to help The Climate Coalition with better access
+to data needed to enable local and national action on climate.
 
-## Use it online
+# Contract Countdown
 
-Visit <https://mysociety.github.io/local-intelligence-hub>.
 
-All modern browsers are supported. Internet Explorer is not. See `.browserlistrc` for details.
+The [original static prototype](https://github.com/mysociety/local-intelligence-hub/commit/4fab6ff08401d4e4c29615ab07ff4f6c4f4e6050) was built as part of mySociety’s August 2022 prototyping week exploring how The Climate Coalition might we give climate campaign organisations and communities better access to the data they need to enable local and national action on climate.
 
-## Running locally
+## Development install
 
-Requirements:
+You will need [Docker](https://docs.docker.com/desktop/) installed.
 
-- [Ruby](https://www.ruby-lang.org/en/documentation/installation/)
-- [Bundler](https://bundler.io/#getting-started)
+Clone the repository:
 
-Install all dependencies and get a local server running immediately, in one command:
+    git clone git@github.com:mysociety/local-intelligence-hub.git
+    cd local-intellegence-hub
 
-    script/server
+Start the Docker environment:
 
-The site will be available at both <http://localhost:4000> and <http://0.0.0.0:4000>.
+    docker-compose up
 
-If you want to serve locally over SSL (recommended) then generate self-signed SSL certificates with:
+(If Python complains about missing libraries, chances are the Python requirements have changed since your Docker image was last built. You can rebuild it with, eg: `docker-compose build web`.)
 
-    script/generate-ssl-certificates
-
-Once the SSL certificates are in place, `script/server` will serve the site over HTTPS, at both <https://localhost:4000> and <https://0.0.0.0:4000>. (You will need to tell your web browser to accept the self-signed certificate.)
-
-You can build the site to `_site` (without serving it) with:
-
-    script/build
+You can then view it at (http://localhost:8000/)
