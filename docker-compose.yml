@@ -15,6 +15,7 @@ services:
       timeout: 5s
       retries: 5
   web:
+    image: mysociety/local-intelligence-hub:${TAG:-latest}
     build: .
     command: /app/script/server --development
     volumes:
