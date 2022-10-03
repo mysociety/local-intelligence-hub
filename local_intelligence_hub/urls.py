@@ -20,5 +20,7 @@ from hub import views
 
 urlpatterns = [
     path("", views.HomePageView.as_view(), name="home"),
+    path("explore/", views.ExploreView.as_view(), name="explore"),
+    path("area/", views.AreaView.as_view(), name="area"),
     path("admin/", admin.site.urls),
 ]

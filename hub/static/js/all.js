@@ -160,7 +160,7 @@ var setUpMap = function() {
                 mouseover: highlightFeature,
                 mouseout: unhighlightFeature,
                 click: function(){
-                    window.location.href = './area'
+                    window.location.href = '/area'
                 }
             })
         }

@@ -1,14 +1,14 @@
----
-layout: default
-title: Borsetshire East
-slug: area
----
+{% extends 'hub/base.html' %}
 
-{% include header.html %}
+{% load static %}
+
+{% block content %}
+
+{% include 'hub/includes/header.html' %}
 
 <div class="py-4 py-lg-5">
     <div class="container">
-        <h1>{{ page.title }}</h1>
+        <h1>{{ title }}</h1>
         <ul class="list-inline mb-0">
             <li class="list-inline-item"><a href="#" class="badge text-white bg-blue-600" style="text-decoration: none;">Blue wall</a></li>
             <li class="list-inline-item"><a href="#" class="badge text-white bg-orange-500" style="text-decoration: none;">Flood risk</a></li>
@@ -107,7 +107,7 @@ slug: area
 
                 <div class="d-flex align-items-center mt-5">
                     <div class="flex-shrink-0">
-                        <img src="{{ '/static/img/mp.jpg' | relative_url }}" alt="James Madeupname" width="60" height="60" class="rounded-circle">
+                        <img src="{% static 'img/mp.jpg' %}" alt="James Madeupname" width="60" height="60" class="rounded-circle">
                     </div>
                     <div class="flex-grow-1 ms-3">
                         <h3 class="h4 mb-0">James<br>Madeupname</h3>
@@ -142,7 +142,7 @@ slug: area
                 <h4 class="h6 text-primary mb-3 mt-5">Relationships with MP</h4>
                 <div class="list-group">
                     <div class="list-group-item d-flex align-items-center">
-                        {% include icons/person.html classes="me-3 text-muted" width="2rem" height="2rem" %}
+                        {% include 'hub/includes/icons/person.html' with classes="me-3 text-muted" width="2rem" height="2rem" %}
                         <div class="">
                             Campaign manager, National Trust
                             <small class="d-block text-muted"><a href="#">Sign in</a> to make contact</small>
@@ -161,44 +161,4 @@ slug: area
 </div>
 
 <div class="footer"></div>
-
-
-<!--
-    Individual area page:
-    Plot "places and spaces" on a map?
-    Show total supporters for each TCC member in this area
--->
-
-<!--
-    Constituency tags:
-    Blue Wall
-    Red Wall
--->
-
-<!--
-    Datasets that FoE have/want:
-
-    Heath – including:
-    Air pollution, with manifesto recommendations from Healthy Air Campaign
-    Green space, with manifesto recommendations from WCL 
-    Cold homes, with multiple manifesto recommendations from End Fuel Poverty Coalition, Friends of the Earth, etc.
-    Extreme weather / climate adaptation, with manifesto recommendation from X
-    Possibly an over-arching policy recommendation on Right to a Healthy Environment
-
-    Climate change – including:
-    Renewable energy, with manifesto recommendation from Pos
-    Climate change – including:
-    Renewable energy, with manifesto recommendation from Possible on onshore wind
-    Heat pumps, with manifesto recommendation from E3G
-    Electric vehicles, with manifesto recommendation from X
-    Public transport, with manifesto recommendation from green alliance
-    Cycling and walking, with manifesto recommendation from X
-
-    Nature
-    River Quality, with manifesto recommendation from Rivers Trust / Surfers Against Sewers
-    Tree cover, with manifesto recommendation from Woodland Trust
--->
-
-<!--
-    further research: Lobbying act! Local authorities? Time sensitive: Election candidates and hustings?
--->
+{% endblock %}

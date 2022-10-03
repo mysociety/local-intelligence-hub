@@ -1,15 +1,15 @@
 <div class="py-4 bg-green-100">
     <div class="container">
         <div class="d-flex align-items-center">
-            <a href="{{ '/' | relative_url }}" class="navbar-brand fs-5 fw-bold">
+            <a href="{% url 'home' %}" class="navbar-brand fs-5 fw-bold">
                 Local Intelligence Hub
             </a>
             <ul class="nav list-unstyled ms-auto d-none d-lg-flex">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ '/' | relative_url }}">Search</a>
+                    <a class="nav-link" href="{% url 'home' %}">Search</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ '/explore' | relative_url }}">Map</a>
+                    <a class="nav-link" href="{% url 'explore' %}">Map</a>
                 </li>
                 <li class="nav-item">
                     <span class="nav-link">Add data</span>

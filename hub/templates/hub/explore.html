@@ -1,15 +1,13 @@
----
-layout: default
-title: National data explorer
-slug: explore
----
+{% extends 'hub/base.html' %}
 
-{% include header.html %}
+{% block content %}
+
+{% include 'hub/includes/header.html' %}
 
 <div class="explore">
 
     <div class="explore-filters p-4 p-lg-5">
-        <h1 class="h2 mb-3">{{ page.title }}</h1>
+        <h1 class="h2 mb-3">{{ title }}</h1>
 
         <p>Use data from The Climate Coalition, its member organisations, and the wider sector, to narrow down your focus to the constituencies that matter to you.</p>
 
@@ -55,7 +53,7 @@ slug: explore
 
 </div>
 
-{% include add-data-modal.html %}
+{% include 'hub/includes/add-data-modal.html' %}
 
 <script type="text/x-template" id="templateFilter">
     <div class="bg-gray-100 border p-3 rounded mb-4 js-filter">
@@ -90,3 +88,4 @@ slug: explore
         </div>
     </div>
 </script>
+{% endblock %}
