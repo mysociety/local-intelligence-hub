@@ -22,4 +22,7 @@ jobs:
           use_dev_image: false
           run: |
             script/bootstrap
-            script/test
+            script/test --coverage
+
+      - name: upload code coverage
+        run: codecov
