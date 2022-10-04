@@ -1,0 +1,6 @@
+[run]
+omit =
+  # this is part of django so don't need coverage
+  manage.py
+  local_intelligence_hub/asgi.py
+  local_intelligence_hub/wsgi.py
