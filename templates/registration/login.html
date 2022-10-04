@@ -1,0 +1,59 @@
+{% extends "hub/base.html" %}
+
+{% block content %}
+
+
+<div class="py-4 py-lg-5 bg-green-100">
+    <div class="container">
+        <div class="d-flex align-items-center mb-4 mb-lg-5">
+            <a href="{% url 'home' %}">
+                {% include 'hub/includes/icons/tcc-logo.html' with classes="me-auto" width="8rem" height="auto" %}
+            </a>
+            <ul class="nav list-unstyled ms-auto d-none d-lg-flex">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'home' %}">Search</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Map</a>
+                </li>
+                <li class="nav-item">
+                    <span class="nav-link">Add data</span>
+                </li>
+                <li class="nav-item">
+                    <span class="nav-link">Sign in</span>
+                </li>
+            </ul>
+        </div>
+        <h1 class="display-2 mb-3">Local Intelligence Hub</h1>
+        <p class="fs-4" style="max-width: 26em;">Your starting point for data about MPs, constituencies, and local climate activity across the UK.</p>
+    </div>
+</div>
+
+<div class="py-5">
+    <div class="container mt-lg-3">
+        <div class="row">
+            <form method="post" action="{% url 'login' %}">
+                {% csrf_token %}
+                <table>
+                <tr>
+                    <td>{{ form.username.label_tag }}</td>
+                    <td>{{ form.username }}</td>
+                </tr>
+                <tr>
+                    <td>{{ form.password.label_tag }}</td>
+                    <td>{{ form.password }}</td>
+                </tr>
+                </table>
+
+                <input type="submit" value="login">
+                <input type="hidden" name="next" value="{% url 'home' %}">
+            </form>
+
+            <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
+        </div>
+    </div>
+</div>
+
+<div class="footer"></div>
+
+{% endblock %}

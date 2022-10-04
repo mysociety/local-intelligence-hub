@@ -30,6 +30,12 @@ DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 CACHE_FILE = env("CACHE_FILE")
 
+NON_LOGIN_URLS = (
+    "/accounts/login/",
+    "/accounts/logout/",
+    "/accounts/password_reset/",
+)
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -51,6 +57,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "hub.middleware.AuthPageProtectionMiddleware",
 ]
 
 ROOT_URLCONF = "local_intelligence_hub.urls"
@@ -58,7 +65,7 @@ ROOT_URLCONF = "local_intelligence_hub.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": ["templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

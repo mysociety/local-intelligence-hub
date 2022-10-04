@@ -1,8 +1,20 @@
 from django.test import TestCase, Client
 from django.urls import reverse
+from django.contrib.auth.models import User
+
+
+class TestLoginEnforced(TestCase):
+    def test_login_required(self):
+        url = reverse("home")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
 
 
 class TestPageRenders(TestCase):
+    def setUp(self):
+        u = User.objects.create(username="user@example.com")
+        self.client.force_login(u)
+
     def test_home_page(self):
         url = reverse("home")
         response = self.client.get(url)
