@@ -24,5 +24,15 @@ jobs:
             script/bootstrap
             script/test --coverage
 
+      # do this inside the docker container otherwise the paths don't work
+      - name: generate coverage xml
+        uses: ./.github/actions/in-container
+        with:
+          run: coverage xml
+
+      # do this outside the docker container otherwise can't get repo details
       - name: upload code coverage
-        run: codecov
+        run: |
+          less coverage.xml
+          pip install codecov
+          codecov

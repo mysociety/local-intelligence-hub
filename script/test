@@ -16,8 +16,7 @@ else
 fi
 
 if [ "$1" == "--coverage" ]; then
-    $PREFIX coverage run manage.py test
-    $PREFIX coverage report -m
+    $PREFIX coverage run --source=. --branch manage.py test
 else
     $PREFIX ./manage.py test
 fi
