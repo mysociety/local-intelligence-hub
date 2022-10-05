@@ -32,6 +32,8 @@ DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 CACHE_FILE = env("CACHE_FILE")
 HIDE_DEBUG_TOOLBAR = env("HIDE_DEBUG_TOOLBAR")
+MAPIT_URL = env("MAPIT_URL")
+MAPIT_API_KEY = env("MAPIT_API_KEY")
 
 # make sure CSRF checking still works behind load balancers
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
