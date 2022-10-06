@@ -2,6 +2,8 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
 
+from hub.models import Area
+
 
 class TestLoginEnforced(TestCase):
     def test_login_required(self):
@@ -27,11 +29,25 @@ class TestPageRenders(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "hub/explore.html")
 
+
+class TestAreaPage(TestCase):
+    def setUp(self):
+        u = User.objects.create(username="user@example.com")
+        self.client.force_login(u)
+
+        a = Area.objects.create(
+            mapit_id=1, gss="E10000001", name="South Borsetshire", area_type="WMC"
+        )
+
     def test_area_page(self):
-        url = reverse("area")
+        url = reverse("area", args=("WMC", "South Borsetshire"))
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "hub/area.html")
+
+        context = response.context
+        self.assertEqual(context["page_title"], "South Borsetshire")
+        self.assertEqual(context["area"].name, "South Borsetshire")
 
 
 class TestStatusView(TestCase):
