@@ -1,29 +1,35 @@
 from django.test import TestCase
 from django.core.management import call_command
 
-from unittest.mock import patch
+from unittest import mock
 from hub.models import Area
+from utils.mapit import MapIt
 
 
 class ImportAreasTestCase(TestCase):
-    @patch("utils.mapit.session")
-    def test_import(self, mapit_session):
-        mapit_session.get.return_value.json.return_value = {
-            "1": {
+    @mock.patch.object(MapIt, "areas_of_type")
+    @mock.patch.object(MapIt, "area_geometry")
+    def test_import(self, mapit_geom, mapit_areas):
+        mapit_geom.return_value = {
+            "type": "Polygon",
+            "coordinates": [[1, 2], [2, 1]],
+        }
+        mapit_areas.return_value = [
+            {
                 "id": 1,
                 "codes": {"gss": "E10000001", "unit_id": "1"},
                 "name": "South Borsetshire",
                 "country": "E",
                 "type": "WMC",
             },
-            "4": {
+            {
                 "id": 4,
                 "codes": {"gss": "E10000004", "unit_id": "4"},
                 "name": "North Borsetshire",
                 "country": "E",
                 "type": "WMC",
             },
-        }
+        ]
         call_command("import_areas")
 
         areas = Area.objects.all()
@@ -33,3 +39,7 @@ class ImportAreasTestCase(TestCase):
         self.assertEqual(first.name, "South Borsetshire")
         self.assertEqual(first.mapit_id, "1")
         self.assertEqual(first.gss, "E10000001")
+        self.assertEqual(
+            first.geometry,
+            '{"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [[1, 2], [2, 1]]}, "properties": {"PCON13CD": "E10000001", "name": "South Borsetshire", "type": "WMC"}}',
+        )
