@@ -6,3 +6,4 @@ class Area(models.Model):
     gss = models.CharField(max_length=30)
     name = models.CharField(max_length=200)
     area_type = models.CharField(max_length=20)
+    geometry = models.TextField(blank=True, null=True)
