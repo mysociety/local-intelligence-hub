@@ -131,12 +131,14 @@ var highlightFeature = function(e) {
     })
 
     if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-        layer.bringToFront()
+        layer.bringToFront();
+        layer.openTooltip();
     }
 }
 
 var unhighlightFeature = function(e) {
     window.geojson.resetStyle(e.target);
+    e.target.closeTooltip();
 }
 
 var setUpMap = function() {
@@ -153,18 +155,21 @@ var setUpMap = function() {
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map)
 
-    window.geojson = L.geoJson(constituencies, {
-        style: getFeatureStyle,
-        onEachFeature: function(feature, layer){
-            layer.on({
-                mouseover: highlightFeature,
-                mouseout: unhighlightFeature,
-                click: function(){
-                    window.location.href = '/area'
-                }
-            })
-        }
-    }).addTo(map)
+    $.getJSON("/filter_areas/", function(data) {
+        window.geojson = L.geoJson(data, {
+            style: getFeatureStyle,
+            onEachFeature: function(feature, layer){
+                layer.bindTooltip(feature.properties.name);
+                layer.on({
+                    mouseover: highlightFeature,
+                    mouseout: unhighlightFeature,
+                    click: function(){
+                        window.location.href = '/area/' + feature.properties.type + '/' + feature.properties.name
+                    }
+                })
+            }
+        }).addTo(map)
+    });
 
     return map
 }

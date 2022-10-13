@@ -29,6 +29,11 @@ class TestPageRenders(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "hub/explore.html")
 
+    def test_filter_page(self):
+        url = reverse("filtered_areas")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
 
 class TestAreaPage(TestCase):
     def setUp(self):

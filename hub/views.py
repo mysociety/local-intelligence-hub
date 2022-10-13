@@ -1,7 +1,9 @@
+import json
 from django.shortcuts import render
 
 from django.shortcuts import get_object_or_404
 from django.views.generic import DetailView, TemplateView
+from django.http import JsonResponse
 
 from hub.mixins import TitleMixin
 from hub.models import Area
@@ -29,6 +31,13 @@ class AreaView(TitleMixin, DetailView):
 
     def get_page_title(self):
         return self.object.name
+
+
+class FilterAreaView(TemplateView):
+    def render_to_response(self, context, **response_kwargs):
+        geom = list(Area.objects.filter(geometry__isnull=False).values("geometry"))
+        geom = [json.loads(g["geometry"]) for g in geom]
+        return JsonResponse({"type": "FeatureCollection", "features": geom})
 
 
 class StatusView(TemplateView):
