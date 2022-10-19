@@ -110,7 +110,7 @@
                         <img src="{% static 'img/mp.jpg' %}" alt="James Madeupname" width="60" height="60" class="rounded-circle">
                     </div>
                     <div class="flex-grow-1 ms-3">
-                        <h3 class="h4 mb-0">James<br>Madeupname</h3>
+                        <h3 class="h4 mb-0">{{ mp.person.name }}</h3>
                     </div>
                 </div>
 
@@ -127,16 +127,26 @@
 
                 <h4 class="h6 text-primary mt-5">MP profiles</h4>
                 <ul class="list-unstyled">
-                    <li class="mb-2"><a href="#">twitter.com/jamesmadeupname_mp</a></li>
-                    <li class="mb-2"><a href="#">facebook.com/JMforBorsetshire</a></li>
-                    <li class="mb-2 text-truncate"><a href="#">theyworkforyou.com/mp/264701/james_madeupname/borsetshire_east</a></li>
+                    {% if mp.twitter %}
+                    <li class="mb-2"><a href="https://twitter.com/{{ mp.twitter }}">twitter.com/{{ mp.twitter }}</a></li>
+                    {% endif %}
+                    {% if mp.parlid %}
+                    <li class="mb-2"><a href="https://members.parliament.uk/member/{{ mp.parlid }}/contact">parliament.uk</a></li>
+                    {% endif %}
+                    {% if mp.facebook %}
+                    <li class="mb-2"><a href="https://facebook.com/{{ mp.facebook }}">facebook.com/{{ mp.facebook }}</a></li>
+                    {% endif %}
+                    {% if mp.wikipedia %}
+                    <li class="mb-2"><a href="{{ mp.wikipedia }}">{{ mp.wikipedia }}</a></li>
+                    {% endif %}
+                    <li class="mb-2 text-truncate"><a href="https://www.theyworkforyou.com/mp/{{ mp.person.external_id }}">theyworkforyou.com/mp/{{ mp.person.external_id }}</a></li>
                 </ul>
 
                 <h4 class="h6 text-primary mt-5">MP memberships</h4>
                 <ul class="list-unstyled">
-                    <li class="mb-2"><a href="#">Conservative Party</a></li>
-                    <li class="mb-2"><a href="#">Conservative Environment Network (CEN)</a></li>
-                    <li class="mb-2"><a href="#">European Research Group (ERG)</a></li>
+                    {% if mp.party %}
+                    <li class="mb-2"><a href="#">{{ mp.party }}</li>
+                    {% endif %}
                 </ul>
 
                 <h4 class="h6 text-primary mb-3 mt-5">Relationships with MP</h4>
