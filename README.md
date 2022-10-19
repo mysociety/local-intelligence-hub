@@ -35,3 +35,10 @@ management commands in the docker web container:
 * `./manage.py import_mps`
 
 You can then view it at (http://localhost:8000/)
+
+You can create the first Django user by entering a bash shell inside the `web` container, and then running the `createsuperuser` script through the Django shell:
+
+    docker-compose exec web bash
+    script/createsuperuser
+
+The superuser will be created with the details specified in the `DJANGO_SUPERUSER_*` environment variables. [Read more about how Docker handles environment variables](https://docs.docker.com/compose/envvars-precedence/).

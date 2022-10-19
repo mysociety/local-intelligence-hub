@@ -33,6 +33,9 @@ services:
       EMAIL_HOST: email.svc
       CACHE_FILE: 'data/cache'
       MAPIT_URL: 'https://mapit.mysociety.org/'
+      DJANGO_SUPERUSER_USERNAME: 'admin'
+      DJANGO_SUPERUSER_PASSWORD: 'password'
+      DJANGO_SUPERUSER_EMAIL: 'admin@localhost'
   mailhog:
     image: mailhog/mailhog:v1.0.1
     restart: always
