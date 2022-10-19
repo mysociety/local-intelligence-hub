@@ -8,7 +8,7 @@ from django.views.decorators.cache import cache_control
 from django.utils.decorators import method_decorator
 
 from hub.mixins import TitleMixin
-from hub.models import Area
+from hub.models import Area, Person, PersonData
 
 cache_settings = {
     "max-age": 60,
@@ -38,6 +38,21 @@ class AreaView(TitleMixin, DetailView):
 
     def get_page_title(self):
         return self.object.name
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        try:
+            context["mp"] = {"person": Person.objects.get(area=self.object)}
+
+            data = PersonData.objects.filter(
+                person=context["mp"]["person"]
+            ).select_related("data_type")
+            for item in data.all():
+                context["mp"][item.data_type.name] = item.data
+        except Person.DoesNotExist:
+            pass
+
+        return context
 
 
 @method_decorator(cache_control(**cache_settings), name="dispatch")

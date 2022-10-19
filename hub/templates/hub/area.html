@@ -103,6 +103,7 @@
             </div>
             <div class="col-lg-6 col-xl-4">
 
+                {% if mp %}
                 <h2 class="mt-5 mb-0 pb-3 border-bottom text-primary">MP</h2>
 
                 <div class="d-flex align-items-center mt-5">
@@ -139,7 +140,9 @@
                     {% if mp.wikipedia %}
                     <li class="mb-2"><a href="{{ mp.wikipedia }}">{{ mp.wikipedia }}</a></li>
                     {% endif %}
-                    <li class="mb-2 text-truncate"><a href="https://www.theyworkforyou.com/mp/{{ mp.person.external_id }}">theyworkforyou.com/mp/{{ mp.person.external_id }}</a></li>
+                    {% if mp.twfyid %}
+                    <li class="mb-2 text-truncate"><a href="https://www.theyworkforyou.com/mp/{{ mp.twfyid}}">theyworkforyou.com/mp/{{ mp.twfyid }}</a></li>
+                    {% endif %}
                 </ul>
 
                 <h4 class="h6 text-primary mt-5">MP memberships</h4>
@@ -163,6 +166,7 @@
                     Do you have a good relationship with this MP?
                     <a href="#" class="d-inline-block">Let us know!</a>
                 </small>
+                {% endif %}
 
             </div>
         </div>

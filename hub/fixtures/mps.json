@@ -1,0 +1,33 @@
+[
+  {
+    "model": "hub.person",
+    "pk": 1,
+    "fields": {
+      "name": "James Madeupname",
+      "external_id": "1",
+      "person_type": "MP",
+      "id_type": "parlid",
+      "area": 1
+    }
+  },
+  {
+    "model": "hub.datatype",
+    "pk": 1,
+    "fields": {
+      "name": "parlid",
+      "data_type": "profileid",
+      "last_update": "2022-10-10T13:20:30+00:00",
+      "source": "https://wikipedia.org"
+    }
+  },
+  {
+    "model": "hub.persondata",
+    "pk": 1,
+    "fields": {
+      "person": 1,
+      "data_type": 1,
+      "data": 1
+    }
+  }
+]
+

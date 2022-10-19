@@ -36,13 +36,11 @@ class TestPageRenders(TestCase):
 
 
 class TestAreaPage(TestCase):
+    fixtures = ["areas.json", "mps.json"]
+
     def setUp(self):
         u = User.objects.create(username="user@example.com")
         self.client.force_login(u)
-
-        a = Area.objects.create(
-            mapit_id=1, gss="E10000001", name="South Borsetshire", area_type="WMC"
-        )
 
     def test_area_page(self):
         url = reverse("area", args=("WMC", "South Borsetshire"))
@@ -53,6 +51,18 @@ class TestAreaPage(TestCase):
         context = response.context
         self.assertEqual(context["page_title"], "South Borsetshire")
         self.assertEqual(context["area"].name, "South Borsetshire")
+
+        mp = context["mp"]
+        self.assertEqual(mp["person"].name, "James Madeupname")
+        self.assertEqual(mp["parlid"], "1")
+
+    def test_area_page_no_mp(self):
+        url = reverse("area", args=("WMC", "Borsetshire East"))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        context = response.context
+        self.assertIsNone(context.get("mp"))
 
 
 class TestStatusView(TestCase):
