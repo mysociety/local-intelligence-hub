@@ -39,6 +39,10 @@ MAPIT_API_KEY = env("MAPIT_API_KEY")
 # make sure CSRF checking still works behind load balancers
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+if env.str("BUGS_EMAIL", None):  # pragma: no cover
+    SERVER_EMAIL = env("BUGS_EMAIL")
+    ADMINS = (("mySociety bugs", env("BUGS_EMAIL")),)
+
 NON_LOGIN_URLS = (
     "/status/",
     "/accounts/login/",
@@ -174,7 +178,6 @@ COMPRESS_CSS_HASHING_METHOD = "content"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
 # django-bootstrap5 settings
 # https://django-bootstrap5.readthedocs.io/en/latest/settings.html
 BOOTSTRAP5 = {
@@ -184,6 +187,10 @@ BOOTSTRAP5 = {
         "default": "hub.renderers.CustomFieldRenderer",
     },
 }
+
+# Sending messages
+EMAIL_HOST = env.str("EMAIL_HOST", "localhost")
+EMAIL_PORT = env.str("EMAIL_PORT", 1025)
 
 if DEBUG and HIDE_DEBUG_TOOLBAR is False:  # pragma: no cover
     hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
