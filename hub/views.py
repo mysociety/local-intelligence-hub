@@ -4,9 +4,16 @@ from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from django.views.generic import DetailView, TemplateView
 from django.http import JsonResponse
+from django.views.decorators.cache import cache_control
+from django.utils.decorators import method_decorator
 
 from hub.mixins import TitleMixin
 from hub.models import Area
+
+cache_settings = {
+    "max-age": 60,
+    "s-maxage": 3600,
+}
 
 
 class HomePageView(TitleMixin, TemplateView):
@@ -33,6 +40,7 @@ class AreaView(TitleMixin, DetailView):
         return self.object.name
 
 
+@method_decorator(cache_control(**cache_settings), name="dispatch")
 class FilterAreaView(TemplateView):
     def render_to_response(self, context, **response_kwargs):
         geom = list(Area.objects.filter(geometry__isnull=False).values("geometry"))
