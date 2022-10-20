@@ -33,6 +33,9 @@ ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 CACHE_FILE = env("CACHE_FILE")
 HIDE_DEBUG_TOOLBAR = env("HIDE_DEBUG_TOOLBAR")
 
+# make sure CSRF checking still works behind load balancers
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 NON_LOGIN_URLS = (
     "/status/",
     "/accounts/login/",
