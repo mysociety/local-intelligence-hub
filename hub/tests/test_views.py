@@ -32,3 +32,11 @@ class TestPageRenders(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "hub/area.html")
+
+
+class TestStatusView(TestCase):
+    def test_status_view_is_200(self):
+        url = reverse("status")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertRegex(response.content, rb"status: OK")

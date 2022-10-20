@@ -13,3 +13,7 @@ class ExploreView(TemplateView):
 
 class AreaView(TemplateView):
     template_name = "hub/area.html"
+
+
+class StatusView(TemplateView):
+    template_name = "hub/status.html"
