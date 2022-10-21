@@ -7,170 +7,227 @@
 
 <div class="py-4 py-lg-5">
     <div class="container">
-        <h1>{{ title }}</h1>
-        <ul class="list-inline mb-0">
-            <li class="list-inline-item"><a href="#" class="badge text-white bg-blue-600" style="text-decoration: none;">Blue wall</a></li>
-            <li class="list-inline-item"><a href="#" class="badge text-white bg-orange-500" style="text-decoration: none;">Flood risk</a></li>
-            <li class="list-inline-item"><a href="#" class="badge text-white bg-teal-500" style="text-decoration: none;">Green tech jobs</a></li>
-            <li class="list-inline-item"><a href="#" class="badge text-gray-900 bg-gray-200" style="text-decoration: none;">+ Add tag</a></li>
-        </ul>
+        <a href="{% url 'explore' %}" class="d-inline-flex align-items-center">
+            {% include 'hub/includes/icons/chevron-left.html' with classes="me-1" %}
+            Back to map
+        </a>
+        <h1 class="mt-3 mb-0">{{ area.name }}</h1>
+    </div>
+</div>
 
-        <div class="row gx-lg-5">
-            <div class="col-lg-6 col-xl-8">
-                <h2 class="mt-5 mb-0 pb-3 border-bottom text-primary">{{ area.name }}</h2>
+<div class="py-4 py-lg-5 bg-light">
+    <div class="container mb-5">
+        <div class="p-3 bg-white border rounded d-flex align-items-center">
+            {% include 'hub/includes/icons/tcc-heart.html' with width="1.25em" height="1.25em" classes="me-3 flex-shrink-0 flex-grow-0" %}
+            <p class="mb-0">
+                <strong class="me-2">TCC member?</strong> Log in or request an account to upload your own datasets and bookmark your favourite datasets for easy access.
+            </p>
+        </div>
 
-                <div class="row gx-lg-5">
-                    <div class="col-lg-6">
-                        <h4 class="h6 text-primary mt-5">Public opinion: Support for Net Zero</h4>
-                        <p class="fs-4 lh-1 mb-0">54%</p>
+        <h2 class="mt-5 mb-3 text-primary">Movement</h2>
 
-                        <h4 class="h6 text-primary mt-5">Average IMD score</h4>
-                        <p class="fs-4 lh-1 mb-0">7 (good)</p>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <div class="col d-flex flex-column">
+                <div class="card flex-grow-1">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Friends of the Earth supporters</h5>
+                        <p class="card-text display-6 lh-1 text-primary">High</p>
                     </div>
-                    <div class="col-lg-6">
-                        <h4 class="h6 text-primary mt-5">Homes in fuel poverty</h4>
-                        <p class="fs-4 lh-1 mb-0">11%</p>
-
-                        <h4 class="h6 text-primary mt-5">Homes with good access to nature</h4>
-                        <p class="fs-4 lh-1 mb-0">43%</p>
+                    <div class="card-footer bg-white">
+                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data from Friends of the Earth</a></p>
                     </div>
-                </div>
-
-                <div class="row gx-lg-5">
-                    <div class="col-xl-6">
-                        <h4 class="mb-3 h6 text-primary mt-5">Groups active nearby</h4>
-                        <div class="list-group">
-                            <div class="list-group-item">
-                                <small class="d-block fw-bold text-muted">Wildlife Trusts</small>
-                                Team Wilder, Borsetshire
-                            </div>
-                            <div class="list-group-item">
-                                <small class="d-block fw-bold text-muted">The WI</small>
-                                WI Felpersham
-                            </div>
-                        </div>
-                        <small class="d-block mt-2 mt-lg-3 text-muted">
-                            Is your group missing?
-                            <a href="#" class="d-inline-block">Let us know!</a>
-                        </small>
-
-                        <h4 class="mb-3 h6 text-primary mt-5">Total TCC supporters</h4>
-                        <div class="p-3 bg-yellow-100 rounded">
-                            <p class="mb-2">This data is available only to The Climate Coalition member organisations.</p>
-                            <p class="mb-0"><a href="#">Sign in</a> or <a href="#">Request an account</a></p>
-                        </div>
-                    </div>
-                    <div class="col-xl-6">
-                        <h4 class="mb-3 h6 text-primary mt-5">Spaces and places</h4>
-                        <div class="list-group">
-                            <div class="list-group-item">
-                                <small class="d-block fw-bold text-muted">Church of England</small>
-                                Ambridge Village Hall
-                            </div>
-                            <div class="list-group-item">
-                                <small class="d-block fw-bold text-muted">Oxfam</small>
-                                Oxfam Borchester
-                            </div>
-                            <div class="list-group-item">
-                                <small class="d-block fw-bold text-muted">National Trust</small>
-                                Felpersham Hall
-                            </div>
-                        </div>
-                        <small class="d-block mt-2 mt-lg-3 text-muted">
-                            Is your space missing?
-                            <a href="#" class="d-inline-block">Let us know!</a>
-                        </small>
-
-                        <h4 class="mb-3 h6 text-primary mt-5">Events</h4>
-                        <div class="list-group">
-                            <div class="list-group-item">
-                                <small class="d-block fw-bold text-muted">The Climate Coalition</small>
-                                Great Big Green Week 2022
-                            </div>
-                            <div class="list-group-item">
-                                <small class="d-block fw-bold text-muted">The Climate Coalition</small>
-                                Great Big Green Week 2021
-                            </div>
-                        </div>
-                        <small class="d-block mt-2 mt-lg-3 text-muted">
-                            Is your event missing?
-                            <a href="#" class="d-inline-block">Let us know!</a>
-                        </small>
+                    <div class="card-footer bg-yellow-100 d-flex align-items-center">
+                        {% include 'hub/includes/icons/tcc-heart.html' with width="1.25em" height="1.25em" classes="me-2 flex-shrink-0 flex-grow-0" %}
+                        <p class="mb-0 fs-7">
+                            Raw data available for <strong>TCC members</strong>
+                        </p>
                     </div>
                 </div>
-
             </div>
-            <div class="col-lg-6 col-xl-4">
-
-                {% if mp %}
-                <h2 class="mt-5 mb-0 pb-3 border-bottom text-primary">MP</h2>
-
-                <div class="d-flex align-items-center mt-5">
-                    <div class="flex-shrink-0">
-                    {% if mp.person.photo %}
-                        <img src="{{ mp.person.photo.url }}" alt="{{ mp.person.name }}" width="60" height="60" class="rounded-circle" loading="lazy">
-                    {% else %}
-                        <img src="{% static 'img/person.svg' %}" alt="" width="60" height="60" class="rounded-circle" loading="lazy">
-                    {% endif %}
+            <div class="col d-flex flex-column">
+                <div class="card flex-grow-1">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Great Big Green Week</h5>
+                        <p class="card-text display-6 lh-1 text-primary mb-0">3 events</p>
+                        <p class="card-text mt-1">in 2022</p>
                     </div>
-                    <div class="flex-grow-1 ms-3">
-                        <h3 class="h4 mb-0">{{ mp.person.name }}</h3>
+                    <div class="card-footer bg-white">
+                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data from The Climate Coalition</a></p>
                     </div>
                 </div>
+            </div>
+            <div class="col d-flex flex-column">
+                <a href="#" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
+                    <span>…7 more datasets available</span>
+                </a>
+            </div>
+        </div>
 
-                <div class="row">
-                    <div class="col-lg-6">
-                        <h4 class="h6 text-primary mt-5">MP majority</h4>
-                        <p class="fs-4 lh-1 mb-0">{{ mp.mp_election_majority|intcomma }}</p>
+        <h2 class="mt-5 mb-3 text-primary">Place</h2>
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <div class="col d-flex flex-column">
+                <div class="card flex-grow-1">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Support for Net Zero</h5>
+                        <p class="card-text mb-0 display-6 lh-1 text-primary">72%</p>
+                        <p class="card-text mt-2 text-muted">68% national average</p>
                     </div>
-                    <div class="col-lg-6">
-                        <h4 class="h6 text-primary mt-5">MP elected</h4>
-                        <p class="fs-4 lh-1 mb-0">{{ mp.mp_first_elected|naturalday }}</p>
+                    <div class="card-footer bg-white">
+                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">MRP polling data from The Climate Coalition, 2022</a></p>
                     </div>
                 </div>
+            </div>
+            <div class="col d-flex flex-column">
+                <div class="card flex-grow-1">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Voting intention</h5>
+                        <p class="card-text fs-5 lh-1 fw-bold mb-0 mt-2 text-primary">51% Labour</p>
+                        <p class="card-text fs-5 lh-1 fw-bold mb-0 mt-2 text-primary">23% Conservative</p>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">MRP polling data from The Climate Coalition, 2022</a></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col d-flex flex-column">
+                <div class="card flex-grow-1">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">2019 voter turnout</h5>
+                        <p class="card-text mb-0 display-6 lh-1 text-primary">65%</p>
+                        <p class="card-text mt-2 text-muted">59% national average</p>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <p class="card-text fs-8"><a href="https://commonslibrary.parliament.uk/general-election-2019-turnout/" class="text-decoration-none text-muted">Data from House of Commons Library</a></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col d-flex flex-column">
+                <div class="card flex-grow-1">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">‘Levelling up’ town</h5>
+                        <p class="card-text fs-5">Nearby <strong class="text-primary">Borchester</strong> received ‘levelling up’ funds in 2021</p>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Source: GOV.UK, 2021</a></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col d-flex flex-column">
+                <div class="card flex-grow-1">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Local businesses</h5>
+                        <p class="card-text display-6 lh-1 mb-0 text-primary d-flex align-items-center">
+                            4% drop
+                            {% include 'hub/includes/icons/triangle-down.html' with classes="ms-2 flex-shrink-0 flex-grow-0 text-danger" %}
+                        </p>
+                        <p class="card-text mt-1">between 2021–2022</p>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <p class="card-text fs-8"><a href="https://commonslibrary.parliament.uk/research-briefings/sn06152/" class="text-decoration-none text-muted">Data from House of Commons Library</a></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col d-flex flex-column">
+                <a href="#" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
+                    <span>…12 more datasets available</span>
+                </a>
+            </div>
+        </div>
 
-                <h4 class="h6 text-primary mt-5">MP profiles</h4>
-                <ul class="list-unstyled">
-                    {% if mp.twitter %}
-                    <li class="mb-2"><a href="https://twitter.com/{{ mp.twitter }}">twitter.com/{{ mp.twitter }}</a></li>
-                    {% endif %}
-                    {% if mp.parlid %}
-                    <li class="mb-2"><a href="https://members.parliament.uk/member/{{ mp.parlid }}/contact">parliament.uk</a></li>
-                    {% endif %}
-                    {% if mp.facebook %}
-                    <li class="mb-2"><a href="https://facebook.com/{{ mp.facebook }}">facebook.com/{{ mp.facebook }}</a></li>
-                    {% endif %}
-                    {% if mp.wikipedia %}
-                    <li class="mb-2"><a href="{{ mp.wikipedia }}">{{ mp.wikipedia }}</a></li>
-                    {% endif %}
-                    {% if mp.twfyid %}
-                    <li class="mb-2 text-truncate"><a href="https://www.theyworkforyou.com/mp/{{ mp.twfyid}}">theyworkforyou.com/mp/{{ mp.twfyid }}</a></li>
-                    {% endif %}
-                </ul>
+        <h2 class="mt-5 mb-3 text-primary">MP</h2>
 
-                <h4 class="h6 text-primary mt-5">MP memberships</h4>
-                <ul class="list-unstyled">
-                    {% if mp.party %}
-                    <li class="mb-2"><a href="#">{{ mp.party }}</li>
-                    {% endif %}
-                </ul>
-
-                <h4 class="h6 text-primary mb-3 mt-5">Relationships with MP</h4>
-                <div class="list-group">
-                    <div class="list-group-item d-flex align-items-center">
-                        {% include 'hub/includes/icons/person.html' with classes="me-3 text-muted" width="2rem" height="2rem" %}
-                        <div class="">
-                            Campaign manager, National Trust
-                            <small class="d-block text-muted"><a href="#">Sign in</a> to make contact</small>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <div class="col d-flex flex-column">
+                <div class="card flex-grow-1">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                              {% if mp.person.photo %}
+                                <img src="{{ mp.person.photo.url }}" alt="{{ mp.person.name }}" width="60" height="60" class="rounded-circle" loading="lazy">
+                              {% else %}
+                                <img src="{% static 'img/person.svg' %}" alt="" width="60" height="60" class="rounded-circle" loading="lazy">
+                              {% endif %}
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h3 class="h4 mb-0 text-primary">{{ mp.person.name }}</h3>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <h4 class="h6 mt-4">Party</h4>
+                                <p class="fs-5 lh-1 fw-bold text-primary mb-0">{{ mp.party|default_if_none:"–" }}</p>
+                            </div>
+                            <div class="col-lg-6">
+                                <h4 class="h6 mt-4">Elected</h4>
+                                <p class="fs-5 lh-1 fw-bold text-primary mb-0">{{ mp.mp_first_elected|naturalday }}</p>
+                            </div>
                         </div>
                     </div>
+                    <div class="card-footer bg-white">
+                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data from TheyWorkForYou.com</a></p>
+                    </div>
                 </div>
-                <small class="d-block mt-2 mt-lg-3 text-muted">
-                    Do you have a good relationship with this MP?
-                    <a href="#" class="d-inline-block">Let us know!</a>
-                </small>
-                {% endif %}
-
+            </div>
+            <div class="col d-flex flex-column">
+                <div class="card flex-grow-1">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">MP memberships</h5>
+                        <ul class="list-unstyled mb-0">
+                          {% if mp.party %}
+                            <li class="mb-2"><a href="#">{{ mp.party }}</a></li>
+                          {% endif %}
+                            <li class="mb-2"><a href="#">Conservative Environment Network (CEN)</a></li>
+                            <li class="mb-2"><a href="#">European Research Group (ERG)</a></li>
+                        </ul>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data collated by The Climate Coalition</a></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col d-flex flex-column">
+                <div class="card flex-grow-1">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">2019 electoral majority</h5>
+                        <p class="card-text display-6 lh-1 text-primary">{{ mp.mp_election_majority|intcomma }}</p>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <p class="card-text fs-8"><a href="https://electionresults.parliament.uk/election/2019-12-12/Statistics/Majority" class="text-decoration-none text-muted">Data from UK Parliament</a></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col d-flex flex-column">
+                <div class="card flex-grow-1">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">MP profiles</h5>
+                        <ul class="list-unstyled mb-0">
+                          {% if mp.twitter %}
+                            <li class="mb-2 text-truncate"><a href="https://twitter.com/{{ mp.twitter }}">twitter.com/{{ mp.twitter }}</a></li>
+                          {% endif %}
+                          {% if mp.facebook %}
+                            <li class="mb-2 text-truncate"><a href="https://facebook.com/{{ mp.facebook }}">facebook.com/{{ mp.facebook }}</a></li>
+                          {% endif %}
+                          {% if mp.twfyid %}
+                            <li class="mb-2 text-truncate"><a href="https://www.theyworkforyou.com/mp/{{ mp.twfyid}}">theyworkforyou.com/mp/{{ mp.twfyid }}</a></li>
+                          {% endif %}
+                          {% if mp.parlid %}
+                            <li class="mb-2 text-truncate"><a href="https://members.parliament.uk/member/{{ mp.parlid }}/contact">parliament.uk</a></li>
+                          {% endif %}
+                          {% if mp.wikipedia %}
+                            <li class="mb-2 text-truncate"><a href="{{ mp.wikipedia }}">{{ mp.wikipedia }}</a></li>
+                          {% endif %}
+                        </ul>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data collated by The Climate Coalition</a></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col d-flex flex-column">
+                <a href="#" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
+                    <span>…3 more datasets available</span>
+                </a>
             </div>
         </div>
 
