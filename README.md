@@ -17,10 +17,15 @@ Clone the repository:
     git clone git@github.com:mysociety/local-intelligence-hub.git
     cd local-intellegence-hub
 
+Create and edit a .env file using `.env-example` file and then
+update `SECRET_KEY` and `MAPIT_API_KEY`. You can get the latter from (https://mapit.mysociety.org/account/signup/)
+
 Start the Docker environment:
 
     docker-compose up
 
 (If Python complains about missing libraries, chances are the Python requirements have changed since your Docker image was last built. You can rebuild it with, eg: `docker-compose build web`.)
+
+You will then need to update the area data by running `./manage.py import_areas` on the docker web container. This will take some time to run.
 
 You can then view it at (http://localhost:8000/)
