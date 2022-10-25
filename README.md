@@ -26,6 +26,12 @@ Start the Docker environment:
 
 (If Python complains about missing libraries, chances are the Python requirements have changed since your Docker image was last built. You can rebuild it with, eg: `docker-compose build web`.)
 
-You will then need to update the area data by running `./manage.py import_areas` on the docker web container. This will take some time to run.
+### Data import
+
+You will then need to update the data by running the following
+management commands in the docker web container:
+
+* `./manage.py import_areas` - this will take some time to run
+* `./manage.py import_mps`
 
 You can then view it at (http://localhost:8000/)
