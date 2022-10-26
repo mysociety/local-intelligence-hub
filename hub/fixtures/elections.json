@@ -1,0 +1,63 @@
+[
+  {
+    "model": "hub.datatype",
+    "pk": 2,
+    "fields": {
+      "name": "mp_election_majority",
+      "data_type": "number",
+      "last_update": "2022-10-10T13:20:30+00:00",
+      "source": "https://wikipedia.org"
+    }
+  },
+  {
+    "model": "hub.datatype",
+    "pk": 3,
+    "fields": {
+      "name": "mp_first_elected",
+      "data_type": "date",
+      "last_update": "2022-10-10T13:20:30+00:00",
+      "source": "https://wikipedia.org"
+    }
+  },
+  {
+    "model": "hub.datatype",
+    "pk": 4,
+    "fields": {
+      "name": "mp_last_elected",
+      "data_type": "date",
+      "last_update": "2022-10-10T13:20:30+00:00",
+      "source": "https://wikipedia.org"
+    }
+  },
+  {
+    "model": "hub.persondata",
+    "pk": 2,
+    "fields": {
+      "person": 1,
+      "data_type": 2,
+      "data": 1234,
+      "date": null
+    }
+  },
+  {
+    "model": "hub.persondata",
+    "pk": 3,
+    "fields": {
+      "person": 1,
+      "data_type": 3,
+      "data": "",
+      "date": "2005-05-05T00:00:00+00:00"
+    }
+  },
+  {
+    "model": "hub.persondata",
+    "pk": 4,
+    "fields": {
+      "person": 1,
+      "data_type": 4,
+      "data": 1234,
+      "date": "2019-12-12T00:00:00+00:00"
+    }
+  }
+]
+

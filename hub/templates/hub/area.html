@@ -1,6 +1,7 @@
 {% extends 'hub/base.html' %}
 
 {% load static %}
+{% load humanize %}
 
 {% block content %}
 
@@ -116,11 +117,11 @@
                 <div class="row">
                     <div class="col-lg-6">
                         <h4 class="h6 text-primary mt-5">MP majority</h4>
-                        <p class="fs-4 lh-1 mb-0">1,582</p>
+                        <p class="fs-4 lh-1 mb-0">{{ mp.mp_election_majority|intcomma }}</p>
                     </div>
                     <div class="col-lg-6">
                         <h4 class="h6 text-primary mt-5">MP elected</h4>
-                        <p class="fs-4 lh-1 mb-0">2019</p>
+                        <p class="fs-4 lh-1 mb-0">{{ mp.mp_first_elected|naturalday }}</p>
                     </div>
                 </div>
 

@@ -36,7 +36,7 @@ class TestPageRenders(TestCase):
 
 
 class TestAreaPage(TestCase):
-    fixtures = ["areas.json", "mps.json"]
+    fixtures = ["areas.json", "mps.json", "elections.json"]
 
     def setUp(self):
         u = User.objects.create(username="user@example.com")
@@ -55,6 +55,8 @@ class TestAreaPage(TestCase):
         mp = context["mp"]
         self.assertEqual(mp["person"].name, "James Madeupname")
         self.assertEqual(mp["parlid"], "1")
+        self.assertEqual(mp["mp_election_majority"], "1234")
+        self.assertEqual(mp["mp_first_elected"].date().isoformat(), "2005-05-05")
 
     def test_area_page_no_mp(self):
         url = reverse("area", args=("WMC", "Borsetshire East"))

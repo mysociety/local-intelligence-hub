@@ -48,7 +48,7 @@ class AreaView(TitleMixin, DetailView):
                 person=context["mp"]["person"]
             ).select_related("data_type")
             for item in data.all():
-                context["mp"][item.data_type.name] = item.data
+                context["mp"][item.data_type.name] = item.value()
         except Person.DoesNotExist:
             pass
 
