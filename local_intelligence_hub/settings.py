@@ -150,6 +150,12 @@ STATICFILES_DIRS = [
     ("popper", BASE_DIR / "vendor" / "popper" / "js"),
 ]
 
+# only want to do this for live really
+if not DEBUG:  # pragma: no cover
+    STATICFILES_STORAGE = (
+        "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+    )
+
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 COMPRESS_CSS_HASHING_METHOD = "content"
 
