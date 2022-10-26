@@ -28,12 +28,12 @@ class Command(BaseCommand):
             except:
                 geom = None
 
-            a = Area.objects.get_or_create(
+            a, created = Area.objects.get_or_create(
                 mapit_id=area["id"],
                 gss=area["codes"]["gss"],
                 name=area["name"],
                 area_type="WMC",
-                geometry=geom,
             )
 
-            sleep(1)
+            a.geometry = geom
+            a.save()

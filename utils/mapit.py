@@ -38,7 +38,7 @@ class MapIt(object):
     touches_url = "%s/area/%s/intersects?type=CTY,COI,DIS,LBO,LGD,MTD,UTA&api_key=%s"
     wgs84_url = "%s/point/4326/%s,%s&api_key=%s"
     areas_url = "%s/areas/%s&api_key=%s"
-    geometry_url = "%s/area/%s.geojson?simplify_tolerance=0.0004&api_key=%s"
+    geometry_url = "%s/area/%s.geojson?simplify_tolerance=0.001&api_key=%s"
     cache = {}
 
     def __init__(self, disable_cache=False):
