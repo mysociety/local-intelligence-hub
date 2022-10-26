@@ -2,9 +2,17 @@ from django.db import models
 
 
 class DataType(models.Model):
-    name = models.CharField(max_length=20)
+    TYPE_CHOICES = [
+        ("text", "Text"),
+        ("number", "Number"),
+        ("date", "Date"),
+        ("boolean", "True/False"),
+        ("profile_id", "Profile Id"),
+    ]
+
+    name = models.CharField(max_length=50)
     description = models.TextField(blank=True, null=True)
-    data_type = models.CharField(max_length=20)
+    data_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     last_update = models.DateTimeField(auto_now=True)
     source = models.CharField(max_length=200)
 
@@ -36,3 +44,10 @@ class PersonData(models.Model):
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
     data_type = models.ForeignKey(DataType, on_delete=models.CASCADE)
     data = models.CharField(max_length=200)
+    date = models.DateTimeField(blank=True, null=True)
+
+    def value(self):
+        if self.data_type.data_type == "date":
+            return self.date
+
+        return self.data
