@@ -1,9 +1,9 @@
 import json
+
 from django.core.management.base import BaseCommand
 
-from time import sleep
-from utils import mapit
 from hub.models import Area
+from utils import mapit
 
 
 class Command(BaseCommand):
@@ -25,7 +25,8 @@ class Command(BaseCommand):
                     },
                 }
                 geom = json.dumps(geom)
-            except:
+            except mapit.NotFoundException:
+                print(f"could not find mapit area for {area['name']}")
                 geom = None
 
             a, created = Area.objects.get_or_create(

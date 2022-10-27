@@ -1,8 +1,8 @@
-import requests
-from django.test import TestCase
-from django.core.management import call_command
-
 from unittest.mock import MagicMock, patch
+
+from django.core.management import call_command
+from django.test import TestCase
+
 from hub.models import Person, PersonData
 
 

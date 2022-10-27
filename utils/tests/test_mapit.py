@@ -1,13 +1,13 @@
-from django.test import TestCase, Client
-
 from unittest.mock import patch
 
+from django.test import TestCase
+
 from utils.mapit import (
-    MapIt,
-    NotFoundException,
     BadRequestException,
     ForbiddenException,
     InternalServerErrorException,
+    MapIt,
+    NotFoundException,
 )
 
 
@@ -84,7 +84,7 @@ class TestMapitResponses(TestCase):
         mapit_session.get.return_value.status_code = 400
         mapit = MapIt(disable_cache=True)
         with self.assertRaisesMessage(BadRequestException, "Postcode invalid"):
-            actual = mapit.postcode_point_to_gss_codes(
+            mapit.postcode_point_to_gss_codes(
                 "BO11AB"
             )  # different value to avoid cache
 
@@ -97,7 +97,7 @@ class TestMapitResponses(TestCase):
         mapit_session.get.return_value.status_code = 404
         mapit = MapIt(disable_cache=True)
         with self.assertRaisesMessage(NotFoundException, "Postcode not found"):
-            actual = mapit.postcode_point_to_gss_codes(
+            mapit.postcode_point_to_gss_codes(
                 "BO11AC"
             )  # different value to avoid cache
 

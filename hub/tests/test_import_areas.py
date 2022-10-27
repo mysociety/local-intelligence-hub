@@ -1,7 +1,8 @@
-from django.test import TestCase
-from django.core.management import call_command
-
 from unittest import mock
+
+from django.core.management import call_command
+from django.test import TestCase
+
 from hub.models import Area
 from utils.mapit import MapIt
 

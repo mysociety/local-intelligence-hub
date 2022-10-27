@@ -1,6 +1,3 @@
-from django.conf import settings
-
-
 class TitleMixin:
     def get_page_title(self):
         return self.page_title

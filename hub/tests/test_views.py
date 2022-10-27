@@ -1,8 +1,6 @@
-from django.test import TestCase, Client
-from django.urls import reverse
 from django.contrib.auth.models import User
-
-from hub.models import Area
+from django.test import TestCase
+from django.urls import reverse
 
 
 class TestLoginEnforced(TestCase):

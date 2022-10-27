@@ -10,9 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
-import environ
 import socket
 from pathlib import Path
+
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -178,7 +179,7 @@ BOOTSTRAP5 = {
     },
 }
 
-if DEBUG and HIDE_DEBUG_TOOLBAR == False:  # pragma: no cover
+if DEBUG and HIDE_DEBUG_TOOLBAR is False:  # pragma: no cover
     hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
     INTERNAL_IPS = [ip[:-1] + "1" for ip in ips] + ["127.0.0.1", "10.0.2.2"]
 

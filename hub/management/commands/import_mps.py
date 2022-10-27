@@ -1,10 +1,8 @@
-import requests
-import urllib.request
-
 from django.core.management.base import BaseCommand
-from django.conf import settings
 
-from hub.models import Area, Person, PersonData, DataType
+import requests
+
+from hub.models import Area, DataType, Person, PersonData
 
 
 class Command(BaseCommand):
@@ -64,7 +62,8 @@ class Command(BaseCommand):
             except Area.DoesNotExist:
                 print(
                     "Failed to add MP {} as area {} does not exist"
-                    % (mp["personLabel"]["value"], mp["gss_code"]["value"])
+                    % mp["personLabel"]["value"],
+                    mp["gss_code"]["value"],
                 )
                 continue
 

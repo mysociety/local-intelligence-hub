@@ -1,12 +1,10 @@
-import requests
-import urllib.request
-
 from datetime import datetime, timezone
 
 from django.core.management.base import BaseCommand
-from django.conf import settings
 
-from hub.models import Person, PersonData, DataType
+import requests
+
+from hub.models import DataType, Person, PersonData
 
 
 class Command(BaseCommand):
@@ -33,7 +31,7 @@ class Command(BaseCommand):
                     "majority": data["value"]["majority"],
                     "last_elected": data["value"]["electionDate"],
                 }
-            except:
+            except requests.RequestException:
                 print(
                     f"problem fetching election result for {mp.name} with id {mp.external_id}"
                 )
@@ -46,7 +44,7 @@ class Command(BaseCommand):
                 results[mp.id]["first_elected"] = data["value"][
                     "latestHouseMembership"
                 ]["membershipStartDate"]
-            except:
+            except requests.RequestException:
                 print(f"problem fetching info for {mp.name} with id {mp.external_id}")
 
         return results

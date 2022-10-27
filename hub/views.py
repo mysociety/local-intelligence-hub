@@ -1,11 +1,10 @@
 import json
-from django.shortcuts import render
 
-from django.shortcuts import get_object_or_404
-from django.views.generic import DetailView, TemplateView
 from django.http import JsonResponse
-from django.views.decorators.cache import cache_control
+from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_control
+from django.views.generic import DetailView, TemplateView
 
 from hub.mixins import TitleMixin
 from hub.models import Area, Person, PersonData
