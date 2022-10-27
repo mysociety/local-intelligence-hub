@@ -17,7 +17,16 @@ requests-cache = "^0.9.6"
 django-debug-toolbar = "^3.7.0"
 black = "^22.8.0"
 coverage = "^6.5.0"
+flake8 = "^5.0.4"
+isort = "^5.10.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
+default_section = "THIRDPARTY"
+known_first_party = "hub"
+known_django = "django"
+sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
