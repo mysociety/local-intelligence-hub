@@ -63,5 +63,47 @@ class FilterAreaView(TemplateView):
         return JsonResponse({"type": "FeatureCollection", "features": geom})
 
 
+class StyleView(TitleMixin, TemplateView):
+    page_title = "Style preview"
+    template_name = "hub/style.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["shades"] = [(i * 100) for i in range(1, 10)]
+        context["colors"] = [
+            "blue",
+            "indigo",
+            "purple",
+            "pink",
+            "red",
+            "orange",
+            "yellow",
+            "green",
+            "teal",
+            "cyan",
+            "gray",
+        ]
+        context["theme_colors"] = [
+            "primary",
+            "secondary",
+            "success",
+            "info",
+            "warning",
+            "danger",
+            "light",
+            "dark",
+        ]
+        context["button_styles"] = ["", "outline-"]
+        context["heading_levels"] = range(1, 7)
+        context["display_levels"] = range(1, 7)
+        context["sizes"] = [
+            "-sm",
+            "",
+            "-lg",
+        ]
+
+        return context
+
+
 class StatusView(TemplateView):
     template_name = "hub/status.html"

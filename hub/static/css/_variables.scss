@@ -1,16 +1,62 @@
 // Color system
 
-$gray-900: #073a41;
+// Colours picked from the TCC / Great Big Green Week websites,
+// named after the closest matching X11 / CSS color name.
+$color-tcc-ivory-green: #edf5e1;
+$color-tcc-sea-green: #89c489;
+$color-tcc-dark-cyan: #1ba781;
+$color-tcc-turquoise: #068670; // 4.51 contrast with #fff
+$color-tcc-green-gray: #063a40;
+$color-tcc-tomato-orange: #ed6832;
+$color-tcc-goldenrod: #fec835;
+$color-tcc-moccasin: #ffe8b0;
+$color-tcc-dodger-blue: #21a8e0;
+$color-tcc-blue-gray: #202449;
 
-$orange: #ed6832;
-$yellow: #fec835;
-$blue: #21a8df;
-$green-600: #068670; // 4.51 contrast with #fff
-$green: #1ba781;
-$green-400: #89c489;
-$green-100: #edf5e1;
+$black: #000;
+$white: #fff;
 
-$primary: $green-600;
+$orange: $color-tcc-tomato-orange;
+
+$yellow: $color-tcc-goldenrod;
+$yellow-100: mix(#fff, $color-tcc-moccasin, 50%);
+$yellow-200: $color-tcc-moccasin;
+$yellow-300: mix($color-tcc-goldenrod, $color-tcc-moccasin, 33.33%);
+$yellow-400: mix($color-tcc-goldenrod, $color-tcc-moccasin, 66.66%);
+$yellow-500: $color-tcc-goldenrod;
+
+$blue: $color-tcc-dodger-blue;
+$blue-500: $color-tcc-dodger-blue;
+$blue-600: mix($color-tcc-blue-gray, $color-tcc-dodger-blue, 25%);
+$blue-700: mix($color-tcc-blue-gray, $color-tcc-dodger-blue, 50%);
+$blue-800: mix($color-tcc-blue-gray, $color-tcc-dodger-blue, 75%);
+$blue-900: $color-tcc-blue-gray;
+
+$green: darken($color-tcc-sea-green, 10%);
+$green-100: $color-tcc-ivory-green;
+$green-200: mix($color-tcc-sea-green, $color-tcc-ivory-green, 33.33%);
+$green-300: mix($color-tcc-sea-green, $color-tcc-ivory-green, 66.66%);
+$green-400: $color-tcc-sea-green;
+$green-500: darken($color-tcc-sea-green, 10%);
+$green-600: darken($color-tcc-sea-green, 25%);
+$green-700: darken($color-tcc-sea-green, 35%);
+$green-800: darken($color-tcc-sea-green, 45%);
+$green-900: darken($color-tcc-sea-green, 55%);
+
+$teal: $color-tcc-dark-cyan;
+$teal-100: mix($white, $color-tcc-dark-cyan, 80%);
+$teal-200: mix($white, $color-tcc-dark-cyan, 60%);
+$teal-300: mix($white, $color-tcc-dark-cyan, 40%);
+$teal-400: mix($white, $color-tcc-dark-cyan, 20%);
+$teal-500: $color-tcc-dark-cyan;
+$teal-600: $color-tcc-turquoise;
+$teal-700: mix($color-tcc-green-gray, $color-tcc-turquoise, 50%);
+$teal-800: $color-tcc-green-gray;
+$teal-900: mix($black, $color-tcc-green-gray, 40%);
+
+$primary: $color-tcc-turquoise;
+$success: $color-tcc-sea-green;
+$dark: $color-tcc-green-gray;
 
 // Options
 

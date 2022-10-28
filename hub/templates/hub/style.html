@@ -1,0 +1,120 @@
+{% extends "hub/base.html" %}
+
+{% block content %}
+
+<div class="py-4 py-lg-5">
+    <div class="container">
+        <div class="row">
+          {% for color in colors %}
+            <div class="col-6 col-md-4 col-lg-2 mb-4">
+              {% for shade in shades %}
+                <div class="text-bg-{{ color }}-{{ shade }} d-block p-2">
+                    {{ color }}-{{ shade }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endfor %}
+            <div class="col-6 col-md-4 col-lg-2 mb-4">
+              {% for color in theme_colors %}
+              <div class="text-bg-{{ color }} d-block p-2">
+                {{ color }}
+              </div>
+              {% endfor %}
+            </div>
+        </div>
+
+        <hr class="my-5">
+
+        <div class="row">
+            <div class="col-lg-6">
+              {% for level in display_levels %}
+                <p class="display-{{ level }} mb-4">Display {{ level }}</p>
+              {% endfor %}
+            </div>
+            <div class="col-lg-6">
+              {% for level in heading_levels %}
+                <h{{ level }}>Heading {{ level }}</h{{ level }}>
+                <p class="mb-4">Lorem Ipsum dolor sit amet. <a href="#">Incidunt temporibus accusantium</a> incidunt dolor. Eum <em>culpa est</em> cum aut. Vel fuga <b>perspiciatis</b> aut temporibus.</p>
+              {% endfor %}
+            </div>
+        </div>
+
+        <hr class="my-5">
+
+      {% for style in button_styles %}
+      {% for size in sizes %}
+        <div class="mb-3 mx-n2 d-flex flex-wrap">
+          {% for color in theme_colors %}
+            <button class="btn btn{{ size }} btn-{{ style }}{{ color }} m-2">{{ color|title }}</button>
+          {% endfor %}
+        </div>
+      {% endfor %}
+      {% endfor %}
+
+        <hr class="my-5">
+
+        <div class="row g-lg-5 mb-n5">
+          {% for size in sizes %}
+            <form class="col-lg-4 mb-5">
+                <div class="mb-3">
+                    <label for="input1" class="form-label">Text input</label>
+                    <input type="text" class="form-control form-control{{ size }}" id="input1" aria-describedby="help1">
+                    <div id="help1" class="form-text">This is some help text for the input.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="input2" class="form-label">Invalid input</label>
+                    <input type="text" class="form-control form-control{{ size }} is-invalid" id="input2" aria-describedby="help2">
+                    <div id="help2" class="invalid-feedback">This is some help text for the input.</div>
+                </div>
+                <div class="mb-3">
+                  <label for="input3" class="form-label">Disabled input</label>
+                  <input type="text" id="input3" class="form-control form-control{{ size }}" disabled>
+                </div>
+                <div class="mb-3">
+                    <label for="input4" class="form-label">Disabled input</label>
+                    <select class="form-select form-select{{ size }}" id="input4">
+                        <option value="1">Option 1</option>
+                        <option value="2">Option 2</option>
+                        <option value="3">Option 3</option>
+                    </select>
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="input5">
+                    <label class="form-check-label" for="input5">Checkbox</label>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="radios" id="input6">
+                        <label class="form-check-label" for="input6">Radio 1</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="radios" id="input7" checked>
+                        <label class="form-check-label" for="input7">Radio 2</label>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn{{ size }} btn-primary">Submit</button>
+            </form>
+          {% endfor %}
+        </div>
+
+        <hr class="my-5">
+
+        <div class="row g-lg-5">
+            <div class="col-sm-6 col-lg-3">
+                <div class="p-3 mb-5 bg-light rounded" style="min-height: 10em">No shadow</div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="shadow-sm p-3 mb-5 bg-body rounded" style="min-height: 10em">Small shadow</div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="shadow p-3 mb-5 bg-body rounded" style="min-height: 10em">Regular shadow</div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="shadow-lg p-3 mb-5 bg-body rounded" style="min-height: 10em">Large shadow</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
