@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "compressor",
+    "django_bootstrap5",
     "hub",
 ]
 
@@ -164,6 +165,17 @@ COMPRESS_CSS_HASHING_METHOD = "content"
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# django-bootstrap5 settings
+# https://django-bootstrap5.readthedocs.io/en/latest/settings.html
+BOOTSTRAP5 = {
+    "set_placeholder": False,
+    "server_side_validation": True,
+    "field_renderers": {
+        "default": "hub.renderers.CustomFieldRenderer",
+    },
+}
 
 if DEBUG and HIDE_DEBUG_TOOLBAR == False:  # pragma: no cover
     hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
