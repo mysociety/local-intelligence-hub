@@ -1,8 +1,8 @@
-<div class="py-4 bg-green-100">
+<div class="py-4 bg-green-100 site-header">
     <div class="container">
         <div class="d-flex align-items-center">
-            <a href="{% url 'home' %}" class="navbar-brand fs-5 fw-bold">
-                Local Intelligence Hub
+            <a href="{% url 'home' %}" aria-label="Local Intelligence Hub">
+                {% include 'hub/includes/icons/lih-logo.html' with classes="me-auto site-logo" %}
             </a>
             <ul class="nav list-unstyled ms-auto d-none d-lg-flex">
                 <li class="nav-item">

@@ -19,7 +19,7 @@
 
 @include media-breakpoint-up(md) {
     .explore {
-        height: calc( 100vh - 88px );
+        height: calc( 100vh - 100px );
         display: flex;
     }
 

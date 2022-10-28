@@ -15,6 +15,7 @@
     <script type="module">document.documentElement.classList.remove('no-js'); document.documentElement.classList.add('js');</script>
 </head>
 <body class="{% block bodyclass %}{% endblock %}">
+    {% include 'hub/includes/header.html' %}
     {% block content %}{% endblock %}
     {% include 'hub/includes/footer.html' %}
     <script async src="https://cdn.jsdelivr.net/npm/es-module-shims@1/dist/es-module-shims.min.js" crossorigin="anonymous"></script>
