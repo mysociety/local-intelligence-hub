@@ -1,7 +1,8 @@
 {% extends "hub/base.html" %}
 
-{% block content %}
+{% load static django_bootstrap5 %}
 
+{% block content %}
 
 <div class="py-4 py-lg-5 bg-green-100">
     <div class="container">
@@ -30,27 +31,17 @@
 </div>
 
 <div class="py-5">
-    <div class="container mt-lg-3">
-        <div class="row">
-            <form method="post" action="{% url 'login' %}">
-                {% csrf_token %}
-                <table>
-                <tr>
-                    <td>{{ form.username.label_tag }}</td>
-                    <td>{{ form.username }}</td>
-                </tr>
-                <tr>
-                    <td>{{ form.password.label_tag }}</td>
-                    <td>{{ form.password }}</td>
-                </tr>
-                </table>
+    <div class="container">
 
-                <input type="submit" value="login">
-                <input type="hidden" name="next" value="{% url 'home' %}">
-            </form>
+        <form method="post" action="{% url 'login' %}" class="mb-5 form-narrow">
+            {% csrf_token %}
+            {% bootstrap_form form %}
+            <input type="hidden" name="next" value="{% url 'home' %}">
+            <button type="submit" class="btn btn-primary">Log in</button>
+        </form>
 
-            <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
-        </div>
+        <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
+
     </div>
 </div>
 
