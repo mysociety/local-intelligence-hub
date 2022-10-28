@@ -1,6 +1,12 @@
-.footer {
+.site-footer {
     background-color: $green-900;
     color: $white;
     box-shadow: 0 1000px 0 1000px $green-900;
     min-height: 10rem;
+}
+
+@include media-breakpoint-up(md) {
+    .page-explore .site-footer {
+        display: none;
+    }
 }
