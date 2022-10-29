@@ -1,23 +1,21 @@
-<div class="py-4 bg-green-100 site-header">
+<nav class="navbar navbar-expand-sm bg-green-100">
     <div class="container">
-        <div class="d-flex align-items-center">
-            <a href="{% url 'home' %}" aria-label="Local Intelligence Hub">
-                {% include 'hub/includes/icons/lih-logo.html' with classes="me-auto site-logo" %}
-            </a>
-            <ul class="nav list-unstyled ms-auto d-none d-lg-flex">
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'home' %}">Search</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'explore' %}">Map</a>
-                </li>
-                <li class="nav-item">
-                    <span class="nav-link">Add data</span>
-                </li>
-                <li class="nav-item">
-                    <span class="nav-link">Sign in</span>
-                </li>
+        <a class="navbar-brand" href="{% url 'home' %}" aria-label="Local Intelligence Hub">
+            {% include 'hub/includes/icons/lih-logo.html' with classes="site-logo" %}
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ms-auto">
+                {% include 'hub/includes/nav-item.html' with name='home' label='Search' %}
+                {% include 'hub/includes/nav-item.html' with name='explore' label='Map' %}
+              {% if user.is_authenticated %}
+                {% include 'hub/includes/nav-item.html' with name='logout' label='Sign out' %}
+              {% else %}
+                {% include 'hub/includes/nav-item.html' with name='login' label='Sign in' %}
+              {% endif %}
             </ul>
         </div>
     </div>
-</div>
+</nav>

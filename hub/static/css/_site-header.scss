@@ -2,3 +2,42 @@
     max-width: 8em;
     height: auto;
 }
+
+.navbar-nav {
+    .nav-link {
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+}
+
+.navbar-toggler {
+    border: none;
+    margin-right: calc(var(--bs-navbar-toggler-padding-x) * -1);
+}
+
+@include media-breakpoint-down(sm) {
+    .navbar-nav {
+        margin-top: 1rem;
+        margin-bottom: 0;
+
+        & > .nav-item {
+            border-top: 1px solid rgba(#000, 0.1);
+        }
+
+        .nav-link {
+            font-size: 1.5rem;
+        }
+    }
+}
+
+@include media-breakpoint-up(sm) {
+    .navbar-nav {
+        margin-right: calc(var(--bs-navbar-nav-link-padding-x) * -1);
+    }
+}
+
+@include media-breakpoint-up(md) {
+    .navbar {
+        --bs-navbar-nav-link-padding-x: #{ $navbar-nav-link-padding-x * 1.5 };
+    }
+}
