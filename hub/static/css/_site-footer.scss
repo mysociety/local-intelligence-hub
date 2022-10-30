@@ -1,12 +1,70 @@
 .site-footer {
-    background-color: $green-900;
+    --bs-link-color: #{$white};
+    --bs-link-hover-color: #{$teal-200};
     color: $white;
-    box-shadow: 0 1000px 0 1000px $green-900;
+    background-color: $teal-800;
+    box-shadow: 0 1000px 0 1000px $teal-800;
     min-height: 10rem;
 }
 
 @include media-breakpoint-up(md) {
     .page-explore .site-footer {
         display: none;
+    }
+}
+
+.site-footer__nav {
+    --bs-nav-link-padding-y: 0.25rem;
+    --bs-nav-link-padding-x: 0;
+    margin-top: calc(var(--bs-nav-link-padding-y) * -1);
+
+    .nav-link {
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+}
+
+.site-footer__org {
+    color: mix($white, $teal-800, 70%);
+
+    a {
+        display: block;
+        margin-top: 0.5rem;
+
+        @include media-breakpoint-up(md) {
+            margin-top: 0.75rem;
+        }
+
+        @include media-breakpoint-up(lg) {
+            margin-top: 1rem;
+        }
+    }
+}
+
+.site-footer__legals {
+    color: mix($white, $teal-800, 70%);
+}
+
+.site-footer__socials {
+    @include list-unstyled();
+    margin: 0;
+    display: flex;
+
+    @include media-breakpoint-up(lg) {
+        justify-content: flex-end;
+    }
+
+    li {
+        margin-right: 1rem;
+
+        @include media-breakpoint-up(lg) {
+            margin-right: 0;
+            margin-left: 1rem;
+        }
+    }
+
+    svg {
+        width: 2rem;
+        height: 2rem;
     }
 }
