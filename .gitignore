@@ -2,6 +2,7 @@
 .env
 .static
 .coverage
+.media
 data
 
 conf/env
