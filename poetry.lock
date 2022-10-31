@@ -285,6 +285,18 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
+name = "pillow"
+version = "9.3.0"
+description = "Python Imaging Library (Fork)"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.extras]
+docs = ["furo", "olefile", "sphinx (>=2.4)", "sphinx-copybutton", "sphinx-issues (>=3.0.1)", "sphinx-removed-in", "sphinxext-opengraph"]
+tests = ["check-manifest", "coverage", "defusedxml", "markdown2", "olefile", "packaging", "pyroma", "pytest", "pytest-cov", "pytest-timeout"]
+
+[[package]]
 name = "platformdirs"
 version = "2.5.2"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
@@ -448,7 +460,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "18177d4456da2800687a1870463f1e62e23b3c979ccbd885bc9e7632aa55a591"
+content-hash = "2a63a4874fe738b85a431f1249f4344ba7222ac1f5b3d6410c8c0280e4f9597e"
 
 [metadata.files]
 appdirs = []
@@ -476,6 +488,7 @@ isort = []
 mccabe = []
 mypy-extensions = []
 pathspec = []
+pillow = []
 platformdirs = []
 psycopg2 = []
 pycodestyle = []
