@@ -107,7 +107,11 @@
 
                 <div class="d-flex align-items-center mt-5">
                     <div class="flex-shrink-0">
-                        <img src="{% static 'img/mp.jpg' %}" alt="James Madeupname" width="60" height="60" class="rounded-circle">
+                    {% if mp.person.photo %}
+                        <img src="{{ mp.person.photo.url }}" alt="{{ mp.person.name }}" width="60" height="60" class="rounded-circle">
+                    {% else %}
+                        <img src="{% static 'img/missing_person.jpg' %}" alt="No image found" width="60" height="60" class="rounded-circle">
+                    {% endif %}
                     </div>
                     <div class="flex-grow-1 ms-3">
                         <h3 class="h4 mb-0">{{ mp.person.name }}</h3>
