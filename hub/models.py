@@ -31,6 +31,7 @@ class Person(models.Model):
     id_type = models.CharField(max_length=10)
     name = models.CharField(max_length=200)
     area = models.ForeignKey(Area, on_delete=models.CASCADE)
+    photo = models.ImageField(null=True, upload_to="person")
 
     def __str__(self):
         return self.name
