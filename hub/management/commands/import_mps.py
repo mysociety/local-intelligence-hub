@@ -1,5 +1,10 @@
+import urllib.request
+
+from django.conf import settings
+from django.core.files import File
 from django.core.management.base import BaseCommand
 
+import magic
 import requests
 
 from hub.models import Area, DataType, Person, PersonData
@@ -10,6 +15,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.import_mps()
+        self.import_mp_images()
 
     def get_mp_data(self):
         headers = {
@@ -90,3 +96,17 @@ class Command(BaseCommand):
                         data_type=data_types["party"],
                         data=mp["partyLabel"]["value"],
                     )
+
+    def import_mp_images(self):
+        path = settings.MEDIA_ROOT / "person"
+        if not path.exists():  # pragma: nocover
+            path.mkdir(parents=True)
+
+        for mp in Person.objects.filter(person_type="MP").all():
+            image_url = f"https://members-api.parliament.uk/api/Members/{mp.external_id}/Thumbnail"
+            file, headers = urllib.request.urlretrieve(image_url)
+            mime_type = magic.from_file(file, mime=True)
+            extension = mime_type.split("/")[1]
+            image = File(open(file, "rb"))
+            mp.photo.save(f"mp_{mp.external_id}.{extension}", image)
+            mp.save()

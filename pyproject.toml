@@ -13,6 +13,7 @@ psycopg2 = "^2.9.3"
 django-libsass = "^0.9"
 requests-cache = "^0.9.6"
 Pillow = "^9.3.0"
+python-magic = "^0.4.27"
 
 [tool.poetry.dev-dependencies]
 django-debug-toolbar = "^3.7.0"
