@@ -108,9 +108,9 @@
                 <div class="d-flex align-items-center mt-5">
                     <div class="flex-shrink-0">
                     {% if mp.person.photo %}
-                        <img src="{{ mp.person.photo.url }}" alt="{{ mp.person.name }}" width="60" height="60" class="rounded-circle">
+                        <img src="{{ mp.person.photo.url }}" alt="{{ mp.person.name }}" width="60" height="60" class="rounded-circle" loading="lazy">
                     {% else %}
-                        <img src="{% static 'img/missing_person.jpg' %}" alt="No image found" width="60" height="60" class="rounded-circle">
+                        <img src="{% static 'img/person.svg' %}" alt="" width="60" height="60" class="rounded-circle" loading="lazy">
                     {% endif %}
                     </div>
                     <div class="flex-grow-1 ms-3">
