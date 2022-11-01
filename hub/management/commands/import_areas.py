@@ -25,7 +25,7 @@ class Command(BaseCommand):
                     },
                 }
                 geom = json.dumps(geom)
-            except mapit.NotFoundException:
+            except mapit.NotFoundException:  # pragma: no cover
                 print(f"could not find mapit area for {area['name']}")
                 geom = None
 

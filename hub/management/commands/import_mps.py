@@ -59,7 +59,7 @@ class Command(BaseCommand):
         for mp in data:
             try:
                 area = Area.objects.get(gss=mp["gss_code"]["value"])
-            except Area.DoesNotExist:
+            except Area.DoesNotExist:  # pragma: no cover
                 print(
                     "Failed to add MP {} as area {} does not exist"
                     % mp["personLabel"]["value"],

@@ -18,7 +18,7 @@ class Command(BaseCommand):
 
         results = {}
         for mp in mps.all():
-            if mp.external_id == "":
+            if mp.external_id == "":  # pragma: no cover
                 print(f"problem with {mp.name} - no id")
                 continue
 
@@ -31,7 +31,7 @@ class Command(BaseCommand):
                     "majority": data["value"]["majority"],
                     "last_elected": data["value"]["electionDate"],
                 }
-            except requests.RequestException:
+            except requests.RequestException:  # pragma: no cover
                 print(
                     f"problem fetching election result for {mp.name} with id {mp.external_id}"
                 )
@@ -44,7 +44,7 @@ class Command(BaseCommand):
                 results[mp.id]["first_elected"] = data["value"][
                     "latestHouseMembership"
                 ]["membershipStartDate"]
-            except requests.RequestException:
+            except requests.RequestException:  # pragma: no cover
                 print(f"problem fetching info for {mp.name} with id {mp.external_id}")
 
         return results

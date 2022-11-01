@@ -66,7 +66,7 @@ class StyleView(TitleMixin, TemplateView):
     page_title = "Style preview"
     template_name = "hub/style.html"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs):  # pragma: no cover
         context = super().get_context_data(**kwargs)
         context["shades"] = [(i * 100) for i in range(1, 10)]
         context["colors"] = [
