@@ -17,6 +17,21 @@ class DataType(models.Model):
     source = models.CharField(max_length=200)
 
 
+class CommonData(models.Model):
+    data_type = models.ForeignKey(DataType, on_delete=models.CASCADE)
+    data = models.CharField(max_length=200)
+    date = models.DateTimeField(blank=True, null=True)
+
+    def value(self):
+        if self.data_type.data_type == "date":
+            return self.date
+
+        return self.data
+
+    class Meta:
+        abstract = True
+
+
 class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
     gss = models.CharField(unique=True, max_length=30)
@@ -26,6 +41,10 @@ class Area(models.Model):
 
     def get_absolute_url(self):
         return f"/area/{self.area_type}/{self.name}"
+
+
+class AreaData(CommonData):
+    area = models.ForeignKey(Area, on_delete=models.CASCADE)
 
 
 class Person(models.Model):
@@ -48,14 +67,5 @@ class Person(models.Model):
         indexes = [models.Index(fields=["external_id", "id_type"])]
 
 
-class PersonData(models.Model):
+class PersonData(CommonData):
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
-    data_type = models.ForeignKey(DataType, on_delete=models.CASCADE)
-    data = models.CharField(max_length=200)
-    date = models.DateTimeField(blank=True, null=True)
-
-    def value(self):
-        if self.data_type.data_type == "date":
-            return self.date
-
-        return self.data
