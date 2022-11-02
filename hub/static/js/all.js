@@ -1,116 +1,42 @@
 import * as _ from '../underscore/underscore.esm.min.js'
 import $ from '../jquery/jquery.esm.js'
-import { Modal, Tab } from '../bootstrap/bootstrap.esm.min.js'
 import L from '../leaflet/leaflet-1.8.0.esm.js'
-import constituencies from './constituencies.esm.js'
 
 $(function(){
     window.map = setUpMap()
 
-    var addDataModal = new Modal($('#addData')[0])
-
-    updateShaderButton()
-
-    $(document).on('click', '.js-remove-filter', function(){
-        $(this).parents('.js-filter').remove()
-        updateMap()
-    })
-
-    $(document).on('click', '.js-remove-shader', function(){
-        $(this).parents('.js-shader').remove()
-        updateMap()
-        updateShaderButton()
-    })
-
-    $(document).on('change', '.js-filter', function(){
-        updateMap()
-    })
-
-    $(document).on('click', '.js-add-filter', function(){
-        $('#addData').data('targetList', '.js-active-filters')
-        $('#addData .modal-title').text('Add filter')
-        addDataModal.show()
-    })
-
-    $(document).on('click', '.js-add-shader', function(){
-        $('#addData').data('targetList', '.js-active-shaders')
-        $('#addData .modal-title').text('Add shader')
-        addDataModal.show()
-    })
-
-    $(document).on('click', '.js-add-dataset', function(){
-        var activeListSelector = $('#addData').data('targetList')
-        var datasetName = $.trim( $(this).find('strong').text() )
-        var datasetParams = _.findWhere(window.datasets, {name: datasetName})
-
-        if ( activeListSelector == '.js-active-shaders' ) {
-            var templateId = 'templateShader'
-        } else {
-            var templateId = 'templateFilter'
-        }
-
-        var html = render(templateId, datasetParams)
-
-        $( activeListSelector ).append( html )
-        updateMap()
-        updateShaderButton()
-
-        addDataModal.hide()
-        $('#addData').removeData('targetList')
-        $('#addData .modal-title').text('Add data')
-    })
+    if ( $('.fake-data').length ) {
+        var $warning = $(`<div class="fake-data-warning alert alert-danger mb-0">
+            <div class="container">
+                <div class="d-md-flex align-items-center">
+                    <h2 class="h6 mb-md-0 me-md-3">Prototype warning</h2>
+                    <p class="mb-md-0 me-md-3">This page contains a mixture of real and fake data.</p>
+                    <button class="btn btn-sm btn-danger ms-md-auto">Show only real data</button>
+                </div>
+            </div>
+        </div>`).on('click', 'button', function(){
+            if ( $(this).data('hidden') ) {
+                $('.fake-data').removeClass('fake-data--hidden')
+                $(this).text('Show only real data')
+                $(this).data('hidden', null)
+            } else {
+                $('.fake-data').addClass('fake-data--hidden')
+                $(this).text('Reveal fake data')
+                $(this).data('hidden', true)
+            }
+        })
+        $('body').append($warning)
+        $('.site-footer > .container').addClass('pb-8 pb-md-6')
+        $('head').append('<link href="https://fonts.googleapis.com/css2?family=Redacted+Script" rel="stylesheet">')
+    }
 })
 
-var render = function(templateId, data) {
-    var rawTemplate = $('#' + templateId).html()
-    return _.template(rawTemplate)(data)
-}
-
 var getAreaColor = function(feature) {
-    var n = parseInt( feature.properties.PCON13CD.slice(-1) )
-    var activeShaders = $('.js-active-shaders .js-shader').length
-    var colors = [
-        '#ffffcc',
-        '#ffeda0',
-        '#fed976',
-        '#feb24c',
-        '#fd8d3c',
-        '#fc4e2a',
-        '#e31a1c',
-        '#bd0026',
-        '#800026',
-        '#57001a'
-    ]
-
-    if ( activeShaders ) {
-        return colors[n]
-    } else {
-        return '#ed6832'
-    }
+    return '#ed6832'
 }
 
-// Something to give the impression of filters reducing
-// the number of matching constituencies. By basing the
-// visibility on the constituency’s ID we’re able to run
-// this function again and again, and the feature will
-// be consistently hidden or shown (rather than randomly
-// changing each time), and by factoring in the number of
-// active filters, and the index of the selected filter
-// dropdowns, we give the impression that changes to the
-// filters affect the number of results.
 var getVisibilityForArea = function(feature) {
-    var n = parseInt( feature.properties.PCON13CD.slice(1) )
-    var $activeFilters = $('.js-active-filters .js-filter')
-
-    if ( $activeFilters.length ) {
-        var offset = 2
-        $activeFilters.find('option:selected').each(function(){
-            offset += $(this).prevAll().length
-        })
-        return ( n % ($activeFilters.length * offset) ) === 0
-    } else {
-        return 1
-    }
+    return 1
 }
 
 var getFeatureStyle = function(feature) {
@@ -172,14 +98,4 @@ var setUpMap = function() {
     });
 
     return map
-}
-
-var updateMap = function() {
-    window.geojson.eachLayer(function(layer){
-        layer.setStyle( getFeatureStyle(layer.feature) )
-    })
-}
-
-var updateShaderButton = function() {
-    $('.js-add-shader').toggle( $('.js-active-shaders .js-shader').length === 0 )
 }
