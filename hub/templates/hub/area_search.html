@@ -1,0 +1,54 @@
+{% extends "hub/base.html" %}
+
+{% block content %}
+
+<div class="py-4 py-lg-5 bg-green-100">
+    <div class="container">
+        <h1 class="display-2 mb-3">Local Intelligence Hub</h1>
+        <p class="fs-4" style="max-width: 26em;">Your starting point for data about MPs, constituencies, and local climate activity across the UK.</p>
+    </div>
+</div>
+
+<div class="py-5">
+    <div class="container mt-lg-3">
+        <div class="row">
+
+            <div class="col-lg-6 mb-5 ps-lg-5">
+                {% if error %}
+                <h2 class="mb-4 text-primary">Error</h2>
+                <p>{{ error }}</p>
+                {% endif %}
+                {% if areas %}
+                <h2 class="mb-4 text-primary">Possible matches</h2>
+                {% for area in areas %}
+                <p><a href="{{ area.get_absolute_url }}">{{ area.name }}</a></p>
+                {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="col-lg-6 mb-5 ps-lg-5">
+                <h2 class="mb-4 text-primary">Jump to an area</h2>
+                <p class="mb-4" style="max-width: 26em;">See detailed data about a parliamentary constituency and its MP, including group memberships, opinion polling, and local presence in the area.</p>
+                <label class="form-label" for="search">Search by constituency name, MP name, or postcode</label>
+                <form class="row mt-2 mb-2" style="max-width: 30rem;" action="{% url 'area_search' %}">
+                    <div class="col">
+                        <div class="search-input search-input-lg">
+                            {% include 'hub/includes/icons/search.html' %}
+                            <input name="search" value="{{ search }}" type="search" id="search" class="form-control form-control-lg">
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary btn-lg">Search</button>
+                    </div>
+                </form>
+                <a class="d-flex align-items-center btn btn-link px-0" href="#">
+                    {% include 'hub/includes/icons/geolocate.html' with classes="me-2" %}
+                    Use my current location
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

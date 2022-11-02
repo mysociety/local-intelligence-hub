@@ -25,6 +25,7 @@ urlpatterns = [
     path("explore/", views.ExploreView.as_view(), name="explore"),
     path("filter_areas/", views.FilterAreaView.as_view(), name="filtered_areas"),
     path("area/<str:area_type>/<str:name>", views.AreaView.as_view(), name="area"),
+    path("location/", views.AreaSearchView.as_view(), name="area_search"),
     path("style/", views.StyleView.as_view(), name="style"),
     path("status/", views.StatusView.as_view(), name="status"),
     path("admin/", admin.site.urls),  # pragma: no cover

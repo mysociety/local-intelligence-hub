@@ -24,6 +24,9 @@ class Area(models.Model):
     area_type = models.CharField(max_length=20)
     geometry = models.TextField(blank=True, null=True)
 
+    def get_absolute_url(self):
+        return f"/area/{self.area_type}/{self.name}"
+
 
 class Person(models.Model):
     person_type = models.CharField(max_length=10)
@@ -35,6 +38,10 @@ class Person(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        area = self.area
+        return f"/area/{area.area_type}/{area.name}"
 
     class Meta:
         unique_together = ("external_id", "id_type")

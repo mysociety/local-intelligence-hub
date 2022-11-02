@@ -1,13 +1,21 @@
 import json
 
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from django.views.generic import DetailView, TemplateView
 
 from hub.mixins import TitleMixin
 from hub.models import Area, Person, PersonData
+from utils import is_valid_postcode
+from utils.mapit import (
+    BadRequestException,
+    ForbiddenException,
+    InternalServerErrorException,
+    MapIt,
+    NotFoundException,
+)
 
 cache_settings = {
     "max-age": 60,
@@ -50,6 +58,50 @@ class AreaView(TitleMixin, DetailView):
                 context["mp"][item.data_type.name] = item.value()
         except Person.DoesNotExist:
             pass
+
+        return context
+
+
+class AreaSearchView(TemplateView):
+    template_name = "hub/area_search.html"
+
+    def render_to_response(self, context):
+        areas = context.get("areas")
+        if areas and len(areas) == 1:
+            return redirect(areas[0])
+
+        return super().render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        search = self.request.GET.get("search")
+        context["search"] = search
+
+        if is_valid_postcode(search):
+            mapit = MapIt()
+            try:
+                gss_codes = mapit.postcode_point_to_gss_codes(search)
+
+                areas = Area.objects.filter(gss__in=gss_codes)
+                context["areas"] = list(areas)
+            except (
+                NotFoundException,
+                BadRequestException,
+                InternalServerErrorException,
+                ForbiddenException,
+            ) as error:
+                context["error"] = error
+
+            return context
+        else:
+            areas = Area.objects.filter(name__icontains=search)
+            people = Person.objects.filter(name__icontains=search)
+            all = list(areas)
+            all.extend(list(people))
+            if len(all) == 0:
+                context["error"] = f"{search} has no matches"
+            else:
+                context["areas"] = all
 
         return context
 

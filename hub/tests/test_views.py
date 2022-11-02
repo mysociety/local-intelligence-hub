@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock, patch
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
@@ -63,6 +65,84 @@ class TestAreaPage(TestCase):
 
         context = response.context
         self.assertIsNone(context.get("mp"))
+
+
+class TestAreaSearchPage(TestCase):
+    fixtures = ["areas.json", "mps.json"]
+
+    def setUp(self):
+        u = User.objects.create(username="user@example.com")
+        self.client.force_login(u)
+
+    @patch("utils.mapit.MapIt.postcode_point_to_gss_codes")
+    def test_postcode_lookup(self, mapit_areas):
+        mapit_areas.return_value = ["E10000001"]
+
+        url = reverse("area_search")
+        response = self.client.get(url, {"search": "SE17 3HE"}, follow=True)
+
+        self.assertRedirects(response, "/area/WMC/South%20Borsetshire")
+        self.assertTemplateUsed(response, "hub/area.html")
+
+        context = response.context
+        self.assertEqual(context["area"].name, "South Borsetshire")
+
+    @patch("utils.mapit.session.get")
+    def test_bad_postcode(self, mapit_get):
+        mock_response = MagicMock()
+        mock_response.status_code = 400
+        mock_response.json.return_value = {"error": "Bad postcode"}
+
+        mapit_get.return_value = mock_response
+
+        url = reverse("area_search")
+        response = self.client.get(url, {"search": "SE17 3HE"}, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "hub/area_search.html")
+
+        context = response.context
+        self.assertEqual(str(context["error"]), "Bad postcode")
+
+    def test_area_name_lookup(self):
+        url = reverse("area_search")
+        response = self.client.get(url, {"search": "South Borsetshire"}, follow=True)
+
+        self.assertRedirects(response, "/area/WMC/South%20Borsetshire")
+        self.assertTemplateUsed(response, "hub/area.html")
+
+        context = response.context
+        self.assertEqual(context["area"].name, "South Borsetshire")
+
+    def test_mp_name_lookup(self):
+        url = reverse("area_search")
+        response = self.client.get(url, {"search": "James Madeupname"}, follow=True)
+
+        self.assertRedirects(response, "/area/WMC/South%20Borsetshire")
+        self.assertTemplateUsed(response, "hub/area.html")
+
+        context = response.context
+        self.assertEqual(context["area"].name, "South Borsetshire")
+
+    def test_no_match_found(self):
+        url = reverse("area_search")
+        response = self.client.get(url, {"search": "Lower Locksley"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "hub/area_search.html")
+
+        context = response.context
+        self.assertEqual(context["error"], "Lower Locksley has no matches")
+
+    def test_multiple_matches(self):
+        url = reverse("area_search")
+        response = self.client.get(url, {"search": "Borsetshire"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "hub/area_search.html")
+
+        context = response.context
+        self.assertEqual(len(context["areas"]), 3)
 
 
 class TestStatusView(TestCase):
