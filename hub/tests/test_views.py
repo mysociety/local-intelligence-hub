@@ -104,6 +104,19 @@ class TestAreaSearchPage(TestCase):
         context = response.context
         self.assertEqual(str(context["error"]), "Bad postcode")
 
+    @patch("utils.mapit.MapIt.wgs84_point_to_gss_codes")
+    def test_latlon_lookup(self, mapit_areas):
+        mapit_areas.return_value = ["E10000001"]
+
+        url = reverse("area_search")
+        response = self.client.get(url, {"lat": "0.11", "lon": "0.12"}, follow=True)
+
+        self.assertRedirects(response, "/area/WMC/South%20Borsetshire")
+        self.assertTemplateUsed(response, "hub/area.html")
+
+        context = response.context
+        self.assertEqual(context["area"].name, "South Borsetshire")
+
     def test_area_name_lookup(self):
         url = reverse("area_search")
         response = self.client.get(url, {"search": "South Borsetshire"}, follow=True)

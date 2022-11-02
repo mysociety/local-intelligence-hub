@@ -72,27 +72,45 @@ class AreaSearchView(TemplateView):
 
         return super().render_to_response(context)
 
+    def get_areas_from_mapit(self, **kwargs):
+        areas = None
+        err = None
+
+        try:
+            mapit = MapIt()
+            if kwargs.get("lon") and kwargs.get("lat"):
+                gss_codes = mapit.wgs84_point_to_gss_codes(kwargs["lon"], kwargs["lat"])
+            elif kwargs.get("pc"):
+                gss_codes = mapit.postcode_point_to_gss_codes(kwargs["pc"])
+
+            areas = Area.objects.filter(gss__in=gss_codes)
+            areas = list(areas)
+        except (
+            NotFoundException,
+            BadRequestException,
+            InternalServerErrorException,
+            ForbiddenException,
+        ) as error:
+            err = error
+
+        return (areas, err)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         search = self.request.GET.get("search")
+        lon = self.request.GET.get("lon")
+        lat = self.request.GET.get("lat")
+
         context["search"] = search
 
-        if is_valid_postcode(search):
-            mapit = MapIt()
-            try:
-                gss_codes = mapit.postcode_point_to_gss_codes(search)
-
-                areas = Area.objects.filter(gss__in=gss_codes)
-                context["areas"] = list(areas)
-            except (
-                NotFoundException,
-                BadRequestException,
-                InternalServerErrorException,
-                ForbiddenException,
-            ) as error:
-                context["error"] = error
-
-            return context
+        if lon and lat:
+            areas, error = self.get_areas_from_mapit(lon=lon, lat=lat)
+            context["areas"] = areas
+            context["error"] = error
+        elif is_valid_postcode(search):
+            areas, error = self.get_areas_from_mapit(pc=search)
+            context["areas"] = areas
+            context["error"] = error
         else:
             areas = Area.objects.filter(name__icontains=search)
             people = Person.objects.filter(name__icontains=search)
