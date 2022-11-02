@@ -17,53 +17,96 @@
 
 <div class="py-4 py-lg-5 bg-light">
     <div class="container mb-5">
-        <div class="p-3 bg-white border rounded d-flex align-items-center">
-            {% include 'hub/includes/icons/tcc-heart.html' with width="1.25em" height="1.25em" classes="me-3 flex-shrink-0 flex-grow-0" %}
-            <p class="mb-0">
-                <strong class="me-2">TCC member?</strong> Log in or request an account to upload your own datasets and bookmark your favourite datasets for easy access.
-            </p>
-        </div>
 
-        <h2 class="mt-5 mb-3 text-primary">Movement</h2>
+        <h2 class="mb-3 text-primary">MP</h2>
 
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             <div class="col d-flex flex-column">
                 <div class="card flex-grow-1">
                     <div class="card-body">
-                        <h5 class="card-title mb-3">Friends of the Earth supporters</h5>
-                        <p class="card-text display-6 lh-1 text-primary">High</p>
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                              {% if mp.person.photo %}
+                                <img src="{{ mp.person.photo.url }}" alt="{{ mp.person.name }}" width="60" height="60" class="rounded-circle" loading="lazy">
+                              {% else %}
+                                <img src="{% static 'img/person.svg' %}" alt="" width="60" height="60" class="rounded-circle" loading="lazy">
+                              {% endif %}
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h3 class="h4 mb-0 text-primary">{{ mp.person.name }}</h3>
+                              {% if mp.party %}
+                                <p class="mb-0 text-muted">{{ mp.party }}</p>
+                              {% endif %}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <h4 class="h6 mt-4">Elected</h4>
+                                <p class="fs-5 lh-1 fw-bold text-primary mb-0">{{ mp.mp_first_elected|naturalday:"jS M Y" }}</p>
+                            </div>
+                            <div class="col-lg-6">
+                                <h4 class="h6 mt-4">2019 majority</h4>
+                                <p class="fs-5 lh-1 fw-bold text-primary mb-0">{{ mp.mp_election_majority|intcomma }}</p>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-footer bg-white">
-                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data from Friends of the Earth</a></p>
-                    </div>
-                    <div class="card-footer bg-yellow-100 d-flex align-items-center">
-                        {% include 'hub/includes/icons/tcc-heart.html' with width="1.25em" height="1.25em" classes="me-2 flex-shrink-0 flex-grow-0" %}
-                        <p class="mb-0 fs-7">
-                            Raw data available for <strong>TCC members</strong>
-                        </p>
+                        <p class="card-text fs-8 text-muted">Data from <a href="https://www.theyworkforyou.com/{% if mp.twfyid %}mp/{{ mp.twfyid}}{% endif %}" class="text-decoration-none text-muted">TheyWorkForYou.com</a> and <a href="https://electionresults.parliament.uk/election/2019-12-12/Statistics/Majority" class="text-decoration-none text-muted">UK Parliament</a></p>
                     </div>
                 </div>
             </div>
             <div class="col d-flex flex-column">
                 <div class="card flex-grow-1">
                     <div class="card-body">
-                        <h5 class="card-title mb-3">Great Big Green Week</h5>
-                        <p class="card-text display-6 lh-1 text-primary mb-0">3 events</p>
-                        <p class="card-text mt-1">in 2022</p>
+                        <h5 class="card-title mb-3">MP memberships</h5>
+                        <ul class="list-unstyled mb-0">
+                          {% if mp.party %}
+                            <li class="mb-2"><a href="#">{{ mp.party }}</a></li>
+                          {% endif %}
+                            <li class="mb-2"><a href="#">Conservative Environment Network (CEN)</a></li>
+                            <li class="mb-2"><a href="#">European Research Group (ERG)</a></li>
+                        </ul>
                     </div>
                     <div class="card-footer bg-white">
-                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data from The Climate Coalition</a></p>
+                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data collated by The Climate Coalition</a></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col d-flex flex-column">
+                <div class="card flex-grow-1">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">MP profiles</h5>
+                        <ul class="list-unstyled mb-0">
+                          {% if mp.twitter %}
+                            <li class="mb-2 text-truncate">Twitter: <a href="https://twitter.com/{{ mp.twitter }}">@{{ mp.twitter }}</a></li>
+                          {% endif %}
+                          {% if mp.facebook %}
+                            <li class="mb-2 text-truncate">Facebook: <a href="https://facebook.com/{{ mp.facebook }}">/{{ mp.facebook }}</a></li>
+                          {% endif %}
+                          {% if mp.twfyid %}
+                            <li class="mb-2 text-truncate"><a href="https://www.theyworkforyou.com/mp/{{ mp.twfyid}}">TheyWorkForYou voting record</a></li>
+                          {% endif %}
+                          {% if mp.parlid %}
+                            <li class="mb-2 text-truncate"><a href="https://members.parliament.uk/member/{{ mp.parlid }}/contact">Parliament contact info</a></li>
+                          {% endif %}
+                          {% if mp.wikipedia %}
+                            <li class="mb-2 text-truncate"><a href="{{ mp.wikipedia }}">Wikipedia page</a></li>
+                          {% endif %}
+                        </ul>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data collated by The Climate Coalition</a></p>
                     </div>
                 </div>
             </div>
             <div class="col d-flex flex-column">
                 <a href="#" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
-                    <span>…7 more datasets available</span>
+                    <span>…3 more datasets available</span>
                 </a>
             </div>
         </div>
 
-        <h2 class="mt-5 mb-3 text-primary">Place</h2>
+        <h2 class="mt-5 mb-3 text-primary">Public opinion</h2>
 
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             <div class="col d-flex flex-column">
@@ -90,6 +133,16 @@
                     </div>
                 </div>
             </div>
+            <div class="col d-flex flex-column">
+                <a href="#" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
+                    <span>…12 more datasets available</span>
+                </a>
+            </div>
+        </div>
+
+        <h2 class="mt-5 mb-3 text-primary">Place</h2>
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             <div class="col d-flex flex-column">
                 <div class="card flex-grow-1">
                     <div class="card-body">
@@ -135,100 +188,50 @@
             </div>
         </div>
 
-        <h2 class="mt-5 mb-3 text-primary">MP</h2>
+        <h2 class="mt-5 mb-3 text-primary">Movement</h2>
 
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             <div class="col d-flex flex-column">
                 <div class="card flex-grow-1">
                     <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                              {% if mp.person.photo %}
-                                <img src="{{ mp.person.photo.url }}" alt="{{ mp.person.name }}" width="60" height="60" class="rounded-circle" loading="lazy">
-                              {% else %}
-                                <img src="{% static 'img/person.svg' %}" alt="" width="60" height="60" class="rounded-circle" loading="lazy">
-                              {% endif %}
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h3 class="h4 mb-0 text-primary">{{ mp.person.name }}</h3>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-6">
-                                <h4 class="h6 mt-4">Party</h4>
-                                <p class="fs-5 lh-1 fw-bold text-primary mb-0">{{ mp.party|default_if_none:"–" }}</p>
-                            </div>
-                            <div class="col-lg-6">
-                                <h4 class="h6 mt-4">Elected</h4>
-                                <p class="fs-5 lh-1 fw-bold text-primary mb-0">{{ mp.mp_first_elected|naturalday }}</p>
-                            </div>
-                        </div>
+                        <h5 class="card-title mb-3">Friends of the Earth supporters</h5>
+                        <p class="card-text display-6 lh-1 text-primary">High</p>
                     </div>
                     <div class="card-footer bg-white">
-                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data from TheyWorkForYou.com</a></p>
+                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data from Friends of the Earth</a></p>
+                    </div>
+                    <div class="card-footer bg-yellow-100 d-flex align-items-center">
+                        {% include 'hub/includes/icons/tcc-heart.html' with width="1.25em" height="1.25em" classes="me-2 flex-shrink-0 flex-grow-0" %}
+                        <p class="mb-0 fs-7">
+                            Raw data available for <strong>TCC members</strong>
+                        </p>
                     </div>
                 </div>
             </div>
             <div class="col d-flex flex-column">
                 <div class="card flex-grow-1">
                     <div class="card-body">
-                        <h5 class="card-title mb-3">MP memberships</h5>
-                        <ul class="list-unstyled mb-0">
-                          {% if mp.party %}
-                            <li class="mb-2"><a href="#">{{ mp.party }}</a></li>
-                          {% endif %}
-                            <li class="mb-2"><a href="#">Conservative Environment Network (CEN)</a></li>
-                            <li class="mb-2"><a href="#">European Research Group (ERG)</a></li>
-                        </ul>
+                        <h5 class="card-title mb-3">Great Big Green Week</h5>
+                        <p class="card-text display-6 lh-1 text-primary mb-0">3 events</p>
+                        <p class="card-text mt-1">in 2022</p>
                     </div>
                     <div class="card-footer bg-white">
-                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data collated by The Climate Coalition</a></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col d-flex flex-column">
-                <div class="card flex-grow-1">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">2019 electoral majority</h5>
-                        <p class="card-text display-6 lh-1 text-primary">{{ mp.mp_election_majority|intcomma }}</p>
-                    </div>
-                    <div class="card-footer bg-white">
-                        <p class="card-text fs-8"><a href="https://electionresults.parliament.uk/election/2019-12-12/Statistics/Majority" class="text-decoration-none text-muted">Data from UK Parliament</a></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col d-flex flex-column">
-                <div class="card flex-grow-1">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">MP profiles</h5>
-                        <ul class="list-unstyled mb-0">
-                          {% if mp.twitter %}
-                            <li class="mb-2 text-truncate"><a href="https://twitter.com/{{ mp.twitter }}">twitter.com/{{ mp.twitter }}</a></li>
-                          {% endif %}
-                          {% if mp.facebook %}
-                            <li class="mb-2 text-truncate"><a href="https://facebook.com/{{ mp.facebook }}">facebook.com/{{ mp.facebook }}</a></li>
-                          {% endif %}
-                          {% if mp.twfyid %}
-                            <li class="mb-2 text-truncate"><a href="https://www.theyworkforyou.com/mp/{{ mp.twfyid}}">theyworkforyou.com/mp/{{ mp.twfyid }}</a></li>
-                          {% endif %}
-                          {% if mp.parlid %}
-                            <li class="mb-2 text-truncate"><a href="https://members.parliament.uk/member/{{ mp.parlid }}/contact">parliament.uk</a></li>
-                          {% endif %}
-                          {% if mp.wikipedia %}
-                            <li class="mb-2 text-truncate"><a href="{{ mp.wikipedia }}">{{ mp.wikipedia }}</a></li>
-                          {% endif %}
-                        </ul>
-                    </div>
-                    <div class="card-footer bg-white">
-                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data collated by The Climate Coalition</a></p>
+                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data from The Climate Coalition</a></p>
                     </div>
                 </div>
             </div>
             <div class="col d-flex flex-column">
                 <a href="#" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
-                    <span>…3 more datasets available</span>
+                    <span>…7 more datasets available</span>
                 </a>
             </div>
+        </div>
+
+        <div class="mt-5 p-3 bg-white border rounded d-flex align-items-center">
+            {% include 'hub/includes/icons/tcc-heart.html' with width="1.25em" height="1.25em" classes="me-3 flex-shrink-0 flex-grow-0" %}
+            <p class="mb-0">
+                <strong class="me-2">TCC member?</strong> Log in or request an account to upload your own datasets and bookmark your favourite datasets for easy access.
+            </p>
         </div>
 
     </div>
