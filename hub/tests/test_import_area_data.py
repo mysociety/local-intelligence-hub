@@ -43,3 +43,32 @@ class ImportAgeDataTestCase(TestCase):
 
         self.assertEqual(south_data[0].data_type.average, 15.1)
         self.assertEqual(south_data[1].data_type.average, 16.1)
+
+
+class ImportFuelPovertyDataTestCase(TestCase):
+    fixtures = ["areas.json"]
+
+    @mock.patch("hub.management.commands.import_area_age_data.pd.read_excel")
+    def test_import(self, patch_read_excel):
+        data = {
+            "Parliamentary Constituency Code": [
+                "E10000001",
+                "E10000002",
+            ],
+            "Proportion of households fuel poor (%)": [12.1, 13.2],
+        }
+        patch_read_excel.return_value = pd.DataFrame(data=data)
+        call_command("import_area_fuel_poverty_data")
+
+        area_data = AreaData.objects.all()
+        self.assertEqual(area_data.count(), 2)
+
+        south_data = (
+            AreaData.objects.filter(area__gss="E10000001")
+            .order_by("data_type__name")
+            .all()
+        )
+
+        self.assertEqual(south_data[0].value(), 12.1)
+
+        self.assertEqual(south_data[0].data_type.average, 12.65)
