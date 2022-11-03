@@ -16,6 +16,8 @@ requests-cache = "^0.9.6"
 Pillow = "^9.3.0"
 python-magic = "^0.4.27"
 tqdm = "^4.64.1"
+pandas = "^1.5.1"
+openpyxl = "^3.0.10"
 
 [tool.poetry.dev-dependencies]
 django-debug-toolbar = "^3.7.0"
