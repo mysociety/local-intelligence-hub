@@ -17,6 +17,7 @@ class DataSet(models.Model):
     data_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     last_update = models.DateTimeField(auto_now=True)
     source = models.CharField(max_length=200)
+    is_range = models.BooleanField(default=False)
 
 
 class DataType(models.Model):
