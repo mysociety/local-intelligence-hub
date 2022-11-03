@@ -1,10 +1,11 @@
 from django.db import models
 
 
-class DataType(models.Model):
+class DataSet(models.Model):
     TYPE_CHOICES = [
         ("text", "Text"),
-        ("number", "Number"),
+        ("integer", "Integer"),
+        ("float", "Floating Point Number"),
         ("date", "Date"),
         ("boolean", "True/False"),
         ("profile_id", "Profile Id"),
@@ -12,9 +13,26 @@ class DataType(models.Model):
 
     name = models.CharField(max_length=50)
     description = models.TextField(blank=True, null=True)
+    label = models.CharField(max_length=200, blank=True, null=True)
     data_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     last_update = models.DateTimeField(auto_now=True)
     source = models.CharField(max_length=200)
+
+
+class DataType(models.Model):
+    TYPE_CHOICES = [
+        ("text", "Text"),
+        ("integer", "Integer"),
+        ("float", "Floating Point Number"),
+        ("date", "Date"),
+        ("boolean", "True/False"),
+        ("profile_id", "Profile Id"),
+    ]
+
+    data_set = models.ForeignKey(DataSet, on_delete=models.CASCADE)
+    name = models.CharField(max_length=50)
+    data_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    last_update = models.DateTimeField(auto_now=True)
 
 
 class CommonData(models.Model):
