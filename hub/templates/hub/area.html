@@ -139,7 +139,7 @@
 
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             <div class="col d-flex flex-column">
-                <div class="card flex-grow-1 fake-data">
+                <div class="card flex-grow-1">
                     <div class="card-body">
                         <h5 class="card-title mb-3">Age range</h5>
                         <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">
@@ -166,6 +166,20 @@
                     </div>
                 </div>
             </div>
+            {% if constituency_fuel_poverty %}
+            <div class="col d-flex flex-column">
+                <div class="card flex-grow-1">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Households in Fuel poverty</h5>
+                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ constituency_fuel_poverty.value|floatformat }}%</p>
+                        <p class="card-text mt-2 text-muted">{{ constituency_fuel_poverty.data_type.average|floatformat }}% national average</p>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <p class="card-text fs-8"><a href="https://www.gov.uk/government/statistics/sub-regional-fuel-poverty-data-2022" class="text-decoration-none text-muted">Data from the Department for Business, Energy &amp; Industrial Strategy</a></p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
             <div class="col d-flex flex-column">
                 <div class="card flex-grow-1 fake-data">
                     <div class="card-body">

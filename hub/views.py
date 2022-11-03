@@ -86,6 +86,10 @@ class AreaView(TitleMixin, DetailView):
 
         context["age_ranges"] = age_ranges.all()
 
+        context["fuel_poverty"] = AreaData.objects.filter(
+            area=self.object, data_type__name="fuel_poverty"
+        ).select_related("data_type")[0]
+
         return context
 
 
