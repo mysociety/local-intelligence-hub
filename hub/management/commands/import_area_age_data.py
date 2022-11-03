@@ -24,6 +24,7 @@ class Command(BaseCommand):
             name="constituency_age_distribution",
             data_type="float",
             source=self.data_url,
+            is_range=True,
         )
 
         averages = {}
