@@ -151,7 +151,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                              {% for range in age_ranges %}
+                              {% for range in constituency_age_distribution %}
                                 <tr>
                                     <th>{{ range.data_type.label }}</th>
                                     <td>{{ range.value|floatformat }}%</td>

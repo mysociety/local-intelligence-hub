@@ -7,7 +7,7 @@ from django.views.decorators.cache import cache_control
 from django.views.generic import DetailView, TemplateView
 
 from hub.mixins import TitleMixin
-from hub.models import Area, AreaData, Person, PersonData
+from hub.models import Area, AreaData, DataSet, Person, PersonData
 from utils import is_valid_postcode
 from utils.mapit import (
     BadRequestException,
@@ -75,20 +75,25 @@ class AreaView(TitleMixin, DetailView):
         except Person.DoesNotExist:
             pass
 
-        age_ranges = (
-            AreaData.objects.filter(
-                area=self.object,
-                data_type__data_set__name="constituency_age_distribution",
-            )
-            .select_related("data_type")
-            .order_by("data_type__name")
-        )
+        for data_set in DataSet.objects.all():
+            name = data_set.name
+            if data_set.is_range:
+                data_range = (
+                    AreaData.objects.filter(
+                        area=self.object,
+                        data_type__data_set__name=name,
+                    )
+                    .select_related("data_type")
+                    .order_by("data_type__name")
+                )
 
-        context["age_ranges"] = age_ranges.all()
-
-        context["fuel_poverty"] = AreaData.objects.filter(
-            area=self.object, data_type__name="fuel_poverty"
-        ).select_related("data_type")[0]
+                context[name] = data_range.all()
+            else:
+                data = AreaData.objects.filter(
+                    area=self.object, data_type__data_set__name=name
+                ).select_related("data_type")
+                if data:
+                    context[name] = data[0]
 
         return context
 

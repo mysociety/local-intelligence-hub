@@ -73,9 +73,12 @@ class TestAreaPage(TestCase):
         self.assertEqual(mp["mp_election_majority"], "1234")
         self.assertEqual(mp["mp_first_elected"].date().isoformat(), "2005-05-05")
 
-        ages = context["age_ranges"]
+        ages = context["constituency_age_distribution"]
         self.assertEqual(len(ages), 2)
         self.assertEqual(ages[0].value(), 10.1234)
+
+        fuel_poverty = context["constituency_fuel_poverty"]
+        self.assertEqual(fuel_poverty.value(), 12.4321)
 
     def test_area_page_no_mp(self):
         url = reverse("area", args=("WMC", "Borsetshire East"))

@@ -6,6 +6,17 @@
       "name": "constituency_age_distribution",
       "data_type": "float",
       "last_update": "2022-10-10T13:20:30+00:00",
+      "is_range": "True",
+      "source": "https://parliament.uk"
+    }
+  },
+  {
+    "model": "hub.dataset",
+    "pk": 6,
+    "fields": {
+      "name": "constituency_fuel_poverty",
+      "data_type": "float",
+      "last_update": "2022-10-10T13:20:30+00:00",
       "source": "https://parliament.uk"
     }
   },
@@ -30,6 +41,16 @@
     }
   },
   {
+    "model": "hub.datatype",
+    "pk": 7,
+    "fields": {
+      "data_set": 6,
+      "name": "fuel_poverty",
+      "data_type": "float",
+      "last_update": "2022-10-10T13:20:30+00:00"
+    }
+  },
+  {
     "model": "hub.areadata",
     "pk": 1,
     "fields": {
@@ -45,6 +66,15 @@
       "area": 1,
       "data_type": 6,
       "data": "11.2134"
+    }
+  },
+  {
+    "model": "hub.areadata",
+    "pk": 3,
+    "fields": {
+      "area": 1,
+      "data_type": 7,
+      "data": "12.4321"
     }
   }
 ]
