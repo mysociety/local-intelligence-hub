@@ -11,13 +11,23 @@
     }
   },
   {
-    "model": "hub.datatype",
+    "model": "hub.dataset",
     "pk": 1,
     "fields": {
       "name": "parlid",
       "data_type": "profileid",
       "last_update": "2022-10-10T13:20:30+00:00",
       "source": "https://wikipedia.org"
+    }
+  },
+  {
+    "model": "hub.datatype",
+    "pk": 1,
+    "fields": {
+      "data_set": 1,
+      "name": "parlid",
+      "data_type": "profileid",
+      "last_update": "2022-10-10T13:20:30+00:00"
     }
   },
   {

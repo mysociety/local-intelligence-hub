@@ -107,7 +107,7 @@ class ImportMPElectionResultsTestCase(TestCase):
         mp = Person.objects.get(id=1)
 
         keys = {
-            "mp_election_majority": "100",
+            "mp_election_majority": 100,
             "mp_last_elected": "2019-12-12",
             "mp_first_elected": "2015-05-05",
         }

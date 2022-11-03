@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 
 import requests
 
-from hub.models import DataType, Person, PersonData
+from hub.models import DataSet, DataType, Person, PersonData
 
 
 class Command(BaseCommand):
@@ -50,25 +50,40 @@ class Command(BaseCommand):
         return results
 
     def create_data_types(self):
-        majority, created = DataType.objects.get_or_create(
+        majority_ds, created = DataSet.objects.get_or_create(
             name="mp_election_majority",
-            data_type="number",
+            data_type="integer",
             description="Majority at last election",
             source="https://members-api.parliament.uk/",
         )
+        majority, created = DataType.objects.get_or_create(
+            data_set=majority_ds,
+            name="mp_election_majority",
+            data_type="integer",
+        )
 
-        last_elected, created = DataType.objects.get_or_create(
+        last_elected_ds, created = DataSet.objects.get_or_create(
             name="mp_last_elected",
             data_type="date",
             description="Date of last election for an MP",
             source="https://members-api.parliament.uk/",
         )
+        last_elected, created = DataType.objects.get_or_create(
+            data_set=last_elected_ds,
+            name="mp_last_elected",
+            data_type="date",
+        )
 
-        first_elected, created = DataType.objects.get_or_create(
+        first_elected_ds, created = DataSet.objects.get_or_create(
             name="mp_first_elected",
             data_type="date",
             description="Date an MP was first elected to current position",
             source="https://members-api.parliament.uk/",
+        )
+        first_elected, created = DataType.objects.get_or_create(
+            data_set=first_elected_ds,
+            name="mp_first_elected",
+            data_type="date",
         )
 
         return {

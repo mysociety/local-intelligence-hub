@@ -8,7 +8,7 @@ import magic
 import requests
 from tqdm import tqdm
 
-from hub.models import Area, DataType, Person, PersonData
+from hub.models import Area, DataSet, DataType, Person, PersonData
 
 
 class Command(BaseCommand):
@@ -61,10 +61,15 @@ class Command(BaseCommand):
         if not self._quiet:
             print("Importing type names")
         for data_type in tqdm(type_names, disable=self._quiet):
-            dt, created = DataType.objects.get_or_create(
+            ds, created = DataSet.objects.get_or_create(
                 name=data_type,
                 data_type="profile_id",
                 source="https://en.wikipedia.org/",
+            )
+            dt, created = DataType.objects.get_or_create(
+                data_set=ds,
+                name=data_type,
+                data_type="profile_id",
             )
             data_types[data_type] = dt
 
