@@ -1,0 +1,51 @@
+[
+  {
+    "model": "hub.dataset",
+    "pk": 5,
+    "fields": {
+      "name": "constituency_age_distribution",
+      "data_type": "float",
+      "last_update": "2022-10-10T13:20:30+00:00",
+      "source": "https://parliament.uk"
+    }
+  },
+  {
+    "model": "hub.datatype",
+    "pk": 5,
+    "fields": {
+      "data_set": 5,
+      "name": "ages_0-9",
+      "data_type": "float",
+      "last_update": "2022-10-10T13:20:30+00:00"
+    }
+  },
+  {
+    "model": "hub.datatype",
+    "pk": 6,
+    "fields": {
+      "data_set": 5,
+      "name": "ages_10-19",
+      "data_type": "float",
+      "last_update": "2022-10-10T13:20:30+00:00"
+    }
+  },
+  {
+    "model": "hub.areadata",
+    "pk": 1,
+    "fields": {
+      "area": 1,
+      "data_type": 5,
+      "data": "10.1234"
+    }
+  },
+  {
+    "model": "hub.areadata",
+    "pk": 2,
+    "fields": {
+      "area": 1,
+      "data_type": 6,
+      "data": "11.2134"
+    }
+  }
+]
+

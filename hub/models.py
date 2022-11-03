@@ -43,8 +43,15 @@ class CommonData(models.Model):
     date = models.DateTimeField(blank=True, null=True)
 
     def value(self):
-        if self.data_type.data_type == "date":
-            return self.date
+        try:
+            if self.data_type.data_type == "date":
+                return self.date
+            elif self.data_type.data_type == "float":
+                return float(self.data)
+            elif self.data_type.data_type == "integer":
+                return int(self.data)
+        except ValueError:
+            return self.data
 
         return self.data
 
