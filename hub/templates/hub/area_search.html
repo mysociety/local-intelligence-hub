@@ -1,53 +1,50 @@
 {% extends "hub/base.html" %}
 
-{% block content %}
+{% load hub_filters %}
 
-<div class="py-4 py-lg-5 bg-green-100">
-    <div class="container">
-        <h1 class="display-2 mb-3">Local Intelligence Hub</h1>
-        <p class="fs-4" style="max-width: 26em;">Your starting point for data about MPs, constituencies, and local climate activity across the UK.</p>
-    </div>
-</div>
+{% block content %}
 
 <div class="py-5">
     <div class="container mt-lg-3">
-        <div class="row">
 
-            <div class="col-lg-6 mb-5 ps-lg-5">
-                {% if error %}
-                <h2 class="mb-4 text-primary">Error</h2>
-                <p>{{ error }}</p>
-                {% endif %}
-                {% if areas %}
-                <h2 class="mb-4 text-primary">Possible matches</h2>
-                {% for area in areas %}
-                <p><a href="{{ area.get_absolute_url }}">{{ area.name }}</a></p>
-                {% endfor %}
-                {% endif %}
+        <h1 class="mb-4 text-primary">Search by location</h1>
+        <label class="form-label" for="search">Enter a constituency name, MP name, or postcode</label>
+        <form class="row mt-2 mb-2" style="max-width: 30rem;" action="{% url 'area_search' %}">
+            <div class="col">
+                <div class="search-input search-input-lg">
+                    {% include 'hub/includes/icons/search.html' %}
+                    <input name="search" value="{{ search }}" type="search" id="search" class="form-control form-control-lg {% if error %}is-invalid{% endif %}">
+                </div>
+              {% if error %}
+                <div class="invalid-feedback d-block fs-6 mt-2">
+                    {{ error }}
+                </div>
+              {% endif %}
             </div>
-
-            <div class="col-lg-6 mb-5 ps-lg-5">
-                <h2 class="mb-4 text-primary">Jump to an area</h2>
-                <p class="mb-4" style="max-width: 26em;">See detailed data about a parliamentary constituency and its MP, including group memberships, opinion polling, and local presence in the area.</p>
-                <label class="form-label" for="search">Search by constituency name, MP name, or postcode</label>
-                <form class="row mt-2 mb-2" style="max-width: 30rem;" action="{% url 'area_search' %}">
-                    <div class="col">
-                        <div class="search-input search-input-lg">
-                            {% include 'hub/includes/icons/search.html' %}
-                            <input name="search" value="{{ search }}" type="search" id="search" class="form-control form-control-lg">
-                        </div>
-                    </div>
-                    <div class="col-auto">
-                        <button type="submit" class="btn btn-primary btn-lg">Search</button>
-                    </div>
-                </form>
-                <a class="js-geolocate d-none d-flex align-items-center btn btn-link px-0" href="#">
-                    {% include 'hub/includes/icons/geolocate.html' with classes="me-2" %}
-                    Use my current location
-                </a>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-lg">Search</button>
             </div>
+        </form>
+        <a class="js-geolocate d-none d-flex align-items-center btn btn-link px-0" href="#">
+            {% include 'hub/includes/icons/geolocate.html' with classes="me-2" %}
+            Use my current location
+        </a>
 
+      {% if areas %}
+        <h2 class="mt-5 mb-4 text-primary">{{ areas|length }} matching locations</h2>
+      {% for area in areas %}
+        <div class="card shadow-sm mb-3 mb-md-4" style="max-width: 30em">
+            <div class="card-body">
+                <h3 class="card-title mb-3"><a href="{{ area.get_absolute_url }}" class="stretched-link">{{ area.name|highlight:search }}</a></h3>
+                <div class="d-flex align-items-center">
+                    {% include 'hub/includes/person-photo.html' with person=area.mp width="32" height="32" %}
+                    <p class="mb-0 ms-2 text-muted">{{ area.mp.name|highlight:search }}, MP</p>
+                </div>
+            </div>
         </div>
+      {% endfor %}
+      {% endif %}
+
     </div>
 </div>
 

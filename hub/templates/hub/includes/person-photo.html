@@ -1,0 +1,7 @@
+{% load static %}
+
+{% if person.photo %}
+    <img src="{{ person.photo.url }}" alt="{{ person.name }}" width="{{ width|default:60 }}" height="{{ height|default:60 }}" class="{{ classes|default:'rounded-circle' }}" loading="lazy">
+{% else %}
+    <img src="{% static 'img/person.svg' %}" alt="" width="{{ width|default:60 }}" height="{{ height|default:60 }}" class="{{ classes|default:'rounded-circle' }}" loading="lazy">
+{% endif %}

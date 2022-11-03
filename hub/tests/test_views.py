@@ -145,7 +145,8 @@ class TestAreaSearchPage(TestCase):
         self.assertTemplateUsed(response, "hub/area_search.html")
 
         context = response.context
-        self.assertEqual(context["error"], "Lower Locksley has no matches")
+        self.assertIn("can’t find", context["error"])
+        self.assertIn("Lower Locksley", context["error"])
 
     def test_multiple_matches(self):
         url = reverse("area_search")

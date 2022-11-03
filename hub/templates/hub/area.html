@@ -1,6 +1,5 @@
 {% extends 'hub/base.html' %}
 
-{% load static %}
 {% load humanize %}
 
 {% block content %}
@@ -26,11 +25,7 @@
                     <div class="card-body">
                         <div class="d-flex align-items-center">
                             <div class="flex-shrink-0">
-                              {% if mp.person.photo %}
-                                <img src="{{ mp.person.photo.url }}" alt="{{ mp.person.name }}" width="60" height="60" class="rounded-circle" loading="lazy">
-                              {% else %}
-                                <img src="{% static 'img/person.svg' %}" alt="" width="60" height="60" class="rounded-circle" loading="lazy">
-                              {% endif %}
+                                {% include 'hub/includes/person-photo.html' with person=mp.person %}
                             </div>
                             <div class="flex-grow-1 ms-3">
                                 <h3 class="h4 mb-0 text-primary">{{ mp.person.name }}</h3>

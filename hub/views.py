@@ -112,14 +112,25 @@ class AreaSearchView(TemplateView):
             context["areas"] = areas
             context["error"] = error
         else:
-            areas = Area.objects.filter(name__icontains=search)
-            people = Person.objects.filter(name__icontains=search)
-            all = list(areas)
-            all.extend(list(people))
-            if len(all) == 0:
-                context["error"] = f"{search} has no matches"
+            areas_raw = Area.objects.filter(name__icontains=search)
+            people_raw = Person.objects.filter(name__icontains=search)
+
+            areas = list(areas_raw)
+            for person in people_raw:
+                areas.append(person.area)
+
+            if len(areas) == 0:
+                context[
+                    "error"
+                ] = f"Sorry, we can’t find a UK location matching “{search}”. Try a nearby town or city?"
             else:
-                context["areas"] = all
+                for area in areas:
+                    try:
+                        area.mp = Person.objects.get(area=area)
+                    except Person.DoesNotExist:
+                        pass
+                areas.sort(key=lambda area: area.name)
+                context["areas"] = areas
 
         return context
 
