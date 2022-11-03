@@ -42,3 +42,16 @@ You can create the first Django user by entering a bash shell inside the `web` c
     script/createsuperuser
 
 The superuser will be created with the details specified in the `DJANGO_SUPERUSER_*` environment variables. [Read more about how Docker handles environment variables](https://docs.docker.com/compose/envvars-precedence/).
+
+### Running the tests
+
+First start the Docker environment:
+
+    docker-compose up
+
+Then enter a bash shell inside the `web` container, and run the tests from there:
+
+    docker-compose exec web bash
+    script/test
+
+The first time you run `script/test`, it will ask whether you want the tests to run natively or inside the docker container. Type `docker` to run them inside the docker container. Your preference will be saved to `.env` for future runs.
