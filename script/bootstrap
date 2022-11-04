@@ -9,6 +9,15 @@ cd `dirname $0`/..
 if [ ! -f .env ] ; then
     echo "==> Seeding an initial .env from .env-example..."
     cp .env-example .env
+
+    # if INSIDE_DOCKER is set, write NATIVE to DEVENV in .env
+    if [ -n "$INSIDE_DOCKER" ] ; then
+        # delete line containing DEVENV from .env
+        sed -i '/DEVENV/d' .env
+        echo "==> Writing DEVENV=native to .env..."
+        echo 'DEVENV="native"' >> .env
+    fi
+
 fi
 
 if ! grep ^DEVENV .env ; then
