@@ -26,6 +26,27 @@ Start the Docker environment:
 
 (If Python complains about missing libraries, chances are the Python requirements have changed since your Docker image was last built. You can rebuild it with, eg: `docker-compose build web`.)
 
+Alternatively, for VScode users:
+
+1. Install the Remote-Container extension.
+2. In VScode Command pallette run `Remote-Containers: Install devcontainer CLI`
+3. Then in the repo dir, run `devcontainer open`.
+
+This will setup the docker containers and provide a BASH prompt into the containers. 
+
+The same config files means this repo also works in codespaces.
+
+You'll then need to run:
+
+`script/dev-populate`
+
+and then
+
+`script/server`
+
+For the dev server. 
+
+
 ### Data import
 
 You will then need to update the data by running the following
