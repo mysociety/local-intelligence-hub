@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "django.contrib.humanize",
     "compressor",
     "django_bootstrap5",
+    "sslserver",
     "hub",
 ]
 
