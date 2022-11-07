@@ -2,6 +2,8 @@ import json
 
 from django.core.management.base import BaseCommand
 
+from tqdm import tqdm
+
 from hub.models import Area
 from utils import mapit
 
@@ -12,7 +14,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         mapit_client = mapit.MapIt()
         areas = mapit_client.areas_of_type(["WMC"])
-        for area in areas:
+        print("Importing Areas")
+        for area in tqdm(areas):
             try:
                 geom = mapit_client.area_geometry(area["id"])
                 geom = {

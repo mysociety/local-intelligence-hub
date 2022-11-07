@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand
 
 import magic
 import requests
+from tqdm import tqdm
 
 from hub.models import Area, DataType, Person, PersonData
 
@@ -52,7 +53,8 @@ class Command(BaseCommand):
         type_names = ["parlid", "twfyid", "twitter", "facebook", "wikipedia", "party"]
         data_types = {}
 
-        for data_type in type_names:
+        print("Importing type names")
+        for data_type in tqdm(type_names):
             dt, created = DataType.objects.get_or_create(
                 name=data_type,
                 data_type="profile_id",
@@ -62,7 +64,8 @@ class Command(BaseCommand):
 
         type_names.remove("party")
 
-        for mp in data:
+        print("Importing MPs")
+        for mp in tqdm(data):
             try:
                 area = Area.objects.get(gss=mp["gss_code"]["value"])
             except Area.DoesNotExist:  # pragma: no cover
@@ -101,8 +104,8 @@ class Command(BaseCommand):
         path = settings.MEDIA_ROOT / "person"
         if not path.exists():  # pragma: nocover
             path.mkdir(parents=True)
-
-        for mp in Person.objects.filter(person_type="MP").all():
+        print("Importing MP Images")
+        for mp in tqdm(Person.objects.filter(person_type="MP").all()):
             image_url = f"https://members-api.parliament.uk/api/Members/{mp.external_id}/Thumbnail"
             file, headers = urllib.request.urlretrieve(image_url)
             mime_type = magic.from_file(file, mime=True)
