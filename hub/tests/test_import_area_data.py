@@ -72,3 +72,35 @@ class ImportFuelPovertyDataTestCase(TestCase):
         self.assertEqual(south_data[0].value(), 12.1)
 
         self.assertEqual(south_data[0].data_type.average, 12.65)
+
+
+class ImportIMDRUCTestCase(TestCase):
+    fixtures = ["areas.json"]
+
+    @mock.patch("hub.management.commands.import_imd_data.pd.read_csv")
+    def test_import(self, patch_read_csv):
+        data = {
+            "gss-code": [
+                "E10000001",
+                "E10000002",
+            ],
+            "pcon-imd-pop-quintile": [1, 2],
+            "ruc-cluster-label": ["Urban", "Rural"],
+        }
+        patch_read_csv.return_value = pd.DataFrame(data=data)
+        call_command("import_imd_data")
+
+        area_data = AreaData.objects.all()
+        self.assertEqual(area_data.count(), 4)
+
+        south_imd_data = AreaData.objects.filter(
+            area__gss="E10000001", data_type__name="constituency_imd"
+        ).all()
+
+        self.assertEqual(south_imd_data[0].value(), 1)
+
+        south_ruc_data = AreaData.objects.filter(
+            area__gss="E10000001", data_type__name="constituency_ruc"
+        ).all()
+
+        self.assertEqual(south_ruc_data[0].value(), "Urban")
