@@ -20,6 +20,8 @@ from django.urls import include, path
 
 from hub import views
 
+handler404 = views.NotFoundPageView.as_view()
+
 urlpatterns = [
     path("", views.HomePageView.as_view(), name="home"),
     path("explore/", views.ExploreView.as_view(), name="explore"),

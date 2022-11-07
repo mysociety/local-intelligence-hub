@@ -5,6 +5,21 @@ from django.test import TestCase
 from django.urls import reverse
 
 
+class Test404Page(TestCase):
+    def testRequireLoginOver404(self):
+        url = "/page_does_not_exist"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+
+    def test404page(self):
+        u = User.objects.create(username="user@example.com")
+        self.client.force_login(u)
+        url = "/page_does_not_exist"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, "404.html")
+
+
 class TestLoginEnforced(TestCase):
     def test_login_required(self):
         url = reverse("home")

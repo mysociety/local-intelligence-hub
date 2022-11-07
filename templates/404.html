@@ -1,0 +1,31 @@
+{% extends "hub/base.html" %}
+
+{% load django_bootstrap5 %}
+
+{% block content %}
+
+<div class="py-5">
+    <div class="container">
+        <h1 class="mb-4 text-primary">Page not found</h1>
+
+        <p>
+            {{ request.build_absolute_uri }} could not be found.
+        </p>
+
+        <h2 class="mt-5 mb-3 text-primary">Looking for local data?</h2>
+        <label class="form-label" for="search">Search by constituency name, MP name, or postcode</label>
+        <form class="row mt-2 mb-2" style="max-width: 30rem;" action="{% url 'area_search' %}">
+            <div class="col">
+                <div class="search-input search-input-lg">
+                    {% include 'hub/includes/icons/search.html' %}
+                    <input name="search" type="search" id="search" class="form-control form-control-lg">
+                </div>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-lg">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
