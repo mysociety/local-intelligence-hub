@@ -1,8 +1,8 @@
-<div class="modal fade wide-modal" tabindex="-1" id="addData">
+<div class="modal fade wide-modal" tabindex="-1" ref="modal">
     <div class="modal-dialog shadow-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title h5 lh-1">Add data</h5>
+                <h2 class="modal-title h5 lh-1">Add ${ currentType }</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-header bg-gray-100">
@@ -12,44 +12,18 @@
                 </div>
             </div>
             <div class="modal-body">
-                <div class="row">
+                <div v-if="!loaded" class="row">
+                    <div class="col-md-12 mb-0 mb-md-0">
+                        Loading...
+                    </div>
+                </div>
+                <div v-else class="row">
                     <div class="col-md-4 mb-4 mb-md-0">
                         <h3 class="h5 text-primary">Public datasets</h3>
                         <div class="list-group mt-3 mt-lg-4">
-                            <button class="list-group-item list-group-item-action js-add-dataset">
-                                <strong>MP party</strong>
-                                <small class="d-block text-muted">Provided by TheyWorkForYou</small>
-                            </button>
-                            <button class="list-group-item list-group-item-action js-add-dataset">
-                                <strong>MP majority</strong>
-                                <small class="d-block text-muted">Provided by Green Alliance</small>
-                            </button>
-                            <button class="list-group-item list-group-item-action js-add-dataset">
-                                <strong>MP memberships</strong>
-                                <small class="d-block text-muted">Including political groups, APPGs, and committees. Provided by Green Alliance</small>
-                            </button>
-                            <button class="list-group-item list-group-item-action js-add-dataset">
-                                <strong>Groups active nearby</strong>
-                                <small class="d-block text-muted">Collated by The Climate Coalition</small>
-                            <button class="list-group-item list-group-item-action js-add-dataset">
-                                <strong>Public support for net zero</strong>
-                                <small class="d-block text-muted">From opinion polling commissioned by The Climate Coalition</small>
-                            </button>
-                            <button class="list-group-item list-group-item-action js-add-dataset">
-                                <strong>% homes in fuel poverty</strong>
-                                <small class="d-block text-muted">Provided by Friends of the Earth</small>
-                            </button>
-                            <button class="list-group-item list-group-item-action js-add-dataset">
-                                <strong>% homes with good access to nature</strong>
-                                <small class="d-block text-muted">Provided by Green Alliance</small>
-                            </button>
-                            <button class="list-group-item list-group-item-action js-add-dataset">
-                                <strong>River quality (0–5)</strong>
-                                <small class="d-block text-muted">Provided by Surfers Against Sewage</small>
-                            </button>
-                            <button class="list-group-item list-group-item-action js-add-dataset">
-                                <strong>IMD score</strong>
-                                <small class="d-block text-muted">Collated by The Climate Coalition, from ONS source</small>
+                            <button v-for="dataset in publicDatasets" @click="addFilterOrShader(dataset.name)" class="list-group-item list-group-item-action">
+                                <strong>${ dataset.title }</strong>
+                                <small class="d-block text-muted">${ dataset.source }</small>
                             </button>
                         </div>
                         <button class="btn btn-sm btn-link w-100 mt-2">Show more…</button>
@@ -61,17 +35,9 @@
                             <p class="mb-0"><a href="#">Sign in</a> or <a href="#">Request an account</a></p>
                         </div>
                         <div class="list-group mt-3 mt-lg-4">
-                            <div class="list-group-item text-muted">
-                                <strong>Total TCC supporters</strong>
-                                <small class="d-block">Total supporters across all TCC member organisations, in this constituency</small>
-                            </div>
-                            <div class="list-group-item text-muted">
-                                <strong>MP relationship strength</strong>
-                                <small class="d-block">Level of reported contact between TCC members and this constituency’s MP</small>
-                            </div>
-                            <div class="list-group-item text-muted">
-                                <strong>% homes at flood risk</strong>
-                                <small class="d-block">Constituency-level data, paid for by The Climate Coalition members</small>
+                            <div v-for="dataset in memberDatasets" class="list-group-item text-muted">
+                                <strong>${ dataset.title }</strong>
+                                <small class="d-block">${ dataset.source }</small>
                             </div>
                         </div>
                         <button class="btn btn-sm btn-link w-100 mt-2">Show more…</button>
@@ -88,98 +54,3 @@
         </div>
     </div>
 </div>
-
-<script type="text/javascript">
-window.datasets = [{
-    name: "MP party",
-    comparators: [
-        "is",
-        "is not"
-    ],
-    options: [
-        "Conservative Party",
-        "Labour Party",
-        "Scottish National Party",
-        "Liberal Democrats",
-        "Democratic Unionist Party",
-        "Sinn Féin",
-        "Plaid Cymru",
-        "Social Democratic and Labour Party",
-        "Alba Party",
-        "Green Party",
-        "Alliance Party"
-    ]
-}, {
-    name: "MP majority",
-    comparators: [
-        "is",
-        "is not"
-    ],
-    defaultValue: "1000"
-}, {
-    name: "MP memberships",
-    comparators: [
-        "includes",
-        "does not include"
-    ],
-    options: [
-        "Climate Change APPG",
-        "Conservative Environment Network (CEN)",
-        "Environment APPG",
-        "Environmental Audit Committee (EAC)",
-        "European Research Group (ERG)",
-        "Hydrogen APPG",
-        "More In Common",
-        "Net Zero APPG",
-        "Net Zero Scrutiny Group",
-        "Poverty APPG"
-    ]
-}, {
-    name: "Groups active nearby",
-    comparators: [
-        "includes",
-        "does not include"
-    ],
-    options: [
-        "a Friends of the Earth group",
-        "a Team Wilder group",
-        "a WI group",
-        "an NUS Students Union"
-    ]
-}, {
-    name: "Public support for net zero",
-    comparators: [
-        "is less than",
-        "is more than"
-    ],
-    defaultValue: ""
-}, {
-    name: "% homes in fuel poverty",
-    comparators: [
-        "is less than",
-        "is more than"
-    ],
-    defaultValue: "10"
-}, {
-    name: "% homes with good access to nature",
-    comparators: [
-        "is less than",
-        "is more than"
-    ],
-    defaultValue: "50"
-}, {
-    name: "River quality (0–5)",
-    comparators: [
-        "is less than",
-        "is more than"
-    ],
-    defaultValue: "3"
-}, {
-    name: "IMD score",
-    comparators: [
-        "is less than",
-        "is more than"
-    ],
-    defaultValue: "5"
-}]
-</script>

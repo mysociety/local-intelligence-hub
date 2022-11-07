@@ -13,6 +13,9 @@ Chart.defaults.animation.duration = 0
 Chart.defaults.responsive = true
 Chart.defaults.interaction.mode = null
 
+import exploreApp from './explore.esm.js'
+exploreApp.mount('#exploreApp')
+
 $(function(){
     if( 'geolocation' in navigator ) {
         $('.js-geolocate').removeClass('d-none');
