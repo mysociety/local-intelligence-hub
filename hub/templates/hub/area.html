@@ -181,25 +181,24 @@
             </div>
             {% endif %}
             <div class="col d-flex flex-column">
-                <div class="card flex-grow-1 fake-data">
+                <div class="card flex-grow-1">
                     <div class="card-body">
-                        <h5 class="card-title mb-3">2019 voter turnout</h5>
-                        <p class="card-text mb-0 display-6 lh-1 text-primary">65%</p>
-                        <p class="card-text mt-2 text-muted">59% national average</p>
+                        <h5 class="card-title mb-3">Index of Multiple Deprivation</h5>
+                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ constituency_imd.value }}</p>
                     </div>
                     <div class="card-footer bg-white">
-                        <p class="card-text fs-8"><a href="https://commonslibrary.parliament.uk/general-election-2019-turnout/" class="text-decoration-none text-muted">Data from House of Commons Library</a></p>
+                        <p class="card-text fs-8"><a href="https://mysociety.github.io/composite_uk_imd/" class="text-decoration-none text-muted">mySociety</a></p>
                     </div>
                 </div>
             </div>
             <div class="col d-flex flex-column">
-                <div class="card flex-grow-1 fake-data">
+                <div class="card flex-grow-1">
                     <div class="card-body">
-                        <h5 class="card-title mb-3">‘Levelling up’ town</h5>
-                        <p class="card-text fs-5">Nearby <strong class="text-primary">Borchester</strong> received ‘levelling up’ funds in 2021</p>
+                        <h5 class="card-title mb-3">Urban Rural Classification</h5>
+                        <p class="card-text fs-5">{{ constituency_ruc.value }}</p>
                     </div>
                     <div class="card-footer bg-white">
-                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Source: GOV.UK, 2021</a></p>
+                        <p class="card-text fs-8"><a href="https://mysociety.github.io/uk_ruc/" class="text-decoration-none text-muted">mySociety></p>
                     </div>
                 </div>
             </div>
