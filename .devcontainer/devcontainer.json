@@ -1,0 +1,20 @@
+
+{
+	"name": "local-intelligence-hub",
+
+	"dockerComposeFile": ["../docker-compose.yml"],
+	"service": "web",
+	"workspaceFolder": "/app",
+	"overrideCommand": true,
+
+	"extensions": [
+		"ms-vscode.test-adapter-converter",
+		"bungcip.better-toml",
+		"ms-python.python",
+		"ms-python.vscode-pylance",
+		"batisteo.vscode-django",
+		"ms-azuretools.vscode-docker",
+		"github.vscode-pull-request-github",
+		"mhutchie.git-graph"
+	]
+}
