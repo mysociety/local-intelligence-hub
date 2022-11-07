@@ -1,4 +1,3 @@
-import * as _ from '../underscore/underscore.esm.min.js'
 import $ from '../jquery/jquery.esm.js'
 import L from '../leaflet/leaflet-1.8.0.esm.js'
 import { Chart, registerables } from '../chartjs/chart.esm.js'
