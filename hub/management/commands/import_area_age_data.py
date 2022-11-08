@@ -42,13 +42,13 @@ class Command(BaseCommand):
                 label=f"Ages {age_group}",
             )
 
-            averages[data_type.name] = row["UK%"] * 100
-
             try:
                 area = Area.objects.get(gss=gss)
             except Area.DoesNotExist:
-                print(f"Failed to find area with code {gss}")
+                self.stdout.write(f"Failed to find area with code {gss}")
                 continue
+
+            averages[data_type.name] = row["UK%"] * 100
 
             AreaData.objects.get_or_create(
                 data_type=data_type,

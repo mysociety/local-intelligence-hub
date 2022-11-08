@@ -41,14 +41,14 @@ class Command(BaseCommand):
         for index, row in tqdm(df.iterrows(), disable=self._quiet, total=df.shape[0]):
             gss = row["Parliamentary Constituency Code"]
 
-            total += float(row["Proportion of households fuel poor (%)"])
-            count += 1
-
             try:
                 area = Area.objects.get(gss=gss)
             except Area.DoesNotExist:
-                print(f"Failed to find area with code {gss}")
+                self.stdout.write(f"Failed to find area with code {gss}")
                 continue
+
+            total += float(row["Proportion of households fuel poor (%)"])
+            count += 1
 
             AreaData.objects.get_or_create(
                 data_type=data_type,

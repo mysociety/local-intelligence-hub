@@ -79,7 +79,7 @@ class Command(BaseCommand):
                 try:
                     area = Area.objects.get(gss=gss)
                 except Area.DoesNotExist:
-                    print(f"Failed to find area with code {gss}")
+                    self.stdout.write(f"Failed to find area with code {gss}")
                     continue
 
                 AreaData.objects.get_or_create(
