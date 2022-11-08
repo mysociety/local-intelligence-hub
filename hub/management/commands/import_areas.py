@@ -11,11 +11,17 @@ from utils import mapit
 class Command(BaseCommand):
     help = "Import basic area information from MaPit"
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "-q", "--quiet", action="store_true", help="Silence progress bars."
+        )
+
+    def handle(self, quiet: bool = False, *args, **options):
         mapit_client = mapit.MapIt()
         areas = mapit_client.areas_of_type(["WMC"])
-        print("Importing Areas")
-        for area in tqdm(areas):
+        if not quiet:
+            print("Importing Areas")
+        for area in tqdm(areas, disable=quiet):
             try:
                 geom = mapit_client.area_geometry(area["id"])
                 geom = {

@@ -14,7 +14,13 @@ from hub.models import Area, DataType, Person, PersonData
 class Command(BaseCommand):
     help = "Import UK Members of Parliament"
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "-q", "--quiet", action="store_true", help="Silence progress bars."
+        )
+
+    def handle(self, quiet: bool = False, *args, **options):
+        self._quiet = quiet
         self.import_mps()
         self.import_mp_images()
 
@@ -52,9 +58,9 @@ class Command(BaseCommand):
         data = self.get_mp_data()
         type_names = ["parlid", "twfyid", "twitter", "facebook", "wikipedia", "party"]
         data_types = {}
-
-        print("Importing type names")
-        for data_type in tqdm(type_names):
+        if not self._quiet:
+            print("Importing type names")
+        for data_type in tqdm(type_names, disable=self._quiet):
             dt, created = DataType.objects.get_or_create(
                 name=data_type,
                 data_type="profile_id",
@@ -64,8 +70,9 @@ class Command(BaseCommand):
 
         type_names.remove("party")
 
-        print("Importing MPs")
-        for mp in tqdm(data):
+        if not self._quiet:
+            print("Importing MPs")
+        for mp in tqdm(data, disable=self._quiet):
             try:
                 area = Area.objects.get(gss=mp["gss_code"]["value"])
             except Area.DoesNotExist:  # pragma: no cover
@@ -104,8 +111,11 @@ class Command(BaseCommand):
         path = settings.MEDIA_ROOT / "person"
         if not path.exists():  # pragma: nocover
             path.mkdir(parents=True)
-        print("Importing MP Images")
-        for mp in tqdm(Person.objects.filter(person_type="MP").all()):
+        if not self._quiet:
+            print("Importing MP Images")
+        for mp in tqdm(
+            Person.objects.filter(person_type="MP").all(), disable=self._quiet
+        ):
             image_url = f"https://members-api.parliament.uk/api/Members/{mp.external_id}/Thumbnail"
             file, headers = urllib.request.urlretrieve(image_url)
             mime_type = magic.from_file(file, mime=True)
