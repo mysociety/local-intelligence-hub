@@ -8,6 +8,8 @@ from utils.mapit import MapIt
 
 
 class ImportAreasTestCase(TestCase):
+    quiet_parameter: bool = False
+
     @mock.patch.object(MapIt, "areas_of_type")
     @mock.patch.object(MapIt, "area_geometry")
     def test_import(self, mapit_geom, mapit_areas):
@@ -31,7 +33,7 @@ class ImportAreasTestCase(TestCase):
                 "type": "WMC",
             },
         ]
-        call_command("import_areas")
+        call_command("import_areas", quiet=self.quiet_parameter)
 
         areas = Area.objects.all()
         self.assertEqual(areas.count(), 2)
@@ -44,3 +46,11 @@ class ImportAreasTestCase(TestCase):
             first.geometry,
             '{"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [[1, 2], [2, 1]]}, "properties": {"PCON13CD": "E10000001", "name": "South Borsetshire", "type": "WMC"}}',
         )
+
+
+class ImportAreasTestCaseQuietFlag(ImportAreasTestCase):
+    """
+    Do the Import Areas check, but with the quiet flag on
+    """
+
+    quiet_parameter: bool = True

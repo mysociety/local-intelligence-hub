@@ -15,6 +15,7 @@ django-libsass = "^0.9"
 requests-cache = "^0.9.6"
 Pillow = "^9.3.0"
 python-magic = "^0.4.27"
+tqdm = "^4.64.1"
 
 [tool.poetry.dev-dependencies]
 django-debug-toolbar = "^3.7.0"
