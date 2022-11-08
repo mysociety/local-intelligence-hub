@@ -12,6 +12,7 @@ IMG_DIR = BASE_DIR / "images"
 
 
 class ImportMPsTestCase(TestCase):
+    quiet_parameter: bool = False
     media_root = BASE_DIR / "media"
 
     def setUp(self):
@@ -55,7 +56,7 @@ class ImportMPsTestCase(TestCase):
         retrieve_mock.return_value = (IMG_DIR / "mp.jpg", 1)
 
         with self.settings(MEDIA_ROOT=self.media_root):
-            call_command("import_mps")
+            call_command("import_mps", quiet=self.quiet_parameter)
 
         mps = Person.objects.all()
         self.assertEqual(mps.count(), 2)
@@ -73,6 +74,14 @@ class ImportMPsTestCase(TestCase):
 
         data = all_data.filter(data_type__name="party").first()
         self.assertEqual(data.data, "Borsetshire Independence")
+
+
+class ImportMPsTestCaseQuiet(ImportMPsTestCase):
+    """
+    Do the ImportMPs check, but with the quiet flag on
+    """
+
+    quiet_parameter: bool = True
 
 
 class ImportMPElectionResultsTestCase(TestCase):
