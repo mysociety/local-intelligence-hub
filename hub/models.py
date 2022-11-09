@@ -11,6 +11,12 @@ class DataSet(models.Model):
         ("profile_id", "Profile Id"),
     ]
 
+    CATEGORY_CHOICES = [
+        ("opinion", "Public Opinion"),
+        ("place", "Place"),
+        ("movement", "Movement"),
+    ]
+
     name = models.CharField(max_length=50)
     description = models.TextField(blank=True, null=True)
     label = models.CharField(max_length=200, blank=True, null=True)
@@ -18,6 +24,9 @@ class DataSet(models.Model):
     last_update = models.DateTimeField(auto_now=True)
     source = models.CharField(max_length=200)
     is_range = models.BooleanField(default=False)
+    featured = models.BooleanField(default=False)
+    order = models.IntegerField(blank=True, null=True)
+    category = models.TextField(blank=True, null=True, choices=CATEGORY_CHOICES)
 
 
 class DataType(models.Model):
