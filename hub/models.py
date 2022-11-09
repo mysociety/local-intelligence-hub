@@ -46,6 +46,12 @@ class DataType(models.Model):
     average = models.FloatField(blank=True, null=True)
     label = models.CharField(max_length=200, blank=True, null=True)
 
+    def is_number(self):
+        if self.data_type in ("integer", "float"):
+            return True
+
+        return False
+
 
 class CommonData(models.Model):
     data_type = models.ForeignKey(DataType, on_delete=models.CASCADE)

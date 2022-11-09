@@ -1,6 +1,7 @@
 {% extends 'hub/base.html' %}
 
 {% load humanize %}
+{% load hub_filters %}
 
 {% block content %}
 
@@ -138,10 +139,12 @@
         <h2 class="mt-5 mb-3 text-primary">Place</h2>
 
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for category in categories.place %}
             <div class="col d-flex flex-column">
                 <div class="card flex-grow-1">
                     <div class="card-body">
-                        <h5 class="card-title mb-3">Age range</h5>
+                        <h5 class="card-title mb-3">{{ category.name }}</h5>
+                        {% if category.is_range %}
                         <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">
                             <thead>
                                 <tr>
@@ -151,7 +154,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                              {% for range in constituency_age_distribution %}
+                              {% for range in category.data %}
                                 <tr>
                                     <th>{{ range.data_type.label }}</th>
                                     <td>{{ range.value|floatformat }}%</td>
@@ -160,48 +163,26 @@
                               {% endfor %}
                             </tbody>
                         </table>
+                      {% else %}
+                            {% if category.data.data_type.is_number %}
+                            <p class="card-text mb-0 display-6 lh-1 text-primary">{{ category.data.value|floatformat }}%</p>
+                                {% if category.data.data_type.average %}
+                                <p class="card-text mt-2 text-muted">{{ category.data.data_type.average|floatformat }}% national average</p>
+                                {% endif %}
+                            {% else %}
+                            <p class="card-text fs-5">{{ category.data.value }}</p>
+                                {% if category.data.data_type.average %}
+                                <p class="card-text mt-2 text-muted">{{ category.data.data_type.average }} national average</p>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
                     </div>
                     <div class="card-footer bg-white">
-                        <p class="card-text fs-8"><a href="https://commonslibrary.parliament.uk/constituency-statistics-population-by-age/" class="text-decoration-none text-muted">Data from House of Commons Library</a></p>
+                        <p class="card-text fs-8"><a href="{{ category.source }}" class="text-decoration-none text-muted">{{ data.source|domain_human }}</a></p>
                     </div>
                 </div>
             </div>
-            {% if constituency_fuel_poverty %}
-            <div class="col d-flex flex-column">
-                <div class="card flex-grow-1">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">Households in Fuel poverty</h5>
-                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ constituency_fuel_poverty.value|floatformat }}%</p>
-                        <p class="card-text mt-2 text-muted">{{ constituency_fuel_poverty.data_type.average|floatformat }}% national average</p>
-                    </div>
-                    <div class="card-footer bg-white">
-                        <p class="card-text fs-8"><a href="https://www.gov.uk/government/statistics/sub-regional-fuel-poverty-data-2022" class="text-decoration-none text-muted">Data from the Department for Business, Energy &amp; Industrial Strategy</a></p>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-            <div class="col d-flex flex-column">
-                <div class="card flex-grow-1">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">Index of Multiple Deprivation</h5>
-                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ constituency_imd.value }}</p>
-                    </div>
-                    <div class="card-footer bg-white">
-                        <p class="card-text fs-8"><a href="https://mysociety.github.io/composite_uk_imd/" class="text-decoration-none text-muted">mySociety</a></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col d-flex flex-column">
-                <div class="card flex-grow-1">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">Urban Rural Classification</h5>
-                        <p class="card-text fs-5">{{ constituency_ruc.value }}</p>
-                    </div>
-                    <div class="card-footer bg-white">
-                        <p class="card-text fs-8"><a href="https://mysociety.github.io/uk_ruc/" class="text-decoration-none text-muted">mySociety</a></p>
-                    </div>
-                </div>
-            </div>
+        {% endfor %}
             <div class="col d-flex flex-column">
                 <div class="card flex-grow-1 fake-data">
                     <div class="card-body">

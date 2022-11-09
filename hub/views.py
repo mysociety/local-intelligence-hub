@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict
 
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -75,26 +76,43 @@ class AreaView(TitleMixin, DetailView):
         except Person.DoesNotExist:
             pass
 
-        for data_set in DataSet.objects.all():
-            name = data_set.name
+        featured = []
+        categories = defaultdict(list)
+        for data_set in DataSet.objects.order_by("order", "name").all():
+            data = {
+                "name": str(data_set),
+                "label": data_set.label,
+                "source": data_set.source,
+            }
             if data_set.is_range:
+                data["is_range"] = True
                 data_range = (
                     AreaData.objects.filter(
                         area=self.object,
-                        data_type__data_set__name=name,
+                        data_type__data_set__name=data_set.name,
                     )
                     .select_related("data_type")
                     .order_by("data_type__name")
                 )
 
-                context[name] = data_range.all()
+                data["data"] = data_range.all()
             else:
-                data = AreaData.objects.filter(
-                    area=self.object, data_type__data_set__name=name
+                area_data = AreaData.objects.filter(
+                    area=self.object, data_type__data_set__name=data_set.name
                 ).select_related("data_type")
-                if data:
-                    context[name] = data[0]
+                if area_data:
+                    data["data"] = area_data[0]
 
+            if data.get("data", None) is not None:
+                if data_set.featured:
+                    featured.append(data)
+                elif data_set.category is not None:
+                    categories[data_set.category].append(data)
+                else:
+                    categories["place"].append(data)
+
+        context["categories"] = categories
+        context["featured"] = featured
         return context
 
 
