@@ -28,6 +28,17 @@ class DataSet(models.Model):
     order = models.IntegerField(blank=True, null=True)
     category = models.TextField(blank=True, null=True, choices=CATEGORY_CHOICES)
 
+    def __str__(self):
+        if self.label:
+            return self.label
+
+        return self.name
+
+    class Meta:
+        permissions = [
+            ("order_and_feature", "Can change sort order and mark as featured")
+        ]
+
 
 class DataType(models.Model):
     TYPE_CHOICES = [
