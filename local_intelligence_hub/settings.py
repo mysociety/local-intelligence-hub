@@ -161,6 +161,7 @@ STATICFILES_DIRS = [
     ("jquery", BASE_DIR / "vendor" / "jquery" / "js"),
     ("leaflet", BASE_DIR / "vendor" / "leaflet" / "js"),
     ("popper", BASE_DIR / "vendor" / "popper" / "js"),
+    ("vue", BASE_DIR / "vendor" / "vue" / "js"),
 ]
 
 # only want to do this for live really
