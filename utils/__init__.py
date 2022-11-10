@@ -25,3 +25,11 @@ def is_valid_postcode(postcode):
             return pc
 
     return None
+
+
+def domain_human(value):
+    return re.sub(r"^(https?:[/][/])?(www[.])?([^/]+).*", r"\3", value)
+
+
+def url_human(value):
+    return re.sub(r"^(https?:[/][/])?(www[.])?(.*)", r"\3", value)

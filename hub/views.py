@@ -84,7 +84,8 @@ class AreaView(TitleMixin, DetailView):
             data = {
                 "name": str(data_set),
                 "label": data_set.label,
-                "source": data_set.source,
+                "source": data_set.source_name,
+                "source_url": data_set.source_url,
                 "category": data_set.category,
             }
             if data_set.is_range:

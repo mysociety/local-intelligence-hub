@@ -4,6 +4,8 @@ from django import template
 from django.template.defaultfilters import stringfilter
 from django.utils.safestring import mark_safe
 
+import utils as lih_utils
+
 register = template.Library()
 
 
@@ -17,10 +19,10 @@ def highlight(text, search):
 @register.filter
 @stringfilter
 def domain_human(value):
-    return re.sub(r"^(https?:[/][/])?(www[.])?([^/]+).*", r"\3", value)
+    return lih_utils.domain_human(value)
 
 
 @register.filter
 @stringfilter
 def url_human(value):
-    return re.sub(r"^(https?:[/][/])?(www[.])?(.*)", r"\3", value)
+    return lih_utils.url_human(value)

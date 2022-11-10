@@ -1,5 +1,7 @@
 from django.db import models
 
+import utils as lih_utils
+
 
 class DataSet(models.Model):
     SOURCE_CHOICES = [
@@ -47,6 +49,24 @@ class DataSet(models.Model):
 
         return self.name
 
+    @property
+    def source_name(self):
+        if self.source_label is not None:
+            return self.source_label
+        elif not self.source == "" and self.source is not None:
+            return lih_utils.domain_human(self.source)
+        elif not self.data_url == "" and self.data_url is not None:
+            return lih_utils.domain_human(self.data_url)
+
+        return "unknown"
+
+    @property
+    def source_url(self):
+        if not self.source == "":
+            return self.source
+
+        return self.data_url
+
     class Meta:
         permissions = [
             ("order_and_feature", "Can change sort order and mark as featured")
@@ -70,6 +90,12 @@ class DataType(models.Model):
     last_update = models.DateTimeField(auto_now=True)
     average = models.FloatField(blank=True, null=True)
     label = models.CharField(max_length=200, blank=True, null=True)
+
+    def __str__(self):
+        if self.label:
+            return self.label
+
+        return self.name
 
     @property
     def is_number(self):
