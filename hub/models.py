@@ -17,7 +17,7 @@ class DataSet(models.Model):
         ("movement", "Movement"),
     ]
 
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True, null=True)
     label = models.CharField(max_length=200, blank=True, null=True)
     data_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
