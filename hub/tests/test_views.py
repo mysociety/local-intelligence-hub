@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
+from hub.models import DataSet
+
 
 class Test404Page(TestCase):
     def testRequireLoginOver404(self):
@@ -58,6 +60,7 @@ class TestAreaPage(TestCase):
         self.client.force_login(u)
 
     def test_area_page(self):
+        DataSet.objects.update(featured=True)
         url = reverse("area", args=("WMC", "South Borsetshire"))
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -90,6 +93,19 @@ class TestAreaPage(TestCase):
 
         context = response.context
         self.assertIsNone(context.get("mp"))
+
+    def test_featured_data(self):
+        ages = DataSet.objects.get(name="constituency_age_distribution")
+        ages.featured = True
+        ages.save()
+
+        url = reverse("area", args=("WMC", "South Borsetshire"))
+        response = self.client.get(url)
+
+        context = response.context
+        places = context["categories"]["place"]
+        self.assertEqual(len(places), 1)
+        self.assertEqual(places[0]["name"], "constituency_age_distribution")
 
 
 class TestAreaSearchPage(TestCase):

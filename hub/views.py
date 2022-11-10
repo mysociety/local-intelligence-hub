@@ -1,6 +1,7 @@
 import json
 from collections import defaultdict
 
+from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
@@ -76,13 +77,15 @@ class AreaView(TitleMixin, DetailView):
         except Person.DoesNotExist:
             pass
 
-        featured = []
         categories = defaultdict(list)
-        for data_set in DataSet.objects.order_by("order", "name").all():
+        for data_set in (
+            DataSet.objects.filter(featured=True).order_by("order", "name").all()
+        ):
             data = {
                 "name": str(data_set),
                 "label": data_set.label,
                 "source": data_set.source,
+                "category": data_set.category,
             }
             if data_set.is_range:
                 data["is_range"] = True
@@ -104,15 +107,22 @@ class AreaView(TitleMixin, DetailView):
                     data["data"] = area_data[0]
 
             if data.get("data", None) is not None:
-                if data_set.featured:
-                    featured.append(data)
-                elif data_set.category is not None:
+                if data_set.category is not None:
                     categories[data_set.category].append(data)
                 else:
                     categories["place"].append(data)
 
+        cat_counts = DataSet.objects.values("category").annotate(
+            categories=Count("category")
+        )
+        counts = {}
+        for count in cat_counts.all():
+            category = count["category"]
+            counts[category] = count["categories"]
+            counts[category] -= len(categories[category])
+
+        context["counts"] = counts
         context["categories"] = categories
-        context["featured"] = featured
         return context
 
 

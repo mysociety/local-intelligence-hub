@@ -105,146 +105,52 @@
         <h2 class="mt-5 mb-3 text-primary">Public opinion</h2>
 
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-            <div class="col d-flex flex-column">
-                <div class="card flex-grow-1 fake-data">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">Support for Net Zero</h5>
-                        <p class="card-text mb-0 display-6 lh-1 text-primary">72%</p>
-                        <p class="card-text mt-2 text-muted">68% national average</p>
-                    </div>
-                    <div class="card-footer bg-white">
-                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">MRP polling data from The Climate Coalition, 2022</a></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col d-flex flex-column">
-                <div class="card flex-grow-1 fake-data">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">Voting intention</h5>
-                        <p class="card-text fs-5 lh-1 fw-bold mb-0 mt-2 text-primary">51% Labour</p>
-                        <p class="card-text fs-5 lh-1 fw-bold mb-0 mt-2 text-primary">23% Conservative</p>
-                    </div>
-                    <div class="card-footer bg-white">
-                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">MRP polling data from The Climate Coalition, 2022</a></p>
-                    </div>
-                </div>
-            </div>
+        {% for category in categories.opinion %}
+            {% include 'hub/area/_place_data.html' with category=category %}
+        {% empty %}
+            {% include 'hub/area/_no_featured_data.html' %}
+        {% endfor %}
+            {% if counts.opinion > 0 %}
             <div class="col d-flex flex-column">
                 <a href="#" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
-                    <span>…12 more datasets available</span>
+                    <span>…{{ counts.opinion }} more datasets available</span>
                 </a>
             </div>
+            {% endif %}
         </div>
 
         <h2 class="mt-5 mb-3 text-primary">Place</h2>
 
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
         {% for category in categories.place %}
-            <div class="col d-flex flex-column">
-                <div class="card flex-grow-1">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">{{ category.name }}</h5>
-                        {% if category.is_range %}
-                          {% for range in category.data %}
-                            <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">Age band</th>
-                                        <th scope="col" data-color="#068670">This area</th>
-                                        <th scope="col" data-color="#ced4da">UK average</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                  {% for range in category.data %}
-                                    <tr>
-                                        <th>{{ range.data_type.label }}</th>
-                                        <td>{{ range.value|floatformat }}{% if range.is_percentage %}%{% endif %}</td>
-                                        <td>{{ range.data_type.average|floatformat }}{% if range.is_percentage %}%{% endif %}</td>
-                                    </tr>
-                                  {% endfor %}
-                                </tbody>
-                            </table>
-                            <p class="card-text mb-0 mt-2 lh-1">{{ range.data_type.label }}: {{ range.value|floatformat }}{% if range.is_percentage %}%{% endif %} ({{ range.data_type.average|floatformat }}{% if range.is_percentage %}%{% endif %})</p>
-                          {% endfor %}
-                          {% else %}
-                            {% if category.data.is_number %}
-                            <p class="card-text mb-0 display-6 lh-1 text-primary">{{ category.data.value|floatformat }}{% if category.data.is_percentage %}%{% endif %}</p>
-                                {% if category.data.data_type.average %}
-                                <p class="card-text mt-2 text-muted">{{ category.data.data_type.average|floatformat }}{% if category.data.is_percentage %}%{% endif %} national average</p>
-                                {% endif %}
-                            {% else %}
-                            <p class="card-text fs-5">{{ category.data.value }}</p>
-                                {% if category.data.data_type.average %}
-                                <p class="card-text mt-2 text-muted">{{ category.data.data_type.average }} national average</p>
-                                {% endif %}
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                    <div class="card-footer bg-white">
-                        <p class="card-text fs-8"><a href="{{ category.source }}" class="text-decoration-none text-muted">{{ data.source|domain_human }}</a></p>
-                    </div>
-                </div>
-            </div>
+            {% include 'hub/area/_place_data.html' with category=category %}
+        {% empty %}
+            {% include 'hub/area/_no_featured_data.html' %}
         {% endfor %}
-            <div class="col d-flex flex-column">
-                <div class="card flex-grow-1 fake-data">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">Local businesses</h5>
-                        <p class="card-text display-6 lh-1 mb-0 text-primary d-flex align-items-center">
-                            4% drop
-                            {% include 'hub/includes/icons/triangle-down.html' with classes="ms-2 flex-shrink-0 flex-grow-0 text-danger" %}
-                        </p>
-                        <p class="card-text mt-1">between 2021–2022</p>
-                    </div>
-                    <div class="card-footer bg-white">
-                        <p class="card-text fs-8"><a href="https://commonslibrary.parliament.uk/research-briefings/sn06152/" class="text-decoration-none text-muted">Data from House of Commons Library</a></p>
-                    </div>
-                </div>
-            </div>
+            {% if counts.place > 0 %}
             <div class="col d-flex flex-column">
                 <a href="#" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
-                    <span>…12 more datasets available</span>
+                    <span>…{{ counts.place }} more datasets available</span>
                 </a>
             </div>
+            {% endif %}
         </div>
 
         <h2 class="mt-5 mb-3 text-primary">Movement</h2>
 
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-            <div class="col d-flex flex-column fake-data">
-                <div class="card flex-grow-1">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">Friends of the Earth supporters</h5>
-                        <p class="card-text display-6 lh-1 text-primary">High</p>
-                    </div>
-                    <div class="card-footer bg-white">
-                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data from Friends of the Earth</a></p>
-                    </div>
-                    <div class="card-footer bg-yellow-100 d-flex align-items-center">
-                        {% include 'hub/includes/icons/tcc-heart.html' with width="1.25em" height="1.25em" classes="me-2 flex-shrink-0 flex-grow-0" %}
-                        <p class="mb-0 fs-7">
-                            Raw data available for <strong>TCC members</strong>
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div class="col d-flex flex-column">
-                <div class="card flex-grow-1 fake-data">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">Great Big Green Week</h5>
-                        <p class="card-text display-6 lh-1 text-primary mb-0">3 events</p>
-                        <p class="card-text mt-1">in 2022</p>
-                    </div>
-                    <div class="card-footer bg-white">
-                        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data from The Climate Coalition</a></p>
-                    </div>
-                </div>
-            </div>
+        {% for category in categories.movement %}
+            {% include 'hub/area/_place_data.html' with category=category %}
+        {% empty %}
+            {% include 'hub/area/_no_featured_data.html' %}
+        {% endfor %}
+            {% if counts.movement > 0 %}
             <div class="col d-flex flex-column">
                 <a href="#" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
-                    <span>…7 more datasets available</span>
+                    <span>…{{ counts.movement }} more datasets available</span>
                 </a>
             </div>
+            {% endif %}
         </div>
 
         <div class="mt-5 p-3 bg-white border rounded d-flex align-items-center">
