@@ -145,29 +145,32 @@
                     <div class="card-body">
                         <h5 class="card-title mb-3">{{ category.name }}</h5>
                         {% if category.is_range %}
-                        <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Age band</th>
-                                    <th scope="col" data-color="#068670">This area</th>
-                                    <th scope="col" data-color="#ced4da">UK average</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                              {% for range in category.data %}
-                                <tr>
-                                    <th>{{ range.data_type.label }}</th>
-                                    <td>{{ range.value|floatformat }}%</td>
-                                    <td>{{ range.data_type.average|floatformat }}%</td>
-                                </tr>
-                              {% endfor %}
-                            </tbody>
-                        </table>
-                      {% else %}
-                            {% if category.data.data_type.is_number %}
-                            <p class="card-text mb-0 display-6 lh-1 text-primary">{{ category.data.value|floatformat }}%</p>
+                          {% for range in category.data %}
+                            <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Age band</th>
+                                        <th scope="col" data-color="#068670">This area</th>
+                                        <th scope="col" data-color="#ced4da">UK average</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                  {% for range in category.data %}
+                                    <tr>
+                                        <th>{{ range.data_type.label }}</th>
+                                        <td>{{ range.value|floatformat }}{% if range.is_percentage %}%{% endif %}</td>
+                                        <td>{{ range.data_type.average|floatformat }}{% if range.is_percentage %}%{% endif %}</td>
+                                    </tr>
+                                  {% endfor %}
+                                </tbody>
+                            </table>
+                            <p class="card-text mb-0 mt-2 lh-1">{{ range.data_type.label }}: {{ range.value|floatformat }}{% if range.is_percentage %}%{% endif %} ({{ range.data_type.average|floatformat }}{% if range.is_percentage %}%{% endif %})</p>
+                          {% endfor %}
+                          {% else %}
+                            {% if category.data.is_number %}
+                            <p class="card-text mb-0 display-6 lh-1 text-primary">{{ category.data.value|floatformat }}{% if category.data.is_percentage %}%{% endif %}</p>
                                 {% if category.data.data_type.average %}
-                                <p class="card-text mt-2 text-muted">{{ category.data.data_type.average|floatformat }}% national average</p>
+                                <p class="card-text mt-2 text-muted">{{ category.data.data_type.average|floatformat }}{% if category.data.is_percentage %}%{% endif %} national average</p>
                                 {% endif %}
                             {% else %}
                             <p class="card-text fs-5">{{ category.data.value }}</p>

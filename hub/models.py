@@ -59,14 +59,30 @@ class DataType(models.Model):
     average = models.FloatField(blank=True, null=True)
     label = models.CharField(max_length=200, blank=True, null=True)
 
+    @property
     def is_number(self):
         if self.data_type in ("integer", "float", "percent"):
             return True
 
         return False
 
+    @property
     def is_percentage(self):
         if self.data_type == "percent":
+            return True
+
+        return False
+
+    @property
+    def is_float(self):
+        if self.data_type == "float" or self.data_type == "percent":
+            return True
+
+        return False
+
+    @property
+    def is_date(self):
+        if self.data_type == "date":
             return True
 
         return False
@@ -79,16 +95,32 @@ class CommonData(models.Model):
 
     def value(self):
         try:
-            if self.data_type.data_type == "date":
+            if self.is_date:
                 return self.date
-            elif self.data_type.data_type == "float" or self.data_type == "percent":
+            elif self.is_float:
                 return float(self.data)
-            elif self.data_type.data_type == "integer":
+            elif self.is_number:
                 return int(self.data)
         except ValueError:
             return self.data
 
         return self.data
+
+    @property
+    def is_number(self):
+        return self.data_type.is_number
+
+    @property
+    def is_percentage(self):
+        return self.data_type.is_percentage
+
+    @property
+    def is_float(self):
+        return self.data_type.is_float
+
+    @property
+    def is_date(self):
+        return self.data_type.is_date
 
     class Meta:
         abstract = True
