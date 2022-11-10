@@ -60,7 +60,13 @@ class DataType(models.Model):
     label = models.CharField(max_length=200, blank=True, null=True)
 
     def is_number(self):
-        if self.data_type in ("integer", "float"):
+        if self.data_type in ("integer", "float", "percent"):
+            return True
+
+        return False
+
+    def is_percentage(self):
+        if self.data_type == "percent":
             return True
 
         return False
@@ -75,7 +81,7 @@ class CommonData(models.Model):
         try:
             if self.data_type.data_type == "date":
                 return self.date
-            elif self.data_type.data_type == "float":
+            elif self.data_type.data_type == "float" or self.data_type == "percent":
                 return float(self.data)
             elif self.data_type.data_type == "integer":
                 return int(self.data)

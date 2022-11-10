@@ -26,7 +26,7 @@ class Command(BaseCommand):
             defaults={
                 "label": "Households in Fuel Poverty",
                 "description": "Percentage of Households in Fuel Poverty",
-                "data_type": "float",
+                "data_type": "percent",
                 "category": "place",
                 "source": self.data_url,
             },
@@ -36,7 +36,7 @@ class Command(BaseCommand):
             data_set=data_set,
             name="fuel_poverty",
             defaults={
-                "data_type": "float",
+                "data_type": "percent",
                 "label": "Households in Fuel Poverty",
             },
         )

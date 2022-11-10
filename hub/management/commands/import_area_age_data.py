@@ -23,7 +23,7 @@ class Command(BaseCommand):
         defaults = {
             "label": "Constituency Age Distribution",
             "description": "Constituency Age Distribution",
-            "data_type": "float",
+            "data_type": "percent",
             "category": "place",
             "source": self.data_url,
             "is_range": True,
@@ -42,11 +42,13 @@ class Command(BaseCommand):
             age_group = row["Age group"]
             gss = row["ONSConstID"]
 
-            data_type, created = DataType.objects.get_or_create(
+            data_type, created = DataType.objects.update_or_create(
                 data_set=data_set,
                 name=f"ages_{age_group}",
-                data_type="float",
-                label=f"Ages {age_group}",
+                defaults={
+                    "data_type": "percent",
+                    "label": f"Ages {age_group}",
+                },
             )
 
             try:
