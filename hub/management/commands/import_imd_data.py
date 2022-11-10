@@ -21,6 +21,7 @@ class Command(BaseCommand):
             "label": "Index of Multiple Deprivation",
             "type": "integer",
             "data_column": "pcon-imd-pop-quintile",
+            "category": "place",
         },
         {
             "repo_name": "uk_ruc",
@@ -32,6 +33,7 @@ class Command(BaseCommand):
             "label": "Urban Rural Classification",
             "type": "text",
             "data_column": "ruc-cluster-label",
+            "category": "place",
         },
     ]
 
@@ -56,17 +58,24 @@ class Command(BaseCommand):
         for package in self.packages:
             df = pd.read_csv(self.get_package_url(package))
 
-            data_set, created = DataSet.objects.get_or_create(
+            data_set, created = DataSet.objects.update_or_create(
                 name=package["name"],
-                data_type=package["type"],
-                source=package["source"],
+                defaults={
+                    "data_type": package["type"],
+                    "source": package["source"],
+                    "label": package["label"],
+                    "description": package["label"],
+                    "category": package["category"],
+                },
             )
 
-            data_type, created = DataType.objects.get_or_create(
+            data_type, created = DataType.objects.update_or_create(
                 data_set=data_set,
                 name=package["name"],
-                data_type=package["type"],
-                label=package["label"],
+                defaults={
+                    "data_type": package["type"],
+                    "label": package["label"],
+                },
             )
 
             if not self._quiet:
@@ -82,8 +91,8 @@ class Command(BaseCommand):
                     self.stdout.write(f"Failed to find area with code {gss}")
                     continue
 
-                AreaData.objects.get_or_create(
+                AreaData.objects.update_or_create(
                     data_type=data_type,
                     area=area,
-                    data=row[package["data_column"]],
+                    defaults={"data": row[package["data_column"]]},
                 )

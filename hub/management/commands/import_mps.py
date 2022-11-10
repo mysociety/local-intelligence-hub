@@ -56,24 +56,35 @@ class Command(BaseCommand):
 
     def import_mps(self):
         data = self.get_mp_data()
-        type_names = ["parlid", "twfyid", "twitter", "facebook", "wikipedia", "party"]
+        type_names = {
+            "parlid": {"label": "Parliament ID"},
+            "twfyid": {"label": "TheyWorkForYou ID"},
+            "twitter": {"label": "Twitter username"},
+            "facebook": {"label": "Facebook username"},
+            "wikipedia": {"label": "Wikipedia article"},
+            "party": {"label": "Political Party"},
+        }
         data_types = {}
         if not self._quiet:
             print("Importing type names")
-        for data_type in tqdm(type_names, disable=self._quiet):
-            ds, created = DataSet.objects.get_or_create(
+        for data_type, props in tqdm(type_names.items(), disable=self._quiet):
+            ds, created = DataSet.objects.update_or_create(
                 name=data_type,
-                data_type="profile_id",
-                source="https://en.wikipedia.org/",
+                defaults={
+                    "data_type": "profile_id",
+                    "description": props["label"],
+                    "label": props["label"],
+                    "source": "https://en.wikipedia.org/",
+                },
             )
             dt, created = DataType.objects.get_or_create(
                 data_set=ds,
                 name=data_type,
-                data_type="profile_id",
+                defaults={"label": props["label"], "data_type": "profile_id"},
             )
             data_types[data_type] = dt
 
-        type_names.remove("party")
+        del type_names["party"]
 
         if not self._quiet:
             print("Importing MPs")
@@ -89,28 +100,50 @@ class Command(BaseCommand):
                 continue
 
             if area:
-                person, created = Person.objects.get_or_create(
+                person, created = Person.objects.update_or_create(
                     person_type="MP",
                     external_id=mp["parlid"]["value"],
                     id_type="parlid",
-                    name=mp["personLabel"]["value"],
-                    area=area,
+                    defaults={
+                        "name": mp["personLabel"]["value"],
+                        "area": area,
+                    },
                 )
 
             if person:
-                for prop in type_names:
+                for prop in type_names.keys():
                     if prop in mp:
+                        try:
+                            PersonData.objects.update_or_create(
+                                person=person,
+                                data_type=data_types[prop],
+                                defaults={"data": mp[prop]["value"]},
+                            )
+                        except PersonData.MultipleObjectsReturned:  # pragma: no cover
+                            PersonData.objects.filter(
+                                person=person, data_type=data_types[prop]
+                            ).delete()
+                            PersonData.objects.create(
+                                person=person,
+                                data_type=data_types[prop],
+                                data=mp[prop]["value"],
+                            )
+                if "partyLabel" in mp:
+                    try:
                         PersonData.objects.get_or_create(
                             person=person,
-                            data_type=data_types[prop],
-                            data=mp[prop]["value"],
+                            data_type=data_types["party"],
+                            defaults={"data": mp["partyLabel"]["value"]},
                         )
-                if "partyLabel" in mp:
-                    PersonData.objects.get_or_create(
-                        person=person,
-                        data_type=data_types["party"],
-                        data=mp["partyLabel"]["value"],
-                    )
+                    except PersonData.MultipleObjectsReturned:  # pragma: no cover
+                        PersonData.objects.filter(
+                            person=person, data_type=data_types["party"]
+                        ).delete()
+                        PersonData.objects.create(
+                            person=person,
+                            data_type=data_types["party"],
+                            data=mp["partyLabel"]["value"],
+                        )
 
     def import_mp_images(self):
         path = settings.MEDIA_ROOT / "person"

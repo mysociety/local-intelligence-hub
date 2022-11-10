@@ -20,11 +20,18 @@ class Command(BaseCommand):
         self._quiet = quiet
         df = pd.read_excel(self.data_url, sheet_name="Age group data")
 
-        data_set, created = DataSet.objects.get_or_create(
+        defaults = {
+            "label": "Constituency Age Distribution",
+            "description": "Constituency Age Distribution",
+            "data_type": "float",
+            "category": "place",
+            "source": self.data_url,
+            "is_range": True,
+        }
+
+        data_set, created = DataSet.objects.update_or_create(
             name="constituency_age_distribution",
-            data_type="float",
-            source=self.data_url,
-            is_range=True,
+            defaults=defaults,
         )
 
         averages = {}
@@ -50,10 +57,10 @@ class Command(BaseCommand):
 
             averages[data_type.name] = row["UK%"] * 100
 
-            AreaData.objects.get_or_create(
+            AreaData.objects.update_or_create(
                 data_type=data_type,
                 area=area,
-                data=row["Const%"] * 100,
+                defaults={"data": row["Const%"] * 100},
             )
 
         for name, average in averages.items():

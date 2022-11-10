@@ -21,17 +21,24 @@ class Command(BaseCommand):
         df = pd.read_excel(self.data_url, sheet_name="Table 4", skiprows=2)
         df = df.dropna(axis="index", how="any")
 
-        data_set, created = DataSet.objects.get_or_create(
+        data_set, created = DataSet.objects.update_or_create(
             name="constituency_fuel_poverty",
-            data_type="float",
-            source=self.data_url,
+            defaults={
+                "label": "Households in Fuel Poverty",
+                "description": "Percentage of Households in Fuel Poverty",
+                "data_type": "float",
+                "category": "place",
+                "source": self.data_url,
+            },
         )
 
-        data_type, created = DataType.objects.get_or_create(
+        data_type, created = DataType.objects.update_or_create(
             data_set=data_set,
             name="fuel_poverty",
-            data_type="float",
-            label="Percentage houses in fuel poverty",
+            defaults={
+                "data_type": "float",
+                "label": "Households in Fuel Poverty",
+            },
         )
 
         total = 0
@@ -50,10 +57,10 @@ class Command(BaseCommand):
             total += float(row["Proportion of households fuel poor (%)"])
             count += 1
 
-            AreaData.objects.get_or_create(
+            AreaData.objects.update_or_create(
                 data_type=data_type,
                 area=area,
-                data=row["Proportion of households fuel poor (%)"],
+                defaults={"data": row["Proportion of households fuel poor (%)"]},
             )
 
         average = total / count

@@ -46,44 +46,52 @@ class Command(BaseCommand):
                 ]["membershipStartDate"]
             except requests.RequestException:  # pragma: no cover
                 print(f"problem fetching info for {mp.name} with id {mp.external_id}")
+            except KeyError:  # pragma: no cover
+                print(f"no results for {mp.name} with {mp.external_id}")
 
         return results
 
     def create_data_types(self):
-        majority_ds, created = DataSet.objects.get_or_create(
+        majority_ds, created = DataSet.objects.update_or_create(
             name="mp_election_majority",
-            data_type="integer",
-            description="Majority at last election",
-            source="https://members-api.parliament.uk/",
+            defaults={
+                "data_type": "integer",
+                "description": "Majority at last election",
+                "source": "https://members-api.parliament.uk/",
+            },
         )
-        majority, created = DataType.objects.get_or_create(
+        majority, created = DataType.objects.update_or_create(
             data_set=majority_ds,
             name="mp_election_majority",
-            data_type="integer",
+            defaults={"data_type": "integer"},
         )
 
-        last_elected_ds, created = DataSet.objects.get_or_create(
+        last_elected_ds, created = DataSet.objects.update_or_create(
             name="mp_last_elected",
-            data_type="date",
-            description="Date of last election for an MP",
-            source="https://members-api.parliament.uk/",
+            defaults={
+                "data_type": "date",
+                "description": "Date of last election for an MP",
+                "source": "https://members-api.parliament.uk/",
+            },
         )
-        last_elected, created = DataType.objects.get_or_create(
+        last_elected, created = DataType.objects.update_or_create(
             data_set=last_elected_ds,
             name="mp_last_elected",
-            data_type="date",
+            defaults={"data_type": "date"},
         )
 
-        first_elected_ds, created = DataSet.objects.get_or_create(
+        first_elected_ds, created = DataSet.objects.update_or_create(
             name="mp_first_elected",
-            data_type="date",
-            description="Date an MP was first elected to current position",
-            source="https://members-api.parliament.uk/",
+            defaults={
+                "data_type": "date",
+                "description": "Date an MP was first elected to current position",
+                "source": "https://members-api.parliament.uk/",
+            },
         )
-        first_elected, created = DataType.objects.get_or_create(
+        first_elected, created = DataType.objects.update_or_create(
             data_set=first_elected_ds,
             name="mp_first_elected",
-            data_type="date",
+            defaults={"data_type": "date"},
         )
 
         return {
@@ -103,15 +111,19 @@ class Command(BaseCommand):
                     # we need to add them
                     if date.tzinfo is None:
                         date = date.replace(tzinfo=timezone.utc)
-                    data, created = PersonData.objects.get_or_create(
+                    data, created = PersonData.objects.update_or_create(
                         person=person,
                         data_type=data_type,
-                        data="",
-                        date=date,
+                        defaults={
+                            "data": "",
+                            "date": date,
+                        },
                     )
                 else:
-                    data, created = PersonData.objects.get_or_create(
-                        person=person, data_type=data_type, data=result[key]
+                    data, created = PersonData.objects.update_or_create(
+                        person=person,
+                        data_type=data_type,
+                        defaults={"data": result[key]},
                     )
 
     def import_results(self):
