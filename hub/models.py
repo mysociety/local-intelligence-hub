@@ -2,6 +2,12 @@ from django.db import models
 
 
 class DataSet(models.Model):
+    SOURCE_CHOICES = [
+        ("csv", "CSV File"),
+        ("xlxs", "Excel File"),
+        ("api", "External API"),
+    ]
+
     TYPE_CHOICES = [
         ("text", "Text"),
         ("integer", "Integer"),
@@ -23,7 +29,13 @@ class DataSet(models.Model):
     label = models.CharField(max_length=200, blank=True, null=True)
     data_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     last_update = models.DateTimeField(auto_now=True)
+    source_label = models.TextField(max_length=300, blank=True, null=True)
     source = models.CharField(max_length=200)
+    source_type = models.TextField(
+        max_length=50, blank=True, null=True, choices=SOURCE_CHOICES
+    )
+    data_url = models.URLField(blank=True, null=True)
+    is_upload = models.BooleanField(default=False)
     is_range = models.BooleanField(default=False)
     featured = models.BooleanField(default=False)
     order = models.IntegerField(blank=True, null=True)

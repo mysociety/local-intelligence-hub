@@ -42,6 +42,10 @@ class DataSetAdmin(admin.ModelAdmin):
                 "category",
                 "name",
                 "source",
+                "source_label",
+                "data_url",
+                "source_type",
+                "is_upload",
             )
 
         return fields
