@@ -9,6 +9,7 @@ from hub.models import Area, AreaData, DataSet, DataType
 class Command(BaseCommand):
     help = "Import data about area age spread"
 
+    source_url = "https://commonslibrary.parliament.uk/constituency-statistics-population-by-age/"
     data_url = "https://data.parliament.uk/resources/constituencystatistics/PowerBIData/Demography/Population.xlsx"
 
     def add_arguments(self, parser):
@@ -25,8 +26,10 @@ class Command(BaseCommand):
             "description": "Constituency Age Distribution",
             "data_type": "percent",
             "category": "place",
-            "source": self.data_url,
             "is_range": True,
+            "source_label": "House of Commons Library",
+            "source": self.source_url,
+            "source_type": "xlxs",
         }
 
         data_set, created = DataSet.objects.update_or_create(

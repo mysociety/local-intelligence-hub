@@ -9,6 +9,9 @@ from hub.models import Area, AreaData, DataSet, DataType
 class Command(BaseCommand):
     help = "Import data about area fuel poverty"
 
+    source_url = (
+        "https://www.gov.uk/government/statistics/sub-regional-fuel-poverty-data-2022"
+    )
     data_url = "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1081191/sub-regional-fuel-poverty-2022-tables.xlsx"
 
     def add_arguments(self, parser):
@@ -28,7 +31,10 @@ class Command(BaseCommand):
                 "description": "Percentage of Households in Fuel Poverty",
                 "data_type": "percent",
                 "category": "place",
-                "source": self.data_url,
+                "source_label": "Department for Business, Energy & Industrial Strategy",
+                "source": self.source_url,
+                "source_type": "xlxs",
+                "data_url": self.data_url,
             },
         )
 

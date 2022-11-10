@@ -17,6 +17,7 @@ class Command(BaseCommand):
             "version_name": "3.0.0",
             "file_name": "constituency_imd.csv",
             "source": "https://mysociety.github.io/composite_uk_imd/",
+            "source_label": "mySociety",
             "name": "constituency_imd",
             "label": "Index of Multiple Deprivation",
             "type": "integer",
@@ -28,6 +29,7 @@ class Command(BaseCommand):
             "package_name": "uk_ruc",
             "version_name": "2.0.0",
             "file_name": "pcon_ruc.csv",
+            "source_label": "mySociety",
             "source": "https://mysociety.github.io/uk_ruc/",
             "name": "constituency_ruc",
             "label": "Urban Rural Classification",
@@ -56,13 +58,17 @@ class Command(BaseCommand):
         self._quiet = quiet
 
         for package in self.packages:
-            df = pd.read_csv(self.get_package_url(package))
+            url = self.get_package_url(package)
+            df = pd.read_csv(url)
 
             data_set, created = DataSet.objects.update_or_create(
                 name=package["name"],
                 defaults={
                     "data_type": package["type"],
                     "source": package["source"],
+                    "source_label": package["source_label"],
+                    "source_type": "csv",
+                    "data_url": url,
                     "label": package["label"],
                     "description": package["label"],
                     "category": package["category"],
