@@ -1,0 +1,20 @@
+// Fallback styling, for if chart doesn’t work.
+table.js-chart {
+    margin-bottom: 0;
+
+    tr > :first-child {
+        padding-left: 0;
+    }
+
+    tr > :last-child {
+        padding-right: 0;
+    }
+
+    tbody tr:last-child > * {
+        border-bottom: none;
+    }
+
+    canvas + & {
+        @include visually-hidden;
+    }
+}

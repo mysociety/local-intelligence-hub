@@ -1,6 +1,18 @@
 import * as _ from '../underscore/underscore.esm.min.js'
 import $ from '../jquery/jquery.esm.js'
 import L from '../leaflet/leaflet-1.8.0.esm.js'
+import { Chart, registerables } from '../chartjs/chart.esm.js'
+
+Chart.register(...registerables);
+
+Chart.defaults.font.family = '"Public Sans", sans-serif'
+Chart.defaults.font.size = 12
+Chart.defaults.plugins.legend.labels.boxHeight = 10
+Chart.defaults.plugins.legend.labels.boxWidth = 20
+Chart.defaults.plugins.legend.labels.padding = 20
+Chart.defaults.animation.duration = 0
+Chart.defaults.responsive = true
+Chart.defaults.interaction.mode = null
 
 $(function(){
     if( 'geolocation' in navigator ) {
@@ -40,6 +52,8 @@ $(function(){
 
     window.map = setUpMap()
 
+    $('.js-chart').each(makeChart);
+
     if ( $('.fake-data').length ) {
         var $warning = $(`<div class="fake-data-warning alert alert-danger mb-0">
             <div class="container">
@@ -65,6 +79,74 @@ $(function(){
         $('head').append('<link href="https://fonts.googleapis.com/css2?family=Redacted+Script" rel="stylesheet">')
     }
 })
+
+var makeChart = function() {
+    var $table = $(this)
+    var chartType = $table.data('chart-type') || 'bar'
+    var chartWidth = $table.data('chart-width') || 600
+    var rowHeight = $table.data('row-height') || 45
+    var legendHeight = 40
+    var labelHeight = 20
+    var $canvas = $('<canvas>').attr({
+        'width': chartWidth,
+        'height': (rowHeight * $table.find('tbody tr').length) + legendHeight + labelHeight,
+        'class': 'mt-n3',
+        'role': 'img',
+        'aria-label': chartType + ' chart'
+    }).insertBefore($table)
+
+    var primaryAxis = $table.data('chart-direction') || 'x'
+    var crossAxis = ( primaryAxis == 'x' ) ? 'y' : 'x'
+
+    var config = {
+        type: chartType,
+        data: {
+            labels: extractLabelsFromTable($table),
+            datasets: extractDatasetsFromTable($table, primaryAxis)
+        },
+        options: {
+            indexAxis: primaryAxis,
+            scales: {
+                [crossAxis]: {
+                    ticks: {
+                        callback: function (value) {
+                            return (value / 100).toLocaleString('en-GB', { style: 'percent' })
+                        }
+                    }
+                },
+                [primaryAxis]: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    }
+
+    new Chart($canvas, config)
+}
+
+var extractLabelsFromTable = function($table) {
+    return $table.find('tbody tr').map(function(){
+        return $(this).find('th').text()
+    }).get()
+}
+
+var extractDatasetsFromTable = function($table, primaryAxis) {
+    return $table.find('thead th').not(':first-child').map(function(i){
+        var $th = $(this)
+        return {
+            label: $(this).text(),
+            axis: primaryAxis,
+            data: $table.find('tbody tr').map(function(){
+                return parseInt( $(this).children().eq(i + 1).text() )
+            }).get(),
+            backgroundColor: $th.data('color'),
+            barPercentage: 1,
+            categoryPercentage: 0.7
+        }
+    }).get()
+}
 
 var getAreaColor = function(feature) {
     return '#ed6832'

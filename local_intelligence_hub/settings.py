@@ -152,6 +152,7 @@ STATICFILES_DIRS = [
     BASE_DIR / "hub" / "static",
     ("bootstrap", BASE_DIR / "vendor" / "bootstrap" / "scss"),
     ("bootstrap", BASE_DIR / "vendor" / "bootstrap" / "js"),
+    ("chartjs", BASE_DIR / "vendor" / "chartjs" / "js"),
     ("underscore", BASE_DIR / "vendor" / "underscore" / "js"),
     ("jquery", BASE_DIR / "vendor" / "jquery" / "js"),
     ("leaflet", BASE_DIR / "vendor" / "leaflet" / "js"),
