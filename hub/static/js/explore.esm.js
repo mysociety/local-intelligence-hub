@@ -74,6 +74,29 @@ const app = createApp({
     removeShader(_shaderName) {
       this.shader = null
     },
+    state() {
+      const state = {}
+
+      this.filters.forEach(function(d) {
+        state[`${d.name}__${d.selectedComparator}`] = d.selectedValue
+      })
+
+      if (this.shader) { state['shader'] = this.shader.name }
+
+      return state
+    },
+    url() {
+      const url = new URL(window.location.origin + window.location.pathname)
+
+      for (const [key, value] of Object.entries(this.state())) {
+        url.searchParams.set(key, value)
+      }
+
+      return url
+    },
+    updateState() {
+      window.history.replaceState(this.state(), '', this.url())
+    },
   }
 })
 
