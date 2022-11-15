@@ -52,11 +52,12 @@ const app = createApp({
       }
       this.modal.hide()
     },
-    addFilter(datasetName) {
+    addFilter(datasetName, current = {}) {
       const dataset = this.getDataset(datasetName)
 
-      dataset.selectedComparator = Object.keys(dataset.comparators)[0]
-      dataset.selectedValue = dataset.defaultValue || dataset.options[0]
+      dataset.selectedComparator = current.comparator ||
+        Object.keys(dataset.comparators)[0]
+      dataset.selectedValue = current.value || dataset.defaultValue
 
       if (!dataset.selectedValue && dataset.options) {
         dataset.selectedValue = dataset.options[0]
