@@ -18,6 +18,7 @@ const app = createApp({
     memberDatasets() { return this.datasets.filter(d => d.scope === 'member') },
   },
   mounted() {
+    this.restoreState()
     this.$refs.filtersContainer.removeAttribute('hidden')
     this.$refs.shaderContainer.removeAttribute('hidden')
   },
@@ -96,6 +97,24 @@ const app = createApp({
     },
     updateState() {
       window.history.replaceState(this.state(), '', this.url())
+    },
+    restoreState() {
+      const params = new URL(window.location).searchParams
+      const pending = {}
+
+      for (const [key, value] of params.entries()) {
+        if (key == 'shader') {
+          pending[value] = () => { this.addShader(value) }
+        } else {
+          const index = key.indexOf('__')
+          const name = key.slice(0, index)
+          const comparator = key.slice(index + 2)
+          pending[name] = () => { this.addFilter(name, { comparator, value }) }
+        }
+      }
+
+      const request = this.loadDatasets(Object.keys(pending))
+      for (let i in pending) { request.then(pending[i]) }
     },
   }
 })
