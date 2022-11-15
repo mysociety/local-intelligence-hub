@@ -23,7 +23,9 @@
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
         {% for data in category_data %}
             {% if category == 'opinion' %}
-                {% include 'hub/area/_place_data.html' with category=data %}
+              {% for q in data.data %}
+                {% include 'hub/area/_opinion_data.html' with category=data item=q %}
+              {% endfor %}
             {% elif category == 'place' %}
                 {% include 'hub/area/_place_data.html' with category=data %}
             {% elif category == 'movement' %}

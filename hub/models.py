@@ -147,6 +147,14 @@ class CommonData(models.Model):
         return self.data
 
     @property
+    def average(self):
+        return self.data_type.average
+
+    @property
+    def label(self):
+        return self.data_type.label
+
+    @property
     def is_number(self):
         return self.data_type.is_number
 

@@ -83,6 +83,17 @@ class BaseAreaView(TitleMixin, DetailView):
             )
 
             data["data"] = data_range.all()
+        elif data_set.category == "opinion":
+            data_range = (
+                AreaData.objects.filter(
+                    area=self.object,
+                    data_type__data_set__name=data_set.name,
+                )
+                .select_related("data_type")
+                .order_by("data_type__order", "data_type__label")
+            )
+
+            data["data"] = data_range.all()
         else:
             area_data = AreaData.objects.filter(
                 area=self.object, data_type__data_set__name=data_set.name

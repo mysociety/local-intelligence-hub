@@ -1,0 +1,12 @@
+<div class="col d-flex flex-column">
+    <div class="card flex-grow-1">
+        <div class="card-body">
+            <h5 class="card-title mb-3">{{ item.label }}</h5>
+            <p class="card-text mb-0 display-6 lh-1 text-primary">{{ item.value }}%</p>
+            <p class="card-text mt-2 text-muted">{{ item.average|floatformat }}% national average</p>
+        </div>
+        <div class="card-footer bg-white">
+            <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">{{ category.source }}</a></p>
+        </div>
+    </div>
+</div>

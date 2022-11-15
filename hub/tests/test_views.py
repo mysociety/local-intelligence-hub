@@ -86,6 +86,13 @@ class TestAreaPage(TestCase):
         fuel_poverty = places[1]
         self.assertEqual(fuel_poverty["data"].value(), 12.4321)
 
+        opinion = context["categories"]["opinion"]
+        self.assertEqual(len(opinion), 1)
+
+        support = opinion[0]
+        self.assertEqual(len(support["data"]), 2)
+        self.assertEqual(support["data"][0].value(), 75)
+
     def test_area_page_no_mp(self):
         url = reverse("area", args=("WMC", "Borsetshire East"))
         response = self.client.get(url)

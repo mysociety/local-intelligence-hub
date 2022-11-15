@@ -23,6 +23,17 @@
     }
   },
   {
+    "model": "hub.dataset",
+    "pk": 7,
+    "fields": {
+      "name": "constituency_polling_data",
+      "data_type": "percent",
+      "last_update": "2022-10-10T13:20:30+00:00",
+      "source": "http://example.org/polling",
+      "category": "opinion"
+    }
+  },
+  {
     "model": "hub.datatype",
     "pk": 5,
     "fields": {
@@ -53,6 +64,28 @@
     }
   },
   {
+    "model": "hub.datatype",
+    "pk": 8,
+    "fields": {
+      "data_set": 7,
+      "name": "wind_support",
+      "data_type": "percent",
+      "last_update": "2022-10-10T13:20:30+00:00",
+      "order": 2
+    }
+  },
+  {
+    "model": "hub.datatype",
+    "pk": 9,
+    "fields": {
+      "data_set": 7,
+      "name": "solar_support",
+      "data_type": "percent",
+      "last_update": "2022-10-10T13:20:30+00:00",
+      "order": 1
+    }
+  },
+  {
     "model": "hub.areadata",
     "pk": 1,
     "fields": {
@@ -77,6 +110,24 @@
       "area": 1,
       "data_type": 7,
       "data": "12.4321"
+    }
+  },
+  {
+    "model": "hub.areadata",
+    "pk": 4,
+    "fields": {
+      "area": 1,
+      "data_type": 8,
+      "data": "70"
+    }
+  },
+  {
+    "model": "hub.areadata",
+    "pk": 5,
+    "fields": {
+      "area": 1,
+      "data_type": 9,
+      "data": "75"
     }
   }
 ]
