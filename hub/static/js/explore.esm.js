@@ -22,8 +22,9 @@ const app = createApp({
     this.$refs.shaderContainer.removeAttribute('hidden')
   },
   methods: {
-    loadDatasets() {
+    loadDatasets(datasets = []) {
       const url = new URL(window.location.origin + '/explore/datasets.json')
+      if (datasets.length > 0) { url.searchParams.set('datasets', datasets) }
 
       return fetch(url.href)
         .then(response => response.json())
