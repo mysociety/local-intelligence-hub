@@ -90,6 +90,8 @@ class DataType(models.Model):
     last_update = models.DateTimeField(auto_now=True)
     average = models.FloatField(blank=True, null=True)
     label = models.CharField(max_length=200, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    order = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
         if self.label:
