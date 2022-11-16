@@ -7,7 +7,8 @@
       "data_type": "float",
       "last_update": "2022-10-10T13:20:30+00:00",
       "is_range": "True",
-      "source": "https://parliament.uk"
+      "source": "https://parliament.uk",
+      "category": "place"
     }
   },
   {
@@ -17,7 +18,8 @@
       "name": "constituency_fuel_poverty",
       "data_type": "float",
       "last_update": "2022-10-10T13:20:30+00:00",
-      "source": "https://parliament.uk"
+      "source": "https://parliament.uk",
+      "category": "place"
     }
   },
   {

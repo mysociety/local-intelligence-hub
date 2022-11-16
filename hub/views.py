@@ -51,9 +51,8 @@ class ExploreView(TitleMixin, TemplateView):
     template_name = "hub/explore.html"
 
 
-class AreaView(TitleMixin, DetailView):
+class BaseAreaView(TitleMixin, DetailView):
     model = Area
-    template_name = "hub/area.html"
     context_object_name = "area"
 
     def get_object(self):
@@ -63,6 +62,41 @@ class AreaView(TitleMixin, DetailView):
 
     def get_page_title(self):
         return self.object.name
+
+    def process_dataset(self, data_set):
+        data = {
+            "name": str(data_set),
+            "label": data_set.label,
+            "source": data_set.source_name,
+            "source_url": data_set.source_url,
+            "category": data_set.category,
+        }
+        if data_set.is_range:
+            data["is_range"] = True
+            data_range = (
+                AreaData.objects.filter(
+                    area=self.object,
+                    data_type__data_set__name=data_set.name,
+                )
+                .select_related("data_type")
+                .order_by("data_type__name")
+            )
+
+            data["data"] = data_range.all()
+        else:
+            area_data = AreaData.objects.filter(
+                area=self.object, data_type__data_set__name=data_set.name
+            ).select_related("data_type")
+            if area_data:
+                data["data"] = area_data[0]
+
+        return data
+
+
+class AreaView(BaseAreaView):
+    model = Area
+    template_name = "hub/area.html"
+    context_object_name = "area"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -81,31 +115,7 @@ class AreaView(TitleMixin, DetailView):
         for data_set in (
             DataSet.objects.filter(featured=True).order_by("order", "name").all()
         ):
-            data = {
-                "name": str(data_set),
-                "label": data_set.label,
-                "source": data_set.source_name,
-                "source_url": data_set.source_url,
-                "category": data_set.category,
-            }
-            if data_set.is_range:
-                data["is_range"] = True
-                data_range = (
-                    AreaData.objects.filter(
-                        area=self.object,
-                        data_type__data_set__name=data_set.name,
-                    )
-                    .select_related("data_type")
-                    .order_by("data_type__name")
-                )
-
-                data["data"] = data_range.all()
-            else:
-                area_data = AreaData.objects.filter(
-                    area=self.object, data_type__data_set__name=data_set.name
-                ).select_related("data_type")
-                if area_data:
-                    data["data"] = area_data[0]
+            data = self.process_dataset(data_set)
 
             if data.get("data", None) is not None:
                 if data_set.category is not None:
@@ -113,8 +123,15 @@ class AreaView(TitleMixin, DetailView):
                 else:
                     categories["place"].append(data)
 
-        cat_counts = DataSet.objects.values("category").annotate(
-            categories=Count("category")
+        data_sets = (
+            AreaData.objects.filter(area=self.object)
+            .distinct("data_type__data_set__id")
+            .values_list("data_type__data_set__id", flat=True)
+        )
+        cat_counts = (
+            DataSet.objects.filter(pk__in=data_sets)
+            .values("category")
+            .annotate(categories=Count("category"))
         )
         counts = {}
         for count in cat_counts.all():
@@ -124,6 +141,33 @@ class AreaView(TitleMixin, DetailView):
 
         context["counts"] = counts
         context["categories"] = categories
+        return context
+
+
+class AreaCategoryView(BaseAreaView):
+    model = Area
+    template_name = "hub/category.html"
+    context_object_name = "area"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        category = self.kwargs.get("category")
+
+        category_data = []
+        for data_set in (
+            DataSet.objects.filter(category=category)
+            .order_by("-featured", "order", "name")
+            .all()
+        ):
+            data = self.process_dataset(data_set)
+
+            if data.get("data", None) is not None:
+                category_data.append(data)
+
+        context["category_data"] = category_data
+        context["category"] = category
+        context["category_title"] = category.capitalize()
+
         return context
 
 

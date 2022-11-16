@@ -112,7 +112,7 @@
         {% endfor %}
             {% if counts.opinion > 0 %}
             <div class="col d-flex flex-column">
-                <a href="#" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
+                <a href="{% url 'area_category' area.area_type area.name 'opinion' %}#" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
                     <span>…{{ counts.opinion }} more datasets available</span>
                 </a>
             </div>
@@ -129,7 +129,7 @@
         {% endfor %}
             {% if counts.place > 0 %}
             <div class="col d-flex flex-column">
-                <a href="#" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
+                <a href="{% url 'area_category' area.area_type area.name 'place' %}" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
                     <span>…{{ counts.place }} more datasets available</span>
                 </a>
             </div>
@@ -146,7 +146,7 @@
         {% endfor %}
             {% if counts.movement > 0 %}
             <div class="col d-flex flex-column">
-                <a href="#" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
+                <a href="{% url 'area_category' area.area_type area.name 'movement' %}" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
                     <span>…{{ counts.movement }} more datasets available</span>
                 </a>
             </div>
