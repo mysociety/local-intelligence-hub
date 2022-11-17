@@ -1,0 +1,8 @@
+<h2 class="mt-5 mb-3 text-gray-500">{{ name }}</h2>
+<div class="alert alert-secondary" role="alert">
+    <div class="d-flex align-items-start mb-2">
+        {% include 'hub/includes/icons/exclamation.html' with classes="flex-grow-0 me-2" %}
+        <p class="h6 mb-0">No {{ name|lower }} datasets available</p>
+    </div>
+    <p class="mb-0 fs-7">You are seeing this message because <code class="alert-link">categories.{{variable}}</code> and <code class="alert-link">counts.{{variable}}</code> are both empty, and <a href="https://docs.djangoproject.com/en/4.1/ref/settings/#std-setting-DEBUG" class="alert-link"><code>DEBUG</code> mode</a> is active.</p>
+</div>

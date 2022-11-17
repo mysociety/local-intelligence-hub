@@ -19,7 +19,6 @@
     <div class="container mb-5">
 
         <h2 class="mb-3 text-primary">MP</h2>
-
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             <div class="col d-flex flex-column">
                 <div class="card flex-grow-1">
@@ -95,63 +94,61 @@
                     </div>
                 </div>
             </div>
-            <div class="col d-flex flex-column">
-                <a href="#" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
-                    <span>…3 more datasets available</span>
-                </a>
-            </div>
         </div>
 
+      {% if categories.opinion or counts.opinion %}
         <h2 class="mt-5 mb-3 text-primary">Public opinion</h2>
-
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        {% for category in categories.opinion %}
+          {% for category in categories.opinion %}
             {% include 'hub/area/_place_data.html' with category=category %}
-        {% empty %}
-            {% include 'hub/area/_no_featured_data.html' %}
-        {% endfor %}
-            {% if counts.opinion > 0 %}
+          {% endfor %}
+          {% if counts.opinion > 0 %}
             <div class="col d-flex flex-column">
                 <a href="{% url 'area_category' area.area_type area.name 'opinion' %}#" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
-                    <span>…{{ counts.opinion }} more datasets available</span>
+                    <span>…{{ counts.opinion }} {% if categories.opinion %}more{% endif %} dataset{{ counts.opinion|pluralize }} available</span>
                 </a>
             </div>
-            {% endif %}
+          {% endif %}
         </div>
+      {% elif debug %}
+        {% include 'hub/area/_no_data.html' with name="Public opinion" variable="opinion" %}
+      {% endif %}
 
+      {% if categories.place or counts.place %}
         <h2 class="mt-5 mb-3 text-primary">Place</h2>
-
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        {% for category in categories.place %}
+          {% for category in categories.place %}
             {% include 'hub/area/_place_data.html' with category=category %}
-        {% empty %}
-            {% include 'hub/area/_no_featured_data.html' %}
-        {% endfor %}
-            {% if counts.place > 0 %}
+          {% endfor %}
+          {% if counts.place > 0 %}
             <div class="col d-flex flex-column">
                 <a href="{% url 'area_category' area.area_type area.name 'place' %}" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
-                    <span>…{{ counts.place }} more datasets available</span>
+                    <span>…{{ counts.place }} {% if categories.place %}more{% endif %} dataset{{ counts.place|pluralize }} available</span>
                 </a>
             </div>
-            {% endif %}
+          {% endif %}
         </div>
+      {% elif debug %}
+        {% include 'hub/area/_no_data.html' with name="Place" variable="movement" %}
+      {% endif %}
 
+      {% if categories.movement or counts.movement %}
         <h2 class="mt-5 mb-3 text-primary">Movement</h2>
-
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        {% for category in categories.movement %}
+          {% for category in categories.movement %}
             {% include 'hub/area/_place_data.html' with category=category %}
-        {% empty %}
-            {% include 'hub/area/_no_featured_data.html' %}
-        {% endfor %}
-            {% if counts.movement > 0 %}
+          {% endfor %}
+          {% if counts.movement > 0 %}
             <div class="col d-flex flex-column">
                 <a href="{% url 'area_category' area.area_type area.name 'movement' %}" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
-                    <span>…{{ counts.movement }} more datasets available</span>
+                    <span>…{{ counts.movement }} {% if categories.movement %}more{% endif %} dataset{{ counts.movement|pluralize }} available</span>
                 </a>
             </div>
-            {% endif %}
+          {% endif %}
         </div>
+      {% elif debug %}
+        {% include 'hub/area/_no_data.html' with name="Movement" variable="movement" %}
+      {% endif %}
 
         <div class="mt-5 p-3 bg-white border rounded d-flex align-items-center">
             {% include 'hub/includes/icons/tcc-heart.html' with width="1.25em" height="1.25em" classes="me-3 flex-shrink-0 flex-grow-0" %}
