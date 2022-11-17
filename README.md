@@ -3,8 +3,7 @@
 A Beta version of a tool to help The Climate Coalition with better access
 to data needed to enable local and national action on climate.
 
-The [original static prototype](https://github.com/mysociety/local-intelligence-hub/commit/4fab6ff08401d4e4c29615ab07ff4f6c4f4e6050) was built as part of mySociety’s August 2022 prototyping week exploring how we might give climate campaign organisations and communities better access to the data they need to enable local and national action on climate.
-
+The [original static prototype](https://github.com/mysociety/local-intelligence-hub/commit/4fab6ff08401d4e4c29615ab07ff4f6c4f4e6050) was built as part of mySociety’s August 2022 prototyping week exploring how The Climate Coalition might we give climate campaign organisations and communities better access to the data they need to enable local and national action on climate.
 ## Development install
 
 You will need [Docker](https://docs.docker.com/desktop/) installed.
@@ -17,47 +16,52 @@ Clone the repository:
 Create and edit a .env file using `.env-example` file and then
 update `SECRET_KEY` and `MAPIT_API_KEY`. You can get the latter from https://mapit.mysociety.org/account/signup/
 
+### Running Docker manually (recommended)
+
 Start the Docker environment:
 
     docker-compose up
 
+Docker-compose will automatically install dependencies and start the development web server at <https://localhost:8000> when the container is started.
+
 (If Python complains about missing libraries, chances are the Python requirements have changed since your Docker image was last built. You can rebuild it with, eg: `docker-compose build web`.)
 
-Alternatively, for VScode users:
+### Running Docker via Visual Studio Code (VS Code)
 
 1. Install the Remote-Container extension.
-2. In VScode Command pallette run `Remote-Containers: Install devcontainer CLI`
-3. Then in the repo dir, run `devcontainer open`.
+2. In the VS Code Command pallette run `Remote-Containers: Install devcontainer CLI`
+3. Then in the repo directory, run `devcontainer open`
 
-This will setup the docker containers and provide a BASH prompt into the containers. 
+This will setup the docker containers and provide a Bash prompt into the containers. 
 
 The same config files means this repo also works in codespaces.
 
-You'll then need to run:
-
-    script/dev-populate
-
-and then:
+And you can run the development web server at <https://localhost:8000>, inside the container, with:
 
     script/server
 
-For the dev server. 
-
-
 ### Data import
 
-You will then need to update the data by running at least the following management commands either inside or outside the container:
+If you’re running Docker manually (recommended) you will need to enter a Bash shell inside the container, in order to run any of the data import commands:
 
-* `script/manage import_areas` - this will take some time to run
-* `script/manage import_mps`
+    docker-compose exec web bash
 
-You can then view it at (http://localhost:8000/)
+If you’re running Docker via Visual Studio Code, instead, you’ll want to run the commands via the built-in terminal.
 
-You can create the first Django user from inside or outside the container with:
+You will likely want to create a Django superuser, by running this inside the container:
 
     script/createsuperuser
 
 The superuser will be created with the details specified in the `DJANGO_SUPERUSER_*` environment variables. [Read more about how Docker handles environment variables](https://docs.docker.com/compose/envvars-precedence/).
+
+You will also want to import data. For convenience, there is a script that will automatically run all the `import_*` commands from `hub/management/commands`, one after the other, which you can run from inside the container:
+
+    script/import-all-data
+
+You could alternatively run commands individually (again, from inside the container), eg:
+
+    ./manage.py import_areas
+    ./manage.py import_mps
 
 ### Running the tests
 
