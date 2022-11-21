@@ -1,6 +1,9 @@
+from django.contrib.auth import get_user_model
 from django.db import models
 
 import utils as lih_utils
+
+User = get_user_model()
 
 
 class DataSet(models.Model):
@@ -126,6 +129,11 @@ class DataType(models.Model):
             return True
 
         return False
+
+
+class UserDataSets(models.Model):
+    data_set = models.ForeignKey(DataSet, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
 
 class CommonData(models.Model):
