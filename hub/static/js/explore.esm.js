@@ -86,8 +86,8 @@ const app = createApp({
 
       return state
     },
-    url() {
-      const url = new URL(window.location.origin + window.location.pathname)
+    url(pathname = window.location.pathname) {
+      const url = new URL(window.location.origin + pathname)
 
       for (const [key, value] of Object.entries(this.state())) {
         url.searchParams.set(key, value)
@@ -97,6 +97,7 @@ const app = createApp({
     },
     updateState() {
       window.history.replaceState(this.state(), '', this.url())
+      this.updateMap()
     },
     restoreState() {
       const params = new URL(window.location).searchParams
@@ -115,7 +116,26 @@ const app = createApp({
 
       const request = this.loadDatasets(Object.keys(pending))
       for (let i in pending) { request.then(pending[i]) }
+
+      setTimeout(() => { this.updateMap() }, 1000)
     },
+    updateMap() {
+      fetch(this.url('/explore.json'))
+        .then(response => response.json())
+        .then(areas => {
+
+          window.geojson.eachLayer((layer) => {
+            const visible = areas.names.includes(layer.feature.properties.name)
+            layer.setStyle({
+              fillColor: '#ed6832',
+              weight: 2,
+              opacity: (visible ? 1 : 0),
+              color: 'white',
+              fillOpacity: (visible ? 0.7 : 0)
+            })
+          })
+        })
+    }
   }
 })
 
