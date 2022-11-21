@@ -1,15 +1,15 @@
 import json
 from collections import defaultdict
 
-from django.db.models import Count
+from django.db.models import Count, OuterRef, Q, Subquery
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
-from django.views.generic import DetailView, TemplateView
+from django.views.generic import DetailView, TemplateView, View
 
 from hub.mixins import TitleMixin
-from hub.models import Area, AreaData, DataSet, Person, PersonData
+from hub.models import Area, AreaData, DataSet, Person, PersonData, UserDataSets
 from utils import is_valid_postcode
 from utils.mapit import (
     BadRequestException,
@@ -64,20 +64,31 @@ class BaseAreaView(TitleMixin, DetailView):
         return self.object.name
 
     def process_dataset(self, data_set):
+        fav_sq = Subquery(
+            UserDataSets.objects.filter(
+                data_set_id=OuterRef("data_type__data_set__id"),
+                user=self.request.user,
+            )
+            .values("data_set_id")
+            .annotate(is_favourite=Count("id"))
+            .values("is_favourite")
+        )
         data = {
             "name": str(data_set),
             "label": data_set.label,
             "source": data_set.source_name,
             "source_url": data_set.source_url,
             "category": data_set.category,
+            "pk": data_set.pk,
         }
         if data_set.is_range:
             data["is_range"] = True
             data_range = (
                 AreaData.objects.filter(
                     area=self.object,
-                    data_type__data_set__name=data_set.name,
+                    data_type__data_set=data_set,
                 )
+                .annotate(is_favourite=fav_sq)
                 .select_related("data_type")
                 .order_by("data_type__name")
             )
@@ -87,17 +98,20 @@ class BaseAreaView(TitleMixin, DetailView):
             data_range = (
                 AreaData.objects.filter(
                     area=self.object,
-                    data_type__data_set__name=data_set.name,
+                    data_type__data_set=data_set,
                 )
+                .annotate(is_favourite=fav_sq)
                 .select_related("data_type")
                 .order_by("data_type__order", "data_type__label")
             )
 
             data["data"] = data_range.all()
         else:
-            area_data = AreaData.objects.filter(
-                area=self.object, data_type__data_set__name=data_set.name
-            ).select_related("data_type")
+            area_data = (
+                AreaData.objects.filter(area=self.object, data_type__data_set=data_set)
+                .annotate(is_favourite=fav_sq)
+                .select_related("data_type")
+            )
             if area_data:
                 data["data"] = area_data[0]
 
@@ -124,7 +138,18 @@ class AreaView(BaseAreaView):
 
         categories = defaultdict(list)
         for data_set in (
-            DataSet.objects.filter(featured=True).order_by("order", "name").all()
+            DataSet.objects.filter(
+                Q(featured=True)
+                | Q(
+                    id__in=Subquery(
+                        UserDataSets.objects.filter(
+                            user=self.request.user, data_set_id=OuterRef("id")
+                        ).values_list("data_set_id", flat=True)
+                    )
+                ),
+            )
+            .order_by("order", "name")
+            .all()
         ):
             data = self.process_dataset(data_set)
 
@@ -253,6 +278,36 @@ class AreaSearchView(TemplateView):
                 context["areas"] = areas
 
         return context
+
+
+class FavouriteDataSetView(View):
+    def post(self, request, data_set):
+        ds = get_object_or_404(DataSet, pk=data_set)
+        user = request.user
+
+        fav, created = UserDataSets.objects.get_or_create(data_set=ds, user=user)
+
+        if self.request.accepts("text/html"):
+            return redirect(self.request.META["HTTP_REFERER"])
+        else:
+            data = {
+                "pk": fav.pk,
+            }
+            return JsonResponse(data)
+
+
+class UnFavouriteDataSetView(View):
+    def post(self, request, data_set):
+        fav = get_object_or_404(UserDataSets, data_set=data_set, user=request.user)
+        fav.delete()
+
+        if self.request.accepts("text/html"):
+            return redirect(self.request.META["HTTP_REFERER"])
+        else:
+            data = {
+                "deleted": True,
+            }
+            return JsonResponse(data)
 
 
 @method_decorator(cache_control(**cache_settings), name="dispatch")

@@ -4,6 +4,13 @@
             <h5 class="card-title mb-3">{{ item.label }}</h5>
             <p class="card-text mb-0 display-6 lh-1 text-primary">{{ item.value }}%</p>
             <p class="card-text mt-2 text-muted">{{ item.average|floatformat }}% national average</p>
+            {% if item.is_favourite %}
+            <p><form action="{% url 'unfavourite_dataset' category.pk  %}" method="POST">{% csrf_token %}<input type="submit" value="UnFavourite"></form></p>
+            {% else %}
+            {{ item.is_favourite }}
+            <p><form action="{% url 'favourite_dataset' category.pk %}" method="POST">{% csrf_token %}<input type="submit" value="Favourite"></form></p>
+            {% endif %}
+
         </div>
         <div class="card-footer bg-white">
           {% if category.source_url %}

@@ -32,6 +32,16 @@ urlpatterns = [
         views.AreaCategoryView.as_view(),
         name="area_category",
     ),
+    path(
+        "data_set/<int:data_set>/favourite",
+        views.FavouriteDataSetView.as_view(),
+        name="favourite_dataset",
+    ),
+    path(
+        "data_set/<int:data_set>/unfavourite",
+        views.UnFavouriteDataSetView.as_view(),
+        name="unfavourite_dataset",
+    ),
     path("location/", views.AreaSearchView.as_view(), name="area_search"),
     path("style/", views.StyleView.as_view(), name="style"),
     path("status/", views.StatusView.as_view(), name="status"),
