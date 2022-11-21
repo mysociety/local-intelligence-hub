@@ -212,7 +212,7 @@ var setUpMap = function() {
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map)
 
-    $.getJSON("/filter_areas/", function(data) {
+    $.getJSON("/explore.json", function(data) {
         window.geojson = L.geoJson(data, {
             style: getFeatureStyle,
             onEachFeature: function(feature, layer){

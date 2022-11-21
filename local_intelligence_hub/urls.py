@@ -30,7 +30,7 @@ urlpatterns = [
         views.ExploreDatasetsJSON.as_view(),
         name="explore_datasets_json",
     ),
-    path("filter_areas/", views.FilterAreaView.as_view(), name="filtered_areas"),
+    path("explore.json", views.ExploreJSON.as_view(), name="explore_json"),
     path("area/<str:area_type>/<str:name>", views.AreaView.as_view(), name="area"),
     path(
         "area/<str:area_type>/<str:name>/<str:category>",

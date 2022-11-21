@@ -7,17 +7,12 @@ from django.dispatch import receiver
 from django_jsonform.models.fields import JSONField
 
 import utils as lih_utils
+from hub.filters import Filter
 
 User = get_user_model()
 
 
-class DataSet(models.Model):
-    SOURCE_CHOICES = [
-        ("csv", "CSV File"),
-        ("xlxs", "Excel File"),
-        ("api", "External API"),
-    ]
-
+class TypeMixin:
     TYPE_CHOICES = [
         ("text", "Text"),
         ("integer", "Integer"),
@@ -26,6 +21,42 @@ class DataSet(models.Model):
         ("date", "Date"),
         ("boolean", "True/False"),
         ("profile_id", "Profile Id"),
+    ]
+
+    @property
+    def is_number(self):
+        if self.data_type in ("integer", "float", "percent"):
+            return True
+
+        return False
+
+    @property
+    def is_percentage(self):
+        if self.data_type == "percent":
+            return True
+
+        return False
+
+    @property
+    def is_float(self):
+        if self.data_type == "float" or self.data_type == "percent":
+            return True
+
+        return False
+
+    @property
+    def is_date(self):
+        if self.data_type == "date":
+            return True
+
+        return False
+
+
+class DataSet(TypeMixin, models.Model):
+    SOURCE_CHOICES = [
+        ("csv", "CSV File"),
+        ("xlxs", "Excel File"),
+        ("api", "External API"),
     ]
 
     CATEGORY_CHOICES = [
@@ -68,7 +99,7 @@ class DataSet(models.Model):
     name = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True, null=True)
     label = models.CharField(max_length=200, blank=True, null=True)
-    data_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    data_type = models.CharField(max_length=20, choices=TypeMixin.TYPE_CHOICES)
     last_update = models.DateTimeField(auto_now=True)
     source_label = models.TextField(max_length=300, blank=True, null=True)
     source = models.CharField(max_length=200)
@@ -115,21 +146,14 @@ class DataSet(models.Model):
             ("order_and_feature", "Can change sort order and mark as featured")
         ]
 
+    def filter(self, query, **kwargs):
+        return Filter(self, query).run(**kwargs)
 
-class DataType(models.Model):
-    TYPE_CHOICES = [
-        ("text", "Text"),
-        ("integer", "Integer"),
-        ("float", "Floating Point Number"),
-        ("percent", "Percentage"),
-        ("date", "Date"),
-        ("boolean", "True/False"),
-        ("profile_id", "Profile Id"),
-    ]
 
+class DataType(TypeMixin, models.Model):
     data_set = models.ForeignKey(DataSet, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
-    data_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    data_type = models.CharField(max_length=20, choices=TypeMixin.TYPE_CHOICES)
     last_update = models.DateTimeField(auto_now=True)
     average = models.FloatField(blank=True, null=True)
     label = models.CharField(max_length=200, blank=True, null=True)
@@ -141,34 +165,6 @@ class DataType(models.Model):
             return self.label
 
         return self.name
-
-    @property
-    def is_number(self):
-        if self.data_type in ("integer", "float", "percent"):
-            return True
-
-        return False
-
-    @property
-    def is_percentage(self):
-        if self.data_type == "percent":
-            return True
-
-        return False
-
-    @property
-    def is_float(self):
-        if self.data_type == "float" or self.data_type == "percent":
-            return True
-
-        return False
-
-    @property
-    def is_date(self):
-        if self.data_type == "date":
-            return True
-
-        return False
 
 
 class UserDataSets(models.Model):

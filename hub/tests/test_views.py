@@ -59,10 +59,37 @@ class TestExploreDatasetsPage(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
-    def test_filter_page(self):
-        url = reverse("filtered_areas")
-        response = self.client.get(url)
+
+class TestExploreFilteringPage(TestCase):
+    fixtures = ["areas.json", "mps.json", "elections.json", "area_data.json"]
+
+    def setUp(self):
+        self.u = User.objects.create(username="user@example.com")
+        self.client.force_login(self.u)
+
+    def test_explore_json_page_year_lt(self):
+        url = reverse("explore_json")
+        response = self.client.get(url + "?mp_last_elected__year__lt=2019")
         self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "South Borsetshire")
+        self.assertContains(response, "Borsetshire West")
+        self.assertNotContains(response, "Borsetshire East")
+
+    def test_explore_json_page_year_gte(self):
+        url = reverse("explore_json")
+        response = self.client.get(url + "?mp_last_elected__year__gte=2019")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "South Borsetshire")
+        self.assertNotContains(response, "Borsetshire West")
+        self.assertNotContains(response, "Borsetshire East")
+
+    def test_explore_json_page_year(self):
+        url = reverse("explore_json")
+        response = self.client.get(url + "?mp_last_elected__year=2015")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "South Borsetshire")
+        self.assertNotContains(response, "Borsetshire West")
+        self.assertNotContains(response, "Borsetshire East")
 
 
 class TestAreaPage(TestCase):

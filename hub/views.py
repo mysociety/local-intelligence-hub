@@ -5,11 +5,9 @@ from operator import itemgetter
 from django.db.models import Count, OuterRef, Q, Subquery
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_control
 from django.views.generic import DetailView, TemplateView, View
 
-from hub.mixins import TitleMixin
+from hub.mixins import FilterMixin, TitleMixin
 from hub.models import Area, AreaData, DataSet, Person, PersonData, UserDataSets
 from utils import is_valid_postcode
 from utils.mapit import (
@@ -71,6 +69,13 @@ class ExploreDatasetsJSON(TemplateView):
             )
 
         return JsonResponse(list(datasets), safe=False)
+
+
+class ExploreJSON(FilterMixin, TemplateView):
+    def render_to_response(self, context, **response_kwargs):
+        geom = list(self.query().filter(geometry__isnull=False).values("geometry"))
+        geom = [json.loads(g["geometry"]) for g in geom]
+        return JsonResponse({"type": "FeatureCollection", "features": geom})
 
 
 class BaseAreaView(TitleMixin, DetailView):
@@ -333,14 +338,6 @@ class UnFavouriteDataSetView(View):
                 "deleted": True,
             }
             return JsonResponse(data)
-
-
-@method_decorator(cache_control(**cache_settings), name="dispatch")
-class FilterAreaView(TemplateView):
-    def render_to_response(self, context, **response_kwargs):
-        geom = list(Area.objects.filter(geometry__isnull=False).values("geometry"))
-        geom = [json.loads(g["geometry"]) for g in geom]
-        return JsonResponse({"type": "FeatureCollection", "features": geom})
 
 
 class StyleView(TitleMixin, TemplateView):
