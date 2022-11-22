@@ -1,0 +1,12 @@
+<form action="{% url 'unfavourite_dataset' category.pk  %}" method="POST" class="js-unfavourite-this-dataset">
+    {% csrf_token %}
+    <button type="submit" title="Unfavourite this dataset">
+        {% include 'hub/includes/icons/heart-full.html' %}
+    </button>
+</form>
+<form action="{% url 'favourite_dataset' category.pk  %}" method="POST" class="js-favourite-this-dataset">
+    {% csrf_token %}
+    <button type="submit" title="Favourite this dataset">
+        {% include 'hub/includes/icons/heart-empty.html' %}
+    </button>
+</form>

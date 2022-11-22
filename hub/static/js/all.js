@@ -50,6 +50,20 @@ $(function(){
         })
     }
 
+    $('.js-favourite-this-dataset, .js-unfavourite-this-dataset').on('submit', function(e){
+        e.preventDefault();
+        var $form = $(this);
+        $.ajax({
+            url: $form.attr('action'),
+            type: $form.attr('method') || 'get',
+            data: $form.serialize(),
+            accepts: 'application/json; charset=utf-8',
+            dataType: 'json'
+        }).done(function(){
+            $form.parents('.dataset-card').toggleClass('dataset-card--favourite');
+        });
+    });
+
     window.map = setUpMap()
 
     $('.js-chart').each(makeChart);

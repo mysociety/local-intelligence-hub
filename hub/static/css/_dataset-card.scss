@@ -1,0 +1,50 @@
+.dataset-card {
+    .js-favourite-this-dataset {
+        display: block;
+    }
+
+    .js-unfavourite-this-dataset {
+        display: none;
+    }
+}
+
+.dataset-card--favourite {
+    .js-unfavourite-this-dataset {
+        display: block;
+    }
+
+    .js-favourite-this-dataset {
+        display: none;
+    }
+}
+
+.dataset-card-header {
+    display: flex;
+
+    h5 {
+        margin-bottom: 0;
+        margin-right: auto;
+        padding: var(--bs-card-spacer-y) 0 var(--bs-card-spacer-y) var(--bs-card-spacer-x);
+    }
+
+    button {
+        background: transparent;
+        border: none;
+        line-height: 1.25em; // match h5
+        font-size: 1em;
+        color: $gray-500;
+        padding: var(--bs-card-spacer-y) var(--bs-card-spacer-x);
+
+        &:focus {
+            color: inherit;
+        }
+
+        &:hover {
+            color: $link-color;
+        }
+    }
+
+    & + .card-body {
+        padding-top: 0;
+    }
+}

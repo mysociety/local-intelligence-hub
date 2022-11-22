@@ -88,11 +88,14 @@ class BaseAreaView(TitleMixin, DetailView):
                     area=self.object,
                     data_type__data_set=data_set,
                 )
-                .annotate(is_favourite=fav_sq)
                 .select_related("data_type")
                 .order_by("data_type__name")
             )
 
+            data["is_favourite"] = UserDataSets.objects.filter(
+                data_set=data_set,
+                user=self.request.user,
+            ).exists()
             data["data"] = data_range.all()
         elif data_set.category == "opinion":
             data_range = (

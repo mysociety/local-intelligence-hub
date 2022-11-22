@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from hub.models import DataSet
+from hub.models import DataSet, UserDataSets
 
 
 class Test404Page(TestCase):
@@ -56,8 +56,8 @@ class TestAreaPage(TestCase):
     fixtures = ["areas.json", "mps.json", "elections.json", "area_data.json"]
 
     def setUp(self):
-        u = User.objects.create(username="user@example.com")
-        self.client.force_login(u)
+        self.u = User.objects.create(username="user@example.com")
+        self.client.force_login(self.u)
 
     def test_area_page(self):
         DataSet.objects.update(featured=True)
@@ -102,9 +102,35 @@ class TestAreaPage(TestCase):
         self.assertIsNone(context.get("mp"))
 
     def test_featured_data(self):
+        url = reverse("area", args=("WMC", "South Borsetshire"))
+        response = self.client.get(url)
+
+        context = response.context
+        places = context["categories"]["place"]
+        self.assertEqual(len(places), 0)
+
         ages = DataSet.objects.get(name="constituency_age_distribution")
         ages.featured = True
         ages.save()
+
+        url = reverse("area", args=("WMC", "South Borsetshire"))
+        response = self.client.get(url)
+
+        context = response.context
+        places = context["categories"]["place"]
+        self.assertEqual(len(places), 1)
+        self.assertEqual(places[0]["name"], "constituency_age_distribution")
+
+    def test_favourited_data(self):
+        url = reverse("area", args=("WMC", "South Borsetshire"))
+        response = self.client.get(url)
+
+        context = response.context
+        places = context["categories"]["place"]
+        self.assertEqual(len(places), 0)
+
+        ages = DataSet.objects.get(name="constituency_age_distribution")
+        UserDataSets.objects.create(data_set=ages, user=self.u)
 
         url = reverse("area", args=("WMC", "South Borsetshire"))
         response = self.client.get(url)
@@ -254,6 +280,82 @@ class TestAreaSearchPage(TestCase):
 
         context = response.context
         self.assertEqual(len(context["areas"]), 3)
+
+
+class testUserFavouriteViews(TestCase):
+    fixtures = ["areas.json", "mps.json", "elections.json", "area_data.json"]
+
+    def setUp(self):
+        self.u = User.objects.create(username="user@example.com")
+        self.client.force_login(self.u)
+
+    def test_favouriting(self):
+        count = UserDataSets.objects.count()
+        self.assertEqual(count, 0)
+
+        ds = DataSet.objects.get(name="constituency_fuel_poverty")
+
+        url = reverse("favourite_dataset", args=(ds.pk,))
+        response = self.client.post(url, HTTP_REFERER="/area/WMC/Borsetshire")
+
+        self.assertEqual(response.status_code, 302)
+
+        count = UserDataSets.objects.count()
+        self.assertEqual(count, 1)
+
+        self.assertTrue(UserDataSets.objects.filter(data_set=ds, user=self.u).exists())
+
+    def test_ajax_favouriting(self):
+        count = UserDataSets.objects.count()
+        self.assertEqual(count, 0)
+
+        ds = DataSet.objects.get(name="constituency_fuel_poverty")
+
+        url = reverse("favourite_dataset", args=(ds.pk,))
+        response = self.client.post(url, HTTP_ACCEPT="application/json")
+
+        self.assertEqual(response.status_code, 200)
+
+        count = UserDataSets.objects.count()
+        self.assertEqual(count, 1)
+
+        self.assertTrue(UserDataSets.objects.filter(data_set=ds, user=self.u).exists())
+        fav = UserDataSets.objects.get(data_set=ds, user=self.u)
+        self.assertEqual(response.json(), {"pk": fav.pk})
+
+    def test_unfavouriting(self):
+        count = UserDataSets.objects.count()
+        self.assertEqual(count, 0)
+
+        ds = DataSet.objects.get(name="constituency_fuel_poverty")
+        UserDataSets.objects.create(data_set=ds, user=self.u)
+
+        url = reverse("unfavourite_dataset", args=(ds.pk,))
+        response = self.client.post(url, HTTP_REFERER="/area/WMC/Borsetshire")
+
+        self.assertEqual(response.status_code, 302)
+
+        count = UserDataSets.objects.count()
+        self.assertEqual(count, 0)
+
+        self.assertFalse(UserDataSets.objects.filter(data_set=ds, user=self.u).exists())
+
+    def test_ajax_unfavouriting(self):
+        count = UserDataSets.objects.count()
+        self.assertEqual(count, 0)
+
+        ds = DataSet.objects.get(name="constituency_fuel_poverty")
+        UserDataSets.objects.create(data_set=ds, user=self.u)
+
+        url = reverse("unfavourite_dataset", args=(ds.pk,))
+        response = self.client.post(url, HTTP_ACCEPT="application/json")
+
+        self.assertEqual(response.status_code, 200)
+
+        count = UserDataSets.objects.count()
+        self.assertEqual(count, 0)
+
+        self.assertEqual(response.json(), {"deleted": True})
 
 
 class TestStatusView(TestCase):
