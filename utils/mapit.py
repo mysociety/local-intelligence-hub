@@ -1,3 +1,5 @@
+from json.decoder import JSONDecodeError
+
 from django.conf import settings
 
 from requests_cache import CachedSession
@@ -22,6 +24,10 @@ class InternalServerErrorException(BaseException):
 
 
 class ForbiddenException(BaseException):
+    pass
+
+
+class RateLimitException(BaseException):
     pass
 
 
@@ -95,7 +101,13 @@ class MapIt(object):
         data = None
         if self.disable_cache or url not in self.cache:
             resp = session.get(url)
-            data = resp.json()
+            try:
+                data = resp.json()
+            except JSONDecodeError as error:
+                data = {"error": str(error)}
+
+            if resp.status_code == 403 and resp.content == b"Rate limit exceeded":
+                raise RateLimitException("Rate limit exceeded")
             if resp.status_code == 403:
                 raise ForbiddenException(data["error"])
             if resp.status_code == 500:
@@ -103,6 +115,8 @@ class MapIt(object):
             if resp.status_code == 404:
                 raise NotFoundException(data["error"])
             if resp.status_code == 400:
+                raise BadRequestException(data["error"])
+            if data.get("error", None) is not None:
                 raise BadRequestException(data["error"])
             if not self.disable_cache:
                 self.cache[url] = data
