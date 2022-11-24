@@ -96,11 +96,11 @@ class ImportFuelPovertyDataTestCase(ImportTestCase):
         self.assertEqual(south_data[0].data_type.average, 12.65)
 
 
-class ImportIMDRUCTestCase(ImportTestCase):
+class ImportIMDTestCase(ImportTestCase):
     command = "import_imd_data"
 
-    @mock.patch("hub.management.commands.import_imd_data.pd.read_csv")
-    def test_import(self, patch_read_csv):
+    @mock.patch("hub.management.commands.import_ruc_data.pd.read_csv")
+    def test_import_imd(self, patch_read_csv):
         data = {
             "gss-code": [
                 "E10000001",
@@ -108,6 +108,36 @@ class ImportIMDRUCTestCase(ImportTestCase):
                 "E40000002",
             ],
             "pcon-imd-pop-quintile": [1, 2, 2],
+        }
+        patch_read_csv.return_value = pd.DataFrame(data=data)
+        out = self.call_command()
+
+        self.assertEqual(
+            out,
+            "Failed to find area with code E40000002\n",
+        )
+
+        area_data = AreaData.objects.all()
+        self.assertEqual(area_data.count(), 2)
+
+        south_imd_data = AreaData.objects.filter(
+            area__gss="E10000001", data_type__name="constituency_imd"
+        ).all()
+
+        self.assertEqual(south_imd_data[0].value(), 1)
+
+
+class ImportRUCTestCase(ImportTestCase):
+    command = "import_ruc_data"
+
+    @mock.patch("hub.management.commands.import_imd_data.pd.read_csv")
+    def test_import_ruc(self, patch_read_csv):
+        data = {
+            "gss-code": [
+                "E10000001",
+                "E10000002",
+                "E40000002",
+            ],
             "ruc-cluster-label": ["Urban", "Rural", "Urban"],
         }
         patch_read_csv.return_value = pd.DataFrame(data=data)
@@ -115,17 +145,11 @@ class ImportIMDRUCTestCase(ImportTestCase):
 
         self.assertEqual(
             out,
-            "Failed to find area with code E40000002\nFailed to find area with code E40000002\n",
+            "Failed to find area with code E40000002\n",
         )
 
         area_data = AreaData.objects.all()
-        self.assertEqual(area_data.count(), 4)
-
-        south_imd_data = AreaData.objects.filter(
-            area__gss="E10000001", data_type__name="constituency_imd"
-        ).all()
-
-        self.assertEqual(south_imd_data[0].value(), 1)
+        self.assertEqual(area_data.count(), 2)
 
         south_ruc_data = AreaData.objects.filter(
             area__gss="E10000001", data_type__name="constituency_ruc"
