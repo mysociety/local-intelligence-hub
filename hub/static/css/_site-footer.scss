@@ -25,19 +25,22 @@
 }
 
 .site-footer__org {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     color: mix($white, $teal-800, 70%);
+
+    & > span {
+        margin-bottom: 0.5rem;
+    }
 
     a {
         display: block;
-        margin-top: 0.5rem;
+        margin: auto 0;
+    }
 
-        @include media-breakpoint-up(md) {
-            margin-top: 0.75rem;
-        }
-
-        @include media-breakpoint-up(lg) {
-            margin-top: 1rem;
-        }
+    svg {
+        max-width: 10em;
     }
 }
 
