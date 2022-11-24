@@ -1,5 +1,6 @@
 import { Modal } from '../bootstrap/bootstrap.esm.min.js'
 import { createApp } from '../vue/vue.esm-browser.prod.js'
+import L from '../leaflet/leaflet-1.9.3.esm.js'
 
 const app = createApp({
   delimiters: ['${', '}'],
@@ -120,23 +121,45 @@ const app = createApp({
       const request = this.loadDatasets(Object.keys(pending))
       for (let i in pending) { request.then(pending[i]) }
 
-      setTimeout(() => { this.updateMap() }, 1000)
+      request.then(() => { this.updateMap() })
+    },
+    setUpMap() {
+      this.map = L.map(this.$refs.map).setView([54.0934, -2.8948], 7)
+
+      var tiles = L.tileLayer(
+        'https://tile.thunderforest.com/atlas/{z}/{x}/{y}.png?apikey=7ac28b44c7414ced98cd4388437c718d',
+        {
+          maxZoom: 19,
+          attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }
+      ).addTo(this.map)
     },
     updateMap() {
+      if (!this.map) { this.setUpMap() }
+
       fetch(this.url('/explore.json'))
         .then(response => response.json())
-        .then(areas => {
+        .then(data => {
+          if (window.geojson) {
+            window.geojson.eachLayer((layer) => { this.map.removeLayer(layer) })
+          }
 
-          window.geojson.eachLayer((layer) => {
-            const visible = areas.names.includes(layer.feature.properties.name)
-            layer.setStyle({
-              fillColor: '#ed6832',
-              weight: 2,
-              opacity: (visible ? 1 : 0),
-              color: 'white',
-              fillOpacity: (visible ? 0.7 : 0)
-            })
-          })
+          window.geojson = L.geoJson(data, {
+            style: {
+              fillColor: '#ed6832', fillOpacity: 0.7,
+              color: 'white', weight: 2, opacity: 1,
+            },
+            onEachFeature: (feature, layer) => {
+              layer.bindTooltip(feature.properties.name)
+              layer.on({
+                mouseover: (e) => { e.target.setStyle({ weight: 5 }) },
+                mouseout: (e) => { window.geojson.resetStyle(e.target) },
+                click: (e) => {
+                  window.location.href = `/area/${feature.properties.type}/${feature.properties.name}`
+                },
+              })
+            }
+          }).addTo(this.map)
         })
     }
   }

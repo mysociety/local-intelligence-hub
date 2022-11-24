@@ -1,5 +1,4 @@
 import $ from '../jquery/jquery.esm.js'
-import L from '../leaflet/leaflet-1.9.3.esm.js'
 import { Chart, registerables } from '../chartjs/chart.esm.js'
 
 Chart.register(...registerables);
@@ -65,8 +64,6 @@ $(function(){
             $form.parents('.dataset-card').toggleClass('dataset-card--favourite');
         });
     });
-
-    window.map = setUpMap()
 
     $('.js-chart').each(makeChart);
 
@@ -162,73 +159,4 @@ var extractDatasetsFromTable = function($table, primaryAxis) {
             categoryPercentage: 0.7
         }
     }).get()
-}
-
-var getAreaColor = function(feature) {
-    return '#ed6832'
-}
-
-var getVisibilityForArea = function(feature) {
-    return 1
-}
-
-var getFeatureStyle = function(feature) {
-    return {
-        fillColor: getAreaColor(feature),
-        weight: 2,
-        opacity: ( getVisibilityForArea(feature) ? 1 : 0 ),
-        color: 'white',
-        fillOpacity: ( getVisibilityForArea(feature) ? 0.7 : 0 )
-    }
-}
-
-var highlightFeature = function(e) {
-    var layer = e.target
-
-    layer.setStyle({
-        weight: 5
-    })
-
-    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-        layer.bringToFront();
-        layer.openTooltip();
-    }
-}
-
-var unhighlightFeature = function(e) {
-    window.geojson.resetStyle(e.target);
-    e.target.closeTooltip();
-}
-
-var setUpMap = function() {
-    var $map = $('.explore-map')
-
-    if ( ! $map.length ) {
-        return undefined
-    }
-
-    var map = L.map($map[0]).setView([54.0934, -2.8948], 7)
-
-    var tiles = L.tileLayer('https://tile.thunderforest.com/atlas/{z}/{x}/{y}.png?apikey=7ac28b44c7414ced98cd4388437c718d', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(map)
-
-    $.getJSON("/explore.json", function(data) {
-        window.geojson = L.geoJson(data, {
-            style: getFeatureStyle,
-            onEachFeature: function(feature, layer){
-                layer.bindTooltip(feature.properties.name);
-                layer.on({
-                    mouseover: highlightFeature,
-                    mouseout: unhighlightFeature,
-                    click: function(){
-                        window.location.href = '/area/' + feature.properties.type + '/' + feature.properties.name
-                    }
-                })
-            }
-        }).addTo(map)
-    });
-
-    return map
 }
