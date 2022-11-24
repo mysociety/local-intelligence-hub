@@ -1,5 +1,5 @@
 import $ from '../jquery/jquery.esm.js'
-import L from '../leaflet/leaflet-1.8.0.esm.js'
+import L from '../leaflet/leaflet-1.9.3.esm.js'
 import { Chart, registerables } from '../chartjs/chart.esm.js'
 
 Chart.register(...registerables);
