@@ -17,6 +17,15 @@ const app = createApp({
       table: null,
     }
   },
+  watch: {
+    filters: {
+      handler(newValue, oldValue) { this.updateState() },
+      deep: true,
+    },
+    shader: {
+      handler(newValue, oldValue) { this.updateState() },
+    },
+  },
   computed: {
     modal() { return new Modal(this.$refs.modal) },
     publicDatasets() { return this.datasets.filter(d => d.scope === 'public') },
