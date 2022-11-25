@@ -52,3 +52,26 @@ class FilterMixin:
             )
 
         return query
+
+    def data(self):
+        headers = ["constituency_name"]
+        headers += map(lambda f: f["dataset"].name, self.filters())
+
+        data = [headers]
+
+        for area in self.query().all():
+            row = [area.name]
+            person = area.person_set.first()
+            if person:
+                persondata = person.persondata_set
+            areadata = area.areadata_set
+
+            for f in self.filters():
+                dataset = f["dataset"]
+                table = areadata if dataset.table == "areadata" else persondata
+                if table:
+                    row.append(table.get(data_type__name=dataset.name).value())
+
+            data.append(row)
+
+        return data

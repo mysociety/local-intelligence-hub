@@ -91,6 +91,30 @@ class TestExploreFilteringPage(TestCase):
         self.assertNotContains(response, "Borsetshire West")
         self.assertNotContains(response, "Borsetshire East")
 
+    def test_explore_csv_page_year_lt(self):
+        url = reverse("explore_csv")
+        response = self.client.get(url + "?mp_last_elected__year__lt=2019")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "South Borsetshire")
+        self.assertContains(response, "Borsetshire West")
+        self.assertNotContains(response, "Borsetshire East")
+
+    def test_explore_csv_page_year_gte(self):
+        url = reverse("explore_csv")
+        response = self.client.get(url + "?mp_last_elected__year__gte=2019")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "South Borsetshire")
+        self.assertNotContains(response, "Borsetshire West")
+        self.assertNotContains(response, "Borsetshire East")
+
+    def test_explore_csv_page_year(self):
+        url = reverse("explore_csv")
+        response = self.client.get(url + "?mp_last_elected__year=2015")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "South Borsetshire")
+        self.assertNotContains(response, "Borsetshire West")
+        self.assertNotContains(response, "Borsetshire East")
+
 
 class TestAreaPage(TestCase):
     fixtures = ["areas.json", "mps.json", "elections.json", "area_data.json"]

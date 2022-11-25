@@ -1,9 +1,10 @@
+import csv
 import json
 from collections import defaultdict
 from operator import itemgetter
 
 from django.db.models import Count, OuterRef, Q, Subquery
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import DetailView, TemplateView, View
 
@@ -76,6 +77,15 @@ class ExploreJSON(FilterMixin, TemplateView):
         geom = list(self.query().filter(geometry__isnull=False).values("geometry"))
         geom = [json.loads(g["geometry"]) for g in geom]
         return JsonResponse({"type": "FeatureCollection", "features": geom})
+
+
+class ExploreCSV(FilterMixin, TemplateView):
+    def render_to_response(self, context, **response_kwargs):
+        response = HttpResponse(content_type="text/csv")
+        writer = csv.writer(response)
+        for row in self.data():
+            writer.writerow(row)
+        return response
 
 
 class BaseAreaView(TitleMixin, DetailView):
