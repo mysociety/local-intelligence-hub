@@ -10,6 +10,8 @@ const app = createApp({
       datasets: [],
       filters: [],
       shader: null,
+      csvURL: '',
+      map: null,
     }
   },
   computed: {
@@ -97,6 +99,7 @@ const app = createApp({
     },
     updateState() {
       window.history.replaceState(this.state(), '', this.url())
+      this.csvURL = this.url('/explore.csv')
       this.updateMap()
     },
     restoreState() {

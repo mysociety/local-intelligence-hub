@@ -59,8 +59,7 @@
                 <label class="btn btn-outline-secondary flex-grow-1 mx-2" for="results-view-map">Map view</label>
                 <input type="radio" class="btn-check" name="results-view" id="results-view-table" autocomplete="off">
                 <label class="btn btn-outline-secondary flex-grow-1 mx-2" for="results-view-table">Table view</label>
-                <input type="radio" class="btn-check" name="results-view" id="results-view-csv" autocomplete="off">
-                <label class="btn btn-outline-secondary flex-grow-1 mx-2" for="results-view-csv">CSV download</label>
+                <a :href="csvURL" class="btn btn-outline-secondary flex-grow-1 mx-2">CSV download</a>
             </div>
         </fieldset>
 
