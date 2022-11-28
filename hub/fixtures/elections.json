@@ -6,7 +6,8 @@
       "name": "mp_election_majority",
       "data_type": "integer",
       "last_update": "2022-10-10T13:20:30+00:00",
-      "source": "https://wikipedia.org"
+      "source": "https://wikipedia.org",
+      "table": "person__persondata"
     }
   },
   {
@@ -16,7 +17,8 @@
       "name": "mp_first_elected",
       "data_type": "date",
       "last_update": "2022-10-10T13:20:30+00:00",
-      "source": "https://wikipedia.org"
+      "source": "https://wikipedia.org",
+      "table": "person__persondata"
     }
   },
   {
@@ -26,7 +28,8 @@
       "name": "mp_last_elected",
       "data_type": "date",
       "last_update": "2022-10-10T13:20:30+00:00",
-      "source": "https://wikipedia.org"
+      "source": "https://wikipedia.org",
+      "table": "person__persondata"
     }
   },
   {

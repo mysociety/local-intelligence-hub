@@ -4,6 +4,8 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.dispatch import receiver
 
+from django_jsonform.models.fields import JSONField
+
 import utils as lih_utils
 
 User = get_user_model()
@@ -32,6 +34,37 @@ class DataSet(models.Model):
         ("movement", "Movement"),
     ]
 
+    TABLE_CHOICES = [
+        ("areadata", "AreaData"),
+        ("person__persondata", "PersonData"),
+    ]
+
+    COMPARATORS_SCHEMA = {
+        "type": "array",
+        "items": {
+            "type": "dict",
+            "keys": {"field_lookup": {"type": "string"}, "title": {"type": "string"}},
+        },
+        "minItems": 2,
+    }
+
+    def comparators_default():
+        return [
+            dict(field_lookup="exact", title="is"),
+            dict(field_lookup="not_exact", title="is not"),
+        ]
+
+    OPTIONS_SCHEMA = {
+        "type": "array",
+        "items": {
+            "type": "dict",
+            "keys": {"title": {"type": "string"}, "shader": {"type": "string"}},
+        },
+    }
+
+    def options_default():
+        return []
+
     name = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True, null=True)
     label = models.CharField(max_length=200, blank=True, null=True)
@@ -48,6 +81,10 @@ class DataSet(models.Model):
     featured = models.BooleanField(default=False)
     order = models.IntegerField(blank=True, null=True)
     category = models.TextField(blank=True, null=True, choices=CATEGORY_CHOICES)
+    table = models.CharField(max_length=20, null=True, choices=TABLE_CHOICES)
+    comparators = JSONField(schema=COMPARATORS_SCHEMA, default=comparators_default)
+    options = JSONField(schema=OPTIONS_SCHEMA, blank=True, default=options_default)
+    default_value = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self):
         if self.label:
