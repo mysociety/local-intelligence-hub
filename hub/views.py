@@ -1,5 +1,6 @@
 import json
 from collections import defaultdict
+from operator import itemgetter
 
 from django.db.models import Count, OuterRef, Q, Subquery
 from django.http import JsonResponse
@@ -49,6 +50,27 @@ class HomePageView(TitleMixin, TemplateView):
 class ExploreView(TitleMixin, TemplateView):
     page_title = "Explore"
     template_name = "hub/explore.html"
+
+
+class ExploreDatasetsJSON(TemplateView):
+    def render_to_response(self, context, **response_kwargs):
+        datasets = []
+        for d in DataSet.objects.all():
+            datasets.append(
+                dict(
+                    scope="public",
+                    name=d.name,
+                    title=d.label,
+                    source=d.source_name,
+                    comparators=dict(
+                        map(itemgetter("field_lookup", "title"), d.comparators)
+                    ),
+                    options=d.options if len(d.options) > 0 else None,
+                    defaultValue=d.default_value,
+                )
+            )
+
+        return JsonResponse(list(datasets), safe=False)
 
 
 class BaseAreaView(TitleMixin, DetailView):

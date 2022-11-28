@@ -25,6 +25,11 @@ handler404 = views.NotFoundPageView.as_view()
 urlpatterns = [
     path("", views.HomePageView.as_view(), name="home"),
     path("explore/", views.ExploreView.as_view(), name="explore"),
+    path(
+        "explore/datasets.json",
+        views.ExploreDatasetsJSON.as_view(),
+        name="explore_datasets_json",
+    ),
     path("filter_areas/", views.FilterAreaView.as_view(), name="filtered_areas"),
     path("area/<str:area_type>/<str:name>", views.AreaView.as_view(), name="area"),
     path(

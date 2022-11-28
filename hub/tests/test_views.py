@@ -46,6 +46,19 @@ class TestPageRenders(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "hub/explore.html")
 
+
+class TestExploreDatasetsPage(TestCase):
+    fixtures = ["areas.json", "mps.json", "elections.json", "area_data.json"]
+
+    def setUp(self):
+        u = User.objects.create(username="user@example.com")
+        self.client.force_login(u)
+
+    def test_explore_datasets_json_page(self):
+        url = reverse("explore_datasets_json")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
     def test_filter_page(self):
         url = reverse("filtered_areas")
         response = self.client.get(url)
