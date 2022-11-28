@@ -30,6 +30,7 @@ class Command(BaseCommand):
             "source_label": "House of Commons Library",
             "source": self.source_url,
             "source_type": "xlxs",
+            "table": "areadata",
         }
 
         data_set, created = DataSet.objects.update_or_create(

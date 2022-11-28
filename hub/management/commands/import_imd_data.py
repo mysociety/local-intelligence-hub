@@ -20,6 +20,12 @@ class Command(BaseImportFromDataFrameCommand):
                 "data_type": "integer",
                 "category": "place",
                 "source_type": "csv",
+                "table": "areadata",
+                "comparators": [
+                    dict(field_lookup="lt", title="is less than"),
+                    dict(field_lookup="gte", title="is equal or greater than"),
+                ],
+                "default_value": 5,
             },
             "col": "pcon-imd-pop-quintile",
         }

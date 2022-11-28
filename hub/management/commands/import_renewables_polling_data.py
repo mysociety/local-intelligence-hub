@@ -76,6 +76,7 @@ class Command(BaseCommand):
                     "source_type": "google sheet",
                     "data_url": "",
                     "order": order,
+                    "table": "areadata",
                 },
             )
 

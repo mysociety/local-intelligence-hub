@@ -27,6 +27,12 @@ class Command(BaseImportFromDataFrameCommand):
                 "source": source_url,
                 "source_type": "xlxs",
                 "data_url": data_url,
+                "table": "areadata",
+                "comparators": [
+                    dict(field_lookup="lt", title="is less than"),
+                    dict(field_lookup="gte", title="is equal or greater than"),
+                ],
+                "default_value": 10,
             },
             "col": "Proportion of households fuel poor (%)",
         }
