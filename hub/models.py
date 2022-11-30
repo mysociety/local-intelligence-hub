@@ -1,5 +1,8 @@
+from datetime import datetime, timezone
+
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.dispatch import receiver
 
 import utils as lih_utils
 
@@ -219,3 +222,16 @@ class Person(models.Model):
 
 class PersonData(CommonData):
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
+
+
+@receiver(models.signals.pre_save, sender=AreaData)
+@receiver(models.signals.pre_save, sender=PersonData)
+def cast_data(sender, instance, *args, **kwargs):
+    if instance.is_date and instance.date is None and instance.data:
+        date = datetime.fromisoformat(instance.data)
+        # parliament API does not add timezones to things that are dates so we
+        # need to add them
+        if date.tzinfo is None:
+            date = date.replace(tzinfo=timezone.utc)
+        instance.date = date
+        instance.data = ""

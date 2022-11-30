@@ -1,5 +1,3 @@
-from datetime import datetime, timezone
-
 from django.core.management.base import BaseCommand
 
 import requests
@@ -105,26 +103,11 @@ class Command(BaseCommand):
             person = Person.objects.get(id=mp_id)
 
             for key, data_type in data_types.items():
-                if data_type.data_type == "date":
-                    date = datetime.fromisoformat(result[key])
-                    # parliament API does not add timezones to things that are dates so
-                    # we need to add them
-                    if date.tzinfo is None:
-                        date = date.replace(tzinfo=timezone.utc)
-                    data, created = PersonData.objects.update_or_create(
-                        person=person,
-                        data_type=data_type,
-                        defaults={
-                            "data": "",
-                            "date": date,
-                        },
-                    )
-                else:
-                    data, created = PersonData.objects.update_or_create(
-                        person=person,
-                        data_type=data_type,
-                        defaults={"data": result[key]},
-                    )
+                data, created = PersonData.objects.update_or_create(
+                    person=person,
+                    data_type=data_type,
+                    defaults={"data": result[key]},
+                )
 
     def import_results(self):
         results = self.get_results()
