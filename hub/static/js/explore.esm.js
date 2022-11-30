@@ -12,7 +12,9 @@ const app = createApp({
       filters: [],
       shader: null,
       csvURL: '',
+      view: 'map',
       map: null,
+      table: null,
     }
   },
   computed: {
@@ -101,7 +103,7 @@ const app = createApp({
     updateState() {
       window.history.replaceState(this.state(), '', this.url())
       this.csvURL = this.url('/explore.csv')
-      this.updateMap()
+      this.updateResults()
     },
     restoreState() {
       const params = new URL(window.location).searchParams
@@ -121,7 +123,25 @@ const app = createApp({
       const request = this.loadDatasets(Object.keys(pending))
       for (let i in pending) { request.then(pending[i]) }
 
-      request.then(() => { this.updateMap() })
+      request.then(() => { this.updateResults() })
+    },
+    changeView(newView) {
+      this.view = newView
+
+      if (this.view == 'map') {
+        this.$refs.table.setAttribute('hidden', true)
+        this.$refs.map.removeAttribute('hidden')
+      }
+      else {
+        this.$refs.map.setAttribute('hidden', true)
+        this.$refs.table.removeAttribute('hidden')
+      }
+
+      this.updateResults()
+    },
+    updateResults() {
+      if (this.view == 'map') { this.updateMap() }
+      else { this.updateTable() }
     },
     setUpMap() {
       this.map = L.map(this.$refs.map).setView([54.0934, -2.8948], 7)
@@ -160,6 +180,18 @@ const app = createApp({
               })
             }
           }).addTo(this.map)
+        })
+    },
+    updateTable() {
+      fetch(this.url('/explore.csv'))
+        .then(response => response.blob())
+        .then(data => {
+          console.log(data)
+          Papa.parse(data, {
+            header: true,
+            skipEmptyLines: true,
+            complete: (results) => { this.table = results }
+          })
         })
     }
   }

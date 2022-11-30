@@ -160,6 +160,7 @@ STATICFILES_DIRS = [
     ("chartjs", BASE_DIR / "vendor" / "chartjs" / "js"),
     ("jquery", BASE_DIR / "vendor" / "jquery" / "js"),
     ("leaflet", BASE_DIR / "vendor" / "leaflet" / "js"),
+    ("papaparse", BASE_DIR / "vendor" / "papaparse" / "js"),
     ("popper", BASE_DIR / "vendor" / "popper" / "js"),
     ("vue", BASE_DIR / "vendor" / "vue" / "js"),
 ]

@@ -1,5 +1,7 @@
 {% extends 'hub/base.html' %}
 
+{% load static %}
+
 {% block bodyclass %}page-explore{% endblock %}
 
 {% block content %}
@@ -55,10 +57,8 @@
         <fieldset>
             <legend class="form-label">Display results in</legend>
             <div class="d-flex mx-n2">
-                <input type="radio" class="btn-check" name="results-view" id="results-view-map" autocomplete="off" checked>
-                <label class="btn btn-outline-secondary flex-grow-1 mx-2" for="results-view-map">Map view</label>
-                <input type="radio" class="btn-check" name="results-view" id="results-view-table" autocomplete="off">
-                <label class="btn btn-outline-secondary flex-grow-1 mx-2" for="results-view-table">Table view</label>
+                <a @click="changeView('map')" class="btn btn-outline-secondary flex-grow-1 mx-2">Map view</a>
+                <a @click="changeView('table')" class="btn btn-outline-secondary flex-grow-1 mx-2">Table view</a>
                 <a :href="csvURL" class="btn btn-outline-secondary flex-grow-1 mx-2">CSV download</a>
             </div>
         </fieldset>
@@ -71,9 +71,29 @@
 
     <div class="explore-results bg-gray-100">
         <div class="explore-map" ref="map"></div>
+        <div class="explore-table" ref="table" hidden>
+            <table v-if="table" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th v-for="(header, key) in table.meta.fields" v-bind:key="'header-'+key">
+                            ${ header }
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(row, rowKey) in table.data" v-bind:key="'row-'+rowKey">
+                        <td v-for="(column, columnKey) in table.meta.fields" v-bind:key="'row-'+rowKey+'-column-'+columnKey">
+                            ${ table.data[rowKey][column] }
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     {% include 'hub/includes/add-data-modal.html' %}
 </div>
+
+<script src="{% static 'papaparse/papaparse-5.3.2.min.js' %}"></script>
 
 {% endblock %}
