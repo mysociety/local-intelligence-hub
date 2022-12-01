@@ -74,4 +74,4 @@ class Command(BaseLatLongImportCommand):
         df = self.get_dataframe()
         self.add_data_sets(df)
         self.process_data(df)
-        self.update_average()
+        self.update_averages()
