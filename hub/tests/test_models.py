@@ -1,5 +1,3 @@
-from datetime import datetime, timezone
-
 from django.test import TestCase
 
 from hub.models import Area, AreaData, DataSet, DataType, Person
@@ -121,19 +119,33 @@ class TestCommonData(TestCase):
             name="dataset_name",
         )
 
-        self.datatype = DataType.objects.create(
+        self.text_datatype = DataType.objects.create(
             data_set=self.dataset, name="datatype_name", data_type="text"
         )
 
-    def test_value(self):
+        self.int_datatype = DataType.objects.create(
+            data_set=self.dataset, name="datatype_name", data_type="integer"
+        )
+
+        self.float_datatype = DataType.objects.create(
+            data_set=self.dataset, name="datatype_name", data_type="float"
+        )
+
+        self.date_datatype = DataType.objects.create(
+            data_set=self.dataset, name="datatype_name", data_type="date"
+        )
+
+    def test_text_value(self):
         data = AreaData.objects.create(
-            area=self.area, data_type=self.datatype, data="1"
+            area=self.area, data_type=self.text_datatype, data="1"
         )
 
         self.assertEqual(data.value(), "1")
 
-        self.datatype.data_type = "integer"
-        self.datatype.save()
+    def test_int_value(self):
+        data = AreaData.objects.create(
+            area=self.area, data_type=self.int_datatype, data="1"
+        )
 
         self.assertEqual(data.value(), 1)
 
@@ -142,26 +154,17 @@ class TestCommonData(TestCase):
 
         self.assertEqual(data.value(), 1)
 
-        self.datatype.data_type = "float"
-        self.datatype.save()
+    def test_float_value(self):
+        data = AreaData.objects.create(
+            area=self.area, data_type=self.float_datatype, data="1.1"
+        )
 
         self.assertEqual(data.value(), 1.1)
 
-        data.data = "text"
-        data.save()
-
-        self.assertEqual(data.value(), "text")
-
-        self.datatype.data_type = "date"
-        self.datatype.save()
-
-        self.assertEqual(data.value(), None)
-
-        the_date = datetime.fromisoformat("2022-10-11")
-        the_date = the_date.replace(tzinfo=timezone.utc)
-
-        data.date = the_date
-        data.save()
+    def test_date_value(self):
+        data = AreaData.objects.create(
+            area=self.area, data_type=self.date_datatype, data="2022-10-11"
+        )
 
         self.assertEqual(data.value().date().isoformat(), "2022-10-11")
 

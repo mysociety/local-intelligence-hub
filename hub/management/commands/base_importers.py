@@ -2,7 +2,7 @@ from time import sleep
 
 from django.core.management.base import BaseCommand
 from django.db.models import Avg, IntegerField
-from django.db.models.functions import Cast
+from django.db.models.functions import Cast, Coalesce
 
 import pandas as pd
 from tqdm import tqdm
@@ -62,7 +62,11 @@ class BaseAreaImportCommand(BaseCommand):
         for data_type in self.data_types.values():
             average = (
                 AreaData.objects.filter(data_type=data_type)
-                .annotate(cast_data=Cast("data", output_field=self.cast_field()))
+                .annotate(
+                    cast_data=Cast(
+                        Coalesce("int", "float"), output_field=self.cast_field()
+                    )
+                )
                 .all()
                 .aggregate(Avg("cast_data"))
             )
