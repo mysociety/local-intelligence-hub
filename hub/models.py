@@ -143,15 +143,17 @@ class CommonData(models.Model):
     data_type = models.ForeignKey(DataType, on_delete=models.CASCADE)
     data = models.CharField(max_length=200)
     date = models.DateTimeField(blank=True, null=True)
+    float = models.FloatField(blank=True, null=True)
+    int = models.IntegerField(blank=True, null=True)
 
     def value(self):
         try:
             if self.is_date:
                 return self.date
             elif self.is_float:
-                return float(self.data)
+                return self.float
             elif self.is_number:
-                return int(self.data)
+                return self.int
         except ValueError:
             return self.data
 
@@ -234,4 +236,12 @@ def cast_data(sender, instance, *args, **kwargs):
         if date.tzinfo is None:
             date = date.replace(tzinfo=timezone.utc)
         instance.date = date
+        instance.data = ""
+
+    elif instance.is_float and instance.float is None and instance.data:
+        instance.float = float(instance.data)
+        instance.data = ""
+
+    elif instance.is_number and instance.int is None and instance.data:
+        instance.int = int(instance.data)
         instance.data = ""
