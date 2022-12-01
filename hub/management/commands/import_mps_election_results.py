@@ -49,6 +49,18 @@ class Command(BaseCommand):
 
         return results
 
+    def numerical_comparators(self):
+        return [
+            dict(field_lookup="lt", title="is less than"),
+            dict(field_lookup="gte", title="is equal or greater than"),
+        ]
+
+    def year_comparators(self):
+        return [
+            dict(field_lookup="year__lt", title="before year"),
+            dict(field_lookup="year__gte", title="since year"),
+        ]
+
     def create_data_types(self):
         majority_ds, created = DataSet.objects.update_or_create(
             name="mp_election_majority",
@@ -56,6 +68,8 @@ class Command(BaseCommand):
                 "data_type": "integer",
                 "description": "Majority at last election",
                 "source": "https://members-api.parliament.uk/",
+                "comparators": self.numerical_comparators(),
+                "default_value": 1000,
             },
         )
         majority, created = DataType.objects.update_or_create(
@@ -70,6 +84,9 @@ class Command(BaseCommand):
                 "data_type": "date",
                 "description": "Date of last election for an MP",
                 "source": "https://members-api.parliament.uk/",
+                "table": "person__persondata",
+                "comparators": self.year_comparators(),
+                "default_value": 2019,
             },
         )
         last_elected, created = DataType.objects.update_or_create(
@@ -84,6 +101,9 @@ class Command(BaseCommand):
                 "data_type": "date",
                 "description": "Date an MP was first elected to current position",
                 "source": "https://members-api.parliament.uk/",
+                "table": "person__persondata",
+                "comparators": self.year_comparators(),
+                "default_value": 2019,
             },
         )
         first_elected, created = DataType.objects.update_or_create(

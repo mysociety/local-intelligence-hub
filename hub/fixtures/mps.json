@@ -11,6 +11,17 @@
     }
   },
   {
+    "model": "hub.person",
+    "pk": 2,
+    "fields": {
+      "name": "Juliet Madeupname",
+      "external_id": "2",
+      "person_type": "MP",
+      "id_type": "parlid",
+      "area": 2
+    }
+  },
+  {
     "model": "hub.dataset",
     "pk": 1,
     "fields": {

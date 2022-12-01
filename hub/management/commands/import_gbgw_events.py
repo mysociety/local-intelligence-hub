@@ -35,6 +35,7 @@ class Command(BaseLatLongImportCommand):
                 "source": "https://greatbiggreenweek.com/",
                 "source_type": "google sheet",
                 "data_url": "",
+                "table": "areadata",
             },
         )
 

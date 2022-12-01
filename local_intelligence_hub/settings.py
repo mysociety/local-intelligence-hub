@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "compressor",
     "django_bootstrap5",
     "sslserver",
+    "django_jsonform",
     "hub",
 ]
 

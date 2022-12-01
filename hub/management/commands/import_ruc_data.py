@@ -19,6 +19,12 @@ class Command(BaseImportFromDataFrameCommand):
                 "source_label": "mySociety",
                 "source": "https://mysociety.github.io/uk_ruc/",
                 "source_type": "csv",
+                "options": [
+                    "Sparse and rural",
+                    "Urban with rural areas",
+                    "Rural",
+                    "Urban",
+                ],
             },
             "col": "ruc-cluster-label",
         }

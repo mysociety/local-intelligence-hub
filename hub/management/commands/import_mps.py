@@ -1,4 +1,5 @@
 import urllib.request
+from collections import Counter
 
 from django.conf import settings
 from django.core.files import File
@@ -75,6 +76,7 @@ class Command(BaseCommand):
                     "description": props["label"],
                     "label": props["label"],
                     "source": "https://en.wikipedia.org/",
+                    "table": "person__persondata",
                 },
             )
             dt, created = DataType.objects.get_or_create(
@@ -144,6 +146,20 @@ class Command(BaseCommand):
                             data_type=data_types["party"],
                             data=mp["partyLabel"]["value"],
                         )
+
+        dataset = DataSet.objects.filter(name="party", options=list())
+        if dataset:
+            parties = list()
+            all_parties = list(
+                PersonData.objects.filter(
+                    data_type__data_set__name="party"
+                ).values_list("data")
+            )
+
+            for (party, count) in Counter(all_parties).most_common():
+                parties.append(party[0])
+
+            dataset.update(options=parties)
 
     def import_mp_images(self):
         path = settings.MEDIA_ROOT / "person"
