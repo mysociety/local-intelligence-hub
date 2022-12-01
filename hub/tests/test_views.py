@@ -73,7 +73,7 @@ class TestAreaPage(TestCase):
         mp = context["mp"]
         self.assertEqual(mp["person"].name, "James Madeupname")
         self.assertEqual(mp["parlid"], "1")
-        self.assertEqual(mp["mp_election_majority"], "1234")
+        self.assertEqual(mp["mp_election_majority"], 1234)
         self.assertEqual(mp["mp_first_elected"].date().isoformat(), "2005-05-05")
 
         places = context["categories"]["place"]
