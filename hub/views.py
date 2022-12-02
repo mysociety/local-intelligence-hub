@@ -55,6 +55,8 @@ class ExploreDatasetsJSON(TemplateView):
     def render_to_response(self, context, **response_kwargs):
         datasets = []
         for d in DataSet.objects.all():
+            options = list(map(itemgetter("title"), d.options))
+
             datasets.append(
                 dict(
                     scope="public",
@@ -64,7 +66,7 @@ class ExploreDatasetsJSON(TemplateView):
                     comparators=dict(
                         map(itemgetter("field_lookup", "title"), d.comparators)
                     ),
-                    options=d.options if len(d.options) > 0 else None,
+                    options=options if len(d.options) > 0 else None,
                     defaultValue=d.default_value,
                 )
             )

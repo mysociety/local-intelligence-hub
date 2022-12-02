@@ -157,7 +157,7 @@ class Command(BaseCommand):
             )
 
             for (party, count) in Counter(all_parties).most_common():
-                parties.append(party[0])
+                parties.append(dict(title=party[0], shader=""))
 
             dataset.update(options=parties)
 
