@@ -66,7 +66,7 @@ class ExploreDatasetsJSON(TemplateView):
                     comparators=dict(
                         map(itemgetter("field_lookup", "title"), d.comparators)
                     ),
-                    options=options if len(d.options) > 0 else None,
+                    options=options if len(options) > 0 else None,
                     defaultValue=d.default_value,
                 )
             )
@@ -76,8 +76,27 @@ class ExploreDatasetsJSON(TemplateView):
 
 class ExploreJSON(FilterMixin, TemplateView):
     def render_to_response(self, context, **response_kwargs):
-        geom = list(self.query().filter(geometry__isnull=False).values("geometry"))
-        geom = [json.loads(g["geometry"]) for g in geom]
+        geom = []
+        areas = list(self.query().filter(geometry__isnull=False))
+        shader = self.shader()
+        colours = {}
+        if shader is not None:
+            colours = shader.colours_for_areas(areas)
+
+        for area in areas:
+            geometry = json.loads(area.geometry)
+            props = geometry["properties"]
+            if colours.get(area.gss, None) is not None:
+                props["color"] = colours[area.gss]["colour"]
+                props["opacity"] = colours[area.gss]["opacity"]
+            else:
+                props["color"] = "#ed6832"
+                props["opacity"] = 0.7
+
+            geometry["properties"] = props
+
+            geom.append(geometry)
+
         return JsonResponse({"type": "FeatureCollection", "features": geom})
 
 

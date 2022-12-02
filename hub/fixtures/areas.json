@@ -7,7 +7,7 @@
       "mapit_id": "1",
       "name": "South Borsetshire",
       "area_type": "WMC",
-      "geometry": "{\"name\": \"South Borsetshire\"}"
+      "geometry": "{\"name\": \"South Borsetshire\", \"properties\": {}}"
     }
   },
   {
@@ -18,7 +18,7 @@
       "mapit_id": "2",
       "name": "Borsetshire West",
       "area_type": "WMC",
-      "geometry": "{\"name\": \"Borsetshire West\"}"
+      "geometry": "{\"name\": \"Borsetshire West\", \"properties\": {}}"
     }
   },
   {
@@ -29,7 +29,7 @@
       "mapit_id": "3",
       "name": "Borsetshire East",
       "area_type": "WMC",
-      "geometry": "{\"name\": \"Borsetshire East\"}"
+      "geometry": "{\"name\": \"Borsetshire East\", \"properties\": {}}"
     }
   }
 ]

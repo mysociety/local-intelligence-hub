@@ -75,3 +75,10 @@ class FilterMixin:
             data.append(row)
 
         return data
+
+    def shader(self):
+        name = self.request.GET.get("shader")
+        try:
+            return DataSet.objects.get(name=name)
+        except DataSet.DoesNotExist:
+            return None

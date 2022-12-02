@@ -157,6 +157,44 @@ class DataSet(TypeMixin, models.Model):
     def filter(self, query, **kwargs):
         return Filter(self, query).run(**kwargs)
 
+    def colours_for_areas(self, areas):
+        values = self.shader_value(areas)
+        colours = {}
+        for value in values:
+            opacity = (
+                value.opacity(value.data_type.minimum, value.data_type.maximum) or 0.7
+            )
+            data = value.value()
+            colours[value.gss] = {"colour": "#ed6832", "opacity": opacity}
+            for option in self.options:
+                if option["title"] == data:
+                    colours[value.gss] = {
+                        "colour": option["shader"],
+                        "opacity": opacity,
+                    }
+
+        return colours
+
+    def shader_value(self, area):
+        if self.table == "areadata":
+            data = (
+                AreaData.objects.filter(area__in=area, data_type__data_set=self)
+                .select_related("area", "data_type")
+                .annotate(gss=models.F("area__gss"))
+            )
+            return data
+        else:
+            data = (
+                PersonData.objects.filter(
+                    person__area__in=area, data_type__data_set=self
+                )
+                .select_related("person__area", "data_type")
+                .annotate(gss=models.F("person__area__gss"))
+            )
+            return data
+
+        return None
+
 
 class DataType(TypeMixin, models.Model):
     data_set = models.ForeignKey(DataSet, on_delete=models.CASCADE)
@@ -205,6 +243,13 @@ class CommonData(models.Model):
 
         return self.data
 
+    def opacity(self, min, max):
+        if self.is_number:
+            inc = (max - min) / 100
+            opacity = (self.value() - min) / inc
+            return opacity / 100
+        return 100
+
     @property
     def average(self):
         return self.data_type.average
@@ -246,6 +291,21 @@ class Area(models.Model):
 
     def get_absolute_url(self):
         return f"/area/{self.area_type}/{self.name}"
+
+    def get_value(self, dataset):
+        area = self
+
+        if dataset.table == "areadata":
+            scope = area.areadata_set
+        else:
+            person = area.person_set.first()
+            scope = person.persondata_set if person else None
+
+        if scope is None:
+            return None
+
+        data = scope.get(data_type__data_set=dataset)
+        return data.value() if data else None
 
 
 class AreaData(CommonData):

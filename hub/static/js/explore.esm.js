@@ -174,9 +174,11 @@ const app = createApp({
           }
 
           window.geojson = L.geoJson(data, {
-            style: {
-              fillColor: '#ed6832', fillOpacity: 0.7,
-              color: 'white', weight: 2, opacity: 1,
+            style: (feature) => {
+              return {
+                fillColor: feature.properties.color, fillOpacity: feature.properties.opacity,
+                color: 'white', weight: 2, opacity: 1,
+              }
             },
             onEachFeature: (feature, layer) => {
               layer.bindTooltip(feature.properties.name)
