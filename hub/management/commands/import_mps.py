@@ -101,7 +101,7 @@ class Command(BaseCommand):
                 )
                 continue
 
-            if area:
+            if area and "parlid" in mp:
                 person, created = Person.objects.update_or_create(
                     person_type="MP",
                     external_id=mp["parlid"]["value"],
