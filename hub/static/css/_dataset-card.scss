@@ -6,6 +6,29 @@
     .js-unfavourite-this-dataset {
         display: none;
     }
+
+    .table {
+        tr > :first-child {
+            padding-left: 0;
+        }
+
+        tr > :last-child {
+            padding-right: 0;
+        }
+
+        tbody > tr:last-child {
+            td, th {
+                border-bottom: none;
+                padding-bottom: 0;
+            }
+        }
+
+        thead > tr:first-child {
+            td, th {
+                padding-top: 0;
+            }
+        }
+    }
 }
 
 .dataset-card--favourite {

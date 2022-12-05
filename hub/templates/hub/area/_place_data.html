@@ -27,6 +27,23 @@
                       {% endfor %}
                     </tbody>
                 </table>
+              {% elif category.data.data_type.name == 'constituency_popular_petitions' %}
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">Petition</th>
+                            <th scope="col">Signatures</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                      {% for petition in category.data.value %}
+                        <tr>
+                            <td><a href="{{ petition.url }}">{{ petition.action }}</a></td>
+                            <td class="text-end">{{ petition.signatures }}</td>
+                        </tr>
+                      {% endfor %}
+                    </body>
+                </table>
               {% else %}
                 {% if category.data.is_number %}
                 <p class="card-text mb-0 display-6 lh-1 text-primary">{{ category.data.value|floatformat }}{% if category.data.is_percentage %}%{% endif %}</p>
