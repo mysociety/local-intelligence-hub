@@ -34,21 +34,23 @@ def populate_datasets(apps, schema_editor):
         "mp_election_majority",
     ]
 
-    hub.models.DataSet.objects.filter(name__in=persondata_names).update(
+    DataSet = apps.get_model("hub", "DataSet")
+
+    DataSet.objects.filter(name__in=persondata_names).update(
         table="person__persondata",
     )
-    hub.models.DataSet.objects.exclude(name__in=persondata_names).update(
+    DataSet.objects.exclude(name__in=persondata_names).update(
         table="areadata",
     )
-    hub.models.DataSet.objects.filter(data_type="year").update(
+    DataSet.objects.filter(data_type="year").update(
         comparators=year_comparators(),
         default_value=2019,  # last election year
     )
-    hub.models.DataSet.objects.filter(data_type="percent").update(
+    DataSet.objects.filter(data_type="percent").update(
         comparators=numerical_comparators(),
         default_value=50,  # right down the middle
     )
-    hub.models.DataSet.objects.filter(data_type__in=["float", "integer"]).update(
+    DataSet.objects.filter(data_type__in=["float", "integer"]).update(
         comparators=numerical_comparators(),
     )
 

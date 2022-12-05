@@ -2,10 +2,11 @@
 
 from django.db import migrations, models
 
-from hub.models import AreaData, PersonData
-
 
 def data_to_num(apps, schema_editor):
+    AreaData = apps.get_model("hub", "AreaData")
+    PersonData = apps.get_model("hub", "PersonData")
+
     for areadata in AreaData.objects.all():
         areadata.data = areadata.data
         areadata.save()
@@ -16,6 +17,9 @@ def data_to_num(apps, schema_editor):
 
 
 def data_to_string(apps, schema_editor):
+    AreaData = apps.get_model("hub", "AreaData")
+    PersonData = apps.get_model("hub", "PersonData")
+
     AreaData.objects.exclude(float=None).update(data=models.F("float"))
     AreaData.objects.exclude(int=None).update(data=models.F("int"))
     PersonData.objects.exclude(float=None).update(data=models.F("float"))

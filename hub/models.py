@@ -21,6 +21,7 @@ class TypeMixin:
         ("date", "Date"),
         ("boolean", "True/False"),
         ("profile_id", "Profile Id"),
+        ("json", "JSON data"),
     ]
 
     @property
@@ -47,6 +48,13 @@ class TypeMixin:
     @property
     def is_date(self):
         if self.data_type == "date":
+            return True
+
+        return False
+
+    @property
+    def is_json(self):
+        if self.data_type == "json":
             return True
 
         return False
@@ -178,6 +186,7 @@ class CommonData(models.Model):
     date = models.DateTimeField(blank=True, null=True)
     float = models.FloatField(blank=True, null=True)
     int = models.IntegerField(blank=True, null=True)
+    json = models.JSONField(blank=True, null=True)
 
     def value(self):
         try:
@@ -187,6 +196,8 @@ class CommonData(models.Model):
                 return self.float
             elif self.is_number:
                 return self.int
+            elif self.is_json:
+                return self.json
         except ValueError:
             return self.data
 
@@ -215,6 +226,10 @@ class CommonData(models.Model):
     @property
     def is_date(self):
         return self.data_type.is_date
+
+    @property
+    def is_json(self):
+        return self.data_type.is_json
 
     class Meta:
         abstract = True
