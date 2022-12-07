@@ -28,8 +28,15 @@ const app = createApp({
   },
   computed: {
     modal() { return new Modal(this.$refs.modal) },
-    publicDatasets() { return this.datasets.filter(d => d.scope === 'public') },
-    memberDatasets() { return this.datasets.filter(d => d.scope === 'member') },
+    favouriteDatasets() { return this.datasets.filter((d) => {
+      return d.is_favourite === true
+    }) },
+    featuredDatasets() { return this.datasets.filter((d) => {
+      return d.featured === true
+    }) },
+    otherDatasets() { return this.datasets.filter((d) => {
+      return d.is_favourite === false && d.featured === false
+    }) },
   },
   mounted() {
     this.restoreState()

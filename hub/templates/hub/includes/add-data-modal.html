@@ -1,53 +1,58 @@
-<div class="modal fade wide-modal" tabindex="-1" ref="modal">
+<div class="modal fade" tabindex="-1" ref="modal">
     <div class="modal-dialog shadow-lg">
-        <div class="modal-content">
+        <div class="modal-content overflow-hidden">
             <div class="modal-header">
                 <h2 class="modal-title h5 lh-1">Add ${ currentType }</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-header bg-gray-100">
+            <div class="modal-body bg-gray-100">
                 <div class="search-input w-100">
                     {% include 'hub/includes/icons/search.html' %}
-                    <input type="search" class="form-control" placeholder="Search all datasets…">
+                    <input type="search" class="form-control" placeholder="Find a dataset…" aria-label="Find a dataset…">
                 </div>
-            </div>
-            <div class="modal-body">
-                <div v-if="!loaded" class="row">
-                    <div class="col-md-12 mb-0 mb-md-0">
-                        Loading...
-                    </div>
+                <div v-if="!loaded" class="mt-3 text-center">
+                    Loading…
                 </div>
-                <div v-else class="row">
-                    <div class="col-md-4 mb-4 mb-md-0">
-                        <h3 class="h5 text-primary">Public datasets</h3>
-                        <div class="list-group mt-3 mt-lg-4">
-                            <button v-for="dataset in publicDatasets" @click="addFilterOrShader(dataset.name)" class="list-group-item list-group-item-action">
-                                <strong>${ dataset.title }</strong>
-                                <small class="d-block text-muted">${ dataset.source }</small>
-                            </button>
-                        </div>
-                        <button class="btn btn-sm btn-link w-100 mt-2">Show more…</button>
-                    </div>
-                    <div class="col-md-4 mb-4 mb-md-0">
-                        <h3 class="h5 text-primary">Members-only datasets</h3>
-                        <div class="p-3 mt-3 mt-lg-4 bg-yellow-100 rounded">
-                            <p class="mb-2">These datasets are available only to The Climate Coalition member organisations.</p>
-                            <p class="mb-0"><a href="#">Sign in</a> or <a href="#">Request an account</a></p>
-                        </div>
-                        <div class="list-group mt-3 mt-lg-4">
-                            <div v-for="dataset in memberDatasets" class="list-group-item text-muted">
-                                <strong>${ dataset.title }</strong>
-                                <small class="d-block">${ dataset.source }</small>
+                <div v-if="favouriteDatasets.length">
+                    <h3 class="h6 mt-4 text-primary">Your favourite datasets</h3>
+                    <div class="list-group mt-3">
+                        <button v-for="dataset in favouriteDatasets" @click="addFilterOrShader(dataset.name)" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <strong class="me-auto pe-3">${ dataset.title }</strong>
+                                <span v-if="dataset.is_favourite" class="text-gray-500">
+                                    {% include 'hub/includes/icons/heart-full.html' %}
+                                </span>
                             </div>
-                        </div>
-                        <button class="btn btn-sm btn-link w-100 mt-2">Show more…</button>
+                            <small class="d-block text-muted fs-8">Data from ${ dataset.source }</small>
+                        </button>
                     </div>
-                    <div class="col-md-4">
-                        <h3 class="h5 text-primary">Your private datatsets</h3>
-                        <div class="p-3 mt-3 mt-lg-4 bg-blue-100 rounded">
-                            <p class="mb-2">You haven’t uploaded any datasets yet.</p>
-                            <p class="mb-0"><a href="#">Sign in</a> or <a href="#">Request an account</a></p>
-                        </div>
+                </div>
+                <div v-if="featuredDatasets.length">
+                    <h3 class="h6 mt-4 text-primary">Popular datasets</h3>
+                    <div class="list-group mt-3">
+                        <button v-for="dataset in featuredDatasets" @click="addFilterOrShader(dataset.name)" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <strong class="me-auto pe-3">${ dataset.title }</strong>
+                                <span v-if="dataset.is_favourite" class="text-gray-500">
+                                    {% include 'hub/includes/icons/heart-full.html' %}
+                                </span>
+                            </div>
+                            <small class="d-block text-muted fs-8">Data from ${ dataset.source }</small>
+                        </button>
+                    </div>
+                </div>
+                <div v-if="otherDatasets.length">
+                    <h3 class="h6 mt-4 text-primary">More datasets</h3>
+                    <div class="list-group mt-3">
+                        <button v-for="dataset in otherDatasets" @click="addFilterOrShader(dataset.name)" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <strong class="me-auto pe-3">${ dataset.title }</strong>
+                                <span v-if="dataset.is_favourite" class="text-gray-500">
+                                    {% include 'hub/includes/icons/heart-full.html' %}
+                                </span>
+                            </div>
+                            <small class="d-block text-muted fs-8">Data from ${ dataset.source }</small>
+                        </button>
                     </div>
                 </div>
             </div>

@@ -62,7 +62,12 @@ class ExploreDatasetsJSON(TemplateView):
                     scope="public",
                     name=d.name,
                     title=d.label,
-                    source=d.source_name,
+                    source=d.source_label,
+                    is_favourite=UserDataSets.objects.filter(
+                        data_set=d,
+                        user=self.request.user,
+                    ).exists(),
+                    featured=d.featured,
                     comparators=dict(
                         map(itemgetter("field_lookup", "title"), d.comparators)
                     ),
