@@ -1,21 +1,30 @@
 from django.core.management.base import BaseCommand
 
 import requests
+from tqdm import tqdm
 
 from hub.models import DataSet, DataType, Person, PersonData
 
 
 class Command(BaseCommand):
-    help = "Import UK Members of Parliament"
+    help = "Import election results for UK Members of Parliament"
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "-q", "--quiet", action="store_true", help="Silence progress bars."
+        )
+
+    def handle(self, quiet=False, *args, **options):
+        self._quiet = quiet
         self.import_results()
 
     def get_results(self):
         mps = Person.objects.filter(person_type="MP")
 
         results = {}
-        for mp in mps.all():
+        if not self._quiet:
+            self.stdout.write("Fetching MP election results")
+        for mp in tqdm(mps.all(), disable=self._quiet):
             if mp.external_id == "":  # pragma: no cover
                 print(f"problem with {mp.name} - no id")
                 continue
@@ -62,12 +71,16 @@ class Command(BaseCommand):
         ]
 
     def create_data_types(self):
+        if not self._quiet:
+            self.stdout.write("Creating data sets and types")
         majority_ds, created = DataSet.objects.update_or_create(
             name="mp_election_majority",
             defaults={
                 "data_type": "integer",
+                "label": "MP majority",
                 "description": "Majority at last election",
                 "source": "https://members-api.parliament.uk/",
+                "source_label": "UK Parliament",
                 "comparators": self.numerical_comparators(),
                 "default_value": 1000,
             },
@@ -75,15 +88,17 @@ class Command(BaseCommand):
         majority, created = DataType.objects.update_or_create(
             data_set=majority_ds,
             name="mp_election_majority",
-            defaults={"data_type": "integer"},
+            defaults={"label": "MP majority", "data_type": "integer"},
         )
 
         last_elected_ds, created = DataSet.objects.update_or_create(
             name="mp_last_elected",
             defaults={
                 "data_type": "date",
+                "label": "Date MP last elected",
                 "description": "Date of last election for an MP",
                 "source": "https://members-api.parliament.uk/",
+                "source_label": "UK Parliament",
                 "table": "person__persondata",
                 "comparators": self.year_comparators(),
                 "default_value": 2019,
@@ -92,15 +107,17 @@ class Command(BaseCommand):
         last_elected, created = DataType.objects.update_or_create(
             data_set=last_elected_ds,
             name="mp_last_elected",
-            defaults={"data_type": "date"},
+            defaults={"label": "Date MP last elected", "data_type": "date"},
         )
 
         first_elected_ds, created = DataSet.objects.update_or_create(
             name="mp_first_elected",
             defaults={
                 "data_type": "date",
+                "label": "Date MP first elected",
                 "description": "Date an MP was first elected to current position",
                 "source": "https://members-api.parliament.uk/",
+                "source_label": "UK Parliament",
                 "table": "person__persondata",
                 "comparators": self.year_comparators(),
                 "default_value": 2019,
@@ -109,7 +126,7 @@ class Command(BaseCommand):
         first_elected, created = DataType.objects.update_or_create(
             data_set=first_elected_ds,
             name="mp_first_elected",
-            defaults={"data_type": "date"},
+            defaults={"label": "Date MP first elected", "data_type": "date"},
         )
 
         return {
@@ -119,7 +136,9 @@ class Command(BaseCommand):
         }
 
     def add_results(self, results, data_types):
-        for mp_id, result in results.items():
+        if not self._quiet:
+            self.stdout.write("Updating MP election results")
+        for mp_id, result in tqdm(results.items(), disable=self._quiet):
             person = Person.objects.get(id=mp_id)
 
             for key, data_type in data_types.items():
@@ -130,6 +149,6 @@ class Command(BaseCommand):
                 )
 
     def import_results(self):
-        results = self.get_results()
         data_types = self.create_data_types()
+        results = self.get_results()
         self.add_results(results, data_types)

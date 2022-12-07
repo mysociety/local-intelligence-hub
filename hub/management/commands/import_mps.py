@@ -76,6 +76,7 @@ class Command(BaseCommand):
                     "description": props["label"],
                     "label": props["label"],
                     "source": "https://en.wikipedia.org/",
+                    "source_label": "Wikipedia",
                     "table": "person__persondata",
                 },
             )
