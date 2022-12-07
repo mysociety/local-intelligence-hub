@@ -58,6 +58,11 @@
                           {% if mp.party %}
                             <li class="mb-2"><a href="#">{{ mp.party }}</a></li>
                           {% endif %}
+                          {% if mp.appg_memberships %}
+                              {% for appg in mp.appg_memberships %}
+                              <li class="mb-2">{{ appg }}</li>
+                              {% endfor %}
+                          {% endif %}
                             <li class="mb-2"><a href="#">Conservative Environment Network (CEN)</a></li>
                             <li class="mb-2"><a href="#">European Research Group (ERG)</a></li>
                         </ul>
@@ -161,5 +166,6 @@
 
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.min.js" integrity="sha384-cn7l7gDp0eyniUwwAZgrzD06kc/tftFf19TOAs2zVinnD/C7E91j9yyk5//jjpt/" crossorigin="anonymous"></script>
 
 {% endblock %}
