@@ -36,3 +36,12 @@
         --bs-navbar-nav-link-padding-x: #{ $navbar-nav-link-padding-x * 1.5 };
     }
 }
+
+.page-explore .navbar .container {
+    max-width: none;
+    --bs-gutter-x: #{ map-get($spacers, 4) * 2 };
+
+    @include media-breakpoint-up(lg) {
+        --bs-gutter-x: #{ map-get($spacers, 5) * 2 };
+    }
+}
