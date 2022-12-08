@@ -55,7 +55,11 @@ class ExploreDatasetsJSON(TemplateView):
     def render_to_response(self, context, **response_kwargs):
         datasets = []
         for d in DataSet.objects.filter(is_filterable=True).all():
-            options = list(map(itemgetter("title"), d.options))
+            try:
+                options = list(map(itemgetter("title"), d.options))
+            # catch bad options and ignore them for now
+            except TypeError:
+                continue
 
             datasets.append(
                 dict(
