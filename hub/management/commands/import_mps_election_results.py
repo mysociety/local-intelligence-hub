@@ -58,18 +58,6 @@ class Command(BaseCommand):
 
         return results
 
-    def numerical_comparators(self):
-        return [
-            dict(field_lookup="lt", title="is less than"),
-            dict(field_lookup="gte", title="is equal or greater than"),
-        ]
-
-    def year_comparators(self):
-        return [
-            dict(field_lookup="year__lt", title="before year"),
-            dict(field_lookup="year__gte", title="since year"),
-        ]
-
     def create_data_types(self):
         if not self._quiet:
             self.stdout.write("Creating data sets and types")
@@ -81,7 +69,7 @@ class Command(BaseCommand):
                 "description": "Majority at last election",
                 "source": "https://members-api.parliament.uk/",
                 "source_label": "UK Parliament",
-                "comparators": self.numerical_comparators(),
+                "comparators": DataSet.numerical_comparators()[::-1],
                 "default_value": 1000,
             },
         )
@@ -100,7 +88,7 @@ class Command(BaseCommand):
                 "source": "https://members-api.parliament.uk/",
                 "source_label": "UK Parliament",
                 "table": "person__persondata",
-                "comparators": self.year_comparators(),
+                "comparators": DataSet.year_comparators(),
                 "default_value": 2019,
             },
         )
@@ -119,7 +107,7 @@ class Command(BaseCommand):
                 "source": "https://members-api.parliament.uk/",
                 "source_label": "UK Parliament",
                 "table": "person__persondata",
-                "comparators": self.year_comparators(),
+                "comparators": DataSet.year_comparators(),
                 "default_value": 2019,
             },
         )

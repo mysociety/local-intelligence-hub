@@ -1,6 +1,8 @@
 import pandas as pd
 from mysoc_dataset import get_dataset_url
 
+from hub.models import DataSet
+
 from .base_importers import BaseImportFromDataFrameCommand
 
 
@@ -21,10 +23,7 @@ class Command(BaseImportFromDataFrameCommand):
                 "category": "place",
                 "source_type": "csv",
                 "table": "areadata",
-                "comparators": [
-                    dict(field_lookup="lt", title="is less than"),
-                    dict(field_lookup="gte", title="is equal or greater than"),
-                ],
+                "comparators": DataSet.numerical_comparators()[::-1],
                 "default_value": 5,
             },
             "col": "pcon-imd-pop-quintile",

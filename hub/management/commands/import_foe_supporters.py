@@ -2,7 +2,7 @@ from django.conf import settings
 
 import pandas as pd
 
-from hub.models import AreaData
+from hub.models import AreaData, DataSet
 
 from .base_importers import BaseImportFromDataFrameCommand
 
@@ -21,7 +21,10 @@ class Command(BaseImportFromDataFrameCommand):
         "source_label": "Friends of the Earth",
         "source": "https://friendsoftheearth.uk/",
         "source_type": "google sheet",
+        "table": "areadata",
+        "default_value": 10,
         "data_url": "",
+        "comparators": DataSet.numerical_comparators(),
     }
 
     data_sets = {

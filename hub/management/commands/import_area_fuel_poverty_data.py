@@ -2,6 +2,8 @@ from django.db.models import FloatField
 
 import pandas as pd
 
+from hub.models import DataSet
+
 from .base_importers import BaseImportFromDataFrameCommand
 
 
@@ -28,10 +30,7 @@ class Command(BaseImportFromDataFrameCommand):
                 "source_type": "xlxs",
                 "data_url": data_url,
                 "table": "areadata",
-                "comparators": [
-                    dict(field_lookup="lt", title="is less than"),
-                    dict(field_lookup="gte", title="is equal or greater than"),
-                ],
+                "comparators": DataSet.numerical_comparators(),
                 "default_value": 10,
             },
             "col": "Proportion of households fuel poor (%)",

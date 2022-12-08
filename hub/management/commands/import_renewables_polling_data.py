@@ -77,6 +77,8 @@ class Command(BaseCommand):
                     "data_url": "",
                     "order": order,
                     "table": "areadata",
+                    "default_value": 50,
+                    "comparators": DataSet.numerical_comparators(),
                 },
             )
 

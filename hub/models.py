@@ -93,6 +93,18 @@ class DataSet(TypeMixin, models.Model):
             dict(field_lookup="not_exact", title="is not"),
         ]
 
+    def numerical_comparators():
+        return [
+            dict(field_lookup="gte", title="is equal or greater than"),
+            dict(field_lookup="lt", title="is less than"),
+        ]
+
+    def year_comparators():
+        return [
+            dict(field_lookup="year__lt", title="before year"),
+            dict(field_lookup="year__gte", title="since year"),
+        ]
+
     OPTIONS_SCHEMA = {
         "type": "array",
         "items": {

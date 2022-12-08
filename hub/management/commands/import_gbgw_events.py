@@ -36,6 +36,8 @@ class Command(BaseLatLongImportCommand):
                 "source_type": "google sheet",
                 "data_url": "",
                 "table": "areadata",
+                "default_value": 10,
+                "comparators": DataSet.numerical_comparators(),
             },
         )
 

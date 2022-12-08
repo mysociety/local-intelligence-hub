@@ -31,6 +31,8 @@ class Command(BaseCommand):
             "source": self.source_url,
             "source_type": "xlxs",
             "table": "areadata",
+            "default_value": 50,
+            "comparators": DataSet.numerical_comparators(),
         }
 
         data_set, created = DataSet.objects.update_or_create(
