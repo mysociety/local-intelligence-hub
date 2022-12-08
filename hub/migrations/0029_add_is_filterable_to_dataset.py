@@ -3,7 +3,7 @@
 from django.db import migrations, models
 
 
-def update_is_filterable(apps, schemaeditor):
+def update_is_filterable(apps, schemaeditor):  # pragma: no cover
     DataSet = apps.get_model("hub", "DataSet")
 
     DataSet.objects.filter(
@@ -18,7 +18,7 @@ def update_is_filterable(apps, schemaeditor):
     ).update(is_filterable=False)
 
 
-def reverse_noop(apps, schema_editor):
+def reverse_noop(apps, schema_editor):  # pragma: no cover
     pass
 
 

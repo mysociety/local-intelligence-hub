@@ -58,7 +58,7 @@ def add_shader_colours(apps, schemaeditor):  # pragma: no cover
         dataset.save()
 
 
-def reverse_noop(apps, schema_editor):
+def reverse_noop(apps, schema_editor):  # pragma: no cover
     pass
 
 

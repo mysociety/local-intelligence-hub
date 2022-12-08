@@ -3,7 +3,7 @@
 from django.db import migrations, models
 
 
-def update_min_max(apps, schemaeditor):
+def update_min_max(apps, schemaeditor):  # pragma: no cover
     DataType = apps.get_model("hub", "DataType")
     AreaData = apps.get_model("hub", "AreaData")
     PersonData = apps.get_model("hub", "PersonData")
@@ -30,7 +30,7 @@ def update_min_max(apps, schemaeditor):
         data_type.save()
 
 
-def reverse_noop(apps, schema_editor):
+def reverse_noop(apps, schema_editor):  # pragma: no cover
     pass
 
 

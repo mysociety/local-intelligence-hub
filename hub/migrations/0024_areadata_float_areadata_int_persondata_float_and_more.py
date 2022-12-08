@@ -3,7 +3,7 @@
 from django.db import migrations, models
 
 
-def data_to_num(apps, schema_editor):
+def data_to_num(apps, schema_editor):  # pragma: no cover
     AreaData = apps.get_model("hub", "AreaData")
     PersonData = apps.get_model("hub", "PersonData")
 
@@ -16,7 +16,7 @@ def data_to_num(apps, schema_editor):
         persondata.save()
 
 
-def data_to_string(apps, schema_editor):
+def data_to_string(apps, schema_editor):  # pragma: no cover
     AreaData = apps.get_model("hub", "AreaData")
     PersonData = apps.get_model("hub", "PersonData")
 
