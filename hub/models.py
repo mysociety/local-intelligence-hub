@@ -124,6 +124,7 @@ class DataSet(TypeMixin, models.Model):
     comparators = JSONField(schema=COMPARATORS_SCHEMA, default=comparators_default)
     options = JSONField(schema=OPTIONS_SCHEMA, blank=True, default=options_default)
     default_value = models.CharField(max_length=50, blank=True, null=True)
+    is_filterable = models.BooleanField(default=True)
 
     def __str__(self):
         if self.label:
