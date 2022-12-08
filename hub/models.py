@@ -164,6 +164,8 @@ class DataType(TypeMixin, models.Model):
     data_type = models.CharField(max_length=20, choices=TypeMixin.TYPE_CHOICES)
     last_update = models.DateTimeField(auto_now=True)
     average = models.FloatField(blank=True, null=True)
+    maximum = models.FloatField(blank=True, null=True)
+    minimum = models.FloatField(blank=True, null=True)
     label = models.CharField(max_length=200, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     order = models.IntegerField(blank=True, null=True)
