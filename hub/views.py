@@ -54,7 +54,7 @@ class ExploreView(TitleMixin, TemplateView):
 class ExploreDatasetsJSON(TemplateView):
     def render_to_response(self, context, **response_kwargs):
         datasets = []
-        for d in DataSet.objects.all():
+        for d in DataSet.objects.filter(is_filterable=True).all():
             options = list(map(itemgetter("title"), d.options))
 
             datasets.append(
