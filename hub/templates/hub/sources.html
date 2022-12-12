@@ -1,0 +1,31 @@
+{% extends "hub/base.html" %}
+
+{% block content %}
+
+<div class="py-4 py-lg-5">
+    <div class="container">
+
+        <h1>Datasets and data sources</h1>
+
+        <table class="table mt-4">
+            <thead>
+                <tr>
+                    <th class="ps-0 d-none d-sm-table-cell" scope="col">Category</th>
+                    <th class="ps-0 px-sm-3 px-md-4" scope="col">Dataset</th>
+                    <th class="pe-0" scope="col">Source</th>
+                </tr>
+            </thead>
+            <tbody>
+              {% for dataset in datasets %}
+                <tr>
+                    <td class="ps-0 d-none d-sm-table-cell">{{ dataset.category|default_if_none:''|title }}</td>
+                    <td class="ps-0 px-sm-3 px-md-4">{{ dataset.label }}</td>
+                    <td class="pe-0"><a href="{{ dataset.source }}">{{ dataset.source_label }}</a></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

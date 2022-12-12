@@ -48,6 +48,7 @@ urlpatterns = [
         views.UnFavouriteDataSetView.as_view(),
         name="unfavourite_dataset",
     ),
+    path("sources/", views.SourcesView.as_view(), name="sources"),
     path("location/", views.AreaSearchView.as_view(), name="area_search"),
     path("style/", views.StyleView.as_view(), name="style"),
     path("status/", views.StatusView.as_view(), name="status"),

@@ -51,6 +51,16 @@ class ExploreView(TitleMixin, TemplateView):
     template_name = "hub/explore.html"
 
 
+class SourcesView(TitleMixin, TemplateView):
+    page_title = "Datasets and data sources"
+    template_name = "hub/sources.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["datasets"] = DataSet.objects.all().order_by("category", "label")
+        return context
+
+
 class ExploreDatasetsJSON(TemplateView):
     def render_to_response(self, context, **response_kwargs):
         datasets = []
