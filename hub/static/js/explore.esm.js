@@ -15,6 +15,7 @@ const app = createApp({
       view: 'map',
       map: null,
       table: null,
+      searchText: '',
     }
   },
   watch: {
@@ -29,19 +30,22 @@ const app = createApp({
   computed: {
     modal() { return new Modal(this.$refs.modal) },
     favouriteDatasets() { return this.datasets.filter((d) => {
-      return d.is_favourite === true
+      return ( d.is_favourite === true ) && this.datasetMatchesSearchText(d)
     }) },
     featuredDatasets() { return this.datasets.filter((d) => {
-      return d.featured === true
+      return ( d.featured === true ) && this.datasetMatchesSearchText(d)
     }) },
     otherDatasets() { return this.datasets.filter((d) => {
-      return d.is_favourite === false && d.featured === false
+      return ( d.is_favourite === false && d.featured === false ) && this.datasetMatchesSearchText(d)
     }) },
   },
   mounted() {
     this.restoreState()
     this.$refs.filtersContainer.removeAttribute('hidden')
     this.$refs.shaderContainer.removeAttribute('hidden')
+    this.$refs.modal.addEventListener('hidden.bs.modal', (e) => {
+      this.searchText = ''
+    })
   },
   methods: {
     loadDatasets(datasets = []) {
@@ -211,6 +215,11 @@ const app = createApp({
             complete: (results) => { this.table = results }
           })
         })
+    },
+    datasetMatchesSearchText(dataset) {
+      var haystack = dataset.title + ' ' + dataset.source
+      var needle = this.searchText
+      return haystack.toLowerCase().indexOf(needle.toLowerCase()) > -1
     }
   }
 })
