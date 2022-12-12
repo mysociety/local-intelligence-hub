@@ -55,6 +55,9 @@
                         </button>
                     </div>
                 </div>
+                <div v-else="!searchText">
+                    <button class="btn btn-link mt-3 w-100" @click="toggleBrowseDatasets()">Browse more datasets</button>
+                </div>
             </div>
         </div>
     </div>

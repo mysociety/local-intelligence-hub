@@ -16,6 +16,7 @@ const app = createApp({
       map: null,
       table: null,
       searchText: '',
+      browseDatasets: false,
     }
   },
   watch: {
@@ -28,16 +29,24 @@ const app = createApp({
     },
   },
   computed: {
-    modal() { return new Modal(this.$refs.modal) },
-    favouriteDatasets() { return this.datasets.filter((d) => {
-      return ( d.is_favourite === true ) && this.datasetMatchesSearchText(d)
-    }) },
-    featuredDatasets() { return this.datasets.filter((d) => {
-      return ( d.featured === true ) && this.datasetMatchesSearchText(d)
-    }) },
-    otherDatasets() { return this.datasets.filter((d) => {
-      return ( d.is_favourite === false && d.featured === false ) && this.datasetMatchesSearchText(d)
-    }) },
+    modal() {
+      return new Modal(this.$refs.modal)
+    },
+    favouriteDatasets() {
+      return this.datasets.filter((d) => {
+        return ( d.is_favourite === true ) && this.datasetMatchesSearchText(d)
+      })
+    },
+    featuredDatasets() {
+      return this.datasets.filter((d) => {
+        return ( d.featured === true ) && this.datasetMatchesSearchText(d)
+      })
+    },
+    otherDatasets() {
+      return this.datasets.filter((d) => {
+        return ( d.is_favourite === false && d.featured === false ) && ( this.browseDatasets == true || this.searchText != '' ) && this.datasetMatchesSearchText(d)
+      })
+    },
   },
   mounted() {
     this.restoreState()
@@ -45,6 +54,7 @@ const app = createApp({
     this.$refs.shaderContainer.removeAttribute('hidden')
     this.$refs.modal.addEventListener('hidden.bs.modal', (e) => {
       this.searchText = ''
+      this.browseDatasets = false
     })
   },
   methods: {
@@ -99,6 +109,9 @@ const app = createApp({
     },
     removeShader(_shaderName) {
       this.shader = null
+    },
+    toggleBrowseDatasets() {
+      this.browseDatasets = !this.browseDatasets
     },
     state() {
       const state = {}
