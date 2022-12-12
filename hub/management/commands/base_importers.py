@@ -78,6 +78,9 @@ class BaseAreaImportCommand(BaseCommand):
 class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
     uses_gss = True
 
+    def get_row_data(self, row, conf):
+        return row[conf["col"]]
+
     def process_data(self, df):
         if not self._quiet:
             self.stdout.write(self.message)
@@ -89,7 +92,8 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
                 if self.uses_gss:
                     areas = Area.objects.filter(gss=cons)
                 else:
-                    areas = Area.objects.filter(name=cons)
+                    cons = cons.replace(" & ", " and ")
+                    areas = Area.objects.filter(name__iexact=cons)
 
                 areas = list(areas)
 
@@ -106,7 +110,7 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
                         area_data, created = AreaData.objects.get_or_create(
                             data_type=self.data_types[name],
                             area=area,
-                            defaults={"data": row[conf["col"]]},
+                            defaults={"data": self.get_row_data(row, conf)},
                         )
                 except Exception as e:
                     print(f"issue with {cons}: {e}")
