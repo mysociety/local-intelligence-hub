@@ -1,0 +1,53 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:11
+    restart: always
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: 'password'
+      POSTGRES_DB: 'ceuk-marking'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  web:
+    image: mysociety/ceuk-marking:${TAG:-latest}
+    build: .
+    command: /app/script/server --development
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    tty: true
+    environment:
+      SECRET_KEY: 'secret'
+      DEBUG: 1
+      DATABASE_URL: 'postgres://postgres:password@db/ceuk-marking'
+      EMAIL_HOST: email.svc
+      CACHE_FILE: 'data/cache'
+      MAPIT_URL: 'https://mapit.mysociety.org/'
+      DJANGO_SUPERUSER_USERNAME: 'admin'
+      DJANGO_SUPERUSER_PASSWORD: 'password'
+      DJANGO_SUPERUSER_EMAIL: 'admin@localhost'
+    working_dir: /app
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    restart: always
+    ports:
+      - 1025:1025
+      - 8025:8025
+    networks:
+     default:
+       aliases:
+         - email.svc
+
+volumes:
+  pgdata:
+  node_modules:

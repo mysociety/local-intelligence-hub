@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# https://letsencrypt.org/docs/certificates-for-localhost/#making-and-trusting-your-own-certificates
+
+mkdir -p ssl
+
+cat <<EOF > ssl/openssl.config
+[dn]
+CN=localhost
+[req]
+distinguished_name = dn
+[EXT]
+subjectAltName=DNS:localhost
+keyUsage=digitalSignature
+extendedKeyUsage=serverAuth
+EOF
+
+openssl req -x509 -out ssl/localhost.crt -keyout ssl/localhost.key -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' -extensions EXT -config ssl/openssl.config
+
+rm -f ssl/openssl.config

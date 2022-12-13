@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# abort on any errors
+set -e
+
+# check that we are in the expected directory
+cd `dirname $0`/..
+
+ACTION=$1
+[ -n "$ACTION" ] || ACTION="--local"
+
+case "$ACTION" in
+    --local)
+        script/bootstrap
+        source .env
+        if [ "$DEVENV" == "docker" ] ; then
+            echo "==> Removing any stopped or crashed containers..."
+            docker-compose rm
+            echo "==> Removing node_modules volume if present..."
+            docker volume rm noiseworks_node_modules || true
+            echo "==> Starting development environment, hit ^C to stop..."
+            docker-compose up
+        else
+            echo "==> Starting development server..."
+            script/server --development
+        fi
+        ;;
+    --development)
+        ./manage.py migrate
+        ./manage.py runserver 0.0.0.0:8000
+        ;;
+    --staging)
+        ./manage.py migrate
+        ./manage.py runserver 0.0.0.0:8000 --insecure
+        ;;
+    *)
+        echo "Error: Unknown argument, ${ACTION}."
+        echo "Usage: script/server [ --local ] | --development | --staging"
+        exit 1
+        ;;
+esac
+

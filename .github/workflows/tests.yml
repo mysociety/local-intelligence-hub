@@ -1,0 +1,38 @@
+name: Run project tests
+
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+  
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: checkout repo content
+        uses: actions/checkout@v2
+
+      - name: Run django tests
+        uses: ./.github/actions/in-container
+        with:
+          use_dev_image: false
+          run: |
+            script/bootstrap
+            script/test --coverage
+
+      # do this inside the docker container otherwise the paths don't work
+      - name: generate coverage xml
+        uses: ./.github/actions/in-container
+        with:
+          run: coverage xml
+
+      # do this outside the docker container otherwise can't get repo details
+      - name: upload code coverage
+        run: |
+          less coverage.xml
+          pip install codecov
+          codecov

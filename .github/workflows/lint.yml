@@ -1,0 +1,23 @@
+# Run linting and basic file format checks
+
+name: Lint
+
+on:
+  pull_request:
+  workflow_call:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: black Lint
+        uses: psf/black@stable
+        with:
+          options: "--check --diff"
+          src: "."
+          version: "22.8.0"
+      - name: isort Lint
+        uses: isort/isort-action@master
+      - name: flake8 Lint
+        uses: py-actions/flake8@v2

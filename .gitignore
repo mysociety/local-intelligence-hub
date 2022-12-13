@@ -1,0 +1,11 @@
+.venv
+.env
+.static
+.coverage
+.media
+data
+
+conf/env
+conf/env.deployed
+conf/httpd.conf
+conf/httpd.conf.deployed

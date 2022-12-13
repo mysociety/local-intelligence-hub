@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "ceuk-marking"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+Django = "^4.1.4"
+django-environ = "^0.9.0"
+psycopg2 = "^2.9.5"
+django-sslserver = "^0.22"
+requests-cache = "^0.9.7"
+
+[tool.poetry.dev-dependencies]
+black = "^22.12.0"
+django-debug-toolbar = "^3.8.1"
+flake8 = "^6.0.0"
+isort = "^5.11.1"
+coverage = "^6.5.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
+default_section = "THIRDPARTY"
+known_first_party = "hub"
+known_django = "django"
+sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
