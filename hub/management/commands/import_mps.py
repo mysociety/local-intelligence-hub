@@ -11,6 +11,23 @@ from tqdm import tqdm
 
 from hub.models import Area, DataSet, DataType, Person, PersonData
 
+party_shades = {
+    "Alba Party": "#005EB8",
+    "Alliance Party of Northern Ireland": "#F6CB2F",
+    "Conservative Party": "#0087DC",
+    "Democratic Unionist Party": "#D46A4C",
+    "Green Party of England and Wales": "#6AB023",
+    "Labour Co-operative": "#E4003B",
+    "Labour Party": "#E4003B",
+    "Liberal Democrats": "#FAA61A",
+    "Plaid Cymru": "#005B54",
+    "Scottish National Party": "#FDF38E",
+    "Sinn Féin": "#326760",
+    "Social Democratic and Labour Party": "#2AA82C",
+    "Speaker of the House of Commons": "#DCDCDC",
+    "independent politician": "#DCDCDC",
+}
+
 
 class Command(BaseCommand):
     help = "Import UK Members of Parliament"
@@ -158,7 +175,8 @@ class Command(BaseCommand):
             )
 
             for (party, count) in Counter(all_parties).most_common():
-                parties.append(dict(title=party[0], shader=""))
+                shade = party_shades.get(party[0], "#DCDCDC")
+                parties.append(dict(title=party[0], shader=shade))
 
             dataset.update(options=parties)
 

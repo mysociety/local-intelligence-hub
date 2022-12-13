@@ -24,8 +24,8 @@ class Command(BaseImportFromDataFrameCommand):
         "source_type": "google sheet",
         "table": "areadata",
         "options": [
-            dict(title="Red Wall"),
-            dict(title="Blue Wall"),
+            dict(title="Red Wall", shader="red"),
+            dict(title="Blue Wall", shader="blue"),
         ],
         "data_url": "",
     }
