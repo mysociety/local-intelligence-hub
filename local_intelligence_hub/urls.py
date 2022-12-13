@@ -30,6 +30,11 @@ urlpatterns = [
         views.ExploreDatasetsJSON.as_view(),
         name="explore_datasets_json",
     ),
+    path(
+        "exploregeometry.json",
+        views.ExploreGeometryJSON.as_view(),
+        name="exploregeometry_json",
+    ),
     path("explore.json", views.ExploreJSON.as_view(), name="explore_json"),
     path("explore.csv", views.ExploreCSV.as_view(), name="explore_csv"),
     path("area/<str:area_type>/<str:name>", views.AreaView.as_view(), name="area"),

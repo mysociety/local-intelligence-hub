@@ -179,29 +179,26 @@ const app = createApp({
           attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }
       ).addTo(this.map)
-    },
-    updateMap() {
-      if (!this.map) { this.setUpMap() }
 
-      fetch(this.url('/explore.json'))
+      // Fetch and plot all boundary polygons once
+      return fetch('/exploregeometry.json')
         .then(response => response.json())
         .then(data => {
-          if (window.geojson) {
-            window.geojson.eachLayer((layer) => { this.map.removeLayer(layer) })
-          }
-
           window.geojson = L.geoJson(data, {
             style: (feature) => {
               return {
-                fillColor: feature.properties.color, fillOpacity: feature.properties.opacity,
-                color: 'white', weight: 2, opacity: 1,
+                fillColor: feature.properties.color,
+                fillOpacity: feature.properties.opacity,
+                color: 'white',
+                weight: 2,
+                opacity: 1,
               }
             },
             onEachFeature: (feature, layer) => {
               layer.bindTooltip(feature.properties.name)
               layer.on({
                 mouseover: (e) => { e.target.setStyle({ weight: 5 }) },
-                mouseout: (e) => { window.geojson.resetStyle(e.target) },
+                mouseout: (e) => { e.target.setStyle({ weight: 2}) },
                 click: (e) => {
                   window.location.href = `/area/${feature.properties.type}/${feature.properties.name}`
                 },
@@ -210,11 +207,41 @@ const app = createApp({
           }).addTo(this.map)
         })
     },
+    updateMap() {
+      if (!this.map) { this.setUpMap().then( this.filterMap ) } else { this.filterMap() }
+    },
+    filterMap() {
+      fetch(this.url('/explore.json'))
+        .then(response => response.json())
+        .then(data => {
+          var features = {};
+          data.features.forEach((feature) => {
+            features[feature.properties.PCON13CD] = feature.properties;
+          });
+
+          window.geojson.eachLayer(function (layer) {
+            if ( features[layer.feature.properties.PCON13CD] ) {
+              var props = features[layer.feature.properties.PCON13CD];
+              // "show" the feature
+              layer.setStyle({
+                opacity: 1,
+                fillColor: props.color,
+                fillOpacity: props.opacity
+              })
+            } else {
+              // "hide" the feature
+              layer.setStyle({
+                opacity: 0,
+                fillOpacity: 0
+              })
+            }
+          })
+        })
+    },
     updateTable() {
       fetch(this.url('/explore.csv'))
         .then(response => response.blob())
         .then(data => {
-          console.log(data)
           Papa.parse(data, {
             header: true,
             skipEmptyLines: true,

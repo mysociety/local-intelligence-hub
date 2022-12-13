@@ -93,7 +93,7 @@ class ExploreDatasetsJSON(TemplateView):
         return JsonResponse(list(datasets), safe=False)
 
 
-class ExploreJSON(FilterMixin, TemplateView):
+class ExploreGeometryJSON(FilterMixin, TemplateView):
     def render_to_response(self, context, **response_kwargs):
         geom = []
         areas = list(self.query().filter(geometry__isnull=False))
@@ -104,6 +104,38 @@ class ExploreJSON(FilterMixin, TemplateView):
 
         for area in areas:
             geometry = json.loads(area.geometry)
+            props = geometry["properties"]
+            if colours.get(area.gss, None) is not None:
+                props["color"] = colours[area.gss]["colour"]
+                props["opacity"] = colours[area.gss]["opacity"]
+            else:
+                props["color"] = "#ed6832"
+                props["opacity"] = 0.7
+
+            geometry["properties"] = props
+
+            geom.append(geometry)
+
+        return JsonResponse({"type": "FeatureCollection", "features": geom})
+
+
+class ExploreJSON(FilterMixin, TemplateView):
+    def render_to_response(self, context, **response_kwargs):
+        geom = []
+        areas = list(self.query().filter(geometry__isnull=False))
+        shader = self.shader()
+        colours = {}
+        if shader is not None:
+            colours = shader.colours_for_areas(areas)
+
+        for area in areas:
+            geometry = {
+                "properties": {
+                    "PCON13CD": area.gss,
+                    "name": area.name,
+                    "type": area.area_type,
+                }
+            }
             props = geometry["properties"]
             if colours.get(area.gss, None) is not None:
                 props["color"] = colours[area.gss]["colour"]
