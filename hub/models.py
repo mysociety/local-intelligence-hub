@@ -246,8 +246,11 @@ class CommonData(models.Model):
 
     def opacity(self, min, max):
         if self.is_number:
-            inc = (max - min) / 100
-            opacity = (self.value() - min) / inc
+            if max == min:
+                opacity = 100
+            else:
+                inc = (max - min) / 100
+                opacity = (self.value() - min) / inc
             return opacity / 100
         return 100
 
