@@ -156,9 +156,9 @@ class BaseLatLongImportCommand(BaseAreaImportCommand):
                 area=area,
             )
             if created:
-                area.data = 1
+                area.int = 1
             else:
-                area.data = area.value() + 1
+                area.int = area.value() + 1
             area.save()
 
         return True
