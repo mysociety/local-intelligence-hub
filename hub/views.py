@@ -9,7 +9,15 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import DetailView, TemplateView, View
 
 from hub.mixins import FilterMixin, TitleMixin
-from hub.models import Area, AreaData, DataSet, Person, PersonData, UserDataSets
+from hub.models import (
+    Area,
+    AreaData,
+    DataSet,
+    DataType,
+    Person,
+    PersonData,
+    UserDataSets,
+)
 from utils import is_valid_postcode
 from utils.mapit import (
     BadRequestException,
@@ -71,24 +79,29 @@ class ExploreDatasetsJSON(TemplateView):
             except TypeError:
                 continue
 
-            datasets.append(
-                dict(
-                    scope="public",
-                    name=d.name,
-                    title=d.label,
-                    source=d.source_label,
-                    is_favourite=UserDataSets.objects.filter(
-                        data_set=d,
-                        user=self.request.user,
-                    ).exists(),
-                    featured=d.featured,
-                    comparators=dict(
-                        map(itemgetter("field_lookup", "title"), d.comparators)
-                    ),
-                    options=options if len(options) > 0 else None,
-                    defaultValue=d.default_value,
-                )
+            ds = dict(
+                scope="public",
+                name=d.name,
+                title=d.label,
+                source=d.source_label,
+                is_favourite=UserDataSets.objects.filter(
+                    data_set=d,
+                    user=self.request.user,
+                ).exists(),
+                featured=d.featured,
+                comparators=dict(
+                    map(itemgetter("field_lookup", "title"), d.comparators)
+                ),
+                options=options if len(options) > 0 else None,
+                defaultValue=d.default_value,
+                is_range=d.is_range,
             )
+            if d.is_range:
+                ds["types"] = [
+                    {"name": dt.name, "title": dt.label}
+                    for dt in DataType.objects.filter(data_set=d)
+                ]
+            datasets.append(ds)
 
         return JsonResponse(list(datasets), safe=False)
 

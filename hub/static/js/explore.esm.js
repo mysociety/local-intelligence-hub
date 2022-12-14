@@ -60,7 +60,15 @@ const app = createApp({
         .then((datasets) => { this.datasets = datasets })
     },
     getDataset(datasetName) {
-      const dataset = this.datasets.find(d => d.name == datasetName)
+      // Get the first dataset which has the given datasetName,
+      // or contains a "type" (sub-dataset) with the given datasetName.
+      const dataset = this.datasets.find(d => {
+        if (d.name == datasetName) {
+          return true
+        } else if (d.types && d.types.find(t => t.name == datasetName)) {
+          return true
+        }
+      })
       if (dataset) { return dataset }
       console.log(`Cannot load dataset: ${datasetName}`)
     },
@@ -92,6 +100,10 @@ const app = createApp({
         dataset.selectedValue = dataset.options[0]
       }
 
+      if (!dataset.selectedType && dataset.types) {
+        dataset.selectedType = dataset.types[0].name
+      }
+
       this.filters.push(dataset)
     },
     removeFilter(filterName) {
@@ -110,7 +122,11 @@ const app = createApp({
       const state = {}
 
       this.filters.forEach(function(d) {
-        state[`${d.name}__${d.selectedComparator}`] = d.selectedValue
+        if (d.selectedType) {
+          state[`${d.selectedType}__${d.selectedComparator}`] = d.selectedValue
+        } else {
+          state[`${d.name}__${d.selectedComparator}`] = d.selectedValue
+        }
       })
 
       if (this.shader) { state['shader'] = this.shader.name }

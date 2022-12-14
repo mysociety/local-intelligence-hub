@@ -13,10 +13,10 @@ class Filter:
         else:
             return "data"
 
-    def run(self, comparator, value):
+    def run(self, name, comparator, value):
         exclude = comparator.startswith("not_")
         kwargs = {
-            "{0}__data_type__name".format(self.dataset.table): self.dataset.name,
+            "{0}__data_type__name".format(self.dataset.table): name,
             "{0}__{1}__{2}".format(
                 self.dataset.table, self.column(), comparator.removeprefix("not_")
             ): value,

@@ -1,6 +1,6 @@
 from functools import cache
 
-from hub.models import Area, DataSet
+from hub.models import Area, DataSet, DataType
 
 
 class TitleMixin:
@@ -33,12 +33,24 @@ class FilterMixin:
                 filters.append(
                     {
                         "dataset": dataset,
+                        "name": dataset.name,
                         "comparator": comparator,
                         "value": value,
                     }
                 )
             except DataSet.DoesNotExist:  # pragma: nocover
-                pass
+                try:
+                    datatype = DataType.objects.get(name=name)
+                    filters.append(
+                        {
+                            "dataset": datatype.data_set,
+                            "name": datatype.name,
+                            "comparator": comparator,
+                            "value": value,
+                        }
+                    )
+                except DataType.DoesNotExist:  # pragma: nocover
+                    pass
 
         return filters
 
@@ -47,6 +59,7 @@ class FilterMixin:
         for f in self.filters():
             query = f["dataset"].filter(
                 query,
+                name=f["name"],
                 comparator=f["comparator"],
                 value=f["value"],
             )
@@ -68,9 +81,10 @@ class FilterMixin:
 
             for f in self.filters():
                 dataset = f["dataset"]
+
                 table = areadata if dataset.table == "areadata" else persondata
                 if table:
-                    row.append(table.get(data_type__name=dataset.name).value())
+                    row.append(table.get(data_type__name=f["name"]).value())
 
             data.append(row)
 
