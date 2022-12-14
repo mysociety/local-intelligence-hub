@@ -20,13 +20,6 @@ const app = createApp({
     }
   },
   watch: {
-    filters: {
-      handler(newValue, oldValue) { this.updateState() },
-      deep: true,
-    },
-    shader: {
-      handler(newValue, oldValue) { this.updateState() },
-    },
   },
   computed: {
     modal() {
