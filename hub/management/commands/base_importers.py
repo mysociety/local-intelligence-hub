@@ -188,3 +188,48 @@ class BaseLatLongImportCommand(BaseAreaImportCommand):
         # retry once if it fails so we can catch rate limit errors
         if success is False:
             self._process_lat_long(lat=lat, lon=lon, row_name=row_name)
+
+
+class BaseConstituencyCountImportCommand(BaseAreaImportCommand):
+    def set_data_type(self):
+        self.data_type = list(self.data_types.values())[0]
+
+    def get_dataframe(self):
+        df = pd.read_csv(self.data_file)
+        df = df.astype({self.cons_col: "str"})
+        return df
+
+    def _get_areas_from_row(self, row):
+        value = row[self.cons_col]
+        if self.uses_gss:
+            areas = Area.objects.filter(gss__in=value.split(","))
+        else:
+            areas = Area.objects.filter(name__iexact=value)
+
+        return list(areas)
+
+    def process_data(self, df):
+        if not self._quiet:
+            self.stdout.write(self.message)
+
+        for index, row in tqdm(df.iterrows(), disable=self._quiet, total=df.shape[0]):
+            areas = self._get_areas_from_row(row)
+            for area in areas:
+                area, created = AreaData.objects.get_or_create(
+                    data_type=self.data_type,
+                    area=area,
+                )
+                if created:
+                    area.int = 1
+                else:
+                    area.int = area.value() + 1
+                area.save()
+
+    def handle(self, quiet=False, *args, **options):
+        self._quiet = quiet
+        df = self.get_dataframe()
+        self.add_data_sets(df)
+        self.set_data_type()
+        self.delete_data()
+        self.process_data(df)
+        self.update_averages()
