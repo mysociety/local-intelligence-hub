@@ -20,6 +20,7 @@ pandas = "^1.5.1"
 openpyxl = "^3.0.10"
 mysoc-dataset = "^0.2.2"
 django-jsonform = "^2.15.0"
+lxml = "^4.9.2"
 
 [tool.poetry.dev-dependencies]
 django-debug-toolbar = "^3.7.0"
