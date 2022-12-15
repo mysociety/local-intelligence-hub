@@ -59,3 +59,6 @@ class Command(BaseImportFromDataFrameCommand):
 
     def update_averages(self):
         pass
+
+    def update_max_min(self):
+        pass
