@@ -37,6 +37,26 @@ class BaseAreaImportCommand(BaseCommand):
         for name, config in self.data_sets.items():
             label = self.get_label(config)
 
+            if config["defaults"].get("is_filterable", None) is None:
+                if config["defaults"].get("table", None) is None:
+                    self.stdout.write(
+                        self.style.ERROR(f"dataset {name} does not have a table set")
+                    )
+                    exit()
+
+            if config["defaults"]["data_type"] not in ["percent", "integer", "float"]:
+                if config["defaults"].get("is_filterable", None) is None:
+                    self.stdout.write(
+                        self.style.NOTICE(
+                            f"dataset {name} does not have filterable set"
+                        )
+                    )
+
+            if config["defaults"].get("comparators", None) is None:
+                self.stdout.write(
+                    self.style.NOTICE(f"dataset {name} does not have comparators set")
+                )
+
             data_set, created = DataSet.objects.update_or_create(
                 name=name,
                 defaults={
