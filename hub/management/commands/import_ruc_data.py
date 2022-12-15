@@ -1,6 +1,8 @@
 import pandas as pd
 from mysoc_dataset import get_dataset_url
 
+from hub.models import DataSet
+
 from .base_importers import BaseImportFromDataFrameCommand
 
 
@@ -19,12 +21,15 @@ class Command(BaseImportFromDataFrameCommand):
                 "source_label": "mySociety",
                 "source": "https://mysociety.github.io/uk_ruc/",
                 "source_type": "csv",
+                "table": "areadata",
+                "is_filterable": True,
                 "options": [
                     dict(title="Sparse and rural", shader="lightgreen"),
                     dict(title="Urban with rural areas", shader="lightgrey"),
                     dict(title="Rural", shader="green"),
                     dict(title="Urban", shader="grey"),
                 ],
+                "comparators": DataSet.comparators_default(),
             },
             "col": "ruc-cluster-label",
         }

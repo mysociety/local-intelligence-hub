@@ -86,6 +86,9 @@ class Command(BaseCommand):
         if not self._quiet:
             print("Importing type names")
         for data_type, props in tqdm(type_names.items(), disable=self._quiet):
+            filterable = False
+            if data_type == "party":
+                filterable = True
             ds, created = DataSet.objects.update_or_create(
                 name=data_type,
                 defaults={
@@ -95,6 +98,7 @@ class Command(BaseCommand):
                     "source": "https://en.wikipedia.org/",
                     "source_label": "Wikipedia",
                     "table": "person__persondata",
+                    "is_filterable": filterable,
                 },
             )
             dt, created = DataType.objects.get_or_create(
