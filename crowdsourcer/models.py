@@ -24,6 +24,9 @@ class PublicAuthority(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        verbose_name_plural = "authorities"
+
 
 class Question(models.Model):
     description = models.TextField()
@@ -75,3 +78,7 @@ class Assigned(models.Model):
     question = models.ForeignKey(
         Question, on_delete=models.CASCADE, null=True, blank=True
     )
+
+    class Meta:
+        verbose_name = "assignment"
+        verbose_name_plural = "assignments"
