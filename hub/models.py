@@ -186,7 +186,14 @@ class DataSet(TypeMixin, models.Model):
                         "opacity": opacity,
                     }
 
-        return colours
+        # if there is no data for an area then need to set the shader to opacity 0 otherwise
+        # they will end up as the default
+        missing = {}
+        for area in areas:
+            if colours.get(area.gss, None) is None:
+                missing[area.gss] = {"colour": "#ed6832", "opacity": 0}
+
+        return {**colours, **missing}
 
     def shader_value(self, area):
         if self.table == "areadata":
