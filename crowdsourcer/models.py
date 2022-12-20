@@ -29,6 +29,8 @@ class PublicAuthority(models.Model):
 
 
 class Question(models.Model):
+    number = models.IntegerField(blank=True, null=True)
+    number_part = models.CharField(max_length=4, blank=True, null=True)
     description = models.TextField()
     criteria = models.TextField()
     section = models.ForeignKey(Section, on_delete=models.CASCADE)
