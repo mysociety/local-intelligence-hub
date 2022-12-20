@@ -29,15 +29,21 @@ class OptionAdmin(admin.ModelAdmin):
 
 @admin.register(PublicAuthority)
 class PublicAuthorityAdmin(admin.ModelAdmin):
-    pass
+    list_display = ("name", "questiongroup")
+    list_filter = ["questiongroup"]
+    ordering = ["name"]
 
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
     list_display = (
         "section",
+        "number",
+        "number_part",
         "description",
     )
+    list_filter = ["section"]
+    ordering = ("section", "number", "number_part")
 
 
 @admin.register(QuestionGroup)
