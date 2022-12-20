@@ -1,3 +1,5 @@
+import re
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
@@ -30,6 +32,8 @@ class Command(BaseCommand):
                 usecols="B:L",
             )
 
+            df = df.dropna(axis="index", how="all")
+
             df.columns = [
                 "question_no",
                 "topic",
@@ -45,10 +49,25 @@ class Command(BaseCommand):
             ]
 
             for index, row in df.iterrows():
+                q_no = row["question_no"]
+                q_part = None
+                if pd.isna(q_no):
+                    continue
+
+                if type(q_no) is not int:
+                    q_parts = re.search(r"(\d+)([a-z]?)", q_no).groups()
+                    q_no = q_parts[0]
+                    if len(q_parts) == 2:
+                        q_part = q_parts[1]
+
                 q, c = Question.objects.update_or_create(
-                    description=row["question"],
+                    number=q_no,
+                    number_part=q_part,
                     section=section,
-                    defaults={"criteria": row["criteria"]},
+                    defaults={
+                        "description": row["question"],
+                        "criteria": row["criteria"],
+                    },
                 )
 
                 for col, group in q_groups.items():
