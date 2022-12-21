@@ -1,7 +1,7 @@
 from time import sleep
 
 from django.core.management.base import BaseCommand
-from django.db.models import Avg, IntegerField
+from django.db.models import Avg, IntegerField, Max, Min
 from django.db.models.functions import Cast, Coalesce
 
 import pandas as pd
@@ -19,8 +19,12 @@ from utils.mapit import (
 
 
 class BaseAreaImportCommand(BaseCommand):
-    data_types = {}
     cast_field = IntegerField
+
+    def __init__(self):
+        super().__init__()
+
+        self.data_types = {}
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -94,6 +98,25 @@ class BaseAreaImportCommand(BaseCommand):
             data_type.average = average["cast_data__avg"]
             data_type.save()
 
+    def update_max_min(self):
+        for data_type in self.data_types.values():
+            base = (
+                AreaData.objects.filter(data_type=data_type)
+                .annotate(
+                    cast_data=Cast(
+                        Coalesce("int", "float"), output_field=self.cast_field()
+                    )
+                )
+                .all()
+            )
+
+            max = base.aggregate(Max("cast_data"))
+            min = base.aggregate(Min("cast_data"))
+
+            data_type.maximum = max["cast_data__max"]
+            data_type.minimum = min["cast_data__min"]
+            data_type.save()
+
 
 class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
     uses_gss = True
@@ -143,6 +166,7 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
         self.delete_data()
         self.process_data(df)
         self.update_averages()
+        self.update_max_min()
 
 
 class BaseLatLongImportCommand(BaseAreaImportCommand):
@@ -233,3 +257,4 @@ class BaseConstituencyCountImportCommand(BaseAreaImportCommand):
         self.delete_data()
         self.process_data(df)
         self.update_averages()
+        self.update_max_min()
