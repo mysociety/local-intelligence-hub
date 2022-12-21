@@ -1,0 +1,7 @@
+{% extends 'crowdsourcer/base.html' %}
+
+{% block content %}
+    {% for assignment in assignments %}
+    {% if show_users %}{{ assignment.user.username }}: {% endif %}{{ assignment.section.title }}<br>
+    {% endfor %}
+{% endblock %}
