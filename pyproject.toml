@@ -26,6 +26,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.isort]
 profile = "black"
 default_section = "THIRDPARTY"
-known_first_party = "hub"
+known_first_party = "crowdsourcer"
 known_django = "django"
 sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+extend_skip_glob = ["*/migrations/*"]
