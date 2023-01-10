@@ -35,7 +35,10 @@ class Command(BaseImportFromDataFrameCommand):
     }
 
     def get_dataframe(self):
-        df = pd.read_csv(self.data_file, usecols=["Westminster constituency", "Groups located within constituency"])
+        df = pd.read_csv(
+            self.data_file,
+            usecols=["Westminster constituency", "Groups located within constituency"],
+        )
         df = df.dropna()
         df = df.groupby("Westminster constituency").size().reset_index()
         df.columns = ["constituency", "groups"]
