@@ -3,11 +3,10 @@ from time import sleep
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from hub.models import Area
-
 import pandas as pd
 from tqdm import tqdm
 
+from hub.models import Area
 from utils.mapit import (
     BadRequestException,
     ForbiddenException,
