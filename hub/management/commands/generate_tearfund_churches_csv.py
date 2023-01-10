@@ -1,4 +1,3 @@
-import json
 import re
 from time import sleep
 
@@ -42,7 +41,7 @@ class Command(BaseCommand):
             InternalServerErrorException,
             ForbiddenException,
         ) as error:
-            print(f"Error fetching row postcode: {postcode}")
+            print(f"Error fetching row postcode: {postcode} - {error} raised")
             return None
         except RateLimitException as error:
             print(f"Mapit Error - {error}, waiting for a minute")
@@ -55,11 +54,11 @@ class Command(BaseCommand):
         # Get postcodes from church and address cols
         df["church_regexed_postcode"] = df.church.str.findall(
             POSTCODE_REGEX, flags=re.IGNORECASE
-        ).apply(lambda l: l[0] if l != [] else None)
+        ).apply(lambda regex_list: regex_list[0] if regex_list != [] else None)
         df["address_regexed_postcode"] = (
             df.address.dropna()
             .str.findall(POSTCODE_REGEX, flags=re.IGNORECASE)
-            .apply(lambda l: l[0] if l != [] else None)
+            .apply(lambda regex_list: regex_list[0] if regex_list != [] else None)
         )
         df["postcode"] = df.address_regexed_postcode.combine_first(
             df.church_regexed_postcode
