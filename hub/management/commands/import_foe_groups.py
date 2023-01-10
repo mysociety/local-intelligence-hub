@@ -46,7 +46,7 @@ class Command(BaseImportFromDataFrameCommand):
         return df
 
     def get_label(self, defaults):
-        return f"Number of Friends of the Earth active groups"
+        return "Number of active Friends of the Earth groups"
 
     def delete_data(self):
         AreaData.objects.filter(data_type__in=self.data_types.values()).delete()
