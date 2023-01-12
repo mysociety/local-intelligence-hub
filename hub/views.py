@@ -258,6 +258,10 @@ class AreaView(BaseAreaView):
             ).select_related("data_type")
             for item in data.all():
                 context["mp"][item.data_type.name] = item.value()
+            context["mp"]["appg_memberships"] = [
+                item.value()
+                for item in data.filter(data_type__name="mp_appg_memberships")
+            ]
         except Person.DoesNotExist:
             pass
 

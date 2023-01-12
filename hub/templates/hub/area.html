@@ -58,6 +58,12 @@
                           {% if mp.party %}
                             <li class="mb-2"><a href="#">{{ mp.party }}</a></li>
                           {% endif %}
+                          {% if mp.appg_memberships %}
+                              <li class="mb-2 fw-bold">APPGs:</li>
+                              {% for appg in mp.appg_memberships %}
+                              <li class="mb-2">{{ appg }}</li>
+                              {% endfor %}
+                          {% endif %}
                         </ul>
                     </div>
                     <div class="card-footer bg-white">
@@ -159,5 +165,4 @@
 
     </div>
 </div>
-
 {% endblock %}
