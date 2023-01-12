@@ -257,7 +257,20 @@ class AreaView(BaseAreaView):
                 person=context["mp"]["person"]
             ).select_related("data_type")
             for item in data.all():
-                context["mp"][item.data_type.name] = item.value()
+                if (
+                    item.data_type.name == "select_committee_membership"
+                    and "select_committee_memberships" not in context["mp"]
+                ):
+                    context["mp"]["select_committee_memberships"] = [
+                        datum["data"]
+                        for datum in PersonData.objects.filter(
+                            person=context["mp"]["person"]
+                        )
+                        .filter(data_type__name="select_committee_membership")
+                        .values()
+                    ]
+                else:
+                    context["mp"][item.data_type.name] = item.value()
             context["mp"]["appg_memberships"] = [
                 item.value()
                 for item in data.filter(data_type__name="mp_appg_memberships")

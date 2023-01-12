@@ -58,6 +58,14 @@
                           {% if mp.party %}
                             <li class="mb-2"><a href="#">{{ mp.party }}</a></li>
                           {% endif %}
+                          {% if mp.select_committee_memberships %}
+                            <li class="mb-2 fw-bold">Select Committees:</li>
+                            <ul class="list-unstyled mb-0">
+                            {% for committee in mp.select_committee_memberships %}
+                              <li class="mb-2">{{ committee }}</li>
+                            {% endfor %}
+                            </ul>
+                          {% endif %}
                           {% if mp.appg_memberships %}
                               <li class="mb-2 fw-bold">APPGs:</li>
                               {% for appg in mp.appg_memberships %}
