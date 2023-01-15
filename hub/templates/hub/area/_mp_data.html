@@ -1,0 +1,104 @@
+{% load humanize %}
+{% load hub_filters %}
+
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    <div class="col d-flex flex-column">
+
+        <div class="card flex-grow-1">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        {% include 'hub/includes/person-photo.html' with person=mp_data.person %}
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="h4 mb-0 text-primary">{{ mp_data.person.name }}</h3>
+                      {% if mp_data.party %}
+                        <p class="mb-0 text-muted">{{ mp_data.party }}</p>
+                      {% endif %}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <h4 class="h6 mt-4">Elected</h4>
+                        <p class="fs-5 lh-1 fw-bold text-primary mb-0">{{ mp_data.mp_first_elected|naturalday:"jS M Y" }}</p>
+                    </div>
+                    <div class="col-lg-6">
+                        <h4 class="h6 mt-4">2019 majority</h4>
+                        <p class="fs-5 lh-1 fw-bold text-primary mb-0">{{ mp_data.mp_election_majority|intcomma }}</p>
+                    </div>
+                    {% if mp.job_titles %}
+                      <div>
+                          <h4 class="h6 mt-4 mb-1">Positions</h4>
+                          <p class="mb-0">{{ mp.job_titles }}</p>
+                      </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                <p class="card-text fs-8 text-muted">Data from <a href="https://www.theyworkforyou.com/{% if mp_data.twfyid %}mp/{{ mp_data.twfyid}}{% endif %}" class="text-decoration-none text-muted">TheyWorkForYou.com</a> and <a href="https://electionresults.parliament.uk/election/2019-12-12/Statistics/Majority" class="text-decoration-none text-muted">UK Parliament</a></p>
+            </div>
+        </div>
+
+        <div class="card flex-grow-1">
+            <div class="card-body">
+                <h5 class="card-title mb-3">MP profiles</h5>
+                <ul class="list-unstyled mb-0">
+                  {% if mp_data.twitter %}
+                    <li class="mb-2 text-truncate">Twitter: <a href="https://twitter.com/{{ mp_data.twitter }}">@{{ mp_data.twitter }}</a></li>
+                  {% endif %}
+                  {% if mp_data.facebook %}
+                    <li class="mb-2 text-truncate">Facebook: <a href="https://facebook.com/{{ mp_data.facebook }}">/{{ mp_data.facebook }}</a></li>
+                  {% endif %}
+                  {% if mp_data.twfyid %}
+                    <li class="mb-2 text-truncate"><a href="https://www.theyworkforyou.com/mp/{{ mp_data.twfyid}}">TheyWorkForYou voting record</a></li>
+                  {% endif %}
+                  {% if mp_data.parlid %}
+                    <li class="mb-2 text-truncate"><a href="https://members.parliament.uk/member/{{ mp_data.parlid }}/contact">Parliament contact info</a></li>
+                  {% endif %}
+                  {% if mp_data.wikipedia %}
+                    <li class="mb-2 text-truncate"><a href="{{ mp_data.wikipedia }}">Wikipedia page</a></li>
+                  {% endif %}
+                </ul>
+            </div>
+            <div class="card-footer bg-white">
+                <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data collated by The Climate Coalition</a></p>
+            </div>
+        </div>
+
+    </div>
+    <div class="col d-flex flex-column">
+
+        <div class="card flex-grow-1">
+            <div class="card-body">
+                <h5 class="card-title mb-3">MP memberships</h5>
+                <ul class="list-unstyled mb-0">
+                  {% if mp_data.party %}
+                    <li class="mb-2"><a href="#">{{ mp_data.party }}</a></li>
+                  {% endif %}
+                  {% if mp_data.cen_member %}
+                    <li class="mb-2">Conservative Environment Network</li>
+                  {% endif %}
+                  {% if mp_data.nzsg_member %}
+                    <li class="mb-2">Net Zero Scrutiny Group</li>
+                  {% endif %}
+                  {% if mp_data.select_committee_memberships %}
+                    <li class="mb-2 fw-bold">Select Committees:</li>
+                      {% for committee in mp_data.select_committee_memberships %}
+                    <li class="mb-2">{{ committee }}</li>
+                      {% endfor %}
+                  {% endif %}
+                  {% if mp_data.appg_memberships %}
+                    <li class="mb-2 fw-bold">APPGs:</li>
+                      {% for appg in mp_data.appg_memberships %}
+                    <li class="mb-2">{{ appg }}</li>
+                      {% endfor %}
+                  {% endif %}
+                </ul>
+            </div>
+            <div class="card-footer bg-white">
+                <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data collated by The Climate Coalition</a></p>
+            </div>
+        </div>
+
+    </div>
+</div>

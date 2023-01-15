@@ -48,4 +48,8 @@
             margin-top: -2rem;
         }
     }
+
+    .row .card + .card {
+        margin-top: var(--bs-gutter-y); // vertical space between cards in a column
+    }
 }
