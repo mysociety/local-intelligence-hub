@@ -7,16 +7,38 @@
 
 <div class="py-4 py-lg-5">
     <div class="container">
-        <a href="{% url 'explore' %}" class="d-inline-flex align-items-center">
-            {% include 'hub/includes/icons/chevron-left.html' with classes="me-1" %}
-            Back to map
-        </a>
-        <h1 class="mt-3 mb-0">{{ area.name }}</h1>
+        <h1 class="m-0">{{ area.name }}</h1>
+        <!-- TODO: Don’t hard-code these! -->
+        <ul class="list-inline mt-3 mb-0">
+            <li class="list-inline-item"><a href="#" class="badge text-white bg-blue-600" style="text-decoration: none; cursor: help;" title="Data from Green Alliance"># Blue wall</a></li>
+            <li class="list-inline-item"><a href="#" class="badge text-white bg-orange-500" style="text-decoration: none; cursor: help;" title="MP electoral majority less than 5000; Data from UK Parliament"># Marginal seat</a></li>
+        </ul>
     </div>
 </div>
 
 <div class="py-4 py-lg-5 bg-light">
     <div class="container mb-5">
+
+        <div class="row">
+            <div class="col-lg-3 col-xl-2 mb-4 mb-lg-0 bg-light area-subnav">
+                <div>
+                    <nav class="nav flex-lg-column">
+                        <a class="nav-link" href="#mp">MP</a>
+                      {% if categories.opinion or counts.opinion %}
+                        <a class="nav-link" href="#opinion">Public opinion</a>
+                      {% endif %}
+                      {% if categories.place or counts.place %}
+                        <a class="nav-link" href="#place">Place</a>
+                      {% endif %}
+                      {% if categories.movement or counts.movement %}
+                        <a class="nav-link" href="#movement">Movement</a>
+                      {% endif %}
+                    </nav>
+                </div>
+            </div>
+            <div class="col-lg-9 offset-xl-1">
+
+                <section id="mp" class="area-section">
 
         <h2 class="mb-3 text-primary">MP</h2>
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
@@ -43,7 +65,7 @@
                                 <h4 class="h6 mt-4">2019 majority</h4>
                                 <p class="fs-5 lh-1 fw-bold text-primary mb-0">{{ mp.mp_election_majority|intcomma }}</p>
                             </div>
-                          {% if mp.job_titles %}
+                            {% if mp.job_titles %}
                             <div>
                                 <h4 class="h6 mt-4 mb-1">Positions</h4>
                                 <p class="mb-0">{{ mp.job_titles }}</p>
@@ -52,7 +74,7 @@
                         </div>
                     </div>
                     <div class="card-footer bg-white">
-                        <p class="card-text fs-8 text-muted">Data from <a href="https://www.theyworkforyou.com/{% if mp.twfyid %}mp/{{ mp.twfyid}}{% endif %}" class="text-decoration-none text-muted">TheyWorkForYou.com</a>{% if mp.job_titles %},{% else %} and{% endif %} <a href="https://electionresults.parliament.uk/election/2019-12-12/Statistics/Majority" class="text-decoration-none text-muted">UK Parliament</a>{% if mp.job_titles %}, and Green Alliance{% endif %}</p>
+                        <p class="card-text fs-8 text-muted">Data from <a href="https://www.theyworkforyou.com/{% if mp.twfyid %}mp/{{ mp.twfyid}}{% endif %}" class="text-decoration-none text-muted">TheyWorkForYou.com</a> and <a href="https://electionresults.parliament.uk/election/2019-12-12/Statistics/Majority" class="text-decoration-none text-muted">UK Parliament</a></p>
                     </div>
                 </div>
             </div>
@@ -72,11 +94,9 @@
                           {% endif %}
                           {% if mp.select_committee_memberships %}
                             <li class="mb-2 fw-bold">Select Committees:</li>
-                            <ul class="list-unstyled mb-0">
                             {% for committee in mp.select_committee_memberships %}
                               <li class="mb-2">{{ committee }}</li>
                             {% endfor %}
-                            </ul>
                           {% endif %}
                           {% if mp.appg_memberships %}
                               <li class="mb-2 fw-bold">APPGs:</li>
@@ -119,68 +139,84 @@
                 </div>
             </div>
         </div>
+    </section>
 
-      {% if categories.opinion or counts.opinion %}
-        <h2 class="mt-5 mb-3 text-primary">Public opinion</h2>
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-          {% for category in categories.opinion %}
-            {% for data in category.data %}
-              {% include 'hub/area/_opinion_data.html' with item=data %}
-            {% endfor %}
-          {% endfor %}
-          {% if counts.opinion > 0 %}
-            <div class="col d-flex flex-column">
-                <a href="{% url 'area_category' area.area_type area.name 'opinion' %}#" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
-                    <span>…{{ counts.opinion }} {% if categories.opinion %}more{% endif %} dataset{{ counts.opinion|pluralize }} available</span>
-                </a>
+              {% if categories.opinion or counts.opinion %}
+                <section id="opinion" class="area-section">
+                    <h2 class="mb-3 text-primary">Public opinion</h2>
+                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                      {% for category in categories.opinion %}
+                        {% for data in category.data %}
+                          {% include 'hub/area/_opinion_data.html' with item=data %}
+                        {% endfor %}
+                      {% endfor %}
+                      {% if counts.opinion > 0 %}
+                        <div class="col d-flex flex-column">
+                            <a href="{% url 'area_category' area.area_type area.name 'opinion' %}#" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
+                                <span>…{{ counts.opinion }} {% if categories.opinion %}more{% endif %} dataset{{ counts.opinion|pluralize }} available</span>
+                            </a>
+                        </div>
+                      {% endif %}
+                    </div>
+                </section>
+              {% elif debug %}
+                <section id="opinion" class="area-section">
+                    {% include 'hub/area/_no_data.html' with name="Public opinion" variable="opinion" %}
+                </section>
+              {% endif %}
+
+              {% if categories.place or counts.place %}
+                <section id="place" class="area-section">
+                    <h2 class="mb-3 text-primary">Place</h2>
+                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                      {% for category in categories.place %}
+                        {% include 'hub/area/_place_data.html' with category=category %}
+                      {% endfor %}
+                      {% if counts.place > 0 %}
+                        <div class="col d-flex flex-column">
+                            <a href="{% url 'area_category' area.area_type area.name 'place' %}" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
+                                <span>…{{ counts.place }} {% if categories.place %}more{% endif %} dataset{{ counts.place|pluralize }} available</span>
+                            </a>
+                        </div>
+                      {% endif %}
+                    </div>
+                </section>
+              {% elif debug %}
+                <section id="place" class="area-section">
+                    {% include 'hub/area/_no_data.html' with name="Place" variable="movement" %}
+                </section>
+              {% endif %}
+
+              {% if categories.movement or counts.movement %}
+                <section id="movement" class="area-section">
+                    <h2 class="mb-3 text-primary">Movement</h2>
+                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                      {% for category in categories.movement %}
+                        {% include 'hub/area/_place_data.html' with category=category %}
+                      {% endfor %}
+                      {% if counts.movement > 0 %}
+                        <div class="col d-flex flex-column">
+                            <a href="{% url 'area_category' area.area_type area.name 'movement' %}" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
+                                <span>…{{ counts.movement }} {% if categories.movement %}more{% endif %} dataset{{ counts.movement|pluralize }} available</span>
+                            </a>
+                        </div>
+                      {% endif %}
+                    </div>
+                </section>
+              {% elif debug %}
+                <section id="movement" class="area-section">
+                    {% include 'hub/area/_no_data.html' with name="Movement" variable="movement" %}
+                </section>
+              {% endif %}
+
+                <div class="mt-5 p-3 bg-white border rounded d-flex align-items-center">
+                    {% include 'hub/includes/icons/tcc-heart.html' with width="1.25em" height="1.25em" classes="me-3 flex-shrink-0 flex-grow-0" %}
+                    <p class="mb-0">
+                        <strong class="me-2">TCC member?</strong> Log in or request an account to upload your own datasets and bookmark your favourite datasets for easy access.
+                    </p>
+                </div>
+
             </div>
-          {% endif %}
-        </div>
-      {% elif debug %}
-        {% include 'hub/area/_no_data.html' with name="Public opinion" variable="opinion" %}
-      {% endif %}
-
-      {% if categories.place or counts.place %}
-        <h2 class="mt-5 mb-3 text-primary">Place</h2>
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-          {% for category in categories.place %}
-            {% include 'hub/area/_place_data.html' with category=category %}
-          {% endfor %}
-          {% if counts.place > 0 %}
-            <div class="col d-flex flex-column">
-                <a href="{% url 'area_category' area.area_type area.name 'place' %}" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
-                    <span>…{{ counts.place }} {% if categories.place %}more{% endif %} dataset{{ counts.place|pluralize }} available</span>
-                </a>
-            </div>
-          {% endif %}
-        </div>
-      {% elif debug %}
-        {% include 'hub/area/_no_data.html' with name="Place" variable="movement" %}
-      {% endif %}
-
-      {% if categories.movement or counts.movement %}
-        <h2 class="mt-5 mb-3 text-primary">Movement</h2>
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-          {% for category in categories.movement %}
-            {% include 'hub/area/_place_data.html' with category=category %}
-          {% endfor %}
-          {% if counts.movement > 0 %}
-            <div class="col d-flex flex-column">
-                <a href="{% url 'area_category' area.area_type area.name 'movement' %}" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
-                    <span>…{{ counts.movement }} {% if categories.movement %}more{% endif %} dataset{{ counts.movement|pluralize }} available</span>
-                </a>
-            </div>
-          {% endif %}
-        </div>
-      {% elif debug %}
-        {% include 'hub/area/_no_data.html' with name="Movement" variable="movement" %}
-      {% endif %}
-
-        <div class="mt-5 p-3 bg-white border rounded d-flex align-items-center">
-            {% include 'hub/includes/icons/tcc-heart.html' with width="1.25em" height="1.25em" classes="me-3 flex-shrink-0 flex-grow-0" %}
-            <p class="mb-0">
-                <strong class="me-2">TCC member?</strong> Log in or request an account to upload your own datasets and bookmark your favourite datasets for easy access.
-            </p>
         </div>
 
     </div>

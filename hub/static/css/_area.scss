@@ -1,0 +1,51 @@
+.area-subnav {
+    --bs-bg-opacity: 0.9 !important;
+    backdrop-filter: blur(5px);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+
+    @include media-breakpoint-up('lg') {
+        --bs-bg-opacity: 1 !important;
+        backdrop-filter: none;
+        position: static;
+    }
+
+    & > div {
+        border-bottom: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color);
+
+        @include media-breakpoint-up('lg') {
+            border-bottom: 0;
+            position: sticky;
+            top: 1rem;
+            z-index: 1;
+            margin-top: -0.5rem;
+        }
+    }
+
+    nav {
+        margin: 0 calc(var(--bs-gutter-x, 1rem) * -0.5);
+    }
+
+    .nav-link {
+        padding: 0.5rem calc(var(--bs-gutter-x, 1rem) * 0.5);
+        font-weight: bold;
+    }
+}
+
+.area-section {
+    padding-top: 4rem; // leave space for the sticky subnav when jumping to section
+
+    @include media-breakpoint-up('lg') {
+        padding-top: 2rem; // no sticky subnav, but still want a bit of clear space below window top when jumping
+        margin-top: 2rem; // compensate for smaller padding, still want lots of space between sections
+    }
+
+    &:first-child {
+        margin-top: -4rem; // don't want to see the padding, but still want it there when we jump
+
+        @include media-breakpoint-up('lg') {
+            margin-top: -2rem;
+        }
+    }
+}
