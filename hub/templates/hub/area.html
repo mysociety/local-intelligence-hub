@@ -52,13 +52,6 @@
                           {% include 'hub/area/_opinion_data.html' with item=data %}
                         {% endfor %}
                       {% endfor %}
-                      {% if counts.opinion > 0 %}
-                        <div class="col d-flex flex-column">
-                            <a href="{% url 'area_category' area.area_type area.name 'opinion' %}#" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
-                                <span>…{{ counts.opinion }} {% if categories.opinion %}more{% endif %} dataset{{ counts.opinion|pluralize }} available</span>
-                            </a>
-                        </div>
-                      {% endif %}
                     </div>
                 </section>
               {% elif debug %}
@@ -74,13 +67,6 @@
                       {% for category in categories.place %}
                         {% include 'hub/area/_place_data.html' with category=category %}
                       {% endfor %}
-                      {% if counts.place > 0 %}
-                        <div class="col d-flex flex-column">
-                            <a href="{% url 'area_category' area.area_type area.name 'place' %}" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
-                                <span>…{{ counts.place }} {% if categories.place %}more{% endif %} dataset{{ counts.place|pluralize }} available</span>
-                            </a>
-                        </div>
-                      {% endif %}
                     </div>
                 </section>
               {% elif debug %}
@@ -96,13 +82,6 @@
                       {% for category in categories.movement %}
                         {% include 'hub/area/_place_data.html' with category=category %}
                       {% endfor %}
-                      {% if counts.movement > 0 %}
-                        <div class="col d-flex flex-column">
-                            <a href="{% url 'area_category' area.area_type area.name 'movement' %}" class="bg-transparent rounded p-3 flex-grow-1 d-flex align-items-center justify-content-center" style="border: 2px dashed var(--bs-border-color-translucent);">
-                                <span>…{{ counts.movement }} {% if categories.movement %}more{% endif %} dataset{{ counts.movement|pluralize }} available</span>
-                            </a>
-                        </div>
-                      {% endif %}
                     </div>
                 </section>
               {% elif debug %}

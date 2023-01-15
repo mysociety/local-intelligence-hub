@@ -39,11 +39,6 @@ urlpatterns = [
     path("explore.csv", views.ExploreCSV.as_view(), name="explore_csv"),
     path("area/<str:area_type>/<str:name>", views.AreaView.as_view(), name="area"),
     path(
-        "area/<str:area_type>/<str:name>/<str:category>",
-        views.AreaCategoryView.as_view(),
-        name="area_category",
-    ),
-    path(
         "data_set/<int:data_set>/favourite",
         views.FavouriteDataSetView.as_view(),
         name="favourite_dataset",

@@ -205,55 +205,6 @@ class TestAreaPage(TestCase):
         self.assertEqual(places[0]["name"], "constituency_age_distribution")
 
 
-class TestAreaCategoryPage(TestCase):
-    fixtures = ["areas.json", "mps.json", "elections.json", "area_data.json"]
-
-    def setUp(self):
-        u = User.objects.create(username="user@example.com")
-        self.client.force_login(u)
-
-    def test_area_category_page(self):
-        url = reverse("area_category", args=("WMC", "South Borsetshire", "place"))
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "hub/category.html")
-
-        context = response.context
-        self.assertEqual(context["page_title"], "South Borsetshire")
-        self.assertEqual(context["area"].name, "South Borsetshire")
-
-        self.assertEqual(context["category"], "place")
-
-        places = context["category_data"]
-        self.assertEqual(len(places), 2)
-
-        ages = places[0]
-        self.assertEqual(len(ages["data"]), 2)
-        self.assertEqual(ages["data"][0].value(), 10.1234)
-
-        fuel_poverty = places[1]
-        self.assertEqual(fuel_poverty["data"].value(), 12.4321)
-
-    def test_area_category_page_ordering(self):
-        ds = DataSet.objects.get(name="constituency_fuel_poverty")
-        ds.featured = True
-        ds.save()
-
-        url = reverse("area_category", args=("WMC", "South Borsetshire", "place"))
-        response = self.client.get(url)
-        context = response.context
-
-        places = context["category_data"]
-        self.assertEqual(len(places), 2)
-
-        ages = places[1]
-        self.assertEqual(len(ages["data"]), 2)
-        self.assertEqual(ages["data"][0].value(), 10.1234)
-
-        fuel_poverty = places[0]
-        self.assertEqual(fuel_poverty["data"].value(), 12.4321)
-
-
 class TestAreaSearchPage(TestCase):
     fixtures = ["areas.json", "mps.json"]
 
