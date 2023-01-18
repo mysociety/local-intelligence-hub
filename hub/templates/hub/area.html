@@ -43,10 +43,16 @@
                                 <h4 class="h6 mt-4">2019 majority</h4>
                                 <p class="fs-5 lh-1 fw-bold text-primary mb-0">{{ mp.mp_election_majority|intcomma }}</p>
                             </div>
+                          {% if mp.job_titles %}
+                            <div>
+                                <h4 class="h6 mt-4 mb-1">Positions</h4>
+                                <p class="mb-0">{{ mp.job_titles }}</p>
+                            </div>
+                          {% endif %}
                         </div>
                     </div>
                     <div class="card-footer bg-white">
-                        <p class="card-text fs-8 text-muted">Data from <a href="https://www.theyworkforyou.com/{% if mp.twfyid %}mp/{{ mp.twfyid}}{% endif %}" class="text-decoration-none text-muted">TheyWorkForYou.com</a> and <a href="https://electionresults.parliament.uk/election/2019-12-12/Statistics/Majority" class="text-decoration-none text-muted">UK Parliament</a></p>
+                        <p class="card-text fs-8 text-muted">Data from <a href="https://www.theyworkforyou.com/{% if mp.twfyid %}mp/{{ mp.twfyid}}{% endif %}" class="text-decoration-none text-muted">TheyWorkForYou.com</a>{% if mp.job_titles %},{% else %} and{% endif %} <a href="https://electionresults.parliament.uk/election/2019-12-12/Statistics/Majority" class="text-decoration-none text-muted">UK Parliament</a>{% if mp.job_titles %}, and Green Alliance{% endif %}</p>
                     </div>
                 </div>
             </div>
