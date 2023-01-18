@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 import pandas as pd
 from tqdm import tqdm
 
-from hub.models import Area, DataSet, DataType, Person, PersonData
+from hub.models import DataSet, DataType, Person, PersonData
 
 
 class Command(BaseCommand):
@@ -14,9 +14,9 @@ class Command(BaseCommand):
         self.import_results()
 
     def get_df(self):
-        df = pd.read_csv("data/cen_nzsg_members.csv", true_values=['CEN', 'NZSG'])
-        df.columns = ['mp_name', 'cen', 'nzsg']
-        
+        df = pd.read_csv("data/cen_nzsg_members.csv", true_values=["CEN", "NZSG"])
+        df.columns = ["mp_name", "cen", "nzsg"]
+
         return df
 
     def create_data_types(self):
@@ -54,7 +54,7 @@ class Command(BaseCommand):
             defaults={"data_type": "bool"},
         )
 
-        return {'cen': cen, 'nzsg': nzsg}
+        return {"cen": cen, "nzsg": nzsg}
 
     def get_results(self):
         mps = Person.objects.filter(person_type="MP")
@@ -65,7 +65,7 @@ class Command(BaseCommand):
             try:
                 mp = mps.get(name__iexact=row.mp_name)
 
-                results[mp] = row[['cen', 'nzsg']].dropna().index.to_list()
+                results[mp] = row[["cen", "nzsg"]].dropna().index.to_list()
             except Person.DoesNotExist:
                 print(f"MP: {row.mp_name} not found.")
         return results
@@ -77,7 +77,7 @@ class Command(BaseCommand):
                 data, created = PersonData.objects.update_or_create(
                     person=mp,
                     data_type=data_types[data_type],
-                    defaults={'data': True},
+                    defaults={"data": True},
                 )
 
     def import_results(self):
