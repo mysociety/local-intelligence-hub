@@ -58,6 +58,12 @@
                           {% if mp.party %}
                             <li class="mb-2"><a href="#">{{ mp.party }}</a></li>
                           {% endif %}
+                          {% if mp.cen_member %}
+                            <li class="mb-2">Conservative Environment Network</li>
+                          {% endif %}
+                          {% if mp.nzsg_member %}
+                          <li class="mb-2">Net Zero Scrutiny Group</li>
+                          {% endif %}
                           {% if mp.select_committee_memberships %}
                             <li class="mb-2 fw-bold">Select Committees:</li>
                             <ul class="list-unstyled mb-0">
