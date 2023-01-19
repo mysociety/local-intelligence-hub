@@ -105,6 +105,12 @@ class DataSet(TypeMixin, models.Model):
             dict(field_lookup="year__gte", title="since year"),
         ]
 
+    def string_comparators():
+        return [
+            dict(field_lookup="icontains", title="contains"),
+            dict(field_lookup="not_icontains", title="does not contain"),
+        ]
+
     OPTIONS_SCHEMA = {
         "type": "array",
         "items": {
