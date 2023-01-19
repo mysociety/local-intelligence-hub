@@ -78,11 +78,153 @@
               {% if categories.movement or counts.movement %}
                 <section id="movement" class="area-section">
                     <h2 class="mb-3 text-primary">Movement</h2>
+
+                    <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
+                        <div class="col d-flex flex-column">
+                            <div class="card flex-grow-1 dataset-card">
+                                <div class="dataset-card-header">
+                                    <h5>Supporters and activists</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Organisation</th>
+                                                <th scope="col">This area</th>
+                                                <th scope="col" class="text-muted">UK average</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- TODO pull in real data, order of rows doesn’t matter -->
+                                            <tr>
+                                                <th>{{ 'Number of Friends of the Earth activists' | simplify_dataset_name }}</th>
+                                                <td>xx</td>
+                                                <td class="text-muted">xx</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{{ 'Number of Friends of the Earth supporters' | simplify_dataset_name }}</th>
+                                                <td>xx</td>
+                                                <td class="text-muted">xx</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from members of The Climate Coalition</a></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col d-flex flex-column">
+                            <div class="card flex-grow-1 dataset-card">
+                                <div class="dataset-card-header">
+                                    <h5>Groups</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Organisation</th>
+                                                <th scope="col">This area</th>
+                                                <th scope="col" class="text-muted">UK average</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- TODO pull in real data, order of rows doesn’t matter -->
+                                            <tr>
+                                                <th>{{ 'Number of active Friends of the Earth groups' | simplify_dataset_name }}</th>
+                                                <td>xx</td>
+                                                <td class="text-muted">xx</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{{ 'Number of Women’s Institute groups' | simplify_dataset_name }}</th>
+                                                <td>xx</td>
+                                                <td class="text-muted">xx</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from members of The Climate Coalition</a></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                        <div class="col d-flex flex-column">
+                            <div class="card flex-grow-1 dataset-card">
+                                <div class="dataset-card-header">
+                                    <h5>Places and spaces</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Organisation</th>
+                                                <th scope="col">This area</th>
+                                                <th scope="col" class="text-muted">UK average</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- TODO pull in real data, order of rows doesn’t matter -->
+                                            <tr>
+                                                <th>{{ 'Number of Save the Children shops' | simplify_dataset_name }}</th>
+                                                <td>xx</td>
+                                                <td class="text-muted">xx</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{{ 'Churches that have declared a climate emergency' | simplify_dataset_name }}</th>
+                                                <td>xx</td>
+                                                <td class="text-muted">xx</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from members of The Climate Coalition</a></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col d-flex flex-column">
+                            <div class="card flex-grow-1 dataset-card">
+                                <div class="dataset-card-header">
+                                    <h5>Events</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Organisation</th>
+                                                <th scope="col">This area</th>
+                                                <th scope="col" class="text-muted">UK average</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- TODO pull in real data, order of rows doesn’t matter -->
+                                            <tr>
+                                                <th>{{ 'Number of Great Big Green Week 2022 events' | simplify_dataset_name }}</th>
+                                                <td>xx</td>
+                                                <td class="text-muted">xx</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from members of The Climate Coalition</a></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!--
                     <div class="row row-cols-1 row-cols-md-2 g-4">
                       {% for category in categories.movement %}
                         {% include 'hub/area/_place_data.html' with category=category %}
                       {% endfor %}
                     </div>
+                    -->
                 </section>
               {% elif debug %}
                 <section id="movement" class="area-section">

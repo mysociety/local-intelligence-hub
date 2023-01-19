@@ -26,3 +26,10 @@ def domain_human(value):
 @stringfilter
 def url_human(value):
     return lih_utils.url_human(value)
+
+
+@register.filter
+@stringfilter
+def simplify_dataset_name(value):
+    trimmed = re.sub(r'^Number of ', '', value)
+    return trimmed[0].upper() + trimmed[1:]

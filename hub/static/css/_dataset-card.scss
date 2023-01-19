@@ -8,6 +8,14 @@
     }
 
     .table {
+        td, th {
+            line-height: 1.2;
+        }
+
+        thead th {
+            @include font-size(0.875rem);
+        }
+
         tr > :first-child {
             padding-left: 0;
         }
