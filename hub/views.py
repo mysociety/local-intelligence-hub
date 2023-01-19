@@ -39,6 +39,32 @@ RUC_COLOURS = {
     "Urban with rural areas": "gray-500",
 }
 
+OPINION_SUBCATEGORIES = {
+    "constituency_nz_support": "climate_support",
+    "constituency_nz_neutral": "climate_support",
+    "constituency_nz_oppose": "climate_support",
+    "support-offshore-wind": "renewable_energy",
+    "support-solar": "renewable_energy",
+    "support-tidal": "renewable_energy",
+    "support-nuclear": "renewable_energy",
+    "would-change-party": "voting",
+    "less-favourable-conservative-weaken-climate": "voting",
+    "prefer-conservative-leader-invest-renewables": "voting",
+    "believe-gov-renewable-invest-increase": "government_action",
+    "believe-gov-renewable-should-invest": "government_action",
+    "believe-block-onshore-wind": "government_action",
+}
+
+MOVEMENT_SUBCATEGORIES = {
+    "constituency_foe_activists_count": "supporters_and_activists",
+    "constituency_foe_activists_count": "supporters_and_activists",
+    "constituency_foe_groups_count": "groups",
+    "constituency_wi_group_count": "groups",
+    "save_the_children_shops_count": "places_and_spaces",
+    "tearfund_churches": "places_and_spaces",
+    "constituency_gbgw_2022_event_count": "events",
+}
+
 
 class NotFoundPageView(TitleMixin, TemplateView):
     page_title = "Page not found"
@@ -258,7 +284,7 @@ class AreaView(BaseAreaView):
     def get_tags(self, mp_data, area_data):
         tags = []
         # Check to see if it's a marginal seat
-        if mp_data["mp_election_majority"]:
+        if mp_data.get("mp_election_majority", None):
             if mp_data["mp_election_majority"] <= 5000:
                 tags.append(
                     {
@@ -267,7 +293,9 @@ class AreaView(BaseAreaView):
                         "name": "Marginal seat",
                     }
                 )
-        red_wall_blue_wall_data = area_data['place'].get("constituency_red_blue_wall", None)
+        red_wall_blue_wall_data = area_data["place"].get(
+            "constituency_red_blue_wall", None
+        )
         if red_wall_blue_wall_data:
             red_wall_blue_wall = red_wall_blue_wall_data["data"].value()
             if red_wall_blue_wall == "Red Wall":
@@ -287,7 +315,7 @@ class AreaView(BaseAreaView):
                     }
                 )
         # Grab the RUC data
-        ruc_data = area_data['place'].get("constituency_ruc", None)
+        ruc_data = area_data["place"].get("constituency_ruc", None)
         if ruc_data:
             ruc = ruc_data["data"].data
             tags.append(
@@ -336,6 +364,18 @@ class AreaView(BaseAreaView):
 
             if data.get("data", None) is not None:
                 if data_set.category is not None:
+                    if type(data["data"]) != AreaData:
+                        if len(data["data"]) == 1:
+                            data["data"] = data["data"][0]
+
+                    if data_set.category == "opinion":
+                        data["sub_category"] = OPINION_SUBCATEGORIES.get(
+                            data_set.name, None
+                        )
+                    else:
+                        data["sub_category"] = MOVEMENT_SUBCATEGORIES.get(
+                            data_set.name, None
+                        )
                     categories[data_set.category].append(data)
                 else:
                     categories["place"].append(data)
@@ -346,22 +386,33 @@ class AreaView(BaseAreaView):
         indexed_categories = defaultdict(dict)
         for category_name, category_items in categories.items():
             for data_item in category_items:
-                data_points = data_item['data']
+                data_points = data_item["data"]
                 if type(data_points) == AreaData:
                     data_set_name = data_points.data_type.name
                 else:
-                    data_set_name = data_points[0].data_type.name
-                indexed_categories[category_name].update({data_set_name.replace('-', '_'): data_item})
+                    if len(data_points) != 0:
+                        data_set_name = data_points[0].data_type.name
+                        if len(data_points) == 1:
+                            data["data"] = data_points[0]
+                    else:
+                        data_set_name = None
+                if data_set_name:
+                    indexed_categories[category_name].update(
+                        {data_set_name.replace("-", "_"): data_item}
+                    )
 
-        tags = self.get_tags(context["mp"], indexed_categories)
+        tags = self.get_tags(context.get("mp", {}), indexed_categories)
         if tags != []:
             context["area_tags"] = tags
-            red_wall_blue_wall = indexed_categories['place'].get("constituency_red_blue_wall", None)
+            red_wall_blue_wall = indexed_categories["place"].get(
+                "constituency_red_blue_wall", None
+            )
             if red_wall_blue_wall:
                 context["categories"]["place"].remove(red_wall_blue_wall)
-            ruc = indexed_categories['place'].get("constituency_ruc", None)
+            ruc = indexed_categories["place"].get("constituency_ruc", None)
             if ruc:
                 context["categories"]["place"].remove(ruc)
+        context["indexed_categories"] = indexed_categories
         return context
 
 
