@@ -17,7 +17,7 @@ class Command(BaseConstituencyCountImportCommand):
         "label": "Number of Trussell Trust foodbanks",
         "description": "Number of Trussell Trust foodbanks",
         "data_type": "integer",
-        "category": "place",
+        "category": "movement",
         "source_label": "Trussell Trust",
         "source": "https://www.trusselltrust.org/",
         "source_type": "csv",

@@ -16,7 +16,7 @@ HARD_CODED_CONSTITUENCY_LOOKUP = {
 
 
 class Command(BaseImportFromDataFrameCommand):
-    help = "Import Onward polling data on attitudes to Net Zero and Climate Change"
+    help = "Import Onward polling data on attitudes to net zero and climate change"
 
     data_file = settings.BASE_DIR / "data" / "onward_mrp_polling_data.csv"
     cons_row = "constituency"
@@ -26,7 +26,7 @@ class Command(BaseImportFromDataFrameCommand):
     defaults = {
         "data_type": "integer",
         "category": "opinion",
-        "source_label": "Onward",
+        "source_label": "Public First, commissioned by Onward UK",
         "source": "https://www.ukonward.com/",
         "source_type": "google sheet",
         "table": "areadata",
@@ -38,19 +38,19 @@ class Command(BaseImportFromDataFrameCommand):
     data_sets = {
         "constituency_nz_support": {
             "defaults": defaults,
-            "col": "support Net Zero",
+            "col": "support net zero",
         },
         "constituency_nz_neutral": {
             "defaults": defaults,
-            "col": "neither support nor oppose Net Zero",
+            "col": "neither support nor oppose net zero",
         },
         "constituency_nz_oppose": {
             "defaults": defaults,
-            "col": "oppose Net Zero",
+            "col": "oppose net zero",
         },
         "constituency_cc_high": {
             "defaults": defaults,
-            "col": "consider Climate Change a high priority",
+            "col": "consider climate change a high priority",
         },
     }
 
@@ -93,10 +93,10 @@ class Command(BaseImportFromDataFrameCommand):
         )
         df.columns = [
             "constituency",
-            "support Net Zero",
-            "neither support nor oppose Net Zero",
-            "oppose Net Zero",
-            "consider Climate Change a high priority",
+            "support net zero",
+            "neither support nor oppose net zero",
+            "oppose net zero",
+            "consider climate change a high priority",
         ]
 
         # Build a constituency lookup from TWFY data, and apply it to the constituency column, so that the names are all in a form that LIH recognises
@@ -107,7 +107,7 @@ class Command(BaseImportFromDataFrameCommand):
         return df
 
     def get_label(self, defaults):
-        return f"Percentage of people who {defaults['col']}"
+        return defaults["col"]
 
     def delete_data(self):
         AreaData.objects.filter(data_type__in=self.data_types.values()).delete()

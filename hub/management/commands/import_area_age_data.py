@@ -22,8 +22,8 @@ class Command(BaseCommand):
         df = pd.read_excel(self.data_url, sheet_name="Age group data")
 
         defaults = {
-            "label": "Constituency Age Distribution",
-            "description": "Constituency Age Distribution",
+            "label": "Constituency age distribution",
+            "description": "Constituency age distribution",
             "data_type": "percent",
             "category": "place",
             "is_range": True,

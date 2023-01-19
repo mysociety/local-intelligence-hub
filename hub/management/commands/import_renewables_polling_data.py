@@ -23,6 +23,7 @@ class Command(BaseCommand):
         q = re.sub(r"Percentage of (?:the )?constituency (?:who|that) (?:are )?", "", q)
         q = q.replace(" as energy generation", "")
         q = re.sub(r"(\w)", lambda w: w.group().upper(), q, 1)
+        q = q.replace("Govt", "government")
 
         return q
 

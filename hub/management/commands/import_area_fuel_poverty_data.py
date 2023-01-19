@@ -21,8 +21,8 @@ class Command(BaseImportFromDataFrameCommand):
     data_sets = {
         "constituency_fuel_poverty": {
             "defaults": {
-                "label": "Households in Fuel Poverty",
-                "description": "Percentage of Households in Fuel Poverty",
+                "label": "Households in fuel poverty",
+                "description": "Percentage of households in fuel poverty",
                 "data_type": "percent",
                 "category": "place",
                 "source_label": "Department for Business, Energy & Industrial Strategy",

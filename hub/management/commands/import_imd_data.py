@@ -18,7 +18,7 @@ class Command(BaseImportFromDataFrameCommand):
                 "source_label": "mySociety",
                 "name": "constituency_imd",
                 "description": "Index of Multiple Deprivation",
-                "label": "Index of Multiple Deprivation",
+                "label": "Index of Multiple Deprivation (IMD)",
                 "data_type": "integer",
                 "category": "place",
                 "source_type": "csv",

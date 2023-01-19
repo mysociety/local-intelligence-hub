@@ -6,7 +6,7 @@ from .base_importers import BaseConstituencyCountImportCommand
 
 
 class Command(BaseConstituencyCountImportCommand):
-    help = "Import data about number of churches who have declared a climate emergency"
+    help = "Import data about number of churches that have declared a climate emergency"
 
     message = "importing churches with a declared climate emergency count"
     uses_gss = True
@@ -14,10 +14,10 @@ class Command(BaseConstituencyCountImportCommand):
     data_file = settings.BASE_DIR / "data" / "tearfund_churches_processed.csv"
 
     defaults = {
-        "label": "Churches Who've Declared a Climate Emergency",
-        "description": "Number of churches who've declared a climate emergency",
+        "label": "Churches that have declared a climate emergency",
+        "description": "Number of churches that have declared a climate emergency",
         "data_type": "integer",
-        "category": "place",
+        "category": "movement",
         "source_label": "Tearfund",
         "source": "https://www.tearfund.org/",
         "source_type": "csv",

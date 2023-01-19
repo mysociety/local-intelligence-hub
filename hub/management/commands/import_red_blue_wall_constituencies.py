@@ -16,7 +16,8 @@ class Command(BaseImportFromDataFrameCommand):
     uses_gss = False
 
     defaults = {
-        "label": "Red or Blue Wall Constituency",
+        "label": "Red or Blue Wall constituency",
+        "description": "Red Wall data from Political Insight, and Blue Wall data from the Financial Times, collated by Green Alliance",
         "data_type": "text",
         "category": "place",
         "source_label": "Green Alliance",

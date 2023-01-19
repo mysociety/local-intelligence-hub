@@ -17,7 +17,7 @@ class Command(BaseConstituencyCountImportCommand):
         "label": "Number of Save the Children shops",
         "description": "Number of Save the Children shops",
         "data_type": "integer",
-        "category": "place",
+        "category": "movement",
         "source_label": "Save the Children",
         "source": "https://www.savethechildren.org.uk/",
         "source_type": "csv",

@@ -70,7 +70,7 @@ class Command(BaseCommand):
             defaults={
                 "data_type": "text",
                 "description": "Membership in APPGs as published on the parliament website",
-                "label": "APPG Memberships",
+                "label": "APPG membership",
                 "source_label": "UK Parliament",
                 "source": "https://parliament.uk/",
                 "table": "person__persondata",
