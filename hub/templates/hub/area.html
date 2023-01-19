@@ -46,13 +46,207 @@
               {% if categories.opinion or counts.opinion %}
                 <section id="opinion" class="area-section">
                     <h2 class="mb-3 text-primary">Public opinion</h2>
-                    <div class="row row-cols-1 row-cols-md-2 g-4">
-                      {% for category in categories.opinion %}
-                        {% for data in category.data %}
-                          {% include 'hub/area/_opinion_data.html' with item=data %}
-                        {% endfor %}
-                      {% endfor %}
+
+                    <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
+                        <div class="col d-flex flex-column">
+                            <div class="card flex-grow-1 dataset-card">
+                                <div class="dataset-card-header">
+                                    <h5>Support for climate</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Opinion</th>
+                                                <th scope="col">This area</th>
+                                                <th scope="col" class="text-muted">UK average</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- TODO pull in real data, order of rows doesn’t matter -->
+                                            <tr>
+                                                <th>{{ 'Support Net Zero' | simplify_dataset_name }}</th>
+                                                <td>xx%</td>
+                                                <td class="text-muted">xx%</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{{ 'Neither support nor oppose Net Zero' | simplify_dataset_name }}</th>
+                                                <td>xx%</td>
+                                                <td class="text-muted">xx%</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{{ 'Oppose Net Zero' | simplify_dataset_name }}</th>
+                                                <td>xx%</td>
+                                                <td class="text-muted">xx%</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Public First, comissioned by Onward UK</a></p>
+                                </div>
+                            </div>
+
+                            <div class="card flex-grow-1 dataset-card">
+                                <div class="dataset-card-header pe-3">
+                                    <h5>Consider Climate Change a high priority</h5>
+                                </div>
+                                <!-- TODO pull in real data, order of rows doesn’t matter -->
+                                <div class="card-body">
+                                    <p class="card-text mb-0 display-6 lh-1 text-primary">xx%</p>
+                                    <p class="card-text mt-2 text-muted">xx% national average</p>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Public First, comissioned by Onward UK</a></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col d-flex flex-column">
+                            <div class="card flex-grow-1 dataset-card">
+                                <div class="dataset-card-header pe-3">
+                                    <h5>Support renewable energy projects in their local area</h5>
+                                </div>
+                                <!-- TODO pull in real data, order of rows doesn’t matter -->
+                                <div class="card-body">
+                                    <p class="card-text mb-0 display-6 lh-1 text-primary">xx%</p>
+                                    <p class="card-text mt-2 text-muted">xx% national average</p>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Survation, comissioned by RenewableUK</a></p>
+                                </div>
+                            </div>
+
+                            <div class="card flex-grow-1 dataset-card">
+                                <div class="dataset-card-header">
+                                    <h5>Renewable energy</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Opinion</th>
+                                                <th scope="col">This area</th>
+                                                <th scope="col" class="text-muted">UK average</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- TODO pull in real data, order of rows doesn’t matter -->
+                                            <tr>
+                                                <th>{{ 'Support offshore wind' | simplify_dataset_name }}</th>
+                                                <td>xx%</td>
+                                                <td class="text-muted">xx%</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{{ 'Support onshore wind' | simplify_dataset_name }}</th>
+                                                <td>xx%</td>
+                                                <td class="text-muted">xx%</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{{ 'Support solar power' | simplify_dataset_name }}</th>
+                                                <td>xx%</td>
+                                                <td class="text-muted">xx%</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{{ 'Support tidal energy' | simplify_dataset_name }}</th>
+                                                <td>xx%</td>
+                                                <td class="text-muted">xx%</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{{ 'Support nuclear energy' | simplify_dataset_name }}</th>
+                                                <td>xx%</td>
+                                                <td class="text-muted">xx%</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Survation, comissioned by RenewableUK</a></p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
+                    <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
+                        <div class="col d-flex flex-column">
+                            <div class="card flex-grow-1 dataset-card">
+                                <div class="dataset-card-header">
+                                    <h5>Voting</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Opinion</th>
+                                                <th scope="col">This area</th>
+                                                <th scope="col" class="text-muted">UK average</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- TODO pull in real data, order of rows doesn’t matter -->
+                                            <tr>
+                                                <th>{{ 'Considering voting for a different party in the next General Election to the one they voted for in 2019' | simplify_dataset_name }}</th>
+                                                <td>xx%</td>
+                                                <td class="text-muted">xx%</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{{ 'Would be less favourable towards the Conservative Party if they chose to weaken climate policies' | simplify_dataset_name }}</th>
+                                                <td>xx%</td>
+                                                <td class="text-muted">xx%</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{{ 'Would prefer the next leader of the Conservative Party to invest in renewable energy' | simplify_dataset_name }}</th>
+                                                <td>xx%</td>
+                                                <td class="text-muted">xx%</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Survation, comissioned by RenewableUK</a></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col d-flex flex-column">
+                            <div class="card flex-grow-1 dataset-card">
+                                <div class="dataset-card-header">
+                                    <h5>Government action</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Opinion</th>
+                                                <th scope="col">This area</th>
+                                                <th scope="col" class="text-muted">UK average</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- TODO pull in real data, order of rows doesn’t matter -->
+                                            <tr>
+                                                <th>{{ 'Believe the government has increased investment in renewables over the past 5 years' | simplify_dataset_name }}</th>
+                                                <td>xx%</td>
+                                                <td class="text-muted">xx%</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{{ 'Believe that the government should use wind and solar farms to reduce energy bills' | simplify_dataset_name }}</th>
+                                                <td>xx%</td>
+                                                <td class="text-muted">xx%</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{{ 'Believe that the government should continue the block on onshore wind development ' | simplify_dataset_name }}</th>
+                                                <td>xx%</td>
+                                                <td class="text-muted">xx%</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Survation, comissioned by RenewableUK</a></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </section>
               {% elif debug %}
                 <section id="opinion" class="area-section">
