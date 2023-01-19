@@ -8,11 +8,13 @@
 <div class="py-4 py-lg-5">
     <div class="container">
         <h1 class="m-0">{{ area.name }}</h1>
-        <!-- TODO: Don’t hard-code these! -->
+        {% if area_tags %}
         <ul class="list-inline mt-3 mb-0">
-            <li class="list-inline-item"><a href="#" class="badge text-white bg-blue-600" style="text-decoration: none; cursor: help;" title="Data from Green Alliance"># Blue wall</a></li>
-            <li class="list-inline-item"><a href="#" class="badge text-white bg-orange-500" style="text-decoration: none; cursor: help;" title="MP electoral majority less than 5000; Data from UK Parliament"># Marginal seat</a></li>
+          {% for tag in area_tags %}
+            {% include "hub/area/_tag.html" with colour=tag.colour title=tag.title name=tag.name only %}
+          {% endfor %}
         </ul>
+        {% endif %}
     </div>
 </div>
 

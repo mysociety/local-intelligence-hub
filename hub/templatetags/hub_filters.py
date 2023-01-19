@@ -31,5 +31,5 @@ def url_human(value):
 @register.filter
 @stringfilter
 def simplify_dataset_name(value):
-    trimmed = re.sub(r'^Number of ', '', value)
+    trimmed = re.sub(r"^Number of ", "", value)
     return trimmed[0].upper() + trimmed[1:]

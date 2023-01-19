@@ -3,7 +3,7 @@ import json
 from collections import defaultdict
 from operator import itemgetter
 
-from django.db.models import Count, OuterRef, Q, Subquery
+from django.db.models import Count, OuterRef, Subquery
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import DetailView, TemplateView, View
@@ -30,6 +30,13 @@ from utils.mapit import (
 cache_settings = {
     "max-age": 60,
     "s-maxage": 3600,
+}
+
+RUC_COLOURS = {
+    "Rural": "green-700",
+    "Urban": "gray-700",
+    "Sparse and rural": "green-300",
+    "Urban with rural areas": "gray-500",
 }
 
 
@@ -248,6 +255,51 @@ class AreaView(BaseAreaView):
     template_name = "hub/area.html"
     context_object_name = "area"
 
+    def get_tags(self, mp_data, area_data):
+        tags = []
+        # Check to see if it's a marginal seat
+        if mp_data["mp_election_majority"]:
+            if mp_data["mp_election_majority"] <= 5000:
+                tags.append(
+                    {
+                        "colour": "orange-500",
+                        "title": "MP electoral majority less than 5000; Data from UK Parliament",
+                        "name": "Marginal seat",
+                    }
+                )
+        red_wall_blue_wall_data = area_data['place'].get("constituency_red_blue_wall", None)
+        if red_wall_blue_wall_data:
+            red_wall_blue_wall = red_wall_blue_wall_data["data"].value()
+            if red_wall_blue_wall == "Red Wall":
+                tags.append(
+                    {
+                        "colour": "red-500",
+                        "title": "Data from Green Alliance",
+                        "name": "Red wall",
+                    }
+                )
+            else:
+                tags.append(
+                    {
+                        "colour": "blue-600",
+                        "title": "Data from Green Alliance",
+                        "name": "Blue wall",
+                    }
+                )
+        # Grab the RUC data
+        ruc_data = area_data['place'].get("constituency_ruc", None)
+        if ruc_data:
+            ruc = ruc_data["data"].data
+            tags.append(
+                {
+                    "colour": RUC_COLOURS[ruc],
+                    "title": "Urban Rural Classification",
+                    "name": ruc,
+                }
+            )
+
+        return tags
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         try:
@@ -279,9 +331,7 @@ class AreaView(BaseAreaView):
             pass
 
         categories = defaultdict(list)
-        for data_set in (
-            DataSet.objects.order_by("order", "name").all()
-        ):
+        for data_set in DataSet.objects.order_by("order", "name").all():
             data = self.process_dataset(data_set)
 
             if data.get("data", None) is not None:
@@ -291,6 +341,27 @@ class AreaView(BaseAreaView):
                     categories["place"].append(data)
 
         context["categories"] = categories
+
+        # Create a version of categories that's indexed to make handling the data cleaner
+        indexed_categories = defaultdict(dict)
+        for category_name, category_items in categories.items():
+            for data_item in category_items:
+                data_points = data_item['data']
+                if type(data_points) == AreaData:
+                    data_set_name = data_points.data_type.name
+                else:
+                    data_set_name = data_points[0].data_type.name
+                indexed_categories[category_name].update({data_set_name.replace('-', '_'): data_item})
+
+        tags = self.get_tags(context["mp"], indexed_categories)
+        if tags != []:
+            context["area_tags"] = tags
+            red_wall_blue_wall = indexed_categories['place'].get("constituency_red_blue_wall", None)
+            if red_wall_blue_wall:
+                context["categories"]["place"].remove(red_wall_blue_wall)
+            ruc = indexed_categories['place'].get("constituency_ruc", None)
+            if ruc:
+                context["categories"]["place"].remove(ruc)
         return context
 
 
