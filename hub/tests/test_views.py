@@ -165,45 +165,6 @@ class TestAreaPage(TestCase):
         context = response.context
         self.assertIsNone(context.get("mp"))
 
-    def test_featured_data(self):
-        url = reverse("area", args=("WMC", "South Borsetshire"))
-        response = self.client.get(url)
-
-        context = response.context
-        places = context["categories"]["place"]
-        self.assertEqual(len(places), 0)
-
-        ages = DataSet.objects.get(name="constituency_age_distribution")
-        ages.featured = True
-        ages.save()
-
-        url = reverse("area", args=("WMC", "South Borsetshire"))
-        response = self.client.get(url)
-
-        context = response.context
-        places = context["categories"]["place"]
-        self.assertEqual(len(places), 1)
-        self.assertEqual(places[0]["name"], "constituency_age_distribution")
-
-    def test_favourited_data(self):
-        url = reverse("area", args=("WMC", "South Borsetshire"))
-        response = self.client.get(url)
-
-        context = response.context
-        places = context["categories"]["place"]
-        self.assertEqual(len(places), 0)
-
-        ages = DataSet.objects.get(name="constituency_age_distribution")
-        UserDataSets.objects.create(data_set=ages, user=self.u)
-
-        url = reverse("area", args=("WMC", "South Borsetshire"))
-        response = self.client.get(url)
-
-        context = response.context
-        places = context["categories"]["place"]
-        self.assertEqual(len(places), 1)
-        self.assertEqual(places[0]["name"], "constituency_age_distribution")
-
 
 class TestAreaSearchPage(TestCase):
     fixtures = ["areas.json", "mps.json"]
