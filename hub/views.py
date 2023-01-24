@@ -39,32 +39,6 @@ RUC_COLOURS = {
     "Urban with rural areas": "gray-500",
 }
 
-OPINION_SUBCATEGORIES = {
-    "constituency_nz_support": "climate_support",
-    "constituency_nz_neutral": "climate_support",
-    "constituency_nz_oppose": "climate_support",
-    "support-offshore-wind": "renewable_energy",
-    "support-solar": "renewable_energy",
-    "support-tidal": "renewable_energy",
-    "support-nuclear": "renewable_energy",
-    "would-change-party": "voting",
-    "less-favourable-conservative-weaken-climate": "voting",
-    "prefer-conservative-leader-invest-renewables": "voting",
-    "believe-gov-renewable-invest-increase": "government_action",
-    "believe-gov-renewable-should-invest": "government_action",
-    "believe-block-onshore-wind": "government_action",
-}
-
-MOVEMENT_SUBCATEGORIES = {
-    "constituency_foe_activists_count": "supporters_and_activists",
-    "constituency_foe_activists_count": "supporters_and_activists",
-    "constituency_foe_groups_count": "groups",
-    "constituency_wi_group_count": "groups",
-    "save_the_children_shops_count": "places_and_spaces",
-    "tearfund_churches": "places_and_spaces",
-    "constituency_gbgw_2022_event_count": "events",
-}
-
 
 class NotFoundPageView(TitleMixin, TemplateView):
     page_title = "Page not found"
@@ -232,6 +206,7 @@ class BaseAreaView(TitleMixin, DetailView):
             "name": str(data_set),
             "label": data_set.label,
             "source": data_set.source_name,
+            "subcategory": data_set.subcategory,
             "source_url": data_set.source_url,
             "category": data_set.category,
             "pk": data_set.pk,
@@ -367,15 +342,6 @@ class AreaView(BaseAreaView):
                     if type(data["data"]) != AreaData:
                         if len(data["data"]) == 1:
                             data["data"] = data["data"][0]
-
-                    if data_set.category == "opinion":
-                        data["sub_category"] = OPINION_SUBCATEGORIES.get(
-                            data_set.name, None
-                        )
-                    else:
-                        data["sub_category"] = MOVEMENT_SUBCATEGORIES.get(
-                            data_set.name, None
-                        )
                     categories[data_set.category].append(data)
                 else:
                     categories["place"].append(data)

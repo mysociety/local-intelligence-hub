@@ -53,7 +53,7 @@
                         <div class="col d-flex flex-column">
                             <div class="card flex-grow-1 dataset-card">
                                 <div class="dataset-card-header">
-                                    <h5>Support for climate</h5>
+                                    <h5>Support for net zero</h5>
                                 </div>
                                 <div class="card-body">
                                     <table class="table mb-0">
@@ -66,7 +66,7 @@
                                         </thead>
                                         <tbody>
                                           {% for datum in categories.opinion %}
-                                            {% if datum.sub_category == "climate_support" %}
+                                            {% if datum.subcategory == "net_zero_support" %}
                                             <tr>
                                                 <th>{{ datum.name | simplify_dataset_name }}</th>
                                                 <td>{{ datum.data.value|floatformat }}%</td>
@@ -124,7 +124,7 @@
                                         </thead>
                                         <tbody>
                                             {% for datum in categories.opinion %}
-                                            {% if datum.sub_category == "renewable_energy" %}
+                                            {% if datum.subcategory == "renewable_energy" %}
                                             <tr>
                                                 <th>{{ datum.name | simplify_dataset_name }}</th>
                                                 <td>{{ datum.data.value|floatformat }}%</td>
@@ -159,7 +159,7 @@
                                         </thead>
                                         <tbody>
                                             {% for datum in categories.opinion %}
-                                            {% if datum.sub_category == "voting" %}
+                                            {% if datum.subcategory == "voting" %}
                                             <tr>
                                                 <th>{{ datum.name | simplify_dataset_name }}</th>
                                                 <td>{{ datum.data.value|floatformat }}%</td>
@@ -191,7 +191,7 @@
                                         </thead>
                                         <tbody>
                                             {% for datum in categories.opinion %}
-                                            {% if datum.sub_category == "government_action" %}
+                                            {% if datum.subcategory == "government_action" %}
                                             <tr>
                                                 <th>{{ datum.name | simplify_dataset_name }}</th>
                                                 <td>{{ datum.data.value|floatformat }}%</td>
@@ -252,7 +252,7 @@
                                         </thead>
                                        <tbody>
                                           {% for datum in categories.movement %}
-                                            {% if datum.sub_category == "supporters_and_activists" %}
+                                            {% if datum.subcategory == "supporters_and_activists" %}
                                             <tr>
                                                 <th>{{ datum.name | simplify_dataset_name }}</th>
                                                 <td>{{ datum.data.value|floatformat }}</td>
@@ -285,7 +285,7 @@
                                         </thead>
                                         <tbody>
                                           {% for datum in categories.movement %}
-                                            {% if datum.sub_category == "groups" %}
+                                            {% if datum.subcategory == "groups" %}
                                             <tr>
                                                 <th>{{ datum.name | simplify_dataset_name }}</th>
                                                 <td>{{ datum.data.value|floatformat }}</td>
@@ -320,7 +320,7 @@
                                         </thead>
                                         <tbody>
                                           {% for datum in categories.movement %}
-                                            {% if datum.sub_category == "places_and_spaces" %}
+                                            {% if datum.subcategory == "places_and_spaces" %}
                                             <tr>
                                                 <th>{{ datum.name | simplify_dataset_name }}</th>
                                                 <td>{{ datum.data.value|floatformat }}</td>
@@ -353,7 +353,7 @@
                                         </thead>
                                         <tbody>
                                           {% for datum in categories.movement %}
-                                            {% if datum.sub_category == "events" %}
+                                            {% if datum.subcategory == "events" %}
                                             <tr>
                                                 <th>{{ datum.name | simplify_dataset_name }}</th>
                                                 <td>{{ datum.data.value|floatformat }}</td>

@@ -17,6 +17,7 @@ class Command(BaseLatLongImportCommand):
         "description": "Number of Women’s Institute groups",
         "data_type": "integer",
         "category": "movement",
+        "subcategory": "groups",
         "source_label": "Woman’s Institute",
         "source": "https://www.thewi.org.uk/",
         "source_type": "api",

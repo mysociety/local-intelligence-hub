@@ -18,6 +18,7 @@ class Command(BaseConstituencyCountImportCommand):
         "description": "Number of churches that have declared a climate emergency",
         "data_type": "integer",
         "category": "movement",
+        "subcategory": "places_and_spaces",
         "source_label": "Tearfund",
         "source": "https://www.tearfund.org/",
         "source_type": "csv",

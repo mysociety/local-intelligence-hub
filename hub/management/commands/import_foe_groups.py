@@ -18,6 +18,7 @@ class Command(BaseImportFromDataFrameCommand):
     defaults = {
         "data_type": "integer",
         "category": "movement",
+        "subcategory": "groups",
         "source_label": "Friends of the Earth",
         "source": "https://friendsoftheearth.uk/",
         "source_type": "google sheet",

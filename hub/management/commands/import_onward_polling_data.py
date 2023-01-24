@@ -29,6 +29,7 @@ class Command(BaseImportFromDataFrameCommand):
         "source_label": "Public First, commissioned by Onward UK",
         "source": "https://www.ukonward.com/",
         "source_type": "google sheet",
+        "subcategory": "net_zero_support",
         "table": "areadata",
         "default_value": 10,
         "data_url": "",
@@ -49,10 +50,11 @@ class Command(BaseImportFromDataFrameCommand):
             "col": "oppose net zero",
         },
         "constituency_cc_high": {
-            "defaults": defaults,
+            "defaults": defaults.copy(),
             "col": "consider climate change a high priority",
         },
     }
+    del data_sets["constituency_cc_high"]["defaults"]["subcategory"]
 
     def add_to_dict(self, df):
         names = df.names.tolist()

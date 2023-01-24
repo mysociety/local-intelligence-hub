@@ -9,6 +9,22 @@ from tqdm import tqdm
 
 from hub.models import Area, AreaData, DataSet, DataType
 
+SUBCATEGORIES_DICT = {
+    "would-change-party": "voting",
+    "less-favourable-conservative-weaken-climate": "voting",
+    "prefer-conservative-leader-invest-renewables": "voting",
+    "support-offshore-wind": "renewable_energy",
+    "support-onshore-wind": None,
+    "support-solar": "renewable_energy",
+    "support-tidal": "renewable_energy",
+    "support-wave": None,
+    "support-nuclear": "renewable_energy",
+    "support-local-renewable": None,
+    "believe-gov-renewable-invest-increase": "government_action",
+    "believe-gov-renewable-should-invest": "government_action",
+    "believe-block-onshore-wind": "government_action",
+}
+
 
 class Command(BaseCommand):
     help = "Import polling data about support for renewables"
@@ -72,6 +88,7 @@ class Command(BaseCommand):
                     "description": description,
                     "data_type": "percent",
                     "category": "opinion",
+                    "subcategory": SUBCATEGORIES_DICT[column],
                     "source_label": "Survation, commissioned by RenewableUK",
                     "source": "https://www.renewableuk.com/news/615931/Polling-in-every-constituency-in-Britain-shows-strong-support-for-wind-farms-to-drive-down-bills.htm",
                     "source_type": "google sheet",

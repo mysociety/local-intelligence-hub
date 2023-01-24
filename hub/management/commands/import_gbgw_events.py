@@ -31,6 +31,7 @@ class Command(BaseLatLongImportCommand):
                 "description": "Number of Great Big Green Week 2022 events",
                 "data_type": "integer",
                 "category": "movement",
+                "subcategory": "events",
                 "source_label": "The Climate Coalition",
                 "source": "https://greatbiggreenweek.com/",
                 "source_type": "google sheet",
