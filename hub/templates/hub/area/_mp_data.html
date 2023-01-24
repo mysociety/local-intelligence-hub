@@ -71,29 +71,39 @@
         <div class="card flex-grow-1">
             <div class="card-body">
                 <h5 class="card-title mb-3">MP memberships</h5>
-                <ul class="list-unstyled mb-0">
-                  {% if mp_data.party %}
-                    <li class="mb-2"><a href="#">{{ mp_data.party }}</a></li>
-                  {% endif %}
+              {% if mp_data.party %}
+                <h6 class="text-muted fw-bold">Party</h6>
+                <ul class="tag-cloud">
+                    <li><a href="{% url 'explore' %}?{% urlencode_params party__exact=mp_data.party %}" class="tag" title="Show all constituencies with an MP in this party">{{ mp_data.party }}</a></li>
+                </ul>
+              {% endif %}
+              {% if mp_data.cen_member or mp_data.nzsg_member %}
+                <h6 class="text-muted fw-bold">Political groups</h6>
+                <ul class="tag-cloud">
                   {% if mp_data.cen_member %}
-                    <li class="mb-2">Conservative Environment Network</li>
+                    <li><a href="{% url 'explore' %}?{% urlencode_params cen_member__exact=True %}" class="tag" title="Show all constituencies with an MP in this group">Conservative Environment Network</a></li>
                   {% endif %}
                   {% if mp_data.nzsg_member %}
-                    <li class="mb-2">Net Zero Scrutiny Group</li>
-                  {% endif %}
-                  {% if mp_data.select_committee_memberships %}
-                    <li class="mb-2 fw-bold">Select Committees:</li>
-                      {% for committee in mp_data.select_committee_memberships %}
-                    <li class="mb-2">{{ committee }}</li>
-                      {% endfor %}
-                  {% endif %}
-                  {% if mp_data.appg_memberships %}
-                    <li class="mb-2 fw-bold">APPGs:</li>
-                      {% for appg in mp_data.appg_memberships %}
-                    <li class="mb-2">{{ appg }}</li>
-                      {% endfor %}
+                    <li><a href="{% url 'explore' %}?{% urlencode_params nzsg_member__exact=True %}" class="tag" title="Show all constituencies with an MP in this group">Net Zero Scrutiny Group</a></li>
                   {% endif %}
                 </ul>
+              {% endif %}
+              {% if mp_data.select_committee_memberships %}
+                <h6 class="text-muted fw-bold">Select committees</h6>
+                <ul class="tag-cloud">
+                  {% for committee in mp_data.select_committee_memberships %}
+                    <li><a href="{% url 'explore' %}?{% urlencode_params select_committee_membership__icontains=committee %}" class="tag" title="Show all constituencies with an MP in this select committee">{{ committee }}</a></li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+              {% if mp_data.appg_memberships %}
+                <h6 class="text-muted fw-bold">APPGs</h6>
+                <ul class="tag-cloud">
+                  {% for appg in mp_data.appg_memberships %}
+                    <li><a href="{% url 'explore' %}?{% urlencode_params mp_appg_memberships__exact=appg %}" class="tag" title="Show all constituencies with an MP in this APPG">{{ appg }}</a></li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
             </div>
             <div class="card-footer bg-white">
                 <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data collated by The Climate Coalition</a></p>

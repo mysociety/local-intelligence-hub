@@ -1,0 +1,45 @@
+.tag-cloud {
+    @include list-unstyled();
+    margin: -0.25rem -0.25rem 1rem -0.25rem;
+    display: flex;
+    flex-wrap: wrap;
+
+    &:last-child {
+        margin-bottom: -0.25rem;
+    }
+
+    li {
+        margin: 0.25rem;
+        max-width: 100%;
+    }
+}
+
+// Heavily based on .badge
+.tag {
+    --#{$prefix}badge-padding-x: #{$badge-padding-x};
+    --#{$prefix}badge-padding-y: #{$badge-padding-y};
+    @include rfs($badge-font-size, --#{$prefix}badge-font-size);
+    --#{$prefix}badge-font-weight: #{$badge-font-weight};
+    --#{$prefix}badge-border-radius: #{$badge-border-radius};
+
+    padding: var(--#{$prefix}badge-padding-y) var(--#{$prefix}badge-padding-x);
+    @include font-size(var(--#{$prefix}badge-font-size));
+    font-weight: var(--#{$prefix}badge-font-weight);
+    line-height: 1;
+    @include border-radius(var(--#{$prefix}badge-border-radius));
+
+    border: 1px solid $border-color;
+
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+a.tag {
+    text-decoration: none;
+
+    &:hover {
+        border-color: darken($border-color, 5%);
+    }
+}

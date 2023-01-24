@@ -1,4 +1,5 @@
 import re
+from urllib.parse import urlencode
 
 from django import template
 from django.template.defaultfilters import stringfilter
@@ -33,3 +34,11 @@ def url_human(value):
 def simplify_dataset_name(value):
     trimmed = re.sub(r"^Number of ", "", value)
     return trimmed[0].upper() + trimmed[1:]
+
+
+@register.simple_tag
+def urlencode_params(**kwargs):
+    """
+    Return encoded URL parameters
+    """
+    return urlencode(kwargs)
