@@ -66,6 +66,16 @@ class DataSet(TypeMixin, models.Model):
         ("xlxs", "Excel File"),
         ("api", "External API"),
     ]
+    SUBCATEGORY_CHOICES = [
+        ("net_zero_support", "Support for net zero"),
+        ("renewable_energy", "Renewable energy"),
+        ("voting", "Voting"),
+        ("government_action", "Government action"),
+        ("supporters_and_activists", "Supporters and activists"),
+        ("groups", "Groups"),
+        ("places_and_spaces", "Places and spaces"),
+        ("events", "Events"),
+    ]
 
     CATEGORY_CHOICES = [
         ("opinion", "Public Opinion"),
@@ -138,6 +148,7 @@ class DataSet(TypeMixin, models.Model):
     featured = models.BooleanField(default=False)
     order = models.IntegerField(blank=True, null=True)
     category = models.TextField(blank=True, null=True, choices=CATEGORY_CHOICES)
+    subcategory = models.TextField(blank=True, null=True, choices=SUBCATEGORY_CHOICES)
     table = models.CharField(max_length=20, null=True, choices=TABLE_CHOICES)
     comparators = JSONField(schema=COMPARATORS_SCHEMA, default=comparators_default)
     options = JSONField(schema=OPTIONS_SCHEMA, blank=True, default=options_default)
