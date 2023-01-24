@@ -26,13 +26,13 @@
                 <div>
                     <nav class="nav flex-lg-column">
                         <a class="nav-link" href="#mp">MP</a>
-                      {% if categories.opinion or counts.opinion %}
+                      {% if categories.opinion %}
                         <a class="nav-link" href="#opinion">Public opinion</a>
                       {% endif %}
-                      {% if categories.place or counts.place %}
+                      {% if categories.place %}
                         <a class="nav-link" href="#place">Place</a>
                       {% endif %}
-                      {% if categories.movement or counts.movement %}
+                      {% if categories.movement %}
                         <a class="nav-link" href="#movement">Movement</a>
                       {% endif %}
                     </nav>
@@ -45,7 +45,7 @@
                     {% include 'hub/area/_mp_data.html' with mp_data=mp %}
                 </section>
 
-              {% if categories.opinion or counts.opinion %}
+              {% if categories.opinion %}
                 <section id="opinion" class="area-section">
                     <h2 class="mb-3 text-primary">Public opinion</h2>
 
@@ -216,7 +216,7 @@
                 </section>
               {% endif %}
 
-              {% if categories.place or counts.place %}
+              {% if categories.place %}
                 <section id="place" class="area-section">
                     <h2 class="mb-3 text-primary">Place</h2>
                     <div class="row row-cols-1 row-cols-md-2 g-4">
@@ -231,7 +231,7 @@
                 </section>
               {% endif %}
 
-              {% if categories.movement or counts.movement %}
+              {% if categories.movement %}
                 <section id="movement" class="area-section">
                     <h2 class="mb-3 text-primary">Movement</h2>
 
