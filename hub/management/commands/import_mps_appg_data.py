@@ -47,6 +47,11 @@ class Command(BaseCommand):
         df = df.dropna(subset="mp")
         return df
 
+    def get_climate_appgs(self):
+        with open("data/climate_APPGs.txt", "r") as fh:
+            climate_appgs = [line.replace("\n", "") for line in fh.readlines()]
+        return climate_appgs
+
     def get_df(self):
         df = get_dataset_df(
             repo_name="mp-appg-membership-data",
@@ -58,13 +63,16 @@ class Command(BaseCommand):
         # (Currently, this is done by reading from a list produced
         # by searching for various keywords related to climate in the
         # title and purposes of the APPGs)
-        with open("data/climate_APPGs.txt", "r") as fh:
-            climate_appgs = [line.replace("\n", "") for line in fh.readlines()]
+        climate_appgs = self.get_climate_appgs()
         df = df[df.appg_name.isin(climate_appgs)]
         df = self.add_mps(df)
         return df
 
     def create_data_type(self):
+        climate_appgs = self.get_climate_appgs()
+        climate_appgs.sort(key=lambda x: x.replace("'", ""))
+        options = [dict(title=appg, shader="#DCDCDC") for appg in climate_appgs]
+
         appg_membership_ds, created = DataSet.objects.update_or_create(
             name="mp_appg_memberships",
             defaults={
@@ -74,7 +82,8 @@ class Command(BaseCommand):
                 "source_label": "UK Parliament",
                 "source": "https://parliament.uk/",
                 "table": "person__persondata",
-                "comparators": DataSet.string_comparators(),
+                "options": options,
+                "comparators": DataSet.comparators_default(),
             },
         )
 

@@ -20,6 +20,10 @@ class Command(BaseCommand):
         return df
 
     def create_data_types(self):
+        options = [
+            {"title": "True", "shader": "#087990"},
+            {"title": "False", "shader": "#DCDCDC"},
+        ]
         cen_ds, created = DataSet.objects.update_or_create(
             name="cen_member",
             defaults={
@@ -29,6 +33,8 @@ class Command(BaseCommand):
                 "source_label": "CEN, collated by mySociety",
                 "source": "https://www.cen.uk.com/our-caucus",
                 "table": "person__persondata",
+                "options": options,
+                "comparators": DataSet.comparators_default(),
             },
         )
         nzsg_ds, created = DataSet.objects.update_or_create(
@@ -40,6 +46,8 @@ class Command(BaseCommand):
                 "source_label": "collated by DeSmog",
                 "source": "https://www.desmog.com/net-zero-scrutiny-group/",
                 "table": "person__persondata",
+                "options": options,
+                "comparators": DataSet.comparators_default(),
             },
         )
 
