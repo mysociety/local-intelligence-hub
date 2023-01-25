@@ -51,7 +51,6 @@ class FilterMixin:
                     )
                 except DataType.DoesNotExist:  # pragma: nocover
                     pass
-
         return filters
 
     def query(self):
@@ -84,7 +83,14 @@ class FilterMixin:
 
                 table = areadata if dataset.table == "areadata" else persondata
                 if table:
-                    row.append(table.get(data_type__name=f["name"]).value())
+                    row.append(
+                        "; ".join(
+                            [
+                                str(value.value())
+                                for value in table.filter(data_type__name=f["name"])
+                            ]
+                        )
+                    )
 
             data.append(row)
 
