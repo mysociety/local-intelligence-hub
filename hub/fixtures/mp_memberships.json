@@ -1,0 +1,41 @@
+[
+  {
+    "model": "hub.dataset",
+    "pk": 10,
+    "fields": {
+      "table": "person__persondata",
+      "name": "mp_appg_membership",
+      "last_update": "2022-10-10T13:20:30+00:00",
+      "source": "Parliament"
+    }
+  },
+  {
+    "model": "hub.datatype",
+    "pk": 10,
+    "fields": {
+      "data_set": 10,
+      "name": "mp_appg_membership",
+      "data_type": "text",
+      "last_update": "2022-10-10T13:20:30+00:00"
+    }
+  },
+  {
+    "model": "hub.persondata",
+    "pk": 10,
+    "fields": {
+      "person": 1,
+      "data_type": 10,
+      "data": "MadeUpAPPG"
+    }
+  },
+  {
+    "model": "hub.persondata",
+    "pk": 11,
+    "fields": {
+      "person": 1,
+      "data_type": 10,
+      "data": "MadeUpAPPG2"
+    }
+  }
+]
+

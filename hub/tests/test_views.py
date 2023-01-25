@@ -48,7 +48,16 @@ class TestPageRenders(TestCase):
 
 
 class TestExploreDatasetsPage(TestCase):
-    fixtures = ["areas.json", "mps.json", "elections.json", "area_data.json"]
+    fixtures = [
+        "areas.json",
+        "mps.json",
+        "elections.json",
+        "area_data.json",
+        "mp_memberships.json",
+    ]
+    output_csv = str.encode(
+        "constituency_name,mp_appg_membership\r\nSouth Borsetshire,MadeUpAPPG2; MadeUpAPPG\r\n"
+    )
 
     def setUp(self):
         u = User.objects.create(username="user@example.com")
@@ -58,6 +67,15 @@ class TestExploreDatasetsPage(TestCase):
         url = reverse("explore_datasets_json")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+
+    def test_explore_view_with_many_to_one(self):
+        url = f"{reverse('explore_csv')}?mp_appg_membership__exact=MadeUpAPPG"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.content,
+            self.output_csv,
+        )
 
 
 class TestExploreFilteringPage(TestCase):
