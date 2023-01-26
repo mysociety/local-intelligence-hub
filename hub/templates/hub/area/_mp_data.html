@@ -77,13 +77,13 @@
                     <li><a href="{% url 'explore' %}?{% urlencode_params party__exact=mp_data.party %}" class="tag" title="Show all constituencies with an MP in this party">{{ mp_data.party }}</a></li>
                 </ul>
               {% endif %}
-              {% if mp_data.cen_member or mp_data.nzsg_member %}
+              {% if mp_data.cen_member == 'True' or mp_data.nzsg_member == 'True' %}
                 <h6 class="text-muted fw-bold">Political groups</h6>
                 <ul class="tag-cloud">
-                  {% if mp_data.cen_member %}
+                  {% if mp_data.cen_member == 'True' %}
                     <li><a href="{% url 'explore' %}?{% urlencode_params cen_member__exact=True %}" class="tag" title="Show all constituencies with an MP in this group">Conservative Environment Network</a></li>
                   {% endif %}
-                  {% if mp_data.nzsg_member %}
+                  {% if mp_data.nzsg_member == 'True' %}
                     <li><a href="{% url 'explore' %}?{% urlencode_params nzsg_member__exact=True %}" class="tag" title="Show all constituencies with an MP in this group">Net Zero Scrutiny Group</a></li>
                   {% endif %}
                 </ul>
