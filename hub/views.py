@@ -292,6 +292,15 @@ class AreaView(BaseAreaView):
                         "name": "Blue wall",
                     }
                 )
+        power_postcode = area_data["movement"].get("power_postcodes", None)
+        if power_postcode:
+            tags.append(
+                {
+                    "colour": "teal-200",
+                    "title": "Aid Alliance Power Postcode",
+                    "name": "Aid Alliance Power Postcode",
+                }
+            )
         # Grab the RUC data
         ruc_data = area_data["place"].get("constituency_ruc", None)
         if ruc_data:
