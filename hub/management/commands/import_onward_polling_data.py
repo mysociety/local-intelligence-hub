@@ -39,19 +39,19 @@ class Command(BaseImportFromDataFrameCommand):
     data_sets = {
         "constituency_nz_support": {
             "defaults": defaults,
-            "col": "support net zero",
+            "col": "Support net zero",
         },
         "constituency_nz_neutral": {
             "defaults": defaults,
-            "col": "neither support nor oppose net zero",
+            "col": "Neither support nor oppose net zero",
         },
         "constituency_nz_oppose": {
             "defaults": defaults,
-            "col": "oppose net zero",
+            "col": "Oppose net zero",
         },
         "constituency_cc_high": {
             "defaults": defaults.copy(),
-            "col": "consider climate change a high priority",
+            "col": "Consider climate change a high priority",
         },
     }
     del data_sets["constituency_cc_high"]["defaults"]["subcategory"]
@@ -95,10 +95,10 @@ class Command(BaseImportFromDataFrameCommand):
         )
         df.columns = [
             "constituency",
-            "support net zero",
-            "neither support nor oppose net zero",
-            "oppose net zero",
-            "consider climate change a high priority",
+            "Support net zero",
+            "Neither support nor oppose net zero",
+            "Oppose net zero",
+            "Consider climate change a high priority",
         ]
 
         # Build a constituency lookup from TWFY data, and apply it to the constituency column, so that the names are all in a form that LIH recognises
