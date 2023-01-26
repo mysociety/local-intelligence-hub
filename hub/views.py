@@ -33,10 +33,10 @@ cache_settings = {
 }
 
 RUC_COLOURS = {
-    "Rural": "green-700",
-    "Urban": "gray-700",
-    "Sparse and rural": "green-300",
-    "Urban with rural areas": "gray-500",
+    "Rural": "green-400",
+    "Urban": "gray-400",
+    "Sparse and rural": "green-200",
+    "Urban with rural areas": "gray-300",
 }
 
 
@@ -263,7 +263,7 @@ class AreaView(BaseAreaView):
             if mp_data["mp_election_majority"] <= 5000:
                 tags.append(
                     {
-                        "colour": "orange-500",
+                        "colour": "yellow-400",
                         "title": "MP electoral majority less than 5000; Data from UK Parliament",
                         "name": "Marginal seat",
                     }
@@ -284,7 +284,7 @@ class AreaView(BaseAreaView):
             else:
                 tags.append(
                     {
-                        "colour": "blue-600",
+                        "colour": "blue-500",
                         "title": "Data from Green Alliance",
                         "name": "Blue wall",
                     }
