@@ -76,7 +76,7 @@ class Command(BaseCommand):
             committee_membership, created = PersonData.objects.update_or_create(
                 person=result.mp,
                 data_type=data_type,
-                defaults={"data": result.committee_name},
+                data=result.committee_name,
             )
 
     def import_results(self):
