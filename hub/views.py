@@ -3,7 +3,9 @@ import json
 from collections import defaultdict
 from operator import itemgetter
 
+from django.db import connection
 from django.db.models import Count, OuterRef, Subquery
+from django.db.utils import OperationalError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import DetailView, TemplateView, View
@@ -529,4 +531,23 @@ class StyleView(TitleMixin, TemplateView):
 
 
 class StatusView(TemplateView):
-    template_name = "hub/status.html"
+    def render_to_response(self, context, **response_kwargs):
+        try:
+            with connection.cursor() as cursor:
+                # will raise OperationalError if db unavailable
+                cursor.execute("select 1")
+
+            return JsonResponse(
+                {
+                    "database": "ok",
+                    "areas": Area.objects.count(),
+                    "datasets": DataSet.objects.count(),
+                }
+            )
+        except OperationalError:
+            return JsonResponse(
+                {
+                    "database": "error",
+                },
+                status=500,
+            )

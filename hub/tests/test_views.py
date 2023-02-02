@@ -357,4 +357,6 @@ class TestStatusView(TestCase):
         url = reverse("status")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertRegex(response.content, rb"status: OK")
+        self.assertEqual(response.json()["database"], "ok")
+        self.assertEqual(response.json()["areas"], 0)
+        self.assertEqual(response.json()["datasets"], 0)
