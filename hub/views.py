@@ -102,6 +102,7 @@ class ExploreDatasetsJSON(TemplateView):
                 options=options if len(options) > 0 else None,
                 defaultValue=d.default_value,
                 is_range=d.is_range,
+                data_type=d.data_type,
             )
             if d.is_range:
                 ds["types"] = [

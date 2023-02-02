@@ -31,6 +31,11 @@
                     <select v-if="filter.options" v-model="filter.selectedValue" class="form-select form-select-sm ms-3 flex-grow-1 flex-shrink-1">
                         <option v-for="option in filter.options" :value="option">${ option }</option>
                     </select>
+                    <div v-else-if="filter.data_type == 'percent'" class="input-group ms-3 flex-grow-1 flex-shrink-1">
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" v-model="filter.selectedValue" class="form-control form-control-sm text-end">
+                        <span class="input-group-text lh-1">%</span>
+                    </div>
+                    <input v-else-if="filter.data_type == 'integer'" type="text" inputmode="numeric" pattern="[0-9]*" v-model="filter.selectedValue" class="form-control form-control-sm ms-3 flex-grow-1 flex-shrink-1">
                     <input v-else type="text" v-model="filter.selectedValue" class="form-control form-control-sm ms-3 flex-grow-1 flex-shrink-1">
                 </div>
             </div>
