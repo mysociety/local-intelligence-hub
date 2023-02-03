@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# check that we are in the expected directory
+cd `dirname $0`/..
+
+source .env
+
+if [ "$INSIDE_DOCKER" == 1 ] ; then
+    # already inside container :-)
+    # run linting directly, no need for virtualenv
+    PREFIX=""
+elif [ "$DEVENV" == "docker" ] ; then
+    # not inside container but should be :-(
+    # run this script again _inside_ the container
+    docker-compose exec web script/lint
+    exit
+else
+    # not inside container and don’t need to be :-)
+    # run linting with `poetry run` (in a virtualenv)
+    PREFIX="poetry run"
+fi
+
+$PREFIX black .
+$PREFIX isort .
+$PREFIX flake8 --exclude ".venv" .
