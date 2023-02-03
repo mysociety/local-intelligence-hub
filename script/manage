@@ -1,6 +1,6 @@
 #!/bin/sh
 
-[ -f "$(dirname $0)"/../.venv/bin/activate ] && . "$(dirname $0)"/../.venv/bin/activate
+# check that we are in the expected directory
+cd `dirname $0`/..
 
-managepy="$(dirname "$0")/../manage.py"
-python3 "$managepy" "$@"
+script/dev-command ./manage.py "$@"

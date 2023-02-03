@@ -8,15 +8,8 @@ cd `dirname $0`/..
 
 script/bootstrap
 
-source .env
-if [ "$DEVENV" == "docker" ] ; then
-    PREFIX=""
-else
-    PREFIX="poetry run"
-fi
-
 if [ "$1" == "--coverage" ]; then
-    $PREFIX coverage run --source=. --branch manage.py test
+    script/dev-command coverage run --source=. --branch manage.py test
 else
-    $PREFIX ./manage.py test
+    script/dev-command ./manage.py test
 fi
