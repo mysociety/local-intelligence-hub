@@ -3,10 +3,13 @@
 
     "editor.formatOnSave": false,
     "[python]": {
-        "editor.formatOnSave": true
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+        }
     },
-
     "python.formatting.provider": "black",
+    "python.formatting.blackPath": "${workspaceFolder}/script/black",
     "files.exclude": {
         "**/.git": true,
         "**/.svn": true,
@@ -23,6 +26,9 @@
         "**/requirements{/**,*}.{txt,in}": "pip-requirements"
     },
     "python.linting.flake8Enabled": true,
-    "python.linting.flake8Path": "flake8",
+    "python.linting.flake8Path": "${workspaceFolder}/script/flake8",
+    "python.linting.flake8Args": [
+        "--exclude \".venv\" ."
+    ],
     "python.linting.enabled": true
 }

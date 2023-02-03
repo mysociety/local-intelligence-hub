@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# dev environment independent way of referencing black in settings.json
+
+cd `dirname $0`/..
+
+script/dev-command black $@

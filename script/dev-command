@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Generic script to run a command in the current dev enviroment
+# e.g. `script/dev-command black .` will run black either natively,
+# in poetry, or in docker, depending on config
+
+# check that we are in the expected directory
+cd `dirname $0`/..
+
+source .env
+
+# if no extra arguments made to script, throw an error
+if [ $# -eq 0 ]; then
+    echo "No arguments provided to script/dev-command"
+    exit 1
+fi
+
+if [ "$INSIDE_DOCKER" == 1 ] ; then
+    # already inside container :-)
+    # run command directly, no need for virtualenv
+    PREFIX=""
+elif [ "$DEVENV" == "docker" ] ; then
+    # not inside container but should be :-(
+    # run the command inside the container
+    PREFIX="docker-compose exec web"
+else
+    # not inside container and don’t need to be :-)
+    # run command in virtualenv with poetry
+    PREFIX="poetry run"
+fi
+
+# use the prefix and the arguments passed to the script to run the command
+$PREFIX $@
