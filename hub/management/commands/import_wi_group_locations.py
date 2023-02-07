@@ -1,21 +1,20 @@
-import re
-from time import sleep
+from django.conf import settings
 
-import requests
+import pandas as pd
 from tqdm import tqdm
 
-from hub.models import AreaData, DataSet
+from hub.models import Area, AreaData, DataSet
 
-from .base_importers import BaseLatLongImportCommand
+from .base_importers import BaseAreaImportCommand
 
 
-class Command(BaseLatLongImportCommand):
-    help = "Import data about number WI groups of per constituency"
-
+class Command(BaseAreaImportCommand):
+    help = "Import data about WI groups per constituency"
+    data_file = settings.BASE_DIR / "data" / "wi_groups.csv"
     defaults = {
-        "label": "Number of Women’s Institute groups",
-        "description": "Number of Women’s Institute groups",
-        "data_type": "integer",
+        "label": "Women’s Institute groups",
+        "description": "Descriptions of Women's Institute Groups",
+        "data_type": "json",
         "category": "movement",
         "subcategory": "groups",
         "source_label": "Woman’s Institute",
@@ -23,56 +22,54 @@ class Command(BaseLatLongImportCommand):
         "source_type": "api",
         "data_url": "https://wi-search.squiz.cloud/s/search.json?collection=nfwi-federations&profile=_default&query=!null&sort=prox&sort=prox&start_rank=1&origin=54.093409,-2.89479&maxdist=9999&num_ranks=9999",
         "table": "areadata",
-        "default_value": 10,
-        "comparators": DataSet.numerical_comparators(),
+        "default_value": {},
+        "is_filterable": False,
+        "comparators": DataSet.comparators_default,
     }
 
     data_sets = {
-        "constituency_wi_group_count": {
+        "constituency_wi_groups": {
             "defaults": defaults,
         },
     }
-
-    def get_api_results(self):
-        results = requests.get(self.data_type.data_set.data_url)
-
-        data = results.json()["response"]["resultPacket"]["results"]
-
-        return data
 
     def delete_data(self):
         for data_type in self.data_types.values():
             AreaData.objects.filter(data_type=data_type).delete()
 
+    def handle(self, quiet=False, *args, **kwargs):
+        self._quiet = quiet
+        self.add_data_sets()
+        self.delete_data()
+        self.process_data()
+
     def process_data(self):
-        self.data_type = self.data_types["constituency_wi_group_count"]
+        df = pd.read_csv(self.data_file)
+        df.group_name = df.group_name.apply(
+            lambda x: x.split(" | ")[0] if type(x) == str else x
+        )
 
         if not self._quiet:
             self.stdout.write("Importing women's institute group data")
-        data = self.get_api_results()
-        count = 0
-        for row in tqdm(data, disable=self._quiet):
-            count += 1
-            lat_long = row["metaData"]["x"]
+
+        # Group by the area, and add the data from there
+        for area_name, data in tqdm(df.groupby("area")):
             try:
-                lat, lon = re.split(r"[,;]", lat_long)
-            except ValueError:
-                print(f"bad lat_lon for row {row['title']} - {lat_long}")
+                area = Area.objects.get(name=area_name)
+            except Area.DoesNotExist:
                 continue
 
-            self.process_lat_long(lat=lat, lon=lon, row_name=row["title"])
+            json = []
+            for index, row in data.iterrows():
+                json.append(row[["group_name", "url"]].dropna().to_dict())
 
-            if count > 0 and count % 50 == 0:
-                sleep(10)
+            json_data, created = AreaData.objects.update_or_create(
+                data_type=self.data_types["constituency_wi_groups"],
+                area=area,
+                json=json,
+            )
 
     def add_arguments(self, parser):
         parser.add_argument(
             "-q", "--quiet", action="store_true", help="Silence progress bars."
         )
-
-    def handle(self, quiet=False, *args, **options):
-        self._quiet = quiet
-        self.delete_data()
-        self.add_data_sets()
-        self.process_data()
-        self.update_averages()
