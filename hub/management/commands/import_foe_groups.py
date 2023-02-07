@@ -1,37 +1,39 @@
 from django.conf import settings
 
 import pandas as pd
+from tqdm import tqdm
 
-from hub.models import AreaData, DataSet
+from hub.models import Area, AreaData, DataSet
 
-from .base_importers import BaseImportFromDataFrameCommand
+from .base_importers import BaseLatLongImportCommand
 
 
-class Command(BaseImportFromDataFrameCommand):
-    help = "Import data about number of FOE groups per constituency"
+class Command(BaseLatLongImportCommand):
+    help = "Import data about FOE groups by constituency"
 
     data_file = settings.BASE_DIR / "data" / "foe_groups.csv"
-    cons_row = "constituency"
     message = "Importing FOE groups data"
     uses_gss = False
 
     defaults = {
-        "data_type": "integer",
+        "data_type": "json",
         "category": "movement",
         "subcategory": "groups",
+        "label": "Active Friends of the Earth groups",
+        "description": "Active Friends of the Earth groups by constituency",
         "source_label": "Friends of the Earth",
         "source": "https://friendsoftheearth.uk/",
         "source_type": "google sheet",
         "table": "areadata",
-        "default_value": 10,
+        "default_value": {},
         "data_url": "",
-        "comparators": DataSet.numerical_comparators(),
+        "is_filterable": False,
+        "comparators": DataSet.comparators_default,
     }
 
     data_sets = {
-        "constituency_foe_groups_count": {
+        "constituency_foe_groups": {
             "defaults": defaults,
-            "col": "groups",
         },
     }
 
@@ -41,13 +43,38 @@ class Command(BaseImportFromDataFrameCommand):
             usecols=["Westminster constituency", "Groups located within constituency"],
         )
         df = df.dropna()
-        df = df.groupby("Westminster constituency").size().reset_index()
         df.columns = ["constituency", "groups"]
-        df.groups = df.groups.astype(int)
+        df = (
+            df.groupby("constituency")
+            .apply(lambda x: [{"group_name": group, "url": ""} for group in x.groups])
+            .reset_index()
+            .rename(columns={0: "groups"})
+        )
         return df
 
-    def get_label(self, defaults):
-        return "Number of active Friends of the Earth groups"
+    def process_data(self):
+        df = self.get_dataframe()
+
+        if not self._quiet:
+            self.stdout.write("Importing Friends of the Earth group data")
+
+        for index, row in tqdm(df.iterrows(), disable=self._quiet):
+            json_data, created = AreaData.objects.update_or_create(
+                data_type=self.data_types["constituency_foe_groups"],
+                area=Area.objects.get(name=row.constituency),
+                json=row.groups,
+            )
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "-q", "--quiet", action="store_true", help="Silence progress bars."
+        )
+
+    def handle(self, quiet=False, *args, **options):
+        self._quiet = quiet
+        self.add_data_sets()
+        self.delete_data()
+        self.process_data()
 
     def delete_data(self):
         AreaData.objects.filter(data_type__in=self.data_types.values()).delete()
