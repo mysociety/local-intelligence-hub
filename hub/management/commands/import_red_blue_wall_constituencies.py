@@ -2,7 +2,7 @@ from django.conf import settings
 
 import pandas as pd
 
-from hub.models import AreaData
+from hub.models import AreaData, DataSet
 
 from .base_importers import BaseImportFromDataFrameCommand
 
@@ -24,11 +24,13 @@ class Command(BaseImportFromDataFrameCommand):
         "source": "https://green-alliance.org.uk/",
         "source_type": "google sheet",
         "table": "areadata",
+        "is_filterable": True,
         "options": [
             dict(title="Red Wall", shader="red"),
             dict(title="Blue Wall", shader="blue"),
         ],
         "data_url": "",
+        "comparators": DataSet.comparators_default(),
     }
 
     data_sets = {
@@ -38,7 +40,11 @@ class Command(BaseImportFromDataFrameCommand):
     }
 
     def get_dataframe(self):
-        df = pd.read_csv(self.data_file, thousands=",")
+        df = pd.read_csv(
+            self.data_file,
+            usecols=["Name", "Constituency", "Red Wall", "Blue Wall"],
+            thousands=",",
+        )
         df = df.dropna(axis="columns", how="all")
         df = df.dropna(thresh=3)
         df.columns = ["mp", "constituency", "red_wall", "blue_wall"]
