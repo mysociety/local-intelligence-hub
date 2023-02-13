@@ -338,6 +338,8 @@ class AreaView(BaseAreaView):
 
         categories = defaultdict(list)
         for data_set in DataSet.objects.order_by("order", "name").all():
+            if data_set.name == "constituency_foe_groups_count":
+                continue
             data = self.process_dataset(data_set)
 
             if data.get("data", None) is not None:
