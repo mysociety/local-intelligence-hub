@@ -24,12 +24,30 @@ class Command(BaseAreaImportCommand):
         "table": "areadata",
         "default_value": {},
         "is_filterable": False,
-        "comparators": DataSet.comparators_default,
+        "comparators": DataSet.comparators_default(),
+    }
+
+    count_defaults = {
+        "label": "Number of Women’s Institute groups",
+        "description": "Number of Women's Institute Groups",
+        "data_type": "integer",
+        "category": "movement",
+        "source_label": "Woman’s Institute",
+        "source": "https://www.thewi.org.uk/",
+        "source_type": "api",
+        "data_url": "https://wi-search.squiz.cloud/s/search.json?collection=nfwi-federations&profile=_default&query=!null&sort=prox&sort=prox&start_rank=1&origin=54.093409,-2.89479&maxdist=9999&num_ranks=9999",
+        "table": "areadata",
+        "default_value": 0,
+        "is_filterable": True,
+        "comparators": DataSet.numerical_comparators(),
     }
 
     data_sets = {
         "constituency_wi_groups": {
             "defaults": defaults,
+        },
+        "constituency_wi_group_count": {
+            "defaults": count_defaults,
         },
     }
 
@@ -67,6 +85,12 @@ class Command(BaseAreaImportCommand):
                 data_type=self.data_types["constituency_wi_groups"],
                 area=area,
                 json=json,
+            )
+
+            count_data, creared = AreaData.objects.update_or_create(
+                data_type=self.data_types["constituency_wi_group_count"],
+                area=area,
+                data=len(data),
             )
 
     def add_arguments(self, parser):
