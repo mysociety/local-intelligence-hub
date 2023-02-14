@@ -31,10 +31,28 @@ class Command(BaseAreaImportCommand):
         "is_filterable": False,
     }
 
+    power_postcode_counts = {
+        "label": "Number of Power Postcodes",
+        "description": "Number of Aid Alliance 'Power Postcode' activist groups",
+        "data_type": "integer",
+        "category": "movement",
+        "source_label": "Aid Alliance",
+        "source": "https://aidalliance.org.uk/",
+        "source_type": "api",
+        "data_url": "https://www.google.com/maps/d/u/0/viewer?mid=15b_tQI0t58rLcBTgFytu2e73jyKrrxFr",
+        "table": "areadata",
+        "default_value": 0,
+        "comparators": DataSet.numerical_comparators(),
+        "is_filterable": True,
+    }
+
     data_sets = {
         "power_postcodes": {
             "defaults": power_postcodes,
-        }
+        },
+        "power_postcodes_count": {
+            "defaults": power_postcode_counts,
+        },
     }
 
     def add_area(self, gss):
@@ -78,6 +96,11 @@ class Command(BaseAreaImportCommand):
                 data_type=self.data_types["power_postcodes"],
                 area=area,
                 json=json,
+            )
+            count_data, created = AreaData.objects.update_or_create(
+                data_type=self.data_types["power_postcodes_count"],
+                area=area,
+                data=len(data),
             )
 
     def delete_data(self):
