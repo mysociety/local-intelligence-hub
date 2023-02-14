@@ -270,8 +270,12 @@ class CommonData(models.Model):
             if self.is_date:
                 return self.date
             elif self.is_float:
+                if self.float is None:
+                    return 0
                 return self.float
             elif self.is_number:
+                if self.int is None:
+                    return 0
                 return self.int
             elif self.is_json:
                 return self.json
