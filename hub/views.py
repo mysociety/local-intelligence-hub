@@ -436,6 +436,8 @@ class AreaSearchView(TemplateView):
             areas, error = self.get_areas_from_mapit(pc=search)
             context["areas"] = areas
             context["error"] = error
+        elif search == "":
+            context["error"] = "Please enter a constituency name, MP name, or postcode."
         else:
             areas_raw = Area.objects.filter(name__icontains=search)
             people_raw = Person.objects.filter(name__icontains=search)
