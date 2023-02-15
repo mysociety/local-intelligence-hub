@@ -121,6 +121,12 @@ class DataSet(TypeMixin, models.Model):
             dict(field_lookup="not_icontains", title="does not contain"),
         ]
 
+    def in_comparators():
+        return [
+            dict(field_lookup="in", title="is one of"),
+            dict(field_lookup="not_in", title="is not one of"),
+        ]
+
     OPTIONS_SCHEMA = {
         "type": "array",
         "items": {

@@ -28,6 +28,9 @@ class FilterMixin:
             else:  # pragma: nocover
                 continue
 
+            if "_in" in param:
+                value = value.split(",")
+
             try:
                 dataset = DataSet.objects.get(name=name)
                 filters.append(

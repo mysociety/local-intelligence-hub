@@ -103,6 +103,7 @@ class ExploreDatasetsJSON(TemplateView):
                 ),
                 options=options if len(options) > 0 else None,
                 defaultValue=d.default_value,
+                is_in=True if d.comparators[0]["field_lookup"] == "in" else False,
                 is_range=d.is_range,
                 data_type=d.data_type,
             )
