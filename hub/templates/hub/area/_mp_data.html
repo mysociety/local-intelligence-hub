@@ -109,6 +109,38 @@
                 <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data collated by The Climate Coalition</a></p>
             </div>
         </div>
+  <div class="card flex-grow-1 dataset-card">
+             <div class="dataset-card-header">
+              <h5>Relevant votes & amendments</h5>
+             </div>
+             <div class="card-body">
+                <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Vote</th>
+                        <th scope="col">Position</th>
+                    </tr>
+                </thead>
+                <tbody>
+                  {% for vote in mp.votes %}
+                    <tr>
+                        <td><a href="{{ vote.url }}">{{ vote.name }}</a></td>
+                        <td>{{ vote.vote }}</td>
+                    </tr>
+                  {% endfor %}
+                  {% for item in mp.support %}
+                    <tr>
+                        <td><a href="{{ item.url }}">{{ item.name }}</a></td>
+                        <td>{{ item.position }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+            </table>
+            </div>
+            <div class="card-footer bg-white">
+                <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data from UK Parliament</a></p>
+            </div>
+        </div>
 
     </div>
 </div>

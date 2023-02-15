@@ -342,6 +342,24 @@ class AreaView(BaseAreaView):
                 item.value()
                 for item in data.filter(data_type__name="mp_appg_memberships")
             ]
+            context["mp"]["votes"] = [
+                {
+                    "name": item.data_type.data_set.label,
+                    "vote": item.value(),
+                    "url": f"https://votes.parliament.uk/Votes/Commons/Division/{item.data_type.name.split('_')[0]}",
+                }
+                for item in data.filter(data_type__data_set__subcategory="vote")
+            ]
+            context["mp"]["support"] = [
+                {
+                    "name": item.data_type.data_set.label,
+                    "position": "Support",
+                    "url": f"https://edm.parliament.uk/early-day-motion/{item.data_type.name.split('_')[0]}",
+                }
+                for item in data.filter(data_type__data_set__subcategory="supporter")
+            ]
+            if context["mp"]["support"] == []:
+                context["mp"]["support"] = None
         except Person.DoesNotExist:
             pass
 
