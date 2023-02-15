@@ -122,10 +122,15 @@ const app = createApp({
       const state = {}
 
       this.filters.forEach(function(d) {
+        var value = d.selectedValue
+        if ( value && Array.isArray(value) ) {
+          value = value.join(",")
+        }
+
         if (d.selectedType) {
-          state[`${d.selectedType}__${d.selectedComparator}`] = d.selectedValue
+          state[`${d.selectedType}__${d.selectedComparator}`] = value
         } else {
-          state[`${d.name}__${d.selectedComparator}`] = d.selectedValue
+          state[`${d.name}__${d.selectedComparator}`] = value
         }
       })
 
@@ -151,13 +156,18 @@ const app = createApp({
       const params = new URL(window.location).searchParams
       const pending = {}
 
-      for (const [key, value] of params.entries()) {
+      for (const [key, v] of params.entries()) {
         if (key == 'shader') {
           pending[value] = () => { this.addShader(value) }
         } else {
           const index = key.indexOf('__')
           const name = key.slice(0, index)
           const comparator = key.slice(index + 2)
+          const is_in = key.indexOf('__in')
+          var value = v
+          if ( is_in > 0 ) {
+            value = value.split(',')
+          }
           pending[name] = () => { this.addFilter(name, { comparator, value }) }
         }
       }
