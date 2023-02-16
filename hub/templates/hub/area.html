@@ -81,7 +81,6 @@
                                     <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Public First, comissioned by Onward UK</a></p>
                                 </div>
                             </div>
-
                             <div class="card flex-grow-1 dataset-card">
                                 <div class="dataset-card-header pe-3">
                                     <h5>Consider climate change a high priority</h5>
@@ -137,6 +136,18 @@
                                 </div>
                                 <div class="card-footer bg-white">
                                     <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Survation, comissioned by RenewableUK</a></p>
+                                </div>
+                            </div>
+                                                        <div class="card flex-grow-1 dataset-card">
+                                <div class="dataset-card-header pe-3">
+                                    <h5>Voted to leave the European Union</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text mb-0 display-6 lh-1 text-primary">{{ indexed_categories.opinion.brexit_votes.data.value|floatformat }}%</p>
+                                    <p class="card-text mt-2 text-muted">{{ indexed_categories.opinion.brexit_votes.data.average|floatformat }}% national average</p>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from UK Parliament</a></p>
                                 </div>
                             </div>
                         </div>
