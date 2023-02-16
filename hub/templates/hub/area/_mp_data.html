@@ -64,7 +64,26 @@
                 <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data collated by The Climate Coalition</a></p>
             </div>
         </div>
-
+      {% if mp.net_zero_target or mp.onshore_wind_energy %}
+      <div class="card flex-grow-1 dataset-card">
+             <div class="dataset-card-header">
+              <h5>MP sector engagement</h5>
+             </div>
+             <div class="card-body">
+             <ul class="tag-cloud">
+                 {% if mp.net_zero_target %}
+                 <li><a href="https://www.theclimatecoalition.org/joint-letter-2019" class="tag">Net Zero open letter</a></li>
+                 {% endif %}
+                 {% if mp.onshore_wind_energy %}
+                 <li><a href="https://www.wearepossible.org/onshore-wind/latest/open-letter-from-mps-to-the-prime-minister" class="tag">Onshore Wind Energy open letter</a></li>
+                 {% endif %}
+            </ul>
+            </div>
+            <div class="card-footer bg-white">
+                <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data collated by mySociety</a></p>
+            </div>
+        </div>
+        {% endif %}
     </div>
     <div class="col d-flex flex-column">
 
