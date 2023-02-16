@@ -42,11 +42,12 @@ class Command(BaseCommand):
             name="job_titles",
             defaults={
                 "data_type": "text",
-                "description": "MP job titles (on top of being Members of Parliament)",
-                "label": "MP Job Titles",
+                "description": "Positions such as cabinet and shadow minister roles, spokespeople, and whips",
+                "label": "MP positions (job titles)",
                 "source_label": "Green Alliance",
                 "source": "https://green-alliance.org.uk/",
                 "table": "person__persondata",
+                "comparators": DataSet.string_comparators(),
             },
         )
 
