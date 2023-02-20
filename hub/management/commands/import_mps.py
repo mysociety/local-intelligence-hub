@@ -86,20 +86,20 @@ class Command(BaseCommand):
         if not self._quiet:
             print("Importing type names")
         for data_type, props in tqdm(type_names.items(), disable=self._quiet):
-            filterable = False
+            defaults = {
+                "data_type": "profile_id",
+                "description": props["label"],
+                "label": props["label"],
+                "source": "https://en.wikipedia.org/",
+                "source_label": "Wikipedia",
+                "table": "person__persondata",
+                "is_filterable": False,
+            }
             if data_type == "party":
-                filterable = True
+                defaults["is_filterable"] = True
+                defaults["comparators"] = DataSet.in_comparators()
             ds, created = DataSet.objects.update_or_create(
-                name=data_type,
-                defaults={
-                    "data_type": "profile_id",
-                    "description": props["label"],
-                    "label": props["label"],
-                    "source": "https://en.wikipedia.org/",
-                    "source_label": "Wikipedia",
-                    "table": "person__persondata",
-                    "is_filterable": filterable,
-                },
+                name=data_type, defaults=defaults
             )
             dt, created = DataType.objects.get_or_create(
                 data_set=ds,

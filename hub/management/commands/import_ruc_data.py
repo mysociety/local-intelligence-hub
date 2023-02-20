@@ -29,7 +29,7 @@ class Command(BaseImportFromDataFrameCommand):
                     dict(title="Rural", shader="green"),
                     dict(title="Urban", shader="grey"),
                 ],
-                "comparators": DataSet.comparators_default(),
+                "comparators": DataSet.in_comparators(),
             },
             "col": "ruc-cluster-label",
         }

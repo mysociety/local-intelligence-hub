@@ -122,7 +122,7 @@ class Command(BaseCommand):
                     "table": "person__persondata",
                     "options": vote_options,
                     "subcategory": "vote",
-                    "comparators": DataSet.comparators_default(),
+                    "comparators": DataSet.in_comparators(),
                 },
             )
             data_type, created = DataType.objects.update_or_create(

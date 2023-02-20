@@ -30,7 +30,7 @@ class Command(BaseImportFromDataFrameCommand):
             dict(title="Blue Wall", shader="blue"),
         ],
         "data_url": "",
-        "comparators": DataSet.comparators_default(),
+        "comparators": DataSet.in_comparators(),
     }
 
     data_sets = {
