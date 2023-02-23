@@ -98,6 +98,34 @@
                                     <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Public First, comissioned by Onward UK</a></p>
                                 </div>
                             </div>
+                            <div class="card flex-grow-1 dataset-card">
+                                <div class="dataset-card-header pe-3">
+                                    <h5>Vote share at last election</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Party</th>
+                                                <th scope="col">Votes</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for data in indexed_categories.opinion.last_election.data.value.results|dictsortreversed:"votes" %}
+                                                {% if data.votes != 0 %}
+                                                    <tr>
+                                                        <th>{{ data.party }}</th>
+                                                        <td>{{ data.votes }}</td>
+                                                    </tr>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">{{ indexed_categories.opinion.last_election.data.value.date|naturalday:"jS M Y" }} election results from UK Parliament</a></p>
+                                </div>
+                            </div>
                         </div>
                         <div class="col d-flex flex-column">
 
@@ -145,7 +173,7 @@
                                     <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Survation, comissioned by RenewableUK</a></p>
                                 </div>
                             </div>
-                                                        <div class="card flex-grow-1 dataset-card">
+                            <div class="card flex-grow-1 dataset-card">
                                 <div class="dataset-card-header pe-3">
                                     <h5>Voted to leave the European Union</h5>
                                 </div>
