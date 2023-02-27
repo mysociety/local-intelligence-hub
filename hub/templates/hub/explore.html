@@ -22,7 +22,7 @@
                     <button @click="removeFilter(filter.name)" type="button" class="btn-close p-0" aria-label="Remove filter"></button>
                 </div>
                 <div :class="{ 'filter__body': true, 'filter__body--expanded': filter.is_in }">
-                    <select v-if="filter.is_range" v-model="filter.selectedType" class="form-select form-select-sm flex-grow-0 flex-shrink-1 me-3">
+                    <select v-if="filter.is_range" v-model="filter.selectedType" class="form-select form-select-sm flex-grow-0 flex-shrink-1">
                       <option v-for="ds_type in filter.types" :value="ds_type.name">${ ds_type.title }</option>
                     </select>
                     <select v-model="filter.selectedComparator" class="form-select form-select-sm flex-grow-0 flex-shrink-1">
