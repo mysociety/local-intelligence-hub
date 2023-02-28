@@ -18,8 +18,8 @@
             {% for row in dataset.data %}
                 <tr>
                     <th>{{ row.label }}</th>
-                    <td>{{ row.value }}%</td>
-                    <td>{{ row.average }}%</td>
+                    <td>{{ row.value|floatformat }}%</td>
+                    <td>{{ row.average|floatformat }}%</td>
                 </tr>
             {% endfor %}
             </tbody>
