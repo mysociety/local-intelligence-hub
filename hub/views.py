@@ -387,10 +387,10 @@ class AreaView(BaseAreaView):
             for data_item in category_items:
                 data_points = data_item["data"]
                 if type(data_points) == AreaData:
-                    data_set_name = data_points.data_type.name
+                    data_set_name = data_points.data_type.data_set.name
                 else:
                     if len(data_points) != 0:
-                        data_set_name = data_points[0].data_type.name
+                        data_set_name = data_points[0].data_type.data_set.name
                         if len(data_points) == 1:
                             data["data"] = data_points[0]
                     else:
