@@ -41,41 +41,31 @@ class Command(BaseCommand):
             DataSet.objects.filter(is_filterable=True).order_by("-category", "source"),
             disable=self._quiet,
         ):
-            # TODO: This .first() means we only get the `ages_0-9` dataset in `constituency_age_distribution`
-            data_type = DataType.objects.filter(data_set=data_set).first()
-
-            # TODO: Do something special to handle age bands correctly (see .first() issue, above)
-            if data_set.name == "constituency_age_distribution":
-                continue
-
-            # TODO: Do something special to handle APPGs and SCs properly (see join duplication issue, below)
-            if data_set.name in ["mp_appg_memberships", "select_committee_membership"]:
-                continue
-
-            if data_set.table == "areadata":
-                data = AreaData.objects.filter(data_type=data_type)
-            else:
-                data = PersonData.objects.filter(data_type=data_type)
-
-            new_df_data = []
-            for datum in data:
+            data_types = DataType.objects.filter(data_set=data_set)
+            for data_type in data_types:
                 if data_set.table == "areadata":
-                    area = datum.area
+                    data = AreaData.objects.filter(data_type=data_type)
                 else:
-                    area = datum.person.area
-                new_df_data.append([area.gss, datum.value()])
-            dfs_list.append(
-                pd.DataFrame(
-                    new_df_data, columns=["Area GSS code", data_set.label]
-                ).set_index("Area GSS code")
-            )
+                    data = PersonData.objects.filter(data_type=data_type)
+                if data_set.is_range:
+                    label = f"{data_set.label}: {data_type.label}"
+                else:
+                    label = data_set.label
+                if data_set.is_percentage:
+                    label += " (%)"
+                new_df_data = []
+                for datum in data:
+                    if data_set.table == "areadata":
+                        area = datum.area
+                    else:
+                        area = datum.person.area
+                    new_df_data.append([area.gss, datum.value()])
+                new_df = pd.DataFrame(
+                        new_df_data, columns=["Area GSS code", label]
+                    )
+                new_df = new_df.groupby('Area GSS code').agg({"Area GSS code": "first", label: lambda l: ", ".join([str(x) for x in l])})
+                new_df = new_df.set_index("Area GSS code")
+                dfs_list.append(new_df)
 
-        # TODO: This results in multiple rows output for constituencies where the MP is in more than one APPG or Select Committee (probably other data_types too, but those are the most obvious ones causing duplication)
-        df = reduce(
-            lambda left, right: left.join(  # Merge DataFrames in list
-                right, how="outer"
-            ),
-            dfs_list,
-        )
-
+        df = pd.concat(dfs_list, axis=1)
         df.to_csv(self.out_file)
