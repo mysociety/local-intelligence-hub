@@ -56,6 +56,11 @@
         margin-bottom: 0;
         margin-right: auto;
         padding: var(--bs-card-spacer-y) 0 var(--bs-card-spacer-y) var(--bs-card-spacer-x);
+
+        // If not followed by a favouriting control
+        &:last-child {
+            padding-right: var(--bs-card-spacer-x);
+        }
     }
 
     button {

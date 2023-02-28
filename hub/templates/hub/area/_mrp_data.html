@@ -1,0 +1,31 @@
+{% load humanize %}
+{% load hub_filters %}
+
+<div class="card flex-grow-0 dataset-card">
+    <div class="dataset-card-header">
+        <h5>{{ dataset.label }}</h5>
+    </div>
+    <div class="card-body">
+        <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y" data-row-height="{{ row_height}}">
+            <thead>
+                <tr>
+                    <th scope="col">Response</th>
+                    <th scope="col" data-color="#068670">This area</th>
+                    <th scope="col" data-color="#ced4da">UK average</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for row in dataset.data %}
+                <tr>
+                    <th>{{ row.label }}</th>
+                    <td>{{ row.value }}%</td>
+                    <td>{{ row.average }}%</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer bg-white">
+        <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data from Focaldata 2023 MRP polling for HOPE not hate</a></p>
+    </div>
+</div>
