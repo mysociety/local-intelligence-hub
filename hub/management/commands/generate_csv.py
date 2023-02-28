@@ -1,5 +1,3 @@
-from functools import reduce
-
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
@@ -24,7 +22,6 @@ class Command(BaseCommand):
         df = self.build_dataframe()
         df.to_csv(self.out_file)
 
-        
     def get_area_data(self):
         area_details = []
         for area in Area.objects.filter(area_type="WMC"):
@@ -34,9 +31,9 @@ class Command(BaseCommand):
                 print(f"Person does not exist for area {area.gss} {area.name}")
             area_details.append([area.gss, area.name, area.mapit_id, mp.name])
         return pd.DataFrame(
-                area_details,
-                columns=["Area GSS code", "Area name", "Area MapIt ID", "MP name"],
-            ).set_index("Area GSS code")
+            area_details,
+            columns=["Area GSS code", "Area name", "Area MapIt ID", "MP name"],
+        ).set_index("Area GSS code")
 
     def create_dataset_df(self, data, label, table):
         df_data = []
@@ -46,11 +43,14 @@ class Command(BaseCommand):
             else:
                 area = datum.person.area
             df_data.append([area.gss, datum.value()])
-        df = pd.DataFrame(
-                df_data, columns=["Area GSS code", label]
-            )
+        df = pd.DataFrame(df_data, columns=["Area GSS code", label])
         # Deal with any multiples, by concatenating them into one string
-        df = df.groupby('Area GSS code').agg({"Area GSS code": "first", label: lambda l: ", ".join([str(x) for x in l])})
+        df = df.groupby("Area GSS code").agg(
+            {
+                "Area GSS code": "first",
+                label: lambda data_list: ", ".join([str(x) for x in data_list]),
+            }
+        )
         df = df.set_index("Area GSS code")
         return df
 
@@ -59,7 +59,10 @@ class Command(BaseCommand):
         dfs_list = [self.get_area_data()]
 
         # Next, iterate through each (filterable) data set in the db
-        for data_set in tqdm(DataSet.objects.filter(is_filterable=True).order_by("-category", "source"), disable=self._quiet):
+        for data_set in tqdm(
+            DataSet.objects.filter(is_filterable=True).order_by("-category", "source"),
+            disable=self._quiet,
+        ):
             # Most datasets only have one datatype, but some (ranges) have multiple, and need to be handled in a slightly different
             # way.
             data_types = DataType.objects.filter(data_set=data_set)
