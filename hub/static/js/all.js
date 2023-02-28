@@ -10,7 +10,6 @@ Chart.defaults.plugins.legend.labels.boxWidth = 20
 Chart.defaults.plugins.legend.labels.padding = 20
 Chart.defaults.animation.duration = 0
 Chart.defaults.responsive = true
-Chart.defaults.interaction.mode = null
 
 import exploreApp from './explore.esm.js'
 exploreApp.mount('#exploreApp')
@@ -132,9 +131,39 @@ var makeChart = function() {
                         display: false
                     }
                 }
+            },
+            plugins: {
+                tooltip: {
+                    enabled: false,
+                    external: function(context){
+                        var $canvas = $(context.chart.canvas);
+                        var $tooltip = $canvas.data('tooltip');
+                        if ( typeof $tooltip === 'undefined' ) {
+                            $tooltip = $('<div>').addClass('js-chart-tooltip').appendTo('body');
+                            $canvas.data('tooltip', $tooltip);
+                        }
+                        $tooltip.toggle(context.tooltip.opacity == 1);
+                        $tooltip.text(context.tooltip.body[0].lines[0]);
+                    },
+                    callbacks: {
+                        label: function(context){
+                            return context.dataset.label + ': ' + (context.raw / 100).toLocaleString('en-GB', { style: 'percent' });
+                        }
+                    }
+                }
             }
         }
     }
+
+    $canvas.on('mousemove', function(e){
+        var $tooltip = $canvas.data('tooltip');
+        if ( $tooltip ) {
+            $tooltip.css({
+                'left': '' + e.clientX + 'px',
+                'top': '' + e.clientY + 'px'
+            });
+        }
+    });
 
     new Chart($canvas, config)
 }
