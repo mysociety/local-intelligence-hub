@@ -6,7 +6,8 @@ from django.test import TestCase
 
 import pandas as pd
 
-from hub.models import AreaData
+from hub.management.commands.base_importers import BaseAreaImportCommand
+from hub.models import Area, AreaData, DataSet, DataType
 
 
 class ImportTestCase(TestCase):
@@ -23,6 +24,62 @@ class ImportTestCase(TestCase):
             **kwargs,
         )
         return out.getvalue()
+
+
+class ImportNumericalDataWithMissingValuesTestCase(TestCase):
+    def setUp(self):
+        self.command = BaseAreaImportCommand()
+        self.command._ignore_blank_entries = False
+        self.command.data_sets = {
+            "data_type_1": {
+                "defaults": {
+                    "label": "Data Type 1",
+                    "description": "",
+                    "data_type": "percent",
+                    "category": "",
+                    "source_label": "",
+                    "source": "",
+                    "source_type": "",
+                    "data_url": "",
+                    "table": "areadata",
+                    "comparators": DataSet.numerical_comparators(),
+                    "default_value": 10,
+                },
+            }
+        }
+        for i, area_name in enumerate("ABCD"):
+            Area.objects.create(
+                mapit_id=i,
+                gss=i,
+                name=area_name,
+                area_type="WMC",
+            )
+
+        self.command.add_data_sets()
+        AreaData.objects.create(
+            area=Area.objects.get(mapit_id=0),
+            data_type=DataType.objects.get(label="Data Type 1"),
+            data=1,
+        )
+        AreaData.objects.create(
+            area=Area.objects.get(mapit_id=1),
+            data_type=DataType.objects.get(label="Data Type 1"),
+            data=1,
+        )
+
+    def test_missing_data_average(self):
+        # Check that the average includes 0s from areas which didn't get given a value from
+        # the data import
+        self.command.update_averages()
+        self.assertEqual(DataType.objects.get(label="Data Type 1").average, 0.5)
+
+    def test_missing_data_count(self):
+        self.command.update_averages()
+        # Check that an AreaData object has been created for every single Area
+        self.assertEqual(
+            AreaData.objects.filter(data_type__label="Data Type 1").count(),
+            Area.objects.all().count(),
+        )
 
 
 class ImportAgeDataTestCase(ImportTestCase):
