@@ -1,6 +1,6 @@
 # Local Intelligence Hub
 
-A Beta verion of a tool to help The Climate Coalition with better access
+A Beta version of a tool to help The Climate Coalition with better access
 to data needed to enable local and national action on climate.
 
 The [original static prototype](https://github.com/mysociety/local-intelligence-hub/commit/4fab6ff08401d4e4c29615ab07ff4f6c4f4e6050) was built as part of mySociety’s August 2022 prototyping week exploring how we might give climate campaign organisations and communities better access to the data they need to enable local and national action on climate.
@@ -12,7 +12,7 @@ You will need [Docker](https://docs.docker.com/desktop/) installed.
 Clone the repository:
 
     git clone git@github.com:mysociety/local-intelligence-hub.git
-    cd local-intellegence-hub
+    cd local-intelligence-hub
 
 Create and edit a .env file using `.env-example` file and then
 update `SECRET_KEY` and `MAPIT_API_KEY`. You can get the latter from https://mapit.mysociety.org/account/signup/
