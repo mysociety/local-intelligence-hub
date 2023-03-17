@@ -2,14 +2,17 @@ from django.db.models import FloatField
 
 import pandas as pd
 
-from hub.models import DataSet
+from hub.models import AreaData, DataSet
 
 from .base_importers import BaseImportFromDataFrameCommand
 
 
-class Command(BaseImportFromDataFrameCommand):
+class Command(
+    BaseImportFromDataFrameCommand
+):  # TODO: Should this have a value that isn't 0?
     help = "Import data about area fuel poverty"
 
+    ignore_blank_entries = True
     source_url = (
         "https://www.gov.uk/government/statistics/sub-regional-fuel-poverty-data-2022"
     )
@@ -36,6 +39,11 @@ class Command(BaseImportFromDataFrameCommand):
             "col": "Proportion of households fuel poor (%)",
         }
     }
+
+    def delete_data(self):
+        AreaData.objects.filter(
+            data_type=self.data_types["constituency_fuel_poverty"]
+        ).delete()
 
     def get_dataframe(self):
         df = pd.read_excel(self.data_url, sheet_name="Table 4", skiprows=2)
