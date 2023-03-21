@@ -1,25 +1,12 @@
-import csv
-import json
 from collections import defaultdict
-from operator import itemgetter
 
-from django.db import connection
 from django.db.models import Count, OuterRef, Subquery
-from django.db.utils import OperationalError
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import DetailView, TemplateView, View
 
-from hub.mixins import FilterMixin, TitleMixin
-from hub.models import (
-    Area,
-    AreaData,
-    DataSet,
-    DataType,
-    Person,
-    PersonData,
-    UserDataSets,
-)
+from hub.mixins import TitleMixin
+from hub.models import Area, AreaData, DataSet, Person, PersonData, UserDataSets
 from utils import is_valid_postcode
 from utils.mapit import (
     BadRequestException,
@@ -29,159 +16,12 @@ from utils.mapit import (
     NotFoundException,
 )
 
-cache_settings = {
-    "max-age": 60,
-    "s-maxage": 3600,
-}
-
 RUC_COLOURS = {
     "Rural": "green-400",
     "Urban": "gray-400",
     "Sparse and rural": "green-200",
     "Urban with rural areas": "gray-300",
 }
-
-
-class NotFoundPageView(TitleMixin, TemplateView):
-    page_title = "Page not found"
-    template_name = "404.html"
-
-    def render_to_response(self, context, **response_kwargs):
-        response_kwargs.setdefault("content_type", self.content_type)
-        return self.response_class(
-            request=self.request,
-            template=self.get_template_names(),
-            context=context,
-            using=self.template_engine,
-            status=404,
-            **response_kwargs,
-        )
-
-
-class HomePageView(TitleMixin, TemplateView):
-    page_title = ""
-    template_name = "hub/home.html"
-
-
-class ExploreView(TitleMixin, TemplateView):
-    page_title = "Explore"
-    template_name = "hub/explore.html"
-
-
-class SourcesView(TitleMixin, TemplateView):
-    page_title = "Datasets and data sources"
-    template_name = "hub/sources.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["datasets"] = DataSet.objects.all().order_by("category", "label")
-        return context
-
-
-class ExploreDatasetsJSON(TemplateView):
-    def render_to_response(self, context, **response_kwargs):
-        datasets = []
-        for d in DataSet.objects.filter(is_filterable=True).all():
-            try:
-                options = list(map(itemgetter("title"), d.options))
-            # catch bad options and ignore them for now
-            except TypeError:
-                continue
-
-            ds = dict(
-                scope="public",
-                name=d.name,
-                title=d.label,
-                source=d.source_label,
-                is_favourite=UserDataSets.objects.filter(
-                    data_set=d,
-                    user=self.request.user,
-                ).exists(),
-                featured=d.featured,
-                comparators=dict(
-                    map(itemgetter("field_lookup", "title"), d.comparators)
-                ),
-                options=options if len(options) > 0 else None,
-                defaultValue=d.default_value,
-                is_in=True if d.comparators[0]["field_lookup"] == "in" else False,
-                is_range=d.is_range,
-                data_type=d.data_type,
-            )
-            if d.is_range:
-                ds["types"] = [
-                    {"name": dt.name, "title": dt.label}
-                    for dt in DataType.objects.filter(data_set=d)
-                ]
-            datasets.append(ds)
-
-        return JsonResponse(list(datasets), safe=False)
-
-
-class ExploreGeometryJSON(FilterMixin, TemplateView):
-    def render_to_response(self, context, **response_kwargs):
-        geom = []
-        areas = list(self.query().filter(geometry__isnull=False))
-        shader = self.shader()
-        colours = {}
-        if shader is not None:
-            colours = shader.colours_for_areas(areas)
-
-        for area in areas:
-            geometry = json.loads(area.geometry)
-            props = geometry["properties"]
-            if colours.get(area.gss, None) is not None:
-                props["color"] = colours[area.gss]["colour"]
-                props["opacity"] = colours[area.gss]["opacity"]
-            else:
-                props["color"] = "#ed6832"
-                props["opacity"] = 0.7
-
-            geometry["properties"] = props
-
-            geom.append(geometry)
-
-        return JsonResponse({"type": "FeatureCollection", "features": geom})
-
-
-class ExploreJSON(FilterMixin, TemplateView):
-    def render_to_response(self, context, **response_kwargs):
-        geom = []
-        areas = list(self.query().filter(geometry__isnull=False))
-        shader = self.shader()
-        colours = {}
-        if shader is not None:
-            colours = shader.colours_for_areas(areas)
-
-        for area in areas:
-            geometry = {
-                "properties": {
-                    "PCON13CD": area.gss,
-                    "name": area.name,
-                    "type": area.area_type,
-                }
-            }
-            props = geometry["properties"]
-            if colours.get(area.gss, None) is not None:
-                props["color"] = colours[area.gss]["colour"]
-                props["opacity"] = colours[area.gss]["opacity"]
-            else:
-                props["color"] = "#ed6832"
-                props["opacity"] = 0.7
-
-            geometry["properties"] = props
-
-            geom.append(geometry)
-
-        return JsonResponse({"type": "FeatureCollection", "features": geom})
-
-
-class ExploreCSV(FilterMixin, TemplateView):
-    def render_to_response(self, context, **response_kwargs):
-        response = HttpResponse(content_type="text/csv")
-        writer = csv.writer(response)
-        for row in self.data():
-            writer.writerow(row)
-        return response
 
 
 class BaseAreaView(TitleMixin, DetailView):
@@ -518,68 +358,3 @@ class UnFavouriteDataSetView(View):
                 "deleted": True,
             }
             return JsonResponse(data)
-
-
-class StyleView(TitleMixin, TemplateView):
-    page_title = "Style preview"
-    template_name = "hub/style.html"
-
-    def get_context_data(self, **kwargs):  # pragma: no cover
-        context = super().get_context_data(**kwargs)
-        context["shades"] = [(i * 100) for i in range(1, 10)]
-        context["colors"] = [
-            "blue",
-            "indigo",
-            "purple",
-            "pink",
-            "red",
-            "orange",
-            "yellow",
-            "green",
-            "teal",
-            "cyan",
-            "gray",
-        ]
-        context["theme_colors"] = [
-            "primary",
-            "secondary",
-            "success",
-            "info",
-            "warning",
-            "danger",
-            "light",
-            "dark",
-        ]
-        context["button_styles"] = ["", "outline-"]
-        context["heading_levels"] = range(1, 7)
-        context["display_levels"] = range(1, 7)
-        context["sizes"] = [
-            "-sm",
-            "",
-            "-lg",
-        ]
-
-        return context
-
-
-class StatusView(TemplateView):
-    def render_to_response(self, context, **response_kwargs):
-        try:
-            with connection.cursor() as cursor:
-                # will raise OperationalError if db unavailable
-                cursor.execute("select 1")
-
-            return JsonResponse(
-                {
-                    "database": "ok",
-                    "areas": Area.objects.count(),
-                    "datasets": DataSet.objects.count(),
-                }
-            )
-        except OperationalError:
-            return JsonResponse(
-                {
-                    "database": "error",
-                },
-                status=500,
-            )

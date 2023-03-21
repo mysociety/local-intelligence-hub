@@ -18,40 +18,40 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from hub import views
+from hub.views import area, core, explore
 
-handler404 = views.NotFoundPageView.as_view()
+handler404 = core.NotFoundPageView.as_view()
 
 urlpatterns = [
-    path("", views.HomePageView.as_view(), name="home"),
-    path("explore/", views.ExploreView.as_view(), name="explore"),
+    path("", core.HomePageView.as_view(), name="home"),
+    path("explore/", explore.ExploreView.as_view(), name="explore"),
     path(
         "explore/datasets.json",
-        views.ExploreDatasetsJSON.as_view(),
+        explore.ExploreDatasetsJSON.as_view(),
         name="explore_datasets_json",
     ),
     path(
         "exploregeometry.json",
-        views.ExploreGeometryJSON.as_view(),
+        explore.ExploreGeometryJSON.as_view(),
         name="exploregeometry_json",
     ),
-    path("explore.json", views.ExploreJSON.as_view(), name="explore_json"),
-    path("explore.csv", views.ExploreCSV.as_view(), name="explore_csv"),
-    path("area/<str:area_type>/<str:name>", views.AreaView.as_view(), name="area"),
+    path("explore.json", explore.ExploreJSON.as_view(), name="explore_json"),
+    path("explore.csv", explore.ExploreCSV.as_view(), name="explore_csv"),
+    path("area/<str:area_type>/<str:name>", area.AreaView.as_view(), name="area"),
     path(
         "data_set/<int:data_set>/favourite",
-        views.FavouriteDataSetView.as_view(),
+        area.FavouriteDataSetView.as_view(),
         name="favourite_dataset",
     ),
     path(
         "data_set/<int:data_set>/unfavourite",
-        views.UnFavouriteDataSetView.as_view(),
+        area.UnFavouriteDataSetView.as_view(),
         name="unfavourite_dataset",
     ),
-    path("sources/", views.SourcesView.as_view(), name="sources"),
-    path("location/", views.AreaSearchView.as_view(), name="area_search"),
-    path("style/", views.StyleView.as_view(), name="style"),
-    path("status/", views.StatusView.as_view(), name="status"),
+    path("sources/", core.SourcesView.as_view(), name="sources"),
+    path("location/", area.AreaSearchView.as_view(), name="area_search"),
+    path("style/", core.StyleView.as_view(), name="style"),
+    path("status/", core.StatusView.as_view(), name="status"),
     path("admin/", admin.site.urls),  # pragma: no cover
     path("accounts/", include("django.contrib.auth.urls")),
 ]
