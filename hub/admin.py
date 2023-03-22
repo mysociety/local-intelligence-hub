@@ -1,6 +1,11 @@
 from django.contrib import admin
 
-from hub.models import DataSet
+from hub.models import DataSet, UserProperties
+
+
+@admin.register(UserProperties)
+class UserPropertiesAdmin(admin.ModelAdmin):
+    pass
 
 
 @admin.register(DataSet)
