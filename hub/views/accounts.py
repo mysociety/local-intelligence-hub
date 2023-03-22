@@ -1,7 +1,8 @@
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import redirect, reverse
 from django.views.generic import FormView, TemplateView
 
-from hub.forms import SignupForm
+from hub.forms import ActivateUserFormSet, SignupForm
 from hub.mixins import TitleMixin
 from hub.tokens import get_user_for_token
 
@@ -49,3 +50,15 @@ class ConfirmEmailView(TitleMixin, TemplateView):
 class BadTokenView(TitleMixin, TemplateView):
     page_title = "Bad Token"
     template_name = "hub/accounts/bad_token.html"
+
+
+class ActivateAccountsView(PermissionRequiredMixin, TitleMixin, FormView):
+    permission_required = "auth.edit_user"
+    page_title = "Activate accounts"
+    template_name = "hub/accounts/activate_accounts.html"
+    form_class = ActivateUserFormSet
+    success_url = "/activate_accounts/"
+
+    def form_valid(self, form):
+        form.save()
+        return super().form_valid(form)

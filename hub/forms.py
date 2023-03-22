@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
-from django.forms import CharField, EmailField
+from django.forms import BaseModelFormSet, CharField, EmailField, modelformset_factory
 from django.template.loader import render_to_string
 
 from hub.models import UserProperties
@@ -62,3 +62,20 @@ class SignupForm(UserCreationForm):
             "full_name",
             "organisation",
         )
+
+
+class BaseActivateUserFormSet(BaseModelFormSet):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.queryset = User.objects.filter(
+            is_active=False, userproperties__email_confirmed=True
+        )
+
+
+ActivateUserFormSet = modelformset_factory(
+    User,
+    fields=("is_active", "id"),
+    edit_only=True,
+    formset=BaseActivateUserFormSet,
+    extra=0,
+)

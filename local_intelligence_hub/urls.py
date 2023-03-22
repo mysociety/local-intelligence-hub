@@ -63,6 +63,11 @@ urlpatterns = [
         accounts.BadTokenView.as_view(),
         name="bad_token",
     ),
+    path(
+        "activate_accounts/",
+        accounts.ActivateAccountsView.as_view(),
+        name="activate_accounts",
+    ),
     re_path(
         "activate/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,40})/",
         accounts.ConfirmEmailView.as_view(),
