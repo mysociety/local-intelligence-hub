@@ -1,0 +1,29 @@
+{% extends "hub/base.html" %}
+
+{% load static django_bootstrap5 %}
+
+{% block content %}
+
+<div class="py-4 py-lg-5 bg-green-100">
+    <div class="container">
+        <h1 class="display-2 mb-3">Local Intelligence Hub</h1>
+        <p class="fs-4" style="max-width: 26em;">Your starting point for data about MPs, constituencies, and local climate activity across the UK.</p>
+    </div>
+</div>
+
+<div class="py-5">
+    <div class="container">
+
+        <form method="post" action="{% url 'signup' %}" class="mb-5 form-narrow">
+            {% csrf_token %}
+            {% bootstrap_form form %}
+            <input type="hidden" name="next" value="{% url 'home' %}">
+            <button type="submit" class="btn btn-primary">Sign up</button>
+        </form>
+
+        <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
+
+    </div>
+</div>
+
+{% endblock %}

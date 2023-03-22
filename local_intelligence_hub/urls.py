@@ -16,9 +16,9 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 
-from hub.views import area, core, explore
+from hub.views import accounts, area, core, explore
 
 handler404 = core.NotFoundPageView.as_view()
 
@@ -52,6 +52,22 @@ urlpatterns = [
     path("location/", area.AreaSearchView.as_view(), name="area_search"),
     path("style/", core.StyleView.as_view(), name="style"),
     path("status/", core.StatusView.as_view(), name="status"),
+    path("signup/", accounts.SignupView.as_view(), name="signup"),
+    path(
+        "confirmation_sent/",
+        accounts.ConfirmationSentView.as_view(),
+        name="confirmation_sent",
+    ),
+    path(
+        "bad_token/",
+        accounts.BadTokenView.as_view(),
+        name="bad_token",
+    ),
+    re_path(
+        "activate/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,40})/",
+        accounts.ConfirmEmailView.as_view(),
+        name="confirm_email",
+    ),
     path("admin/", admin.site.urls),  # pragma: no cover
     path("accounts/", include("django.contrib.auth.urls")),
 ]
