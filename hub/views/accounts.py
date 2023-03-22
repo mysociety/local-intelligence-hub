@@ -33,8 +33,9 @@ class ConfirmEmailView(TitleMixin, TemplateView):
             if t is None or user is None:
                 return redirect(reverse("bad_token"))
 
-            user.is_active = True
-            user.save()
+            props = user.userproperties
+            props.email_confirmed = True
+            props.save()
             t.delete()
 
         return super().get(request)

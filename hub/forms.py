@@ -5,6 +5,7 @@ from django.core.mail import EmailMessage
 from django.forms import CharField, EmailField
 from django.template.loader import render_to_string
 
+from hub.models import UserProperties
 from hub.tokens import make_token_for_user
 
 User = get_user_model()
@@ -13,14 +14,22 @@ User = get_user_model()
 class SignupForm(UserCreationForm):
     username = EmailField(label="Email")
     organisation = CharField()
+    full_name = CharField()
 
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = user.username
         user.is_active = False
 
+        props = UserProperties(
+            user=user,
+            organisation_name=self.cleaned_data.get("organisation"),
+            full_name=self.cleaned_data.get("full_name"),
+        )
+
         if commit:
             user.save()
+            props.save()
 
         return user
 
@@ -46,4 +55,10 @@ class SignupForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ("username", "password1", "password2", "organisation")
+        fields = (
+            "username",
+            "password1",
+            "password2",
+            "full_name",
+            "organisation",
+        )

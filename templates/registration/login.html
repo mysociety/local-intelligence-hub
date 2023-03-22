@@ -16,7 +16,9 @@
 
         <form method="post" action="{% url 'login' %}" class="mb-5 form-narrow">
             {% csrf_token %}
-            {% bootstrap_form form %}
+            {% bootstrap_label "Email address" label_for="username" label_class="form-label" %}
+            {% bootstrap_field form.username show_label='skip' %}
+            {% bootstrap_form form exclude='username' %}
             <input type="hidden" name="next" value="{% url 'home' %}">
             <button type="submit" class="btn btn-primary">Log in</button>
         </form>
