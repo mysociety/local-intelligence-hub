@@ -388,6 +388,13 @@ class PersonData(CommonData):
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
 
 
+class Token(models.Model):
+    DOMAINS = [("user", "User")]
+    token = models.CharField(max_length=300)
+    domain = models.CharField(max_length=50, choices=DOMAINS)
+    domain_id = models.IntegerField()
+
+
 @receiver(models.signals.pre_save, sender=AreaData)
 @receiver(models.signals.pre_save, sender=PersonData)
 def cast_data(sender, instance, *args, **kwargs):
