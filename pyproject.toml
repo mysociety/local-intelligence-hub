@@ -40,3 +40,4 @@ default_section = "THIRDPARTY"
 known_first_party = "hub"
 known_django = "django"
 sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+extend_skip = ["migrations"]
