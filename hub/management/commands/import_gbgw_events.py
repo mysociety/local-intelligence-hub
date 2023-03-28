@@ -79,3 +79,4 @@ class Command(BaseLatLongImportCommand):
         self.add_data_sets(df)
         self.process_data(df)
         self.update_averages()
+        self.update_max_min()
