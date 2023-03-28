@@ -197,9 +197,9 @@ class DataSet(TypeMixin, models.Model):
         values = self.shader_value(areas)
         colours = {}
         for value in values:
-            opacity = (
-                value.opacity(value.data_type.minimum, value.data_type.maximum) or 0.7
-            )
+            opacity = value.opacity(value.data_type.minimum, value.data_type.maximum)
+            if opacity is None:
+                opacity = 0.7
             data = value.value()
             colours[value.gss] = {"colour": "#ed6832", "opacity": opacity}
             for option in self.options:
