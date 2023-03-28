@@ -117,6 +117,8 @@ class Command(BaseCommand):
     def process_data(self, df):
         count = 0
         totals = defaultdict(int)
+        maxes = defaultdict(int)
+        mins = defaultdict(int)
 
         if not self._quiet:
             self.stdout.write("Importing polling data")
@@ -132,8 +134,15 @@ class Command(BaseCommand):
             count += 1
 
             for column, data_type in self.data_types.items():
+                mins[column] = 100
 
-                totals[column] += float(row[column])
+                f_val = float(row[column])
+                totals[column] += f_val
+                if f_val > maxes[column]:
+                    maxes[column] = f_val
+
+                if f_val < mins[column]:
+                    mins[column] = f_val
 
                 AreaData.objects.update_or_create(
                     data_type=data_type,
@@ -144,6 +153,8 @@ class Command(BaseCommand):
         for column, data_type in self.data_types.items():
             average = totals[column] / count
             data_type.average = average
+            data_type.max = maxes[column]
+            data_type.min = mins[column]
             data_type.save()
 
     def add_arguments(self, parser):
