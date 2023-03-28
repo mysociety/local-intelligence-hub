@@ -60,6 +60,7 @@ class Command(BaseAreaImportCommand):
         self.add_data_sets()
         self.delete_data()
         self.process_data()
+        self.update_max_min()
 
     def process_data(self):
         df = pd.read_csv(self.data_file)
