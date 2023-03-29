@@ -4,24 +4,24 @@
 
 {% block content %}
 
-<div class="py-4 py-lg-5 bg-green-100">
-    <div class="container">
-        <h1 class="display-2 mb-3">Local Intelligence Hub</h1>
-        <p class="fs-4" style="max-width: 26em;">Your starting point for data about MPs, constituencies, and local climate activity across the UK.</p>
-    </div>
-</div>
-
 <div class="py-5">
     <div class="container">
 
-        <form method="post" action="{% url 'signup' %}" class="mb-5 form-narrow">
+        <h1 class="mb-4">Request an account</h1>
+
+        <div style="max-width: 30em">
+            <p>During this initial launch phase, an account is required to access any data on the Local Intelligence Hub. If you’re associated with any Climate Coalition member organisation, you’re welcome to request an account, below.</p>
+            <p>Later this year, we hope to make <em>public</em> data available to visitors without an account, but an account will still be required to access members-only data.</p>
+        </div>
+
+        <form method="post" action="{% url 'signup' %}" class="my-5" style="max-width: 30em">
             {% csrf_token %}
             {% bootstrap_form form %}
             <input type="hidden" name="next" value="{% url 'home' %}">
-            <button type="submit" class="btn btn-primary">Sign up</button>
+            <button type="submit" class="btn btn-primary">Submit request</button>
         </form>
 
-        <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
+        <p>Already have an account but need to <a href="{% url 'password_reset' %}">reset your password</a>?</p>
 
     </div>
 </div>

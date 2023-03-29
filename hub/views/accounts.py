@@ -8,7 +8,7 @@ from hub.tokens import get_user_for_token
 
 
 class SignupView(TitleMixin, FormView):
-    page_title = "Sign up"
+    page_title = "Request an account"
     template_name = "hub/accounts/signup.html"
     form_class = SignupForm
     success_url = "/confirmation_sent/"
@@ -20,7 +20,7 @@ class SignupView(TitleMixin, FormView):
 
 
 class ConfirmationSentView(TitleMixin, TemplateView):
-    page_title = "Confirmation Sent"
+    page_title = "Verify your email"
     template_name = "hub/accounts/confirmation_sent.html"
 
 

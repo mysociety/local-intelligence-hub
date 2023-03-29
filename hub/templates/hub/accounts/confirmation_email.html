@@ -1,7 +1,7 @@
 {% autoescape off %}
 Hi {{ user.username }},
 
-Please click on the link to confirm your registration:
+Please click on the link to complete your request for a Local Intelligence Hub account:
 
 https://{{ domain }}{% url 'confirm_email' token=token %}
 

@@ -4,20 +4,15 @@
 
 {% block content %}
 
-<div class="py-4 py-lg-5 bg-green-100">
-    <div class="container">
-        <h1 class="display-2 mb-3">Local Intelligence Hub</h1>
-        <p class="fs-4" style="max-width: 26em;">Your starting point for data about MPs, constituencies, and local climate activity across the UK.</p>
-    </div>
-</div>
-
 <div class="py-5">
     <div class="container">
 
-        {% if form|length == 0 %}
-        <div>No accounts to activate</div>
-        {% else %}
-        <form method="post" action="{% url 'activate_accounts' %}" class="mb-5 form-narrow">
+        <h1 class="mb-5">Activate accounts</h1>
+
+      {% if form|length == 0 %}
+        <p>There are no accounts to activate.</p>
+      {% else %}
+        <form method="post" action="{% url 'activate_accounts' %}" class="my-5">
             {% csrf_token %}
             {{ form.management_form }}
 
@@ -31,10 +26,10 @@
                     </tr>
                 </thead>
                 <tbody>
-                {% for user_form in form %}
+                  {% for user_form in form %}
                     <tr>
                         <td>
-                            {% bootstrap_field user_form.is_active show_help=False show_label=False %}
+                            {% bootstrap_field user_form.is_active show_help=False show_label=False wrapper_class="" %}
                             {% bootstrap_field user_form.id %}
                         </td>
                         <td>
@@ -47,12 +42,12 @@
                             {{ user_form.instance.userproperties.organisation_name }}
                         </td>
                     </tr>
-                {% endfor %}
+                  {% endfor %}
                 </tbody>
             </table>
-            <button type="submit" class="btn btn-primary">Activate</button>
+            <button type="submit" class="btn btn-primary">Activate selected accounts</button>
         </form>
-        {% endif %}
+      {% endif %}
 
     </div>
 </div>
