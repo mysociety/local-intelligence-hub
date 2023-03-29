@@ -48,6 +48,10 @@ NON_LOGIN_URLS = (
     "/accounts/login/",
     "/accounts/logout/",
     "/accounts/password_reset/",
+    "/signup/",
+    "/confirmation_sent/",
+    "/bad_token/",
+    "/activate/",
 )
 
 # Application definition

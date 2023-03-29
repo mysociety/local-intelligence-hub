@@ -14,6 +14,7 @@ class AuthPageProtectionMiddleware:
     def __call__(self, request):
         if (
             request.path not in settings.NON_LOGIN_URLS
+            and not request.path.startswith("/activate/")
             and not request.path.startswith("/__debug__/")
             and not request.user.is_authenticated
         ):
