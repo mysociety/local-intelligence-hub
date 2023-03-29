@@ -86,8 +86,17 @@
 
                     <h2 class="h5 mt-4 mt-lg-5 mb-3 mb-lg-4 text-primary">Step 3: Add extra columns (optional)</h2>
 
-                    <button type="button" class="btn btn-outline-secondary p-3 w-100">
-                        Add extra columns
+                    <div ref="columnContainer" class="mb-4" hidden>
+                        <div v-for="column in columns" class="bg-gray-100 border p-3 rounded filter">
+                            <div class="d-flex">
+                                <h3 class="h6 mb-0 me-auto">${ column.title }</h3>
+                                <button @click="removeColumn(column.name)" type="button" class="btn-close p-0" aria-label="Remove column"></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button @click="selectColumn" type="button" class="btn btn-outline-secondary p-3 w-100">
+                        Add a column
                     </button>
 
                     <div class="d-flex mt-4 mt-lg-5 mx-n2">

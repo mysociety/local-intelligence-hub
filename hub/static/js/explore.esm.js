@@ -10,6 +10,7 @@ const app = createApp({
       loaded: false,
       datasets: [],
       filters: [],
+      columns: [],
       shader: null,
       view: 'map',
       map: null,
@@ -51,6 +52,7 @@ const app = createApp({
     this.restoreState()
     this.$refs.filtersContainer.removeAttribute('hidden')
     this.$refs.shaderContainer.removeAttribute('hidden')
+    this.$refs.columnContainer.removeAttribute('hidden')
     this.$refs.modal.addEventListener('hidden.bs.modal', (e) => {
       this.searchText = ''
       this.browseDatasets = false
@@ -90,10 +92,16 @@ const app = createApp({
       this.modal.show()
       this.loadDatasets().then(() => { this.loaded = true })
     },
+    selectColumn() {
+      this.currentType = 'column'
+      this.modal.show()
+      this.loadDatasets().then(() => { this.loaded = true })
+    },
     addFilterOrShader(datasetName) {
       switch (this.currentType) {
         case 'filter': this.addFilter(datasetName); break
         case 'shader': this.addShader(datasetName); break
+        case 'column': this.addColumn(datasetName); break
       }
       this.modal.hide()
     },
@@ -116,6 +124,14 @@ const app = createApp({
     },
     removeFilter(filterName) {
       this.filters = this.filters.filter(f => f.name != filterName)
+    },
+    addColumn(datasetName) {
+      const dataset = this.getDataset(datasetName)
+
+      this.columns.push(dataset)
+    },
+    removeColumn(columnName) {
+      this.columns = this.columns.filter(f => f.name != columnName)
     },
     addShader(datasetName) {
       this.shader = this.getDataset(datasetName)
@@ -147,6 +163,15 @@ const app = createApp({
       // don’t bother saving view unless it’s been changed from default
       if ( this.view != 'map' ) { state['view'] = this.view }
 
+      if (this.columns.length) {
+        var cols = []
+        this.columns.forEach(function(d) {
+          cols.push(d.name)
+        })
+
+        state['columns'] = cols.join(',')
+      }
+
       return state
     },
     url(pathname = window.location.pathname) {
@@ -170,7 +195,9 @@ const app = createApp({
         if (key == 'view' ) {
           this.view = v;
         } else if (key == 'shader') {
-          pending[value] = () => { this.addShader(value) }
+          pending[v] = () => { this.addShader(v) }
+        } else if (key == 'columns') {
+          pending[v] = () => { for (const col of v.split(',')) { this.addColumn(col) } }
         } else {
           const index = key.indexOf('__')
           const name = key.slice(0, index)
