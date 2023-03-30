@@ -8,77 +8,102 @@
 
 <div class="explore" id="exploreApp">
 
-    <div class="explore-filters p-4 p-lg-5">
-        <h1 class="h2 mb-3">Explore</h1>
+    <div class="explore-filters">
 
-        <p>Use data from The Climate Coalition, its member organisations, and the wider sector, to narrow down your focus to the constituencies that matter to you.</p>
+        <div class="explore-filters__intro p-4 p-lg-5 pb-0 pb-lg-0">
+            <h1 class="h2 mb-3">Explore</h1>
 
-        <h2 class="h4 mt-4 mt-lg-5 mb-4 text-primary">Step 1: Add filters</h2>
+            <p>Use data from The Climate Coalition, its member organisations, and the wider sector, to narrow down your focus to the constituencies that matter to you.</p>
 
-        <div ref="filtersContainer" class="mb-4" hidden>
-            <div v-for="filter in filters" class="bg-gray-100 border p-3 rounded filter">
-                <div class="filter__header">
-                    <h3 class="h6">${ filter.title }</h3>
-                    <button @click="removeFilter(filter.name)" type="button" class="btn-close p-0" aria-label="Remove filter"></button>
-                </div>
-                <div :class="{ 'filter__body': true, 'filter__body--expanded': filter.is_in }">
-                    <select v-if="filter.is_range" v-model="filter.selectedType" class="form-select form-select-sm flex-grow-0 flex-shrink-1">
-                      <option v-for="ds_type in filter.types" :value="ds_type.name">${ ds_type.title }</option>
-                    </select>
-                    <select v-model="filter.selectedComparator" class="form-select form-select-sm flex-grow-0 flex-shrink-1">
-                      <option v-for="(title, comparator) in filter.comparators" :value="comparator">${ title }</option>
-                    </select>
-                    <select v-if="filter.options" v-model="filter.selectedValue" :multiple="filter.is_in" class="form-select form-select-sm flex-grow-1 flex-shrink-1">
-                        <option v-for="option in filter.options" :value="option">${ option }</option>
-                    </select>
-                    <div v-else-if="filter.data_type == 'percent'" class="input-group flex-grow-1 flex-shrink-1">
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" v-model="filter.selectedValue" class="form-control form-control-sm text-end">
-                        <span class="input-group-text lh-1">%</span>
+            <h2 class="h5 mt-4 mt-lg-5 mb-3 mb-lg-4 text-primary">Step 1: Select an output format</h2>
+
+            <ul class="nav nav-tabs mx-n4 mx-lg-n5 px-4 px-lg-5" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-3 px-4 fw-bold" :class="{ 'active': mapViewActive }" id="tab-map" data-bs-toggle="tab" data-bs-target="#options-map" type="button" role="tab" aria-controls="options-map" :aria-selected="mapViewActive ? 'true' : 'false'" @click="changeView('map')">Map view</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-3 px-4 fw-bold" :class="{ 'active': tableViewActive }" id="tab-table" data-bs-toggle="tab" data-bs-target="#options-table" type="button" role="tab" aria-controls="options-table" :aria-selected="tableViewActive ? 'true' : 'false'" @click="changeView('table')">Table view</button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="p-4 p-lg-5">
+            <h2 class="h5 mb-4 text-primary">Step 2: Filter constituencies</h2>
+
+            <div ref="filtersContainer" class="mb-4" hidden>
+                <div v-for="filter in filters" class="bg-gray-100 border p-3 rounded filter">
+                    <div class="filter__header">
+                        <h3 class="h6">${ filter.title }</h3>
+                        <button @click="removeFilter(filter.name)" type="button" class="btn-close p-0" aria-label="Remove filter"></button>
                     </div>
-                    <input v-else-if="filter.data_type == 'integer'" type="text" inputmode="numeric" pattern="[0-9]*" v-model="filter.selectedValue" class="form-control form-control-sm flex-grow-1 flex-shrink-1">
-                    <input v-else type="text" v-model="filter.selectedValue" class="form-control form-control-sm flex-grow-1 flex-shrink-1">
-                    <p v-if="filter.is_in" class="flex-grow-1 text-muted mb-0 text-center fs-8">Tip: Ctrl-click (PC) or Cmd-click (Mac) to select multiple items</p>
+                    <div :class="{ 'filter__body': true, 'filter__body--expanded': filter.is_in }">
+                        <select v-if="filter.is_range" v-model="filter.selectedType" class="form-select form-select-sm flex-grow-0 flex-shrink-1">
+                        <option v-for="ds_type in filter.types" :value="ds_type.name">${ ds_type.title }</option>
+                        </select>
+                        <select v-model="filter.selectedComparator" class="form-select form-select-sm flex-grow-0 flex-shrink-1">
+                        <option v-for="(title, comparator) in filter.comparators" :value="comparator">${ title }</option>
+                        </select>
+                        <select v-if="filter.options" v-model="filter.selectedValue" :multiple="filter.is_in" class="form-select form-select-sm flex-grow-1 flex-shrink-1">
+                            <option v-for="option in filter.options" :value="option">${ option }</option>
+                        </select>
+                        <div v-else-if="filter.data_type == 'percent'" class="input-group flex-grow-1 flex-shrink-1">
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" v-model="filter.selectedValue" class="form-control form-control-sm text-end">
+                            <span class="input-group-text lh-1">%</span>
+                        </div>
+                        <input v-else-if="filter.data_type == 'integer'" type="text" inputmode="numeric" pattern="[0-9]*" v-model="filter.selectedValue" class="form-control form-control-sm flex-grow-1 flex-shrink-1">
+                        <input v-else type="text" v-model="filter.selectedValue" class="form-control form-control-sm flex-grow-1 flex-shrink-1">
+                        <p v-if="filter.is_in" class="flex-grow-1 text-muted mb-0 text-center fs-8">Tip: Ctrl-click (PC) or Cmd-click (Mac) to select multiple items</p>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <button @click="selectFilter" type="button" class="btn btn-outline-secondary p-3 w-100">
-            Add data to filter by
-        </button>
+            <button @click="selectFilter" type="button" class="btn btn-outline-secondary p-3 w-100">
+                Add data to filter by
+            </button>
 
-        <h2 class="h4 mt-4 mt-lg-5 mb-3 mb-lg-4 text-primary">Step 2: Shade results (optional)</h2>
+            <div class="tab-content">
+                <div class="tab-pane" :class="{ 'active': mapViewActive }" id="options-map" role="tabpanel" aria-labelledby="tab-map" tabindex="0">
 
-        <div ref="shaderContainer" class="mb-4" hidden>
-            <div v-if="shader" class="bg-gray-100 border p-3 rounded mb-4">
-                <div class="d-flex">
-                    <h3 class="h6 mb-0 me-auto">${ shader.title }</h3>
-                    <button @click="removeShader(shader.name)" type="button" class="btn-close p-0" aria-label="Remove shader"></button>
+                    <h2 class="h5 mt-4 mt-lg-5 mb-3 mb-lg-4 text-primary">Step 3: Shade constituencies (optional)</h2>
+
+                    <div ref="shaderContainer" class="mb-4" hidden>
+                        <div v-if="shader" class="bg-gray-100 border p-3 rounded mb-4">
+                            <div class="d-flex">
+                                <h3 class="h6 mb-0 me-auto">${ shader.title }</h3>
+                                <button @click="removeShader(shader.name)" type="button" class="btn-close p-0" aria-label="Remove shader"></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button v-if="!shader" @click="selectShader" type="button" class="btn btn-outline-secondary p-3 w-100">
+                        Add a dataset to shade results
+                    </button>
+
+                    <button class="mt-4 mt-lg-5 btn btn-primary p-3 w-100" @click="updateState">Update map</button>
+
+                </div>
+                <div class="tab-pane" :class="{ 'active': tableViewActive }" id="options-table" role="tabpanel" aria-labelledby="tab-table" tabindex="0">
+
+                    <h2 class="h5 mt-4 mt-lg-5 mb-3 mb-lg-4 text-primary">Step 3: Add extra columns (optional)</h2>
+
+                    <button type="button" class="btn btn-outline-secondary p-3 w-100">
+                        Add extra columns
+                    </button>
+
+                    <div class="d-flex mt-4 mt-lg-5 mx-n2">
+                        <a class="btn btn-outline-primary p-3 flex-grow-1 mx-2" :href="csvURL">Download CSV</a>
+                        <button class="btn btn-primary p-3 flex-grow-1 mx-2" @click="updateState">Update table</button>
+                    </div>
+
                 </div>
             </div>
+
         </div>
-
-        <button v-if="!shader" @click="selectShader" type="button" class="btn btn-outline-secondary p-3 w-100">
-            Add a dataset to shade results
-        </button>
-
-        <h2 class="h4 mt-4 mt-lg-5 mb-3 mb-lg-4 text-primary">Step 3: Select an output format</h2>
-
-        <fieldset>
-            <legend class="form-label">Display results in</legend>
-            <div class="d-flex mx-n2">
-                <a @click="changeView('map')" class="btn btn-outline-secondary flex-grow-1 mx-2">Map view</a>
-                <a @click="changeView('table')" class="btn btn-outline-secondary flex-grow-1 mx-2">Table view</a>
-                <a :href="csvURL" class="btn btn-outline-secondary flex-grow-1 mx-2">CSV download</a>
-            </div>
-        </fieldset>
-
-        <button @click="updateState" class="mt-4 mt-lg-5 btn btn-primary w-100">Update results</button>
-
     </div>
 
     <div class="explore-results bg-gray-100">
-        <div class="explore-map" ref="map"></div>
-        <div class="explore-table" ref="table" hidden>
+        <div class="explore-map" ref="map" :hidden="!mapViewActive"></div>
+        <div class="explore-table" ref="table" :hidden="!tableViewActive">
             <table v-if="table" class="table table-striped">
                 <thead>
                     <tr>

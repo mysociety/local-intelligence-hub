@@ -13,8 +13,17 @@ $color-tcc-ben-nevis-grey: #1d1d1b;
 
 $color-darker-seafoam: #068670; // like seafoam-green, but 4.51 contrast with #fff
 
-$black: #000;
-$white: #fff;
+$white:    #fff;
+$gray-100: #f8f9fa;
+$gray-200: #e9ecef;
+$gray-300: #dee2e6;
+$gray-400: #ced4da;
+$gray-500: #adb5bd;
+$gray-600: #6c757d;
+$gray-700: #495057;
+$gray-800: #343a40;
+$gray-900: #212529;
+$black:    #000;
 
 $red: darken($color-tcc-robin-red, 10%);
 
@@ -52,6 +61,7 @@ $teal-800: $color-tcc-sherwood-forest-green;
 $teal-900: mix($black, $color-tcc-sherwood-forest-green, 40%);
 
 $primary: $color-darker-seafoam;
+$secondary: $gray-600;
 $success: $color-tcc-heart-green;
 $dark: $color-tcc-sherwood-forest-green;
 
@@ -81,6 +91,7 @@ $spacers: (
 
 // Body
 
+$body-bg: $white;
 $body-color: $color-tcc-sherwood-forest-green;
 
 // Utilities maps
@@ -174,6 +185,12 @@ $form-label-font-weight: bold;
 // Z-index master list
 
 // Navs
+
+$nav-tabs-border-color: $gray-500;
+$nav-tabs-link-hover-border-color: $gray-300 $gray-300 $gray-500;
+$nav-tabs-link-active-color: $gray-600;
+$nav-tabs-link-active-bg: $body-bg;
+$nav-tabs-link-active-border-color: $gray-500 $gray-500 $nav-tabs-link-active-bg;
 
 // Navbar
 

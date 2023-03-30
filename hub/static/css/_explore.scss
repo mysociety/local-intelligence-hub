@@ -36,6 +36,10 @@
     }
 }
 
+.explore-filters__intro {
+    background: linear-gradient($body-bg, rgba($green-100, 0.3))
+}
+
 .filter {
     margin-bottom: map-get($spacers, 4);
 }
