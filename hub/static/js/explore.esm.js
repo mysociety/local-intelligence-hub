@@ -11,12 +11,12 @@ const app = createApp({
       datasets: [],
       filters: [],
       shader: null,
-      csvURL: '',
       view: 'map',
       map: null,
       table: null,
       searchText: '',
       browseDatasets: false,
+      downloadCsvWithNextTableUpdate: false,
     }
   },
   watch: {
@@ -160,7 +160,6 @@ const app = createApp({
     },
     updateState() {
       window.history.replaceState(this.state(), '', this.url())
-      this.csvURL = this.url('/explore.csv')
       this.updateResults()
     },
     restoreState() {
@@ -295,7 +294,20 @@ const app = createApp({
             skipEmptyLines: true,
             complete: (results) => { this.table = results }
           })
+
+          if ( this.downloadCsvWithNextTableUpdate ) {
+            this.downloadCsvWithNextTableUpdate = false
+            var a = document.createElement("a")
+            a.href = window.URL.createObjectURL(data)
+            a.download = "explore.csv"
+            a.click()
+            window.URL.revokeObjectURL(a.href)
+          }
         })
+    },
+    downloadCSV() {
+      this.downloadCsvWithNextTableUpdate = true
+      this.updateState()
     },
     datasetMatchesSearchText(dataset) {
       var haystack = dataset.title + ' ' + dataset.source
