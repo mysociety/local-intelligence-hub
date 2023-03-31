@@ -71,3 +71,17 @@
 .filter__body--expanded {
     flex-wrap: wrap;
 }
+
+.explore-table {
+    .table {
+        --bs-table-bg: #{$white};
+        --bs-border-color: transparent;
+        margin-bottom: 0;
+
+        thead {
+            position: sticky;
+            top: 0;
+            box-shadow: 0 0 10px rgba($black, 0.1), 0 1px 0 $border-color;
+        }
+    }
+}

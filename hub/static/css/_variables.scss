@@ -170,6 +170,13 @@ $mark-bg: #fff55a;
 
 // Tables
 
+$table-striped-bg-factor: .04;
+$table-striped-bg: rgba($teal-900, $table-striped-bg-factor);
+$table-active-bg-factor: .1;
+$table-active-bg: rgba($teal-900, $table-active-bg-factor);
+$table-hover-bg-factor: .075;
+$table-hover-bg: rgba($teal-900, $table-hover-bg-factor);
+
 // Buttons + Forms
 
 // Buttons
