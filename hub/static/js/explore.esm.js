@@ -294,16 +294,18 @@ const app = createApp({
             skipEmptyLines: true,
             complete: (results) => { this.table = results }
           })
-        }).then( () => {
+
           if ( this.downloadCsvWithNextTableUpdate ) {
             this.downloadCsvWithNextTableUpdate = false
-            window.location.href = this.url('/explore.csv')
+            var a = document.createElement("a")
+            a.href = window.URL.createObjectURL(data)
+            a.download = "explore.csv"
+            a.click()
+            window.URL.revokeObjectURL(a.href)
           }
         })
     },
     downloadCSV() {
-      // Update the URL and the table view,
-      // and then redirect to the CSV URL.
       this.downloadCsvWithNextTableUpdate = true
       this.updateState()
     },
