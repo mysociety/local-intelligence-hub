@@ -40,6 +40,12 @@ const app = createApp({
         return ( d.is_favourite === false && d.featured === false ) && ( this.browseDatasets == true || this.searchText != '' ) && this.datasetMatchesSearchText(d)
       })
     },
+    mapViewActive() {
+      return this.view == 'map'
+    },
+    tableViewActive() {
+      return this.view == 'table'
+    },
   },
   mounted() {
     this.restoreState()
@@ -49,6 +55,8 @@ const app = createApp({
       this.searchText = ''
       this.browseDatasets = false
     })
+
+    window.vuethis = this;
   },
   methods: {
     loadDatasets(datasets = []) {
@@ -136,6 +144,9 @@ const app = createApp({
 
       if (this.shader) { state['shader'] = this.shader.name }
 
+      // don’t bother saving view unless it’s been changed from default
+      if ( this.view != 'map' ) { state['view'] = this.view }
+
       return state
     },
     url(pathname = window.location.pathname) {
@@ -157,7 +168,9 @@ const app = createApp({
       const pending = {}
 
       for (const [key, v] of params.entries()) {
-        if (key == 'shader') {
+        if (key == 'view' ) {
+          this.view = v;
+        } else if (key == 'shader') {
           pending[value] = () => { this.addShader(value) }
         } else {
           const index = key.indexOf('__')
@@ -179,21 +192,26 @@ const app = createApp({
     },
     changeView(newView) {
       this.view = newView
+      this.updateState()
 
-      if (this.view == 'map') {
-        this.$refs.table.setAttribute('hidden', true)
-        this.$refs.map.removeAttribute('hidden')
+      if ( this.view == 'map' ){
+        // Sometimes a race condition means the map is initialised while hidden.
+        // When this happens, Leaflet is unable to determine which tiles to load,
+        // because it doesn’t know what is visible and what isn’t.
+        // To fix this, we tell Leaflet to recalculate dimensions, on a slight delay,
+        // because the map element should be visible by then.
+        var _this = this
+        setTimeout(function(){
+          _this.map.invalidateSize()
+        }, 100)
       }
-      else {
-        this.$refs.map.setAttribute('hidden', true)
-        this.$refs.table.removeAttribute('hidden')
-      }
-
-      this.updateResults()
     },
     updateResults() {
-      if (this.view == 'map') { this.updateMap() }
-      else { this.updateTable() }
+      if (this.view == 'map') {
+        this.updateMap()
+      } else {
+        this.updateTable()
+      }
     },
     setUpMap() {
       this.map = L.map(this.$refs.map).setView([54.0934, -2.8948], 7)
@@ -234,7 +252,11 @@ const app = createApp({
         })
     },
     updateMap() {
-      if (!this.map) { this.setUpMap().then( this.filterMap ) } else { this.filterMap() }
+      if (!this.map) {
+        this.setUpMap().then( this.filterMap )
+      } else {
+        this.filterMap()
+      }
     },
     filterMap() {
       fetch(this.url('/explore.json'))
