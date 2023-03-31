@@ -17,7 +17,7 @@ class ExploreView(TitleMixin, TemplateView):
 class ExploreDatasetsJSON(TemplateView):
     def render_to_response(self, context, **response_kwargs):
         datasets = []
-        for d in DataSet.objects.filter(is_filterable=True).all():
+        for d in DataSet.objects.all():
             try:
                 options = list(map(itemgetter("title"), d.options))
             # catch bad options and ignore them for now
@@ -33,6 +33,7 @@ class ExploreDatasetsJSON(TemplateView):
                     data_set=d,
                     user=self.request.user,
                 ).exists(),
+                is_filterable=d.is_filterable,
                 featured=d.featured,
                 comparators=dict(
                     map(itemgetter("field_lookup", "title"), d.comparators)

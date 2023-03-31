@@ -28,17 +28,17 @@ const app = createApp({
     },
     favouriteDatasets() {
       return this.datasets.filter((d) => {
-        return ( d.is_favourite === true ) && this.datasetMatchesSearchText(d)
+        return ( d.is_favourite === true ) && this.datasetMatchesSearchText(d) && this.datasetIsFilterable(d)
       })
     },
     featuredDatasets() {
       return this.datasets.filter((d) => {
-        return ( d.featured === true ) && this.datasetMatchesSearchText(d)
+        return ( d.featured === true ) && this.datasetMatchesSearchText(d) && this.datasetIsFilterable(d)
       })
     },
     otherDatasets() {
       return this.datasets.filter((d) => {
-        return ( d.is_favourite === false && d.featured === false ) && ( this.browseDatasets == true || this.searchText != '' ) && this.datasetMatchesSearchText(d)
+        return ( d.is_favourite === false && d.featured === false ) && ( this.browseDatasets == true || this.searchText != '' ) && this.datasetMatchesSearchText(d) && this.datasetIsFilterable(d)
       })
     },
     mapViewActive() {
@@ -340,6 +340,11 @@ const app = createApp({
       var haystack = dataset.title + ' ' + dataset.source
       var needle = this.searchText
       return haystack.toLowerCase().indexOf(needle.toLowerCase()) > -1
+    },
+    datasetIsFilterable(dataset) {
+      // All datasets are considered "filterable" (ie: selectable from the modal)
+      // if we are currently picking a column to add to the table view.
+      return ( this.currentType == 'column' ) || dataset.is_filterable
     }
   }
 })
