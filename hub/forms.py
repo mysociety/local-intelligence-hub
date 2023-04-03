@@ -3,7 +3,13 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
-from django.forms import BaseModelFormSet, CharField, EmailField, modelformset_factory
+from django.forms import (
+    BaseModelFormSet,
+    CharField,
+    EmailField,
+    ModelForm,
+    modelformset_factory,
+)
 from django.template.loader import render_to_string
 
 from hub.models import UserProperties
@@ -65,17 +71,37 @@ class SignupForm(UserCreationForm):
         )
 
 
+class ActivateUserForm(ModelForm):
+    def save(self, commit=True):
+        user = super().save(commit=False)
+
+        props = user.userproperties
+        props.account_confirmed = True
+
+        if commit:
+            props.save()
+            user.save()
+
+        return user
+
+    class Meta:
+        model = User
+        fields = ["is_active", "id"]
+
+
 class BaseActivateUserFormSet(BaseModelFormSet):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.queryset = User.objects.filter(
-            is_active=False, userproperties__email_confirmed=True
+            is_active=False,
+            userproperties__email_confirmed=True,
+            userproperties__account_confirmed=False,
         )
 
 
 ActivateUserFormSet = modelformset_factory(
     User,
-    fields=("is_active", "id"),
+    form=ActivateUserForm,
     edit_only=True,
     formset=BaseActivateUserFormSet,
     extra=0,
@@ -85,11 +111,18 @@ ActivateUserFormSet = modelformset_factory(
 class InactiveCheckLoginForm(AuthenticationForm):
     def confirm_login_allowed(self, user):
         if not user.is_active:
-            if not user.userproperties.email_confirmed:
+            props = user.userproperties
+
+            if props.account_confirmed:
+                raise ValidationError(
+                    self.error_messages["inactive"],
+                    code="inactive",
+                )
+            elif not props.email_confirmed:
                 raise ValidationError(
                     "Please confirm your email address", code="inactive"
                 )
-            elif user.userproperties.email_confirmed:
+            elif props.email_confirmed:
                 raise ValidationError(
                     "Your account hasn’t been approved yet", code="inactive"
                 )
