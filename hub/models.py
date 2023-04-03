@@ -15,6 +15,7 @@ User = get_user_model()
 class UserProperties(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     organisation_name = models.TextField(null=True, blank=True)
+    full_name = models.TextField(null=True, blank=True)
     email_confirmed = models.BooleanField(default=False)
 
     def __str__(self):
