@@ -74,6 +74,7 @@ urlpatterns = [
         name="confirm_email",
     ),
     path("admin/", admin.site.urls),  # pragma: no cover
+    path("accounts/login/", accounts.LIHLoginView.as_view(), name="login"),
     path("accounts/", include("django.contrib.auth.urls")),
 ]
 

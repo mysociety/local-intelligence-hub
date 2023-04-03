@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.sites.shortcuts import get_current_site
+from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
 from django.forms import BaseModelFormSet, CharField, EmailField, modelformset_factory
 from django.template.loader import render_to_string
@@ -79,3 +80,22 @@ ActivateUserFormSet = modelformset_factory(
     formset=BaseActivateUserFormSet,
     extra=0,
 )
+
+
+class InactiveCheckLoginForm(AuthenticationForm):
+    def confirm_login_allowed(self, user):
+        if not user.is_active:
+            if not user.userproperties.email_confirmed:
+                raise ValidationError(
+                    "Please confirm your email address", code="inactive"
+                )
+            elif user.userproperties.email_confirmed:
+                raise ValidationError(
+                    "Your account hasn’t been approved yet", code="inactive"
+                )
+
+            else:
+                raise ValidationError(
+                    self.error_messages["inactive"],
+                    code="inactive",
+                )

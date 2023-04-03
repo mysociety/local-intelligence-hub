@@ -1,10 +1,15 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.views import LoginView
 from django.shortcuts import redirect, reverse
 from django.views.generic import FormView, TemplateView
 
-from hub.forms import ActivateUserFormSet, SignupForm
+from hub.forms import ActivateUserFormSet, InactiveCheckLoginForm, SignupForm
 from hub.mixins import TitleMixin
 from hub.tokens import get_user_for_token
+
+
+class LIHLoginView(LoginView):
+    form_class = InactiveCheckLoginForm
 
 
 class SignupView(TitleMixin, FormView):
