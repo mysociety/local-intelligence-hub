@@ -194,13 +194,12 @@ class AreaView(BaseAreaView):
             context["mp"]["support"] = [
                 {
                     "name": item.data_type.data_set.label,
-                    "position": "Support",
+                    "position": item.value(),
                     "url": f"https://edm.parliament.uk/early-day-motion/{item.data_type.name.split('_')[0]}",
                 }
                 for item in data.filter(data_type__data_set__subcategory="supporter")
             ]
-            if context["mp"]["support"] == []:
-                context["mp"]["support"] = None
+
         except Person.DoesNotExist:
             pass
 
