@@ -217,19 +217,44 @@ class DataSet(TypeMixin, models.Model):
     def filter(self, query, **kwargs):
         return Filter(self, query).run(**kwargs)
 
+    shades = [
+        "#ffffd9",
+        "#edf8b1",
+        "#c7e9b4",
+        "#7fcdbb",
+        "#41b6c4",
+        "#1d91c0",
+        "#225ea8",
+        "#253494",
+        "#081d58",
+    ]
+
+    def shade(self, val, cmin, cmax):
+        try:
+            x = float(val - cmin) / (cmax - cmin)
+        except ZeroDivisionError:
+            x = 0.5  # cmax == cmin
+
+        shade = int(x * 9) - 1
+        return self.shades[shade]
+
     def colours_for_areas(self, areas):
         values, mininimum, maximum = self.shader_value(areas)
         colours = {}
         for value in values:
-            opacity = value.opacity(mininimum, maximum) or 0.7
             data = value.value()
-            colours[value.gss] = {"colour": "#ed6832", "opacity": opacity}
             for option in self.options:
                 if option["title"] == data:
                     colours[value.gss] = {
                         "colour": option["shader"],
-                        "opacity": opacity,
+                        "opacity": value.opacity(mininimum, maximum) or 0.7,
                     }
+
+            if colours.get(value.gss, None) is None:
+                colours[value.gss] = {
+                    "colour": self.shade(data, mininimum, maximum),
+                    "opacity": 0.7,
+                }
 
         # if there is no data for an area then need to set the shader to opacity 0 otherwise
         # they will end up as the default
