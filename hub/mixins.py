@@ -1,7 +1,7 @@
 from collections import defaultdict
 from functools import cache
 
-from hub.models import Area, AreaData, DataSet, DataType, PersonData
+from hub.models import Area, AreaData, DataSet, DataType, Person, PersonData
 
 
 class TitleMixin:
@@ -63,6 +63,10 @@ class FilterMixin:
         col_names = self.request.GET.get("columns", "").split(",")
 
         for col in col_names:
+            if col in ["mp_name", "gss"]:
+                columns.append({"name": col})
+                continue
+
             try:
                 dataset = DataSet.objects.get(name=col)
                 columns.append(
@@ -113,7 +117,7 @@ class FilterMixin:
         to add, limited by the set of areas we've already filtered down to
         """
         area_ids = self.query().values_list("pk", flat=True)
-        cols = self.filters()
+        cols = self.filters().copy()
         cols.extend(self.columns())
 
         """
@@ -121,6 +125,18 @@ class FilterMixin:
         area
         """
         for col in cols:
+            if col["name"] == "mp_name":
+                for row in Person.objects.filter(area_id__in=area_ids).select_related(
+                    "area"
+                ):
+                    area_data[row.area.name][col["name"]].append(row.name)
+
+                continue
+            elif col["name"] == "gss":
+                for row in self.query():
+                    area_data[row.name][col["name"]].append(row.gss)
+                continue
+
             dataset = col["dataset"]
             if dataset.table == "areadata":
                 for row in AreaData.objects.filter(

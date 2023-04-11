@@ -51,6 +51,30 @@ class ExploreDatasetsJSON(TemplateView):
                 ]
             datasets.append(ds)
 
+        datasets.append(
+            {
+                "scope": "public",
+                "featured": False,
+                "is_favourite": False,
+                "is_filterable": False,
+                "name": "mp_name",
+                "title": "MP Name",
+                "source": "Wikipedia",
+            }
+        )
+
+        datasets.append(
+            {
+                "scope": "public",
+                "featured": False,
+                "is_favourite": False,
+                "is_filterable": False,
+                "name": "gss",
+                "title": "Constituency GSS code",
+                "source": "mySociety",
+            }
+        )
+
         return JsonResponse(list(datasets), safe=False)
 
 
