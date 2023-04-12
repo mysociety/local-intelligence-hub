@@ -2,12 +2,14 @@ import re
 from urllib.parse import urlencode
 
 from django import template
+from django.contrib.auth import get_user_model
 from django.template.defaultfilters import stringfilter
 from django.utils.safestring import mark_safe
 
 import utils as lih_utils
 
 register = template.Library()
+User = get_user_model()
 
 
 @register.filter(name="highlight")
@@ -42,3 +44,15 @@ def urlencode_params(**kwargs):
     Return encoded URL parameters
     """
     return urlencode(kwargs)
+
+
+@register.simple_tag
+def pending_account_requests(**kwargs):
+    """
+    Return number of account requests
+    """
+    return User.objects.filter(
+        is_active=False,
+        userproperties__email_confirmed=True,
+        userproperties__account_confirmed=False,
+    ).count()

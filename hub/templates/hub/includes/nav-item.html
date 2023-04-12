@@ -1,9 +1,14 @@
 <li class="nav-item">
-  {% if request.resolver_match.url_name == name %}
+  {% if href %}
+    <a class="nav-link" href="{{ href|escape }}">
+  {% elif request.resolver_match.url_name == name %}
     <a class="nav-link active" aria-current="page" href="{% url name %}">
   {% else %}
     <a class="nav-link" href="{% url name %}">
   {% endif %}
         {{ label }}
+        {% if badge %}
+          <span class="badge text-bg-danger rounded-pill ms-2">{{ badge }}</span>
+        {% endif %}
     </a>
 </li>

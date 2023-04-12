@@ -1,3 +1,5 @@
+{% load hub_filters %}
+
 <div class="site-footer py-5">
     <div class="container">
         <h2 class="h4 mb-3">Local Intelligence Hub</h2>
@@ -7,18 +9,14 @@
             </div>
             <div class="col-md-6 col-lg-5 offset-lg-1 mb-4">
                 <ul class="nav site-footer__nav">
-                    <li class="nav-item w-50">
-                        <a class="nav-link" href="{% url 'sources' %}">Data sources</a>
-                    </li>
-                    <li class="nav-item w-50">
-                        <a class="nav-link" href="#">Privacy Policy</a>
-                    </li>
-                    <li class="nav-item w-50">
-                        <a class="nav-link" href="https://www.theclimatecoalition.org/contact-us">Contact us</a>
-                    </li>
-                    <li class="nav-item w-50">
-                        <a class="nav-link" href="https://www.theclimatecoalition.org/donate">Donate</a>
-                    </li>
+                    {% include 'hub/includes/nav-item.html' with name='sources' label='Data sources' %}
+                    {% include 'hub/includes/nav-item.html' with href='#' label='Privacy Policy' %}
+                    {% include 'hub/includes/nav-item.html' with href='https://www.theclimatecoalition.org/contact-us' label='Contact us' %}
+                    {% include 'hub/includes/nav-item.html' with href='https://www.theclimatecoalition.org/donate' label='Donate' %}
+                  {% if perms.auth.edit_user %}
+                    {% pending_account_requests as num %}
+                    {% include 'hub/includes/nav-item.html' with name='activate_accounts' label='Admin' badge=num %}
+                  {% endif %}
                 </ul>
             </div>
         </div>

@@ -5,6 +5,12 @@
     }
 }
 
+// Flex layout, for nicely positioning .badge children
+.nav-link {
+    display: flex;
+    align-items: center;
+}
+
 .navbar-toggler {
     border: none;
     margin-right: calc(var(--bs-navbar-toggler-padding-x) * -1);
