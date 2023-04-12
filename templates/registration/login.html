@@ -14,13 +14,21 @@
 <div class="py-5">
     <div class="container">
 
-        <form method="post" action="{% url 'login' %}" class="mb-5 form-narrow">
+        <h1 class="mb-4">Sign in</h1>
+
+        <div style="max-width: 30em">
+            <p>During this initial launch phase, an account is required to access any data on the Local Intelligence Hub.</p>
+            <p><strong>If you don’t yet have an account</strong>, and are associated with any Climate Coalition member organisation, <a href="{% url 'signup' %}">you can request an account here</a>.</p>
+            <p>Later this year, we hope to make <em>public</em> data available to visitors without an account, but an account will still be required to access members-only data.</p>
+        </div>
+
+        <form method="post" action="{% url 'login' %}" class="my-5" style="max-width: 30em">
             {% csrf_token %}
             {% bootstrap_label "Email address" label_for="username" label_class="form-label" %}
             {% bootstrap_field form.username show_label='skip' %}
             {% bootstrap_form form exclude='username' %}
             <input type="hidden" name="next" value="{% url 'home' %}">
-            <button type="submit" class="btn btn-primary">Log in</button>
+            <button type="submit" class="btn btn-primary">Sign in</button>
         </form>
 
         <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
