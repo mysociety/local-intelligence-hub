@@ -12,6 +12,7 @@ const app = createApp({
       filters: [],
       columns: [],
       shader: null,
+      key: null,
       view: 'map',
       map: null,
       table: null,
@@ -138,6 +139,7 @@ const app = createApp({
     },
     removeShader(_shaderName) {
       this.shader = null
+      this.key = null
     },
     toggleBrowseDatasets() {
       this.browseDatasets = !this.browseDatasets
@@ -275,6 +277,11 @@ const app = createApp({
               })
             }
           }).addTo(this.map)
+          if ("properties" in data && data["properties"]) {
+            this.key = data["properties"]
+          } else {
+            this.key = null
+          }
         })
     },
     updateMap() {
@@ -310,6 +317,13 @@ const app = createApp({
               })
             }
           })
+
+          if ("properties" in data && data["properties"]) {
+            this.key = data["properties"]
+            console.log(this.key)
+          } else {
+            this.key = null
+          }
         })
     },
     updateTable() {

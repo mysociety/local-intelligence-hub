@@ -73,6 +73,14 @@
                                 <button @click="removeShader(shader.name)" type="button" class="btn-close p-0" aria-label="Remove shader"></button>
                             </div>
                         </div>
+                        <div v-if="key" class="bg-gray-100 border p-3 rounded mb-4">
+                            <div class="d-flex">
+                                <h3 class="h6 mb-0 me-auto">${ key.minimum } - ${ key.maximum }</h3>
+                                <div>
+                                    <span v-for="shade in key.shades" :style="`color: ${ shade }`">&#9608;</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <button v-if="!shader" @click="selectShader" type="button" class="btn btn-outline-secondary p-3 w-100">

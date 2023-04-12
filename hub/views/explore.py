@@ -101,7 +101,13 @@ class ExploreGeometryJSON(FilterMixin, TemplateView):
 
             geom.append(geometry)
 
-        return JsonResponse({"type": "FeatureCollection", "features": geom})
+        return JsonResponse(
+            {
+                "type": "FeatureCollection",
+                "features": geom,
+                "properties": colours.get("properties", None),
+            }
+        )
 
 
 class ExploreJSON(FilterMixin, TemplateView):
@@ -133,7 +139,13 @@ class ExploreJSON(FilterMixin, TemplateView):
 
             geom.append(geometry)
 
-        return JsonResponse({"type": "FeatureCollection", "features": geom})
+        return JsonResponse(
+            {
+                "type": "FeatureCollection",
+                "features": geom,
+                "properties": colours.get("properties", None),
+            }
+        )
 
 
 class ExploreCSV(FilterMixin, TemplateView):

@@ -240,6 +240,13 @@ class DataSet(TypeMixin, models.Model):
 
     def colours_for_areas(self, areas):
         values, mininimum, maximum = self.shader_value(areas)
+        props = {
+            "properties": {
+                "maximum": maximum,
+                "minimum": mininimum,
+                "shades": self.shades,
+            }
+        }
         colours = {}
         for value in values:
             data = value.value()
@@ -263,7 +270,7 @@ class DataSet(TypeMixin, models.Model):
             if colours.get(area.gss, None) is None:
                 missing[area.gss] = {"colour": "#ed6832", "opacity": 0}
 
-        return {**colours, **missing}
+        return {**colours, **missing, **props}
 
     def shader_value(self, area):
         if self.table == "areadata":
