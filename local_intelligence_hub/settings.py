@@ -52,6 +52,7 @@ NON_LOGIN_URLS = (
     "/confirmation_sent/",
     "/bad_token/",
     "/activate/",
+    "/privacy/",
 )
 
 # Application definition

@@ -38,6 +38,11 @@ class SourcesView(TitleMixin, TemplateView):
         return context
 
 
+class PrivacyView(TitleMixin, TemplateView):
+    page_title = "Privacy policy"
+    template_name = "hub/privacy.html"
+
+
 class StyleView(TitleMixin, TemplateView):
     page_title = "Style preview"
     template_name = "hub/style.html"
