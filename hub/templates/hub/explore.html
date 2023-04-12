@@ -81,6 +81,16 @@
                                 </div>
                             </div>
                         </div>
+                        <div v-if="legend" class="bg-gray-100 border p-3 rounded mb-4">
+                            <div class="d-flex">
+                                <h3 class="h6 mb-0 me-auto">Legend</h3>
+                                <div>
+                                    <p v-for="(shade, title) in legend">${ title }:
+                                    <span :style="`color: ${ shade }`">&#9608;</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <button v-if="!shader" @click="selectShader" type="button" class="btn btn-outline-secondary p-3 w-100">

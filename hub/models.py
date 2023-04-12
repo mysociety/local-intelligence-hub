@@ -240,13 +240,30 @@ class DataSet(TypeMixin, models.Model):
 
     def colours_for_areas(self, areas):
         values, mininimum, maximum = self.shader_value(areas)
-        props = {
-            "properties": {
-                "maximum": maximum,
-                "minimum": mininimum,
-                "shades": self.shades,
+        legend = {}
+        for option in self.options:
+            if option.get("shader", None) is not None:
+                legend[option["title"]] = option["shader"]
+
+        if len(legend) > 0:
+            props = {"properties": {"legend": legend}}
+        else:
+            d_max = maximum
+            d_min = mininimum
+            if self.is_float:
+                d_max = round(maximum, 1)
+                d_min = round(mininimum, 1)
+                if self.is_percentage:
+                    d_max = f"{d_max}%"
+                    d_min = f"{d_min}%"
+
+            props = {
+                "properties": {
+                    "maximum": d_max,
+                    "minimum": d_min,
+                    "shades": self.shades,
+                }
             }
-        }
         colours = {}
         for value in values:
             data = value.value()

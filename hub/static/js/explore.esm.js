@@ -13,6 +13,7 @@ const app = createApp({
       columns: [],
       shader: null,
       key: null,
+      legend: null,
       view: 'map',
       map: null,
       table: null,
@@ -140,6 +141,7 @@ const app = createApp({
     removeShader(_shaderName) {
       this.shader = null
       this.key = null
+      this.legend = null
     },
     toggleBrowseDatasets() {
       this.browseDatasets = !this.browseDatasets
@@ -277,10 +279,15 @@ const app = createApp({
               })
             }
           }).addTo(this.map)
+          this.key = null
+          this.legend = null
           if ("properties" in data && data["properties"]) {
-            this.key = data["properties"]
-          } else {
-            this.key = null
+            var p = data["properties"]
+            if ("legend" in p) {
+              this.legend = p["legend"]
+            } else {
+              this.key = p
+            }
           }
         })
     },
@@ -318,11 +325,15 @@ const app = createApp({
             }
           })
 
+          this.key = null
+          this.legend = null
           if ("properties" in data && data["properties"]) {
-            this.key = data["properties"]
-            console.log(this.key)
-          } else {
-            this.key = null
+            var p = data["properties"]
+            if ("legend" in p) {
+              this.legend = p["legend"]
+            } else {
+              this.key = p
+            }
           }
         })
     },
