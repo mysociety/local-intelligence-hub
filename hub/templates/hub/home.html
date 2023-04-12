@@ -17,7 +17,7 @@
                 <h2 class="mb-4 text-primary">Jump to an area or MP</h2>
                 <p class="mb-4" style="max-width: 26em;">See detailed data about a parliamentary constituency and its MP, including group memberships, opinion polling, and local presence in the area.</p>
                 <label class="form-label" for="search">Search by constituency name, MP name, or postcode</label>
-                <form class="row mt-2 mb-2" style="max-width: 30rem;" action="{% url 'area_search' %}">
+                <form class="row mt-2 mb-2 js-homepage-search" style="max-width: 30rem;" action="{% url 'area_search' %}">
                     <div class="col">
                         <div class="search-input search-input-lg">
                             {% include 'hub/includes/icons/search.html' %}

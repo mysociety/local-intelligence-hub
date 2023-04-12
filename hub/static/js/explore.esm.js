@@ -1,6 +1,7 @@
 import { Modal } from '../bootstrap/bootstrap.esm.min.js'
 import { createApp } from '../vue/vue.esm-browser.prod.js'
 import L from '../leaflet/leaflet-1.9.3.esm.js'
+import trackEvent from './analytics.esm.js'
 
 const app = createApp({
   delimiters: ['${', '}'],
@@ -88,16 +89,19 @@ const app = createApp({
       this.currentType = 'filter'
       this.modal.show()
       this.loadDatasets().then(() => { this.loaded = true })
+      trackEvent('explore_add_filter_click')
     },
     selectShader() {
       this.currentType = 'shader'
       this.modal.show()
       this.loadDatasets().then(() => { this.loaded = true })
+      trackEvent('explore_add_shader_click')
     },
     selectColumn() {
       this.currentType = 'column'
       this.modal.show()
       this.loadDatasets().then(() => { this.loaded = true })
+      trackEvent('explore_add_column_click')
     },
     addFilterOrShader(datasetName) {
       switch (this.currentType) {
@@ -123,6 +127,10 @@ const app = createApp({
       }
 
       this.filters.push(dataset)
+
+      trackEvent('explore_filter_added', {
+        'dataset': datasetName
+      });
     },
     removeFilter(filterName) {
       this.filters = this.filters.filter(f => f.name != filterName)
@@ -131,12 +139,20 @@ const app = createApp({
       const dataset = this.getDataset(datasetName)
 
       this.columns.push(dataset)
+
+      trackEvent('explore_column_added', {
+        'dataset': datasetName
+      });
     },
     removeColumn(columnName) {
       this.columns = this.columns.filter(f => f.name != columnName)
     },
     addShader(datasetName) {
       this.shader = this.getDataset(datasetName)
+
+      trackEvent('explore_shader_added', {
+        'dataset': datasetName
+      });
     },
     removeShader(_shaderName) {
       this.shader = null
@@ -242,6 +258,10 @@ const app = createApp({
       } else {
         this.updateTable()
       }
+
+      trackEvent('explore_update_view', {
+        'view': this.view
+      });
     },
     setUpMap() {
       this.map = L.map(this.$refs.map).setView([54.0934, -2.8948], 7)
@@ -274,7 +294,12 @@ const app = createApp({
                 mouseover: (e) => { e.target.setStyle({ weight: 5 }) },
                 mouseout: (e) => { e.target.setStyle({ weight: 2}) },
                 click: (e) => {
-                  window.location.href = `/area/${feature.properties.type}/${feature.properties.name}`
+                  trackEvent('explore_area_click', {
+                    'area_type': feature.properties.type,
+                    'area_name': feature.properties.name
+                  }).always(function(e){
+                    window.location.href = `/area/${feature.properties.type}/${feature.properties.name}`
+                  });
                 },
               })
             }

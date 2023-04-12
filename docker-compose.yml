@@ -33,6 +33,8 @@ services:
       EMAIL_HOST: email.svc
       CACHE_FILE: 'data/cache'
       MAPIT_URL: 'https://mapit.mysociety.org/'
+      GOOGLE_ANALYTICS: ${GOOGLE_ANALYTICS:-}
+      GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
       DJANGO_SUPERUSER_USERNAME: 'admin'
       DJANGO_SUPERUSER_PASSWORD: 'password'
       DJANGO_SUPERUSER_EMAIL: 'admin@localhost'

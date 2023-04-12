@@ -22,6 +22,8 @@ env = environ.Env(
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, []),
     HIDE_DEBUG_TOOLBAR=(bool, False),
+    GOOGLE_ANALYTICS=(str, ""),
+    GOOGLE_SITE_VERIFICATION=(str, ""),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -35,6 +37,8 @@ CACHE_FILE = env("CACHE_FILE")
 HIDE_DEBUG_TOOLBAR = env("HIDE_DEBUG_TOOLBAR")
 MAPIT_URL = env("MAPIT_URL")
 MAPIT_API_KEY = env("MAPIT_API_KEY")
+GOOGLE_ANALYTICS = env("GOOGLE_ANALYTICS")
+GOOGLE_SITE_VERIFICATION = env("GOOGLE_SITE_VERIFICATION")
 
 # make sure CSRF checking still works behind load balancers
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -97,6 +101,7 @@ TEMPLATES = [
                 "django.template.context_processors.media",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "hub.context_processors.analytics",
             ],
         },
     },

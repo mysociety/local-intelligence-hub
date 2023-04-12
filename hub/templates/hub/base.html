@@ -12,6 +12,25 @@
     {% endcompress %}
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,700;0,800;1,400&display=swap">
     <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
+  {% if GOOGLE_SITE_VERIFICATION %}
+    <meta name="google-site-verification" content="{{ GOOGLE_SITE_VERIFICATION }}">
+  {% endif %}
+  {% if GOOGLE_ANALYTICS %}
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ GOOGLE_ANALYTICS }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '{{ GOOGLE_ANALYTICS }}');
+        gtag("consent", "default", {
+            ad_storage: "denied",
+            analytics_storage: "denied",
+            functionality_storage: "denied",
+            personalization_storage: "denied",
+            security_storage: "denied"
+        });
+    </script>
+  {% endif %}
     <script type="module">document.documentElement.classList.remove('no-js'); document.documentElement.classList.add('js');</script>
 </head>
 <body class="{% block bodyclass %}{% endblock %}">

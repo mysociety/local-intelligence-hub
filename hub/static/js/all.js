@@ -1,5 +1,6 @@
 import $ from '../jquery/jquery.esm.js'
 import { Chart, registerables } from '../chartjs/chart.esm.js'
+import trackEvent from './analytics.esm.js'
 
 Chart.register(...registerables);
 
@@ -25,6 +26,8 @@ $(function(){
 
             $icon.addClass('d-none');
             $spinner.removeClass('d-none');
+
+            trackEvent('homepage_geolocate_click');
 
             navigator.geolocation.getCurrentPosition(function(position){
                 var params = {
@@ -90,6 +93,16 @@ $(function(){
         $('.site-footer > .container').addClass('pb-8 pb-md-6')
         $('head').append('<link href="https://fonts.googleapis.com/css2?family=Redacted+Script" rel="stylesheet">')
     }
+
+    $('.js-homepage-search').on('submit', function(e){
+        var $form = $(this);
+        if ( ! $form.data('submitRecorded') ) {
+            e.preventDefault();
+            trackEvent('homepage_search_form_submit').always(function(){
+                $form.data('submitRecorded', true).submit();
+            });
+        }
+    })
 })
 
 var makeChart = function() {
