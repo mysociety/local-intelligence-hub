@@ -85,6 +85,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "hub.middleware.AuthPageProtectionMiddleware",
+    "hub.middleware.RecordLastSeenMiddleware",
 ]
 
 ROOT_URLCONF = "local_intelligence_hub.urls"

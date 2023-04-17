@@ -10,6 +10,7 @@ class UserPropertiesAdmin(admin.ModelAdmin):
         "user__is_active",
         "email_confirmed",
         "account_confirmed",
+        "last_seen",
     ]
     list_display = [
         "user",
@@ -18,6 +19,7 @@ class UserPropertiesAdmin(admin.ModelAdmin):
         "email_confirmed",
         "account_confirmed",
         "user_is_active",
+        "last_seen",
     ]
 
     @admin.display(description="Is Active")

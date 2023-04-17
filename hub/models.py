@@ -18,6 +18,7 @@ class UserProperties(models.Model):
     full_name = models.TextField(null=True, blank=True)
     email_confirmed = models.BooleanField(default=False)
     account_confirmed = models.BooleanField(default=False)
+    last_seen = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.user.username
