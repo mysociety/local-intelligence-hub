@@ -1,0 +1,30 @@
+.homepage-map-section {
+    background: #fff url('../img/map.png') 100% 50% no-repeat;
+    background-size: auto 130%;
+
+    @include media-breakpoint-up('lg') {
+        background-position: 100% 70%;
+        background-size: auto 180%;
+    }
+
+    @include media-breakpoint-up('xl') {
+        background-position: 80% 70%;
+    }
+
+    .row > :first-child {
+        background-image: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.8) 85%, rgba(255, 255, 255, 0) 100%)
+    }
+
+    .row > :last-child {
+        max-width: 32rem;
+    }
+
+    .row > a {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .filter {
+        min-width: 80%;
+    }
+}
