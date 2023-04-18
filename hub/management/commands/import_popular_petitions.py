@@ -23,6 +23,7 @@ class Command(BaseAreaImportCommand):
                 "data_type": "json",
                 "category": "place",
                 "source_type": "json",
+                "table": "areadata",
                 "is_filterable": False,
             },
         }
