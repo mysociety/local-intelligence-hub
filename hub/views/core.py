@@ -48,6 +48,11 @@ class AboutView(TitleMixin, TemplateView):
     template_name = "hub/about.html"
 
 
+class ContactView(TitleMixin, TemplateView):
+    page_title = "Contact us"
+    template_name = "hub/contact.html"
+
+
 class StyleView(TitleMixin, TemplateView):
     page_title = "Style preview"
     template_name = "hub/style.html"

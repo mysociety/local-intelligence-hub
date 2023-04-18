@@ -58,6 +58,7 @@ NON_LOGIN_URLS = (
     "/activate/",
     "/privacy/",
     "/about/",
+    "/contact/",
     "/",
 )
 
