@@ -5,15 +5,33 @@ from hub.models import DataSet, UserProperties
 
 @admin.register(UserProperties)
 class UserPropertiesAdmin(admin.ModelAdmin):
-    pass
+    search_fields = ["user__username", "full_name", "organisation_name"]
+    list_filter = [
+        "user__is_active",
+        "email_confirmed",
+        "account_confirmed",
+    ]
+    list_display = [
+        "user",
+        "full_name",
+        "organisation_name",
+        "email_confirmed",
+        "account_confirmed",
+        "user_is_active",
+    ]
+
+    @admin.display(description="Is Active")
+    def user_is_active(self, obj):
+        return obj.user.is_active
 
 
 @admin.register(DataSet)
 class DataSetAdmin(admin.ModelAdmin):
     list_display = ("__str__", "description", "category", "order", "featured")
     list_editable = ("order", "featured")
-    list_filter = ("category", "featured")
+    list_filter = ("category", "featured", "data_type")
     ordering = ("order", "name")
+    search_fields = ["name", "description", "source"]
 
     def has_module_permission(self, request):
         if request.user.is_superuser or request.user.has_perm("hub.order_and_feature"):
