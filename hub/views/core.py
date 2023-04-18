@@ -43,6 +43,11 @@ class PrivacyView(TitleMixin, TemplateView):
     template_name = "hub/privacy.html"
 
 
+class AboutView(TitleMixin, TemplateView):
+    page_title = "About"
+    template_name = "hub/about.html"
+
+
 class StyleView(TitleMixin, TemplateView):
     page_title = "Style preview"
     template_name = "hub/style.html"

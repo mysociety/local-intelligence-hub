@@ -9,8 +9,9 @@
             </div>
             <div class="col-md-6 col-lg-5 offset-lg-1 mb-4">
                 <ul class="nav site-footer__nav">
-                    {% include 'hub/includes/nav-item.html' with name='sources' label='Data sources' %}
+                    {% include 'hub/includes/nav-item.html' with name='about' label='About' %}
                     {% include 'hub/includes/nav-item.html' with name='privacy' label='Privacy policy' %}
+                    {% include 'hub/includes/nav-item.html' with name='sources' label='Data sources' %}
                     {% include 'hub/includes/nav-item.html' with href='https://www.theclimatecoalition.org/contact-us' label='Contact us' %}
                     {% include 'hub/includes/nav-item.html' with href='https://www.theclimatecoalition.org/donate' label='Donate' %}
                   {% if perms.auth.edit_user %}
