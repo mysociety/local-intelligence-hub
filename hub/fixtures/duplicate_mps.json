@@ -1,0 +1,110 @@
+[
+    {
+      "model": "hub.person",
+      "pk": 1,
+      "fields": {
+        "name": "James Madeupname",
+        "external_id": "1",
+        "person_type": "MP",
+        "id_type": "parlid",
+        "area": 1
+      }
+    },
+    {
+      "model": "hub.person",
+      "pk": 2,
+      "fields": {
+        "name": "Juliet Madeupname",
+        "external_id": "2",
+        "person_type": "MP",
+        "id_type": "parlid",
+        "area": 2
+      }
+    },
+    {
+        "model": "hub.person",
+        "pk": 3,
+        "fields": {
+          "name": "Juliet Replacement",
+          "external_id": "3",
+          "person_type": "MP",
+          "id_type": "parlid",
+          "area": 2
+        }
+    },
+    {
+        "model": "hub.area",
+        "pk": 1,
+        "fields": {
+          "gss": "E10000001",
+          "mapit_id": "1",
+          "name": "South Borsetshire",
+          "area_type": "WMC",
+          "geometry": "{\"name\": \"South Borsetshire\", \"properties\": {}}"
+        }
+      },
+      {
+        "model": "hub.area",
+        "pk": 2,
+        "fields": {
+          "gss": "E10000002",
+          "mapit_id": "2",
+          "name": "North Borsetshire",
+          "area_type": "WMC",
+          "geometry": "{\"name\": \"North Borsetshire\", \"properties\": {}}"
+        }
+      },
+      {
+        "model": "hub.dataset",
+        "pk": 1,
+        "fields": {
+          "name": "mp_last_elected",
+          "data_type": "date",
+          "last_update": "2022-10-10T13:20:30+00:00",
+          "source": "https://wikipedia.org",
+          "table": "person__persondata"
+        }
+      },
+      {
+        "model": "hub.datatype",
+        "pk": 1,
+        "fields": {
+          "data_set": 1,
+          "name": "mp_last_elected",
+          "data_type": "date",
+          "last_update": "2022-10-10T13:20:30+00:00"
+        }
+      },
+      {
+        "model": "hub.persondata",
+        "pk": 1,
+        "fields": {
+          "person": 1,
+          "data_type": 1,
+          "data": "",
+          "date": "2005-04-05T00:00:00+00:00"
+        }
+      },
+      {
+        "model": "hub.persondata",
+        "pk": 2,
+        "fields": {
+          "person": 2,
+          "data_type": 1,
+          "data": "",
+          "date": "2005-05-05T00:00:00+00:00"
+        }
+      },
+      {
+        "model": "hub.persondata",
+        "pk": 3,
+        "fields": {
+          "person": 3,
+          "data_type": 1,
+          "data": "",
+          "date": "2019-12-12T00:00:00+00:00"
+        }
+      }
+  ]
+  
+  

@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 from django.core.management import call_command
 from django.test import TestCase
 
+from hub.management.commands.import_mps import Command as ImportMpsCommand
 from hub.models import Person, PersonData
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -118,3 +119,63 @@ class ImportMPElectionResultsTestCase(TestCase):
                 self.assertEqual(data.value().date().isoformat(), value)
             else:
                 self.assertEqual(data.value(), value)
+
+
+class DuplicateMPsTestCase(TestCase):
+    fixtures = ["duplicate_mps.json"]
+
+    @patch("hub.management.commands.import_mps.call_command")
+    def test_duplicates_detected(self, mock_call_command):
+        # Run the duplicate MPs method
+        import_mps = ImportMpsCommand()
+        import_mps.check_for_duplicate_mps()
+
+        # Check that it's making calls to other commands
+        # (showing that it's found a duplicate)
+        self.assertTrue(mock_call_command.called)
+
+    @patch("hub.management.commands.import_mps.call_command")
+    def test_only_one_mp_left(self, mock_call_command):
+        # Run the duplicate MPs method
+        import_mps = ImportMpsCommand()
+        import_mps.check_for_duplicate_mps()
+
+        # Count the number of People objects associated
+        # with area 2, and ensure it is one
+        self.assertEqual(Person.objects.filter(area__id=2).count(), 1)
+
+    @patch("hub.management.commands.import_mps.call_command")
+    def test_correct_mp_left(self, mock_call_command):
+        # Run the duplicate MPs method
+        import_mps = ImportMpsCommand()
+        import_mps.check_for_duplicate_mps()
+
+        # Check the MP returned is the most recently
+        # elected MP (as of last elections)
+        self.assertEqual(
+            Person.objects.get(area__id=2),
+            Person.objects.get(name="Juliet Replacement"),
+        )
+
+    @patch("hub.management.commands.import_mps.call_command")
+    @patch("hub.management.commands.import_mps.MP_IMPORT_COMMANDS", ["A", "B", "C"])
+    def test_data_reimported(self, mock_call_command):
+        # Run the duplicate MPs method
+        import_mps = ImportMpsCommand()
+        import_mps.check_for_duplicate_mps()
+
+        # Check that the call_command was executed once
+        # for each import command, and then again for
+        # the initial data to determine the correct duplicate
+        self.assertEqual(mock_call_command.call_count, 4)
+
+    @patch("hub.management.commands.import_mps.call_command")
+    def test_data_not_reimported_if_no_duplicates(self, mock_call_command):
+        # Remove the duplicated MP
+        Person.objects.get(name="Juliet Replacement").delete()
+        # Run the duplicate MPs method
+        import_mps = ImportMpsCommand()
+        import_mps.check_for_duplicate_mps()
+
+        # Check that the call_command was never executed
+        self.assertEqual(mock_call_command.call_count, 0)

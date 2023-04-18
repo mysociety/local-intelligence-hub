@@ -3,7 +3,9 @@ from collections import Counter
 
 from django.conf import settings
 from django.core.files import File
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
+from django.db.models import Count
 
 import magic
 import requests
@@ -28,6 +30,14 @@ party_shades = {
     "independent politician": "#DCDCDC",
 }
 
+MP_IMPORT_COMMANDS = [
+    "import_mps_relevant_votes",
+    "import_mps_select_committee_membership",
+    "import_mps_appg_data",
+    "import_mp_job_titles",
+    "import_mp_engagement",
+]
+
 
 class Command(BaseCommand):
     help = "Import UK Members of Parliament"
@@ -40,6 +50,7 @@ class Command(BaseCommand):
     def handle(self, quiet: bool = False, *args, **options):
         self._quiet = quiet
         self.import_mps()
+        self.check_for_duplicate_mps()
         self.import_mp_images()
 
     def get_mp_data(self):
@@ -200,3 +211,38 @@ class Command(BaseCommand):
             image = File(open(file, "rb"))
             mp.photo.save(f"mp_{mp.external_id}.{extension}", image)
             mp.save()
+
+    def check_for_duplicate_mps(self):
+        duplicates = (
+            Person.objects.distinct()
+            .values("area_id")
+            .annotate(area_count=Count("area_id"))
+            .filter(area_count__gt=1)
+        )
+        if duplicates.count() > 0:
+            print(
+                f"Duplicate MPs found for {str(duplicates.count())} area(s). Removing duplicates"
+            )
+            # First, get the election results so that we can compare elected dates
+            call_command("import_mps_election_results")
+
+            # Remove all duplicate MPs
+            for area in duplicates:
+                duplicate_mps = Person.objects.filter(area=area["area_id"]).values_list(
+                    "external_id", flat=True
+                )
+                least_recent_mp = (
+                    PersonData.objects.filter(
+                        data_type__data_set__name="mp_last_elected"
+                    )
+                    .filter(person__external_id__in=duplicate_mps)
+                    .latest("date")
+                    .person.external_id
+                )
+                mps_to_delete = list(duplicate_mps)
+                mps_to_delete.remove(least_recent_mp)
+                Person.objects.filter(external_id__in=mps_to_delete).delete()
+
+            print("Rerunning MP import scripts")
+            for command_name in MP_IMPORT_COMMANDS:
+                call_command(command_name)
