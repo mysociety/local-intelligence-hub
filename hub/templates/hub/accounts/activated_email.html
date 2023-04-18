@@ -1,0 +1,22 @@
+{% autoescape off %}
+{% if user.userproperties.full_name %}
+Hi {{ user.userproperties.full_name }},
+{% else %}
+Hi {{ user.username }},
+{% endif %}
+
+Thank you for requesting an account. Your Local Intelligence Hub account has now been authorised and you can go ahead and start using your login details to access all of the data the Hub has to offer:
+
+https://{{ domain }}
+
+If you have any questions about the Hub, please check out our FAQ page:
+
+https://{{ domain }}{% url 'about' %}
+
+Enjoy using our powerful data tool.
+
+Kind regards,
+
+Julia, Jake and the team at TCC
+
+{% endautoescape %}

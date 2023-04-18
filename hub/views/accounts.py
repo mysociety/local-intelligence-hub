@@ -65,5 +65,8 @@ class ActivateAccountsView(PermissionRequiredMixin, TitleMixin, FormView):
     success_url = "/activate_accounts/"
 
     def form_valid(self, form):
-        form.save()
+        self.object = form.save()
+        for sub_form in form:
+            if sub_form.cleaned_data["is_active"]:
+                sub_form.send_notification_email(request=self.request)
         return super().form_valid(form)

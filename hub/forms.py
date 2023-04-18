@@ -58,7 +58,6 @@ class SignupForm(UserCreationForm):
         to_email = user.email
         email = EmailMessage(mail_subject, message, to=[to_email])
         email.send()
-        print("email sent!")
 
     class Meta:
         model = User
@@ -83,6 +82,23 @@ class ActivateUserForm(ModelForm):
             user.save()
 
         return user
+
+    def send_notification_email(self, request=None):
+        user = self.cleaned_data["id"]
+        current_site = get_current_site(request)
+        mail_subject = render_to_string(
+            "hub/accounts/activated_email_subject.txt"
+        ).strip()
+        message = render_to_string(
+            "hub/accounts/activated_email.html",
+            {
+                "user": user,
+                "domain": current_site.domain,
+            },
+        )
+        to_email = user.email
+        email = EmailMessage(mail_subject, message, to=[to_email])
+        email.send()
 
     class Meta:
         model = User
