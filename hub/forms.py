@@ -5,12 +5,14 @@ from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
 from django.forms import (
     BaseModelFormSet,
+    BooleanField,
     CharField,
     EmailField,
     ModelForm,
     modelformset_factory,
 )
 from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
 
 from hub.models import UserProperties
 from hub.tokens import make_token_for_user
@@ -22,6 +24,13 @@ class SignupForm(UserCreationForm):
     username = EmailField(label="Email")
     organisation = CharField()
     full_name = CharField()
+    terms = BooleanField(
+        required=True,
+        label=mark_safe(
+            'I agree to the <a href="/terms/" target="_blank">Terms of use</a> and will use the Local Intelligence Hub in the spirit in which it was developed'
+        ),
+        error_messages={"required": "You must accept the Terms of use"},
+    )
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -32,6 +41,7 @@ class SignupForm(UserCreationForm):
             user=user,
             organisation_name=self.cleaned_data.get("organisation"),
             full_name=self.cleaned_data.get("full_name"),
+            agreed_terms=self.cleaned_data.get("terms"),
         )
 
         if commit:

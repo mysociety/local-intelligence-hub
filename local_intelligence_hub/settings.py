@@ -57,6 +57,7 @@ NON_LOGIN_URLS = (
     "/bad_token/",
     "/activate/",
     "/privacy/",
+    "/terms/",
     "/about/",
     "/contact/",
     "/",

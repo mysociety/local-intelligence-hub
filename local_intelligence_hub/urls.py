@@ -50,6 +50,7 @@ urlpatterns = [
     ),
     path("sources/", core.SourcesView.as_view(), name="sources"),
     path("privacy/", core.PrivacyView.as_view(), name="privacy"),
+    path("terms/", core.TermsView.as_view(), name="terms"),
     path("about/", core.AboutView.as_view(), name="about"),
     path("contact/", core.ContactView.as_view(), name="contact"),
     path("location/", area.AreaSearchView.as_view(), name="area_search"),

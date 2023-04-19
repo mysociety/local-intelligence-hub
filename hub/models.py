@@ -19,6 +19,7 @@ class UserProperties(models.Model):
     email_confirmed = models.BooleanField(default=False)
     account_confirmed = models.BooleanField(default=False)
     last_seen = models.DateTimeField(null=True, blank=True)
+    agreed_terms = models.BooleanField(default=False)
 
     def __str__(self):
         return self.user.username
