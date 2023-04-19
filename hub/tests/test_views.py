@@ -24,7 +24,7 @@ class Test404Page(TestCase):
 
 class TestLoginEnforced(TestCase):
     def test_login_required(self):
-        url = reverse("home")
+        url = reverse("explore")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 302)
 
