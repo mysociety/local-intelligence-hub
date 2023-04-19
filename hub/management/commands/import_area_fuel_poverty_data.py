@@ -18,6 +18,8 @@ class Command(
     )
     data_url = "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1081191/sub-regional-fuel-poverty-2022-tables.xlsx"
 
+    source_date = "2020"
+
     cast_field = FloatField
     cons_row = "Parliamentary Constituency Code"
     message = "Importing constituency fuel poverty data"
@@ -29,6 +31,7 @@ class Command(
                 "data_type": "percent",
                 "category": "place",
                 "source_label": "Department for Business, Energy & Industrial Strategy",
+                "source_date": source_date,
                 "source": source_url,
                 "source_type": "xlxs",
                 "data_url": data_url,

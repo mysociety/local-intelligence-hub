@@ -13,6 +13,8 @@ class Command(BaseConstituencyCountImportCommand):
     cons_col = "gss"
     data_file = settings.BASE_DIR / "data" / "tearfund_churches_processed.csv"
 
+    source_date = "November 2022"
+
     defaults = {
         "label": "Churches that have declared a climate emergency",
         "description": "Number of churches that have declared a climate emergency",
@@ -20,6 +22,7 @@ class Command(BaseConstituencyCountImportCommand):
         "category": "movement",
         "subcategory": "places_and_spaces",
         "source_label": "Tearfund",
+        "source_date": source_date,
         "source": "https://www.tearfund.org/",
         "source_type": "csv",
         "data_url": "",

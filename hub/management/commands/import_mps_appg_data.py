@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.core.management.base import BaseCommand
 
 from mysoc_dataset import get_dataset_df, get_dataset_url
@@ -28,6 +30,8 @@ class Command(BaseCommand):
         version_name="latest",
         file_name="appg_officers.csv",
     )
+
+    source_date = datetime.now().strftime("%B %Y")
 
     def handle(self, quiet=False, *args, **options):
         self._quiet = quiet
@@ -80,6 +84,7 @@ class Command(BaseCommand):
                 "description": "Membership in APPGs as published on the parliament website",
                 "label": "APPG membership",
                 "source_label": "UK Parliament",
+                "source_date": self.source_date,
                 "source": "https://parliament.uk/",
                 "table": "person__persondata",
                 "options": options,

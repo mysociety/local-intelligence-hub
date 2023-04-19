@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.conf import settings
 
 import pandas as pd
@@ -11,6 +13,9 @@ from .base_importers import BaseAreaImportCommand
 class Command(BaseAreaImportCommand):
     help = "Import data about WI groups per constituency"
     data_file = settings.BASE_DIR / "data" / "wi_groups.csv"
+
+    source_date = datetime.now().strftime("%B %Y")
+
     defaults = {
         "label": "Women’s Institute groups",
         "description": "Descriptions of Women's Institute Groups",
@@ -18,6 +23,7 @@ class Command(BaseAreaImportCommand):
         "category": "movement",
         "subcategory": "groups",
         "source_label": "Woman’s Institute",
+        "source_date": source_date,
         "source": "https://www.thewi.org.uk/",
         "source_type": "api",
         "data_url": "https://wi-search.squiz.cloud/s/search.json?collection=nfwi-federations&profile=_default&query=!null&sort=prox&sort=prox&start_rank=1&origin=54.093409,-2.89479&maxdist=9999&num_ranks=9999",
@@ -33,6 +39,7 @@ class Command(BaseAreaImportCommand):
         "data_type": "integer",
         "category": "movement",
         "source_label": "Woman’s Institute",
+        "source_date": source_date,
         "source": "https://www.thewi.org.uk/",
         "source_type": "api",
         "data_url": "https://wi-search.squiz.cloud/s/search.json?collection=nfwi-federations&profile=_default&query=!null&sort=prox&sort=prox&start_rank=1&origin=54.093409,-2.89479&maxdist=9999&num_ranks=9999",

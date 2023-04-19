@@ -12,6 +12,8 @@ class Command(BaseCommand):
     source_url = "https://commonslibrary.parliament.uk/constituency-statistics-population-by-age/"
     data_url = "https://data.parliament.uk/resources/constituencystatistics/PowerBIData/Demography/Population.xlsx"
 
+    source_date = "mid-2020"
+
     def add_arguments(self, parser):
         parser.add_argument(
             "-q", "--quiet", action="store_true", help="Silence progress bars."
@@ -28,6 +30,7 @@ class Command(BaseCommand):
             "category": "place",
             "is_range": True,
             "source_label": "House of Commons Library",
+            "source_date": self.source_date,
             "source": self.source_url,
             "source_type": "xlxs",
             "table": "areadata",

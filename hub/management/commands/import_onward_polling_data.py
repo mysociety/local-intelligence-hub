@@ -23,10 +23,13 @@ class Command(BaseImportFromDataFrameCommand):
     message = "Importing Onward polling data"
     uses_gss = False
 
+    source_date = "July 2022"
+
     defaults = {
         "data_type": "integer",
         "category": "opinion",
         "source_label": "Public First, commissioned by Onward UK",
+        "source_date": source_date,
         "source": "https://www.ukonward.com/",
         "source_type": "google sheet",
         "subcategory": "net_zero_support",

@@ -13,6 +13,8 @@ class Command(BaseConstituencyCountImportCommand):
     cons_col = "gss"
     data_file = settings.BASE_DIR / "data" / "save_the_children_shops_processed.csv"
 
+    source_date = "November 2022"
+
     defaults = {
         "label": "Number of Save the Children shops",
         "description": "Number of Save the Children shops",
@@ -20,6 +22,7 @@ class Command(BaseConstituencyCountImportCommand):
         "category": "movement",
         "subcategory": "places_and_spaces",
         "source_label": "Save the Children",
+        "source_date": source_date,
         "source": "https://www.savethechildren.org.uk/",
         "source_type": "csv",
         "data_url": "",

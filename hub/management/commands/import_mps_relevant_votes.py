@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.core.management.base import BaseCommand
 
 import requests
@@ -14,6 +16,8 @@ class Command(BaseCommand):
 
     vote_api_url = "https://commonsvotes-api.parliament.uk/data/division/"
     edm_api_url = "https://oralquestionsandmotions-api.parliament.uk/EarlyDayMotion/"
+
+    source_date = datetime.now().strftime("%B %Y")
 
     def handle(self, quiet=False, *args, **options):
         self._quiet = quiet
@@ -179,6 +183,7 @@ class Command(BaseCommand):
                         "description": f"Supporters of {edm['edm_name']}",
                         "label": edm["edm_name"],
                         "source_label": "UK Parliament",
+                        "source_date": self.source_date,
                         "source": "https://parliament.uk/",
                         "table": "person__persondata",
                         "options": edm_options,

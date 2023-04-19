@@ -13,12 +13,15 @@ class Command(BaseConstituencyCountImportCommand):
     cons_col = "gss"
     data_file = settings.BASE_DIR / "data" / "foodbanks_per_constituency.csv"
 
+    source_date = "December 2022"
+
     defaults = {
         "label": "Number of Trussell Trust foodbanks",
         "description": "Number of Trussell Trust foodbanks",
         "data_type": "integer",
         "category": "movement",
         "source_label": "Trussell Trust",
+        "source_date": source_date,
         "source": "https://www.trusselltrust.org/",
         "source_type": "csv",
         "data_url": "",

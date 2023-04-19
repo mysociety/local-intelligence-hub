@@ -15,11 +15,14 @@ class Command(BaseImportFromDataFrameCommand):
     message = "Importing FOE supporters data"
     uses_gss = False
 
+    source_date = "November 2022"
+
     defaults = {
         "data_type": "integer",
         "category": "movement",
         "subcategory": "supporters_and_activists",
         "source_label": "Friends of the Earth",
+        "source_date": source_date,
         "source": "https://friendsoftheearth.uk/",
         "source_type": "google sheet",
         "table": "areadata",

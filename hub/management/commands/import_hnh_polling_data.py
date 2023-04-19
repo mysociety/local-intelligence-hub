@@ -29,11 +29,14 @@ class Command(BaseImportFromDataFrameCommand):
     help = "Import Hope Not Hate polling data, from February 2023"
     message = "Importing Hope Not Hate polling data"
 
+    source_date = "February 2023"
+
     defaults = {
         "data_type": "percent",
         "category": "opinion",
         "is_range": True,
-        "source_label": "Focaldata 2023 MRP polling for HOPE not hate",
+        "source_label": "Focaldata MRP polling for HOPE not hate",
+        "source_date": source_date,
         "source": "https://hopenothate.org.uk/research/",
         "source_type": "google sheet",
         "table": "areadata",

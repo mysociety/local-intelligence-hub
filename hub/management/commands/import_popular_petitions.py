@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from django.conf import settings
 
@@ -12,11 +13,15 @@ class Command(BaseAreaImportCommand):
 
     data_file = settings.BASE_DIR / "data" / "petitions.json"
     message = "Importing petition data"
+
+    source_date = datetime.now().strftime("%B %Y")
+
     data_sets = {
         "constituency_popular_petitions": {
             "defaults": {
                 "source": "https://petition.parliament.uk/",
                 "source_label": "UK Government and Parliament Petitions",
+                "source_date": source_date,
                 "name": "constituency_popular_petitions",
                 "description": "Popular petitions",
                 "label": "Popular petitions",

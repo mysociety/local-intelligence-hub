@@ -11,11 +11,14 @@ class Command(BaseImportFromDataFrameCommand):
 
     cons_row = "gss-code"
     message = "Importing constituency IMD data"
+    source_date = "2020"
+
     data_sets = {
         "constituency_imd": {
             "defaults": {
                 "source": "https://mysociety.github.io/composite_uk_imd/",
                 "source_label": "mySociety",
+                "source_date": source_date,
                 "name": "constituency_imd",
                 "description": "Index of Multiple Deprivation",
                 "label": "Index of Multiple Deprivation (IMD)",

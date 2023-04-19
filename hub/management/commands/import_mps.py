@@ -1,5 +1,6 @@
 import urllib.request
 from collections import Counter
+from datetime import datetime
 
 from django.conf import settings
 from django.core.files import File
@@ -31,6 +32,8 @@ party_shades = {
 
 class Command(BaseCommand):
     help = "Import UK Members of Parliament"
+
+    source_date = datetime.now().strftime("%B %Y")
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -92,6 +95,7 @@ class Command(BaseCommand):
                 "label": props["label"],
                 "source": "https://en.wikipedia.org/",
                 "source_label": "Wikipedia",
+                "source_date": self.source_date,
                 "table": "person__persondata",
                 "is_filterable": False,
             }

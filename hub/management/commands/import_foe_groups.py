@@ -15,6 +15,8 @@ class Command(BaseLatLongImportCommand):
     message = "Importing FOE groups data"
     uses_gss = False
 
+    source_date = "November 2022"
+
     defaults = {
         "data_type": "json",
         "category": "movement",
@@ -22,6 +24,7 @@ class Command(BaseLatLongImportCommand):
         "label": "Active Friends of the Earth groups",
         "description": "Active Friends of the Earth groups by constituency",
         "source_label": "Friends of the Earth",
+        "source_date": source_date,
         "source": "https://friendsoftheearth.uk/",
         "source_type": "google sheet",
         "table": "areadata",

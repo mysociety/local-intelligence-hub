@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.core.management.base import BaseCommand
 
 import pandas as pd
@@ -8,6 +10,8 @@ from hub.models import DataSet, DataType, Person, PersonData
 
 class Command(BaseCommand):
     help = "Import CEN and NZSG Members"
+
+    source_date = datetime.now().strftime("%B %Y")
 
     def handle(self, quiet=False, *args, **options):
         self._quiet = quiet
@@ -31,6 +35,7 @@ class Command(BaseCommand):
                 "description": "Conservative Environment Network membership",
                 "label": "Conservative Environment Network Member",
                 "source_label": "CEN, collated by mySociety",
+                "source_date": self.source_date,
                 "source": "https://www.cen.uk.com/our-caucus",
                 "table": "person__persondata",
                 "options": options,
@@ -44,6 +49,7 @@ class Command(BaseCommand):
                 "description": "Net Zero Scrutiny Group membership",
                 "label": "Net Zero Scrutiny Group Member",
                 "source_label": "collated by DeSmog",
+                "source_date": self.source_date,
                 "source": "https://www.desmog.com/net-zero-scrutiny-group/",
                 "table": "person__persondata",
                 "options": options,

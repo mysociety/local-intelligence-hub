@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.conf import settings
 
 import pandas as pd
@@ -15,13 +17,16 @@ class Command(BaseAreaImportCommand):
     cons_col = "gss"
     data_file = settings.BASE_DIR / "data" / "aid_alliance_power_postcodes.csv"
 
+    source_date = datetime.now().strftime("%B %Y")
+
     power_postcodes = {
         "label": "Power Postcodes",
-        "description": "Description of Aid Alliance 'Power Postcode' activist groups",
+        "description": "Aid Alliance 'Power Postcode' activist groups",
         "data_type": "json",
         "category": "movement",
         "subcategory": "groups",
         "source_label": "Aid Alliance",
+        "source_date": source_date,
         "source": "https://aidalliance.org.uk/",
         "source_type": "api",
         "data_url": "https://www.google.com/maps/d/u/0/viewer?mid=15b_tQI0t58rLcBTgFytu2e73jyKrrxFr",
@@ -37,6 +42,7 @@ class Command(BaseAreaImportCommand):
         "data_type": "integer",
         "category": "movement",
         "source_label": "Aid Alliance",
+        "source_date": source_date,
         "source": "https://aidalliance.org.uk/",
         "source_type": "api",
         "data_url": "https://www.google.com/maps/d/u/0/viewer?mid=15b_tQI0t58rLcBTgFytu2e73jyKrrxFr",

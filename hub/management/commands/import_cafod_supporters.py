@@ -23,10 +23,13 @@ class Command(BaseImportFromDataFrameCommand):
     message = "Importing CAFOD supporters data"
     uses_gss = False
 
+    source_date = "February 2023"
+
     defaults = {
         "data_type": "integer",
         "category": "movement",
         "source_label": "CAFOD",
+        "source_date": source_date,
         "source": "https://cafod.org.uk",
         "source_type": "google sheet",
         "table": "areadata",

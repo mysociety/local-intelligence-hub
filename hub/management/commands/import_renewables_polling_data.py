@@ -34,6 +34,8 @@ class Command(BaseCommand):
     column_map = {}
     data_types = {}
 
+    source_date = "September 2022"
+
     def make_label_from_question(self, q):
         q = re.sub(r"[\d.]+\) ", "", q)
         q = re.sub(r"Percentage of (?:the )?constituency (?:who|that) (?:are )?", "", q)
@@ -90,6 +92,7 @@ class Command(BaseCommand):
                     "category": "opinion",
                     "subcategory": SUBCATEGORIES_DICT[column],
                     "source_label": "Survation, commissioned by RenewableUK",
+                    "source_date": self.source_date,
                     "source": "https://www.renewableuk.com/news/615931/Polling-in-every-constituency-in-Britain-shows-strong-support-for-wind-farms-to-drive-down-bills.htm",
                     "source_type": "google sheet",
                     "data_url": "",

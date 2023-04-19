@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.conf import settings
 
 from hub.models import AreaData, DataSet
@@ -13,12 +15,15 @@ class Command(BaseConstituencyCountImportCommand):
     cons_col = "gss"
     data_file = settings.BASE_DIR / "data" / "windfarms_per_constituency.csv"
 
+    source_date = datetime.now().strftime("%B %Y")
+
     defaults = {
         "label": "Number of onshore windfarms",
         "description": "Number of onshore windfarms",
         "data_type": "integer",
         "category": "place",
         "source_label": "Wikipedia",
+        "source_date": source_date,
         "source": "https://en.wikipedia.org/wiki/List_of_onshore_wind_farms_in_the_United_Kingdom",
         "source_type": "api",
         "data_url": "https://en.wikipedia.org/wiki/List_of_onshore_wind_farms_in_the_United_Kingdom",

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pandas as pd
 from mysoc_dataset import get_dataset_url
 
@@ -11,6 +13,9 @@ class Command(BaseImportFromDataFrameCommand):
 
     cons_row = "gss-code"
     message = "Importing constituency rural urban classification data"
+
+    source_date = datetime.now().strftime("%B %Y")
+
     data_sets = {
         "constituency_ruc": {
             "defaults": {
@@ -19,6 +24,7 @@ class Command(BaseImportFromDataFrameCommand):
                 "data_type": "text",
                 "category": "place",
                 "source_label": "mySociety",
+                "source_date": source_date,
                 "source": "https://mysociety.github.io/uk_ruc/",
                 "source_type": "csv",
                 "table": "areadata",

@@ -156,6 +156,7 @@ class DataSet(TypeMixin, models.Model):
     data_type = models.CharField(max_length=20, choices=TypeMixin.TYPE_CHOICES)
     last_update = models.DateTimeField(auto_now=True)
     source_label = models.TextField(max_length=300, blank=True, null=True)
+    source_date = models.CharField(max_length=100, blank=True, null=True)
     source = models.CharField(max_length=200)
     source_type = models.TextField(
         max_length=50, blank=True, null=True, choices=SOURCE_CHOICES

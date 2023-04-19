@@ -15,12 +15,15 @@ class Command(BaseImportFromDataFrameCommand):
     message = "Importing red and blue wall constituencies"
     uses_gss = False
 
+    source_date = "March 2023"
+
     defaults = {
         "label": "Red or Blue Wall constituency",
         "description": "Red Wall data from Political Insight, and Blue Wall data from the Financial Times, collated by Green Alliance",
         "data_type": "text",
         "category": "place",
         "source_label": "Green Alliance",
+        "source_date": source_date,
         "source": "https://green-alliance.org.uk/",
         "source_type": "google sheet",
         "table": "areadata",

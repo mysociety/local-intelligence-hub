@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.core.management.base import BaseCommand
 
 import pandas as pd
@@ -19,6 +21,8 @@ CONSTITUENCY_CORRECTIONS_DICT = {
 
 class Command(BaseCommand):
     help = "Import MP Job titles"
+
+    source_date = datetime.now().strftime("%B %Y")
 
     def handle(self, quiet=False, *args, **options):
         self._quiet = quiet
@@ -45,6 +49,7 @@ class Command(BaseCommand):
                 "description": "Positions such as cabinet and shadow minister roles, spokespeople, and whips",
                 "label": "MP positions (job titles)",
                 "source_label": "Green Alliance",
+                "source_date": self.source_date,
                 "source": "https://green-alliance.org.uk/",
                 "table": "person__persondata",
                 "comparators": DataSet.string_comparators(),

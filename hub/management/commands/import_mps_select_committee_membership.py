@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.core.management.base import BaseCommand
 
 import pandas as pd
@@ -11,6 +13,8 @@ COMMITTEE_REQUEST_URL = "https://committees-api.parliament.uk/api/Committees"
 
 class Command(BaseCommand):
     help = "Import select committee memberships for UK Members of Parliament"
+
+    source_date = datetime.now().strftime("%B %Y")
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -56,6 +60,7 @@ class Command(BaseCommand):
                 "description": "MP membership in Select Committees",
                 "label": "Select Committee membership",
                 "source_label": "UK Parliament",
+                "source_date": self.source_date,
                 "source": "https://parliament.uk/",
                 "table": "person__persondata",
                 "comparators": DataSet.in_comparators(),

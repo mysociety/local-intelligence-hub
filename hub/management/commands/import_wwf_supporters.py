@@ -15,11 +15,14 @@ class Command(BaseImportFromDataFrameCommand):
     message = "Importing WWF supporters data"
     uses_gss = False
 
+    source_date = "February 2023"
+
     defaults = {
         "data_type": "integer",
         "category": "movement",
         "subcategory": "supporters_and_activists",
         "source_label": "WWF",
+        "source_date": source_date,
         "source": "https://www.wwf.org.uk/",
         "source_type": "google sheet",
         "table": "areadata",
