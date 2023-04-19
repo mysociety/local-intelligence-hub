@@ -10,8 +10,19 @@
     {% compress css %}
     <link rel="stylesheet" type="text/x-scss" href="{% static 'css/main.scss' %}">
     {% endcompress %}
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,700;0,800;1,400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,700;0,800;1,400&amp;display=swap">
+
     <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:title" content="{{ page_title }}">
+    <meta property="og:site_name" content="Local Intelligence Hub">
+    <meta property="og:description" content="Your starting point for data about local MPs, constituencies, public opinion and the climate and nature movement.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://{{ request.get_host }}{% static 'img/opengraph.png' %}">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
   {% if GOOGLE_SITE_VERIFICATION %}
     <meta name="google-site-verification" content="{{ GOOGLE_SITE_VERIFICATION }}">
   {% endif %}
