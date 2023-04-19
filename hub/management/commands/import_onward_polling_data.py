@@ -109,7 +109,7 @@ class Command(BaseImportFromDataFrameCommand):
         return df
 
     def get_label(self, defaults):
-        return defaults["col"]
+        return defaults["col"].capitalize()
 
     def delete_data(self):
         AreaData.objects.filter(data_type__in=self.data_types.values()).delete()

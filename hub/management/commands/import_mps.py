@@ -75,12 +75,12 @@ class Command(BaseCommand):
     def import_mps(self):
         data = self.get_mp_data()
         type_names = {
-            "parlid": {"label": "Parliament ID"},
-            "twfyid": {"label": "TheyWorkForYou ID"},
-            "twitter": {"label": "Twitter username"},
-            "facebook": {"label": "Facebook username"},
-            "wikipedia": {"label": "Wikipedia article"},
-            "party": {"label": "Political Party"},
+            "parlid": {"label": "MP Parliament ID"},
+            "twfyid": {"label": "MP TheyWorkForYou ID"},
+            "twitter": {"label": "MP Twitter username"},
+            "facebook": {"label": "MP Facebook username"},
+            "wikipedia": {"label": "MP Wikipedia article"},
+            "party": {"label": "MP party"},
         }
         data_types = {}
         if not self._quiet:

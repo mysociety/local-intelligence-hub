@@ -53,8 +53,8 @@ class Command(BaseCommand):
             name="select_committee_membership",
             defaults={
                 "data_type": "text",
-                "description": "MP membership in Select Committees",
-                "label": "Select Committee membership",
+                "description": "Membership in Select Committees as published on the parliament website",
+                "label": "MP Select Committee memberships",
                 "source_label": "UK Parliament",
                 "source": "https://parliament.uk/",
                 "table": "person__persondata",

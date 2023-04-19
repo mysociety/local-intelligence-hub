@@ -153,8 +153,8 @@ class Command(BaseCommand):
                 name=vote_machine_name,
                 defaults={
                     "data_type": "string",
-                    "description": f"Member votes on {vote['vote_name']}",
-                    "label": vote["vote_name"],
+                    "description": f"MP vote on {vote['vote_name']}",
+                    "label": f"MP vote on {vote['vote_name']}",
                     "source_label": "UK Parliament",
                     "source": "https://parliament.uk/",
                     "table": "person__persondata",
@@ -176,8 +176,8 @@ class Command(BaseCommand):
                     name=edm_machine_name,
                     defaults={
                         "data_type": "string",
-                        "description": f"Supporters of {edm['edm_name']}",
-                        "label": edm["edm_name"],
+                        "description": f"MP support for {edm['edm_name']}",
+                        "label": f"MP support for {edm['edm_name']}",
                         "source_label": "UK Parliament",
                         "source": "https://parliament.uk/",
                         "table": "person__persondata",

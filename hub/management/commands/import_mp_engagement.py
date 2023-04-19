@@ -36,8 +36,8 @@ class Command(BaseCommand):
             name="net_zero_target",
             defaults={
                 "data_type": "string",
-                "description": "MPs who have signed the Net Zero Target open letter",
-                "label": "Net Zero Target open letter with The Climate Coalition",
+                "description": "MP signed The Climate Coalition’s 2019 Net Zero Target joint letter",
+                "label": "MP signed The Climate Coalition’s 2019 Net Zero Target joint letter",
                 "source_label": "The Climate Coalition",
                 "source": "https://www.theclimatecoalition.org/joint-letter-2019",
                 "table": "person__persondata",
@@ -57,8 +57,8 @@ class Command(BaseCommand):
             name="onshore_wind_energy",
             defaults={
                 "data_type": "string",
-                "description": "MPs who have signed the Onshore Wind Energy open letter",
-                "label": "Onshore Wind Energy open letter with Possible",
+                "description": "MP signed Possible’s Onshore Wind Energy open letter",
+                "label": "MP signed Possible’s 2019 Onshore Wind Energy open letter",
                 "source_label": "Possible",
                 "source": "https://www.wearepossible.org/onshore-wind/latest/open-letter-from-mps-to-the-prime-minister",
                 "table": "person__persondata",

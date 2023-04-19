@@ -32,7 +32,7 @@ class Command(BaseCommand):
             defaults={
                 "data_type": "text",
                 "description": "The country that the constituency is in",
-                "label": "Country",
+                "label": "Country of the UK",
                 "source_label": "MapIt",
                 "source": "https://mapit.mysociety.org/",
                 "table": "areadata",

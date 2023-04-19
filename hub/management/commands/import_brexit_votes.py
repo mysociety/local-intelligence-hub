@@ -17,8 +17,8 @@ class Command(BaseImportFromDataFrameCommand):
     data_sets = {
         "brexit_votes": {
             "defaults": {
-                "label": "Voted to leave the EU",
-                "description": "Percentage of people who voted to leave the EU in the 2016 referendum",
+                "label": "EU (Brexit) leave vote percentage",
+                "description": "Percentage of constituents who voted to leave the EU in the 2016 referendum",
                 "data_type": "percent",
                 "category": "opinion",
                 "source_label": "UK Parliament",

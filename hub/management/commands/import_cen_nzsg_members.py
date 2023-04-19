@@ -29,7 +29,7 @@ class Command(BaseCommand):
             defaults={
                 "data_type": "bool",
                 "description": "Conservative Environment Network membership",
-                "label": "Conservative Environment Network Member",
+                "label": "MP membership of Conservative Environment Network (CEN)",
                 "source_label": "CEN, collated by mySociety",
                 "source": "https://www.cen.uk.com/our-caucus",
                 "table": "person__persondata",
@@ -42,7 +42,7 @@ class Command(BaseCommand):
             defaults={
                 "data_type": "bool",
                 "description": "Net Zero Scrutiny Group membership",
-                "label": "Net Zero Scrutiny Group Member",
+                "label": "MP membership of Net Zero Scrutiny Group (NZSG)",
                 "source_label": "collated by DeSmog",
                 "source": "https://www.desmog.com/net-zero-scrutiny-group/",
                 "table": "person__persondata",
