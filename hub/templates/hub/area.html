@@ -358,7 +358,11 @@
                                     <h6 class="text-muted fw-bold">{{ datum.label }}</h6>
                                     <ul class="tag-cloud">
                                       {% for data in datum.data.json %}
-                                        <li><a href="{{ data.url }}" class="tag" title="{{ datum.label }}">{{ data.group_name }}</a></li>
+                                        {% if data.url %}
+                                          <li><a href="{{ data.url }}" class="tag" title="{{ datum.label }}">{{ data.group_name }}</a></li>
+                                        {% else %}
+                                          <li class="tag">{{ data.group_name }}</li>
+                                        {% endif %}
                                       {% endfor %}
                                     </ul>
                                   {% endif %}
