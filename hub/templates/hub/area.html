@@ -314,35 +314,7 @@
                                     <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from members of The Climate Coalition</a></p>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="col d-flex flex-column">
-                            <div class="card flex-grow-1 dataset-card">
-                                <div class="dataset-card-header">
-                                    <h5>Groups</h5>
-                                </div>
-                                <div class="card-body">
-                                          {% for datum in categories.movement %}
-                                            {% if datum.subcategory == "groups" %}
-                                                <h6 class="text-muted fw-bold">{{ datum.label }}</h6>
-                                                <ul class="tag-cloud">
-                                                {% for data in datum.data.json %}
-                                                    <li><a href="{{ data.url }}" class="tag" title="{{ datum.label }}">{{ data.group_name }}</a></li>
-                                                {% endfor %}
-                                                </ul>
-                                            {% endif %}
-                                          {% endfor %}
-
-                                </div>
-                                <div class="card-footer bg-white">
-                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from members of The Climate Coalition</a></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row row-cols-1 row-cols-md-2 g-4">
-                        <div class="col d-flex flex-column">
                             <div class="card flex-grow-1 dataset-card">
                                 <div class="dataset-card-header">
                                     <h5>Places and spaces</h5>
@@ -376,6 +348,48 @@
                         </div>
 
                         <div class="col d-flex flex-column">
+                            <div class="card flex-grow-1 dataset-card">
+                                <div class="dataset-card-header">
+                                    <h5>Groups</h5>
+                                </div>
+                                <div class="card-body">
+                                  {% for datum in categories.movement %}
+                                  {% if datum.subcategory == "groups" %}
+                                    <h6 class="text-muted fw-bold">{{ datum.label }}</h6>
+                                    <ul class="tag-cloud">
+                                      {% for data in datum.data.json %}
+                                        <li><a href="{{ data.url }}" class="tag" title="{{ datum.label }}">{{ data.group_name }}</a></li>
+                                      {% endfor %}
+                                    </ul>
+                                  {% endif %}
+                                  {% endfor %}
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from members of The Climate Coalition</a></p>
+                                </div>
+                            </div>
+
+                            <div class="card flex-grow-1 dataset-card">
+                                <div class="dataset-card-header">
+                                    <h5>Locations</h5>
+                                </div>
+                                <div class="card-body">
+                                  {% for datum in categories.movement %}
+                                  {% if datum.subcategory == "locations" %}
+                                    <h6 class="text-muted fw-bold">{{ datum.label }}</h6>
+                                    <ul class="tag-cloud">
+                                      {% for data in datum.data.json %}
+                                        <li><a href="{{ data.url }}" class="tag">{{ data.name }}</a></li>
+                                      {% endfor %}
+                                    </ul>
+                                  {% endif %}
+                                  {% endfor %}
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from members of The Climate Coalition</a></p>
+                                </div>
+                            </div>
+
                             <div class="card flex-grow-1 dataset-card">
                                 <div class="dataset-card-header">
                                     <h5>Events</h5>
