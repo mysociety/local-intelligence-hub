@@ -238,6 +238,8 @@ class DataSet(TypeMixin, models.Model):
             x = 0.5  # cmax == cmin
 
         shade = int(x * 9) - 1
+        if shade < 0:
+            shade = 0
         return self.shades[shade]
 
     def colours_for_areas(self, areas):
