@@ -1,0 +1,133 @@
+{% extends "hub/base.html" %}
+
+{% load static django_bootstrap5 %}
+
+{% block content %}
+
+<div class="py-5">
+    <div class="container">
+
+        <h1 class="mb-5">Accounts</h1>
+
+      {% if form|length != 0 %}
+        <h2 class="h4 mb-4">Awaiting activation</h2>
+
+        <form method="post" action="{% url 'accounts' %}">
+            {% csrf_token %}
+            {{ form.management_form }}
+
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th scope="col"></th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Organisation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                  {% for user_form in form %}
+                    <tr>
+                        <td>
+                            {% bootstrap_field user_form.is_active show_help=False show_label=False wrapper_class="" %}
+                            {% bootstrap_field user_form.id %}
+                        </td>
+                        <td>
+                            {{ user_form.instance.username }}
+                        </td>
+                        <td>
+                            {{ user_form.instance.userproperties.full_name }}
+                        </td>
+                        <td>
+                            {{ user_form.instance.userproperties.organisation_name }}
+                        </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+            </table>
+            <button type="submit" class="btn btn-primary">Activate selected accounts</button>
+        </form>
+      {% endif %}
+
+        <div class="row my-5">
+            <div class="col-6 col-md-3 my-2 d-flex flex-column">
+                <div class="bg-gray-100 rounded p-3 flex-grow-1">
+                    <p class="display-3 lh-0 mb-0 text-primary">{{ count_users_seen_this_week }}</p>
+                    <p class="mb-0">user{{ count_users_seen_this_week|pluralize }} seen in last 7 days</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 my-2 d-flex flex-column">
+                <div class="bg-gray-100 rounded p-3 flex-grow-1">
+                    <p class="display-3 lh-0 mb-0 text-primary">{{ count_users_joined_this_week }}</p>
+                    <p class="mb-0">user{{ count_users_joined_this_week|pluralize }} joined in last 7 days</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 my-2 d-flex flex-column">
+                <div class="bg-gray-100 rounded p-3 flex-grow-1">
+                    <p class="display-3 lh-0 mb-0 text-primary">{{ count_users_seen_this_month }}</p>
+                    <p class="mb-0">user{{ count_users_seen_this_month|pluralize }} seen in last 30 days</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 my-2 d-flex flex-column">
+                <div class="bg-gray-100 rounded p-3 flex-grow-1">
+                    <p class="display-3 lh-0 mb-0 text-primary">{{ count_users_joined_this_month }}</p>
+                    <p class="mb-0">user{{ count_users_joined_this_month|pluralize }} joined in last 30 days</p>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="h4 mb-4">Activated accounts</h2>
+
+        <table class="table table-striped mb-5">
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Organisation</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Staff</th>
+                    <th scope="col">Joined</th>
+                    <th scope="col">Last seen</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>
+                        <a href="{% url 'admin:hub_userproperties_change' user.pk %}">{{ user.full_name }}</a>
+                    </td>
+                    <td>
+                        {{ user.organisation_name }}
+                    </td>
+                    <td>
+                        {% if user.account_confirmed and user.email_confirmed and not user.user.is_active %}
+                            Deactivated
+                        {% elif user.account_confirmed %}
+                            Approved
+                        {% elif user.email_confirmed %}
+                            Awaiting activation
+                        {% else %}
+                            Unconfirmed email
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.user.is_superuser %}
+                            Superuser
+                        {% elif user.user.is_staff %}
+                            Staff
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ user.user.date_joined|date:"j M Y" }}
+                    </td>
+                    <td>
+                        {{ user.last_seen|date:"j M Y" }}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+{% endblock %}

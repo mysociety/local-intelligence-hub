@@ -17,7 +17,7 @@
                     {% include 'hub/includes/nav-item.html' with href='https://www.theclimatecoalition.org/donate' label='Donate' %}
                   {% if perms.auth.edit_user %}
                     {% pending_account_requests as num %}
-                    {% include 'hub/includes/nav-item.html' with name='activate_accounts' label='Admin' badge=num %}
+                    {% include 'hub/includes/nav-item.html' with name='accounts' label='Accounts' badge=num %}
                   {% endif %}
                 </ul>
             </div>

@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.views import LoginView
 from django.shortcuts import redirect, reverse
@@ -5,6 +7,7 @@ from django.views.generic import FormView, TemplateView
 
 from hub.forms import ActivateUserFormSet, InactiveCheckLoginForm, SignupForm
 from hub.mixins import TitleMixin
+from hub.models import UserProperties
 from hub.tokens import get_user_for_token
 
 
@@ -57,12 +60,12 @@ class BadTokenView(TitleMixin, TemplateView):
     template_name = "hub/accounts/bad_token.html"
 
 
-class ActivateAccountsView(PermissionRequiredMixin, TitleMixin, FormView):
+class AccountsView(PermissionRequiredMixin, TitleMixin, FormView):
     permission_required = "auth.edit_user"
-    page_title = "Activate accounts"
-    template_name = "hub/accounts/activate_accounts.html"
+    page_title = "Accounts"
+    template_name = "hub/accounts/accounts.html"
     form_class = ActivateUserFormSet
-    success_url = "/activate_accounts/"
+    success_url = "/accounts/"
 
     def form_valid(self, form):
         self.object = form.save()
@@ -70,3 +73,27 @@ class ActivateAccountsView(PermissionRequiredMixin, TitleMixin, FormView):
             if sub_form.cleaned_data["is_active"]:
                 sub_form.send_notification_email(request=self.request)
         return super().form_valid(form)
+
+    def get_context_data(self):
+        context = super().get_context_data()
+
+        time_a_week_ago = date.today() - timedelta(days=6)
+        time_a_month_ago = date.today() - timedelta(days=30)
+
+        users = UserProperties.objects.all()
+
+        context["users"] = users.order_by("last_seen")
+        context["count_users_seen_this_week"] = users.filter(
+            last_seen__gte=time_a_week_ago
+        ).count()
+        context["count_users_joined_this_week"] = users.filter(
+            user__date_joined__gte=time_a_week_ago
+        ).count()
+        context["count_users_seen_this_month"] = users.filter(
+            last_seen__gte=time_a_month_ago
+        ).count()
+        context["count_users_joined_this_month"] = users.filter(
+            user__date_joined__gte=time_a_month_ago
+        ).count()
+
+        return context

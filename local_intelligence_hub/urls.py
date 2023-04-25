@@ -17,6 +17,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path, re_path
+from django.views.generic.base import RedirectView
 
 from hub.views import accounts, area, core, explore
 
@@ -67,10 +68,11 @@ urlpatterns = [
         accounts.BadTokenView.as_view(),
         name="bad_token",
     ),
+    path("activate_accounts/", RedirectView.as_view(url="/accounts/", permanent=False)),
     path(
-        "activate_accounts/",
-        accounts.ActivateAccountsView.as_view(),
-        name="activate_accounts",
+        "accounts/",
+        accounts.AccountsView.as_view(),
+        name="accounts",
     ),
     re_path(
         "activate/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,40})/",
