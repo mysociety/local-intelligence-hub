@@ -23,7 +23,7 @@
                         <p class="fs-5 lh-1 fw-bold text-primary mb-0">{{ mp_data.mp_first_elected|naturalday:"jS M Y" }}</p>
                     </div>
                     <div class="col-lg-6">
-                        <h4 class="h6 mt-4">2019 majority</h4>
+                        <h4 class="h6 mt-4">{{ mp_data.mp_last_elected|date:"Y"}} majority</h4>
                         <p class="fs-5 lh-1 fw-bold text-primary mb-0">{{ mp_data.mp_election_majority|intcomma }}</p>
                     </div>
                     {% if mp.job_titles %}
