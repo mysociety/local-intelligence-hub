@@ -31,17 +31,17 @@ const app = createApp({
     },
     favouriteDatasets() {
       return this.datasets.filter((d) => {
-        return ( d.is_favourite === true ) && this.datasetMatchesSearchText(d) && this.datasetIsFilterable(d)
+        return ( d.is_favourite === true ) && this.datasetMatchesSearchText(d) && this.datasetIsSelectable(d)
       })
     },
     featuredDatasets() {
       return this.datasets.filter((d) => {
-        return ( d.featured === true ) && this.datasetMatchesSearchText(d) && this.datasetIsFilterable(d)
+        return ( d.featured === true ) && this.datasetMatchesSearchText(d) && this.datasetIsSelectable(d)
       })
     },
     otherDatasets() {
       return this.datasets.filter((d) => {
-        return ( d.is_favourite === false && d.featured === false ) && ( this.browseDatasets == true || this.searchText != '' ) && this.datasetMatchesSearchText(d) && this.datasetIsFilterable(d)
+        return ( d.is_favourite === false && d.featured === false ) && ( this.browseDatasets == true || this.searchText != '' ) && this.datasetMatchesSearchText(d) && this.datasetIsSelectable(d)
       })
     },
     mapViewActive() {
@@ -391,10 +391,19 @@ const app = createApp({
       var needle = this.searchText
       return haystack.toLowerCase().indexOf(needle.toLowerCase()) > -1
     },
-    datasetIsFilterable(dataset) {
-      // All datasets are considered "filterable" (ie: selectable from the modal)
-      // if we are currently picking a column to add to the table view.
-      return ( this.currentType == 'column' ) || dataset.is_filterable
+    datasetIsSelectable(dataset) {
+      switch(this.currentType) {
+        case 'column':
+          // All datasets are selectable if we are currently
+          // picking a column to add to the table view.
+          return true
+        case 'filter':
+          return dataset.is_filterable
+        case 'shader':
+          return dataset.is_shadable
+        default:
+          return true
+      }
     }
   }
 })

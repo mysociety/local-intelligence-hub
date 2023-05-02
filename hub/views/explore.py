@@ -34,6 +34,7 @@ class ExploreDatasetsJSON(TemplateView):
                     user=self.request.user,
                 ).exists(),
                 is_filterable=d.is_filterable,
+                is_shadable=d.is_shadable,
                 featured=d.featured,
                 comparators=dict(
                     map(itemgetter("field_lookup", "title"), d.comparators)
@@ -57,6 +58,7 @@ class ExploreDatasetsJSON(TemplateView):
                 "featured": False,
                 "is_favourite": False,
                 "is_filterable": False,
+                "is_shadable": False,
                 "name": "mp_name",
                 "title": "MP Name",
                 "source": "Wikipedia",
@@ -69,6 +71,7 @@ class ExploreDatasetsJSON(TemplateView):
                 "featured": False,
                 "is_favourite": False,
                 "is_filterable": False,
+                "is_shadable": False,
                 "name": "gss",
                 "title": "Constituency GSS code",
                 "source": "mySociety",
