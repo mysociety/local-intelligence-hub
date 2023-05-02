@@ -84,7 +84,6 @@
                     <th scope="col">Name</th>
                     <th scope="col">Organisation</th>
                     <th scope="col">Status</th>
-                    <th scope="col">Staff</th>
                     <th scope="col">Joined</th>
                     <th scope="col">Last seen</th>
                 </tr>
@@ -94,6 +93,11 @@
                 <tr>
                     <td>
                         <a href="{% url 'admin:hub_userproperties_change' user.pk %}">{{ user.full_name }}</a>
+                      {% if user.user.is_superuser %}
+                        <span class="badge text-bg-yellow-500 fs-9 ms-1" style="vertical-align: 0.1em">Superuser</span>
+                      {% elif user.user.is_staff %}
+                        <span class="badge text-bg-cyan-300 fs-9 ms-1" style="vertical-align: 0.1em">Staff</span>
+                      {% endif %}
                     </td>
                     <td>
                         {{ user.organisation_name }}
@@ -107,13 +111,6 @@
                             Awaiting activation
                         {% else %}
                             Unconfirmed email
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if user.user.is_superuser %}
-                            Superuser
-                        {% elif user.user.is_staff %}
-                            Staff
                         {% endif %}
                     </td>
                     <td>
