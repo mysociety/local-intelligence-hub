@@ -2,6 +2,7 @@ from datetime import date, timedelta
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.views import LoginView
+from django.db.models import F
 from django.shortcuts import redirect, reverse
 from django.views.generic import FormView, TemplateView
 
@@ -82,7 +83,7 @@ class AccountsView(PermissionRequiredMixin, TitleMixin, FormView):
 
         users = UserProperties.objects.all()
 
-        context["users"] = users.order_by("last_seen")
+        context["users"] = users.order_by(F("last_seen").desc(nulls_last=True))
         context["count_users_seen_this_week"] = users.filter(
             last_seen__gte=time_a_week_ago
         ).count()
