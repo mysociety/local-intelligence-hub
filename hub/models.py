@@ -244,6 +244,8 @@ class DataSet(TypeMixin, models.Model):
     }
 
     def shade(self, val, cmin, cmax):
+        if val == "":
+            return None
         try:
             x = float(val - cmin) / (cmax - cmin)
         except ZeroDivisionError:
@@ -287,6 +289,7 @@ class DataSet(TypeMixin, models.Model):
             data = value.value()
             for option in self.options:
                 if option["title"] == data:
+                    print(data, option["shader"])
                     colours[value.gss] = {
                         "colour": self.COLOUR_NAMES.get(
                             option["shader"], option["shader"]
@@ -295,10 +298,12 @@ class DataSet(TypeMixin, models.Model):
                     }
 
             if colours.get(value.gss, None) is None:
-                colours[value.gss] = {
-                    "colour": self.shade(data, mininimum, maximum),
-                    "opacity": 0.7,
-                }
+                shade = self.shade(data, mininimum, maximum)
+                if shade is not None:
+                    colours[value.gss] = {
+                        "colour": shade,
+                        "opacity": 0.7,
+                    }
 
         # if there is no data for an area then need to set the shader to opacity 0 otherwise
         # they will end up as the default
