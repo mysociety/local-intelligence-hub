@@ -114,10 +114,10 @@
                         {% endif %}
                     </td>
                     <td>
-                        {{ user.user.date_joined|date:"j M Y" }}
+                        {{ user.user.date_joined|date:"jS F" }}
                     </td>
                     <td>
-                        {{ user.last_seen|date:"j M Y" }}
+                        {{ user.last_seen|date:"jS F" }}
                     </td>
                 </tr>
             {% endfor %}
