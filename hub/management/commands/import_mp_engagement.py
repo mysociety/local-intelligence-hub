@@ -29,7 +29,7 @@ class Command(BaseCommand):
         return df[["mp", "letter"]]
 
     def create_data_types(self):
-        options = [{"title": "Signed", "shader": "#89c489"}]
+        options = [{"title": "Signed", "shader": "blue-500"}]
         data_types = {}
 
         ds, created = DataSet.objects.update_or_create(

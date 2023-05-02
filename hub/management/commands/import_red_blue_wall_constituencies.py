@@ -26,8 +26,8 @@ class Command(BaseImportFromDataFrameCommand):
         "table": "areadata",
         "is_filterable": True,
         "options": [
-            dict(title="Red Wall", shader="red"),
-            dict(title="Blue Wall", shader="blue"),
+            dict(title="Red Wall", shader="red-500"),
+            dict(title="Blue Wall", shader="blue-500"),
         ],
         "data_url": "",
         "comparators": DataSet.in_comparators(),

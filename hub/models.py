@@ -231,6 +231,17 @@ class DataSet(TypeMixin, models.Model):
         "#081d58",
     ]
 
+    COLOUR_NAMES = {
+        "red-500": "#CC3517",
+        "orange-500": "#ED6832",
+        "yellow-500": "#FEC835",
+        "teal-600": "#068670",
+        "blue-500": "#21A8E0",
+        "purple-500": "#6F42C1",
+        "gray-500": "#ADB5BD",
+        "gray-300": "#DEE2E6",
+    }
+
     def shade(self, val, cmin, cmax):
         try:
             x = float(val - cmin) / (cmax - cmin)
@@ -247,7 +258,9 @@ class DataSet(TypeMixin, models.Model):
         legend = {}
         for option in self.options:
             if option.get("shader", None) is not None:
-                legend[option["title"]] = option["shader"]
+                legend[option["title"]] = self.COLOUR_NAMES.get(
+                    option["shader"], option["shader"]
+                )
 
         if len(legend) > 0:
             props = {"properties": {"legend": legend}}
@@ -274,7 +287,9 @@ class DataSet(TypeMixin, models.Model):
             for option in self.options:
                 if option["title"] == data:
                     colours[value.gss] = {
-                        "colour": option["shader"],
+                        "colour": self.COLOUR_NAMES.get(
+                            option["shader"], option["shader"]
+                        ),
                         "opacity": value.opacity(mininimum, maximum) or 0.7,
                     }
 

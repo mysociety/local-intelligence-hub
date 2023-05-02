@@ -136,16 +136,16 @@ class Command(BaseCommand):
     def create_data_types(self, votes, edms):
         data_types = {}
         vote_options = [
-            {"title": "Aye", "shader": "#21A8E0"},
-            {"title": "No", "shader": "#ED6832"},
-            {"title": "Did not vote", "shader": "#ADB5BD"},
-            {"title": "Did not vote (teller)", "shader": "#ADB5BD"},
-            {"title": "Not in office", "shader": "#DEE2E6"},
+            {"title": "Aye", "shader": "blue-500"},
+            {"title": "No", "shader": "orange-500"},
+            {"title": "Did not vote", "shader": "gray-500"},
+            {"title": "Did not vote (teller)", "shader": "gray-500"},
+            {"title": "Not in office", "shader": "gray-300"},
         ]
         edm_options = [
-            {"title": "Supporter", "shader": "#21A8E0"},
-            {"title": "Did not support", "shader": "#ADB5BD"},
-            {"title": "Not in office", "shader": "#DEE2E6"},
+            {"title": "Supporter", "shader": "blue-500"},
+            {"title": "Did not support", "shader": "gray-500"},
+            {"title": "Not in office", "shader": "gray-300"},
         ]
         for vote in votes:
             vote_machine_name = self.get_machine_name(vote)

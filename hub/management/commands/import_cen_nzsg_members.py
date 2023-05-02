@@ -21,8 +21,8 @@ class Command(BaseCommand):
 
     def create_data_types(self):
         options = [
-            {"title": "True", "shader": "#087990"},
-            {"title": "False", "shader": "#DCDCDC"},
+            {"title": "True", "shader": "blue-500"},
+            {"title": "False", "shader": "orange-500"},
         ]
         cen_ds, created = DataSet.objects.update_or_create(
             name="cen_member",
