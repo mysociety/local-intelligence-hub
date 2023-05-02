@@ -24,6 +24,7 @@ class Command(BaseAreaImportCommand):
         "table": "areadata",
         "default_value": {},
         "is_filterable": False,
+        "is_shadable": False,
         "comparators": DataSet.comparators_default(),
     }
 

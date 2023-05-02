@@ -29,6 +29,7 @@ class Command(BaseAreaImportCommand):
         "default_value": {},
         "comparators": DataSet.comparators_default(),
         "is_filterable": False,
+        "is_shadable": False,
     }
 
     power_postcode_counts = {

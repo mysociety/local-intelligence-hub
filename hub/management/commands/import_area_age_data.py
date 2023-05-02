@@ -32,6 +32,7 @@ class Command(BaseCommand):
             "source_type": "xlxs",
             "table": "areadata",
             "default_value": 50,
+            "is_shadable": False,
             "comparators": DataSet.numerical_comparators(),
         }
 

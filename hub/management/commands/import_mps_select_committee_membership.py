@@ -58,6 +58,7 @@ class Command(BaseCommand):
                 "source_label": "UK Parliament",
                 "source": "https://parliament.uk/",
                 "table": "person__persondata",
+                "is_shadable": False,
                 "comparators": DataSet.in_comparators(),
             },
         )
