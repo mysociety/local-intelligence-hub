@@ -83,7 +83,7 @@
                                     </table>
                                 </div>
                                 <div class="card-footer bg-white">
-                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Public First, comissioned by Onward UK</a></p>
+                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Public First, commissioned by Onward UK</a></p>
                                 </div>
                             </div>
                             <div class="card flex-grow-1 dataset-card">
@@ -95,7 +95,7 @@
                                     <p class="card-text mt-2 text-muted">{{ indexed_categories.opinion.constituency_cc_high.data.average|floatformat }}% national average</p>
                                 </div>
                                 <div class="card-footer bg-white">
-                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Public First, comissioned by Onward UK</a></p>
+                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Public First, commissioned by Onward UK</a></p>
                                 </div>
                             </div>
                             <div class="card flex-grow-1 dataset-card">
@@ -140,11 +140,11 @@
                                     <p class="card-text mt-2 text-muted">{{ indexed_categories.opinion.support_local_renewable.data.average|floatformat }}% national average</p>
                                 </div>
                                 <div class="card-footer bg-white">
-                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Survation, comissioned by RenewableUK</a></p>
+                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Survation, commissioned by RenewableUK</a></p>
                                 </div>
                             </div>
-                            {% include 'hub/area/_opinion_table_data.html' with title="Renewable energy" col_name="Opinion" category=categories.opinion subcategory="renewable_energy" data_source="Data from Survation, comissioned by RenewableUK" %}
-                            {% include 'hub/area/_opinion_table_data.html' with title="Cost of living" col_name="Question"  category=categories.opinion subcategory="cost_of_living" data_source="Data from Survation, comissioned by 38Degrees" %}
+                            {% include 'hub/area/_opinion_table_data.html' with title="Renewable energy" col_name="Opinion" category=categories.opinion subcategory="renewable_energy" data_source="Data from Survation, commissioned by RenewableUK" %}
+                            {% include 'hub/area/_opinion_table_data.html' with title="Cost of living" col_name="Question"  category=categories.opinion subcategory="cost_of_living" data_source="Data from Survation, commissioned by 38Degrees" %}
 
 
                             <div class="card flex-grow-1 dataset-card">
@@ -164,10 +164,10 @@
 
                     <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
                         <div class="col d-flex flex-column">
-                                {% include 'hub/area/_opinion_table_data.html' with title="Voting" col_name="Opinion"  category=categories.opinion subcategory="voting" data_source="Data from Survation, comissioned by RenewableUK" %}
+                                {% include 'hub/area/_opinion_table_data.html' with title="Voting" col_name="Opinion"  category=categories.opinion subcategory="voting" data_source="Data from Survation, commissioned by RenewableUK" %}
                         </div>
                         <div class="col d-flex flex-column">
-                            {% include 'hub/area/_opinion_table_data.html' with title="Government Action" col_name="Opinion"  category=categories.opinion subcategory="government_action" data_source="Data from Survation, comissioned by RenewableUK" %}
+                            {% include 'hub/area/_opinion_table_data.html' with title="Government Action" col_name="Opinion"  category=categories.opinion subcategory="government_action" data_source="Data from Survation, commissioned by RenewableUK" %}
                         </div>
                     </div>
 
