@@ -143,68 +143,9 @@
                                     <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Survation, comissioned by RenewableUK</a></p>
                                 </div>
                             </div>
+                            {% include 'hub/area/_opinion_table_data.html' with title="Renewable energy" col_name="Opinion" category=categories.opinion subcategory="renewable_energy" data_source="Data from Survation, comissioned by RenewableUK" %}
+                            {% include 'hub/area/_opinion_table_data.html' with title="Cost of living" col_name="Question"  category=categories.opinion subcategory="cost_of_living" data_source="Data from Survation, comissioned by 38Degrees" %}
 
-                            <div class="card flex-grow-1 dataset-card">
-                                <div class="dataset-card-header">
-                                    <h5>Renewable energy</h5>
-                                </div>
-                                <div class="card-body">
-                                    <table class="table mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">Opinion</th>
-                                                <th scope="col">This area</th>
-                                                <th scope="col" class="text-muted">UK average</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for datum in categories.opinion %}
-                                            {% if datum.subcategory == "renewable_energy" %}
-                                            <tr>
-                                                <th>{{ datum.name | simplify_dataset_name }}</th>
-                                                <td>{{ datum.data.value|floatformat }}%</td>
-                                                <td class="text-muted">{{ datum.data.average|floatformat }}%</td>
-                                            </tr>
-                                            {% endif %}
-                                          {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="card-footer bg-white">
-                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Survation, comissioned by RenewableUK</a></p>
-                                </div>
-                            </div>
-
-                                                        <div class="card flex-grow-1 dataset-card">
-                                <div class="dataset-card-header">
-                                    <h5>Cost of Living</h5>
-                                </div>
-                                <div class="card-body">
-                                    <table class="table mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">Question</th>
-                                                <th scope="col">This area</th>
-                                                <th scope="col" class="text-muted">UK average</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for datum in categories.opinion %}
-                                            {% if datum.subcategory == "cost_of_living" %}
-                                            <tr>
-                                                <th>{{ datum.name}}</th>
-                                                <td>{{ datum.data.value|floatformat }}%</td>
-                                                <td class="text-muted">{{ datum.data.average|floatformat }}%</td>
-                                            </tr>
-                                            {% endif %}
-                                          {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="card-footer bg-white">
-                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Survation, comissioned by 38Degrees</a></p>
-                                </div>
-                            </div>
 
                             <div class="card flex-grow-1 dataset-card">
                                 <div class="dataset-card-header pe-3">
@@ -223,68 +164,10 @@
 
                     <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
                         <div class="col d-flex flex-column">
-                            <div class="card flex-grow-1 dataset-card">
-                                <div class="dataset-card-header">
-                                    <h5>Voting</h5>
-                                </div>
-                                <div class="card-body">
-                                    <table class="table mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">Opinion</th>
-                                                <th scope="col">This area</th>
-                                                <th scope="col" class="text-muted">UK average</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for datum in categories.opinion %}
-                                            {% if datum.subcategory == "voting" %}
-                                            <tr>
-                                                <th>{{ datum.name | simplify_dataset_name }}</th>
-                                                <td>{{ datum.data.value|floatformat }}%</td>
-                                                <td class="text-muted">{{ datum.data.average|floatformat }}%</td>
-                                            </tr>
-                                            {% endif %}
-                                          {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="card-footer bg-white">
-                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Survation, comissioned by RenewableUK</a></p>
-                                </div>
-                            </div>
+                                {% include 'hub/area/_opinion_table_data.html' with title="Voting" col_name="Opinion"  category=categories.opinion subcategory="voting" data_source="Data from Survation, comissioned by RenewableUK" %}
                         </div>
                         <div class="col d-flex flex-column">
-                            <div class="card flex-grow-1 dataset-card">
-                                <div class="dataset-card-header">
-                                    <h5>Government action</h5>
-                                </div>
-                                <div class="card-body">
-                                    <table class="table mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">Opinion</th>
-                                                <th scope="col">This area</th>
-                                                <th scope="col" class="text-muted">UK average</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for datum in categories.opinion %}
-                                            {% if datum.subcategory == "government_action" %}
-                                            <tr>
-                                                <th>{{ datum.name | simplify_dataset_name }}</th>
-                                                <td>{{ datum.data.value|floatformat }}%</td>
-                                                <td class="text-muted">{{ datum.data.average|floatformat }}%</td>
-                                            </tr>
-                                            {% endif %}
-                                          {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="card-footer bg-white">
-                                    <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Survation, comissioned by RenewableUK</a></p>
-                                </div>
-                            </div>
+                            {% include 'hub/area/_opinion_table_data.html' with title="Government Action" col_name="Opinion"  category=categories.opinion subcategory="government_action" data_source="Data from Survation, comissioned by RenewableUK" %}
                         </div>
                     </div>
 

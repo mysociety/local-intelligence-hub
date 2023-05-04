@@ -1,0 +1,31 @@
+{% load hub_filters %}
+<div class="card flex-grow-1 dataset-card">
+    <div class="dataset-card-header">
+        <h5>{{ title }}</h5>
+    </div>
+    <div class="card-body">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th scope="col">{{ col_name }}</th>
+                    <th scope="col">This area</th>
+                    <th scope="col" class="text-muted">UK average</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for datum in category %}
+                {% if datum.subcategory == subcategory %}
+                <tr>
+                    <th>{{ datum.name | simplify_dataset_name }}</th>
+                    <td>{{ datum.data.value|floatformat }}%</td>
+                    <td class="text-muted">{{ datum.data.average|floatformat }}%</td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer bg-white">
+        <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">{{ data_source }}</a></p>
+    </div>
+</div>
