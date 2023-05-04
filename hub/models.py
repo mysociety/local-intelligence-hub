@@ -88,6 +88,7 @@ class DataSet(TypeMixin, models.Model):
         ("groups", "Groups"),
         ("places_and_spaces", "Places and spaces"),
         ("events", "Events"),
+        ("cost_of_living", "Cost of living"),
     ]
 
     CATEGORY_CHOICES = [
