@@ -46,6 +46,70 @@ class Command(BaseImportFromDataFrameCommand):
 
     files = [
         {
+            "data_set_name": "hnh_mrp_41-1",
+            "defaults": extend(
+                defaults,
+                {
+                    "label": "Loss of nature and destruction of the environment should be one of the most important concerns for the country",
+                    "description": None,
+                },
+            ),
+            "source_filename": "Aid Alliance MRP Q41.1 1_3_23 - Constituency.csv",
+            "source_cols": [
+                {"source_string": "Name", "slug": "name", "label": None},
+                {
+                    "source_string": "Westminster Constituency",
+                    "slug": "gss_code",
+                    "label": None,
+                },
+                {
+                    "source_string": "Region",
+                    "slug": "region",
+                    "label": None,
+                },
+                {
+                    "source_string": "Winner",
+                    "slug": "winner",
+                    "label": None,
+                },
+                {
+                    "source_string": "Strongly agree",
+                    "slug": "strongly_agree",
+                    "label": "Strongly agree",
+                },
+                {
+                    "source_string": "Partly agree",
+                    "slug": "partly_agree",
+                    "label": "Partly agree",
+                },
+                {
+                    "source_string": "Neither agree nor disagree",
+                    "slug": "neither",
+                    "label": "Neither agree nor disagree",
+                },
+                {
+                    "source_string": "Partly disagree",
+                    "slug": "partly_disagree",
+                    "label": "Partly disagree",
+                },
+                {
+                    "source_string": "Strongly disagree",
+                    "slug": "vstrongly_disagree",
+                    "label": "Strongly disagree",
+                },
+                {
+                    "source_string": "NET_agree",
+                    "slug": "net_agree",
+                    "label": "Net agree",
+                },
+                {
+                    "source_string": "NET_disagree",
+                    "slug": "net_disagree",
+                    "label": "Net disagree",
+                },
+            ],
+        },
+        {
             "data_set_name": "hnh_mrp_24-3",
             "defaults": extend(
                 defaults,
