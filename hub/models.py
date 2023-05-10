@@ -110,11 +110,21 @@ class DataSet(TypeMixin, models.Model):
         "minItems": 2,
     }
 
+    EXCLUDE_COUNTRIES_SCHEMA = {
+        "type": "array",
+        "items": {
+            "type": "string",
+        },
+    }
+
     def comparators_default():
         return [
             dict(field_lookup="exact", title="is"),
             dict(field_lookup="not_exact", title="is not"),
         ]
+
+    def exclude_countries_default():
+        return []
 
     def numerical_comparators():
         return [
@@ -174,6 +184,10 @@ class DataSet(TypeMixin, models.Model):
     default_value = models.CharField(max_length=50, blank=True, null=True)
     is_filterable = models.BooleanField(default=True)
     is_shadable = models.BooleanField(default=True)
+    fill_blanks = models.BooleanField(default=True)
+    exclude_countries = JSONField(
+        schema=EXCLUDE_COUNTRIES_SCHEMA, blank=True, default=exclude_countries_default
+    )
 
     def __str__(self):
         if self.label:

@@ -107,6 +107,18 @@ class BaseAreaImportCommand(BaseCommand):
                         areadata.area.name
                         for areadata in AreaData.objects.filter(data_type=data_type)
                     ]
+                    # If some countries are set to be excluded, their values should not be filled in
+                    if data_type.data_set.exclude_countries != []:
+                        for country in data_type.data_set.exclude_countries:
+                            areas_with_values.extend(
+                                [
+                                    areadata.area.name
+                                    for areadata in AreaData.objects.filter(
+                                        data_type__name="country"
+                                    ).filter(data=country)
+                                ]
+                            )
+
                     areas_without_values = Area.objects.exclude(
                         name__in=areas_with_values
                     )
