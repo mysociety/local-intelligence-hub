@@ -257,6 +257,9 @@ class DataSet(TypeMixin, models.Model):
         return self.shades[shade]
 
     def colours_for_areas(self, areas):
+        if len(areas) == 0:
+            return {"properties": {"no_areas": True}}
+
         values, mininimum, maximum = self.shader_value(areas)
         legend = {}
         for option in self.options:
@@ -289,7 +292,6 @@ class DataSet(TypeMixin, models.Model):
             data = value.value()
             for option in self.options:
                 if option["title"] == data:
-                    print(data, option["shader"])
                     colours[value.gss] = {
                         "colour": self.COLOUR_NAMES.get(
                             option["shader"], option["shader"]
