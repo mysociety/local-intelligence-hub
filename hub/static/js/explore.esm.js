@@ -14,6 +14,7 @@ const app = createApp({
       columns: [],
       shader: null,
       key: null,
+      no_areas: false,
       legend: null,
       view: 'map',
       map: null,
@@ -158,6 +159,7 @@ const app = createApp({
       this.shader = null
       this.key = null
       this.legend = null
+      this.no_areas = null
     },
     toggleBrowseDatasets() {
       this.browseDatasets = !this.browseDatasets
@@ -306,9 +308,12 @@ const app = createApp({
           }).addTo(this.map)
           this.key = null
           this.legend = null
+          this.no_areas = null
           if ("properties" in data && data["properties"]) {
             var p = data["properties"]
-            if ("legend" in p) {
+            if ("no-areas" in p) {
+              this.no_areas = true
+            } else if ("legend" in p) {
               this.legend = p["legend"]
             } else {
               this.key = p
@@ -352,9 +357,12 @@ const app = createApp({
 
           this.key = null
           this.legend = null
+          this.no_areas = false
           if ("properties" in data && data["properties"]) {
             var p = data["properties"]
-            if ("legend" in p) {
+            if ("no_areas" in p) {
+              this.no_areas = true
+            } else if ("legend" in p) {
               this.legend = p["legend"]
             } else {
               this.key = p
