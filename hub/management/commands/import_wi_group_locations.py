@@ -23,6 +23,7 @@ class Command(BaseAreaImportCommand):
         "data_url": "https://wi-search.squiz.cloud/s/search.json?collection=nfwi-federations&profile=_default&query=!null&sort=prox&sort=prox&start_rank=1&origin=54.093409,-2.89479&maxdist=9999&num_ranks=9999",
         "table": "areadata",
         "default_value": {},
+        "exclude_countries": ["Scotland"],
         "is_filterable": False,
         "is_shadable": False,
         "comparators": DataSet.comparators_default(),
@@ -39,6 +40,7 @@ class Command(BaseAreaImportCommand):
         "data_url": "https://wi-search.squiz.cloud/s/search.json?collection=nfwi-federations&profile=_default&query=!null&sort=prox&sort=prox&start_rank=1&origin=54.093409,-2.89479&maxdist=9999&num_ranks=9999",
         "table": "areadata",
         "default_value": 0,
+        "exclude_countries": ["Scotland"],
         "is_filterable": True,
         "comparators": DataSet.numerical_comparators(),
     }

@@ -28,6 +28,7 @@ class Command(BaseImportFromDataFrameCommand):
                 "source_type": "xlxs",
                 "data_url": "",
                 "table": "areadata",
+                "exclude_countries": ["Northern Ireland", "Scotland", "Wales"],
                 "comparators": DataSet.numerical_comparators(),
                 "default_value": 10,
             },
