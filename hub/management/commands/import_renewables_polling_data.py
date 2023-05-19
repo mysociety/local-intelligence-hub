@@ -1,13 +1,11 @@
 import re
-from collections import defaultdict
 
 from django.conf import settings
-from django.core.management.base import BaseCommand
 
 import pandas as pd
-from tqdm import tqdm
 
-from hub.models import Area, AreaData, DataSet, DataType
+from hub.management.commands.base_importers import BaseImportFromDataFrameCommand
+from hub.models import AreaData, DataSet, DataType
 
 SUBCATEGORIES_DICT = {
     "would-change-party": "voting",
@@ -26,13 +24,16 @@ SUBCATEGORIES_DICT = {
 }
 
 
-class Command(BaseCommand):
+class Command(BaseImportFromDataFrameCommand):
     help = "Import polling data about support for renewables"
-
+    message = "Importing polling data about support for renewables"
     data_url = "https://cdn.survation.com/wp-content/uploads/2022/09/06213145/RenewableUK-MRP-Constituency-Topline-.xlsx"
     data_file = settings.BASE_DIR / "data" / "renewables_polling.csv"
+
+    cons_row = "gss"
     column_map = {}
     data_types = {}
+    data_sets = {}
 
     def make_label_from_question(self, q):
         q = re.sub(r"[\d.]+\) ", "", q)
@@ -80,25 +81,27 @@ class Command(BaseCommand):
 
             label = self.make_label_from_question(self.column_map[column])
             description = self.column_map[column]
-
+            defaults = {
+                "label": label,
+                "description": description,
+                "data_type": "percent",
+                "category": "opinion",
+                "subcategory": SUBCATEGORIES_DICT[column],
+                "source_label": "Survation, commissioned by RenewableUK",
+                "source": "https://www.renewableuk.com/news/615931/Polling-in-every-constituency-in-Britain-shows-strong-support-for-wind-farms-to-drive-down-bills.htm",
+                "source_type": "google sheet",
+                "data_url": self.data_url,
+                "order": order,
+                "table": "areadata",
+                "exclude_countries": ["Northern Ireland"],
+                "default_value": 50,
+                "comparators": DataSet.numerical_comparators(),
+            }
             data_set, created = DataSet.objects.update_or_create(
                 name=column,
-                defaults={
-                    "label": label,
-                    "description": description,
-                    "data_type": "percent",
-                    "category": "opinion",
-                    "subcategory": SUBCATEGORIES_DICT[column],
-                    "source_label": "Survation, commissioned by RenewableUK",
-                    "source": "https://www.renewableuk.com/news/615931/Polling-in-every-constituency-in-Britain-shows-strong-support-for-wind-farms-to-drive-down-bills.htm",
-                    "source_type": "google sheet",
-                    "data_url": "",
-                    "order": order,
-                    "table": "areadata",
-                    "default_value": 50,
-                    "comparators": DataSet.numerical_comparators(),
-                },
+                defaults=defaults,
             )
+            self.data_sets[column] = {"defaults": defaults, "col": column}
 
             data_type, created = DataType.objects.update_or_create(
                 data_set=data_set,
@@ -114,56 +117,6 @@ class Command(BaseCommand):
 
             self.data_types[column] = data_type
 
-    def process_data(self, df):
-        count = 0
-        totals = defaultdict(int)
-        maxes = defaultdict(int)
-        mins = defaultdict(int)
-
-        if not self._quiet:
-            self.stdout.write("Importing polling data")
-        for index, row in tqdm(df.iterrows(), disable=self._quiet, total=df.shape[0]):
-            gss = row["gss"]
-
-            try:
-                area = Area.objects.get(gss=gss)
-            except Area.DoesNotExist:
-                self.stdout.write(f"Failed to find area with code {gss}")
-                continue
-
-            count += 1
-
-            for column, data_type in self.data_types.items():
-                mins[column] = 100
-
-                f_val = float(row[column])
-                totals[column] += f_val
-                if f_val > maxes[column]:
-                    maxes[column] = f_val
-
-                if f_val < mins[column]:
-                    mins[column] = f_val
-
-                AreaData.objects.update_or_create(
-                    data_type=data_type,
-                    area=area,
-                    defaults={"data": row[column]},
-                )
-
-        for column, data_type in self.data_types.items():
-            average = totals[column] / count
-            data_type.average = average
-            data_type.max = maxes[column]
-            data_type.min = mins[column]
-            data_type.save()
-
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )
-
-    def handle(self, quiet=False, *args, **options):
-        self._quiet = quiet
-        df = self.get_dataframe()
-        self.add_data_sets(df)
-        self.process_data(df)
+    def delete_data(self):
+        for data_type in self.data_types.values():
+            AreaData.objects.filter(data_type=data_type).delete()

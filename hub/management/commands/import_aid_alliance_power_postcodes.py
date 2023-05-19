@@ -27,6 +27,7 @@ class Command(BaseAreaImportCommand):
         "data_url": "https://www.google.com/maps/d/u/0/viewer?mid=15b_tQI0t58rLcBTgFytu2e73jyKrrxFr",
         "table": "areadata",
         "default_value": {},
+        "exclude_countries": ["Northern Ireland", "Scotland", "Wales"],
         "comparators": DataSet.comparators_default(),
         "is_filterable": False,
         "is_shadable": False,
@@ -43,6 +44,7 @@ class Command(BaseAreaImportCommand):
         "data_url": "https://www.google.com/maps/d/u/0/viewer?mid=15b_tQI0t58rLcBTgFytu2e73jyKrrxFr",
         "table": "areadata",
         "default_value": 0,
+        "exclude_countries": ["Northern Ireland", "Scotland", "Wales"],
         "comparators": DataSet.numerical_comparators(),
         "is_filterable": True,
     }

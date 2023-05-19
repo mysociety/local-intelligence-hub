@@ -25,6 +25,7 @@ class Command(BaseConstituencyCountImportCommand):
         "data_url": "",
         "table": "areadata",
         "default_value": 10,
+        "exclude_countries": ["Northern Ireland"],
         "comparators": DataSet.numerical_comparators(),
     }
 

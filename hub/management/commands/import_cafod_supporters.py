@@ -30,6 +30,7 @@ class Command(BaseImportFromDataFrameCommand):
         "source": "https://cafod.org.uk",
         "source_type": "google sheet",
         "table": "areadata",
+        "exclude_countries": ["Northern Ireland", "Scotland"],
         "data_url": "",
         "comparators": DataSet.numerical_comparators(),
     }
