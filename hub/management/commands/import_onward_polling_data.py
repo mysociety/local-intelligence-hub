@@ -33,6 +33,7 @@ class Command(BaseImportFromDataFrameCommand):
         "table": "areadata",
         "default_value": 10,
         "data_url": "",
+        "exclude_countries": ["Northern Ireland"],
         "comparators": DataSet.numerical_comparators(),
     }
 

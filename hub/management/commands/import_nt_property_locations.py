@@ -40,6 +40,7 @@ class Command(BaseAreaImportCommand):
         "table": "areadata",
         "default_value": 0,
         "is_filterable": True,
+        "exclude_countries": ["Scotland"],
         "comparators": DataSet.numerical_comparators(),
     }
 
@@ -61,6 +62,7 @@ class Command(BaseAreaImportCommand):
         self.add_data_sets()
         self.delete_data()
         self.process_data()
+        self.update_averages()
         self.update_max_min()
 
     def process_data(self):
