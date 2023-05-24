@@ -20,7 +20,6 @@ from utils.mapit import (
 
 class BaseAreaImportCommand(BaseCommand):
     cast_field = IntegerField
-    ignore_blank_entries = False
 
     def __init__(self):
         super().__init__()
@@ -84,48 +83,46 @@ class BaseAreaImportCommand(BaseCommand):
             self.data_types[name] = data_type
 
     def _fill_empty_entries(self):
-        if not self.ignore_blank_entries:
-            for data_type in self.data_types.values():
-                if (
-                    data_type.data_type
-                    in [
-                        "integer",
-                        "float",
-                        "percent",
-                    ]
-                    and data_type.data_set.table == "areadata"
-                ):
-                    datum_example = AreaData.objects.filter(data_type=data_type).first()
-                    if datum_example.float:
-                        key = "float"
-                    elif datum_example.int:
-                        key = "int"
-                    else:
-                        key = "data"
-                    defaults = {key: 0}
-                    areas_with_values = [
-                        areadata.area.name
-                        for areadata in AreaData.objects.filter(data_type=data_type)
-                    ]
-                    # If some countries are set to be excluded, their values should not be filled in
-                    if data_type.data_set.exclude_countries != []:
-                        for country in data_type.data_set.exclude_countries:
-                            areas_with_values.extend(
-                                [
-                                    areadata.area.name
-                                    for areadata in AreaData.objects.filter(
-                                        data_type__name="country"
-                                    ).filter(data=country)
-                                ]
-                            )
-
-                    areas_without_values = Area.objects.exclude(
-                        name__in=areas_with_values
-                    )
-                    for area in areas_without_values:
-                        data, created = AreaData.objects.update_or_create(
-                            area=area, data_type=data_type, defaults=defaults
+        for data_type in self.data_types.values():
+            if (
+                data_type.data_type
+                in [
+                    "integer",
+                    "float",
+                    "percent",
+                ]
+                and data_type.data_set.table == "areadata"
+                and data_type.data_set.fill_blanks
+            ):
+                datum_example = AreaData.objects.filter(data_type=data_type).first()
+                if datum_example.float:
+                    key = "float"
+                elif datum_example.int:
+                    key = "int"
+                else:
+                    key = "data"
+                defaults = {key: 0}
+                areas_with_values = [
+                    areadata.area.name
+                    for areadata in AreaData.objects.filter(data_type=data_type)
+                ]
+                # If some countries are set to be excluded, their values should not be filled in
+                if data_type.data_set.exclude_countries != []:
+                    for country in data_type.data_set.exclude_countries:
+                        areas_with_values.extend(
+                            [
+                                areadata.area.name
+                                for areadata in AreaData.objects.filter(
+                                    data_type__name="country"
+                                ).filter(data=country)
+                            ]
                         )
+
+                areas_without_values = Area.objects.exclude(name__in=areas_with_values)
+                for area in areas_without_values:
+                    data, created = AreaData.objects.update_or_create(
+                        area=area, data_type=data_type, defaults=defaults
+                    )
 
     def update_averages(self):
         self._fill_empty_entries()

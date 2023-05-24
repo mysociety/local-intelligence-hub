@@ -7,12 +7,9 @@ from hub.models import AreaData, DataSet
 from .base_importers import BaseImportFromDataFrameCommand
 
 
-class Command(
-    BaseImportFromDataFrameCommand
-):  # TODO: Should this have a value that isn't 0?
+class Command(BaseImportFromDataFrameCommand):
     help = "Import data about area fuel poverty"
 
-    ignore_blank_entries = True
     source_url = (
         "https://www.gov.uk/government/statistics/sub-regional-fuel-poverty-data-2022"
     )
@@ -33,6 +30,7 @@ class Command(
                 "source_type": "xlxs",
                 "data_url": data_url,
                 "table": "areadata",
+                "fill_blanks": False,
                 "comparators": DataSet.numerical_comparators(),
                 "default_value": 10,
             },

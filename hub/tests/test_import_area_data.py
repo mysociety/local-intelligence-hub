@@ -29,7 +29,6 @@ class ImportTestCase(TestCase):
 class ImportNumericalDataWithMissingValuesTestCase(TestCase):
     def setUp(self):
         self.command = BaseAreaImportCommand()
-        self.command._ignore_blank_entries = False
         self.command.data_sets = {
             "data_type_1": {
                 "defaults": {
