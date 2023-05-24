@@ -1,13 +1,11 @@
 import re
-from collections import defaultdict
 
 from django.conf import settings
 
 import pandas as pd
-from tqdm import tqdm
 
 from hub.management.commands.base_importers import BaseImportFromDataFrameCommand
-from hub.models import Area, AreaData, DataSet, DataType
+from hub.models import AreaData, DataSet, DataType
 
 SUBCATEGORIES_DICT = {
     "would-change-party": "voting",
