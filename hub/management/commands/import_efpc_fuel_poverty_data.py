@@ -23,7 +23,7 @@ class Command(BaseImportFromDataFrameCommand):
                 "description": "Percentage of households in fuel poverty",
                 "data_type": "percent",
                 "category": "place",
-                "source_label": "End Fuel Povery Coalition",
+                "source_label": "End Fuel Poverty Coalition",
                 "source": source_url,
                 "source_type": "xlxs",
                 "data_url": "",
