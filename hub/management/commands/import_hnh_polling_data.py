@@ -41,6 +41,7 @@ class Command(BaseImportFromDataFrameCommand):
         "default_value": 50,
         "is_filterable": True,
         "exclude_countries": ["Northern Ireland"],
+        "is_shadable": False,
         "comparators": DataSet.numerical_comparators(),
     }
 
@@ -285,6 +286,49 @@ class Command(BaseImportFromDataFrameCommand):
                     "source_string": "NET_disagree",
                     "slug": "net_disagree",
                     "label": "Net disagree",
+                },
+            ],
+        },
+        {
+            "data_set_name": "hnh_mrp_25",
+            "defaults": extend(
+                defaults,
+                {
+                    "label": "Government policies on the overseas aid budget",
+                    "description": None,
+                },
+            ),
+            "source_filename": "Aid Alliance MRP Q25 1_3_23.xlsx - Constituency.csv",
+            "source_cols": [
+                {
+                    "source_string": "Name",
+                    "slug": "name",
+                    "label": None,
+                },
+                {
+                    "source_string": "Westminster Constituency",
+                    "slug": "gss_code",
+                    "label": None,
+                },
+                {
+                    "source_string": "Region",
+                    "slug": "region",
+                    "label": None,
+                },
+                {
+                    "source_string": "Winner",
+                    "slug": "winner",
+                    "label": None,
+                },
+                {
+                    "source_string": "The UK government should increase the overseas aid budget",
+                    "slug": "increase_overseas_aid_budget",
+                    "label": "Should increase",
+                },
+                {
+                    "source_string": "The UK government should reduce the overseas aid budget",
+                    "slug": "decrease_overseas_aid_budget",
+                    "label": "Should decrease",
                 },
             ],
         },

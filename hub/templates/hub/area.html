@@ -149,6 +149,7 @@
                             {% include 'hub/area/_opinion_table_data.html' with title="Cost of living" col_name="Question"  category=categories.opinion subcategory="cost_of_living" data_source="Data from Survation, commissioned by 38Degrees" %}
 
 
+                            {% include 'hub/area/_mrp_data.html' with dataset=indexed_categories.opinion.hnh_mrp_25 row_height=65 %}
                             <div class="card flex-grow-1 dataset-card">
                                 <div class="dataset-card-header pe-3">
                                     <h5>Voted to leave the European Union</h5>
