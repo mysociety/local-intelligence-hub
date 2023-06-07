@@ -27,19 +27,14 @@
     <meta name="google-site-verification" content="{{ GOOGLE_SITE_VERIFICATION }}">
   {% endif %}
   {% if GOOGLE_ANALYTICS %}
-    <script async src="https://www.googletagmanager.com/gtag/js?id={{ GOOGLE_ANALYTICS }}"></script>
+    <script defer>var capturedCookies={};Object.defineProperty(document,"cookie",{get:function(){var t=Object.getOwnPropertyDescriptor(Document.prototype,"cookie").get.call(document);for(var e in capturedCookies)t+=" "+e+"="+capturedCookies[e]+";";return t},set:function(t){var e=t.split("="),o=e[0].trim(),r=e[1].trim();o.startsWith("_ga")?capturedCookies[o]=r:Object.getOwnPropertyDescriptor(Document.prototype,"cookie").set.call(document,t)}});</script>
+    <script defer src="https://www.googletagmanager.com/gtag/js?id={{ GOOGLE_ANALYTICS }}"></script>
     <script>
+        var client_id = Math.floor(Math.random() * 1000000000) + '.' + Math.floor(Math.random() * 1000000000);
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-        gtag('config', '{{ GOOGLE_ANALYTICS }}');
-        gtag("consent", "default", {
-            ad_storage: "denied",
-            analytics_storage: "denied",
-            functionality_storage: "denied",
-            personalization_storage: "denied",
-            security_storage: "denied"
-        });
+        gtag('config','{{ GOOGLE_ANALYTICS }}', {'client_id': client_id, 'cookie_expires': 0 });
     </script>
   {% endif %}
     <script type="module">document.documentElement.classList.remove('no-js'); document.documentElement.classList.add('js');</script>
