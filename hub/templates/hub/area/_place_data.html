@@ -8,7 +8,7 @@
             {% include "hub/area/_favourite.html" %}
         </div>
         <div class="card-body">
-            {% if category.is_range %}
+            {% if category.name == "Constituency Age Distribution" %}
                 <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">
                     <thead>
                         <tr>
@@ -27,6 +27,25 @@
                       {% endfor %}
                     </tbody>
                 </table>
+              {% elif category.name == 'Socio-Economic Status' %}
+              <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th scope="col">Status</th>
+                    <th scope="col">This area</th>
+                    <th scope="col" class="text-muted">UK average</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for range in category.data %}
+                <tr>
+                    <th>{{ range.label }}</th>
+                    <td>{{ range.value|floatformat }}%</td>
+                    <td class="text-muted">{{ range.average|floatformat }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
               {% elif category.data.data_type.name == 'constituency_popular_petitions' %}
                 <table class="table mb-0">
                     <thead>
