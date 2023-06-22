@@ -9,7 +9,7 @@
 
         <h1 class="mb-4 text-primary">Search by location</h1>
         <label class="form-label" for="search">Enter a constituency name, MP name, or postcode</label>
-        <form class="row mt-2 mb-2" style="max-width: 30rem;" action="{% url 'area_search' %}">
+        <form class="row mt-2 mb-2 js-homepage-search" style="max-width: 30rem;" action="{% url 'area_search' %}">
             <div class="col">
                 <div class="search-input search-input-lg">
                     {% include 'hub/includes/icons/search.html' %}

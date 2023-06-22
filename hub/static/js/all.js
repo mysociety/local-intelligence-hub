@@ -98,7 +98,9 @@ $(function(){
         var $form = $(this);
         if ( ! $form.data('submitRecorded') ) {
             e.preventDefault();
-            trackEvent('homepage_search_form_submit').always(function(){
+            trackEvent('homepage_search_form_submit', {
+                search_term: $form.find('input[type="search"]').val()
+            }).always(function(){
                 $form.data('submitRecorded', true).submit();
             });
         }
