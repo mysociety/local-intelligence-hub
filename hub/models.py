@@ -115,6 +115,18 @@ class DataSet(TypeMixin, models.Model):
         ("person__persondata", "PersonData"),
     ]
 
+    UNIT_TYPE_CHOICES = [
+        ("raw", "Raw unit (e.g. people or buildings)"),
+        ("percentage", "Percentage"),
+        ("point", "Point data (e.g. lat/long)"),
+    ]
+
+    UNIT_DISTRIBUTION_CHOICES = [
+        ("people_in_area", "Evenly distributed over people in an area"),
+        ("physical_area", "Evenly distributed over a physical area"),
+        ("point", "Point data (recalculated)"),
+    ]
+
     COMPARATORS_SCHEMA = {
         "type": "array",
         "items": {
@@ -203,6 +215,8 @@ class DataSet(TypeMixin, models.Model):
     exclude_countries = JSONField(
         schema=EXCLUDE_COUNTRIES_SCHEMA, blank=True, default=exclude_countries_default
     )
+    unit_type = models.TextField(null=True, choices=UNIT_TYPE_CHOICES)
+    unit_distribution = models.TextField(null=True, choices=UNIT_DISTRIBUTION_CHOICES)
 
     def __str__(self):
         if self.label:
