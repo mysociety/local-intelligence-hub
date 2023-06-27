@@ -211,6 +211,7 @@ class DataSet(TypeMixin, models.Model):
     default_value = models.CharField(max_length=50, blank=True, null=True)
     is_filterable = models.BooleanField(default=True)
     is_shadable = models.BooleanField(default=True)
+    is_public = models.BooleanField(default=False)
     fill_blanks = models.BooleanField(default=True)
     exclude_countries = JSONField(
         schema=EXCLUDE_COUNTRIES_SCHEMA, blank=True, default=exclude_countries_default
