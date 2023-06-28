@@ -22,6 +22,8 @@ class TitleMixin:
 class FilterMixin:
     @cache
     def filters(self):
+        is_non_member = self.request.user.is_anonymous
+
         filters = []
         for param, value in self.request.GET.items():
             if "__" in param and param not in ["shader", "columns"]:
@@ -34,6 +36,8 @@ class FilterMixin:
 
             try:
                 dataset = DataSet.objects.get(name=name)
+                if is_non_member and not dataset.is_public:
+                    continue
                 filters.append(
                     {
                         "dataset": dataset,
@@ -63,6 +67,8 @@ class FilterMixin:
 
     @cache
     def columns(self, mp_name=False):
+        is_non_member = self.request.user.is_anonymous
+
         columns = []
         col_names = self.request.GET.get("columns", "").split(",")
 
@@ -78,6 +84,8 @@ class FilterMixin:
 
             try:
                 dataset = DataSet.objects.get(name=col)
+                if is_non_member and not dataset.is_public:
+                    continue
                 columns.append(
                     {
                         "dataset": dataset,

@@ -10,7 +10,8 @@
       "is_range": "True",
       "source": "https://parliament.uk",
       "table": "areadata",
-      "category": "place"
+      "category": "place",
+      "is_public": "True"
     }
   },
   {
