@@ -1,0 +1,30 @@
+{% load humanize %}
+
+<div class="card flex-grow-1 dataset-card">
+    <div class="dataset-card-header pe-3">
+        <h5>Vote share at last election</h5>
+    </div>
+    <div class="card-body">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th scope="col">Party</th>
+                    <th scope="col">Votes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in indexed_categories.opinion.last_election.data.value.results|dictsortreversed:"votes" %}
+                    {% if data.votes != 0 %}
+                        <tr>
+                            <th>{{ data.party }}</th>
+                            <td>{{ data.votes }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer bg-white">
+        <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">{{ indexed_categories.opinion.last_election.data.value.date|naturalday:"jS M Y" }} election results from UK Parliament</a></p>
+    </div>
+</div>

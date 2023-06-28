@@ -47,15 +47,17 @@ class BaseAreaView(TitleMixin, DetailView):
         return self.object.name
 
     def process_dataset(self, data_set):
-        fav_sq = Subquery(
-            UserDataSets.objects.filter(
-                data_set_id=OuterRef("data_type__data_set__id"),
-                user=self.request.user,
+        is_member = not self.request.user.is_anonymous
+        if is_member:
+            fav_sq = Subquery(
+                UserDataSets.objects.filter(
+                    data_set_id=OuterRef("data_type__data_set__id"),
+                    user=self.request.user,
+                )
+                .values("data_set_id")
+                .annotate(is_favourite=Count("id"))
+                .values("is_favourite")
             )
-            .values("data_set_id")
-            .annotate(is_favourite=Count("id"))
-            .values("is_favourite")
-        )
         data = {
             "name": str(data_set),
             "label": data_set.label,
@@ -75,11 +77,14 @@ class BaseAreaView(TitleMixin, DetailView):
                 .select_related("data_type")
                 .order_by("data_type__name")
             )
+            if is_member:
+                data["is_favourite"] = UserDataSets.objects.filter(
+                    data_set=data_set,
+                    user=self.request.user,
+                ).exists()
+            else:
+                data["is_favourite"] = False
 
-            data["is_favourite"] = UserDataSets.objects.filter(
-                data_set=data_set,
-                user=self.request.user,
-            ).exists()
             data["data"] = data_range.all()
         elif data_set.category == "opinion":
             data_range = (
@@ -87,18 +92,19 @@ class BaseAreaView(TitleMixin, DetailView):
                     area=self.object,
                     data_type__data_set=data_set,
                 )
-                .annotate(is_favourite=fav_sq)
                 .select_related("data_type")
                 .order_by("data_type__order", "data_type__label")
             )
+            if is_member:
+                data_range = data_range.annotate(is_favourite=fav_sq)
 
             data["data"] = data_range.all()
         else:
-            area_data = (
-                AreaData.objects.filter(area=self.object, data_type__data_set=data_set)
-                .annotate(is_favourite=fav_sq)
-                .select_related("data_type")
-            )
+            area_data = AreaData.objects.filter(
+                area=self.object, data_type__data_set=data_set
+            ).select_related("data_type")
+            if is_member:
+                area_data = area_data.annotate(is_favourite=fav_sq)
             if area_data:
                 data["data"] = area_data[0]
 
@@ -177,14 +183,18 @@ class AreaView(BaseAreaView):
         return tags
 
     def get_context_data(self, **kwargs):
+        is_non_member = self.request.user.is_anonymous
+
         context = super().get_context_data(**kwargs)
         try:
             context["mp"] = {"person": Person.objects.get(area=self.object)}
 
             data = PersonData.objects.filter(
                 person=context["mp"]["person"]
-            ).select_related("data_type")
+            ).select_related("data_type", "data_type__data_set")
             for item in data.all():
+                if is_non_member and not item.data_type.data_set.is_public:
+                    continue
                 if (
                     item.data_type.name == "select_committee_membership"
                     and "select_committee_memberships" not in context["mp"]
@@ -199,25 +209,34 @@ class AreaView(BaseAreaView):
                     ]
                 else:
                     context["mp"][item.data_type.name] = item.value()
+
             context["mp"]["appg_memberships"] = [
                 item.value()
                 for item in data.filter(data_type__name="mp_appg_memberships")
             ]
+
+            votes = data.filter(data_type__data_set__subcategory="vote")
+            if is_non_member:
+                votes = votes.exclude(data_type__data_set__is_public=False)
             context["mp"]["votes"] = [
                 {
                     "name": item.data_type.data_set.label,
                     "vote": item.value(),
                     "url": f"https://votes.parliament.uk/Votes/Commons/Division/{item.data_type.name.split('_')[0]}",
                 }
-                for item in data.filter(data_type__data_set__subcategory="vote")
+                for item in votes
             ]
+
+            support = data.filter(data_type__data_set__subcategory="supporter")
+            if is_non_member:
+                support = support.exclude(data_type__data_set__is_public=False)
             context["mp"]["support"] = [
                 {
                     "name": item.data_type.data_set.label,
                     "position": item.value(),
                     "url": f"https://edm.parliament.uk/early-day-motion/{item.data_type.name.split('_')[0]}",
                 }
-                for item in data.filter(data_type__data_set__subcategory="supporter")
+                for item in support
             ]
 
         except Person.DoesNotExist:
@@ -225,6 +244,8 @@ class AreaView(BaseAreaView):
 
         categories = defaultdict(list)
         for data_set in DataSet.objects.order_by("order", "name").all():
+            if is_non_member and not data_set.is_public:
+                continue
             if data_set.name == "constituency_foe_groups_count":
                 continue
             data = self.process_dataset(data_set)
@@ -271,6 +292,7 @@ class AreaView(BaseAreaView):
             if ruc:
                 context["categories"]["place"].remove(ruc)
         context["indexed_categories"] = indexed_categories
+        context["user_is_member"] = not is_non_member
         return context
 
 

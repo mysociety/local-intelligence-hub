@@ -128,7 +128,8 @@
                 <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data collated by The Climate Coalition</a></p>
             </div>
         </div>
-  <div class="card flex-grow-1 dataset-card">
+      {% if mp.votes %}
+        <div class="card flex-grow-1 dataset-card">
              <div class="dataset-card-header">
               <h5>Relevant votes & amendments</h5>
              </div>
@@ -160,6 +161,7 @@
                 <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data from UK Parliament</a></p>
             </div>
         </div>
+        {% endif %}
 
     </div>
 </div>
