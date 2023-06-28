@@ -1,34 +1,8 @@
 from datetime import timedelta
 
-from django.conf import settings
-from django.http import HttpResponseRedirect
-from django.urls import reverse_lazy
 from django.utils.timezone import now
 
 from hub.models import UserProperties
-
-
-def redirect_to_login():
-    return HttpResponseRedirect(reverse_lazy("login"))
-
-
-class AuthPageProtectionMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        if (
-            request.path not in settings.NON_LOGIN_URLS
-            and not request.path.startswith("/accounts/reset/")
-            and not request.path.startswith("/activate/")
-            and not request.path.startswith("/__debug__/")
-            and not request.user.is_authenticated
-        ):
-            return redirect_to_login()
-
-        response = self.get_response(request)
-
-        return response
 
 
 class RecordLastSeenMiddleware:
