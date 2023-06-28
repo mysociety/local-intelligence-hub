@@ -22,6 +22,8 @@ class TitleMixin:
 class FilterMixin:
     @cache
     def filters(self):
+        is_non_member = self.request.user.is_anonymous
+
         filters = []
         area_type = self.area_type()
         for param, value in self.request.GET.items():
@@ -39,6 +41,8 @@ class FilterMixin:
 
             try:
                 dataset = DataSet.objects.get(name=name, areas_available=area_type)
+                if is_non_member and not dataset.is_public:
+                    continue
                 filters.append(
                     {
                         "dataset": dataset,
@@ -68,6 +72,8 @@ class FilterMixin:
 
     @cache
     def columns(self, mp_name=False):
+        is_non_member = self.request.user.is_anonymous
+
         columns = []
         col_names = self.request.GET.get("columns", "").split(",")
 
@@ -85,6 +91,8 @@ class FilterMixin:
 
             try:
                 dataset = DataSet.objects.get(name=col, areas_available=area_type)
+                if is_non_member and not dataset.is_public:
+                    continue
                 columns.append(
                     {
                         "dataset": dataset,

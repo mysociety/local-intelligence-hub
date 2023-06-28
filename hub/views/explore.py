@@ -48,6 +48,8 @@ class ExploreDatasetsJSON(TemplateView):
 
             type_map[t.data_set.name]["stats"] = stats
 
+        is_non_member = self.request.user.is_anonymous
+
         datasets = []
         for d in DataSet.objects.all():
             try:
@@ -56,17 +58,30 @@ class ExploreDatasetsJSON(TemplateView):
             except TypeError:
                 continue
 
+            scope = "private"
+            if d.is_public:
+                scope = "public"
+
+            if scope == "private" and is_non_member:
+                continue
+
+            is_favourite = False
+            if not is_non_member:
+                is_favourite = (
+                    UserDataSets.objects.filter(
+                        data_set=d,
+                        user=self.request.user,
+                    ).exists(),
+                )
+
             ds = dict(
-                scope="public",
+                scope=scope,
                 name=d.name,
                 title=d.label,
                 description=d.description,
                 source=d.source,
                 source_label=d.source_label,
-                is_favourite=UserDataSets.objects.filter(
-                    data_set=d,
-                    user=self.request.user,
-                ).exists(),
+                is_favourite=is_favourite,
                 is_filterable=d.is_filterable,
                 is_shadable=d.is_shadable,
                 featured=d.featured,
