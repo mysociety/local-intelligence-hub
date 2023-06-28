@@ -42,9 +42,16 @@ class DataSetDataTypeInline(admin.StackedInline):
 
 @admin.register(DataSet)
 class DataSetAdmin(admin.ModelAdmin):
-    list_display = ("__str__", "description", "category", "order", "featured")
-    list_editable = ("order", "featured")
-    list_filter = ("category", "featured", "data_type")
+    list_display = (
+        "__str__",
+        "description",
+        "category",
+        "order",
+        "featured",
+        "is_public",
+    )
+    list_editable = ("order", "featured", "is_public")
+    list_filter = ("category", "featured", "data_type", "is_public")
     ordering = ("order", "name")
     search_fields = ["name", "description", "source"]
 
