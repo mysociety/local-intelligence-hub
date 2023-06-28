@@ -8,32 +8,14 @@ from hub.models import DataSet, UserDataSets
 
 
 class Test404Page(TestCase):
-    def testRequireLoginOver404(self):
-        url = "/page_does_not_exist"
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 302)
-
     def test404page(self):
-        u = User.objects.create(username="user@example.com")
-        self.client.force_login(u)
         url = "/page_does_not_exist"
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         self.assertTemplateUsed(response, "404.html")
 
 
-class TestLoginEnforced(TestCase):
-    def test_login_required(self):
-        url = reverse("explore")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 302)
-
-
 class TestPageRenders(TestCase):
-    def setUp(self):
-        u = User.objects.create(username="user@example.com")
-        self.client.force_login(u)
-
     def test_home_page(self):
         url = reverse("home")
         response = self.client.get(url)
@@ -67,6 +49,15 @@ class TestExploreDatasetsPage(TestCase):
         url = reverse("explore_datasets_json")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+
+        datasets = response.json()
+        self.assertEqual(11, len(datasets))
+
+        self.client.logout()
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        datasets = response.json()
+        self.assertEqual(4, len(datasets))
 
     def test_explore_view_with_many_to_one(self):
         url = f"{reverse('explore_csv')}?mp_appg_membership__exact=MadeUpAPPG"
@@ -206,7 +197,7 @@ class TestAreaPage(TestCase):
         self.u = User.objects.create(username="user@example.com")
         self.client.force_login(self.u)
 
-    def test_area_page(self):
+    def test_area_page_logged_in(self):
         DataSet.objects.update(featured=True)
         url = reverse("area", args=("WMC", "South Borsetshire"))
         response = self.client.get(url)
@@ -218,6 +209,7 @@ class TestAreaPage(TestCase):
         self.assertEqual(context["area"].name, "South Borsetshire")
 
         mp = context["mp"]
+        self.assertEqual(len(mp.keys()), 9)
         self.assertEqual(mp["person"].name, "James Madeupname")
         self.assertEqual(mp["parlid"], "1")
         self.assertEqual(mp["mp_election_majority"], 1234)
@@ -247,6 +239,36 @@ class TestAreaPage(TestCase):
 
         context = response.context
         self.assertIsNone(context.get("mp"))
+
+    def test_area_page_logged_out(self):
+        self.client.logout()
+
+        DataSet.objects.update(featured=True)
+        url = reverse("area", args=("WMC", "South Borsetshire"))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "hub/area.html")
+
+        context = response.context
+        self.assertEqual(context["page_title"], "South Borsetshire")
+        self.assertEqual(context["area"].name, "South Borsetshire")
+
+        mp = context["mp"]
+        self.assertEqual(len(mp.keys()), 5)
+        self.assertEqual(mp["person"].name, "James Madeupname")
+        self.assertIsNone(mp.get("parlid", None))
+        self.assertEqual(mp["mp_election_majority"], 1234)
+        self.assertIsNone(mp.get("mp_first_elected", None))
+
+        places = context["categories"]["place"]
+        self.assertEqual(len(places), 1)
+
+        ages = places[0]
+        self.assertEqual(len(ages["data"]), 2)
+        self.assertEqual(ages["data"][0].value(), 10.1234)
+
+        opinion = context["categories"]["opinion"]
+        self.assertEqual(len(opinion), 0)
 
 
 class TestAreaSearchPage(TestCase):
