@@ -56,7 +56,7 @@ class TestExploreDatasetsPage(TestCase):
         "mp_memberships.json",
     ]
     output_csv = str.encode(
-        "constituency_name,mp_appg_membership\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2\r\n"
+        "Constituency Name,APPG membership\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2\r\n"
     )
 
     def setUp(self):
@@ -79,7 +79,7 @@ class TestExploreDatasetsPage(TestCase):
 
     def test_explore_view_extra_column(self):
         output_csv = str.encode(
-            "constituency_name,mp_appg_membership,wind_support\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2,70.0\r\n"
+            "Constituency Name,APPG membership,Wind support\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2,70.0\r\n"
         )
 
         url = f"{reverse('explore_csv')}?mp_appg_membership__exact=MadeUpAPPG&columns=wind_support"
@@ -92,7 +92,7 @@ class TestExploreDatasetsPage(TestCase):
 
     def test_explore_view_multiple_extra_columns(self):
         output_csv = str.encode(
-            "constituency_name,mp_appg_membership,wind_support,fuel_poverty\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2,70.0,12.4321\r\n"
+            "Constituency Name,APPG membership,Wind support,Constituency Fuel Poverty\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2,70.0,12.4321\r\n"
         )
 
         url = f"{reverse('explore_csv')}?mp_appg_membership__exact=MadeUpAPPG&columns=wind_support,fuel_poverty"
@@ -105,7 +105,7 @@ class TestExploreDatasetsPage(TestCase):
 
     def test_explore_view_extra_columns_multiset(self):
         output_csv = str.encode(
-            "constituency_name,mp_appg_membership,wind_support,ages_0-9\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2,70.0,10.1234\r\n"
+            "Constituency Name,APPG membership,Wind support,Constituency Age 0-9 %age\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2,70.0,10.1234\r\n"
         )
 
         url = f"{reverse('explore_csv')}?mp_appg_membership__exact=MadeUpAPPG&columns=wind_support,ages_0-9"

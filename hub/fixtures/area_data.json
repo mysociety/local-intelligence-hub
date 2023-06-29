@@ -4,6 +4,7 @@
     "pk": 5,
     "fields": {
       "name": "constituency_age_distribution",
+      "label": "Constituency Age Distribution",
       "data_type": "float",
       "last_update": "2022-10-10T13:20:30+00:00",
       "is_range": "True",
@@ -17,6 +18,7 @@
     "pk": 6,
     "fields": {
       "name": "constituency_fuel_poverty",
+      "label": "Constituency Fuel Poverty",
       "data_type": "float",
       "last_update": "2022-10-10T13:20:30+00:00",
       "source": "https://parliament.uk",
@@ -29,6 +31,7 @@
     "pk": 7,
     "fields": {
       "name": "constituency_polling_data",
+      "label": "Constituency Polling Data",
       "data_type": "percent",
       "last_update": "2022-10-10T13:20:30+00:00",
       "source": "http://example.org/polling",
@@ -42,6 +45,7 @@
     "fields": {
       "data_set": 5,
       "name": "ages_0-9",
+      "label": "Constituency Age 0-9 %age",
       "data_type": "float",
       "last_update": "2022-10-10T13:20:30+00:00"
     }
@@ -52,6 +56,7 @@
     "fields": {
       "data_set": 5,
       "name": "ages_10-19",
+      "label": "Constituency Age 10-19 %age",
       "data_type": "float",
       "last_update": "2022-10-10T13:20:30+00:00"
     }
@@ -62,6 +67,7 @@
     "fields": {
       "data_set": 6,
       "name": "fuel_poverty",
+      "label": "Constituency Fuel Poverty",
       "data_type": "float",
       "last_update": "2022-10-10T13:20:30+00:00"
     }
@@ -72,6 +78,7 @@
     "fields": {
       "data_set": 7,
       "name": "wind_support",
+      "label": "Wind support",
       "data_type": "percent",
       "last_update": "2022-10-10T13:20:30+00:00",
       "order": 2
@@ -83,6 +90,7 @@
     "fields": {
       "data_set": 7,
       "name": "solar_support",
+      "label": "Solar support",
       "data_type": "percent",
       "last_update": "2022-10-10T13:20:30+00:00",
       "order": 1

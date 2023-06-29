@@ -38,6 +38,7 @@ class FilterMixin:
                     {
                         "dataset": dataset,
                         "name": dataset.name,
+                        "label": dataset.label,
                         "comparator": comparator,
                         "value": value,
                         "value_col": dataset.value_col,
@@ -50,6 +51,7 @@ class FilterMixin:
                         {
                             "dataset": datatype.data_set,
                             "name": datatype.name,
+                            "label": datatype.label,
                             "comparator": comparator,
                             "value": value,
                             "value_col": datatype.value_col,
@@ -60,13 +62,18 @@ class FilterMixin:
         return filters
 
     @cache
-    def columns(self):
+    def columns(self, mp_name=False):
         columns = []
         col_names = self.request.GET.get("columns", "").split(",")
 
+        if mp_name:
+            col_names.append("mp_name")
+
+        col_label_map = {"mp_name": "MP Name", "gss": "GSS"}
+
         for col in col_names:
             if col in ["mp_name", "gss"]:
-                columns.append({"name": col})
+                columns.append({"name": col, "label": col_label_map[col]})
                 continue
 
             try:
@@ -76,6 +83,7 @@ class FilterMixin:
                         "dataset": dataset,
                         "name": dataset.name,
                         "value_col": dataset.value_col,
+                        "label": dataset.label,
                     }
                 )
             except DataSet.DoesNotExist:
@@ -86,6 +94,7 @@ class FilterMixin:
                             "dataset": datatype.data_set,
                             "name": datatype.name,
                             "value_col": datatype.value_col,
+                            "label": datatype.label,
                         }
                     )
                 except DataType.DoesNotExist:
@@ -106,10 +115,18 @@ class FilterMixin:
         query = query.distinct("pk")
         return query
 
-    def data(self):
-        headers = ["constituency_name"]
-        headers += map(lambda f: f["dataset"].name, self.filters())
-        headers += map(lambda f: f["name"], self.columns())
+    def format_value(self, type, value):
+        if type == "percent":
+            return f"{round(value, 1)}%"
+        elif type == "float":
+            return round(value, 1)
+
+        return value
+
+    def data(self, as_dict=False, mp_name=False):
+        headers = ["Constituency Name"]
+        headers += map(lambda f: f["dataset"].label, self.filters())
+        headers += map(lambda f: f["label"], self.columns(mp_name=mp_name))
 
         data = [headers]
 
@@ -122,7 +139,7 @@ class FilterMixin:
         """
         area_ids = self.query().values_list("pk", flat=True)
         cols = self.filters().copy()
-        cols.extend(self.columns())
+        cols.extend(self.columns(mp_name=mp_name))
 
         """
         first for each column we want gather the data and store it against the
@@ -133,12 +150,12 @@ class FilterMixin:
                 for row in Person.objects.filter(area_id__in=area_ids).select_related(
                     "area"
                 ):
-                    area_data[row.area.name][col["name"]].append(row.name)
+                    area_data[row.area.name]["MP Name"].append(row.name)
 
                 continue
             elif col["name"] == "gss":
                 for row in self.query():
-                    area_data[row.name][col["name"]].append(row.gss)
+                    area_data[row.name]["GSS"].append(row.gss)
                 continue
 
             dataset = col["dataset"]
@@ -150,7 +167,10 @@ class FilterMixin:
                     .order_by(col["value_col"])
                     .select_related("area", "data_type")
                 ):
-                    area_data[row.area.name][col["name"]].append(str(row.value()))
+                    value = row.value()
+                    if as_dict:
+                        value = self.format_value(row.data_type.data_type, row.value())
+                    area_data[row.area.name][col["label"]].append(str(value))
             else:
                 for row in (
                     PersonData.objects.filter(
@@ -159,9 +179,15 @@ class FilterMixin:
                     .order_by(col["value_col"])
                     .select_related("person__area", "data_type")
                 ):
-                    area_data[row.person.area.name][col["name"]].append(
-                        str(row.value())
-                    )
+                    value = row.value()
+                    if as_dict:
+                        value = self.format_value(row.data_type.data_type, row.value())
+                    area_data[row.person.area.name][col["label"]].append(str(value))
+
+        if as_dict:
+            for area in Area.objects.filter(id__in=area_ids):
+                area_data[area.name]["area"] = area
+            return area_data
 
         """
         and then go through the data for each area and reconstitute it into an array
@@ -169,7 +195,7 @@ class FilterMixin:
         for area, values in area_data.items():
             row = [area]
             for col in cols:
-                row.append("; ".join(values[col["name"]]))
+                row.append("; ".join(values[col["label"]]))
             data.append(row)
 
         return data

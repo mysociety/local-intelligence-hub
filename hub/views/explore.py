@@ -116,24 +116,31 @@ class ExploreGeometryJSON(FilterMixin, TemplateView):
 class ExploreJSON(FilterMixin, TemplateView):
     def render_to_response(self, context, **response_kwargs):
         geom = []
-        areas = list(self.query().filter(geometry__isnull=False))
+        areas = self.data(as_dict=True, mp_name=True)
+        shader_areas = [a["area"] for a in areas.values()]
         shader = self.shader()
         colours = {}
         if shader is not None:
-            colours = shader.colours_for_areas(areas)
+            colours = shader.colours_for_areas(shader_areas)
 
-        for area in areas:
+        for area in areas.values():
+            area_obj = area["area"]
             geometry = {
                 "properties": {
-                    "PCON13CD": area.gss,
-                    "name": area.name,
-                    "type": area.area_type,
+                    "PCON13CD": area_obj.gss,
+                    "name": area_obj.name,
+                    "type": area_obj.area_type,
                 }
             }
+            for k in area.keys():
+                if k == "area":
+                    continue
+                geometry["properties"][k] = area[k]
             props = geometry["properties"]
-            if colours.get(area.gss, None) is not None:
-                props["color"] = colours[area.gss]["colour"]
-                props["opacity"] = colours[area.gss]["opacity"]
+            if colours.get(area_obj.gss, None) is not None:
+                props["color"] = colours[area_obj.gss]["colour"]
+                props["opacity"] = colours[area_obj.gss]["opacity"]
+                props[colours[area_obj.gss]["label"]] = colours[area_obj.gss]["value"]
             else:
                 props["color"] = "#ed6832"
                 props["opacity"] = 0.7

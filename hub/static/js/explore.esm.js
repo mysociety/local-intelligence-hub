@@ -291,6 +291,7 @@ const app = createApp({
               }
             },
             onEachFeature: (feature, layer) => {
+              layer.name = feature.properties.name
               layer.bindTooltip(feature.properties.name)
               layer.on({
                 mouseover: (e) => { e.target.setStyle({ weight: 5 }) },
@@ -341,12 +342,22 @@ const app = createApp({
             if ( features[layer.feature.properties.PCON13CD] ) {
               var props = features[layer.feature.properties.PCON13CD];
               // "show" the feature
+              var text = "<strong>" + props["name"] + "</strong><table class=\"table table-sm\">"
+              for (p in props) {
+                if (["name", "type", "color", "opacity", "PCON13CD"].includes(p)) {
+                  continue
+                }
+                text += "<tr><td>" + p + "</td><td> " + props[p] + "</td></tr>"
+              }
+              text += "</table>"
+              layer.bindTooltip(text)
               layer.setStyle({
                 opacity: 1,
                 fillColor: props.color,
                 fillOpacity: props.opacity
               })
             } else {
+              layer.bindTooltip(layer.name)
               // "hide" the feature
               layer.setStyle({
                 opacity: 0,

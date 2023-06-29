@@ -312,6 +312,8 @@ class DataSet(TypeMixin, models.Model):
                             option["shader"], option["shader"]
                         ),
                         "opacity": value.opacity(mininimum, maximum) or 0.7,
+                        "value": data,
+                        "label": self.label,
                     }
 
             if colours.get(value.gss, None) is None:
@@ -320,6 +322,8 @@ class DataSet(TypeMixin, models.Model):
                     colours[value.gss] = {
                         "colour": shade,
                         "opacity": 0.7,
+                        "label": self.label,
+                        "value": data,
                     }
 
         # if there is no data for an area then need to set the shader to opacity 0 otherwise
