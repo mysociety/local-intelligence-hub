@@ -110,6 +110,8 @@ class AreaView(BaseAreaView):
                         "colour": "yellow-400",
                         "title": "MP electoral majority less than 5000; Data from UK Parliament",
                         "name": "Marginal seat",
+                        "key": "mp_election_majority__lt",
+                        "value": 5000,
                     }
                 )
         red_wall_blue_wall_data = area_data["place"].get(
@@ -123,6 +125,8 @@ class AreaView(BaseAreaView):
                         "colour": "red-500",
                         "title": "Data from Green Alliance",
                         "name": "Red wall",
+                        "key": "constituency_red_blue_wall__in",
+                        "value": "Red Wall",
                     }
                 )
             else:
@@ -131,6 +135,8 @@ class AreaView(BaseAreaView):
                         "colour": "blue-500",
                         "title": "Data from Green Alliance",
                         "name": "Blue wall",
+                        "key": "constituency_red_blue_wall__in",
+                        "value": "Blue Wall",
                     }
                 )
         power_postcode = area_data["movement"].get("power_postcodes", None)
@@ -140,6 +146,8 @@ class AreaView(BaseAreaView):
                     "colour": "teal-200",
                     "title": "Aid Alliance Power Postcode",
                     "name": "Aid Alliance Power Postcode",
+                    "key": "power_postcodes_count__gte",
+                    "value": 1,
                 }
             )
         # Grab the RUC data
@@ -151,6 +159,8 @@ class AreaView(BaseAreaView):
                     "colour": RUC_COLOURS[ruc],
                     "title": "Urban Rural Classification",
                     "name": ruc,
+                    "key": "constituency_ruc__in",
+                    "value": ruc,
                 }
             )
 

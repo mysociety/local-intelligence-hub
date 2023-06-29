@@ -11,7 +11,7 @@
         {% if area_tags %}
         <ul class="list-inline mt-3 mb-0">
           {% for tag in area_tags %}
-            {% include "hub/area/_tag.html" with colour=tag.colour title=tag.title name=tag.name only %}
+            {% include "hub/area/_tag.html" with colour=tag.colour title=tag.title name=tag.name key=tag.key value=tag.value only %}
           {% endfor %}
         </ul>
         {% endif %}
