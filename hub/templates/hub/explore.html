@@ -54,6 +54,25 @@
                         <input v-else type="text" v-model="filter.selectedValue" class="form-control form-control-sm flex-grow-1 flex-shrink-1">
                         <p v-if="filter.is_in" class="flex-grow-1 text-muted mb-0 text-center fs-8">Tip: Ctrl-click (PC) or Cmd-click (Mac) to select multiple items</p>
                     </div>
+                    <details class="mt-3" v-if="Number.isFinite(filter.min)">
+                        <summary class="text-muted fs-8 fw-bold lh-1">About this dataset</summary>
+                        <table class="table table-sm table-bordered table-fixed text-center mb-0 mt-3 fs-8">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Minimum</th>
+                                    <th v-if="Number.isFinite(filter.avg)" scope="col">Average</th>
+                                    <th scope="col">Maximum</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>${ filter.min }</td>
+                                    <td v-if="Number.isFinite(filter.avg)">${ filter.avg }</td>
+                                    <td>${ filter.max }</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </details>
                 </div>
             </div>
 

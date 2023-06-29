@@ -1,5 +1,6 @@
 import csv
 import json
+import math
 from operator import itemgetter
 
 from django.http import HttpResponse, JsonResponse
@@ -16,6 +17,29 @@ class ExploreView(TitleMixin, TemplateView):
 
 class ExploreDatasetsJSON(TemplateView):
     def render_to_response(self, context, **response_kwargs):
+        types = DataType.objects.exclude(data_set__is_range=True).select_related(
+            "data_set"
+        )
+        type_map = {}
+        for t in types:
+            avg = t.average
+            maximum = t.maximum
+            minimum = t.minimum
+            if t.is_number:
+                if avg is not None:
+                    # we never want this to be 0
+                    avg = math.ceil(avg)
+                if maximum is not None:
+                    maximum = round(maximum)
+                if minimum is not None:
+                    minimum = round(minimum)
+            type_map[t.data_set.name] = {
+                "max": maximum,
+                "min": minimum,
+                "avg": avg,
+                "defaultValue": avg,
+            }
+
         datasets = []
         for d in DataSet.objects.all():
             try:
@@ -45,6 +69,11 @@ class ExploreDatasetsJSON(TemplateView):
                 is_range=d.is_range,
                 data_type=d.data_type,
             )
+            if (
+                type_map.get(d.name, None) is not None
+                and type_map[d.name]["min"] is not None
+            ):
+                ds = {**ds, **type_map[d.name]}
             if d.is_range:
                 ds["types"] = [
                     {"name": dt.name, "title": dt.label}
