@@ -149,7 +149,7 @@ class ImportFuelPovertyDataTestCase(ImportTestCase):
 
         self.assertEqual(south_data[0].value(), 12.1)
 
-        self.assertEqual(south_data[0].data_type.average, 12.65)
+        self.assertEqual(round(south_data[0].data_type.average, 2), 12.65)
 
 
 class ImportIMDTestCase(ImportTestCase):
