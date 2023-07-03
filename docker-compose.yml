@@ -2,9 +2,10 @@ version: '3.9'
 
 services:
   db:
-    image: postgres:11
+    image: postgres:13
     restart: always
     volumes:
+      - .:/app
       - pgdata:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: 'password'
@@ -14,6 +15,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    working_dir: /app
   web:
     image: mysociety/local-intelligence-hub:${TAG:-latest}
     build: .
