@@ -40,6 +40,7 @@ class FilterMixin:
                         "name": dataset.name,
                         "comparator": comparator,
                         "value": value,
+                        "value_col": dataset.value_col,
                     }
                 )
             except DataSet.DoesNotExist:  # pragma: nocover
@@ -51,6 +52,7 @@ class FilterMixin:
                             "name": datatype.name,
                             "comparator": comparator,
                             "value": value,
+                            "value_col": datatype.value_col,
                         }
                     )
                 except DataType.DoesNotExist:  # pragma: nocover
@@ -73,6 +75,7 @@ class FilterMixin:
                     {
                         "dataset": dataset,
                         "name": dataset.name,
+                        "value_col": dataset.value_col,
                     }
                 )
             except DataSet.DoesNotExist:
@@ -82,6 +85,7 @@ class FilterMixin:
                         {
                             "dataset": datatype.data_set,
                             "name": datatype.name,
+                            "value_col": datatype.value_col,
                         }
                     )
                 except DataType.DoesNotExist:
@@ -139,14 +143,22 @@ class FilterMixin:
 
             dataset = col["dataset"]
             if dataset.table == "areadata":
-                for row in AreaData.objects.filter(
-                    area_id__in=area_ids, data_type__name=col["name"]
-                ).select_related("area", "data_type"):
+                for row in (
+                    AreaData.objects.filter(
+                        area_id__in=area_ids, data_type__name=col["name"]
+                    )
+                    .order_by(col["value_col"])
+                    .select_related("area", "data_type")
+                ):
                     area_data[row.area.name][col["name"]].append(str(row.value()))
             else:
-                for row in PersonData.objects.filter(
-                    person__area_id__in=area_ids, data_type__name=col["name"]
-                ).select_related("person__area", "data_type"):
+                for row in (
+                    PersonData.objects.filter(
+                        person__area_id__in=area_ids, data_type__name=col["name"]
+                    )
+                    .order_by(col["value_col"])
+                    .select_related("person__area", "data_type")
+                ):
                     area_data[row.person.area.name][col["name"]].append(
                         str(row.value())
                     )

@@ -72,6 +72,19 @@ class TypeMixin:
 
         return False
 
+    @property
+    def value_col(self):
+        if self.is_date:
+            return "date"
+        elif self.is_float:
+            return "float"
+        elif self.is_number:
+            return "int"
+        elif self.is_json:
+            return "json"
+        else:
+            return "data"
+
 
 class DataSet(TypeMixin, models.Model):
     SOURCE_CHOICES = [
@@ -218,19 +231,6 @@ class DataSet(TypeMixin, models.Model):
         permissions = [
             ("order_and_feature", "Can change sort order and mark as featured")
         ]
-
-    @property
-    def value_col(self):
-        if self.is_date:
-            return "date"
-        elif self.is_float:
-            return "float"
-        elif self.is_number:
-            return "int"
-        elif self.is_json:
-            return "json"
-        else:
-            return "data"
 
     def filter(self, query, **kwargs):
         return Filter(self, query).run(**kwargs)
