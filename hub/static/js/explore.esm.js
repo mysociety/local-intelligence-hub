@@ -11,10 +11,11 @@ const app = createApp({
       loaded: false,
       datasets: [],
       filters: [],
+      filters_applied: false,
       columns: [],
       shader: null,
+      area_count: 0,
       key: null,
-      no_areas: false,
       legend: null,
       view: 'map',
       map: null,
@@ -113,6 +114,7 @@ const app = createApp({
       this.modal.hide()
     },
     addFilter(datasetName, current = {}) {
+      this.filters_applied = false
       const dataset = this.getDataset(datasetName)
 
       dataset.selectedComparator = current.comparator ||
@@ -134,6 +136,7 @@ const app = createApp({
       });
     },
     removeFilter(filterName) {
+      this.filters_applied = false
       this.filters = this.filters.filter(f => f.name != filterName)
     },
     addColumn(datasetName) {
@@ -159,7 +162,6 @@ const app = createApp({
       this.shader = null
       this.key = null
       this.legend = null
-      this.no_areas = null
     },
     toggleBrowseDatasets() {
       this.browseDatasets = !this.browseDatasets
@@ -309,12 +311,9 @@ const app = createApp({
           }).addTo(this.map)
           this.key = null
           this.legend = null
-          this.no_areas = null
           if ("properties" in data && data["properties"]) {
             var p = data["properties"]
-            if ("no-areas" in p) {
-              this.no_areas = true
-            } else if ("legend" in p) {
+            if ("legend" in p) {
               this.legend = p["legend"]
             } else {
               this.key = p
@@ -337,6 +336,9 @@ const app = createApp({
           data.features.forEach((feature) => {
             features[feature.properties.PCON13CD] = feature.properties;
           });
+
+          this.filters_applied = true
+          this.area_count = Object.keys(features).length
 
           window.geojson.eachLayer(function (layer) {
             if ( features[layer.feature.properties.PCON13CD] ) {
@@ -368,12 +370,9 @@ const app = createApp({
 
           this.key = null
           this.legend = null
-          this.no_areas = false
           if ("properties" in data && data["properties"]) {
             var p = data["properties"]
-            if ("no_areas" in p) {
-              this.no_areas = true
-            } else if ("legend" in p) {
+            if ("legend" in p) {
               this.legend = p["legend"]
             } else {
               this.key = p
@@ -385,11 +384,16 @@ const app = createApp({
       fetch(this.url('/explore.csv'))
         .then(response => response.blob())
         .then(data => {
+          this.filters_applied = true
           Papa.parse(data, {
             header: true,
             skipEmptyLines: true,
-            complete: (results) => { this.table = results }
+            complete: (results) => {
+              this.area_count = results["data"].length
+              this.table = results
+            }
           })
+
 
           if ( this.downloadCsvWithNextTableUpdate ) {
             this.downloadCsvWithNextTableUpdate = false

@@ -31,6 +31,16 @@
             <h2 class="h5 mb-4 text-primary">Step 2: Filter constituencies</h2>
 
             <div ref="filtersContainer" class="mb-4" hidden>
+                <div v-if="filters_applied && filters.length > 0 && area_count == 0" class="bg-red-100 border p-3 rounded filter">
+                    No areas matched this set of filters.
+                </div>
+                <div v-else-if="filters_applied && filters.length > 0" class="bg-green-100 border p-3 rounded filter">
+                    ${ area_count } areas matched this set of filters.
+                </div>
+                <div v-else-if="!filters_applied && filters.length > 0" class="bg-green-100 border p-3 rounded filter">
+                    This set of filters has not been applied. Click the update button to apply them.
+                </div>
+
                 <div v-for="filter in filters" class="bg-gray-100 border p-3 rounded filter">
                     <div class="filter__header">
                         <h3 class="h6">${ filter.title }</h3>
@@ -95,7 +105,7 @@
                                 <h3 class="h6 mb-0 me-auto">${ shader.title }</h3>
                                 <button @click="removeShader(shader.name)" type="button" class="btn-close p-0" aria-label="Remove shader"></button>
                             </div>
-                            <ul v-if="no_areas" class="mt-3 mb-0 list-unstyled fs-7 lh-1 text-muted">
+                            <ul v-if="area_count == 0" class="mt-3 mb-0 list-unstyled fs-7 lh-1 text-muted">
                                 <li class="d-flex align-items-center mt-1">
                                     No areas to display
                                 </li>
