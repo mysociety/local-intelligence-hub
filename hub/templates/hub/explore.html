@@ -182,7 +182,10 @@
                 <tbody>
                     <tr v-for="(row, rowKey) in table.data" v-bind:key="'row-'+rowKey">
                         <td v-for="(column, columnKey) in table.meta.fields" v-bind:key="'row-'+rowKey+'-column-'+columnKey">
+                            <a v-if="column == 'Constituency Name'" :href="`/area/WMC/${ table.data[rowKey][column] }`">
                             ${ table.data[rowKey][column] }
+                            </a>
+                            <span v-else>${ table.data[rowKey][column] }</span>
                         </td>
                     </tr>
                 </tbody>
