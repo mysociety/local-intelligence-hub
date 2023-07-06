@@ -27,6 +27,8 @@ const app = createApp({
       currentType: 'filter', // what to add from the Add Dataset modal (filter, shader, or column)
       searchText: '', // filter datasets by name in the Add Dataset modal
       browseDatasets: false, // show the full list of datasets in the Add Dataset modal?
+      sortBy: 'Constituency Name', // column to use to sort the table
+      sortOrder: 1, // sort order direction - 1 for ascending, 0 for descending
       downloadCsvWithNextTableUpdate: false,
     }
   },
@@ -57,6 +59,26 @@ const app = createApp({
     tableViewActive() {
       return this.view == 'table'
     },
+
+    sortedTable() {
+      var sortType = this.getSortType()
+      return [...this.table.data]
+        .sort((a,b) => {
+          var a_c = a[this.sortBy]
+          var b_c = b[this.sortBy]
+
+          // we need to convert numbers into number objects in order for the sorting to work
+          if (sortType == "numeric") {
+            a_c = Number(a_c)
+            b_c = Number(b_c)
+          }
+
+          if (a_c >= b_c) {
+            return this.sortOrder
+          }
+          return -this.sortOrder
+        })
+    }
   },
   mounted() {
     this.restoreState()
@@ -78,6 +100,19 @@ const app = createApp({
       return fetch(url.href)
         .then(response => response.json())
         .then((datasets) => { this.datasets = datasets })
+    },
+    getSortType() {
+      var filterType = "text"
+      var all_cols = this.filters.concat(this.columns)
+      var ds = all_cols.filter(f => f.title == this.sortBy)
+      if (ds.length > 0) {
+        filterType = ds[0].data_type
+      }
+
+      if (["percent", "float", "integer"].includes(filterType)) {
+        return "numeric"
+      }
+      return "natural"
     },
     getDataset(datasetName) {
       // Get the first dataset which has the given datasetName,
@@ -418,6 +453,24 @@ const app = createApp({
 
           this.loading = false
         })
+    },
+    sort: function(sortBy){
+      if(this.sortBy === sortBy) {
+        this.sortOrder = -this.sortOrder;
+      } else {
+        this.sortBy = sortBy
+      }
+    },
+    ariaSort: function(header){
+      if ( this.sortBy === header ) {
+        if ( this.sortOrder === -1 ) {
+          return 'descending'
+        } else {
+          return 'ascending'
+        }
+      } else {
+        return undefined // remove the aria-sort attribute
+      }
     },
     downloadCSV() {
       this.downloadCsvWithNextTableUpdate = true

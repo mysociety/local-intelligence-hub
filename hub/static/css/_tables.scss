@@ -1,3 +1,42 @@
 .table-fixed {
     table-layout: fixed;
 }
+
+.table-sortable th {
+    padding: 0;
+    vertical-align: middle; // vertically centre buttons of different heights
+}
+
+.table-sortable th button {
+    background: transparent;
+    border: 1px solid transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: inherit;
+    line-height: inherit;
+    text-align: inherit;
+
+    width: 100%;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.table-sortable th button svg {
+    margin-left: 0.5rem;
+    flex: 0 0 auto;
+}
+
+.table-sortable th button svg path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1px;
+    stroke-opacity: 0.5;
+}
+
+.table-sortable [aria-sort="ascending"] button svg path.up,
+.table-sortable [aria-sort="descending"] button svg path.down {
+    fill: currentColor;
+    stroke-opacity: 1;
+}

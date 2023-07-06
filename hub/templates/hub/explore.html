@@ -171,21 +171,24 @@
         </div>
         <div class="explore-map" ref="map" :hidden="!mapViewActive"></div>
         <div class="explore-table" ref="table" :hidden="!tableViewActive">
-            <table v-if="table" class="table table-striped">
+            <table v-if="table" class="table table-striped table-sortable">
                 <thead>
                     <tr>
-                        <th v-for="(header, key) in table.meta.fields" v-bind:key="'header-'+key">
-                            ${ header }
+                        <th v-for="(header, key) in table.meta.fields" @click="sort(header)" v-bind:key="'header-'+key" :aria-sort="ariaSort(header)">
+                            <button type="button">
+                                ${ header }
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 16" width="32" height="16" focusable="false" aria-hidden="true"><path class="up" d="M8.16 3.33a1 1 0 0 1 1.68 0l5.18 8.13a1 1 0 0 1-.84 1.54H3.82a1 1 0 0 1-.84-1.54l5.18-8.13Z"/><path class="down" d="M23.84 12.67a1 1 0 0 1-1.68 0l-5.18-8.13A1 1 0 0 1 17.82 3h10.36a1 1 0 0 1 .84 1.54l-5.18 8.13Z"/></svg>
+                            </button>
                         </th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(row, rowKey) in table.data" v-bind:key="'row-'+rowKey">
+                    <tr v-for="(row, rowKey) in sortedTable" v-bind:key="'row-'+rowKey">
                         <td v-for="(column, columnKey) in table.meta.fields" v-bind:key="'row-'+rowKey+'-column-'+columnKey">
-                            <a v-if="column == 'Constituency Name'" :href="`/area/WMC/${ table.data[rowKey][column] }`">
-                            ${ table.data[rowKey][column] }
+                            <a v-if="column == 'Constituency Name'" :href="`/area/WMC/${ sortedTable[rowKey][column] }`">
+                            ${ sortedTable[rowKey][column] }
                             </a>
-                            <span v-else>${ table.data[rowKey][column] }</span>
+                            <span v-else>${ sortedTable[rowKey][column] }</span>
                         </td>
                     </tr>
                 </tbody>
