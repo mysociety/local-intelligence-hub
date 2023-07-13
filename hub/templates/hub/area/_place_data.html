@@ -27,6 +27,25 @@
                       {% endfor %}
                     </tbody>
                 </table>
+            {% elif category.name == "Ethnicity" %}
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">Ethnicity</th>
+                            <th scope="col" data-color="#068670">This area</th>
+                            <th scope="col" data-color="#ced4da">UK average</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                      {% for range in category.data %}
+                        <tr>
+                            <th>{{ range.label }}</th>
+                            <td>{{ range.value|floatformat }}{% if range.is_percentage %}%{% endif %}</td>
+                            <td>{{ range.average|floatformat }}{% if range.is_percentage %}%{% endif %}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                </table>
               {% elif category.name == 'Socio-Economic Status' %}
               <table class="table mb-0">
             <thead>
