@@ -185,7 +185,7 @@
                 <section id="place" class="area-section">
                     <h2 class="mb-3 text-primary">Place</h2>
                     <div class="row row-cols-1 row-cols-md-2 g-4">
-                      {% for category in categories.place %}
+                      {% for category in categories.place reversed %}
                         {% include 'hub/area/_place_data.html' with category=category %}
                       {% endfor %}
                     </div>
