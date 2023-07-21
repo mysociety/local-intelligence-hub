@@ -8,9 +8,9 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav ms-auto flex-wrap justify-content-end">
-              {% if user.is_authenticated %}
                 {% include 'hub/includes/nav-item.html' with name='home' label='Search' %}
                 {% include 'hub/includes/nav-item.html' with name='explore' label='Map' %}
+              {% if user.is_authenticated %}
                 {% include 'hub/includes/nav-item.html' with name='my_account' label='Account' %}
               {% else %}
                 {% include 'hub/includes/nav-item.html' with name='login' label='Sign in' %}
