@@ -343,14 +343,15 @@
                 </section>
               {% endif %}
 
-                <!--
+              {% if not user_is_member %}
                 <div class="mt-5 p-3 bg-white border rounded d-flex align-items-center">
-                    {% include 'hub/includes/icons/tcc-heart.html' with width="1.25em" height="1.25em" classes="me-3 flex-shrink-0 flex-grow-0" %}
+                    {% include 'hub/includes/icons/tcc-heart.html' with width="2em" height="2em" classes="me-3 flex-shrink-0 flex-grow-0" %}
                     <p class="mb-0">
-                        <strong class="me-2">TCC member?</strong> Log in or request an account to upload your own datasets and bookmark your favourite datasets for easy access.
+                        <strong class="d-block">TCC member?</strong>
+                        <a href="{% url 'login' %}">Sign in</a> or <a href="{% url 'signup' %}">request an account</a> to access exclusive members-only MRP and local movement data.
                     </p>
                 </div>
-                -->
+              {% endif %}
 
             </div>
         </div>
