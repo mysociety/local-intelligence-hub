@@ -7,21 +7,26 @@ const app = createApp({
   delimiters: ['${', '}'],
   data() {
     return {
-      currentType: 'filter',
-      loaded: false,
-      datasets: [],
-      filters: [],
-      filters_applied: false,
-      columns: [],
-      shader: null,
-      area_count: 0,
-      key: null,
-      legend: null,
-      view: 'map',
-      map: null,
-      table: null,
-      searchText: '',
-      browseDatasets: false,
+      view: 'map', // which page view is active (map or table)
+      datasets: [], // datasets from datasets.json
+      datasetsLoaded: false, // whether we are fetching datasets for display in the filter modal
+      map: null, // the Leaflet Map instance
+      table: null, // rows of data to be rendered as a table
+      loading: true, // whether map/table data is currently loading (default to true on pageload, even though that's technically a lie, because we know the first thing we'll do is start loading)
+
+      filters: [], // filters to be applied on next Update
+      shader: null, // shader to applied on next Update
+      columns: [], // additional columns to be requested on next Update
+
+      filters_applied: false, // were filters applied on the last Update?
+      area_count: 0, // number of areas returned on last Update
+
+      key: null, // info to be displayed in the "key" for the currenly selected shader
+      legend: null, // info to be displayed in the "legend" for the currenly selected shader
+
+      currentType: 'filter', // what to add from the Add Dataset modal (filter, shader, or column)
+      searchText: '', // filter datasets by name in the Add Dataset modal
+      browseDatasets: false, // show the full list of datasets in the Add Dataset modal?
       downloadCsvWithNextTableUpdate: false,
     }
   },
@@ -90,19 +95,19 @@ const app = createApp({
     selectFilter() {
       this.currentType = 'filter'
       this.modal.show()
-      this.loadDatasets().then(() => { this.loaded = true })
+      this.loadDatasets().then(() => { this.datasetsLoaded = true })
       trackEvent('explore_add_filter_click')
     },
     selectShader() {
       this.currentType = 'shader'
       this.modal.show()
-      this.loadDatasets().then(() => { this.loaded = true })
+      this.loadDatasets().then(() => { this.datasetsLoaded = true })
       trackEvent('explore_add_shader_click')
     },
     selectColumn() {
       this.currentType = 'column'
       this.modal.show()
-      this.loadDatasets().then(() => { this.loaded = true })
+      this.loadDatasets().then(() => { this.datasetsLoaded = true })
       trackEvent('explore_add_column_click')
     },
     addFilterOrShader(datasetName) {
@@ -114,7 +119,6 @@ const app = createApp({
       this.modal.hide()
     },
     addFilter(datasetName, current = {}) {
-      this.filters_applied = false
       const dataset = this.getDataset(datasetName)
 
       dataset.selectedComparator = current.comparator ||
@@ -136,7 +140,6 @@ const app = createApp({
       });
     },
     removeFilter(filterName) {
-      this.filters_applied = false
       this.filters = this.filters.filter(f => f.name != filterName)
     },
     addColumn(datasetName) {
@@ -268,6 +271,7 @@ const app = createApp({
       });
     },
     setUpMap() {
+      this.loading = true
       this.map = L.map(this.$refs.map).setView([54.0934, -2.8948], 7)
 
       var tiles = L.tileLayer(
@@ -309,6 +313,7 @@ const app = createApp({
               })
             }
           }).addTo(this.map)
+
           this.key = null
           this.legend = null
           if ("properties" in data && data["properties"]) {
@@ -319,6 +324,8 @@ const app = createApp({
               this.key = p
             }
           }
+
+          this.loading = false
         })
     },
     updateMap() {
@@ -329,6 +336,9 @@ const app = createApp({
       }
     },
     filterMap() {
+      this.loading = true
+      this.filters_applied = (this.filters.length > 0)
+
       fetch(this.url('/explore.json'))
         .then(response => response.json())
         .then(data => {
@@ -337,7 +347,6 @@ const app = createApp({
             features[feature.properties.PCON13CD] = feature.properties;
           });
 
-          this.filters_applied = true
           this.area_count = Object.keys(features).length
 
           window.geojson.eachLayer(function (layer) {
@@ -378,13 +387,17 @@ const app = createApp({
               this.key = p
             }
           }
+
+          this.loading = false
         })
     },
     updateTable() {
+      this.loading = true
+      this.filters_applied = (this.filters.length > 0)
+
       fetch(this.url('/explore.csv'))
         .then(response => response.blob())
         .then(data => {
-          this.filters_applied = true
           Papa.parse(data, {
             header: true,
             skipEmptyLines: true,
@@ -394,7 +407,6 @@ const app = createApp({
             }
           })
 
-
           if ( this.downloadCsvWithNextTableUpdate ) {
             this.downloadCsvWithNextTableUpdate = false
             var a = document.createElement("a")
@@ -403,6 +415,8 @@ const app = createApp({
             a.click()
             window.URL.revokeObjectURL(a.href)
           }
+
+          this.loading = false
         })
     },
     downloadCSV() {

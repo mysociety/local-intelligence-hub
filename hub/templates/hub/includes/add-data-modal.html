@@ -10,7 +10,7 @@
                     {% include 'hub/includes/icons/search.html' %}
                     <input type="search" class="form-control" placeholder="Find a dataset…" aria-label="Find a dataset…" v-model="searchText">
                 </div>
-                <div v-if="!loaded" class="mt-3 text-center">
+                <div v-if="!datasetsLoaded" class="mt-3 text-center">
                     Loading…
                 </div>
                 <div v-if="favouriteDatasets.length">

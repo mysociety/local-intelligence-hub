@@ -1,3 +1,9 @@
+$osm-sea-blue: rgb(168, 212, 243);
+
+[v-cloak] {
+    display: none !important;
+}
+
 .explore-filters {
     overflow: auto;
     border-bottom: 1px solid $border-color;
@@ -5,16 +11,29 @@
 
 .explore-results {
     overflow: auto;
-    position: relative;
     min-height: 70vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.explore-status {
+    flex: 0 0 auto;
+    padding: 0.5rem 15px; // match 15px indent of leaflet map controls
+    background: mix($osm-sea-blue, #fff, 70%);
+    border-bottom: 1px solid mix($osm-sea-blue, #fff, 50%);
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+
+    &--warning {
+        background: $red-100;
+        border-bottom-color: $red-200;
+    }
 }
 
 .explore-map {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
+    flex: 1 1 auto;
+    background: $osm-sea-blue;
 }
 
 @include media-breakpoint-up(md) {
