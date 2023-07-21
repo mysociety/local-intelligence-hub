@@ -142,6 +142,15 @@ class FilterMixin:
         cols.extend(self.columns(mp_name=mp_name))
 
         """
+        shortcut if no filters/columns were requested: just return a single
+        column of constituency names
+        """
+        if not cols:
+            for area in Area.objects.order_by("name"):
+                data.append([area.name])
+            return data
+
+        """
         first for each column we want gather the data and store it against the
         area
         """
