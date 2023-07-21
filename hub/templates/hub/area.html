@@ -49,15 +49,16 @@
                 <section id="opinion" class="area-section">
                     <h2 class="mb-3 text-primary">Public opinion</h2>
 
-                    {% if user_is_member %}
                     <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
                         <div class="col d-flex flex-column">
 
+                          {% if user_is_member %}
                             {% include 'hub/area/_mrp_data.html' with dataset=indexed_categories.opinion.hnh_mrp_29 row_height=85 %}
 
                             {% include 'hub/area/_mrp_data.html' with dataset=indexed_categories.opinion.hnh_mrp_37_1 row_height=65 %}
 
                             {% include 'hub/area/_mrp_data.html' with dataset=indexed_categories.opinion.hnh_mrp_41_1 row_height=65 %}
+                          {% endif %}
 
                             <div class="card flex-grow-1 dataset-card">
                                 <div class="dataset-card-header">
@@ -89,6 +90,7 @@
                                     <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Public First, commissioned by Onward UK</a></p>
                                 </div>
                             </div>
+
                             <div class="card flex-grow-1 dataset-card">
                                 <div class="dataset-card-header pe-3">
                                     <h5>Consider climate change a high priority</h5>
@@ -103,10 +105,13 @@
                             </div>
 
                             {% include 'hub/area/_vote_share_data.html' %}
+
                         </div>
                         <div class="col d-flex flex-column">
 
+                          {% if user_is_member %}
                             {% include 'hub/area/_mrp_data.html' with dataset=indexed_categories.opinion.hnh_mrp_24_3 row_height=65 %}
+                          {% endif %}
 
                             <div class="card flex-grow-1 dataset-card">
                                 <div class="dataset-card-header pe-3">
@@ -120,11 +125,15 @@
                                     <p class="card-text fs-8"><a href="{% url 'sources' %}" class="text-decoration-none text-muted">Data from Survation, commissioned by RenewableUK</a></p>
                                 </div>
                             </div>
+
                             {% include 'hub/area/_opinion_table_data.html' with title="Renewable energy" col_name="Opinion" category=categories.opinion subcategory="renewable_energy" data_source="Data from Survation, commissioned by RenewableUK" %}
+
                             {% include 'hub/area/_opinion_table_data.html' with title="Cost of living" col_name="Question"  category=categories.opinion subcategory="cost_of_living" data_source="Data from Survation, commissioned by 38Degrees" %}
 
-
+                          {% if user_is_member %}
                             {% include 'hub/area/_mrp_data.html' with dataset=indexed_categories.opinion.hnh_mrp_25 row_height=65 %}
+                          {% endif %}
+
                             <div class="card flex-grow-1 dataset-card">
                                 <div class="dataset-card-header pe-3">
                                     <h5>Voted to leave the European Union</h5>
@@ -148,13 +157,6 @@
                             {% include 'hub/area/_opinion_table_data.html' with title="Government Action" col_name="Opinion"  category=categories.opinion subcategory="government_action" data_source="Data from Survation, commissioned by RenewableUK" %}
                         </div>
                     </div>
-                    {% else %}
-                    <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
-                        <div class="col d-flex flex-column">
-                            {% include 'hub/area/_vote_share_data.html' %}
-                        </div>
-                    </div>
-                    {% endif %}
 
                 </section>
               {% elif debug %}
@@ -178,7 +180,7 @@
                 </section>
               {% endif %}
 
-              {% if user_is_member and categories.movement %}
+              {% if categories.movement %}
                 <section id="movement" class="area-section">
                     <h2 class="mb-3 text-primary">Movement</h2>
 
