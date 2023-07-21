@@ -474,6 +474,9 @@ class Area(models.Model):
     area_type = models.CharField(max_length=20)
     geometry = models.TextField(blank=True, null=True)
 
+    def __str__(self):
+        return self.name
+
     def get_absolute_url(self):
         return f"/area/{self.area_type}/{self.name}"
 

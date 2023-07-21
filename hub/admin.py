@@ -1,6 +1,14 @@
 from django.contrib import admin
 
-from hub.models import DataSet, UserProperties
+from hub.models import (
+    Area,
+    AreaData,
+    DataSet,
+    DataType,
+    Person,
+    PersonData,
+    UserProperties,
+)
 
 
 @admin.register(UserProperties)
@@ -27,6 +35,11 @@ class UserPropertiesAdmin(admin.ModelAdmin):
         return obj.user.is_active
 
 
+class DataSetDataTypeInline(admin.StackedInline):
+    model = DataType
+    extra = 0
+
+
 @admin.register(DataSet)
 class DataSetAdmin(admin.ModelAdmin):
     list_display = ("__str__", "description", "category", "order", "featured")
@@ -34,6 +47,10 @@ class DataSetAdmin(admin.ModelAdmin):
     list_filter = ("category", "featured", "data_type")
     ordering = ("order", "name")
     search_fields = ["name", "description", "source"]
+
+    inlines = [
+        DataSetDataTypeInline,
+    ]
 
     def has_module_permission(self, request):
         if request.user.is_superuser or request.user.has_perm("hub.order_and_feature"):
@@ -74,3 +91,70 @@ class DataSetAdmin(admin.ModelAdmin):
             )
 
         return fields
+
+
+@admin.register(AreaData)
+class AreaDataAdmin(admin.ModelAdmin):
+    list_display = (
+        "value",
+        "data_type",
+        "area",
+    )
+    list_filter = (
+        "data_type",
+        "area",
+    )
+    search_fields = (
+        "id",
+        "data_type__name",
+        "data_type__data_set__name",
+        "area__name",
+    )
+
+
+@admin.register(PersonData)
+class PersonDataAdmin(admin.ModelAdmin):
+    list_display = (
+        "value",
+        "data_type",
+        "person",
+    )
+    list_filter = (
+        "data_type",
+        "person",
+    )
+    search_fields = (
+        "id",
+        "data_type__name",
+        "data_type__data_set__name",
+        "person__name",
+    )
+
+
+@admin.register(Area)
+class AreaAdmin(admin.ModelAdmin):
+    list_display = (
+        "__str__",
+        "area_type",
+        "gss",
+        "mapit_id",
+    )
+    search_fields = (
+        "name",
+        "area_type",
+        "gss",
+        "mapit_id",
+    )
+
+
+@admin.register(Person)
+class PersonAdmin(admin.ModelAdmin):
+    list_display = (
+        "__str__",
+        "person_type",
+        "area",
+    )
+    search_fields = (
+        "name",
+        "area",
+    )
