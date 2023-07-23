@@ -23,7 +23,10 @@
                                     {% include 'hub/includes/icons/heart-full.html' %}
                                 </span>
                             </div>
-                            <small class="d-block text-muted fs-8">Data from ${ dataset.source }</small>
+                            <small class="d-block text-muted fs-8">
+                                <template v-if="dataset.description">${ dataset.description }.</template>
+                                Data from ${ dataset.source_label }.
+                            </small>
                         </button>
                     </div>
                 </div>
@@ -37,7 +40,10 @@
                                     {% include 'hub/includes/icons/heart-full.html' %}
                                 </span>
                             </div>
-                            <small class="d-block text-muted fs-8">Data from ${ dataset.source }</small>
+                            <small class="d-block text-muted fs-8">
+                                <template v-if="dataset.description">${ dataset.description }.</template>
+                                Data from ${ dataset.source_label }.
+                            </small>
                         </button>
                     </div>
                 </div>
@@ -51,7 +57,10 @@
                                     {% include 'hub/includes/icons/heart-full.html' %}
                                 </span>
                             </div>
-                            <small class="d-block text-muted fs-8">Data from ${ dataset.source }</small>
+                            <small class="d-block text-muted fs-8">
+                                <template v-if="dataset.description">${ dataset.description }.</template>
+                                Data from ${ dataset.source_label }.
+                            </small>
                         </button>
                     </div>
                 </div>

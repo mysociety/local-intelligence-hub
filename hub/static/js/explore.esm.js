@@ -406,7 +406,10 @@ const app = createApp({
       this.updateState()
     },
     datasetMatchesSearchText(dataset) {
-      var haystack = dataset.title + ' ' + dataset.source
+      var haystack = dataset.title + ' ' + dataset.source_label
+      if ( dataset.description ) {
+        haystack = haystack + ' ' + dataset.description
+      }
       var needle = this.searchText
       return haystack.toLowerCase().indexOf(needle.toLowerCase()) > -1
     },

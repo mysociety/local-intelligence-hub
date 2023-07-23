@@ -52,7 +52,9 @@ class ExploreDatasetsJSON(TemplateView):
                 scope="public",
                 name=d.name,
                 title=d.label,
-                source=d.source_label,
+                description=d.description,
+                source=d.source,
+                source_label=d.source_label,
                 is_favourite=UserDataSets.objects.filter(
                     data_set=d,
                     user=self.request.user,
