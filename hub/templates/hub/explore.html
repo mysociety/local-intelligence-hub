@@ -59,6 +59,7 @@
                         <p class="text-muted fs-7 mb-0 mt-3">
                             <template v-if="filter.description">${ filter.description }.</template>
                             Data from <a href="${ filter.source }">${ filter.source_label }</a>.
+                            <span v-if="filter.release_date">Last update: ${ filter.release_date }</span>
                         </p>
                         <table v-if="Number.isFinite(filter.min)" class="table table-sm table-bordered table-fixed text-center mb-0 mt-3 fs-7">
                             <thead>
