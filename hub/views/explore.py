@@ -71,6 +71,9 @@ class ExploreDatasetsJSON(TemplateView):
                 is_range=d.is_range,
                 data_type=d.data_type,
             )
+            if d.release_date is not None:
+                ds["release_date"] = d.release_date
+
             if (
                 type_map.get(d.name, None) is not None
                 and type_map[d.name]["min"] is not None
