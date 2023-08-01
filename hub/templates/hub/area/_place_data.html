@@ -82,6 +82,30 @@
                       {% endfor %}
                     </body>
                 </table>
+              {% elif category.name == 'Air pollution' %}
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">Pollutant</th>
+                            <th scope="col">This area</th>
+                            <th scope="col" class="text-muted">UK average</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for range in category.data %}
+                        <tr>
+                            <th>
+                                {{ range.label|html_format_dataset_name|safe }}
+                              {% if range.data_type.description %}
+                                <small class="d-block mt-1 fs-8 fw-normal">{{ range.data_type.description|escape }}</small>
+                              {% endif %}
+                            </th>
+                            <td>{{ range.value|floatformat }}%</td>
+                            <td class="text-muted">{{ range.average|floatformat }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
               {% else %}
                 {% if category.data.is_number %}
                 <p class="card-text mb-0 display-6 lh-1 text-primary">{{ category.data.value|floatformat }}{% if category.data.is_percentage %}%{% endif %}</p>

@@ -34,34 +34,34 @@ class Command(BaseCommand):
     }
 
     in_files = {
-        "pm__10": {
-            "pollutant": "PM_{10}",
+        "pm_10": {
+            "pollutant": "PM10",
             "metric": "Annual mean",
             "header_label": "pm102021g",
             "comments": "Gravimetric units",
             "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mappm102021g.csv",
         },
-        "pm__2_5": {
-            "pollutant": "PM_{2.5}",
+        "pm_2_5": {
+            "pollutant": "PM2.5",
             "metric": "Annual mean",
             "header_label": "pm252021g",
             "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mappm252021g.csv",
         },
-        "no__2": {
-            "pollutant": "NO_2",
+        "no_2": {
+            "pollutant": "NO2",
             "metric": "Annual mean",
             "header_label": "no22021",
             "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mapno22021.csv",
         },
-        "no__x": {
-            "pollutant": "NO_X",
+        "no_x": {
+            "pollutant": "NOx",
             "metric": "Annual mean",
             "header_label": "nox2021",
             "comments": "µg m\u207B\u00B3 (NO\u2093 as NO\u2082)",
             "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mapnox2021.csv",
         },
-        "so__2": {
-            "pollutant": "SO_2",
+        "so_2": {
+            "pollutant": "SO2",
             "metric": "Annual mean",
             "header_label": "so22021",
             "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mapso22021.csv",
@@ -70,7 +70,7 @@ class Command(BaseCommand):
             "pollutant": "Ozone",
             "metric": "DGT120",
             "header_label": "dgt12021",
-            "comments": "metric is number of days on which the daily max 8-hr concentration is greater than 120 µg m\u207B\u00B3",
+            "comments": "number of days on which the daily max 8-hr concentration is greater than 120 µg m\u207B\u00B3",
             "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mapdgt12021.csv",
         },
         "benzene": {
