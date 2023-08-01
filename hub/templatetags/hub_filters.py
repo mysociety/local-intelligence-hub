@@ -56,3 +56,16 @@ def pending_account_requests(**kwargs):
         userproperties__email_confirmed=True,
         userproperties__account_confirmed=False,
     ).count()
+
+
+@register.filter
+@stringfilter
+def html_format_dataset_name(value):
+    pollutants = {
+        "PM10": "PM<sub>10</sub>",
+        "PM2.5": "PM<sub>2.5</sub>",
+        "NO2": "NO<sub>2</sub>",
+        "NOx": "NO<sub>X</sub>",
+        "SO2": "SO<sub>2</sub>",
+    }
+    return pollutants.get(value, value)
