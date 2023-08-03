@@ -7,7 +7,7 @@ from django.test import TestCase
 import pandas as pd
 
 from hub.management.commands.base_importers import BaseAreaImportCommand
-from hub.models import Area, AreaData, DataSet, DataType
+from hub.models import Area, AreaData, AreaType, DataSet, DataType
 
 
 class ImportTestCase(TestCase):
@@ -46,12 +46,13 @@ class ImportNumericalDataWithMissingValuesTestCase(TestCase):
                 },
             }
         }
+        area_type = AreaType.objects.get(code="WMC")
         for i, area_name in enumerate("ABCD"):
             Area.objects.create(
                 mapit_id=i,
                 gss=i,
                 name=area_name,
-                area_type="WMC",
+                area_type=area_type,
             )
 
         self.command.add_data_sets()

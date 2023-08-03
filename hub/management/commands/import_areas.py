@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 
 from tqdm import tqdm
 
-from hub.models import Area
+from hub.models import Area, AreaType
 from utils import mapit
 
 
@@ -19,6 +19,13 @@ class Command(BaseCommand):
     def handle(self, quiet: bool = False, *args, **options):
         mapit_client = mapit.MapIt()
         areas = mapit_client.areas_of_type(["WMC"])
+        area_type, created = AreaType.objects.get_or_create(
+            name="2010 Parliamentary Constituency",
+            code="WMC",
+            area_type="Westminster Constituency",
+            description="Westminster Parliamentary Constituency boundaries, as created in 2010",
+        )
+
         if not quiet:
             print("Importing Areas")
         for area in tqdm(areas, disable=quiet):
@@ -42,7 +49,7 @@ class Command(BaseCommand):
                 mapit_id=area["id"],
                 gss=area["codes"]["gss"],
                 name=area["name"],
-                area_type="WMC",
+                area_type=area_type,
             )
 
             a.geometry = geom

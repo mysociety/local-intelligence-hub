@@ -1,12 +1,22 @@
 [
   {
+    "model": "hub.areatype",
+    "pk": 1,
+    "fields": {
+      "name": "Constituency",
+      "code": "WMC",
+      "area_type": "Constituency",
+      "description": "Constituency"
+    }
+  },
+  {
     "model": "hub.area",
     "pk": 1,
     "fields": {
       "gss": "E10000001",
       "mapit_id": "1",
       "name": "South Borsetshire",
-      "area_type": "WMC",
+      "area_type_id": 1,
       "geometry": "{\"name\": \"South Borsetshire\", \"properties\": {}}"
     }
   },
@@ -17,7 +27,7 @@
       "gss": "E10000002",
       "mapit_id": "2",
       "name": "Borsetshire West",
-      "area_type": "WMC",
+      "area_type_id": 1,
       "geometry": "{\"name\": \"Borsetshire West\", \"properties\": {}}"
     }
   },
@@ -28,7 +38,7 @@
       "gss": "E10000003",
       "mapit_id": "3",
       "name": "Borsetshire East",
-      "area_type": "WMC",
+      "area_type_id": 1,
       "geometry": "{\"name\": \"Borsetshire East\", \"properties\": {}}"
     }
   }

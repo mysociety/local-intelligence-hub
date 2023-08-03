@@ -487,7 +487,7 @@ class Area(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return f"/area/{self.area_type}/{self.name}"
+        return f"/area/{self.area_type.code}/{self.name}"
 
     def get_value(self, dataset):
         area = self

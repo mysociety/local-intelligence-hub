@@ -163,7 +163,7 @@ class ExploreJSON(FilterMixin, TemplateView):
                 "properties": {
                     "PCON13CD": area_obj.gss,
                     "name": area_obj.name,
-                    "type": area_obj.area_type,
+                    "type": area_obj.area_type.name,
                 }
             }
             for k in area.keys():
