@@ -77,7 +77,7 @@ class Command(BaseCommand):
         for index, row in tqdm(df.iterrows()):
             area = []
             # If the constituency isn't null
-            if type(row.constituency) == str:
+            if isinstance(row.constituency, str):
                 area = Area.objects.filter(name__iexact=row.constituency)
 
             if len(area) != 0:

@@ -59,7 +59,7 @@ class Command(BaseAreaImportCommand):
     }
 
     def add_area(self, gss):
-        if type(gss) == str:
+        if isinstance(gss, str):
             areas = Area.objects.filter(gss__in=gss.split(","))
             if len(areas) != 0:
                 return areas[0].name

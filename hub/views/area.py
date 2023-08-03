@@ -221,7 +221,7 @@ class AreaView(BaseAreaView):
 
             if data.get("data", None) is not None:
                 if data_set.category is not None:
-                    if type(data["data"]) != AreaData:
+                    if not isinstance(data["data"], AreaData):
                         if len(data["data"]) == 1:
                             data["data"] = data["data"][0]
                     categories[data_set.category].append(data)
@@ -235,7 +235,7 @@ class AreaView(BaseAreaView):
         for category_name, category_items in categories.items():
             for data_item in category_items:
                 data_points = data_item["data"]
-                if type(data_points) == AreaData:
+                if isinstance(data_points, AreaData):
                     data_set_name = data_points.data_type.data_set.name
                 else:
                     if len(data_points) != 0:

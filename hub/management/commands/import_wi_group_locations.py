@@ -68,7 +68,7 @@ class Command(BaseAreaImportCommand):
     def process_data(self):
         df = pd.read_csv(self.data_file)
         df.group_name = df.group_name.apply(
-            lambda x: x.split(" | ")[0] if type(x) == str else x
+            lambda x: x.split(" | ")[0] if isinstance(x, str) else x
         )
 
         if not self._quiet:
