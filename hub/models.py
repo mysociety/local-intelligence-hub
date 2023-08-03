@@ -467,18 +467,26 @@ class CommonData(models.Model):
         abstract = True
 
 
+class AreaType(models.Model):
+    AREA_TYPES = [("westminster_constituency", "Westminster Constituency")]
+    name = models.CharField(max_length=50, unique=True)
+    code = models.CharField(max_length=10, unique=True)
+    area_type = models.CharField(max_length=50, choices=AREA_TYPES)
+    description = models.CharField(max_length=300)
+
+
 class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
     gss = models.CharField(unique=True, max_length=30)
     name = models.CharField(max_length=200)
-    area_type = models.CharField(max_length=20)
+    area_type = models.ForeignKey(AreaType, on_delete=models.CASCADE)
     geometry = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name
 
     def get_absolute_url(self):
-        return f"/area/{self.area_type}/{self.name}"
+        return f"/area/{self.area_type.code}/{self.name}"
 
     def get_value(self, dataset):
         area = self
@@ -513,7 +521,7 @@ class Person(models.Model):
 
     def get_absolute_url(self):
         area = self.area
-        return f"/area/{area.area_type}/{area.name}"
+        return f"/area/{area.area_type.code}/{area.name}"
 
     class Meta:
         unique_together = ("external_id", "id_type")

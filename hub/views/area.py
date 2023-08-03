@@ -6,7 +6,15 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import DetailView, TemplateView, View
 
 from hub.mixins import TitleMixin
-from hub.models import Area, AreaData, DataSet, Person, PersonData, UserDataSets
+from hub.models import (
+    Area,
+    AreaData,
+    AreaType,
+    DataSet,
+    Person,
+    PersonData,
+    UserDataSets,
+)
 from utils import is_valid_postcode
 from utils.mapit import (
     BadRequestException,
@@ -30,7 +38,9 @@ class BaseAreaView(TitleMixin, DetailView):
 
     def get_object(self):
         return get_object_or_404(
-            Area, area_type=self.kwargs.get("area_type"), name=self.kwargs.get("name")
+            Area,
+            area_type=AreaType.objects.get(code=self.kwargs.get("area_type")),
+            name=self.kwargs.get("name"),
         )
 
     def get_page_title(self):
