@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("hub", "0041_alter_dataset_subcategory"),
+        ("hub", "0048_alter_area_area_type"),
     ]
 
     operations = [
