@@ -1,131 +1,152 @@
 {% load humanize %}
 {% load hub_filters %}
 
-<div class="col d-flex flex-column">
-    <div class="card flex-grow-1 dataset-card {% if category.is_favourite or category.data.is_favourite %}dataset-card--favourite{% endif %}">
-        <div class="dataset-card-header">
-            <h5>{{ category.name }}</h5>
-            {% include "hub/area/_favourite.html" %}
-        </div>
-        <div class="card-body">
-            {% if category.name == "Constituency age distribution" %}
-                <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">
-                    <thead>
-                        <tr>
-                            <th scope="col">Age band</th>
-                            <th scope="col" data-color="#068670">This area</th>
-                            <th scope="col" data-color="#ced4da">UK average</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                      {% for range in category.data %}
-                        <tr>
-                            <th>{{ range.label }}</th>
-                            <td>{{ range.value|floatformat }}{% if range.is_percentage %}%{% endif %}</td>
-                            <td>{{ range.average|floatformat }}{% if range.is_percentage %}%{% endif %}</td>
-                        </tr>
-                      {% endfor %}
-                    </tbody>
-                </table>
-            {% elif category.name == "Ethnicity" %}
-                <table class="table mb-0">
-                    <thead>
-                        <tr>
-                            <th scope="col">Ethnicity</th>
-                            <th scope="col" data-color="#068670">This area</th>
-                            <th scope="col" data-color="#ced4da">UK average</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                      {% for range in category.data %}
-                        <tr>
-                            <th>{{ range.label }}</th>
-                            <td>{{ range.value|floatformat }}{% if range.is_percentage %}%{% endif %}</td>
-                            <td>{{ range.average|floatformat }}{% if range.is_percentage %}%{% endif %}</td>
-                        </tr>
-                      {% endfor %}
-                    </tbody>
-                </table>
-              {% elif category.name == 'Socio-Economic Status' %}
-              <table class="table mb-0">
-            <thead>
-                <tr>
-                    <th scope="col">Status</th>
-                    <th scope="col">This area</th>
-                    <th scope="col" class="text-muted">UK average</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for range in category.data %}
-                <tr>
-                    <th>{{ range.label }}</th>
-                    <td>{{ range.value|floatformat }}%</td>
-                    <td class="text-muted">{{ range.average|floatformat }}%</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-              {% elif category.data.data_type.name == 'constituency_popular_petitions' %}
-                <table class="table mb-0">
-                    <thead>
-                        <tr>
-                            <th scope="col">Petition</th>
-                            <th scope="col">Signatures</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                      {% for petition in category.data.value %}
-                        <tr>
-                            <td><a href="{{ petition.url }}">{{ petition.action }}</a></td>
-                            <td class="text-end">{{ petition.signatures }}</td>
-                        </tr>
-                      {% endfor %}
-                    </body>
-                </table>
-              {% elif category.name == 'Air pollution' %}
-                <table class="table mb-0">
-                    <thead>
-                        <tr>
-                            <th scope="col">Pollutant</th>
-                            <th scope="col">This area</th>
-                            <th scope="col" class="text-muted">UK average</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+{% if category.data %}
+    <div class="col d-flex flex-column">
+        <div class="card flex-grow-1 dataset-card {% if category.is_favourite or category.data.is_favourite %}dataset-card--favourite{% endif %}">
+            <div class="dataset-card-header">
+                <h5>{{ category.name }}</h5>
+                {% include "hub/area/_favourite.html" %}
+            </div>
+            <div class="card-body">
+                {% if category.name == "Constituency age distribution" %}
+                    <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">
+                        <thead>
+                            <tr>
+                                <th scope="col">Age band</th>
+                                <th scope="col" data-color="#068670">This area</th>
+                                <th scope="col" data-color="#ced4da">UK average</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                         {% for range in category.data %}
-                        <tr>
-                            <th>
-                                {{ range.label|html_format_dataset_name|safe }}
-                              {% if range.data_type.description %}
-                                <small class="d-block mt-1 fs-8 fw-normal">{{ range.data_type.description|escape }}</small>
-                              {% endif %}
-                            </th>
-                            <td>{{ range.value|floatformat }}%</td>
-                            <td class="text-muted">{{ range.average|floatformat }}%</td>
-                        </tr>
+                            <tr>
+                                <th>{{ range.label }}</th>
+                                <td>{{ range.value|floatformat }}{% if range.is_percentage %}%{% endif %}</td>
+                                <td>{{ range.average|floatformat }}{% if range.is_percentage %}%{% endif %}</td>
+                            </tr>
                         {% endfor %}
-                    </tbody>
-                </table>
-              {% else %}
-                {% if category.data.is_number %}
-                <p class="card-text mb-0 display-6 lh-1 text-primary">{{ category.data.value|floatformat }}{% if category.data.is_percentage %}%{% endif %}</p>
-                    {% if category.data.average %}
-                    <p class="card-text mt-2 text-muted">{{ category.data.average|floatformat }}{% if category.data.is_percentage %}%{% endif %} national average</p>
-                    {% endif %}
+                        </tbody>
+                    </table>
+                {% elif category.name == "Ethnicity" %}
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">Ethnicity</th>
+                                <th scope="col" data-color="#068670">This area</th>
+                                <th scope="col" data-color="#ced4da">UK average</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for range in category.data %}
+                            <tr>
+                                <th>{{ range.label }}</th>
+                                <td>{{ range.value|floatformat }}{% if range.is_percentage %}%{% endif %}</td>
+                                <td>{{ range.average|floatformat }}{% if range.is_percentage %}%{% endif %}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% elif category.name == 'Socio-Economic Status' %}
+                <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Status</th>
+                        <th scope="col">This area</th>
+                        <th scope="col" class="text-muted">UK average</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for range in category.data %}
+                    <tr>
+                        <th>{{ range.label }}</th>
+                        <td>{{ range.value|floatformat }}%</td>
+                        <td class="text-muted">{{ range.average|floatformat }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+                {% elif category.data.data_type.name == 'constituency_popular_petitions' %}
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">Petition</th>
+                                <th scope="col">Signatures</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for petition in category.data.value %}
+                            <tr>
+                                <td><a href="{{ petition.url }}">{{ petition.action }}</a></td>
+                                <td class="text-end">{{ petition.signatures }}</td>
+                            </tr>
+                        {% endfor %}
+                        </body>
+                    </table>
+                {% elif category.name == 'Air pollution' %}
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">Pollutant</th>
+                                <th scope="col">This area</th>
+                                <th scope="col" class="text-muted">UK average</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for range in category.data %}
+                            <tr>
+                                <th>
+                                    {{ range.label|html_format_dataset_name|safe }}
+                                {% if range.data_type.description %}
+                                    <small class="d-block mt-1 fs-8 fw-normal">{{ range.data_type.description|escape }}</small>
+                                {% endif %}
+                                </th>
+                                <td>{{ range.value|floatformat }}%</td>
+                                <td class="text-muted">{{ range.average|floatformat }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% elif category.name == 'Flood risk from rivers or sea' %}
+                        <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y"">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Risk</th>
+                                        <th scope="col" data-color="#068670">This area</th>
+                                        <th scope="col" data-color="#ced4da">UK average</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for range in category.data %}
+                                    <tr>
+                                        <th>{{ range.label }}</th>
+                                        <td>{{ range.value|floatformat }}%</td>
+                                        <td class="text-muted">{{ range.average|floatformat }}%</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                 {% else %}
-                <p class="card-text fs-5">{{ category.data.value }}</p>
-                    {% if category.data.average %}
-                    <p class="card-text mt-2 text-muted">{{ category.data.average }} national average</p>
+                    {% if category.data.is_number %}
+                    <p class="card-text mb-0 display-6 lh-1 text-primary">{{ category.data.value|floatformat }}{% if category.data.is_percentage %}%{% endif %}</p>
+                        {% if category.data.average %}
+                        <p class="card-text mt-2 text-muted">{{ category.data.average|floatformat }}{% if category.data.is_percentage %}%{% endif %} national average</p>
+                        {% endif %}
+                    {% else %}
+                    <p class="card-text fs-5">{{ category.data.value }}</p>
+                        {% if category.data.average %}
+                        <p class="card-text mt-2 text-muted">{{ category.data.average }} national average</p>
+                        {% endif %}
                     {% endif %}
                 {% endif %}
+            </div>
+            <div class="card-footer bg-white">
+            {% if category.source_url %}
+                <p class="card-text fs-8"><a href="{{ category.source_url }}" class="text-decoration-none text-muted">Data from {{ category.source }}</a></p>
+            {% else %}
+                <p class="card-text fs-8 text-muted">Data from {{ category.source }}</p>
             {% endif %}
-        </div>
-        <div class="card-footer bg-white">
-          {% if category.source_url %}
-            <p class="card-text fs-8"><a href="{{ category.source_url }}" class="text-decoration-none text-muted">Data from {{ category.source }}</a></p>
-          {% else %}
-            <p class="card-text fs-8 text-muted">Data from {{ category.source }}</p>
-          {% endif %}
+            </div>
         </div>
     </div>
-</div>
+{% endif %}
