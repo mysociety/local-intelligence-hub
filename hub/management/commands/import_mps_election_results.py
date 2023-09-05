@@ -70,7 +70,7 @@ class Command(BaseCommand):
                 "source": "https://members-api.parliament.uk/",
                 "source_label": "UK Parliament",
                 "comparators": DataSet.numerical_comparators()[::-1],
-                "table": "areadata",
+                "table": "person__persondata",
                 "default_value": 1000,
             },
         )
