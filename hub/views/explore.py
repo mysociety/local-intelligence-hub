@@ -174,7 +174,11 @@ class ExploreJSON(FilterMixin, TemplateView):
             if colours.get(area_obj.gss, None) is not None:
                 props["color"] = colours[area_obj.gss]["colour"]
                 props["opacity"] = colours[area_obj.gss]["opacity"]
-                props[colours[area_obj.gss]["label"]] = colours[area_obj.gss]["value"]
+                # there is no data for the area to use in a shader, e.g country specific datasets
+                if props.get("label", None) is not None:
+                    props[colours[area_obj.gss]["label"]] = colours[area_obj.gss][
+                        "value"
+                    ]
             else:
                 props["color"] = "#ed6832"
                 props["opacity"] = 0.7
