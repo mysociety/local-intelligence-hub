@@ -398,6 +398,14 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
         return Filter(self, query).run(**kwargs)
 
 
+class AreaType(models.Model):
+    AREA_TYPES = [("westminster_constituency", "Westminster Constituency")]
+    name = models.CharField(max_length=50, unique=True)
+    code = models.CharField(max_length=10, unique=True)
+    area_type = models.CharField(max_length=50, choices=AREA_TYPES)
+    description = models.CharField(max_length=300)
+
+
 class DataType(TypeMixin, ShaderMixin, models.Model):
     data_set = models.ForeignKey(DataSet, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
@@ -409,6 +417,7 @@ class DataType(TypeMixin, ShaderMixin, models.Model):
     label = models.CharField(max_length=200, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     order = models.IntegerField(blank=True, null=True)
+    area_type = models.ForeignKey(AreaType, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         if self.label:
@@ -499,14 +508,6 @@ class CommonData(models.Model):
 
     class Meta:
         abstract = True
-
-
-class AreaType(models.Model):
-    AREA_TYPES = [("westminster_constituency", "Westminster Constituency")]
-    name = models.CharField(max_length=50, unique=True)
-    code = models.CharField(max_length=10, unique=True)
-    area_type = models.CharField(max_length=50, choices=AREA_TYPES)
-    description = models.CharField(max_length=300)
 
 
 class Area(models.Model):
