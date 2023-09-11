@@ -74,6 +74,11 @@ urlpatterns = [
         accounts.AccountsView.as_view(),
         name="accounts",
     ),
+    path(
+        "accounts.csv",
+        accounts.AccountsCSV.as_view(),
+        name="accounts_csv",
+    ),
     re_path(
         "activate/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,40})/",
         accounts.ConfirmEmailView.as_view(),

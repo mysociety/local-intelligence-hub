@@ -1,10 +1,12 @@
+import csv
 from datetime import date, timedelta
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.views import LoginView
 from django.db.models import F
+from django.http import HttpResponse
 from django.shortcuts import redirect, reverse
-from django.views.generic import FormView, TemplateView
+from django.views.generic import FormView, ListView, TemplateView
 
 from hub.forms import ActivateUserFormSet, InactiveCheckLoginForm, SignupForm
 from hub.mixins import TitleMixin
@@ -98,3 +100,43 @@ class AccountsView(PermissionRequiredMixin, TitleMixin, FormView):
         ).count()
 
         return context
+
+
+class AccountsCSV(PermissionRequiredMixin, ListView):
+    model = UserProperties
+    queryset = UserProperties.objects.order_by(F("last_seen").desc(nulls_last=True))
+    context_object_name = "users"
+    permission_required = "auth.edit_user"
+
+    def render_to_response(self, context, **response_kwargs):
+        response = HttpResponse(content_type="text/csv")
+        field_names = [
+            "name",
+            "organisation",
+            "email",
+            "date_joined",
+            "date_last_seen",
+            "email_confirmed",
+            "account_confirmed",
+            "is_active",
+            "is_staff",
+            "is_superuser",
+        ]
+        writer = csv.DictWriter(response, field_names)
+        writer.writeheader()
+        for userprops in context["users"]:
+            writer.writerow(
+                {
+                    "name": userprops.full_name,
+                    "organisation": userprops.organisation_name,
+                    "email": userprops.user.email,
+                    "date_joined": userprops.user.date_joined,
+                    "date_last_seen": userprops.last_seen,
+                    "email_confirmed": userprops.email_confirmed,
+                    "account_confirmed": userprops.account_confirmed,
+                    "is_active": userprops.user.is_active,
+                    "is_staff": userprops.user.is_staff,
+                    "is_superuser": userprops.user.is_superuser,
+                }
+            )
+        return response
