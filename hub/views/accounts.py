@@ -108,6 +108,12 @@ class AccountsCSV(PermissionRequiredMixin, ListView):
     context_object_name = "users"
     permission_required = "auth.edit_user"
 
+    def date_format(self, datetime):
+        if datetime:
+            return datetime.strftime("%Y-%m-%d")
+        else:
+            return None
+
     def render_to_response(self, context, **response_kwargs):
         response = HttpResponse(content_type="text/csv")
         field_names = [
@@ -130,8 +136,8 @@ class AccountsCSV(PermissionRequiredMixin, ListView):
                     "name": userprops.full_name,
                     "organisation": userprops.organisation_name,
                     "email": userprops.user.email,
-                    "date_joined": userprops.user.date_joined,
-                    "date_last_seen": userprops.last_seen,
+                    "date_joined": self.date_format(userprops.user.date_joined),
+                    "date_last_seen": self.date_format(userprops.last_seen),
                     "email_confirmed": userprops.email_confirmed,
                     "account_confirmed": userprops.account_confirmed,
                     "is_active": userprops.user.is_active,
