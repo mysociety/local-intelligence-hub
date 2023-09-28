@@ -395,6 +395,9 @@ class AreaType(models.Model):
     area_type = models.CharField(max_length=50, choices=AREA_TYPES)
     description = models.CharField(max_length=300)
 
+    def __str__(self):
+        return self.code
+
 
 class DataType(TypeMixin, models.Model):
     data_set = models.ForeignKey(DataSet, on_delete=models.CASCADE)
