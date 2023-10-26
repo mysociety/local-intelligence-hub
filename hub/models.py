@@ -198,7 +198,7 @@ class DataSet(TypeMixin, models.Model):
         max_length=50, blank=True, null=True, choices=SOURCE_CHOICES
     )
     data_url = models.URLField(blank=True, null=True)
-    release_date = models.DateField(blank=True, null=True)
+    release_date = models.TextField(blank=True, null=True)
     is_upload = models.BooleanField(default=False)
     is_range = models.BooleanField(default=False)
     featured = models.BooleanField(default=False)
