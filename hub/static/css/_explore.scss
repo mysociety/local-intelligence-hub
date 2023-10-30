@@ -7,6 +7,11 @@ $osm-sea-blue: rgb(168, 212, 243);
 .explore-filters {
     overflow: auto;
     border-bottom: 1px solid $border-color;
+
+    // Make area_type select match the .btn-outline-secondary buttons below.
+    .form-select-lg {
+        border-color: $secondary;
+    }
 }
 
 .explore-results {
