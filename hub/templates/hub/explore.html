@@ -28,7 +28,14 @@
         </div>
 
         <div class="p-4 p-lg-5">
-            <h2 class="h5 mb-4 text-primary">Step 2: Filter constituencies</h2>
+            <label for="area_type" class="form-label text-muted mb-lg-3">Constituency generation</label>
+
+            <select id="area_type" class="form-select form-select-lg">
+                <option value="WMC">2010–2024 Constituencies</option>
+                <option value="WMC23">2025 Constituencies</option>
+            </select>
+
+            <h2 class="h5 mt-4 mt-lg-5 mb-4 text-primary">Step 2: Filter constituencies</h2>
 
             <div ref="filtersContainer" class="mb-4" hidden>
                 <div v-for="filter in filters" class="bg-gray-100 border p-3 rounded filter">
