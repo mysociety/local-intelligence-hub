@@ -167,7 +167,11 @@ class FilterMixin:
         column of constituency names
         """
         if not cols:
-            for area in Area.objects.order_by("name"):
+            areas = Area.objects
+            area_type = self.area_type()
+            if area_type is not None:
+                areas = areas.filter(area_type=area_type)
+            for area in areas.order_by("name"):
                 data.append([area.name])
             return data
 
