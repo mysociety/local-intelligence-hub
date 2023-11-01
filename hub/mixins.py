@@ -1,7 +1,7 @@
 from collections import defaultdict
 from functools import cache
 
-from hub.models import Area, AreaData, DataSet, DataType, Person, PersonData
+from hub.models import Area, AreaData, AreaType, DataSet, DataType, Person, PersonData
 
 
 class TitleMixin:
@@ -102,8 +102,21 @@ class FilterMixin:
 
         return columns
 
+    def area_type(self):
+        code = self.request.GET.get("area_type", "WMC")
+        try:
+            area_type = AreaType.objects.get(code=code)
+        except AreaType.DoesNotExist:
+            return None
+
+        return area_type
+
     def query(self):
         query = Area.objects
+        area_type = self.area_type()
+        if area_type is not None:
+            query = query.filter(area_type=area_type)
+
         for f in self.filters():
             query = f["dataset"].filter(
                 query,
