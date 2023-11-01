@@ -17,6 +17,7 @@ const app = createApp({
       filters: [], // filters to be applied on next Update
       shader: null, // shader to applied on next Update
       columns: [], // additional columns to be requested on next Update
+      area_type: "WMC", // the area type to fetch
 
       filters_applied: false, // were filters applied on the last Update?
       area_count: 0, // number of areas returned on last Update
@@ -239,6 +240,8 @@ const app = createApp({
       // don’t bother saving view unless it’s been changed from default
       if ( this.view != 'map' ) { state['view'] = this.view }
 
+      if ( this.area_type != 'WMC' ) { state['area_type'] = this.area_type }
+
       if (this.columns.length) {
         var cols = []
         this.columns.forEach(function(d) {
@@ -285,6 +288,8 @@ const app = createApp({
           pending[v] = () => { this.addShader(v) }
         } else if (key == 'columns') {
           pending[v] = () => { for (const col of v.split(',')) { this.addColumn(col) } }
+        } else if (key == 'area_type') {
+          pending[v] = () => { this.area_type = v }
         } else {
           const index = key.indexOf('__')
           const name = key.slice(0, index)
