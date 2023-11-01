@@ -18,6 +18,7 @@ const app = createApp({
       shader: null, // shader to applied on next Update
       columns: [], // additional columns to be requested on next Update
       area_type: "WMC", // the area type to fetch
+      area_type_changed: false, // so we know to reload the map
 
       filters_applied: false, // were filters applied on the last Update?
       area_count: 0, // number of areas returned on last Update
@@ -248,6 +249,15 @@ const app = createApp({
 
       return url
     },
+    geomUrl() {
+      const url = new URL(window.location.origin + '/exploregeometry.json')
+
+      if ('area_type' in this.state()) {
+        url.searchParams.set('area_type', this.state()['area_type'])
+      }
+
+      return url
+    },
     updateState() {
       window.history.replaceState(this.state(), '', this.url())
       this.updateResults()
@@ -299,6 +309,9 @@ const app = createApp({
         }, 100)
       }
     },
+    changeAreaType() {
+      this.area_type_changed = true
+    },
     updateResults() {
       if (this.view == 'map') {
         this.updateMap()
@@ -322,8 +335,15 @@ const app = createApp({
         }
       ).addTo(this.map)
 
+      return this.setUpMapAreas()
+    },
+    removeMapAreas() {
+      this.map.removeLayer(window.geojson)
+      return this.setUpMapAreas()
+    },
+    setUpMapAreas() {
       // Fetch and plot all boundary polygons once
-      return fetch('/exploregeometry.json')
+      return fetch(this.geomUrl())
         .then(response => response.json())
         .then(data => {
           window.geojson = L.geoJson(data, {
@@ -366,11 +386,14 @@ const app = createApp({
           }
 
           this.loading = false
+          this.area_type_changed = false
         })
     },
     updateMap() {
       if (!this.map) {
         this.setUpMap().then( this.filterMap )
+      } else if ( this.area_type_changed) {
+        this.removeMapAreas().then( this.filterMap )
       } else {
         this.filterMap()
       }
