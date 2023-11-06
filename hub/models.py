@@ -523,6 +523,24 @@ class Area(models.Model):
         data = scope.get(data_type__data_set=dataset)
         return data.value() if data else None
 
+    @classmethod
+    def get_by_gss(cls, gss, area_type="WMC"):
+        try:
+            area = cls.objects.get(gss=gss, area_type__code=area_type)
+        except cls.DoesNotExist:
+            area = None
+
+        return area
+
+    @classmethod
+    def get_by_name(cls, name, area_type="WMC"):
+        try:
+            area = cls.objects.get(name__iexact=name, area_type__code=area_type)
+        except cls.DoesNotExist:
+            area = None
+
+        return area
+
 
 class AreaData(CommonData):
     area = models.ForeignKey(Area, on_delete=models.CASCADE)
