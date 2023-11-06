@@ -164,6 +164,7 @@ class BaseAreaImportCommand(BaseCommand):
 
 class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
     uses_gss = True
+    area_type = "WMC"
 
     def get_row_data(self, row, conf):
         return row[conf["col"]]
@@ -177,31 +178,28 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
 
             if not pd.isna(cons):
                 if self.uses_gss:
-                    areas = Area.objects.filter(gss=cons)
+                    area = Area.get_by_gss(cons, area_type=self.area_type)
                 else:
                     cons = cons.replace(" & ", " and ")
-                    areas = Area.objects.filter(name__iexact=cons)
+                    area = Area.get_by_name(cons, area_type=self.area_type)
 
-                areas = list(areas)
-
-            if len(areas) == 0:
+            if area is None:
                 if self.uses_gss:
                     self.stdout.write(f"Failed to find area with code {cons}")
                 else:
                     self.stdout.write(f"no matching area for {cons}")
                 continue
 
-            for area in areas:
-                try:
-                    for name, conf in self.data_sets.items():
-                        area_data, created = AreaData.objects.get_or_create(
-                            data_type=self.data_types[name],
-                            area=area,
-                            defaults={"data": self.get_row_data(row, conf)},
-                        )
-                except Exception as e:
-                    print(f"issue with {cons}: {e}")
-                    break
+            try:
+                for name, conf in self.data_sets.items():
+                    area_data, created = AreaData.objects.get_or_create(
+                        data_type=self.data_types[name],
+                        area=area,
+                        defaults={"data": self.get_row_data(row, conf)},
+                    )
+            except Exception as e:
+                print(f"issue with {cons}: {e}")
+                break
 
     def handle(self, quiet=False, *args, **options):
         self._quiet = quiet
