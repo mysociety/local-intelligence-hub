@@ -22,6 +22,8 @@ class Command(BaseCommand):
     # https://researchbriefings.files.parliament.uk/documents/CBP-9225/Data-file.xlsx
     by_election_source_file = settings.BASE_DIR / "data" / "byelections.xlsx"
 
+    area_type = "WMC"
+
     party_translate_down_dict = {
         "Conservative": "con",
         "Labour": "lab",
@@ -226,18 +228,20 @@ class Command(BaseCommand):
         if not self._quiet:
             print("Adding 'second party' data to database")
         for gss, party in tqdm(df.second_party.items(), disable=self._quiet):
-            try:
-                area = Area.objects.get(gss=gss)
+            area = Area.get_by_gss(gss, area_type=self.area_type)
+            if area is not None:
                 data, created = AreaData.objects.update_or_create(
                     area=area, data_type=self.data_types["second_party"], data=party
                 )
-            except Area.DoesNotExist:
-                print(f"Area with GSS code: {str(gss)} doesn't exist.")
+            else:
+                print(
+                    f"Area with GSS code: {str(gss)} doesn't exist for area type {self.area_type}."
+                )
         if not self._quiet:
             print("Adding 'last election' data to database")
         for gss, dataset in tqdm(df.iterrows(), disable=self._quiet):
             try:
-                area = Area.objects.get(gss=gss)
+                area = Area.get_by_gss(gss, area_type=self.area_type)
                 json_data = {
                     "date": dataset.date,
                     "results": [

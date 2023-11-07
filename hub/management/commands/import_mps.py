@@ -43,6 +43,8 @@ MP_IMPORT_COMMANDS = [
 class Command(BaseCommand):
     help = "Import UK Members of Parliament"
 
+    area_type = "WMC"
+
     def add_arguments(self, parser):
         parser.add_argument(
             "-q", "--quiet", action="store_true", help="Silence progress bars."
@@ -126,9 +128,9 @@ class Command(BaseCommand):
         if not self._quiet:
             print("Importing MPs")
         for mp in tqdm(data, disable=self._quiet):
-            try:
-                area = Area.objects.get(gss=mp["gss_code"]["value"])
-            except Area.DoesNotExist:  # pragma: no cover
+
+            area = Area.get_by_gss(mp["gss_code"]["value"], area_type=self.area_type)
+            if area is None:  # pragma: no cover
                 print(
                     "Failed to add MP {} as area {} does not exist"
                     % mp["personLabel"]["value"],
