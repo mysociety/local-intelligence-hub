@@ -515,7 +515,7 @@ class CommonData(models.Model):
 
 class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
-    gss = models.CharField(unique=True, max_length=30)
+    gss = models.CharField(max_length=30)
     name = models.CharField(max_length=200)
     area_type = models.ForeignKey(AreaType, on_delete=models.CASCADE)
     geometry = models.TextField(blank=True, null=True)
@@ -558,6 +558,9 @@ class Area(models.Model):
             area = None
 
         return area
+
+    class Meta:
+        unique_together = ["gss", "area_type"]
 
 
 class AreaData(CommonData):
