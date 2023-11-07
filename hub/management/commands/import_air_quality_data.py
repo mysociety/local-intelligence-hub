@@ -18,6 +18,7 @@ class Command(BaseCommand):
         settings.BASE_DIR / "data" / "gridcode_constituency_lookup.csv"
     )
     message = "Importing constituency air-pollution data"
+    area_type = "WMC"
     defaults = {
         "label": "Air pollution",
         "description": "Metrics of pollutants associated with air pollution, aggregated per constituency, recorded automatically across the UK.",
@@ -124,10 +125,11 @@ class Command(BaseCommand):
         if not self._quiet:
             self.stdout.write("Importing air quality data")
         for gss, row in tqdm(df.iterrows(), disable=self._quiet):
-            try:
-                area = Area.objects.get(gss=gss)
-            except Area.DoesNotExist:
-                self.stdout.write(f"Failed to find area with code {gss}")
+            area = Area.get_by_gss(gss, area_type=self.area_type)
+            if area is None:
+                self.stdout.write(
+                    f"Failed to find area with code {gss} and area_type {self.area_type}"
+                )
                 continue
             for data_type in self.data_types:
                 AreaData.objects.create(

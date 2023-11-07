@@ -12,6 +12,7 @@ class Command(BaseCommand):
 
     data_file = settings.BASE_DIR / "data" / "risk_of_flooding.csv"
     message = "Importing constituency flood risk data"
+    area_type = "WMC"
     defaults = {
         "label": "Flood risk from rivers or sea",
         "description": "Data relating to risk of flooding from rivers or sea across the UK, aggregated by constituency.",
@@ -65,10 +66,11 @@ class Command(BaseCommand):
         if not self._quiet:
             self.stdout.write("Importing flood risk data")
         for gss, row in tqdm(df.iterrows(), disable=self._quiet):
-            try:
-                area = Area.objects.get(gss=gss)
-            except Area.DoesNotExist:
-                self.stdout.write(f"Failed to find area with code {gss}")
+            area = Area.get_by_gss(gss, area_type=self.area_type)
+            if area is None:
+                self.stdout.write(
+                    f"Failed to find area with code {gss} and area type {self.area_type}"
+                )
                 continue
             for data_type in self.data_types:
                 AreaData.objects.create(

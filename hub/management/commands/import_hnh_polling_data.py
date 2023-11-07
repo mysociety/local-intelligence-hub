@@ -348,6 +348,8 @@ class Command(BaseImportFromDataFrameCommand):
         for file in self.files:
             self.log(file["defaults"]["label"])
 
+            area_type = file.get("area_type", "WMC")
+
             data_set, created = DataSet.objects.update_or_create(
                 name=file["data_set_name"],
                 defaults=file["defaults"],
@@ -383,11 +385,10 @@ class Command(BaseImportFromDataFrameCommand):
             for index, row in tqdm(
                 df.iterrows(), disable=self._quiet, total=df.shape[0]
             ):
-                try:
-                    area = Area.objects.get(gss=row["gss_code"])
-                except Area.DoesNotExist:
+                area = Area.get_by_gss(row["gss_code"], area_type=area_type)
+                if area is None:
                     self.stdout.write(
-                        f"Failed to find area with code {row['gss_code']}"
+                        f"Failed to find area with code {row['gss_code']} and type {area_type}"
                     )
                     continue
 
