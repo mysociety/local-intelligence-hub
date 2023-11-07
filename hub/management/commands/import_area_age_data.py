@@ -11,6 +11,7 @@ class Command(BaseCommand):
 
     source_url = "https://commonslibrary.parliament.uk/constituency-statistics-population-by-age/"
     data_url = "https://data.parliament.uk/resources/constituencystatistics/PowerBIData/Demography/Population.xlsx"
+    area_type = "WMC"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -59,10 +60,11 @@ class Command(BaseCommand):
                 },
             )
 
-            try:
-                area = Area.objects.get(gss=gss)
-            except Area.DoesNotExist:
-                self.stdout.write(f"Failed to find area with code {gss}")
+            area = Area.get_by_gss(gss, area_type=self.area_type)
+            if area is None:
+                self.stdout.write(
+                    f"Failed to find area with code {gss} and area type {self.area_type}"
+                )
                 continue
 
             averages[data_type.name] = row["UK%"] * 100
