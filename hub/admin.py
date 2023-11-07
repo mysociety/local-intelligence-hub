@@ -146,9 +146,9 @@ class AreaAdmin(admin.ModelAdmin):
         "gss",
         "mapit_id",
     )
+    list_filter = ("area_type",)
     search_fields = (
         "name",
-        "area_type",
         "gss",
         "mapit_id",
     )
