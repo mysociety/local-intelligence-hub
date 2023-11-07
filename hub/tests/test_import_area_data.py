@@ -111,7 +111,7 @@ class ImportAgeDataTestCase(ImportTestCase):
         self.assertEqual(area_data.count(), 4)
 
         south_data = (
-            AreaData.objects.filter(area__gss="E10000001")
+            AreaData.objects.filter(area__gss="E10000001", area__area_type__code="WMC")
             .order_by("data_type__name")
             .all()
         )
@@ -148,7 +148,9 @@ class ImportIMDTestCase(ImportTestCase):
         self.assertEqual(area_data.count(), 2)
 
         south_imd_data = AreaData.objects.filter(
-            area__gss="E10000001", data_type__name="constituency_imd"
+            area__gss="E10000001",
+            data_type__name="constituency_imd",
+            area__area_type__code="WMC",
         ).all()
 
         self.assertEqual(south_imd_data[0].value(), 1)
@@ -179,7 +181,9 @@ class ImportRUCTestCase(ImportTestCase):
         self.assertEqual(area_data.count(), 2)
 
         south_ruc_data = AreaData.objects.filter(
-            area__gss="E10000001", data_type__name="constituency_ruc"
+            area__gss="E10000001",
+            data_type__name="constituency_ruc",
+            area__area_type__code="WMC",
         ).all()
 
         self.assertEqual(south_ruc_data[0].value(), "Urban")
