@@ -12,6 +12,7 @@ class Command(BaseAreaImportCommand):
 
     data_file = settings.BASE_DIR / "data" / "petitions.json"
     message = "Importing petition data"
+    area_type = "WMC"
     data_sets = {
         "constituency_popular_petitions": {
             "defaults": {
@@ -40,10 +41,11 @@ class Command(BaseAreaImportCommand):
             data = json.load(input)
 
             for gss, petitions in data.items():
-                try:
-                    area = Area.objects.get(gss=gss)
-                except Area.DoesNotExist:
-                    self.stdout(f"Failed to find ares with code {gss}")
+                area = Area.get_by_gss(gss, area_type=self.area_type)
+                if area is None:
+                    self.stdout.write(
+                        f"Failed to find area with code {gss} and area type {self.area_type}"
+                    )
                     continue
 
                 data, created = AreaData.objects.update_or_create(

@@ -12,6 +12,8 @@ class Command(BaseCommand):
     source_url = "https://commonslibrary.parliament.uk/find-the-socio-economic-status-of-people-living-in-england-and-wales-by-constituency/"
     data_url = "https://data.parliament.uk/resources/constituencystatistics/PowerBIData/Census%202021/NS-SEC_2021.xlsx"
 
+    area_type = "WMC"
+
     message = "Importing constituency socio-economic data"
     defaults = {
         "label": "Socio-Economic Status",
@@ -82,10 +84,11 @@ class Command(BaseCommand):
         if not self._quiet:
             self.stdout.write("Importing socio-economic data")
         for index, row in tqdm(df.iterrows(), disable=self._quiet):
-            try:
-                area = Area.objects.get(gss=row.gss)
-            except Area.DoesNotExist:
-                self.stdout.write(f"Failed to find area with code {row.gss}")
+            area = Area.get_by_gss(row.gss, area_type=self.area_type)
+            if area is None:
+                self.stdout.write(
+                    f"Failed to find area with code {row.gss} and area type {self.area_type}"
+                )
                 continue
             for data_type in self.data_types:
                 AreaData.objects.create(

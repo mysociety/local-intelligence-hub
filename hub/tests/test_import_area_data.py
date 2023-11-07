@@ -104,7 +104,9 @@ class ImportAgeDataTestCase(ImportTestCase):
         patch_read_excel.return_value = pd.DataFrame(data=data)
         out = self.call_command()
 
-        self.assertEqual(out, "Failed to find area with code E40000001\n")
+        self.assertEqual(
+            out, "Failed to find area with code E40000001 and area type WMC\n"
+        )
         area_data = AreaData.objects.all()
         self.assertEqual(area_data.count(), 4)
 

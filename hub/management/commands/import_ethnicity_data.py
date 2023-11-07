@@ -15,6 +15,9 @@ class Command(BaseCommand):
     data_url = "https://data.parliament.uk/resources/constituencystatistics/PowerBIData/Census%202021/ethnicity_2021census.xlsx"
 
     message = "Importing constituency ethnicity data"
+
+    area_type = "WMC"
+
     defaults = {
         "label": "Ethnicity",
         "description": "Ethnicity as of the 2021 census (England and Wales)",
@@ -69,10 +72,11 @@ class Command(BaseCommand):
         if not self._quiet:
             self.stdout.write("Importing ethnicity data")
         for index, row in tqdm(df.iterrows(), disable=self._quiet):
-            try:
-                area = Area.objects.get(gss=row.gss)
-            except Area.DoesNotExist:
-                self.stdout.write(f"Failed to find area with code {row.gss}")
+            area = Area.get_by_gss(row.gss, area_type=self.area_type)
+            if area is None:
+                self.stdout.write(
+                    f"Failed to find area with code {row.gss} and type {self.area_type}"
+                )
                 continue
             for data_type in self.data_types:
                 AreaData.objects.create(
