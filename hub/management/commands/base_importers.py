@@ -1,3 +1,4 @@
+from functools import cache
 from time import sleep
 
 from django.core.management.base import BaseCommand
@@ -7,7 +8,7 @@ from django.db.models.functions import Cast, Coalesce
 import pandas as pd
 from tqdm import tqdm
 
-from hub.models import Area, AreaData, DataSet, DataType
+from hub.models import Area, AreaData, AreaType, DataSet, DataType
 from utils.mapit import (
     BadRequestException,
     ForbiddenException,
@@ -20,6 +21,7 @@ from utils.mapit import (
 
 class BaseAreaImportCommand(BaseCommand):
     cast_field = IntegerField
+    area_type = "WMC"
 
     def __init__(self):
         super().__init__()
@@ -36,6 +38,10 @@ class BaseAreaImportCommand(BaseCommand):
 
     def delete_data(self):
         pass
+
+    @cache
+    def get_area_type(self):
+        return AreaType.objects.get(code=self.area_type)
 
     def add_data_sets(self, df=None):
         for name, config in self.data_sets.items():
@@ -69,10 +75,12 @@ class BaseAreaImportCommand(BaseCommand):
                     **config["defaults"],
                 },
             )
+            data_set.areas_available.add(self.get_area_type())
 
             data_type, created = DataType.objects.update_or_create(
                 data_set=data_set,
                 name=name,
+                area_type=self.get_area_type(),
                 defaults={
                     "data_type": config["defaults"]["data_type"],
                     "label": label,
@@ -163,7 +171,6 @@ class BaseAreaImportCommand(BaseCommand):
 
 class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
     uses_gss = True
-    area_type = "WMC"
 
     def get_row_data(self, row, conf):
         return row[conf["col"]]
