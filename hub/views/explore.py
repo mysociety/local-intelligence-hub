@@ -70,6 +70,7 @@ class ExploreDatasetsJSON(TemplateView):
                 is_in=True if d.comparators[0]["field_lookup"] == "in" else False,
                 is_range=d.is_range,
                 data_type=d.data_type,
+                areas_available=[t.code for t in d.areas_available.all()],
             )
             if d.release_date is not None:
                 ds["release_date"] = d.release_date
