@@ -218,6 +218,7 @@ class DataSet(TypeMixin, models.Model):
     )
     unit_type = models.TextField(null=True, choices=UNIT_TYPE_CHOICES)
     unit_distribution = models.TextField(null=True, choices=UNIT_DISTRIBUTION_CHOICES)
+    areas_available = models.ManyToManyField("AreaType")
 
     def __str__(self):
         if self.label:
