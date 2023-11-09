@@ -16,52 +16,25 @@
                 <div v-if="favouriteDatasets.length">
                     <h3 class="h6 mt-4 text-primary">Your favourite datasets</h3>
                     <div class="list-group mt-3">
-                        <button v-for="dataset in favouriteDatasets" @click="addFilterOrShader(dataset.name)" class="list-group-item list-group-item-action">
-                            <div class="d-flex align-items-center">
-                                <strong class="me-auto pe-3">${ dataset.title }</strong>
-                                <span v-if="dataset.is_favourite" class="text-gray-500">
-                                    {% include 'hub/includes/icons/heart-full.html' %}
-                                </span>
-                            </div>
-                            <small class="d-block text-muted fs-8">
-                                <template v-if="dataset.description">${ dataset.description }.</template>
-                                Data from ${ dataset.source_label }.
-                            </small>
-                        </button>
+                        <template v-for="dataset in favouriteDatasets">
+                            {% include 'hub/includes/add-data-modal-button.html' %}
+                        </template>
                     </div>
                 </div>
                 <div v-if="featuredDatasets.length">
                     <h3 class="h6 mt-4 text-primary">Popular datasets</h3>
                     <div class="list-group mt-3">
-                        <button v-for="dataset in featuredDatasets" @click="addFilterOrShader(dataset.name)" class="list-group-item list-group-item-action">
-                            <div class="d-flex align-items-center">
-                                <strong class="me-auto pe-3">${ dataset.title }</strong>
-                                <span v-if="dataset.is_favourite" class="text-gray-500">
-                                    {% include 'hub/includes/icons/heart-full.html' %}
-                                </span>
-                            </div>
-                            <small class="d-block text-muted fs-8">
-                                <template v-if="dataset.description">${ dataset.description }.</template>
-                                Data from ${ dataset.source_label }.
-                            </small>
-                        </button>
+                        <template v-for="dataset in featuredDatasets">
+                            {% include 'hub/includes/add-data-modal-button.html' %}
+                        </template>
                     </div>
                 </div>
                 <div v-if="otherDatasets.length">
                     <h3 class="h6 mt-4 text-primary">More datasets</h3>
                     <div class="list-group mt-3">
-                        <button v-for="dataset in otherDatasets" @click="addFilterOrShader(dataset.name)" class="list-group-item list-group-item-action">
-                            <div class="d-flex align-items-center">
-                                <strong class="me-auto pe-3">${ dataset.title }</strong>
-                                <span v-if="dataset.is_favourite" class="text-gray-500">
-                                    {% include 'hub/includes/icons/heart-full.html' %}
-                                </span>
-                            </div>
-                            <small class="d-block text-muted fs-8">
-                                <template v-if="dataset.description">${ dataset.description }.</template>
-                                Data from ${ dataset.source_label }.
-                            </small>
-                        </button>
+                        <template v-for="dataset in otherDatasets">
+                            {% include 'hub/includes/add-data-modal-button.html' %}
+                        </template>
                     </div>
                 </div>
                 <div v-else="!searchText">

@@ -1,0 +1,13 @@
+<button @click="addFilterOrShader(dataset.name)" class="list-group-item list-group-item-action">
+    <div class="d-flex align-items-center">
+        <strong class="me-auto pe-3">${ dataset.title }</strong>
+        <span v-if="dataset.is_favourite" class="text-gray-500">
+            {% include 'hub/includes/icons/heart-full.html' %}
+        </span>
+    </div>
+    <small class="d-block text-muted fs-8">
+        <template v-if="dataset.description">${ dataset.description }.</template>
+        Data from ${ dataset.source_label }.
+    </small>
+</button>
+
