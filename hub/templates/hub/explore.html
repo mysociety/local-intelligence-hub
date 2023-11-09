@@ -38,7 +38,8 @@
             <h2 class="h5 mt-4 mt-lg-5 mb-4 text-primary">Step 2: Filter constituencies</h2>
 
             <div ref="filtersContainer" class="mb-4" hidden>
-                <div v-for="filter in filters" class="bg-gray-100 border p-3 rounded filter">
+                <template v-for="filter in filters">
+                    <div class="border p-3 rounded filter" :class="{ 'bg-gray-100': filter.areas_available.includes(area_type), 'bg-red-100': !filter.areas_available.includes(area_type) }">
                     <div class="filter__header">
                         <h3 class="h6">${ filter.title }</h3>
                         <button @click="removeFilter(filter.name)" type="button" class="btn-close p-0" aria-label="Remove filter"></button>
@@ -86,6 +87,7 @@
                         </table>
                     </details>
                 </div>
+                </template>
             </div>
 
             <button @click="selectFilter" type="button" class="btn btn-outline-secondary p-3 w-100">
