@@ -100,7 +100,7 @@
                     <h2 class="h5 mt-4 mt-lg-5 mb-3 mb-lg-4 text-primary">Step 3: Shade constituencies (optional)</h2>
 
                     <div ref="shaderContainer" hidden>
-                        <div v-if="shader" class="bg-gray-100 border p-3 rounded">
+                        <div v-if="shader" class="border p-3 rounded" :class="{ 'bg-gray-100': shader.areas_available.includes(area_type), 'bg-red-100': !shader.areas_available.includes(area_type) }">
                             <div class="d-flex">
                                 <h3 class="h6 mb-0 me-auto">${ shader.title }</h3>
                                 <button @click="removeShader(shader.name)" type="button" class="btn-close p-0" aria-label="Remove shader"></button>
