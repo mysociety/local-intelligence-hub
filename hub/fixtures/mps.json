@@ -51,7 +51,8 @@
       "options": [
         { "title": "blue party", "shader": "#0000ff" },
         { "title": "red party", "shader": "#ff0000" }
-      ]
+      ],
+      "areas_available": [1]
     }
   },
   {
