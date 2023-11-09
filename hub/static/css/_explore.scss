@@ -65,7 +65,16 @@ $osm-sea-blue: rgb(168, 212, 243);
 }
 
 .filter {
+    padding: map-get($spacers, 3);
     margin-bottom: map-get($spacers, 4);
+    border-radius: $border-radius;
+    background: $gray-100;
+    border: 1px solid $gray-300;
+}
+
+.filter--unavailable {
+    background: $red-100;
+    border-color: $red-200;
 }
 
 .filter__header {
