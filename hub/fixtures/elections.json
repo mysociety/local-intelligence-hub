@@ -7,6 +7,7 @@
       "data_type": "integer",
       "last_update": "2022-10-10T13:20:30+00:00",
       "source": "https://wikipedia.org",
+      "areas_available": [1],
       "table": "person__persondata"
     }
   },
@@ -18,6 +19,7 @@
       "data_type": "date",
       "last_update": "2022-10-10T13:20:30+00:00",
       "source": "https://wikipedia.org",
+      "areas_available": [1],
       "table": "person__persondata"
     }
   },
@@ -29,6 +31,7 @@
       "data_type": "date",
       "last_update": "2022-10-10T13:20:30+00:00",
       "source": "https://wikipedia.org",
+      "areas_available": [1],
       "table": "person__persondata"
     }
   },

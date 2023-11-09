@@ -10,6 +10,16 @@
     }
   },
   {
+    "model": "hub.areatype",
+    "pk": 2,
+    "fields": {
+      "name": "Constituency 2023",
+      "code": "WMC23",
+      "area_type": "Constituency 2023",
+      "description": "Constituency 2023"
+    }
+  },
+  {
     "model": "hub.area",
     "pk": 1,
     "fields": {

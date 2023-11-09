@@ -23,6 +23,7 @@ class FilterMixin:
     @cache
     def filters(self):
         filters = []
+        area_type = self.area_type()
         for param, value in self.request.GET.items():
             if "__" in param and param not in ["shader", "columns"]:
                 name, comparator = param.split("__", 1)
@@ -33,7 +34,7 @@ class FilterMixin:
                 value = value.split(",")
 
             try:
-                dataset = DataSet.objects.get(name=name)
+                dataset = DataSet.objects.get(name=name, areas_available=area_type)
                 filters.append(
                     {
                         "dataset": dataset,
@@ -46,7 +47,7 @@ class FilterMixin:
                 )
             except DataSet.DoesNotExist:  # pragma: nocover
                 try:
-                    datatype = DataType.objects.get(name=name)
+                    datatype = DataType.objects.get(name=name, area_type=area_type)
                     filters.append(
                         {
                             "dataset": datatype.data_set,
@@ -102,6 +103,7 @@ class FilterMixin:
 
         return columns
 
+    @cache
     def area_type(self):
         code = self.request.GET.get("area_type", "WMC")
         try:
