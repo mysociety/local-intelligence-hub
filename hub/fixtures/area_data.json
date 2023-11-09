@@ -10,6 +10,7 @@
       "is_range": "True",
       "source": "https://parliament.uk",
       "table": "areadata",
+      "areas_available": [1],
       "category": "place"
     }
   },
@@ -23,6 +24,7 @@
       "last_update": "2022-10-10T13:20:30+00:00",
       "source": "https://parliament.uk",
       "table": "areadata",
+      "areas_available": [1],
       "category": "place"
     }
   },
@@ -36,6 +38,7 @@
       "last_update": "2022-10-10T13:20:30+00:00",
       "source": "http://example.org/polling",
       "table": "areadata",
+      "areas_available": [1],
       "category": "opinion"
     }
   },
