@@ -19,6 +19,13 @@ const app = createApp({
       columns: [], // additional columns to be requested on next Update
       area_type: "WMC", // the area type to fetch
       area_type_changed: false, // so we know to reload the map
+      area_types: [{
+        slug: "WMC",
+        label: "2010–2024 constituencies"
+      }, {
+        slug: "WMC23",
+        label: "2025 constituencies"
+      }],
 
       filters_applied: false, // were filters applied on the last Update?
       area_count: 0, // number of areas returned on last Update
@@ -311,6 +318,11 @@ const app = createApp({
     },
     changeAreaType() {
       this.area_type_changed = true
+    },
+    getAreaTypeLabel(slug) {
+      return this.area_types.find((t) => {
+        return t["slug"] == slug
+      })["label"]
     },
     updateResults() {
       if (this.view == 'map') {
