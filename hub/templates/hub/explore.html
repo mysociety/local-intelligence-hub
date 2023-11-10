@@ -28,14 +28,14 @@
         </div>
 
         <div class="p-4 p-lg-5">
-            <label for="area_type" class="form-label text-muted mb-lg-3">Constituency generation</label>
+            <div class="mb-4 mb-lg-5" v-cloak>
+                <label for="area_type" class="form-label text-muted mb-lg-3">Constituency generation</label>
+                <select id="area_type" class="form-select form-select-lg" v-model="area_type" @change="changeAreaType()">
+                    <option v-for="t in area_types" :value="t['slug']">${ t.label }</option>
+                </select>
+            </div>
 
-            <select id="area_type" class="form-select form-select-lg" v-model="area_type" @change="changeAreaType()">
-                <option value="WMC">2010–2024 Constituencies</option>
-                <option value="WMC23">2025 Constituencies</option>
-            </select>
-
-            <h2 class="h5 mt-4 mt-lg-5 mb-4 text-primary">Step 2: Filter constituencies</h2>
+            <h2 class="h5 mb-4 text-primary">Step 2: Filter constituencies</h2>
 
             <div ref="filtersContainer" class="mb-4" hidden>
                 <template v-for="filter in filters">
