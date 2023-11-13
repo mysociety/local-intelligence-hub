@@ -76,13 +76,15 @@ class FilterMixin:
 
         col_label_map = {"mp_name": "MP Name", "gss": "GSS"}
 
+        area_type = self.area_type()
+
         for col in col_names:
             if col in ["mp_name", "gss"]:
                 columns.append({"name": col, "label": col_label_map[col]})
                 continue
 
             try:
-                dataset = DataSet.objects.get(name=col)
+                dataset = DataSet.objects.get(name=col, areas_available=area_type)
                 columns.append(
                     {
                         "dataset": dataset,
@@ -94,7 +96,7 @@ class FilterMixin:
                 )
             except DataSet.DoesNotExist:
                 try:
-                    datatype = DataType.objects.get(name=col)
+                    datatype = DataType.objects.get(name=col, area_type=area_type)
                     columns.append(
                         {
                             "dataset": datatype.data_set,
