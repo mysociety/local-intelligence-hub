@@ -25,7 +25,9 @@
             <div class="col-lg-3 col-xl-2 mb-4 mb-lg-0 bg-light area-subnav">
                 <div>
                     <nav class="nav flex-lg-column">
+                      {% if area_type == "WMC" %}
                         <a class="nav-link" href="#mp">MP</a>
+                      {% endif %}
                       {% if categories.opinion %}
                         <a class="nav-link" href="#opinion">Public opinion</a>
                       {% endif %}
@@ -39,41 +41,33 @@
                 </div>
             </div>
             <div class="col-lg-9 offset-xl-1">
-            {% if area_type == "WMC" %}
-            <div class="card flex-grow-1 dataset-card">
-                                <div class="dataset-card-header">
-                                    <h5>This is a 2010 constituency</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p>At the next election, people from this constituency will be divided into <b>{{ overlap_constituencies|length|apnumber }} constituenc{% if overlap_constituencies|length_is:1 %}y{% else %}ies{% endif %}:</b></p>
-                                    <table class="table mb-0">
-                                    <tbody>
-                                        {% for overlap_constituency in overlap_constituencies %}
-                                        <tr>
-                                            <th><a href="{% url 'area' area_type=overlap_constituency.area.area_type.code name=overlap_constituency.area.name %}" class="text-decoration-none">{{ overlap_constituency.area }}</a></th>
-                                            <td class="text-muted">Covers approximately {{ overlap_constituency.pop_overlap }}% of this constituency's population, and {{ overlap_constituency.area_overlap }}% of this constituency's area.</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                                </div>
-                            </div>
-            {% endif %}
+              {% if area_type == "WMC" %}
+                <div class="card flex-grow-1 dataset-card">
+                    <div class="dataset-card-header">
+                        <h2 class="h5">This is a 2010 constituency</h2>
+                    </div>
+                    <div class="card-body">
+                        <p>At the next election, people from this constituency will be divided into <b>{{ overlap_constituencies|length|apnumber }} constituenc{% if overlap_constituencies|length_is:1 %}y{% else %}ies{% endif %}:</b></p>
+                        <table class="table mb-0">
+                            <tbody>
+                              {% for overlap_constituency in overlap_constituencies %}
+                                <tr>
+                                    <th><a href="{% url 'area' area_type=overlap_constituency.area.area_type.code name=overlap_constituency.area.name %}" class="text-decoration-none">{{ overlap_constituency.area }}</a></th>
+                                    <td class="text-muted">Covers approximately {{ overlap_constituency.pop_overlap }}% of this constituency’s population, and {{ overlap_constituency.area_overlap }}% of this constituency’s area.</td>
+                                </tr>
+                              {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+              {% endif %}
+
+              {% if area_type == "WMC" %}
                 <section id="mp" class="area-section">
                     <h2 class="mb-3 text-primary">MP</h2>
-                    {% if area_type == "WMC23" %}
-                        <div class="card flex-grow-1 dataset-card">
-                                <div class="dataset-card-header">
-                                    <h5>This is a 2023 constituency</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p>At the next election, an MP will be voted into this constituency, however until then, there is no MP.</p>
-                                </div>
-                            </div>
-                    {% else %}
-                        {% include 'hub/area/_mp_data.html' with mp_data=mp %}
-                    {% endif %}
+                    {% include 'hub/area/_mp_data.html' with mp_data=mp %}
                 </section>
+              {% endif %}
 
               {% if categories.opinion %}
                 <section id="opinion" class="area-section">
