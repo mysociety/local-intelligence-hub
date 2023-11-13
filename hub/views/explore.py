@@ -97,6 +97,7 @@ class ExploreDatasetsJSON(TemplateView):
                 "name": "mp_name",
                 "title": "MP Name",
                 "source": "Wikipedia",
+                "areas_available": ["WMC"],
             }
         )
 
@@ -110,6 +111,7 @@ class ExploreDatasetsJSON(TemplateView):
                 "name": "gss",
                 "title": "Constituency GSS code",
                 "source": "mySociety",
+                "areas_available": ["WMC"],
             }
         )
 
