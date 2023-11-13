@@ -555,6 +555,9 @@ const app = createApp({
       return haystack.toLowerCase().indexOf(needle.toLowerCase()) > -1
     },
     datasetIsSelectable(dataset) {
+      if (!dataset.areas_available.includes(this.area_type)) {
+        return false
+      }
       switch(this.currentType) {
         case 'column':
           // All datasets are selectable if we are currently
