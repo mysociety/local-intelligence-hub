@@ -57,6 +57,11 @@ const app = createApp({
         return ( d.featured === true ) && this.datasetMatchesSearchText(d) && this.datasetIsSelectable(d)
       })
     },
+    availableOtherDatasets() {
+      return this.datasets.filter((d) => {
+        return ( d.is_favourite === false && d.featured === false ) && this.datasetIsSelectable(d)
+      })
+    },
     otherDatasets() {
       return this.datasets.filter((d) => {
         return ( d.is_favourite === false && d.featured === false ) && ( this.browseDatasets == true || this.searchText != '' ) && this.datasetMatchesSearchText(d) && this.datasetIsSelectable(d)
