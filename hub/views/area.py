@@ -58,12 +58,16 @@ class BaseAreaView(TitleMixin, DetailView):
         )
         data = {
             "name": str(data_set),
+            "db_name": data_set.name,
             "label": data_set.label,
             "source": data_set.source_name,
             "subcategory": data_set.subcategory,
             "source_url": data_set.source_url,
             "category": data_set.category,
             "pk": data_set.pk,
+            "data_type": data_set.data_type,
+            "featured": data_set.featured,
+            "excluded_countries": data_set.exclude_countries,
         }
         if data_set.is_range:
             data["is_range"] = True
@@ -80,7 +84,11 @@ class BaseAreaView(TitleMixin, DetailView):
                 data_set=data_set,
                 user=self.request.user,
             ).exists()
-            data["data"] = data_range.all()
+            d = data_range.all()
+            if len(d) == 0:
+                d = None
+
+            data["data"] = d
         elif data_set.category == "opinion":
             data_range = (
                 AreaData.objects.filter(
@@ -109,72 +117,6 @@ class AreaView(BaseAreaView):
     model = Area
     template_name = "hub/area.html"
     context_object_name = "area"
-
-    def get_tags(self, mp_data, area_data):
-        tags = []
-        # Check to see if it's a marginal seat
-        if mp_data.get("mp_election_majority", None):
-            if mp_data["mp_election_majority"] <= 5000:
-                tags.append(
-                    {
-                        "colour": "yellow-400",
-                        "title": "MP electoral majority less than 5000; Data from UK Parliament",
-                        "name": "Marginal seat",
-                        "key": "mp_election_majority__lt",
-                        "value": 5000,
-                    }
-                )
-        red_wall_blue_wall_data = area_data["place"].get(
-            "constituency_red_blue_wall", None
-        )
-        if red_wall_blue_wall_data:
-            red_wall_blue_wall = red_wall_blue_wall_data["data"].value()
-            if red_wall_blue_wall == "Red Wall":
-                tags.append(
-                    {
-                        "colour": "red-500",
-                        "title": "Data from Green Alliance",
-                        "name": "Red wall",
-                        "key": "constituency_red_blue_wall__in",
-                        "value": "Red Wall",
-                    }
-                )
-            else:
-                tags.append(
-                    {
-                        "colour": "blue-500",
-                        "title": "Data from Green Alliance",
-                        "name": "Blue wall",
-                        "key": "constituency_red_blue_wall__in",
-                        "value": "Blue Wall",
-                    }
-                )
-        power_postcode = area_data["movement"].get("power_postcodes", None)
-        if power_postcode:
-            tags.append(
-                {
-                    "colour": "teal-200",
-                    "title": "Aid Alliance Power Postcode",
-                    "name": "Aid Alliance Power Postcode",
-                    "key": "power_postcodes_count__gte",
-                    "value": 1,
-                }
-            )
-        # Grab the RUC data
-        ruc_data = area_data["place"].get("constituency_ruc", None)
-        if ruc_data:
-            ruc = ruc_data["data"].data
-            tags.append(
-                {
-                    "colour": RUC_COLOURS[ruc],
-                    "title": "Urban Rural Classification",
-                    "name": ruc,
-                    "key": "constituency_ruc__in",
-                    "value": ruc,
-                }
-            )
-
-        return tags
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -224,12 +166,11 @@ class AreaView(BaseAreaView):
             pass
 
         categories = defaultdict(list)
-        for data_set in DataSet.objects.order_by("order", "name").all():
-            if data_set.name == "constituency_foe_groups_count":
-                continue
+        indexed_categories = defaultdict(dict)
+        for data_set in DataSet.objects.order_by("order", "label").all():
             data = self.process_dataset(data_set)
 
-            if data.get("data", None) is not None:
+            if data.get("data", None) is not None and data["data"]:
                 if data_set.category is not None:
                     if not isinstance(data["data"], AreaData):
                         if len(data["data"]) == 1:
@@ -238,39 +179,49 @@ class AreaView(BaseAreaView):
                 else:
                     categories["place"].append(data)
 
+                indexed_categories[data["db_name"]] = data
+
+        context["related_categories"] = {
+            "constituency_christian_aid_group_count": "constituency_christian_aid_groups",
+            "constituency_foe_groups_count": "constituency_foe_groups",
+            "constituency_nt_properties_count": "constituency_nt_properties",
+            "constituency_wi_group_count": "constituency_wi_groups",
+            "power_postcodes_count": "power_postcodes",
+        }
+
+        context["is_related_category"] = context["related_categories"].values()
+
+        categories_to_remove = defaultdict(list)
+
+        try:
+            context["country"] = indexed_categories["country"]["data"].value()
+        except (ValueError, KeyError):
+            context["country"] = None
+
+        if context["country"] is not None:
+            for category, items in categories.items():
+                for data_set in items:
+                    if (
+                        context["related_categories"].get(data_set["db_name"], None)
+                        is not None
+                    ):
+                        data_item = indexed_categories[
+                            context["related_categories"][data_set["db_name"]]
+                        ]
+                        if len(data_item) > 0:
+                            data_set["related_category"] = data_item
+                            categories_to_remove["movement"].append(data_item)
+
+                    if context["country"] in data_set["excluded_countries"]:
+                        categories_to_remove[category].append(data_set)
+
+        for category_name, items in categories_to_remove.items():
+            for item in items:
+                categories[category_name].remove(item)
+
         context["categories"] = categories
-
-        # Create a version of categories that's indexed to make handling the data cleaner
-        indexed_categories = defaultdict(dict)
-        for category_name, category_items in categories.items():
-            for data_item in category_items:
-                data_points = data_item["data"]
-                if isinstance(data_points, AreaData):
-                    data_set_name = data_points.data_type.data_set.name
-                else:
-                    if len(data_points) != 0:
-                        data_set_name = data_points[0].data_type.data_set.name
-                        if len(data_points) == 1:
-                            data["data"] = data_points[0]
-                    else:
-                        data_set_name = None
-                if data_set_name:
-                    indexed_categories[category_name].update(
-                        {data_set_name.replace("-", "_"): data_item}
-                    )
-
-        tags = self.get_tags(context.get("mp", {}), indexed_categories)
-        if tags != []:
-            context["area_tags"] = tags
-            red_wall_blue_wall = indexed_categories["place"].get(
-                "constituency_red_blue_wall", None
-            )
-            if red_wall_blue_wall:
-                context["categories"]["place"].remove(red_wall_blue_wall)
-            ruc = indexed_categories["place"].get("constituency_ruc", None)
-            if ruc:
-                context["categories"]["place"].remove(ruc)
         context["indexed_categories"] = indexed_categories
+
         return context
 
 

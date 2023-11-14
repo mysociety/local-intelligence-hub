@@ -33,23 +33,122 @@
     }
 }
 
-.area-section {
-    padding-top: 4rem; // leave space for the sticky subnav when jumping to section
+.area-tabs {
+    overflow-x: auto;
+    background: linear-gradient(0deg, var(--bs-border-color-translucent) 1px, transparent 1px);
+
+    .nav {
+        --bs-nav-tabs-link-active-bg: var(--bs-light);
+        --bs-nav-tabs-border-color: var(--bs-border-color-translucent);
+        --bs-nav-tabs-link-active-border-color: var(--bs-nav-tabs-border-color) var(--bs-nav-tabs-border-color) var(--bs-light);
+        --bs-nav-link-padding-y: 1em;
+        --bs-nav-link-padding-x: 1.5em;
+
+        flex-wrap: nowrap;
+        align-items: flex-end;
+        border-bottom: none;
+    }
+
+    .nav-link {
+        margin-bottom: 0;
+        border-bottom: none;
+        white-space: nowrap;
+
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: map-get($spacers, 2);
+
+        // TODO: Better :focus style
+    }
+}
+
+.area-data-grid {
+    display: grid;
+    grid-gap: 1rem;
+    grid-template-columns: 1fr;
+    grid-auto-flow: row dense;
+
+    @include media-breakpoint-up('md') {
+        grid-template-columns: repeat(2, 1fr);
+        grid-gap: $grid-gutter-width;
+    }
 
     @include media-breakpoint-up('lg') {
-        padding-top: 2rem; // no sticky subnav, but still want a bit of clear space below window top when jumping
-        margin-top: 2rem; // compensate for smaller padding, still want lots of space between sections
+        grid-template-columns: repeat(3, 1fr);
     }
+}
 
-    &:first-child {
-        margin-top: -4rem; // don't want to see the padding, but still want it there when we jump
+.area-data--sm {
+    grid-row: span 1;
+}
 
-        @include media-breakpoint-up('lg') {
-            margin-top: -2rem;
+.area-data--md {
+    grid-row: span 2;
+}
+
+.area-data--lg {
+    grid-row: span 3;
+}
+
+.area-data-favourites {
+    display: none; // will be shown later on
+
+    svg {
+        margin: 0 0.33rem;
+    }
+}
+
+.area-data-more {
+    display: none; // will be shown later on
+    margin-top: map-get($spacers, 3);
+
+    a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: map-get($spacers, 1);
+        border-radius: $border-radius;
+        background: rgba(#fff, 0.5);
+        border: 1px solid rgba(#000, 0.1);
+        padding: $card-spacer-y $card-spacer-x;
+
+        &:hover, &:focus {
+            background: $card-bg;
+            border-color: $card-border-color;
         }
     }
+}
 
-    .row .card + .card {
-        margin-top: var(--bs-gutter-y); // vertical space between cards in a column
+@each $tab in ("mp", "opinion", "place", "movement") {
+    .area-content[data-section="#{$tab}"] {
+        .area-section:not(##{$tab}),
+        .area-data-more {
+            display: none;
+        }
+    }
+}
+
+.area-content[data-section="featured"] {
+    .area-data-more {
+        display: block;
+    }
+
+    .area-data-grid > :not(.area-data--featured) {
+        display: none;
+    }
+}
+
+.area-content[data-section="favourites"] {
+    .area-data-favourites {
+        display: block;
+    }
+
+    .area-data-grid > :not(.dataset-card--favourite) {
+        display: none;
+    }
+
+    .area-section:not(:has(.dataset-card--favourite)) {
+        display: none;
     }
 }

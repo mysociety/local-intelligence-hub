@@ -1,0 +1,49 @@
+{% load humanize %}
+{% if dataset.name.lower == "results of last election" %}
+    <table class="table mb-0">
+        <thead>
+            <tr>
+                <th scope="col">Party</th>
+                <th scope="col">Votes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in dataset.data.value.results|dictsortreversed:"votes" %}
+                {% if data.votes != 0 %}
+                    <tr>
+                        <th>{{ data.party }}</th>
+                        <td>{{ data.votes }}</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+{% elif dataset.name.lower == "popular petitions" %}
+    <table class="table mb-0">
+        <thead>
+            <tr>
+                <th scope="col">Petition</th>
+                <th scope="col">Signatures</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for petition in dataset.data.value %}
+            <tr>
+                <td><a href="{{ petition.url }}">{{ petition.action }}</a></td>
+                <td class="text-end">{{ petition.signatures }}</td>
+            </tr>
+        {% endfor %}
+        </body>
+    </table>
+{% elif dataset.subcategory == "groups" %}
+    <h6 class="text-muted fw-bold">{{ dataset.label }}</h6>
+    <ul class="tag-cloud">
+      {% for data in dataset.data.json %}
+        {% if data.url %}
+          <li><a href="{{ data.url }}" class="tag" title="{{ dataset.label }}">{{ data.group_name }}</a></li>
+        {% else %}
+          <li class="tag">{{ data.group_name }}</li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+{% endif %}

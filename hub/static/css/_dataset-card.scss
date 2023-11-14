@@ -37,6 +37,53 @@
             }
         }
     }
+
+    .card-header {
+        display: flex;
+        padding: var(--bs-card-spacer-y) var(--bs-card-spacer-x) 0;
+        border-bottom: none;
+    
+        h1, h2, h3, h4, h5 {
+            margin-bottom: 0;
+            margin-right: auto;
+        }
+    
+        form {
+            margin: calc(var(--bs-card-spacer-y) * -1) calc(var(--bs-card-spacer-x) * -1);
+        }
+    
+        button {
+            background: transparent;
+            border: none;
+            line-height: 1.25em; // match h5
+            font-size: 1em;
+            color: $gray-500;
+            padding: var(--bs-card-spacer-y) var(--bs-card-spacer-x);
+    
+            &:focus {
+                color: inherit;
+            }
+    
+            &:hover {
+                color: $link-color;
+            }
+        }
+    }
+
+    .card-footer {
+        color: $text-muted;
+        font-size: map-get($font-sizes, 8);
+
+        a {
+            color: inherit;
+            text-decoration: none;
+
+            &:hover, &:focus {
+                color: $link-color;
+                text-decoration: underline;
+            }
+        }
+    }
 }
 
 .dataset-card--favourite {
@@ -46,41 +93,5 @@
 
     .js-favourite-this-dataset {
         display: none;
-    }
-}
-
-.dataset-card-header {
-    display: flex;
-
-    h5 {
-        margin-bottom: 0;
-        margin-right: auto;
-        padding: var(--bs-card-spacer-y) 0 var(--bs-card-spacer-y) var(--bs-card-spacer-x);
-
-        // If not followed by a favouriting control
-        &:last-child {
-            padding-right: var(--bs-card-spacer-x);
-        }
-    }
-
-    button {
-        background: transparent;
-        border: none;
-        line-height: 1.25em; // match h5
-        font-size: 1em;
-        color: $gray-500;
-        padding: var(--bs-card-spacer-y) var(--bs-card-spacer-x);
-
-        &:focus {
-            color: inherit;
-        }
-
-        &:hover {
-            color: $link-color;
-        }
-    }
-
-    & + .card-body {
-        padding-top: 0;
     }
 }

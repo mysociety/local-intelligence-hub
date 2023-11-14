@@ -15,6 +15,8 @@ Chart.defaults.responsive = true
 import exploreApp from './explore.esm.js'
 exploreApp.mount('#exploreApp')
 
+import setUpAreaPage from './area.esm.js'
+
 $(function(){
     if( 'geolocation' in navigator ) {
         $('.js-geolocate').removeClass('d-none');
@@ -53,21 +55,9 @@ $(function(){
         })
     }
 
-    $('.js-favourite-this-dataset, .js-unfavourite-this-dataset').on('submit', function(e){
-        e.preventDefault();
-        var $form = $(this);
-        $.ajax({
-            url: $form.attr('action'),
-            type: $form.attr('method') || 'get',
-            data: $form.serialize(),
-            accepts: 'application/json; charset=utf-8',
-            dataType: 'json'
-        }).done(function(){
-            $form.parents('.dataset-card').toggleClass('dataset-card--favourite');
-        });
-    });
-
     $('.js-chart').each(makeChart);
+
+    $('body.js-area-page').each(setUpAreaPage);
 
     if ( $('.fake-data').length ) {
         var $warning = $(`<div class="fake-data-warning alert alert-danger mb-0">

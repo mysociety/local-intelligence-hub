@@ -12,6 +12,11 @@ register = template.Library()
 User = get_user_model()
 
 
+@register.filter(name="split")
+def split(value, key):
+    return value.split(key)
+
+
 @register.filter(name="highlight")
 def highlight(text, search):
     rgx = re.compile(re.escape(search), re.IGNORECASE)
