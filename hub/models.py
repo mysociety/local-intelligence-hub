@@ -502,6 +502,7 @@ class Area(models.Model):
     name = models.CharField(max_length=200)
     area_type = models.ForeignKey(AreaType, on_delete=models.CASCADE)
     geometry = models.TextField(blank=True, null=True)
+    overlaps = models.ManyToManyField("self", through="AreaOverlap")
 
     def __str__(self):
         return self.name
@@ -544,6 +545,17 @@ class Area(models.Model):
 
     class Meta:
         unique_together = ["gss", "area_type"]
+
+
+class AreaOverlap(models.Model):
+    area_old = models.ForeignKey(
+        Area, on_delete=models.CASCADE, related_name="old_overlaps"
+    )
+    area_new = models.ForeignKey(
+        Area, on_delete=models.CASCADE, related_name="new_overlaps"
+    )
+    population_overlap = models.SmallIntegerField(default=0)
+    area_overlap = models.SmallIntegerField(default=0)
 
 
 class AreaData(CommonData):
