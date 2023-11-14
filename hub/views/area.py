@@ -5,8 +5,6 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import DetailView, TemplateView, View
 
-from mysoc_dataset import get_dataset_df
-
 from hub.mixins import TitleMixin
 from hub.models import (
     Area,
@@ -18,7 +16,6 @@ from hub.models import (
     UserDataSets,
 )
 from utils import is_valid_postcode
-from utils.constituency_mapping import get_overlap_df
 from utils.mapit import (
     BadRequestException,
     ForbiddenException,
@@ -180,27 +177,21 @@ class AreaView(BaseAreaView):
         return tags
 
     def get_overlap_info(self, **kwargs):
-        # Get lookup between short code and GSS
-        constituency_lookup = (
-            get_dataset_df(
-                repo_name="2025-constituencies",
-                package_name="parliament_con_2025",
-                version_name="latest",
-                file_name="parl_constituencies_2025.csv",
-            )
-            .set_index("short_code")["gss_code"]
-            .to_dict()
-        )
+        if self.object.area_type.code == "WMC":
+            overlaps = self.object.old_overlaps.all()
+        elif self.object.area_type.code == "WMC23":
+            overlaps = self.object.new_overlaps.all()
+        else:
+            return []
 
-        df = get_overlap_df("PARL10", "PARL25")
-        overlap_constituencies = df.query("PARL10 == @self.object.gss")
         overlap_constituencies = [
             {
-                "area": Area.objects.get(gss=constituency_lookup[row["PARL25"]]),
-                "pop_overlap": int(row["percentage_overlap_pop"] * 100),
-                "area_overlap": int(row["percentage_overlap_area"] * 100),
+                "new_area": overlap.area_new,
+                "old_area": overlap.area_old,
+                "pop_overlap": overlap.population_overlap,
+                "area_overlap": overlap.area_overlap,
             }
-            for index, row in overlap_constituencies.iterrows()
+            for overlap in overlaps
         ]
         return overlap_constituencies
 

@@ -41,24 +41,43 @@
                 </div>
             </div>
             <div class="col-lg-9 offset-xl-1">
-              {% if area_type == "WMC" %}
-                <div class="card flex-grow-1 dataset-card">
-                    <div class="dataset-card-header">
-                        <h2 class="h5">This is a 2010 constituency</h2>
-                    </div>
+              {% if area_type == "WMC" and area.overlaps %}
+                <div class="card flex-grow-1">
                     <div class="card-body">
-                        <p>At the next election, people from this constituency will be divided into <b>{{ overlap_constituencies|length|apnumber }} constituenc{% if overlap_constituencies|length_is:1 %}y{% else %}ies{% endif %}:</b></p>
-                        <table class="table mb-0">
-                            <tbody>
-                              {% for overlap_constituency in overlap_constituencies %}
-                                <tr>
-                                    <th><a href="{% url 'area' area_type=overlap_constituency.area.area_type.code name=overlap_constituency.area.name %}" class="text-decoration-none">{{ overlap_constituency.area }}</a></th>
-                                    <td class="text-muted">Covers approximately {{ overlap_constituency.pop_overlap }}% of this constituency’s population, and {{ overlap_constituency.area_overlap }}% of this constituency’s area.</td>
-                                </tr>
-                              {% endfor %}
-                            </tbody>
-                        </table>
+                      {% if overlap_constituencies|length > 1 %}
+                        <p>At the next election, this constituency will be divided into <b>{{ overlap_constituencies|length|apnumber }} new constituenc{% if overlap_constituencies|length_is:1 %}y{% else %}ies{% endif %}:</b></p>
+                      {% else %}
+                        <p>At the next election, this constituency will be replaced with:</p>
+                      {% endif %}
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); grid-gap: 1rem 2rem;">
+                          {% for overlap_constituency in overlap_constituencies %}
+                            <div>
+                                <h3 class="h5"><a href="{% url 'area' area_type=overlap_constituency.new_area.area_type.code name=overlap_constituency.new_area.name %}" class="text-decoration-none">{{ overlap_constituency.new_area }}</a></h3>
+                                <p class="fs-7 text-muted mb-0">Will cover approximately {{ overlap_constituency.pop_overlap }}% of this constituency’s population, and {{ overlap_constituency.area_overlap }}% of this constituency’s area.</p>
+                            </div>
+                          {% endfor %}
+                        </div>
                     </div>
+                </div>
+              {% elif area_type == "WMC23" and area.overlaps %}
+                <div class="card flex-grow-1">
+                  {% if area.overlaps %}
+                    <div class="card-body">
+                      {% if overlap_constituencies|length > 1 %}
+                        <p>This constituency will only exist at the next election, and replaces the previous <b>{{ overlap_constituencies|length|apnumber }} constituenc{% if overlap_constituencies|length_is:1 %}y{% else %}ies{% endif %}:</b></p>
+                      {% else %}
+                        <p>This constituency will only exist at the next election, and replaces:</p>
+                      {% endif %}
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); grid-gap: 1rem 2rem;">
+                          {% for overlap_constituency in overlap_constituencies %}
+                            <div>
+                                <h3 class="h5"><a href="{% url 'area' area_type=overlap_constituency.old_area.area_type.code name=overlap_constituency.old_area.name %}" class="text-decoration-none">{{ overlap_constituency.old_area }}</a></h3>
+                                <p class="fs-7 text-muted mb-0">Covered approximately {{ overlap_constituency.pop_overlap }}% of this constituency’s population, and {{ overlap_constituency.area_overlap }}% of this constituency’s area.</p>
+                            </div>
+                          {% endfor %}
+                        </div>
+                    </div>
+                  {% endif %}
                 </div>
               {% endif %}
 
