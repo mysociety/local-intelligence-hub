@@ -4,9 +4,11 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db.utils import IntegrityError
 
+from mysoc_dataset import get_dataset_df
 from tqdm import tqdm
 
-from hub.models import Area, AreaType
+from hub.models import Area, AreaOverlap, AreaType
+from utils.constituency_mapping import get_overlap_df
 
 
 class Command(BaseCommand):
@@ -57,3 +59,30 @@ class Command(BaseCommand):
             con["properties"]["type"] = "WMC23"
             a.geometry = json.dumps(con)
             a.save()
+
+        constituency_lookup = (
+            get_dataset_df(
+                repo_name="2025-constituencies",
+                package_name="parliament_con_2025",
+                version_name="latest",
+                file_name="parl_constituencies_2025.csv",
+            )
+            .set_index("short_code")["gss_code"]
+            .to_dict()
+        )
+
+        df = get_overlap_df("PARL10", "PARL25")
+        for area in Area.objects.filter(area_type__code="WMC"):
+            overlap_constituencies = df.query("PARL10 == @area.gss")
+            for _, row in overlap_constituencies.iterrows():
+                new_area = Area.objects.get(
+                    area_type__code="WMC23", gss=constituency_lookup[row["PARL25"]]
+                )
+                AreaOverlap.objects.get_or_create(
+                    area_old=area,
+                    area_new=new_area,
+                    defaults={
+                        "population_overlap": int(row["percentage_overlap_pop"] * 100),
+                        "area_overlap": int(row["percentage_overlap_area"] * 100),
+                    },
+                )
