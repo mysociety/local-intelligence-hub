@@ -17,11 +17,12 @@ class Command(BaseAreaImportCommand):
 
     power_postcodes = {
         "label": "Power Postcodes",
-        "description": "Description of Aid Alliance 'Power Postcode' activist groups",
+        "description": "Aid Alliance’s Power Postcodes are activist groups building a stronger connection between communities and MPs in key constituencies, on international development and the UK aid budget.",
         "data_type": "json",
         "category": "movement",
         "subcategory": "groups",
-        "source_label": "Aid Alliance",
+        "release_date": "July 2023",
+        "source_label": "Data from Aid Alliance.",
         "source": "https://aidalliance.org.uk/",
         "source_type": "api",
         "data_url": "https://www.google.com/maps/d/u/0/viewer?mid=15b_tQI0t58rLcBTgFytu2e73jyKrrxFr",
@@ -35,10 +36,11 @@ class Command(BaseAreaImportCommand):
 
     power_postcode_counts = {
         "label": "Number of Power Postcodes",
-        "description": "Number of Aid Alliance 'Power Postcode' activist groups",
+        "description": "Aid Alliance’s Power Postcodes are activist groups building a stronger connection between communities and MPs in key constituencies, on international development and the UK aid budget.",
         "data_type": "integer",
         "category": "movement",
-        "source_label": "Aid Alliance",
+        "release_date": "July 2023",
+        "source_label": "Data from Aid Alliance.",
         "source": "https://aidalliance.org.uk/",
         "source_type": "api",
         "data_url": "https://www.google.com/maps/d/u/0/viewer?mid=15b_tQI0t58rLcBTgFytu2e73jyKrrxFr",

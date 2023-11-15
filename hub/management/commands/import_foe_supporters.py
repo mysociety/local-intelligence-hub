@@ -19,7 +19,8 @@ class Command(BaseImportFromDataFrameCommand):
         "data_type": "integer",
         "category": "movement",
         "subcategory": "supporters_and_activists",
-        "source_label": "Friends of the Earth",
+        "release_date": "November 2022",
+        "source_label": "Data from Friends of the Earth.",
         "source": "https://friendsoftheearth.uk/",
         "source_type": "google sheet",
         "table": "areadata",
@@ -30,11 +31,19 @@ class Command(BaseImportFromDataFrameCommand):
 
     data_sets = {
         "constituency_foe_activists_count": {
-            "defaults": defaults,
+            "defaults": defaults.extend(
+                {
+                    "description": "Number of Friends of the Earth activists per constituency."
+                }
+            ),
             "col": "activists",
         },
         "constituency_foe_supporters_count": {
-            "defaults": defaults,
+            "defaults": defaults.extend(
+                {
+                    "description": "Number of Friends of the Earth supporters per constituency."
+                }
+            ),
             "col": "supporters",
         },
     }

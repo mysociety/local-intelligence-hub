@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.core.management.base import BaseCommand
 
 import requests
@@ -66,9 +68,10 @@ class Command(BaseCommand):
             defaults={
                 "data_type": "integer",
                 "label": "MP majority",
-                "description": "Majority at last election",
+                "description": "Majority at last election.",
+                "release_date": str(date.today()),
                 "source": "https://members-api.parliament.uk/",
-                "source_label": "UK Parliament",
+                "source_label": "Data from UK Parliament.",
                 "comparators": DataSet.numerical_comparators()[::-1],
                 "table": "person__persondata",
                 "default_value": 1000,
@@ -87,7 +90,8 @@ class Command(BaseCommand):
                 "label": "Date MP last elected",
                 "description": "Date of last election for an MP",
                 "source": "https://members-api.parliament.uk/",
-                "source_label": "UK Parliament",
+                "release_date": str(date.today()),
+                "source_label": "Data from UK Parliament.",
                 "table": "person__persondata",
                 "comparators": DataSet.year_comparators(),
                 "default_value": 2019,
@@ -104,9 +108,10 @@ class Command(BaseCommand):
             defaults={
                 "data_type": "date",
                 "label": "Date MP first elected",
-                "description": "Date an MP was first elected to current position",
+                "description": "Date an MP was first elected to current position.",
+                "release_date": str(date.today()),
                 "source": "https://members-api.parliament.uk/",
-                "source_label": "UK Parliament",
+                "source_label": "Data from UK Parliament.",
                 "table": "person__persondata",
                 "comparators": DataSet.year_comparators(),
                 "default_value": 2019,

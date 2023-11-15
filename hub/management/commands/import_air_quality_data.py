@@ -20,10 +20,11 @@ class Command(BaseCommand):
     message = "Importing constituency air-pollution data"
     defaults = {
         "label": "Air pollution",
-        "description": "Data relating to air pollution, recorded in 2021",
+        "description": "Metrics of pollutants associated with air pollution, aggregated per constituency, recorded automatically across the UK.",
         "data_type": "float",
         "category": "place",
-        "source_label": "Defra",
+        "source_label": "Data from Defra.",
+        "release_date": "2021",
         "is_range": True,
         "source": source_url,
         "source_type": "csv",

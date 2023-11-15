@@ -19,11 +19,12 @@ class Command(BaseImportFromDataFrameCommand):
     data_sets = {
         "efpc_constituency_fuel_poverty": {
             "defaults": {
-                "label": "Households in fuel poverty",
-                "description": "Percentage of households in fuel poverty",
+                "label": "Estimated households in fuel poverty",
+                "description": "Percentage of households in fuel poverty, including adjustment for Energy Price Guarantee, using National Energy Action base number of households in fuel poverty.",
                 "data_type": "percent",
+                "release_date": "July 2023",
                 "category": "place",
-                "source_label": "End Fuel Poverty Coalition",
+                "source_label": "Data from End Fuel Poverty Coalition.",
                 "source": source_url,
                 "source_type": "xlxs",
                 "data_url": "",

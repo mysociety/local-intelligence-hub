@@ -42,9 +42,10 @@ class Command(BaseCommand):
             name="job_titles",
             defaults={
                 "data_type": "text",
-                "description": "Positions such as cabinet and shadow minister roles, spokespeople, and whips",
+                "description": "Positions such as cabinet and shadow minister roles, spokespeople, and whips.",
+                "release_date": "December 2022",
                 "label": "MP positions (job titles)",
-                "source_label": "Green Alliance",
+                "source_label": "Data from Green Alliance.",
                 "source": "https://green-alliance.org.uk/",
                 "table": "person__persondata",
                 "comparators": DataSet.string_comparators(),

@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
@@ -181,7 +183,8 @@ class Command(BaseCommand):
                 "description": "The parliamentary party who came second in this constituency’s most recent election or by-election",
                 "label": "Second placed party at most recent election",
                 "category": "opinion",
-                "source_label": "UK Parliament",
+                "release_date": str(date.today()),
+                "source_label": "Data from UK Parliament.",
                 "source": "https://parliament.uk/",
                 "table": "areadata",
                 "options": self.party_options,
@@ -202,7 +205,8 @@ class Command(BaseCommand):
                 "data_type": "json",
                 "description": "The results of the last parliamentary election held in this constituency",
                 "label": "Results of last election",
-                "source_label": "UK Parliament",
+                "release_date": str(date.today()),
+                "source_label": "Data from UK Parliament.",
                 "source": "https://parliament.uk/",
                 "category": "opinion",
                 "table": "areadata",

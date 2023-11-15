@@ -15,9 +15,9 @@ class Command(BaseImportFromDataFrameCommand):
         "constituency_imd": {
             "defaults": {
                 "source": "https://mysociety.github.io/composite_uk_imd/",
-                "source_label": "mySociety",
+                "source_label": "Data from ONS (England and Wales), NRS (Scotland), and NISRA (Northern Ireland), collated and standardised by mySociety.",
                 "name": "constituency_imd",
-                "description": "Index of Multiple Deprivation",
+                "description": "Deciles of deprivation, from 1 (most deprived) to 10 (least deprived). This uses a composite measure of deprivation (including income, employment, education, skills, health, crime, and housing) standardised across the countries of the UK.",
                 "label": "Index of Multiple Deprivation (IMD)",
                 "data_type": "integer",
                 "category": "place",

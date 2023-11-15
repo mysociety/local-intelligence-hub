@@ -20,11 +20,12 @@ class Command(BaseImportFromDataFrameCommand):
     data_sets = {
         "constituency_child_poverty": {
             "defaults": {
-                "label": "Child Poverty",
-                "description": "Estimates of percentages of children in poverty",
+                "label": "Estimated child poverty",
+                "description": "Percentage of children living in households with a net income (after housing costs) below 60% of the national median.",
+                "release_date": "March 2022",
                 "data_type": "percent",
                 "category": "place",
-                "source_label": "End Child Poverty",
+                "source_label": "Data from End Child Poverty, based on data from DWP/HMRC.",
                 "source": source_url,
                 "source_type": "xlxs",
                 "data_url": data_url,

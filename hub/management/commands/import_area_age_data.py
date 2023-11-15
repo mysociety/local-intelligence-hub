@@ -23,11 +23,12 @@ class Command(BaseCommand):
 
         defaults = {
             "label": "Constituency age distribution",
-            "description": "Constituency age distribution",
+            "description": "Distribution of the ages of the constituents of each constituency.",
             "data_type": "percent",
             "category": "place",
+            "release_date": "2021",
             "is_range": True,
-            "source_label": "House of Commons Library",
+            "source_label": "Data from ONS (England and Wales), NRS (Scotland), and NISRA (Northern Ireland), collated by House of Commons Library.",
             "source": self.source_url,
             "source_type": "xlxs",
             "table": "areadata",

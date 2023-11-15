@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.core.management.base import BaseCommand
 
 import pandas as pd
@@ -55,7 +57,8 @@ class Command(BaseCommand):
                 "data_type": "text",
                 "description": "Membership in Select Committees as published on the parliament website",
                 "label": "MP Select Committee memberships",
-                "source_label": "UK Parliament",
+                "source_label": "Data from UK Parliament.",
+                "release_date": str(date.today()),
                 "source": "https://parliament.uk/",
                 "table": "person__persondata",
                 "is_shadable": False,

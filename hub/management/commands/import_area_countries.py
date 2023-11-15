@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.core.management.base import BaseCommand
 
 from tqdm import tqdm
@@ -31,9 +33,10 @@ class Command(BaseCommand):
             name="country",
             defaults={
                 "data_type": "text",
-                "description": "The country that the constituency is in",
+                "description": "The country that the constituency is in.",
+                "release_date": str(date.today()),
                 "label": "Country of the UK",
-                "source_label": "MapIt",
+                "source_label": "Data from mySociety.",
                 "source": "https://mapit.mysociety.org/",
                 "table": "areadata",
                 "options": options,

@@ -1,5 +1,6 @@
 import urllib.request
 from collections import Counter
+from datetime import date
 
 from django.conf import settings
 from django.core.files import File
@@ -101,8 +102,9 @@ class Command(BaseCommand):
                 "data_type": "profile_id",
                 "description": props["label"],
                 "label": props["label"],
+                "release_date": str(date.today()),
                 "source": "https://en.wikipedia.org/",
-                "source_label": "Wikipedia",
+                "source_label": "Data from Wikipedia.",
                 "table": "person__persondata",
                 "is_filterable": False,
             }

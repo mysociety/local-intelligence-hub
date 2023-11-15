@@ -15,10 +15,10 @@ class Command(BaseImportFromDataFrameCommand):
         "constituency_ruc": {
             "defaults": {
                 "label": "Urban Rural Classification",
-                "description": "Urban Rural Classification",
+                "description": "A composite measure of 'ruralness' (based population density, settlement size, and drive times) standardised across the countries of the UK.",
                 "data_type": "text",
                 "category": "place",
-                "source_label": "mySociety",
+                "source_label": "Data from ONS (England and Wales), NRS (Scotland), and NISRA (Northern Ireland), collated and standardised by mySociety.",
                 "source": "https://mysociety.github.io/uk_ruc/",
                 "source_type": "csv",
                 "table": "areadata",

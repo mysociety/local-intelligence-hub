@@ -26,8 +26,9 @@ class Command(BaseImportFromDataFrameCommand):
     defaults = {
         "data_type": "integer",
         "category": "movement",
-        "source_label": "CAFOD",
+        "source_label": "Data from CAFOD.",
         "source": "https://cafod.org.uk",
+        "release_date": "February 2023",
         "source_type": "google sheet",
         "table": "areadata",
         "exclude_countries": ["Northern Ireland", "Scotland"],
@@ -42,6 +43,7 @@ class Command(BaseImportFromDataFrameCommand):
                 {
                     "subcategory": "supporters_and_activists",
                     "default_value": 10,
+                    "description": "Number of CAFOD activists per constituency.",
                 },
             ),
             "col": "activists",
@@ -52,6 +54,7 @@ class Command(BaseImportFromDataFrameCommand):
                 {
                     "subcategory": "places_and_spaces",
                     "default_value": 5,
+                    "description": "Number of CAFOD parishes per constituency.",
                 },
             ),
             "col": "parishes",
@@ -62,6 +65,7 @@ class Command(BaseImportFromDataFrameCommand):
                 {
                     "subcategory": "places_and_spaces",
                     "default_value": 5,
+                    "description": "Number of CAFOD schools per constituency.",
                 },
             ),
             "col": "schools",

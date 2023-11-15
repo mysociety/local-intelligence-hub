@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.conf import settings
 
 from hub.models import AreaData, DataSet
@@ -18,7 +20,8 @@ class Command(BaseConstituencyCountImportCommand):
         "description": "Number of onshore windfarms",
         "data_type": "integer",
         "category": "place",
-        "source_label": "Wikipedia",
+        "release_date": str(date.today()),
+        "source_label": "Data from Wikipedia.",
         "source": "https://en.wikipedia.org/wiki/List_of_onshore_wind_farms_in_the_United_Kingdom",
         "source_type": "api",
         "data_url": "https://en.wikipedia.org/wiki/List_of_onshore_wind_farms_in_the_United_Kingdom",

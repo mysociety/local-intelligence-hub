@@ -14,10 +14,11 @@ class Command(BaseCommand):
     message = "Importing constituency flood risk data"
     defaults = {
         "label": "Flood risk from rivers or sea",
-        "description": "Data relating to risk of flooding from rivers or sea, recorded in 2018",
+        "description": "Data relating to risk of flooding from rivers or sea across the UK, aggregated by constituency.",
+        "release_date": "2018",
         "data_type": "percent",
         "category": "place",
-        "source_label": "Defra",
+        "source_label": "Data from Defra.",
         "is_range": True,
         "source_type": "csv",
         "table": "areadata",

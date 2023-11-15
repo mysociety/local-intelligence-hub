@@ -14,11 +14,12 @@ class Command(BaseCommand):
 
     message = "Importing constituency socio-economic data"
     defaults = {
-        "label": "Socio-Economic Status",
-        "description": "Socio-economic status as of the 2021 census",
+        "label": "Socio-economic status",
+        "description": "England and Wales only.",
         "data_type": "percent",
         "category": "place",
-        "source_label": "House of Commons Library",
+        "release_date": "2021",
+        "source_label": "Data from the 2021 census, collated by House of Commons Library.",
         "is_range": True,
         "source": source_url,
         "source_type": "xlxs",

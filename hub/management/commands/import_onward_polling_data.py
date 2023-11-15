@@ -26,8 +26,9 @@ class Command(BaseImportFromDataFrameCommand):
     defaults = {
         "data_type": "integer",
         "category": "opinion",
-        "source_label": "Public First, commissioned by Onward UK",
-        "source": "https://www.ukonward.com/",
+        "source_label": "Public First MRP Polling, commissioned by Onward UK.",
+        "release_date": "July 2022",
+        "source": "https://www.publicfirst.co.uk/new-public-first-polling-for-onward.html",
         "source_type": "google sheet",
         "subcategory": "net_zero_support",
         "table": "areadata",
@@ -39,19 +40,35 @@ class Command(BaseImportFromDataFrameCommand):
 
     data_sets = {
         "constituency_nz_support": {
-            "defaults": defaults,
+            "defaults": defaults.copy().extend(
+                {
+                    "description": "Estimated percentage of constituents who support net zero."
+                }
+            ),
             "col": "support net zero",
         },
         "constituency_nz_neutral": {
-            "defaults": defaults,
+            "defaults": defaults.extend(
+                {
+                    "description": "Estimated percentage of constituents who neither support nor oppose net zero."
+                }
+            ),
             "col": "neither support nor oppose net zero",
         },
         "constituency_nz_oppose": {
-            "defaults": defaults,
+            "defaults": defaults.extend(
+                {
+                    "description": "Estimated percentage of constituents who oppose net zero."
+                }
+            ),
             "col": "oppose net zero",
         },
         "constituency_cc_high": {
-            "defaults": defaults.copy(),
+            "defaults": defaults.copy().extend(
+                {
+                    "description": "Estimated percentage of constituents who consider climate change a high priority."
+                }
+            ),
             "col": "consider climate change a high priority",
         },
     }

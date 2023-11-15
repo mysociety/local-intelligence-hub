@@ -28,11 +28,12 @@ class Command(BaseLatLongImportCommand):
             name="constituency_gbgw_2022_event_count",
             defaults={
                 "label": "Number of Great Big Green Week 2022 events",
-                "description": "Number of Great Big Green Week 2022 events",
+                "description": "Number of Great Big Green Week 2022 events per constituency.",
+                "release_date": "October 2022",
                 "data_type": "integer",
                 "category": "movement",
                 "subcategory": "events",
-                "source_label": "The Climate Coalition",
+                "source_label": "Data from The Climate Coalition.",
                 "source": "https://greatbiggreenweek.com/",
                 "source_type": "google sheet",
                 "data_url": "",
@@ -48,7 +49,7 @@ class Command(BaseLatLongImportCommand):
             defaults={
                 "data_type": "integer",
                 "label": "Number of Great Big Green Week 2022 events",
-                "description": "Number of Great Big Green Week 2022 events",
+                "description": "Number of Great Big Green Week 2022 events per constituency.",
             },
         )
 

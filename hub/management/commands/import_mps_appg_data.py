@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.core.management.base import BaseCommand
 
 from mysoc_dataset import get_dataset_df, get_dataset_url
@@ -77,9 +79,10 @@ class Command(BaseCommand):
             name="mp_appg_memberships",
             defaults={
                 "data_type": "text",
-                "description": "Membership in APPGs as published on the parliament website",
+                "description": "Membership in APPGs as published on the parliament website.",
+                "release_date": str(date.today()),
                 "label": "MP APPG memberships",
-                "source_label": "UK Parliament",
+                "source_label": "Data from UK Parliament.",
                 "source": "https://parliament.uk/",
                 "table": "person__persondata",
                 "options": options,

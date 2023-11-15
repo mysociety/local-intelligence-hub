@@ -147,15 +147,29 @@ class Command(BaseCommand):
             {"title": "Did not support", "shader": "gray-500"},
             {"title": "Not in office", "shader": "gray-300"},
         ]
+        descriptions = {
+            "1116_vote": "The final vote on what became the Environment Act 2021, establishing the UK’s new legal framework for environmental protection, post-Brexit.",
+            "1372_vote": "A Conservative majority saw this ban rejected, but a handful of Conservative MPs refused to vote on this topic.",
+            "58953_edm": "MPs who supported this Early Day Motion are likely to support other pro-climate and international climate justice policies.",
+            "60083_edm": "MPs who supported this Early Day Motion are likely to support other pro-climate and international climate justice policies.",
+        }
+
+        release_dates = {
+            "1116_vote": "October 2021",
+            "1372_vote": "October 2022",
+            "58953_edm": "September 2021",
+            "60083_edm": "September 2022",
+        }
         for vote in votes:
             vote_machine_name = self.get_machine_name(vote)
             ds, created = DataSet.objects.update_or_create(
                 name=vote_machine_name,
                 defaults={
                     "data_type": "string",
-                    "description": f"MP vote on {vote['vote_name']}",
+                    "description": descriptions[vote_machine_name],
                     "label": f"MP vote on {vote['vote_name']}",
-                    "source_label": "UK Parliament",
+                    "release_date": release_dates[vote_machine_name],
+                    "source_label": "Data from UK Parliament.",
                     "source": "https://parliament.uk/",
                     "table": "person__persondata",
                     "options": vote_options,
@@ -176,8 +190,9 @@ class Command(BaseCommand):
                     name=edm_machine_name,
                     defaults={
                         "data_type": "string",
-                        "description": f"MP support for {edm['edm_name']}",
+                        "description": descriptions[edm_machine_name],
                         "label": f"MP support for {edm['edm_name']}",
+                        "release_date": release_dates[edm_machine_name],
                         "source_label": "UK Parliament",
                         "source": "https://parliament.uk/",
                         "table": "person__persondata",

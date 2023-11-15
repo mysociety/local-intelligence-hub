@@ -18,11 +18,12 @@ class Command(BaseAreaImportCommand):
     data_file = settings.BASE_DIR / "data" / "christian_aid_groups.csv"
     defaults = {
         "label": "Christian Aid groups",
-        "description": "Descriptions of Christian Aid Groups",
+        "description": "Descriptions of Christian Aid groups",
         "data_type": "json",
         "category": "movement",
         "subcategory": "groups",
-        "source_label": "Christian Aid",
+        "release_date": "April 2023",
+        "source_label": "Data from Christian Aid.",
         "source": "",
         "source_type": "api",
         "data_url": "",
@@ -34,10 +35,11 @@ class Command(BaseAreaImportCommand):
 
     count_defaults = {
         "label": "Number of Christian Aid groups",
-        "description": "Number of Christian Aid Groups",
+        "description": "Number of Christian Aid groups",
         "data_type": "integer",
+        "release_date": "April 2023",
         "category": "movement",
-        "source_label": "Christian Aid",
+        "source_label": "Data from Christian Aid.",
         "source": "",
         "source_type": "api",
         "data_url": "",
