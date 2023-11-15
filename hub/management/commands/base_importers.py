@@ -35,7 +35,8 @@ class BaseAreaImportCommand(BaseCommand):
         return config["defaults"]["label"]
 
     def delete_data(self):
-        pass
+        for data_type in self.data_types.values():
+            AreaData.objects.filter(data_type=data_type).delete()
 
     def add_data_sets(self, df=None):
         for name, config in self.data_sets.items():
