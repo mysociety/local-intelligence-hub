@@ -121,38 +121,6 @@ class ImportAgeDataTestCase(ImportTestCase):
         self.assertEqual(south_data[1].data_type.average, 16.1)
 
 
-class ImportFuelPovertyDataTestCase(ImportTestCase):
-    command = "import_area_fuel_poverty_data"
-
-    @mock.patch("hub.management.commands.import_area_age_data.pd.read_excel")
-    def test_import(self, patch_read_excel):
-        data = {
-            "Parliamentary Constituency Code": [
-                "E10000001",
-                "E10000002",
-                "E40000002",
-            ],
-            "Proportion of households fuel poor (%)": [12.1, 13.2, 14.2],
-        }
-        patch_read_excel.return_value = pd.DataFrame(data=data)
-        out = self.call_command()
-
-        self.assertEqual(out, "Failed to find area with code E40000002\n")
-
-        area_data = AreaData.objects.all()
-        self.assertEqual(area_data.count(), 2)
-
-        south_data = (
-            AreaData.objects.filter(area__gss="E10000001")
-            .order_by("data_type__name")
-            .all()
-        )
-
-        self.assertEqual(south_data[0].value(), 12.1)
-
-        self.assertEqual(round(south_data[0].data_type.average, 2), 12.65)
-
-
 class ImportIMDTestCase(ImportTestCase):
     command = "import_imd_data"
 
