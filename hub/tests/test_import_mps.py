@@ -158,18 +158,6 @@ class DuplicateMPsTestCase(TestCase):
         )
 
     @patch("hub.management.commands.import_mps.call_command")
-    @patch("hub.management.commands.import_mps.MP_IMPORT_COMMANDS", ["A", "B", "C"])
-    def test_data_reimported(self, mock_call_command):
-        # Run the duplicate MPs method
-        import_mps = ImportMpsCommand()
-        import_mps.check_for_duplicate_mps()
-
-        # Check that the call_command was executed once
-        # for each import command, and then again for
-        # the initial data to determine the correct duplicate
-        self.assertEqual(mock_call_command.call_count, 4)
-
-    @patch("hub.management.commands.import_mps.call_command")
     def test_data_not_reimported_if_no_duplicates(self, mock_call_command):
         # Remove the duplicated MP
         Person.objects.get(name="Juliet Replacement").delete()

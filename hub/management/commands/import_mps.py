@@ -191,7 +191,7 @@ class Command(BaseCommand):
                 ).values_list("data")
             )
 
-            for (party, count) in Counter(all_parties).most_common():
+            for party, count in Counter(all_parties).most_common():
                 shade = party_shades.get(party[0], "#DCDCDC")
                 parties.append(dict(title=party[0], shader=shade))
 
@@ -244,7 +244,3 @@ class Command(BaseCommand):
                 mps_to_delete = list(duplicate_mps)
                 mps_to_delete.remove(least_recent_mp)
                 Person.objects.filter(external_id__in=mps_to_delete).delete()
-
-            print("Rerunning MP import scripts")
-            for command_name in MP_IMPORT_COMMANDS:
-                call_command(command_name)
