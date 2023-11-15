@@ -100,11 +100,10 @@ class Command(BaseCommand):
 
         if not self._quiet:
             self.stdout.write("Generating GSS codes for new WI groups")
-
         df["area"] = df.progress_apply(
             lambda row: self.process_lat_long(row.lat_lon, row.group_name)
-            if pd.isna(row.area)
-            else row.area,
+            if "area" not in row
+            else row["area"],
             axis=1,
         )
         return df
