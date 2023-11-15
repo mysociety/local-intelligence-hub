@@ -66,7 +66,7 @@ class Command(BaseCommand):
 
     def process_data(self, df):
         if not self._quiet:
-            self.stdout.write("Generating foodbank per constituency data")
+            self.stdout.write("Generating save the children count")
 
         df = df.dropna(subset="postcode")
         df.constituency = df.constituency.str.strip()
