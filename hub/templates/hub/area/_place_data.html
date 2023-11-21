@@ -142,9 +142,9 @@
             </div>
             <div class="card-footer bg-white">
             {% if category.source_url %}
-                <p class="card-text fs-8"><a href="{{ category.source_url }}" class="text-decoration-none text-muted">Data from {{ category.source }}</a></p>
+                <p class="card-text fs-8"><a href="{{ category.source_url }}" class="text-decoration-none text-muted">{{ category.source }}</a></p>
             {% else %}
-                <p class="card-text fs-8 text-muted">Data from {{ category.source }}</p>
+                <p class="card-text fs-8 text-muted">{{ category.source }}</p>
             {% endif %}
             </div>
         </div>
