@@ -317,7 +317,7 @@ class AreaSearchView(TemplateView):
             elif kwargs.get("pc"):
                 gss_codes = mapit.postcode_point_to_gss_codes(kwargs["pc"])
 
-            areas = Area.objects.filter(gss__in=gss_codes)
+            areas = Area.objects.filter(gss__in=gss_codes, area_type__code="WMC")
             areas = list(areas)
         except (
             NotFoundException,
@@ -348,7 +348,9 @@ class AreaSearchView(TemplateView):
         elif search == "":
             context["error"] = "Please enter a constituency name, MP name, or postcode."
         else:
-            areas_raw = Area.objects.filter(name__icontains=search)
+            areas_raw = Area.objects.filter(
+                name__icontains=search, area_type__code="WMC"
+            )
             people_raw = Person.objects.filter(name__icontains=search)
 
             areas = list(areas_raw)
