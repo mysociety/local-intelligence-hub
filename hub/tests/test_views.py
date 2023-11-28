@@ -124,6 +124,14 @@ class TestExploreFilteringPage(TestCase):
         self.u = User.objects.create(username="user@example.com")
         self.client.force_login(self.u)
 
+    def test_explore_json_page_null_value(self):
+        url = reverse("explore_json")
+        response = self.client.get(url + "?mp_last_elected__year__lt=")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "South Borsetshire")
+        self.assertContains(response, "Borsetshire West")
+        self.assertContains(response, "Borsetshire East")
+
     def test_explore_json_page_year_lt(self):
         url = reverse("explore_json")
         response = self.client.get(url + "?mp_last_elected__year__lt=2019")

@@ -245,9 +245,16 @@ const app = createApp({
 
       return url
     },
+    filtersValid() {
+      return this.filters.every(function(filter){
+        return filter.selectedValue !== "";
+      });
+    },
     updateState() {
-      window.history.replaceState(this.state(), '', this.url())
-      this.updateResults()
+      if (this.filtersValid()) {
+        window.history.replaceState(this.state(), '', this.url())
+        this.updateResults()
+      }
     },
     restoreState() {
       const params = new URL(window.location).searchParams

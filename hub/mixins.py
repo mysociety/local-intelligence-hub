@@ -24,6 +24,10 @@ class FilterMixin:
     def filters(self):
         filters = []
         for param, value in self.request.GET.items():
+            # we don't filter on blank values so skip them
+            if value == "":
+                continue
+
             if "__" in param and param not in ["shader", "columns"]:
                 name, comparator = param.split("__", 1)
             else:  # pragma: nocover
