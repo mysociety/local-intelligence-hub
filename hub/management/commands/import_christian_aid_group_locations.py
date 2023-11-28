@@ -67,6 +67,7 @@ class Command(BaseAreaImportCommand):
         self.add_data_sets()
         self.delete_data()
         self.process_data()
+        self.update_averages()
         self.update_max_min()
 
     def add_to_dict(self, df):
