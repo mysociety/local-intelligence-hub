@@ -218,4 +218,7 @@ class FilterMixin:
         try:
             return DataSet.objects.get(name=name)
         except DataSet.DoesNotExist:
-            return None
+            try:
+                return DataType.objects.get(name=name)
+            except DataType.DoesNotExist:
+                return None

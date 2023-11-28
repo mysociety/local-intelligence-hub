@@ -180,6 +180,24 @@ class TestExploreFilteringPage(TestCase):
         self.assertNotContains(response, "Borsetshire West")
         self.assertNotContains(response, "Borsetshire East")
 
+    def test_explore_json_shader(self):
+        url = reverse("explore_json")
+        response = self.client.get(url + "?shader=ages_0-9")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "South Borsetshire")
+        self.assertContains(response, "shades")
+
+        response = self.client.get(url + "?shader=wind_support")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "South Borsetshire")
+        self.assertContains(response, "shades")
+
+    def test_explore_json_shader_custom_colours(self):
+        url = reverse("explore_json")
+        response = self.client.get(url + "?shader=party")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "#ff0000")
+
 
 class TestAreaPage(TestCase):
     fixtures = ["areas.json", "mps.json", "elections.json", "area_data.json"]

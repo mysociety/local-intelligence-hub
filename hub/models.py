@@ -86,7 +86,153 @@ class TypeMixin:
             return "data"
 
 
-class DataSet(TypeMixin, models.Model):
+class ShaderMixin:
+    shades = [
+        "#ffffd9",
+        "#edf8b1",
+        "#c7e9b4",
+        "#7fcdbb",
+        "#41b6c4",
+        "#1d91c0",
+        "#225ea8",
+        "#253494",
+        "#081d58",
+    ]
+
+    COLOUR_NAMES = {
+        "red-500": "#CC3517",
+        "orange-500": "#ED6832",
+        "yellow-500": "#FEC835",
+        "teal-600": "#068670",
+        "blue-500": "#21A8E0",
+        "purple-500": "#6F42C1",
+        "gray-500": "#ADB5BD",
+        "gray-300": "#DEE2E6",
+    }
+
+    @property
+    def shader_table(self):
+        return self.table
+
+    @property
+    def shader_filter(self):
+        return {"data_type__data_set": self}
+
+    def shade(self, val, cmin, cmax):
+        if val == "":
+            return None
+        try:
+            x = float(val - cmin) / (cmax - cmin)
+        except ZeroDivisionError:
+            x = 0.5  # cmax == cmin
+
+        shade = int(x * 9) - 1
+        if shade < 0:
+            shade = 0
+        return self.shades[shade]
+
+    def colours_for_areas(self, areas):
+        if len(areas) == 0:
+            return {"properties": {"no_areas": True}}
+
+        values, mininimum, maximum = self.shader_value(areas)
+        legend = {}
+        if hasattr(self, "options"):
+            for option in self.options:
+                if option.get("shader", None) is not None:
+                    legend[option["title"]] = self.COLOUR_NAMES.get(
+                        option["shader"], option["shader"]
+                    )
+
+        if len(legend) > 0:
+            props = {"properties": {"legend": legend}}
+        else:
+            d_max = maximum
+            d_min = mininimum
+            if self.is_float:
+                d_max = round(maximum, 1)
+                d_min = round(mininimum, 1)
+                if self.is_percentage:
+                    d_max = f"{d_max}%"
+                    d_min = f"{d_min}%"
+
+            props = {
+                "properties": {
+                    "maximum": d_max,
+                    "minimum": d_min,
+                    "shades": self.shades,
+                }
+            }
+        colours = {}
+        for value in values:
+            data = value.value()
+            if hasattr(self, "options"):
+                for option in self.options:
+                    if option["title"] == data:
+                        colours[value.gss] = {
+                            "colour": self.COLOUR_NAMES.get(
+                                option["shader"], option["shader"]
+                            ),
+                            "opacity": value.opacity(mininimum, maximum) or 0.7,
+                            "value": data,
+                            "label": self.label,
+                        }
+
+            if colours.get(value.gss, None) is None:
+                shade = self.shade(data, mininimum, maximum)
+                if shade is not None:
+                    colours[value.gss] = {
+                        "colour": shade,
+                        "opacity": 0.7,
+                        "label": self.label,
+                        "value": data,
+                    }
+
+        # if there is no data for an area then need to set the shader to opacity 0 otherwise
+        # they will end up as the default
+        missing = {}
+        for area in areas:
+            if colours.get(area.gss, None) is None:
+                missing[area.gss] = {"colour": "#ed6832", "opacity": 0}
+
+        return {**colours, **missing, **props}
+
+    def shader_value(self, area):
+        if self.shader_table == "areadata":
+            min_max = AreaData.objects.filter(
+                area__in=area, **self.shader_filter
+            ).aggregate(
+                max=models.Max(self.value_col),
+                min=models.Min(self.value_col),
+            )
+
+            data = (
+                AreaData.objects.filter(area__in=area, **self.shader_filter)
+                .select_related("area", "data_type")
+                .annotate(
+                    gss=models.F("area__gss"),
+                )
+            )
+            return data, min_max["min"], min_max["max"]
+        else:
+            min_max = PersonData.objects.filter(
+                person__area__in=area, **self.shader_filter
+            ).aggregate(
+                max=models.Max(self.value_col),
+                min=models.Min(self.value_col),
+            )
+
+            data = (
+                PersonData.objects.filter(person__area__in=area, **self.shader_filter)
+                .select_related("person__area", "data_type")
+                .annotate(gss=models.F("person__area__gss"))
+            )
+            return data, min_max["min"], min_max["max"]
+
+        return None, None, None
+
+
+class DataSet(TypeMixin, ShaderMixin, models.Model):
     SOURCE_CHOICES = [
         ("csv", "CSV File"),
         ("xlxs", "Excel File"),
@@ -251,144 +397,8 @@ class DataSet(TypeMixin, models.Model):
     def filter(self, query, **kwargs):
         return Filter(self, query).run(**kwargs)
 
-    shades = [
-        "#ffffd9",
-        "#edf8b1",
-        "#c7e9b4",
-        "#7fcdbb",
-        "#41b6c4",
-        "#1d91c0",
-        "#225ea8",
-        "#253494",
-        "#081d58",
-    ]
 
-    COLOUR_NAMES = {
-        "red-500": "#CC3517",
-        "orange-500": "#ED6832",
-        "yellow-500": "#FEC835",
-        "teal-600": "#068670",
-        "blue-500": "#21A8E0",
-        "purple-500": "#6F42C1",
-        "gray-500": "#ADB5BD",
-        "gray-300": "#DEE2E6",
-    }
-
-    def shade(self, val, cmin, cmax):
-        if val == "":
-            return None
-        try:
-            x = float(val - cmin) / (cmax - cmin)
-        except ZeroDivisionError:
-            x = 0.5  # cmax == cmin
-
-        shade = int(x * 9) - 1
-        if shade < 0:
-            shade = 0
-        return self.shades[shade]
-
-    def colours_for_areas(self, areas):
-        if len(areas) == 0:
-            return {"properties": {"no_areas": True}}
-
-        values, mininimum, maximum = self.shader_value(areas)
-        legend = {}
-        for option in self.options:
-            if option.get("shader", None) is not None:
-                legend[option["title"]] = self.COLOUR_NAMES.get(
-                    option["shader"], option["shader"]
-                )
-
-        if len(legend) > 0:
-            props = {"properties": {"legend": legend}}
-        else:
-            d_max = maximum
-            d_min = mininimum
-            if self.is_float:
-                d_max = round(maximum, 1)
-                d_min = round(mininimum, 1)
-                if self.is_percentage:
-                    d_max = f"{d_max}%"
-                    d_min = f"{d_min}%"
-
-            props = {
-                "properties": {
-                    "maximum": d_max,
-                    "minimum": d_min,
-                    "shades": self.shades,
-                }
-            }
-        colours = {}
-        for value in values:
-            data = value.value()
-            for option in self.options:
-                if option["title"] == data:
-                    colours[value.gss] = {
-                        "colour": self.COLOUR_NAMES.get(
-                            option["shader"], option["shader"]
-                        ),
-                        "opacity": value.opacity(mininimum, maximum) or 0.7,
-                        "value": data,
-                        "label": self.label,
-                    }
-
-            if colours.get(value.gss, None) is None:
-                shade = self.shade(data, mininimum, maximum)
-                if shade is not None:
-                    colours[value.gss] = {
-                        "colour": shade,
-                        "opacity": 0.7,
-                        "label": self.label,
-                        "value": data,
-                    }
-
-        # if there is no data for an area then need to set the shader to opacity 0 otherwise
-        # they will end up as the default
-        missing = {}
-        for area in areas:
-            if colours.get(area.gss, None) is None:
-                missing[area.gss] = {"colour": "#ed6832", "opacity": 0}
-
-        return {**colours, **missing, **props}
-
-    def shader_value(self, area):
-        if self.table == "areadata":
-            min_max = AreaData.objects.filter(
-                area__in=area, data_type__data_set=self
-            ).aggregate(
-                max=models.Max(self.value_col),
-                min=models.Min(self.value_col),
-            )
-
-            data = (
-                AreaData.objects.filter(area__in=area, data_type__data_set=self)
-                .select_related("area", "data_type")
-                .annotate(
-                    gss=models.F("area__gss"),
-                )
-            )
-            return data, min_max["min"], min_max["max"]
-        else:
-            min_max = PersonData.objects.filter(
-                person__area__in=area, data_type__data_set=self
-            ).aggregate(
-                max=models.Max(self.value_col),
-                min=models.Min(self.value_col),
-            )
-
-            data = (
-                PersonData.objects.filter(
-                    person__area__in=area, data_type__data_set=self
-                )
-                .select_related("person__area", "data_type")
-                .annotate(gss=models.F("person__area__gss"))
-            )
-            return data, min_max["min"], min_max["max"]
-
-        return None, None, None
-
-
-class DataType(TypeMixin, models.Model):
+class DataType(TypeMixin, ShaderMixin, models.Model):
     data_set = models.ForeignKey(DataSet, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     data_type = models.CharField(max_length=20, choices=TypeMixin.TYPE_CHOICES)
@@ -405,6 +415,14 @@ class DataType(TypeMixin, models.Model):
             return self.label
 
         return self.name
+
+    @property
+    def shader_table(self):
+        return self.data_set.table
+
+    @property
+    def shader_filter(self):
+        return {"data_type": self}
 
 
 class UserDataSets(models.Model):

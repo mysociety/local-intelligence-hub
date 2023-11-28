@@ -192,6 +192,10 @@ const app = createApp({
     addShader(datasetName) {
       this.shader = this.getDataset(datasetName)
 
+      if (!this.shader.selectedType && this.shader.types) {
+        this.shader.selectedType = this.shader.types[0].name
+      }
+
       trackEvent('explore_shader_added', {
         'dataset': datasetName
       });
@@ -220,7 +224,13 @@ const app = createApp({
         }
       })
 
-      if (this.shader) { state['shader'] = this.shader.name }
+      if (this.shader) {
+        if (this.shader.selectedType) {
+          state['shader'] = this.shader.selectedType
+        } else {
+          state['shader'] = this.shader.name
+        }
+      }
 
       // don’t bother saving view unless it’s been changed from default
       if ( this.view != 'map' ) { state['view'] = this.view }
@@ -500,7 +510,7 @@ const app = createApp({
         case 'filter':
           return dataset.is_filterable
         case 'shader':
-          return dataset.is_shadable
+          return ["party", "constituency_ruc"].includes(dataset.name) || !["text", "json", "date", "profile_id"].includes(dataset.data_type)
         default:
           return true
       }
