@@ -88,6 +88,7 @@ class FilterMixin:
                         "name": dataset.name,
                         "value_col": dataset.value_col,
                         "label": dataset.label,
+                        "header_label": dataset.label,
                     }
                 )
             except DataSet.DoesNotExist:
@@ -99,6 +100,7 @@ class FilterMixin:
                             "name": datatype.name,
                             "value_col": datatype.value_col,
                             "label": datatype.label,
+                            "header_label": f"{datatype.data_set.label} - {datatype.label}",
                         }
                     )
                 except DataType.DoesNotExist:
@@ -130,7 +132,9 @@ class FilterMixin:
     def data(self, as_dict=False, mp_name=False):
         headers = ["Constituency Name"]
         headers += map(lambda f: f["dataset"].label, self.filters())
-        headers += map(lambda f: f["label"], self.columns(mp_name=mp_name))
+        headers += map(
+            lambda f: f.get("header_label", f["label"]), self.columns(mp_name=mp_name)
+        )
 
         data = [headers]
 

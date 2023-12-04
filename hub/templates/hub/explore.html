@@ -136,6 +136,11 @@
                                 <h3 class="h6 mb-0 me-auto">${ column.title }</h3>
                                 <button @click="removeColumn(column.name)" type="button" class="btn-close p-0" aria-label="Remove column"></button>
                             </div>
+                            <div :class="{ 'filter__body': true, 'filter__body--expanded': true }">
+                                <select v-if="column.is_range" v-model="column.selectedType" class="form-select form-select-sm flex-grow-0 flex-shrink-1">
+                                <option v-for="ds_type in column.types" :value="ds_type.name">${ ds_type.title }</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 

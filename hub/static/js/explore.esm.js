@@ -180,6 +180,10 @@ const app = createApp({
     addColumn(datasetName) {
       const dataset = this.getDataset(datasetName)
 
+      if (!dataset.selectedType && dataset.types) {
+        dataset.selectedType = dataset.types[0].name
+      }
+
       this.columns.push(dataset)
 
       trackEvent('explore_column_added', {
@@ -238,7 +242,11 @@ const app = createApp({
       if (this.columns.length) {
         var cols = []
         this.columns.forEach(function(d) {
-          cols.push(d.name)
+          if (d.selectedType) {
+            cols.push(d.selectedType)
+          } else {
+            cols.push(d.name)
+          }
         })
 
         state['columns'] = cols.join(',')
