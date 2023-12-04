@@ -14,7 +14,7 @@
             </thead>
             <tbody>
                 {% for datum in category %}
-                {% if datum.subcategory == subcategory %}
+                {% if datum.subcategory.lower == subcategory.lower %}
                 <tr>
                     <th>{{ datum.name | simplify_dataset_name }}</th>
                     <td>{{ datum.data.value|floatformat }}%</td>

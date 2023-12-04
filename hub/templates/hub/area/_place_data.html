@@ -9,7 +9,7 @@
                 {% include "hub/area/_favourite.html" %}
             </div>
             <div class="card-body">
-                {% if category.name == "Constituency age distribution" %}
+                {% if category.name.lower == 'constituency age distribution' %}
                     <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">
                         <thead>
                             <tr>
@@ -28,7 +28,7 @@
                         {% endfor %}
                         </tbody>
                     </table>
-                {% elif category.name == "Ethnicity" %}
+                {% elif category.name.lower == 'ethnicity' %}
                     <table class="table mb-0">
                         <thead>
                             <tr>
@@ -47,7 +47,7 @@
                         {% endfor %}
                         </tbody>
                     </table>
-                {% elif category.name == 'Socio-Economic Status' %}
+                {% elif category.name.lower == 'socio-economic status' %}
                 <table class="table mb-0">
                 <thead>
                     <tr>
@@ -83,7 +83,7 @@
                         {% endfor %}
                         </body>
                     </table>
-                {% elif category.name == 'Air pollution' %}
+                {% elif category.name.lower == 'air pollution' %}
                     <table class="table mb-0">
                         <thead>
                             <tr>
@@ -107,7 +107,7 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                {% elif category.name == 'Flood risk from rivers or sea' %}
+                {% elif category.name.lower == 'flood risk from rivers or sea' %}
                         <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y"">
                                 <thead>
                                     <tr>
