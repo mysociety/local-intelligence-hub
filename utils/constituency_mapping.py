@@ -149,7 +149,7 @@ def convert_data_geographies(
     # at the same time, we're aggregating the overlap column
     # to get the total new geography pop/area
 
-    final = df.groupby(output_geography).agg("sum")
+    final = df.groupby(output_geography).agg("sum", numeric_only=False)
 
     # if we want percentages, reconvert based on the summed overlap value
     # (which should roughly add up to the output geography area)
