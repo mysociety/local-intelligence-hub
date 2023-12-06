@@ -54,6 +54,7 @@ class Command(BaseLatLongImportCommand):
         )
 
         self.data_type = data_type
+        self.data_types[data_type.name] = data_type
 
     def process_data(self, df):
         AreaData.objects.filter(data_type=self.data_type).delete()
