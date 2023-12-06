@@ -32,6 +32,8 @@ class Command(BaseImportFromDataFrameCommand):
                 "exclude_countries": ["Northern Ireland", "Scotland", "Wales"],
                 "comparators": DataSet.numerical_comparators(),
                 "default_value": 10,
+                "unit_type": "percentage",
+                "unit_distribution": "people_in_area",
             },
             "col": "% of area in FP from 1 Jul 2023",
         }

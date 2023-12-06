@@ -36,6 +36,8 @@ class Command(BaseCommand):
             "default_value": 50,
             "is_shadable": False,
             "comparators": DataSet.numerical_comparators(),
+            "unit_type": "percentage",
+            "unit_distribution": "people_in_area",
         }
 
         data_set, created = DataSet.objects.update_or_create(

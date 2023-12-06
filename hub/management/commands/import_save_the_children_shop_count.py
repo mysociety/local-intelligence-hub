@@ -27,6 +27,8 @@ class Command(BaseConstituencyCountImportCommand):
         "table": "areadata",
         "default_value": 10,
         "comparators": DataSet.numerical_comparators(),
+        "unit_type": "point",
+        "unit_distribution": "point",
     }
 
     data_sets = {

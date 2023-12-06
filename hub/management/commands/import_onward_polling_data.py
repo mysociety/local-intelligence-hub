@@ -36,6 +36,8 @@ class Command(BaseImportFromDataFrameCommand):
         "data_url": "",
         "exclude_countries": ["Northern Ireland"],
         "comparators": DataSet.numerical_comparators(),
+        "unit_type": "percentage",
+        "unit_distribution": "people_in_area",
     }
 
     data_sets = {

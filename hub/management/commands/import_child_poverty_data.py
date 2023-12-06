@@ -33,6 +33,8 @@ class Command(BaseImportFromDataFrameCommand):
                 "fill_blanks": False,
                 "comparators": DataSet.numerical_comparators(),
                 "default_value": 10,
+                "unit_type": "percentage",
+                "unit_distribution": "people_in_area",
             },
             "col": "Percentage 2020/21",
         }
