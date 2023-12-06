@@ -25,6 +25,8 @@ class Command(BaseImportFromDataFrameCommand):
                 "table": "areadata",
                 "comparators": DataSet.numerical_comparators()[::-1],
                 "default_value": 5,
+                "unit_type": "percentage",
+                "unit_distribution": "people_in_area",
             },
             "col": "pcon-imd-pop-quintile",
         }

@@ -49,6 +49,8 @@ class Command(BaseAreaImportCommand):
         "exclude_countries": ["Northern Ireland", "Scotland", "Wales"],
         "comparators": DataSet.numerical_comparators(),
         "is_filterable": True,
+        "unit_type": "point",
+        "unit_distribution": "point",
     }
 
     data_sets = {

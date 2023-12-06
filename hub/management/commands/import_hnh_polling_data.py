@@ -44,6 +44,8 @@ class Command(BaseImportFromDataFrameCommand):
         "exclude_countries": ["Northern Ireland"],
         "is_shadable": False,
         "comparators": DataSet.numerical_comparators(),
+        "unit_type": "percentage",
+        "unit_distribution": "people_in_area",
     }
 
     files = [
