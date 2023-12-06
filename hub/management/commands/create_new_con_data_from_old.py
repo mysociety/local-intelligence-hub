@@ -33,10 +33,10 @@ class Command(BaseCommand):
         )
         return df
 
-    def get_df_from_dataset(self, ds):
-        if ds.table == "areadata":
+    def get_df_from_datatype(self, dt):
+        if dt.data_set.table == "areadata":
             data = AreaData.objects.filter(
-                data_type__data_set=ds, area__area_type=self.old_con_at
+                data_type=dt, area__area_type=self.old_con_at
             )
 
         data_list = []
@@ -48,11 +48,11 @@ class Command(BaseCommand):
 
         return df
 
-    def create_data_for_new_con(self, ds, df):
-        old_dt = DataType.objects.get(data_set=ds, area_type=self.old_con_at)
-
+    def create_data_for_new_con(self, old_dt, df):
         try:
-            dt = DataType.objects.get(data_set=ds, area_type=self.new_con_at)
+            dt = DataType.objects.get(
+                data_set=old_dt.data_set, area_type=self.new_con_at
+            )
         except DataType.DoesNotExist:
             dt = old_dt
             dt.pk = None
@@ -70,30 +70,33 @@ class Command(BaseCommand):
                     value_col: row["value"],
                 },
             )
-        ds.areas_available.add(self.new_con_at)
+        dt.data_set.areas_available.add(self.new_con_at)
+
+    def convert_datatype_to_new_geography(self, dt):
+        df = self.get_df_from_datatype(dt)
+        input_values_type = "percentage"
+        if dt.data_set.unit_type != "percentage":
+            input_values_type = "absolute"
+
+        new_df = convert_data_geographies(
+            df=df,
+            input_geography="PARL10",
+            output_geography="PARL25",
+            input_values_type=input_values_type,
+        )
+        new_df = self.apply_parl25_gss_to_df(new_df)
+        self.create_data_for_new_con(dt, new_df)
 
     def process_datasets(self):
         sets = DataSet.objects.filter(
             unit_distribution__in=["people_in_area", "point"],
             category__in=["place", "opinion", "movement"],
-            is_range=False,
         )
 
         for ds in sets:
             print(ds.label, ds.unit_type)
-            df = self.get_df_from_dataset(ds)
-            input_values_type = "percentage"
-            if ds.unit_type != "percentage":
-                input_values_type = "absolute"
-
-            new_df = convert_data_geographies(
-                df=df,
-                input_geography="PARL10",
-                output_geography="PARL25",
-                input_values_type=input_values_type,
-            )
-            new_df = self.apply_parl25_gss_to_df(new_df)
-            self.create_data_for_new_con(ds, new_df)
+            for dt in DataType.objects.filter(data_set=ds, area_type=self.old_con_at):
+                self.convert_datatype_to_new_geography(dt)
 
     def handle(self, quiet=False, *args, **options):
         self._quiet = quiet
