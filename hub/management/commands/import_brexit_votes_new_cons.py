@@ -28,6 +28,8 @@ class Command(BaseImportFromDataFrameCommand):
                 "table": "areadata",
                 "is_filterable": True,
                 "comparators": DataSet.numerical_comparators(),
+                "unit_type": "percentage",
+                "unit_distribution": "people_in_area",
             },
             "col": "leave_percent",
         }

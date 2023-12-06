@@ -113,6 +113,8 @@ class Command(BaseImportFromDataFrameCommand):
                 "exclude_countries": ["Northern Ireland"],
                 "default_value": 50,
                 "comparators": DataSet.numerical_comparators(),
+                "unit_type": "percentage",
+                "unit_distribution": "people_in_area",
             }
             data_set, created = DataSet.objects.update_or_create(
                 name=column,
