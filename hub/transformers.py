@@ -64,6 +64,8 @@ class DataTypeConverter:
                 },
             )
         dt.data_set.areas_available.add(self.new_con_at)
+        dt.update_average()
+        dt.update_max_min()
 
     def convert_datatype_to_new_geography(self, dt):
         df = self.get_df_from_datatype(dt)
