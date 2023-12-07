@@ -7,6 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from hub.models import Area, AreaData, AreaType, DataSet, DataType
+from hub.transformers import DataTypeConverter
 from utils.mapit import (
     BadRequestException,
     ForbiddenException,
@@ -28,6 +29,12 @@ class BaseAreaImportCommand(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             "-q", "--quiet", action="store_true", help="Silence progress bars."
+        )
+
+        parser.add_argument(
+            "--skip_new_areatype_conversion",
+            action="store_true",
+            help="do not auto convert to new constituency data",
         )
 
     def get_label(self, config):
@@ -141,6 +148,18 @@ class BaseAreaImportCommand(BaseCommand):
         for data_type in self.data_types.values():
             data_type.update_max_min()
 
+    def convert_to_new_con(self):
+        if self.do_not_convert:
+            return
+
+        converter = DataTypeConverter()
+        for data_type in self.data_types.values():
+            if (
+                data_type.area_type == converter.old_area_type
+                and data_type.data_set.unit_distribution == "people_in_area"
+                and data_type.data_set.unit_type == "percentage"
+            ):
+                converter.convert_datatype_to_new_geography(data_type)
 
 
 class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
@@ -186,14 +205,16 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
                 print(f"issue with {cons}: {e}")
                 break
 
-    def handle(self, quiet=False, *args, **options):
+    def handle(self, quiet=False, skip_new_areatype_conversion=False, *args, **options):
         self._quiet = quiet
+        self.do_not_convert = skip_new_areatype_conversion
         df = self.get_dataframe()
         self.add_data_sets(df)
         self.delete_data()
         self.process_data(df)
         self.update_averages()
         self.update_max_min()
+        self.convert_to_new_con()
 
 
 class BaseLatLongImportCommand(BaseAreaImportCommand):

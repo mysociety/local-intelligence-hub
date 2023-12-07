@@ -137,7 +137,7 @@ class ImportIMDTestCase(ImportTestCase):
             "pcon-imd-pop-quintile": [1, 2, 2],
         }
         patch_read_csv.return_value = pd.DataFrame(data=data)
-        out = self.call_command()
+        out = self.call_command(skip_new_areatype_conversion=True)
 
         self.assertEqual(
             out,
@@ -170,7 +170,7 @@ class ImportRUCTestCase(ImportTestCase):
             "ruc-cluster-label": ["Urban", "Rural", "Urban"],
         }
         patch_read_csv.return_value = pd.DataFrame(data=data)
-        out = self.call_command()
+        out = self.call_command(skip_new_areatype_conversion=True)
 
         self.assertEqual(
             out,
