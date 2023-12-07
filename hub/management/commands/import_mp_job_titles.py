@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 import pandas as pd
 from tqdm import tqdm
 
-from hub.models import Area, DataSet, DataType, Person, PersonData
+from hub.models import Area, AreaType, DataSet, DataType, Person, PersonData
 
 CONSTITUENCY_CORRECTIONS_DICT = {
     "Beverly and Holderness": "Beverley and Holderness",
@@ -23,6 +23,9 @@ class Command(BaseCommand):
     def handle(self, quiet=False, *args, **options):
         self._quiet = quiet
         self.import_results()
+
+    def get_area_type(self):
+        return AreaType.objects.get(code="WMC")
 
     def get_df(self):
         df = pd.read_csv("data/mp_job_titles.csv", usecols=["Constituency", "Title"])
@@ -51,10 +54,12 @@ class Command(BaseCommand):
                 "comparators": DataSet.string_comparators(),
             },
         )
+        mp_job_titles_ds.areas_available.add(self.get_area_type())
 
         mp_job_titles, created = DataType.objects.update_or_create(
             data_set=mp_job_titles_ds,
             name="job_titles",
+            area_type=self.get_area_type(),
             defaults={"data_type": "text"},
         )
 
@@ -65,9 +70,12 @@ class Command(BaseCommand):
         df = self.get_df()
         results = {}
         print("Matching MPs with titles")
+        area_type = self.get_area_type()
         for index, row in df.iterrows():
             try:
-                area = Area.objects.get(name__iexact=row.Constituency)
+                area = Area.objects.get(
+                    name__iexact=row.Constituency, area_type=area_type
+                )
                 results[mps.get(area=area)] = row.Title
             except Area.DoesNotExist:
                 print(f"Constituency: {row.Constituency} not found.")

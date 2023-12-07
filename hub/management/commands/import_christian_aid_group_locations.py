@@ -131,7 +131,7 @@ class Command(BaseAreaImportCommand):
         # Group by the area, and add the data from there
         for area_name, data in tqdm(df.groupby("area")):
             try:
-                area = Area.objects.get(name=area_name)
+                area = Area.objects.get(name=area_name, area_type__code=self.area_type)
             except Area.DoesNotExist:
                 continue
 
