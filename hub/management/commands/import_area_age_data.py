@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 import pandas as pd
 from tqdm import tqdm
 
-from hub.models import Area, AreaData, DataSet, DataType
+from hub.models import Area, AreaData, AreaType, DataSet, DataType
 
 
 class Command(BaseCommand):
@@ -49,6 +49,8 @@ class Command(BaseCommand):
         df = df.loc[df["Date"] == 2020]
         if not self._quiet:
             self.stdout.write("Importing constituency age distribution")
+
+        area_type = AreaType.objects.get(code=self.area_type)
         for index, row in tqdm(df.iterrows(), disable=self._quiet, total=df.shape[0]):
             age_group = row["Age group"]
             gss = row["ONSConstID"]
@@ -56,6 +58,7 @@ class Command(BaseCommand):
             data_type, created = DataType.objects.update_or_create(
                 data_set=data_set,
                 name=f"ages_{age_group}",
+                area_type=area_type,
                 defaults={
                     "data_type": "percent",
                     "label": f"Ages {age_group}",
@@ -78,6 +81,6 @@ class Command(BaseCommand):
             )
 
         for name, average in averages.items():
-            data_type = DataType.objects.get(name=name)
+            data_type = DataType.objects.get(name=name, area_type=area_type)
             data_type.average = average
             data_type.save()

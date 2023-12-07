@@ -62,7 +62,9 @@ class Command(BaseLatLongImportCommand):
         for index, row in tqdm(df.iterrows(), disable=self._quiet):
             json_data, created = AreaData.objects.update_or_create(
                 data_type=self.data_types["constituency_foe_groups"],
-                area=Area.objects.get(name=row.constituency),
+                area=Area.objects.get(
+                    name=row.constituency, area_type__code=self.area_type
+                ),
                 json=row.groups,
             )
 
