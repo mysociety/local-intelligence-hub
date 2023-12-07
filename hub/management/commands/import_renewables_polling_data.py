@@ -5,7 +5,7 @@ from django.conf import settings
 import pandas as pd
 
 from hub.management.commands.base_importers import BaseImportFromDataFrameCommand
-from hub.models import AreaData, DataSet, DataType
+from hub.models import AreaData, AreaType, DataSet, DataType
 
 SUBCATEGORIES_DICT = {
     "would-change-party": "voting",
@@ -91,6 +91,7 @@ class Command(BaseImportFromDataFrameCommand):
 
     def add_data_sets(self, df):
         order = 1
+        area_type = AreaType.objects.get(code=self.area_type)
         for column in df.columns:
             if column in ("id-name", "gss", "constituency-name"):
                 continue
@@ -125,6 +126,7 @@ class Command(BaseImportFromDataFrameCommand):
             data_type, created = DataType.objects.update_or_create(
                 data_set=data_set,
                 name=column,
+                area_type=area_type,
                 defaults={
                     "data_type": "percent",
                     "label": label,

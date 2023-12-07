@@ -79,9 +79,10 @@ class Command(BaseAreaImportCommand):
             self.stdout.write("Importing National Trust property data")
 
         # Group by the area, and add the data from there
+        area_type = self.get_area_type()
         for area_name, data in tqdm(df.groupby("area")):
             try:
-                area = Area.objects.get(name=area_name)
+                area = Area.objects.get(name=area_name, area_type=area_type)
             except Area.DoesNotExist:
                 continue
 

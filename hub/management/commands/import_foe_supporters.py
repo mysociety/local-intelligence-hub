@@ -33,19 +33,17 @@ class Command(BaseImportFromDataFrameCommand):
 
     data_sets = {
         "constituency_foe_activists_count": {
-            "defaults": defaults.extend(
-                {
-                    "description": "Number of Friends of the Earth activists per constituency."
-                }
-            ),
+            "defaults": {
+                **defaults,
+                "description": "Number of Friends of the Earth activists per constituency.",
+            },
             "col": "activists",
         },
         "constituency_foe_supporters_count": {
-            "defaults": defaults.extend(
-                {
-                    "description": "Number of Friends of the Earth supporters per constituency."
-                }
-            ),
+            "defaults": {
+                **defaults,
+                "description": "Number of Friends of the Earth supporters per constituency.",
+            },
             "col": "supporters",
         },
     }

@@ -48,6 +48,7 @@ class Command(BaseLatLongImportCommand):
         data_type, created = DataType.objects.update_or_create(
             data_set=data_set,
             name="constituency_gbgw_2022_event_count",
+            area_type=self.get_area_type(),
             defaults={
                 "data_type": "integer",
                 "label": "Number of Great Big Green Week 2022 events",

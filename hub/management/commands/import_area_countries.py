@@ -54,7 +54,9 @@ class Command(BaseCommand):
 
     def import_data(self, data_type):
         mapit = MapIt()
-        areas = mapit.areas_of_type([area.mapit_id for area in Area.objects.all()])
+        areas = mapit.areas_of_type(
+            [area.mapit_id for area in Area.objects.exclude(mapit_id="")]
+        )
         for area in tqdm(areas, disable=self._quiet):
             data, created = AreaData.objects.update_or_create(
                 area=Area.objects.get(mapit_id=area["id"]),

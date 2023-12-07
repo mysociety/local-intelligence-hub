@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.db.models import Avg, Max, Min
+from django.db.models import Avg, FloatField, Max, Min
 from django.db.models.functions import Cast, Coalesce
 
 import pandas as pd
@@ -28,6 +28,7 @@ class Command(BaseImportFromDataFrameCommand):
 
     help = "Import Hope Not Hate polling data, from February 2023"
     message = "Importing Hope Not Hate polling data"
+    cast_field = FloatField
 
     defaults = {
         "data_type": "percent",
@@ -369,6 +370,7 @@ class Command(BaseImportFromDataFrameCommand):
                     data_type, created = DataType.objects.update_or_create(
                         data_set=data_set,
                         name=data_type_slug,
+                        area_type=self.get_area_type(),
                         defaults={
                             "data_type": "percent",
                             "label": col["label"],
@@ -426,7 +428,10 @@ class Command(BaseImportFromDataFrameCommand):
                         file["data_set_name"], col["slug"]
                     )
                     self.log(f"    {data_type_slug}")
-                    data_type = DataType.objects.get(name=data_type_slug)
+                    data_type = DataType.objects.get(
+                        name=data_type_slug,
+                        area_type__code=file.get("area_type", "WMC"),
+                    )
                     average = (
                         AreaData.objects.filter(data_type=data_type)
                         .annotate(
@@ -450,7 +455,10 @@ class Command(BaseImportFromDataFrameCommand):
                         file["data_set_name"], col["slug"]
                     )
                     self.log(f"    {data_type_slug}")
-                    data_type = DataType.objects.get(name=data_type_slug)
+                    data_type = DataType.objects.get(
+                        name=data_type_slug,
+                        area_type__code=file.get("area_type", "WMC"),
+                    )
                     base = (
                         AreaData.objects.filter(data_type=data_type)
                         .annotate(
