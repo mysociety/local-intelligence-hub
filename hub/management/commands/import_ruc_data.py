@@ -62,3 +62,6 @@ class Command(BaseImportFromDataFrameCommand):
 
     def update_max_min(self):
         pass
+
+    def convert_to_new_con(self):
+        pass
