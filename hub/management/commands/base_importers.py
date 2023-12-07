@@ -2,8 +2,6 @@ from functools import cache
 from time import sleep
 
 from django.core.management.base import BaseCommand
-from django.db.models import Avg, IntegerField, Max, Min
-from django.db.models.functions import Cast, Coalesce
 
 import pandas as pd
 from tqdm import tqdm
@@ -20,7 +18,6 @@ from utils.mapit import (
 
 
 class BaseAreaImportCommand(BaseCommand):
-    cast_field = IntegerField
     area_type = "WMC"
 
     def __init__(self):
@@ -138,38 +135,12 @@ class BaseAreaImportCommand(BaseCommand):
     def update_averages(self):
         self._fill_empty_entries()
         for data_type in self.data_types.values():
-            average = (
-                AreaData.objects.filter(data_type=data_type)
-                .annotate(
-                    cast_data=Cast(
-                        Coalesce("int", "float"), output_field=self.cast_field()
-                    )
-                )
-                .all()
-                .aggregate(Avg("cast_data"))
-            )
-
-            data_type.average = average["cast_data__avg"]
-            data_type.save()
+            data_type.update_average()
 
     def update_max_min(self):
         for data_type in self.data_types.values():
-            base = (
-                AreaData.objects.filter(data_type=data_type)
-                .annotate(
-                    cast_data=Cast(
-                        Coalesce("int", "float"), output_field=self.cast_field()
-                    )
-                )
-                .all()
-            )
+            data_type.update_max_min()
 
-            max = base.aggregate(Max("cast_data"))
-            min = base.aggregate(Min("cast_data"))
-
-            data_type.maximum = max["cast_data__max"]
-            data_type.minimum = min["cast_data__min"]
-            data_type.save()
 
 
 class BaseImportFromDataFrameCommand(BaseAreaImportCommand):

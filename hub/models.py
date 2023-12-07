@@ -2,6 +2,8 @@ from datetime import datetime, timezone
 
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models import Avg, IntegerField, Max, Min
+from django.db.models.functions import Cast, Coalesce
 from django.dispatch import receiver
 
 from django_jsonform.models.fields import JSONField
@@ -438,6 +440,39 @@ class DataType(TypeMixin, ShaderMixin, models.Model):
             return self.label
 
         return self.name
+
+    def update_average(self):
+        average = (
+            AreaData.objects.filter(data_type=self)
+            .annotate(
+                cast_data=Cast(Coalesce("int", "float"), output_field=self.cast_field())
+            )
+            .all()
+            .aggregate(Avg("cast_data"))
+        )
+
+        self.average = average["cast_data__avg"]
+        self.save()
+
+    def update_max_min(self):
+        base = (
+            AreaData.objects.filter(data_type=self)
+            .annotate(
+                cast_data=Cast(Coalesce("int", "float"), output_field=self.cast_field())
+            )
+            .all()
+        )
+
+        max = base.aggregate(Max("cast_data"))
+        min = base.aggregate(Min("cast_data"))
+
+        self.maximum = max["cast_data__max"]
+        self.minimum = min["cast_data__min"]
+        self.save()
+
+    @property
+    def cast_field(self):
+        return IntegerField
 
     @property
     def shader_table(self):
