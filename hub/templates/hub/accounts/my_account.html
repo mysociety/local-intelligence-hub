@@ -1,0 +1,41 @@
+{% extends "hub/base.html" %}
+
+{% block content %}
+
+<div class="py-4 py-lg-5">
+    <div class="container">
+        <div class="d-flex mb-4 mb-lg-5 align-items-center">
+            <h1 class="mb-0 me-auto">Your account</h1>
+            <a href="{% url 'logout' %}" class="btn btn-danger text-nowrap">Sign out</a>
+        </div>
+
+        <div class="readable mb-5 mb-lg-6">
+            <dl class="row">
+                <dt class="col-sm-3">Full name</dt>
+                <dd class="col-sm-9">{{ request.user.userproperties.full_name }}</dd>
+                <dt class="col-sm-3">Organisation</dt>
+                <dd class="col-sm-9">{{ request.user.userproperties.organisation_name }}</dd>
+                <dt class="col-sm-3">Email</dt>
+                <dd class="col-sm-9">{{ request.user.email }}</dd>
+            </dl>
+            <p>If you need to change these details, please <a href="{% url 'contact' %}">contact us</a>.</p>
+            <p>You can also <a href="{% url 'password_reset' %}">change your password</a>.</p>
+        </div>
+
+        <div class="p-3 p-lg-4 rounded bg-red-100 mb-4">
+            <h2 class="h3 mb-3 mb-lg-4">Danger zone</h2>
+            <div class="d-md-flex align-items-center">
+                <div class="flex-grow-1 mb-3 mb-md-0 pe-sm-5">
+                    <h3 class="h6">Delete your account</h3>
+                    <p class="mb-0">If you no longer need your account, you can delete it. This <strong>cannot</strong> be undone.</p>
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger text-nowrap">Delete account immediately</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

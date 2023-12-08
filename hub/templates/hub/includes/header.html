@@ -7,11 +7,11 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav ms-auto">
+            <ul class="navbar-nav ms-auto flex-wrap justify-content-end">
               {% if user.is_authenticated %}
                 {% include 'hub/includes/nav-item.html' with name='home' label='Search' %}
                 {% include 'hub/includes/nav-item.html' with name='explore' label='Map' %}
-                {% include 'hub/includes/nav-item.html' with name='logout' label='Sign out' %}
+                {% include 'hub/includes/nav-item.html' with name='my_account' label='Account' %}
               {% else %}
                 {% include 'hub/includes/nav-item.html' with name='login' label='Sign in' %}
               {% endif %}

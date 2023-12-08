@@ -57,6 +57,7 @@ urlpatterns = [
     path("location/", area.AreaSearchView.as_view(), name="area_search"),
     path("style/", core.StyleView.as_view(), name="style"),
     path("status/", core.StatusView.as_view(), name="status"),
+    path("me/", accounts.MyAccountView.as_view(), name="my_account"),
     path("signup/", accounts.SignupView.as_view(), name="signup"),
     path(
         "confirmation_sent/",

@@ -1,12 +1,14 @@
 import csv
 from datetime import date, timedelta
 
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.views import LoginView
 from django.db.models import F
 from django.http import HttpResponse
 from django.shortcuts import redirect, reverse
-from django.views.generic import FormView, ListView, TemplateView
+from django.urls import reverse_lazy
+from django.views.generic import DeleteView, FormView, ListView, TemplateView
 
 from hub.forms import ActivateUserFormSet, InactiveCheckLoginForm, SignupForm
 from hub.mixins import TitleMixin
@@ -146,3 +148,13 @@ class AccountsCSV(PermissionRequiredMixin, ListView):
                 }
             )
         return response
+
+
+class MyAccountView(TitleMixin, DeleteView):
+    page_title = "Your account"
+    model = get_user_model()
+    template_name = "hub/accounts/my_account.html"
+    success_url = reverse_lazy("home")
+
+    def get_object(self, queryset=None):
+        return self.request.user
