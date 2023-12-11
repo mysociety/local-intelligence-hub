@@ -31,6 +31,7 @@ class Command(BaseImportFromDataFrameCommand):
         ],
         "data_url": "",
         "comparators": DataSet.in_comparators(),
+        "data_type": "text",
     }
 
     data_sets = {
