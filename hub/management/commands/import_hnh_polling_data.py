@@ -6,6 +6,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from hub.models import Area, AreaData, DataSet, DataType
+from hub.transformers import DataTypeConverter
 
 from .base_importers import BaseImportFromDataFrameCommand
 
@@ -407,6 +408,11 @@ class Command(BaseImportFromDataFrameCommand):
                             area=area,
                             defaults={"data": value},
                         )
+
+            converter = DataTypeConverter()
+            for data_type in data_types.values():
+                if data_type.area_type == converter.old_area_type:
+                    converter.convert_datatype_to_new_geography(data_type)
 
     def delete_data(self):
         self.log("Deleting existing AreaData objects for DataTypes:")
