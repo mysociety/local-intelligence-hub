@@ -583,7 +583,7 @@ class AreaData(CommonData):
 class Person(models.Model):
     person_type = models.CharField(max_length=10)
     external_id = models.CharField(db_index=True, max_length=20)
-    id_type = models.CharField(max_length=10)
+    id_type = models.CharField(max_length=30)
     name = models.CharField(max_length=200)
     area = models.ForeignKey(Area, on_delete=models.CASCADE)
     photo = models.ImageField(null=True, upload_to="person")
