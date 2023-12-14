@@ -136,7 +136,9 @@ class AreaView(BaseAreaView):
         context["area_type"] = str(self.object.area_type)
         try:
             context["mp"] = {
-                "person": Person.objects.get(area=self.object, person_type="MP")
+                "person": Person.objects.get(
+                    area=self.object, person_type="MP", end_date__isnull=True
+                )
             }
 
             data = PersonData.objects.filter(
