@@ -135,7 +135,9 @@ class AreaView(BaseAreaView):
         context["overlap_constituencies"] = self.get_overlap_info()
         context["area_type"] = str(self.object.area_type)
         try:
-            context["mp"] = {"person": Person.objects.get(area=self.object)}
+            context["mp"] = {
+                "person": Person.objects.get(area=self.object, person_type="MP")
+            }
 
             data = PersonData.objects.filter(
                 person=context["mp"]["person"]
