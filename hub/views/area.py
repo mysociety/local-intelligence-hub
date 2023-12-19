@@ -11,6 +11,7 @@ from hub.models import (
     AreaData,
     AreaType,
     DataSet,
+    DataType,
     Person,
     PersonData,
     UserDataSets,
@@ -134,13 +135,22 @@ class AreaView(BaseAreaView):
 
         context["overlap_constituencies"] = self.get_overlap_info()
         context["area_type"] = str(self.object.area_type)
+        if context["area_type"] == "WMC23":
+            context["PPCs"] = [
+                {
+                    "person": p,
+                    "party": PersonData.objects.get(
+                        person=p, data_type=DataType.objects.get(name="party")
+                    ).value(),
+                }
+                for p in Person.objects.filter(area=self.object, person_type="PPC")
+            ]
         try:
             context["mp"] = {
                 "person": Person.objects.get(
                     area=self.object, person_type="MP", end_date__isnull=True
                 )
             }
-
             data = PersonData.objects.filter(
                 person=context["mp"]["person"]
             ).select_related("data_type")
