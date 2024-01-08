@@ -333,7 +333,7 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
     def options_default():
         return []
 
-    name = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
     label = models.CharField(max_length=200, blank=True, null=True)
     data_type = models.CharField(max_length=20, choices=TypeMixin.TYPE_CHOICES)
@@ -400,7 +400,7 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
 
 class DataType(TypeMixin, ShaderMixin, models.Model):
     data_set = models.ForeignKey(DataSet, on_delete=models.CASCADE)
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=100)
     data_type = models.CharField(max_length=20, choices=TypeMixin.TYPE_CHOICES)
     last_update = models.DateTimeField(auto_now=True)
     average = models.FloatField(blank=True, null=True)
