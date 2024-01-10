@@ -491,6 +491,21 @@ class DataType(TypeMixin, ShaderMixin, models.Model):
     def shader_filter(self):
         return {"data_type": self}
 
+    @property
+    def auto_conversion_disclaimer(self):
+        text = None
+        if self.auto_converted:
+            if self.auto_converted_text:
+                text = self.auto_converted_text
+            elif self.area_type.code == "WMC":
+                text = "This dataset has been automatically converted from 2025 parliamentary constituencies."
+            elif self.area_type.code == "WMC23":
+                text = "This dataset has been automatically converted from 2010 parliamentary constituencies."
+            else:
+                text = "This dataset has been automatically converted from a different boundary type."
+
+        return text
+
 
 class UserDataSets(models.Model):
     data_set = models.ForeignKey(DataSet, on_delete=models.CASCADE)
