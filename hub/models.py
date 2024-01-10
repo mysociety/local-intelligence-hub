@@ -441,10 +441,14 @@ class DataType(TypeMixin, ShaderMixin, models.Model):
     auto_converted_text = models.TextField(blank=True, null=True)
 
     def __str__(self):
+        name = self.name
         if self.label:
-            return self.label
+            name = self.label
 
-        return self.name
+        if self.area_type:
+            return f"{name} ({self.area_type})"
+
+        return name
 
     def update_average(self):
         average = (
