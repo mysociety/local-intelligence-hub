@@ -30,6 +30,8 @@ class Command(BaseImportFromDataFrameCommand):
         "data_url": "",
         "exclude_countries": ["Scotland"],
         "comparators": DataSet.numerical_comparators(),
+        "unit_type": "raw",
+        "unit_distribution": "people_in_area",
     }
 
     data_sets = {

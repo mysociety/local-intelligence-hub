@@ -30,6 +30,8 @@ class Command(BaseImportFromDataFrameCommand):
                     dict(title="Urban", shader="grey"),
                 ],
                 "comparators": DataSet.in_comparators(),
+                "unit_distribution": "physical_area",
+                "unit_type": "raw",
             },
             "col": "ruc-cluster-label",
         }
