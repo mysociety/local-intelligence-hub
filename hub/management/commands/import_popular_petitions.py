@@ -29,6 +29,8 @@ class Command(BaseAreaImportCommand):
                 "table": "areadata",
                 "is_shadable": False,
                 "is_filterable": False,
+                "unit_type": "raw",
+                "unit_distribution": "physical_area",
             },
         }
     }
