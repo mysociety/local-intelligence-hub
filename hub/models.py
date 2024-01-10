@@ -434,6 +434,10 @@ class DataType(TypeMixin, ShaderMixin, models.Model):
     description = models.TextField(blank=True, null=True)
     order = models.IntegerField(blank=True, null=True)
     area_type = models.ForeignKey(AreaType, on_delete=models.CASCADE, null=True)
+    auto_converted = models.BooleanField(
+        default=False,
+        help_text="True if this has been auto converted from an area with overlapping geometry",
+    )
 
     def __str__(self):
         if self.label:
