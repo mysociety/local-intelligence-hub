@@ -56,6 +56,11 @@ class BaseAreaView(TitleMixin, DetailView):
             .annotate(is_favourite=Count("id"))
             .values("is_favourite")
         )
+        base_qs = AreaData.objects.filter(
+            area=self.object,
+            data_type__data_set=data_set,
+            data_type__area_type=self.object.area_type,
+        )
         data = {
             "name": str(data_set),
             "db_name": data_set.name,
@@ -71,14 +76,7 @@ class BaseAreaView(TitleMixin, DetailView):
         }
         if data_set.is_range:
             data["is_range"] = True
-            data_range = (
-                AreaData.objects.filter(
-                    area=self.object,
-                    data_type__data_set=data_set,
-                )
-                .select_related("data_type")
-                .order_by("data_type__name")
-            )
+            data_range = base_qs.select_related("data_type").order_by("data_type__name")
 
             data["is_favourite"] = UserDataSets.objects.filter(
                 data_set=data_set,
@@ -91,21 +89,15 @@ class BaseAreaView(TitleMixin, DetailView):
             data["data"] = d
         elif data_set.category == "opinion":
             data_range = (
-                AreaData.objects.filter(
-                    area=self.object,
-                    data_type__data_set=data_set,
-                )
-                .annotate(is_favourite=fav_sq)
+                base_qs.annotate(is_favourite=fav_sq)
                 .select_related("data_type")
                 .order_by("data_type__order", "data_type__label")
             )
 
             data["data"] = data_range.all()
         else:
-            area_data = (
-                AreaData.objects.filter(area=self.object, data_type__data_set=data_set)
-                .annotate(is_favourite=fav_sq)
-                .select_related("data_type")
+            area_data = base_qs.annotate(is_favourite=fav_sq).select_related(
+                "data_type"
             )
             if area_data:
                 data["data"] = area_data[0]
@@ -189,7 +181,9 @@ class AreaView(BaseAreaView):
 
         categories = defaultdict(list)
         indexed_categories = defaultdict(dict)
-        for data_set in DataSet.objects.order_by("order", "label").all():
+        for data_set in DataSet.objects.order_by("order", "label").filter(
+            areas_available=self.object.area_type
+        ):
             data = self.process_dataset(data_set)
 
             if data.get("data", None) is not None and data["data"]:
