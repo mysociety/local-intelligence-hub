@@ -53,6 +53,9 @@ class DataTypeConverter:
             dt.area_type = self.new_con_at
             dt.save()
 
+        dt.auto_converted = True
+        dt.save()
+
         value_col = dt.value_col
         for _, row in df.iterrows():
             a = Area.objects.get(gss=row["PARL25"], area_type=self.new_con_at)
