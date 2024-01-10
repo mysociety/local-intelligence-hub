@@ -63,7 +63,15 @@ class BaseAreaView(TitleMixin, DetailView):
 
         return fav_map
 
-    def process_dataset(self, data_set, favs):
+    def get_auto_convered_datasets(self):
+        auto_converted = {}
+
+        for ds in DataType.objects.filter(area_type=self.object.area_type):
+            auto_converted[ds.data_set_id] = ds.auto_conversion_disclaimer
+
+        return auto_converted
+
+    def process_dataset(self, data_set, favs, auto_converted):
         base_qs = AreaData.objects.filter(
             area=self.object,
             data_type__data_set=data_set,
@@ -82,6 +90,7 @@ class BaseAreaView(TitleMixin, DetailView):
             "featured": data_set.featured,
             "excluded_countries": data_set.exclude_countries,
             "release_date": data_set.release_date,
+            "auto_conversion_disclaimer": auto_converted.get(data_set.id, None),
             "is_favourite": favs.get(data_set.id, False),
         }
         if data_set.is_range:
@@ -209,10 +218,11 @@ class AreaView(BaseAreaView):
         categories = defaultdict(list)
         indexed_categories = defaultdict(dict)
         favs = self.get_user_favourite_datasets()
+        auto_converted = self.get_auto_convered_datasets()
         for data_set in DataSet.objects.order_by("order", "label").filter(
             areas_available=self.object.area_type
         ):
-            data = self.process_dataset(data_set, favs)
+            data = self.process_dataset(data_set, favs, auto_converted)
 
             if data.get("data", None) is not None and data["data"]:
                 if data_set.category is not None:

@@ -346,10 +346,14 @@
                     <div class="card-footer">
                       <p class="card-text">
                           {{ dataset.source }}
+                        {% if dataset.auto_conversion_disclaimer %}
+                          <a href="{% url 'future_constituencies' %}">{{ dataset.auto_conversion_disclaimer|safe }}</a>
+                        {% endif %}
                         {% if dataset.release_date %}
                           Updated {{ dataset.release_date }}.
                         {% endif %}
-                      </p>
+                     </p>
+
                     </div>
                 </div>
               {% endfor %}
@@ -425,10 +429,14 @@
                     <div class="card-footer">
                       <p class="card-text">
                           {{ dataset.source }}
+                        {% if dataset.auto_conversion_disclaimer %}
+                          <a href="{% url 'future_constituencies' %}">{{ dataset.auto_conversion_disclaimer|safe }}</a>
+                        {% endif %}
                         {% if dataset.release_date %}
                           Updated {{ dataset.release_date }}.
                         {% endif %}
                       </p>
+
                     </div>
                 </div>
               {% endfor %}
@@ -522,10 +530,14 @@
                     <div class="card-footer">
                       <p class="card-text">
                           {{ dataset.source }}
+                        {% if dataset.auto_conversion_disclaimer %}
+                          <a href="{% url 'future_constituencies' %}">{{ dataset.auto_conversion_disclaimer|safe }}</a>
+                        {% endif %}
                         {% if dataset.release_date %}
                           Updated {{ dataset.release_date }}.
                         {% endif %}
                       </p>
+
                     </div>
                 </div>
               {% endfor %}
