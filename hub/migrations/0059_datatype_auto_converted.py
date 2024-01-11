@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("hub", "0058_areaoverlap_area_overlaps"),
+        ("hub", "0054_fill_datatype_area_type"),
     ]
 
     operations = [
