@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("hub", "0054_fill_datatype_area_type"),
+        ("hub", "0054_increase_dataset_name_length"),
     ]
 
     operations = [
