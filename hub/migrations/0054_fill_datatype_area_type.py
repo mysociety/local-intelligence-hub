@@ -18,7 +18,7 @@ def reverse(apps, schema_editor):  # pragma: no cover
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("hub", "0054_increase_dataset_name_length"),
+        ("hub", "0053_datatype_area_type"),
     ]
 
     operations = [migrations.RunPython(update_field, reverse_code=reverse)]

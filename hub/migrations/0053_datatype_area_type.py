@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("hub", "0053_alter_dataset_release_date"),
+        ("hub", "0058_areaoverlap_area_overlaps"),
     ]
 
     operations = [
