@@ -12,7 +12,11 @@
         <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
             <div>
                 <h1 class="mb-2">{{ area.name }}</h1>
+                {% if area_type == "WMC" %}
                 <p class="mb-0 text-muted">Current parliamentary constituency</p>
+                {% elif area_type == "WMC23" %}
+                <p class="mb-0 text-muted">Future parliamentary constituency</p>
+                {% endif %}
             </div>
             <div class="col-lg-9 offset-xl-1">
               {% if area_type == "WMC" and area.overlaps %}
