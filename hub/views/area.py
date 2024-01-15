@@ -74,6 +74,7 @@ class BaseAreaView(TitleMixin, DetailView):
             "data_type": data_set.data_type,
             "featured": data_set.featured,
             "excluded_countries": data_set.exclude_countries,
+            "release_date": data_set.release_date,
         }
         if data_set.is_range:
             data["is_range"] = True
