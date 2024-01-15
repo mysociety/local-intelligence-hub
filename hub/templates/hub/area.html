@@ -339,7 +339,12 @@
                       {% endif %}
                     </div>
                     <div class="card-footer">
-                      <p class="card-text">{{ dataset.source }}</p>
+                      <p class="card-text">
+                          {{ dataset.source }}
+                        {% if dataset.release_date %}
+                          Updated {{ dataset.release_date }}.
+                        {% endif %}
+                      </p>
                     </div>
                 </div>
               {% endfor %}
@@ -408,7 +413,12 @@
                       {% endif %}
                     </div>
                     <div class="card-footer">
-                      <p class="card-text">{{ dataset.source }}</p>
+                      <p class="card-text">
+                          {{ dataset.source }}
+                        {% if dataset.release_date %}
+                          Updated {{ dataset.release_date }}.
+                        {% endif %}
+                      </p>
                     </div>
                 </div>
               {% endfor %}
@@ -500,7 +510,12 @@
                       {% endif %}
                     </div>
                     <div class="card-footer">
-                      <p class="card-text">{{ dataset.source }}</p>
+                      <p class="card-text">
+                          {{ dataset.source }}
+                        {% if dataset.release_date %}
+                          Updated {{ dataset.release_date }}.
+                        {% endif %}
+                      </p>
                     </div>
                 </div>
               {% endfor %}
