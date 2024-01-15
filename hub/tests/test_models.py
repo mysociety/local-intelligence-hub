@@ -75,6 +75,8 @@ class TestDataType(TestCase):
         self.assertFalse(datatype.is_percentage)
         self.assertFalse(datatype.is_float)
         self.assertFalse(datatype.is_date)
+        self.assertFalse(datatype.is_json)
+        self.assertFalse(datatype.is_url)
 
         datatype.data_type = "integer"
         datatype.save()
@@ -83,6 +85,8 @@ class TestDataType(TestCase):
         self.assertFalse(datatype.is_percentage)
         self.assertFalse(datatype.is_float)
         self.assertFalse(datatype.is_date)
+        self.assertFalse(datatype.is_json)
+        self.assertFalse(datatype.is_url)
 
         datatype.data_type = "float"
         datatype.save()
@@ -91,6 +95,8 @@ class TestDataType(TestCase):
         self.assertFalse(datatype.is_percentage)
         self.assertTrue(datatype.is_float)
         self.assertFalse(datatype.is_date)
+        self.assertFalse(datatype.is_json)
+        self.assertFalse(datatype.is_url)
 
         datatype.data_type = "percent"
         datatype.save()
@@ -99,6 +105,8 @@ class TestDataType(TestCase):
         self.assertTrue(datatype.is_percentage)
         self.assertTrue(datatype.is_float)
         self.assertFalse(datatype.is_date)
+        self.assertFalse(datatype.is_json)
+        self.assertFalse(datatype.is_url)
 
         datatype.data_type = "date"
         datatype.save()
@@ -107,6 +115,28 @@ class TestDataType(TestCase):
         self.assertFalse(datatype.is_percentage)
         self.assertFalse(datatype.is_float)
         self.assertTrue(datatype.is_date)
+        self.assertFalse(datatype.is_json)
+        self.assertFalse(datatype.is_url)
+
+        datatype.data_type = "json"
+        datatype.save()
+
+        self.assertFalse(datatype.is_number)
+        self.assertFalse(datatype.is_percentage)
+        self.assertFalse(datatype.is_float)
+        self.assertFalse(datatype.is_date)
+        self.assertTrue(datatype.is_json)
+        self.assertFalse(datatype.is_url)
+
+        datatype.data_type = "url"
+        datatype.save()
+
+        self.assertFalse(datatype.is_number)
+        self.assertFalse(datatype.is_percentage)
+        self.assertFalse(datatype.is_float)
+        self.assertFalse(datatype.is_date)
+        self.assertFalse(datatype.is_json)
+        self.assertTrue(datatype.is_url)
 
 
 class TestCommonData(TestCase):
@@ -133,6 +163,14 @@ class TestCommonData(TestCase):
 
         self.date_datatype = DataType.objects.create(
             data_set=self.dataset, name="datatype_name", data_type="date"
+        )
+
+        self.json_datatype = DataType.objects.create(
+            data_set=self.dataset, name="datatype_name", data_type="json"
+        )
+
+        self.url_datatype = DataType.objects.create(
+            data_set=self.dataset, name="datatype_name", data_type="url"
         )
 
     def test_text_value(self):
@@ -167,6 +205,20 @@ class TestCommonData(TestCase):
         )
 
         self.assertEqual(data.value().date().isoformat(), "2022-10-11")
+
+    def test_json_value(self):
+        data = AreaData.objects.create(
+            area=self.area, data_type=self.json_datatype, json={"key": "value"}
+        )
+
+        self.assertEqual(data.value(), {"key": "value"})
+
+    def test_url_value(self):
+        data = AreaData.objects.create(
+            area=self.area, data_type=self.url_datatype, json={"key": "value"}
+        )
+
+        self.assertEqual(data.value(), {"key": "value"})
 
 
 class TestPerson(TestCase):
