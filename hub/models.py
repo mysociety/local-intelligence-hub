@@ -35,6 +35,7 @@ class TypeMixin:
         ("boolean", "True/False"),
         ("profile_id", "Profile Id"),
         ("json", "JSON data"),
+        ("url", "URL"),
     ]
 
     @property
@@ -73,6 +74,13 @@ class TypeMixin:
         return False
 
     @property
+    def is_url(self):
+        if self.data_type == "url":
+            return True
+
+        return False
+
+    @property
     def value_col(self):
         if self.is_date:
             return "date"
@@ -80,6 +88,8 @@ class TypeMixin:
             return "float"
         elif self.is_number:
             return "int"
+        elif self.is_url or self.is_json:
+            return "json"
         elif self.is_json:
             return "json"
         else:
@@ -463,7 +473,7 @@ class CommonData(models.Model):
                 if self.int is None:
                     return 0
                 return self.int
-            elif self.is_json:
+            elif self.is_json or self.is_url:
                 return self.json
         except ValueError:
             return self.data
@@ -509,6 +519,10 @@ class CommonData(models.Model):
     @property
     def is_json(self):
         return self.data_type.is_json
+
+    @property
+    def is_url(self):
+        return self.data_type.is_url
 
     class Meta:
         abstract = True
