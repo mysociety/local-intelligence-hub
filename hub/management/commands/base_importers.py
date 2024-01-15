@@ -199,10 +199,15 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
 
             try:
                 for name, conf in self.data_sets.items():
+                    if self.data_types[name].data_type in ["json", "url"]:
+                        defaults = {"json": self.get_row_data(row, conf)}
+                    else:
+                        defaults = {"data": self.get_row_data(row, conf)}
+
                     area_data, created = AreaData.objects.get_or_create(
                         data_type=self.data_types[name],
                         area=area,
-                        defaults={"data": self.get_row_data(row, conf)},
+                        defaults=defaults,
                     )
             except Exception as e:
                 print(f"issue with {cons}: {e}")
