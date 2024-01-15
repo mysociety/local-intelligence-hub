@@ -63,7 +63,9 @@ class BaseAreaImportCommand(BaseCommand):
                         )
                     )
 
-            if config["defaults"].get("comparators", None) is None:
+            if config["defaults"].get("comparators", None) is None and not config[
+                "defaults"
+            ].pop("no_comparators", False):
                 self.stdout.write(
                     self.style.NOTICE(f"dataset {name} does not have comparators set")
                 )
