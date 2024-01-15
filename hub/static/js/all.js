@@ -101,9 +101,9 @@ var makeChart = function() {
     var $table = $(this)
     var chartType = $table.data('chart-type') || 'bar'
     var chartWidth = $table.data('chart-width') || 600
-    var rowHeight = $table.data('row-height') || 45
-    var legendHeight = 40
-    var labelHeight = 20
+    var rowHeight = $table.data('row-height') || 40
+    var legendHeight = 60
+    var labelHeight = 60
     var $canvas = $('<canvas>').attr({
         'width': chartWidth,
         'height': (rowHeight * $table.find('tbody tr').length) + legendHeight + labelHeight,
@@ -175,7 +175,7 @@ var makeChart = function() {
 
 var extractLabelsFromTable = function($table) {
     return $table.find('tbody tr').map(function(){
-        return $(this).find('th').text()
+        return $(this).find('th').text().trim()
     }).get()
 }
 
