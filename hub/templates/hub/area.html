@@ -320,12 +320,12 @@
                       {% elif dataset.data_type == "text" %}
                         <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|safe }}</p>
                       {% elif dataset.is_range and dataset.data|length > 0 %}
-                        <table class="table mb-0">
+                        <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">
                           <thead>
                               <tr>
-                                  <th scope="col">Answer</th>
                                   <th scope="col"></th>
-                                  <th scope="col">National Average</th>
+                                  <th scope="col" data-color="#068670">This area</th>
+                                  <th scope="col" data-color="#ced4da">National average</th>
                               </tr>
                           </thead>
                           <tbody>
@@ -401,12 +401,12 @@
                         <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }} national average</p>
                         {% endif %}
                       {% elif dataset.is_range and dataset.data|length > 0 %}
-                        <table class="table mb-0">
+                        <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">
                           <thead>
                               <tr>
                                   <th scope="col"></th>
-                                  <th scope="col">This area</th>
-                                  <th scope="col">UK Average</th>
+                                  <th scope="col" data-color="#068670">This area</th>
+                                  <th scope="col" data-color="#ced4da">National average</th>
                               </tr>
                           </thead>
                           <tbody>
@@ -507,8 +507,8 @@
                           <thead>
                               <tr>
                                   <th scope="col"></th>
-                                  <th scope="col">This area</th>
-                                  <th scope="col">UK Average</th>
+                                  <th scope="col" data-color="#068670">This area</th>
+                                  <th scope="col" data-color="#ced4da">National average</th>
                               </tr>
                           </thead>
                           <tbody>
