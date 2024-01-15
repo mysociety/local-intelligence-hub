@@ -386,6 +386,11 @@
                       {% include 'hub/area/_json_data.html' with dataset=dataset %}
                       {% elif dataset.data_type == "text" %}
                         <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|safe }}</p>
+                      {% elif dataset.data_type == "url" %}
+                        <a href="{{ dataset.data.value.url|safe }}" class="card-text lh-sm d-flex align-items-center">
+                            {% include 'hub/includes/icons/document.html' with classes='flex-grow-0 flex-shrink-0 me-3' %}
+                            <span>{{ dataset.data.value.link_text|safe }}</span>
+                        </a>
                       {% elif dataset.data_type == "integer" %}
                         <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value }}</p>
                         {% if data.data.average %}
