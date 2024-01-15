@@ -6,8 +6,8 @@
         </span>
     </div>
     <small class="d-block text-muted fs-8">
-        <template v-if="dataset.description">${ dataset.description }.</template>
-        Data from ${ dataset.source_label }.
+        <template v-if="dataset.description">${ dataset.description }</template>
+        ${ dataset.source_label }
+        <template v-if="dataset.release_date">Updated ${ dataset.release_date }.</template>
     </small>
 </button>
-
