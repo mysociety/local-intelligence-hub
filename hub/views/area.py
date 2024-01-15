@@ -118,7 +118,7 @@ class AreaView(BaseAreaView):
         elif self.object.area_type.code == "WMC23":
             overlaps = self.object.new_overlaps.all()
         else:
-            return []
+            return None
 
         overlap_constituencies = [
             {
@@ -129,12 +129,24 @@ class AreaView(BaseAreaView):
             }
             for overlap in overlaps
         ]
+        if (
+            len(overlap_constituencies) == 1
+            and overlap_constituencies[0]["new_area"].gss
+            == overlap_constituencies[0]["old_area"].gss
+        ):
+            overlap_constituencies[0]["unchanged"] = True
         return overlap_constituencies
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         context["overlap_constituencies"] = self.get_overlap_info()
+        if (
+            context["overlap_constituencies"] is not None
+            and len(context["overlap_constituencies"]) == 1
+        ):
+            if context["overlap_constituencies"][0].get("unchanged", False):
+                context["overlap_unchanged"] = True
         context["area_type"] = str(self.object.area_type)
         if context["area_type"] == "WMC23":
             context["PPCs"] = [
