@@ -1,0 +1,47 @@
+{% extends "hub/base.html" %}
+
+{% block content %}
+
+<div class="py-4 py-lg-5">
+    <div class="container">
+        <div class="readable">
+            <h1 class="mb-4">Data for future constituencies on the Local Intelligence&nbsp;Hub</h1>
+
+            <p>There will be a general election in the UK in 2024, at which MPs will be voted into new parliamentary constituencies with a different shape to the current constituencies that have been in place since 2010. The Local Intelligence Hub includes data for both these current and future constituencies. This helps produce information that is useful now, and information that is useful after the next election.</p>
+
+            <p>Over time, statistics agencies will release more information like this, for future constituencies, which we will be able to import straight into the Local Intelligence Hub. But during the changeover we want to keep as much of the value of datasets for the outgoing constituencies as possible.</p>
+
+            <p>For datasets where we have the original data at a very granular level (eg: <abbr title="Lower Super Output Area">LSOA</abbr> or point-based data), we have created new datasets using future constituencies.</p>
+
+            <p>Where we only have data at the level of current constituencies, we’ve created a process to approximately convert information from current to future constituencies.</p>
+
+            <h2 id="how" class="h4">How we calculate data for future constituencies, from data on current constituencies</h2>
+
+            <p>As you’ll see from constituency pages on the Local Intelligence Hub, we have calculated the overlaps between current and future constituencies – both in terms of geographical area, and population. Depending on whether a statistic is best understood as a feature of the physical or human geography, we distribute it among the fragments of a current constituency, then switch to the overlapping future constituencies, recombine all the fragments, and finally add up to create approximate values for the future constituencies.</p>
+
+            <p>The big assumption of this method is that, for either people or area, the thing being measured is evenly distributed across that metric.</p>
+
+            <p>As a worked example:</p>
+            
+            <ol>
+                <li class="mb-2">Let’s imagine that there are 1000 WWF supporters in Constituency A.</li>
+                <li class="mb-2">At the next election, Constituency A will be split into Constituency B and Constituency C.</li>
+                <li class="mb-2">We assume that WWF supporters are evenly distributed across Constituency A.</li>
+                <li>Therefore, if 60% of the population of Constituency A will be in Constituency C, our process would assume 60% of the supporters (600 supporters) will be in Constituency C at the next election.</li>
+            </ol>
+
+            <p>This, of course, assumes that WWF supporters <em>are</em> evenly distributed across Constituency A (and that, therefore, 60% of them will eventually be in Constituency C). This might not be true. They might all be gathered in one corner of the constituency, which will eventually be part of Constituency B. However, this method could still usefully reveal that there are no supporters in the neighbouring constituencies Y and Z. While the data is fuzzy in comparison between neighbours, overall it will capture trends across wider areas or regions.</p>
+
+            <h2 id="why" class="h4">Why we’re doing this</h2>
+
+            <p>We believe this method strikes a good balance between enabling users of the Local Intelligence Hub to make informed decisions about the climate and nature movements in the constituencies that will come into existence at the next general election, while also allowing us to make use of the wealth of data that has been collected only for the current (outgoing) constituencies.  But in the long term, the goal is to replace all the data.</p>
+
+            <p>Where this automatic conversion does not make sense (for example, where datasets have been collected only for current constituencies, and concern very small numbers, thereby increasing the likelihood that the underlying data isn’t evenly distributed across the whole constituency) we’ve refrained from converting the data to future constituencies, and will instead be working to collect equivalent data, in the new constituency boundaries, over 2024.</p>
+
+            <p>If you’d like to know more about our future constituency data (and the conversion function) you can <a href="https://www.mysociety.org/2023/09/12/navigating-the-new-constituencies/">read this blog post from mySociety</a>.</p>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}
