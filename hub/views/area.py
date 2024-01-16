@@ -48,6 +48,9 @@ class BaseAreaView(TitleMixin, DetailView):
         return self.object.name
 
     def get_user_favourite_datasets(self):
+        if self.request.user.is_anonymous:
+            return {}
+
         favs = (
             UserDataSets.objects.filter(
                 user=self.request.user,
@@ -149,6 +152,8 @@ class AreaView(BaseAreaView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        is_non_member = self.request.user.is_anonymous
+
         context["overlap_constituencies"] = self.get_overlap_info()
         if (
             context["overlap_constituencies"] is not None
@@ -176,6 +181,8 @@ class AreaView(BaseAreaView):
             data = PersonData.objects.filter(
                 person=context["mp"]["person"]
             ).select_related("data_type")
+            if is_non_member:
+                data = data.exclude(data_type__data_set__is_public=False)
             for item in data.all():
                 if (
                     item.data_type.name == "select_committee_membership"
@@ -195,21 +202,29 @@ class AreaView(BaseAreaView):
                 item.value()
                 for item in data.filter(data_type__name="mp_appg_memberships")
             ]
+
+            votes = data.filter(data_type__data_set__subcategory="vote")
+            if is_non_member:
+                votes = votes.exclude(data_type__data_set__is_public=False)
             context["mp"]["votes"] = [
                 {
                     "name": item.data_type.data_set.label,
                     "vote": item.value(),
                     "url": f"https://votes.parliament.uk/Votes/Commons/Division/{item.data_type.name.split('_')[0]}",
                 }
-                for item in data.filter(data_type__data_set__subcategory="vote")
+                for item in votes
             ]
+
+            support = data.filter(data_type__data_set__subcategory="supporter")
+            if is_non_member:
+                support = support.exclude(data_type__data_set__is_public=False)
             context["mp"]["support"] = [
                 {
                     "name": item.data_type.data_set.label,
                     "position": item.value(),
                     "url": f"https://edm.parliament.uk/early-day-motion/{item.data_type.name.split('_')[0]}",
                 }
-                for item in data.filter(data_type__data_set__subcategory="supporter")
+                for item in support
             ]
 
         except Person.DoesNotExist:
@@ -219,9 +234,14 @@ class AreaView(BaseAreaView):
         indexed_categories = defaultdict(dict)
         favs = self.get_user_favourite_datasets()
         auto_converted = self.get_auto_convered_datasets()
-        for data_set in DataSet.objects.order_by("order", "label").filter(
+        data_sets = DataSet.objects.order_by("order", "label").filter(
             areas_available=self.object.area_type
-        ):
+        )
+
+        if is_non_member:
+            data_sets = data_sets.exclude(is_public=False)
+
+        for data_set in data_sets:
             data = self.process_dataset(data_set, favs, auto_converted)
 
             if data.get("data", None) is not None and data["data"]:
@@ -275,6 +295,7 @@ class AreaView(BaseAreaView):
 
         context["categories"] = categories
         context["indexed_categories"] = indexed_categories
+        context["user_is_member"] = not is_non_member
 
         return context
 
