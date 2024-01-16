@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from django.db.models import Count, OuterRef, Subquery
+from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import DetailView, TemplateView, View
@@ -47,16 +47,23 @@ class BaseAreaView(TitleMixin, DetailView):
     def get_page_title(self):
         return self.object.name
 
-    def process_dataset(self, data_set):
-        fav_sq = Subquery(
+    def get_user_favourite_datasets(self):
+        favs = (
             UserDataSets.objects.filter(
-                data_set_id=OuterRef("data_type__data_set__id"),
                 user=self.request.user,
             )
             .values("data_set_id")
             .annotate(is_favourite=Count("id"))
             .values("is_favourite")
         )
+
+        fav_map = {}
+        for fav in favs:
+            fav_map["fav.data_set_id"] = fav["is_favourite"]
+
+        return fav_map
+
+    def process_dataset(self, data_set, favs):
         base_qs = AreaData.objects.filter(
             area=self.object,
             data_type__data_set=data_set,
@@ -75,32 +82,25 @@ class BaseAreaView(TitleMixin, DetailView):
             "featured": data_set.featured,
             "excluded_countries": data_set.exclude_countries,
             "release_date": data_set.release_date,
+            "is_favourite": favs.get(data_set.id, False),
         }
         if data_set.is_range:
             data["is_range"] = True
             data_range = base_qs.select_related("data_type").order_by("data_type__name")
 
-            data["is_favourite"] = UserDataSets.objects.filter(
-                data_set=data_set,
-                user=self.request.user,
-            ).exists()
             d = data_range.all()
             if len(d) == 0:
                 d = None
 
             data["data"] = d
         elif data_set.category == "opinion":
-            data_range = (
-                base_qs.annotate(is_favourite=fav_sq)
-                .select_related("data_type")
-                .order_by("data_type__order", "data_type__label")
+            data_range = base_qs.select_related("data_type").order_by(
+                "data_type__order", "data_type__label"
             )
 
             data["data"] = data_range.all()
         else:
-            area_data = base_qs.annotate(is_favourite=fav_sq).select_related(
-                "data_type"
-            )
+            area_data = base_qs.select_related("data_type")
             if area_data:
                 data["data"] = area_data[0]
 
@@ -208,10 +208,11 @@ class AreaView(BaseAreaView):
 
         categories = defaultdict(list)
         indexed_categories = defaultdict(dict)
+        favs = self.get_user_favourite_datasets()
         for data_set in DataSet.objects.order_by("order", "label").filter(
             areas_available=self.object.area_type
         ):
-            data = self.process_dataset(data_set)
+            data = self.process_dataset(data_set, favs)
 
             if data.get("data", None) is not None and data["data"]:
                 if data_set.category is not None:
