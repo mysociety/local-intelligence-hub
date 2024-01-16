@@ -50,6 +50,11 @@ urlpatterns = [
         name="unfavourite_dataset",
     ),
     path("sources/", core.SourcesView.as_view(), name="sources"),
+    path(
+        "future-constituencies/",
+        core.FutureConstituenciesView.as_view(),
+        name="future_constituencies",
+    ),
     path("privacy/", core.PrivacyView.as_view(), name="privacy"),
     path("terms/", core.TermsView.as_view(), name="terms"),
     path("about/", core.AboutView.as_view(), name="about"),
