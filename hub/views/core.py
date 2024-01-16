@@ -38,6 +38,11 @@ class SourcesView(TitleMixin, TemplateView):
         return context
 
 
+class FutureConstituenciesView(TitleMixin, TemplateView):
+    page_title = "Data for future constituencies"
+    template_name = "hub/future-constituencies.html"
+
+
 class PrivacyView(TitleMixin, TemplateView):
     page_title = "Privacy policy"
     template_name = "hub/privacy.html"
