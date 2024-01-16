@@ -438,6 +438,7 @@ class DataType(TypeMixin, ShaderMixin, models.Model):
         default=False,
         help_text="True if this has been auto converted from an area with overlapping geometry",
     )
+    auto_converted_text = models.TextField(blank=True, null=True)
 
     def __str__(self):
         if self.label:
