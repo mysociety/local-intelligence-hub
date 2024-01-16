@@ -105,6 +105,16 @@
                 Add data to filter by
             </button>
 
+            {% if not user_is_member %}
+            <div class="mt-4 p-3 bg-white border rounded d-flex align-items-center fs-7">
+                {% include 'hub/includes/icons/tcc-heart.html' with width="2em" height="2em" classes="me-3 flex-shrink-0 flex-grow-0" %}
+                <p class="mb-0">
+                    <strong class="me-2">TCC member?</strong>
+                    <a href="{% url 'login' %}">Sign in</a> or <a href="{% url 'signup' %}">request an account</a> to access exclusive members-only MRP and local movement data.
+                </p>
+            </div>
+            {% endif %}
+
             <div class="tab-content">
                 <div class="tab-pane" :class="{ 'active': mapViewActive }" id="options-map" role="tabpanel" aria-labelledby="tab-map" tabindex="0">
 

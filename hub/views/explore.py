@@ -15,6 +15,13 @@ class ExploreView(TitleMixin, TemplateView):
     page_title = "Explore"
     template_name = "hub/explore.html"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context["user_is_member"] = not self.request.user.is_anonymous
+
+        return context
+
 
 class ExploreDatasetsJSON(TemplateView):
     def render_to_response(self, context, **response_kwargs):
