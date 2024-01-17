@@ -133,7 +133,9 @@ class BaseAreaImportCommand(BaseCommand):
                             ]
                         )
 
-                areas_without_values = Area.objects.exclude(name__in=areas_with_values)
+                areas_without_values = Area.objects.exclude(
+                    name__in=areas_with_values
+                ).filter(area_type__code=self.area_type)
                 for area in areas_without_values:
                     data, created = AreaData.objects.update_or_create(
                         area=area, data_type=data_type, defaults=defaults
