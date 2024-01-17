@@ -3,6 +3,7 @@ from datetime import date
 from django.core.management.base import BaseCommand
 
 import requests
+from dateutil.parser import isoparse
 from tqdm import tqdm
 
 from hub.models import DataSet, DataType, Person, PersonData
@@ -31,32 +32,38 @@ class Command(BaseCommand):
                 print(f"problem with {mp.name} - no id")
                 continue
 
-            response = requests.get(
-                f"https://members-api.parliament.uk/api/Members/{mp.external_id}/LatestElectionResult"
-            )
-            try:
-                data = response.json()
-                results[mp.id] = {
-                    "majority": data["value"]["majority"],
-                    "last_elected": data["value"]["electionDate"],
-                }
-            except requests.RequestException:  # pragma: no cover
-                print(
-                    f"problem fetching election result for {mp.name} with id {mp.external_id}"
-                )
+            if mp.end_date:
+                continue
 
             response = requests.get(
                 f"https://members-api.parliament.uk/api/Members/{mp.external_id}"
             )
             try:
                 data = response.json()
-                results[mp.id]["first_elected"] = data["value"][
-                    "latestHouseMembership"
-                ]["membershipStartDate"]
+                membership = data["value"]["latestHouseMembership"]
+                if membership.get("membershipEndDate", None) is not None:
+                    end_date = isoparse(membership["membershipEndDate"])
+                    mp.end_date = end_date.date().isoformat()
+                    mp.save()
+                    continue
+
+                results[mp.id] = {"first_elected": membership["membershipStartDate"]}
             except requests.RequestException:  # pragma: no cover
                 print(f"problem fetching info for {mp.name} with id {mp.external_id}")
             except KeyError:  # pragma: no cover
                 print(f"no results for {mp.name} with {mp.external_id}")
+
+            response = requests.get(
+                f"https://members-api.parliament.uk/api/Members/{mp.external_id}/LatestElectionResult"
+            )
+            try:
+                data = response.json()
+                results[mp.id]["majority"] = data["value"]["majority"]
+                results[mp.id]["last_elected"] = data["value"]["electionDate"]
+            except requests.RequestException:  # pragma: no cover
+                print(
+                    f"problem fetching election result for {mp.name} with id {mp.external_id}"
+                )
 
         return results
 
