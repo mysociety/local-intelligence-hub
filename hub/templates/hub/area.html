@@ -80,12 +80,14 @@
             <li class="nav-item d-none js-nav-item-featured">
                 <a class="nav-link" href="">Quick facts</a>
             </li>
+          {% if user.is_authenticated %}
             <li class="nav-item d-none js-nav-item-favourites">
                 <a class="nav-link" href="#favourites">
                     {% include 'hub/includes/icons/heart-empty.html' %}
                     Favourites
                 </a>
             </li>
+          {% endif %}
             <li class="nav-item">
                 <a class="nav-link" href="#mp">{% if area_type == "WMC23" %}PPCs{% else %}MP{% endif %}</a>
             </li>
@@ -312,12 +314,14 @@
                 <div class="card dataset-card area-data--sm {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %}area-data--featured{% endif %}">
                 {% endif %}
                     <div class="card-header">
-                      <h3 class="h5">{{ dataset.label }}</h3>
-                      {% include "hub/area/_favourite.html" with dataset=dataset %}
+                        <h3 class="h5">{{ dataset.label }}</h3>
+                      {% if user.is_authenticated %}
+                        {% include "hub/area/_favourite.html" with dataset=dataset %}
+                      {% endif %}
                     </div>
                     <div class="card-body">
                       {% if dataset.data_type == "json" %}
-                      {% include 'hub/area/_json_data.html' with dataset=dataset %}
+                        {% include 'hub/area/_json_data.html' with dataset=dataset %}
                       {% elif dataset.data_type == "text" %}
                         <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|safe }}</p>
                       {% elif dataset.is_range and dataset.data|length > 0 %}
@@ -383,12 +387,14 @@
                 <div class="card dataset-card area-data--sm {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %} area-data--featured{% endif %}">
                 {% endif %}
                     <div class="card-header">
-                      <h3 class="h5">{{ dataset.label }}</h3>
-                      {% include "hub/area/_favourite.html" with dataset=dataset %}
+                        <h3 class="h5">{{ dataset.label }}</h3>
+                      {% if user.is_authenticated %}
+                        {% include "hub/area/_favourite.html" with dataset=dataset %}
+                      {% endif %}
                     </div>
                     <div class="card-body">
                       {% if dataset.data_type == "json" %}
-                      {% include 'hub/area/_json_data.html' with dataset=dataset %}
+                        {% include 'hub/area/_json_data.html' with dataset=dataset %}
                       {% elif dataset.data_type == "text" %}
                         <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|safe }}</p>
                       {% elif dataset.data_type == "url" %}
@@ -468,12 +474,14 @@
                 <div class="card dataset-card area-data--sm {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %}area-data--featured{% endif %}">
                 {% endif %}
                     <div class="card-header">
-                      <h3 class="h5">{{ dataset.label }}</h3>
-                      {% include "hub/area/_favourite.html" with dataset=dataset %}
+                        <h3 class="h5">{{ dataset.label }}</h3>
+                      {% if user.is_authenticated %}
+                        {% include "hub/area/_favourite.html" with dataset=dataset %}
+                      {% endif %}
                     </div>
                     <div class="card-body">
                       {% if dataset.data_type == "json" %}
-                      {% include 'hub/area/_json_data.html' with dataset=dataset %}
+                        {% include 'hub/area/_json_data.html' with dataset=dataset %}
                       {% elif dataset.data_type == "percentage" %}
                         <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|floatformat }}%</p>
                         <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }}% national average</p>
