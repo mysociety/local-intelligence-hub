@@ -149,7 +149,7 @@ class BaseAreaImportCommand(BaseCommand):
             data_type.update_max_min()
 
     def convert_to_new_con(self):
-        if self.do_not_convert:
+        if self.do_not_convert or self.area_type == "WMC23":
             return
 
         converter = DataTypeConverter()
@@ -207,7 +207,8 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
 
     def handle(self, quiet=False, skip_new_areatype_conversion=False, *args, **options):
         self._quiet = quiet
-        self.do_not_convert = skip_new_areatype_conversion
+        if not hasattr(self, "do_not_convert"):
+            self.do_not_convert = skip_new_areatype_conversion
         df = self.get_dataframe()
         self.add_data_sets(df)
         self.delete_data()
