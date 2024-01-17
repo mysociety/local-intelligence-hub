@@ -108,6 +108,7 @@ class AreaDataAdmin(admin.ModelAdmin):
         "area",
     )
     list_filter = (
+        "data_type__area_type",
         "data_type",
         "area",
     )
