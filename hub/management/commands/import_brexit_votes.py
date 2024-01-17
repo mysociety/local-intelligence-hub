@@ -2,7 +2,7 @@ from django.conf import settings
 
 import pandas as pd
 
-from hub.models import AreaData, DataSet
+from hub.models import DataSet
 
 from .base_importers import BaseImportFromDataFrameCommand
 
@@ -14,6 +14,8 @@ class Command(BaseImportFromDataFrameCommand):
     message = "Importing constituency Brexit voting data"
     uses_gss = False
     data_file = settings.BASE_DIR / "data" / "brexit.xlsx"
+    do_not_convert = True
+
     data_sets = {
         "brexit_votes": {
             "defaults": {
@@ -46,6 +48,3 @@ class Command(BaseImportFromDataFrameCommand):
         )
         df.constituency = df.constituency.str.replace("Ynys Mon", "Ynys Môn")
         return df
-
-    def delete_data(self):
-        AreaData.objects.filter(data_type__name="brexit_votes").delete()
