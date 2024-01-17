@@ -235,14 +235,18 @@ class Command(BaseCommand):
                 duplicate_mps = Person.objects.filter(area=area["area_id"]).values_list(
                     "external_id", flat=True
                 )
-                least_recent_mp = (
-                    PersonData.objects.filter(
-                        data_type__data_set__name="mp_last_elected"
-                    )
-                    .filter(person__external_id__in=duplicate_mps)
-                    .latest("date")
-                    .person.external_id
-                )
                 mps_to_delete = list(duplicate_mps)
-                mps_to_delete.remove(least_recent_mp)
+                try:
+                    least_recent_mp = (
+                        PersonData.objects.filter(
+                            data_type__data_set__name="mp_last_elected"
+                        )
+                        .filter(person__external_id__in=duplicate_mps)
+                        .latest("date")
+                        .person.external_id
+                    )
+                    mps_to_delete.remove(least_recent_mp)
+                except PersonData.DoesNotExist:
+                    # if someonehow we've never set this then we won't have the data
+                    pass
                 Person.objects.filter(external_id__in=mps_to_delete).delete()
