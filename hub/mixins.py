@@ -185,9 +185,9 @@ class FilterMixin:
         """
         for col in cols:
             if col["name"] == "mp_name":
-                for row in Person.objects.filter(area_id__in=area_ids).select_related(
-                    "area"
-                ):
+                for row in Person.objects.filter(
+                    person_type="MP", area_id__in=area_ids
+                ).select_related("area"):
                     area_data[row.area.name]["MP Name"].append(row.name)
 
                 continue
