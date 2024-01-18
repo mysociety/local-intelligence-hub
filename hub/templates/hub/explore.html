@@ -29,7 +29,8 @@
 
         <div class="p-4 p-lg-5">
             <div class="mb-4 mb-lg-5" v-cloak>
-                <label for="area_type" class="form-label text-muted mb-lg-3">Constituency generation</label>
+                <label for="area_type" class="form-label text-muted">Constituency generation</label>
+                <p class="from-text fs-7">Parliamentary boundaries are changing at the next election. You can search by either the current or future constituencies. Some datasets have been <a href="{% url 'future_constituencies' %}" target="_blank" title="Opens in a new tab">automatically converted</a> to future constituencies.</p>
                 <select id="area_type" class="form-select form-select-lg" v-model="area_type" @change="changeAreaType()">
                     <option v-for="t in area_types" :value="t['slug']">${ t.label }</option>
                 </select>

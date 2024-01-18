@@ -21,10 +21,10 @@ const app = createApp({
       area_type_changed: false, // so we know to reload the map
       area_types: [{
         slug: "WMC",
-        label: "2010–2024 constituencies"
+        label: "Current constituencies"
       }, {
         slug: "WMC23",
-        label: "2025 constituencies"
+        label: "Future constituencies"
       }],
 
       filters_applied: false, // were filters applied on the last Update?
