@@ -154,6 +154,9 @@ class BaseAreaImportCommand(BaseCommand):
         if self.do_not_convert or self.area_type == "WMC23":
             return
 
+        if not self._quiet:
+            self.stdout.write("Converting to WMC23 constituency data")
+
         converter = DataTypeConverter()
         for data_type in self.data_types.values():
             if (
@@ -161,7 +164,9 @@ class BaseAreaImportCommand(BaseCommand):
                 and data_type.data_set.unit_distribution == "people_in_area"
                 and data_type.data_set.unit_type == "percentage"
             ):
-                converter.convert_datatype_to_new_geography(data_type)
+                converter.convert_datatype_to_new_geography(
+                    data_type, delete_old=True, quiet=self._quiet
+                )
 
 
 class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
