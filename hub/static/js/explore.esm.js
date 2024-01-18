@@ -111,9 +111,19 @@ const app = createApp({
       const url = new URL(window.location.origin + '/explore/datasets.json')
       if (datasets.length > 0) { url.searchParams.set('datasets', datasets) }
 
+      var area_type = this.area_type
+
       return fetch(url.href)
         .then(response => response.json())
-        .then((datasets) => { this.datasets = datasets })
+        .then((datasets) => {
+          datasets.forEach(function(d) {
+            if ("stats" in d && area_type in d["stats"]) {
+              d["defaultValue"] = d["stats"][area_type]["defaultValue"]
+              d["stats"] = d["stats"][area_type]
+            }
+          })
+          this.datasets = datasets
+        })
     },
     getSortType() {
       var filterType = "text"
