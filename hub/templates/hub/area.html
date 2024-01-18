@@ -246,7 +246,7 @@
                         </p>
                     </div>
                     <div class="card-footer">
-                        <p class="card-text"><a href="#">Data from UK Parliament.</a></p>
+                        <p class="card-text"><a href="https://members-api.parliament.uk/api/Members/{{ mp.person.external_id }}/LatestElectionResult">Data from UK Parliament.</a> This information is provided because in the UK electoral system, political parties and the media will be paying more attention to marginal seats and therefore the voices of the people within them can have greater national impact.</p>
                     </div>
                 </div>
                 <div class="card dataset-card area-data--sm {% comment %} TODO: dataset-card--favourite? {% endcomment %}">
@@ -272,7 +272,8 @@
                 </a>
             </div>
             {% elif area_type == "WMC23" %}
-            <h2 class="mb-3 text-primary">Prospective Parliamentary Candiates</h2>
+            <h2 class="text-primary">Prospective Parliamentary Candiates</h2>
+            <p style="max-width: 37em;" class="mb-4">Not all the candidates for the next UK general election have been selected yet. We will be adding more information when it becomes available.</p>
             <div class="area-data-grid">
             {% for row in PPCs %}
               <div class="card dataset-card area-data--sm area-data--featured">
