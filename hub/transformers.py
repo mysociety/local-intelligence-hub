@@ -1,5 +1,6 @@
 import pandas as pd
 from mysoc_dataset import get_dataset_df
+from tqdm import tqdm
 
 from hub.models import Area, AreaData, AreaType, DataType
 from utils.constituency_mapping import convert_data_geographies
@@ -12,6 +13,7 @@ class DataTypeConverter:
             package_name="parliament_con_2025",
             version_name="latest",
             file_name="parl_constituencies_2025.csv",
+            done_survey=True,
         )
         return df.set_index("short_code").gss_code.to_dict()
 
@@ -63,7 +65,7 @@ class DataTypeConverter:
             self.delete_old_data(dt)
 
         value_col = dt.value_col
-        for _, row in df.iterrows():
+        for _, row in tqdm(df.iterrows(), disable=self._quiet, total=df.shape[0]):
             a = Area.objects.get(gss=row["PARL25"], area_type=self.new_con_at)
             AreaData.objects.update_or_create(
                 area=a,
@@ -76,8 +78,9 @@ class DataTypeConverter:
         dt.update_average()
         dt.update_max_min()
 
-    def convert_datatype_to_new_geography(self, dt, delete_old=False):
+    def convert_datatype_to_new_geography(self, dt, delete_old=False, quiet=True):
         self.delete_old = delete_old
+        self._quiet = quiet
 
         df = self.get_df_from_datatype(dt)
         input_values_type = "percentage"
