@@ -1,6 +1,7 @@
 import csv
 import json
 import math
+from collections import defaultdict
 from operator import itemgetter
 
 from django.http import HttpResponse, JsonResponse
@@ -18,9 +19,10 @@ class ExploreView(TitleMixin, TemplateView):
 class ExploreDatasetsJSON(TemplateView):
     def render_to_response(self, context, **response_kwargs):
         types = DataType.objects.exclude(data_set__is_range=True).select_related(
-            "data_set"
+            "data_set",
+            "area_type",
         )
-        type_map = {}
+        type_map = defaultdict(dict)
         for t in types:
             avg = t.average
             maximum = t.maximum
@@ -33,12 +35,18 @@ class ExploreDatasetsJSON(TemplateView):
                     maximum = round(maximum)
                 if minimum is not None:
                     minimum = round(minimum)
-            type_map[t.data_set.name] = {
-                "max": maximum,
-                "min": minimum,
-                "avg": avg,
-                "defaultValue": avg,
-            }
+            stats = type_map[t.data_set.name].get("stats", {})
+
+            if t.area_type is not None:
+                code = t.area_type.code
+                stats[code] = {
+                    "max": maximum,
+                    "min": minimum,
+                    "avg": avg,
+                    "defaultValue": avg,
+                }
+
+            type_map[t.data_set.name]["stats"] = stats
 
         datasets = []
         for d in DataSet.objects.all():
@@ -77,7 +85,8 @@ class ExploreDatasetsJSON(TemplateView):
 
             if (
                 type_map.get(d.name, None) is not None
-                and type_map[d.name]["min"] is not None
+                and type_map[d.name]["stats"] is not None
+                and type_map[d.name]["stats"]
             ):
                 ds = {**ds, **type_map[d.name]}
             if d.is_range:
@@ -111,7 +120,7 @@ class ExploreDatasetsJSON(TemplateView):
                 "name": "gss",
                 "title": "Constituency GSS code",
                 "source": "mySociety",
-                "areas_available": ["WMC"],
+                "areas_available": ["WMC", "WMC23"],
             }
         )
 
