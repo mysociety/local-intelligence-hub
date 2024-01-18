@@ -33,7 +33,7 @@ class Command(BaseCommand):
         "exclude_countries": ["Scotland", "Northern Ireland"],
         "comparators": DataSet.numerical_comparators(),
         "default_value": 10,
-        "is_shadable": False,
+        "is_shadable": True,
         "unit_type": "percentage",
         "unit_distribution": "people_in_area",
     }
