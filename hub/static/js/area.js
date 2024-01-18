@@ -2,6 +2,7 @@ import $ from 'jquery/dist/jquery.slim'
 import { Chart, BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip } from 'chart.js'
 import trackEvent from './analytics.esm.js'
 import Collapse from 'bootstrap/js/dist/collapse'
+import Dropdown from 'bootstrap/js/dist/dropdown'
 
 Chart.register( BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip);
 
@@ -56,6 +57,25 @@ $(function(){
     $('.js-chart').each(makeChart);
 
     $('body.js-area-page').each(setUpAreaPage);
+
+    $('[data-copy-text]').on('click', function(e){
+        e.stopPropagation();
+        if (navigator.clipboard) {
+            var $el = $(this);
+            var $feedback = $el.find('[data-copy-feedback]');
+            var copyText = $el.attr('data-copy-text');
+            var successHTML = $el.attr('data-copy-success');
+            var originalHTML = $feedback.html();
+            navigator.clipboard.writeText(copyText).then(function(){
+                $feedback.html(successHTML);
+                $el.attr('data-copied', true);
+                setTimeout(function(){
+                    $feedback.html(originalHTML);
+                    $el.removeAttr('data-copied');
+                }, 2000);
+            });
+        }
+    });
 
     $('.js-email-your-mp').on('click', function(e){
         e.preventDefault()

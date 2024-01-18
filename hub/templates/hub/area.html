@@ -24,11 +24,34 @@
                 {% endif %}
             </div>
 
-            {% comment %} TODO: Make this share button work {% endcomment %}
-            {% comment %} <button class="btn btn-primary d-flex align-items-center gap-2">
-                {% include 'hub/includes/icons/share.html' %}
-                Share this page
-            </button> {% endcomment %}
+            <div>
+                <button class="btn btn-primary d-flex align-items-center gap-2" data-bs-toggle="dropdown" aria-controls="sharing" aria-expanded="false">
+                    {% include 'hub/includes/icons/share.html' %}
+                    Share this page
+                </button>
+                <ul class="dropdown-menu shadow social-sharing-menu" id="sharing">
+                    <li><a class="dropdown-item text-facebook-blue" href="https://www.facebook.com/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank">
+                        {% include 'hub/includes/icons/facebook.html' %}
+                        Facebook
+                    </a></li>
+                    <li><a class="dropdown-item text-twitter-black" href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri|urlencode }}" target="_blank">
+                        {% include 'hub/includes/icons/x.html' %}
+                        X (Twitter)
+                    </a></li>
+                    <li><a class="dropdown-item text-linkedin-blue" href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.build_absolute_uri|urlencode }}" target="_blank">
+                        {% include 'hub/includes/icons/linkedin.html' %}
+                        LinkedIn
+                    </a></li>
+                    <li><a class="dropdown-item text-whatsapp-green" href="https://api.whatsapp.com/send?text={{ request.build_absolute_uri|urlencode }}" target="_blank">
+                        {% include 'hub/includes/icons/whatsapp.html' %}
+                        WhatsApp
+                    </a></li>
+                    <li><button class="dropdown-item" data-copy-text="{{ request.build_absolute_uri }}" data-copy-success="Copied!">
+                        {% include 'hub/includes/icons/link.html' %}
+                        <span data-copy-feedback>Copy link</span>
+                    </button></li>
+                </ul>
+            </div>
         </div>
 
       {% if area_type == "WMC" and area.overlaps %}

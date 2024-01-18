@@ -152,3 +152,32 @@
         display: none;
     }
 }
+
+.social-sharing-menu {
+    --bs-dropdown-item-padding-y: 0.5rem;
+
+    .dropdown-item {
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+
+        svg {
+            width: 1.5rem;
+            height: 1.5rem;
+            margin-right: 0.75rem;
+        }
+    }
+}
+
+@keyframes success-ping {
+    0% {
+        box-shadow: 0 0 0 0rem rgba($color-tcc-honeysuckle-yellow, 0.5);
+    }
+    100% {
+        box-shadow: 0 0 0 10rem rgba($color-tcc-honeysuckle-yellow, 0);
+    }
+}
+
+[data-copy-text][data-copied] {
+    animation: 500ms linear success-ping;
+}
