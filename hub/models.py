@@ -452,7 +452,7 @@ class DataType(TypeMixin, ShaderMixin, models.Model):
 
     def update_average(self):
         average = (
-            AreaData.objects.filter(data_type=self)
+            AreaData.objects.filter(area__area_type=self.area_type, data_type=self)
             .annotate(
                 cast_data=Cast(Coalesce("int", "float"), output_field=self.cast_field())
             )
@@ -465,7 +465,7 @@ class DataType(TypeMixin, ShaderMixin, models.Model):
 
     def update_max_min(self):
         base = (
-            AreaData.objects.filter(data_type=self)
+            AreaData.objects.filter(area__area_type=self.area_type, data_type=self)
             .annotate(
                 cast_data=Cast(Coalesce("int", "float"), output_field=self.cast_field())
             )
