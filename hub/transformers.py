@@ -41,6 +41,9 @@ class DataTypeConverter:
 
         return df
 
+    def delete_old_data(self, dt):
+        AreaData.objects.filter(data_type=dt).delete()
+
     def create_data_for_new_con(self, old_dt, df):
         try:
             dt = DataType.objects.get(
@@ -56,6 +59,9 @@ class DataTypeConverter:
         dt.auto_converted = True
         dt.save()
 
+        if self.delete_old:
+            self.delete_old_data(dt)
+
         value_col = dt.value_col
         for _, row in df.iterrows():
             a = Area.objects.get(gss=row["PARL25"], area_type=self.new_con_at)
@@ -70,7 +76,9 @@ class DataTypeConverter:
         dt.update_average()
         dt.update_max_min()
 
-    def convert_datatype_to_new_geography(self, dt):
+    def convert_datatype_to_new_geography(self, dt, delete_old=False):
+        self.delete_old = delete_old
+
         df = self.get_df_from_datatype(dt)
         input_values_type = "percentage"
         if dt.data_set.unit_type != "percentage":
