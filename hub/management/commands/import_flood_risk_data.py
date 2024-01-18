@@ -13,6 +13,7 @@ class Command(BaseCommand):
     data_file = settings.BASE_DIR / "data" / "risk_of_flooding.csv"
     message = "Importing constituency flood risk data"
     area_type = "WMC"
+
     defaults = {
         "label": "Flood risk from rivers or sea",
         "description": "Data relating to risk of flooding from rivers or sea across the UK, aggregated by constituency.",
@@ -21,12 +22,13 @@ class Command(BaseCommand):
         "category": "place",
         "source_label": "Data from Defra.",
         "is_range": True,
+        "source": "https://www.data.gov.uk/dataset/bad20199-6d39-4aad-8564-26a46778fd94/risk-of-flooding-from-rivers-and-sea",
         "source_type": "csv",
         "table": "areadata",
         "exclude_countries": ["Northern Ireland", "Scotland", "Wales"],
         "comparators": DataSet.numerical_comparators(),
         "default_value": 10,
-        "is_shadable": False,
+        "is_shadable": True,
     }
 
     def add_arguments(self, parser):

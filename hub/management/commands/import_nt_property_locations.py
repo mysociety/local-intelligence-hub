@@ -11,6 +11,7 @@ from .base_importers import BaseAreaImportCommand
 class Command(BaseAreaImportCommand):
     help = "Import data about NT properties per constituency"
     data_file = settings.BASE_DIR / "data" / "national_trust_properties.csv"
+    source_url = "https://www.nationaltrust.org.uk/search"
     defaults = {
         "label": "National Trust properties",
         "description": "Names of National Trust properties",

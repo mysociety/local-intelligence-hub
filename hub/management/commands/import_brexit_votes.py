@@ -29,6 +29,7 @@ class Command(BaseImportFromDataFrameCommand):
                 "source_type": "xlxs",
                 "table": "areadata",
                 "is_filterable": True,
+                "is_shadable": True,
                 "comparators": DataSet.numerical_comparators(),
                 "unit_type": "percentage",
                 "unit_distribution": "people_in_area",

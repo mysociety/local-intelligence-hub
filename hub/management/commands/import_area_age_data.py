@@ -35,6 +35,7 @@ class Command(BaseCommand):
             "table": "areadata",
             "default_value": 50,
             "is_shadable": True,
+            "is_filterable": True,
             "comparators": DataSet.numerical_comparators(),
             "unit_type": "percentage",
             "unit_distribution": "people_in_area",

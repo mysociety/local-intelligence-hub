@@ -33,6 +33,8 @@ class Command(BaseImportFromDataFrameCommand):
         "table": "areadata",
         "exclude_countries": ["Northern Ireland", "Scotland"],
         "data_url": "",
+        "is_filterable": True,
+        "is_shadable": True,
         "comparators": DataSet.numerical_comparators(),
         "unit_type": "raw",
         "unit_distribution": "people_in_area",

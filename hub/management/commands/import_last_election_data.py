@@ -12,6 +12,7 @@ from hub.models import Area, AreaData, DataSet, DataType
 
 class Command(BaseCommand):
     help = "Import data from the last election"
+    source_url = "https://commonslibrary.parliament.uk/tag/elections-data/"
 
     # https://commonslibrary.parliament.uk/research-briefings/cbp-8749/
     # https://researchbriefings.files.parliament.uk/documents/CBP-8749/HoC-GE2019-results-by-constituency-csv.csv
