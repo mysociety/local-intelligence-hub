@@ -357,6 +357,9 @@
                         {% if dataset.release_date %}
                           Updated {{ dataset.release_date }}.
                         {% endif %}
+                        {% if not dataset.is_public %}
+                          <strong class="text-danger">Not to be publicly shared.</strong>
+                        {% endif %}
                      </p>
 
                     </div>
@@ -441,6 +444,9 @@
                         {% endif %}
                         {% if dataset.release_date %}
                           Updated {{ dataset.release_date }}.
+                        {% endif %}
+                        {% if not dataset.is_public %}
+                          <strong class="text-danger">Not to be publicly shared.</strong>
                         {% endif %}
                       </p>
 
@@ -544,6 +550,9 @@
                         {% endif %}
                         {% if dataset.release_date %}
                           Updated {{ dataset.release_date }}.
+                        {% endif %}
+                        {% if not dataset.is_public %}
+                          <strong class="text-danger">Not to be publicly shared.</strong>
                         {% endif %}
                       </p>
 
