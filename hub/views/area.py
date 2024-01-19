@@ -95,6 +95,7 @@ class BaseAreaView(TitleMixin, DetailView):
             "release_date": data_set.release_date,
             "auto_conversion_disclaimer": auto_converted.get(data_set.id, None),
             "is_favourite": favs.get(data_set.id, False),
+            "is_public": data_set.is_public,
         }
         if data_set.is_range:
             data["is_range"] = True
