@@ -11,5 +11,6 @@
     <small class="d-block text-muted fs-8">
         ${ dataset.source_label }
         <template v-if="dataset.release_date">Updated ${ dataset.release_date }.</template>
+        <strong v-if="dataset.scope == 'private'" class="text-danger"> Not to be publicly shared.</strong>
     </small>
 </button>
