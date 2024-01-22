@@ -53,6 +53,7 @@ urlpatterns = [
     path("privacy/", core.PrivacyView.as_view(), name="privacy"),
     path("terms/", core.TermsView.as_view(), name="terms"),
     path("about/", core.AboutView.as_view(), name="about"),
+    path("landing/", core.LandingView.as_view(), name="landing"),
     path("contact/", core.ContactView.as_view(), name="contact"),
     path("location/", area.AreaSearchView.as_view(), name="area_search"),
     path("style/", core.StyleView.as_view(), name="style"),

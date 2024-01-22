@@ -1,0 +1,100 @@
+{% extends "hub/base.html" %}
+
+{% block content %}
+
+<div class="py-4 py-lg-5">
+    <div class="container">
+        <div class="readable">
+            <h1>Landing page</h1>
+
+            <h2 id="what" class="h4">What is the Local Intelligence&nbsp;Hub?</h2>
+
+            <p>The Local Intelligence Hub is a platform to find and interrogate data about local MPs, constituencies, public opinion and the climate and nature movement in order to support our campaigning and organising efforts.</p>
+
+            <h2 id="why" class="h4">Why did you make the Local Intelligence&nbsp;Hub?</h2>
+
+            <p>In collaboration with mySociety and Green Alliance, The Climate Coalition created the Local Intelligence Hub to bring together (with both local and national views) disparate sets of publicly available and private data. We recognised lots of data was around, or held by our members and stakeholders, but it was not easily accessible or interactive. We spotted a gap in the digital tools available to us and decided to create something new and useful to the climate, environment and development sectors.</p>
+
+            <h2 id="who" class="h4">Who owns and/or manages the Local Intelligence&nbsp;Hub?</h2>
+
+            <p>The Local Intelligence Hub is owned by The Climate Coalition for use by its members and partners across the climate, nature and development sectors. Management and maintenance of the platform is undertaken primarily by The Climate Coalition, with support from mySociety and Green Alliance. If you see any data that is old or inaccurate, <a href="{% url 'contact' %}">please let us know</a>.</p>
+
+            <div class="d-flex align-items-center flex-wrap my-4">
+                <a href="https://www.theclimatecoalition.org" aria-label="The Climate Coalition">
+                    {% include 'hub/includes/icons/tcc-logo.html' with classes="me-3 me-lg-4" width="128" height="39" %}
+                </a>
+                <a href="https://green-alliance.org.uk" aria-label="Green Alliance">
+                    {% include 'hub/includes/icons/green-alliance-logo.html' with width="63" height="50" classes="me-3 me-lg-4" %}
+                </a>
+                <a href="https://www.mysociety.org" aria-label="mySociety">
+                    {% include 'hub/includes/icons/mysociety-logo-black.html' with width="128" height="27" %}
+                </a>
+            </div>
+
+            <h2 class="text-primary mt-5">Access</h2>
+
+            <h3 id="access" class="h4">Who can view the information and data contained in the Local Intelligence&nbsp;Hub?</h3>
+
+            <p>People and organisations are invited to create user accounts on the platform at the invitation of The Climate Coalition. Those that can view the data are organisations and groups broadly working toward shared goals of creating a safe climate and healthy, secure, liveable planet for generations to come.</p>
+
+            <h3 id="permissions" class="h4">What am I / my organisation allowed to do with information procured from the Local Intelligence Hub?</h3>
+
+            <p>Public data can be (re-)shared publicly, as long as any attributions are included. Private data (ie: data that you had to log in to access) should not be shared with anyone who doesn’t also have a log-in to the Local Intelligence Hub.</p>
+
+            <p>For full details, see the <a href="{% url 'terms' %}">Terms of use</a> you agreed to when creating your account.</p>
+
+            <h3 id="sharing" class="h4">The Hub would be really useful for my place of worship / foodbank / community group / political party. Can I give them login details?</h3>
+
+            <p>The Local Intelligence Hub is currently in a private beta for Climate Coalition member organisations. <a href="https://www.theclimatecoalition.org/newsletter-subscribe">You can sign up here to be notified</a> once public datasets are made available without a login.</p>
+
+            <h3 id="invites" class="h4">How can a colleague request an account?</h3>
+
+            <p>The Local Intelligence Hub is currently in a private beta for Climate Coalition member organisations and project stakeholders. <a href="{% url 'signup' %}">You can request an account here.</a> We aim to approve requests from members within a few working days.</p>
+
+            <h2 class="text-primary mt-5">Data</h2>
+
+            <h3 id="updates" class="h4">How often is the Local Intelligence Hub updated? Is the current information correct/accurate?</h3>
+
+            <p>Many of the datasets on the Local Intelligence Hub are gathered automatically from public sources, so are updated at least weekly. Datasets provided by our partners are updated when they provide updates to us. Once a quarter, all partners are contacted and asked to either confirm a dataset remains accurate or provide an update.</p>
+
+            <p>We are working on making the age / last update of data more visible on the site. This should be in place by the end of the private beta.</p>
+
+            <h3 id="sources" class="h4">Where has the data come from? Do I need to attribute the source when presenting work that has used the Hub?</h3>
+
+            <p><a href="{% url 'sources' %}">A full list of datasets and sources can be found here.</a> Datasets should be attributed if you use them outside the tool.</p>
+
+            <h3 id="contributing" class="h4">I have data (from my organisation, or a public source) that I want to upload to the Hub. How do I do that?</h3>
+
+            <p>We can work with you to get your data incorporated into the Local Intelligence Hub. You can choose whether it’s made available just to other Climate Coalition members, or to all users of the Hub. <a href="{% url 'contact' %}">Contact us</a> to arrange a call.</p>
+
+            <h3 id="inaccuracies" class="h4">Who should I contact if I notice something is incorrect?</h3>
+
+            <p><a href="{% url 'contact' %}">Contact us here</a> for anything relating to the Local Intelligence Hub.</p>
+
+            <h3 id="privacy" class="h4">Where can I find information on data protection?</h3>
+
+            <p>In our <a href="{% url 'privacy' %}">Privacy policy</a>!</p>
+
+            <h2 class="text-primary mt-5">Features</h2>
+
+            <h3 id="comparisons" class="h4">Can I compare two constituency pages side by side?</h3>
+
+            <p>We’re working on making comparisons easier, but in the meantime, you can open each constituency page in a separate tab, and switch between them, to compare.</p>
+
+            <h3 class="h4">Can I print out a constituency page?</h3>
+
+            <p>Yes!</p>
+
+            <h3 class="h4">Can I print or download a graphic of the map I have created with filters?</h3>
+
+            <p>Sorry, not yet!</p>
+
+            <h3 class="h4">How many filters can I select when choosing data?</h3>
+
+            <p>As many as you like!</p>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

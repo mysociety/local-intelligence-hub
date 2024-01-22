@@ -1,0 +1,47 @@
+.landing-hero-section {
+
+  background: transparent url('../img/map.png') 100% 50% no-repeat;
+
+  // .section-background {
+  //   background: transparent url('../img/map.png') 100% 50% no-repeat;
+  //   background-size: auto 80%;
+  //   max-width: 80%;
+  //   position: absolute;
+  
+  //   @include media-breakpoint-up('lg') {
+  //       background-position: 100% 70%;
+  //       background-size: auto 180%;
+  //       // max-width: 50%;
+  //       max-width: 50%;
+  //   }
+  
+  //   @include media-breakpoint-up('xl') {
+  //       background-position: center;
+  //       background-size: contain;
+  //       max-width: 30%;
+  //       top: 0;
+  //       right: 20%;
+  //       height: 90%;
+  //   }
+  // }
+
+  @include media-breakpoint-up('lg') {
+      background-position: top 20% right 30%;
+      background-size: contain;
+      // max-width: 50%;
+  }
+
+
+  .map-background {
+    height: 80dvh;
+    width: auto;
+    position: absolute;
+    z-index: 0;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .filter {
+      min-width: 90%;
+  }
+}
