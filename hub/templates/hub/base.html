@@ -43,7 +43,5 @@
     {% include 'hub/includes/header.html' %}
     {% block content %}{% endblock %}
     {% include 'hub/includes/footer.html' %}
-    <script async src="https://cdn.jsdelivr.net/npm/es-module-shims@1/dist/es-module-shims.min.js" crossorigin="anonymous"></script>
-    <script type="importmap">{ "imports": { "@popperjs/core": "{% static 'popper/popper.min.js' %}" } }</script>
-    <script type="module" src="{% static 'js/all.js' %}"></script>
+    <script type="module" src="{% static 'js/all-out-esm.js' %}"></script>
 </body>

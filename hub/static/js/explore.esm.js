@@ -1,10 +1,10 @@
 //import { Modal } from '../../../vendor/bootstrap/js/bootstrap.esm.min.js'
-//import { Modal } from 'bootstrap'
-import { Modal } from 'bootstrap/js/dist/modal'
+import { Modal } from 'bootstrap'
+//import { Modal } from 'bootstrap/js/dist/modal'
 import "bootstrap/js/dist/collapse"
 import "bootstrap/js/dist/tab"
 //import "bootstrap/js/dist/dropdown";
-import { createApp } from 'vue'
+import { createApp } from 'vue/dist/vue.esm-bundler.js'
 //import L from '../../../vendor/leaflet/js/leaflet-1.9.3.esm.js'
 //import L from 'leaflet/dist/leaflet-src.esm.js'
 //import { Map, TileLayer, GeoJSON } from 'leaflet/dist/leaflet-src.esm.js'

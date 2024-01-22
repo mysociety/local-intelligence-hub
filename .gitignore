@@ -11,3 +11,4 @@ conf/httpd.conf
 conf/httpd.conf.deployed
 
 node_modules
+build
