@@ -1,12 +1,14 @@
-<button @click="addFilterOrShader(dataset.name)" class="list-group-item list-group-item-action" :class="{ 'bg-red-100': !dataset.areas_available.includes(area_type) }">
-    <div class="d-flex align-items-center">
-        <strong class="me-auto pe-3">${ dataset.title }</strong>
-        <span v-if="dataset.is_favourite" class="text-gray-500">
+<button @click="addFilterOrShader(dataset.name)" class="list-group-item list-group-item-action">
+    <div class="d-flex align-items-center mb-2">
+        <strong class="lh-sm me-auto pe-3">${ dataset.title }</strong>
+        <span v-if="dataset.is_favourite" class="text-gray-500 d-flex">
             {% include 'hub/includes/icons/heart-full.html' %}
         </span>
     </div>
+    <small v-if="dataset.description" class="d-block fs-7 mb-2">
+        ${ dataset.description }
+    </small>
     <small class="d-block text-muted fs-8">
-        <template v-if="dataset.description">${ dataset.description }</template>
         ${ dataset.source_label }
         <template v-if="dataset.release_date">Updated ${ dataset.release_date }.</template>
     </small>
