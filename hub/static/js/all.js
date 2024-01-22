@@ -1,8 +1,11 @@
-import $ from '../jquery/jquery.esm.js'
-import { Chart, registerables } from '../chartjs/chart.esm.js'
+import $ from 'jquery/dist/jquery.slim'
+//import { Chart, registerables } from '../../../vendor/chartjs/js/chart.esm.js'
+//import { Chart, BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip } from '../../../vendor/chartjs/js/chart.esm.js'
+import { Chart, BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip } from 'chart.js'
 import trackEvent from './analytics.esm.js'
 
-Chart.register(...registerables);
+//Chart.register(...registerables);
+Chart.register( BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip);
 
 Chart.defaults.font.family = '"Public Sans", sans-serif'
 Chart.defaults.font.size = 12

@@ -1,4 +1,4 @@
-import $ from '../jquery/jquery.esm.js'
+import $ from 'jquery/dist/jquery.slim'
 import trackEvent from './analytics.esm.js'
 
 const hashes = ["#favourites", "#mp", "#opinion", "#place", "#movement"]
@@ -66,6 +66,7 @@ function setUpAreaPage() {
     $('.js-favourite-this-dataset, .js-unfavourite-this-dataset').on('submit', function(e){
         e.preventDefault();
         var $form = $(this);
+        // XXX Needs changing to use fetch() or similar
         $.ajax({
             url: $form.attr('action'),
             type: $form.attr('method') || 'get',
