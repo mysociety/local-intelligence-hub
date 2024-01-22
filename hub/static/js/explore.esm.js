@@ -1,6 +1,16 @@
-import { Modal } from '../bootstrap/bootstrap.esm.min.js'
-import { createApp } from '../vue/vue.esm-browser.prod.js'
-import L from '../leaflet/leaflet-1.9.3.esm.js'
+//import { Modal } from '../../../vendor/bootstrap/js/bootstrap.esm.min.js'
+import { Modal } from 'bootstrap'
+//import { Modal } from 'bootstrap/js/dist/modal'
+import "bootstrap/js/dist/collapse"
+import "bootstrap/js/dist/tab"
+//import "bootstrap/js/dist/dropdown";
+import { createApp } from 'vue/dist/vue.esm-bundler.js'
+//import L from '../../../vendor/leaflet/js/leaflet-1.9.3.esm.js'
+//import L from 'leaflet/dist/leaflet-src.esm.js'
+//import { Map, TileLayer, GeoJSON } from 'leaflet/dist/leaflet-src.esm.js'
+import { Map } from 'leaflet/src/map'
+import { TileLayer } from 'leaflet/src/layer/tile'
+import { GeoJSON } from 'leaflet/src/layer'
 import trackEvent from './analytics.esm.js'
 
 const app = createApp({
@@ -379,9 +389,9 @@ const app = createApp({
     },
     setUpMap() {
       this.loading = true
-      this.map = L.map(this.$refs.map).setView([54.0934, -2.8948], 7)
+      this.map = new Map(this.$refs.map).setView([54.0934, -2.8948], 7)
 
-      var tiles = L.tileLayer(
+      var tiles = new TileLayer(
         'https://tile.thunderforest.com/atlas/{z}/{x}/{y}.png?apikey=7ac28b44c7414ced98cd4388437c718d',
         {
           maxZoom: 19,
@@ -400,7 +410,7 @@ const app = createApp({
       return fetch(this.geomUrl())
         .then(response => response.json())
         .then(data => {
-          window.geojson = L.geoJson(data, {
+          window.geojson = new GeoJSON(data, {
             style: (feature) => {
               return {
                 fillColor: feature.properties.color,

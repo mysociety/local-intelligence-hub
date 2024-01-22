@@ -1,4 +1,4 @@
-import $ from '../jquery/jquery.esm.js'
+import $ from 'jquery/dist/jquery.slim'
 
 const trackEvent = function(eventName, params) {
     // We'll return a promise, and resolve it when either Gtag handles
