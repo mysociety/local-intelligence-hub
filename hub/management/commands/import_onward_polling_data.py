@@ -42,31 +42,19 @@ class Command(BaseImportFromDataFrameCommand):
 
     data_sets = {
         "constituency_nz_support": {
-            "defaults": {
-                **defaults,
-                "description": "Estimated percentage of constituents who support net zero.",
-            },
+            "defaults": defaults,
             "col": "support net zero",
         },
         "constituency_nz_neutral": {
-            "defaults": {
-                **defaults,
-                "description": "Estimated percentage of constituents who neither support nor oppose net zero.",
-            },
+            "defaults": defaults,
             "col": "neither support nor oppose net zero",
         },
         "constituency_nz_oppose": {
-            "defaults": {
-                **defaults,
-                "description": "Estimated percentage of constituents who oppose net zero.",
-            },
+            "defaults": defaults,
             "col": "oppose net zero",
         },
         "constituency_cc_high": {
-            "defaults": {
-                **defaults,
-                "description": "Estimated percentage of constituents who consider climate change a high priority.",
-            },
+            "defaults": defaults,
             "col": "consider climate change a high priority",
         },
     }

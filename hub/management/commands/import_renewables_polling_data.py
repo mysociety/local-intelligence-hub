@@ -23,22 +23,6 @@ SUBCATEGORIES_DICT = {
     "believe-block-onshore-wind": "government_action",
 }
 
-DESCRIPTIONS = {
-    "would-change-party": "Estimated percentage of constituents that are considering voting for a different party in the next General Election to the one they voted for in 2019.",
-    "less-favourable-conservative-weaken-climate": "Estimated percentage of constituents that would be less favourable towards the Conservative Party if they chose to weaken climate policies.",
-    "prefer-conservative-leader-invest-renewables": "Estimated percentage of constituents that would prefer the next leader of the Conservative Party to invest in renewable energy.",
-    "support-offshore-wind": "Estimated percentage of constituents that support offshore wind as energy generation.",
-    "support-onshore-wind": "Estimated percentage of constituents that support onshore wind as energy generation.",
-    "support-solar": "Estimated percentage of constituents that support solar power as energy generation.",
-    "support-tidal": "Estimated percentage of constituents that support tidal energy as energy generation.",
-    "support-wave": "Estimated percentage of constituents that support wave energy as energy generation.",
-    "support-nuclear": "Estimated percentage of constituents that support nuclear energy as energy generation.",
-    "support-local-renewable": "Estimated percentage of constituents who support renewable energy projects in their local area.",
-    "believe-gov-renewable-invest-increase": "Estimated percentage of constituents that believe the Govt has increased investment in renewables over the past 5 years.",
-    "believe-gov-renewable-should-invest": "Estimated percentage of constituents that believe that the Govt should use wind and solar farms to reduce energy bills.",
-    "believe-block-onshore-wind": "Estimated percentage of constituents that believe that the Govt should continue the block on onshore wind development.",
-}
-
 
 class Command(BaseImportFromDataFrameCommand):
     help = "Import polling data about support for renewables"
@@ -97,10 +81,8 @@ class Command(BaseImportFromDataFrameCommand):
                 continue
 
             label = self.make_label_from_question(self.column_map[column])
-            description = DESCRIPTIONS[column]
             defaults = {
                 "label": label,
-                "description": description,
                 "data_type": "percent",
                 "category": "opinion",
                 "subcategory": SUBCATEGORIES_DICT[column],
@@ -130,7 +112,6 @@ class Command(BaseImportFromDataFrameCommand):
                 defaults={
                     "data_type": "percent",
                     "label": label,
-                    "description": description,
                 },
             )
 

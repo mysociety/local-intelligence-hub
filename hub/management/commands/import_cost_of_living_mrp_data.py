@@ -45,18 +45,6 @@ class Command(BaseImportFromDataFrameCommand):
         "mental_health_cost_of_living": "Mental health has been impacted by the cost of living crisis",
     }
 
-    descriptions = {
-        "not_able_to_afford_mortgage_rent": "Estimated percentage of constituents worried about not being able to afford their mortgage or rent in the next year.",
-        "not_able_to_pay_energy_bills": "Estimated percentage of constituents worried about not being able to pay their energy bills in the next year.",
-        "worried_foodbank": "Estimated percentage of constituents worried about having to use a foodbank in the next year.",
-        "conservatives_dont_understand_impact": "Estimated percentage of constituents who think that Rishi Sunak and the Conservative Government do not understand the impact the cost of living crisis is having on people.",
-        "missed_bill_payment": "Estimated percentage of constituents that have missed a bill payment in the last six months.",
-        "missed_rent_payment": "Estimated percentage of constituents that have missed a rent payment in the last six months.",
-        "missed_credit_payment": "Estimated percentage of constituents that have missed a credit payment in the last six months.",
-        "cant_afford_heating": "Estimated percentage of constituents that have not been able to afford to turn the heating on at home when they have felt cold in the past month.",
-        "mental_health_cost_of_living": "Estimated percentage of constituents whose mental health has been impacted by the cost of living crisis.",
-    }
-
     def add_data_sets(self, df):
         for col in df.columns:
             if col != "gss_code":
@@ -65,7 +53,6 @@ class Command(BaseImportFromDataFrameCommand):
                     "col": col,
                 }
                 self.data_sets[col]["defaults"]["label"] = self.labels[col]
-                self.data_sets[col]["defaults"]["description"] = self.descriptions[col]
 
         super().add_data_sets()
 
