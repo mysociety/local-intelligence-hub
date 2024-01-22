@@ -74,24 +74,23 @@ class ExploreDatasetsJSON(TemplateView):
 
             is_favourite = False
             if not is_non_member:
-                is_favourite = (
-                    UserDataSets.objects.filter(
-                        data_set=d,
-                        user=self.request.user,
-                    ).exists(),
-                )
+                is_favourite = UserDataSets.objects.filter(
+                    data_set=d,
+                    user=self.request.user,
+                ).exists()
 
             ds = dict(
                 scope=scope,
                 name=d.name,
                 title=d.label,
                 description=d.description,
+                category=d.category or "mp",
                 source=d.source,
                 source_label=d.source_label,
                 is_favourite=is_favourite,
                 is_filterable=d.is_filterable,
                 is_shadable=d.is_shadable,
-                featured=d.featured,
+                is_featured=d.featured,
                 comparators=dict(
                     map(itemgetter("field_lookup", "title"), d.comparators)
                 ),
@@ -121,13 +120,14 @@ class ExploreDatasetsJSON(TemplateView):
         datasets.append(
             {
                 "scope": "public",
-                "featured": False,
+                "is_featured": False,
                 "is_favourite": False,
                 "is_filterable": False,
                 "is_shadable": False,
+                "category": "mp",
                 "name": "mp_name",
                 "title": "MP Name",
-                "source": "Wikipedia",
+                "source_label": "Data from Wikipedia.",
                 "areas_available": ["WMC"],
             }
         )
@@ -135,13 +135,14 @@ class ExploreDatasetsJSON(TemplateView):
         datasets.append(
             {
                 "scope": "public",
-                "featured": False,
+                "is_featured": False,
                 "is_favourite": False,
                 "is_filterable": False,
                 "is_shadable": False,
+                "category": "place",
                 "name": "gss",
                 "title": "Constituency GSS code",
-                "source": "mySociety",
+                "source_label": "Data from mySociety.",
                 "areas_available": ["WMC", "WMC23"],
             }
         )

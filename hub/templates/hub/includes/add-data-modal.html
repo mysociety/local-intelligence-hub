@@ -1,44 +1,62 @@
-<div class="modal fade" tabindex="-1" ref="modal">
+<div class="modal fade explore-modal" tabindex="-1" ref="modal">
     <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content overflow-hidden shadow-lg">
+        <div class="modal-content h-100 overflow-hidden shadow-lg">
             <div class="modal-header">
                 <h2 class="modal-title h5 lh-1">Add ${ currentType }</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body bg-gray-100">
+            <div class="modal-body bg-gray-100 flex-grow-0 flex-shrink-0">
                 <div class="search-input w-100">
                     {% include 'hub/includes/icons/search.html' %}
                     <input type="search" class="form-control" placeholder="Find a dataset…" aria-label="Find a dataset…" v-model="searchText">
                 </div>
-                <div v-if="!datasetsLoaded" class="mt-3 text-center">
-                    Loading…
-                </div>
-                <div v-if="favouriteDatasets.length">
-                    <h3 class="h6 mt-4 text-primary">Your favourite datasets</h3>
-                    <div class="list-group mt-3">
-                        <template v-for="dataset in favouriteDatasets">
-                            {% include 'hub/includes/add-data-modal-button.html' %}
-                        </template>
+            </div>
+            <div class="modal-body bg-gray-100 pt-0">
+                <div class="row">
+                    <div class="col-sm-6 col-lg-3">
+                        <h3 class="h5 my-3 text-primary">MP</h3>
+                        <div v-if="!datasetsLoaded">
+                            <p class="text-muted">Loading datasets…</p>
+                        </div>
+                        <div v-else-if="selectableDatasets.mp.length" class="list-group">
+                            <template v-for="dataset in selectableDatasets.mp">
+                                {% include 'hub/includes/add-data-modal-button.html' %}
+                            </template>
+                        </div>
                     </div>
-                </div>
-                <div v-if="featuredDatasets.length">
-                    <h3 class="h6 mt-4 text-primary">Popular datasets</h3>
-                    <div class="list-group mt-3">
-                        <template v-for="dataset in featuredDatasets">
-                            {% include 'hub/includes/add-data-modal-button.html' %}
-                        </template>
+                    <div class="col-sm-6 col-lg-3">
+                        <h3 class="h5 my-3 text-primary">Public opinion</h3>
+                        <div v-if="!datasetsLoaded">
+                            <p class="text-muted">Loading datasets…</p>
+                        </div>
+                        <div v-else-if="selectableDatasets.opinion.length" class="list-group">
+                            <template v-for="dataset in selectableDatasets.opinion">
+                                {% include 'hub/includes/add-data-modal-button.html' %}
+                            </template>
+                        </div>
                     </div>
-                </div>
-                <div v-if="otherDatasets.length">
-                    <h3 class="h6 mt-4 text-primary">More datasets</h3>
-                    <div class="list-group mt-3">
-                        <template v-for="dataset in otherDatasets">
-                            {% include 'hub/includes/add-data-modal-button.html' %}
-                        </template>
+                    <div class="col-sm-6 col-lg-3">
+                        <h3 class="h5 my-3 text-primary">Place</h3>
+                        <div v-if="!datasetsLoaded">
+                            <p class="text-muted">Loading datasets…</p>
+                        </div>
+                        <div v-else-if="selectableDatasets.place.length" class="list-group">
+                            <template v-for="dataset in selectableDatasets.place">
+                                {% include 'hub/includes/add-data-modal-button.html' %}
+                            </template>
+                        </div>
                     </div>
-                </div>
-                <div v-else-if="!searchText && availableOtherDatasets.length > 0">
-                    <button class="btn btn-link mt-3 w-100" @click="toggleBrowseDatasets()">Browse more datasets</button>
+                    <div class="col-sm-6 col-lg-3">
+                        <h3 class="h5 my-3 text-primary">Movement</h3>
+                        <div v-if="!datasetsLoaded">
+                            <p class="text-muted">Loading datasets…</p>
+                        </div>
+                        <div v-else-if="selectableDatasets.movement.length" class="list-group">
+                            <template v-for="dataset in selectableDatasets.movement">
+                                {% include 'hub/includes/add-data-modal-button.html' %}
+                            </template>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

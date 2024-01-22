@@ -35,7 +35,6 @@ const app = createApp({
 
       currentType: 'filter', // what to add from the Add Dataset modal (filter, shader, or column)
       searchText: '', // filter datasets by name in the Add Dataset modal
-      browseDatasets: false, // show the full list of datasets in the Add Dataset modal?
       sortBy: 'Constituency Name', // column to use to sort the table
       sortOrder: 1, // sort order direction - 1 for ascending, 0 for descending
       downloadCsvWithNextTableUpdate: false,
@@ -47,25 +46,19 @@ const app = createApp({
     modal() {
       return new Modal(this.$refs.modal)
     },
-    favouriteDatasets() {
-      return this.datasets.filter((d) => {
-        return ( d.is_favourite === true ) && this.datasetMatchesSearchText(d) && this.datasetIsSelectable(d)
+    selectableDatasets() {
+      let categories = {
+        mp: [],
+        opinion: [],
+        place: [],
+        movement: []
+      }
+      this.datasets.forEach((d) => {
+        if ( this.datasetMatchesSearchText(d) && this.datasetIsSelectable(d) ) {
+          categories[d.category].push(d)
+        }
       })
-    },
-    featuredDatasets() {
-      return this.datasets.filter((d) => {
-        return ( d.featured === true ) && this.datasetMatchesSearchText(d) && this.datasetIsSelectable(d)
-      })
-    },
-    availableOtherDatasets() {
-      return this.datasets.filter((d) => {
-        return ( d.is_favourite === false && d.featured === false ) && this.datasetIsSelectable(d)
-      })
-    },
-    otherDatasets() {
-      return this.datasets.filter((d) => {
-        return ( d.is_favourite === false && d.featured === false ) && ( this.browseDatasets == true || this.searchText != '' ) && this.datasetMatchesSearchText(d) && this.datasetIsSelectable(d)
-      })
+      return categories
     },
     mapViewActive() {
       return this.view == 'map'
@@ -99,9 +92,12 @@ const app = createApp({
     this.$refs.filtersContainer.removeAttribute('hidden')
     this.$refs.shaderContainer.removeAttribute('hidden')
     this.$refs.columnContainer.removeAttribute('hidden')
+    this.$refs.modal.addEventListener('shown.bs.modal', (e) => {
+      this.$refs.modal.querySelector('.search-input input').focus()
+      this.$refs.modal.querySelector('.modal-body:last-child').scrollTop = 0
+    })
     this.$refs.modal.addEventListener('hidden.bs.modal', (e) => {
       this.searchText = ''
-      this.browseDatasets = false
     })
 
     window.vuethis = this;
@@ -120,6 +116,15 @@ const app = createApp({
             if ("stats" in d && area_type in d["stats"]) {
               d["defaultValue"] = d["stats"][area_type]["defaultValue"]
               d["stats"] = d["stats"][area_type]
+            }
+          })
+          datasets = datasets.sort((a, b) => {
+            if (a.is_favourite != b.is_favourite) {
+              return a.is_favourite ? -1 : 1
+            } else if (a.is_featured != b.is_featured) {
+              return a.is_featured ? -1 : 1
+            } else {
+              return a.title.localeCompare(b.title)
             }
           })
           this.datasets = datasets
@@ -232,9 +237,6 @@ const app = createApp({
       this.shader = null
       this.key = null
       this.legend = null
-    },
-    toggleBrowseDatasets() {
-      this.browseDatasets = !this.browseDatasets
     },
     state() {
       const state = {}
