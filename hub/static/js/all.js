@@ -107,13 +107,14 @@ var makeChart = function() {
     var rowHeight = $table.data('row-height') || 40
     var legendHeight = 60
     var labelHeight = 60
+    var $div = $('<div>').attr({'class': 'chartwrapper'})
     var $canvas = $('<canvas>').attr({
         'width': chartWidth,
         'height': (rowHeight * $table.find('tbody tr').length) + legendHeight + labelHeight,
         'class': 'mt-n3',
         'role': 'img',
         'aria-label': chartType + ' chart'
-    }).insertBefore($table)
+    }).wrap('<div>').attr({'class': 'chartwrapper'}).insertBefore($table)
 
     var primaryAxis = $table.data('chart-direction') || 'x'
     var crossAxis = ( primaryAxis == 'x' ) ? 'y' : 'x'

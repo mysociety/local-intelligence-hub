@@ -14,7 +14,7 @@ table.js-chart {
         border-bottom: none;
     }
 
-    canvas + & {
+    .chartwrapper + & {
         @include visually-hidden;
     }
 }
