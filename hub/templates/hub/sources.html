@@ -3,28 +3,49 @@
 {% block content %}
 
 <div class="py-4 py-lg-5">
-    <div class="container">
+    <div class="container pb-5">
 
         <h1>Datasets and data sources</h1>
 
-        <table class="table mt-4">
-            <thead>
-                <tr>
-                    <th class="ps-0 d-none d-sm-table-cell" scope="col">Category</th>
-                    <th class="ps-0 px-sm-3 px-md-4" scope="col">Dataset</th>
-                    <th class="pe-0" scope="col">Source</th>
-                </tr>
-            </thead>
-            <tbody>
-              {% for dataset in datasets %}
-                <tr>
-                    <td class="ps-0 d-none d-sm-table-cell">{{ dataset.category|default_if_none:''|title }}</td>
-                    <td class="ps-0 px-sm-3 px-md-4">{{ dataset.label }}</td>
-                    <td class="pe-0"><a href="{{ dataset.source }}">{{ dataset.source_label }}</a></td>
-                </tr>
-              {% endfor %}
-            </tbody>
-        </table>
+        <div class="readable mt-4">
+            <p>The Local Intelligence Hub brings together data from a number of public and private sources, under four categories: <a href="#mp">MP</a>, <a href="#opinion">Public opinion</a>, <a href="#place">Place</a>, and <a href="#movement">Movement</a>.</p>
+            <p>We are constantly incorporating new data into the Local Intelligence Hub, for the benefit of the entire climate and nature movement. If your organisation has data to contribute, <a href="{% url 'contact' %}">please get in touch</a>.</p>
+        </div>
+
+      {% for slug, category in categories.items %}
+        <h2 class="mt-5 text-primary" id="{{ slug }}">{{ category.label }}</h2>
+        <div class="row">
+          {% for dataset in category.datasets %}
+            <div class="col-md-6 col-lg-4 d-flex flex-column mt-3 mt-md-4">
+                <div class="card flex-grow-1">
+                    <div class="card-body {% if not dataset.is_public %}bg-green-100{% endif %}">
+                      {% if not dataset.is_public %}
+                        <div class="d-flex align-items-center mb-2 fs-7 lh-sm">
+                            {% include 'hub/includes/icons/tcc-heart.html' with width="1em" height="1em" classes="me-2 flex-shrink-0 flex-grow-0" %}
+                            Members only
+                        </div>
+                      {% endif %}
+                        <h3 class="h5 mb-0">{{ dataset.label }}</h3>
+                      {% if dataset.description %}
+                        <p class="mb-0 mt-2 fs-7 lh-sm {% if dataset.is_public %}text-muted{% endif %}">
+                            {{ dataset.description }}
+                        </p>
+                      {% endif %}
+                    </div>
+                    <div class="card-footer bg-gray-100">
+                        <p class="card-text fs-8 text-muted">
+                            <a href="{{ dataset.source }}">{{ dataset.source_label }}</a>
+                          {% if dataset.release_date %}
+                            Updated {{ dataset.release_date }}.
+                          {% endif %}
+                       </p>
+                    </div>
+                </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+
     </div>
 </div>
 

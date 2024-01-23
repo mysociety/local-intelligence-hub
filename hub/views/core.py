@@ -34,7 +34,42 @@ class SourcesView(TitleMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["datasets"] = DataSet.objects.all().order_by("category", "label")
+
+        categories = {
+            "mp": {
+                "label": "MP",
+                "datasets": [],
+            },
+            "opinion": {
+                "label": "Public opinion",
+                "datasets": [],
+            },
+            "place": {
+                "label": "Place",
+                "datasets": [],
+            },
+            "movement": {
+                "label": "Movement",
+                "datasets": [],
+            },
+        }
+
+        for dataset in DataSet.objects.all().order_by("label"):
+            categories[dataset.category or "mp"]["datasets"].append(
+                {
+                    "name": dataset.name,
+                    "label": dataset.label,
+                    "description": dataset.description,
+                    "category": dataset.category or "mp",
+                    "source": dataset.source,
+                    "source_label": dataset.source_label,
+                    "release_date": dataset.release_date,
+                    "is_public": dataset.is_public,
+                }
+            )
+
+        context["categories"] = categories
+
         return context
 
 
