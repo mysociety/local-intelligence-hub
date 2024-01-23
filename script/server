@@ -26,6 +26,8 @@ case "$ACTION" in
         fi
         ;;
     --development)
+        npm install --no-package-lock --no-audit
+        ./script/build_js
         ./manage.py migrate
         ./manage.py runsslserver 0.0.0.0:8000
         ;;
