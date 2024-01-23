@@ -1,0 +1,34 @@
+{% extends "hub/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="py-5">
+    <div class="container">
+        <h1 class="mb-4">Landing pages</h1>
+        <table class="table w-auto">
+            <thead>
+                <tr>
+                    <th class="ps-0">name</th>
+                    <th class="pe-0">urlpattern</th>
+                </tr>
+            </thead>
+            <tbody>
+              {% for child in urlpatterns %}
+                <tr>
+                    <td class="p-0">
+                        <a href="{% url child.name %}" class="d-block p-2 ps-0">
+                            {{ child.name }}
+                        </a>
+                    </td>
+                    <td class="p-0">
+                        <a href="{% url child.name %}" class="d-block p-2 pe-0 text-muted">
+                            /go/{{ child.pattern }}
+                        </a>
+                    </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

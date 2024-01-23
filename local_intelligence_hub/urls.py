@@ -19,7 +19,7 @@ from django.contrib import admin
 from django.urls import include, path, re_path
 from django.views.generic.base import RedirectView
 
-from hub.views import accounts, area, core, explore
+from hub.views import accounts, area, core, explore, landingpages
 
 handler404 = core.NotFoundPageView.as_view()
 
@@ -65,6 +65,7 @@ urlpatterns = [
     path("about/", core.AboutView.as_view(), name="about"),
     path("contact/", core.ContactView.as_view(), name="contact"),
     path("location/", area.AreaSearchView.as_view(), name="area_search"),
+    path("go/", include(landingpages.urlpatterns)),
     path("style/", core.StyleView.as_view(), name="style"),
     path("status/", core.StatusView.as_view(), name="status"),
     path("me/", accounts.MyAccountView.as_view(), name="my_account"),

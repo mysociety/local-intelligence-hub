@@ -1,0 +1,88 @@
+{% extends "hub/base.html" %}
+{% load static %}
+{% load hub_filters %}
+
+{% block content %}
+
+<div class="landing-page__map-section">
+    <div class="container">
+        <div class="row">
+            <div class="landing-page__map-section__primary">
+                <h1 class="display-{{ title_size }} mb-4">{{ title|prevent_widow }}</h1>
+                <p class="fs-5 mb-4" style="max-width: 30em;">{{ intro_text }}</p>
+              {% if search_form_label %}
+                <label class="form-label" for="search">{{ search_form_label }}</label>
+                <form class="row mt-2 mb-2 js-landingpage-search" style="max-width: 30rem;" action="{% url 'area_search' %}">
+                    <div class="col">
+                        <div class="search-input search-input-lg">
+                            {% include 'hub/includes/icons/search.html' %}
+                            <input name="search" type="search" id="search" class="form-control form-control-lg" required>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary btn-lg">Search</button>
+                    </div>
+                </form>
+                <a class="js-geolocate d-none d-flex align-items-center btn btn-link px-0" href="{% url 'area_search' %}">
+                    {% include 'hub/includes/icons/geolocate.html' with classes="me-2" %}
+                    Use my current location
+                </a>
+              {% else %}
+                <a class="btn btn-lg btn-primary js-landingpage-cta" href="{% url 'explore' %}">Explore our data</a>
+              {% endif %}
+            </div>
+
+            <a class="landing-page__map-section__secondary js-landingpage-cta" href="{% url 'explore' %}">
+                <div class="bg-gray-100 border p-3 rounded shadow-lg filter ms-5">
+                    <div class="filter__header">
+                        <h3 class="h6 lh-sm">{{ example_filter_label }}</h3>
+                        <span class="btn-close p-0"></span>
+                    </div>
+                    <div class="filter__body">
+                        <div class="form-control fs-7">{{ example_filter_comparator }}</div>
+                        <div class="form-control fs-7">{{ example_filter_value }}</div>
+                    </div>
+                </div>
+                <div class="bg-gray-100 border p-3 rounded shadow-lg filter me-5 mb-0">
+                    <div class="filter__header">
+                        <h3 class="h6 lh-sm">{{ example_shader_label }}</h3>
+                        <span class="btn-close p-0"></span>
+                    </div>
+                    <div class="d-flex mt-3">
+                        <span class="pt-3 flex-grow-1" style="background-color: rgb(255, 255, 217);"></span>
+                        <span class="pt-3 flex-grow-1" style="background-color: rgb(237, 248, 177);"></span>
+                        <span class="pt-3 flex-grow-1" style="background-color: rgb(199, 233, 180);"></span>
+                        <span class="pt-3 flex-grow-1" style="background-color: rgb(127, 205, 187);"></span>
+                        <span class="pt-3 flex-grow-1" style="background-color: rgb(65, 182, 196);"></span>
+                        <span class="pt-3 flex-grow-1" style="background-color: rgb(29, 145, 192);"></span>
+                        <span class="pt-3 flex-grow-1" style="background-color: rgb(34, 94, 168);"></span>
+                        <span class="pt-3 flex-grow-1" style="background-color: rgb(37, 52, 148);"></span>
+                        <span class="pt-3 flex-grow-1" style="background-color: rgb(8, 29, 88);"></span></div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<section class="bg-gray-100">
+    <div class="container py-5 py-lg-6">
+        <div class="row">
+            <div class="mb-5 mb-lg-0 col-lg-6 offset-lg-1 order-lg-2 col-xxl-5 d-flex flex-column align-items-stretch justify-content-center">
+                <p class="fs-5">The Local Intelligence Hub was developed by The Climate Coalition and mySociety, with support from Green Alliance.</p>
+                <p class="fs-5">Anyone can access our free and growing library of live data about local MPs, political candidates, constituencies, and people and groups who are already taking action on the climate and nature crises.</p>
+                <p class="fs-5">The tool also brings together recent public opinion data on climate action and the cost of living crisis, the climate and nature movement so people can explore how their local area compares to the national average.</p>
+                <p class="fs-5 mb-0">
+                    <a href="{% url 'about' %}" class="d-flex align-items-center js-landingpage-cta">
+                        Find out more
+                        {% include 'hub/includes/icons/chevron-right.html' with classes="ms-2" %}
+                    </a>
+                </p>
+            </div>
+            <div class="col-lg-5 order-lg-1 d-flex flex-column align-items-center justify-content-center">
+                <img src="{% static 'img/screenshots.webp' %}" alt="" class="mw-100">
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

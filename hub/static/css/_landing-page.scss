@@ -1,0 +1,76 @@
+.landing-page__map-section {
+    background: $green-100 url('../img/map.png') 60% 50% no-repeat;
+    background-size: auto 100%;
+
+    @include media-breakpoint-up('lg') {
+        background-position: 100% 70%;
+        background-size: auto 140%;
+    }
+
+    @include media-breakpoint-up('xl') {
+        background-position: 80% 70%;
+    }
+
+    & > .container > .row {
+        @include media-breakpoint-up('lg') {
+            @include row-cols(2);
+        }
+    }
+}
+
+.landing-page__map-section__primary {
+    // hide map behind
+    background-color: $green-100;
+
+    // bit of breathing space
+    padding-top: 5%;
+    padding-bottom: 5%;
+
+    @include media-breakpoint-up('md') {
+        padding-bottom: 0;
+    }
+
+    @include media-breakpoint-up('lg') {
+        padding-top: map-get($spacers, 5);
+        padding-bottom: map-get($spacers, 6);
+    }
+}
+
+.landing-page__map-section__secondary {
+    // reset link styles
+    text-decoration: none !important;
+    color: inherit !important;
+
+    // layout for fake "filter" children
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    // reveal map behind
+    padding-top: 25%;
+    padding-bottom: 25%;
+    background-image: linear-gradient(180deg, transparentize($green-100, 0) 0%, transparentize($green-100, 1) 50%);
+
+    @include media-breakpoint-up('sm') {
+        padding-top: map-get($spacers, 7);
+        padding-bottom: map-get($spacers, 7);
+    }
+
+    @include media-breakpoint-up('lg') {
+        padding-top: map-get($spacers, 5);
+        padding-bottom: map-get($spacers, 6);
+        padding-left: 8%;
+        background-image: linear-gradient(90deg, transparentize($green-100, 0) 0%, transparentize($green-100, 1) 20%);
+    }
+
+    .filter {
+        width: 70%;
+        max-width: 24rem;
+    }
+
+    .filter__body > * {
+        width: auto;
+        flex: 1 1 auto;
+    }
+}

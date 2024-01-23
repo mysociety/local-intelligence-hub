@@ -91,7 +91,7 @@ $(function(){
             trackEvent('homepage_search_form_submit', {
                 search_term: $form.find('input[type="search"]').val()
             }).always(function(){
-                $form.data('submitRecorded', true).submit();
+                $form.data('submitRecorded', true).trigger('submit');
             });
         }
     })
@@ -105,6 +105,29 @@ $(function(){
         }).always(function(){
             window.location.href = href
         })
+    })
+    $('.js-landingpage-search').on('submit', function(e){
+        var $form = $(this);
+        if ( ! $form.data('submitRecorded') ) {
+            e.preventDefault();
+            trackEvent('landingpage_search_form_submit', {
+                page_path: window.location.pathname,
+                search_term: $form.find('input[type="search"]').val()
+            }).always(function(){
+                $form.data('submitRecorded', true).trigger('submit');
+            });
+        }
+    })
+
+    $('.js-landingpage-cta').on('click', function(e){
+        e.preventDefault();
+        var href = $(this).attr('href');
+        trackEvent('landingpage_cta', {
+            page_path: window.location.pathname,
+            cta_destination: href
+        }).always(function(){
+            window.location.href = href;
+        });
     })
 })
 

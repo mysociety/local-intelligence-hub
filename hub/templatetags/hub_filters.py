@@ -43,6 +43,19 @@ def simplify_dataset_name(value):
     return trimmed[0].upper() + trimmed[1:]
 
 
+@register.filter
+@stringfilter
+def prevent_widow(s, max=12):
+    # Replace final space in string with &nbsp;
+    # if length of final two words (plus a space)
+    # is less than `max` value.
+    bits = s.rsplit(" ", 2)
+    if len(f"{bits[-2]} {bits[-1]}") < max:
+        return mark_safe(f"{bits[-3]} {bits[-2]}&nbsp;{bits[-1]}")
+    else:
+        return s
+
+
 @register.simple_tag
 def urlencode_params(**kwargs):
     """
