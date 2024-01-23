@@ -356,7 +356,7 @@ class AreaSearchView(TemplateView):
             areas_raw = Area.objects.filter(
                 name__icontains=search, area_type__code="WMC"
             )
-            people_raw = Person.objects.filter(name__icontains=search)
+            people_raw = Person.objects.filter(person_type="MP", name__icontains=search)
 
             areas = list(areas_raw)
             for person in people_raw:
