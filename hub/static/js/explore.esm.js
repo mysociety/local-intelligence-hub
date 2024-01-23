@@ -339,7 +339,7 @@ const app = createApp({
           const name = key.slice(0, index)
           const comparator = key.slice(index + 2)
           const is_in = key.indexOf('__in')
-          const value = v
+          let value = v
           if ( is_in > 0 ) {
             value = value.split(',')
           }
