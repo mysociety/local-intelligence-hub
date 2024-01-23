@@ -28,6 +28,8 @@ class Command(BaseAreaImportCommand):
         "is_filterable": False,
         "is_shadable": False,
         "comparators": DataSet.comparators_default(),
+        "unit_type": "point",
+        "unit_distribution": "point",
     }
 
     count_defaults = {
@@ -45,8 +47,8 @@ class Command(BaseAreaImportCommand):
         "is_filterable": True,
         "exclude_countries": ["Scotland"],
         "comparators": DataSet.numerical_comparators(),
-        "unit_type": "point",
-        "unit_distribution": "point",
+        "unit_type": "raw",
+        "unit_distribution": "physical_area",
     }
 
     data_sets = {

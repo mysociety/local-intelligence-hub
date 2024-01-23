@@ -29,6 +29,8 @@ class Command(BaseCommand):
         "comparators": DataSet.numerical_comparators(),
         "default_value": 10,
         "is_shadable": True,
+        "unit_type": "percentage",
+        "unit_distribution": "physical_area",
     }
 
     def add_arguments(self, parser):

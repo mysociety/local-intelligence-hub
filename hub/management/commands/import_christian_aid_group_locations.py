@@ -47,8 +47,8 @@ class Command(BaseAreaImportCommand):
         "default_value": 0,
         "is_filterable": True,
         "comparators": DataSet.numerical_comparators(),
-        "unit_type": "raw",
-        "unit_distribution": "people_in_area",
+        "unit_type": "point",
+        "unit_distribution": "point",
     }
 
     data_sets = {

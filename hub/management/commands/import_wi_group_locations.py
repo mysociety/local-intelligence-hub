@@ -31,6 +31,8 @@ class Command(BaseAreaImportCommand):
         "is_filterable": False,
         "is_shadable": False,
         "comparators": DataSet.comparators_default(),
+        "unit_type": "point",
+        "unit_distribution": "point",
     }
 
     count_defaults = {

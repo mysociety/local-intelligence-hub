@@ -34,6 +34,8 @@ class Command(BaseCommand):
         "default_value": 10,
         "is_filterable": True,
         "is_shadable": True,
+        "unit_type": "percentage",
+        "unit_distribution": "physical_area",
     }
 
     in_files = {
