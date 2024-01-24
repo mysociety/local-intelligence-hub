@@ -32,7 +32,10 @@ class Command(BaseCommand):
         "table": "areadata",
         "comparators": DataSet.numerical_comparators(),
         "default_value": 10,
-        "is_shadable": False,
+        "is_filterable": True,
+        "is_shadable": True,
+        "unit_type": "percentage",
+        "unit_distribution": "physical_area",
     }
 
     in_files = {

@@ -13,6 +13,7 @@ from .base_importers import BaseAreaImportCommand
 class Command(BaseAreaImportCommand):
     help = "Import data about WI groups per constituency"
     data_file = settings.BASE_DIR / "data" / "wi_groups.csv"
+    source_url = "https://www.thewi.org.uk/wis-a-z"
     defaults = {
         "label": "Women’s Institute groups",
         "description": "Descriptions of Women's Institute Groups",
@@ -30,6 +31,8 @@ class Command(BaseAreaImportCommand):
         "is_filterable": False,
         "is_shadable": False,
         "comparators": DataSet.comparators_default(),
+        "unit_type": "point",
+        "unit_distribution": "point",
     }
 
     count_defaults = {

@@ -41,7 +41,7 @@ class Command(BaseLatLongImportCommand):
                 "default_value": 10,
                 "comparators": DataSet.numerical_comparators(),
                 "unit_type": "raw",
-                "unit_distribution": "physical_area",
+                "unit_distribution": "people_in_area",
             },
         )
 

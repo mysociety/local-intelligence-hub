@@ -27,6 +27,8 @@ class Command(BaseConstituencyCountImportCommand):
         "data_url": "https://en.wikipedia.org/wiki/List_of_onshore_wind_farms_in_the_United_Kingdom",
         "table": "areadata",
         "default_value": 10,
+        "is_filterable": True,
+        "is_shadable": True,
         "comparators": DataSet.numerical_comparators(),
         "unit_type": "point",
         "unit_distribution": "point",

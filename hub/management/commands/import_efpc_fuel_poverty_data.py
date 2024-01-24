@@ -10,7 +10,7 @@ from .base_importers import BaseImportFromDataFrameCommand
 class Command(BaseImportFromDataFrameCommand):
     help = "Import data about area fuel poverty from End Fuel Poverty Coalition"
 
-    source_url = "https://www.endfuelpoverty.org.uk/"
+    source_url = "https://www.endfuelpoverty.org.uk/price-cap-methodology/"
     data_file = settings.BASE_DIR / "data" / "efpc_fuel_poverty.xlsx"
     cons_row = "Parliamentary Constituency Code"
     uses_gss = True

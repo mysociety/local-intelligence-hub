@@ -28,6 +28,7 @@ class Command(BaseImportFromDataFrameCommand):
     help = "Import polling data about support for renewables"
     message = "Importing polling data about support for renewables"
     data_url = "https://cdn.survation.com/wp-content/uploads/2022/09/06213145/RenewableUK-MRP-Constituency-Topline-.xlsx"
+    source_url = "https://www.survation.com/polling-in-every-constituency-in-britain-shows-strong-support-for-building-wind-farms-to-drive-down-consumer-bills/ "
     data_file = settings.BASE_DIR / "data" / "renewables_polling.csv"
 
     cons_row = "gss"

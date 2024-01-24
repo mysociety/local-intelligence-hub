@@ -9,6 +9,7 @@ class Command(BaseConstituencyCountImportCommand):
     help = "Import data about number of foodbanks of per constituency"
 
     message = "importing consituency foodbank count"
+    source_url = "https://www.trusselltrust.org/get-help/find-a-foodbank/"
     uses_gss = True
     cons_col = "gss"
     data_file = settings.BASE_DIR / "data" / "foodbanks_per_constituency.csv"

@@ -28,8 +28,8 @@ class Command(BaseConstituencyCountImportCommand):
         "default_value": 10,
         "exclude_countries": ["Northern Ireland"],
         "comparators": DataSet.numerical_comparators(),
-        "unit_type": "point",
-        "unit_distribution": "point",
+        "unit_type": "raw",
+        "unit_distribution": "people_in_area",
     }
 
     data_sets = {

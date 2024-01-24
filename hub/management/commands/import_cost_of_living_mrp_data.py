@@ -6,7 +6,6 @@ from .base_importers import BaseImportFromDataFrameCommand
 
 
 class Command(BaseImportFromDataFrameCommand):
-
     help = "Import Cost of Living polling data"
     message = "Importing Cost of Living polling data"
 
