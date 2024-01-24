@@ -1,4 +1,5 @@
 {
+  "name": "lih",
   "devDependencies": {
     "esbuild": "0.19.11"
   },
