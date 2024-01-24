@@ -340,6 +340,9 @@ class AreaSearchView(TemplateView):
         lon = self.request.GET.get("lon")
         lat = self.request.GET.get("lat")
 
+        if search is None and lat is None and lon is None:
+            return context
+
         context["search"] = search
 
         if lon and lat:
