@@ -40,6 +40,20 @@ function updateUI() {
     })
 }
 
+async function toggleFavourite($form) {
+    const response = await fetch($form.attr('action'), {
+        method: $form.attr('method') || 'GET',
+        mode: 'cors',
+        credentials: 'same-origin',
+        body: $form.serialize(),
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": 'application/json; charset=utf-8',
+        },
+    })
+    return response.json()
+}
+
 function setUpAreaPage() {
     // The page URL without any hash fragment
     let pageUrl = window.location.href.split('#')[0]
@@ -66,14 +80,7 @@ function setUpAreaPage() {
     $('.js-favourite-this-dataset, .js-unfavourite-this-dataset').on('submit', function(e){
         e.preventDefault();
         var $form = $(this);
-        // XXX Needs changing to use fetch() or similar
-        $.ajax({
-            url: $form.attr('action'),
-            type: $form.attr('method') || 'get',
-            data: $form.serialize(),
-            accepts: 'application/json; charset=utf-8',
-            dataType: 'json'
-        }).done(function(){
+        toggleFavourite($form).then(function(){
             $form.parents('.dataset-card').toggleClass('dataset-card--favourite');
         });
     });
