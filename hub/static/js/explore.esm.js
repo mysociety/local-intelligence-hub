@@ -1,6 +1,4 @@
 import { Modal } from 'bootstrap'
-import "bootstrap/js/dist/collapse"
-import "bootstrap/js/dist/tab"
 import { createApp } from 'vue/dist/vue.esm-bundler.js'
 import { Map } from 'leaflet/src/map'
 import { TileLayer } from 'leaflet/src/layer/tile'
