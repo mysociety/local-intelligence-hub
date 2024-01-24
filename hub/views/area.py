@@ -55,14 +55,13 @@ class BaseAreaView(TitleMixin, DetailView):
             UserDataSets.objects.filter(
                 user=self.request.user,
             )
-            .values("data_set_id")
             .annotate(is_favourite=Count("id"))
-            .values("is_favourite")
+            .values("data_set_id", "is_favourite")
         )
 
         fav_map = {}
         for fav in favs:
-            fav_map["fav.data_set_id"] = fav["is_favourite"]
+            fav_map[fav["data_set_id"]] = fav["is_favourite"]
 
         return fav_map
 

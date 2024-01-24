@@ -47,7 +47,7 @@ async function toggleFavourite($form) {
         credentials: 'same-origin',
         body: $form.serialize(),
         headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": 'application/x-www-form-urlencoded',
             "Accept": 'application/json; charset=utf-8',
         },
     })
