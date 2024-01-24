@@ -1,0 +1,28 @@
+.site-feedback {
+    border-top: 1px solid $border-color;
+    padding: 1.5rem 0;
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        @include media-breakpoint-up('md') {
+            flex-direction: row;
+        }
+
+        @include media-breakpoint-up('lg') {
+            gap: 1rem;
+        }
+    }
+
+    h2 {
+        margin-bottom: 0;
+        font-size: 1em;
+        line-height: inherit;
+    }
+
+    p {
+        margin-bottom: 0;
+    }
+}

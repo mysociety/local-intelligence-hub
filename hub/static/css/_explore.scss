@@ -4,6 +4,13 @@ $osm-sea-blue: rgb(168, 212, 243);
     display: none !important;
 }
 
+@include media-breakpoint-up('md') {
+    .page-explore .site-footer,
+    .page-explore .site-feedback {
+        display: none !important;
+    }
+}
+
 .explore-filters {
     overflow: auto;
     border-bottom: 1px solid $border-color;
