@@ -5,6 +5,8 @@ from collections import defaultdict
 from operator import itemgetter
 
 from django.http import HttpResponse, JsonResponse
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_control
 from django.views.generic import TemplateView
 
 from hub.mixins import FilterMixin, TitleMixin
@@ -180,6 +182,18 @@ class ExploreGeometryJSON(FilterMixin, TemplateView):
                 "properties": colours.get("properties", None),
             }
         )
+
+
+@method_decorator(cache_control(max_age=604800), name="dispatch")  # cache for a week
+class ExploreGeometryCachedJSON(ExploreGeometryJSON):
+    """serve a cache-control version of the json area geometry
+
+    This is here entirely to allow using a second path with the area type
+    as a slug in the URL rather than as a query param and hence to make
+    caching a bit clearer.
+    """
+
+    pass
 
 
 class ExploreJSON(FilterMixin, TemplateView):

@@ -121,7 +121,10 @@ class FilterMixin:
 
     @cache
     def area_type(self):
-        code = self.request.GET.get("area_type", "WMC")
+        if self.kwargs.get("area_type", None) is not None:
+            code = self.kwargs["area_type"]
+        else:
+            code = self.request.GET.get("area_type", "WMC")
         try:
             area_type = AreaType.objects.get(code=code)
         except AreaType.DoesNotExist:

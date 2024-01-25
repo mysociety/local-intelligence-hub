@@ -36,6 +36,11 @@ urlpatterns = [
         explore.ExploreGeometryJSON.as_view(),
         name="exploregeometry_json",
     ),
+    path(
+        "exploregeometry/<str:area_type>.json",
+        explore.ExploreGeometryCachedJSON.as_view(),
+        name="exploregeometry_cached_json",
+    ),
     path("explore.json", explore.ExploreJSON.as_view(), name="explore_json"),
     path("explore.csv", explore.ExploreCSV.as_view(), name="explore_csv"),
     path("area/<str:area_type>/<str:name>", area.AreaView.as_view(), name="area"),
