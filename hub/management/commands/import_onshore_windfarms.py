@@ -17,7 +17,6 @@ class Command(BaseConstituencyCountImportCommand):
 
     defaults = {
         "label": "Number of onshore windfarms",
-        "description": "Number of onshore windfarms",
         "data_type": "integer",
         "category": "place",
         "release_date": str(date.today()),

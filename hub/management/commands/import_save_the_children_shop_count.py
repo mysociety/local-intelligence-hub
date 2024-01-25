@@ -15,7 +15,6 @@ class Command(BaseConstituencyCountImportCommand):
 
     defaults = {
         "label": "Number of Save the Children shops",
-        "description": "Number of Save the Children shops",
         "data_type": "integer",
         "category": "movement",
         "subcategory": "places_and_spaces",

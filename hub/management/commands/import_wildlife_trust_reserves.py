@@ -15,7 +15,6 @@ class Command(BaseAreaImportCommand):
     data_file = settings.BASE_DIR / "data" / "wildlife_trust_reserves.csv"
     defaults = {
         "label": "Wildlife Trusts Reserves",
-        "description": "Names of Wildlife Trusts reserves in each constituency.",
         "data_type": "json",
         "category": "movement",
         "subcategory": "groups",
@@ -33,7 +32,6 @@ class Command(BaseAreaImportCommand):
 
     count_defaults = {
         "label": "Number of Wildlife Trusts Reserves",
-        "description": "Number of Wildlife Trusts reserves in each constituency.",
         "data_type": "integer",
         "category": "place",
         "release_date": str(date.today()),

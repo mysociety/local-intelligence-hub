@@ -15,7 +15,6 @@ class Command(BaseConstituencyCountImportCommand):
 
     defaults = {
         "label": "Churches that have declared a climate emergency",
-        "description": "Number of churches that have declared a climate emergency",
         "data_type": "integer",
         "category": "movement",
         "subcategory": "places_and_spaces",

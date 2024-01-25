@@ -28,7 +28,6 @@ class Command(BaseLatLongImportCommand):
             name="constituency_gbgw_2023_event_count",
             defaults={
                 "label": "Number of Great Big Green Week 2023 events",
-                "description": "Number of Great Big Green Week 2023 events per constituency.",
                 "release_date": "July 2023",
                 "data_type": "integer",
                 "category": "movement",
@@ -51,7 +50,6 @@ class Command(BaseLatLongImportCommand):
             defaults={
                 "data_type": "integer",
                 "label": "Number of Great Big Green Week 2023 events",
-                "description": "Number of Great Big Green Week 2023 events per constituency.",
             },
         )
 

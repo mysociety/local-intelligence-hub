@@ -14,7 +14,6 @@ class Command(BaseAreaImportCommand):
     source_url = "https://www.nationaltrust.org.uk/search"
     defaults = {
         "label": "National Trust properties",
-        "description": "Names of National Trust properties",
         "data_type": "json",
         "category": "movement",
         "release_date": "March 2023",
@@ -34,7 +33,6 @@ class Command(BaseAreaImportCommand):
 
     count_defaults = {
         "label": "Number of National Trust properties",
-        "description": "Number of National Trust properties",
         "data_type": "integer",
         "release_date": "March 2023",
         "category": "movement",

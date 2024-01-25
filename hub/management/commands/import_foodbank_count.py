@@ -16,7 +16,6 @@ class Command(BaseConstituencyCountImportCommand):
 
     defaults = {
         "label": "Number of Trussell Trust foodbanks",
-        "description": "Number of Trussell Trust foodbanks per constituency.",
         "data_type": "integer",
         "category": "movement",
         "release_date": "December 2022",

@@ -22,7 +22,7 @@ class Command(BaseImportFromDataFrameCommand):
                 "description": "Percentage of constituents who voted to leave the EU in the 2016 referendum",
                 "data_type": "percent",
                 "category": "opinion",
-                "source_label": "UK Parliament",
+                "source_label": "Data from UK Parliament.",
                 "source": "https://commonslibrary.parliament.uk/brexit-votes-by-constituency/",
                 "source_type": "xlxs",
                 "table": "areadata",

@@ -36,7 +36,6 @@ class Command(BaseCommand):
             name="net_zero_target",
             defaults={
                 "data_type": "string",
-                "description": "MP signed The Climate Coalition’s 2019 Net Zero Target joint letter",
                 "label": "MP signed The Climate Coalition’s 2019 Net Zero Target joint letter",
                 "source_label": "Data from The Climate Coalition.",
                 "release_date": "June 2019",
@@ -58,7 +57,6 @@ class Command(BaseCommand):
             name="onshore_wind_energy",
             defaults={
                 "data_type": "string",
-                "description": "MP signed Possible’s Onshore Wind Energy open letter",
                 "label": "MP signed Possible’s 2019 Onshore Wind Energy open letter",
                 "source_label": "Data from Possible.",
                 "release_date": "October 2019",

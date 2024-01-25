@@ -16,7 +16,6 @@ class Command(BaseAreaImportCommand):
     source_url = "https://www.thewi.org.uk/wis-a-z"
     defaults = {
         "label": "Women’s Institute groups",
-        "description": "Descriptions of Women's Institute Groups",
         "data_type": "json",
         "category": "movement",
         "subcategory": "groups",
@@ -37,7 +36,6 @@ class Command(BaseAreaImportCommand):
 
     count_defaults = {
         "label": "Number of Women’s Institute groups",
-        "description": "Number of Women's Institute Groups",
         "data_type": "integer",
         "category": "movement",
         "release_date": str(date.today()),

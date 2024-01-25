@@ -17,10 +17,9 @@ class Command(BaseImportFromDataFrameCommand):
 
     defaults = {
         "label": "Red or Blue Wall constituency",
-        "description": "Data from Political Insight (Red Wall), and the Financial Times (Blue Wall), collated by Green Alliance.",
         "category": "place",
         "release_date": "February 2023",
-        "source_label": "Green Alliance",
+        "source_label": "Data from Political Insight (Red Wall), and the Financial Times (Blue Wall), collated by Green Alliance.",
         "source": "https://green-alliance.org.uk/",
         "source_type": "google sheet",
         "table": "areadata",

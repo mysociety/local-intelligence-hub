@@ -21,7 +21,6 @@ class Command(BaseImportFromDataFrameCommand):
 
     defaults = {
         "label": "Number of Save the Children supporters",
-        "description": "The number of Save The Children supporters per constituency.",
         "data_type": "integer",
         "category": "movement",
         "subcategory": "supporters_and_activists",

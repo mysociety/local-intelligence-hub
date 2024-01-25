@@ -24,7 +24,6 @@ class Command(BaseCommand):
 
         defaults = {
             "label": "Constituency age distribution",
-            "description": "Distribution of the ages of the constituents of each constituency.",
             "data_type": "percent",
             "category": "place",
             "release_date": "2021",

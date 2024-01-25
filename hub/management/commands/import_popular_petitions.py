@@ -21,7 +21,6 @@ class Command(BaseAreaImportCommand):
                 "source_label": "Data from UK Government and Parliament Petitions.",
                 "release_date": str(date.today()),
                 "name": "constituency_popular_petitions",
-                "description": "Popular petitions",
                 "label": "Popular petitions",
                 "data_type": "json",
                 "category": "place",

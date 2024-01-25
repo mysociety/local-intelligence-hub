@@ -16,7 +16,7 @@ class Command(BaseCommand):
 
     defaults = {
         "label": "Flood risk from rivers or sea",
-        "description": "Data relating to risk of flooding from rivers or sea across the UK, aggregated by constituency.",
+        "description": "Proportion of this constituency at High, Medium, Low, or Very Low risk of flooding.",
         "release_date": "2018",
         "data_type": "percent",
         "category": "place",

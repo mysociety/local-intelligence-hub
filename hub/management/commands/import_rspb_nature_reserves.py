@@ -13,7 +13,6 @@ class Command(BaseAreaImportCommand):
     data_file = settings.BASE_DIR / "data" / "rspb_reserves.csv"
     defaults = {
         "label": "RSPB Reserves",
-        "description": "Names of RSPB reserves in each constituency.",
         "data_type": "json",
         "category": "movement",
         "subcategory": "groups",
@@ -32,7 +31,6 @@ class Command(BaseAreaImportCommand):
 
     count_defaults = {
         "label": "Number of RSPB Reserves",
-        "description": "Number of RSPB reserves in each constituency.",
         "data_type": "integer",
         "category": "place",
         "release_date": "September 2023",

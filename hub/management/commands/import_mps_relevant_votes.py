@@ -193,7 +193,7 @@ class Command(BaseCommand):
                         "description": descriptions[edm_machine_name],
                         "label": f"MP support for {edm['edm_name']}",
                         "release_date": release_dates[edm_machine_name],
-                        "source_label": "UK Parliament",
+                        "source_label": "Data from UK Parliament.",
                         "source": "https://parliament.uk/",
                         "table": "person__persondata",
                         "options": edm_options,

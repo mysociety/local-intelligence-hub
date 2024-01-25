@@ -25,7 +25,6 @@ class Command(BaseImportFromDataFrameCommand):
         "data_type": "integer",
         "category": "movement",
         "subcategory": "supporters_and_activists",
-        "description": "Campaign organisers are constituents trained by Christian Aid to campaign for climate justice in their local church and community.",
         "release_date": "February 2023",
         "source_label": "Data from Christian Aid.",
         "source": "https://www.christianaid.org.uk/",

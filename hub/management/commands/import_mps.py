@@ -102,7 +102,6 @@ class Command(BaseCommand):
         for data_type, props in tqdm(type_names.items(), disable=self._quiet):
             defaults = {
                 "data_type": "profile_id",
-                "description": props["label"],
                 "label": props["label"],
                 "release_date": str(date.today()),
                 "source": "https://en.wikipedia.org/",

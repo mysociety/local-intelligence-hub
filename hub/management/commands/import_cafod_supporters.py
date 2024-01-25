@@ -47,7 +47,6 @@ class Command(BaseImportFromDataFrameCommand):
                 {
                     "subcategory": "supporters_and_activists",
                     "default_value": 10,
-                    "description": "Number of CAFOD activists per constituency.",
                 },
             ),
             "col": "activists",
@@ -58,7 +57,6 @@ class Command(BaseImportFromDataFrameCommand):
                 {
                     "subcategory": "places_and_spaces",
                     "default_value": 5,
-                    "description": "Number of CAFOD parishes per constituency.",
                 },
             ),
             "col": "parishes",
@@ -69,7 +67,6 @@ class Command(BaseImportFromDataFrameCommand):
                 {
                     "subcategory": "places_and_spaces",
                     "default_value": 5,
-                    "description": "Number of CAFOD schools per constituency.",
                 },
             ),
             "col": "schools",
