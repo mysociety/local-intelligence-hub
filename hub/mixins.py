@@ -248,10 +248,11 @@ class FilterMixin:
 
     def shader(self):
         name = self.request.GET.get("shader")
+        area_type = self.area_type()
         try:
-            return DataSet.objects.get(name=name, areas_available=self.area_type())
+            return DataSet.objects.get(name=name, areas_available=area_type)
         except DataSet.DoesNotExist:
             try:
-                return DataType.objects.get(name=name)
+                return DataType.objects.get(name=name, area_type=area_type)
             except DataType.DoesNotExist:
                 return None
