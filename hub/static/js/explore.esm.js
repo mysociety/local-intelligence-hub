@@ -116,7 +116,9 @@ const app = createApp({
         .then((datasets) => {
           datasets.forEach(function(d) {
             if ("stats" in d && area_type in d["stats"]) {
-              d["defaultValue"] = d["stats"][area_type]["defaultValue"]
+              if (d["stats"][area_type]["defaultValue"]) {
+                d["defaultValue"] = d["stats"][area_type]["defaultValue"]
+              }
               d["stats"] = d["stats"][area_type]
             }
           })
@@ -295,7 +297,7 @@ const app = createApp({
     },
     filtersValid() {
       return this.filters.every(function(filter){
-        return filter.selectedValue !== "";
+        return filter.selectedValue !== "" && filter.selectedValue !== null;
       });
     },
     geomUrl() {

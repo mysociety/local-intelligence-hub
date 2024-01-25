@@ -28,7 +28,7 @@ class FilterMixin:
         area_type = self.area_type()
         for param, value in self.request.GET.items():
             # we don't filter on blank values so skip them
-            if value == "":
+            if value == "" or value == "null":
                 continue
 
             if "__" in param and param not in ["shader", "columns"]:

@@ -56,11 +56,11 @@
                                 <option v-for="option in filter.options" :value="option">${ option }</option>
                             </select>
                             <div v-else-if="filter.data_type == 'percent'" class="input-group flex-grow-1 flex-shrink-1">
-                                <input type="text" inputmode="numeric" pattern="[0-9]*" v-model="filter.selectedValue" class="form-control form-control-sm text-end">
+                                <input type="text" inputmode="numeric" pattern="[0-9]*" v-model="filter.selectedValue" class="form-control form-control-sm text-end" :class="{ 'is-invalid': filter.selectedValue === '' || filter.selectedValue == null }">
                                 <span class="input-group-text lh-1">%</span>
                             </div>
-                            <input v-else-if="filter.data_type == 'integer'" type="text" inputmode="numeric" pattern="[0-9]*" v-model="filter.selectedValue" class="form-control form-control-sm flex-grow-1 flex-shrink-1">
-                            <input v-else type="text" v-model="filter.selectedValue" class="form-control form-control-sm flex-grow-1 flex-shrink-1">
+                            <input v-else-if="filter.data_type == 'integer'" type="text" inputmode="numeric" pattern="[0-9]*" v-model="filter.selectedValue" class="form-control form-control-sm flex-grow-1 flex-shrink-1" :class="{ 'is-invalid': filter.selectedValue === '' || filter.selectedValue == null }">
+                            <input v-else type="text" v-model="filter.selectedValue" class="form-control form-control-sm flex-grow-1 flex-shrink-1" :class="{ 'is-invalid': filter.selectedValue === '' || filter.selectedValue == null }">
                             <p v-if="filter.is_in" class="flex-grow-1 text-muted mb-0 mt-2 text-center fs-8">Tip: Ctrl-click (PC) or Cmd-click (Mac) to select multiple items</p>
                         </div>
                         <details class="mt-3">
