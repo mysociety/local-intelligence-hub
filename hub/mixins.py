@@ -36,7 +36,7 @@ class FilterMixin:
             else:  # pragma: nocover
                 continue
 
-            if "_in" in param:
+            if "__in" in param:
                 value = value.split(",")
 
             try:
