@@ -301,10 +301,10 @@ const app = createApp({
       });
     },
     geomUrl() {
-      const url = new URL(window.location.origin + '/exploregeometry.json')
+      let url = new URL(window.location.origin + '/exploregeometry.json')
 
-      if ('area_type' in this.state()) {
-        url.searchParams.set('area_type', this.state()['area_type'])
+      if (["WMC", "WMC23"].includes(this.area_type)) {
+        url = new URL(window.location.origin + '/exploregeometry/' + this.area_type + '.json')
       }
 
       return url
