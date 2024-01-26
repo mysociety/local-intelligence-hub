@@ -1,0 +1,4 @@
+// Remove extra space below checkboxes on accounts page
+.table td:first-child .form-check {
+    margin-bottom: 0;
+}
