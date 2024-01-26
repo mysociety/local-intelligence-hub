@@ -23,6 +23,7 @@
                         <th scope="col">Email</th>
                         <th scope="col">Name</th>
                         <th scope="col">Organisation</th>
+                        <th scope="col">Requested</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -40,6 +41,9 @@
                         </td>
                         <td>
                             {{ user_form.instance.userproperties.organisation_name }}
+                        </td>
+                        <td>
+                            {{ user_form.instance.date_joined|date:"jS F" }}
                         </td>
                     </tr>
                   {% endfor %}
