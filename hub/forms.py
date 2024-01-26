@@ -122,7 +122,7 @@ class BaseActivateUserFormSet(BaseModelFormSet):
             is_active=False,
             userproperties__email_confirmed=True,
             userproperties__account_confirmed=False,
-        )
+        ).order_by("date_joined")
 
 
 ActivateUserFormSet = modelformset_factory(
