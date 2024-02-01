@@ -203,6 +203,11 @@ class AreaView(BaseAreaView):
                 for item in data.filter(data_type__name="mp_appg_memberships")
             ]
 
+            bill_map = {
+                "1372": "2022-10-19b.799.3",
+                "1116": "2021-10-20c.869.2",
+            }
+
             votes = data.filter(data_type__data_set__subcategory="vote")
             if is_non_member:
                 votes = votes.exclude(data_type__data_set__is_public=False)
@@ -210,7 +215,7 @@ class AreaView(BaseAreaView):
                 {
                     "name": item.data_type.data_set.label,
                     "vote": item.value(),
-                    "url": f"https://votes.parliament.uk/Votes/Commons/Division/{item.data_type.name.split('_')[0]}",
+                    "url": f"https://www.theyworkforyou.com/debates/?id={bill_map[item.data_type.name.split('_')[0]]}",
                 }
                 for item in votes
             ]
