@@ -43,8 +43,9 @@ class DataSetDataTypeInline(admin.StackedInline):
 @admin.register(DataSet)
 class DataSetAdmin(admin.ModelAdmin):
     list_display = (
-        "__str__",
+        "label",
         "description",
+        "source_label",
         "category",
         "order",
         "featured",
@@ -52,8 +53,8 @@ class DataSetAdmin(admin.ModelAdmin):
     )
     list_editable = ("order", "featured", "is_public")
     list_filter = ("category", "featured", "data_type", "is_public")
-    ordering = ("order", "name")
-    search_fields = ["name", "description", "source"]
+    ordering = ("category", "order", "label")
+    search_fields = ["name", "label", "description", "source", "source_label"]
 
     inlines = [
         DataSetDataTypeInline,
