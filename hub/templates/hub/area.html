@@ -11,7 +11,7 @@
     <div class="container">
         <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
             <div>
-                <h1 class="mb-2">{{ area.name }}</h1>
+                <h1 class="mb-2" id="area_name">{{ area.name }}</h1>
                 {% if area_type == "WMC" %}
                 <p class="mb-0 text-muted">Current parliamentary constituency</p>
                 {% elif area_type == "WMC23" %}
@@ -114,7 +114,13 @@
 
         <section class="mb-5 mb-lg-6 area-section" id="mp">
             {% if area_type == "WMC" %}
-            <h2 class="mb-3 text-primary">MP</h2>
+            <div class="mb-3 d-sm-flex align-items-center">
+                <h2 class="mb-2 mb-sm-0 me-auto text-primary">MP</h2>
+                <a href="https://www.writetothem.com" target="_blank" title="Opens in a new window" class="d-flex align-items-center js-email-your-mp">
+                    Email your MP about this data
+                    {% include 'hub/includes/icons/external-link.html' with classes="ms-2" %}
+                </a>
+            </div>
             <div class="area-data-grid">
 
                 <div class="card dataset-card area-data--sm area-data--featured">
@@ -124,7 +130,7 @@
                                 {% include 'hub/includes/person-photo.html' with person=mp.person %}
                             </div>
                             <div class="flex-grow-1 ms-3">
-                                <h3 class="h4 mb-0 text-primary">{{ mp.person.name }}</h3>
+                                <h3 class="h4 mb-0 text-primary" id="mp_name">{{ mp.person.name }}</h3>
                             {% if mp.party %}
                                 <p class="mb-0 text-muted">{{ mp.party }}</p>
                             {% endif %}
