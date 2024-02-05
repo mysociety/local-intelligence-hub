@@ -95,6 +95,17 @@ $(function(){
             });
         }
     })
+
+    $('.js-email-your-mp').on('click', function(e){
+        e.preventDefault()
+        let href = $(this).attr('href')
+        trackEvent('email_your_mp', {
+            area_name: $('#area_name').text(),
+            area_mp_name: $('#mp_name').text()
+        }).always(function(){
+            window.location.href = href
+        })
+    })
 })
 
 var makeChart = function() {
