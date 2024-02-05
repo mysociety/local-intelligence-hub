@@ -239,7 +239,12 @@
                         </table>
                    </div>
                    <div class="card-footer">
-                       <p class="card-text">Data from UK Parliament.</p>
+                       <p class="card-text">
+                          Data from UK Parliament.
+                        {% if mp.twfyid %}
+                          <a href="https://www.theyworkforyou.com/mp/{{ mp.twfyid }}">See this MP’s full voting record on TheyWorkForYou.</a>
+                        {% endif %}
+                        </p>
                    </div>
                 </div>
 
