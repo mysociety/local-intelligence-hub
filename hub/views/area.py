@@ -266,6 +266,7 @@ class AreaView(BaseAreaView):
             "constituency_nt_properties_count": "constituency_nt_properties",
             "constituency_wi_group_count": "constituency_wi_groups",
             "power_postcodes_count": "power_postcodes",
+            "tcc_open_letter_signatories_count": "tcc_open_letter_signatories",
         }
 
         context["is_related_category"] = context["related_categories"].values()
