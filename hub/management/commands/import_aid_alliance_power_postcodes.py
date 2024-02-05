@@ -2,12 +2,12 @@ from django.conf import settings
 
 import pandas as pd
 
-from hub.models import Area, AreaData, DataSet
+from hub.models import Area, DataSet
 
-from .base_importers import BaseAreaImportCommand
+from .base_importers import BaseConstituencyGroupListImportCommand
 
 
-class Command(BaseAreaImportCommand):
+class Command(BaseConstituencyGroupListImportCommand):
     help = "Import Aid Alliance 'Power Postcode' data"
 
     message = "importing Aid Alliance 'power postcode' data"
@@ -32,6 +32,8 @@ class Command(BaseAreaImportCommand):
         "comparators": DataSet.comparators_default(),
         "is_filterable": False,
         "is_shadable": False,
+        "unit_type": "point",
+        "unit_distribution": "point",
     }
 
     power_postcode_counts = {
@@ -50,8 +52,8 @@ class Command(BaseAreaImportCommand):
         "comparators": DataSet.numerical_comparators(),
         "is_shadable": True,
         "is_filterable": True,
-        "unit_type": "point",
-        "unit_distribution": "point",
+        "unit_type": "raw",
+        "unit_distribution": "physical_area",
     }
 
     data_sets = {
@@ -63,6 +65,9 @@ class Command(BaseAreaImportCommand):
         },
     }
 
+    group_data_type = "power_postcodes"
+    count_data_type = "power_postcodes_count"
+
     def add_area(self, gss):
         if isinstance(gss, str):
             areas = Area.objects.filter(gss__in=gss.split(","))
@@ -70,10 +75,7 @@ class Command(BaseAreaImportCommand):
                 return areas[0].name
         return None
 
-    def process_data(self):
-        if not self._quiet:
-            self.stdout.write(self.message)
-
+    def get_df(self):
         df = pd.read_csv(self.data_file)
         df.columns = [
             "group_name",
@@ -84,43 +86,13 @@ class Command(BaseAreaImportCommand):
             "gss",
         ]
         # Add Areas to df
-        df["area"] = df.gss.apply(self.add_area)
+        df["constituency"] = df.gss.apply(self.add_area)
 
-        # Group by the area, and add the data from there
-        for area_name, data in df.groupby("area"):
-            try:
-                area = Area.objects.get(name=area_name, area_type__code="WMC")
-            except Area.DoesNotExist:
-                continue
+        return df
 
-            json = []
-            for index, row in data.iterrows():
-                json.append(
-                    row[["group_name", "community_organiser", "contact", "url"]]
-                    .dropna()
-                    .to_dict()
-                )
-            json_data, created = AreaData.objects.update_or_create(
-                data_type=self.data_types["power_postcodes"],
-                area=area,
-                json=json,
-            )
-            count_data, created = AreaData.objects.update_or_create(
-                data_type=self.data_types["power_postcodes_count"],
-                area=area,
-                data=len(data),
-            )
-
-    def delete_data(self):
-        for data_type in self.data_types.values():
-            AreaData.objects.filter(data_type=data_type).delete()
-
-    def handle(self, quiet=False, *args, **kwargs):
-        self._quiet = quiet
-        self.add_data_sets()
-        self.delete_data()
-        self.process_data()
-
-        del self.data_types["power_postcodes"]
-        self.update_averages()
-        self.update_max_min()
+    def get_group_json(self, row):
+        return (
+            row[["group_name", "community_organiser", "contact", "url"]]
+            .dropna()
+            .to_dict()
+        )

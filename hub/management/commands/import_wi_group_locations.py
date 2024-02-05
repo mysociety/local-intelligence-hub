@@ -3,15 +3,16 @@ from datetime import date
 from django.conf import settings
 
 import pandas as pd
-from tqdm import tqdm
 
-from hub.models import Area, AreaData, DataSet
+from hub.models import DataSet
 
-from .base_importers import BaseAreaImportCommand
+from .base_importers import BaseConstituencyGroupListImportCommand
 
 
-class Command(BaseAreaImportCommand):
+class Command(BaseConstituencyGroupListImportCommand):
     help = "Import data about WI groups per constituency"
+    message = "Importing Women's Institute group data"
+
     data_file = settings.BASE_DIR / "data" / "wi_groups.csv"
     source_url = "https://www.thewi.org.uk/wis-a-z"
     defaults = {
@@ -61,52 +62,16 @@ class Command(BaseAreaImportCommand):
         },
     }
 
-    def delete_data(self):
-        for data_type in self.data_types.values():
-            AreaData.objects.filter(data_type=data_type).delete()
+    group_data_type = "constituency_wi_groups"
+    count_data_type = "constituency_wi_group_count"
 
-    def handle(self, quiet=False, *args, **kwargs):
-        self._quiet = quiet
-        self.add_data_sets()
-        self.delete_data()
-        self.process_data()
-        self.update_averages()
-        self.update_max_min()
-
-    def process_data(self):
+    def get_df(self):
         df = pd.read_csv(self.data_file)
         df.group_name = df.group_name.apply(
             lambda x: x.split(" | ")[0] if isinstance(x, str) else x
         )
+        df.columns = ["group_name", "url", "lat_lon", "constituency"]
+        return df
 
-        if not self._quiet:
-            self.stdout.write("Importing women's institute group data")
-
-        # Group by the area, and add the data from there
-        area_type = self.get_area_type()
-        for area_name, data in tqdm(df.groupby("area")):
-            try:
-                area = Area.objects.get(name=area_name, area_type=area_type)
-            except Area.DoesNotExist:
-                continue
-
-            json = []
-            for index, row in data.iterrows():
-                json.append(row[["group_name", "url"]].dropna().to_dict())
-
-            json_data, created = AreaData.objects.update_or_create(
-                data_type=self.data_types["constituency_wi_groups"],
-                area=area,
-                json=json,
-            )
-
-            count_data, creared = AreaData.objects.update_or_create(
-                data_type=self.data_types["constituency_wi_group_count"],
-                area=area,
-                data=len(data),
-            )
-
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )
+    def get_group_json(self, row):
+        return row[["group_name", "url"]].dropna().to_dict()

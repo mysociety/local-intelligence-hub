@@ -3,15 +3,16 @@ from datetime import date
 from django.conf import settings
 
 import pandas as pd
-from tqdm import tqdm
 
-from hub.models import Area, AreaData, AreaType, DataSet
+from hub.models import DataSet
 
-from .base_importers import BaseAreaImportCommand
+from .base_importers import BaseConstituencyGroupListImportCommand
 
 
-class Command(BaseAreaImportCommand):
+class Command(BaseConstituencyGroupListImportCommand):
     help = "Import data about wildlife trust reserves in each constituency"
+    message = "Importing wildlife trusts reserves data"
+
     data_file = settings.BASE_DIR / "data" / "wildlife_trust_reserves.csv"
     defaults = {
         "label": "Wildlife Trusts Reserves",
@@ -28,6 +29,8 @@ class Command(BaseAreaImportCommand):
         "is_filterable": False,
         "is_shadable": False,
         "comparators": DataSet.comparators_default(),
+        "unit_type": "point",
+        "unit_distribution": "point",
     }
 
     count_defaults = {
@@ -44,6 +47,8 @@ class Command(BaseAreaImportCommand):
         "is_filterable": True,
         "is_shadable": True,
         "comparators": DataSet.numerical_comparators(),
+        "unit_type": "raw",
+        "unit_distribution": "physical_area",
     }
 
     data_sets = {
@@ -55,50 +60,14 @@ class Command(BaseAreaImportCommand):
         },
     }
 
-    def handle(self, quiet=False, *args, **kwargs):
-        self._quiet = quiet
-        self.add_data_sets()
-        self.delete_data()
-        self.process_data()
-        self.update_max_min()
+    group_data_type = "wildlife_trusts_reserves"
+    count_data_type = "wildlife_trusts_reserves_count"
+    use_gss = True
 
-    def process_data(self):
-        df = pd.read_csv(self.data_file)
-
-        if not self._quiet:
-            self.stdout.write("Importing wildlife trusts reserves data")
-
-        # Group by the area, and add the data from there
-        for gss, data in tqdm(df.groupby("gss")):
-            try:
-                area = Area.objects.filter(
-                    area_type=AreaType.objects.get(code="WMC")
-                ).get(gss=gss)
-            except Area.DoesNotExist:
-                continue
-
-            json = []
-            for index, row in data.iterrows():
-                json.append(
-                    row[["title", "url"]]
-                    .rename({"title": "group_name"})
-                    .dropna()
-                    .to_dict()
-                )
-
-            json_data, created = AreaData.objects.update_or_create(
-                data_type=self.data_types["wildlife_trusts_reserves"],
-                area=area,
-                json=json,
-            )
-
-            count_data, created = AreaData.objects.update_or_create(
-                data_type=self.data_types["wildlife_trusts_reserves_count"],
-                area=area,
-                data=len(data),
-            )
-
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
+    def get_df(self):
+        return pd.read_csv(
+            self.data_file, names=["group_name", "trust", "url", "postcode", "gss"]
         )
+
+    def get_group_json(self, row):
+        return row[["group_name", "url"]].dropna().to_dict()

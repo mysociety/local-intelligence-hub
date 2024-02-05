@@ -270,6 +270,54 @@ class BaseLatLongImportCommand(BaseAreaImportCommand):
             self._process_lat_long(lat=lat, lon=lon, row_name=row_name)
 
 
+class BaseConstituencyGroupListImportCommand(BaseAreaImportCommand):
+    use_gss = False
+
+    def process_data(self):
+        df = self.get_df()
+
+        if not self._quiet:
+            self.stdout.write(self.message)
+
+        group_by = "constituency"
+        if self.use_gss:
+            group_by = "gss"
+
+        for lookup, data in tqdm(df.groupby(group_by)):
+            try:
+                area = Area.objects.filter(area_type__code=self.area_type)
+                if self.use_gss:
+                    area = area.get(gss=lookup)
+                else:
+                    area = area.get(name=lookup)
+            except Area.DoesNotExist:
+                continue
+
+            json = []
+            for index, row in data.iterrows():
+                json.append(self.get_group_json(row))
+
+            json_data, created = AreaData.objects.update_or_create(
+                data_type=self.data_types[self.group_data_type],
+                area=area,
+                json=json,
+            )
+
+            count_data, created = AreaData.objects.update_or_create(
+                data_type=self.data_types[self.count_data_type],
+                area=area,
+                data=len(data),
+            )
+
+    def handle(self, quiet=False, *args, **kwargs):
+        self._quiet = quiet
+        self.add_data_sets()
+        self.delete_data()
+        self.process_data()
+        self.update_averages()
+        self.update_max_min()
+
+
 class BaseConstituencyCountImportCommand(BaseAreaImportCommand):
     def set_data_type(self):
         self.data_type = list(self.data_types.values())[0]
