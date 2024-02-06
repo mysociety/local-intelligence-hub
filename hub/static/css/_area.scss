@@ -181,3 +181,17 @@
 [data-copy-text][data-copied] {
     animation: 500ms linear success-ping;
 }
+
+@media print {
+    .area-data-grid {
+        grid-template-columns: repeat(2, 1fr);
+        // @include media-breakpoint-up('md') {
+        //     grid-template-columns: repeat(2, 1fr);
+        //     grid-gap: $grid-gutter-width;
+        // }
+
+        // @include media-breakpoint-up('lg') {
+        //     grid-template-columns: repeat(3, 1fr);
+        // }
+    }
+}
