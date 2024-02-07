@@ -7,6 +7,7 @@ from django.core.files import File
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db.models import Count
+from django.db.utils import DataError
 
 import magic
 import requests
@@ -138,15 +139,21 @@ class Command(BaseCommand):
                 continue
 
             if area and "parlid" in mp:
-                person, created = Person.objects.update_or_create(
-                    person_type="MP",
-                    external_id=mp["parlid"]["value"],
-                    id_type="parlid",
-                    defaults={
-                        "name": mp["personLabel"]["value"],
-                        "area": area,
-                    },
-                )
+                try:
+                    person, created = Person.objects.update_or_create(
+                        person_type="MP",
+                        external_id=mp["parlid"]["value"],
+                        id_type="parlid",
+                        defaults={
+                            "name": mp["personLabel"]["value"],
+                            "area": area,
+                        },
+                    )
+                except DataError as e:
+                    print(
+                        f"Failed to create/update mp {mp['personLabel']['value']}: {e}"
+                    )
+                    continue
 
             if person:
                 for prop in type_names.keys():
