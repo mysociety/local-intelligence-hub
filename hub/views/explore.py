@@ -114,8 +114,14 @@ class ExploreDatasetsJSON(TemplateView):
                 ds = {**ds, **type_map[d.name]}
             if d.is_range:
                 ds["types"] = [
-                    {"name": dt.name, "title": dt.label}
-                    for dt in DataType.objects.filter(data_set=d)
+                    {
+                        "name": dt.name,
+                        "title": dt.label,
+                        "area_type": dt.area_type.code if dt.area_type else None,
+                    }
+                    for dt in DataType.objects.filter(data_set=d).select_related(
+                        "area_type"
+                    )
                 ]
             datasets.append(ds)
 

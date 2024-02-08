@@ -47,10 +47,10 @@
                         </div>
                         <div :class="{ 'filter__body': true, 'filter__body--expanded': filter.is_in }">
                             <select v-if="filter.is_range" v-model="filter.selectedType" class="form-select form-select-sm flex-grow-0 flex-shrink-1">
-                            <option v-for="ds_type in filter.types" :value="ds_type.name">${ ds_type.title }</option>
+                                <option v-for="ds_type in getDataTypesForCurrentArea(filter)" :value="ds_type.name">${ ds_type.title }</option>
                             </select>
                             <select v-model="filter.selectedComparator" class="form-select form-select-sm flex-grow-0 flex-shrink-1">
-                            <option v-for="(title, comparator) in filter.comparators" :value="comparator">${ title }</option>
+                                <option v-for="(title, comparator) in filter.comparators" :value="comparator">${ title }</option>
                             </select>
                             <select v-if="filter.options" v-model="filter.selectedValue" :multiple="filter.is_in" class="form-select form-select-sm flex-grow-1 flex-shrink-1">
                                 <option v-for="option in filter.options" :value="option">${ option }</option>
@@ -134,7 +134,7 @@
                             </ul>
                             <div :class="{ 'filter__body': true, 'filter__body--expanded': true }">
                                 <select v-if="shader.is_range" v-model="shader.selectedType" class="form-select form-select-sm flex-grow-0 flex-shrink-1">
-                                <option v-for="ds_type in shader.types" :value="ds_type.name">${ ds_type.title }</option>
+                                    <option v-for="ds_type in getDataTypesForCurrentArea(shader)" :value="ds_type.name">${ ds_type.title }</option>
                                 </select>
                             </div>
                             <div v-if="key" class="mt-3">
