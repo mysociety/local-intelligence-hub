@@ -1,3 +1,5 @@
+import re
+
 from django.core.management.base import BaseCommand
 
 import pandas as pd
@@ -28,9 +30,13 @@ class Command(BaseCommand):
         return AreaType.objects.get(code="WMC")
 
     def get_df(self):
-        df = pd.read_csv("data/mp_job_titles.csv", usecols=["Constituency", "Title"])
+        df = pd.read_csv(
+            "data/mp_job_titles.csv",
+            usecols=["Constituency", "Short Title"],
+        )
+        df.columns = ["Title", "Constituency"]
         df = df.query(
-            "not(Title.str.contains('^ ?(((MP)|(Member of Parliament)) for .*)|(Member of .*Select Committee)$'))"
+            "not(Title.str.contains('^ ?(?:(?:MP|Member of Parliament) for .*|Member of .*Select Committee|Backbencher|Sadly died).*$'))"
         ).copy()
 
         # Clean the constituency data:
@@ -46,7 +52,7 @@ class Command(BaseCommand):
             defaults={
                 "data_type": "text",
                 "description": "Positions such as cabinet and shadow minister roles, spokespeople, and whips.",
-                "release_date": "December 2022",
+                "release_date": "January 2024",
                 "label": "MP positions (job titles)",
                 "source_label": "Data from Green Alliance.",
                 "source": "https://green-alliance.org.uk/",
@@ -69,7 +75,8 @@ class Command(BaseCommand):
         mps = Person.objects.filter(person_type="MP")
         df = self.get_df()
         results = {}
-        print("Matching MPs with titles")
+        if not self._quiet:
+            print("Matching MPs with titles")
         area_type = self.get_area_type()
         for index, row in df.iterrows():
             try:
@@ -82,13 +89,18 @@ class Command(BaseCommand):
         return results
 
     def add_results(self, results, data_type):
-        print("Adding MP job title data to Django database")
+        mp_list = []
         for mp, job_title in tqdm(results.items(), disable=self._quiet):
+            job_title = re.sub("<br/?>", "\n", job_title)
             data, created = PersonData.objects.update_or_create(
                 person=mp,
                 data_type=data_type,
                 data=job_title,
             )
+            mp_list.append(data.id)
+
+        # clear out old job titles, which we assume to be anyone without a current job
+        PersonData.objects.filter(data_type=data_type).exclude(pk__in=mp_list).delete()
 
     def import_results(self):
         data_type = self.create_data_type()
