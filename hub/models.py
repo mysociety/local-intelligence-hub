@@ -514,7 +514,7 @@ class UserDataSets(models.Model):
 
 class CommonData(models.Model):
     data_type = models.ForeignKey(DataType, on_delete=models.CASCADE)
-    data = models.CharField(max_length=200)
+    data = models.CharField(max_length=400)
     date = models.DateTimeField(blank=True, null=True)
     float = models.FloatField(blank=True, null=True)
     int = models.IntegerField(blank=True, null=True)
