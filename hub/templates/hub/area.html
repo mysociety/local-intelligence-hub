@@ -361,9 +361,12 @@
                     </div>
                     <div class="card-footer">
                       <p class="card-text">
-                          {{ dataset.source }}
+                          <a href="{{ dataset.source_url }}">{{ dataset.source_name }}</a>
                         {% if dataset.auto_conversion_disclaimer %}
                           <a href="{% url 'future_constituencies' %}">{{ dataset.auto_conversion_disclaimer|safe }}</a>
+                        {% endif %}
+                        {% if dataset.description %}
+                          {{ dataset.description }}
                         {% endif %}
                         {% if dataset.release_date %}
                           Updated {{ dataset.release_date }}.
@@ -449,9 +452,12 @@
                     </div>
                     <div class="card-footer">
                       <p class="card-text">
-                          {{ dataset.source }}
+                          <a href="{{ dataset.source_url }}">{{ dataset.source_name }}</a>
                         {% if dataset.auto_conversion_disclaimer %}
                           <a href="{% url 'future_constituencies' %}">{{ dataset.auto_conversion_disclaimer|safe }}</a>
+                        {% endif %}
+                        {% if dataset.description %}
+                          {{ dataset.description }}
                         {% endif %}
                         {% if dataset.release_date %}
                           Updated {{ dataset.release_date }}.
@@ -555,9 +561,12 @@
                     </div>
                     <div class="card-footer">
                       <p class="card-text">
-                          {{ dataset.source }}
+                          <a href="{{ dataset.source_url }}">{{ dataset.source_name }}</a>
                         {% if dataset.auto_conversion_disclaimer %}
                           <a href="{% url 'future_constituencies' %}">{{ dataset.auto_conversion_disclaimer|safe }}</a>
+                        {% endif %}
+                        {% if dataset.description %}
+                          {{ dataset.description }}
                         {% endif %}
                         {% if dataset.release_date %}
                           Updated {{ dataset.release_date }}.
