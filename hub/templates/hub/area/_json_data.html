@@ -36,7 +36,6 @@
         </body>
     </table>
 {% elif dataset.subcategory == "groups" %}
-    <h6 class="text-muted fw-bold">{{ dataset.label }}</h6>
     <ul class="tag-cloud">
       {% for data in dataset.data.json %}
         {% if data.url %}

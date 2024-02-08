@@ -510,7 +510,6 @@
                         <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }}% national average</p>
                       {% elif dataset.data_type == "integer" %}
                         {% if dataset.related_category %}
-                        <p class="card-text mb-3 display-6 lh-1 text-primary">{{ dataset.data.value }}</p>
                         <ul class="tag-cloud">
                             {% if dataset.related_category.subcategory == "groups" %}
                               {% for data in dataset.related_category.data.value %} 
