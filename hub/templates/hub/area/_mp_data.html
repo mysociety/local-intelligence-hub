@@ -130,7 +130,7 @@
         </div>
   <div class="card flex-grow-1 dataset-card">
              <div class="dataset-card-header">
-              <h5>Relevant votes & amendments</h5>
+              <h5>Votes and EDMs</h5>
              </div>
              <div class="card-body">
                 <table class="table mb-0">
@@ -157,7 +157,12 @@
             </table>
             </div>
             <div class="card-footer bg-white">
-                <p class="card-text fs-8"><a href="#" class="text-decoration-none text-muted">Data from UK Parliament</a>.</p>
+              <p class="card-text">
+                Data from UK Parliament. Votes and EDMs selected for indicating support for climate/nature movement. 
+              {% if mp.twfyid %}
+                <a href="https://www.theyworkforyou.com/mp/{{ mp.twfyid }}">See this MP’s full voting record on TheyWorkForYou.</a>
+              {% endif %}
+              </p>
             </div>
         </div>
 
