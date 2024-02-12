@@ -266,6 +266,7 @@ class AreaView(BaseAreaView):
             "constituency_foe_groups_count": "constituency_foe_groups",
             "constituency_nt_properties_count": "constituency_nt_properties",
             "constituency_wi_group_count": "constituency_wi_groups",
+            "constituency_foe_group_count": "constituency_foe_groups",
             "power_postcodes_count": "power_postcodes",
             "tcc_open_letter_signatories_count": "tcc_open_letter_signatories",
         }

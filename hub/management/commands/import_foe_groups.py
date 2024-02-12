@@ -1,17 +1,16 @@
 from django.conf import settings
 
 import pandas as pd
-from tqdm import tqdm
 
-from hub.models import Area, AreaData, DataSet
+from hub.models import DataSet
 
-from .base_importers import BaseLatLongImportCommand
+from .base_importers import BaseConstituencyGroupListImportCommand
 
 
-class Command(BaseLatLongImportCommand):
+class Command(BaseConstituencyGroupListImportCommand):
     help = "Import data about FOE groups by constituency"
 
-    data_file = settings.BASE_DIR / "data" / "foe_groups.csv"
+    data_file = settings.BASE_DIR / "data" / "foe_groups_wmc.csv"
     message = "Importing FOE groups data"
     uses_gss = False
 
@@ -19,65 +18,48 @@ class Command(BaseLatLongImportCommand):
         "data_type": "json",
         "category": "movement",
         "subcategory": "groups",
-        "label": "Active Friends of the Earth groups",
-        "description": "Descriptions of active Friends of the Earth groups by constituency.",
+        "label": "Friends of the Earth local action groups",
+        "description": "",
         "source_label": "Data from Friends of the Earth.",
-        "release_date": "November 2022",
-        "source": "https://friendsoftheearth.uk/",
+        "release_date": "January 2024",
+        "source": "https://friendsoftheearth.uk/about/what-are-local-action-groups",
         "source_type": "google sheet",
         "table": "areadata",
         "default_value": {},
         "data_url": "",
-        "is_filterable": False,
-        "comparators": DataSet.comparators_default,
+        "exclude_countries": ["Scotland", "Northern Ireland"],
+        "is_filterable": True,
+        "is_shadable": False,
+        "is_public": True,
+        "comparators": DataSet.string_comparators(),
+        "unit_type": "point",
+        "unit_distribution": "point",
+    }
+
+    count_defaults = {
+        **defaults,
+        "data_type": "integer",
+        "is_shadable": True,
+        "label": "Number of Friends of the Earth local action groups",
+        "comparators": DataSet.numerical_comparators(),
     }
 
     data_sets = {
         "constituency_foe_groups": {
             "defaults": defaults,
         },
+        "constituency_foe_groups_count": {
+            "defaults": count_defaults,
+        },
     }
 
-    def get_dataframe(self):
-        df = pd.read_csv(
-            self.data_file,
-            usecols=["Westminster constituency", "Groups located within constituency"],
-        )
-        df = df.dropna()
-        df.columns = ["constituency", "groups"]
-        df = (
-            df.groupby("constituency")
-            .apply(lambda x: [{"group_name": group, "url": ""} for group in x.groups])
-            .reset_index()
-            .rename(columns={0: "groups"})
-        )
+    group_data_type = "constituency_foe_groups"
+    count_data_type = "constituency_foe_groups_count"
+
+    def get_df(self):
+        df = pd.read_csv(self.data_file)
+        df.columns = ["group_name", "postcode", "constituency", "source", "type"]
         return df
 
-    def process_data(self):
-        df = self.get_dataframe()
-
-        if not self._quiet:
-            self.stdout.write("Importing Friends of the Earth group data")
-
-        for index, row in tqdm(df.iterrows(), disable=self._quiet):
-            json_data, created = AreaData.objects.update_or_create(
-                data_type=self.data_types["constituency_foe_groups"],
-                area=Area.objects.get(
-                    name=row.constituency, area_type__code=self.area_type
-                ),
-                json=row.groups,
-            )
-
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )
-
-    def handle(self, quiet=False, *args, **options):
-        self._quiet = quiet
-        self.add_data_sets()
-        self.delete_data()
-        self.process_data()
-
-    def delete_data(self):
-        AreaData.objects.filter(data_type__in=self.data_types.values()).delete()
+    def get_group_json(self, row):
+        return row[["group_name"]].dropna().to_dict()
