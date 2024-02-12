@@ -114,8 +114,18 @@
 
         <section class="mb-5 mb-lg-6 area-section" id="mp">
             {% if area_type == "WMC" %}
+            {% if no_mp %}
+              <h2 class="text-primary">This constituency has no MP right now</h2>
+              <p style="max-width: 37em;" class="mb-4">
+                  There may be a <a href="https://en.wikipedia.org/wiki/List_of_United_Kingdom_by-elections_(2010%E2%80%93present)">by-election scheduled for this constituency</a>. Until then, this constituency has no sitting MP. Data for the previous MP is displayed below.
+              </p>
+            {% endif %}
             <div class="mb-3 d-sm-flex align-items-center">
+              {% if no_mp %}
+                <h2 class="mb-2 mb-sm-0 me-auto text-muted h4">Previous MP</h2>
+              {% else %}
                 <h2 class="mb-2 mb-sm-0 me-auto text-primary">MP</h2>
+              {% endif %}
                 <a href="https://www.writetothem.com" target="_blank" title="Opens in a new window" class="d-flex align-items-center js-email-your-mp">
                     Email your MP about this data
                     {% include 'hub/includes/icons/external-link.html' with classes="ms-2" %}
@@ -172,6 +182,7 @@
                     </div>
                 </div>
 
+              {% if not no_mp %}
                 <div class="card dataset-card area-data--md area-data--featured">
                     <div class="card-header">
                         <h3 class="h5">Positions and memberships</h3>
@@ -257,6 +268,7 @@
                         </p>
                    </div>
                 </div>
+              {% endif %}
 
                 <div class="card dataset-card area-data--sm {% comment %} TODO: dataset-card--favourite? {% endcomment %} area-data--featured">
                     <div class="card-header">
@@ -286,6 +298,22 @@
                         <p class="card-text"><a href="https://members-api.parliament.uk/api/Members/{{ mp.person.external_id }}/LatestElectionResult">Data from UK Parliament.</a></p>
                     </div>
                 </div>
+
+              {% if no_mp and mp.person %}
+                <div class="card dataset-card area-data--sm area-data--featured">
+                    <div class="card-header">
+                        <h3 class="h5">Term ended</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text mb-0 display-6 lh-1 text-primary">
+                            {{ mp.person.end_date|naturalday:"jS M Y" }}
+                        </p>
+                    </div>
+                    <div class="card-footer">
+                        <p class="card-text"><a href="https://members-api.parliament.uk/api/Members/{{ mp.person.external_id }}/">Data from UK Parliament.</a></p>
+                    </div>
+                </div>
+              {% endif %}
 
             </div>
             <div class="area-data-more">

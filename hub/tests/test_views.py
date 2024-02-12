@@ -238,7 +238,7 @@ class TestAreaPage(TestCase):
         self.assertEqual(response.status_code, 200)
 
         context = response.context
-        self.assertIsNone(context.get("mp"))
+        self.assertTrue(context.get("no_mp"))
 
     def test_area_page_logged_out(self):
         self.client.logout()

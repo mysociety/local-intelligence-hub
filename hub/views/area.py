@@ -179,6 +179,8 @@ class AreaView(BaseAreaView):
                     area=self.object, person_type="MP", end_date__isnull=True
                 )
             }
+
+            context["no_mp"] = False
             data = PersonData.objects.filter(
                 person=context["mp"]["person"]
             ).select_related("data_type")
@@ -234,7 +236,32 @@ class AreaView(BaseAreaView):
             ]
 
         except Person.DoesNotExist:
-            pass
+            context["no_mp"] = True
+            context["mp"] = {
+                "person": Person.objects.filter(
+                    area=self.object, person_type="MP", end_date__isnull=False
+                )
+                .order_by("-end_date")
+                .first()
+            }
+            data = PersonData.objects.filter(
+                person=context["mp"]["person"],
+                data_type__name__in=[
+                    "party",
+                    "last_election",
+                    "second_party",
+                    "mp_last_elected",
+                    "mp_first_elected",
+                    "mp_election_majority",
+                    "twfyid",
+                    "wikipedia",
+                ],
+            ).select_related("data_type")
+
+            if is_non_member:
+                data = data.exclude(data_type__data_set__is_public=False)
+            for item in data.all():
+                context["mp"][item.data_type.name] = item.value()
 
         categories = defaultdict(list)
         indexed_categories = defaultdict(dict)
