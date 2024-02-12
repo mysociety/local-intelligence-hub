@@ -165,5 +165,5 @@ class PersonAdmin(admin.ModelAdmin):
     )
     search_fields = (
         "name",
-        "area",
+        "area__name",
     )
