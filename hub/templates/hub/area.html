@@ -139,7 +139,7 @@
                     </div>
                     <div class="card-footer">
                         <p class="card-text">
-                            <a href="https://www.theyworkforyou.com/{% if mp.twfyid %}mp/{{ mp.twfyid}}{% endif %}">Data from TheyWorkForYou.</a>
+                          <a href="https://www.theyworkforyou.com/{% if mp.twfyid %}mp/{{ mp.twfyid}}{% endif %}">Data from TheyWorkForYou.</a>
                         </p>
                     </div>
                 </div>
@@ -174,9 +174,19 @@
 
                 <div class="card dataset-card area-data--md area-data--featured">
                     <div class="card-header">
-                        <h3 class="h5">MP memberships</h3>
+                        <h3 class="h5">Positions and memberships</h3>
                     </div>
                     <div class="card-body">
+                      {% if mp.job_titles %}
+                        <h4 class="visually-hidden">Positions</h4>
+                        <ul class="mb-3 mt-n2 list-unstyled lh-sm">
+                      {% with mp.job_titles|splitlines as positions %}
+                      {% for position in positions %}
+                          <li class="mt-2">{{ position }}</li>
+                      {% endfor %}
+                      {% endwith %}
+                        </ul>
+                      {% endif %}
                       {% if mp.cen_member or mp.nzsg_member %}
                         <h4 class="h6 text-muted fw-bold">Political groups</h4>
                         <ul class="tag-cloud">
@@ -206,7 +216,7 @@
                       {% endif %}
                     </div>
                     <div class="card-footer">
-                        <p class="card-text">Data collated by The Climate Coalition.</p>
+                        <p class="card-text">Data from <a href="https://www.parliament.uk/about/mps-and-lords/members/">UK Parliament</a>{% if mp.job_titles %} and <a href="https://green-alliance.org.uk/">Green Alliance</a>{% endif %}.</p>
                     </div>
                 </div>
 

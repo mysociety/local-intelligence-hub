@@ -17,6 +17,11 @@ def split(value, key):
     return value.split(key)
 
 
+@register.filter(name="splitlines")
+def splitlines(value):
+    return value.splitlines()
+
+
 @register.filter(name="highlight")
 def highlight(text, search):
     rgx = re.compile(re.escape(search), re.IGNORECASE)
