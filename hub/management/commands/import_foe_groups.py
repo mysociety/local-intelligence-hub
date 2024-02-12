@@ -27,7 +27,7 @@ class Command(BaseConstituencyGroupListImportCommand):
         "table": "areadata",
         "default_value": {},
         "data_url": "",
-        "exclude_countries": ["Scotland", "Northern Ireland"],
+        "exclude_countries": ["Scotland"],
         "is_filterable": True,
         "is_shadable": False,
         "is_public": True,
