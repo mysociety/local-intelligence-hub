@@ -3,6 +3,8 @@ import { createApp } from 'vue/dist/vue.esm-bundler.js'
 import { Map } from 'leaflet/src/map'
 import { TileLayer } from 'leaflet/src/layer/tile'
 import { GeoJSON } from 'leaflet/src/layer'
+import { Zoom } from 'leaflet/src/control'
+import { Attribution } from 'leaflet/src/control'
 import trackEvent from './analytics.esm.js'
 
 const app = createApp({
