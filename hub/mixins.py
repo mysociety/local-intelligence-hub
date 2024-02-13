@@ -196,10 +196,17 @@ class FilterMixin:
         """
         for col in cols:
             if col["name"] == "mp_name":
+                has_mp = []
                 for row in Person.objects.filter(
-                    person_type="MP", area_id__in=area_ids
+                    person_type="MP", area_id__in=area_ids, end_date__isnull=True
                 ).select_related("area"):
+                    has_mp.append(row.area_id)
                     area_data[row.area.name]["MP Name"].append(row.name)
+
+                if len(has_mp) < len(area_ids):
+                    missing_areas = set(area_ids).difference(has_mp)
+                    for row in Area.objects.filter(id__in=missing_areas):
+                        area_data[row.name]["MP Name"].append("No current MP")
 
                 continue
             elif col["name"] == "gss":
