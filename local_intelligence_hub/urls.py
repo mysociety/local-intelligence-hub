@@ -16,9 +16,11 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path, re_path
 from django.views.generic.base import RedirectView
 
+from hub.sitemap import hub_sitemap
 from hub.views import accounts, area, core, explore, landingpages
 
 handler404 = core.NotFoundPageView.as_view()
@@ -99,6 +101,12 @@ urlpatterns = [
     path("admin/", admin.site.urls),  # pragma: no cover
     path("accounts/login/", accounts.LIHLoginView.as_view(), name="login"),
     path("accounts/", include("django.contrib.auth.urls")),
+    path(
+        "sitemap.xml",
+        sitemap,
+        {"sitemaps": hub_sitemap},
+        name="django.contrib.sitemaps.views.sitemap",
+    ),
 ]
 
 if settings.DEBUG:  # pragma: no cover
