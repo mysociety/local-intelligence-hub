@@ -14,7 +14,7 @@
             <div class="col-md-6 mb-4">
                 <p class="mb-0">Find and interrogate data about local MPs, constituencies, public opinion and the climate and nature movement in order to support your campaigning and organising efforts.</p>
             </div>
-            <div class="col-md-6 col-lg-5 offset-lg-1 mb-4">
+            <div class="col-md-6 col-lg-5 offset-lg-1 mb-4 d-print-none">
                 <ul class="nav site-footer__nav">
                     {% include 'hub/includes/nav-item.html' with name='about' label='About' %}
                     {% include 'hub/includes/nav-item.html' with name='privacy' label='Privacy policy' %}
@@ -39,8 +39,11 @@
                             <a href="https://www.theclimatecoalition.org" aria-label="The Climate Coalition">
                                 {% include 'hub/includes/icons/tcc-logo.html' with classes="me-3 me-lg-4" %}
                             </a>
-                            <a href="https://www.mysociety.org" aria-label="mySociety">
+                            <a class="d-print-none" href="https://www.mysociety.org" aria-label="mySociety">
                                 {% include 'hub/includes/icons/mysociety-logo.html' %}
+                            </a>
+                            <a class="d-none d-print-block" href="https://www.mysociety.org" aria-label="mySociety">
+                                {% include 'hub/includes/icons/mysociety-logo-black.html' %}
                             </a>
                         </div>
                     </div>
@@ -56,7 +59,7 @@
                 <p class="fs-7 mb-0 site-footer__legals"><a href="https://www.theclimatecoalition.org">The Climate Coalition</a> is the operating name of The Climate Movement, a registered charity (1109973). <a href="https://www.mysociety.org">mySociety</a> is a registered charity (1076346) and a limited company (03277032). <a href="https://green-alliance.org.uk">Green Alliance</a> is a registered charity (1045395) and a limited company (3037633).</p>
             </div>
             <div class="col-lg-3 mb-4">
-                <ul class="site-footer__socials">
+                <ul class="site-footer__socials d-print-none">
                     <li>
                         <a href="https://x.com/theccoalition/" aria-label="X (Twitter)">
                             {% include 'hub/includes/icons/x-circle.html' %}
