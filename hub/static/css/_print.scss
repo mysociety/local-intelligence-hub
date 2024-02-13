@@ -1,0 +1,40 @@
+@media print {
+  html {
+      font-size: 14px;
+      background-color: $white;
+  }
+
+  .container {
+      max-width: 100%; // Uses the page print default margin
+  }
+
+  .navbar-collapse, 
+  .navbar-expand-sm .navbar-collapse,
+  .area-data-more {
+      display: none !important;
+  }
+
+  .site-footer {
+      background-color: #fff;
+      color: $black;
+      page-break-before: always; // For non-CSS3 supporting browsers
+      break-before: page; // For CSS3-supporting browsers
+      box-shadow: none; // Prevents the whole odd coloured segment at the end of the page
+
+      .site-footer__legals, .site-footer__org {
+          color: $black;
+      }
+
+      a {
+          color: $black;
+      }
+  }
+
+  .area-tabs {
+      border-bottom: 1px solid var(--bs-border-color-translucent);
+  }
+
+  .area-data-grid {
+      grid-template-columns: repeat(3, 1fr);
+  }
+}
