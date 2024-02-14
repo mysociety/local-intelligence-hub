@@ -44,5 +44,9 @@
     {% include 'hub/includes/header.html' %}
     {% block content %}{% endblock %}
     {% include 'hub/includes/footer.html' %}
-    <script type="module" src="{% static 'js/all-out-esm.js' %}"></script>
+    {% block script %}
+    <script type="module" src="{% static 'js/home-out-esm.js' %}"></script>
+    <link rel="prefetch" href="{% static 'js/area-out-esm.js' %}">
+    <link rel="prefetch" href="{% static 'js/explore-out-esm.js' %}">
+    {% endblock %}
 </body>

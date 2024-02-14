@@ -4,6 +4,10 @@
 
 {% block bodyclass %}page-explore{% endblock %}
 
+{% block script %}
+    <script type="module" src="{% static 'js/explore-out-esm.js' %}"></script>
+{% endblock %}
+
 {% block content %}
 
 <div class="explore" id="exploreApp">

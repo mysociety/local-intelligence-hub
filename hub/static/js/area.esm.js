@@ -1,4 +1,5 @@
 import $ from 'jquery/dist/jquery.slim'
+import { Tab } from 'bootstrap/js/dist/tab'
 import trackEvent from './analytics.esm.js'
 
 const hashes = ["#favourites", "#mp", "#opinion", "#place", "#movement"]

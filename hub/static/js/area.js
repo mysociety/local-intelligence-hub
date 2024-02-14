@@ -1,6 +1,7 @@
 import $ from 'jquery/dist/jquery.slim'
 import { Chart, BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip } from 'chart.js'
 import trackEvent from './analytics.esm.js'
+import Collapse from 'bootstrap/js/dist/collapse'
 
 Chart.register( BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip);
 
@@ -11,9 +12,6 @@ Chart.defaults.plugins.legend.labels.boxWidth = 20
 Chart.defaults.plugins.legend.labels.padding = 20
 Chart.defaults.animation.duration = 0
 Chart.defaults.responsive = true
-
-import exploreApp from './explore.esm.js'
-exploreApp.mount('#exploreApp')
 
 import setUpAreaPage from './area.esm.js'
 
@@ -59,43 +57,6 @@ $(function(){
 
     $('body.js-area-page').each(setUpAreaPage);
 
-    if ( $('.fake-data').length ) {
-        var $warning = $(`<div class="fake-data-warning alert alert-danger mb-0">
-            <div class="container">
-                <div class="d-md-flex align-items-center">
-                    <h2 class="h6 mb-md-0 me-md-3">Prototype warning</h2>
-                    <p class="mb-md-0 me-md-3">This page contains a mixture of real and fake data.</p>
-                    <button class="btn btn-sm btn-danger ms-md-auto">Show only real data</button>
-                </div>
-            </div>
-        </div>`).on('click', 'button', function(){
-            if ( $(this).data('hidden') ) {
-                $('.fake-data').removeClass('fake-data--hidden')
-                $(this).text('Show only real data')
-                $(this).data('hidden', null)
-            } else {
-                $('.fake-data').addClass('fake-data--hidden')
-                $(this).text('Reveal fake data')
-                $(this).data('hidden', true)
-            }
-        })
-        $('body').append($warning)
-        $('.site-footer > .container').addClass('pb-8 pb-md-6')
-        $('head').append('<link href="https://fonts.googleapis.com/css2?family=Redacted+Script" rel="stylesheet">')
-    }
-
-    $('.js-homepage-search').on('submit', function(e){
-        var $form = $(this);
-        if ( ! $form.data('submitRecorded') ) {
-            e.preventDefault();
-            trackEvent('homepage_search_form_submit', {
-                search_term: $form.find('input[type="search"]').val()
-            }).always(function(){
-                $form.data('submitRecorded', true).trigger('submit');
-            });
-        }
-    })
-
     $('.js-email-your-mp').on('click', function(e){
         e.preventDefault()
         let href = $(this).attr('href')
@@ -105,29 +66,6 @@ $(function(){
         }).always(function(){
             window.location.href = href
         })
-    })
-    $('.js-landingpage-search').on('submit', function(e){
-        var $form = $(this);
-        if ( ! $form.data('submitRecorded') ) {
-            e.preventDefault();
-            trackEvent('landingpage_search_form_submit', {
-                page_path: window.location.pathname,
-                search_term: $form.find('input[type="search"]').val()
-            }).always(function(){
-                $form.data('submitRecorded', true).trigger('submit');
-            });
-        }
-    })
-
-    $('.js-landingpage-cta').on('click', function(e){
-        e.preventDefault();
-        var href = $(this).attr('href');
-        trackEvent('landingpage_cta', {
-            page_path: window.location.pathname,
-            cta_destination: href
-        }).always(function(){
-            window.location.href = href;
-        });
     })
 })
 

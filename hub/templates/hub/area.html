@@ -2,8 +2,13 @@
 
 {% load humanize %}
 {% load hub_filters %}
+{% load static %}
 
 {% block bodyclass %}js-area-page{% endblock %}
+
+{% block script %}
+    <script type="module" src="{% static 'js/area-out-esm.js' %}"></script>
+{% endblock %}
 
 {% block content %}
 

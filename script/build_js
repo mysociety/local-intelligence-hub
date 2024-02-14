@@ -6,4 +6,6 @@ set -e
 # check that we are in the expected directory
 cd `dirname $0`/..
 
-./node_modules/.bin/esbuild --bundle hub/static/js/all.js --outfile=build/js/all-out-esm.js --format=esm --minify
+./node_modules/.bin/esbuild --bundle hub/static/js/home.js --outfile=build/js/home-out-esm.js --format=esm --minify
+./node_modules/.bin/esbuild --bundle hub/static/js/area.js --outfile=build/js/area-out-esm.js --format=esm --minify
+./node_modules/.bin/esbuild --bundle hub/static/js/explore.js --outfile=build/js/explore-out-esm.js --format=esm --minify
