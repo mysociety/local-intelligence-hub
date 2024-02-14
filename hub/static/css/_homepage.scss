@@ -26,5 +26,30 @@
 
     .filter {
         min-width: 80%;
+        margin-bottom: 1.5rem;
+    }
+
+    .filter__header {
+        display: flex;
+
+        h6 {
+            margin-bottom: 0;
+            margin-right: auto;
+        }
+
+        .btn-close {
+            margin-left: map-get($spacers, 2);
+            flex-shrink: 0;
+        }
+    }
+
+    .filter__body {
+        display: flex;
+        margin-left: (map-get($spacers, 3) * -1);
+
+        & > * {
+            margin-top: map-get($spacers, 3);
+            margin-left: map-get($spacers, 3);
+        }
     }
 }

@@ -105,6 +105,14 @@ $link-hover-color: shift-color($link-color, $link-shade-percentage);
 // Paragraphs
 
 // Grid breakpoints
+$grid-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px
+) !default;
+//
 
 // Grid containers
 

@@ -8,7 +8,9 @@
     <meta name="viewport" content="initial-scale=1, viewport-fit=cover">
     <title>{{ page_title }}</title>
     {% compress css %}
+    {% block css %}
     <link rel="stylesheet" type="text/x-scss" href="{% static 'css/main.scss' %}">
+    {% endblock %}
     {% endcompress %}
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,700;0,800;1,400&amp;display=swap">
     <meta name="theme-color" content="#e9f1d6">
