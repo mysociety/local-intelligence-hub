@@ -39,12 +39,12 @@ class BaseAreaView(TitleMixin, DetailView):
 
     def get_object(self):
         area_type_code = self.kwargs.get("area_type", "")
-        lower_case_code = False
+        bad_case = False
 
         if area_type_code not in AreaType.VALID_AREA_TYPES:
             area_type_code = area_type_code.upper()
             if area_type_code in AreaType.VALID_AREA_TYPES:
-                lower_case_code = True
+                bad_case = True
 
         try:
             area = Area.objects.get(
@@ -52,9 +52,16 @@ class BaseAreaView(TitleMixin, DetailView):
                 name=self.kwargs.get("name"),
             )
         except Area.DoesNotExist:
-            raise Http404("Area not found")
+            try:
+                area = Area.objects.get(
+                    area_type__code=area_type_code,
+                    name__iexact=self.kwargs.get("name"),
+                )
+                bad_case = True
+            except Area.DoesNotExist:
+                raise Http404("Area not found")
 
-        if lower_case_code:
+        if bad_case:
             return redirect(area, permanent=True)
 
         return area

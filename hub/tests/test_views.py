@@ -214,6 +214,13 @@ class TestAreaPage(TestCase):
         self.assertEqual(response.status_code, 301)
         self.assertEqual(response.headers["Location"], "/area/WMC/South%20Borsetshire")
 
+    def test_area_page_lower_case_area_name(self):
+        url = reverse("area", args=("wmc", "south borsetshire"))
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response.headers["Location"], "/area/WMC/South%20Borsetshire")
+
     def test_area_page_logged_in(self):
         DataSet.objects.update(featured=True)
         url = reverse("area", args=("WMC", "South Borsetshire"))
