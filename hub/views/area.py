@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from django.db.models import Count
-from django.http import JsonResponse
+from django.http import Http404, HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import DetailView, TemplateView, View
 
@@ -38,11 +38,34 @@ class BaseAreaView(TitleMixin, DetailView):
     context_object_name = "area"
 
     def get_object(self):
-        return get_object_or_404(
-            Area,
-            area_type=AreaType.objects.get(code=self.kwargs.get("area_type")),
-            name=self.kwargs.get("name"),
-        )
+        area_type_code = self.kwargs.get("area_type", "")
+        lower_case_code = False
+
+        if area_type_code not in AreaType.VALID_AREA_TYPES:
+            area_type_code = area_type_code.upper()
+            if area_type_code in AreaType.VALID_AREA_TYPES:
+                lower_case_code = True
+
+        try:
+            area = Area.objects.get(
+                area_type__code=area_type_code,
+                name=self.kwargs.get("name"),
+            )
+        except Area.DoesNotExist:
+            raise Http404("Area not found")
+
+        if lower_case_code:
+            return redirect(area, permanent=True)
+
+        return area
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if isinstance(self.object, HttpResponsePermanentRedirect):
+            return self.object
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
 
     def get_page_title(self):
         return self.object.name

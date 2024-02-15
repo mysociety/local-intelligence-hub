@@ -197,6 +197,23 @@ class TestAreaPage(TestCase):
         self.u = User.objects.create(username="user@example.com")
         self.client.force_login(self.u)
 
+    def test_area_page_bad_area(self):
+        url = reverse("area", args=("WMC", "East Borsetshire"))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_area_page_bad_area_code(self):
+        url = reverse("area", args=("WMX", "South Borsetshire"))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_area_page_lower_case_area_code(self):
+        url = reverse("area", args=("wmc", "South Borsetshire"))
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response.headers["Location"], "/area/WMC/South%20Borsetshire")
+
     def test_area_page_logged_in(self):
         DataSet.objects.update(featured=True)
         url = reverse("area", args=("WMC", "South Borsetshire"))
