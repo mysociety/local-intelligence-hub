@@ -5,6 +5,8 @@ from unittest.mock import MagicMock, patch
 from django.core.management import call_command
 from django.test import TestCase
 
+import pandas as pd
+
 from hub.management.commands.import_mps import Command as ImportMpsCommand
 from hub.models import Person, PersonData
 
@@ -28,7 +30,9 @@ class ImportMPsTestCase(TestCase):
 
     @patch("hub.management.commands.import_mps.requests")
     @patch("hub.management.commands.import_mps.urllib.request.urlretrieve")
-    def test_import(self, retrieve_mock, request_mock):
+    @patch("hub.management.commands.import_mps.Command.get_twfy_df")
+    @patch("hub.management.commands.import_mps.Command.get_id_df")
+    def test_import(self, id_df_mock, twfy_df_mock, retrieve_mock, request_mock):
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
@@ -38,20 +42,41 @@ class ImportMPsTestCase(TestCase):
                         "gss_code": {"value": "E10000001"},
                         "personLabel": {"value": "James Madeupname"},
                         "partyLabel": {"value": "Borsetshire Independence"},
-                        "parlid": {"value": 1},
-                        "twfyid": {"value": 26},
                     },
                     {
                         "gss_code": {"value": "E10000002"},
                         "personLabel": {"value": "Angela Madeupname"},
                         "partyLabel": {"value": "Borsetshire Unionist"},
-                        "parlid": {"value": 2},
-                        "twfyid": {"value": 27},
                     },
                 ]
             }
         }
         request_mock.get.return_value = mock_response
+        df = pd.DataFrame.from_dict(
+            {
+                "twfyid": [
+                    26,
+                    27,
+                ],
+                "Constituency": ["South Borsetshire", "Borsetshire West"],
+                "Party": ["Borsetshire Independence", "Borsetshire Unionist"],
+                "First name": ["James", "Angela"],
+                "Last name": ["Madeupname", "Madeupname"],
+            }
+        )
+        twfy_df_mock.return_value = df
+        df = pd.DataFrame.from_dict(
+            {
+                "twfyid": [
+                    "uk.org.publicwhip/person/26",
+                    "uk.org.publicwhip/person/27",
+                    "uk.org.publicwhip/person/27",
+                ],
+                "identifier": [1, "Q12", 2],
+                "scheme": ["datadotparl_id", "wiki", "datadotparl_id"],
+            }
+        )
+        id_df_mock.return_value = df
 
         # we don't use the headers value here
         retrieve_mock.return_value = (IMG_DIR / "mp.jpg", 1)

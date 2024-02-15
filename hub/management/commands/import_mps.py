@@ -10,6 +10,7 @@ from django.db.models import Count
 from django.db.utils import DataError
 
 import magic
+import pandas as pd
 import requests
 from tqdm import tqdm
 
@@ -57,21 +58,55 @@ class Command(BaseCommand):
         self.check_for_duplicate_mps()
         self.import_mp_images()
 
-    def get_mp_data(self):
+    # these are separate functions so we can mock them in tests
+    def get_twfy_df(self):
+        df = pd.read_csv("https://www.theyworkforyou.com/mps/?f=csv").rename(
+            columns={"Person ID": "twfyid"}
+        )
+
+        return df
+
+    def get_id_df(self):
+        df = pd.read_csv(
+            "https://pages.mysociety.org/politician_data/data/uk_politician_data/latest/person_identifiers.csv",
+            dtype={"person_id": str, "identifier": str},
+        ).rename(columns={"person_id": "twfyid"})
+
+        return df
+
+    def get_parliament_ids_df(self):
+        id_df = self.get_id_df()
+        id_df = id_df.loc[id_df["scheme"] == "datadotparl_id"].copy()
+        id_df["twfyid"] = id_df["twfyid"].str.replace(
+            "uk.org.publicwhip/person/", "", regex=False
+        )
+        id_df["twfyid"] = pd.to_numeric(id_df["twfyid"])
+        id_df = id_df.drop(columns=["scheme"])
+        id_df = id_df.rename(columns={"identifier": "parlid"})
+
+        return id_df
+
+    def get_area_map(self):
+        areas = Area.objects.filter(area_type__code="WMC").all()
+        area_gss_lookup = {}
+        for area in areas:
+            area_gss_lookup[area.name] = area.gss
+
+        return area_gss_lookup
+
+    def get_social_media_information(self):
         headers = {
             "Accept": "application/json",
             "User-Agent": "Local Intelligence Hub beta",
         }
         """ SPARQL QUERY
-        SELECT DISTINCT ?person ?personLabel ?partyLabel ?seatLabel ?gss_code ?twfyid ?parlid ?twitter ?facebook ?wikipedia WHERE
+        SELECT DISTINCT ?person ?personLabel ?partyLabel ?seatLabel ?gss_code ?twitter ?facebook ?wikipedia WHERE
         {
           ?person wdt:P31 wd:Q5 . ?person p:P39 ?ps .
           ?ps ps:P39 ?term . ?term wdt:P279 wd:Q16707842 .
           ?ps pq:P580 ?start . ?ps pq:P4100 ?party . ?ps pq:P768 ?seat .
           FILTER NOT EXISTS { ?ps pq:P582 ?end } .
           ?seat wdt:P836 ?gss_code .
-          OPTIONAL { ?person wdt:P2171 ?twfyid } .
-          OPTIONAL { ?person wdt:P10428 ?parlid } .
           OPTIONAL { ?person wdt:P2002 ?twitter } .
           OPTIONAL { ?person wdt:P2013 ?facebook } .
           OPTIONAL {
@@ -82,20 +117,60 @@ class Command(BaseCommand):
           SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
         }
         """
-        url = "https://query.wikidata.org/sparql?query=%20%20%20%20%20%20%20%20SELECT%20DISTINCT%20%3Fperson%20%3FpersonLabel%20%3FpartyLabel%20%3FseatLabel%20%3Fgss_code%20%3Ftwfyid%20%3Fparlid%20%3Ftwitter%20%3Ffacebook%20%3Fwikipedia%20WHERE%0A%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%3Fperson%20wdt%3AP31%20wd%3AQ5%20.%20%3Fperson%20p%3AP39%20%3Fps%20.%0A%20%20%20%20%20%20%20%20%20%20%3Fps%20ps%3AP39%20%3Fterm%20.%20%3Fterm%20wdt%3AP279%20wd%3AQ16707842%20.%0A%20%20%20%20%20%20%20%20%20%20%3Fps%20pq%3AP580%20%3Fstart%20.%20%3Fps%20pq%3AP4100%20%3Fparty%20.%20%3Fps%20pq%3AP768%20%3Fseat%20.%0A%20%20%20%20%20%20%20%20%20%20FILTER%20NOT%20EXISTS%20%7B%20%3Fps%20pq%3AP582%20%3Fend%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20%3Fseat%20wdt%3AP836%20%3Fgss_code%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%20%3Fperson%20wdt%3AP2171%20%3Ftwfyid%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%20%3Fperson%20wdt%3AP10428%20%3Fparlid%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%20%3Fperson%20wdt%3AP2002%20%3Ftwitter%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%20%3Fperson%20wdt%3AP2013%20%3Ffacebook%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Fwikipedia%20schema%3Aabout%20%3Fperson%20.%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Fwikipedia%20schema%3AinLanguage%20%22en%22%20.%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Fwikipedia%20schema%3AisPartOf%20%3Chttps%3A%2F%2Fen.wikipedia.org%2F%3E%20.%0A%20%20%20%20%20%20%20%20%20%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20SERVICE%20wikibase%3Alabel%20%7B%20bd%3AserviceParam%20wikibase%3Alanguage%20%22en%22.%20%7D%0A%20%20%20%20%20%20%20%20%7D%0A"
+        url = "https://query.wikidata.org/sparql?query=%20%20%20%20%20%20%20%20SELECT%20DISTINCT%20%3Fperson%20%3FpersonLabel%20%3FpartyLabel%20%3FseatLabel%20%3Fgss_code%20%3Ftwitter%20%3Ffacebook%20%3Fwikipedia%20WHERE%0A%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%3Fperson%20wdt%3AP31%20wd%3AQ5%20.%20%3Fperson%20p%3AP39%20%3Fps%20.%0A%20%20%20%20%20%20%20%20%20%20%3Fps%20ps%3AP39%20%3Fterm%20.%20%3Fterm%20wdt%3AP279%20wd%3AQ16707842%20.%0A%20%20%20%20%20%20%20%20%20%20%3Fps%20pq%3AP580%20%3Fstart%20.%20%3Fps%20pq%3AP4100%20%3Fparty%20.%20%3Fps%20pq%3AP768%20%3Fseat%20.%0A%20%20%20%20%20%20%20%20%20%20FILTER%20NOT%20EXISTS%20%7B%20%3Fps%20pq%3AP582%20%3Fend%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20%3Fseat%20wdt%3AP836%20%3Fgss_code%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%20%3Fperson%20wdt%3AP2171%20%3Ftwfyid%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%20%3Fperson%20wdt%3AP10428%20%3Fparlid%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%20%3Fperson%20wdt%3AP2002%20%3Ftwitter%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%20%3Fperson%20wdt%3AP2013%20%3Ffacebook%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Fwikipedia%20schema%3Aabout%20%3Fperson%20.%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Fwikipedia%20schema%3AinLanguage%20%22en%22%20.%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Fwikipedia%20schema%3AisPartOf%20%3Chttps%3A%2F%2Fen.wikipedia.org%2F%3E%20.%0A%20%20%20%20%20%20%20%20%20%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20SERVICE%20wikibase%3Alabel%20%7B%20bd%3AserviceParam%20wikibase%3Alanguage%20%22en%22.%20%7D%0A%20%20%20%20%20%20%20%20%7D%0A"
         r = requests.get(url, headers=headers)
 
-        return r.json()["results"]["bindings"]
+        # munge the wikidata JSON into a set of dicts so we can turn it into a datframe
+        records = r.json()["results"]["bindings"]
+        data = []
+        for record in records:
+            row = {}
+            for label, values in record.items():
+                row[label] = values["value"]
+            data.append(row)
+
+        wiki_df = pd.DataFrame(data)
+
+        return wiki_df
+
+    def get_mp_data(self):
+        # get MP data
+        df = self.get_twfy_df()
+
+        # get parliament IDs and match them to MPs
+        id_df = self.get_parliament_ids_df()
+        df = df.merge(id_df, how="left", on="twfyid")
+
+        # add GSS codes
+        area_map = self.get_area_map()
+        df["gss_code"] = df["Constituency"].map(area_map)
+
+        # Get wikidata for twitter ids etc
+        wiki_df = self.get_social_media_information()
+        df = df.merge(wiki_df, how="left", on="gss_code")
+
+        return df
 
     def import_mps(self):
         data = self.get_mp_data()
+        sources = {
+            "TWFY": {
+                "source": "https://www.theyworkforyou.com",
+                "source_label": "Data from TheyWorkForYou.",
+            },
+            "Wiki": {
+                "source": "https://en.wikipedia.org/",
+                "source_label": "Data from Wikipedia.",
+            },
+        }
+
         type_names = {
-            "parlid": {"label": "MP Parliament ID"},
-            "twfyid": {"label": "MP TheyWorkForYou ID"},
-            "twitter": {"label": "MP Twitter username"},
-            "facebook": {"label": "MP Facebook username"},
-            "wikipedia": {"label": "MP Wikipedia article"},
-            "party": {"label": "MP party"},
+            "parlid": {"label": "MP Parliament ID", "source": "TWFY"},
+            "twfyid": {"label": "MP TheyWorkForYou ID", "source": "TWFY"},
+            "party": {"label": "MP party", "source": "TWFY"},
+            "twitter": {"label": "MP Twitter username", "source": "Wiki"},
+            "facebook": {"label": "MP Facebook username", "source": "Wiki"},
+            "wikipedia": {"label": "MP Wikipedia article", "source": "Wiki"},
         }
         data_types = {}
         if not self._quiet:
@@ -105,8 +180,8 @@ class Command(BaseCommand):
                 "data_type": "profile_id",
                 "label": props["label"],
                 "release_date": str(date.today()),
-                "source": "https://en.wikipedia.org/",
-                "source_label": "Data from Wikipedia.",
+                "source": sources[props["source"]]["source"],
+                "source_label": sources[props["source"]]["source_label"],
                 "table": "person__persondata",
                 "is_filterable": False,
             }
@@ -127,42 +202,43 @@ class Command(BaseCommand):
 
         if not self._quiet:
             print("Importing MPs")
-        for mp in tqdm(data, disable=self._quiet):
-
-            area = Area.get_by_gss(mp["gss_code"]["value"], area_type=self.area_type)
+        for _, mp in tqdm(data.iterrows(), disable=self._quiet, total=data.shape[0]):
+            area = Area.get_by_name(mp["Constituency"], area_type=self.area_type)
             if area is None:  # pragma: no cover
                 print(
-                    "Failed to add MP {} as area {} does not exist"
-                    % mp["personLabel"]["value"],
-                    mp["gss_code"]["value"],
+                    "Failed to add MP {} as area {} does not exist" % mp["personLabel"],
+                    mp["gss_code"],
                 )
                 continue
 
             if area and "parlid" in mp:
+                name = f"{mp['First name']} {mp['Last name']}"
+                if pd.isna(mp["parlid"]):
+                    print(f"No parlid for {name}, not updating")
+                    continue
+
                 try:
                     person, created = Person.objects.update_or_create(
                         person_type="MP",
-                        external_id=mp["parlid"]["value"],
+                        external_id=mp["parlid"],
                         id_type="parlid",
                         defaults={
-                            "name": mp["personLabel"]["value"],
+                            "name": name,
                             "area": area,
                         },
                     )
                 except DataError as e:
-                    print(
-                        f"Failed to create/update mp {mp['personLabel']['value']}: {e}"
-                    )
+                    print(f"Failed to create/update mp {name}: {e}")
                     continue
 
             if person:
                 for prop in type_names.keys():
-                    if prop in mp:
+                    if prop in mp and not pd.isna(mp[prop]):
                         try:
                             PersonData.objects.update_or_create(
                                 person=person,
                                 data_type=data_types[prop],
-                                defaults={"data": mp[prop]["value"]},
+                                defaults={"data": mp[prop]},
                             )
                         except PersonData.MultipleObjectsReturned:  # pragma: no cover
                             PersonData.objects.filter(
@@ -171,14 +247,14 @@ class Command(BaseCommand):
                             PersonData.objects.create(
                                 person=person,
                                 data_type=data_types[prop],
-                                data=mp[prop]["value"],
+                                data=mp[prop],
                             )
-                if "partyLabel" in mp:
+                if "Party" in mp:
                     try:
-                        PersonData.objects.get_or_create(
+                        PersonData.objects.update_or_create(
                             person=person,
                             data_type=data_types["party"],
-                            defaults={"data": mp["partyLabel"]["value"]},
+                            defaults={"data": mp["Party"]},
                         )
                     except PersonData.MultipleObjectsReturned:  # pragma: no cover
                         PersonData.objects.filter(
@@ -187,7 +263,7 @@ class Command(BaseCommand):
                         PersonData.objects.create(
                             person=person,
                             data_type=data_types["party"],
-                            data=mp["partyLabel"]["value"],
+                            data=mp["Party"],
                         )
 
         dataset = DataSet.objects.filter(name="party", options=list())
