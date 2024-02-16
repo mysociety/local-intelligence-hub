@@ -84,6 +84,12 @@ class Command(BaseCommand):
         id_df = id_df.drop(columns=["scheme"])
         id_df = id_df.rename(columns={"identifier": "parlid"})
 
+        # TODO: Remove this temporary workaround, once February 2024 byelection MPs are added upstream.
+        patch_df = pd.DataFrame(
+            [{"twfyid": 26287, "parlid": "5010"}, {"twfyid": 26288, "parlid": "5011"}]
+        )
+        id_df = pd.concat([id_df, patch_df])
+
         return id_df
 
     def get_area_map(self):
