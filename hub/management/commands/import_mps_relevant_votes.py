@@ -79,12 +79,16 @@ class Command(BaseCommand):
             not_in_office = [
                 str(person_data.person.external_id)
                 for person_data in PersonData.objects.filter(
-                    data_type__name="mp_first_elected"
-                ).filter(data__gt=date)
+                    person__person_type="MP",
+                    data_type__name="mp_first_elected",
+                    date__gt=date,
+                ).select_related("person")
             ]
             all_members = [
-                str(person_data.person.external_id)
-                for person_data in PersonData.objects.all()
+                str(person.external_id)
+                for person in Person.objects.filter(
+                    person_type="MP", end_date__isnull=True
+                ).order_by("external_id")
             ]
             did_not_support = [
                 person_id
