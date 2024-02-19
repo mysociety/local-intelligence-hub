@@ -439,7 +439,7 @@ class AreaSearchView(TemplateView):
             else:
                 for area in areas:
                     try:
-                        area.mp = Person.objects.get(area=area)
+                        area.mp = Person.objects.get(area=area, end_date__isnull=True)
                     except Person.DoesNotExist:
                         pass
                 areas.sort(key=lambda area: area.name)
