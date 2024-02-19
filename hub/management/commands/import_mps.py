@@ -84,12 +84,6 @@ class Command(BaseCommand):
         id_df = id_df.drop(columns=["scheme"])
         id_df = id_df.rename(columns={"identifier": "parlid"})
 
-        # TODO: Remove this temporary workaround, once February 2024 byelection MPs are added upstream.
-        patch_df = pd.DataFrame(
-            [{"twfyid": 26287, "parlid": "5010"}, {"twfyid": 26288, "parlid": "5011"}]
-        )
-        id_df = pd.concat([id_df, patch_df])
-
         return id_df
 
     def get_area_map(self):
@@ -219,17 +213,17 @@ class Command(BaseCommand):
                 )
                 continue
 
-            if area and "parlid" in mp:
+            if area and "twfyid" in mp:
                 name = f"{mp['First name']} {mp['Last name']}"
-                if pd.isna(mp["parlid"]):
-                    print(f"No parlid for {name}, not updating")
+                if pd.isna(mp["twfyid"]):
+                    print(f"No twfyid for {name}, not updating")
                     continue
 
                 try:
                     person, created = Person.objects.update_or_create(
                         person_type="MP",
-                        external_id=mp["parlid"],
-                        id_type="parlid",
+                        external_id=mp["twfyid"],
+                        id_type="twfyid",
                         defaults={
                             "name": name,
                             "area": area,
@@ -296,15 +290,22 @@ class Command(BaseCommand):
         if not self._quiet:
             print("Importing MP Images")
         for mp in tqdm(
-            Person.objects.filter(person_type="MP").all(), disable=self._quiet
+            PersonData.objects.filter(
+                data_type__name="parlid", person__person_type="MP"
+            )
+            .select_related("person")
+            .all(),
+            disable=self._quiet,
         ):
-            image_url = f"https://members-api.parliament.uk/api/Members/{mp.external_id}/Thumbnail"
+            image_url = (
+                f"https://members-api.parliament.uk/api/Members/{mp.data}/Thumbnail"
+            )
             file, headers = urllib.request.urlretrieve(image_url)
             mime_type = magic.from_file(file, mime=True)
             extension = mime_type.split("/")[1]
             image = File(open(file, "rb"))
-            mp.photo.save(f"mp_{mp.external_id}.{extension}", image)
-            mp.save()
+            mp.person.photo.save(f"mp_{mp.data}.{extension}", image)
+            mp.person.save()
 
     def check_for_duplicate_mps(self):
         duplicates = (
