@@ -106,13 +106,14 @@ class Command(BaseCommand):
             "User-Agent": "Local Intelligence Hub beta",
         }
         """ SPARQL QUERY
-        SELECT DISTINCT ?person ?personLabel ?partyLabel ?seatLabel ?gss_code ?twitter ?facebook ?wikipedia WHERE
+        SELECT DISTINCT ?person ?personLabel ?twfyid ?partyLabel ?seatLabel ?gss_code ?twitter ?facebook ?wikipedia WHERE
         {
           ?person wdt:P31 wd:Q5 . ?person p:P39 ?ps .
           ?ps ps:P39 ?term . ?term wdt:P279 wd:Q16707842 .
           ?ps pq:P580 ?start . ?ps pq:P4100 ?party . ?ps pq:P768 ?seat .
           FILTER NOT EXISTS { ?ps pq:P582 ?end } .
           ?seat wdt:P836 ?gss_code .
+          OPTIONAL { ?person wdt:P2002 ?twfyid } .
           OPTIONAL { ?person wdt:P2002 ?twitter } .
           OPTIONAL { ?person wdt:P2013 ?facebook } .
           OPTIONAL {
@@ -123,7 +124,7 @@ class Command(BaseCommand):
           SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
         }
         """
-        url = "https://query.wikidata.org/sparql?query=%20%20%20%20%20%20%20%20SELECT%20DISTINCT%20%3Fperson%20%3FpersonLabel%20%3FpartyLabel%20%3FseatLabel%20%3Fgss_code%20%3Ftwitter%20%3Ffacebook%20%3Fwikipedia%20WHERE%0A%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%3Fperson%20wdt%3AP31%20wd%3AQ5%20.%20%3Fperson%20p%3AP39%20%3Fps%20.%0A%20%20%20%20%20%20%20%20%20%20%3Fps%20ps%3AP39%20%3Fterm%20.%20%3Fterm%20wdt%3AP279%20wd%3AQ16707842%20.%0A%20%20%20%20%20%20%20%20%20%20%3Fps%20pq%3AP580%20%3Fstart%20.%20%3Fps%20pq%3AP4100%20%3Fparty%20.%20%3Fps%20pq%3AP768%20%3Fseat%20.%0A%20%20%20%20%20%20%20%20%20%20FILTER%20NOT%20EXISTS%20%7B%20%3Fps%20pq%3AP582%20%3Fend%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20%3Fseat%20wdt%3AP836%20%3Fgss_code%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%20%3Fperson%20wdt%3AP2171%20%3Ftwfyid%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%20%3Fperson%20wdt%3AP10428%20%3Fparlid%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%20%3Fperson%20wdt%3AP2002%20%3Ftwitter%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%20%3Fperson%20wdt%3AP2013%20%3Ffacebook%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Fwikipedia%20schema%3Aabout%20%3Fperson%20.%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Fwikipedia%20schema%3AinLanguage%20%22en%22%20.%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Fwikipedia%20schema%3AisPartOf%20%3Chttps%3A%2F%2Fen.wikipedia.org%2F%3E%20.%0A%20%20%20%20%20%20%20%20%20%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20SERVICE%20wikibase%3Alabel%20%7B%20bd%3AserviceParam%20wikibase%3Alanguage%20%22en%22.%20%7D%0A%20%20%20%20%20%20%20%20%7D%0A"
+        url = "https://query.wikidata.org/sparql?query=%20%20%20%20%20%20%20%20SELECT%20DISTINCT%20%3Fperson%20%3FpersonLabel%20%3FpartyLabel%20%3Ftwfyid%20%3F%20%3FseatLabel%20%3Fgss_code%20%3Ftwitter%20%3Ffacebook%20%3Fwikipedia%20WHERE%0A%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%3Fperson%20wdt%3AP31%20wd%3AQ5%20.%20%3Fperson%20p%3AP39%20%3Fps%20.%0A%20%20%20%20%20%20%20%20%20%20%3Fps%20ps%3AP39%20%3Fterm%20.%20%3Fterm%20wdt%3AP279%20wd%3AQ16707842%20.%0A%20%20%20%20%20%20%20%20%20%20%3Fps%20pq%3AP580%20%3Fstart%20.%20%3Fps%20pq%3AP4100%20%3Fparty%20.%20%3Fps%20pq%3AP768%20%3Fseat%20.%0A%20%20%20%20%20%20%20%20%20%20FILTER%20NOT%20EXISTS%20%7B%20%3Fps%20pq%3AP582%20%3Fend%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20%3Fseat%20wdt%3AP836%20%3Fgss_code%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%20%3Fperson%20wdt%3AP2171%20%3Ftwfyid%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%20%3Fperson%20wdt%3AP10428%20%3Fparlid%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%20%3Fperson%20wdt%3AP2002%20%3Ftwitter%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%20%3Fperson%20wdt%3AP2013%20%3Ffacebook%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20OPTIONAL%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Fwikipedia%20schema%3Aabout%20%3Fperson%20.%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Fwikipedia%20schema%3AinLanguage%20%22en%22%20.%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Fwikipedia%20schema%3AisPartOf%20%3Chttps%3A%2F%2Fen.wikipedia.org%2F%3E%20.%0A%20%20%20%20%20%20%20%20%20%20%7D%20.%0A%20%20%20%20%20%20%20%20%20%20SERVICE%20wikibase%3Alabel%20%7B%20bd%3AserviceParam%20wikibase%3Alanguage%20%22en%22.%20%7D%0A%20%20%20%20%20%20%20%20%7D%0A"
         r = requests.get(url, headers=headers)
 
         # munge the wikidata JSON into a set of dicts so we can turn it into a datframe
@@ -153,7 +154,7 @@ class Command(BaseCommand):
 
         # Get wikidata for twitter ids etc
         wiki_df = self.get_social_media_information()
-        df = df.merge(wiki_df, how="left", on="gss_code")
+        df = df.merge(wiki_df, how="left", on="twfyid")
 
         return df
 

@@ -39,11 +39,12 @@ class ImportMPsTestCase(TestCase):
             "results": {
                 "bindings": [
                     {
-                        "gss_code": {"value": "E10000001"},
+                        "twfyid": {"value": 26},
                         "personLabel": {"value": "James Madeupname"},
                         "partyLabel": {"value": "Borsetshire Independence"},
                     },
                     {
+                        "twfyid": {"value": 27},
                         "gss_code": {"value": "E10000002"},
                         "personLabel": {"value": "Angela Madeupname"},
                         "partyLabel": {"value": "Borsetshire Unionist"},
