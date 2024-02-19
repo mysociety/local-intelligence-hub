@@ -283,6 +283,7 @@ class AreaView(BaseAreaView):
                     "mp_last_elected",
                     "mp_first_elected",
                     "mp_election_majority",
+                    "parlid",
                     "twfyid",
                     "wikipedia",
                 ],
