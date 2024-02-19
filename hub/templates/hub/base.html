@@ -15,6 +15,8 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,700;0,800;1,400&amp;display=swap">
     <meta name="theme-color" content="#e9f1d6">
 
+    <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
+
     <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
     <meta property="og:title" content="{{ page_title }}">
