@@ -14,7 +14,7 @@ party_lookup = {
     "Labour (Co-op)": "Labour Co-operative",
     "Independent": "independent politician",
     "Alliance": "Alliance Party of Northern Ireland",
-    "Green Party": "Green Party of England and Wales",
+    "Green Party": "Green Party",
     "Speaker": "Speaker of the House of Commons",
     "Social Democratic & Labour Party": "Social Democratic and Labour Party",
 }

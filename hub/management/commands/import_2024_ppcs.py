@@ -12,7 +12,7 @@ party_shades = {
     "Alliance Party of Northern Ireland": "#F6CB2F",
     "Conservative Party": "#0087DC",
     "Democratic Unionist Party": "#D46A4C",
-    "Green Party of England and Wales": "#6AB023",
+    "Green Party": "#6AB023",
     "Labour Co-operative": "#E4003B",
     "Labour Party": "#E4003B",
     "Liberal Democrats": "#FAA61A",

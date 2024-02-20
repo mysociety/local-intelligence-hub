@@ -54,7 +54,7 @@ class Command(BaseCommand):
         "dup": "Democratic Unionist Party",
         "uup": "Ulster Unionist Party",
         "con": "Conservative Party",
-        "green": "Green Party of England and Wales",
+        "green": "Green Party",
         "pbpa": "People Before Profit Alliance",
     }
 
@@ -63,7 +63,7 @@ class Command(BaseCommand):
         {"title": "Alliance Party of Northern Ireland", "shader": "#F6CB2F"},
         {"title": "Conservative Party", "shader": "#0087DC"},
         {"title": "Democratic Unionist Party", "shader": "#D46A4C"},
-        {"title": "Green Party of England and Wales", "shader": "#6AB023"},
+        {"title": "Green Party", "shader": "#6AB023"},
         {"title": "Labour Co-operative", "shader": "#E4003B"},
         {"title": "Labour Party", "shader": "#E4003B"},
         {"title": "Liberal Democrats", "shader": "#FAA61A"},
