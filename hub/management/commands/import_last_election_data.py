@@ -1,3 +1,4 @@
+import re
 from datetime import date
 
 from django.conf import settings
@@ -5,9 +6,11 @@ from django.core.management.base import BaseCommand
 
 import numpy as np
 import pandas as pd
+import requests
+from dateutil import parser
 from tqdm import tqdm
 
-from hub.models import Area, AreaData, DataSet, DataType
+from hub.models import Area, AreaData, AreaType, DataSet, DataType
 
 
 class Command(BaseCommand):
@@ -19,9 +22,8 @@ class Command(BaseCommand):
     general_election_source_file = (
         settings.BASE_DIR / "data" / "2019_general_election.csv"
     )
-    # https://commonslibrary.parliament.uk/research-briefings/cbp-9225/
-    # https://researchbriefings.files.parliament.uk/documents/CBP-9225/Data-file.xlsx
-    by_election_source_file = settings.BASE_DIR / "data" / "byelections.xlsx"
+
+    by_election_api_url = "https://lda.data.parliament.uk/electionresults.json?_sort=-election.date&_pageSize=40"
 
     area_type = "WMC"
 
@@ -82,6 +84,9 @@ class Command(BaseCommand):
         self.data_types = self.create_data_types()
         self.import_results(df)
 
+    def get_area_type(self):
+        return AreaType.objects.get(code=self.area_type)
+
     def get_general_election_data(self):
         df = pd.read_csv(
             self.general_election_source_file,
@@ -113,50 +118,76 @@ class Command(BaseCommand):
         return df
 
     def get_by_elections_data(self):
-        gss_lookup = {
-            row["Constituency name"].lower(): row["ONS_id"]
-            for index, row in pd.read_excel(
-                self.by_election_source_file,
-                skiprows=1,
-                usecols=["ONS_id", "Constituency name"],
-            ).iterrows()
-        }
-        df = pd.read_excel(
-            self.by_election_source_file,
-            sheet_name=1,
-            skiprows=1,
-            usecols=["Party", "Constituency", "Date of By-election", "Votes_by"],
-        )
-        df["Constituency"] = df["Constituency"].apply(
-            lambda name: gss_lookup[name.lower()]
-        )
-        df.columns = ["party", "gss", "date", "votes"]
-        first_second_parties = []
-        for gss, data in df.groupby("gss"):
-            votes = sorted(data.votes.tolist())
-            first = votes.pop()  # NOQA
-            second = votes.pop()  # NOQA
-            first_party = data.query("votes == @first").iloc[0, 0]
-            second_party = data.query("votes == @second").iloc[0, 0]
-            first_second_parties.append([gss, first_party, second_party])
-        first_second_parties_df = pd.DataFrame(
-            first_second_parties, columns=["gss", "first_party", "second_party"]
-        ).set_index("gss")
-        df.party = df.party.apply(
-            lambda x: self.party_translate_down_dict.get(x, "other")
-        )
-        df = (
-            df.groupby(["gss", "date"], group_keys=True)
-            .apply(
-                lambda x: x.groupby("party", group_keys=False).sum(numeric_only=True).T
-            )
-            .fillna(0)
-            .reset_index()
-            .drop(columns="level_2")
-        )
-        df = df.set_index("gss")
-        df.date = df.date.astype(str)
-        df = df.join(first_second_parties_df)
+        response = requests.get(self.by_election_api_url)
+
+        by_election_data = {}
+
+        if response.status_code == 200:
+            elections = response.json()
+            election_ids = []
+            for election in elections["result"]["items"]:
+                desc = election["election"]["label"]["_value"]
+                if desc == "2019 General Election":
+                    break
+                election_id = election["_about"]
+                election_id = election_id.replace(
+                    "http://data.parliament.uk/resources/", ""
+                )
+                election_ids.append(election_id)
+
+            for election_id in election_ids:
+                uri = (
+                    f"https://lda.data.parliament.uk/electionresults/{election_id}.json"
+                )
+                election_response = requests.get(uri)
+                if election_response.status_code == 200:
+                    election_data = election_response.json()
+                    election_data = election_data["result"]["primaryTopic"]
+                    label = election_data["election"]["label"]["_value"]
+                    election_date = re.match(r"(\d+-\w+-\d+) .*", label)
+                    election_date = election_date.group(1)
+                    election_date = parser.parse(election_date)
+                    cons = election_data["constituency"]["label"]["_value"]
+                    a = Area.get_by_name(cons)
+
+                    result = {
+                        "date": election_date.date().isoformat(),
+                        # "uri": uri,
+                        # "label": election_data["election"]["label"]["_value"],
+                        # "Constituency": a.gss,
+                        # "Constituency name": cons,
+                    }
+
+                    for candidate in election_data["candidate"]:
+                        party = candidate["party"]["_value"].lower()
+                        party_name = self.party_translate_up_dict.get(party, "other")
+
+                        # consolidate the minor parties
+                        if party_name == "other":
+                            count = result.get("other", 0)
+                            count = count + candidate["numberOfVotes"]
+                            result["other"] = count
+                        else:
+                            result[party] = candidate["numberOfVotes"]
+
+                    sorted_results = sorted(
+                        election_data["candidate"],
+                        key=lambda c: c["numberOfVotes"],
+                        reverse=True,
+                    )
+                    result["first_party"] = self.party_translate_up_dict.get(
+                        sorted_results[0]["party"]["_value"].lower(),
+                        sorted_results[0]["party"]["_value"].lower(),
+                    )
+                    result["second_party"] = self.party_translate_up_dict.get(
+                        sorted_results[1]["party"]["_value"].lower(),
+                        sorted_results[1]["party"]["_value"].lower(),
+                    )
+
+                    by_election_data[a.gss] = result
+
+        df = pd.DataFrame.from_dict(by_election_data, orient="index")
+
         return df
 
     def get_last_election_df(self):
@@ -195,6 +226,7 @@ class Command(BaseCommand):
                 "comparators": DataSet.in_comparators(),
             },
         )
+        second_party_ds.areas_available.add(self.get_area_type())
 
         second_party, created = DataType.objects.update_or_create(
             data_set=second_party_ds,
@@ -216,6 +248,8 @@ class Command(BaseCommand):
                 "is_filterable": False,
             },
         )
+
+        last_election_ds.areas_available.add(self.get_area_type())
 
         last_election, created = DataType.objects.update_or_create(
             data_set=last_election_ds,
