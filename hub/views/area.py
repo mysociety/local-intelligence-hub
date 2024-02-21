@@ -407,6 +407,9 @@ class AreaSearchView(TemplateView):
         if search is None and lat is None and lon is None:
             return context
 
+        if search is not None:
+            search = search.strip()
+
         context["search"] = search
 
         if lon and lat:

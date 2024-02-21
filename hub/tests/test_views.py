@@ -355,6 +355,21 @@ class TestAreaSearchPage(TestCase):
         context = response.context
         self.assertEqual(context["area"].name, "South Borsetshire")
 
+    def test_search_with_spaces(self):
+        url = reverse("area_search")
+        response = self.client.get(url, {"search": " South Borsetshire"}, follow=True)
+
+        self.assertRedirects(response, "/area/WMC/South%20Borsetshire")
+        self.assertTemplateUsed(response, "hub/area.html")
+
+        response = self.client.get(url, {"search": "South Borsetshire "}, follow=True)
+
+        self.assertRedirects(response, "/area/WMC/South%20Borsetshire")
+        self.assertTemplateUsed(response, "hub/area.html")
+
+        context = response.context
+        self.assertEqual(context["area"].name, "South Borsetshire")
+
     def test_mp_name_lookup(self):
         url = reverse("area_search")
         response = self.client.get(url, {"search": "James Madeupname"}, follow=True)
