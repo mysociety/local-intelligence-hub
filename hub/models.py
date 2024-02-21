@@ -190,7 +190,7 @@ class ShaderMixin:
                             "label": self.label,
                         }
 
-            if colours.get(value.gss, None) is None:
+            if self.is_number and colours.get(value.gss, None) is None:
                 shade = self.shade(data, mininimum, maximum)
                 if shade is not None:
                     colours[value.gss] = {
