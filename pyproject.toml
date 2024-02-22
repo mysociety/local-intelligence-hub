@@ -22,6 +22,8 @@ mysoc-dataset = "^0.3.0"
 django-jsonform = "^2.15.0"
 lxml = "^4.9.2"
 beautifulsoup4 = "^4.11.1"
+djangorestframework = "^3.14.0"
+djangorestframework-simplejwt = {extras = ["crypto"], version = "^5.3.1"}
 
 [tool.poetry.dev-dependencies]
 django-debug-toolbar = "^3.7.0"

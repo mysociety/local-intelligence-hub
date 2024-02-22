@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "django_bootstrap5",
     "sslserver",
     "django_jsonform",
+    "rest_framework",
     "hub",
 ]
 
@@ -237,3 +238,10 @@ if DEBUG and HIDE_DEBUG_TOOLBAR is False:  # pragma: no cover
         "debug_toolbar.panels.logging.LoggingPanel",
         "debug_toolbar.panels.redirects.RedirectsPanel",
     ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}

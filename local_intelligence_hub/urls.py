@@ -19,9 +19,13 @@ from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path, re_path
 from django.views.generic.base import RedirectView
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 from hub.sitemap import hub_sitemap
-from hub.views import accounts, area, core, explore, landingpages
+from hub.views import accounts, api, area, core, explore, landingpages
 
 handler404 = core.NotFoundPageView.as_view()
 
@@ -107,6 +111,10 @@ urlpatterns = [
         {"sitemaps": hub_sitemap},
         name="django.contrib.sitemaps.views.sitemap",
     ),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path("api/public/", api.PublicAreaViewSet.as_view({'get': 'list'}), name="api_public"),
+    path("api/private/", api.PrivateAreaViewSet.as_view({'get': 'list'}), name="api_private"),
 ]
 
 if settings.DEBUG:  # pragma: no cover
