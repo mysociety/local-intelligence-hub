@@ -58,6 +58,14 @@ $(function(){
 
     $('body.js-area-page').each(setUpAreaPage);
 
+    $('.social-sharing-menu a[target="_blank"]').on('click', function(e){
+        var $link = $(this);
+        trackEvent('social_share', {
+            'service': $link[0].innerText,
+            'page_location': window.location.href
+        });
+    });
+
     $('[data-copy-text]').on('click', function(e){
         e.stopPropagation();
         if (navigator.clipboard) {
