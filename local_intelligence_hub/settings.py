@@ -78,7 +78,6 @@ INSTALLED_APPS = [
     "django.contrib.sitemaps",
     "compressor",
     "django_bootstrap5",
-    "sslserver",
     "django_jsonform",
     "gqlauth",
     "hub",
