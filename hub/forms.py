@@ -8,6 +8,7 @@ from django.forms import (
     BooleanField,
     CharField,
     EmailField,
+    Form,
     ModelForm,
     modelformset_factory,
 )
@@ -158,3 +159,20 @@ class InactiveCheckLoginForm(AuthenticationForm):
                     self.error_messages["inactive"],
                     code="inactive",
                 )
+
+
+class MailingListSignupForm(Form):
+    email = EmailField(label="Email")
+    full_name = CharField()
+    mysoc_signup = BooleanField(
+        required=False,
+        label=mark_safe(
+            'mySociety <a href="https://www.mysociety.org/privacy/">(privacy policy)</a>'
+        ),
+    )
+    tcc_signup = BooleanField(
+        required=False,
+        label=mark_safe(
+            'The Climate Coalition <a href="https://www.theclimatecoalition.org/privacy-policy">(privacy policy)</a>'
+        ),
+    )

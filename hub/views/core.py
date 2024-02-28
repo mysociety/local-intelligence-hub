@@ -1,8 +1,15 @@
+import re
+
+from django.conf import settings
 from django.db import connection
 from django.db.utils import OperationalError
 from django.http import JsonResponse
-from django.views.generic import TemplateView
+from django.views.generic import FormView, TemplateView
 
+import mailchimp_marketing as MailChimp
+from mailchimp_marketing.api_client import ApiClientError
+
+from hub.forms import MailingListSignupForm
 from hub.mixins import TitleMixin
 from hub.models import Area, DataSet
 
@@ -96,6 +103,113 @@ class AboutView(TitleMixin, TemplateView):
 class ContactView(TitleMixin, TemplateView):
     page_title = "Contact us"
     template_name = "hub/contact.html"
+
+
+class MailChimpSuccessView(TitleMixin, TemplateView):
+    page_title = "Contact us"
+    template_name = "hub/sign_up_success.html"
+
+
+class MailChimpSignupView(TitleMixin, FormView):
+    form_class = MailingListSignupForm
+    page_title = "Signup to our mailing list"
+    template_name = "hub/sign_up.html"
+    success_url = "/mailing-list-success/"
+
+    def form_invalid(self, form):
+        response = super().form_invalid(form)
+        if self.request.accepts("text/html"):
+            return response
+        else:
+            return JsonResponse({"errors": form.errors}, status=400)
+
+    def form_valid(self, form):
+        mysoc_client = MailChimp.Client()
+        tcc_client = MailChimp.Client()
+
+        mysoc_climate_signup = form.cleaned_data.get("mysoc_signup", False)
+        tcc_signup = form.cleaned_data.get("tcc_signup", False)
+
+        name = form.cleaned_data.get("full_name")
+        merge_fields = None
+        if name is not None:
+            name = name.strip()
+            name = re.sub(r"\s+", " ", name)
+            parts = name.split(" ", maxsplit=1)
+
+            if len(parts) >= 1:
+                merge_fields = {"FNAME": parts[0]}
+            if len(parts) == 2:
+                merge_fields["LNAME"] = parts[1]
+
+        mysoc_client.set_config(
+            {
+                "api_key": settings.MAILCHIMP_MYSOC_KEY,
+                "server": settings.MAILCHIMP_MYSOC_SERVER_PREFIX,
+            }
+        )
+
+        tcc_client.set_config(
+            {
+                "api_key": settings.MAILCHIMP_TCC_KEY,
+                "server": settings.MAILCHIMP_TCC_SERVER_PREFIX,
+            }
+        )
+
+        content = {
+            "email_address": form.cleaned_data.get("email"),
+            "status": "subscribed",
+        }
+
+        if merge_fields is not None:
+            content["merge_fields"] = merge_fields
+
+        mysoc_content = {**content, "tags": [settings.MAILCHIMP_MYSOC_DATA_UPDATE_TAG]}
+
+        if mysoc_climate_signup:
+            mysoc_content["interests"] = {}
+            mysoc_content["interests"][settings.MAILCHIMP_MYSOC_CLIMATE_INTEREST] = True
+
+        if tcc_signup:
+            tcc_content = content
+
+        http_status = 200
+        response_data = {"data": content}
+
+        try:
+            response = mysoc_client.lists.batch_list_members(
+                settings.MAILCHIMP_MYSOC_LIST_ID,
+                {"members": [mysoc_content], "update_existing": True},
+            )
+
+            response_data = {"response": "ok", "data": content}
+
+            if (
+                tcc_signup
+                and hasattr(settings, "MAILCHIMP_TCC_LIST_ID")
+                and settings.MAILCHIMP_TCC_LIST_ID != ""
+            ):
+                response = tcc_client.lists.batch_list_members(
+                    settings.MAILCHIMP_TCC_LIST_ID,
+                    {"members": [tcc_content], "update_existing": True},
+                )
+                print("posting to TCC API", tcc_content)
+
+        except ApiClientError as error:
+            http_status = 500
+            response_data = {
+                "errors": {
+                    "mailchmip": [
+                        error.text,
+                    ]
+                }
+            }
+
+        response = super().form_valid(form)
+        if self.request.accepts("text/html"):
+            return response
+        else:
+            return JsonResponse(response_data, status=http_status)
 
 
 class StyleView(TitleMixin, TemplateView):

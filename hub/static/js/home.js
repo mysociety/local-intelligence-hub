@@ -2,6 +2,20 @@ import $ from 'jquery/dist/jquery.slim'
 import Collapse from 'bootstrap/js/dist/collapse'
 import trackEvent from './analytics.esm.js'
 
+async function mailingListSignup($form) {
+    const response = await fetch($form.attr('action'), {
+        method: $form.attr('method') || 'GET',
+        mode: 'cors',
+        credentials: 'same-origin',
+        body: $form.serialize(),
+        headers: {
+            "Content-Type": 'application/x-www-form-urlencoded',
+            "Accept": 'application/json; charset=utf-8',
+        },
+    })
+    return response.json()
+}
+
 $(function(){
     if( 'geolocation' in navigator ) {
         $('.js-geolocate').removeClass('d-none');
@@ -83,6 +97,36 @@ $(function(){
             cta_destination: href
         }).always(function(){
             window.location.href = href;
+        });
+    })
+
+    $('#mailing_list_signup').on('submit', function(e){
+        e.preventDefault();
+        var $form = $(this);
+        $('.invalid-feedback').remove()
+        mailingListSignup($form).then(function(response){
+            if (response['response'] == 'ok') {
+                $form.parent().hide()
+                $('#mailing_list_success').removeClass('d-none')
+            } else {
+                console.log(response)
+                for (var k in response["errors"]) {
+                    var id = '#' + k
+                    var el = $(id)
+                    el.addClass('is-invalid')
+                    var error_el = $('<div>')
+                    error_el.addClass('invalid-feedback d-block fs-6 mt-2')
+                    error_el.html( '<p>' + response["errors"][k].join(", ") + '</p>' )
+                    el.after(error_el)
+                }
+
+                if ("mailchimp" in response["errors"]) {
+                    var error_el = $('<div>')
+                    error_el.addClass('invalid-feedback d-block fs-6 mt-2')
+                    error_el.html( '<p>There was a problem signing you up, please try again.</p>' )
+                    $form.before(error_el)
+                }
+            }
         });
     })
 })

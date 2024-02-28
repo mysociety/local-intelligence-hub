@@ -1,0 +1,51 @@
+<div class="readable">
+    <form id="mailing_list_signup" method="POST" action="{% url 'mailing_list_signup' %}">
+        {% csrf_token %}
+        <h2 class="h4">Want notifications when we add new data?</h2>
+        <fieldset>
+            <legend>Let us know your email address and we’ll notify you about new data:</legend>
+            <div class="mb-3">
+                <label class="form-label" for="full_name">Name</label>
+                <input type="text" name="full_name" id="full_name" class="form-control">
+                {% if form.errors.full_name %}
+                  <div class="invalid-feedback d-block fs-6 mt-2">
+                      {{ form.errors.full_name }}
+                  </div>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="email">Email address</label>
+                <input type="email" name="email" id="email" class="form-control">
+                {% if form.errors.email %}
+                  <div class="invalid-feedback d-block fs-6 mt-2">
+                      {{ form.errors.email }}
+                  </div>
+                {% endif %}
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>You can also, optionally, join our newsletters for more inspiration on data, democracy, and climate action:</legend>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="yes" name="mysoc_signup" id="mysoc_signup">
+                <label class="form-check-label" for="mysoc_signup">
+                    mySociety
+                    <a href="https://www.mysociety.org/privacy/">(privacy policy)</a>
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="yes" name="tcc_signup" id="tcc_signup">
+                <label class="form-check-label" for="tcc_signup">
+                    The Climate Coalition
+                    <a href="https://www.theclimatecoalition.org/privacy-policy">(privacy policy)</a>
+                </label>
+            </div>
+        </fieldset>
+        <button type="submit" class="btn btn-primary mt-4">Subscribe</button>
+    </form>
+</div>
+
+<div class="d-none" id="mailing_list_success">
+    <p>
+        You're signed up!
+    </p>
+</div>
