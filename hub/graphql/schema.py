@@ -18,17 +18,17 @@ class Query(UserQueries):
     area_types: list[AreaType] = strawberry_django.field()
 
     @strawberry_django.field
-    def public(self) -> list[Area]:
+    def public_areas(self) -> list[Area]:
         return models.Area.objects.all()
     
     @strawberry_django.field
-    def private(self, info: Info) -> list[Area]:
+    def private_areas(self, info: Info) -> list[Area]:
         user = get_user(info)
 
         if not user.is_authenticated:
             raise GQLAuthError(code=GQLAuthErrors.UNAUTHENTICATED)
-
-        return models.Area.objects.all()
+        areas = list(models.Area.objects.all())
+        return areas
 
 
 @strawberry.type
