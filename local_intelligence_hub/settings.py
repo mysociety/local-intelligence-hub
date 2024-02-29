@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     "sslserver",
     "django_jsonform",
     "hub",
+    "procrastinate.contrib.django",
 ]
 
 MIDDLEWARE = [

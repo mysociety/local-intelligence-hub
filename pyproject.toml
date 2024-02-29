@@ -24,6 +24,9 @@ lxml = "^4.9.2"
 beautifulsoup4 = "^4.11.1"
 django-polymorphic = "^3.1.0"
 pyairtable = "^2.3.0.post1"
+procrastinate = {version = "2.0.0b4", extras = ["django"]}
+psycopg = "^3.1.18"
+aiopg = "^1.4.0"
 
 [tool.poetry.dev-dependencies]
 django-debug-toolbar = "^3.7.0"

@@ -46,6 +46,35 @@ services:
     # allows "forwardPorts" in devcontainer.json function
     # so that mtxr.sqltools and third party DB clients can access it
     network_mode: service:db
+  worker:
+    image: mysociety/local-intelligence-hub:${TAG:-latest}
+    build: .
+    command: ./manage.py procrastinate worker
+    volumes:
+      - .:/app
+    # ports:
+    #   - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    tty: true
+    environment:
+      SECRET_KEY: 'secret'
+      DEBUG: 1
+      DATABASE_URL: 'postgres://postgres:password@db/local-intelligence'
+      EMAIL_HOST: email.svc
+      CACHE_FILE: 'data/cache'
+      MAPIT_URL: 'https://mapit.mysociety.org/'
+      GOOGLE_ANALYTICS: ${GOOGLE_ANALYTICS:-}
+      GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
+      DJANGO_SUPERUSER_USERNAME: 'admin'
+      DJANGO_SUPERUSER_PASSWORD: 'password'
+      DJANGO_SUPERUSER_EMAIL: 'admin@localhost'
+    working_dir: /app
+    # Runs app on the same network as the database container,
+    # allows "forwardPorts" in devcontainer.json function
+    # so that mtxr.sqltools and third party DB clients can access it
+    network_mode: service:db
   mailhog:
     image: mailhog/mailhog:v1.0.1
     restart: always

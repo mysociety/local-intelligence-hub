@@ -1,9 +1,18 @@
 {
     "version": "0.2.0",
+    "compounds": [
+      {
+        "name": "Run all app services",
+        "configurations": [
+          "Python: Run webapp",
+          "Python: Run background tasks"
+        ]
+      }
+    ],
     "configurations": [     
         {
-            "name": "Run debug server",
-            "type": "python",
+            "name": "Python: Run webapp",
+            "type": "debugpy",
             "request": "launch",
             "justMyCode": false,
             "program": "${workspaceFolder}/manage.py",
@@ -11,6 +20,17 @@
                 "runserver"
             ],
             "django": true
+        },
+        {
+          "name": "Python: Run background tasks",
+          "type": "debugpy",
+          "request": "launch",
+          "program": "${workspaceFolder}/manage.py",
+          "args": [
+            "procrastinate", "worker"
+          ],
+          "justMyCode": true,
+          "django": true
         }
     ]
 }

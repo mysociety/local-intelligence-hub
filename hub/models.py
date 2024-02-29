@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import Iterable
 import uuid
 
 from django.contrib.auth import get_user_model
@@ -12,6 +11,8 @@ from django_jsonform.models.fields import JSONField
 
 import utils as lih_utils
 from hub.filters import Filter
+
+from hub.tasks import update_many, update_one
 
 User = get_user_model()
 
@@ -786,11 +787,17 @@ class AirtableSource(ExternalDataSource):
         return table
     
     def healthcheck(self):
-        table = self.table
-        record = table.first()
+        record = self.table.first()
         if record:
             return True
         return False
+    
+    def update_many(self, config: 'ExternalDataSourceUpdateConfig'):
+        # 1. Get all members
+        list = self.table.all()
+        # 2. Print
+        print("Airtable results", list.count())
+        # 3. Update members with some random field value
 
 # class GoogleSheetSource(ExternalDataSource):
 #     '''
@@ -863,10 +870,7 @@ class ExternalDataSourceUpdateConfig(models.Model):
         return f'Update config for {self.data_source.name}'
     
     def update_many(self):
-        self.data_source.update_many(self)
+        update_many.defer(self.id)
 
     def update_one(self, member):
-        self.data_source.update_one(member, self)
-
-    def save(self, force_insert: bool = ..., force_update: bool = ..., using: str | None = ..., update_fields: Iterable[str] | None = ...) -> None:
-        return super().save(force_insert, force_update, using, update_fields)
+        update_one.defer(self.id)
