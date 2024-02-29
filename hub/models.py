@@ -707,3 +707,107 @@ def cast_data(sender, instance, *args, **kwargs):
     elif instance.is_number and instance.int is None and instance.data:
         instance.int = int(instance.data)
         instance.data = ""
+
+from polymorphic.models import PolymorphicModel
+
+class ExternalDataSource(PolymorphicModel):
+    '''
+    A third-party data source that can be read and optionally written back to.
+    E.g. Google Sheet or an Action Network table.
+    This class is to be subclassed by specific data source types.
+    '''
+    # TODO: organisation = models.CharField(max_length=100)
+    name = models.CharField(max_length=250, null=True, blank=True)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_update = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        abstract = True
+
+class RemoteCSVSource(ExternalDataSource):
+    '''
+    Any public CSV that can be read.
+    '''
+    url = models.URLField()
+    
+    class Meta:
+        verbose_name = 'Public CSV'
+
+class AirtableSource(ExternalDataSource):
+    '''
+    An Airtable table.
+    '''
+    api_key = models.CharField(max_length=250)
+    base_id = models.CharField(max_length=250)
+    table_id = models.CharField(max_length=250)
+
+    class Meta:
+        verbose_name = 'Airtable table'
+
+    def healthcheck(self):
+        '''
+        Check the connection to the Airtable API.
+        '''
+        pass
+    
+    def setup_webhook(self):
+        '''
+        Set up a webhook on the Airtable table.
+        '''
+        pass
+    
+    def append(self, config):
+        '''
+        Append data to the Airtable table.
+        '''
+        pass
+    
+    def append_one(self, member, config):
+        '''
+        Append data for one member to the Airtable table.
+        '''
+        pass
+
+# class GoogleSheetSource(ExternalDataSource):
+#     '''
+#     A Google Sheet.
+#     '''
+#     sheet_id = models.CharField(max_length=250)
+#     tab_name = models.CharField(max_length=250)
+#     api_token = models.CharField(max_length=250)
+    
+#     class Meta:
+#         verbose_name = 'Google Sheet'
+
+# class ActionNetworkSource(ExternalDataSource):
+#     '''
+#     An Action Network table data source.
+#     '''
+#     api_token = models.CharField(max_length=250)
+    
+#     class Meta:
+#         verbose_name = 'Action Network'
+    
+# class MailchimpListSource(ExternalDataSource):
+#     '''
+#     A Mailchimp list.
+#     '''
+#     api_key = models.CharField(max_length=250)
+#     list_id = models.CharField(max_length=250)
+
+#     class Meta:
+#         verbose_name = 'Mailchimp list'
+
+# class CiviCRMSource(ExternalDataSource):
+#     '''
+#     A CiviCRM table.
+#     '''
+#     api_key = models.CharField(max_length=250)
+#     base_url = models.URLField()
+
+#     class Meta:
+#         verbose_name = 'CiviCRM'

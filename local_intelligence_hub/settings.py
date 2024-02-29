@@ -79,6 +79,8 @@ INSTALLED_APPS = [
     "sslserver",
     "django_jsonform",
     "hub",
+    'polymorphic',
+    'django.contrib.contenttypes',
 ]
 
 MIDDLEWARE = [
