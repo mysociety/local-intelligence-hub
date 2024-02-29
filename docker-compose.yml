@@ -10,6 +10,7 @@ services:
     environment:
       POSTGRES_PASSWORD: 'password'
       POSTGRES_DB: 'local-intelligence'
+      POSTGRES_PORT: 5432
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -22,8 +23,8 @@ services:
     command: /app/script/server --development
     volumes:
       - .:/app
-    ports:
-      - "8000:8000"
+    # ports:
+    #   - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -41,6 +42,10 @@ services:
       DJANGO_SUPERUSER_PASSWORD: 'password'
       DJANGO_SUPERUSER_EMAIL: 'admin@localhost'
     working_dir: /app
+    # Runs app on the same network as the database container,
+    # allows "forwardPorts" in devcontainer.json function
+    # so that mtxr.sqltools and third party DB clients can access it
+    network_mode: service:db
   mailhog:
     image: mailhog/mailhog:v1.0.1
     restart: always

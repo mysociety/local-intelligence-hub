@@ -6,6 +6,7 @@
 	"service": "web",
 	"workspaceFolder": "/app",
 	"overrideCommand": true,
+  "forwardPorts": [8000, 5432],
 
 	"extensions": [
 		"ms-vscode.test-adapter-converter",
@@ -15,6 +16,24 @@
 		"batisteo.vscode-django",
 		"ms-azuretools.vscode-docker",
 		"github.vscode-pull-request-github",
-		"mhutchie.git-graph"
-	]
+		"mhutchie.git-graph",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg",
+	],
+
+  // Set *default* container specific settings.json values on container create.
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash",
+    "sqltools.connections": [
+      {
+        "name": "Container database",
+        "driver": "PostgreSQL",
+        "previewLimit": 50,
+        "server": "db",
+        "port": 5432,
+        "database": "local-intelligence",
+        "username": "postgres",
+        "password": "password"
+      }
+  ]
 }
