@@ -1,16 +1,37 @@
 {
     "version": "0.2.0",
-    "configurations": [     
+    "configurations": [
         {
             "name": "Run debug server",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "justMyCode": false,
-            "program": "${workspaceFolder}/manage.py",
+            "program": "${workspaceFolder}/django/manage.py",
             "args": [
                 "runserver"
             ],
             "django": true
+        },
+        {
+            "name": "Start backend containers",
+            "type": "node-terminal",
+            "command": "cd django && docker compose up",
+            "request": "launch"
+        },
+        {
+            "name": "Start frontend",
+            "type": "node-terminal",
+            "command": "cd nextjs && npm run dev",
+            "request": "launch"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "App",
+            "configurations": [
+                "Start backend containers",
+                "Start frontend"
+            ]
         }
     ]
 }

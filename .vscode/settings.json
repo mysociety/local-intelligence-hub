@@ -9,12 +9,12 @@
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
     "python.analysis.extraPaths": [
-        ".venv/lib/python3.12/site-packages"
+        "django/.venv/lib/python3.12/site-packages"
     ],
-    "black-formatter.path": ["${workspaceFolder}", "script", "black"],
-    "flake8.path": ["${workspaceFolder}", "script", "flake8"],
+    "black-formatter.path": ["${workspaceFolder}", "django", "script", "black"],
+    "flake8.path": ["${workspaceFolder}", "django", "script", "flake8"],
     "flake8.args": [
-        "--exclude \".venv\" ."
+        "--exclude \"django/.venv\" ."
     ],
 
     "files.exclude": {
