@@ -21,7 +21,7 @@
         {
             "name": "Start frontend",
             "type": "node-terminal",
-            "command": "cd nextjs && npm run dev",
+            "command": "cd nextjs && nvm use && npm install && npm run dev",
             "request": "launch"
         }
     ],
