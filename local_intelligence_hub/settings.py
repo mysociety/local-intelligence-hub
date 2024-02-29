@@ -248,9 +248,10 @@ if DEBUG and HIDE_DEBUG_TOOLBAR is False:  # pragma: no cover
 
 # CK Section
 
-one_hour = timedelta(hours=1)
+# TODO: Decrease this when we go public
+one_week = timedelta(days=7)
 GQL_AUTH = GqlAuthSettings(
-    JWT_EXPIRATION_DELTA=one_hour,
+    JWT_EXPIRATION_DELTA=one_week,
     LOGIN_REQUIRE_CAPTCHA=False,
     REGISTER_REQUIRE_CAPTCHA=False,
 )
