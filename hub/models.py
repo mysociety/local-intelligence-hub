@@ -1,4 +1,6 @@
 from datetime import datetime, timezone
+from typing import Iterable
+import uuid
 
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -716,6 +718,7 @@ class ExternalDataSource(PolymorphicModel):
     E.g. Google Sheet or an Action Network table.
     This class is to be subclassed by specific data source types.
     '''
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     # TODO: organisation = models.CharField(max_length=100)
     name = models.CharField(max_length=250, null=True, blank=True)
     description = models.TextField(blank=True, null=True)
@@ -724,9 +727,6 @@ class ExternalDataSource(PolymorphicModel):
 
     def __str__(self):
         return self.name
-    
-    class Meta:
-        abstract = True
 
     def healthcheck(self):
         '''
@@ -740,19 +740,19 @@ class ExternalDataSource(PolymorphicModel):
         '''
         raise NotImplementedError('Webhook setup not implemented for this data source type.')
     
-    def ingest (self, config):
+    def ingest (self):
         '''
         Copy data to this database for use in dashboarding features.
         '''
         raise NotImplementedError('Ingest not implemented for this data source type.')
     
-    def update_many(self, config):
+    def update_many(self, config: 'ExternalDataSourceUpdateConfig'):
         '''
         Append data to the table.
         '''
         raise NotImplementedError('Update many not implemented for this data source type.')
     
-    def update_one(self, member, config):
+    def update_one(self, member, config: 'ExternalDataSourceUpdateConfig'):
         '''
         Append data for one member to the table.
         '''
@@ -831,3 +831,42 @@ class AirtableSource(ExternalDataSource):
 
 #     class Meta:
 #         verbose_name = 'CiviCRM'
+
+class ExternalDataSourceUpdateConfig(models.Model):
+    '''
+    A configuration for updating a data source.
+    '''
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    data_source = models.ForeignKey(ExternalDataSource, on_delete=models.CASCADE)
+    last_update = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    enabled = models.BooleanField(default=False)
+    postcode_column = models.CharField(max_length=250, null=True, blank=True)
+
+    '''
+    Mapping is a key/value pair where the key is the column name in the data source and the value is from Mapped, like
+    {
+        action network: mapped
+    }
+
+    E.g.
+    {
+        "constituency_2024": {
+          source: "postcodes.io",
+          path: "constituency_2025"
+        }
+    }
+    '''
+    mapping = JSONField(blank=True, null=True)
+
+    def __str__(self):
+        return f'Update config for {self.data_source.name}'
+    
+    def update_many(self):
+        self.data_source.update_many(self)
+
+    def update_one(self, member):
+        self.data_source.update_one(member, self)
+
+    def save(self, force_insert: bool = ..., force_update: bool = ..., using: str | None = ..., update_fields: Iterable[str] | None = ...) -> None:
+        return super().save(force_insert, force_update, using, update_fields)
