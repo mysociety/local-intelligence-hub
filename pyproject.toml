@@ -5,7 +5,7 @@ description = ""
 authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.9,<3.13"
 Django = "4.2.10"
 django-bootstrap5 = "^22.1"
 django-environ = "^0.9.0"
@@ -22,6 +22,9 @@ mysoc-dataset = "^0.3.0"
 django-jsonform = "^2.15.0"
 lxml = "^4.9.2"
 beautifulsoup4 = "^4.11.1"
+strawberry-graphql-django = "^0.32.1"
+strawberry-django-auth = "^0.376.5"
+django-cors-headers = "^4.3.1"
 
 [tool.poetry.dev-dependencies]
 django-debug-toolbar = "^3.7.0"
