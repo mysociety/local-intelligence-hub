@@ -68,7 +68,8 @@ NON_LOGIN_URLS = (
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
-    "django.contrib.contenttypes",
+    'polymorphic',
+    'django.contrib.contenttypes',
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
@@ -79,8 +80,6 @@ INSTALLED_APPS = [
     "sslserver",
     "django_jsonform",
     "hub",
-    'polymorphic',
-    'django.contrib.contenttypes',
 ]
 
 MIDDLEWARE = [

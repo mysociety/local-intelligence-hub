@@ -23,6 +23,7 @@ django-jsonform = "^2.15.0"
 lxml = "^4.9.2"
 beautifulsoup4 = "^4.11.1"
 django-polymorphic = "^3.1.0"
+pyairtable = "^2.3.0.post1"
 
 [tool.poetry.dev-dependencies]
 django-debug-toolbar = "^3.7.0"

@@ -728,6 +728,36 @@ class ExternalDataSource(PolymorphicModel):
     class Meta:
         abstract = True
 
+    def healthcheck(self):
+        '''
+        Check the connection to the API.
+        '''
+        raise NotImplementedError('Healthcheck not implemented for this data source type.')
+    
+    def setup_webhook(self):
+        '''
+        Set up a webhook.
+        '''
+        raise NotImplementedError('Webhook setup not implemented for this data source type.')
+    
+    def ingest (self, config):
+        '''
+        Copy data to this database for use in dashboarding features.
+        '''
+        raise NotImplementedError('Ingest not implemented for this data source type.')
+    
+    def update_many(self, config):
+        '''
+        Append data to the table.
+        '''
+        raise NotImplementedError('Update many not implemented for this data source type.')
+    
+    def update_one(self, member, config):
+        '''
+        Append data for one member to the table.
+        '''
+        raise NotImplementedError('Update one not implemented for this data source type.')
+
 class RemoteCSVSource(ExternalDataSource):
     '''
     Any public CSV that can be read.
@@ -741,36 +771,26 @@ class AirtableSource(ExternalDataSource):
     '''
     An Airtable table.
     '''
-    api_key = models.CharField(max_length=250)
+    api_key = models.CharField(max_length=250, help_text='Personal access token. Requires the following 4 scopes: data.records:read, data.records:write, schema.bases:read, webhook:manage')
     base_id = models.CharField(max_length=250)
     table_id = models.CharField(max_length=250)
 
     class Meta:
         verbose_name = 'Airtable table'
 
+    @property
+    def table(self):
+        from pyairtable import Api
+        api = Api(self.api_key)
+        table = api.table(self.base_id, self.table_id)
+        return table
+    
     def healthcheck(self):
-        '''
-        Check the connection to the Airtable API.
-        '''
-        pass
-    
-    def setup_webhook(self):
-        '''
-        Set up a webhook on the Airtable table.
-        '''
-        pass
-    
-    def append(self, config):
-        '''
-        Append data to the Airtable table.
-        '''
-        pass
-    
-    def append_one(self, member, config):
-        '''
-        Append data for one member to the Airtable table.
-        '''
-        pass
+        table = self.table
+        record = table.first()
+        if record:
+            return True
+        return False
 
 # class GoogleSheetSource(ExternalDataSource):
 #     '''
