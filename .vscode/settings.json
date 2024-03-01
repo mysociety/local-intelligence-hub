@@ -1,6 +1,5 @@
 {
     "python.defaultInterpreterPath": "/usr/local/bin/python",
-
     "editor.formatOnSave": false,
     "[python]": {
         "editor.formatOnSave": true,
@@ -9,6 +8,9 @@
         },
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
+    "python.analysis.extraPaths": [
+        ".venv/lib/python3.12/site-packages"
+    ],
     "black-formatter.path": ["${workspaceFolder}", "script", "black"],
     "flake8.path": ["${workspaceFolder}", "script", "flake8"],
     "flake8.args": [

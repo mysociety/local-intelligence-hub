@@ -10,10 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+from datetime import timedelta
 import socket
 from pathlib import Path
 
 import environ
+from gqlauth.settings_type import GqlAuthSettings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -84,18 +86,21 @@ INSTALLED_APPS = [
     "django.contrib.sitemaps",
     "compressor",
     "django_bootstrap5",
-    "sslserver",
     "django_jsonform",
+    "gqlauth",
     "hub",
+    "corsheaders",
     "procrastinate.contrib.django",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "gqlauth.core.middlewares.django_jwt_middleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "hub.middleware.RecordLastSeenMiddleware",
@@ -148,6 +153,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# TODO: Do we want inactive users to be able to log in? If not, change to backends.ModelBackend
+# See https://docs.djangoproject.com/en/5.0/ref/contrib/auth/#fields for more details
 AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.AllowAllUsersModelBackend"]
 
 
@@ -265,3 +272,16 @@ LOGGING = {
         },
     },
 }
+# CK Section
+
+# TODO: Decrease this when we go public
+one_week = timedelta(days=7)
+GQL_AUTH = GqlAuthSettings(
+    JWT_EXPIRATION_DELTA=one_week,
+    LOGIN_REQUIRE_CAPTCHA=False,
+    REGISTER_REQUIRE_CAPTCHA=False,
+)
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+]

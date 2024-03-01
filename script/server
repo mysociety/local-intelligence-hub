@@ -26,10 +26,12 @@ case "$ACTION" in
         fi
         ;;
     --development)
+        poetry install --no-root
+        source .venv/bin/activate
         npm install --no-package-lock --no-audit
         ./script/build_js
         ./manage.py migrate
-        ./manage.py runsslserver 0.0.0.0:8000
+        ./manage.py runserver 0.0.0.0:8000
         ;;
     --staging)
         ./manage.py migrate

@@ -19,7 +19,9 @@ from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path, re_path
 from django.views.generic.base import RedirectView
+from strawberry.django.views import AsyncGraphQLView
 
+from hub.graphql.schema import schema
 from hub.sitemap import hub_sitemap
 from hub.views import accounts, area, core, explore, landingpages
 
@@ -107,6 +109,7 @@ urlpatterns = [
         {"sitemaps": hub_sitemap},
         name="django.contrib.sitemaps.views.sitemap",
     ),
+    path("graphql", AsyncGraphQLView.as_view(schema=schema), name="graphql")
 ]
 
 if settings.DEBUG:  # pragma: no cover
