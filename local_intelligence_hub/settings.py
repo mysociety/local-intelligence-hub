@@ -24,6 +24,10 @@ env = environ.Env(
     HIDE_DEBUG_TOOLBAR=(bool, False),
     GOOGLE_ANALYTICS=(str, ""),
     GOOGLE_SITE_VERIFICATION=(str, ""),
+    TEST_AIRTABLE_BASE_ID=(str, ""),
+    TEST_AIRTABLE_TABLE_NAME=(str, ""),
+    TEST_AIRTABLE_API_KEY=(str, ""),
+    DJANGO_LOG_LEVEL=(str, "INFO"),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -39,6 +43,9 @@ MAPIT_URL = env("MAPIT_URL")
 MAPIT_API_KEY = env("MAPIT_API_KEY")
 GOOGLE_ANALYTICS = env("GOOGLE_ANALYTICS")
 GOOGLE_SITE_VERIFICATION = env("GOOGLE_SITE_VERIFICATION")
+TEST_AIRTABLE_BASE_ID=env("TEST_AIRTABLE_BASE_ID")
+TEST_AIRTABLE_TABLE_NAME=env("TEST_AIRTABLE_TABLE_NAME")
+TEST_AIRTABLE_API_KEY=env("TEST_AIRTABLE_API_KEY")
 
 # make sure CSRF checking still works behind load balancers
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -239,3 +246,22 @@ if DEBUG and HIDE_DEBUG_TOOLBAR is False:  # pragma: no cover
         "debug_toolbar.panels.logging.LoggingPanel",
         "debug_toolbar.panels.redirects.RedirectsPanel",
     ]
+
+POSTCODES_IO_URL = "https://postcodes.commonknowledge.coop"
+POSTCODES_IO_BATCH_MAXIMUM = 100
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': env('DJANGO_LOG_LEVEL'),
+        },
+    },
+}

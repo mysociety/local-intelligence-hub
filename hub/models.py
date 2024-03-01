@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 import uuid
+from typing import TypedDict
 
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -13,6 +14,8 @@ import utils as lih_utils
 from hub.filters import Filter
 
 from hub.tasks import update_many, update_one
+from utils.postcodesIO import get_postcode_geo, PostcodesIOResult
+from utils.py import get
 
 User = get_user_model()
 
@@ -753,11 +756,61 @@ class ExternalDataSource(PolymorphicModel):
         '''
         raise NotImplementedError('Update many not implemented for this data source type.')
     
-    def update_one(self, member, config: 'ExternalDataSourceUpdateConfig'):
+    def fetch_one(self, member_id: str):
+        '''
+        Get one member from the data source.
+        '''
+        raise NotImplementedError('Get one not implemented for this data source type.')
+
+    def update_one(self, member_id: str, config: 'ExternalDataSourceUpdateConfig'):
         '''
         Append data for one member to the table.
         '''
         raise NotImplementedError('Update one not implemented for this data source type.')
+    
+    def get_field_for_record(self, record, field):
+        '''
+        Get a field from a record.
+        '''
+        return record[field]
+    
+    MappedMember = TypedDict('MatchedMember', {
+        'config': 'ExternalDataSourceUpdateConfig',
+        'member_id': str,
+        'member': dict,
+        'postcodes.io': PostcodesIOResult,
+        'update_fields': dict[str, any]
+    })
+
+    def map_one(self, member_id, config: 'ExternalDataSourceUpdateConfig') -> MappedMember:
+        '''
+        Match one member to a record in the data source.
+        '''
+        # Get postcode field from the config
+        postcode_column = config.postcode_column
+        # Get postcode from member
+        member = self.fetch_one(member_id)
+        postcode = self.get_field_for_record(member, postcode_column)
+        # Get relevant config data for that postcode
+        postcode_data = get_postcode_geo(postcode)
+        # Map the fields
+        update_fields = {}
+        for field, mapping in config.mapping.items():
+            source = mapping['source']
+            path = mapping['path']
+            if source == 'postcodes.io':
+                update_fields[field] = get(postcode_data, path)
+            else:
+                # TODO: Add other sources
+                pass
+        # Return the member and config data
+        return {
+            'config': config,
+            'member_id': member_id,
+            'member': member,
+            'postcodes.io': postcode_data,
+            'update_fields': update_fields
+        }
 
 class RemoteCSVSource(ExternalDataSource):
     '''
@@ -792,10 +845,27 @@ class AirtableSource(ExternalDataSource):
             return True
         return False
     
+    def fetch_one(self, member_id):
+        record = self.table.get(member_id)
+        return record
+  
+    def get_field_for_record(self, record, field):
+        '''
+        Get a field from a fetched record.
+        '''
+        return record['fields'][field]
+
+    def update_one(self, member_id: str, config: 'ExternalDataSourceUpdateConfig'):
+        mapped_record = self.map_one(member_id, config)
+        # 2. Look at the dictionary
+        # print("Airtable results", mapped_record)
+        # 3. Update
+        self.table.update(mapped_record['member']['id'], mapped_record['update_fields'])
+
     def update_many(self, config: 'ExternalDataSourceUpdateConfig'):
         # 1. Get all members
         list = self.table.all()
-        # 2. Print
+        # 2. Look at the dictionary
         print("Airtable results", list.count())
         # 3. Update members with some random field value
 
@@ -839,6 +909,13 @@ class AirtableSource(ExternalDataSource):
 #     class Meta:
 #         verbose_name = 'CiviCRM'
 
+
+class UpdateConfigDict(TypedDict):
+    # Data source ID
+    source: str
+    # Dot path
+    path: str
+
 class ExternalDataSourceUpdateConfig(models.Model):
     '''
     A configuration for updating a data source.
@@ -851,12 +928,7 @@ class ExternalDataSourceUpdateConfig(models.Model):
     postcode_column = models.CharField(max_length=250, null=True, blank=True)
 
     '''
-    Mapping is a key/value pair where the key is the column name in the data source and the value is from Mapped, like
-    {
-        action network: mapped
-    }
-
-    E.g.
+    Mapping is a key/value pair where the key is the column name in the data source and the value is from Mapped, E.g.
     {
         "constituency_2024": {
           source: "postcodes.io",
@@ -868,9 +940,21 @@ class ExternalDataSourceUpdateConfig(models.Model):
 
     def __str__(self):
         return f'Update config for {self.data_source.name}'
-    
-    def update_many(self):
-        update_many.defer(self.id)
 
-    def update_one(self, member):
-        update_one.defer(self.id)
+    def schedule_update_one(self, member_id: str):
+        update_one.defer(config_id=str(self.id), member_id=member_id)
+
+    def update_one(self, member_id: str):
+        self.data_source.update_one(member_id=member_id, config=self)
+
+    def schedule_update_many(self):
+        update_many\
+        .configure(
+          # Dedupe `update_many` jobs for the same config
+          # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+          queueing_lock=f"update_many_{self.id}"
+        )\
+        .defer(config_id=str(self.id))
+
+    def update_many(self):
+        self.data_source.update_many(self)
