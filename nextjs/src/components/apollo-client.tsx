@@ -3,9 +3,8 @@ import { ApolloClient, InMemoryCache } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { HttpLink } from "@apollo/client";
 
-const httpLink = new HttpLink({ uri: `http://localhost:8000/graphql` });
+const httpLink = new HttpLink({ uri: process.env.NEXT_PUBLIC_BACKEND_BASE_URL });
 
-console.log(httpLink)
 const authLink = setContext((_, { headers }) => {
     // get the authentication token from local storage if it exists
     const token = typeof window === 'undefined' ? null : localStorage.getItem('jwt');
