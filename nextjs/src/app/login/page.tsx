@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { gql } from '@apollo/client';
-import { client } from '../apollo-client';
-import { DoLogin, DoLogOut } from '../../auth/authenticationHandler'
+import { client } from '../../components/apollo-client';
+import { DoLogin } from '../../components/authenticationHandler'
+import { useRequireAuth } from '../../components/authenticationHandler';
 
 
 const LoginMutation = gql`
@@ -21,7 +22,7 @@ mutation Login($username: String!, $password: String!) {
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [token, setToken] = useState(null); 
+  const [token, setToken] = useState(null);
 
   const handleSubmit = async (event: { preventDefault: () => void; }) => {
     event.preventDefault();
@@ -34,7 +35,7 @@ export default function Login() {
 
       const token = data?.tokenAuth?.token?.token;
       if (token) {
-        setToken(token); 
+        setToken(token);
       } else {
         console.error('Login failed: ', data?.tokenAuth?.errors);
       }
@@ -42,10 +43,8 @@ export default function Login() {
       console.error('Login error: ', error);
     }
   };
-  const handleLogout = () => {
-    DoLogOut(); 
-    setToken(null); 
-  };
+  useRequireAuth();
+
   return (
     <>
       <form onSubmit={handleSubmit}>
@@ -70,9 +69,6 @@ export default function Login() {
         <button type="submit">Login</button>
       </form>
       {token && <DoLogin token={token} />}
-      {token && (
-        <button onClick={handleLogout}>Logout</button> // Conditionally render logout button
-      )}
     </>
   );
 }
