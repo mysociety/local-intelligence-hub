@@ -28,8 +28,8 @@ export default function RootLayout({
     <ApolloProvider client={client}> 
     <html lang="en">
       <body className={inter.className}>
-      <nav>
-        <ul>
+      <nav className="bg-gray-800 text-white flex flex-row justify-end">
+        <ul className="flex flex-row items-center justify-between p-12 basis-1/2">
           <li><Link href="/">Home</Link></li>
           <li><Link href="/account">Account</Link></li>
           {isLoggedIn ? (
@@ -39,7 +39,7 @@ export default function RootLayout({
             )}
         </ul>
       </nav>
-        {children}
+       <main className="flex flex-col items-center justify-between p-24">{children}</main> 
       </body>
     </html>
     </ApolloProvider>

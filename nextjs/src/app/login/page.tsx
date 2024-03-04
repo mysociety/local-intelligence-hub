@@ -47,26 +47,30 @@ export default function Login() {
 
   return (
     <>
-      <form onSubmit={handleSubmit}>
+      <form className="pb-4 flex flex-col gap-4" onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="username">Username</label>
+          <label className="mr-2" htmlFor="username">Username</label>
           <input
+            className="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             id="username"
             type="text"
+            placeholder="Your Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
         </div>
         <div>
-          <label htmlFor="password">Password</label>
+          <label className="mr-2" htmlFor="password">Password</label>
           <input
+            className="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Your Password"
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
-        <button type="submit">Login</button>
+        <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded" type="submit">Login</button>
       </form>
       {token && <DoLogin token={token} />}
     </>
