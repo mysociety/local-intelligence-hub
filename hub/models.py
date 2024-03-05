@@ -851,33 +851,34 @@ class ExternalDataSource(PolymorphicModel):
         postcode_column = config.postcode_column
         # Get postcode from member
         postcode = self.get_record_field(member, postcode_column)
-        # Get relevant config data for that postcode
-        postcode_data = await loaders['postcodesIO'].load(postcode)
-        if postcode_data is None:
-            # No postcode data found
+        try:
+            # Get relevant config data for that postcode
+            postcode_data = await loaders['postcodesIO'].load(postcode)
+            # Map the fields
+            update_fields = {}
+            for field, mapping in config.mapping.items():
+                source = mapping['source']
+                path = mapping['path']
+                if source == 'postcodes.io':
+                    update_fields[field] = get(postcode_data['result'], path)
+                else:
+                    # TODO: Add other sources
+                    pass
+            # Return the member and config data
             return {
                 'config': config,
                 'member': member,
                 'postcodes.io': postcode_data,
+                'update_fields': update_fields
+            }
+        except TypeError:
+            # Error fetching postcode data
+            return {
+                'config': config,
+                'member': member,
+                'postcodes.io': None,
                 'update_fields': {}
             }
-        # Map the fields
-        update_fields = {}
-        for field, mapping in config.mapping.items():
-            source = mapping['source']
-            path = mapping['path']
-            if source == 'postcodes.io':
-                update_fields[field] = get(postcode_data['result'], path)
-            else:
-                # TODO: Add other sources
-                pass
-        # Return the member and config data
-        return {
-            'config': config,
-            'member': member,
-            'postcodes.io': postcode_data,
-            'update_fields': update_fields
-        }
     
     async def map_many(self, member_ids: list[str], config: 'ExternalDataSourceUpdateConfig') -> list[MappedMember]:
         '''
