@@ -18,7 +18,7 @@ services:
       retries: 5
     working_dir: /app
     ports:
-      - "5432:54322"
+      - "53333:5432"
   web:
     image: mysociety/local-intelligence-hub:${TAG:-latest}
     build: .

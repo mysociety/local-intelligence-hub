@@ -8,17 +8,24 @@ from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min
 from django.db.models.functions import Cast, Coalesce
 from django.dispatch import receiver
+from django.utils.functional import cached_property
+from django.urls import reverse
+from django.conf import settings
+from urllib.parse import urljoin
+from dateutil.parser import parser as date_parser
+from django.http import HttpResponse
 
 from django_jsonform.models.fields import JSONField
 
 import utils as lih_utils
 from hub.filters import Filter
 
-from hub.tasks import update_one, update_many, update_all
+from hub.tasks import update_one, update_many, update_all, refresh_webhook
 from utils.postcodesIO import get_postcode_geo, get_bulk_postcode_geo, PostcodesIOResult
-from utils.py import get
+from utils.py import get, ensure_list
 
 from strawberry.dataloader import DataLoader
+from pyairtable import Api as AirtableAPI, Base as AirtableBase, Table as AirtableTable
 
 User = get_user_model()
 
@@ -731,6 +738,7 @@ class ExternalDataSource(PolymorphicModel):
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(auto_now=True)
+    automated_webhooks = False
 
     def __str__(self):
         return self.name
@@ -741,11 +749,23 @@ class ExternalDataSource(PolymorphicModel):
         '''
         raise NotImplementedError('Healthcheck not implemented for this data source type.')
     
-    def setup_webhook(self):
+    async def setup_webhook(self, config: 'ExternalDataSourceUpdateConfig'):
         '''
         Set up a webhook.
         '''
         raise NotImplementedError('Webhook setup not implemented for this data source type.')
+    
+    async def refresh_webhook(self, config: 'ExternalDataSourceUpdateConfig'):
+        '''
+        Refresh the webhook.
+        '''
+        return await self.setup_webhook(config)
+    
+    def get_member_ids_from_webhook(self, payload: dict) -> list[str]:
+        '''
+        Get the member ID from the webhook payload.
+        '''
+        raise NotImplementedError('Get member ID not implemented for this data source type.')
     
     def ingest (self):
         '''
@@ -882,16 +902,22 @@ class AirtableSource(ExternalDataSource):
     api_key = models.CharField(max_length=250, help_text='Personal access token. Requires the following 4 scopes: data.records:read, data.records:write, schema.bases:read, webhook:manage')
     base_id = models.CharField(max_length=250)
     table_id = models.CharField(max_length=250)
+    automated_webhooks = True
 
     class Meta:
         verbose_name = 'Airtable table'
 
-    @property
-    def table(self):
-        from pyairtable import Api
-        api = Api(self.api_key)
-        table = api.table(self.base_id, self.table_id)
-        return table
+    @cached_property
+    def api(self) -> AirtableAPI:
+        return AirtableAPI(self.api_key)
+
+    @cached_property
+    def base(self) -> AirtableBase:
+        return self.api.base(self.base_id)
+
+    @cached_property
+    def table(self) -> AirtableTable:
+        return self.base.table(self.table_id)
     
     def healthcheck(self):
         record = self.table.first()
@@ -947,6 +973,89 @@ class AirtableSource(ExternalDataSource):
           } for
           mapped_record in mapped_records
         ])
+
+    def webhook_specification(self, config: 'ExternalDataSourceUpdateConfig'):
+        # DOCS: https://airtable.com/developers/web/api/model/webhooks-specification
+        return {
+          "options": {
+            "filters": {
+              "dataTypes": [
+                "tableData"
+              ],
+            },
+            "recordChangeScope": self.table_id,
+            "changeTypes": [
+                "add",
+                "update",
+            ],
+            "watchDataInFieldIds": [
+                self.table.schema().field(config.postcode_column).id
+            ]
+          }
+        }
+    
+    def webhook_url(self, config: 'ExternalDataSourceUpdateConfig'):
+        return urljoin(settings.BASE_URL, reverse('record_updated_webhook', args=[config.id]))
+
+    def get_webhooks(self, config: 'ExternalDataSourceUpdateConfig'):
+      list = self.base.webhooks()
+      url = self.webhook_url(config)
+      return [webhook for webhook in list if webhook.notification_url == url]
+
+    def webhook_healthcheck(self, config: 'ExternalDataSourceUpdateConfig'):
+        webhooks = self.get_webhooks(config)
+        if len(webhooks) < 1:
+            print("No webhook")
+            return False
+        if len(webhooks) > 1:
+            print("Too many webhooks")
+            return False
+        if not webhooks[0].is_hook_enabled:
+            print("Webhook expired")
+            return False
+        return True
+    
+    def teardown_webhook(self, config: 'ExternalDataSourceUpdateConfig'):
+      list = self.base.webhooks()
+      url = self.webhook_url(config)
+      for webhook in list:
+          if webhook.notification_url == url:
+              # Update the webhook in case the spec changed,
+              # which will also refresh the 7 day expiration date
+              webhook.delete()
+
+    def setup_webhook(self, config: 'ExternalDataSourceUpdateConfig'):
+      self.teardown_webhook(config)
+      self.base.add_webhook(
+          self.webhook_url(config),
+          self.webhook_specification(config)
+      )
+
+    def get_member_ids_from_webhook(self, webhook_payload: dict) -> list[str]:
+        member_ids: list[str] = []
+        webhook_id = webhook_payload['webhook']['id']
+        webhook = self.base.webhook(webhook_id)
+        webhook_object, is_new = AirtableWebhook.objects.update_or_create(airtable_id=webhook_id)
+        print(webhook_object, webhook_object.cursor)
+        for payload in webhook.payloads(cursor=webhook_object.cursor, limit=1):
+            print("Loading webhook", payload.timestamp)
+            for table_id, deets in payload.changed_tables_by_id.items():
+                print(table_id, deets)
+                if table_id == self.table_id:
+                    member_ids += deets.changed_records_by_id.keys()
+                    member_ids += deets.created_records_by_id.keys()
+                    print(member_ids)
+            webhook_object.cursor = webhook_object.cursor + 1
+            webhook_object.save()
+        return member_ids
+    
+class AirtableWebhook(models.Model):
+    '''
+    We need a way to persist the cursor for the Airtable webhook, so we are saving it per-webhook in the DB.
+    '''
+    # Airtable ID
+    airtable_id = models.CharField(max_length=250, primary_key=True)
+    cursor = models.IntegerField(default=1, blank=True)
 
 # class GoogleSheetSource(ExternalDataSource):
 #     '''
@@ -1027,12 +1136,11 @@ class ExternalDataSourceUpdateConfig(models.Model):
         await self.data_source.update_one(member_id=member_id, config=self)
 
     def schedule_update_many(self, member_ids: list[str]):
-        hsh = hash(sorted(member_ids))
         update_many\
         .configure(
           # Dedupe `update_many` jobs for the same config
           # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-          queueing_lock=f"update_many_{hsh}"
+          queueing_lock=f"update_many_{str(self.id)}_{hash(sorted(member_ids))}"
         )\
         .defer(config_id=str(self.id))
 
@@ -1044,9 +1152,46 @@ class ExternalDataSourceUpdateConfig(models.Model):
         .configure(
           # Dedupe `update_all` jobs for the same config
           # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-          queueing_lock="update_all"
+          queueing_lock=f"update_all_{str(self.id)}"
         )\
         .defer(config_id=str(self.id))
 
     async def update_all(self):
         await self.data_source.update_all(config=self)
+
+    def enable(self):
+        self.enabled = True
+        self.save()
+
+        if self.data_source.automated_webhooks:
+            self.data_source.setup_webhook(config=self)
+            
+            refresh_webhook\
+            .configure(
+              # Dedupe `update_all` jobs for the same config
+              # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+              queueing_lock=f"webhook_{str(self.id)}"
+            )\
+            .defer(config_id=str(self.id))
+
+    def refresh_webhook(self):
+        if self.data_source.automated_webhooks:
+            self.data_source.refresh_webhook(config=self)
+
+    def disable(self):
+        self.enabled = False
+        self.save()
+
+    def handle_update_webhook_view(self, body):
+        try:
+            member_ids = ensure_list(self.data_source.get_member_ids_from_webhook(body))
+            try:
+                if len(member_ids) == 1:
+                    self.schedule_update_one(member_ids[0])
+                else:
+                    self.schedule_update_many(member_ids)
+                return HttpResponse(status=200)
+            except:
+                return HttpResponse(status=500)
+        except:
+            return HttpResponse(status=400)

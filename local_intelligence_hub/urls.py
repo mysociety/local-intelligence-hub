@@ -20,10 +20,12 @@ from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path, re_path
 from django.views.generic.base import RedirectView
 from strawberry.django.views import AsyncGraphQLView
+from django.views.decorators.csrf import csrf_exempt
 
 from hub.graphql.schema import schema
 from hub.sitemap import hub_sitemap
 from hub.views import accounts, area, core, explore, landingpages
+from hub.views.mapped import CRMRecordUpdatedWebhookView
 
 handler404 = core.NotFoundPageView.as_view()
 
@@ -109,7 +111,8 @@ urlpatterns = [
         {"sitemaps": hub_sitemap},
         name="django.contrib.sitemaps.views.sitemap",
     ),
-    path("graphql", AsyncGraphQLView.as_view(schema=schema), name="graphql")
+    path("graphql", AsyncGraphQLView.as_view(schema=schema), name="graphql"),
+    path("webhooks/<str:config_id>/record-updated", csrf_exempt(CRMRecordUpdatedWebhookView.as_view()), name="record_updated_webhook")
 ]
 
 if settings.DEBUG:  # pragma: no cover

@@ -21,6 +21,7 @@ from gqlauth.settings_type import GqlAuthSettings
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(
+    BASE_URL=(str, False),
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, []),
     HIDE_DEBUG_TOOLBAR=(bool, False),
@@ -36,6 +37,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
+BASE_URL = env("BASE_URL")
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
