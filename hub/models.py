@@ -1210,7 +1210,7 @@ class ExternalDataSourceUpdateConfig(models.Model):
           # Dedupe `update_many` jobs for the same config
           # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
           queueing_lock=f"update_one_{str(self.id)}_{str(member_id)}",
-          schedule_in={"seconds": 7}
+          schedule_in={"seconds": 3}
         )\
         .defer(config_id=str(self.id), member_id=member_id)
 
@@ -1220,7 +1220,7 @@ class ExternalDataSourceUpdateConfig(models.Model):
           # Dedupe `update_many` jobs for the same config
           # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
           queueing_lock=f"update_many_{str(self.id)}_{hash(",".join(list(sorted(set(member_ids)))))}",
-          schedule_in={"seconds": 7}
+          schedule_in={"seconds": 3}
         )\
         .defer(config_id=str(self.id), member_ids=member_ids)
 
@@ -1230,6 +1230,6 @@ class ExternalDataSourceUpdateConfig(models.Model):
           # Dedupe `update_all` jobs for the same config
           # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
           queueing_lock=f"update_all_{str(self.id)}",
-          schedule_in={"seconds": 7}
+          schedule_in={"seconds": 3}
         )\
         .defer(config_id=str(self.id))
