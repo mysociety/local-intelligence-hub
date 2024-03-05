@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { gql } from '@apollo/client';
 import { client } from '../../components/apollo-client';
-import { DoLogin } from '../../components/authenticationHandler'
 import { useRequireAuth } from '../../components/authenticationHandler';
 
 
