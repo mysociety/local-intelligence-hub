@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 import uuid
 from typing import TypedDict, Union
 import asyncio
+from asgiref.sync import sync_to_async
 
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -743,7 +744,7 @@ class ExternalDataSource(PolymorphicModel):
     def __str__(self):
         return self.name
 
-    def healthcheck(self):
+    async def healthcheck(self):
         '''
         Check the connection to the API.
         '''
@@ -767,37 +768,37 @@ class ExternalDataSource(PolymorphicModel):
         '''
         raise NotImplementedError('Get member ID not implemented for this data source type.')
     
-    def ingest (self):
+    async def ingest (self):
         '''
         Copy data to this database for use in dashboarding features.
         '''
         raise NotImplementedError('Ingest not implemented for this data source type.')
 
-    def fetch_one(self, member_id: str):
+    async def fetch_one(self, member_id: str):
         '''
         Get one member from the data source.
         '''
         raise NotImplementedError('Get one not implemented for this data source type.')
     
-    def fetch_many(self, id_list: list[str]):
+    async def fetch_many(self, id_list: list[str]):
         '''
         Get many members from the data source.
         '''
         raise NotImplementedError('Get many not implemented for this data source type.')
     
-    def fetch_all(self):
+    async def fetch_all(self):
         '''
         Get all members from the data source.
         '''
         raise NotImplementedError('Get all not implemented for this data source type.')
 
-    def update_one(self, member_id: str, config: 'ExternalDataSourceUpdateConfig'):
+    async def update_one(self, member_id: str, config: 'ExternalDataSourceUpdateConfig'):
         '''
         Append data for one member to the table.
         '''
         raise NotImplementedError('Update one not implemented for this data source type.')
         
-    def update_many(self, config: 'ExternalDataSourceUpdateConfig'):
+    async def update_many(self, config: 'ExternalDataSourceUpdateConfig'):
         '''
         Append mapped data to the table.
         '''
@@ -843,7 +844,7 @@ class ExternalDataSource(PolymorphicModel):
         Match one member to a record in the data source, via ID or record.
         '''
         if type(member) == str:
-            member = self.fetch_one(member)
+            member = await loaders['fetch_record'].load(member)
         # if loaders is None:
         #     loaders = self.get_loaders()
         # Get postcode field from the config
@@ -852,6 +853,14 @@ class ExternalDataSource(PolymorphicModel):
         postcode = self.get_record_field(member, postcode_column)
         # Get relevant config data for that postcode
         postcode_data = await loaders['postcodesIO'].load(postcode)
+        if postcode_data is None:
+            # No postcode data found
+            return {
+                'config': config,
+                'member': member,
+                'postcodes.io': postcode_data,
+                'update_fields': {}
+            }
         # Map the fields
         update_fields = {}
         for field, mapping in config.mapping.items():
@@ -874,7 +883,7 @@ class ExternalDataSource(PolymorphicModel):
         '''
         Match many members to records in the data source.
         '''
-        members = self.fetch_many(member_ids)
+        members = await self.fetch_many(member_ids)
         loaders = self.get_loaders()
         return await asyncio.gather(*[self.map_one(member, config, loaders) for member in members])
     
@@ -919,24 +928,24 @@ class AirtableSource(ExternalDataSource):
     def table(self) -> AirtableTable:
         return self.base.table(self.table_id)
     
-    def healthcheck(self):
+    async def healthcheck(self):
         record = self.table.first()
         if record:
             return True
         return False
     
-    def fetch_one(self, member_id):
-        record = self.table.get(member_id)
+    async def fetch_one(self, member_id):
+        record = await self.table.get(member_id)
         return record
     
-    def fetch_many(self, id_list: list[str]):
+    async def fetch_many(self, id_list: list[str]):
         formula = f'OR('
         formula += ",".join([f"RECORD_ID()='{member_id}'" for member_id in id_list])
         formula += ')'
         records = self.table.all(formula=formula)
         return records
     
-    def fetch_all(self):
+    async def fetch_all(self):
         records = self.table.all()
         return records
     
@@ -979,18 +988,18 @@ class AirtableSource(ExternalDataSource):
         return {
           "options": {
             "filters": {
+              "recordChangeScope": self.table_id,
+              "watchDataInFieldIds": [
+                self.table.schema().field(config.postcode_column).id
+              ],
               "dataTypes": [
                 "tableData"
               ],
-            },
-            "recordChangeScope": self.table_id,
-            "changeTypes": [
+              "changeTypes": [
                 "add",
                 "update",
-            ],
-            "watchDataInFieldIds": [
-                self.table.schema().field(config.postcode_column).id
-            ]
+              ]
+            }
           }
         }
     
@@ -1036,17 +1045,16 @@ class AirtableSource(ExternalDataSource):
         webhook_id = webhook_payload['webhook']['id']
         webhook = self.base.webhook(webhook_id)
         webhook_object, is_new = AirtableWebhook.objects.update_or_create(airtable_id=webhook_id)
-        print(webhook_object, webhook_object.cursor)
-        for payload in webhook.payloads(cursor=webhook_object.cursor, limit=1):
-            print("Loading webhook", payload.timestamp)
+        payloads = webhook.payloads(cursor=webhook_object.cursor)
+        for payload in payloads:
+            webhook_object.cursor = webhook_object.cursor + 1
             for table_id, deets in payload.changed_tables_by_id.items():
-                print(table_id, deets)
                 if table_id == self.table_id:
                     member_ids += deets.changed_records_by_id.keys()
                     member_ids += deets.created_records_by_id.keys()
-                    print(member_ids)
-            webhook_object.cursor = webhook_object.cursor + 1
-            webhook_object.save()
+        webhook_object.save()
+        member_ids = list(sorted(set(member_ids)))
+        print("Webhook member result", webhook_object.cursor, member_ids)
         return member_ids
     
 class AirtableWebhook(models.Model):
@@ -1129,35 +1137,7 @@ class ExternalDataSourceUpdateConfig(models.Model):
     def __str__(self):
         return f'Update config for {self.data_source.name}'
 
-    def schedule_update_one(self, member_id: str):
-        update_one.defer(config_id=str(self.id), member_id=member_id)
-
-    async def update_one(self, member_id: str):
-        await self.data_source.update_one(member_id=member_id, config=self)
-
-    def schedule_update_many(self, member_ids: list[str]):
-        update_many\
-        .configure(
-          # Dedupe `update_many` jobs for the same config
-          # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-          queueing_lock=f"update_many_{str(self.id)}_{hash(sorted(member_ids))}"
-        )\
-        .defer(config_id=str(self.id))
-
-    async def update_many(self, member_ids: list[str]):
-        await self.data_source.update_many(member_ids=member_ids, config=self)
-
-    def schedule_update_all(self):
-        update_all\
-        .configure(
-          # Dedupe `update_all` jobs for the same config
-          # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-          queueing_lock=f"update_all_{str(self.id)}"
-        )\
-        .defer(config_id=str(self.id))
-
-    async def update_all(self):
-        await self.data_source.update_all(config=self)
+    # UI
 
     def enable(self):
         self.enabled = True
@@ -1174,24 +1154,82 @@ class ExternalDataSourceUpdateConfig(models.Model):
             )\
             .defer(config_id=str(self.id))
 
-    def refresh_webhook(self):
-        if self.data_source.automated_webhooks:
-            self.data_source.refresh_webhook(config=self)
-
     def disable(self):
         self.enabled = False
         self.save()
 
+    # Webhooks
+
     def handle_update_webhook_view(self, body):
-        try:
-            member_ids = ensure_list(self.data_source.get_member_ids_from_webhook(body))
-            try:
-                if len(member_ids) == 1:
-                    self.schedule_update_one(member_ids[0])
-                else:
-                    self.schedule_update_many(member_ids)
-                return HttpResponse(status=200)
-            except:
-                return HttpResponse(status=500)
-        except:
-            return HttpResponse(status=400)
+        # try:
+        member_ids = self.data_source.get_member_ids_from_webhook(body)
+            # try:
+        if len(member_ids) == 1:
+            self.schedule_update_one(member_id=member_ids[0])
+        else:
+            self.schedule_update_many(member_ids=member_ids)
+        return HttpResponse(status=200)
+        #     except:
+        #         return HttpResponse(status=500)
+        # except:
+        #     return HttpResponse(status=400)
+
+    # Scheduling
+
+    @classmethod
+    async def deferred_update_one(cls, config_id: str, member_id: str):
+        config = await cls.objects.select_related('data_source').aget(id=config_id)
+        if config.enabled:
+            data_source = await sync_to_async(config.data_source.get_real_instance)()
+            await data_source.update_one(member_id=member_id, config=config)
+
+    @classmethod
+    async def deferred_update_many(cls, config_id: str, member_ids: list[str]):
+        config = await cls.objects.select_related('data_source').aget(id=config_id)
+        if config.enabled:
+            data_source = await sync_to_async(config.data_source.get_real_instance)()
+            await data_source.update_many(member_ids=member_ids, config=config)
+
+    @classmethod
+    async def deferred_update_all(cls, config_id: str):
+        config = await cls.objects.select_related('data_source').aget(id=config_id)
+        if config.enabled:
+            data_source = await sync_to_async(config.data_source.get_real_instance)()
+            await data_source.update_all(config=config)
+
+    @classmethod
+    async def deferred_refresh_webhook(cls, config_id: str):
+        config = await ExternalDataSourceUpdateConfig.objects.select_related('data_source').aget(pk=config_id)
+        if config.enabled and config.data_source.automated_webhooks:
+            data_source = await sync_to_async(config.data_source.get_real_instance)()
+            await data_source.refresh_webhook(config=config)
+
+    def schedule_update_one(self, member_id: str):
+        update_one\
+        .configure(
+          # Dedupe `update_many` jobs for the same config
+          # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+          queueing_lock=f"update_one_{str(self.id)}_{str(member_id)}",
+          schedule_in={"seconds": 7}
+        )\
+        .defer(config_id=str(self.id), member_id=member_id)
+
+    def schedule_update_many(self, member_ids: list[str]):
+        update_many\
+        .configure(
+          # Dedupe `update_many` jobs for the same config
+          # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+          queueing_lock=f"update_many_{str(self.id)}_{hash(",".join(list(sorted(set(member_ids)))))}",
+          schedule_in={"seconds": 7}
+        )\
+        .defer(config_id=str(self.id), member_ids=member_ids)
+
+    def schedule_update_all(self):
+        update_all\
+        .configure(
+          # Dedupe `update_all` jobs for the same config
+          # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+          queueing_lock=f"update_all_{str(self.id)}",
+          schedule_in={"seconds": 7}
+        )\
+        .defer(config_id=str(self.id))
