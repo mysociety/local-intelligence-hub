@@ -1201,9 +1201,10 @@ class ExternalDataSourceUpdateConfig(models.Model):
     @classmethod
     async def deferred_refresh_webhook(cls, config_id: str):
         config = await ExternalDataSourceUpdateConfig.objects.select_related('data_source').aget(pk=config_id)
-        if config.enabled and config.data_source.automated_webhooks:
+        if config.enabled:
             data_source = await sync_to_async(config.data_source.get_real_instance)()
-            await data_source.refresh_webhook(config=config)
+            if config.data_source.automated_webhooks:
+                await data_source.refresh_webhook(config=config)
 
     def schedule_update_one(self, member_id: str):
         update_one\
