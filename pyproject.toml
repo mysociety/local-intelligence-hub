@@ -29,6 +29,7 @@ aiopg = "^1.4.0"
 strawberry-graphql-django = "^0.32.1"
 strawberry-django-auth = "^0.376.5"
 django-cors-headers = "^4.3.1"
+python-benedict = "^0.33.2"
 
 [tool.poetry.dev-dependencies]
 django-debug-toolbar = "^3.7.0"

@@ -1,9 +1,9 @@
-# from benedict import benedict
+from benedict import benedict
 
-# def getdict(d, path):
-#     if isinstance(d, benedict):
-#         return d[path]
-#     return benedict(d)[path]
+def get(d, path):
+    if isinstance(d, benedict):
+        return d[path]
+    return benedict(d)[path]
 
 def is_sequence(arg):
     if isinstance(arg, str):
@@ -20,35 +20,6 @@ def ensure_list(possible):
     else:
         return []
 
-def get(d, key, default=None):
-    keys = ensure_list(key)
-    val = None
-    try:
-        for key in keys:
-            val = d.get(key)
-            if val is not None:
-                break
-    except:
-        pass
-    try:
-        if val is None:
-            for key in keys:
-                val = getattr(d, key)
-                if val is not None:
-                    break
-    except:
-        pass
-    try:
-        if val is None:
-            for key in keys:
-                val = getattr(ensureObj(d), key)
-                if val is not None:
-                    break
-    except:
-        pass
-
-    return val if val is not None else default
-
 def get_path(d, *keys):
     for k in keys:
         d = get(d, k)
@@ -60,11 +31,11 @@ def chunk_array(arr, max_size):
 
 def batch_and_aggregate(arr_limit):
     def decorator(original_fn):
-        def resulting_fn(arr):
+        async def resulting_fn(arr):
             batches = chunk_array(arr, arr_limit)
             results = []
             for batch in batches:
-                results += original_fn(batch)
+                results += await original_fn(batch)
             return results
         return resulting_fn
     return decorator

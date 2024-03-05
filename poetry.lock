@@ -740,6 +740,30 @@ docs = ["sphinx (>=4.5.0,<5.0.0)", "sphinx-rtd-theme", "zope.interface"]
 tests = ["coverage[toml] (==5.0.4)", "pytest (>=6.0.0,<7.0.0)"]
 
 [[package]]
+name = "python-benedict"
+version = "0.33.2"
+description = "python-benedict is a dict subclass with keylist/keypath/keyattr support, normalized I/O operations (base64, csv, ini, json, pickle, plist, query-string, toml, xls, xml, yaml) and many utilities... for humans, obviously."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+python-fsutil = ">=0.9.3,<1.0.0"
+python-slugify = ">=7.0.0,<9.0.0"
+requests = ">=2.26.0,<3.0.0"
+
+[package.extras]
+all = ["python-benedict[io,parse,s3]"]
+html = ["beautifulsoup4 (>=4.12.0,<5.0.0)", "python-benedict[xml]"]
+io = ["python-benedict[html,toml,xls,xml,yaml]"]
+parse = ["ftfy (>=6.0.0,<7.0.0)", "mailchecker (>=4.1.0,<7.0.0)", "phonenumbers (>=8.12.0,<9.0.0)", "python-dateutil (>=2.8.0,<3.0.0)"]
+s3 = ["boto3 (>=1.24.89,<2.0.0)"]
+toml = ["toml (>=0.10.2,<1.0.0)"]
+xls = ["openpyxl (>=3.0.0,<4.0.0)", "xlrd (>=2.0.0,<3.0.0)"]
+xml = ["xmltodict (>=0.12.0,<1.0.0)"]
+yaml = ["pyyaml (>=6.0,<7.0)"]
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0"
 description = "Extensions to the standard Python datetime module"
@@ -751,12 +775,34 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
 six = ">=1.5"
 
 [[package]]
+name = "python-fsutil"
+version = "0.13.1"
+description = "high-level file-system operations for lazy devs."
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "python-magic"
 version = "0.4.27"
 description = "File type identification using libmagic"
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[[package]]
+name = "python-slugify"
+version = "8.0.4"
+description = "A Python slugify application that also handles Unicode"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+text-unidecode = ">=1.3"
+
+[package.extras]
+unidecode = ["Unidecode (>=1.1.1)"]
 
 [[package]]
 name = "pytz"
@@ -961,6 +1007,14 @@ debug-toolbar = ["django-debug-toolbar (>=3.4)"]
 enum = ["django-choices-field (>=2.2.2)"]
 
 [[package]]
+name = "text-unidecode"
+version = "1.3"
+description = "The most basic Text::Unidecode port"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
@@ -1045,7 +1099,7 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.13"
-content-hash = "f0cbeb43cf6c2a0ece41d67f0ad0fbe95f1ce6303bccfeeeeed05d0007c96adc"
+content-hash = "08c94c3956a7095c9589c4bc2b49607b56cc9632545ad26b63d5de9cd6b4bee0"
 
 [metadata.files]
 aiopg = [
@@ -1837,13 +1891,25 @@ pyjwt = [
     {file = "PyJWT-2.8.0-py3-none-any.whl", hash = "sha256:59127c392cc44c2da5bb3192169a91f429924e17aff6534d70fdc02ab3e04320"},
     {file = "PyJWT-2.8.0.tar.gz", hash = "sha256:57e28d156e3d5c10088e0c68abb90bfac3df82b40a71bd0daa20c65ccd5c23de"},
 ]
+python-benedict = [
+    {file = "python-benedict-0.33.2.tar.gz", hash = "sha256:662de43bffb4e127da2056447f8ddd7f6f5c89b72dd66d289cf9abd1cc2720c8"},
+    {file = "python_benedict-0.33.2-py3-none-any.whl", hash = "sha256:50a69b601b34d4ad7b67fe94e3266ec05046bc547a4132fe43fd8fbd41aeefaa"},
+]
 python-dateutil = [
     {file = "python-dateutil-2.9.0.tar.gz", hash = "sha256:78e73e19c63f5b20ffa567001531680d939dc042bf7850431877645523c66709"},
     {file = "python_dateutil-2.9.0-py2.py3-none-any.whl", hash = "sha256:cbf2f1da5e6083ac2fbfd4da39a25f34312230110440f424a14c7558bb85d82e"},
 ]
+python-fsutil = [
+    {file = "python-fsutil-0.13.1.tar.gz", hash = "sha256:302b0a1739b85151df6e6fddb1593a8fb9648c655fad0fac6c66c21bce900c13"},
+    {file = "python_fsutil-0.13.1-py3-none-any.whl", hash = "sha256:b4ad4c57c243ba46ee5aacebe58ce7a6f62ddeff20ea53e52afc420884b5e544"},
+]
 python-magic = [
     {file = "python-magic-0.4.27.tar.gz", hash = "sha256:c1ba14b08e4a5f5c31a302b7721239695b2f0f058d125bd5ce1ee36b9d9d3c3b"},
     {file = "python_magic-0.4.27-py2.py3-none-any.whl", hash = "sha256:c212960ad306f700aa0d01e5d7a325d20548ff97eb9920dcd29513174f0294d3"},
+]
+python-slugify = [
+    {file = "python-slugify-8.0.4.tar.gz", hash = "sha256:59202371d1d05b54a9e7720c5e038f928f45daaffe41dd10822f3907b937c856"},
+    {file = "python_slugify-8.0.4-py2.py3-none-any.whl", hash = "sha256:276540b79961052b66b7d116620b36518847f52d5fd9e3a70164fc8c50faa6b8"},
 ]
 pytz = [
     {file = "pytz-2024.1-py2.py3-none-any.whl", hash = "sha256:328171f4e3623139da4983451950b28e95ac706e13f3f2630a879749e7a8b319"},
@@ -1942,6 +2008,10 @@ strawberry-graphql = [
 strawberry-graphql-django = [
     {file = "strawberry_graphql_django-0.32.2-py3-none-any.whl", hash = "sha256:b59da6ebef3f6e3b9ec0407cc5f0990169363ee7ff529ab23034f7513d5611ca"},
     {file = "strawberry_graphql_django-0.32.2.tar.gz", hash = "sha256:a209dcaa8164552d39010ca18a2d909d0191520c294e08b1124cfd797d43e1a0"},
+]
+text-unidecode = [
+    {file = "text-unidecode-1.3.tar.gz", hash = "sha256:bad6603bb14d279193107714b288be206cac565dfa49aa5b105294dd5c4aab93"},
+    {file = "text_unidecode-1.3-py2.py3-none-any.whl", hash = "sha256:1311f10e8b895935241623731c2ba64f4c455287888b18189350b67134a822e8"},
 ]
 tomli = [
     {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},

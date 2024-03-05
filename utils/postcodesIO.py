@@ -85,7 +85,7 @@ def get_postcode_geo(postcode: str) -> PostcodesIOResult:
     return result
 
 @batch_and_aggregate(settings.POSTCODES_IO_BATCH_MAXIMUM)
-def get_bulk_postcode_geo(postcodes) -> PostcodesIOBulkResult:
+async def get_bulk_postcode_geo(postcodes) -> PostcodesIOBulkResult:
     response = requests.post(f'{settings.POSTCODES_IO_URL}/postcodes', json={
         "postcodes": postcodes
     },)
@@ -100,7 +100,7 @@ def get_bulk_postcode_geo(postcodes) -> PostcodesIOBulkResult:
 
 
 @batch_and_aggregate(25)
-def bulk_coordinate_geo(coordinates):
+async def bulk_coordinate_geo(coordinates):
     for i, coords in enumerate(coordinates):
         coordinates[i]["limit"] = 1
 
@@ -134,16 +134,16 @@ def coordinates_geo(latitude: float, longitude: float):
 def point_from_geo(geo):
     return create_point(latitude=get_path(geo, 'latitude'), longitude=get_path(geo, 'longitude'))
 
-def get_approximate_postcode_locations(postcodes):
-    '''
-    Increase frequency of distance matrix cache hits by lowering precision of locations
-    '''
+# def get_approximate_postcode_locations(postcodes):
+#     '''
+#     Increase frequency of distance matrix cache hits by lowering precision of locations
+#     '''
 
-    def approximate_location(coordinate):
-        # 0.01 degrees distance on both long and lat == about a 20 minute walk in the uk
-        return {
-            "latitude": round(get_path(coordinate, 'result', 'latitude'), 2),
-            "longitude": round(get_path(coordinate, 'result', 'longitude'), 2)
-        }
+#     def approximate_location(coordinate):
+#         # 0.01 degrees distance on both long and lat == about a 20 minute walk in the uk
+#         return {
+#             "latitude": round(get_path(coordinate, 'result', 'latitude'), 2),
+#             "longitude": round(get_path(coordinate, 'result', 'longitude'), 2)
+#         }
 
-    return map(approximate_location, get_bulk_postcode_geo(postcodes))
+#     return map(approximate_location, get_bulk_postcode_geo(postcodes))

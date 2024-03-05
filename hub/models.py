@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 import uuid
-from typing import TypedDict
+from typing import TypedDict, Union
+import asyncio
 
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -13,9 +14,11 @@ from django_jsonform.models.fields import JSONField
 import utils as lih_utils
 from hub.filters import Filter
 
-from hub.tasks import update_many, update_one
-from utils.postcodesIO import get_postcode_geo, PostcodesIOResult
+from hub.tasks import update_one, update_many, update_all
+from utils.postcodesIO import get_postcode_geo, get_bulk_postcode_geo, PostcodesIOResult
 from utils.py import get
+
+from strawberry.dataloader import DataLoader
 
 User = get_user_model()
 
@@ -749,30 +752,48 @@ class ExternalDataSource(PolymorphicModel):
         Copy data to this database for use in dashboarding features.
         '''
         raise NotImplementedError('Ingest not implemented for this data source type.')
-    
-    def update_many(self, config: 'ExternalDataSourceUpdateConfig'):
-        '''
-        Append data to the table.
-        '''
-        raise NotImplementedError('Update many not implemented for this data source type.')
-    
+
     def fetch_one(self, member_id: str):
         '''
         Get one member from the data source.
         '''
         raise NotImplementedError('Get one not implemented for this data source type.')
+    
+    def fetch_many(self, id_list: list[str]):
+        '''
+        Get many members from the data source.
+        '''
+        raise NotImplementedError('Get many not implemented for this data source type.')
+    
+    def fetch_all(self):
+        '''
+        Get all members from the data source.
+        '''
+        raise NotImplementedError('Get all not implemented for this data source type.')
 
     def update_one(self, member_id: str, config: 'ExternalDataSourceUpdateConfig'):
         '''
         Append data for one member to the table.
         '''
         raise NotImplementedError('Update one not implemented for this data source type.')
+        
+    def update_many(self, config: 'ExternalDataSourceUpdateConfig'):
+        '''
+        Append mapped data to the table.
+        '''
+        raise NotImplementedError('Update many not implemented for this data source type.')
     
-    def get_field_for_record(self, record, field):
+    def get_record_id(self, record):
+        '''
+        Get the ID for a record.
+        '''
+        raise NotImplementedError('Get ID not implemented for this data source type.')
+
+    def get_record_field(self, record: dict, field: str):
         '''
         Get a field from a record.
         '''
-        return record[field]
+        raise NotImplementedError('Get field not implemented for this data source type.')
     
     MappedMember = TypedDict('MatchedMember', {
         'config': 'ExternalDataSourceUpdateConfig',
@@ -782,35 +803,68 @@ class ExternalDataSource(PolymorphicModel):
         'update_fields': dict[str, any]
     })
 
-    def map_one(self, member_id, config: 'ExternalDataSourceUpdateConfig') -> MappedMember:
+    async def fetch_many_loader(self, keys):
+        results = await self.fetch_many(keys)
+        # sort results by keys, including None
+        return [next((result for result in results if self.get_record_id(result) == key), None) for key in keys]
+
+    class Loaders(TypedDict):
+        postcodesIO: DataLoader
+        fetch_record: DataLoader
+
+    def get_loaders (self) -> Loaders:
+        return {
+            "postcodesIO": DataLoader(load_fn=get_bulk_postcode_geo),
+            "fetch_record": DataLoader(load_fn=self.fetch_many_loader, cache=False)
+        }
+
+    async def map_one(self, member: Union[str, dict], config: 'ExternalDataSourceUpdateConfig', loaders: Loaders) -> MappedMember:
         '''
-        Match one member to a record in the data source.
+        Match one member to a record in the data source, via ID or record.
         '''
+        if type(member) == str:
+            member = self.fetch_one(member)
+        # if loaders is None:
+        #     loaders = self.get_loaders()
         # Get postcode field from the config
         postcode_column = config.postcode_column
         # Get postcode from member
-        member = self.fetch_one(member_id)
-        postcode = self.get_field_for_record(member, postcode_column)
+        postcode = self.get_record_field(member, postcode_column)
         # Get relevant config data for that postcode
-        postcode_data = get_postcode_geo(postcode)
+        postcode_data = await loaders['postcodesIO'].load(postcode)
         # Map the fields
         update_fields = {}
         for field, mapping in config.mapping.items():
             source = mapping['source']
             path = mapping['path']
             if source == 'postcodes.io':
-                update_fields[field] = get(postcode_data, path)
+                update_fields[field] = get(postcode_data['result'], path)
             else:
                 # TODO: Add other sources
                 pass
         # Return the member and config data
         return {
             'config': config,
-            'member_id': member_id,
             'member': member,
             'postcodes.io': postcode_data,
             'update_fields': update_fields
         }
+    
+    async def map_many(self, member_ids: list[str], config: 'ExternalDataSourceUpdateConfig') -> list[MappedMember]:
+        '''
+        Match many members to records in the data source.
+        '''
+        members = self.fetch_many(member_ids)
+        loaders = self.get_loaders()
+        return await asyncio.gather(*[self.map_one(member, config, loaders) for member in members])
+    
+    async def map_all(self, config: 'ExternalDataSourceUpdateConfig') -> list[MappedMember]:
+        '''
+        Match all members to records in the data source.
+        '''
+        members = self.fetch_all()
+        loaders = self.get_loaders()
+        return await asyncio.gather(*[self.map_one(member, config, loaders) for member in members])
 
 class RemoteCSVSource(ExternalDataSource):
     '''
@@ -848,26 +902,51 @@ class AirtableSource(ExternalDataSource):
     def fetch_one(self, member_id):
         record = self.table.get(member_id)
         return record
-  
-    def get_field_for_record(self, record, field):
-        '''
-        Get a field from a fetched record.
-        '''
-        return record['fields'][field]
+    
+    def fetch_many(self, id_list: list[str]):
+        formula = f'OR('
+        formula += ",".join([f"RECORD_ID()='{member_id}'" for member_id in id_list])
+        formula += ')'
+        records = self.table.all(formula=formula)
+        return records
+    
+    def fetch_all(self):
+        records = self.table.all()
+        return records
+    
+    def get_record_id(self, record):
+        return record['id']
+    
+    def get_record_field(self, record, field):
+        return record['fields'].get(str(field))
 
-    def update_one(self, member_id: str, config: 'ExternalDataSourceUpdateConfig'):
-        mapped_record = self.map_one(member_id, config)
-        # 2. Look at the dictionary
-        # print("Airtable results", mapped_record)
+    async def update_one(self, member_id: str, config: 'ExternalDataSourceUpdateConfig'):
+        loaders = self.get_loaders()
+        mapped_record = await self.map_one(member_id, config, loaders)
         # 3. Update
         self.table.update(mapped_record['member']['id'], mapped_record['update_fields'])
 
-    def update_many(self, config: 'ExternalDataSourceUpdateConfig'):
-        # 1. Get all members
-        list = self.table.all()
-        # 2. Look at the dictionary
-        print("Airtable results", list.count())
-        # 3. Update members with some random field value
+    async def update_many(self, member_ids: list[str], config: 'ExternalDataSourceUpdateConfig'):
+        mapped_records = await self.map_many(member_ids, config)
+        # 3. Update members
+        self.table.batch_update([
+          {
+            "id": mapped_record['member']['id'],
+            "fields": mapped_record['update_fields']
+          } for
+          mapped_record in mapped_records
+        ])
+
+    async def update_all(self, config: 'ExternalDataSourceUpdateConfig'):
+        mapped_records = await self.map_all(config)
+        # 3. Update members
+        self.table.batch_update([
+          {
+            "id": mapped_record['member']['id'],
+            "fields": mapped_record['update_fields']
+          } for
+          mapped_record in mapped_records
+        ])
 
 # class GoogleSheetSource(ExternalDataSource):
 #     '''
@@ -944,17 +1023,30 @@ class ExternalDataSourceUpdateConfig(models.Model):
     def schedule_update_one(self, member_id: str):
         update_one.defer(config_id=str(self.id), member_id=member_id)
 
-    def update_one(self, member_id: str):
-        self.data_source.update_one(member_id=member_id, config=self)
+    async def update_one(self, member_id: str):
+        await self.data_source.update_one(member_id=member_id, config=self)
 
-    def schedule_update_many(self):
+    def schedule_update_many(self, member_ids: list[str]):
+        hsh = hash(sorted(member_ids))
         update_many\
         .configure(
           # Dedupe `update_many` jobs for the same config
           # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-          queueing_lock=f"update_many_{self.id}"
+          queueing_lock=f"update_many_{hsh}"
         )\
         .defer(config_id=str(self.id))
 
-    def update_many(self):
-        self.data_source.update_many(self)
+    async def update_many(self, member_ids: list[str]):
+        await self.data_source.update_many(member_ids=member_ids, config=self)
+
+    def schedule_update_all(self):
+        update_all\
+        .configure(
+          # Dedupe `update_all` jobs for the same config
+          # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+          queueing_lock="update_all"
+        )\
+        .defer(config_id=str(self.id))
+
+    async def update_all(self):
+        await self.data_source.update_all(config=self)
