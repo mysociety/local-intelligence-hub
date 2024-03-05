@@ -7,17 +7,9 @@ from hub.models import Area
 from utils.mapit import MapIt
 
 
-class ImportAreasTestCase(TestCase):
-    quiet_parameter: bool = False
-
-    @mock.patch.object(MapIt, "areas_of_type")
-    @mock.patch.object(MapIt, "area_geometry")
-    def test_import(self, mapit_geom, mapit_areas):
-        mapit_geom.return_value = {
-            "type": "Polygon",
-            "coordinates": [[1, 2], [2, 1]],
-        }
-        mapit_areas.return_value = [
+def mock_areas_of_type(types):
+    if "WMC" in types:
+        return [
             {
                 "id": 1,
                 "codes": {"gss": "E10000001", "unit_id": "1"},
@@ -33,6 +25,22 @@ class ImportAreasTestCase(TestCase):
                 "type": "WMC",
             },
         ]
+
+    return []
+
+
+class ImportAreasTestCase(TestCase):
+    quiet_parameter: bool = False
+
+    @mock.patch.object(MapIt, "areas_of_type")
+    @mock.patch.object(MapIt, "area_geometry")
+    def test_import(self, mapit_geom, mapit_areas):
+        mapit_geom.return_value = {
+            "type": "Polygon",
+            "coordinates": [[1, 2], [2, 1]],
+        }
+        mapit_areas.side_effect = mock_areas_of_type
+
         call_command("import_areas", quiet=self.quiet_parameter)
 
         areas = Area.objects.all()
