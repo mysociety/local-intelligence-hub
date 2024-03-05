@@ -10,7 +10,7 @@ To run the front-end, you will need [Node Version Manager (nvm)](https://github.
 
 Clone the repository:
 
-    git clone git@github.com:mysociety/local-intelligence-hub.git
+    git clone git@github.com:commonknowledge/meep-intelligence-hub.git
     cd local-intelligence-hub
 
 Create and edit a .env file using `.env-example` file and then
