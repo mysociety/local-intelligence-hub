@@ -30,7 +30,23 @@ party_shades = {
     "Sinn Féin": "#326760",
     "Social Democratic and Labour Party": "#2AA82C",
     "Speaker of the House of Commons": "#DCDCDC",
+    "Reclaim": "#101122",
     "independent politician": "#DCDCDC",
+}
+
+party_map = {
+    "Conservative": "Conservative Party",
+    "Conservative and Unionist Party": "Conservative Party",
+    "Green": "Green Party",
+    "Green Party (England & Wales)": "Green Party",
+    "SDLP (Social Democratic & Labour Party)": "Social Democratic and Labour Party",
+    "DUP": "Democratic Unionist Party",
+    "Labour": "Labour Party",
+    "Labour/Co-operative": "Labour Co-operative",
+    "Speaker": "Speaker of the House of Commons",
+    "Liberal Democrat": "Liberal Democrats",
+    "Alba": "Alba Party",
+    "Independent": "independent politician",
 }
 
 MP_IMPORT_COMMANDS = [
@@ -58,6 +74,16 @@ class Command(BaseCommand):
         self.check_for_duplicate_mps()
         self.import_mp_images()
 
+    def standardise_party(self, party):
+        orig_party = party
+        if party_shades.get(party, None) is not None:
+            return party
+
+        if party_map.get(party, None) is not None:
+            return party_map[party]
+
+        return orig_party
+
     # these are separate functions so we can mock them in tests
     def get_twfy_df(self):
         df = pd.read_csv("https://www.theyworkforyou.com/mps/?f=csv").rename(
@@ -83,12 +109,6 @@ class Command(BaseCommand):
         id_df["twfyid"] = pd.to_numeric(id_df["twfyid"])
         id_df = id_df.drop(columns=["scheme"])
         id_df = id_df.rename(columns={"identifier": "parlid"})
-
-        # TODO: Remove this temporary workaround, once February 2024 byelection MPs are added upstream.
-        patch_df = pd.DataFrame(
-            [{"twfyid": 26287, "parlid": "5010"}, {"twfyid": 26288, "parlid": "5011"}]
-        )
-        id_df = pd.concat([id_df, patch_df])
 
         return id_df
 
@@ -219,17 +239,17 @@ class Command(BaseCommand):
                 )
                 continue
 
-            if area and "parlid" in mp:
+            if area and "twfyid" in mp:
                 name = f"{mp['First name']} {mp['Last name']}"
-                if pd.isna(mp["parlid"]):
-                    print(f"No parlid for {name}, not updating")
+                if pd.isna(mp["twfyid"]):
+                    print(f"No twfyid for {name}, not updating")
                     continue
 
                 try:
                     person, created = Person.objects.update_or_create(
                         person_type="MP",
-                        external_id=mp["parlid"],
-                        id_type="parlid",
+                        external_id=mp["twfyid"],
+                        id_type="twfyid",
                         defaults={
                             "name": name,
                             "area": area,
@@ -259,10 +279,11 @@ class Command(BaseCommand):
                             )
                 if "Party" in mp:
                     try:
+                        party = self.standardise_party(mp["Party"])
                         PersonData.objects.update_or_create(
                             person=person,
                             data_type=data_types["party"],
-                            defaults={"data": mp["Party"]},
+                            defaults={"data": party},
                         )
                     except PersonData.MultipleObjectsReturned:  # pragma: no cover
                         PersonData.objects.filter(
@@ -296,15 +317,22 @@ class Command(BaseCommand):
         if not self._quiet:
             print("Importing MP Images")
         for mp in tqdm(
-            Person.objects.filter(person_type="MP").all(), disable=self._quiet
+            PersonData.objects.filter(
+                data_type__name="parlid", person__person_type="MP"
+            )
+            .select_related("person")
+            .all(),
+            disable=self._quiet,
         ):
-            image_url = f"https://members-api.parliament.uk/api/Members/{mp.external_id}/Thumbnail"
+            image_url = (
+                f"https://members-api.parliament.uk/api/Members/{mp.data}/Thumbnail"
+            )
             file, headers = urllib.request.urlretrieve(image_url)
             mime_type = magic.from_file(file, mime=True)
             extension = mime_type.split("/")[1]
             image = File(open(file, "rb"))
-            mp.photo.save(f"mp_{mp.external_id}.{extension}", image)
-            mp.save()
+            mp.person.photo.save(f"mp_{mp.data}.{extension}", image)
+            mp.person.save()
 
     def check_for_duplicate_mps(self):
         duplicates = (

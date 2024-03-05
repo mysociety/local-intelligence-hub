@@ -1,3 +1,5 @@
+from functools import cache
+
 from django.core.management.base import BaseCommand
 
 import requests
@@ -30,6 +32,15 @@ class Command(BaseCommand):
         self.delete_data()
         self.import_results(votes, edms)
 
+    @cache
+    def get_parlid_lookup(self):
+        lookup = {}
+
+        for parlid in PersonData.objects.filter(data_type__name="parlid"):
+            lookup[parlid.person_id] = parlid.value()
+
+        return lookup
+
     def get_votes(self, division_id):
         api_url = self.vote_api_url + str(division_id) + ".json"
         response = requests.get(api_url)
@@ -52,8 +63,10 @@ class Command(BaseCommand):
             for member in data["NoVoteRecorded"]:
                 vote_dict[str(member["MemberId"])] = "Did not vote"
 
+            parlid_lookup = self.get_parlid_lookup()
+
             not_in_office_members = [
-                str(person_data.person.external_id)
+                str(parlid_lookup[person_data.person_id])
                 for person_data in PersonData.objects.filter(
                     data_type__name="mp_first_elected"
                 ).filter(data__gt=date)
@@ -76,8 +89,11 @@ class Command(BaseCommand):
             edm_name = data["Title"]
             date = data["DateTabled"]
             supporters = [str(member["MemberId"]) for member in data["Sponsors"]]
+
+            parlid_lookup = self.get_parlid_lookup()
+
             not_in_office = [
-                str(person_data.person.external_id)
+                str(parlid_lookup[person_data.person_id])
                 for person_data in PersonData.objects.filter(
                     person__person_type="MP",
                     data_type__name="mp_first_elected",
@@ -85,7 +101,7 @@ class Command(BaseCommand):
                 ).select_related("person")
             ]
             all_members = [
-                str(person.external_id)
+                str(parlid_lookup[person.id])
                 for person in Person.objects.filter(
                     person_type="MP", end_date__isnull=True
                 ).order_by("external_id")
@@ -216,8 +232,11 @@ class Command(BaseCommand):
     def import_results(self, votes, edms):
         if not self._quiet:
             print("Adding MP data on relevant votes + EDMS to database")
+
+        parlid_lookup = self.get_parlid_lookup()
+
         for mp in tqdm(Person.objects.filter(person_type="MP"), disable=self._quiet):
-            mp_id = mp.external_id
+            mp_id = parlid_lookup[mp.id]
 
             for vote in votes:
                 if mp_id in vote:

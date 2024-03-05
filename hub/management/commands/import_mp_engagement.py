@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 import pandas as pd
 from tqdm import tqdm
 
-from hub.models import DataSet, DataType, Person, PersonData
+from hub.models import DataSet, DataType, PersonData
 
 
 class Command(BaseCommand):
@@ -19,8 +19,9 @@ class Command(BaseCommand):
 
     def get_person_from_id(self, id):
         try:
-            return Person.objects.get(external_id=id)
-        except Person.DoesNotExist:
+            data = PersonData.objects.get(data_type__name="parlid", data=id)
+            return data.person
+        except PersonData.DoesNotExist:
             return None
 
     def get_df(self):

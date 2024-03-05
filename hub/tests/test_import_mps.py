@@ -90,7 +90,7 @@ class ImportMPsTestCase(TestCase):
 
         first = mps[0]
         self.assertEqual(first.name, "James Madeupname")
-        self.assertEqual(first.external_id, "1")
+        self.assertEqual(first.external_id, "26")
         self.assertRegex(first.photo.url, r"/media/person/mp_1.jpeg")
 
         all_data = PersonData.objects.filter(person=first)
