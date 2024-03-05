@@ -936,7 +936,7 @@ class AirtableSource(ExternalDataSource):
         return False
     
     async def fetch_one(self, member_id):
-        record = await self.table.get(member_id)
+        record = self.table.get(member_id)
         return record
     
     async def fetch_many(self, id_list: list[str]):

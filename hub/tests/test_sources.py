@@ -50,7 +50,7 @@ class TestDataSource(TestCase):
     async def test_airtable_fetch_one(self):
         record = self.create_test_record({ "Postcode": "EH99 1SP" })
 
-        record = self.source.fetch_one(self.source.get_record_id(record))
+        record = await self.source.fetch_one(self.source.get_record_id(record))
 
         self.assertEqual(
             self.source.get_record_field(record, 'Postcode'),
@@ -64,7 +64,7 @@ class TestDataSource(TestCase):
             { "Postcode": date + "22222" }
         ])
 
-        records = self.source.fetch_many([record['id'] for record in records])
+        records = await self.source.fetch_many([record['id'] for record in records])
         assert len(records) == 2
 
         for record in records:
@@ -80,7 +80,7 @@ class TestDataSource(TestCase):
             self.config
         )
 
-        record = self.source.fetch_one(self.source.get_record_id(record))
+        record = await self.source.fetch_one(self.source.get_record_id(record))
         
         self.assertEqual(
             self.source.get_record_field(record, 'constituency'),
@@ -93,11 +93,12 @@ class TestDataSource(TestCase):
             { "Postcode": "G42 8PH" }
         ])
 
-        await self.config.update_many(
-            member_ids=[record['id'] for record in records]
+        await self.source.update_many(
+            member_ids=[record['id'] for record in records],
+            config=self.config
         )
 
-        records = self.source.fetch_many([record['id'] for record in records])
+        records = await self.source.fetch_many([record['id'] for record in records])
         assert len(records) == 2
 
         for record in records:
