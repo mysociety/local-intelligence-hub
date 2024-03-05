@@ -22,7 +22,6 @@ mutation Login($username: String!, $password: String!) {
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [token, setToken] = useState(null);
 
   const handleSubmit = async (event: { preventDefault: () => void; }) => {
     event.preventDefault();
@@ -35,7 +34,8 @@ export default function Login() {
 
       const token = data?.tokenAuth?.token?.token;
       if (token) {
-        setToken(token);
+        localStorage.setItem('jwt', token);
+        window.location.href = '/account';
       } else {
         console.error('Login failed: ', data?.tokenAuth?.errors);
       }
@@ -72,7 +72,6 @@ export default function Login() {
         </div>
         <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded" type="submit">Login</button>
       </form>
-      {token && <DoLogin token={token} />}
     </>
   );
 }
