@@ -1,9 +1,12 @@
 .venv
 .env
+.env.local
 .static
 .coverage
 .media
-data
+data/**/*
+!data/.gitkeep
+.next
 
 conf/env
 conf/env.deployed
