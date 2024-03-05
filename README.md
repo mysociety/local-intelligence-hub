@@ -8,6 +8,8 @@ The [original static prototype](https://github.com/mysociety/local-intelligence-
 
 You will need [Docker](https://docs.docker.com/desktop/) installed.
 
+To run the front-end, you will need [Node Version Manager (nvm)](https://github.com/nvm-sh/nvm) installed.
+
 Clone the repository:
 
     git clone git@github.com:mysociety/local-intelligence-hub.git
