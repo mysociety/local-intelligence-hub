@@ -3,7 +3,11 @@
 import { useRequireAuth } from '../../components/authenticationHandler';
 
 export default function Account() {
-  useRequireAuth();
+  const loading = useRequireAuth();
+
+  if (loading) {
+    return <h2>Loading...</h2>
+  }
 
   return (
     <>
