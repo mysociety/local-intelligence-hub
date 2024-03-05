@@ -22,6 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(
     BASE_URL=(str, False),
+    SCHEDULED_UPDATE_SECONDS_DELAY=(int, 3),
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, []),
     HIDE_DEBUG_TOOLBAR=(bool, False),
@@ -287,3 +288,5 @@ GQL_AUTH = GqlAuthSettings(
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
 ]
+
+SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")
