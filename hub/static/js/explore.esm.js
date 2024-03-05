@@ -29,6 +29,12 @@ const app = createApp({
       }, {
         slug: "WMC23",
         label: "Future constituencies"
+      }, {
+        slug: "STC",
+        label: "Single Tier councils"
+      }, {
+        slug: "DIS",
+        label: "District councils"
       }],
 
       filters_applied: false, // were filters applied on the last Update?
@@ -305,7 +311,7 @@ const app = createApp({
     geomUrl() {
       let url = new URL(window.location.origin + '/exploregeometry.json')
 
-      if (["WMC", "WMC23"].includes(this.area_type)) {
+      if (["WMC", "WMC23", "DIS", "STC"].includes(this.area_type)) {
         url = new URL(window.location.origin + '/exploregeometry/' + this.area_type + '.json')
       }
 
