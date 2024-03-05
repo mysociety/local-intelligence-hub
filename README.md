@@ -1,20 +1,27 @@
-# Local Intelligence Hub
+# Local Intelligence Hub: MEEP Version
 
-A Beta version of a tool to help The Climate Coalition with better access
-to data needed to enable local and national action on climate.
+A fork of MySociety's Local Intelligence Hub to be used as a backend for Common Knowledge's MEEP.
 
-The [original static prototype](https://github.com/mysociety/local-intelligence-hub/commit/4fab6ff08401d4e4c29615ab07ff4f6c4f4e6050) was built as part of mySociety’s August 2022 prototyping week exploring how The Climate Coalition might we give climate campaign organisations and communities better access to the data they need to enable local and national action on climate.
 ## Development install
 
 You will need [Docker](https://docs.docker.com/desktop/) installed.
 
+To run the front-end, you will need [Node Version Manager (nvm)](https://github.com/nvm-sh/nvm) installed.
+
 Clone the repository:
 
-    git clone git@github.com:mysociety/local-intelligence-hub.git
+    git clone git@github.com:commonknowledge/meep-intelligence-hub.git
     cd local-intelligence-hub
 
 Create and edit a .env file using `.env-example` file and then
 update `SECRET_KEY` and `MAPIT_API_KEY`. You can get the latter from https://mapit.mysociety.org/account/signup/
+
+For the front-end, create and edit a .env file using `nextjs/.env.example` (save it as `nextjs/.env`).
+
+Follow the below steps to start up the back-end. After data import, there is an extra step for MEEP
+where the created user needs to be verified in the back-end - see the "Logging In" section.
+
+Start up the front end with: `cd nextjs; npm run dev`.
 
 ### Running Docker manually (recommended)
 
@@ -62,6 +69,11 @@ You could alternatively run commands individually (again, from inside the contai
 
     ./manage.py import_areas
     ./manage.py import_mps
+
+### Logging In
+
+The superuser will not initially work on the front-end as it is not verified, which is required by the GraphQL Auth library
+we are using. To fix this, simply go to the back-end and update the User Status for it, ensuring "Verified" is checked.
 
 ### Running the tests
 

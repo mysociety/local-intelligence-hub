@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-from hub.models import DataSet, DataType, Person, PersonData
+from hub.models import DataSet, DataType, PersonData
 
 COMMITTEE_REQUEST_URL = "https://committees-api.parliament.uk/api/Committees"
 
@@ -27,8 +27,10 @@ class Command(BaseCommand):
         if not self._quiet:
             self.stdout.write("Fetching all current Select Committee memberships")
 
-        mps = Person.objects.filter(person_type="MP")
-        mp_ids = list(mps.values_list("external_id", flat=True))
+        mps = PersonData.objects.filter(
+            data_type__name="parlid", person__person_type="MP"
+        ).select_related("person")
+        mp_ids = list(mps.values_list("data", flat=True))
 
         select_committees_json = []
         for mp in tqdm(mp_ids, disable=self._quiet):
@@ -45,7 +47,7 @@ class Command(BaseCommand):
         df = pd.DataFrame.from_records(select_committees_json)[["committees", "id"]]
         df = df.explode("committees")
         df["committee_name"] = df.committees.str["name"]
-        df["mp"] = df.id.apply(lambda mp_id: mps.get(external_id=mp_id))
+        df["mp"] = df.id.apply(lambda mp_id: mps.get(data=mp_id))
         return df
 
     def create_data_types(self):
@@ -78,7 +80,7 @@ class Command(BaseCommand):
             self.stdout.write("Adding Select Committee Membership")
         for index, result in tqdm(results.iterrows(), disable=self._quiet):
             committee_membership, created = PersonData.objects.update_or_create(
-                person=result.mp,
+                person=result.mp.person,
                 data_type=data_type,
                 defaults={"data": result.committee_name},
             )

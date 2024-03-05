@@ -32,6 +32,7 @@ env = environ.Env(
     TEST_AIRTABLE_TABLE_NAME=(str, ""),
     TEST_AIRTABLE_API_KEY=(str, ""),
     DJANGO_LOG_LEVEL=(str, "INFO"),
+    CORS_ALLOWED_ORIGINS=(list, ['http://localhost:3000'])
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -42,6 +43,7 @@ BASE_URL = env("BASE_URL")
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
+CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
 CACHE_FILE = env("CACHE_FILE")
 HIDE_DEBUG_TOOLBAR = env("HIDE_DEBUG_TOOLBAR")
 MAPIT_URL = env("MAPIT_URL")
@@ -285,8 +287,3 @@ GQL_AUTH = GqlAuthSettings(
     REGISTER_REQUIRE_CAPTCHA=False,
 )
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-]
-
-SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")

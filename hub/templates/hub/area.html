@@ -38,6 +38,10 @@
                         {% include 'hub/includes/icons/x.html' %}
                         X (Twitter)
                     </a></li>
+                    <li><a class="dropdown-item text-threads-black" href="https://threads.net/intent/post?text={{ request.build_absolute_uri|urlencode }}" target="_blank">
+                        {% include 'hub/includes/icons/threads.html' %}
+                        Threads
+                    </a></li>
                     <li><a class="dropdown-item text-linkedin-blue" href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.build_absolute_uri|urlencode }}" target="_blank">
                         {% include 'hub/includes/icons/linkedin.html' %}
                         LinkedIn
@@ -309,7 +313,7 @@
                         </p>
                     </div>
                     <div class="card-footer">
-                        <p class="card-text"><a href="https://members-api.parliament.uk/api/Members/{{ mp.person.external_id }}/LatestElectionResult">Data from UK Parliament.</a> This information is provided because in the UK electoral system, political parties and the media will be paying more attention to marginal seats and therefore the voices of the people within them can have greater national impact.</p>
+                        <p class="card-text"><a href="https://members-api.parliament.uk/api/Members/{{ mp.parlid }}/LatestElectionResult">Data from UK Parliament.</a> This information is provided because in the UK electoral system, political parties and the media will be paying more attention to marginal seats and therefore the voices of the people within them can have greater national impact.</p>
                     </div>
                 </div>
                 <div class="card dataset-card area-data--sm {% comment %} TODO: dataset-card--favourite? {% endcomment %}">
@@ -323,7 +327,7 @@
                         </p>
                     </div>
                     <div class="card-footer">
-                        <p class="card-text"><a href="https://members-api.parliament.uk/api/Members/{{ mp.person.external_id }}/LatestElectionResult">Data from UK Parliament.</a></p>
+                        <p class="card-text"><a href="https://members-api.parliament.uk/api/Members/{{ mp.parlid }}/LatestElectionResult">Data from UK Parliament.</a></p>
                     </div>
                 </div>
 
@@ -338,7 +342,7 @@
                         </p>
                     </div>
                     <div class="card-footer">
-                        <p class="card-text"><a href="https://members-api.parliament.uk/api/Members/{{ mp.person.external_id }}/">Data from UK Parliament.</a></p>
+                        <p class="card-text"><a href="https://members-api.parliament.uk/api/Members/{{ mp.parlid }}/">Data from UK Parliament.</a></p>
                     </div>
                 </div>
               {% endif %}

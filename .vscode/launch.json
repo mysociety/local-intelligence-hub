@@ -1,17 +1,8 @@
 {
     "version": "0.2.0",
-    "compounds": [
-      {
-        "name": "Run all app services",
-        "configurations": [
-          "Python: Run webapp",
-          "Python: Run background tasks"
-        ]
-      }
-    ],
-    "configurations": [     
+    "configurations": [
         {
-            "name": "Python: Run webapp",
+            "name": "Django",
             "type": "debugpy",
             "request": "launch",
             "justMyCode": false,
@@ -22,7 +13,19 @@
             "django": true
         },
         {
-          "name": "Python: Run background tasks",
+            "name": "Start backend containers",
+            "type": "node-terminal",
+            "command": "docker compose up",
+            "request": "launch"
+        },
+        {
+            "name": "NextJS",
+            "type": "node-terminal",
+            "command": "cd nextjs && npm install && npm run dev",
+            "request": "launch"
+        },
+        {
+          "name": "Django background worker",
           "type": "debugpy",
           "request": "launch",
           "program": "${workspaceFolder}/manage.py",
@@ -31,6 +34,16 @@
           ],
           "justMyCode": true,
           "django": true
+        }
+    ],
+    "compounds": [
+        {
+            "name": "App",
+            "configurations": [
+                "NextJS",
+                "Django",
+                "Django background worker"
+            ]
         }
     ]
 }

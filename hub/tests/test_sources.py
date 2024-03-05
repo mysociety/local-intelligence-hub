@@ -44,8 +44,14 @@ class TestDataSource(TestCase):
     
     ### Tests begin
 
-    def test_airtable_source(self):
-        self.assertTrue(self.source.healthcheck())
+    async def test_airtable_source(self):
+        self.assertTrue(await self.source.healthcheck())
+
+    async def test_airtable_webhooks(self):
+        await self.source.teardown_webhook()
+        self.assertFalse(await self.source.webhook_healthcheck())
+        await self.source.setup_webhook()
+        self.assertTrue(await self.source.webhook_healthcheck())
 
     async def test_airtable_fetch_one(self):
         record = self.create_test_record({ "Postcode": "EH99 1SP" })
