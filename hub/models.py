@@ -891,7 +891,7 @@ class ExternalDataSource(PolymorphicModel):
         '''
         Match all members to records in the data source.
         '''
-        members = self.fetch_all()
+        members = await self.fetch_all()
         loaders = self.get_loaders()
         return await asyncio.gather(*[self.map_one(member, config, loaders) for member in members])
 
