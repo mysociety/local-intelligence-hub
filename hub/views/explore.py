@@ -151,7 +151,22 @@ class ExploreDatasetsJSON(TemplateView):
                 "name": "gss",
                 "title": "Constituency GSS code",
                 "source_label": "Data from mySociety.",
-                "areas_available": ["WMC", "WMC23", "STC", "DIS"],
+                "areas_available": ["WMC", "WMC23"],
+            }
+        )
+
+        datasets.append(
+            {
+                "scope": "public",
+                "is_featured": False,
+                "is_favourite": False,
+                "is_filterable": False,
+                "is_shadable": False,
+                "category": "place",
+                "name": "gss",
+                "title": "Council GSS code",
+                "source_label": "Data from mySociety.",
+                "areas_available": ["DIS", "STC"],
             }
         )
 
