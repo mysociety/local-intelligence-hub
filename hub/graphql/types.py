@@ -152,6 +152,9 @@ class ExternalDataSourceUpdateConfig:
     postcode_column: auto
     enabled: auto
     events: List[EventLogItem] = strawberry_django.field(
+        resolver=lambda self: procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
+            args__config_id=str(self.id)
+        ),
         filters=EventLogFilter,
         pagination=True
     )
