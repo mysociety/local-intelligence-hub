@@ -51,13 +51,13 @@ class TestExploreDatasetsPage(TestCase):
         self.assertEqual(response.status_code, 200)
 
         datasets = response.json()
-        self.assertEqual(12, len(datasets))
+        self.assertEqual(13, len(datasets))
 
         self.client.logout()
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         datasets = response.json()
-        self.assertEqual(5, len(datasets))
+        self.assertEqual(6, len(datasets))
 
     def test_explore_view_with_many_to_one(self):
         url = f"{reverse('explore_csv')}?mp_appg_membership__exact=MadeUpAPPG"
