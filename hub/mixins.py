@@ -181,13 +181,17 @@ class FilterMixin:
         shortcut if no filters/columns were requested: just return a single
         column of constituency names
         """
-        if not cols:
+        if not cols or len(cols) == 0:
             areas = Area.objects
             area_type = self.area_type()
             if area_type is not None:
                 areas = areas.filter(area_type=area_type)
             for area in areas.order_by("name"):
                 data.append([area.name])
+            if as_dict:
+                for area in Area.objects.filter(id__in=area_ids):
+                    area_data[area.name]["area"] = area
+                return area_data
             return data
 
         """
