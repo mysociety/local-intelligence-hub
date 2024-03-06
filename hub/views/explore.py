@@ -151,7 +151,7 @@ class ExploreDatasetsJSON(TemplateView):
                 "name": "gss",
                 "title": "Constituency GSS code",
                 "source_label": "Data from mySociety.",
-                "areas_available": ["WMC", "WMC23"],
+                "areas_available": ["WMC", "WMC23", "STC", "DIS"],
             }
         )
 
