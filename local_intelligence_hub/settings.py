@@ -182,7 +182,6 @@ STATICFILES_FINDERS = (
 )
 
 STATICFILES_DIRS = [
-    BASE_DIR / "hub" / "static",
     BASE_DIR / "build",
     ("bootstrap", BASE_DIR / "vendor" / "bootstrap" / "scss"),
     ("bootstrap", BASE_DIR / "vendor" / "bootstrap" / "js"),
