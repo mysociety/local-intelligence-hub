@@ -1105,6 +1105,7 @@ class ExternalDataSourceUpdateConfig(models.Model):
       }
     ]
     '''
+    # TODO: validation
     mapping = JSONField(blank=True, null=True)
 
     def get_mapping(self) -> list[UpdateConfigDict]:
