@@ -5,7 +5,7 @@ from datetime import datetime
 from hub.models import AirtableSource, ExternalDataSourceUpdateConfig
 
 
-class TestDataSource(TestCase):
+class TestAirtableSource(TestCase):
     ### Test prep
 
     def setUp(self) -> None:
@@ -19,12 +19,13 @@ class TestDataSource(TestCase):
         self.config = ExternalDataSourceUpdateConfig(
             data_source=self.source,
             postcode_column="Postcode", 
-            mapping={
-                "constituency": {
-                    "source": "postcodes.io",
-                    "path": "parliamentary_constituency_2025",
-                }
-            }
+            mapping=[
+              {
+                "source": "postcodes.io",
+                "source_path": "parliamentary_constituency_2025",
+                "destination_field": "constituency"
+              }
+            ]
         )
 
     def tearDown(self) -> None:

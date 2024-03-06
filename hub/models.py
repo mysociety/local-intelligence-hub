@@ -856,9 +856,10 @@ class ExternalDataSource(PolymorphicModel):
             postcode_data = await loaders['postcodesIO'].load(postcode)
             # Map the fields
             update_fields = {}
-            for field, mapping in config.mapping.items():
-                source = mapping['source']
-                path = mapping['path']
+            for mapping_dict in config.get_mapping().values():
+                source = mapping_dict['source']
+                path = mapping_dict['source_path']
+                field = mapping_dict['destination_field']
                 if source == 'postcodes.io':
                     update_fields[field] = get(postcode_data['result'], path)
                 else:
@@ -1108,10 +1109,11 @@ class AirtableWebhook(models.Model):
 
 
 class UpdateConfigDict(TypedDict):
-    # Data source ID
     source: str
-    # Dot path
-    path: str
+    # Can be a dot path, for use with benedict
+    source_path: str
+    destination_column: str
+
 
 class ExternalDataSourceUpdateConfig(models.Model):
     '''
@@ -1126,14 +1128,18 @@ class ExternalDataSourceUpdateConfig(models.Model):
 
     '''
     Mapping is a key/value pair where the key is the column name in the data source and the value is from Mapped, E.g.
-    {
-        "constituency_2024": {
-          source: "postcodes.io",
-          path: "constituency_2025"
-        }
-    }
+    [
+      {
+        source: "postcodes.io",
+        source_path: "constituency_2025",
+        destionation_field: "constituency_2024"
+      }
+    ]
     '''
     mapping = JSONField(blank=True, null=True)
+
+    def get_mapping(self) -> dict[str, UpdateConfigDict]:
+        return self.mapping
 
     def __str__(self):
         return f'Update config for {self.data_source.name}'
