@@ -2,7 +2,7 @@ import strawberry
 import strawberry_django
 from strawberry_django.auth.utils import get_current_user
 from strawberry import auto
-from typing import List, Optional
+from typing import List, Optional, Union
 from hub import models
 import procrastinate.contrib.django.models
 
@@ -64,6 +64,7 @@ class Membership:
         return queryset.filter(user=user.id)
 
 # ExternalDataSource
+    
 @strawberry_django.type(models.ExternalDataSource)
 class ExternalDataSource:
     id: auto
@@ -82,7 +83,10 @@ class ExternalDataSource:
     def healthcheck(self, info) -> bool:
         return self.healthcheck()
 
-    # TODO: get polymorphic specific / type
+    @strawberry_django.field
+    def connection_details(self, info) -> Union['AirtableSource']:
+        instance = self.get_real_instance()
+        return instance
 
 @strawberry_django.type(models.AirtableSource)
 class AirtableSource(ExternalDataSource):
@@ -106,7 +110,7 @@ class UpdateConfigDict:
 
 @strawberry_django.filters.filter(procrastinate.contrib.django.models.ProcrastinateJob, lookups=True)
 class EventLogFilter:
-    id: str
+    id: auto
     status: auto
     queue_name: auto
     task_name: auto
