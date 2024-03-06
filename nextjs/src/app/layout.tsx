@@ -74,7 +74,7 @@ export default function RootLayout({
                     </svg></CollapsibleTrigger>
                   </Collapsible></li>
                 {isLoggedIn ? (
-                  <li><Link href="/login" className={buttonVariants({ variant: "outline" })}>Logout</Link></li>
+                  <li><Link href="/logout" className={buttonVariants({ variant: "outline" })}>Logout</Link></li>
                 ) : (
                   <li>
                     <Link href="/login" className={buttonVariants({ variant: "outline" })}>Login</Link></li>
