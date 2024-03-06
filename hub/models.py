@@ -864,7 +864,7 @@ class ExternalDataSource(PolymorphicModel):
             for mapping_dict in config.get_mapping():
                 source = mapping_dict['source']
                 path = mapping_dict['source_path']
-                field = mapping_dict['destination_field']
+                field = mapping_dict['destination_column']
                 if source == 'postcodes.io':
                     update_fields[field] = get(postcode_data['result'], path)
                 else:
@@ -1113,19 +1113,22 @@ class ExternalDataSourceUpdateConfig(models.Model):
     # Data
         
     async def update_one(self, member_id: Union[str, any]):
-        loaders = self.data_source.get_loaders()
-        mapped_record = await self.data_source.map_one(member_id, self, loaders)
-        await self.data_source.update_one(mapped_record=mapped_record)
+        data_source = await sync_to_async(self.data_source.get_real_instance)()
+        loaders = data_source.get_loaders()
+        mapped_record = await data_source.map_one(member_id, self, loaders)
+        await data_source.update_one(mapped_record=mapped_record)
 
     async def update_many(self, member_ids: list[Union[str, any]]):
-        loaders = self.data_source.get_loaders()
-        mapped_records = await self.data_source.map_many(member_ids, self, loaders)
-        await self.data_source.update_many(mapped_records=mapped_records)
+        data_source = await sync_to_async(self.data_source.get_real_instance)()
+        loaders = data_source.get_loaders()
+        mapped_records = await data_source.map_many(member_ids, self, loaders)
+        await data_source.update_many(mapped_records=mapped_records)
 
     async def update_all(self):
-        loaders = self.data_source.get_loaders()
-        mapped_records = await self.data_source.map_all(self, loaders)
-        await self.data_source.update_all(mapped_records=mapped_records)
+        data_source = await sync_to_async(self.data_source.get_real_instance)()
+        loaders = data_source.get_loaders()
+        mapped_records = await data_source.map_all(self, loaders)
+        await data_source.update_all(mapped_records=mapped_records)
 
     # Webhooks
         
@@ -1143,19 +1146,19 @@ class ExternalDataSourceUpdateConfig(models.Model):
     async def deferred_update_one(cls, config_id: str, member_id: str):
         config = await cls.objects.select_related('data_source').aget(id=config_id)
         if config.enabled:
-            config.update_one(member_id=member_id)
+            await config.update_one(member_id=member_id)
 
     @classmethod
     async def deferred_update_many(cls, config_id: str, member_ids: list[str]):
         config = await cls.objects.select_related('data_source').aget(id=config_id)
         if config.enabled:
-            config.update_many(member_ids=member_ids)
+            await config.update_many(member_ids=member_ids)
 
     @classmethod
     async def deferred_update_all(cls, config_id: str):
         config = await cls.objects.select_related('data_source').aget(id=config_id)
         if config.enabled:
-            config.update_all()
+            await config.update_all()
 
     @classmethod
     async def deferred_refresh_webhook(cls, config_id: str):
@@ -1180,11 +1183,12 @@ class ExternalDataSourceUpdateConfig(models.Model):
 
     def schedule_update_many(self, member_ids: list[str]):
         try:
+          member_ids_hash = hash(",".join(list(sorted(set(member_ids)))))
           update_many\
           .configure(
             # Dedupe `update_many` jobs for the same config
             # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-            queueing_lock=f"update_many_{str(self.id)}_{hash(",".join(list(sorted(set(member_ids)))))}",
+            queueing_lock=f"update_many_{str(self.id)}_{member_ids_hash}",
             schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY }
           )\
           .defer(config_id=str(self.id), member_ids=member_ids)

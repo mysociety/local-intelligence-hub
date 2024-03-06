@@ -24,7 +24,7 @@ class TestAirtableSource(TestCase):
               {
                 "source": "postcodes.io",
                 "source_path": "parliamentary_constituency_2025",
-                "destination_field": "constituency"
+                "destination_column": "constituency"
               }
             ]
         )
