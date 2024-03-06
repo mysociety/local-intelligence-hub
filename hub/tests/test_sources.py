@@ -18,13 +18,13 @@ class TestAirtableSource(TestCase):
         )
 
         self.config = ExternalDataSourceUpdateConfig(
-            data_source=self.source,
+            external_data_source=self.source,
             postcode_column="Postcode", 
             mapping=[
               {
                 "source": "postcodes.io",
                 "source_path": "parliamentary_constituency_2025",
-                "destination_field": "constituency"
+                "destination_column": "constituency"
               }
             ]
         )
@@ -49,8 +49,8 @@ class TestAirtableSource(TestCase):
     
     ### Tests begin
 
-    async def test_airtable_source(self):
-        self.assertTrue(await self.source.healthcheck())
+    def test_airtable_source(self):
+        self.assertTrue(self.source.healthcheck())
 
     async def test_airtable_webhooks(self):
         self.source.teardown_webhook(self.config)
