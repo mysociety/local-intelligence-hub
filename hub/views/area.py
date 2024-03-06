@@ -192,7 +192,12 @@ class AreaView(BaseAreaView):
         ):
             if context["overlap_constituencies"][0].get("unchanged", False):
                 context["overlap_unchanged"] = True
-        context["area_type"] = str(self.object.area_type)
+        area_type = self.object.area_type
+        context["area_type"] = area_type.code
+        context["is_westminster_cons"] = True
+        if area_type.area_type != "Westminster Constituency":
+            context["is_westminster_cons"] = False
+
         if context["area_type"] == "WMC23":
             context["PPCs"] = [
                 {
