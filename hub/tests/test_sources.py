@@ -60,9 +60,9 @@ class TestAirtableSource(TestCase):
 
     async def test_airtable_fetch_one(self):
         record = self.create_test_record({ "Postcode": "EH99 1SP" })
-
+        # Test this functionality
         record = await self.source.fetch_one(self.source.get_record_id(record))
-
+        # Check
         self.assertEqual(
             self.source.get_record_field(record, 'Postcode'),
             "EH99 1SP"
@@ -74,10 +74,10 @@ class TestAirtableSource(TestCase):
             { "Postcode": date + "11111" },
             { "Postcode": date + "22222" }
         ])
-
+        # Test this functionality
         records = await self.source.fetch_many([record['id'] for record in records])
+        # Check
         assert len(records) == 2
-
         for record in records:
             self.assertTrue(
                 self.source.get_record_field(record, 'Postcode').startswith(date)
@@ -85,14 +85,10 @@ class TestAirtableSource(TestCase):
 
     async def test_airtable_update_one(self):
         record = self.create_test_record({ "Postcode": "EH99 1SP" })
-
-        await self.source.update_one(
-            record['id'],
-            self.config
-        )
-
+        # Test this functionality
+        await self.config.update_one(record)
+        # Check
         record = await self.source.fetch_one(self.source.get_record_id(record))
-        
         self.assertEqual(
             self.source.get_record_field(record, 'constituency'),
             "Edinburgh East and Musselburgh"
@@ -103,15 +99,11 @@ class TestAirtableSource(TestCase):
             { "Postcode": "G11 5RD" },
             { "Postcode": "G42 8PH" }
         ])
-
-        await self.source.update_many(
-            member_ids=[record['id'] for record in records],
-            config=self.config
-        )
-
+        # Test this functionality
+        await self.config.update_many(records)
+        # Check
         records = await self.source.fetch_many([record['id'] for record in records])
         assert len(records) == 2
-
         for record in records:
             if self.source.get_record_field(record, "Postcode") == "G11 5RD":
                 self.assertEqual(

@@ -792,17 +792,31 @@ class ExternalDataSource(PolymorphicModel):
         '''
         raise NotImplementedError('Get all not implemented for this data source type.')
 
-    async def update_one(self, member_id: str, config: 'ExternalDataSourceUpdateConfig'):
+    MappedMember = TypedDict('MatchedMember', {
+        'config': 'ExternalDataSourceUpdateConfig',
+        'member_id': str,
+        'member': dict,
+        'postcodes.io': PostcodesIOResult,
+        'update_fields': dict[str, any]
+    })
+
+    async def update_one(self, mapped_record: MappedMember):
         '''
         Append data for one member to the table.
         '''
         raise NotImplementedError('Update one not implemented for this data source type.')
         
-    async def update_many(self, config: 'ExternalDataSourceUpdateConfig'):
+    async def update_many(self, mapped_records: list[MappedMember]):
         '''
         Append mapped data to the table.
         '''
         raise NotImplementedError('Update many not implemented for this data source type.')
+    
+    async def update_all(self, mapped_records: list[MappedMember]):
+        '''
+        Append all data to the table.
+        '''
+        raise NotImplementedError('Update all not implemented for this data source type.')
     
     def get_record_id(self, record):
         '''
@@ -815,14 +829,6 @@ class ExternalDataSource(PolymorphicModel):
         Get a field from a record.
         '''
         raise NotImplementedError('Get field not implemented for this data source type.')
-    
-    MappedMember = TypedDict('MatchedMember', {
-        'config': 'ExternalDataSourceUpdateConfig',
-        'member_id': str,
-        'member': dict,
-        'postcodes.io': PostcodesIOResult,
-        'update_fields': dict[str, any]
-    })
 
     async def fetch_many_loader(self, keys):
         results = await self.fetch_many(keys)
@@ -845,8 +851,6 @@ class ExternalDataSource(PolymorphicModel):
         '''
         if type(member) == str:
             member = await loaders['fetch_record'].load(member)
-        # if loaders is None:
-        #     loaders = self.get_loaders()
         # Get postcode field from the config
         postcode_column = config.postcode_column
         # Get postcode from member
@@ -881,20 +885,17 @@ class ExternalDataSource(PolymorphicModel):
                 'update_fields': {}
             }
     
-    async def map_many(self, member_ids: list[str], config: 'ExternalDataSourceUpdateConfig') -> list[MappedMember]:
+    async def map_many(self, members: list[Union[str, any]], config: 'ExternalDataSourceUpdateConfig', loaders: Loaders) -> list[MappedMember]:
         '''
         Match many members to records in the data source.
         '''
-        members = await self.fetch_many(member_ids)
-        loaders = self.get_loaders()
         return await asyncio.gather(*[self.map_one(member, config, loaders) for member in members])
     
-    async def map_all(self, config: 'ExternalDataSourceUpdateConfig') -> list[MappedMember]:
+    async def map_all(self, config: 'ExternalDataSourceUpdateConfig', loaders: Loaders) -> list[MappedMember]:
         '''
         Match all members to records in the data source.
         '''
         members = await self.fetch_all()
-        loaders = self.get_loaders()
         return await asyncio.gather(*[self.map_one(member, config, loaders) for member in members])
 
 class RemoteCSVSource(ExternalDataSource):
@@ -957,15 +958,10 @@ class AirtableSource(ExternalDataSource):
     def get_record_field(self, record, field):
         return record['fields'].get(str(field))
 
-    async def update_one(self, member_id: str, config: 'ExternalDataSourceUpdateConfig'):
-        loaders = self.get_loaders()
-        mapped_record = await self.map_one(member_id, config, loaders)
-        # 3. Update
+    async def update_one(self, mapped_record):
         self.table.update(mapped_record['member']['id'], mapped_record['update_fields'])
 
-    async def update_many(self, member_ids: list[str], config: 'ExternalDataSourceUpdateConfig'):
-        mapped_records = await self.map_many(member_ids, config)
-        # 3. Update members
+    async def update_many(self, mapped_records):
         self.table.batch_update([
           {
             "id": mapped_record['member']['id'],
@@ -974,9 +970,7 @@ class AirtableSource(ExternalDataSource):
           mapped_record in mapped_records
         ])
 
-    async def update_all(self, config: 'ExternalDataSourceUpdateConfig'):
-        mapped_records = await self.map_all(config)
-        # 3. Update members
+    async def update_all(self, mapped_records):
         self.table.batch_update([
           {
             "id": mapped_record['member']['id'],
@@ -1138,7 +1132,7 @@ class ExternalDataSourceUpdateConfig(models.Model):
     '''
     mapping = JSONField(blank=True, null=True)
 
-    def get_mapping(self) -> dict[str, UpdateConfigDict]:
+    def get_mapping(self) -> list[UpdateConfigDict]:
         return self.mapping
 
     def __str__(self):
@@ -1166,20 +1160,13 @@ class ExternalDataSourceUpdateConfig(models.Model):
         self.save()
 
     # Webhooks
-
     def handle_update_webhook_view(self, body):
-        # try:
         member_ids = self.data_source.get_member_ids_from_webhook(body)
-            # try:
         if len(member_ids) == 1:
             self.schedule_update_one(member_id=member_ids[0])
         else:
             self.schedule_update_many(member_ids=member_ids)
         return HttpResponse(status=200)
-        #     except:
-        #         return HttpResponse(status=500)
-        # except:
-        #     return HttpResponse(status=400)
 
     # Scheduling
 
@@ -1187,22 +1174,37 @@ class ExternalDataSourceUpdateConfig(models.Model):
     async def deferred_update_one(cls, config_id: str, member_id: str):
         config = await cls.objects.select_related('data_source').aget(id=config_id)
         if config.enabled:
-            data_source = await sync_to_async(config.data_source.get_real_instance)()
-            await data_source.update_one(member_id=member_id, config=config)
+            config.update_one(member_id=member_id)
+
+    async def update_one(self, member_id: Union[str, any]):
+        # data_source = await sync_to_async(self.data_source.get_real_instance)()
+        loaders = self.data_source.get_loaders()
+        mapped_record = await self.data_source.map_one(member_id, self, loaders)
+        await self.data_source.update_one(mapped_record=mapped_record)
 
     @classmethod
     async def deferred_update_many(cls, config_id: str, member_ids: list[str]):
         config = await cls.objects.select_related('data_source').aget(id=config_id)
         if config.enabled:
-            data_source = await sync_to_async(config.data_source.get_real_instance)()
-            await data_source.update_many(member_ids=member_ids, config=config)
+            config.update_many(member_ids=member_ids)
+
+    async def update_many(self, member_ids: list[Union[str, any]]):
+        # data_source = await sync_to_async(self.data_source.get_real_instance)()
+        loaders = self.data_source.get_loaders()
+        mapped_records = await self.data_source.map_many(member_ids, self, loaders)
+        await self.data_source.update_many(mapped_records=mapped_records)
 
     @classmethod
     async def deferred_update_all(cls, config_id: str):
         config = await cls.objects.select_related('data_source').aget(id=config_id)
         if config.enabled:
-            data_source = await sync_to_async(config.data_source.get_real_instance)()
-            await data_source.update_all(config=config)
+            config.update_all()
+
+    async def update_all(self):
+        # data_source = await sync_to_async(self.data_source.get_real_instance)()
+        loaders = self.data_source.get_loaders()
+        mapped_records = await self.data_source.map_all(self, loaders)
+        await self.data_source.update_all(mapped_records=mapped_records)
 
     @classmethod
     async def deferred_refresh_webhook(cls, config_id: str):
