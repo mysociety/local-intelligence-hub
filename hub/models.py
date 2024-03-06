@@ -1180,11 +1180,12 @@ class ExternalDataSourceUpdateConfig(models.Model):
 
     def schedule_update_many(self, member_ids: list[str]):
         try:
+          member_ids_hash = hash(",".join(list(sorted(set(member_ids)))))
           update_many\
           .configure(
             # Dedupe `update_many` jobs for the same config
             # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-            queueing_lock=f"update_many_{str(self.id)}_{hash(",".join(list(sorted(set(member_ids)))))}",
+            queueing_lock=f"update_many_{str(self.id)}_{member_ids_hash}",
             schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY }
           )\
           .defer(config_id=str(self.id), member_ids=member_ids)
