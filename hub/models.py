@@ -868,7 +868,6 @@ class ExternalDataSource(PolymorphicModel):
                 if source == 'postcodes.io':
                     update_fields[field] = get(postcode_data['result'], path)
                 else:
-                    # TODO: Add other sources
                     pass
             # Return the member and config data
             return {
@@ -898,15 +897,6 @@ class ExternalDataSource(PolymorphicModel):
         '''
         members = await self.fetch_all()
         return await asyncio.gather(*[self.map_one(member, config, loaders) for member in members])
-
-class RemoteCSVSource(ExternalDataSource):
-    '''
-    Any public CSV that can be read.
-    '''
-    url = models.URLField()
-    
-    class Meta:
-        verbose_name = 'Public CSV'
 
 class AirtableSource(ExternalDataSource):
     '''
@@ -1062,46 +1052,6 @@ class AirtableWebhook(models.Model):
     airtable_id = models.CharField(max_length=250, primary_key=True)
     cursor = models.IntegerField(default=1, blank=True)
 
-# class GoogleSheetSource(ExternalDataSource):
-#     '''
-#     A Google Sheet.
-#     '''
-#     sheet_id = models.CharField(max_length=250)
-#     tab_name = models.CharField(max_length=250)
-#     api_token = models.CharField(max_length=250)
-    
-#     class Meta:
-#         verbose_name = 'Google Sheet'
-
-# class ActionNetworkSource(ExternalDataSource):
-#     '''
-#     An Action Network table data source.
-#     '''
-#     api_token = models.CharField(max_length=250)
-    
-#     class Meta:
-#         verbose_name = 'Action Network'
-    
-# class MailchimpListSource(ExternalDataSource):
-#     '''
-#     A Mailchimp list.
-#     '''
-#     api_key = models.CharField(max_length=250)
-#     list_id = models.CharField(max_length=250)
-
-#     class Meta:
-#         verbose_name = 'Mailchimp list'
-
-# class CiviCRMSource(ExternalDataSource):
-#     '''
-#     A CiviCRM table.
-#     '''
-#     api_key = models.CharField(max_length=250)
-#     base_url = models.URLField()
-
-#     class Meta:
-#         verbose_name = 'CiviCRM'
-
 
 class UpdateConfigDict(TypedDict):
     source: str
@@ -1160,7 +1110,25 @@ class ExternalDataSourceUpdateConfig(models.Model):
         self.enabled = False
         self.save()
 
+    # Data
+        
+    async def update_one(self, member_id: Union[str, any]):
+        loaders = self.data_source.get_loaders()
+        mapped_record = await self.data_source.map_one(member_id, self, loaders)
+        await self.data_source.update_one(mapped_record=mapped_record)
+
+    async def update_many(self, member_ids: list[Union[str, any]]):
+        loaders = self.data_source.get_loaders()
+        mapped_records = await self.data_source.map_many(member_ids, self, loaders)
+        await self.data_source.update_many(mapped_records=mapped_records)
+
+    async def update_all(self):
+        loaders = self.data_source.get_loaders()
+        mapped_records = await self.data_source.map_all(self, loaders)
+        await self.data_source.update_all(mapped_records=mapped_records)
+
     # Webhooks
+        
     def handle_update_webhook_view(self, body):
         member_ids = self.data_source.get_member_ids_from_webhook(body)
         if len(member_ids) == 1:
@@ -1177,35 +1145,17 @@ class ExternalDataSourceUpdateConfig(models.Model):
         if config.enabled:
             config.update_one(member_id=member_id)
 
-    async def update_one(self, member_id: Union[str, any]):
-        # data_source = await sync_to_async(self.data_source.get_real_instance)()
-        loaders = self.data_source.get_loaders()
-        mapped_record = await self.data_source.map_one(member_id, self, loaders)
-        await self.data_source.update_one(mapped_record=mapped_record)
-
     @classmethod
     async def deferred_update_many(cls, config_id: str, member_ids: list[str]):
         config = await cls.objects.select_related('data_source').aget(id=config_id)
         if config.enabled:
             config.update_many(member_ids=member_ids)
 
-    async def update_many(self, member_ids: list[Union[str, any]]):
-        # data_source = await sync_to_async(self.data_source.get_real_instance)()
-        loaders = self.data_source.get_loaders()
-        mapped_records = await self.data_source.map_many(member_ids, self, loaders)
-        await self.data_source.update_many(mapped_records=mapped_records)
-
     @classmethod
     async def deferred_update_all(cls, config_id: str):
         config = await cls.objects.select_related('data_source').aget(id=config_id)
         if config.enabled:
             config.update_all()
-
-    async def update_all(self):
-        # data_source = await sync_to_async(self.data_source.get_real_instance)()
-        loaders = self.data_source.get_loaders()
-        mapped_records = await self.data_source.map_all(self, loaders)
-        await self.data_source.update_all(mapped_records=mapped_records)
 
     @classmethod
     async def deferred_refresh_webhook(cls, config_id: str):
