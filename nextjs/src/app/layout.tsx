@@ -29,10 +29,10 @@ export default function RootLayout({
   return (
     <ApolloProvider client={client}>
       <html lang="en">
-        <body>
+        <body className="bg-meep-background text-white">
           <nav>
             <ul className="flex flex-row">
-              <div className="bg-card flex flex-row justify-between items-center basis-1/2">
+              <div className="flex flex-row justify-between items-center basis-1/2">
                 <div>
                   <svg xmlns="http://www.w3.org/2000/svg" width="29" height="43" viewBox="0 0 29 43" fill="none">
                     <circle cx="14.7351" cy="14.2833" r="13.9737" fill="#678DE3" />
