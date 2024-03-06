@@ -1,7 +1,8 @@
 .venv
 .env
 .env.local
-.static
+.static/**/*
+!.static/.gitkeep
 .coverage
 .media
 data/**/*
@@ -14,4 +15,5 @@ conf/httpd.conf
 conf/httpd.conf.deployed
 
 node_modules
-build
+build/**/*
+!build/.gitkeep

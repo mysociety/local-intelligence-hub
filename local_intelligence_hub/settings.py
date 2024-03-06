@@ -100,6 +100,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -192,7 +193,6 @@ STATICFILES_FINDERS = (
 )
 
 STATICFILES_DIRS = [
-    BASE_DIR / "hub" / "static",
     BASE_DIR / "build",
     ("bootstrap", BASE_DIR / "vendor" / "bootstrap" / "scss"),
     ("bootstrap", BASE_DIR / "vendor" / "bootstrap" / "js"),
@@ -204,11 +204,6 @@ STATICFILES_DIRS = [
     ("vue", BASE_DIR / "vendor" / "vue" / "js"),
 ]
 
-# only want to do this for live really
-if not DEBUG:  # pragma: no cover
-    STATICFILES_STORAGE = (
-        "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
-    )
 
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 COMPRESS_CSS_HASHING_METHOD = "content"
