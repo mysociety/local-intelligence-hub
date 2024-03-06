@@ -26,7 +26,7 @@ env = environ.Env(
     HIDE_DEBUG_TOOLBAR=(bool, False),
     GOOGLE_ANALYTICS=(str, ""),
     GOOGLE_SITE_VERIFICATION=(str, ""),
-    CORS_ALLOWED_ORIGINS=(list, ['http://localhost:3000/'])
+    CORS_ALLOWED_ORIGINS=(list, ['http://localhost:3000'])
 
 )
 environ.Env.read_env(BASE_DIR / ".env")
@@ -89,6 +89,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
