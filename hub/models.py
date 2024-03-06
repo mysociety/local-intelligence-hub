@@ -856,7 +856,7 @@ class ExternalDataSource(PolymorphicModel):
             postcode_data = await loaders['postcodesIO'].load(postcode)
             # Map the fields
             update_fields = {}
-            for mapping_dict in config.get_mapping().values():
+            for mapping_dict in config.get_mapping():
                 source = mapping_dict['source']
                 path = mapping_dict['source_path']
                 field = mapping_dict['destination_field']
