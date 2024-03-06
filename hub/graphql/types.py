@@ -151,8 +151,7 @@ class ExternalDataSourceUpdateConfig:
     mapping: List[UpdateConfigDict]
     postcode_column: auto
     enabled: auto
-    event_log: List[EventLogItem] = strawberry_django.field(
-        resolver=models.ExternalDataSourceUpdateConfig.event_log_queryset,
+    events: List[EventLogItem] = strawberry_django.field(
         filters=EventLogFilter,
         pagination=True
     )
