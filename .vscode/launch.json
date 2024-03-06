@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Run debug server",
+            "name": "Django",
             "type": "debugpy",
             "request": "launch",
             "justMyCode": false,
@@ -19,18 +19,30 @@
             "request": "launch"
         },
         {
-            "name": "Start frontend",
+            "name": "NextJS",
             "type": "node-terminal",
-            "command": "cd nextjs && nvm use && npm install && npm run dev",
+            "command": "cd nextjs && npm install && npm run dev",
             "request": "launch"
+        },
+        {
+          "name": "Django background worker",
+          "type": "debugpy",
+          "request": "launch",
+          "program": "${workspaceFolder}/manage.py",
+          "args": [
+            "procrastinate", "worker"
+          ],
+          "justMyCode": true,
+          "django": true
         }
     ],
     "compounds": [
         {
             "name": "App",
             "configurations": [
-                "Start backend containers",
-                "Start frontend"
+                "NextJS",
+                "Django",
+                "Django background worker"
             ]
         }
     ]

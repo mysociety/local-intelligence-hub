@@ -21,19 +21,25 @@ from gqlauth.settings_type import GqlAuthSettings
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(
+    BASE_URL=(str, False),
+    SCHEDULED_UPDATE_SECONDS_DELAY=(int, 3),
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, []),
     HIDE_DEBUG_TOOLBAR=(bool, False),
     GOOGLE_ANALYTICS=(str, ""),
     GOOGLE_SITE_VERIFICATION=(str, ""),
+    TEST_AIRTABLE_BASE_ID=(str, ""),
+    TEST_AIRTABLE_TABLE_NAME=(str, ""),
+    TEST_AIRTABLE_API_KEY=(str, ""),
+    DJANGO_LOG_LEVEL=(str, "INFO"),
     CORS_ALLOWED_ORIGINS=(list, ['http://localhost:3000'])
-
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
+BASE_URL = env("BASE_URL")
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
@@ -44,6 +50,9 @@ MAPIT_URL = env("MAPIT_URL")
 MAPIT_API_KEY = env("MAPIT_API_KEY")
 GOOGLE_ANALYTICS = env("GOOGLE_ANALYTICS")
 GOOGLE_SITE_VERIFICATION = env("GOOGLE_SITE_VERIFICATION")
+TEST_AIRTABLE_BASE_ID=env("TEST_AIRTABLE_BASE_ID")
+TEST_AIRTABLE_TABLE_NAME=env("TEST_AIRTABLE_TABLE_NAME")
+TEST_AIRTABLE_API_KEY=env("TEST_AIRTABLE_API_KEY")
 
 # make sure CSRF checking still works behind load balancers
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -73,7 +82,8 @@ NON_LOGIN_URLS = (
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
-    "django.contrib.contenttypes",
+    'polymorphic',
+    'django.contrib.contenttypes',
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
@@ -84,7 +94,8 @@ INSTALLED_APPS = [
     "django_jsonform",
     "gqlauth",
     "hub",
-     "corsheaders"
+    "corsheaders",
+    "procrastinate.contrib.django",
 ]
 
 MIDDLEWARE = [
@@ -243,6 +254,24 @@ if DEBUG and HIDE_DEBUG_TOOLBAR is False:  # pragma: no cover
         "debug_toolbar.panels.redirects.RedirectsPanel",
     ]
 
+POSTCODES_IO_URL = "https://postcodes.commonknowledge.coop"
+POSTCODES_IO_BATCH_MAXIMUM = 100
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': env('DJANGO_LOG_LEVEL'),
+        },
+    },
+}
 # CK Section
 
 # TODO: Decrease this when we go public
@@ -253,3 +282,4 @@ GQL_AUTH = GqlAuthSettings(
     REGISTER_REQUIRE_CAPTCHA=False,
 )
 
+SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")
