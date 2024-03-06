@@ -1,7 +1,8 @@
 .venv
 .env
 .env.local
-.static
+.static/**/*
+!.static/.gitkeep
 .coverage
 .media
 data/**/*
