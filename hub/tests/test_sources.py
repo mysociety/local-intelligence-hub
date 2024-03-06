@@ -11,6 +11,7 @@ class TestAirtableSource(TestCase):
     def setUp(self) -> None:
         self.records_to_delete = []
         self.source = AirtableSource(
+            name="Test Airtable Source",
             base_id=settings.TEST_AIRTABLE_BASE_ID,
             table_id=settings.TEST_AIRTABLE_TABLE_NAME,
             api_key=settings.TEST_AIRTABLE_API_KEY,
@@ -28,9 +29,12 @@ class TestAirtableSource(TestCase):
             ]
         )
 
+        self.source.teardown_webhook(self.config)
+
     def tearDown(self) -> None:
         for record_id in self.records_to_delete:
             self.source.table.delete(record_id)
+        self.source.teardown_webhook(self.config)
         return super().tearDown()
     
     def create_test_record(self, record):
@@ -49,10 +53,10 @@ class TestAirtableSource(TestCase):
         self.assertTrue(await self.source.healthcheck())
 
     async def test_airtable_webhooks(self):
-        await self.source.teardown_webhook()
-        self.assertFalse(await self.source.webhook_healthcheck())
-        await self.source.setup_webhook()
-        self.assertTrue(await self.source.webhook_healthcheck())
+        self.source.teardown_webhook(self.config)
+        self.assertFalse(self.source.webhook_healthcheck(self.config))
+        self.source.setup_webhook(self.config)
+        self.assertTrue(self.source.webhook_healthcheck(self.config))
 
     async def test_airtable_fetch_one(self):
         record = self.create_test_record({ "Postcode": "EH99 1SP" })
