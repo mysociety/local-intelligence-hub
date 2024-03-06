@@ -18,6 +18,13 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        'IBMPlexSans': ['IBM Plex Sans Condensed, sans-serif'], 
+        'PPRightGrotesk': ['PPRightGrotesk, sans-serif'], 
+      },
+      fontSize: {
+        'base': '17px', 
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -32,6 +39,7 @@ const config = {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
         },
+
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
@@ -52,6 +60,7 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+    
       },
       borderRadius: {
         lg: "var(--radius)",
