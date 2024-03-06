@@ -530,6 +530,14 @@ const app = createApp({
       this.loading = true
       this.filters_applied = (this.filters.length > 0)
 
+      if (this.sortBy == 'Constituency Name' || this.sortBy == 'Council Name') {
+          if (["DIS", "STC"].includes(this.area_type)) {
+            this.sortBy = "Council Name"
+          } else {
+            this.sortBy = "Constituency Name"
+          }
+      }
+
       fetch(this.url('/explore.csv'))
         .then(response => response.blob())
         .then(data => {
