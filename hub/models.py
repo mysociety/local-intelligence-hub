@@ -3,6 +3,7 @@ import uuid
 from typing import TypedDict, Union
 import asyncio
 from asgiref.sync import sync_to_async
+from psycopg.errors import UniqueViolation
 
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -1215,31 +1216,40 @@ class ExternalDataSourceUpdateConfig(models.Model):
                 await data_source.refresh_webhook(config=config)
 
     def schedule_update_one(self, member_id: str):
-        update_one\
-        .configure(
-          # Dedupe `update_many` jobs for the same config
-          # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-          queueing_lock=f"update_one_{str(self.id)}_{str(member_id)}",
-          schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY }
-        )\
-        .defer(config_id=str(self.id), member_id=member_id)
+        try:
+          update_one\
+          .configure(
+            # Dedupe `update_many` jobs for the same config
+            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+            queueing_lock=f"update_one_{str(self.id)}_{str(member_id)}",
+            schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY }
+          )\
+          .defer(config_id=str(self.id), member_id=member_id)
+        except UniqueViolation:
+          pass
 
     def schedule_update_many(self, member_ids: list[str]):
-        update_many\
-        .configure(
-          # Dedupe `update_many` jobs for the same config
-          # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-          queueing_lock=f"update_many_{str(self.id)}_{hash(",".join(list(sorted(set(member_ids)))))}",
-          schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY }
-        )\
-        .defer(config_id=str(self.id), member_ids=member_ids)
+        try:
+          update_many\
+          .configure(
+            # Dedupe `update_many` jobs for the same config
+            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+            queueing_lock=f"update_many_{str(self.id)}_{hash(",".join(list(sorted(set(member_ids)))))}",
+            schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY }
+          )\
+          .defer(config_id=str(self.id), member_ids=member_ids)
+        except UniqueViolation:
+          pass
 
     def schedule_update_all(self):
-        update_all\
-        .configure(
-          # Dedupe `update_all` jobs for the same config
-          # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-          queueing_lock=f"update_all_{str(self.id)}",
-          schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY }
-        )\
-        .defer(config_id=str(self.id))
+        try:
+          update_all\
+          .configure(
+            # Dedupe `update_all` jobs for the same config
+            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+            queueing_lock=f"update_all_{str(self.id)}",
+            schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY }
+          )\
+          .defer(config_id=str(self.id))
+        except UniqueViolation:
+          pass
