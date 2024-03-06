@@ -36,6 +36,7 @@ const app = createApp({
         slug: "DIS",
         label: "District councils"
       }],
+      area_header_label: "constituencies",
 
       filters_applied: false, // were filters applied on the last Update?
       area_count: 0, // number of areas returned on last Update
@@ -477,6 +478,11 @@ const app = createApp({
           });
 
           this.area_count = Object.keys(features).length
+          if (["DIS", "STC"].includes(this.area_type)) {
+            this.area_header_label = "councils"
+          } else {
+            this.area_header_label = "constituencies"
+          }
 
           window.geojson.eachLayer(function (layer) {
             if ( features[layer.feature.properties.PCON13CD] ) {

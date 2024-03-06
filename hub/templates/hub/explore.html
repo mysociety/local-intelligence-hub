@@ -213,16 +213,16 @@
             </template>
             <template v-else-if="filters_applied && area_count == 0">
                 {% include 'hub/includes/icons/exclamation.html' with classes="flex-grow-0 me-2" %}
-                No matching constituencies
+                No matching ${ area_header_label }
             </template>
             <template v-else-if="filters_applied">
-                ${ area_count } matching constituencies
+                ${ area_count } matching ${ area_header_label }
             </template>
             <template v-else-if="area_count">
-                ${ area_count } constituencies
+                ${ area_count } ${ area_header_label }
             </template>
             <template v-else>
-                No constituencies
+                No ${ area_header_label }
             </template>
         </div>
         <div class="explore-map" ref="map" :hidden="!mapViewActive"></div>
