@@ -1,8 +1,3 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { ApolloProvider } from '@apollo/client';
-import { client } from '../components/apollo-client';
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -14,6 +9,10 @@ import "./globals.css";
 import { twMerge } from 'tailwind-merge';
 import { Toaster } from '@/components/ui/sonner';
 
+import "./globals.css";
+import { ApolloWrapper } from "@/components/apollo-wrapper";
+import { useAuth } from "@/hooks/auth";
+
 
 function MappedIcon() {
   return (
@@ -24,23 +23,16 @@ function MappedIcon() {
   )
 }
 
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const user = await useAuth();
+  const isLoggedIn = Boolean(user);
 
-  useEffect(() => {
-    const token = localStorage.getItem('jwt');
-    if (token) {
-      setIsLoggedIn(true);
-    }
-  }, []);
-  
   return (
-    <ApolloProvider client={client}>
+    <ApolloWrapper>
       <html lang="en">
         <body className="bg-meep-background text-white">
           {isLoggedIn ? (
@@ -111,6 +103,6 @@ export default function RootLayout({
           <Toaster />
         </body>
       </html>
-    </ApolloProvider >
+    </ApolloWrapper >
   );
 }

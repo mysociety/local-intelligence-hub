@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { useContext } from 'react';
 import { useRouter } from 'next/navigation';
-import { NewExternalDataSourceUpdateConfigContext } from '../../layout';
+import { NewExternalDataSourceUpdateConfigContext } from '../../NewExternalDataSourceWrapper';
 import { gql, useQuery } from '@apollo/client';
 import { PageForExternalDataSourceUpdateConfigReviewQuery, PageForExternalDataSourceUpdateConfigReviewQueryVariables } from '@/__generated__/graphql';
 import { ExternalDataSourceUpdateConfigCard } from '@/components/ExternalDataSourceCard';

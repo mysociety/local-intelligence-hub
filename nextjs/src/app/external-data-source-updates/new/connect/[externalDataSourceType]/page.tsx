@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { ApolloError, gql, useLazyQuery, useMutation } from '@apollo/client';
-import { NewExternalDataSourceUpdateConfigContext } from '../../layout';
+import { NewExternalDataSourceUpdateConfigContext } from '../../NewExternalDataSourceWrapper';
 import { toast } from "sonner"
 import { SubmitHandler, useForm } from 'react-hook-form'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';

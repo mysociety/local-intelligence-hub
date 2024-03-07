@@ -10,14 +10,14 @@ class TestAirtableSource(TestCase):
 
     def setUp(self) -> None:
         self.records_to_delete = []
-        self.source = AirtableSource(
+        self.source = AirtableSource.objects.create(
             name="Test Airtable Source",
             base_id=settings.TEST_AIRTABLE_BASE_ID,
             table_id=settings.TEST_AIRTABLE_TABLE_NAME,
             api_key=settings.TEST_AIRTABLE_API_KEY,
         )
 
-        self.config = ExternalDataSourceUpdateConfig(
+        self.config = ExternalDataSourceUpdateConfig.objects.create(
             external_data_source=self.source,
             postcode_column="Postcode", 
             mapping=[

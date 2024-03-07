@@ -1,8 +1,7 @@
 import { formatRelative } from "date-fns";
 import Link from "next/link";
 import { Switch } from '@/components/ui/switch';
-import { client } from "./apollo-client";
-import { FetchResult, gql, useFragment } from "@apollo/client";
+import { ApolloClient, FetchResult, gql, useApolloClient } from "@apollo/client";
 import { toast } from 'sonner'
 import { DisableUpdateConfigMutation, DisableUpdateConfigMutationVariables, EnableUpdateConfigMutation, EnableUpdateConfigMutationVariables, TriggerFullUpdateMutation, TriggerFullUpdateMutationVariables, UpdateConfigCardFieldsFragment, UpdateConfigMutation } from "../__generated__/graphql";
 import { Button, ButtonProps, buttonVariants } from "./ui/button";
@@ -43,9 +42,10 @@ export function ExternalDataSourceUpdateConfigCard({ updateConfig }: { updateCon
 export function ExternalDataSourceCardSwitch ({ updateConfig }: {
   updateConfig: any
 }) {
+  const client = useApolloClient();
   return (
     <div className="flex flex-row items-center justify-start gap-2 text-label">
-      <Switch checked={updateConfig.enabled} onCheckedChange={e => toggleUpdateConfigEnabled(e, updateConfig.id)}>{updateConfig.enabled ? 'Enabled' : 'Disabled'}</Switch>
+      <Switch checked={updateConfig.enabled} onCheckedChange={e => toggleUpdateConfigEnabled(client, e, updateConfig.id)}>{updateConfig.enabled ? 'Enabled' : 'Disabled'}</Switch>
       {updateConfig.enabled ? <span className='text-brand'>Enabled</span> : <span>Disabled</span>}
     </div>
   )
@@ -55,6 +55,8 @@ export function ExternalDataSourceFullUpdateButton ({ id, label = 'Trigger full 
   id: string,
   label?: string
 } & ButtonProps) {
+  const client = useApolloClient();
+
   return (
     <AlertDialog>
       <AlertDialogTrigger {...buttonProps}>
@@ -94,7 +96,7 @@ export function ExternalDataSourceFullUpdateButton ({ id, label = 'Trigger full 
   }
 }
 
-export function toggleUpdateConfigEnabled (checked: boolean, id: any) {
+export function toggleUpdateConfigEnabled (client: ApolloClient, checked: boolean, id: any) {
   if (checked) {
     const mutation = client.mutate<EnableUpdateConfigMutation, EnableUpdateConfigMutationVariables>({
       mutation: ENABLE_UPDATE_CONFIG,

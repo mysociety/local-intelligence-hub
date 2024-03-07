@@ -776,7 +776,7 @@ class ExternalDataSource(PolymorphicModel):
     automated_webhooks = False
 
     def __str__(self):
-        return self.name
+        return self.name if self.name is not None else super().__str__()
 
     def healthcheck(self):
         '''

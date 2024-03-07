@@ -1,11 +1,10 @@
 'use client';
 
-import { AirtableLogo } from '@/components/logos';
 import { Button } from '@/components/ui/button';
 import { twMerge } from 'tailwind-merge';
 import { useContext, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { NewExternalDataSourceUpdateConfigContext } from './layout';
+import { NewExternalDataSourceUpdateConfigContext } from './NewExternalDataSourceWrapper';
 import { externalDataSourceOptions, getSourceOptionForTypename } from '@/lib/data';
 import { gql, useQuery } from '@apollo/client';
 import { AllExternalDataSourcesQuery } from '@/__generated__/graphql';
@@ -50,7 +49,7 @@ export default function Page() {
         <p className='mt-6 text-muted-text max-w-sm'>We currently support the following platforms. If your platform isn’t on this list, <a href='mailto:hello@commonknowledge.coop'>get in touch to see how we can help.</a></p>
       </header>
       {Object.values(externalDataSourceOptions).map((externalDataSource) => (
-        <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-7'>
+        <div key={externalDataSource.key} className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-7'>
           <div onClick={() => {
             setSource(externalDataSource.key)
           }} className={twMerge(
@@ -73,7 +72,7 @@ export default function Page() {
             ).map((externalDataSource) => {
               const Logo = getSourceOptionForTypename(externalDataSource.connectionDetails.crmType)!.logo
               return (
-                <article className='cursor-pointer rounded-3xl border-background-tertiary px-6 py-5 space-y-3 transition-all hover:border-brand border-2 box-border' onClick={() => {
+                <article key={externalDataSource.id} className='cursor-pointer rounded-3xl border-background-tertiary px-6 py-5 space-y-3 transition-all hover:border-brand border-2 box-border' onClick={() => {
                   context.setStep(3)
                   router.push(`/external-data-source-updates/new/configure/${externalDataSource.id}`)
                 }}>
