@@ -23,10 +23,10 @@ const buttonVariants = cva(
         reverse: "bg-white hover:bg-slate-100 !text-gray-900 hover:!text-gray-900"
       },
       size: {
-        default: "text-label h-10 px-4 py-2",
+        default: "text-labelLg h-10 px-4 py-2",
         sm: "text-sm h-9 rounded-md px-3",
         lg: "text-base h-11 rounded-md px-8",
-        icon: "text-label h-10 w-10",
+        icon: "text-labelLg h-10 w-10",
       },
     },
     defaultVariants: {

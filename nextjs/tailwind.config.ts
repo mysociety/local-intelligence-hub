@@ -28,24 +28,49 @@ const config = {
           letterSpacing: '0em',
           fontWeight: '700',
         }],
+        hMd: ['21px', {
+          lineHeight: 'normal',
+          letterSpacing: '0em',
+          fontWeight: '500',
+        }],
         hSm: ['16px', {
-          lineHeight: '21px',
+          lineHeight: 'normal',
           letterSpacing: '0em',
           fontWeight: '500',
         }],
         base: ['16px', {
-          lineHeight: '21px',
+          lineHeight: 'normal',
           letterSpacing: '0em',
           fontWeight: '400',
         }],
-        label: ['14px', {
-          lineHeight: '17px',
+        sm: ['14px', {
+          lineHeight: 'normal',
+          letterSpacing: '0em',
+          fontWeight: '400',
+        }],
+        tiny: ['12px', {
+          lineHeight: 'normal',
+          letterSpacing: '0em',
+          fontWeight: '400',
+        }],
+        labelMain: ['12px', {
+          lineHeight: 'normal',
           letterSpacing: '0em',
           fontWeight: '500',
         }],
-        sm: ['12px', {
-          lineHeight: '16px',
+        labelLg: ['14px', {
+          lineHeight: 'normal',
           letterSpacing: '0em',
+          fontWeight: '500',
+        }],
+        dataName: ['13px', {
+          lineHeight: '100%',
+          letterSpacing: '0.65px',
+          fontWeight: '500',
+        }],
+        dataResult: ['16px', {
+          lineHeight: '100%',
+          letterSpacing: '-0.32px',
           fontWeight: '400',
         }],
       },
