@@ -46,7 +46,7 @@ export default function RootLayout({
           {isLoggedIn ? (
             <nav className='flex flex-row justify-start items-center py-4 px-4 gap-x-8'>
               <Link href='/'><MappedIcon /></Link>
-              <Link href='/crm-update'>CRM Data Updates</Link>
+              <Link href='/external-data-source-updates'>CRM Data Updates</Link>
               {isLoggedIn ? (
                 <Link href="/logout" className={twMerge('ml-auto', buttonVariants({ variant: "outline" }))}>Logout</Link>
               ) : (

@@ -14,6 +14,8 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  */
 const documents = {
     "\n  query UserInfo {\n    me {\n      firstName\n      lastName\n    }\n  }\n": types.UserInfoDocument,
+    "\n  query TestAirtableSource($apiKey: String!, $baseId: String!, $tableId: String!) {\n    testAirtableSource(apiKey: $apiKey, baseId: $baseId, tableId: $tableId)\n  }\n": types.TestAirtableSourceDocument,
+    "\n  mutation CreateAirtableSource($AirtableSource: AirtableSourceInput!) {\n    createAirtableSource(data: $AirtableSource) {\n      id\n      healthcheck\n    }\n  }\n": types.CreateAirtableSourceDocument,
     "\n  query ListUpdateConfigs {\n    externalDataSourceUpdateConfigs {\n      externalDataSource {\n        id\n        __typename\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n      id\n      enabled\n      events {\n        scheduledAt\n        status\n      }\n    }\n  }\n": types.ListUpdateConfigsDocument,
     "\n  mutation EnableUpdateConfig($ID: String!) {\n    enableUpdateConfig(configId: $ID) {\n      id\n      enabled\n      externalDataSource {\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n    }\n  } \n": types.EnableUpdateConfigDocument,
     "\n  mutation DisableUpdateConfig($ID: String!) {\n    disableUpdateConfig(configId: $ID) {\n      id\n      enabled\n      externalDataSource {\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n    }\n  } \n": types.DisableUpdateConfigDocument,
@@ -39,6 +41,14 @@ export function gql(source: string): unknown;
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  query UserInfo {\n    me {\n      firstName\n      lastName\n    }\n  }\n"): (typeof documents)["\n  query UserInfo {\n    me {\n      firstName\n      lastName\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query TestAirtableSource($apiKey: String!, $baseId: String!, $tableId: String!) {\n    testAirtableSource(apiKey: $apiKey, baseId: $baseId, tableId: $tableId)\n  }\n"): (typeof documents)["\n  query TestAirtableSource($apiKey: String!, $baseId: String!, $tableId: String!) {\n    testAirtableSource(apiKey: $apiKey, baseId: $baseId, tableId: $tableId)\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation CreateAirtableSource($AirtableSource: AirtableSourceInput!) {\n    createAirtableSource(data: $AirtableSource) {\n      id\n      healthcheck\n    }\n  }\n"): (typeof documents)["\n  mutation CreateAirtableSource($AirtableSource: AirtableSourceInput!) {\n    createAirtableSource(data: $AirtableSource) {\n      id\n      healthcheck\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

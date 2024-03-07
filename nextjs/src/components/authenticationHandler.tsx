@@ -16,6 +16,7 @@ export const useRequireAuth = () => {
   const userTestQuery = useQuery<UserTestQuery>(USER_TEST_QUERY);
 
   const isLoggedIn = useMemo(() => {
+    if (typeof window === 'undefined') return false;
     const token = localStorage.getItem('jwt');
     return !!token && !!userTestQuery.data?.me.id;
   }, [userTestQuery.data?.me.id])

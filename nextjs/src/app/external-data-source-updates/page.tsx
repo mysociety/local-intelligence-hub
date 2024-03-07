@@ -153,7 +153,7 @@ function PageHeader () {
 
 function CreateNewSyncButton () {
   return (
-    <Link href='/crm-update/new'>
+    <Link href='/external-data-source-updates/new'>
       <article className='relative cursor-pointer rounded-xl border border-background-tertiary px-6 py-5'>
         <div className='space-y-5'>
           <Skeleton className="h-4 w-full max-w-[100px]" />

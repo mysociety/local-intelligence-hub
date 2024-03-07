@@ -26,6 +26,18 @@ class Query(UserQueries):
     airtable_sources: List[types.AirtableSource] = strawberry_django.field(extensions=[IsAuthenticated()])
     external_data_source_update_configs: List[types.ExternalDataSourceUpdateConfig] = strawberry_django.field(extensions=[IsAuthenticated()])
     events: List[types.EventLogItem] = strawberry_django.field(extensions=[IsAuthenticated()])
+    
+    @strawberry.field
+    def test_airtable_source(self,
+                                 info: Info, 
+                                 api_key: str,
+                                 base_id: str,
+                                 table_id: str) -> bool:
+        return models.AirtableSource(
+            api_key=api_key,
+            base_id=base_id,
+            table_id=table_id
+        ).test_connection()
 
     @strawberry_django.field
     def public_areas(self) -> List[types.Area]:

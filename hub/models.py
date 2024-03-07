@@ -784,6 +784,13 @@ class ExternalDataSource(PolymorphicModel):
         '''
         raise NotImplementedError('Healthcheck not implemented for this data source type.')
     
+    @classmethod
+    def test_connection(cls):
+        '''
+        Use this to test a connection before creating the object.
+        '''
+        return cls.healthcheck()
+
     def setup_webhook(self, config: 'ExternalDataSourceUpdateConfig'):
         '''
         Set up a webhook.

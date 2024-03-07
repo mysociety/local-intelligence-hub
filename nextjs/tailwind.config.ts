@@ -19,7 +19,7 @@ const config = {
     },
     extend: {
       fontFamily: {
-        'IBMPlexSans': ['IBM Plex Sans Condensed, sans-serif'], 
+        'IBMPlexSans': ['"IBM Plex Sans Condensed", sans-serif'], 
         'PPRightGrotesk': ['PPRightGrotesk, sans-serif'], 
       },
       fontSize: {
@@ -116,7 +116,7 @@ const config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate"), require('@tailwindcss/forms'),],
 } satisfies Config
 
 export default config
