@@ -1,13 +1,13 @@
-import type { Config } from "tailwindcss"
+import type { Config } from "tailwindcss";
 
 const config = {
   darkMode: ["class"],
   content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
-	],
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+  ],
   prefix: "",
   theme: {
     container: {
@@ -19,35 +19,50 @@ const config = {
     },
     extend: {
       fontFamily: {
-        'IBMPlexSans': ['"IBM Plex Sans Condensed", sans-serif'], 
-        'PPRightGrotesk': ['PPRightGrotesk, sans-serif'], 
+        IBMPlexSans: ['"IBM Plex Sans Condensed", sans-serif'],
+        PPRightGrotesk: ["PPRightGrotesk, sans-serif"],
       },
       fontSize: {
-        hLg: ['36px', {
-          lineHeight: '47px',
-          letterSpacing: '0em',
-          fontWeight: '700',
-        }],
-        hSm: ['16px', {
-          lineHeight: '21px',
-          letterSpacing: '0em',
-          fontWeight: '500',
-        }],
-        base: ['16px', {
-          lineHeight: '21px',
-          letterSpacing: '0em',
-          fontWeight: '400',
-        }],
-        label: ['14px', {
-          lineHeight: '17px',
-          letterSpacing: '0em',
-          fontWeight: '500',
-        }],
-        sm: ['12px', {
-          lineHeight: '16px',
-          letterSpacing: '0em',
-          fontWeight: '400',
-        }],
+        hLg: [
+          "36px",
+          {
+            lineHeight: "47px",
+            letterSpacing: "0em",
+            fontWeight: "700",
+          },
+        ],
+        hSm: [
+          "16px",
+          {
+            lineHeight: "21px",
+            letterSpacing: "0em",
+            fontWeight: "500",
+          },
+        ],
+        base: [
+          "16px",
+          {
+            lineHeight: "21px",
+            letterSpacing: "0em",
+            fontWeight: "400",
+          },
+        ],
+        label: [
+          "14px",
+          {
+            lineHeight: "17px",
+            letterSpacing: "0em",
+            fontWeight: "500",
+          },
+        ],
+        sm: [
+          "12px",
+          {
+            lineHeight: "16px",
+            letterSpacing: "0em",
+            fontWeight: "400",
+          },
+        ],
       },
       colors: {
         brand: "hsl(var(--brand))",
@@ -93,7 +108,6 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-    
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -116,7 +130,7 @@ const config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), require('@tailwindcss/forms'),],
-} satisfies Config
+  plugins: [require("tailwindcss-animate"), require("@tailwindcss/forms")],
+} satisfies Config;
 
-export default config
+export default config;

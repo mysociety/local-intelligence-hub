@@ -1,22 +1,38 @@
-'use client';
+"use client";
 
-import { FetchResult, MutationResult, gql, useQuery, useApolloClient } from '@apollo/client';
-import { AirtableLogo } from '@/components/logos';
-import { formatRelative } from 'date-fns'
-import { Button, buttonVariants } from '@/components/ui/button';
-import { toast } from "sonner"
-import { ExternalDataSourceCardSwitch, ExternalDataSourceFullUpdateButton } from '@/components/ExternalDataSourceCard';
-import { LoadingIcon } from '@/components/ui/loadingIcon';
-import { DeleteSourceMutation, DeleteSourceMutationVariables, ExternalDataSourceUpdateConfigInput, PageForExternalDataSourceUpdateConfigQuery, PageForExternalDataSourceUpdateConfigQueryVariables, UpdateConfigMutation } from '@/__generated__/graphql';
-import { useRouter } from 'next/navigation';
+import {
+  FetchResult,
+  MutationResult,
+  gql,
+  useQuery,
+  useApolloClient,
+} from "@apollo/client";
+import { AirtableLogo } from "@/components/logos";
+import { formatRelative } from "date-fns";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { toast } from "sonner";
+import {
+  ExternalDataSourceCardSwitch,
+  ExternalDataSourceFullUpdateButton,
+} from "@/components/ExternalDataSourceCard";
+import { LoadingIcon } from "@/components/ui/loadingIcon";
+import {
+  DeleteSourceMutation,
+  DeleteSourceMutationVariables,
+  ExternalDataSourceUpdateConfigInput,
+  PageForExternalDataSourceUpdateConfigQuery,
+  PageForExternalDataSourceUpdateConfigQueryVariables,
+  UpdateConfigMutation,
+} from "@/__generated__/graphql";
+import { useRouter } from "next/navigation";
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   getSortedRowModel,
-  SortingState
-} from "@tanstack/react-table"
+  SortingState,
+} from "@tanstack/react-table";
 import {
   Table,
   TableBody,
@@ -24,9 +40,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { ArrowUpDown, RefreshCcw } from 'lucide-react';
-import { useState } from 'react';
+} from "@/components/ui/table";
+import { ArrowUpDown, RefreshCcw } from "lucide-react";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,9 +53,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { globalID } from '@/lib/graphql';
-import { UpdateConfigForm } from '@/components/UpdateConfig';
+} from "@/components/ui/alert-dialog";
+import { globalID } from "@/lib/graphql";
+import { UpdateConfigForm } from "@/components/UpdateConfig";
 
 const GET_UPDATE_CONFIG = gql`
   query PageForExternalDataSourceUpdateConfig($ID: ID!) {
@@ -91,191 +107,231 @@ const DELETE_SOURCE = gql`
   }
 `;
 
-export default function InspectExternalDataSourceUpdateConfig({ externalDataSourceUpdateConfigId }: { externalDataSourceUpdateConfigId: string }) {
-  const router = useRouter()
+export default function InspectExternalDataSourceUpdateConfig({
+  externalDataSourceUpdateConfigId,
+}: {
+  externalDataSourceUpdateConfigId: string;
+}) {
+  const router = useRouter();
   const client = useApolloClient();
 
-  const { loading, error, data, refetch } = useQuery<PageForExternalDataSourceUpdateConfigQuery, PageForExternalDataSourceUpdateConfigQueryVariables>(GET_UPDATE_CONFIG, {
+  const { loading, error, data, refetch } = useQuery<
+    PageForExternalDataSourceUpdateConfigQuery,
+    PageForExternalDataSourceUpdateConfigQueryVariables
+  >(GET_UPDATE_CONFIG, {
     variables: {
-      ID: externalDataSourceUpdateConfigId
-    }
+      ID: externalDataSourceUpdateConfigId,
+    },
   });
 
   if (loading) {
-    return <LoadingIcon />
+    return <LoadingIcon />;
   }
 
   if (!data?.externalDataSourceUpdateConfig) {
-    return <h2>No data sync found</h2>
+    return <h2>No data sync found</h2>;
   }
 
-  const config = data.externalDataSourceUpdateConfig
+  const config = data.externalDataSourceUpdateConfig;
 
   return (
-    <div className='p-6 max-w-4xl mx-auto space-y-7'>
-      <header className='flex flex-row justify-between gap-8'>
+    <div className="p-6 max-w-4xl mx-auto space-y-7">
+      <header className="flex flex-row justify-between gap-8">
         <div>
-          <div className='text-muted-text'>External data source</div>
-          <h1 className='text-hLg'>
+          <div className="text-muted-text">External data source</div>
+          <h1 className="text-hLg">
             {config.externalDataSource.connectionDetails.crmType}
-            {config.externalDataSource.connectionDetails.crmType === 'AirtableSource' && (
-              <span className='inline-block rounded-xl bg-background-secondary px-10 py-6 overflow-hidden flex flex-row items-center justify-center'>
+            {config.externalDataSource.connectionDetails.crmType ===
+              "AirtableSource" && (
+              <span className="inline-block rounded-xl bg-background-secondary px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
                 <AirtableLogo className="w-30" />
               </span>
             )}
           </h1>
         </div>
       </header>
-      <div className='flex flex-row justify-between gap-8'>
-        <div className='space-y-3'>
+      <div className="flex flex-row justify-between gap-8">
+        <div className="space-y-3">
           {config.jobs[0]?.lastEventAt ? (
-            <div className='text-muted-text'>
-              Last sync: {formatRelative(config.jobs[0].lastEventAt, new Date())} ({config.jobs[0].status})
-            </div> 
+            <div className="text-muted-text">
+              Last sync:{" "}
+              {formatRelative(config.jobs[0].lastEventAt, new Date())} (
+              {config.jobs[0].status})
+            </div>
           ) : null}
           <ExternalDataSourceCardSwitch updateConfig={config} />
         </div>
-        <div className='flex flex-row gap-4'>
+        <div className="flex flex-row gap-4">
           <ExternalDataSourceFullUpdateButton id={config.id} />
           <AlertDialog>
             <AlertDialogTrigger>
-              <Button variant='destructive'>Permanently delete</Button>
+              <Button variant="destructive">Permanently delete</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                <AlertDialogDescription className='text-base'>
-                  This action cannot be undone. This will permanently delete this configuration from Mapped.
+                <AlertDialogDescription className="text-base">
+                  This action cannot be undone. This will permanently delete
+                  this configuration from Mapped.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel  className={buttonVariants({ variant: 'outline' })}>Cancel
+                <AlertDialogCancel
+                  className={buttonVariants({ variant: "outline" })}
+                >
+                  Cancel
                 </AlertDialogCancel>
-                <AlertDialogAction onClick={() => { del() }} className={buttonVariants({ variant: 'destructive' })}>Confirm delete
+                <AlertDialogAction
+                  onClick={() => {
+                    del();
+                  }}
+                  className={buttonVariants({ variant: "destructive" })}
+                >
+                  Confirm delete
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
         </div>
       </div>
-      <div className='border-b border-background-secondary pt-10' />
+      <div className="border-b border-background-secondary pt-10" />
       <section>
-        <h2 className='text-hSm mb-5'>Mapping</h2>
+        <h2 className="text-hSm mb-5">Mapping</h2>
         <UpdateConfigForm
           saveButtonLabel="Update"
           initialData={{
             postcodeColumn: config.postcodeColumn,
             // Trim out the __typenames
-            mapping: config.mapping.map(m => ({
+            mapping: config.mapping.map((m) => ({
               source: m.source,
               sourcePath: m.sourcePath,
-              destinationColumn: m.destinationColumn
-            }))
+              destinationColumn: m.destinationColumn,
+            })),
           }}
           onSubmit={saveConfig}
         />
       </section>
-      <div className='border-b border-background-secondary pt-10' />
+      <div className="border-b border-background-secondary pt-10" />
       <section>
-        <h2 className='text-hSm mb-5 flex flex-row items-center gap-3'>
+        <h2 className="text-hSm mb-5 flex flex-row items-center gap-3">
           <span>Logs</span>
-          <RefreshCcw className='inline-block cursor-pointer w-4 h-4' onClick={async () => {
-            const tid = toast.loading('Refreshing')
-            await refetch()
-            toast.success('Refreshed', {
-              duration: 2000,
-              id: tid
-            })
-          }} />
+          <RefreshCcw
+            className="inline-block cursor-pointer w-4 h-4"
+            onClick={async () => {
+              const tid = toast.loading("Refreshing");
+              await refetch();
+              toast.success("Refreshed", {
+                duration: 2000,
+                id: tid,
+              });
+            }}
+          />
         </h2>
-        <LogsTable data={config.jobs} sortingState={[{desc: true, id: "lastEventAt"}]} columns={[
-          { 
-            accessorKey: 'lastEventAt',
-            header: ({ column }) => {
-              return (
-                <Button
-                  variant="ghost"
-                  onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                  Last Update Time
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              )
-            },
-            cell: (d) => {
-              try {
-                if (d) {
-                  // @ts-ignore
-                  return formatRelative(new Date(d.getValue()), new Date())
+        <LogsTable
+          data={config.jobs}
+          sortingState={[{ desc: true, id: "lastEventAt" }]}
+          columns={[
+            {
+              accessorKey: "lastEventAt",
+              header: ({ column }) => {
+                return (
+                  <Button
+                    variant="ghost"
+                    onClick={() =>
+                      column.toggleSorting(column.getIsSorted() === "asc")
+                    }
+                  >
+                    Last Update Time
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                );
+              },
+              cell: (d) => {
+                try {
+                  if (d) {
+                    // @ts-ignore
+                    return formatRelative(new Date(d.getValue()), new Date());
+                  }
+                  return null;
+                } catch (e) {
+                  return null;
                 }
-                return null
-              } catch (e) {
-                return null
-              }
-            }
-          },
-          { header: 'ID', accessorKey: 'id' },
-          { header: 'Job', accessorKey: 'taskName' },
-          { header: 'Status', accessorKey: 'status' },
-          { header: 'Args', accessorKey: 'args', cell: d => <code><pre>{JSON.stringify(d.getValue() || {}, null, 2)}</pre></code> },
-        ]} />
+              },
+            },
+            { header: "ID", accessorKey: "id" },
+            { header: "Job", accessorKey: "taskName" },
+            { header: "Status", accessorKey: "status" },
+            {
+              header: "Args",
+              accessorKey: "args",
+              cell: (d) => (
+                <code>
+                  <pre>{JSON.stringify(d.getValue() || {}, null, 2)}</pre>
+                </code>
+              ),
+            },
+          ]}
+        />
       </section>
     </div>
   );
 
-  function del () {
-    const mutation = client.mutate<DeleteSourceMutation, DeleteSourceMutationVariables>({
+  function del() {
+    const mutation = client.mutate<
+      DeleteSourceMutation,
+      DeleteSourceMutationVariables
+    >({
       mutation: DELETE_SOURCE,
-      variables: { id: config.externalDataSource.id }
-    })
+      variables: { id: config.externalDataSource.id },
+    });
     toast.promise(mutation, {
-      loading: 'Deleting...',
-      success: (e: MutationResult<DeleteSourceMutation>) => {
-        if (!e.error) {
-          router.push('/external-data-source-updates')
-          return `Deleted sync for ${config.externalDataSource.connectionDetails.crmType}`
+      loading: "Deleting...",
+      success: (e: FetchResult<DeleteSourceMutation>) => {
+        if (!e.errors) {
+          router.push("/external-data-source-updates");
+          return `Deleted sync for ${config.externalDataSource.connectionDetails.crmType}`;
         }
       },
-      error: `Couldn't delete data source`
+      error: `Couldn't delete data source`,
     });
   }
 
-  function saveConfig (data: ExternalDataSourceUpdateConfigInput) {
+  function saveConfig(data: ExternalDataSourceUpdateConfigInput) {
     const update = client.mutate({
       mutation: UPDATE_CONFIG,
       variables: {
         config: {
           ...data,
-          id: config.id
-        }
-      }
-    })
+          id: config.id,
+        },
+      },
+    });
     toast.promise(update, {
-      loading: 'Updating...',
+      loading: "Updating...",
       success: (d: FetchResult<UpdateConfigMutation>) => {
         if (!d.errors && d.data) {
-          return 'Saved config'
+          return "Saved config";
         }
       },
-      error: `Couldn't save config`
+      error: `Couldn't save config`,
     });
   }
 }
 
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
 }
 
 export function LogsTable<TData, TValue>({
   columns,
   data,
-  sortingState = []
+  sortingState = [],
 }: DataTableProps<TData, TValue> & {
-  sortingState?: SortingState
+  sortingState?: SortingState;
 }) {
-  const [sorting, setSorting] = useState<SortingState>(sortingState)
- 
+  const [sorting, setSorting] = useState<SortingState>(sortingState);
+
   const table = useReactTable({
     data,
     columns,
@@ -285,8 +341,8 @@ export function LogsTable<TData, TValue>({
     state: {
       sorting,
     },
-  })
-  
+  });
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -300,10 +356,10 @@ export function LogsTable<TData, TValue>({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
-                )
+                );
               })}
             </TableRow>
           ))}
@@ -332,5 +388,5 @@ export function LogsTable<TData, TValue>({
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }

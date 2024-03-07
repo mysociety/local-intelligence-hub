@@ -1,6 +1,6 @@
 import { Oval } from "react-loader-spinner";
 
-export function LoadingIcon () {
+export function LoadingIcon() {
   return (
     <Oval
       visible={true}
@@ -13,5 +13,5 @@ export function LoadingIcon () {
       wrapperStyle={{}}
       wrapperClass=""
     />
-  )
+  );
 }
