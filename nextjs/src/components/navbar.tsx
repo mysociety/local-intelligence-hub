@@ -54,8 +54,10 @@ export default function Navbar() {
                 <Link className="pl-xs" href='/'><MappedIcon />
                 </Link>
                 <div className="flex flex-col">
+                <Link href='/'>
                   <div className="text-hLg font-PPRightGrotesk">Mapped</div>
                   <p className="text-[9px] tracking-[-0.185px]"><em>by</em> Common Knowledge</p>
+                  </Link>
                 </div>
               </div>
               <div className="flex items-center gap-xs p-xs">
