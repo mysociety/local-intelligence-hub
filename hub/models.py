@@ -1049,7 +1049,7 @@ class AirtableSource(ExternalDataSource):
       list = self.base.webhooks()
       url = self.webhook_url(config)
       for webhook in list:
-          if webhook.notification_url == url:
+          if settings.BASE_URL in url:
               # Update the webhook in case the spec changed,
               # which will also refresh the 7 day expiration date
               webhook.delete()
