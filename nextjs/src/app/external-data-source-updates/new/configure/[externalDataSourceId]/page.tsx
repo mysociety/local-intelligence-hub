@@ -61,7 +61,7 @@ export default function Page({ params: { externalDataSourceId }}: { params: { ex
       loading: 'Saving config...',
       success: (d: FetchResult<CreateUpdateConfigMutation>) => {
         if (!d.errors && d.data) {
-          router.push(`/external-data-source-updates/new/${d.data.createExternalDataSourceUpdateConfig.id}/review`)
+          router.push(`/external-data-source-updates/new/review/${d.data.createExternalDataSourceUpdateConfig.id}`)
         }
         return 'Saved config'
       },
@@ -77,7 +77,7 @@ export default function Page({ params: { externalDataSourceId }}: { params: { ex
 
   useEffect(() => {
     if (checkQuery.data?.externalDataSource?.updateConfigs?.length) {
-      router.push(`/external-data-source-updates/new/${checkQuery.data.externalDataSource.updateConfigs[0].id}/review`)
+      router.push(`/external-data-source-updates/new/review/${checkQuery.data.externalDataSource.updateConfigs[0].id}`)
     }
   }, [checkQuery.data])
 
