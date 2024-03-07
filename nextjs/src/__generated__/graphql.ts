@@ -69,12 +69,13 @@ export type AirtableSource = {
 /** An Airtable table. */
 export type AirtableSourceInput = {
   /** Personal access token. Requires the following 4 scopes: data.records:read, data.records:write, schema.bases:read, webhook:manage */
-  apiKey: Scalars['String']['input'];
-  baseId: Scalars['String']['input'];
+  apiKey?: InputMaybe<Scalars['String']['input']>;
+  baseId?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['UUID']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   organisation?: InputMaybe<Scalars['String']['input']>;
-  tableId: Scalars['String']['input'];
+  tableId?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** An Airtable table. */
@@ -83,6 +84,7 @@ export type AirtableSourceInputPartial = {
   apiKey?: InputMaybe<Scalars['String']['input']>;
   baseId?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['UUID']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   organisation?: InputMaybe<Scalars['String']['input']>;
   tableId?: InputMaybe<Scalars['String']['input']>;
@@ -173,6 +175,7 @@ export type ExternalDataSourceUpdateConfig = {
 export type ExternalDataSourceUpdateConfigInput = {
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
   externalDataSource?: InputMaybe<OneToManyInput>;
+  id?: InputMaybe<Scalars['UUID']['input']>;
   mapping: Array<UpdateConfigDictInput>;
   postcodeColumn?: InputMaybe<Scalars['String']['input']>;
 };
@@ -374,6 +377,7 @@ export type Organisation = {
 /** Organisation(id, slug, name, description, website, logo) */
 export type OrganisationInputPartial = {
   description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
   name: Scalars['String']['input'];
   slug?: InputMaybe<Scalars['String']['input']>;
 };
