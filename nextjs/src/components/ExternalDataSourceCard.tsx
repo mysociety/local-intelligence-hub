@@ -13,6 +13,7 @@ import {
   DisableUpdateConfigMutationVariables,
   EnableUpdateConfigMutation,
   EnableUpdateConfigMutationVariables,
+  PageForExternalDataSourceUpdateConfigQuery,
   TriggerFullUpdateMutation,
   TriggerFullUpdateMutationVariables,
   UpdateConfigCardFieldsFragment,
@@ -30,17 +31,23 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { getSourceOptionForTypename } from "@/lib/data";
 
 export function ExternalDataSourceUpdateConfigCard({
   updateConfig,
 }: {
-  updateConfig: UpdateConfigCardFieldsFragment;
+  updateConfig: PageForExternalDataSourceUpdateConfigQuery['externalDataSourceUpdateConfig']
 }) {
+  const Logo = getSourceOptionForTypename(
+    updateConfig.externalDataSource.connectionDetails.crmType,
+  )!.logo;
+
   return (
     <article className="rounded-xl border border-background-tertiary px-6 py-5 space-y-3">
+      <Logo className='w-20'/>
       <header className="flex flex-row justify-between items-center">
         <h3 className="text-hSm">
-          {updateConfig?.externalDataSource?.connectionDetails?.crmType}
+          {updateConfig?.externalDataSource.name || updateConfig?.externalDataSource?.connectionDetails?.crmType}
         </h3>
         <Link href={`/external-data-source-updates/inspect/${updateConfig.id}`}>
           <CogIcon />
@@ -54,10 +61,12 @@ export function ExternalDataSourceUpdateConfigCard({
         </div>
       ) : null}
       <ExternalDataSourceCardSwitch updateConfig={updateConfig} />
-      <ExternalDataSourceFullUpdateButton
-        id={updateConfig.id}
-        className="w-full"
-      />
+      <div className='mt-auto'>
+        <ExternalDataSourceFullUpdateButton
+          id={updateConfig.id}
+          className="w-full"
+        />
+      </div>
     </article>
   );
 }
@@ -75,13 +84,11 @@ export function ExternalDataSourceCardSwitch({
         onCheckedChange={(e) =>
           toggleUpdateConfigEnabled(client, e, updateConfig.id)
         }
-      >
-        {updateConfig.enabled ? "Enabled" : "Disabled"}
-      </Switch>
+      />
       {updateConfig.enabled ? (
-        <span className="text-brand">Enabled</span>
+        <span className="text-brand">Webhooks enabled</span>
       ) : (
-        <span>Disabled</span>
+        <span>Webhooks disabled</span>
       )}
     </div>
   );
@@ -100,7 +107,7 @@ export function ExternalDataSourceFullUpdateButton({
   return (
     <AlertDialog>
       <AlertDialogTrigger {...buttonProps}>
-        <Button {...buttonProps}>{label}</Button>
+        <Button variant='outline' {...buttonProps}>{label}</Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -188,6 +195,7 @@ export const UPDATE_CONFIG_CARD_FRAGMENT = gql`
     id
     externalDataSource {
       id
+      name
       connectionDetails {
         crmType: __typename
       }
@@ -206,6 +214,8 @@ export const ENABLE_UPDATE_CONFIG = gql`
       id
       enabled
       externalDataSource {
+        id
+        name
         connectionDetails {
           crmType: __typename
         }
@@ -220,6 +230,8 @@ export const DISABLE_UPDATE_CONFIG = gql`
       id
       enabled
       externalDataSource {
+        id
+        name
         connectionDetails {
           crmType: __typename
         }
@@ -264,6 +276,8 @@ export const TRIGGER_FULL_UPDATE = gql`
         lastEventAt
       }
       externalDataSource {
+        id
+        name
         connectionDetails {
           crmType: __typename
         }

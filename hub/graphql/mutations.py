@@ -106,5 +106,7 @@ def create_airtable_source(info: Info, data: AirtableSourceInput) -> models.Airt
         api_key=data.api_key,
         base_id=data.base_id,
         table_id=data.table_id,
-        organisation=organisation
+        organisation=organisation,
+        name=data.name,
+        description=data.description
     )

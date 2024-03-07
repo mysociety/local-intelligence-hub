@@ -39,6 +39,7 @@ const CREATE_AIRTABLE_SOURCE = gql`
   mutation CreateAirtableSource($AirtableSource: AirtableSourceInput!) {
     createAirtableSource(data: $AirtableSource) {
       id
+      name
       healthcheck
     }
   }
@@ -157,6 +158,23 @@ export default function Page({
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-7 max-w-sm"
           >
+            <FormField
+              control={form.control}
+              name="airtable.name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nickname</FormLabel>
+                  <FormControl>
+                    <Input placeholder="My members list" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Give this connection a nickname to help you remember what it 
+                    does. This will be visible to your team.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="airtable.apiKey"

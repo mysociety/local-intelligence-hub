@@ -63,6 +63,7 @@ class Mutation:
 
     create_airtable_source: types.AirtableSource = mutation_types.create_airtable_source
     update_airtable_source: types.AirtableSource = mutations.update(mutation_types.AirtableSourceInput, extensions=[IsAuthenticated()])
+    update_external_data_source: types.ExternalDataSource = mutations.update(mutation_types.ExternalDataSourceInput, extensions=[IsAuthenticated()])
     delete_airtable_source: types.AirtableSource = mutations.delete(str, extensions=[IsAuthenticated()])
     delete_external_data_source: types.ExternalDataSource = mutations.delete(mutation_types.IDObject, extensions=[IsAuthenticated()])
 

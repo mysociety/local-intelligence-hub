@@ -1155,18 +1155,24 @@ class ExternalDataSourceUpdateConfig(models.Model):
     # Data
         
     async def update_one(self, member_id: Union[str, any]):
+        if len(self.get_mapping()) == 0:
+            return
         external_data_source = await sync_to_async(self.external_data_source.get_real_instance)()
         loaders = external_data_source.get_loaders()
         mapped_record = await external_data_source.map_one(member_id, self, loaders)
         await external_data_source.update_one(mapped_record=mapped_record)
 
     async def update_many(self, member_ids: list[Union[str, any]]):
+        if len(self.get_mapping()) == 0:
+            return
         external_data_source = await sync_to_async(self.external_data_source.get_real_instance)()
         loaders = external_data_source.get_loaders()
         mapped_records = await external_data_source.map_many(member_ids, self, loaders)
         await external_data_source.update_many(mapped_records=mapped_records)
 
     async def update_all(self):
+        if len(self.get_mapping()) == 0:
+            return
         external_data_source = await sync_to_async(self.external_data_source.get_real_instance)()
         loaders = external_data_source.get_loaders()
         mapped_records = await external_data_source.map_all(self, loaders)

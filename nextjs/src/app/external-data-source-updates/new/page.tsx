@@ -60,7 +60,7 @@ export default function Page() {
       {Object.values(externalDataSourceOptions).map((externalDataSource) => (
         <div
           key={externalDataSource.key}
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-7"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-7"
         >
           <div
             onClick={() => {
@@ -79,7 +79,7 @@ export default function Page() {
         <section className="space-y-7">
           <div className="border-b border-background-secondary pt-6" />
           <h2 className="text-hSm">Or pick up where you left off</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-7">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-7">
             {crms.data?.externalDataSources
               .filter(
                 (d) =>
@@ -101,7 +101,8 @@ export default function Page() {
                       );
                     }}
                   >
-                    <Logo />
+                    <Logo className='w-20'/>
+                    <div className="text-hSm font-bold">{externalDataSource.name}</div>
                     <div className="text-sm text-muted-text">
                       <p>
                         Created{" "}
@@ -111,7 +112,7 @@ export default function Page() {
                         )}
                       </p>
                       {!!externalDataSource.connectionDetails.baseId && (
-                        <div>
+                        <div className='mt-2'>
                           <code>
                             {externalDataSource.connectionDetails.baseId}
                           </code>

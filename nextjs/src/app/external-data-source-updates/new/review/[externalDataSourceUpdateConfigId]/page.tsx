@@ -18,6 +18,7 @@ const GET_UPDATE_CONFIG = gql`
       id
       externalDataSource {
         id
+        name
         connectionDetails {
           crmType: __typename
         }

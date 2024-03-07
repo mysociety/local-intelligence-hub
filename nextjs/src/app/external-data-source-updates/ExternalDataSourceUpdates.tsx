@@ -17,6 +17,7 @@ const LIST_UPDATE_CONFIGS = gql`
       id
       externalDataSource {
         id
+        name
         connectionDetails {
           crmType: __typename
         }
@@ -25,6 +26,11 @@ const LIST_UPDATE_CONFIGS = gql`
       jobs {
         lastEventAt
         status
+      }
+      mapping {
+        source
+        sourcePath
+        destinationColumn
       }
     }
   }

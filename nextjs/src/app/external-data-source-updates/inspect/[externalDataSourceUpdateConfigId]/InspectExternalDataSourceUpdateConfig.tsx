@@ -63,6 +63,7 @@ const GET_UPDATE_CONFIG = gql`
       id
       externalDataSource {
         id
+        name
         connectionDetails {
           crmType: __typename
         }
@@ -81,6 +82,15 @@ const GET_UPDATE_CONFIG = gql`
         sourcePath
         destinationColumn
       }
+    }
+  }
+`;
+
+const UPDATE_SOURCE = gql`
+  mutation UpdateSource($config: ExternalDataSourceInput!) {
+    updateExternalDataSource(data: $config) {
+      id
+      name
     }
   }
 `;
@@ -137,21 +147,11 @@ export default function InspectExternalDataSourceUpdateConfig({
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-7">
       <header className="flex flex-row justify-between gap-8">
-        <div>
+        <div className='w-full'>
           <div className="text-muted-text">External data source</div>
-          <h1 className="text-hLg">
-            {config.externalDataSource.connectionDetails.crmType}
-            {config.externalDataSource.connectionDetails.crmType ===
-              "AirtableSource" && (
-              <span className="inline-block rounded-xl bg-background-secondary px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
-                <AirtableLogo className="w-30" />
-              </span>
-            )}
+          <h1 className="text-hLg" contentEditable id="nickname" onBlur={updateNickname}>
+            {config.externalDataSource.name || config.externalDataSource.connectionDetails.crmType}
           </h1>
-        </div>
-      </header>
-      <div className="flex flex-row justify-between gap-8">
-        <div className="space-y-3">
           {config.jobs[0]?.lastEventAt ? (
             <div className="text-muted-text">
               Last sync:{" "}
@@ -159,10 +159,22 @@ export default function InspectExternalDataSourceUpdateConfig({
               {config.jobs[0].status})
             </div>
           ) : null}
+        </div>
+        <div>
+          {config.externalDataSource.connectionDetails.crmType ===
+            "AirtableSource" && (
+            <div className="inline-block rounded-xl bg-background-secondary px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
+              <AirtableLogo className="w-full" />
+            </div>
+          )}
+        </div>
+      </header>
+      <div className="flex flex-row justify-between gap-8">
+        <div className="flex flex-row gap-4 items-center">
+          <ExternalDataSourceFullUpdateButton id={config.id} />
           <ExternalDataSourceCardSwitch updateConfig={config} />
         </div>
         <div className="flex flex-row gap-4">
-          <ExternalDataSourceFullUpdateButton id={config.id} />
           <AlertDialog>
             <AlertDialogTrigger>
               <Button variant="destructive">Permanently delete</Button>
@@ -275,6 +287,27 @@ export default function InspectExternalDataSourceUpdateConfig({
       </section>
     </div>
   );
+
+  function updateNickname () {
+    const update = client.mutate({
+      mutation: UPDATE_SOURCE,
+      variables: {
+        config: {
+          id: config.externalDataSource.id,
+          name: document.getElementById("nickname")?.textContent
+        }
+      }
+    })
+    toast.promise(update, {
+      loading: "Saving...",
+      success: (d: FetchResult<UpdateConfigMutation>) => {
+        if (!d.errors && d.data) {
+          return "Saved source name";
+        }
+      },
+      error: `Couldn't save source`,
+    });
+  }
 
   function del() {
     const mutation = client.mutate<
