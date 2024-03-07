@@ -6,8 +6,8 @@ import { getClient } from "@/services/apollo-client";
 import { isClient } from "@/util";
 
 const USER_QUERY = gql`
-  query Me {
-    me {
+  query PublicUser {
+    publicUser {
       id
       username
     }
@@ -39,7 +39,7 @@ export const useAuth = async (): Promise<User> => {
   } catch (e: any) {
     console.error(e.message);
   }
-  return data?.me;
+  return data?.publicUser;
 };
 
 export const useRequireAuth = async () => {
