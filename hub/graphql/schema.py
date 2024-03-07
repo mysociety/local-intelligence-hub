@@ -1,11 +1,8 @@
 from gqlauth.core.middlewares import JwtSchema
-from gqlauth.core.types_ import GQLAuthError, GQLAuthErrors
-from gqlauth.core.utils import get_user
 from gqlauth.user.queries import UserQueries
 from gqlauth.user import arg_mutations as auth_mutations
 from strawberry_django import mutations, NodeInput
 import strawberry
-from strawberry.types import Info
 import strawberry_django
 from strawberry_django.optimizer import DjangoOptimizerExtension
 from strawberry_django.permissions import IsAuthenticated
@@ -13,13 +10,9 @@ from typing import List
 
 from hub.graphql import types
 from hub.graphql import mutations as mutation_types
-from hub import models
 
 @strawberry.type
 class Query(UserQueries):
-    # Create automatic resolvers for 'areas' and 'area_types'
-    areas: List[types.Area] = strawberry_django.field()
-    area_types: List[types.AreaType] = strawberry_django.field()
     memberships: List[types.Membership] = strawberry_django.field(extensions=[IsAuthenticated()])
     organisations: List[types.Organisation] = strawberry_django.field(extensions=[IsAuthenticated()])
     external_data_sources: List[types.ExternalDataSource] = strawberry_django.field(extensions=[IsAuthenticated()])
@@ -27,22 +20,11 @@ class Query(UserQueries):
     external_data_source_update_configs: List[types.ExternalDataSourceUpdateConfig] = strawberry_django.field(extensions=[IsAuthenticated()])
     events: List[types.EventLogItem] = strawberry_django.field(extensions=[IsAuthenticated()])
 
-    @strawberry_django.field
-    def public_areas(self) -> List[types.Area]:
-        return models.Area.objects.all()
-    
-    @strawberry_django.field
-    def private_areas(self, info: Info) -> List[types.Area]:
-        user = get_user(info)
-
-        if not user.is_authenticated:
-            raise GQLAuthError(code=GQLAuthErrors.UNAUTHENTICATED)
-        areas = list(models.Area.objects.all())
-        return areas
-    
 @strawberry.type
 class Mutation:
     token_auth = auth_mutations.ObtainJSONWebToken.field
+    register = auth_mutations.Register.field
+    verify_account = auth_mutations.VerifyAccount.field
 
     create_airtable_source: types.AirtableSource = mutations.create(mutation_types.AirtableSourceInput, extensions=[IsAuthenticated()])
     update_airtable_source: types.AirtableSource = mutations.update(mutation_types.AirtableSourceInputPartial, extensions=[IsAuthenticated()])

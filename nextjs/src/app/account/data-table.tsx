@@ -4,12 +4,12 @@ import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/experimental-nextjs-app-support/ssr";
 
 const EXAMPLE_QUERY = gql`
-query Areas {
-    areas {
-        id
-        name
+  query Example {
+    organisations {
+      id
+      name
     }
-}
+  }
 `
 
 export default function DataTable() {
@@ -23,7 +23,7 @@ export default function DataTable() {
         return <p>Loading...</p>
     }
 
-    const areas = data?.areas || [];
+    const orgs = data?.organisations || [];
 
     return (
         <table className="border-collapse table-auto w-full text-sm">
@@ -34,7 +34,7 @@ export default function DataTable() {
                 </tr>
             </thead>
             <tbody className="bg-white dark:bg-slate-800">
-                {areas.map((a: { id: string, name: string }) => (
+                {orgs.map((a: { id: string, name: string }) => (
                     <tr key={a.id} className="">
                         <td className="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400">{a.id}</td>
                         <td className="border-b border-slate-100 dark:border-slate-700 p-4 text-slate-500 dark:text-slate-400">{a.name}</td>

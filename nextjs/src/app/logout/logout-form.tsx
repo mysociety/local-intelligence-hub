@@ -5,7 +5,6 @@ import { MouseEvent } from "react";
 
 export default function LogoutForm() {
   const handleLogout = (e: MouseEvent) => {
-    console.log("handle logout");
     e.preventDefault();
     logout();
   };

@@ -10,8 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
-from datetime import timedelta
 import socket
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -22,9 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(
     BASE_URL=(str, False),
+    FRONTEND_BASE_URL=(str, False),
+    FRONTEND_SITE_TITLE=(str, False),
     SCHEDULED_UPDATE_SECONDS_DELAY=(int, 3),
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, []),
+    CORS_ALLOWED_ORIGINS=(list, ['http://localhost:3000']),
     HIDE_DEBUG_TOOLBAR=(bool, False),
     GOOGLE_ANALYTICS=(str, ""),
     GOOGLE_SITE_VERIFICATION=(str, ""),
@@ -32,7 +35,6 @@ env = environ.Env(
     TEST_AIRTABLE_TABLE_NAME=(str, ""),
     TEST_AIRTABLE_API_KEY=(str, ""),
     DJANGO_LOG_LEVEL=(str, "INFO"),
-    CORS_ALLOWED_ORIGINS=(list, ['http://localhost:3000'])
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -40,6 +42,8 @@ environ.Env.read_env(BASE_DIR / ".env")
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 BASE_URL = env("BASE_URL")
+FRONTEND_BASE_URL = env("FRONTEND_BASE_URL")
+FRONTEND_SITE_TITLE = env("FRONTEND_SITE_TITLE")
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
@@ -277,6 +281,10 @@ LOGGING = {
 # TODO: Decrease this when we go public
 one_week = timedelta(days=7)
 GQL_AUTH = GqlAuthSettings(
+    EMAIL_TEMPLATE_VARIABLES={
+        "frontend_base_url": FRONTEND_BASE_URL,
+        "frontend_site_title": FRONTEND_SITE_TITLE,
+    },
     JWT_EXPIRATION_DELTA=one_week,
     LOGIN_REQUIRE_CAPTCHA=False,
     REGISTER_REQUIRE_CAPTCHA=False,
