@@ -28,7 +28,7 @@ export default function RootLayout({
     <ApolloProvider client={client}>
       <html lang="en">
         <body>
-        {isLoggedIn && <AreaPattern/>}
+        {!isLoggedIn && <AreaPattern/>}
         <Navbar isLoggedIn={isLoggedIn} />
         <main className="p-lg">{children}</main>
           <Toaster />
