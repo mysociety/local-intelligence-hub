@@ -6,27 +6,21 @@ import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createContext } from 'react';
+import { twMerge } from 'tailwind-merge';
 
-type UpdateConfigDict = {
-  externalDataSourceType: 'airtable'
-  externalDataSourceId: string,
-  externalDataSourceUpdateConfigId: string
-}
-
-export const NewExternalDataSourceUpdateConfigContext = createContext<Partial<UpdateConfigDict> & { 
-  setConfig: React.Dispatch<React.SetStateAction<Partial<UpdateConfigDict>>>
+export const NewExternalDataSourceUpdateConfigContext = createContext<{
+  step: number
+  setStep: React.Dispatch<React.SetStateAction<number>>
 }>({
-  setConfig: () => {}
+  step: 0,
+  setStep: () => {}
 });
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const authLoading = useRequireAuth();
   const router = useRouter()
   const pathname = usePathname()
-  const [
-    { externalDataSourceType, externalDataSourceId, externalDataSourceUpdateConfigId },
-    setConfig
-  ] = useState<Partial<UpdateConfigDict>>({ externalDataSourceType: undefined, externalDataSourceId: undefined, externalDataSourceUpdateConfigId: undefined})
+  const [step, setStep] = useState<number>(0)
 
   if (authLoading) {
     return <h2>Loading...</h2>
@@ -34,34 +28,35 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <NewExternalDataSourceUpdateConfigContext.Provider value={{
-      externalDataSourceType,
-      externalDataSourceId,
-      externalDataSourceUpdateConfigId,
-      setConfig
+      step,
+      setStep
     }}>
       <div className='p-6 max-w-6xl mx-auto flex flex-row gap-7'>
-        <aside className='w-[180px]'>
+        <div>
+        <aside className='w-[180px] flex flex-col justify-start items-start gap-4 relative'>
+          <div className='h-full absolute top-0 left-5 border-l border-x-meepGray-500 z-10' />
           <Step number={1} state={
-            externalDataSourceType ? 'completed' : 'active'
+            step > 1 ? 'completed' : 'active'
           }>
             Choose platform
           </Step>
           <Step number={2} state={
-            externalDataSourceId ? 'completed' : externalDataSourceType ? 'active' : 'disabled'
+            step > 2 ? 'completed' : step === 2 ? 'active' : 'disabled'
           }>
             Provide information
           </Step>
           <Step number={3} state={
-            externalDataSourceUpdateConfigId ? 'completed' : externalDataSourceId ? 'active' : 'disabled'
+            step > 3 ? 'completed' : step === 3 ? 'active' : 'disabled'
           }>
             Select data layers
           </Step>
           <Step number={4} state={
-            externalDataSourceUpdateConfigId ? 'active' : 'disabled'
+            step === 4 ? 'active' : 'disabled'
           }>
             Activate sync
           </Step>
         </aside>
+        </div>
         <main className='space-y-7'>
           {children}
         </main>
@@ -76,10 +71,15 @@ export function Step ({ number, state, children }: {
   children: React.ReactNode
 }) {
   return (
-    <div className={state === 'active' ? 'bg-white' : state === 'completed' ? 'bg-muted' : 'bg-gray-800'}>
-      <div className='flex items-center gap-2'>
-        <span className='text-2xl bg-muted-text text-white rounded w-10 h-10 inline-flex items-center justify-center'>{number}</span>
-        <span>{children}</span>
+    <div>
+      <div className='flex items-center gap-2 z-20 relative'>
+        <span className={twMerge(
+          state === 'active' ? 'bg-white text-gray-800' : state === 'completed' ? 'bg-gray-400 text-white' : 'bg-gray-800 text-white',
+          'rounded w-10 h-10 inline-flex items-center justify-center shrink-0 grow-0'
+        )}><div className='inline'>{number}</div></span>
+        <span className={
+          state === 'disabled' ? 'text-muted-text' : 'text-white'
+        }>{children}</span>
       </div>
     </div>
   )

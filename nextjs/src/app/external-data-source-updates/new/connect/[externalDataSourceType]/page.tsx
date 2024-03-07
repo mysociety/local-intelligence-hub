@@ -72,7 +72,7 @@ export default function Page({ params: { externalDataSourceType } }: { params: {
       try {
         const source = await createSource({ variables: { AirtableSource: airtable } })
         toast.success("Connection successful", { id: toastId })
-        context.setConfig(x => ({ ...x, externalDataSourceId: source.data?.createAirtableSource.id }))
+        context.setStep(3)
         router.push(`/external-data-source-updates/new/configure/${source.data?.createAirtableSource.id}`)
       } catch (e) {
         // Check if e is ApolloError
