@@ -19,17 +19,49 @@ const config = {
     },
     extend: {
       fontFamily: {
-        'IBMPlexSans': ['IBM Plex Sans Condensed, sans-serif'], 
+        'IBMPlexSans': ['"IBM Plex Sans Condensed", sans-serif'], 
         'PPRightGrotesk': ['PPRightGrotesk, sans-serif'], 
       },
       fontSize: {
-        'base': '17px', 
+        hLg: ['36px', {
+          lineHeight: '47px',
+          letterSpacing: '0em',
+          fontWeight: '700',
+        }],
+        hSm: ['16px', {
+          lineHeight: '21px',
+          letterSpacing: '0em',
+          fontWeight: '500',
+        }],
+        base: ['16px', {
+          lineHeight: '21px',
+          letterSpacing: '0em',
+          fontWeight: '400',
+        }],
+        label: ['14px', {
+          lineHeight: '17px',
+          letterSpacing: '0em',
+          fontWeight: '500',
+        }],
+        sm: ['12px', {
+          lineHeight: '16px',
+          letterSpacing: '0em',
+          fontWeight: '400',
+        }],
       },
       colors: {
+        brand: "hsl(var(--brand))",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
+        meepGray: {
+          500: "hsl(var(--meep-gray-500))",
+        },
+        background: {
+          DEFAULT: "hsl(var(--background))",
+          secondary: "hsl(var(--background-secondary))",
+          tertiary: "hsl(var(--background-tertiary))",
+        },
         foreground: "hsl(var(--foreground))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
@@ -53,6 +85,7 @@ const config = {
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
+          text: "hsl(var(--muted-text))",
         },
         accent: {
           DEFAULT: "hsl(var(--accent))",
@@ -89,7 +122,7 @@ const config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate"), require('@tailwindcss/forms'),],
 } satisfies Config
 
 export default config

@@ -1,8 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { UserTestQuery } from '@/__generated__/graphql';
+import { gql, useQuery } from '@apollo/client';
+import { useEffect, useMemo, useState } from 'react';
+
+const USER_TEST_QUERY = gql`
+  query UserTest {
+    me {
+      id
+    }
+  }
+`
 
 export const useRequireAuth = () => {
+  const userTestQuery = useQuery<UserTestQuery>(USER_TEST_QUERY);
+
+  const isLoggedIn = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const token = localStorage.getItem('jwt');
+    return !!token && !!userTestQuery.data?.me.id;
+  }, [userTestQuery.data?.me.id])
+
   // Set "loading" state that can be used by components to display a loading
   // placeholder while the auth state is being determined
   const [loading, setLoading] = useState(true);
@@ -11,17 +29,18 @@ export const useRequireAuth = () => {
     const path = window.location.pathname;
 
     let willRedirect = false;
-    
-    // If the token exists and the current path is "/login", redirect to the account page.
-    if (token && path === '/login') {
-      window.location.href = '/account';
-      willRedirect = true;
-    }
-    
-    // If there's no token and the current path is not "/login", redirect to the login page.
-    if (!token && path !== '/login') {
-      window.location.href = '/login';
-      willRedirect = true;
+    if (isLoggedIn) {
+      // If the token exists and the current path is "/login", redirect to the account page.
+      if (token && path === '/login') {
+        window.location.href = '/account';
+        willRedirect = true;
+      }
+      
+      // // If there's no token and the current path is not "/login", redirect to the login page.
+      if (!token && path !== '/login') {
+        window.location.href = '/login';
+        willRedirect = true;
+      }
     }
 
     // Only set loading to false if no redirect is happening. This is because if the
@@ -31,7 +50,7 @@ export const useRequireAuth = () => {
     if (!willRedirect) {
       setLoading(false);
     }
-  }, []);
+  }, [isLoggedIn]);
 
   // Return the loading state so pages/components can use it.
   return loading;

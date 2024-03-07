@@ -13,11 +13,36 @@
  
 @layer base {
   :root {
-    --background: 0, 0%, 12%;
-    --secondary: 220, 25%, 16%;
+    --background: 222, 14%, 14%;
+    --background-secondary: 222, 14%, 19%;
+    --background-tertiary: 222, 14%, 24%;
+    --meep-gray-500: 222, 14%, 34%;
+    --muted-text: 222, 14%, 64%;
+
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+ 
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+ 
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
     --brand: 222, 69%, 65%;
-    --white: 0, 0%, 100%;
-   
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
@@ -33,6 +58,6 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-IBMPlexSans;
   }
 }

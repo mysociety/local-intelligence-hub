@@ -92,3 +92,22 @@ The first time you run `script/test`, it will ask whether you want the tests to 
 You can run the linting and formatting suite from inside or outside the docker container:
 
     script/lint
+
+## GraphQL docs
+
+### Inserting foreign key references via `{ set: ID! }`
+
+E.g. when adding a source to an org
+
+```graphql
+mutation Mutation {e
+  createAirtableSource(data:{
+    apiKey: "...",
+    baseId:"...",
+    tableId:"...",
+    organisation: { set:5 }
+  }) {
+    id
+  }
+}
+```

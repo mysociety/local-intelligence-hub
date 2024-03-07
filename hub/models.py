@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 import uuid
-from typing import TypedDict, Union
+from typing import Iterable, TypedDict, Union
 import asyncio
 from asgiref.sync import sync_to_async
 from psycopg.errors import UniqueViolation
+import hashlib
 
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -16,6 +17,7 @@ from django.conf import settings
 from urllib.parse import urljoin
 from dateutil.parser import parser as date_parser
 from django.http import HttpResponse
+from procrastinate.contrib.django.models import ProcrastinateJob
 
 from django_jsonform.models.fields import JSONField
 
@@ -29,7 +31,38 @@ from utils.py import get, ensure_list
 from strawberry.dataloader import DataLoader
 from pyairtable import Api as AirtableAPI, Base as AirtableBase, Table as AirtableTable
 
+
 User = get_user_model()
+
+
+from django.utils.text import slugify
+
+class Organisation(models.Model):
+    slug = models.SlugField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    website = models.URLField(blank=True, null=True)
+    logo = models.ImageField(null=True, upload_to="organisation")
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+    
+
+class Membership(models.Model):
+    class Meta:
+        unique_together = ['user', 'organisation']
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="memberships")
+    organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name="members")
+    role = models.CharField(max_length=250)
+
+    def __str__(self):
+        return f"{self.user}: {self.role} in {self.organisation}"
 
 
 class UserProperties(models.Model):
@@ -735,7 +768,7 @@ class ExternalDataSource(PolymorphicModel):
     This class is to be subclassed by specific data source types.
     '''
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    # TODO: organisation = models.CharField(max_length=100)
+    organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name='external_data_sources', null=True, blank=True)
     name = models.CharField(max_length=250, null=True, blank=True)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -745,13 +778,20 @@ class ExternalDataSource(PolymorphicModel):
     def __str__(self):
         return self.name
 
-    async def healthcheck(self):
+    def healthcheck(self):
         '''
         Check the connection to the API.
         '''
         raise NotImplementedError('Healthcheck not implemented for this data source type.')
     
-    async def setup_webhook(self, config: 'ExternalDataSourceUpdateConfig'):
+    @classmethod
+    def test_connection(cls):
+        '''
+        Use this to test a connection before creating the object.
+        '''
+        return cls.healthcheck()
+
+    def setup_webhook(self, config: 'ExternalDataSourceUpdateConfig'):
         '''
         Set up a webhook.
         '''
@@ -909,6 +949,7 @@ class AirtableSource(ExternalDataSource):
 
     class Meta:
         verbose_name = 'Airtable table'
+        unique_together = ['base_id', 'table_id', 'api_key']
 
     @cached_property
     def api(self) -> AirtableAPI:
@@ -922,7 +963,7 @@ class AirtableSource(ExternalDataSource):
     def table(self) -> AirtableTable:
         return self.base.table(self.table_id)
     
-    async def healthcheck(self):
+    def healthcheck(self):
         record = self.table.first()
         if record:
             return True
@@ -1065,7 +1106,7 @@ class ExternalDataSourceUpdateConfig(models.Model):
     A configuration for updating a data source.
     '''
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    data_source = models.ForeignKey(ExternalDataSource, on_delete=models.CASCADE)
+    external_data_source = models.ForeignKey(ExternalDataSource, on_delete=models.CASCADE, related_name='update_configs')
     last_update = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
     enabled = models.BooleanField(default=False)
@@ -1081,24 +1122,25 @@ class ExternalDataSourceUpdateConfig(models.Model):
       }
     ]
     '''
+    # TODO: validation
     mapping = JSONField(blank=True, null=True)
 
     def get_mapping(self) -> list[UpdateConfigDict]:
         return self.mapping
 
     def __str__(self):
-        return f'Update config for {self.data_source.name}'
+        return f'Update config for {self.external_data_source.name}'
 
     # UI
 
-    def enable(self):
+    def enable(self) -> Union[None, int]:
         self.enabled = True
         self.save()
 
-        if self.data_source.automated_webhooks:
-            self.data_source.setup_webhook(config=self)
+        if self.external_data_source.automated_webhooks:
+            self.external_data_source.setup_webhook(config=self)
             
-            refresh_webhook\
+            return refresh_webhook\
             .configure(
               # Dedupe `update_all` jobs for the same config
               # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
@@ -1113,64 +1155,68 @@ class ExternalDataSourceUpdateConfig(models.Model):
     # Data
         
     async def update_one(self, member_id: Union[str, any]):
-        data_source = await sync_to_async(self.data_source.get_real_instance)()
-        loaders = data_source.get_loaders()
-        mapped_record = await data_source.map_one(member_id, self, loaders)
-        await data_source.update_one(mapped_record=mapped_record)
+        external_data_source = await sync_to_async(self.external_data_source.get_real_instance)()
+        loaders = external_data_source.get_loaders()
+        mapped_record = await external_data_source.map_one(member_id, self, loaders)
+        await external_data_source.update_one(mapped_record=mapped_record)
 
     async def update_many(self, member_ids: list[Union[str, any]]):
-        data_source = await sync_to_async(self.data_source.get_real_instance)()
-        loaders = data_source.get_loaders()
-        mapped_records = await data_source.map_many(member_ids, self, loaders)
-        await data_source.update_many(mapped_records=mapped_records)
+        external_data_source = await sync_to_async(self.external_data_source.get_real_instance)()
+        loaders = external_data_source.get_loaders()
+        mapped_records = await external_data_source.map_many(member_ids, self, loaders)
+        await external_data_source.update_many(mapped_records=mapped_records)
 
     async def update_all(self):
-        data_source = await sync_to_async(self.data_source.get_real_instance)()
-        loaders = data_source.get_loaders()
-        mapped_records = await data_source.map_all(self, loaders)
-        await data_source.update_all(mapped_records=mapped_records)
+        external_data_source = await sync_to_async(self.external_data_source.get_real_instance)()
+        loaders = external_data_source.get_loaders()
+        mapped_records = await external_data_source.map_all(self, loaders)
+        await external_data_source.update_all(mapped_records=mapped_records)
 
     # Webhooks
         
     def handle_update_webhook_view(self, body):
-        member_ids = self.data_source.get_member_ids_from_webhook(body)
+        member_ids = self.external_data_source.get_member_ids_from_webhook(body)
         if len(member_ids) == 1:
             self.schedule_update_one(member_id=member_ids[0])
         else:
             self.schedule_update_many(member_ids=member_ids)
         return HttpResponse(status=200)
+    
+    def refresh_webhook(self):
+        external_data_source = self.external_data_source.get_real_instance()
+        external_data_source.refresh_webhook(config=self)
 
     # Scheduling
 
     @classmethod
     async def deferred_update_one(cls, config_id: str, member_id: str):
-        config = await cls.objects.select_related('data_source').aget(id=config_id)
+        config = await cls.objects.select_related('external_data_source').aget(id=config_id)
         if config.enabled:
             await config.update_one(member_id=member_id)
 
     @classmethod
     async def deferred_update_many(cls, config_id: str, member_ids: list[str]):
-        config = await cls.objects.select_related('data_source').aget(id=config_id)
+        config = await cls.objects.select_related('external_data_source').aget(id=config_id)
         if config.enabled:
             await config.update_many(member_ids=member_ids)
 
     @classmethod
     async def deferred_update_all(cls, config_id: str):
-        config = await cls.objects.select_related('data_source').aget(id=config_id)
+        config = await cls.objects.select_related('external_data_source').aget(id=config_id)
         if config.enabled:
             await config.update_all()
 
     @classmethod
     async def deferred_refresh_webhook(cls, config_id: str):
-        config = await ExternalDataSourceUpdateConfig.objects.select_related('data_source').aget(pk=config_id)
+        config = await ExternalDataSourceUpdateConfig.objects.select_related('external_data_source').aget(pk=config_id)
         if config.enabled:
-            data_source = await sync_to_async(config.data_source.get_real_instance)()
-            if config.data_source.automated_webhooks:
-                await data_source.refresh_webhook(config=config)
+            external_data_source = await sync_to_async(config.external_data_source.get_real_instance)()
+            if config.external_data_source.automated_webhooks:
+                await external_data_source.refresh_webhook(config=config)
 
-    def schedule_update_one(self, member_id: str):
+    def schedule_update_one(self, member_id: str) -> int:
         try:
-          update_one\
+          return update_one\
           .configure(
             # Dedupe `update_many` jobs for the same config
             # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
@@ -1181,10 +1227,10 @@ class ExternalDataSourceUpdateConfig(models.Model):
         except UniqueViolation:
           pass
 
-    def schedule_update_many(self, member_ids: list[str]):
+    def schedule_update_many(self, member_ids: list[str]) -> int:
+        member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
-          member_ids_hash = hash(",".join(list(sorted(set(member_ids)))))
-          update_many\
+          return update_many\
           .configure(
             # Dedupe `update_many` jobs for the same config
             # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
@@ -1195,9 +1241,9 @@ class ExternalDataSourceUpdateConfig(models.Model):
         except UniqueViolation:
           pass
 
-    def schedule_update_all(self):
+    def schedule_update_all(self) -> int:
         try:
-          update_all\
+          return update_all\
           .configure(
             # Dedupe `update_all` jobs for the same config
             # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
@@ -1207,3 +1253,6 @@ class ExternalDataSourceUpdateConfig(models.Model):
           .defer(config_id=str(self.id))
         except UniqueViolation:
           pass
+
+    def event_log_queryset(self):
+        return ProcrastinateJob.objects.filter(args__config_id=str(self.id)).order_by('-scheduled_at')
