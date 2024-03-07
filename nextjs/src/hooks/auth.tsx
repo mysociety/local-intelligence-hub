@@ -34,7 +34,6 @@ export const useAuth = async (): Promise<User> => {
 export const useRequireAuth = async () => {
   const user = await useAuth();
 
-  // If there's no user and the current path is not "/login", redirect to the login page.
   if (!user) {
     redirect("/login");
   }

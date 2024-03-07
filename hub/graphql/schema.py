@@ -25,6 +25,7 @@ class Mutation:
     token_auth = auth_mutations.ObtainJSONWebToken.field
     register = auth_mutations.Register.field
     verify_account = auth_mutations.VerifyAccount.field
+    resend_activation_email = auth_mutations.ResendActivationEmail.field
 
     create_airtable_source: types.AirtableSource = mutations.create(mutation_types.AirtableSourceInput, extensions=[IsAuthenticated()])
     update_airtable_source: types.AirtableSource = mutations.update(mutation_types.AirtableSourceInputPartial, extensions=[IsAuthenticated()])
