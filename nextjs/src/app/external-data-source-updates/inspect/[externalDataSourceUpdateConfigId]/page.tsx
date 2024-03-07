@@ -1,6 +1,6 @@
 'use client';
 
-import { MutationResult, gql, useQuery } from '@apollo/client';
+import { FetchResult, MutationResult, gql, useQuery } from '@apollo/client';
 import { useRequireAuth } from '@/components/authenticationHandler';
 import { client } from '@/components/apollo-client';
 import { AirtableLogo } from '@/components/logos';
@@ -9,7 +9,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { toast } from "sonner"
 import { ExternalDataSourceCardSwitch, UPDATE_CONFIG_CARD_FRAGMENT } from '@/components/ExternalDataSourceCard';
 import { LoadingIcon } from '@/components/ui/loadingIcon';
-import { DeleteSourceMutation, DeleteSourceMutationVariables, PageForExternalDataSourceUpdateConfigQuery, PageForExternalDataSourceUpdateConfigQueryVariables } from '@/__generated__/graphql';
+import { DeleteSourceMutation, DeleteSourceMutationVariables, ExternalDataSourceUpdateConfigInput, PageForExternalDataSourceUpdateConfigQuery, PageForExternalDataSourceUpdateConfigQueryVariables, UpdateConfigMutation } from '@/__generated__/graphql';
 import { useRouter } from 'next/navigation';
 import {
   ColumnDef,
@@ -41,6 +41,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { globalID } from '@/lib/graphql';
+import { UpdateConfigForm } from '@/components/UpdateConfig';
 
 const GET_UPDATE_CONFIG = gql`
   query PageForExternalDataSourceUpdateConfig($ID: ID!) {
@@ -59,6 +60,26 @@ const GET_UPDATE_CONFIG = gql`
         taskName
         args
         lastEventAt
+      }
+      postcodeColumn
+      mapping {
+        source
+        sourcePath
+        destinationColumn
+      }
+    }
+  }
+`;
+
+const UPDATE_CONFIG = gql`
+  mutation UpdateConfig($config: ExternalDataSourceUpdateConfigInput!) {
+    updateExternalDataSourceUpdateConfig(data: $config) {
+      id
+      postcodeColumn
+      mapping {
+        source
+        sourcePath
+        destinationColumn
       }
     }
   }
@@ -140,6 +161,23 @@ export default function Page({ params: { externalDataSourceUpdateConfigId } }: {
       </div>
       <div className='border-b border-background-secondary pt-10' />
       <section>
+        <h2 className='text-hSm mb-5'>Mapping</h2>
+        <UpdateConfigForm
+          saveButtonLabel="Update"
+          initialData={{
+            postcodeColumn: config.postcodeColumn,
+            // Trim out the __typenames
+            mapping: config.mapping.map(m => ({
+              source: m.source,
+              sourcePath: m.sourcePath,
+              destinationColumn: m.destinationColumn
+            }))
+          }}
+          onSubmit={saveConfig}
+        />
+      </section>
+      <div className='border-b border-background-secondary pt-10' />
+      <section>
         <h2 className='text-hSm mb-5'>Logs</h2>
         <LogsTable data={config.jobs} sortingState={[{desc: true, id: "lastEventAt"}]} columns={[
           { 
@@ -189,6 +227,27 @@ export default function Page({ params: { externalDataSourceUpdateConfigId } }: {
         }
       },
       error: `Couldn't delete data source`
+    });
+  }
+
+  function saveConfig (data: ExternalDataSourceUpdateConfigInput) {
+    const update = client.mutate({
+      mutation: UPDATE_CONFIG,
+      variables: {
+        config: {
+          ...data,
+          id: config.id
+        }
+      }
+    })
+    toast.promise(update, {
+      loading: 'Updating...',
+      success: (d: FetchResult<UpdateConfigMutation>) => {
+        if (!d.errors && d.data) {
+          return 'Saved config'
+        }
+      },
+      error: `Couldn't save config`
     });
   }
 }

@@ -67,7 +67,7 @@ class Mutation:
     delete_external_data_source: types.ExternalDataSource = mutations.delete(mutation_types.IDObject, extensions=[IsAuthenticated()])
 
     create_external_data_source_update_config: types.ExternalDataSourceUpdateConfig = mutations.create(mutation_types.ExternalDataSourceUpdateConfigInput, extensions=[IsAuthenticated()])
-    update_external_data_source_update_config: types.ExternalDataSourceUpdateConfig = mutations.update(mutation_types.ExternalDataSourceUpdateConfigInputPartial, extensions=[IsAuthenticated()])
+    update_external_data_source_update_config: types.ExternalDataSourceUpdateConfig = mutations.update(mutation_types.ExternalDataSourceUpdateConfigInput, extensions=[IsAuthenticated()])
     delete_external_data_source_update_config: types.ExternalDataSourceUpdateConfig = mutations.delete(NodeInput, extensions=[IsAuthenticated()])
 
     enable_update_config: types.ExternalDataSourceUpdateConfig = mutation_types.enable_update_config

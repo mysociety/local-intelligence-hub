@@ -1147,6 +1147,8 @@ class ExternalDataSourceUpdateConfig(models.Model):
 
     def disable(self):
         self.enabled = False
+        if self.external_data_source.automated_webhooks:
+            self.external_data_source.teardown_webhook(config=self)
         self.save()
 
     # Data

@@ -14,14 +14,16 @@ import procrastinate.contrib.django.models
 class IDObject:
     id: str
 
-@strawberry_django.input(models.ExternalDataSource)
+@strawberry_django.input(models.ExternalDataSource, partial=True)
 class ExternalDataSourceInput:
+    id: auto
     name: auto
     description: auto
     organisation: auto
 
-@strawberry_django.input(models.AirtableSource)
+@strawberry_django.input(models.AirtableSource, partial=True)
 class AirtableSourceInput(ExternalDataSourceInput):
+    id: auto
     api_key: auto
     base_id: auto
     table_id: auto
@@ -37,17 +39,14 @@ class UpdateConfigDictInput:
     source_path: str
     destination_column: str
 
-@strawberry_django.input(models.ExternalDataSourceUpdateConfig)
+@strawberry_django.input(models.ExternalDataSourceUpdateConfig, partial=True)
 class ExternalDataSourceUpdateConfigInput:
+    id: auto
     external_data_source: types.ExternalDataSource
     postcode_column: auto
     enabled: auto
     mapping: List[UpdateConfigDictInput]
   
-@strawberry_django.partial(models.ExternalDataSourceUpdateConfig)
-class ExternalDataSourceUpdateConfigInputPartial(ExternalDataSourceUpdateConfigInput):
-    pass
-
 @strawberry.mutation(extensions=[IsAuthenticated(), InputMutationExtension()])
 async def create_organisation(info: Info, name: str, slug: Optional[str] = None, description: Optional[str] = None) -> types.Membership:
     org = await models.Organisation.objects.acreate(name=name, slug=slug, description=description)
@@ -57,6 +56,7 @@ async def create_organisation(info: Info, name: str, slug: Optional[str] = None,
 
 @strawberry_django.input(models.Organisation, partial=True)
 class OrganisationInputPartial:
+    id: auto
     name: str
     slug: Optional[str]
     description: Optional[str]
