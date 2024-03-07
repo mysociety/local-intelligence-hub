@@ -14,7 +14,7 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  */
 const documents = {
     "\n  query UserInfo {\n    me {\n      firstName\n      lastName\n    }\n  }\n": types.UserInfoDocument,
-    "\n  query ListDataSyncs {\n    organisations {\n      id\n      name\n    }\n    externalDataSourceUpdateConfigs {\n      externalDataSource {\n        id\n        __typename\n      }\n      id\n      enabled\n      events(pagination: { limit: 3 }) {\n        scheduledAt\n        status\n      }\n    }\n  }\n": types.ListDataSyncsDocument,
+    "\n  query ListDataSyncs {\n    organisations {\n      id\n      name\n    }\n    externalDataSourceUpdateConfigs {\n      externalDataSource {\n        id\n        __typename\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n      id\n      enabled\n      events {\n        scheduledAt\n        status\n      }\n    }\n  }\n": types.ListDataSyncsDocument,
     "\nmutation Login($username: String!, $password: String!) {\n  tokenAuth(username: $username, password: $password) {\n    errors\n    success\n    token {\n      token\n    }\n  }\n}\n": types.LoginDocument,
     "\n  query UserTest {\n    me {\n      id\n    }\n  }\n": types.UserTestDocument,
 };
@@ -40,7 +40,7 @@ export function gql(source: "\n  query UserInfo {\n    me {\n      firstName\n  
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  query ListDataSyncs {\n    organisations {\n      id\n      name\n    }\n    externalDataSourceUpdateConfigs {\n      externalDataSource {\n        id\n        __typename\n      }\n      id\n      enabled\n      events(pagination: { limit: 3 }) {\n        scheduledAt\n        status\n      }\n    }\n  }\n"): (typeof documents)["\n  query ListDataSyncs {\n    organisations {\n      id\n      name\n    }\n    externalDataSourceUpdateConfigs {\n      externalDataSource {\n        id\n        __typename\n      }\n      id\n      enabled\n      events(pagination: { limit: 3 }) {\n        scheduledAt\n        status\n      }\n    }\n  }\n"];
+export function gql(source: "\n  query ListDataSyncs {\n    organisations {\n      id\n      name\n    }\n    externalDataSourceUpdateConfigs {\n      externalDataSource {\n        id\n        __typename\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n      id\n      enabled\n      events {\n        scheduledAt\n        status\n      }\n    }\n  }\n"): (typeof documents)["\n  query ListDataSyncs {\n    organisations {\n      id\n      name\n    }\n    externalDataSourceUpdateConfigs {\n      externalDataSource {\n        id\n        __typename\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n      id\n      enabled\n      events {\n        scheduledAt\n        status\n      }\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

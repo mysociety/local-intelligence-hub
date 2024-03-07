@@ -4,6 +4,7 @@ from typing import Iterable, TypedDict, Union
 import asyncio
 from asgiref.sync import sync_to_async
 from psycopg.errors import UniqueViolation
+import hashlib
 
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -1220,6 +1221,7 @@ class ExternalDataSourceUpdateConfig(models.Model):
           pass
 
     def schedule_update_many(self, member_ids: list[str]) -> int:
+        member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
           return update_many\
           .configure(
