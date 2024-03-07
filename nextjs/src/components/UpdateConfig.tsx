@@ -33,77 +33,83 @@ export function UpdateConfigForm ({
   return (
     <FormProvider {...form}>
       <Form {...form}>
-        {/* Postcode field */}
-        <FormField
-          control={form.control}
-          name="postcodeColumn"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Postcode Column</FormLabel>
-              <FormControl>
-                {/* @ts-ignore */}
-                <Input placeholder="postcode" {...field} />
-              </FormControl>
-              <FormDescription>
-                In your external table
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <table>
-        {fields.map((field, index) => (
-          <tr>
-            <td className='w-10'>
-              <Button className='flex-shrink' onClick={() => {
-                remove(index)
-              }}>
-                <XCircle />
-              </Button>
-            </td>
-            <td className='w-1/2'>
-              <SourcePathSelector
-                sources={enrichmentDataSources}
-                value={{
-                  source: form.watch(`mapping.${index}.source`),
-                  sourcePath: form.watch(`mapping.${index}.sourcePath`)
-                }}
-                setValue={(source, sourcePath) => {
-                  form.setValue(`mapping.${index}.source`, source)
-                  form.setValue(`mapping.${index}.sourcePath`, sourcePath)
-                }}
+        <div className='space-y-7'>
+        <div className='max-w-sm'>
+          {/* Postcode field */}
+          <FormField
+            control={form.control}
+            name="postcodeColumn"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Postcode Column</FormLabel>
+                <FormControl>
+                  {/* @ts-ignore */}
+                  <Input placeholder="postcode" {...field} />
+                </FormControl>
+                <FormDescription>
+                  In your external table
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className='max-w-3xl'>
+          <table>
+          {fields.map((field, index) => (
+            <tr>
+              <td className='w-10'>
+                <Button className='flex-shrink' onClick={() => {
+                  remove(index)
+                }}>
+                  <XCircle />
+                </Button>
+              </td>
+              <td className='w-1/2'>
+                <SourcePathSelector
+                  sources={enrichmentDataSources}
+                  value={{
+                    source: form.watch(`mapping.${index}.source`),
+                    sourcePath: form.watch(`mapping.${index}.sourcePath`)
+                  }}
+                  setValue={(source, sourcePath) => {
+                    form.setValue(`mapping.${index}.source`, source)
+                    form.setValue(`mapping.${index}.sourcePath`, sourcePath)
+                  }}
+                />
+              </td>
+              <td className='w-10'>
+              <ArrowRight className='flex-shrink' />
+              </td>
+              <td className='w-1/2'>
+              <Input
+                className='flex-shrink-0 flex-grow'
+                placeholder='Destination column'
+                key={field.id} // important to include key with field's id
+                {...form.register(`mapping.${index}.destinationColumn`)}
               />
-            </td>
-            <td className='w-10'>
-            <ArrowRight className='flex-shrink' />
-            </td>
-            <td className='w-1/2'>
-            <Input
-              className='flex-shrink-0 flex-grow'
-              placeholder='Destination column'
-              key={field.id} // important to include key with field's id
-              {...form.register(`mapping.${index}.destinationColumn`)}
-            />
-            </td>
-          </tr>
-        ))}
-        </table>
-        <Button onClick={() => {
-          append({
-            source: "",
-            sourcePath: "",
-            destinationColumn: "",
-          })
-        }}>
-          Add field
-        </Button>
-        <div className='flex flex-row gap-x-4'>
-          {children}
-          <Button type='submit' variant={'reverse'} onClick={() => {
-            onSubmit(data)
+              </td>
+            </tr>
+          ))}
+          </table>
+          <Button onClick={() => {
+            append({
+              source: "",
+              sourcePath: "",
+              destinationColumn: "",
+            })
           }}>
-            {saveButtonLabel}
+            Add field
           </Button>
+          <div className='flex flex-row gap-x-4 mt-6'>
+            {children}
+            <Button type='submit' variant={'reverse'} onClick={() => {
+              onSubmit(data)
+            }}>
+              {saveButtonLabel}
+            </Button>
+          </div>
+          </div>
         </div>
       </Form>
     </FormProvider>

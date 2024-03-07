@@ -3,9 +3,14 @@ import { AirtableLogo } from "@/components/logos"
 export const externalDataSourceOptions = {
   airtable: {
     key: 'airtable',
+    modelName: 'AirtableSource',
     name: 'Airtable',
     logo: AirtableLogo
   }
+}
+
+export const getSourceOptionForTypename = (typename: string) => {
+  return Object.values(externalDataSourceOptions).find(option => option.modelName === typename)
 }
 
 export type EnrichmentDataSource = {

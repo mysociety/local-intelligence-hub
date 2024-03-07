@@ -71,6 +71,9 @@ class ExternalDataSource:
     id: auto
     name: auto
     description: auto
+    created_at: auto
+    last_update: auto
+    organisation: Organisation
     update_configs: List['ExternalDataSourceUpdateConfig']
 
     @classmethod

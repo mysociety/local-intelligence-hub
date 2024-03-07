@@ -21,17 +21,13 @@ class ExternalDataSourceInput:
     description: auto
     organisation: auto
 
-@strawberry_django.input(models.AirtableSource, partial=True)
+@strawberry_django.input(models.AirtableSource)
 class AirtableSourceInput(ExternalDataSourceInput):
-    id: auto
+    id: Optional[strawberry.scalars.ID]
     api_key: auto
     base_id: auto
     table_id: auto
     organisation: Optional[str]
-
-@strawberry_django.partial(models.AirtableSource)
-class AirtableSourceInputPartial(AirtableSourceInput):
-    pass
 
 @strawberry.input
 class UpdateConfigDictInput:

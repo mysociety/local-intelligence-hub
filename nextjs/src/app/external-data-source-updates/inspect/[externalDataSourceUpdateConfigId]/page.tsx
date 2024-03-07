@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown, RefreshCcw } from 'lucide-react';
 import { useState } from 'react';
 import {
   AlertDialog,
@@ -97,7 +97,7 @@ export default function Page({ params: { externalDataSourceUpdateConfigId } }: {
   const authLoading = useRequireAuth();
   const router = useRouter()
 
-  const { loading, error, data } = useQuery<PageForExternalDataSourceUpdateConfigQuery, PageForExternalDataSourceUpdateConfigQueryVariables>(GET_UPDATE_CONFIG, {
+  const { loading, error, data, refetch } = useQuery<PageForExternalDataSourceUpdateConfigQuery, PageForExternalDataSourceUpdateConfigQueryVariables>(GET_UPDATE_CONFIG, {
     variables: {
       ID: externalDataSourceUpdateConfigId
     }
@@ -114,7 +114,7 @@ export default function Page({ params: { externalDataSourceUpdateConfigId } }: {
   const config = data.externalDataSourceUpdateConfig
 
   return (
-    <div className='p-6 max-w-6xl mx-auto space-y-7'>
+    <div className='p-6 max-w-4xl mx-auto space-y-7'>
       <header className='flex flex-row justify-between gap-8'>
         <div>
           <div className='text-muted-text'>External data source</div>
@@ -178,7 +178,17 @@ export default function Page({ params: { externalDataSourceUpdateConfigId } }: {
       </section>
       <div className='border-b border-background-secondary pt-10' />
       <section>
-        <h2 className='text-hSm mb-5'>Logs</h2>
+        <h2 className='text-hSm mb-5 flex flex-row items-center gap-3'>
+          <span>Logs</span>
+          <RefreshCcw className='inline-block cursor-pointer w-4 h-4' onClick={async () => {
+            const tid = toast.loading('Refreshing')
+            await refetch()
+            toast.success('Refreshed', {
+              duration: 2000,
+              id: tid
+            })
+          }} />
+        </h2>
         <LogsTable data={config.jobs} sortingState={[{desc: true, id: "lastEventAt"}]} columns={[
           { 
             accessorKey: 'lastEventAt',
@@ -196,6 +206,7 @@ export default function Page({ params: { externalDataSourceUpdateConfigId } }: {
             cell: (d) => {
               try {
                 if (d) {
+                  // @ts-ignore
                   return formatRelative(new Date(d.getValue()), new Date())
                 }
                 return null

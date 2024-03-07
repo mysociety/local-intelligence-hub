@@ -21,6 +21,7 @@ const documents = {
     "\n  mutation CreateUpdateConfig($config: ExternalDataSourceUpdateConfigInput!) {\n    createExternalDataSourceUpdateConfig(data: $config) {\n      id\n      postcodeColumn\n      mapping {\n        destinationColumn\n        source\n        sourcePath\n      }\n    }\n  }\n": types.CreateUpdateConfigDocument,
     "\n  query TestAirtableSource($apiKey: String!, $baseId: String!, $tableId: String!) {\n    testAirtableSource(apiKey: $apiKey, baseId: $baseId, tableId: $tableId)\n  }\n": types.TestAirtableSourceDocument,
     "\n  mutation CreateAirtableSource($AirtableSource: AirtableSourceInput!) {\n    createAirtableSource(data: $AirtableSource) {\n      id\n      healthcheck\n    }\n  }\n": types.CreateAirtableSourceDocument,
+    "\n  query AllExternalDataSources {\n    externalDataSources {\n      id\n      name\n      createdAt\n      connectionDetails {\n        crmType: __typename\n        ...on AirtableSource {\n          baseId\n          tableId\n        }\n      }\n      updateConfigs {\n        id\n        enabled\n      }\n    }\n  }\n": types.AllExternalDataSourcesDocument,
     "\n  query PageForExternalDataSourceUpdateConfigReview($ID: ID!) {\n    externalDataSourceUpdateConfig(pk: $ID) {\n      id\n      externalDataSource {\n        id\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n      enabled\n      jobs {\n        lastEventAt\n        status\n      }\n    }\n  }\n": types.PageForExternalDataSourceUpdateConfigReviewDocument,
     "\n  query ListUpdateConfigs {\n    externalDataSourceUpdateConfigs {\n      id\n      externalDataSource {\n        id\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n      enabled\n      jobs {\n        lastEventAt\n        status\n      }\n    }\n  }\n": types.ListUpdateConfigsDocument,
     "\nmutation Login($username: String!, $password: String!) {\n  tokenAuth(username: $username, password: $password) {\n    errors\n    success\n    token {\n      token\n    }\n  }\n}\n": types.LoginDocument,
@@ -76,6 +77,10 @@ export function gql(source: "\n  query TestAirtableSource($apiKey: String!, $bas
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  mutation CreateAirtableSource($AirtableSource: AirtableSourceInput!) {\n    createAirtableSource(data: $AirtableSource) {\n      id\n      healthcheck\n    }\n  }\n"): (typeof documents)["\n  mutation CreateAirtableSource($AirtableSource: AirtableSourceInput!) {\n    createAirtableSource(data: $AirtableSource) {\n      id\n      healthcheck\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query AllExternalDataSources {\n    externalDataSources {\n      id\n      name\n      createdAt\n      connectionDetails {\n        crmType: __typename\n        ...on AirtableSource {\n          baseId\n          tableId\n        }\n      }\n      updateConfigs {\n        id\n        enabled\n      }\n    }\n  }\n"): (typeof documents)["\n  query AllExternalDataSources {\n    externalDataSources {\n      id\n      name\n      createdAt\n      connectionDetails {\n        crmType: __typename\n        ...on AirtableSource {\n          baseId\n          tableId\n        }\n      }\n      updateConfigs {\n        id\n        enabled\n      }\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

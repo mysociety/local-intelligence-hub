@@ -1,18 +1,11 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { twMerge } from 'tailwind-merge';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { NewExternalDataSourceUpdateConfigContext } from '../../layout';
-import { enrichmentDataSources, externalDataSourceOptions } from "@/lib/data";
-import { Form, FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import { FetchResult, gql, useMutation, useQuery } from '@apollo/client';
 import { CheckIfSourceHasConfigQuery, CheckIfSourceHasConfigQueryVariables, CreateUpdateConfigMutation, CreateUpdateConfigMutationVariables, ExternalDataSourceUpdateConfigInput } from '@/__generated__/graphql';
-import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { SourcePathSelector } from '@/components/SelectSourceData';
-import { ArrowRight, Cross, XCircle } from 'lucide-react';
 import { toast } from 'sonner'
 import { UpdateConfigForm } from '@/components/UpdateConfig';
 
@@ -61,6 +54,7 @@ export default function Page({ params: { externalDataSourceId }}: { params: { ex
       loading: 'Saving config...',
       success: (d: FetchResult<CreateUpdateConfigMutation>) => {
         if (!d.errors && d.data) {
+          context.setConfig(x => ({ ...x, externalDataSourceUpdateConfigId: d.data?.createExternalDataSourceUpdateConfig.id }))
           router.push(`/external-data-source-updates/new/review/${d.data.createExternalDataSourceUpdateConfig.id}`)
         }
         return 'Saved config'
@@ -77,6 +71,7 @@ export default function Page({ params: { externalDataSourceId }}: { params: { ex
 
   useEffect(() => {
     if (checkQuery.data?.externalDataSource?.updateConfigs?.length) {
+      context.setConfig(x => ({ ...x, externalDataSourceUpdateConfigId: checkQuery.data?.externalDataSource.updateConfigs[0].id }))
       router.push(`/external-data-source-updates/new/review/${checkQuery.data.externalDataSource.updateConfigs[0].id}`)
     }
   }, [checkQuery.data])
