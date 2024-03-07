@@ -899,7 +899,8 @@ class ExternalDataSource(PolymorphicModel):
                 path = mapping_dict['source_path']
                 field = mapping_dict['destination_column']
                 if source == 'postcodes.io':
-                    update_fields[field] = get(postcode_data['result'], path)
+                    if postcode_data is not None:
+                        update_fields[field] = get(postcode_data, path)
                 else:
                     pass
             # Return the member and config data
