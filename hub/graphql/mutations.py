@@ -25,6 +25,7 @@ class AirtableSourceInput(ExternalDataSourceInput):
     api_key: auto
     base_id: auto
     table_id: auto
+    organisation: Optional[str]
 
 @strawberry_django.partial(models.AirtableSource)
 class AirtableSourceInputPartial(AirtableSourceInput):
@@ -84,3 +85,30 @@ def refresh_webhook (config_id: str) -> models.ExternalDataSourceUpdateConfig:
     if config.external_data_source.automated_webhooks:
         config.refresh_webhook()
     return config
+
+@strawberry.mutation(extensions=[IsAuthenticated()])
+def create_airtable_source(info: Info, data: AirtableSourceInput) -> models.AirtableSource:
+    user = get_current_user(info)
+    organisation = data.organisation
+    if isinstance(data.organisation, strawberry.unset.UnsetType) or data.organisation is None:
+        if user.memberships.first() is not None:
+            print("Assigning the user's default organisation")
+            organisation = user.memberships.first().organisation
+        else:
+            print("Making an organisation for this user")
+            organisation = models.Organisation.objects.create(
+                name=f"{user.username}'s organisation",
+                slug=f'{user.username}-org'
+            )
+            models.Membership.objects.create(
+                user=user,
+                organisation=organisation,
+                role="owner"
+            )
+
+    return models.AirtableSource.objects.create(
+        api_key=data.api_key,
+        base_id=data.base_id,
+        table_id=data.table_id,
+        organisation=organisation
+    )
