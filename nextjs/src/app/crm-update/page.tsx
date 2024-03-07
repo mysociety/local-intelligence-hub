@@ -1,15 +1,19 @@
 'use client';
 
-import { gql, useQuery } from '@apollo/client';
-import { useRequireAuth } from '../../components/authenticationHandler';
-import { ListDataSyncsQuery } from '@/__generated__/graphql';
+import { FetchResult, gql, useQuery } from '@apollo/client';
+import { useRequireAuth } from '@/components/authenticationHandler';
+import { DisableUpdateConfigMutation, DisableUpdateConfigMutationVariables, EnableUpdateConfigMutation, EnableUpdateConfigMutationVariables, ListUpdateConfigsQuery } from '@/__generated__/graphql';
 import { Switch } from '@/components/ui/switch';
 import { client } from '@/components/apollo-client';
 import { ActionNetworkLogo, AirtableLogo } from '@/components/logos';
 import { formatRelative } from 'date-fns'
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
+import { toast } from "sonner"
 
 const LIST_DATA_SYNCS = gql`
-  query ListDataSyncs {
+  query ListUpdateConfigs {
     externalDataSourceUpdateConfigs {
       externalDataSource {
         id
@@ -28,10 +32,38 @@ const LIST_DATA_SYNCS = gql`
   }
 `;
 
+const ENABLE_UPDATE_CONFIG = gql`
+  mutation EnableUpdateConfig($ID: String!) {
+    enableUpdateConfig(configId: $ID) {
+      id
+      enabled
+      externalDataSource {
+        connectionDetails {
+          crmType: __typename
+        }
+      }
+    }
+  } 
+`
+
+const DISABLE_UPDATE_CONFIG = gql`
+  mutation DisableUpdateConfig($ID: String!) {
+    disableUpdateConfig(configId: $ID) {
+      id
+      enabled
+      externalDataSource {
+        connectionDetails {
+          crmType: __typename
+        }
+      }
+    }
+  } 
+`
+
 export default function Page() {
   const authLoading = useRequireAuth();
 
-  const { loading, error, data } = useQuery<ListDataSyncsQuery>(LIST_DATA_SYNCS);
+  const { loading, error, data } = useQuery<ListUpdateConfigsQuery>(LIST_DATA_SYNCS);
 
   if (authLoading) {
     return <h2>Loading...</h2>
@@ -39,29 +71,29 @@ export default function Page() {
 
   function switchUpdateConfig (checked: boolean, id: any) {
     if (checked) {
-      client.mutate({
-        mutation: gql`
-          mutation EnableUpdateConfig($ID: String!) {
-            enableUpdateConfig(configId: $ID) {
-              id
-              enabled
-            }
-          } 
-        `,
+      const mutation = client.mutate<EnableUpdateConfigMutation, EnableUpdateConfigMutationVariables>({
+        mutation: ENABLE_UPDATE_CONFIG,
         variables: { ID: id }
       })
+      toast.promise(mutation, {
+        loading: 'Enabling...',
+        success: (d: FetchResult<EnableUpdateConfigMutation>) => {
+          return `Enabled syncing for ${d.data?.enableUpdateConfig.externalDataSource.connectionDetails.crmType}`;
+        },
+        error: `Couldn't enable syncing`
+      });
     } else {
-      client.mutate({
-        mutation: gql`
-          mutation EnableUpdateConfig($ID: String!) {
-            disableUpdateConfig(configId: $ID) {
-              id
-              enabled
-            }
-          } 
-        `,
+      const mutation = client.mutate<DisableUpdateConfigMutation, DisableUpdateConfigMutationVariables>({
+        mutation: DISABLE_UPDATE_CONFIG,
         variables: { ID: id }
       })
+      toast.promise(mutation, {
+        loading: 'Disabling...',
+        success: (d: FetchResult<DisableUpdateConfigMutation>) => {
+          return `Disabled syncing for ${d.data?.disableUpdateConfig.externalDataSource.connectionDetails.crmType}`;
+        },
+        error: `Couldn't disable syncing`
+      });
     }
   }
 
@@ -70,12 +102,20 @@ export default function Page() {
       <PageHeader />
       <div className='border-b border-background-secondary pt-10' />
       <h2 className='text-hSm'>Active Syncs</h2>
-      {loading && <h2>Loading...</h2>}
-      {error && <h2>Error: {error.message}</h2>}
-      {data && (
-        <ul className='grid gap-7 grid-cols-1 sm:grid-cols-2 md:grid-cols-4'>
+      {loading ? (
+        <section className='grid gap-7 grid-cols-1 sm:grid-cols-2 md:grid-cols-4'>
+          <article className='rounded-xl border border-background-tertiary px-6 py-5 space-y-3'>
+            <Skeleton className="h-4 w-full max-w-[100px]" />
+            <Skeleton className="h-10 w-full" />
+          </article>
+          <CreateNewSyncButton />
+        </section>
+      ) : error ? (
+        <h2>Error: {error.message}</h2>
+      ) : data ? (
+        <section className='grid gap-7 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
           {data.externalDataSourceUpdateConfigs.map(updateConfig => (
-            <li key={updateConfig.id} className='rounded-xl border border-background-tertiary px-6 py-5 space-y-3'>
+            <article key={updateConfig.id} className='rounded-xl border border-background-tertiary px-6 py-5 space-y-3'>
               <h3 className='text-hSm'>{updateConfig.externalDataSource.connectionDetails.crmType}</h3>
               {updateConfig.events[0]?.scheduledAt ? (
                 <div className='text-sm text-muted-text'>
@@ -83,10 +123,11 @@ export default function Page() {
                 </div> 
               ) : null}
               <Switch checked={updateConfig.enabled} onCheckedChange={e => switchUpdateConfig(e, updateConfig.id)}>{updateConfig.enabled ? 'Enabled' : 'Disabled'}</Switch>
-            </li>
+            </article>
           ))}
-        </ul>
-      )}
+          <CreateNewSyncButton />
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -107,5 +148,21 @@ function PageHeader () {
         </div>
       </div>
     </header>
+  )
+}
+
+function CreateNewSyncButton () {
+  return (
+    <Link href='/crm-update/new'>
+      <article className='relative cursor-pointer rounded-xl border border-background-tertiary px-6 py-5'>
+        <div className='space-y-5'>
+          <Skeleton className="h-4 w-full max-w-[100px]" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+        <div className='absolute inset-0 top-1/2 -translate-y-1/2 flex items-center justify-center'>
+          <Button variant='reverse' className='shadow-md'>+ Create new sync</Button>
+        </div>
+      </article>
+    </Link>
   )
 }

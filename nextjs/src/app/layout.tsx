@@ -12,6 +12,7 @@ import {
 import Link from 'next/link';
 import "./globals.css";
 import { twMerge } from 'tailwind-merge';
+import { Toaster } from '@/components/ui/sonner';
 
 
 function MappedIcon() {
@@ -107,6 +108,7 @@ export default function RootLayout({
             </nav>
           )}
           <main>{children}</main>
+          <Toaster />
         </body>
       </html>
     </ApolloProvider >

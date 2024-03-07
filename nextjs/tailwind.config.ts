@@ -38,6 +38,11 @@ const config = {
           letterSpacing: '0em',
           fontWeight: '400',
         }],
+        label: ['14px', {
+          lineHeight: '17px',
+          letterSpacing: '0em',
+          fontWeight: '500',
+        }],
         sm: ['12px', {
           lineHeight: '16px',
           letterSpacing: '0em',
