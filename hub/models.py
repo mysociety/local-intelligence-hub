@@ -783,13 +783,6 @@ class ExternalDataSource(PolymorphicModel):
         Check the connection to the API.
         '''
         raise NotImplementedError('Healthcheck not implemented for this data source type.')
-    
-    @classmethod
-    def test_connection(cls):
-        '''
-        Use this to test a connection before creating the object.
-        '''
-        return cls.healthcheck()
 
     def setup_webhook(self, config: 'ExternalDataSourceUpdateConfig'):
         '''
@@ -1130,6 +1123,10 @@ class ExternalDataSourceUpdateConfig(models.Model):
 
     def __str__(self):
         return f'Update config for {self.external_data_source.name}'
+
+    def delete(self, *args, **kwargs):
+        self.disable()
+        return super().delete(*args, **kwargs)
 
     # UI
 

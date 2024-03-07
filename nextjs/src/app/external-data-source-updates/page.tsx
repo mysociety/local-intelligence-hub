@@ -1,28 +1,24 @@
 'use client';
 
-import { FetchResult, gql, useQuery } from '@apollo/client';
+import { gql, useQuery } from '@apollo/client';
 import { useRequireAuth } from '@/components/authenticationHandler';
-import { DisableUpdateConfigMutation, DisableUpdateConfigMutationVariables, EnableUpdateConfigMutation, EnableUpdateConfigMutationVariables, ListUpdateConfigsQuery } from '@/__generated__/graphql';
-import { Switch } from '@/components/ui/switch';
-import { client } from '@/components/apollo-client';
 import { ActionNetworkLogo, AirtableLogo } from '@/components/logos';
-import { formatRelative } from 'date-fns'
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
-import { toast } from "sonner"
+import { ExternalDataSourceUpdateConfigCard } from '@/components/ExternalDataSourceCard';
+import { ListUpdateConfigsQuery, ListUpdateConfigsQueryVariables } from '@/__generated__/graphql';
 
-const LIST_DATA_SYNCS = gql`
+const LIST_UPDATE_CONFIGS = gql`
   query ListUpdateConfigs {
     externalDataSourceUpdateConfigs {
+      id
       externalDataSource {
         id
-        __typename
         connectionDetails {
           crmType: __typename
         }
       }
-      id
       enabled
       events {
         scheduledAt
@@ -32,69 +28,13 @@ const LIST_DATA_SYNCS = gql`
   }
 `;
 
-const ENABLE_UPDATE_CONFIG = gql`
-  mutation EnableUpdateConfig($ID: String!) {
-    enableUpdateConfig(configId: $ID) {
-      id
-      enabled
-      externalDataSource {
-        connectionDetails {
-          crmType: __typename
-        }
-      }
-    }
-  } 
-`
-
-const DISABLE_UPDATE_CONFIG = gql`
-  mutation DisableUpdateConfig($ID: String!) {
-    disableUpdateConfig(configId: $ID) {
-      id
-      enabled
-      externalDataSource {
-        connectionDetails {
-          crmType: __typename
-        }
-      }
-    }
-  } 
-`
-
 export default function Page() {
   const authLoading = useRequireAuth();
 
-  const { loading, error, data } = useQuery<ListUpdateConfigsQuery>(LIST_DATA_SYNCS);
+  const { loading, error, data } = useQuery<ListUpdateConfigsQuery, ListUpdateConfigsQueryVariables>(LIST_UPDATE_CONFIGS);
 
   if (authLoading) {
     return <h2>Loading...</h2>
-  }
-
-  function switchUpdateConfig (checked: boolean, id: any) {
-    if (checked) {
-      const mutation = client.mutate<EnableUpdateConfigMutation, EnableUpdateConfigMutationVariables>({
-        mutation: ENABLE_UPDATE_CONFIG,
-        variables: { ID: id }
-      })
-      toast.promise(mutation, {
-        loading: 'Enabling...',
-        success: (d: FetchResult<EnableUpdateConfigMutation>) => {
-          return `Enabled syncing for ${d.data?.enableUpdateConfig.externalDataSource.connectionDetails.crmType}`;
-        },
-        error: `Couldn't enable syncing`
-      });
-    } else {
-      const mutation = client.mutate<DisableUpdateConfigMutation, DisableUpdateConfigMutationVariables>({
-        mutation: DISABLE_UPDATE_CONFIG,
-        variables: { ID: id }
-      })
-      toast.promise(mutation, {
-        loading: 'Disabling...',
-        success: (d: FetchResult<DisableUpdateConfigMutation>) => {
-          return `Disabled syncing for ${d.data?.disableUpdateConfig.externalDataSource.connectionDetails.crmType}`;
-        },
-        error: `Couldn't disable syncing`
-      });
-    }
   }
 
   return (
@@ -115,15 +55,10 @@ export default function Page() {
       ) : data ? (
         <section className='grid gap-7 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
           {data.externalDataSourceUpdateConfigs.map(updateConfig => (
-            <article key={updateConfig.id} className='rounded-xl border border-background-tertiary px-6 py-5 space-y-3'>
-              <h3 className='text-hSm'>{updateConfig.externalDataSource.connectionDetails.crmType}</h3>
-              {updateConfig.events[0]?.scheduledAt ? (
-                <div className='text-sm text-muted-text'>
-                  Last sync: {formatRelative(updateConfig.events[0].scheduledAt, new Date())} ({updateConfig.events[0].status})
-                </div> 
-              ) : null}
-              <Switch checked={updateConfig.enabled} onCheckedChange={e => switchUpdateConfig(e, updateConfig.id)}>{updateConfig.enabled ? 'Enabled' : 'Disabled'}</Switch>
-            </article>
+            <ExternalDataSourceUpdateConfigCard
+              key={updateConfig.id}
+              id={updateConfig.id}
+            />
           ))}
           <CreateNewSyncButton />
         </section>

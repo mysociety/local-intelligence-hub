@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/button';
 import { twMerge } from 'tailwind-merge';
 import { useContext, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { NewExternalDataSourceUpdateConfigContext, externalDataSourceOptions } from './layout';
+import { NewExternalDataSourceUpdateConfigContext } from './layout';
+import { externalDataSourceOptions } from '@/lib/data';
 
 export default function Page() {
   const router = useRouter()
   const context = useContext(NewExternalDataSourceUpdateConfigContext)
   return (
-    <div>
+    <div className='space-y-7'>
       <header>
         <h1 className='text-hLg'>Select platform to sync data to</h1>
         <p className='mt-6 text-muted-text max-w-sm'>We currently support the following platforms. If your platform isn’t on this list, <a href='mailto:hello@commonknowledge.coop'>get in touch to see how we can help.</a></p>

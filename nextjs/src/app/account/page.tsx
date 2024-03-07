@@ -2,8 +2,8 @@
 
 import { useQuery } from '@apollo/client';
 import { useRequireAuth } from '../../components/authenticationHandler';
-import { gql } from '@/__generated__';
-import { UserInfoQuery } from '@/__generated__/graphql';
+import { gql } from '../../__generated__';
+import { UserInfoQuery } from '../../__generated__/graphql';
 
 const USER_QUERY = gql`
   query UserInfo {

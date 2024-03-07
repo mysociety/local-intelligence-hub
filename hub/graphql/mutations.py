@@ -10,6 +10,10 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry.types.info import Info
 import procrastinate.contrib.django.models
 
+@strawberry.input
+class IDObject:
+    id: str
+
 @strawberry_django.input(models.ExternalDataSource)
 class ExternalDataSourceInput:
     name: auto

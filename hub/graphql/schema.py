@@ -22,9 +22,14 @@ class Query(UserQueries):
     area_types: List[types.AreaType] = strawberry_django.field()
     memberships: List[types.Membership] = strawberry_django.field(extensions=[IsAuthenticated()])
     organisations: List[types.Organisation] = strawberry_django.field(extensions=[IsAuthenticated()])
+
+    external_data_source: types.ExternalDataSource = strawberry_django.field(extensions=[IsAuthenticated()])
     external_data_sources: List[types.ExternalDataSource] = strawberry_django.field(extensions=[IsAuthenticated()])
+    airtable_source: types.AirtableSource = strawberry_django.field(extensions=[IsAuthenticated()])
     airtable_sources: List[types.AirtableSource] = strawberry_django.field(extensions=[IsAuthenticated()])
+    external_data_source_update_config: types.ExternalDataSourceUpdateConfig = strawberry_django.field(extensions=[IsAuthenticated()])
     external_data_source_update_configs: List[types.ExternalDataSourceUpdateConfig] = strawberry_django.field(extensions=[IsAuthenticated()])
+    event: types.EventLogItem = strawberry_django.field(extensions=[IsAuthenticated()])
     events: List[types.EventLogItem] = strawberry_django.field(extensions=[IsAuthenticated()])
     
     @strawberry.field
@@ -37,7 +42,7 @@ class Query(UserQueries):
             api_key=api_key,
             base_id=base_id,
             table_id=table_id
-        ).test_connection()
+        ).healthcheck()
 
     @strawberry_django.field
     def public_areas(self) -> List[types.Area]:
@@ -58,7 +63,8 @@ class Mutation:
 
     create_airtable_source: types.AirtableSource = mutations.create(mutation_types.AirtableSourceInput, extensions=[IsAuthenticated()])
     update_airtable_source: types.AirtableSource = mutations.update(mutation_types.AirtableSourceInputPartial, extensions=[IsAuthenticated()])
-    delete_airtable_source: types.AirtableSource = mutations.delete(NodeInput, extensions=[IsAuthenticated()])
+    delete_airtable_source: types.AirtableSource = mutations.delete(str, extensions=[IsAuthenticated()])
+    delete_external_data_source: types.ExternalDataSource = mutations.delete(mutation_types.IDObject, extensions=[IsAuthenticated()])
 
     create_external_data_source_update_config: types.ExternalDataSourceUpdateConfig = mutations.create(mutation_types.ExternalDataSourceUpdateConfigInput, extensions=[IsAuthenticated()])
     update_external_data_source_update_config: types.ExternalDataSourceUpdateConfig = mutations.update(mutation_types.ExternalDataSourceUpdateConfigInputPartial, extensions=[IsAuthenticated()])

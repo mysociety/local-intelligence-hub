@@ -1,6 +1,6 @@
 'use client';
 
-import { UserTestQuery } from '@/__generated__/graphql';
+import { UserTestQuery } from '../__generated__/graphql';
 import { gql, useQuery } from '@apollo/client';
 import { useEffect, useMemo, useState } from 'react';
 

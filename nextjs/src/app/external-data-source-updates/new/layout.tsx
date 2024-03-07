@@ -2,15 +2,8 @@
 
 import { useRequireAuth } from '@/components/authenticationHandler';
 import { AirtableLogo } from '@/components/logos';
-import { Button } from '@/components/ui/button';
-import { twMerge } from 'tailwind-merge';
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { AirtableSourceInput, CreateAirtableSourceMutation, CreateAirtableSourceMutationVariables } from '@/__generated__/graphql';
-import { Combobox } from '@/components/ui/combobox';
-import { TailSpin } from 'react-loader-spinner'
-import { gql } from '@apollo/client';
-import { client } from '@/components/apollo-client';
 import Link from 'next/link';
 import { createContext } from 'react';
 
@@ -65,23 +58,4 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
     </NewExternalDataSourceUpdateConfigContext.Provider>
   );
-}
-
-export const dataLayers = {
-  "postcodes.io": {
-    key: "postcodes.io",
-    name: "Postcodes.io",
-    data: [
-      "postcode",
-      "parliamentary_constituency"
-    ]
-  }
-}
-
-export const externalDataSourceOptions = {
-  airtable: {
-    key: 'airtable',
-    name: 'Airtable',
-    logo: AirtableLogo
-  }
 }
