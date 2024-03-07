@@ -20,8 +20,8 @@ const GET_UPDATE_CONFIG = gql`
         }
       }
       enabled
-      events {
-        scheduledAt
+      jobs {
+        lastEventAt
         status
       }
     }

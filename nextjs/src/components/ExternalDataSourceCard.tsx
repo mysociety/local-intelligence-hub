@@ -7,15 +7,6 @@ import { toast } from 'sonner'
 import { DisableUpdateConfigMutation, DisableUpdateConfigMutationVariables, EnableUpdateConfigMutation, EnableUpdateConfigMutationVariables, UpdateConfigCardFieldsFragment } from "../__generated__/graphql";
 
 export function ExternalDataSourceUpdateConfigCard({ updateConfig }: { updateConfig: UpdateConfigCardFieldsFragment }) {
-  // const { complete, data: updateConfig } = useFragment({
-  //   fragment: gql(UPDATE_CONFIG_CARD_FRAGMENT),
-  //   fragmentName: "UpdateConfigCardFields",
-  //   from: {
-  //     __typename: "ExternalDataSourceUpdateConfig",
-  //     id,
-  //   },
-  // });
-
   return (
     <article className='rounded-xl border border-background-tertiary px-6 py-5 space-y-3'>
       <header className='flex flex-row justify-between items-center'>
@@ -26,9 +17,9 @@ export function ExternalDataSourceUpdateConfigCard({ updateConfig }: { updateCon
           <CogIcon />
         </Link>
       </header>
-      {updateConfig?.events?.[0]?.scheduledAt ? (
+      {updateConfig?.jobs?.[0]?.lastEventAt ? (
         <div className='text-sm text-muted-text'>
-          Last sync: {formatRelative(updateConfig.events[0].scheduledAt, new Date())} ({updateConfig.events[0].status})
+          Last sync: {formatRelative(updateConfig.jobs[0].lastEventAt, new Date())} ({updateConfig.jobs[0].status})
         </div> 
       ) : null}
       <ExternalDataSourceCardSwitch updateConfig={updateConfig} />
@@ -85,8 +76,8 @@ export const UPDATE_CONFIG_CARD_FRAGMENT = gql`
       }
     }
     enabled
-    events {
-      scheduledAt
+    jobs {
+      lastEventAt
       status
     }
   }

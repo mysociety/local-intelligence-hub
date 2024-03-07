@@ -20,8 +20,8 @@ const LIST_UPDATE_CONFIGS = gql`
         }
       }
       enabled
-      events {
-        scheduledAt
+      jobs {
+        lastEventAt
         status
       }
     }
@@ -57,7 +57,7 @@ export default function Page() {
           {data.externalDataSourceUpdateConfigs.map(updateConfig => (
             <ExternalDataSourceUpdateConfigCard
               key={updateConfig.id}
-              id={updateConfig.id}
+              updateConfig={updateConfig}
             />
           ))}
           <CreateNewSyncButton />

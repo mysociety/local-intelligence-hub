@@ -29,8 +29,8 @@ class Query(UserQueries):
     airtable_sources: List[types.AirtableSource] = strawberry_django.field(extensions=[IsAuthenticated()])
     external_data_source_update_config: types.ExternalDataSourceUpdateConfig = strawberry_django.field(extensions=[IsAuthenticated()])
     external_data_source_update_configs: List[types.ExternalDataSourceUpdateConfig] = strawberry_django.field(extensions=[IsAuthenticated()])
-    event: types.EventLogItem = strawberry_django.field(extensions=[IsAuthenticated()])
-    events: List[types.EventLogItem] = strawberry_django.field(extensions=[IsAuthenticated()])
+    event: types.QueueJob = strawberry_django.field(extensions=[IsAuthenticated()])
+    jobs: List[types.QueueJob] = strawberry_django.field(extensions=[IsAuthenticated()])
     
     @strawberry.field
     def test_airtable_source(self,
@@ -72,7 +72,7 @@ class Mutation:
 
     enable_update_config: types.ExternalDataSourceUpdateConfig = mutation_types.enable_update_config
     disable_update_config: types.ExternalDataSourceUpdateConfig = mutation_types.disable_update_config
-    update_all: types.EventLogItem = mutation_types.update_all
+    update_all: types.QueueJob = mutation_types.update_all
     refresh_webhook: types.ExternalDataSourceUpdateConfig = mutation_types.refresh_webhook
 
     create_organisation: types.Membership = mutation_types.create_organisation

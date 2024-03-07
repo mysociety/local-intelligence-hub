@@ -53,12 +53,12 @@ const GET_UPDATE_CONFIG = gql`
         }
       }
       enabled
-      events {
-        scheduledAt
+      jobs {
         status
         id
         taskName
         args
+        lastEventAt
       }
     }
   }
@@ -109,9 +109,9 @@ export default function Page({ params: { externalDataSourceUpdateConfigId } }: {
       </header>
       <div className='flex flex-row justify-between gap-8'>
         <div className='space-y-3'>
-          {config.events[0]?.scheduledAt ? (
+          {config.jobs[0]?.lastEventAt ? (
             <div className='text-muted-text'>
-              Last sync: {formatRelative(config.events[0].scheduledAt, new Date())} ({config.events[0].status})
+              Last sync: {formatRelative(config.jobs[0].lastEventAt, new Date())} ({config.jobs[0].status})
             </div> 
           ) : null}
           <ExternalDataSourceCardSwitch updateConfig={config} />
@@ -141,16 +141,16 @@ export default function Page({ params: { externalDataSourceUpdateConfigId } }: {
       <div className='border-b border-background-secondary pt-10' />
       <section>
         <h2 className='text-hSm mb-5'>Logs</h2>
-        <LogsTable data={config.events} sortingState={[{desc: true, id: "scheduledAt"}]} columns={[
+        <LogsTable data={config.jobs} sortingState={[{desc: true, id: "lastEventAt"}]} columns={[
           { 
-            accessorKey: 'scheduledAt',
+            accessorKey: 'lastEventAt',
             header: ({ column }) => {
               return (
                 <Button
                   variant="ghost"
                   onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                 >
-                  Scheduled At
+                  Last Update Time
                   <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
               )
