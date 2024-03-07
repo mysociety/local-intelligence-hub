@@ -4,6 +4,7 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry import auto
 from typing import List, Optional, Union
 from hub import models
+from datetime import datetime
 import procrastinate.contrib.django.models
 
 @strawberry_django.type(models.Area)
@@ -70,6 +71,9 @@ class ExternalDataSource:
     id: auto
     name: auto
     description: auto
+    created_at: auto
+    last_update: auto
+    organisation: Organisation
     update_configs: List['ExternalDataSourceUpdateConfig']
 
     @classmethod
@@ -109,7 +113,7 @@ class UpdateConfigDict:
         return self['destination_column']
 
 @strawberry_django.filters.filter(procrastinate.contrib.django.models.ProcrastinateJob, lookups=True)
-class EventLogFilter:
+class QueueFilter:
     id: auto
     status: auto
     queue_name: auto
@@ -121,8 +125,11 @@ class EventLogFilter:
     def filter_config_id(self, queryset, info, value):
         return queryset.filter(args__config_id=value)
 
-@strawberry_django.type(procrastinate.contrib.django.models.ProcrastinateJob, filters=EventLogFilter, pagination=True)
-class EventLogItem:
+@strawberry_django.type(
+    procrastinate.contrib.django.models.ProcrastinateJob,
+    filters=QueueFilter,
+    pagination=True)
+class QueueJob:
     id: auto
     queue_name: auto
     task_name: auto
@@ -132,6 +139,11 @@ class EventLogItem:
     scheduled_at: auto
     attempts: auto
     queueing_lock: auto
+    events: List['QueueEvent']
+
+    @strawberry_django.field
+    def last_event_at(self, info) -> datetime:
+        return procrastinate.contrib.django.models.ProcrastinateEvent.objects.filter(job_id=self.id).order_by("-at").first().at
 
     @classmethod
     def get_queryset(cls, queryset, info, **kwargs):
@@ -144,6 +156,13 @@ class EventLogItem:
             args__config_id__in=[str(my_config.id) for my_config in my_configs]
         )
 
+@strawberry_django.type(procrastinate.contrib.django.models.ProcrastinateEvent)
+class QueueEvent:
+    id: auto
+    job: QueueJob
+    type: auto
+    at: auto
+
 @strawberry_django.type(models.ExternalDataSourceUpdateConfig)
 class ExternalDataSourceUpdateConfig:
     id: auto
@@ -151,9 +170,11 @@ class ExternalDataSourceUpdateConfig:
     mapping: List[UpdateConfigDict]
     postcode_column: auto
     enabled: auto
-    event_log: List[EventLogItem] = strawberry_django.field(
-        resolver=models.ExternalDataSourceUpdateConfig.event_log_queryset,
-        filters=EventLogFilter,
+    jobs: List[QueueJob] = strawberry_django.field(
+        resolver=lambda self: procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
+            args__config_id=str(self.id)
+        ),
+        filters=QueueFilter,
         pagination=True
     )
 

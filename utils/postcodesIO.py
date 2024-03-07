@@ -91,12 +91,19 @@ async def get_bulk_postcode_geo(postcodes) -> PostcodesIOBulkResult:
     },)
     data = response.json()
     status = get(data, 'status')
-    result = get(data, 'result')
+    result: List[ResultElement] = get(data, 'result')
 
     if status != 200 or result is None:
         raise Exception(f'Failed to bulk geocode postcodes: {postcodes}.')
 
-    return result
+    return [
+        next((
+            geo.get('result') if geo.get('result') else None
+            for geo in result
+            if geo['query'] == postcode
+        ), None)
+        for postcode in postcodes
+    ]
 
 
 @batch_and_aggregate(25)

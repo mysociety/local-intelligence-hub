@@ -18,6 +18,10 @@
 		"mhutchie.git-graph",
     "mtxr.sqltools",
     "mtxr.sqltools-driver-pg",
+    "GraphQL.vscode-graphql",
+    "GraphQL.vscode-graphql-syntax",
+    "bradlc.vscode-tailwindcss",
+    "apollographql.vscode-apollo"
 	],
   "settings": {
     "terminal.integrated.shell.linux": "/bin/bash",
