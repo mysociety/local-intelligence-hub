@@ -29,7 +29,31 @@ from utils.py import get, ensure_list
 from strawberry.dataloader import DataLoader
 from pyairtable import Api as AirtableAPI, Base as AirtableBase, Table as AirtableTable
 
+
 User = get_user_model()
+
+
+class Organisation(models.Model):
+    slug = models.SlugField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    website = models.URLField(blank=True, null=True)
+    logo = models.ImageField(null=True, upload_to="organisation")
+
+    def __str__(self):
+        return self.name
+    
+
+class Membership(models.Model):
+    class Meta:
+        unique_together = ['user', 'organisation']
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="memberships")
+    organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name="members")
+    role = models.CharField(max_length=250)
+
+    def __str__(self):
+        return f"{self.user}: {self.role} in {self.organisation}"
 
 
 class UserProperties(models.Model):
@@ -735,7 +759,7 @@ class ExternalDataSource(PolymorphicModel):
     This class is to be subclassed by specific data source types.
     '''
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    # TODO: organisation = models.CharField(max_length=100)
+    organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name='external_data_sources', null=True, blank=True)
     name = models.CharField(max_length=250, null=True, blank=True)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
