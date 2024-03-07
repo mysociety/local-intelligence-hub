@@ -28,6 +28,7 @@ const documents = {
     "\n  fragment UpdateConfigCardFields on ExternalDataSourceUpdateConfig {\n    id\n    externalDataSource {\n      id\n      connectionDetails {\n        crmType: __typename\n      }\n    }\n    enabled\n    jobs {\n      lastEventAt\n      status\n    }\n  }\n": types.UpdateConfigCardFieldsFragmentDoc,
     "\n  mutation EnableUpdateConfig($ID: String!) {\n    enableUpdateConfig(configId: $ID) {\n      id\n      enabled\n      externalDataSource {\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n    }\n  } \n": types.EnableUpdateConfigDocument,
     "\n  mutation DisableUpdateConfig($ID: String!) {\n    disableUpdateConfig(configId: $ID) {\n      id\n      enabled\n      externalDataSource {\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n    }\n  } \n": types.DisableUpdateConfigDocument,
+    "\n  mutation TriggerFullUpdate($configId: String!) {\n    updateAll(configId: $configId) {\n      id\n      jobs {\n        status\n        id\n        taskName\n        args\n        lastEventAt\n      }\n      externalDataSource {\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n    }\n  }\n": types.TriggerFullUpdateDocument,
     "\n  query UserTest {\n    me {\n      id\n    }\n  }\n": types.UserTestDocument,
 };
 
@@ -105,6 +106,10 @@ export function gql(source: "\n  mutation EnableUpdateConfig($ID: String!) {\n  
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  mutation DisableUpdateConfig($ID: String!) {\n    disableUpdateConfig(configId: $ID) {\n      id\n      enabled\n      externalDataSource {\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n    }\n  } \n"): (typeof documents)["\n  mutation DisableUpdateConfig($ID: String!) {\n    disableUpdateConfig(configId: $ID) {\n      id\n      enabled\n      externalDataSource {\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n    }\n  } \n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation TriggerFullUpdate($configId: String!) {\n    updateAll(configId: $configId) {\n      id\n      jobs {\n        status\n        id\n        taskName\n        args\n        lastEventAt\n      }\n      externalDataSource {\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation TriggerFullUpdate($configId: String!) {\n    updateAll(configId: $configId) {\n      id\n      jobs {\n        status\n        id\n        taskName\n        args\n        lastEventAt\n      }\n      externalDataSource {\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

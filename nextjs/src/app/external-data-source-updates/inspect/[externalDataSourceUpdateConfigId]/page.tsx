@@ -7,7 +7,7 @@ import { AirtableLogo } from '@/components/logos';
 import { formatRelative } from 'date-fns'
 import { Button, buttonVariants } from '@/components/ui/button';
 import { toast } from "sonner"
-import { ExternalDataSourceCardSwitch, UPDATE_CONFIG_CARD_FRAGMENT } from '@/components/ExternalDataSourceCard';
+import { ExternalDataSourceCardSwitch, ExternalDataSourceFullUpdateButton } from '@/components/ExternalDataSourceCard';
 import { LoadingIcon } from '@/components/ui/loadingIcon';
 import { DeleteSourceMutation, DeleteSourceMutationVariables, ExternalDataSourceUpdateConfigInput, PageForExternalDataSourceUpdateConfigQuery, PageForExternalDataSourceUpdateConfigQueryVariables, UpdateConfigMutation } from '@/__generated__/graphql';
 import { useRouter } from 'next/navigation';
@@ -137,7 +137,8 @@ export default function Page({ params: { externalDataSourceUpdateConfigId } }: {
           ) : null}
           <ExternalDataSourceCardSwitch updateConfig={config} />
         </div>
-        <div>
+        <div className='flex flex-row gap-4'>
+          <ExternalDataSourceFullUpdateButton id={config.id} />
           <AlertDialog>
             <AlertDialogTrigger>
               <Button variant='destructive'>Permanently delete</Button>

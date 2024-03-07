@@ -72,7 +72,7 @@ class Mutation:
 
     enable_update_config: types.ExternalDataSourceUpdateConfig = mutation_types.enable_update_config
     disable_update_config: types.ExternalDataSourceUpdateConfig = mutation_types.disable_update_config
-    update_all: types.QueueJob = mutation_types.update_all
+    update_all: types.ExternalDataSourceUpdateConfig = mutation_types.update_all
     refresh_webhook: types.ExternalDataSourceUpdateConfig = mutation_types.refresh_webhook
 
     create_organisation: types.Membership = mutation_types.create_organisation

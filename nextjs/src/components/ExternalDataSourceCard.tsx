@@ -4,7 +4,19 @@ import { Switch } from '@/components/ui/switch';
 import { client } from "./apollo-client";
 import { FetchResult, gql, useFragment } from "@apollo/client";
 import { toast } from 'sonner'
-import { DisableUpdateConfigMutation, DisableUpdateConfigMutationVariables, EnableUpdateConfigMutation, EnableUpdateConfigMutationVariables, UpdateConfigCardFieldsFragment } from "../__generated__/graphql";
+import { DisableUpdateConfigMutation, DisableUpdateConfigMutationVariables, EnableUpdateConfigMutation, EnableUpdateConfigMutationVariables, TriggerFullUpdateMutation, TriggerFullUpdateMutationVariables, UpdateConfigCardFieldsFragment, UpdateConfigMutation } from "../__generated__/graphql";
+import { Button, ButtonProps, buttonVariants } from "./ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export function ExternalDataSourceUpdateConfigCard({ updateConfig }: { updateConfig: UpdateConfigCardFieldsFragment }) {
   return (
@@ -23,6 +35,7 @@ export function ExternalDataSourceUpdateConfigCard({ updateConfig }: { updateCon
         </div> 
       ) : null}
       <ExternalDataSourceCardSwitch updateConfig={updateConfig} />
+      <ExternalDataSourceFullUpdateButton id={updateConfig.id} className="w-full" />
     </article>
   )
 }
@@ -36,6 +49,49 @@ export function ExternalDataSourceCardSwitch ({ updateConfig }: {
       {updateConfig.enabled ? <span className='text-brand'>Enabled</span> : <span>Disabled</span>}
     </div>
   )
+}
+
+export function ExternalDataSourceFullUpdateButton ({ id, label = 'Trigger full sync', ...buttonProps }: {
+  id: string,
+  label?: string
+} & ButtonProps) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger {...buttonProps}>
+        <Button {...buttonProps}>
+          {label}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Trigger a full update</AlertDialogTitle>
+          <AlertDialogDescription className='text-base'>
+            This will update all records in the CRM. Depending on the size of your CRM, this may take a while.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel  className={buttonVariants({ variant: 'outline' })}>Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={() => { trigger() }} className={buttonVariants({ variant: 'reverse' })}>Trigger update
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+
+  function trigger () {
+    const mutation = client.mutate<TriggerFullUpdateMutation, TriggerFullUpdateMutationVariables>({
+      mutation: TRIGGER_FULL_UPDATE,
+      variables: { configId: id }
+    })
+    toast.promise(mutation, {
+      loading: 'Triggering...',
+      success: (d: FetchResult<TriggerFullUpdateMutation>) => {
+        return `Triggered sync for ${d.data?.updateAll.externalDataSource.connectionDetails.crmType}`;
+      },
+      error: `Couldn't trigger sync`
+    });
+  }
 }
 
 export function toggleUpdateConfigEnabled (checked: boolean, id: any) {
@@ -119,3 +175,23 @@ export function CogIcon () {
 </svg>
   )
 }
+
+export const TRIGGER_FULL_UPDATE = gql`
+  mutation TriggerFullUpdate($configId: String!) {
+    updateAll(configId: $configId) {
+      id
+      jobs {
+        status
+        id
+        taskName
+        args
+        lastEventAt
+      }
+      externalDataSource {
+        connectionDetails {
+          crmType: __typename
+        }
+      }
+    }
+  }
+`;

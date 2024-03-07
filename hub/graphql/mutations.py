@@ -70,10 +70,10 @@ def disable_update_config (config_id: str) -> models.ExternalDataSourceUpdateCon
     return config
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
-def update_all(config_id: str) -> procrastinate.contrib.django.models.ProcrastinateJob:
+def update_all(config_id: str) -> models.ExternalDataSourceUpdateConfig:
     config = models.ExternalDataSourceUpdateConfig.objects.get(id=config_id)
     job_id = config.schedule_update_all()
-    return procrastinate.contrib.django.models.ProcrastinateJob.objects.get(id=job_id)
+    return config
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
 def refresh_webhook (config_id: str) -> models.ExternalDataSourceUpdateConfig:
