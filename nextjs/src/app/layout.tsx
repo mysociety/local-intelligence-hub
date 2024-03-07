@@ -1,4 +1,5 @@
 'use client';
+import { useEffect, useState } from 'react';
 
 import { ApolloProvider } from '@apollo/client';
 import { client } from '../components/apollo-client';
@@ -13,14 +14,23 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
- 
+  
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('jwt');
+    if (token) {
+      setIsLoggedIn(true);
+    }
+  }, []);
+
   return (
     <ApolloProvider client={client}>
       <html lang="en">
         <body>
-          <AreaPattern/>
-          <Navbar />
-          <main className="p-lg">{children}</main>
+        {!isLoggedIn && <AreaPattern/>}
+        <Navbar isLoggedIn={isLoggedIn} />
+        <main className="p-lg">{children}</main>
           <Toaster />
           <Footer/>
         </body>

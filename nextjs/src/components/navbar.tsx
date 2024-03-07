@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -8,15 +7,12 @@ import {
 import Link from 'next/link';
 import { twMerge } from 'tailwind-merge';
 
-export default function Navbar() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+interface NavbarProps {
+  isLoggedIn: boolean;
+}
 
-  useEffect(() => {
-    const token = localStorage.getItem('jwt');
-    if (token) {
-      setIsLoggedIn(true);
-    }
-  }, []);
+
+export default function Navbar({ isLoggedIn }: NavbarProps ) {
 
   function MappedIcon() {
     return (
@@ -39,7 +35,9 @@ export default function Navbar() {
       {isLoggedIn ? (
         <nav className='flex flex-row justify-start items-center p-sm gap-md'>
           <Link href='/'><MappedIcon /></Link>
-          <Link href='/external-data-source-updates'>CRM Data Updates</Link>
+          <Link href='/reports'>Reports</Link>
+          <Link href='/'>Data layers</Link>
+          <Link href='/external-data-source-updates'>CRM Data Sync</Link>
           {isLoggedIn ? (
             <Link href="/logout" className={twMerge('ml-auto', buttonVariants({ variant: "brand" }))}>Logout</Link>
           ) : (
