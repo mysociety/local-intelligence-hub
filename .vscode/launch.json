@@ -34,6 +34,13 @@
           ],
           "justMyCode": true,
           "django": true
+        },
+        {
+          // Node 
+          "name": "Generate GraphQL types for client",
+          "type": "node-terminal",
+          "command": "cd nextjs && npm run graphql:watch",
+          "request": "launch"
         }
     ],
     "compounds": [
@@ -42,7 +49,8 @@
             "configurations": [
                 "NextJS",
                 "Django",
-                "Django background worker"
+                "Django background worker",
+                "Generate GraphQL types for client"
             ]
         }
     ]

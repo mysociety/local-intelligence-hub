@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/experimental-nextjs-app-support/ssr";
@@ -13,15 +13,15 @@ const EXAMPLE_QUERY = gql`
 `
 
 export default function DataTable() {
-    const { data, error, loading } = useQuery(EXAMPLE_QUERY);
+  const { data, error, loading } = useQuery(EXAMPLE_QUERY);
 
-    if (error) {
-        return <p className="text-red-500">Error: {String(error)}</p>
-    }
+  if (error) {
+    return <p className="text-red-500">Error: {String(error)}</p>;
+  }
 
-    if (loading) {
-        return <p>Loading...</p>
-    }
+  if (loading) {
+    return <p>Loading...</p>;
+  }
 
     const orgs = data?.organisations || [];
 

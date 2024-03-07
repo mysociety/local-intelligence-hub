@@ -31,5 +31,6 @@
         "**/templates/**/*.html": "django-html",
         "**/templates/**/*": "django-txt",
         "**/requirements{/**,*}.{txt,in}": "pip-requirements"
-    }
+    },
+    "tailwindCSS.experimental.configFile": "nextjs/tailwind.config.ts"
 }
