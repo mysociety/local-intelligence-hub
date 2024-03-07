@@ -7,7 +7,7 @@ const config = {
     './components/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
-	],
+  ],
   prefix: "",
   theme: {
     container: {
@@ -19,8 +19,8 @@ const config = {
     },
     extend: {
       fontFamily: {
-        'IBMPlexSans': ['"IBM Plex Sans Condensed", sans-serif'], 
-        'PPRightGrotesk': ['PPRightGrotesk, sans-serif'], 
+        'IBMPlexSans': ['"IBM Plex Sans Condensed", sans-serif'],
+        'PPRightGrotesk': ['PPRightGrotesk, sans-serif'],
       },
       fontSize: {
         hLg: ['36px', {
@@ -75,13 +75,24 @@ const config = {
         }],
       },
       colors: {
-        brand: "hsl(var(--brand))",
+        brandBlue: "hsl(var(--brand))",
+        white: "hsl(var(--white))",
+        meepGray: {
+          100: "hsl(var(--meep-gray-100))",
+          200: "hsl(var(--meep-gray-200))",
+          300: "hsl(var(--meep-gray-300))",
+          400: "hsl(var(--meep-gray-400))",
+          500: "hsl(var(--meep-gray-500))",
+          600: "hsl(var(--meep-gray-600))",
+          700: "hsl(var(--meep-gray-700))",
+          800: "hsl(var(--meep-gray-800))",
+        },
+        labour: "hsl(var(--labour))",
+        conservative: "hsl(var(--conservative))",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        meepGray: {
-          500: "hsl(var(--meep-gray-500))",
-        },
+
         background: {
           DEFAULT: "hsl(var(--background))",
           secondary: "hsl(var(--background-secondary))",
@@ -95,15 +106,6 @@ const config = {
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
-        },
-
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-      
-        white: {
-          DEFAULT: "hsl(var(--white))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -122,7 +124,7 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-    
+
       },
       borderRadius: {
         lg: "var(--radius)",
