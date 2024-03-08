@@ -3,14 +3,30 @@
 {% block content %}
 
 <div class="py-4 py-lg-5">
+
     <div class="container pb-5">
-
         <h1>Datasets and data sources</h1>
+        <p class="readable mt-4 mb-0">
+            The Local Intelligence Hub brings together data from a number of public and private sources, under four categories: <a href="#mp">MP</a>, <a href="#opinion">Public opinion</a>, <a href="#place">Place</a>, and <a href="#movement">Movement</a>.
+        </p>
+    </div>
 
-        <div class="readable mt-4">
-            <p>The Local Intelligence Hub brings together data from a number of public and private sources, under four categories: <a href="#mp">MP</a>, <a href="#opinion">Public opinion</a>, <a href="#place">Place</a>, and <a href="#movement">Movement</a>.</p>
-            <p>We are constantly incorporating new data into the Local Intelligence Hub, for the benefit of the entire climate and nature movement. If your organisation has data to contribute, <a href="{% url 'contact' %}">please get in touch</a>.</p>
+    <div class="bg-gray-100 border-top border-bottom py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-5 col-xl-6">
+                    {% include 'hub/includes/mailing-list-form.html' with classes="js-collapsable-mailing-list-form" %}
+                </div>
+                <div class="col-md-5 mt-5 mt-md-0 mx-md-auto">
+                    <h2 class="h4 mt-0">Got new data to contribute?</h2>
+                    <p>We are constantly incorporating new data into the Local Intelligence Hub, for the benefit of the entire climate and nature movement.</p>
+                    <p class="mb-0">If your organisation has data to contribute, <a href="{% url 'contact' %}">please get in touch</a>.</p>
+                </div>
+            </div>
         </div>
+    </div>
+
+    <div class="container pb-5">
 
       {% for slug, category in categories.items %}
         <h2 class="mt-5 text-primary" id="{{ slug }}">{{ category.label }}</h2>

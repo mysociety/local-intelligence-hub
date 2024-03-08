@@ -16,6 +16,28 @@ async function mailingListSignup($form) {
     return response.json()
 }
 
+var setUpCollapsableMailingListForm = function() {
+    var $form = $(this);
+    var selectors = '.js-mailing-list-name, .js-mailing-list-extras';
+    var trigger = '.js-mailing-list-email input#email';
+    var instances = [];
+
+    var updateUI = function() {
+        var emailEntered = $(trigger).val() !== '';
+        $.each(instances, function(i, instance){
+            emailEntered ? instance.show() : instance.hide();
+        });
+    };
+
+    $(selectors, $form).addClass('collapse').each(function(){
+        instances.push(new Collapse(this, { toggle: false }));
+    });
+    $(trigger, $form).on('keyup change', function(){
+        updateUI();
+    });
+    updateUI();
+};
+
 $(function(){
     if( 'geolocation' in navigator ) {
         $('.js-geolocate').removeClass('d-none');
@@ -100,14 +122,16 @@ $(function(){
         });
     })
 
-    $('#mailing_list_signup').on('submit', function(e){
+    $('.js-collapsable-mailing-list-form').each(setUpCollapsableMailingListForm);
+
+    $('.js-mailing-list-signup').on('submit', function(e){
         e.preventDefault();
         var $form = $(this);
         $('.invalid-feedback').remove()
         mailingListSignup($form).then(function(response){
             if (response['response'] == 'ok') {
-                $form.parent().hide()
-                $('#mailing_list_success').removeClass('d-none')
+                $form.hide()
+                $('.js-mailing-list-success').removeClass('d-none')
             } else {
                 console.log(response)
                 for (var k in response["errors"]) {
