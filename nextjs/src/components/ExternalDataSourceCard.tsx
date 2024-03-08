@@ -43,7 +43,7 @@ export function ExternalDataSourceUpdateConfigCard({
   )!.logo;
 
   return (
-    <article className="rounded-xl border border-background-tertiary px-6 py-5 space-y-3">
+    <article className="rounded-xl border border-meepGray-600 px-6 py-5 space-y-3">
       <Logo className='w-20'/>
       <header className="flex flex-row justify-between items-center">
         <h3 className="text-hSm">
@@ -54,7 +54,7 @@ export function ExternalDataSourceUpdateConfigCard({
         </Link>
       </header>
       {updateConfig?.jobs?.[0]?.lastEventAt ? (
-        <div className="text-sm text-muted-text">
+        <div className="text-sm text-meepGray-400">
           Last sync:{" "}
           {formatRelative(updateConfig.jobs[0].lastEventAt, new Date())} (
           {updateConfig.jobs[0].status})
@@ -86,7 +86,7 @@ export function ExternalDataSourceCardSwitch({
         }
       />
       {updateConfig.enabled ? (
-        <span className="text-brand">Webhooks enabled</span>
+        <span className="text-brandBlue">Webhooks enabled</span>
       ) : (
         <span>Webhooks disabled</span>
       )}

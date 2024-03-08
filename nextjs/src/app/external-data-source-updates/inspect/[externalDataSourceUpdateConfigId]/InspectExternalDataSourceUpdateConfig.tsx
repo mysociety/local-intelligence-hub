@@ -148,12 +148,12 @@ export default function InspectExternalDataSourceUpdateConfig({
     <div className="p-6 max-w-4xl mx-auto space-y-7">
       <header className="flex flex-row justify-between gap-8">
         <div className='w-full'>
-          <div className="text-muted-text">External data source</div>
+          <div className="text-meepGray-400">External data source</div>
           <h1 className="text-hLg" contentEditable id="nickname" onBlur={updateNickname}>
             {config.externalDataSource.name || config.externalDataSource.connectionDetails.crmType}
           </h1>
           {config.jobs[0]?.lastEventAt ? (
-            <div className="text-muted-text">
+            <div className="text-meepGray-400">
               Last sync:{" "}
               {formatRelative(config.jobs[0].lastEventAt, new Date())} (
               {config.jobs[0].status})
@@ -163,7 +163,7 @@ export default function InspectExternalDataSourceUpdateConfig({
         <div>
           {config.externalDataSource.connectionDetails.crmType ===
             "AirtableSource" && (
-            <div className="inline-block rounded-xl bg-background-secondary px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
+            <div className="inline-block rounded-xl bg-meepGray-700 px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
               <AirtableLogo className="w-full" />
             </div>
           )}
@@ -206,7 +206,7 @@ export default function InspectExternalDataSourceUpdateConfig({
           </AlertDialog>
         </div>
       </div>
-      <div className="border-b border-background-secondary pt-10" />
+      <div className="border-b border-meepGray-700 pt-10" />
       <section>
         <h2 className="text-hSm mb-5">Mapping</h2>
         <UpdateConfigForm
@@ -223,7 +223,7 @@ export default function InspectExternalDataSourceUpdateConfig({
           onSubmit={saveConfig}
         />
       </section>
-      <div className="border-b border-background-secondary pt-10" />
+      <div className="border-b border-meepGray-700 pt-10" />
       <section>
         <h2 className="text-hSm mb-5 flex flex-row items-center gap-3">
           <span>Logs</span>
@@ -377,7 +377,7 @@ export function LogsTable<TData, TValue>({
   });
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border border-meepGray-500">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (

@@ -61,7 +61,7 @@ export default function Page({
     <div className="space-y-7">
       <header>
         <h1 className="text-hLg">Activate data sync</h1>
-        <p className="mt-6 text-muted-text max-w-sm">
+        <p className="mt-6 text-meepGray-400 max-w-sm">
           Your almost there! Active the data sync to start syncing data. Note,
           this may take a while if you are using a large amount of data layers.
         </p>

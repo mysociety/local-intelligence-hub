@@ -49,7 +49,7 @@ export default function Page() {
     <div className="space-y-7">
       <header>
         <h1 className="text-hLg">Select platform to sync data to</h1>
-        <p className="mt-6 text-muted-text max-w-sm">
+        <p className="mt-6 text-meepGray-400 max-w-sm">
           We currently support the following platforms. If your platform isn’t
           on this list,{" "}
           <a href="mailto:hello@commonknowledge.coop">
@@ -67,8 +67,8 @@ export default function Page() {
               setSource(externalDataSource.key);
             }}
             className={twMerge(
-              "cursor-pointer rounded-3xl bg-background-secondary px-10 py-6 overflow-hidden flex flex-row items-center justify-center transition-all hover:border-brand border-2 box-border",
-              source === externalDataSource.key && "border-brand border-2",
+              "cursor-pointer rounded-3xl bg-meepGray-700 px-10 py-6 overflow-hidden flex flex-row items-center justify-center transition-all hover:border-brandBlue border-2 box-border",
+              source === externalDataSource.key && "border-brandBlue border-2",
             )}
           >
             <externalDataSource.logo className="w-full" />
@@ -77,7 +77,7 @@ export default function Page() {
       ))}
       {!!unusedCRMs?.length && (
         <section className="space-y-7">
-          <div className="border-b border-background-secondary pt-6" />
+          <div className="border-b border-meepGray-700 pt-6" />
           <h2 className="text-hSm">Or pick up where you left off</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-7">
             {crms.data?.externalDataSources
@@ -93,7 +93,7 @@ export default function Page() {
                 return (
                   <article
                     key={externalDataSource.id}
-                    className="cursor-pointer rounded-3xl border-background-tertiary px-6 py-5 space-y-3 transition-all hover:border-brand border-2 box-border"
+                    className="cursor-pointer rounded-3xl border-meepGray-600 px-6 py-5 space-y-3 transition-all hover:border-brandBlue border-2 box-border"
                     onClick={() => {
                       context.setStep(3);
                       router.push(
@@ -103,7 +103,7 @@ export default function Page() {
                   >
                     <Logo className='w-20'/>
                     <div className="text-hSm font-bold">{externalDataSource.name}</div>
-                    <div className="text-sm text-muted-text">
+                    <div className="text-sm text-meepGray-400">
                       <p>
                         Created{" "}
                         {formatRelative(

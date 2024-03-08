@@ -132,7 +132,7 @@ export default function Page({
     return (
       <div className="space-y-6">
         <h1 className="text-hLg">Testing connection...</h1>
-        <p className="text-muted-text max-w-sm">
+        <p className="text-meepGray-400 max-w-sm">
           Please wait whilst we try to connect to your CRM using the information
           you provided
         </p>
@@ -146,7 +146,7 @@ export default function Page({
       <div className="space-y-7">
         <header>
           <h1 className="text-hLg">Syncing to your Airtable base</h1>
-          <p className="mt-6 text-muted-text max-w-sm">
+          <p className="mt-6 text-meepGray-400 max-w-sm">
             In order to send data across to your Airtable, we’ll need a few
             details that gives us permission to make updates to your base, as
             well as tell us which table to update in the first place. You can

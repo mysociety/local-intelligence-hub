@@ -102,7 +102,7 @@ export default function Page({
         <h1 className="text-hLg">
           Now configure how you{"'"}d like data to be updated
         </h1>
-        <p className="mt-6 text-muted-text max-w-sm">
+        <p className="mt-6 text-meepGray-400 max-w-sm">
           Choose from the following data sources to enhance your CRM with data
           that empower you organisation. For geographic data, we need to know
           which column has the postcode so we can make sure you are getting

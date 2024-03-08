@@ -29,7 +29,7 @@ export default function NewExternalDataSourceWrapper({
       <div className="p-6 max-w-6xl mx-auto flex flex-row gap-7">
         <div>
           <aside className="w-[180px] flex flex-col justify-start items-start gap-4 relative">
-            <div className="h-full absolute top-0 left-5 border-l border-x-meepGray-500 z-10" />
+            <div className="h-full absolute top-0 left-5 border-l border-x-meepGray-400 z-10" />
             <Step number={1} state={step > 1 ? "completed" : "active"}>
               Choose platform
             </Step>
@@ -85,7 +85,7 @@ export function Step({
           <div className="inline">{number}</div>
         </span>
         <span
-          className={state === "disabled" ? "text-muted-text" : "text-white"}
+          className={state === "disabled" ? "text-meepGray-400" : "text-white"}
         >
           {children}
         </span>
