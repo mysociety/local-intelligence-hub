@@ -1,8 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import { gql, useMutation } from "@apollo/client";
 import { login } from "../../actions/auth";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod";
+import { Button } from "@/components/ui/button"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input";
 
 const LOGIN_MUTATION = gql`
   mutation Login($username: String!, $password: String!) {
@@ -20,8 +33,12 @@ const LOGIN_MUTATION = gql`
 `;
 
 export default function LoginForm() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const form = useForm({
+    resolver: zodResolver(z.object({
+      username: z.string(),
+      password: z.string(),
+    })),
+  })
 
   const [doLogin, { data, loading, error: gqlError }] =
     useMutation(LOGIN_MUTATION);
@@ -40,49 +57,42 @@ export default function LoginForm() {
     errorMessage = "Bad credentials or user not verified";
   }
 
-  const handleSubmit = async (event: { preventDefault: () => void }) => {
-    event.preventDefault();
-    doLogin({ variables: { username, password } });
+  const handleSubmit = async (values: any) => {
+    doLogin({ variables: values });
   };
 
   return (
-    <form className="pb-4 flex flex-col gap-4" onSubmit={handleSubmit}>
-      <div>
-        <label className="mr-2" htmlFor="username">
-          Username
-        </label>
-        <input
-          className="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          id="username"
-          type="text"
-          placeholder="Your Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+    <Form {...form}>
+      <form className="pb-4 flex flex-col space-y-5" onSubmit={form.handleSubmit(handleSubmit)}>
+        <FormField
+          control={form.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Username</FormLabel>
+              <FormControl>
+                <Input placeholder="username" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-      <div>
-        <label className="mr-2" htmlFor="password">
-          Password
-        </label>
-        <input
-          className="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Your Password"
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <Input type='password' placeholder="password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-      <button
-        className="bg-gray-500 text-white font-bold py-2 px-4 rounded"
-        type="submit"
-        disabled={loading}
-      >
-        Login
-      </button>
-      {errorMessage ? (
-        <small className="text-red-500">{errorMessage}</small>
-      ) : null}
-    </form>
+        <FormMessage />
+        <Button variant='reverse' type="submit" disabled={loading}>Login</Button>
+      </form>
+    </Form>
   );
 }

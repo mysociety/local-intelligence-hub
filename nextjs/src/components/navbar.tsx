@@ -32,17 +32,13 @@ export default function Navbar({ isLoggedIn }: NavbarProps ) {
   }
   return (
     <>
-      {!isLoggedIn ? (
+      {isLoggedIn ? (
         <nav className='flex flex-row justify-start items-center p-sm gap-md'>
           <Link href='/'><MappedIcon /></Link>
           <Link href='/reports'>Reports</Link>
           <Link href='/'>Data layers</Link>
           <Link href='/external-data-source-updates'>CRM Data Sync</Link>
-          {!isLoggedIn ? (
-            <Link href="/logout" className={twMerge('ml-auto', buttonVariants({ variant: "brand" }))}>Logout</Link>
-          ) : (
-            <Link href="/login" className={twMerge('ml-auto', buttonVariants({ variant: "brand" }))}>Login</Link>
-          )}
+          <Link href="/logout" className={twMerge('ml-auto', buttonVariants({ variant: "brand" }))}>Logout</Link>
         </nav>
       ) : (
         <nav className="p-sm">
@@ -81,12 +77,8 @@ export default function Navbar({ isLoggedIn }: NavbarProps ) {
                 <Collapsible>
                   <CollapsibleTrigger><CollapsibleIcon /></CollapsibleTrigger>
                 </Collapsible></li>
-              {isLoggedIn ? (
-                <li><Link href="/logout" className={buttonVariants({ variant: "brand" })}>Logout</Link></li>
-              ) : (
                 <li>
                   <Link href="/login" className={buttonVariants({ variant: "brand" })}>Login</Link></li>
-              )}
             </div>
           </ul>
         </nav>
