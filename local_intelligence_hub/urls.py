@@ -31,6 +31,7 @@ handler404 = core.NotFoundPageView.as_view()
 
 urlpatterns = [
     path("", core.HomePageView.as_view(), name="home"),
+    path("async-healthcheck", core.async_healthcheck),
     path("explore/", explore.ExploreView.as_view(), name="explore"),
     path(
         "explore/datasets.json",

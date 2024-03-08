@@ -5,6 +5,11 @@ from django.views.generic import TemplateView
 
 from hub.mixins import TitleMixin
 from hub.models import Area, DataSet
+from django.http import HttpResponse
+
+
+async def async_healthcheck(request):
+    return HttpResponse("Hello, async Django!")
 
 
 class NotFoundPageView(TitleMixin, TemplateView):
