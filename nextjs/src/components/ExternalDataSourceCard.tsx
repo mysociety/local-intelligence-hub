@@ -36,7 +36,7 @@ import { getSourceOptionForTypename } from "@/lib/data";
 export function ExternalDataSourceUpdateConfigCard({
   updateConfig,
 }: {
-  updateConfig: PageForExternalDataSourceUpdateConfigQuery['externalDataSourceUpdateConfig']
+  updateConfig: UpdateConfigCardFieldsFragment
 }) {
   const Logo = getSourceOptionForTypename(
     updateConfig.externalDataSource.connectionDetails.crmType,
@@ -206,6 +206,15 @@ export const UPDATE_CONFIG_CARD_FRAGMENT = gql`
       status
     }
   }
+`;
+
+export const GET_UPDATE_CONFIG_CARD = gql`
+  query ExternalDataSourceUpdateConfigCard($ID: ID!) {
+    externalDataSourceUpdateConfig(pk: $ID) {
+      ...UpdateConfigCardFields
+    }
+  }
+  ${UPDATE_CONFIG_CARD_FRAGMENT}
 `;
 
 export const ENABLE_UPDATE_CONFIG = gql`

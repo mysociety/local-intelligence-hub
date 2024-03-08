@@ -1,28 +1,24 @@
 import { redirect } from "next/navigation";
 import { gql } from "@apollo/client";
-
 import { getClient } from "@/services/apollo-client";
+import { PublicUserQuery } from "@/__generated__/graphql";
 
 const USER_QUERY = gql`
   query PublicUser {
     publicUser {
       id
       username
+      email
     }
   }
 `;
 
-interface User {
-  id: string;
-  username: string;
-}
-
-export const useAuth = async (): Promise<User> => {
+export const useAuth = async () => {
   const client = getClient();
 
   let data = null;
   try {
-    const response = await client.query({ query: USER_QUERY });
+    const response = await client.query<PublicUserQuery>({ query: USER_QUERY });
     data = response.data;
   } catch (e: any) {
     console.error(e.message);

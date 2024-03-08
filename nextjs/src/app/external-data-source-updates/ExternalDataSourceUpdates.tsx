@@ -26,9 +26,6 @@ const LIST_UPDATE_CONFIGS = gql`
       jobs {
         lastEventAt
         status
-        id
-        taskName
-        args
       }
       mapping {
         source
