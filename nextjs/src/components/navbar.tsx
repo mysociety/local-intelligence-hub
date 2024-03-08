@@ -32,13 +32,13 @@ export default function Navbar({ isLoggedIn }: NavbarProps ) {
   }
   return (
     <>
-      {isLoggedIn ? (
+      {!isLoggedIn ? (
         <nav className='flex flex-row justify-start items-center p-sm gap-md'>
           <Link href='/'><MappedIcon /></Link>
           <Link href='/reports'>Reports</Link>
           <Link href='/'>Data layers</Link>
           <Link href='/external-data-source-updates'>CRM Data Sync</Link>
-          {isLoggedIn ? (
+          {!isLoggedIn ? (
             <Link href="/logout" className={twMerge('ml-auto', buttonVariants({ variant: "brand" }))}>Logout</Link>
           ) : (
             <Link href="/login" className={twMerge('ml-auto', buttonVariants({ variant: "brand" }))}>Login</Link>

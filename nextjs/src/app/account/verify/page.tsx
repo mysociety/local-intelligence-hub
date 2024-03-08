@@ -2,7 +2,6 @@
 
 import { gql, useMutation } from "@apollo/client";
 import { useEffect } from "react";
-import Link from "next/link";
 import { clearJwt } from "@/actions/auth";
 
 const VERIFY_ACCOUNT = gql`
