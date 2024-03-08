@@ -171,6 +171,7 @@ export default function Page({
                 <FormItem>
                   <FormLabel>Nickname</FormLabel>
                   <FormControl>
+                    {/* @ts-ignore */}
                     <Input placeholder="My members list" {...field} />
                   </FormControl>
                   <FormDescription>
