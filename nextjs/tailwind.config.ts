@@ -19,59 +19,92 @@ const config = {
     },
     extend: {
       fontFamily: {
-        IBMPlexSans: ['"IBM Plex Sans Condensed", sans-serif'],
-        PPRightGrotesk: ["PPRightGrotesk, sans-serif"],
+        'IBMPlexSans': ['"IBM Plex Sans Condensed", sans-serif'],
+        'IBMPlexMono': ['"IBM Plex Mono", sans-serif'],
+        'PPRightGrotesk': ['PPRightGrotesk, sans-serif'],
       },
       fontSize: {
-        hLg: [
-          "36px",
-          {
-            lineHeight: "47px",
-            letterSpacing: "0em",
-            fontWeight: "700",
-          },
-        ],
-        hSm: [
-          "16px",
-          {
-            lineHeight: "21px",
-            letterSpacing: "0em",
-            fontWeight: "500",
-          },
-        ],
-        base: [
-          "16px",
-          {
-            lineHeight: "21px",
-            letterSpacing: "0em",
-            fontWeight: "400",
-          },
-        ],
-        label: [
-          "14px",
-          {
-            lineHeight: "17px",
-            letterSpacing: "0em",
-            fontWeight: "500",
-          },
-        ],
-        sm: [
-          "12px",
-          {
-            lineHeight: "16px",
-            letterSpacing: "0em",
-            fontWeight: "400",
-          },
-        ],
+        hXlg: ['73.488px', {
+          lineHeight: '107%',
+        }],
+        hLg: ['36px', {
+          lineHeight: '47px',
+          letterSpacing: '0em',
+          fontWeight: '700',
+        }],
+        hMd: ['21px', {
+          lineHeight: 'normal',
+          letterSpacing: '0em',
+          fontWeight: '500',
+        }],
+        hSm: ['16px', {
+          lineHeight: 'normal',
+          letterSpacing: '0em',
+          fontWeight: '500',
+        }],
+        base: ['16px', {
+          lineHeight: 'normal',
+          letterSpacing: '0em',
+          fontWeight: '400',
+        }],
+        sm: ['14px', {
+          lineHeight: 'normal',
+          letterSpacing: '0em',
+          fontWeight: '400',
+        }],
+        tiny: ['12px', {
+          lineHeight: 'normal',
+          letterSpacing: '0em',
+          fontWeight: '400',
+        }],
+        labelMain: ['12px', {
+          lineHeight: 'normal',
+          letterSpacing: '0em',
+          fontWeight: '500',
+        }],
+        labelLg: ['14px', {
+          lineHeight: 'normal',
+          letterSpacing: '0em',
+          fontWeight: '500',
+        }],
+        dataName: ['13px', {
+          lineHeight: '100%',
+          letterSpacing: '0.65px',
+          fontWeight: '500',
+        }],
+        dataResult: ['16px', {
+          lineHeight: '100%',
+          letterSpacing: '-0.32px',
+          fontWeight: '400',
+        }],
+
+      },
+      fontWeight: {
+        light: '300',
+        normal: '400',
+        medium: '500',
+        bold: '800'
       },
       colors: {
-        brand: "hsl(var(--brand))",
+        brandBlue: "hsl(var(--brand-blue))",
+        white: "hsl(var(--white))",
+        muted: " hsl(var(--muted-text))",
+        meepGray: {
+          100: "hsl(var(--meep-gray-100))",
+          200: "hsl(var(--meep-gray-200))",
+          300: "hsl(var(--meep-gray-300))",
+          400: "hsl(var(--meep-gray-400))",
+          500: "hsl(var(--meep-gray-500))",
+          600: "hsl(var(--meep-gray-600))",
+          700: "hsl(var(--meep-gray-700))",
+          800: "hsl(var(--meep-gray-800))",
+        },
+        buttonText: "hsl(var(--button-text))",
+        labour: "hsl(var(--labour))",
+        conservative: "hsl(var(--conservative))",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        meepGray: {
-          500: "hsl(var(--meep-gray-500))",
-        },
         background: {
           DEFAULT: "hsl(var(--background))",
           secondary: "hsl(var(--background-secondary))",
@@ -87,15 +120,6 @@ const config = {
           foreground: "hsl(var(--secondary-foreground))",
         },
 
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-          text: "hsl(var(--muted-text))",
-        },
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
@@ -108,12 +132,21 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+
+      },
+      spacing: {
+        xs: '10px',
+        sm: '15px',
+        md: '20px',
+        lg: '30px',
+
       },
       borderRadius: {
-        lg: "var(--radius)",
+        lg: "50px",
         md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        sm: "10px",
       },
+
       keyframes: {
         "accordion-down": {
           from: { height: "0" },

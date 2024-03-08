@@ -21,7 +21,7 @@ from gqlauth.settings_type import GqlAuthSettings
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(
-    EMAIL_BACKEND=(str, "django.core.mail.backends.console.EmailBackend")
+    EMAIL_BACKEND=(str, "django.core.mail.backends.console.EmailBackend"),
     BASE_URL=(str, False),
     FRONTEND_BASE_URL=(str, False),
     FRONTEND_SITE_TITLE=(str, False),
