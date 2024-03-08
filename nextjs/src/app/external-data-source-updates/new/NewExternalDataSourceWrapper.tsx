@@ -26,7 +26,7 @@ export default function NewExternalDataSourceWrapper({
         setStep,
       }}
     >
-      <div className="p-6 max-w-6xl mx-auto flex flex-row gap-7">
+      <div className="p-6 max-w-6xl mx-auto flex flex-row gap-20">
         <div>
           <aside className="w-[180px] flex flex-col justify-start items-start gap-4 relative">
             <div className="h-full absolute top-0 left-5 border-l border-x-meepGray-500 z-10" />
@@ -75,17 +75,17 @@ export function Step({
         <span
           className={twMerge(
             state === "active"
-              ? "bg-white text-gray-800"
+              ? "bg-white text-meepGray-700"
               : state === "completed"
-                ? "bg-gray-400 text-white"
-                : "bg-gray-800 text-white",
+                ? "bg-meepGray-500 text-white"
+                : "bg-meepGray-700 text-meepGray-600",
             "rounded w-10 h-10 inline-flex items-center justify-center shrink-0 grow-0",
           )}
         >
           <div className="inline">{number}</div>
         </span>
         <span
-          className={state === "disabled" ? "text-muted-text" : "text-white"}
+          className={state === "disabled" ? "text-meepGray-600" : "text-white"}
         >
           {children}
         </span>

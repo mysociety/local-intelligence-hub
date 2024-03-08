@@ -1,3 +1,5 @@
+'use client'
+
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -6,13 +8,15 @@ import {
 } from "@/components/ui/collapsible"
 import Link from 'next/link';
 import { twMerge } from 'tailwind-merge';
+import { usePathname } from 'next/navigation'
 
 interface NavbarProps {
   isLoggedIn: boolean;
 }
 
 
-export default function Navbar({ isLoggedIn }: NavbarProps ) {
+export default function Navbar({ isLoggedIn }: NavbarProps) {
+  const pathname = usePathname()
 
   function MappedIcon() {
     return (
@@ -33,12 +37,37 @@ export default function Navbar({ isLoggedIn }: NavbarProps ) {
   return (
     <>
       {isLoggedIn ? (
-        <nav className='flex flex-row justify-start items-center p-sm gap-md'>
-          <Link href='/'><MappedIcon /></Link>
-          <Link href='/reports'>Reports</Link>
-          <Link href='/'>Data layers</Link>
-          <Link href='/external-data-source-updates'>CRM Data Sync</Link>
-          <Link href="/logout" className={twMerge('ml-auto', buttonVariants({ variant: "brand" }))}>Logout</Link>
+        <nav className='flex flex-row justify-start items-stretch gap-md font-IBMPlexSansCondensed text-lg border-b border-meepGray-700 px-sm'>
+          <Link href='/' className="py-sm"><MappedIcon /></Link>
+          <Link
+            className={`link ${pathname === '/reports' ? 'active' : 'flex items-center'}`}
+            href="/reports"
+          >
+            Reports
+          </Link>
+          <Link
+            className={`link ${pathname === '/data-layers' ? 'active' : 'flex items-center'}`}
+            href="/data-layers"
+          >
+            Data layers
+          </Link>
+          <Link
+            className={`link ${pathname === '/external-data-source-updates' ? 'active' : 'flex items-center'}`}
+            href="/external-data-source-updates"
+          >
+            CRM Data Sync
+          </Link>
+          <div className="ml-auto flex items-stretch gap-md ">
+            <Link
+              className={`link ${pathname === '/account' ? 'active' : 'flex items-center'}`}
+              href="/account"
+            >
+              Account
+            </Link>
+            <div className="flex items-center">
+            <Link href="/logout" className={twMerge('', buttonVariants({ variant: "brand" }))}>Logout</Link>
+            </div>
+          </div>
         </nav>
       ) : (
         <nav className="p-sm">
@@ -48,9 +77,9 @@ export default function Navbar({ isLoggedIn }: NavbarProps ) {
                 <Link className="pl-xs" href='/'><MappedIcon />
                 </Link>
                 <div className="flex flex-col">
-                <Link href='/'>
-                  <div className="text-hLg font-PPRightGrotesk">Mapped</div>
-                  <p className="text-[9px] tracking-[-0.185px]"><em>by</em> Common Knowledge</p>
+                  <Link href='/'>
+                    <div className="text-hLg font-PPRightGrotesk">Mapped</div>
+                    <p className="text-[9px] tracking-[-0.185px]"><em>by</em> Common Knowledge</p>
                   </Link>
                 </div>
               </div>
@@ -77,8 +106,8 @@ export default function Navbar({ isLoggedIn }: NavbarProps ) {
                 <Collapsible>
                   <CollapsibleTrigger><CollapsibleIcon /></CollapsibleTrigger>
                 </Collapsible></li>
-                <li>
-                  <Link href="/login" className={buttonVariants({ variant: "brand" })}>Login</Link></li>
+              <li>
+                <Link href="/login" className={buttonVariants({ variant: "brand" })}>Login</Link></li>
             </div>
           </ul>
         </nav>

@@ -13,6 +13,8 @@ import Footer from "@/components/footer";
 import Navbar from "@/components/navbar";
 import { AreaPattern } from "@/components/areaPattern";
 
+
+
 function MappedIcon() {
   return (
     <svg
@@ -45,7 +47,7 @@ export default async function RootLayout({
         <body>
         {!isLoggedIn && <AreaPattern/>}
         <Navbar isLoggedIn={isLoggedIn} />
-        <main className="p-lg">{children}</main>
+        <main className="p-20 relative">{children}</main>
           <Toaster />
           {!isLoggedIn && (
             <Footer/>

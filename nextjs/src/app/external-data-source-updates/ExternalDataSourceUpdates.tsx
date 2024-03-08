@@ -43,13 +43,13 @@ export default function ExternalDataSourceUpdates() {
   >(LIST_UPDATE_CONFIGS);
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-7">
+    <div className=" max-w-7xl space-y-7 w-full">
       <PageHeader />
-      <div className="border-b border-background-secondary pt-10" />
+      <div className="border-b border-meepGray-700 pt-10" />
       <h2 className="text-hSm">Active Syncs</h2>
       {loading ? (
         <section className="grid gap-7 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
-          <article className="rounded-xl border border-background-tertiary px-6 py-5 space-y-3">
+          <article className="rounded-xl border border-meepGray-700 px-6 py-5 space-y-3">
             <Skeleton className="h-4 w-full max-w-[100px]" />
             <Skeleton className="h-10 w-full" />
           </article>
@@ -76,18 +76,18 @@ function PageHeader() {
   return (
     <header className="grid grid-rows-2 md:grid-rows-1 md:grid-cols-2  gap-8">
       <div>
-        <h1 className="text-hLg">CRM Data Updates</h1>
-        <p className="mt-6 text-muted-text max-w-sm">
+        <h1 className="text-hLg mb-7">CRM Data Updates</h1>
+        <p className="text-meepGray-400 w-[400px]">
           Maximise your organisations impact by securely connecting your CRM
           platforms with Mapped and select from a range of data sources to
           enhance your membership lists.
         </p>
       </div>
       <div className="grid grid-cols-2 gap-7">
-        <div className="rounded-3xl bg-background-secondary px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
+        <div className="rounded-3xl bg-meepGray-700 px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
           <ActionNetworkLogo className="w-full" />
         </div>
-        <div className="rounded-3xl bg-background-secondary px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
+        <div className="rounded-3xl bg-meepGray-700 px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
           <AirtableLogo className="w-full" />
         </div>
       </div>
@@ -98,7 +98,7 @@ function PageHeader() {
 function CreateNewSyncButton() {
   return (
     <Link href="/external-data-source-updates/new">
-      <article className="relative cursor-pointer rounded-xl border border-background-tertiary px-6 py-5">
+      <article className="relative cursor-pointer rounded-xl border border-meepGray-700 px-6 py-5">
         <div className="space-y-5">
           <Skeleton className="h-4 w-full max-w-[100px]" />
           <Skeleton className="h-10 w-full" />
