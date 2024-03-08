@@ -57,7 +57,13 @@ export default function Page({
   const router = useRouter();
   const context = useContext(NewExternalDataSourceUpdateConfigContext);
 
-  const form = useForm<FormInputs>();
+  const form = useForm<FormInputs>({
+    defaultValues: {
+      airtable: {
+        name: ""
+      }
+    }
+  });
 
   const onSubmit: SubmitHandler<FormInputs> = (data) => {
     if (data.airtable) {

@@ -13,8 +13,9 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Therefore it is highly recommended to use the babel or swc plugin for production.
  */
 const documents = {
-    "\n  query Areas {\n    areas {\n      id\n      name\n    }\n  }\n": types.AreasDocument,
-    "\n  query ListUpdateConfigs {\n    externalDataSourceUpdateConfigs {\n      id\n      externalDataSource {\n        id\n        name\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n      enabled\n      jobs {\n        lastEventAt\n        status\n      }\n      mapping {\n        source\n        sourcePath\n        destinationColumn\n      }\n    }\n  }\n": types.ListUpdateConfigsDocument,
+    "\n  query Example {\n    organisations {\n      id\n      name\n    }\n  }\n": types.ExampleDocument,
+    "\n  mutation Verify($token: String!) {\n    verifyAccount(token: $token) {\n      errors\n      success\n    }\n  }\n": types.VerifyDocument,
+    "\n  query ListUpdateConfigs {\n    externalDataSourceUpdateConfigs {\n      id\n      externalDataSource {\n        id\n        name\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n      enabled\n      jobs {\n        lastEventAt\n        status\n        id\n        taskName\n        args\n      }\n      mapping {\n        source\n        sourcePath\n        destinationColumn\n      }\n    }\n  }\n": types.ListUpdateConfigsDocument,
     "\n  query PageForExternalDataSourceUpdateConfig($ID: ID!) {\n    externalDataSourceUpdateConfig(pk: $ID) {\n      id\n      externalDataSource {\n        id\n        name\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n      enabled\n      jobs {\n        status\n        id\n        taskName\n        args\n        lastEventAt\n      }\n      postcodeColumn\n      mapping {\n        source\n        sourcePath\n        destinationColumn\n      }\n    }\n  }\n": types.PageForExternalDataSourceUpdateConfigDocument,
     "\n  mutation UpdateSource($config: ExternalDataSourceInput!) {\n    updateExternalDataSource(data: $config) {\n      id\n      name\n    }\n  }\n": types.UpdateSourceDocument,
     "\n  mutation UpdateConfig($config: ExternalDataSourceUpdateConfigInput!) {\n    updateExternalDataSourceUpdateConfig(data: $config) {\n      id\n      postcodeColumn\n      mapping {\n        source\n        sourcePath\n        destinationColumn\n      }\n    }\n  }\n": types.UpdateConfigDocument,
@@ -26,6 +27,7 @@ const documents = {
     "\n  query AllExternalDataSources {\n    externalDataSources {\n      id\n      name\n      createdAt\n      connectionDetails {\n        crmType: __typename\n        ... on AirtableSource {\n          baseId\n          tableId\n        }\n      }\n      updateConfigs {\n        id\n        enabled\n      }\n    }\n  }\n": types.AllExternalDataSourcesDocument,
     "\n  query PageForExternalDataSourceUpdateConfigReview($ID: ID!) {\n    externalDataSourceUpdateConfig(pk: $ID) {\n      id\n      externalDataSource {\n        id\n        name\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n      enabled\n      jobs {\n        lastEventAt\n        status\n      }\n    }\n  }\n": types.PageForExternalDataSourceUpdateConfigReviewDocument,
     "\n  mutation Login($username: String!, $password: String!) {\n    tokenAuth(username: $username, password: $password) {\n      errors\n      success\n      token {\n        token\n        payload {\n          exp\n        }\n      }\n    }\n  }\n": types.LoginDocument,
+    "\n  mutation Register($email: String!, $password1: String!, $password2: String!, $username: String!) {\n    register(email: $email, password1: $password1, password2: $password2, username: $username) {\n      errors\n      success\n    }\n  }\n": types.RegisterDocument,
     "\n  fragment UpdateConfigCardFields on ExternalDataSourceUpdateConfig {\n    id\n    externalDataSource {\n      id\n      name\n      connectionDetails {\n        crmType: __typename\n      }\n    }\n    enabled\n    jobs {\n      lastEventAt\n      status\n    }\n  }\n": types.UpdateConfigCardFieldsFragmentDoc,
     "\n  mutation EnableUpdateConfig($ID: String!) {\n    enableUpdateConfig(configId: $ID) {\n      id\n      enabled\n      externalDataSource {\n        id\n        name\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n    }\n  }\n": types.EnableUpdateConfigDocument,
     "\n  mutation DisableUpdateConfig($ID: String!) {\n    disableUpdateConfig(configId: $ID) {\n      id\n      enabled\n      externalDataSource {\n        id\n        name\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n    }\n  }\n": types.DisableUpdateConfigDocument,
@@ -49,11 +51,15 @@ export function gql(source: string): unknown;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  query Areas {\n    areas {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  query Areas {\n    areas {\n      id\n      name\n    }\n  }\n"];
+export function gql(source: "\n  query Example {\n    organisations {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  query Example {\n    organisations {\n      id\n      name\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  query ListUpdateConfigs {\n    externalDataSourceUpdateConfigs {\n      id\n      externalDataSource {\n        id\n        name\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n      enabled\n      jobs {\n        lastEventAt\n        status\n      }\n      mapping {\n        source\n        sourcePath\n        destinationColumn\n      }\n    }\n  }\n"): (typeof documents)["\n  query ListUpdateConfigs {\n    externalDataSourceUpdateConfigs {\n      id\n      externalDataSource {\n        id\n        name\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n      enabled\n      jobs {\n        lastEventAt\n        status\n      }\n      mapping {\n        source\n        sourcePath\n        destinationColumn\n      }\n    }\n  }\n"];
+export function gql(source: "\n  mutation Verify($token: String!) {\n    verifyAccount(token: $token) {\n      errors\n      success\n    }\n  }\n"): (typeof documents)["\n  mutation Verify($token: String!) {\n    verifyAccount(token: $token) {\n      errors\n      success\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query ListUpdateConfigs {\n    externalDataSourceUpdateConfigs {\n      id\n      externalDataSource {\n        id\n        name\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n      enabled\n      jobs {\n        lastEventAt\n        status\n        id\n        taskName\n        args\n      }\n      mapping {\n        source\n        sourcePath\n        destinationColumn\n      }\n    }\n  }\n"): (typeof documents)["\n  query ListUpdateConfigs {\n    externalDataSourceUpdateConfigs {\n      id\n      externalDataSource {\n        id\n        name\n        connectionDetails {\n          crmType: __typename\n        }\n      }\n      enabled\n      jobs {\n        lastEventAt\n        status\n        id\n        taskName\n        args\n      }\n      mapping {\n        source\n        sourcePath\n        destinationColumn\n      }\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -98,6 +104,10 @@ export function gql(source: "\n  query PageForExternalDataSourceUpdateConfigRevi
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  mutation Login($username: String!, $password: String!) {\n    tokenAuth(username: $username, password: $password) {\n      errors\n      success\n      token {\n        token\n        payload {\n          exp\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation Login($username: String!, $password: String!) {\n    tokenAuth(username: $username, password: $password) {\n      errors\n      success\n      token {\n        token\n        payload {\n          exp\n        }\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation Register($email: String!, $password1: String!, $password2: String!, $username: String!) {\n    register(email: $email, password1: $password1, password2: $password2, username: $username) {\n      errors\n      success\n    }\n  }\n"): (typeof documents)["\n  mutation Register($email: String!, $password1: String!, $password2: String!, $username: String!) {\n    register(email: $email, password1: $password1, password2: $password2, username: $username) {\n      errors\n      success\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
