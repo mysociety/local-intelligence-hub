@@ -20,6 +20,8 @@ from gqlauth.settings_type import GqlAuthSettings
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
 env = environ.Env(
     BASE_URL=(str, False),
     FRONTEND_BASE_URL=(str, False),
