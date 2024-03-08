@@ -1,7 +1,8 @@
 import re
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urljoin
 
 from django import template
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.template.defaultfilters import stringfilter
 from django.utils.safestring import mark_safe
@@ -10,6 +11,15 @@ import utils as lih_utils
 
 register = template.Library()
 User = get_user_model()
+
+@register.simple_tag(name="backend_url")
+def backend_url(relative_url: str) -> str:
+    return urljoin(settings.BASE_URL, relative_url)
+
+@register.simple_tag(name="frontend_url")
+def frontend_url(relative_url: str) -> str:
+    return urljoin(settings.FRONTEND_BASE_URL, relative_url)
+
 
 
 @register.filter(name="split")

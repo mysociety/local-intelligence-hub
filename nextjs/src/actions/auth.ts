@@ -9,8 +9,12 @@ export const login = (jwt: string, expiresISODate: string) => {
   window.location.href = "/account";
 };
 
-export const logout = () => {
+export const clearJwt = () => {
   localStorage.removeItem("jwt");
   document.cookie = "jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"; // overwrite the cookie with an empty string
+};
+
+export const logout = () => {
+  clearJwt()
   window.location.href = "/";
 };
