@@ -15,6 +15,16 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: IBMPlexSans;
+  src: url("../fonts/IBMPlexSans/IBMPlexSans-Regular.ttf");
+}
+
+@font-face {
+  font-family: IBMPlexSansCondensed;
+  src: url("../fonts/IBMPlexSans/IBMPlexSansCondensed-Regular.ttf");
+}
+
 @layer base {
   :root {
     --meep-gray-100: 220, 14%, 96%;
@@ -64,5 +74,12 @@
   }
   body {
     @apply bg-meepGray-800 text-white font-IBMPlexSans;
+  }
+  
+}
+
+@layer components {
+  .active {
+    @apply border-b flex items-center;
   }
 }

@@ -6,7 +6,7 @@ export function LoadingIcon() {
       visible={true}
       height="60"
       width="60"
-      color="#333"
+      color="white"
       secondaryColor="#111"
       strokeWidth={10}
       ariaLabel="oval-loading"

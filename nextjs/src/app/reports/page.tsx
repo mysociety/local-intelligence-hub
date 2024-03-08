@@ -1,4 +1,6 @@
 import Image from 'next/image';
+import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -11,16 +13,11 @@ import { Button, buttonVariants } from "@/components/ui/button"
 export default function Report() {
 
   return (
-    <>
+    <div className=" max-w-7xl space-y-7 w-full">
+    <PageHeader />
+    <div className="border-b border-meepGray-700 pt-10" />
+      <h2 className="text-hSm">Active Syncs</h2>
 
-      <div className="flex flex-row justify-between mb-16">
-        <div>
-          <h1 className="text-hLg mb-7">Reports</h1>
-          <p className="text-meepGray-400 w-[400px]">Maximise your organisations impact by securely connecting your CRM platforms with Mapped and select from a range of data sources to enhance your membership lists.</p>
-        </div>
-        <Image src="/reports_page_screenshot.png" alt="Description of the image" width={500} height={300} />
-      </div>
-      <p className="mb-lg"> Your team’s reports</p>
       <div className="flex flex-row gap-lg">
         <Card>
           <CardHeader>
@@ -38,6 +35,24 @@ export default function Report() {
           </CardContent>
         </Card>
       </div>
-    </>
+    </div>
+  );
+}
+
+
+function PageHeader() {
+  return (
+    <header className="grid grid-rows-2 md:grid-rows-1 md:grid-cols-2  gap-8">
+    <div>
+      <h1 className="text-hLg mb-7">Reports</h1>
+      <p className="text-meepGray-400 w-[400px]">
+      Maximise your organisations impact by securely connecting your CRM platforms with Mapped and select from a range of data sources to enhance your membership lists.
+      </p>
+    </div>
+    <div className="">
+    <Image src="/reports_page_screenshot.png" alt="Description of the image" width={500} height={300} />
+
+    </div>
+  </header>
   );
 }

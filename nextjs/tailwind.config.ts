@@ -19,7 +19,8 @@ const config = {
     },
     extend: {
       fontFamily: {
-        'IBMPlexSans': ['"IBM Plex Sans Condensed", sans-serif'],
+        'IBMPlexSans': ["IBMPlexSans", 'sans-serif'],
+        'IBMPlexSansCondensed': ["IBMPlexSansCondensed", 'sans-serif'],
         'IBMPlexMono': ['"IBM Plex Mono", sans-serif'],
         'PPRightGrotesk': ['PPRightGrotesk, sans-serif'],
       },
@@ -88,7 +89,7 @@ const config = {
       colors: {
         brandBlue: "hsl(var(--brand-blue))",
         white: "hsl(var(--white))",
-        muted: " hsl(var(--meepGray-400))",
+        muted: "hsl(var(--meep-gray-600))",
         meepGray: {
           100: "hsl(var(--meep-gray-100))",
           200: "hsl(var(--meep-gray-200))",
