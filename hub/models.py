@@ -776,20 +776,13 @@ class ExternalDataSource(PolymorphicModel):
     automated_webhooks = False
 
     def __str__(self):
-        return self.name
+        return self.name if self.name is not None else super().__str__()
 
     def healthcheck(self):
         '''
         Check the connection to the API.
         '''
         raise NotImplementedError('Healthcheck not implemented for this data source type.')
-    
-    @classmethod
-    def test_connection(cls):
-        '''
-        Use this to test a connection before creating the object.
-        '''
-        return cls.healthcheck()
 
     def setup_webhook(self, config: 'ExternalDataSourceUpdateConfig'):
         '''
@@ -906,7 +899,8 @@ class ExternalDataSource(PolymorphicModel):
                 path = mapping_dict['source_path']
                 field = mapping_dict['destination_column']
                 if source == 'postcodes.io':
-                    update_fields[field] = get(postcode_data['result'], path)
+                    if postcode_data is not None:
+                        update_fields[field] = get(postcode_data, path)
                 else:
                     pass
             # Return the member and config data
@@ -1056,7 +1050,7 @@ class AirtableSource(ExternalDataSource):
       list = self.base.webhooks()
       url = self.webhook_url(config)
       for webhook in list:
-          if webhook.notification_url == url:
+          if settings.BASE_URL in url:
               # Update the webhook in case the spec changed,
               # which will also refresh the 7 day expiration date
               webhook.delete()
@@ -1131,6 +1125,10 @@ class ExternalDataSourceUpdateConfig(models.Model):
     def __str__(self):
         return f'Update config for {self.external_data_source.name}'
 
+    def delete(self, *args, **kwargs):
+        self.disable()
+        return super().delete(*args, **kwargs)
+
     # UI
 
     def enable(self) -> Union[None, int]:
@@ -1150,23 +1148,31 @@ class ExternalDataSourceUpdateConfig(models.Model):
 
     def disable(self):
         self.enabled = False
+        if self.external_data_source.automated_webhooks:
+            self.external_data_source.teardown_webhook(config=self)
         self.save()
 
     # Data
         
     async def update_one(self, member_id: Union[str, any]):
+        if len(self.get_mapping()) == 0:
+            return
         external_data_source = await sync_to_async(self.external_data_source.get_real_instance)()
         loaders = external_data_source.get_loaders()
         mapped_record = await external_data_source.map_one(member_id, self, loaders)
         await external_data_source.update_one(mapped_record=mapped_record)
 
     async def update_many(self, member_ids: list[Union[str, any]]):
+        if len(self.get_mapping()) == 0:
+            return
         external_data_source = await sync_to_async(self.external_data_source.get_real_instance)()
         loaders = external_data_source.get_loaders()
         mapped_records = await external_data_source.map_many(member_ids, self, loaders)
         await external_data_source.update_many(mapped_records=mapped_records)
 
     async def update_all(self):
+        if len(self.get_mapping()) == 0:
+            return
         external_data_source = await sync_to_async(self.external_data_source.get_real_instance)()
         loaders = external_data_source.get_loaders()
         mapped_records = await external_data_source.map_all(self, loaders)

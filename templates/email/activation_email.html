@@ -1,0 +1,12 @@
+{% extends 'email/gqlauth_base.html' %}
+
+{% block content %}
+<h1>Welcome to Mapped</h1>
+
+<p>Hi {{ user.username }},</p>
+<p>
+  Thanks for signing up to Mapped!
+  <a href="{{ frontend_base_url }}/account/verify?token={{ token }}">Click here</a>
+  to activate your account, or visit {{ frontend_base_url }}/account/verify?token={{ token }}.
+</p>
+{% endblock %}

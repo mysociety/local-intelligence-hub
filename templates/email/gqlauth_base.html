@@ -1,0 +1,243 @@
+{% load static hub_filters %}
+
+<head>
+    <style>
+        {% static 'fonts/PPRightGrotesk' as fonts_path %}
+        {% backend_url fonts_path as fonts_url %}
+        @font-face {
+            font-family: 'PPRightGrotesk';
+            src: url('{{ fonts_url }}/PPRightGrotesk-CompactBlack.woff2') format('woff2'),
+                url('{{ fonts_url }}/PPRightGrotesk-CompactBlack.woff') format('woff'),
+                url('{{ fonts_url }}/PPRightGrotesk-CompactBlack.otf') format('opentype'),
+                url('{{ fonts_url }}/PPRightGrotesk-CompactBlack.ttf') format('truetype');
+        }
+
+        {% static 'fonts/IBMPlexSans' as fonts_path %}
+        {% backend_url fonts_path as fonts_url %}
+        @font-face {
+            font-family: 'IBMPlexSans';
+            src: url('{{ fonts_url }}/IBMPlexSans-Thin.ttf') format('truetype');
+            font-weight: 100;
+            font-display: swap;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'IBMPlexSans';
+            src: url('{{ fonts_url }}/IBMPlexSans-ThinItalic.ttf') format('truetype');
+            font-weight: 100;
+            font-display: swap;
+            font-style: italic;
+        }
+
+        @font-face {
+            font-family: 'IBMPlexSans';
+            src: url('{{ fonts_url }}/IBMPlexSans-ExtraLight.ttf') format('truetype');
+            font-weight: 200;
+            font-display: swap;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'IBMPlexSans';
+            src: url('{{ fonts_url }}/IBMPlexSans-ExtraLightItalic.ttf') format('truetype');
+            font-weight: 200;
+            font-display: swap;
+            font-style: italic;
+        }
+
+        @font-face {
+            font-family: 'IBMPlexSans';
+            src: url('{{ fonts_url }}/IBMPlexSans-Light.ttf') format('truetype');
+            font-weight: 300;
+            font-display: swap;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'IBMPlexSans';
+            src: url('{{ fonts_url }}/IBMPlexSans-LightItalic.ttf') format('truetype');
+            font-weight: 300;
+            font-display: swap;
+            font-style: italic;
+        }
+
+        @font-face {
+            font-family: 'IBMPlexSans';
+            src: url('{{ fonts_url }}/IBMPlexSans-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-display: swap;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'IBMPlexSans';
+            src: url('{{ fonts_url }}/IBMPlexSans-Italic.ttf') format('truetype');
+            font-weight: 400;
+            font-display: swap;
+            font-style: italic;
+        }
+
+        @font-face {
+            font-family: 'IBMPlexSans';
+            src: url('{{ fonts_url }}/IBMPlexSans-Medium.ttf') format('truetype');
+            font-weight: 500;
+            font-display: swap;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'IBMPlexSans';
+            src: url('{{ fonts_url }}/IBMPlexSans-MediumItalic.ttf') format('truetype');
+            font-weight: 500;
+            font-display: swap;
+            font-style: italic;
+        }
+
+        @font-face {
+            font-family: 'IBMPlexSans';
+            src: url('{{ fonts_url }}/IBMPlexSans-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-display: swap;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'IBMPlexSans';
+            src: url('{{ fonts_url }}/IBMPlexSans-BoldItalic.ttf') format('truetype');
+            font-weight: 700;
+            font-display: swap;
+            font-style: italic;
+        }
+
+        @font-face {
+            font-family: 'IBMPlexSans';
+            src: url('{{ fonts_url }}/IBMPlexSans-ExtraBold.ttf') format('truetype');
+            font-weight: 800;
+            font-display: swap;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'IBMPlexSans';
+            src: url('{{ fonts_url }}/IBMPlexSans-ExtraBoldItalic.ttf') format('truetype');
+            font-weight: 800;
+            font-display: swap;
+            font-style: italic;
+        }
+
+        @font-face {
+            font-family: 'IBMPlexSans';
+            src: url('{{ fonts_url }}/IBMPlexSans-Black.ttf') format('truetype');
+            font-weight: 900;
+            font-display: swap;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'IBMPlexSans';
+            src: url('{{ fonts_url }}/IBMPlexSans-BlackItalic.ttf') format('truetype');
+            font-weight: 900;
+            font-display: swap;
+            font-style: italic;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1,h2,h3,h4,h5,h6 {
+            font-family: 'PPRightGrotesk', sans-serif;
+        }
+
+        .body {
+            font-family: 'IBMPlexSans', sans-serif;
+            background-color: #202229;
+            color: #ffffff;
+        }
+
+        .body a {
+            color: #ffffff;
+        }
+
+        .header {
+        }
+
+        .header table {
+            margin: 0 auto;
+            max-width: 800px;
+            padding: 1.5rem;
+            width: 100%;
+        }
+
+        .header td a {
+            margin: 0;
+        }
+
+        .main {
+        }
+
+        .content {
+            line-height: 1.5;
+            margin: 0 auto;
+            max-width: 800px;
+            overflow: auto;
+            padding: 1.5rem 1.5rem 2.5rem 1.5rem;
+        }
+
+        .content h1 {
+            margin-bottom: 1rem;
+        }
+
+        .content h2 {
+            margin-bottom: 1rem;
+            margin-top: 1rem;
+        }
+
+        .content h3 {
+            margin-bottom: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .content p {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer {
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .footer a {
+        }
+    </style>
+</head>
+<body>
+    <div class="body">
+        <div class="header">
+            <table>
+                <tbody>
+                    <tr>
+                        <td>
+                            <a href="{{ frontend_base_url }}">
+                                {% static 'img/mapped-logo.png' as logo_path %}
+                                <img alt="Mapped" src="{% backend_url logo_path %}">
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="main">
+            <div class="content">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+        <div class="footer">
+            <a href="{{ frontend_base_url }}">{{ frontend_site_title }}</a>
+        </div>
+    </div>
+</body>

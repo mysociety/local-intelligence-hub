@@ -1,17 +1,20 @@
-import { CodegenConfig } from '@graphql-codegen/cli';
+import { CodegenConfig } from "@graphql-codegen/cli";
 
 const config: CodegenConfig = {
-  schema: 'http://localhost:8000/graphql',
-  // this assumes that all your source files are in a top-level `src/` directory - you might need to adjust this to your file structure
-  documents: ['src/**/*.{ts,tsx}'],
+  schema: "http://localhost:8000/graphql",
+  documents: ["src/components/**/*.{ts,tsx}", "src/app/**/*.{ts,tsx}"],
   generates: {
-    './src/__generated__/': {
-      preset: 'client',
-      plugins: [],
+    "./src/__generated__/": {
+      preset: "client",
+      plugins: ["fragment-matcher"],
       presetConfig: {
-        gqlTagName: 'gql',
-      }
-    }
+        gqlTagName: "gql",
+      },
+      config: {
+        apolloClientVersion: 3,
+        useExplicitTyping: true,
+      },
+    },
   },
   ignoreNoDocuments: true,
 };

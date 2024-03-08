@@ -10,21 +10,24 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry.types.info import Info
 import procrastinate.contrib.django.models
 
-@strawberry_django.input(models.ExternalDataSource)
+@strawberry.input
+class IDObject:
+    id: str
+
+@strawberry_django.input(models.ExternalDataSource, partial=True)
 class ExternalDataSourceInput:
+    id: auto
     name: auto
     description: auto
     organisation: auto
 
 @strawberry_django.input(models.AirtableSource)
 class AirtableSourceInput(ExternalDataSourceInput):
+    id: Optional[strawberry.scalars.ID]
     api_key: auto
     base_id: auto
     table_id: auto
-
-@strawberry_django.partial(models.AirtableSource)
-class AirtableSourceInputPartial(AirtableSourceInput):
-    pass
+    organisation: Optional[str]
 
 @strawberry.input
 class UpdateConfigDictInput:
@@ -32,17 +35,14 @@ class UpdateConfigDictInput:
     source_path: str
     destination_column: str
 
-@strawberry_django.input(models.ExternalDataSourceUpdateConfig)
+@strawberry_django.input(models.ExternalDataSourceUpdateConfig, partial=True)
 class ExternalDataSourceUpdateConfigInput:
+    id: auto
     external_data_source: types.ExternalDataSource
     postcode_column: auto
     enabled: auto
     mapping: List[UpdateConfigDictInput]
   
-@strawberry_django.partial(models.ExternalDataSourceUpdateConfig)
-class ExternalDataSourceUpdateConfigInputPartial(ExternalDataSourceUpdateConfigInput):
-    pass
-
 @strawberry.mutation(extensions=[IsAuthenticated(), InputMutationExtension()])
 async def create_organisation(info: Info, name: str, slug: Optional[str] = None, description: Optional[str] = None) -> types.Membership:
     org = await models.Organisation.objects.acreate(name=name, slug=slug, description=description)
@@ -52,6 +52,7 @@ async def create_organisation(info: Info, name: str, slug: Optional[str] = None,
 
 @strawberry_django.input(models.Organisation, partial=True)
 class OrganisationInputPartial:
+    id: auto
     name: str
     slug: Optional[str]
     description: Optional[str]
@@ -69,10 +70,10 @@ def disable_update_config (config_id: str) -> models.ExternalDataSourceUpdateCon
     return config
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
-def update_all(config_id: str) -> procrastinate.contrib.django.models.ProcrastinateJob:
+def update_all(config_id: str) -> models.ExternalDataSourceUpdateConfig:
     config = models.ExternalDataSourceUpdateConfig.objects.get(id=config_id)
     job_id = config.schedule_update_all()
-    return procrastinate.contrib.django.models.ProcrastinateJob.objects.get(id=job_id)
+    return config
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
 def refresh_webhook (config_id: str) -> models.ExternalDataSourceUpdateConfig:
@@ -80,3 +81,32 @@ def refresh_webhook (config_id: str) -> models.ExternalDataSourceUpdateConfig:
     if config.external_data_source.automated_webhooks:
         config.refresh_webhook()
     return config
+
+@strawberry.mutation(extensions=[IsAuthenticated()])
+def create_airtable_source(info: Info, data: AirtableSourceInput) -> models.AirtableSource:
+    user = get_current_user(info)
+    organisation = data.organisation
+    if isinstance(data.organisation, strawberry.unset.UnsetType) or data.organisation is None:
+        if user.memberships.first() is not None:
+            print("Assigning the user's default organisation")
+            organisation = user.memberships.first().organisation
+        else:
+            print("Making an organisation for this user")
+            organisation = models.Organisation.objects.create(
+                name=f"{user.username}'s organisation",
+                slug=f'{user.username}-org'
+            )
+            models.Membership.objects.create(
+                user=user,
+                organisation=organisation,
+                role="owner"
+            )
+
+    return models.AirtableSource.objects.create(
+        api_key=data.api_key,
+        base_id=data.base_id,
+        table_id=data.table_id,
+        organisation=organisation,
+        name=data.name,
+        description=data.description
+    )

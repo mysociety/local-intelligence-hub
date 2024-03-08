@@ -51,37 +51,37 @@ export type Scalars = {
   UUID: { input: any; output: any; }
 };
 
+/** An Airtable table. */
 export type AirtableSource = {
   __typename?: 'AirtableSource';
+  /** Personal access token. Requires the following 4 scopes: data.records:read, data.records:write, schema.bases:read, webhook:manage */
   apiKey: Scalars['String']['output'];
   baseId: Scalars['String']['output'];
   connectionDetails: AirtableSource;
+  createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
   healthcheck: Scalars['Boolean']['output'];
   id: Scalars['UUID']['output'];
+  lastUpdate: Scalars['DateTime']['output'];
   name?: Maybe<Scalars['String']['output']>;
+  organisation: Organisation;
   tableId: Scalars['String']['output'];
   updateConfigs: Array<ExternalDataSourceUpdateConfig>;
 };
 
+/** An Airtable table. */
 export type AirtableSourceInput = {
+  /** Personal access token. Requires the following 4 scopes: data.records:read, data.records:write, schema.bases:read, webhook:manage */
   apiKey: Scalars['String']['input'];
   baseId: Scalars['String']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
-  organisation?: InputMaybe<OneToManyInput>;
+  organisation?: InputMaybe<Scalars['String']['input']>;
   tableId: Scalars['String']['input'];
 };
 
-export type AirtableSourceInputPartial = {
-  apiKey?: InputMaybe<Scalars['String']['input']>;
-  baseId?: InputMaybe<Scalars['String']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  organisation?: InputMaybe<OneToManyInput>;
-  tableId?: InputMaybe<Scalars['String']['input']>;
-};
-
+/** Area(id, mapit_id, gss, name, area_type, geometry) */
 export type Area = {
   __typename?: 'Area';
   areaType: AreaType;
@@ -93,6 +93,7 @@ export type Area = {
   overlaps: Array<Area>;
 };
 
+/** AreaType(id, name, code, area_type, description) */
 export type AreaType = {
   __typename?: 'AreaType';
   areaType: Scalars['String']['output'];
@@ -133,64 +134,54 @@ export type DjangoModelType = {
   pk: Scalars['ID']['output'];
 };
 
-export type EventLogFilter = {
-  AND?: InputMaybe<EventLogFilter>;
-  NOT?: InputMaybe<EventLogFilter>;
-  OR?: InputMaybe<EventLogFilter>;
-  attempts?: InputMaybe<IntFilterLookup>;
-  configId?: InputMaybe<Scalars['String']['input']>;
-  id?: InputMaybe<IdFilterLookup>;
-  queueName?: InputMaybe<StrFilterLookup>;
-  scheduledAt?: InputMaybe<DatetimeFilterLookup>;
-  status?: InputMaybe<StrFilterLookup>;
-  taskName?: InputMaybe<StrFilterLookup>;
-};
-
-export type EventLogItem = {
-  __typename?: 'EventLogItem';
-  args: Scalars['JSON']['output'];
-  attempts: Scalars['Int']['output'];
-  id: Scalars['ID']['output'];
-  lock?: Maybe<Scalars['String']['output']>;
-  queueName: Scalars['String']['output'];
-  queueingLock?: Maybe<Scalars['String']['output']>;
-  scheduledAt?: Maybe<Scalars['DateTime']['output']>;
-  status: Scalars['String']['output'];
-  taskName: Scalars['String']['output'];
-};
-
+/**
+ * A third-party data source that can be read and optionally written back to.
+ * E.g. Google Sheet or an Action Network table.
+ * This class is to be subclassed by specific data source types.
+ */
 export type ExternalDataSource = {
   __typename?: 'ExternalDataSource';
   connectionDetails: AirtableSource;
+  createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
   healthcheck: Scalars['Boolean']['output'];
   id: Scalars['UUID']['output'];
+  lastUpdate: Scalars['DateTime']['output'];
   name?: Maybe<Scalars['String']['output']>;
+  organisation: Organisation;
   updateConfigs: Array<ExternalDataSourceUpdateConfig>;
 };
 
+/**
+ * A third-party data source that can be read and optionally written back to.
+ * E.g. Google Sheet or an Action Network table.
+ * This class is to be subclassed by specific data source types.
+ */
+export type ExternalDataSourceInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['UUID']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  organisation?: InputMaybe<OneToManyInput>;
+};
+
+/** A configuration for updating a data source. */
 export type ExternalDataSourceUpdateConfig = {
   __typename?: 'ExternalDataSourceUpdateConfig';
   enabled: Scalars['Boolean']['output'];
-  events: Array<EventLogItem>;
   externalDataSource: ExternalDataSource;
   id: Scalars['UUID']['output'];
+  jobs: Array<QueueJob>;
   mapping: Array<UpdateConfigDict>;
   postcodeColumn?: Maybe<Scalars['String']['output']>;
   webhookHealthcheck: Scalars['Boolean']['output'];
   webhookUrl: Scalars['String']['output'];
 };
 
+/** A configuration for updating a data source. */
 export type ExternalDataSourceUpdateConfigInput = {
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
-  externalDataSource: OneToManyInput;
-  mapping: Array<UpdateConfigDictInput>;
-  postcodeColumn?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type ExternalDataSourceUpdateConfigInputPartial = {
-  enabled?: InputMaybe<Scalars['Boolean']['input']>;
-  externalDataSource: OneToManyInput;
+  externalDataSource?: InputMaybe<OneToManyInput>;
+  id?: InputMaybe<Scalars['UUID']['input']>;
   mapping: Array<UpdateConfigDictInput>;
   postcodeColumn?: InputMaybe<Scalars['String']['input']>;
 };
@@ -215,6 +206,10 @@ export type IdFilterLookup = {
   startsWith?: InputMaybe<Scalars['ID']['input']>;
 };
 
+export type IdObject = {
+  id: Scalars['String']['input'];
+};
+
 export type IntFilterLookup = {
   contains?: InputMaybe<Scalars['Int']['input']>;
   endsWith?: InputMaybe<Scalars['Int']['input']>;
@@ -235,6 +230,7 @@ export type IntFilterLookup = {
   startsWith?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Membership(id, user, organisation, role) */
 export type Membership = {
   __typename?: 'Membership';
   id: Scalars['ID']['output'];
@@ -249,6 +245,7 @@ export type Mutation = {
   createExternalDataSourceUpdateConfig: ExternalDataSourceUpdateConfig;
   createOrganisation: Membership;
   deleteAirtableSource: AirtableSource;
+  deleteExternalDataSource: ExternalDataSource;
   deleteExternalDataSourceUpdateConfig: ExternalDataSourceUpdateConfig;
   disableUpdateConfig: ExternalDataSourceUpdateConfig;
   enableUpdateConfig: ExternalDataSourceUpdateConfig;
@@ -268,7 +265,8 @@ export type Mutation = {
    */
   tokenAuth: ObtainJsonWebTokenType;
   updateAirtableSource: AirtableSource;
-  updateAll: EventLogItem;
+  updateAll: ExternalDataSourceUpdateConfig;
+  updateExternalDataSource: ExternalDataSource;
   updateExternalDataSourceUpdateConfig: ExternalDataSourceUpdateConfig;
   updateOrganisation: Organisation;
 };
@@ -290,7 +288,12 @@ export type MutationCreateOrganisationArgs = {
 
 
 export type MutationDeleteAirtableSourceArgs = {
-  data: NodeInput;
+  data: Scalars['String']['input'];
+};
+
+
+export type MutationDeleteExternalDataSourceArgs = {
+  data: IdObject;
 };
 
 
@@ -321,7 +324,7 @@ export type MutationTokenAuthArgs = {
 
 
 export type MutationUpdateAirtableSourceArgs = {
-  data: AirtableSourceInputPartial;
+  data: AirtableSourceInput;
 };
 
 
@@ -330,8 +333,13 @@ export type MutationUpdateAllArgs = {
 };
 
 
+export type MutationUpdateExternalDataSourceArgs = {
+  data: ExternalDataSourceInput;
+};
+
+
 export type MutationUpdateExternalDataSourceUpdateConfigArgs = {
-  data: ExternalDataSourceUpdateConfigInputPartial;
+  data: ExternalDataSourceUpdateConfigInput;
 };
 
 
@@ -368,6 +376,7 @@ export type OneToManyInput = {
   set?: InputMaybe<Scalars['ID']['input']>;
 };
 
+/** Organisation(id, slug, name, description, website, logo) */
 export type Organisation = {
   __typename?: 'Organisation';
   externalDataSources: Array<ExternalDataSource>;
@@ -377,8 +386,10 @@ export type Organisation = {
   slug: Scalars['String']['output'];
 };
 
+/** Organisation(id, slug, name, description, website, logo) */
 export type OrganisationInputPartial = {
   description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
   name: Scalars['String']['input'];
   slug?: InputMaybe<Scalars['String']['input']>;
 };
@@ -390,12 +401,16 @@ export type OutputInterface = {
 
 export type Query = {
   __typename?: 'Query';
+  airtableSource: AirtableSource;
   airtableSources: Array<AirtableSource>;
   areaTypes: Array<AreaType>;
   areas: Array<Area>;
-  events: Array<EventLogItem>;
+  event: QueueJob;
+  externalDataSource: ExternalDataSource;
+  externalDataSourceUpdateConfig: ExternalDataSourceUpdateConfig;
   externalDataSourceUpdateConfigs: Array<ExternalDataSourceUpdateConfig>;
   externalDataSources: Array<ExternalDataSource>;
+  jobs: Array<QueueJob>;
   me: UserType;
   memberships: Array<Membership>;
   organisations: Array<Organisation>;
@@ -407,8 +422,28 @@ export type Query = {
 };
 
 
-export type QueryEventsArgs = {
-  filters?: InputMaybe<EventLogFilter>;
+export type QueryAirtableSourceArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryEventArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryExternalDataSourceArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryExternalDataSourceUpdateConfigArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryJobsArgs = {
+  filters?: InputMaybe<QueueFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -417,6 +452,45 @@ export type QueryTestAirtableSourceArgs = {
   apiKey: Scalars['String']['input'];
   baseId: Scalars['String']['input'];
   tableId: Scalars['String']['input'];
+};
+
+/** ProcrastinateEvent(id, job, type, at) */
+export type QueueEvent = {
+  __typename?: 'QueueEvent';
+  at?: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['ID']['output'];
+  job: QueueJob;
+  type: Scalars['String']['output'];
+};
+
+/** ProcrastinateJob(id, queue_name, task_name, lock, args, status, scheduled_at, attempts, queueing_lock) */
+export type QueueFilter = {
+  AND?: InputMaybe<QueueFilter>;
+  NOT?: InputMaybe<QueueFilter>;
+  OR?: InputMaybe<QueueFilter>;
+  attempts?: InputMaybe<IntFilterLookup>;
+  configId?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<IdFilterLookup>;
+  queueName?: InputMaybe<StrFilterLookup>;
+  scheduledAt?: InputMaybe<DatetimeFilterLookup>;
+  status?: InputMaybe<StrFilterLookup>;
+  taskName?: InputMaybe<StrFilterLookup>;
+};
+
+/** ProcrastinateJob(id, queue_name, task_name, lock, args, status, scheduled_at, attempts, queueing_lock) */
+export type QueueJob = {
+  __typename?: 'QueueJob';
+  args: Scalars['JSON']['output'];
+  attempts: Scalars['Int']['output'];
+  events: Array<QueueEvent>;
+  id: Scalars['ID']['output'];
+  lastEventAt: Scalars['DateTime']['output'];
+  lock?: Maybe<Scalars['String']['output']>;
+  queueName: Scalars['String']['output'];
+  queueingLock?: Maybe<Scalars['String']['output']>;
+  scheduledAt?: Maybe<Scalars['DateTime']['output']>;
+  status: Scalars['String']['output'];
+  taskName: Scalars['String']['output'];
 };
 
 /**
@@ -496,24 +570,38 @@ export type UpdateConfigDictInput = {
   sourcePath: Scalars['String']['input'];
 };
 
+/**
+ * Users within the Django authentication system are represented by this
+ * model.
+ *
+ * Username and password are required. Other fields are optional.
+ */
 export type User = {
   __typename?: 'User';
   email: Scalars['String']['output'];
   userProperties: UserProperties;
 };
 
+/** UserProperties(id, user, organisation_name, full_name, email_confirmed, account_confirmed, last_seen, agreed_terms) */
 export type UserProperties = {
   __typename?: 'UserProperties';
   fullName?: Maybe<Scalars['String']['output']>;
   user: User;
 };
 
+/** A helper model that handles user account stuff. */
 export type UserStatusType = {
   __typename?: 'UserStatusType';
   archived: Scalars['Boolean']['output'];
   verified: Scalars['Boolean']['output'];
 };
 
+/**
+ * Users within the Django authentication system are represented by this
+ * model.
+ *
+ * Username and password are required. Other fields are optional.
+ */
 export type UserType = {
   __typename?: 'UserType';
   archived: Scalars['Boolean']['output'];
@@ -521,21 +609,72 @@ export type UserType = {
   email: Scalars['String']['output'];
   firstName?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  /** Designates whether this user should be treated as active. Unselect this instead of deleting accounts. */
   isActive: Scalars['Boolean']['output'];
+  /** Designates whether the user can log into this admin site. */
   isStaff: Scalars['Boolean']['output'];
+  /** Designates that this user has all permissions without explicitly assigning them. */
   isSuperuser: Scalars['Boolean']['output'];
   lastLogin?: Maybe<Scalars['DateTime']['output']>;
   lastName?: Maybe<Scalars['String']['output']>;
   logentrySet: Array<DjangoModelType>;
   status: UserStatusType;
+  /** Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. */
   username: Scalars['String']['output'];
   verified: Scalars['Boolean']['output'];
 };
 
-export type UserInfoQueryVariables = Exact<{ [key: string]: never; }>;
+export type AreasQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type UserInfoQuery = { __typename?: 'Query', me: { __typename?: 'UserType', firstName?: string | null, lastName?: string | null } };
+export type AreasQuery = { __typename?: 'Query', areas: Array<{ __typename?: 'Area', id: string, name: string }> };
+
+export type ListUpdateConfigsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ListUpdateConfigsQuery = { __typename?: 'Query', externalDataSourceUpdateConfigs: Array<{ __typename?: 'ExternalDataSourceUpdateConfig', id: any, enabled: boolean, externalDataSource: { __typename?: 'ExternalDataSource', id: any, name?: string | null, connectionDetails: { __typename?: 'AirtableSource', crmType: 'AirtableSource' } }, jobs: Array<{ __typename?: 'QueueJob', lastEventAt: any, status: string }>, mapping: Array<{ __typename?: 'UpdateConfigDict', source: string, sourcePath: string, destinationColumn: string }> }> };
+
+export type PageForExternalDataSourceUpdateConfigQueryVariables = Exact<{
+  ID: Scalars['ID']['input'];
+}>;
+
+
+export type PageForExternalDataSourceUpdateConfigQuery = { __typename?: 'Query', externalDataSourceUpdateConfig: { __typename?: 'ExternalDataSourceUpdateConfig', id: any, enabled: boolean, postcodeColumn?: string | null, externalDataSource: { __typename?: 'ExternalDataSource', id: any, name?: string | null, connectionDetails: { __typename?: 'AirtableSource', crmType: 'AirtableSource' } }, jobs: Array<{ __typename?: 'QueueJob', status: string, id: string, taskName: string, args: any, lastEventAt: any }>, mapping: Array<{ __typename?: 'UpdateConfigDict', source: string, sourcePath: string, destinationColumn: string }> } };
+
+export type UpdateSourceMutationVariables = Exact<{
+  config: ExternalDataSourceInput;
+}>;
+
+
+export type UpdateSourceMutation = { __typename?: 'Mutation', updateExternalDataSource: { __typename?: 'ExternalDataSource', id: any, name?: string | null } };
+
+export type UpdateConfigMutationVariables = Exact<{
+  config: ExternalDataSourceUpdateConfigInput;
+}>;
+
+
+export type UpdateConfigMutation = { __typename?: 'Mutation', updateExternalDataSourceUpdateConfig: { __typename?: 'ExternalDataSourceUpdateConfig', id: any, postcodeColumn?: string | null, mapping: Array<{ __typename?: 'UpdateConfigDict', source: string, sourcePath: string, destinationColumn: string }> } };
+
+export type DeleteSourceMutationVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type DeleteSourceMutation = { __typename?: 'Mutation', deleteExternalDataSource: { __typename?: 'ExternalDataSource', id: any } };
+
+export type CheckIfSourceHasConfigQueryVariables = Exact<{
+  ID: Scalars['ID']['input'];
+}>;
+
+
+export type CheckIfSourceHasConfigQuery = { __typename?: 'Query', externalDataSource: { __typename?: 'ExternalDataSource', id: any, updateConfigs: Array<{ __typename?: 'ExternalDataSourceUpdateConfig', id: any }> } };
+
+export type CreateUpdateConfigMutationVariables = Exact<{
+  config: ExternalDataSourceUpdateConfigInput;
+}>;
+
+
+export type CreateUpdateConfigMutation = { __typename?: 'Mutation', createExternalDataSourceUpdateConfig: { __typename?: 'ExternalDataSourceUpdateConfig', id: any, postcodeColumn?: string | null, mapping: Array<{ __typename?: 'UpdateConfigDict', destinationColumn: string, source: string, sourcePath: string }> } };
 
 export type TestAirtableSourceQueryVariables = Exact<{
   apiKey: Scalars['String']['input'];
@@ -551,26 +690,19 @@ export type CreateAirtableSourceMutationVariables = Exact<{
 }>;
 
 
-export type CreateAirtableSourceMutation = { __typename?: 'Mutation', createAirtableSource: { __typename?: 'AirtableSource', id: any, healthcheck: boolean } };
+export type CreateAirtableSourceMutation = { __typename?: 'Mutation', createAirtableSource: { __typename?: 'AirtableSource', id: any, name?: string | null, healthcheck: boolean } };
 
-export type ListUpdateConfigsQueryVariables = Exact<{ [key: string]: never; }>;
+export type AllExternalDataSourcesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ListUpdateConfigsQuery = { __typename?: 'Query', externalDataSourceUpdateConfigs: Array<{ __typename?: 'ExternalDataSourceUpdateConfig', id: any, enabled: boolean, externalDataSource: { __typename: 'ExternalDataSource', id: any, connectionDetails: { __typename?: 'AirtableSource', crmType: 'AirtableSource' } }, events: Array<{ __typename?: 'EventLogItem', scheduledAt?: any | null, status: string }> }> };
+export type AllExternalDataSourcesQuery = { __typename?: 'Query', externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name?: string | null, createdAt: any, connectionDetails: { __typename?: 'AirtableSource', baseId: string, tableId: string, crmType: 'AirtableSource' }, updateConfigs: Array<{ __typename?: 'ExternalDataSourceUpdateConfig', id: any, enabled: boolean }> }> };
 
-export type EnableUpdateConfigMutationVariables = Exact<{
-  ID: Scalars['String']['input'];
+export type PageForExternalDataSourceUpdateConfigReviewQueryVariables = Exact<{
+  ID: Scalars['ID']['input'];
 }>;
 
 
-export type EnableUpdateConfigMutation = { __typename?: 'Mutation', enableUpdateConfig: { __typename?: 'ExternalDataSourceUpdateConfig', id: any, enabled: boolean, externalDataSource: { __typename?: 'ExternalDataSource', connectionDetails: { __typename?: 'AirtableSource', crmType: 'AirtableSource' } } } };
-
-export type DisableUpdateConfigMutationVariables = Exact<{
-  ID: Scalars['String']['input'];
-}>;
-
-
-export type DisableUpdateConfigMutation = { __typename?: 'Mutation', disableUpdateConfig: { __typename?: 'ExternalDataSourceUpdateConfig', id: any, enabled: boolean, externalDataSource: { __typename?: 'ExternalDataSource', connectionDetails: { __typename?: 'AirtableSource', crmType: 'AirtableSource' } } } };
+export type PageForExternalDataSourceUpdateConfigReviewQuery = { __typename?: 'Query', externalDataSourceUpdateConfig: { __typename?: 'ExternalDataSourceUpdateConfig', id: any, enabled: boolean, externalDataSource: { __typename?: 'ExternalDataSource', id: any, name?: string | null, connectionDetails: { __typename?: 'AirtableSource', crmType: 'AirtableSource' } }, jobs: Array<{ __typename?: 'QueueJob', lastEventAt: any, status: string }> } };
 
 export type LoginMutationVariables = Exact<{
   username: Scalars['String']['input'];
@@ -578,19 +710,60 @@ export type LoginMutationVariables = Exact<{
 }>;
 
 
-export type LoginMutation = { __typename?: 'Mutation', tokenAuth: { __typename?: 'ObtainJSONWebTokenType', errors?: any | null, success: boolean, token?: { __typename?: 'TokenType', token: string } | null } };
+export type LoginMutation = { __typename?: 'Mutation', tokenAuth: { __typename?: 'ObtainJSONWebTokenType', errors?: any | null, success: boolean, token?: { __typename?: 'TokenType', token: string, payload: { __typename?: 'TokenPayloadType', exp: any } } | null } };
 
-export type UserTestQueryVariables = Exact<{ [key: string]: never; }>;
+export type UpdateConfigCardFieldsFragment = { __typename?: 'ExternalDataSourceUpdateConfig', id: any, enabled: boolean, externalDataSource: { __typename?: 'ExternalDataSource', id: any, name?: string | null, connectionDetails: { __typename?: 'AirtableSource', crmType: 'AirtableSource' } }, jobs: Array<{ __typename?: 'QueueJob', lastEventAt: any, status: string }> } & { ' $fragmentName'?: 'UpdateConfigCardFieldsFragment' };
+
+export type EnableUpdateConfigMutationVariables = Exact<{
+  ID: Scalars['String']['input'];
+}>;
 
 
-export type UserTestQuery = { __typename?: 'Query', me: { __typename?: 'UserType', id: string } };
+export type EnableUpdateConfigMutation = { __typename?: 'Mutation', enableUpdateConfig: { __typename?: 'ExternalDataSourceUpdateConfig', id: any, enabled: boolean, externalDataSource: { __typename?: 'ExternalDataSource', id: any, name?: string | null, connectionDetails: { __typename?: 'AirtableSource', crmType: 'AirtableSource' } } } };
+
+export type DisableUpdateConfigMutationVariables = Exact<{
+  ID: Scalars['String']['input'];
+}>;
 
 
-export const UserInfoDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"UserInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"me"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}}]}}]}}]} as unknown as DocumentNode<UserInfoQuery, UserInfoQueryVariables>;
+export type DisableUpdateConfigMutation = { __typename?: 'Mutation', disableUpdateConfig: { __typename?: 'ExternalDataSourceUpdateConfig', id: any, enabled: boolean, externalDataSource: { __typename?: 'ExternalDataSource', id: any, name?: string | null, connectionDetails: { __typename?: 'AirtableSource', crmType: 'AirtableSource' } } } };
+
+export type TriggerFullUpdateMutationVariables = Exact<{
+  configId: Scalars['String']['input'];
+}>;
+
+
+export type TriggerFullUpdateMutation = { __typename?: 'Mutation', updateAll: { __typename?: 'ExternalDataSourceUpdateConfig', id: any, jobs: Array<{ __typename?: 'QueueJob', status: string, id: string, taskName: string, args: any, lastEventAt: any }>, externalDataSource: { __typename?: 'ExternalDataSource', id: any, name?: string | null, connectionDetails: { __typename?: 'AirtableSource', crmType: 'AirtableSource' } } } };
+
+export const UpdateConfigCardFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"UpdateConfigCardFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ExternalDataSourceUpdateConfig"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"crmType"},"name":{"kind":"Name","value":"__typename"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}},{"kind":"Field","name":{"kind":"Name","value":"jobs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"lastEventAt"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}}]}}]} as unknown as DocumentNode<UpdateConfigCardFieldsFragment, unknown>;
+export const AreasDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"Areas"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"areas"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]} as unknown as DocumentNode<AreasQuery, AreasQueryVariables>;
+export const ListUpdateConfigsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ListUpdateConfigs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSourceUpdateConfigs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"crmType"},"name":{"kind":"Name","value":"__typename"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}},{"kind":"Field","name":{"kind":"Name","value":"jobs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"lastEventAt"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}},{"kind":"Field","name":{"kind":"Name","value":"mapping"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"sourcePath"}},{"kind":"Field","name":{"kind":"Name","value":"destinationColumn"}}]}}]}}]}}]} as unknown as DocumentNode<ListUpdateConfigsQuery, ListUpdateConfigsQueryVariables>;
+export const PageForExternalDataSourceUpdateConfigDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"PageForExternalDataSourceUpdateConfig"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSourceUpdateConfig"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"crmType"},"name":{"kind":"Name","value":"__typename"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}},{"kind":"Field","name":{"kind":"Name","value":"jobs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"taskName"}},{"kind":"Field","name":{"kind":"Name","value":"args"}},{"kind":"Field","name":{"kind":"Name","value":"lastEventAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"postcodeColumn"}},{"kind":"Field","name":{"kind":"Name","value":"mapping"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"sourcePath"}},{"kind":"Field","name":{"kind":"Name","value":"destinationColumn"}}]}}]}}]}}]} as unknown as DocumentNode<PageForExternalDataSourceUpdateConfigQuery, PageForExternalDataSourceUpdateConfigQueryVariables>;
+export const UpdateSourceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateSource"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"config"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ExternalDataSourceInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateExternalDataSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"config"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]} as unknown as DocumentNode<UpdateSourceMutation, UpdateSourceMutationVariables>;
+export const UpdateConfigDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateConfig"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"config"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ExternalDataSourceUpdateConfigInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateExternalDataSourceUpdateConfig"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"config"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"postcodeColumn"}},{"kind":"Field","name":{"kind":"Name","value":"mapping"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"sourcePath"}},{"kind":"Field","name":{"kind":"Name","value":"destinationColumn"}}]}}]}}]}}]} as unknown as DocumentNode<UpdateConfigMutation, UpdateConfigMutationVariables>;
+export const DeleteSourceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteSource"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteExternalDataSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<DeleteSourceMutation, DeleteSourceMutationVariables>;
+export const CheckIfSourceHasConfigDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"CheckIfSourceHasConfig"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"updateConfigs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<CheckIfSourceHasConfigQuery, CheckIfSourceHasConfigQueryVariables>;
+export const CreateUpdateConfigDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateUpdateConfig"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"config"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ExternalDataSourceUpdateConfigInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createExternalDataSourceUpdateConfig"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"config"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"postcodeColumn"}},{"kind":"Field","name":{"kind":"Name","value":"mapping"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"destinationColumn"}},{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"sourcePath"}}]}}]}}]}}]} as unknown as DocumentNode<CreateUpdateConfigMutation, CreateUpdateConfigMutationVariables>;
 export const TestAirtableSourceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"TestAirtableSource"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"apiKey"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"baseId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"tableId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"testAirtableSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"apiKey"},"value":{"kind":"Variable","name":{"kind":"Name","value":"apiKey"}}},{"kind":"Argument","name":{"kind":"Name","value":"baseId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"baseId"}}},{"kind":"Argument","name":{"kind":"Name","value":"tableId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"tableId"}}}]}]}}]} as unknown as DocumentNode<TestAirtableSourceQuery, TestAirtableSourceQueryVariables>;
-export const CreateAirtableSourceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateAirtableSource"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"AirtableSource"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"AirtableSourceInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createAirtableSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"AirtableSource"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"healthcheck"}}]}}]}}]} as unknown as DocumentNode<CreateAirtableSourceMutation, CreateAirtableSourceMutationVariables>;
-export const ListUpdateConfigsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ListUpdateConfigs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSourceUpdateConfigs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"crmType"},"name":{"kind":"Name","value":"__typename"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}},{"kind":"Field","name":{"kind":"Name","value":"events"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"scheduledAt"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}}]}}]}}]} as unknown as DocumentNode<ListUpdateConfigsQuery, ListUpdateConfigsQueryVariables>;
-export const EnableUpdateConfigDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"EnableUpdateConfig"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"enableUpdateConfig"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"configId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}},{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"crmType"},"name":{"kind":"Name","value":"__typename"}}]}}]}}]}}]}}]} as unknown as DocumentNode<EnableUpdateConfigMutation, EnableUpdateConfigMutationVariables>;
-export const DisableUpdateConfigDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DisableUpdateConfig"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"disableUpdateConfig"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"configId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}},{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"crmType"},"name":{"kind":"Name","value":"__typename"}}]}}]}}]}}]}}]} as unknown as DocumentNode<DisableUpdateConfigMutation, DisableUpdateConfigMutationVariables>;
-export const LoginDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"Login"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"username"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"password"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"tokenAuth"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"username"},"value":{"kind":"Variable","name":{"kind":"Name","value":"username"}}},{"kind":"Argument","name":{"kind":"Name","value":"password"},"value":{"kind":"Variable","name":{"kind":"Name","value":"password"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"errors"}},{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"token"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"token"}}]}}]}}]}}]} as unknown as DocumentNode<LoginMutation, LoginMutationVariables>;
-export const UserTestDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"UserTest"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"me"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<UserTestQuery, UserTestQueryVariables>;
+export const CreateAirtableSourceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateAirtableSource"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"AirtableSource"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"AirtableSourceInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createAirtableSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"AirtableSource"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"healthcheck"}}]}}]}}]} as unknown as DocumentNode<CreateAirtableSourceMutation, CreateAirtableSourceMutationVariables>;
+export const AllExternalDataSourcesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AllExternalDataSources"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSources"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"crmType"},"name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AirtableSource"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"baseId"}},{"kind":"Field","name":{"kind":"Name","value":"tableId"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"updateConfigs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}}]}}]}}]}}]} as unknown as DocumentNode<AllExternalDataSourcesQuery, AllExternalDataSourcesQueryVariables>;
+export const PageForExternalDataSourceUpdateConfigReviewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"PageForExternalDataSourceUpdateConfigReview"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSourceUpdateConfig"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"crmType"},"name":{"kind":"Name","value":"__typename"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}},{"kind":"Field","name":{"kind":"Name","value":"jobs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"lastEventAt"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}}]}}]}}]} as unknown as DocumentNode<PageForExternalDataSourceUpdateConfigReviewQuery, PageForExternalDataSourceUpdateConfigReviewQueryVariables>;
+export const LoginDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"Login"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"username"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"password"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"tokenAuth"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"username"},"value":{"kind":"Variable","name":{"kind":"Name","value":"username"}}},{"kind":"Argument","name":{"kind":"Name","value":"password"},"value":{"kind":"Variable","name":{"kind":"Name","value":"password"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"errors"}},{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"token"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"token"}},{"kind":"Field","name":{"kind":"Name","value":"payload"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"exp"}}]}}]}}]}}]}}]} as unknown as DocumentNode<LoginMutation, LoginMutationVariables>;
+export const EnableUpdateConfigDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"EnableUpdateConfig"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"enableUpdateConfig"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"configId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}},{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"crmType"},"name":{"kind":"Name","value":"__typename"}}]}}]}}]}}]}}]} as unknown as DocumentNode<EnableUpdateConfigMutation, EnableUpdateConfigMutationVariables>;
+export const DisableUpdateConfigDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DisableUpdateConfig"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"disableUpdateConfig"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"configId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}},{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"crmType"},"name":{"kind":"Name","value":"__typename"}}]}}]}}]}}]}}]} as unknown as DocumentNode<DisableUpdateConfigMutation, DisableUpdateConfigMutationVariables>;
+export const TriggerFullUpdateDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"TriggerFullUpdate"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"configId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateAll"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"configId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"configId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"jobs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"taskName"}},{"kind":"Field","name":{"kind":"Name","value":"args"}},{"kind":"Field","name":{"kind":"Name","value":"lastEventAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"crmType"},"name":{"kind":"Name","value":"__typename"}}]}}]}}]}}]}}]} as unknown as DocumentNode<TriggerFullUpdateMutation, TriggerFullUpdateMutationVariables>;
+
+      export interface PossibleTypesResultData {
+        possibleTypes: {
+          [key: string]: string[]
+        }
+      }
+      const result: PossibleTypesResultData = {
+  "possibleTypes": {
+    "OutputInterface": [
+      "ObtainJSONWebTokenType"
+    ]
+  }
+};
+      export default result;
+    
