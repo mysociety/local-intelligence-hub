@@ -1,41 +1,39 @@
-from datetime import datetime, timezone
-import uuid
-from typing import Iterable, TypedDict, Union
 import asyncio
-from asgiref.sync import sync_to_async
-from psycopg.errors import UniqueViolation
 import hashlib
+import uuid
+from datetime import datetime, timezone
+from typing import TypedDict, Union
+from urllib.parse import urljoin
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min
 from django.db.models.functions import Cast, Coalesce
 from django.dispatch import receiver
-from django.utils.functional import cached_property
-from django.urls import reverse
-from django.conf import settings
-from urllib.parse import urljoin
-from dateutil.parser import parser as date_parser
 from django.http import HttpResponse
-from procrastinate.contrib.django.models import ProcrastinateJob
+from django.urls import reverse
+from django.utils.functional import cached_property
+from django.utils.text import slugify
 
+from asgiref.sync import sync_to_async
 from django_jsonform.models.fields import JSONField
+from polymorphic.models import PolymorphicModel
+from procrastinate.contrib.django.models import ProcrastinateJob
+from psycopg.errors import UniqueViolation
+from pyairtable import Api as AirtableAPI
+from pyairtable import Base as AirtableBase
+from pyairtable import Table as AirtableTable
+from strawberry.dataloader import DataLoader
 
 import utils as lih_utils
 from hub.filters import Filter
-
-from hub.tasks import update_one, update_many, update_all, refresh_webhook
-from utils.postcodesIO import get_postcode_geo, get_bulk_postcode_geo, PostcodesIOResult
-from utils.py import get, ensure_list
-
-from strawberry.dataloader import DataLoader
-from pyairtable import Api as AirtableAPI, Base as AirtableBase, Table as AirtableTable
-
+from hub.tasks import refresh_webhook, update_all, update_many, update_one
+from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
+from utils.py import get
 
 User = get_user_model()
 
-
-from django.utils.text import slugify
 
 class Organisation(models.Model):
     slug = models.SlugField(max_length=100, unique=True)
@@ -51,14 +49,16 @@ class Organisation(models.Model):
 
     def __str__(self):
         return self.name
-    
+
 
 class Membership(models.Model):
     class Meta:
-        unique_together = ['user', 'organisation']
+        unique_together = ["user", "organisation"]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="memberships")
-    organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name="members")
+    organisation = models.ForeignKey(
+        Organisation, on_delete=models.CASCADE, related_name="members"
+    )
     role = models.CharField(max_length=250)
 
     def __str__(self):
@@ -759,16 +759,22 @@ def cast_data(sender, instance, *args, **kwargs):
         instance.int = int(instance.data)
         instance.data = ""
 
-from polymorphic.models import PolymorphicModel
 
 class ExternalDataSource(PolymorphicModel):
-    '''
+    """
     A third-party data source that can be read and optionally written back to.
     E.g. Google Sheet or an Action Network table.
     This class is to be subclassed by specific data source types.
-    '''
+    """
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name='external_data_sources', null=True, blank=True)
+    organisation = models.ForeignKey(
+        Organisation,
+        on_delete=models.CASCADE,
+        related_name="external_data_sources",
+        null=True,
+        blank=True,
+    )
     name = models.CharField(max_length=250, null=True, blank=True)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -779,171 +785,215 @@ class ExternalDataSource(PolymorphicModel):
         return self.name if self.name is not None else super().__str__()
 
     def healthcheck(self):
-        '''
+        """
         Check the connection to the API.
-        '''
-        raise NotImplementedError('Healthcheck not implemented for this data source type.')
+        """
+        raise NotImplementedError(
+            "Healthcheck not implemented for this data source type."
+        )
 
-    def setup_webhook(self, config: 'ExternalDataSourceUpdateConfig'):
-        '''
+    def setup_webhook(self, config: "ExternalDataSourceUpdateConfig"):
+        """
         Set up a webhook.
-        '''
-        raise NotImplementedError('Webhook setup not implemented for this data source type.')
-    
-    async def refresh_webhook(self, config: 'ExternalDataSourceUpdateConfig'):
-        '''
+        """
+        raise NotImplementedError(
+            "Webhook setup not implemented for this data source type."
+        )
+
+    async def refresh_webhook(self, config: "ExternalDataSourceUpdateConfig"):
+        """
         Refresh the webhook.
-        '''
+        """
         return await self.setup_webhook(config)
-    
+
     def get_member_ids_from_webhook(self, payload: dict) -> list[str]:
-        '''
+        """
         Get the member ID from the webhook payload.
-        '''
-        raise NotImplementedError('Get member ID not implemented for this data source type.')
-    
-    async def ingest (self):
-        '''
+        """
+        raise NotImplementedError(
+            "Get member ID not implemented for this data source type."
+        )
+
+    async def ingest(self):
+        """
         Copy data to this database for use in dashboarding features.
-        '''
-        raise NotImplementedError('Ingest not implemented for this data source type.')
+        """
+        raise NotImplementedError("Ingest not implemented for this data source type.")
 
     async def fetch_one(self, member_id: str):
-        '''
+        """
         Get one member from the data source.
-        '''
-        raise NotImplementedError('Get one not implemented for this data source type.')
-    
-    async def fetch_many(self, id_list: list[str]):
-        '''
-        Get many members from the data source.
-        '''
-        raise NotImplementedError('Get many not implemented for this data source type.')
-    
-    async def fetch_all(self):
-        '''
-        Get all members from the data source.
-        '''
-        raise NotImplementedError('Get all not implemented for this data source type.')
+        """
+        raise NotImplementedError("Get one not implemented for this data source type.")
 
-    MappedMember = TypedDict('MatchedMember', {
-        'config': 'ExternalDataSourceUpdateConfig',
-        'member_id': str,
-        'member': dict,
-        'postcodes.io': PostcodesIOResult,
-        'update_fields': dict[str, any]
-    })
+    async def fetch_many(self, id_list: list[str]):
+        """
+        Get many members from the data source.
+        """
+        raise NotImplementedError("Get many not implemented for this data source type.")
+
+    async def fetch_all(self):
+        """
+        Get all members from the data source.
+        """
+        raise NotImplementedError("Get all not implemented for this data source type.")
+
+    MappedMember = TypedDict(
+        "MatchedMember",
+        {
+            "config": "ExternalDataSourceUpdateConfig",
+            "member_id": str,
+            "member": dict,
+            "postcodes.io": PostcodesIOResult,
+            "update_fields": dict[str, any],
+        },
+    )
 
     async def update_one(self, mapped_record: MappedMember):
-        '''
+        """
         Append data for one member to the table.
-        '''
-        raise NotImplementedError('Update one not implemented for this data source type.')
-        
+        """
+        raise NotImplementedError(
+            "Update one not implemented for this data source type."
+        )
+
     async def update_many(self, mapped_records: list[MappedMember]):
-        '''
+        """
         Append mapped data to the table.
-        '''
-        raise NotImplementedError('Update many not implemented for this data source type.')
-    
+        """
+        raise NotImplementedError(
+            "Update many not implemented for this data source type."
+        )
+
     async def update_all(self, mapped_records: list[MappedMember]):
-        '''
+        """
         Append all data to the table.
-        '''
-        raise NotImplementedError('Update all not implemented for this data source type.')
-    
+        """
+        raise NotImplementedError(
+            "Update all not implemented for this data source type."
+        )
+
     def get_record_id(self, record):
-        '''
+        """
         Get the ID for a record.
-        '''
-        raise NotImplementedError('Get ID not implemented for this data source type.')
+        """
+        raise NotImplementedError("Get ID not implemented for this data source type.")
 
     def get_record_field(self, record: dict, field: str):
-        '''
+        """
         Get a field from a record.
-        '''
-        raise NotImplementedError('Get field not implemented for this data source type.')
+        """
+        raise NotImplementedError(
+            "Get field not implemented for this data source type."
+        )
 
     async def fetch_many_loader(self, keys):
         results = await self.fetch_many(keys)
         # sort results by keys, including None
-        return [next((result for result in results if self.get_record_id(result) == key), None) for key in keys]
+        return [
+            next(
+                (result for result in results if self.get_record_id(result) == key),
+                None,
+            )
+            for key in keys
+        ]
 
     class Loaders(TypedDict):
         postcodesIO: DataLoader
         fetch_record: DataLoader
 
-    def get_loaders (self) -> Loaders:
+    def get_loaders(self) -> Loaders:
         return {
             "postcodesIO": DataLoader(load_fn=get_bulk_postcode_geo),
-            "fetch_record": DataLoader(load_fn=self.fetch_many_loader, cache=False)
+            "fetch_record": DataLoader(load_fn=self.fetch_many_loader, cache=False),
         }
 
-    async def map_one(self, member: Union[str, dict], config: 'ExternalDataSourceUpdateConfig', loaders: Loaders) -> MappedMember:
-        '''
+    async def map_one(
+        self,
+        member: Union[str, dict],
+        config: "ExternalDataSourceUpdateConfig",
+        loaders: Loaders,
+    ) -> MappedMember:
+        """
         Match one member to a record in the data source, via ID or record.
-        '''
-        if type(member) == str:
-            member = await loaders['fetch_record'].load(member)
+        """
+        if type(member) is str:
+            member = await loaders["fetch_record"].load(member)
         # Get postcode field from the config
         postcode_column = config.postcode_column
         # Get postcode from member
         postcode = self.get_record_field(member, postcode_column)
         try:
             # Get relevant config data for that postcode
-            postcode_data = await loaders['postcodesIO'].load(postcode)
+            postcode_data = await loaders["postcodesIO"].load(postcode)
             # Map the fields
             update_fields = {}
             for mapping_dict in config.get_mapping():
-                source = mapping_dict['source']
-                path = mapping_dict['source_path']
-                field = mapping_dict['destination_column']
-                if source == 'postcodes.io':
+                source = mapping_dict["source"]
+                path = mapping_dict["source_path"]
+                field = mapping_dict["destination_column"]
+                if source == "postcodes.io":
                     if postcode_data is not None:
                         update_fields[field] = get(postcode_data, path)
                 else:
                     pass
             # Return the member and config data
             return {
-                'config': config,
-                'member': member,
-                'postcodes.io': postcode_data,
-                'update_fields': update_fields
+                "config": config,
+                "member": member,
+                "postcodes.io": postcode_data,
+                "update_fields": update_fields,
             }
         except TypeError:
             # Error fetching postcode data
             return {
-                'config': config,
-                'member': member,
-                'postcodes.io': None,
-                'update_fields': {}
+                "config": config,
+                "member": member,
+                "postcodes.io": None,
+                "update_fields": {},
             }
-    
-    async def map_many(self, members: list[Union[str, any]], config: 'ExternalDataSourceUpdateConfig', loaders: Loaders) -> list[MappedMember]:
-        '''
+
+    async def map_many(
+        self,
+        members: list[Union[str, any]],
+        config: "ExternalDataSourceUpdateConfig",
+        loaders: Loaders,
+    ) -> list[MappedMember]:
+        """
         Match many members to records in the data source.
-        '''
-        return await asyncio.gather(*[self.map_one(member, config, loaders) for member in members])
-    
-    async def map_all(self, config: 'ExternalDataSourceUpdateConfig', loaders: Loaders) -> list[MappedMember]:
-        '''
+        """
+        return await asyncio.gather(
+            *[self.map_one(member, config, loaders) for member in members]
+        )
+
+    async def map_all(
+        self, config: "ExternalDataSourceUpdateConfig", loaders: Loaders
+    ) -> list[MappedMember]:
+        """
         Match all members to records in the data source.
-        '''
+        """
         members = await self.fetch_all()
-        return await asyncio.gather(*[self.map_one(member, config, loaders) for member in members])
+        return await asyncio.gather(
+            *[self.map_one(member, config, loaders) for member in members]
+        )
+
 
 class AirtableSource(ExternalDataSource):
-    '''
+    """
     An Airtable table.
-    '''
-    api_key = models.CharField(max_length=250, help_text='Personal access token. Requires the following 4 scopes: data.records:read, data.records:write, schema.bases:read, webhook:manage')
+    """
+
+    api_key = models.CharField(
+        max_length=250,
+        help_text="Personal access token. Requires the following 4 scopes: data.records:read, data.records:write, schema.bases:read, webhook:manage",
+    )
     base_id = models.CharField(max_length=250)
     table_id = models.CharField(max_length=250)
     automated_webhooks = True
 
     class Meta:
-        verbose_name = 'Airtable table'
-        unique_together = ['base_id', 'table_id', 'api_key']
+        verbose_name = "Airtable table"
+        unique_together = ["base_id", "table_id", "api_key"]
 
     @cached_property
     def api(self) -> AirtableAPI:
@@ -956,84 +1006,88 @@ class AirtableSource(ExternalDataSource):
     @cached_property
     def table(self) -> AirtableTable:
         return self.base.table(self.table_id)
-    
+
     def healthcheck(self):
         record = self.table.first()
         if record:
             return True
         return False
-    
+
     async def fetch_one(self, member_id):
         record = self.table.get(member_id)
         return record
-    
+
     async def fetch_many(self, id_list: list[str]):
-        formula = f'OR('
+        formula = "OR("
         formula += ",".join([f"RECORD_ID()='{member_id}'" for member_id in id_list])
-        formula += ')'
+        formula += ")"
         records = self.table.all(formula=formula)
         return records
-    
+
     async def fetch_all(self):
         records = self.table.all()
         return records
-    
+
     def get_record_id(self, record):
-        return record['id']
-    
+        return record["id"]
+
     def get_record_field(self, record, field):
-        return record['fields'].get(str(field))
+        return record["fields"].get(str(field))
 
     async def update_one(self, mapped_record):
-        self.table.update(mapped_record['member']['id'], mapped_record['update_fields'])
+        self.table.update(mapped_record["member"]["id"], mapped_record["update_fields"])
 
     async def update_many(self, mapped_records):
-        self.table.batch_update([
-          {
-            "id": mapped_record['member']['id'],
-            "fields": mapped_record['update_fields']
-          } for
-          mapped_record in mapped_records
-        ])
+        self.table.batch_update(
+            [
+                {
+                    "id": mapped_record["member"]["id"],
+                    "fields": mapped_record["update_fields"],
+                }
+                for mapped_record in mapped_records
+            ]
+        )
 
     async def update_all(self, mapped_records):
-        self.table.batch_update([
-          {
-            "id": mapped_record['member']['id'],
-            "fields": mapped_record['update_fields']
-          } for
-          mapped_record in mapped_records
-        ])
+        self.table.batch_update(
+            [
+                {
+                    "id": mapped_record["member"]["id"],
+                    "fields": mapped_record["update_fields"],
+                }
+                for mapped_record in mapped_records
+            ]
+        )
 
-    def webhook_specification(self, config: 'ExternalDataSourceUpdateConfig'):
+    def webhook_specification(self, config: "ExternalDataSourceUpdateConfig"):
         # DOCS: https://airtable.com/developers/web/api/model/webhooks-specification
         return {
-          "options": {
-            "filters": {
-              "recordChangeScope": self.table_id,
-              "watchDataInFieldIds": [
-                self.table.schema().field(config.postcode_column).id
-              ],
-              "dataTypes": [
-                "tableData"
-              ],
-              "changeTypes": [
-                "add",
-                "update",
-              ]
+            "options": {
+                "filters": {
+                    "recordChangeScope": self.table_id,
+                    "watchDataInFieldIds": [
+                        self.table.schema().field(config.postcode_column).id
+                    ],
+                    "dataTypes": ["tableData"],
+                    "changeTypes": [
+                        "add",
+                        "update",
+                    ],
+                }
             }
-          }
         }
-    
-    def webhook_url(self, config: 'ExternalDataSourceUpdateConfig'):
-        return urljoin(settings.BASE_URL, reverse('record_updated_webhook', args=[config.id]))
 
-    def get_webhooks(self, config: 'ExternalDataSourceUpdateConfig'):
-      list = self.base.webhooks()
-      url = self.webhook_url(config)
-      return [webhook for webhook in list if webhook.notification_url == url]
+    def webhook_url(self, config: "ExternalDataSourceUpdateConfig"):
+        return urljoin(
+            settings.BASE_URL, reverse("record_updated_webhook", args=[config.id])
+        )
 
-    def webhook_healthcheck(self, config: 'ExternalDataSourceUpdateConfig'):
+    def get_webhooks(self, config: "ExternalDataSourceUpdateConfig"):
+        list = self.base.webhooks()
+        url = self.webhook_url(config)
+        return [webhook for webhook in list if webhook.notification_url == url]
+
+    def webhook_healthcheck(self, config: "ExternalDataSourceUpdateConfig"):
         webhooks = self.get_webhooks(config)
         if len(webhooks) < 1:
             print("No webhook")
@@ -1045,28 +1099,29 @@ class AirtableSource(ExternalDataSource):
             print("Webhook expired")
             return False
         return True
-    
-    def teardown_webhook(self, config: 'ExternalDataSourceUpdateConfig'):
-      list = self.base.webhooks()
-      url = self.webhook_url(config)
-      for webhook in list:
-          if settings.BASE_URL in url:
-              # Update the webhook in case the spec changed,
-              # which will also refresh the 7 day expiration date
-              webhook.delete()
 
-    def setup_webhook(self, config: 'ExternalDataSourceUpdateConfig'):
-      self.teardown_webhook(config)
-      self.base.add_webhook(
-          self.webhook_url(config),
-          self.webhook_specification(config)
-      )
+    def teardown_webhook(self, config: "ExternalDataSourceUpdateConfig"):
+        list = self.base.webhooks()
+        url = self.webhook_url(config)
+        for webhook in list:
+            if settings.BASE_URL in url:
+                # Update the webhook in case the spec changed,
+                # which will also refresh the 7 day expiration date
+                webhook.delete()
+
+    def setup_webhook(self, config: "ExternalDataSourceUpdateConfig"):
+        self.teardown_webhook(config)
+        self.base.add_webhook(
+            self.webhook_url(config), self.webhook_specification(config)
+        )
 
     def get_member_ids_from_webhook(self, webhook_payload: dict) -> list[str]:
         member_ids: list[str] = []
-        webhook_id = webhook_payload['webhook']['id']
+        webhook_id = webhook_payload["webhook"]["id"]
         webhook = self.base.webhook(webhook_id)
-        webhook_object, is_new = AirtableWebhook.objects.update_or_create(airtable_id=webhook_id)
+        webhook_object, is_new = AirtableWebhook.objects.update_or_create(
+            airtable_id=webhook_id
+        )
         payloads = webhook.payloads(cursor=webhook_object.cursor)
         for payload in payloads:
             webhook_object.cursor = webhook_object.cursor + 1
@@ -1078,11 +1133,13 @@ class AirtableSource(ExternalDataSource):
         member_ids = list(sorted(set(member_ids)))
         print("Webhook member result", webhook_object.cursor, member_ids)
         return member_ids
-    
+
+
 class AirtableWebhook(models.Model):
-    '''
+    """
     We need a way to persist the cursor for the Airtable webhook, so we are saving it per-webhook in the DB.
-    '''
+    """
+
     # Airtable ID
     airtable_id = models.CharField(max_length=250, primary_key=True)
     cursor = models.IntegerField(default=1, blank=True)
@@ -1096,17 +1153,20 @@ class UpdateConfigDict(TypedDict):
 
 
 class ExternalDataSourceUpdateConfig(models.Model):
-    '''
+    """
     A configuration for updating a data source.
-    '''
+    """
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    external_data_source = models.ForeignKey(ExternalDataSource, on_delete=models.CASCADE, related_name='update_configs')
+    external_data_source = models.ForeignKey(
+        ExternalDataSource, on_delete=models.CASCADE, related_name="update_configs"
+    )
     last_update = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
     enabled = models.BooleanField(default=False)
     postcode_column = models.CharField(max_length=250, null=True, blank=True)
 
-    '''
+    """
     Mapping is a key/value pair where the key is the column name in the data source and the value is from Mapped, E.g.
     [
       {
@@ -1115,7 +1175,7 @@ class ExternalDataSourceUpdateConfig(models.Model):
         destionation_field: "constituency_2024"
       }
     ]
-    '''
+    """
     # TODO: validation
     mapping = JSONField(blank=True, null=True)
 
@@ -1123,7 +1183,7 @@ class ExternalDataSourceUpdateConfig(models.Model):
         return self.mapping
 
     def __str__(self):
-        return f'Update config for {self.external_data_source.name}'
+        return f"Update config for {self.external_data_source.name}"
 
     def delete(self, *args, **kwargs):
         self.disable()
@@ -1137,14 +1197,12 @@ class ExternalDataSourceUpdateConfig(models.Model):
 
         if self.external_data_source.automated_webhooks:
             self.external_data_source.setup_webhook(config=self)
-            
-            return refresh_webhook\
-            .configure(
-              # Dedupe `update_all` jobs for the same config
-              # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-              queueing_lock=f"webhook_{str(self.id)}"
-            )\
-            .defer(config_id=str(self.id))
+
+            return refresh_webhook.configure(
+                # Dedupe `update_all` jobs for the same config
+                # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+                queueing_lock=f"webhook_{str(self.id)}"
+            ).defer(config_id=str(self.id))
 
     def disable(self):
         self.enabled = False
@@ -1153,11 +1211,13 @@ class ExternalDataSourceUpdateConfig(models.Model):
         self.save()
 
     # Data
-        
+
     async def update_one(self, member_id: Union[str, any]):
         if len(self.get_mapping()) == 0:
             return
-        external_data_source = await sync_to_async(self.external_data_source.get_real_instance)()
+        external_data_source = await sync_to_async(
+            self.external_data_source.get_real_instance
+        )()
         loaders = external_data_source.get_loaders()
         mapped_record = await external_data_source.map_one(member_id, self, loaders)
         await external_data_source.update_one(mapped_record=mapped_record)
@@ -1165,7 +1225,9 @@ class ExternalDataSourceUpdateConfig(models.Model):
     async def update_many(self, member_ids: list[Union[str, any]]):
         if len(self.get_mapping()) == 0:
             return
-        external_data_source = await sync_to_async(self.external_data_source.get_real_instance)()
+        external_data_source = await sync_to_async(
+            self.external_data_source.get_real_instance
+        )()
         loaders = external_data_source.get_loaders()
         mapped_records = await external_data_source.map_many(member_ids, self, loaders)
         await external_data_source.update_many(mapped_records=mapped_records)
@@ -1173,13 +1235,15 @@ class ExternalDataSourceUpdateConfig(models.Model):
     async def update_all(self):
         if len(self.get_mapping()) == 0:
             return
-        external_data_source = await sync_to_async(self.external_data_source.get_real_instance)()
+        external_data_source = await sync_to_async(
+            self.external_data_source.get_real_instance
+        )()
         loaders = external_data_source.get_loaders()
         mapped_records = await external_data_source.map_all(self, loaders)
         await external_data_source.update_all(mapped_records=mapped_records)
 
     # Webhooks
-        
+
     def handle_update_webhook_view(self, body):
         member_ids = self.external_data_source.get_member_ids_from_webhook(body)
         if len(member_ids) == 1:
@@ -1187,7 +1251,7 @@ class ExternalDataSourceUpdateConfig(models.Model):
         else:
             self.schedule_update_many(member_ids=member_ids)
         return HttpResponse(status=200)
-    
+
     def refresh_webhook(self):
         external_data_source = self.external_data_source.get_real_instance()
         external_data_source.refresh_webhook(config=self)
@@ -1196,69 +1260,75 @@ class ExternalDataSourceUpdateConfig(models.Model):
 
     @classmethod
     async def deferred_update_one(cls, config_id: str, member_id: str):
-        config = await cls.objects.select_related('external_data_source').aget(id=config_id)
+        config = await cls.objects.select_related("external_data_source").aget(
+            id=config_id
+        )
         if config.enabled:
             await config.update_one(member_id=member_id)
 
     @classmethod
     async def deferred_update_many(cls, config_id: str, member_ids: list[str]):
-        config = await cls.objects.select_related('external_data_source').aget(id=config_id)
+        config = await cls.objects.select_related("external_data_source").aget(
+            id=config_id
+        )
         if config.enabled:
             await config.update_many(member_ids=member_ids)
 
     @classmethod
     async def deferred_update_all(cls, config_id: str):
-        config = await cls.objects.select_related('external_data_source').aget(id=config_id)
+        config = await cls.objects.select_related("external_data_source").aget(
+            id=config_id
+        )
         if config.enabled:
             await config.update_all()
 
     @classmethod
     async def deferred_refresh_webhook(cls, config_id: str):
-        config = await ExternalDataSourceUpdateConfig.objects.select_related('external_data_source').aget(pk=config_id)
+        config = await ExternalDataSourceUpdateConfig.objects.select_related(
+            "external_data_source"
+        ).aget(pk=config_id)
         if config.enabled:
-            external_data_source = await sync_to_async(config.external_data_source.get_real_instance)()
+            external_data_source = await sync_to_async(
+                config.external_data_source.get_real_instance
+            )()
             if config.external_data_source.automated_webhooks:
                 await external_data_source.refresh_webhook(config=config)
 
     def schedule_update_one(self, member_id: str) -> int:
         try:
-          return update_one\
-          .configure(
-            # Dedupe `update_many` jobs for the same config
-            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-            queueing_lock=f"update_one_{str(self.id)}_{str(member_id)}",
-            schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY }
-          )\
-          .defer(config_id=str(self.id), member_id=member_id)
+            return update_one.configure(
+                # Dedupe `update_many` jobs for the same config
+                # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+                queueing_lock=f"update_one_{str(self.id)}_{str(member_id)}",
+                schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+            ).defer(config_id=str(self.id), member_id=member_id)
         except UniqueViolation:
-          pass
+            pass
 
     def schedule_update_many(self, member_ids: list[str]) -> int:
         member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
-          return update_many\
-          .configure(
-            # Dedupe `update_many` jobs for the same config
-            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-            queueing_lock=f"update_many_{str(self.id)}_{member_ids_hash}",
-            schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY }
-          )\
-          .defer(config_id=str(self.id), member_ids=member_ids)
+            return update_many.configure(
+                # Dedupe `update_many` jobs for the same config
+                # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+                queueing_lock=f"update_many_{str(self.id)}_{member_ids_hash}",
+                schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+            ).defer(config_id=str(self.id), member_ids=member_ids)
         except UniqueViolation:
-          pass
+            pass
 
     def schedule_update_all(self) -> int:
         try:
-          return update_all\
-          .configure(
-            # Dedupe `update_all` jobs for the same config
-            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-            queueing_lock=f"update_all_{str(self.id)}",
-            schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY }
-          )\
-          .defer(config_id=str(self.id))
+            return update_all.configure(
+                # Dedupe `update_all` jobs for the same config
+                # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+                queueing_lock=f"update_all_{str(self.id)}",
+                schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+            ).defer(config_id=str(self.id))
         except UniqueViolation:
-          pass
+            pass
 
     def event_log_queryset(self):
-        return ProcrastinateJob.objects.filter(args__config_id=str(self.id)).order_by('-scheduled_at')
+        return ProcrastinateJob.objects.filter(args__config_id=str(self.id)).order_by(
+            "-scheduled_at"
+        )

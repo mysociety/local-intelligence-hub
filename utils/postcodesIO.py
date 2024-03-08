@@ -1,10 +1,13 @@
-from django.conf import settings
-from typing import List, Optional
-import requests
-from utils.py import get, get_path, batch_and_aggregate
-from utils.geo import create_point
-
 from dataclasses import dataclass
+from typing import List, Optional
+
+from django.conf import settings
+
+import requests
+
+from utils.geo import create_point
+from utils.py import batch_and_aggregate, get, get_path
+
 
 @dataclass
 class Codes:
@@ -55,7 +58,6 @@ class Result:
     ced: Optional[str] = None
 
 
-
 @dataclass
 class PostcodesIOResult:
     status: int
@@ -73,35 +75,41 @@ class PostcodesIOBulkResult:
     status: int
     result: List[ResultElement]
 
+
 def get_postcode_geo(postcode: str) -> PostcodesIOResult:
-    response = requests.get(f'{settings.POSTCODES_IO_URL}/postcodes/{postcode}')
+    response = requests.get(f"{settings.POSTCODES_IO_URL}/postcodes/{postcode}")
     data = response.json()
-    status = get(data, 'status')
-    result = get(data, 'result')
+    status = get(data, "status")
+    result = get(data, "result")
 
     if status != 200 or result is None:
-        raise Exception(f'Failed to geocode postcode: {postcode}.')
+        raise Exception(f"Failed to geocode postcode: {postcode}.")
 
     return result
 
+
 @batch_and_aggregate(settings.POSTCODES_IO_BATCH_MAXIMUM)
 async def get_bulk_postcode_geo(postcodes) -> PostcodesIOBulkResult:
-    response = requests.post(f'{settings.POSTCODES_IO_URL}/postcodes', json={
-        "postcodes": postcodes
-    },)
+    response = requests.post(
+        f"{settings.POSTCODES_IO_URL}/postcodes",
+        json={"postcodes": postcodes},
+    )
     data = response.json()
-    status = get(data, 'status')
-    result: List[ResultElement] = get(data, 'result')
+    status = get(data, "status")
+    result: List[ResultElement] = get(data, "result")
 
     if status != 200 or result is None:
-        raise Exception(f'Failed to bulk geocode postcodes: {postcodes}.')
+        raise Exception(f"Failed to bulk geocode postcodes: {postcodes}.")
 
     return [
-        next((
-            geo.get('result') if geo.get('result') else None
-            for geo in result
-            if geo['query'] == postcode
-        ), None)
+        next(
+            (
+                geo.get("result") if geo.get("result") else None
+                for geo in result
+                if geo["query"] == postcode
+            ),
+            None,
+        )
         for postcode in postcodes
     ]
 
@@ -111,35 +119,40 @@ async def bulk_coordinate_geo(coordinates):
     for i, coords in enumerate(coordinates):
         coordinates[i]["limit"] = 1
 
-    payload = {
-        "geolocations": coordinates
-    }
+    payload = {"geolocations": coordinates}
 
-    response = requests.post(f'{settings.POSTCODES_IO_URL}/postcodes', data=payload)
+    response = requests.post(f"{settings.POSTCODES_IO_URL}/postcodes", data=payload)
     data = response.json()
-    status = get(data, 'status')
-    result = get(data, 'result')
+    status = get(data, "status")
+    result = get(data, "result")
 
     if status != 200 or result is None:
-        raise Exception(f'Failed to bulk geocode coordinates: {payload}')
+        raise Exception(f"Failed to bulk geocode coordinates: {payload}")
 
     return result
 
+
 def coordinates_geo(latitude: float, longitude: float):
     response = requests.get(
-        f'{settings.POSTCODES_IO_URL}/postcodes?lon={longitude}&lat={latitude}')
+        f"{settings.POSTCODES_IO_URL}/postcodes?lon={longitude}&lat={latitude}"
+    )
     data = response.json()
-    status = get(data, 'status')
-    result = get(data, 'result')
+    status = get(data, "status")
+    result = get(data, "result")
 
     if status != 200 or result is None or len(result) < 1:
         raise Exception(
-            f'Failed to get postcode for coordinates: lon={longitude}&lat={latitude}.')
+            f"Failed to get postcode for coordinates: lon={longitude}&lat={latitude}."
+        )
 
     return result[0]
 
+
 def point_from_geo(geo):
-    return create_point(latitude=get_path(geo, 'latitude'), longitude=get_path(geo, 'longitude'))
+    return create_point(
+        latitude=get_path(geo, "latitude"), longitude=get_path(geo, "longitude")
+    )
+
 
 # def get_approximate_postcode_locations(postcodes):
 #     '''

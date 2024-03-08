@@ -27,5 +27,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(ensure_users_have_status, reverse_code=migrations.RunPython.noop),
+        migrations.RunPython(
+            ensure_users_have_status, reverse_code=migrations.RunPython.noop
+        ),
     ]

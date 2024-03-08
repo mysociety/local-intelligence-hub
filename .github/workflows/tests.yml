@@ -11,15 +11,29 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     steps:
-
       - name: checkout repo content
         uses: actions/checkout@v2
 
       - name: Run django tests
         uses: ./.github/actions/in-container
+        env:
+          DATABASE_URL: postgres://postgres:postgres@postgres/postgres
+          CACHE_FILE: /tmp/meep
+          SECRET_KEY: keyboardcat
         with:
-          use_dev_image: false
           run: |
             script/bootstrap
             script/test --coverage
