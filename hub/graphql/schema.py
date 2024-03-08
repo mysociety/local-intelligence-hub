@@ -8,6 +8,7 @@ from strawberry_django.optimizer import DjangoOptimizerExtension
 from strawberry_django.permissions import IsAuthenticated
 from typing import List
 
+from hub import models
 from hub.graphql import types
 from hub.graphql import mutations as mutation_types
 
@@ -27,7 +28,7 @@ class Query(UserQueries):
     
     @strawberry.field
     def test_airtable_source(self,
-                                 info: Info, 
+                                 info: strawberry.types.info.Info, 
                                  api_key: str,
                                  base_id: str,
                                  table_id: str) -> bool:
