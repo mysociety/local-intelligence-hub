@@ -1,11 +1,10 @@
 from django.db import connection
 from django.db.utils import OperationalError
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.generic import TemplateView
 
 from hub.mixins import TitleMixin
 from hub.models import Area, DataSet
-from django.http import HttpResponse
 
 
 async def async_healthcheck(request):

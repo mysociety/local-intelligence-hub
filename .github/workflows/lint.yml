@@ -4,20 +4,19 @@ name: Lint
 
 on:
   pull_request:
-  workflow_call:
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: black Lint
+      - name: Run black
         uses: psf/black@stable
         with:
           options: "--check --diff"
           src: "."
           version: "22.8.0"
-      - name: isort Lint
+      - name: Run isort
         uses: isort/isort-action@master
-      - name: flake8 Lint
+      - name: Run flake8
         uses: py-actions/flake8@v2

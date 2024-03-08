@@ -10,7 +10,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
-import socket
 from datetime import timedelta
 from pathlib import Path
 
@@ -28,7 +27,7 @@ env = environ.Env(
     SCHEDULED_UPDATE_SECONDS_DELAY=(int, 3),
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, []),
-    CORS_ALLOWED_ORIGINS=(list, ['http://localhost:3000']),
+    CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3000"]),
     GOOGLE_ANALYTICS=(str, ""),
     GOOGLE_SITE_VERIFICATION=(str, ""),
     TEST_AIRTABLE_BASE_ID=(str, ""),
