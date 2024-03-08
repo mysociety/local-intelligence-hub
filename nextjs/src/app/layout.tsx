@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 import { ApolloWrapper } from "@/components/apollo-wrapper";
 import { useAuth } from "@/hooks/auth";
+import Footer from "@/components/footer";
 
 function MappedIcon() {
   return (
@@ -212,7 +213,9 @@ export default async function RootLayout({
           )}
           <main>{children}</main>
           <Toaster />
-          <Footer/>
+          {!isLoggedIn && (
+            <Footer/>
+          )}
         </body>
       </html>
     </ApolloWrapper>
