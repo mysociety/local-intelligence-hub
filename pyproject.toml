@@ -37,7 +37,6 @@ strawberry-graphql = {extras = ["asgi"], version = "^0.220.0"}
 pandas = "^2.2.1"
 
 [tool.poetry.dev-dependencies]
-django-debug-toolbar = "^3.7.0"
 black = "^22.8.0"
 coverage = "^6.5.0"
 flake8 = "^5.0.4"
