@@ -465,6 +465,21 @@ files = [
 Django = ">=3.2"
 
 [[package]]
+name = "django-choices-field"
+version = "2.3.0"
+description = "Django field that set/get django's new TextChoices/IntegerChoices enum."
+optional = false
+python-versions = ">=3.8,<4.0"
+files = [
+    {file = "django_choices_field-2.3.0-py3-none-any.whl", hash = "sha256:4bdcccf802bff9065af19798810de494dd16337fa46dae01680ede12a10280d6"},
+    {file = "django_choices_field-2.3.0.tar.gz", hash = "sha256:bb0c85c79737ab98bfb9c0d9ddf98010d612c0585be767890e25fd192c3d1694"},
+]
+
+[package.dependencies]
+django = ">=3.2"
+typing_extensions = ">=4.0.0"
+
+[[package]]
 name = "django-compressor"
 version = "4.4"
 description = "('Compresses linked and inline JavaScript or CSS into single cached files.',)"
@@ -2106,4 +2121,4 @@ brotli = ["Brotli"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "d06a2831fed444045e638c953c8b5eafc781a3c0399b41a32351c032924c497c"
+content-hash = "c83460eeaee728dd2a4c7229fb26b1cbbd6b031bfb43572874bec28962618fa4"

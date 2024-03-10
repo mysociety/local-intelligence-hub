@@ -1,12 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ApolloError, gql, useLazyQuery, useMutation } from "@apollo/client";
 import { NewExternalDataSourceUpdateConfigContext } from "../../NewExternalDataSourceWrapper";
 import { toast } from "sonner";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { SubmitHandler, useFieldArray, useForm } from "react-hook-form";
 import {
   Form,
   FormControl,
@@ -16,11 +16,21 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Input } from "@/components/ui/input";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import {
   CreateAirtableSourceMutation,
   CreateAirtableSourceMutationVariables,
+  GeographyTypes,
   TestAirtableSourceQuery,
   TestAirtableSourceQueryVariables,
 } from "@/__generated__/graphql";
@@ -60,9 +70,9 @@ export default function Page({
   const form = useForm<FormInputs>({
     defaultValues: {
       airtable: {
-        name: ""
-      }
-    }
+        geographyColumnType: GeographyTypes.Postcode,
+      },
+    },
   });
 
   const onSubmit: SubmitHandler<FormInputs> = (data) => {
@@ -99,7 +109,7 @@ export default function Page({
     airtable: CreateAirtableSourceMutationVariables["AirtableSource"],
   ) {
     const toastId = toast.loading("Testing connection...");
-    const test = testSource({ variables: airtable })
+    const test = testSource({ variables: airtable as any })
       .then(async (d) => {
         if (d.error || !d.data?.testAirtableSource) {
           return toast.error("Connection failed", { id: toastId });
@@ -189,6 +199,7 @@ export default function Page({
                 <FormItem>
                   <FormLabel>Airtable access token</FormLabel>
                   <FormControl>
+                    {/* @ts-ignore */}
                     <Input placeholder="patAB1" {...field} />
                   </FormControl>
                   <FormDescription>
@@ -213,6 +224,7 @@ export default function Page({
                 <FormItem>
                   <FormLabel>Base ID</FormLabel>
                   <FormControl>
+                    {/* @ts-ignore */}
                     <Input placeholder="app1234" {...field} />
                   </FormControl>
                   <FormDescription>
@@ -236,6 +248,7 @@ export default function Page({
                 <FormItem>
                   <FormLabel>Table ID</FormLabel>
                   <FormControl>
+                    {/* @ts-ignore */}
                     <Input placeholder="tbl1234" {...field} />
                   </FormControl>
                   <FormDescription>
@@ -251,7 +264,52 @@ export default function Page({
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            />        
+            <FormItem>
+              <FormLabel>Geography Column</FormLabel>
+              <div className='grid grid-cols-2 gap-4 w-full'>
+                {/* Postcode field */}
+                <FormField
+                  control={form.control}
+                  name="airtable.geographyColumn"
+                  render={({ field }) => (
+                    <>
+                      <FormControl>
+                        {/* @ts-ignore */}
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="airtable.geographyColumnType"
+                  render={({ field }) => (
+                    <>
+                      <FormControl>
+                        {/* @ts-ignore */}
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a geography type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectLabel>Geography column type</SelectLabel>
+                              <SelectItem value={GeographyTypes.Postcode}>Postcode</SelectItem>
+                              <SelectItem value={GeographyTypes.Ward}>Ward</SelectItem>
+                              <SelectItem value={GeographyTypes.Council}>Council</SelectItem>
+                              <SelectItem value={GeographyTypes.Constituency}>Constituency</SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </>
+                  )}
+              />
+              </div>
+            </FormItem>
             <div className="flex flex-row gap-x-4">
               <Button
                 variant="outline"

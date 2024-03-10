@@ -35,6 +35,7 @@ setuptools = "^69.1.1"
 uvicorn = "^0.27.1"
 strawberry-graphql = {extras = ["asgi"], version = "^0.220.0"}
 pandas = "^2.2.1"
+django-choices-field = "^2.3.0"
 
 [tool.poetry.dev-dependencies]
 django-debug-toolbar = "^3.7.0"

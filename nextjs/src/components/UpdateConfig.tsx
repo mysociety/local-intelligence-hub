@@ -4,14 +4,6 @@ import { Button } from "@/components/ui/button";
 import { enrichmentDataSources } from "@/lib/data";
 import { Form, FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { MutationUpdateExternalDataSourceUpdateConfigArgs } from "@/__generated__/graphql";
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { SourcePathSelector } from "@/components/SelectSourceData";
 import { ArrowRight, XCircle } from "lucide-react";
@@ -49,24 +41,6 @@ export function UpdateConfigForm({
     <FormProvider {...form}>
       <Form {...form}>
         <div className="space-y-7">
-          <div className="max-w-sm">
-            {/* Postcode field */}
-            <FormField
-              control={form.control}
-              name="postcodeColumn"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Postcode Column</FormLabel>
-                  <FormControl>
-                    {/* @ts-ignore */}
-                    <Input placeholder="postcode" {...field} />
-                  </FormControl>
-                  <FormDescription>In your external table</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
           <div className="max-w-3xl">
             <table>
               {fields.map((field, index) => (

@@ -30,7 +30,6 @@ const CREATE_UPDATE_CONFIG = gql`
   mutation CreateUpdateConfig($config: ExternalDataSourceUpdateConfigInput!) {
     createExternalDataSourceUpdateConfig(data: $config) {
       id
-      postcodeColumn
       mapping {
         destinationColumn
         source

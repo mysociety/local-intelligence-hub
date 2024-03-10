@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 import uuid
-from typing import Iterable, TypedDict, Union
+from typing import Iterable, TypedDict, Union, Optional
 import asyncio
 from asgiref.sync import sync_to_async
 from psycopg.errors import UniqueViolation
@@ -18,6 +18,7 @@ from urllib.parse import urljoin
 from dateutil.parser import parser as date_parser
 from django.http import HttpResponse
 from procrastinate.contrib.django.models import ProcrastinateJob
+from django_choices_field import TextChoicesField
 
 from django_jsonform.models.fields import JSONField
 
@@ -774,6 +775,14 @@ class ExternalDataSource(PolymorphicModel):
     created_at = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(auto_now=True)
     automated_webhooks = False
+    # Geocoding data
+    class GeographyTypes(models.TextChoices):
+        POSTCODE = 'postcode', 'Postcode'
+        WARD = 'ward', 'Ward'
+        COUNCIL = 'council', 'Council'
+        CONSTITUENCY = 'constituency', 'Constituency'
+    geography_column_type = TextChoicesField(choices_enum=GeographyTypes, default=GeographyTypes.POSTCODE)
+    geography_column = models.CharField(max_length=250)
 
     def __str__(self):
         return self.name if self.name is not None else super().__str__()
@@ -828,9 +837,7 @@ class ExternalDataSource(PolymorphicModel):
 
     MappedMember = TypedDict('MatchedMember', {
         'config': 'ExternalDataSourceUpdateConfig',
-        'member_id': str,
         'member': dict,
-        'postcodes.io': PostcodesIOResult,
         'update_fields': dict[str, any]
     })
 
@@ -885,15 +892,15 @@ class ExternalDataSource(PolymorphicModel):
         '''
         if type(member) == str:
             member = await loaders['fetch_record'].load(member)
-        # Get postcode field from the config
-        postcode_column = config.postcode_column
-        # Get postcode from member
-        postcode = self.get_record_field(member, postcode_column)
+        update_fields = {}
         try:
-            # Get relevant config data for that postcode
-            postcode_data = await loaders['postcodesIO'].load(postcode)
+            postcode_data = None
+            if self.geography_column_type == self.GeographyTypes.POSTCODE:
+                # Get postcode from member
+                postcode = self.get_record_field(member, self.geography_column)
+                # Get relevant config data for that postcode
+                postcode_data = await loaders['postcodesIO'].load(postcode)
             # Map the fields
-            update_fields = {}
             for mapping_dict in config.get_mapping():
                 source = mapping_dict['source']
                 path = mapping_dict['source_path']
@@ -902,12 +909,12 @@ class ExternalDataSource(PolymorphicModel):
                     if postcode_data is not None:
                         update_fields[field] = get(postcode_data, path)
                 else:
+                    # Room for other data sources
                     pass
             # Return the member and config data
             return {
                 'config': config,
                 'member': member,
-                'postcodes.io': postcode_data,
                 'update_fields': update_fields
             }
         except TypeError:
@@ -915,7 +922,6 @@ class ExternalDataSource(PolymorphicModel):
             return {
                 'config': config,
                 'member': member,
-                'postcodes.io': None,
                 'update_fields': {}
             }
     
@@ -1012,7 +1018,8 @@ class AirtableSource(ExternalDataSource):
             "filters": {
               "recordChangeScope": self.table_id,
               "watchDataInFieldIds": [
-                self.table.schema().field(config.postcode_column).id
+                # Listen for any geography changes
+                self.table.schema().field(self.geography_column).id
               ],
               "dataTypes": [
                 "tableData"
@@ -1104,7 +1111,6 @@ class ExternalDataSourceUpdateConfig(models.Model):
     last_update = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
     enabled = models.BooleanField(default=False)
-    postcode_column = models.CharField(max_length=250, null=True, blank=True)
 
     '''
     Mapping is a key/value pair where the key is the column name in the data source and the value is from Mapped, E.g.

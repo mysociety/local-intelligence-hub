@@ -76,7 +76,7 @@ const GET_UPDATE_CONFIG = gql`
         args
         lastEventAt
       }
-      postcodeColumn
+      
       mapping {
         source
         sourcePath
@@ -99,7 +99,7 @@ const UPDATE_CONFIG = gql`
   mutation UpdateConfig($config: ExternalDataSourceUpdateConfigInput!) {
     updateExternalDataSourceUpdateConfig(data: $config) {
       id
-      postcodeColumn
+      
       mapping {
         source
         sourcePath
@@ -212,7 +212,6 @@ export default function InspectExternalDataSourceUpdateConfig({
         <UpdateConfigForm
           saveButtonLabel="Update"
           initialData={{
-            postcodeColumn: config.postcodeColumn,
             // Trim out the __typenames
             mapping: config.mapping.map((m) => ({
               source: m.source,
@@ -289,6 +288,8 @@ export default function InspectExternalDataSourceUpdateConfig({
   );
 
   function updateNickname () {
+    const name = document.getElementById("nickname")?.textContent?.trim()
+    if (name === config.externalDataSource.name) return
     const update = client.mutate({
       mutation: UPDATE_SOURCE,
       variables: {

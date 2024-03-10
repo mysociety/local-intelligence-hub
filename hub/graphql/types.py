@@ -74,6 +74,8 @@ class ExternalDataSource:
     created_at: auto
     last_update: auto
     organisation: Organisation
+    geography_column: auto
+    geography_column_type: auto
     update_configs: List['ExternalDataSourceUpdateConfig']
 
     @classmethod
@@ -168,7 +170,6 @@ class ExternalDataSourceUpdateConfig:
     id: auto
     external_data_source: ExternalDataSource
     mapping: List[UpdateConfigDict]
-    postcode_column: auto
     enabled: auto
     jobs: List[QueueJob] = strawberry_django.field(
         resolver=lambda self: procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(

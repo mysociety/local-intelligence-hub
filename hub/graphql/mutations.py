@@ -8,7 +8,6 @@ from strawberry.field_extensions import InputMutationExtension
 from strawberry_django.permissions import IsAuthenticated
 from strawberry_django.auth.utils import get_current_user
 from strawberry.types.info import Info
-import procrastinate.contrib.django.models
 
 @strawberry.input
 class IDObject:
@@ -20,14 +19,14 @@ class ExternalDataSourceInput:
     name: auto
     description: auto
     organisation: auto
+    geography_column: auto
+    geography_column_type: auto
 
-@strawberry_django.input(models.AirtableSource)
+@strawberry_django.input(models.AirtableSource, partial=True)
 class AirtableSourceInput(ExternalDataSourceInput):
-    id: Optional[strawberry.scalars.ID]
     api_key: auto
     base_id: auto
     table_id: auto
-    organisation: Optional[str]
 
 @strawberry.input
 class UpdateConfigDictInput:
@@ -39,7 +38,6 @@ class UpdateConfigDictInput:
 class ExternalDataSourceUpdateConfigInput:
     id: auto
     external_data_source: types.ExternalDataSource
-    postcode_column: auto
     enabled: auto
     mapping: List[UpdateConfigDictInput]
   
@@ -84,8 +82,15 @@ def refresh_webhook (config_id: str) -> models.ExternalDataSourceUpdateConfig:
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
 def create_airtable_source(info: Info, data: AirtableSourceInput) -> models.AirtableSource:
+    return models.AirtableSource.objects.create(
+        organisation=get_or_create_organisation_for_source(info, data),
+        **data.__dict__()
+    )
+
+def get_or_create_organisation_for_source(info: Info, data: any):
+    if data.organisation:
+        return data.organisation
     user = get_current_user(info)
-    organisation = data.organisation
     if isinstance(data.organisation, strawberry.unset.UnsetType) or data.organisation is None:
         if user.memberships.first() is not None:
             print("Assigning the user's default organisation")
@@ -101,12 +106,4 @@ def create_airtable_source(info: Info, data: AirtableSourceInput) -> models.Airt
                 organisation=organisation,
                 role="owner"
             )
-
-    return models.AirtableSource.objects.create(
-        api_key=data.api_key,
-        base_id=data.base_id,
-        table_id=data.table_id,
-        organisation=organisation,
-        name=data.name,
-        description=data.description
-    )
+    return organisation

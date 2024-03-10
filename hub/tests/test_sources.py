@@ -15,11 +15,11 @@ class TestAirtableSource(TestCase):
             base_id=settings.TEST_AIRTABLE_BASE_ID,
             table_id=settings.TEST_AIRTABLE_TABLE_NAME,
             api_key=settings.TEST_AIRTABLE_API_KEY,
+            geography_column="Postcode"
         )
 
         self.config = ExternalDataSourceUpdateConfig.objects.create(
             external_data_source=self.source,
-            postcode_column="Postcode", 
             mapping=[
               {
                 "source": "postcodes.io",
