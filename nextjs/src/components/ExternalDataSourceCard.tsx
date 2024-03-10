@@ -44,11 +44,13 @@ export function ExternalDataSourceUpdateConfigCard({
 
   return (
     <article className="rounded-xl border border-meepGray-600 px-6 py-5 space-y-3">
-      <Logo className='w-20'/>
-      <header className="flex flex-row justify-between items-center">
-        <h3 className="text-hSm">
-          {updateConfig?.externalDataSource.name || updateConfig?.externalDataSource?.connectionDetails?.crmType}
-        </h3>
+      <header className="flex flex-row justify-between items-start">
+        <div className='space-y-3'>
+          <Logo className='w-20'/>
+          <h3 className="text-hSm">
+            {updateConfig?.externalDataSource.name || updateConfig?.externalDataSource?.connectionDetails?.crmType}
+          </h3>
+        </div>
         <Link href={`/external-data-source-updates/inspect/${updateConfig.id}`}>
           <CogIcon />
         </Link>
