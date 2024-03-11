@@ -5,34 +5,64 @@ concurrency:
   cancel-in-progress: true
   
 on:
-  push:
   pull_request:
 
 jobs:
   tests:
     runs-on: ubuntu-latest
+    environment: testing
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    container:
+      image: python:3.12
+      env:
+        DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
+        CACHE_FILE: /tmp/meep
+        POETRY_VIRTUALENVS_CREATE: "false"
+        MAPIT_URL: https://mapit.mysociety.org/
+        MAPIT_API_KEY: "not_a_key"
+        TEST_AIRTABLE_BASE_ID: ${{ vars.TEST_AIRTABLE_BASE_ID }}
+        TEST_AIRTABLE_TABLE_NAME: ${{ vars.TEST_AIRTABLE_TABLE_NAME }}
+        TEST_AIRTABLE_API_KEY: ${{ secrets.TEST_AIRTABLE_API_KEY }}
+        SECRET_KEY: keyboardcat
     steps:
-
-      - name: checkout repo content
+      - name: Checkout repo content
         uses: actions/checkout@v2
-
-      - name: Run django tests
-        uses: ./.github/actions/in-container
-        with:
-          use_dev_image: false
-          run: |
-            script/bootstrap
-            script/test --coverage
-
-      # do this inside the docker container otherwise the paths don't work
-      - name: generate coverage xml
-        uses: ./.github/actions/in-container
-        with:
-          run: coverage xml
-
-      # do this outside the docker container otherwise can't get repo details
-      - name: upload code coverage
+      - name: Install linux dependencies
         run: |
-          less coverage.xml
-          pip install codecov
-          codecov
+          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | tee /etc/apt/sources.list.d/ngrok.list
+          apt-get update && apt-get install -y binutils gdal-bin libproj-dev ngrok less
+      - name: Install poetry
+        run: curl -sSL https://install.python-poetry.org | python3 -
+      - name: Install python dependencies
+        run: ~/.local/bin/poetry export --with dev -f requirements.txt --output requirements.txt && pip install -r requirements.txt
+      - name: Start server
+        run: gunicorn local_intelligence_hub.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 &
+      - name: Start ngrok tunnelling
+        run: |
+          ngrok authtoken ${{ secrets.NGROK_AUTHTOKEN }}
+          ngrok http 8000 --log=stdout > ngrok.log &
+      - name: Extract ngrok URL
+        run: BASE_URL=$(cat ngrok.log | grep 'url=' | awk -F= '{print $NF}') && echo "BASE_URL=$BASE_URL" > .env
+      - name: Run django tests
+        run: cat .env && coverage run --source=. --branch manage.py test
+      - name: Generate coverage xml
+        run: coverage xml
+      - name: Upload coverage.xml
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage.xml
+          path: coverage.xml
+          retention-days: 5
+

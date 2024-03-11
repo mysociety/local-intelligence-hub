@@ -24,7 +24,7 @@ def record_last_seen_middleware(get_response):
     def process_request(request):
         if request.user.is_authenticated:
             user = request.user
-            props = UserProperties.objects.get_or_create(user=user)
+            props, _ = UserProperties.objects.get_or_create(user=user)
             last_seen = request.session.get("last_seen", None)
             yesterday = now().replace(hour=0, minute=0) - one_day
             if last_seen is None or last_seen < yesterday.timestamp():
@@ -33,11 +33,13 @@ def record_last_seen_middleware(get_response):
                 props.save()
 
     if iscoroutinefunction(get_response):
+
         async def middleware(request: HttpRequest):
             await sync_to_async(process_request)(request)
             return await get_response(request)
 
     else:
+
         def middleware(request: HttpRequest):
             process_request(request)
             return get_response(request)
@@ -51,6 +53,7 @@ def async_whitenoise_middleware(get_response):
         return WhiteNoiseMiddleware(get_response)(request)
 
     if iscoroutinefunction(get_response):
+
         async def middleware(request: HttpRequest):
             response = logic(request)
             if isawaitable(response):
@@ -58,6 +61,7 @@ def async_whitenoise_middleware(get_response):
             return response
 
     else:
+
         def middleware(request: HttpRequest):
             return logic(request)
 
@@ -81,6 +85,7 @@ def django_jwt_middleware(get_response):
         setattr(request, USER_OR_ERROR_KEY, user_or_error)
 
     if iscoroutinefunction(get_response):
+
         async def middleware(request: HttpRequest):
             try:
                 return await gqlauth_middleware(request)
@@ -89,10 +94,11 @@ def django_jwt_middleware(get_response):
             return await get_response(request)
 
     else:
+
         def middleware(request: HttpRequest):
             try:
                 return gqlauth_middleware(request)
-            except Exception as e:
+            except Exception:
                 exception_handler(request)
             return get_response(request)
 
