@@ -231,6 +231,9 @@ BOOTSTRAP5 = {
 # Sending messages
 EMAIL_HOST = env.str("EMAIL_HOST", "localhost")
 EMAIL_PORT = env.str("EMAIL_PORT", 1025)
+EMAIL_HOST_USER = env.str("EMAIL_HOST_USER", False)
+EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD", False)
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", False)
 DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL", "webmaster@localhost")
 
 POSTCODES_IO_URL = "https://postcodes.commonknowledge.coop"
