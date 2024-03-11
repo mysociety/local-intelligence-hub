@@ -1,46 +1,13 @@
 import * as React from "react";
 import {
-  Calendar,
-  MoreHorizontal,
-  Tags,
-  Trash,
-  User,
-  Database,
-} from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import {
   Command,
   CommandDialog,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList,
-  CommandSeparator,
-  CommandShortcut,
+  CommandList
 } from "@/components/ui/command"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { EnrichmentDataSource, SourcePath } from "@/lib/data";
 import { AutoUpdateConfig } from "@/__generated__/graphql";
 
@@ -81,7 +48,7 @@ export function SourcePathSelector({
               {source.sourcePaths.map((sourcePath) => (
                 <CommandItem
                   key={val(sourcePath)}
-                  value={val(sourcePath)}
+                  value={label(sourcePath)}
                   onSelect={() => {
                     setValue(
                       source.slug,
@@ -90,64 +57,20 @@ export function SourcePathSelector({
                     setOpen(false);
                   }}
                 >
-                  {label(sourcePath)}
+                  <div>
+                    <div>{label(sourcePath)}</div>
+                    {!!description(sourcePath) && (
+                      <div className="text-xs opacity-70">
+                        {description(sourcePath)}
+                      </div>
+                    )}
+                  </div>
                 </CommandItem>
               ))}
             </CommandGroup>
           ))}
         </CommandList>
       </CommandDialog>
-{/* 
-      <Sheet>
-        <SheetTrigger>
-          {value && value.source && value.sourcePath
-              ? `${value.source}: ${value.sourcePath}`
-              : "Select data"}
-        </SheetTrigger>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Select data</SheetTitle>
-            <SheetDescription>
-              {sources.map((source) => (
-                <DropdownMenuSub key={source.slug}>
-                  <DropdownMenuSubTrigger>
-                    <Database className="mr-2 h-4 w-4" />
-                    {source.name || source.slug}
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="p-0">
-                    <Command>
-                      <CommandInput
-                        placeholder="Filter available data..."
-                        autoFocus={true}
-                      />
-                      <CommandList>
-                        <CommandEmpty>No data found.</CommandEmpty>
-                        <CommandGroup>
-                          {source.sourcePaths.map((sourcePath) => (
-                            <CommandItem
-                              key={val(sourcePath)}
-                              value={val(sourcePath)}
-                              onSelect={() => {
-                                setValue(
-                                  source.slug,
-                                  val(sourcePath),
-                                );
-                                setOpen(false);
-                              }}
-                            >
-                              {label(sourcePath)}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-              ))}
-            </SheetDescription>
-          </SheetHeader>
-        </SheetContent>
-      </Sheet> */}
     </div>
   );
 }
@@ -158,4 +81,8 @@ function label(d: SourcePath) {
 
 function val(d: SourcePath) {
   return typeof d === "string" ? d : d.value;
+}
+
+function description(d: SourcePath) {
+  return typeof d === "string" ? "" : d.description;
 }

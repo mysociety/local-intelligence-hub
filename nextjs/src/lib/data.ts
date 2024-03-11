@@ -45,10 +45,82 @@ export const enrichmentDataSources: Array<EnrichmentDataSource> = [
     builtIn: true,
     sourcePaths: [
       {
+        value: "parliamentary_constituency_2025",
+        label: "GE2024 Westminster Parliamentary Constituency",
+        description:
+          "The Westminster Parliamentary Constituency code for each postcode.",
+      },
+      {
+        value: "parliamentary_constituency",
+        label: "GE2019 Westminster Parliamentary Constituency",
+        description:
+          "The Westminster Parliamentary Constituency code for each postcode.",
+      },
+      {
+        value: "admin_district",
+        label: "District (Council/Local Authority)",
+        description:
+          "The current district/unitary authority to which the postcode has been assigned.",
+      },
+      {
+        value: "admin_ward",
+        label: "Ward",
+        description:
+          "The current administrative/electoral area to which the postcode has been assigned.",
+      },
+      {
         value: "postcode",
         label: "Postcode",
         description:
           "All current (‘live’) postcodes within the United Kingdom, the Channel Islands and the Isle of Man, received monthly from Royal Mail. 2, 3 or 4-character outward code, single space and 3-character inward code.",
+      },
+      {
+        value: "parish",
+        label: "Parish (England)/community (Wales)",
+        description:
+          "The smallest type of administrative area in England is the parish (also known as 'civil parish'); the equivalent units in Wales are communities.",
+      },
+      {
+        value: "admin_county",
+        label: "County",
+        description:
+          "The current county to which the postcode has been assigned.",
+      },
+      {
+        value: "region",
+        label: "Region (formerly GOR)",
+        description:
+          "The Region code for each postcode. The nine GORs were abolished on 1 April 2011 and are now known as ‘Regions’. They were the primary statistical subdivisions of England and also the areas in which the Government Offices for the Regions fulfilled their role. Each GOR covered a number of local authorities.",
+      },
+      {
+        value: "country",
+        label: "Country",
+        description:
+          "The country (i.e. one of the four constituent countries of the United Kingdom or the Channel Islands or the Isle of Man) to which each postcode is assigned.",
+      },
+      {
+        value: "nhs_ha",
+        label: "Strategic Health Authority",
+        description: "The health area code for the postcode.",
+      },
+      {
+        value: "primary_care_trust",
+        label: "Primary Care Trust (PCT)",
+        description:
+          "The code for the Primary Care areas in England, LHBs in Wales, CHPs in Scotland, LCG in Northern Ireland and PHD in the Isle of Man; there are no equivalent areas in the Channel Islands. Care Trust/ Care Trust Plus (CT)/ local health board (LHB)/ community health partnership (CHP)/ local commissioning group (LCG)/ primary healthcare directorate (PHD).",
+      },
+      {
+        value: "ccg",
+        label:
+          "Sub ICB Location (LOC)/ Local Health Board (LHB)/ Community Health Partnership (CHP)/ Local Commissioning Group (LCG)/ Primary Healthcare Directorate (PHD)",
+        description:
+          ". The code for the Sub ICB Locations in England, LHBs in Wales, CHPs in Scotland, LCG in Northern Ireland and PHD in the Isle of Man; there are no equivalent areas in the Channel Islands. This was formerly Clinical Commissioning Group. From July 2022, CCGs were replaced by Sub-ICB locations.",
+      },
+      {
+        value: "ced",
+        label: "County Electoral District",
+        description:
+          "The county electoral division code for each English postcode. Pseudo codes are included for the remainder of the UK. The field will be null for English postcodes with no grid reference. English county councils use county electoral divisions (CED) to elect councillors. These CEDs must be confined within district boundaries, but need not be based on whole electoral wards. The only exceptions are the Isles of Scilly and the Greater London Authority (GLA). CEDs do not exist within UAs.",
       },
       {
         value: "outcode",
@@ -81,35 +153,6 @@ export const enrichmentDataSources: Array<EnrichmentDataSource> = [
           "The Ordnance Survey postcode grid reference Northing to 1 metre resolution. Grid references for postcodes in Northern Ireland relate to the Irish Grid system. May be null if geolocation not available.",
       },
       {
-        value: "country",
-        label: "Country",
-        description:
-          "The country (i.e. one of the four constituent countries of the United Kingdom or the Channel Islands or the Isle of Man) to which each postcode is assigned.",
-      },
-      {
-        value: "nhs_ha",
-        label: "Strategic Health Authority",
-        description: "The health area code for the postcode.",
-      },
-      {
-        value: "admin_county",
-        label: "County",
-        description:
-          "The current county to which the postcode has been assigned.",
-      },
-      {
-        value: "admin_district",
-        label: "District",
-        description:
-          "The current district/unitary authority to which the postcode has been assigned.",
-      },
-      {
-        value: "admin_ward",
-        label: "Ward",
-        description:
-          "The current administrative/electoral area to which the postcode has been assigned.",
-      },
-      {
         value: "longitude",
         label: "Longitude",
         description:
@@ -122,39 +165,9 @@ export const enrichmentDataSources: Array<EnrichmentDataSource> = [
           "The WGS84 latitude given the Postcode's national grid reference. May be null if geolocation not available.",
       },
       {
-        value: "parliamentary_constituency",
-        label: "Westminster Parliamentary Constituency",
-        description:
-          "The Westminster Parliamentary Constituency code for each postcode.",
-      },
-      {
-        value: "parliamentary_constituency_2025",
-        label: "GE2024 Westminster Parliamentary Constituency",
-        description:
-          "The Westminster Parliamentary Constituency code for each postcode.",
-      },
-      {
         value: "european_electoral_region",
         label: "European Electoral Region (EER)",
         description: "The European Electoral Region code for each postcode.",
-      },
-      {
-        value: "primary_care_trust",
-        label: "Primary Care Trust (PCT)",
-        description:
-          "The code for the Primary Care areas in England, LHBs in Wales, CHPs in Scotland, LCG in Northern Ireland and PHD in the Isle of Man; there are no equivalent areas in the Channel Islands. Care Trust/ Care Trust Plus (CT)/ local health board (LHB)/ community health partnership (CHP)/ local commissioning group (LCG)/ primary healthcare directorate (PHD).",
-      },
-      {
-        value: "region",
-        label: "Region (formerly GOR)",
-        description:
-          "The Region code for each postcode. The nine GORs were abolished on 1 April 2011 and are now known as ‘Regions’. They were the primary statistical subdivisions of England and also the areas in which the Government Offices for the Regions fulfilled their role. Each GOR covered a number of local authorities.",
-      },
-      {
-        value: "parish",
-        label: "Parish (England)/community (Wales)",
-        description:
-          "The smallest type of administrative area in England is the parish (also known as 'civil parish'); the equivalent units in Wales are communities.",
       },
       {
         value: "lsoa",
@@ -167,19 +180,6 @@ export const enrichmentDataSources: Array<EnrichmentDataSource> = [
         label: "2011 Census middle layer super output area (MSOA)",
         description:
           "The 2011 Census middle layer SOA (MSOA) code for England and Wales and intermediate zone for Scotland.",
-      },
-      {
-        value: "ced",
-        label: "County Electoral District",
-        description:
-          "The county electoral division code for each English postcode. Pseudo codes are included for the remainder of the UK. The field will be null for English postcodes with no grid reference. English county councils use county electoral divisions (CED) to elect councillors. These CEDs must be confined within district boundaries, but need not be based on whole electoral wards. The only exceptions are the Isles of Scilly and the Greater London Authority (GLA). CEDs do not exist within UAs.",
-      },
-      {
-        value: "ccg",
-        label:
-          "Sub ICB Location (LOC)/ Local Health Board (LHB)/ Community Health Partnership (CHP)/ Local Commissioning Group (LCG)/ Primary Healthcare Directorate (PHD)",
-        description:
-          ". The code for the Sub ICB Locations in England, LHBs in Wales, CHPs in Scotland, LCG in Northern Ireland and PHD in the Isle of Man; there are no equivalent areas in the Channel Islands. This was formerly Clinical Commissioning Group. From July 2022, CCGs were replaced by Sub-ICB locations.",
       },
       {
         value: "nuts",
