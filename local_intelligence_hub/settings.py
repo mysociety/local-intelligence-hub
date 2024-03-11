@@ -29,7 +29,6 @@ env = environ.Env(
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, []),
     CORS_ALLOWED_ORIGINS=(list, ['http://localhost:3000']),
-    HIDE_DEBUG_TOOLBAR=(bool, False),
     GOOGLE_ANALYTICS=(str, ""),
     GOOGLE_SITE_VERIFICATION=(str, ""),
     TEST_AIRTABLE_BASE_ID=(str, ""),
@@ -50,7 +49,6 @@ DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
 CACHE_FILE = env("CACHE_FILE")
-HIDE_DEBUG_TOOLBAR = env("HIDE_DEBUG_TOOLBAR")
 MAPIT_URL = env("MAPIT_URL")
 MAPIT_API_KEY = env("MAPIT_API_KEY")
 GOOGLE_ANALYTICS = env("GOOGLE_ANALYTICS")
@@ -105,16 +103,16 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "hub.middleware.async_whitenoise_middleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "gqlauth.core.middlewares.django_jwt_middleware",
+    "hub.middleware.django_jwt_middleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "hub.middleware.RecordLastSeenMiddleware",
+    "hub.middleware.record_last_seen_middleware",
 ]
 
 ROOT_URLCONF = "local_intelligence_hub.urls"
@@ -234,31 +232,6 @@ BOOTSTRAP5 = {
 EMAIL_HOST = env.str("EMAIL_HOST", "localhost")
 EMAIL_PORT = env.str("EMAIL_PORT", 1025)
 DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL", "webmaster@localhost")
-
-if DEBUG and HIDE_DEBUG_TOOLBAR is False:  # pragma: no cover
-    hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
-    INTERNAL_IPS = [ip[:-1] + "1" for ip in ips] + ["127.0.0.1", "10.0.2.2"]
-    CSRF_TRUSTED_ORIGINS = ["https://*.preview.app.github.dev"]
-
-    # debug toolbar has to come after django_hosts middleware
-    MIDDLEWARE.insert(1, "debug_toolbar.middleware.DebugToolbarMiddleware")
-
-    INSTALLED_APPS += ("debug_toolbar",)
-
-    DEBUG_TOOLBAR_PANELS = [
-        "debug_toolbar.panels.versions.VersionsPanel",
-        "debug_toolbar.panels.timer.TimerPanel",
-        "debug_toolbar.panels.settings.SettingsPanel",
-        "debug_toolbar.panels.headers.HeadersPanel",
-        "debug_toolbar.panels.request.RequestPanel",
-        "debug_toolbar.panels.sql.SQLPanel",
-        "debug_toolbar.panels.staticfiles.StaticFilesPanel",
-        "debug_toolbar.panels.templates.TemplatesPanel",
-        "debug_toolbar.panels.cache.CachePanel",
-        "debug_toolbar.panels.signals.SignalsPanel",
-        "debug_toolbar.panels.logging.LoggingPanel",
-        "debug_toolbar.panels.redirects.RedirectsPanel",
-    ]
 
 POSTCODES_IO_URL = "https://postcodes.commonknowledge.coop"
 POSTCODES_IO_BATCH_MAXIMUM = 100
