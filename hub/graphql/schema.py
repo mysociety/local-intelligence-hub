@@ -57,6 +57,8 @@ class Mutation:
     create_organisation: types.Membership = mutation_types.create_organisation
     update_organisation: types.Organisation = mutations.update(mutation_types.OrganisationInputPartial, extensions=[IsAuthenticated()])
 
+    import_all: types.ExternalDataSource = mutation_types.import_all
+
 schema = JwtSchema(
     query=Query,
     mutation=Mutation,

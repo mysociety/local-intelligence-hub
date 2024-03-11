@@ -6,6 +6,7 @@ from asgiref.sync import sync_to_async
 from psycopg.errors import UniqueViolation
 import hashlib
 
+import json
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min
@@ -19,6 +20,8 @@ from dateutil.parser import parser as date_parser
 from django.http import HttpResponse
 from procrastinate.contrib.django.models import ProcrastinateJob
 from django_choices_field import TextChoicesField
+from asgiref.sync import async_to_sync
+import pandas as pd
 
 from django_jsonform.models.fields import JSONField
 
@@ -430,6 +433,9 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
     unit_type = models.TextField(null=True, choices=UNIT_TYPE_CHOICES)
     unit_distribution = models.TextField(null=True, choices=UNIT_DISTRIBUTION_CHOICES)
     areas_available = models.ManyToManyField("AreaType")
+    external_data_source = models.ForeignKey(
+        "ExternalDataSource", on_delete=models.CASCADE, null=True, blank=True
+    )
 
     def __str__(self):
         if self.label:
@@ -642,6 +648,10 @@ class CommonData(models.Model):
         abstract = True
 
 
+class GenericData(CommonData):
+    pass
+
+
 class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
     gss = models.CharField(max_length=30)
@@ -835,11 +845,43 @@ class ExternalDataSource(PolymorphicModel):
         '''
         raise NotImplementedError('Get member ID not implemented for this data source type.')
     
-    async def ingest (self):
+    def import_all (self):
         '''
         Copy data to this database for use in dashboarding features.
         '''
-        raise NotImplementedError('Ingest not implemented for this data source type.')
+
+        # A LIH record of this data
+        data_set, created = DataSet.objects.update_or_create(
+            external_data_source=self,
+            defaults={
+              "name": self.name,
+              "data_type": "json",
+              "table": "commondata",
+              "default_value": {},
+              "is_filterable": True,
+              "is_shadable": False,
+              "is_public": False,
+          },
+        )
+
+        data_type, created = DataType.objects.update_or_create(
+            data_set=data_set,
+            name=self.id,
+            defaults={
+                "data_type": "json"
+            }
+        )
+
+        data = async_to_sync(self.fetch_all)()
+        for record in data:
+            # To allow us to lean on LIH's geo-analytics features,
+            # TODO: Re-implement this data as `AreaData`, linking each datum to an Area/AreaType as per `self.geography_column` and `self.geography_column_type`.
+            # This will require importing other AreaTypes like admin_district, Ward
+            data, created = GenericData.objects.update_or_create(
+                data_type=data_type,
+                data=self.get_record_id(record),
+                defaults={"json": self.get_record_dict(record)},
+            )
 
     async def fetch_one(self, member_id: str):
         '''
@@ -894,6 +936,12 @@ class ExternalDataSource(PolymorphicModel):
         '''
         raise NotImplementedError('Get field not implemented for this data source type.')
     
+    def get_record_dict(self, record: any) -> dict:
+        '''
+        Get a record as a dictionary.
+        '''
+        return record
+    
     # Mapping mechanics
 
     async def fetch_many_loader(self, keys):
@@ -904,6 +952,14 @@ class ExternalDataSource(PolymorphicModel):
     class Loaders(TypedDict):
         postcodesIO: DataLoader
         fetch_record: DataLoader
+
+    def get_import_data(self):
+        return GenericData.objects.filter(
+            data_type__data_set__external_data_source_id=self.id
+        )
+    
+    def get_import_dataframe(self):
+        return pd.DataFrame(list(self.get_cached_data()))
 
     def get_loaders (self) -> Loaders:
         return {
@@ -1010,28 +1066,33 @@ class ExternalDataSource(PolymorphicModel):
 
     @classmethod
     async def deferred_refresh_one(cls, external_data_source_id: str, member_id: str):
-        external_data_source = await cls.objects.aget(id=external_data_source_id)
+        external_data_source: ExternalDataSource = await cls.objects.aget(id=external_data_source_id)
         if external_data_source.auto_update_enabled:
             await external_data_source.refresh_one(member_id=member_id)
 
     @classmethod
     async def deferred_refresh_many(cls, external_data_source_id: str, member_ids: list[str]):
-        external_data_source = await cls.objects.aget(id=external_data_source_id)
+        external_data_source: ExternalDataSource = await cls.objects.aget(id=external_data_source_id)
         if external_data_source.auto_update_enabled:
             await external_data_source.refresh_many(member_ids=member_ids)
 
     @classmethod
     async def deferred_refresh_all(cls, external_data_source_id: str):
-        external_data_source = await cls.objects.aget(id=external_data_source_id)
+        external_data_source: ExternalDataSource = await cls.objects.aget(id=external_data_source_id)
         if external_data_source.auto_update_enabled:
             await external_data_source.refresh_all()
 
     @classmethod
     async def deferred_refresh_webhooks(cls, external_data_source_id: str):
-        external_data_source = await cls.objects.aget(pk=external_data_source_id)
+        external_data_source: ExternalDataSource = await cls.objects.aget(pk=external_data_source_id)
         if external_data_source.auto_update_enabled or external_data_source.auto_import_enabled:
             if external_data_source.automated_webhooks:
                 external_data_source.refresh_webhooks()
+
+    @classmethod
+    async def deferred_import_all(cls, external_data_source_id: str):
+        external_data_source: ExternalDataSource = await cls.objects.aget(pk=external_data_source_id)
+        await external_data_source.import_all()
 
     def schedule_refresh_one(self, member_id: str) -> int:
         try:
@@ -1073,6 +1134,19 @@ class ExternalDataSource(PolymorphicModel):
         except UniqueViolation:
           pass
 
+    def schedule_import_all(self) -> int:
+        try:
+          return import_all\
+          .configure(
+            # Dedupe `import_all` jobs for the same config
+            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+            queueing_lock=f"import_all_{str(self.id)}",
+            schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY }
+          )\
+          .defer(external_data_source_id=str(self.id))
+        except UniqueViolation:
+          pass
+        
 class AirtableSource(ExternalDataSource):
     '''
     An Airtable table.
@@ -1124,6 +1198,9 @@ class AirtableSource(ExternalDataSource):
     
     def get_record_field(self, record, field):
         return record['fields'].get(str(field))
+
+    def get_record_dict(self, record):
+        return record['fields']
 
     async def update_one(self, mapped_record):
         self.table.update(mapped_record['member']['id'], mapped_record['update_fields'])

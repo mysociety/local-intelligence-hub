@@ -108,3 +108,9 @@ def get_or_create_organisation_for_source(info: Info, data: any):
                 role="owner"
             )
     return organisation
+
+@strawberry.mutation(extensions=[IsAuthenticated()])
+def import_all(external_data_source_id: str) -> models.ExternalDataSource:
+    data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
+    data_source.import_all()
+    return data_source

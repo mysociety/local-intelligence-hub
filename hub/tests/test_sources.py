@@ -1,16 +1,18 @@
 from django.test import TestCase
 from django.conf import settings
 from datetime import datetime
+from asgiref.sync import async_to_sync
 
 from hub.models import AirtableSource
 
 
 class TestAirtableSource(TestCase):
     ### Test prep
+    source: AirtableSource
 
     def setUp(self) -> None:
         self.records_to_delete = []
-        self.source = AirtableSource.objects.create(
+        self.source: AirtableSource = AirtableSource.objects.create(
             name="Test Airtable Source",
             base_id=settings.TEST_AIRTABLE_BASE_ID,
             table_id=settings.TEST_AIRTABLE_TABLE_NAME,
@@ -54,6 +56,22 @@ class TestAirtableSource(TestCase):
         self.assertFalse(self.source.webhook_healthcheck())
         self.source.setup_webhooks()
         self.assertTrue(self.source.webhook_healthcheck())
+
+    def test_import_all(self):
+        # Confirm the database is empty
+        original_count = self.source.get_import_data().count()
+        assert original_count == 0
+        # Add some test data
+        self.create_many_test_records([
+            { "Postcode": "import_test_1" },
+            { "Postcode": "import_test_2" }
+        ])
+        assert len(list(async_to_sync(self.source.fetch_all)())) >= 2
+        # Check that the import is storing it all
+        fetch_count = len(list(async_to_sync(self.source.fetch_all)()))
+        self.source.import_all()
+        import_count = self.source.get_import_data().count()
+        assert import_count == fetch_count
 
     async def test_airtable_fetch_one(self):
         record = self.create_test_record({ "Postcode": "EH99 1SP" })
@@ -112,3 +130,18 @@ class TestAirtableSource(TestCase):
                     record['fields']['constituency'],
                     "Glasgow South"
                 )
+
+    def test_airtable_filter(self):
+        date = str(datetime.now().isoformat())
+        self.create_many_test_records([
+            { "Postcode": date + "11111" },
+            { "Postcode": date + "22222" }
+        ])
+        # Test this functionality
+        records = self.source.filter({ "Postcode": date + "11111" })
+        # Check
+        assert len(records) == 1
+        self.assertEqual(
+            self.source.get_record_field(records[0], 'Postcode'),
+            date + "11111"
+        )
