@@ -6,7 +6,7 @@ import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { ExternalDataSourceInput, GeographyTypes } from "@/__generated__/graphql";
 import { Input } from "@/components/ui/input";
 import { SourcePathSelector } from "@/components/SelectSourceData";
-import { ArrowRight, XCircle } from "lucide-react";
+import { ArrowRight, X, XCircle } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -102,22 +102,21 @@ export function AutoUpdateMappingForm({
               </div>
             </FormItem>
           </div>
-          <div className="max-w-3xl">
-            <table>
+          <div>
+            <table className='w-full'>
               {fields.map((field, index) => (
                 <tr key={field.id} className='flex flex-row'>
-                  <td className="w-10">
+                  <td className="w-1/2 grow-0  flex flex-row items-center justify-stretch">
                     <Button
                       className="flex-shrink"
                       onClick={() => {
                         remove(index);
                       }}
                     >
-                      <XCircle />
+                      <X />
                     </Button>
-                  </td>
-                  <td className="w-1/2 grow-0">
                     <SourcePathSelector
+                      focusOnMount
                       sources={enrichmentDataSources}
                       value={{
                         source: form.watch(`autoUpdateMapping.${index}.source`),
@@ -132,10 +131,8 @@ export function AutoUpdateMappingForm({
                       }}
                     />
                   </td>
-                  <td className="w-10">
-                    <ArrowRight className="flex-shrink" />
-                  </td>
-                  <td className="w-1/2 shrink-0">
+                  <td className="w-1/2 shrink-0 flex flex-row items-center justify-stretch">
+                    <ArrowRight className="flex-shrink-0" />
                     <Input
                       className="flex-shrink-0 flex-grow"
                       placeholder="Destination column"

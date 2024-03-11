@@ -48,20 +48,30 @@ export function SourcePathSelector({
   sources,
   value,
   setValue,
+  focusOnMount = false,
 }: {
   sources: Array<EnrichmentDataSource>;
   value: Pick<AutoUpdateConfig, 'source' | 'sourcePath'>;
   setValue: (source: AutoUpdateConfig['source'], sourcePath: AutoUpdateConfig['sourcePath']) => void;
+  focusOnMount?: boolean;
 }) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(focusOnMount);
+
+  function labelForSourcePath(source: string, sourcePath: SourcePath) {
+    const sourceDict = sources.find((s) => s.slug === source);
+    if (!sourceDict) return sourcePath;
+    const sourcePathDict = sourceDict.sourcePaths.find((s) => val(s) === sourcePath);
+    if (!sourcePathDict) return sourcePath;
+    return label(sourcePathDict)
+  }
 
   return (
-    <div className="flex w-full flex-col items-start justify-between rounded-md border p-1 sm:flex-row sm:items-center">
-      <Button onClick={() => setOpen(true)} className="w-full sm:w-auto">
-      {value && value.source && value.sourcePath
-              ? `${value.source}: ${value.sourcePath}`
-              : "Select data"}
-      </Button>
+    <div className="flex w-full flex-col items-start justify-between rounded-md border py-2 px-3 sm:flex-row sm:items-center cursor-pointer hover:bg-meepGray-700 text-ellipsis overflow-hidden text-nowrap">
+      <div onClick={() => setOpen(true)} className="w-full text-ellipsis overflow-hidden text-nowrap text-sm">
+        {value && value.source && value.sourcePath
+              ? `${labelForSourcePath(value.source, value.sourcePath)} (${value.source})`
+              : "Click to select data"}
+      </div>
       <CommandDialog open={open} onOpenChange={() => setOpen(false)}>
         <CommandInput placeholder="Search available data..." />
         <CommandList>
