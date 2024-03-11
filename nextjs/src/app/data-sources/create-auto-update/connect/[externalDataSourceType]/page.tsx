@@ -1,10 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ApolloError, gql, useLazyQuery, useMutation } from "@apollo/client";
-import { NewExternalDataSourceUpdateConfigContext } from "../../NewExternalDataSourceWrapper";
+import { CreateAutoUpdateFormContext } from "../../NewExternalDataSourceWrapper";
 import { toast } from "sonner";
 import { SubmitHandler, useFieldArray, useForm } from "react-hook-form";
 import {
@@ -65,7 +65,11 @@ export default function Page({
   params: { externalDataSourceType: string };
 }) {
   const router = useRouter();
-  const context = useContext(NewExternalDataSourceUpdateConfigContext);
+  const context = useContext(CreateAutoUpdateFormContext);
+
+  useEffect(() => {
+    context.setStep(2)
+  }, [context])
 
   const form = useForm<FormInputs>({
     defaultValues: {
@@ -120,10 +124,6 @@ export default function Page({
             variables: { AirtableSource: airtable },
           });
           toast.success("Connection successful", { id: toastId });
-          context.setStep(3);
-          router.push(
-            `/external-data-source-updates/new/configure/${source.data?.createAirtableSource.id}`,
-          );
         } catch (e) {
           // Check if e is ApolloError
           if (e instanceof ApolloError) {
@@ -144,7 +144,7 @@ export default function Page({
       });
   }
 
-  if (testSourceResult.loading) {
+  if (testSourceResult.loading || createSourceResult.loading) {
     return (
       <div className="space-y-6">
         <h1 className="text-hLg">Testing connection...</h1>
@@ -155,6 +155,33 @@ export default function Page({
         <LoadingIcon />
       </div>
     );
+  }
+
+  if (createSourceResult.data?.createAirtableSource.healthcheck) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-hLg">Connection successful</h1>
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-7'>
+          <Button
+            variant="outline"
+            onClick={() => {
+              router.push(`/data-sources/`);
+            }}
+          >
+            Back to data sources
+          </Button>
+          <Button
+            onClick={() => {
+              router.push(
+                `/data-sources/create-auto-update/configure/${createSourceResult.data?.createAirtableSource.id}`,
+              );
+            }}
+          >
+            Configure auto-updates
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   if (externalDataSourceType === "airtable") {

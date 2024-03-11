@@ -13,6 +13,12 @@ from strawberry.types.info import Info
 class IDObject:
     id: str
 
+@strawberry.input
+class AutoUpdateMappingItemInput:
+    source: str
+    source_path: str
+    destination_column: str
+
 @strawberry_django.input(models.ExternalDataSource, partial=True)
 class ExternalDataSourceInput:
     id: auto
@@ -21,25 +27,15 @@ class ExternalDataSourceInput:
     organisation: auto
     geography_column: auto
     geography_column_type: auto
+    auto_update_enabled: auto
+    auto_update_mapping: Optional[List[AutoUpdateMappingItemInput]]
+    auto_import_enabled: auto
 
 @strawberry_django.input(models.AirtableSource, partial=True)
 class AirtableSourceInput(ExternalDataSourceInput):
     api_key: auto
     base_id: auto
     table_id: auto
-
-@strawberry.input
-class UpdateConfigDictInput:
-    source: str
-    source_path: str
-    destination_column: str
-
-@strawberry_django.input(models.ExternalDataSourceUpdateConfig, partial=True)
-class ExternalDataSourceUpdateConfigInput:
-    id: auto
-    external_data_source: types.ExternalDataSource
-    enabled: auto
-    mapping: List[UpdateConfigDictInput]
   
 @strawberry.mutation(extensions=[IsAuthenticated(), InputMutationExtension()])
 async def create_organisation(info: Info, name: str, slug: Optional[str] = None, description: Optional[str] = None) -> types.Membership:
@@ -56,35 +52,40 @@ class OrganisationInputPartial:
     description: Optional[str]
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
-def enable_update_config (config_id: str) -> models.ExternalDataSourceUpdateConfig:
-    config = models.ExternalDataSourceUpdateConfig.objects.get(id=config_id)
-    config.enable()
-    return config
+def enable_auto_update (external_data_source_id: str) -> models.ExternalDataSource:
+    data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
+    data_source.enable_auto_update()
+    return data_source
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
-def disable_update_config (config_id: str) -> models.ExternalDataSourceUpdateConfig:
-    config = models.ExternalDataSourceUpdateConfig.objects.get(id=config_id)
-    config.disable()
-    return config
+def disable_auto_update (external_data_source_id: str) -> models.ExternalDataSource:
+    data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
+    data_source.disable_auto_update()
+    return data_source
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
-def update_all(config_id: str) -> models.ExternalDataSourceUpdateConfig:
-    config = models.ExternalDataSourceUpdateConfig.objects.get(id=config_id)
-    job_id = config.schedule_update_all()
-    return config
+def trigger_update(external_data_source_id: str) -> models.ExternalDataSource:
+    data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
+    job_id = data_source.schedule_refresh_all()
+    return data_source
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
-def refresh_webhook (config_id: str) -> models.ExternalDataSourceUpdateConfig:
-    config = models.ExternalDataSourceUpdateConfig.objects.get(id=config_id)
-    if config.external_data_source.automated_webhooks:
-        config.refresh_webhook()
-    return config
+def refresh_webhooks (external_data_source_id: str) -> models.ExternalDataSource:
+    data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
+    data_source.refresh_webhooks()
+    return data_source
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
 def create_airtable_source(info: Info, data: AirtableSourceInput) -> models.AirtableSource:
-    return models.AirtableSource.objects.create(
-        organisation=get_or_create_organisation_for_source(info, data),
-        **data.__dict__()
+    # Override the default strawberry_django.create resolver to add a default organisation
+    args = {
+        **strawberry_django.mutations.resolvers.parse_input(info, vars(data).copy()),
+        "organisation": get_or_create_organisation_for_source(info, data)
+    }
+    return strawberry_django.mutations.resolvers.create(
+        info,
+        models.AirtableSource,
+        args
     )
 
 def get_or_create_organisation_for_source(info: Info, data: any):

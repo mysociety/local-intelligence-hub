@@ -5,29 +5,24 @@ import { ActionNetworkLogo, AirtableLogo } from "@/components/logos";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-import { ExternalDataSourceUpdateConfigCard } from "@/components/ExternalDataSourceCard";
-import {
-  ListUpdateConfigsQuery,
-  ListUpdateConfigsQueryVariables,
-} from "@/__generated__/graphql";
+import { AutoUpdateCard } from "@/components/AutoUpdateCard";
+import { ListExternalDataSourcesQuery, ListExternalDataSourcesQueryVariables } from "@/__generated__/graphql";
+import { useEffect } from "react";
 
 const LIST_UPDATE_CONFIGS = gql`
-  query ListUpdateConfigs {
-    externalDataSourceUpdateConfigs {
+  query ListExternalDataSources {
+    externalDataSources {
       id
-      externalDataSource {
-        id
-        name
-        connectionDetails {
-          crmType: __typename
-        }
+      name
+      connectionDetails {
+        crmType: __typename
       }
-      enabled
+      autoUpdateEnabled
       jobs {
         lastEventAt
         status
       }
-      mapping {
+      autoUpdateMapping {
         source
         sourcePath
         destinationColumn
@@ -37,35 +32,41 @@ const LIST_UPDATE_CONFIGS = gql`
 `;
 
 export default function ExternalDataSourceUpdates() {
-  const { loading, error, data } = useQuery<
-    ListUpdateConfigsQuery,
-    ListUpdateConfigsQueryVariables
-  >(LIST_UPDATE_CONFIGS);
+  const { loading, error, data, refetch } = useQuery<ListExternalDataSourcesQuery, ListExternalDataSourcesQueryVariables>(LIST_UPDATE_CONFIGS);
+
+  useEffect(() => {
+    refetch()
+  }, [refetch])
 
   return (
     <div className=" max-w-7xl space-y-7 w-full">
       <PageHeader />
       <div className="border-b border-meepGray-700 pt-10" />
-      <h2 className="text-hSm">Active Syncs</h2>
+      <header className='flex flex-row justify-end'>
+        <h2 className="text-hSm mr-auto">Your connected data sources</h2>
+        <Button variant="ghost" className="shadow-md">
+          + New auto-update
+        </Button>
+      </header>
       {loading ? (
         <section className="grid gap-7 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
           <article className="rounded-xl border border-meepGray-700 px-6 py-5 space-y-3">
             <Skeleton className="h-4 w-full max-w-[100px]" />
             <Skeleton className="h-10 w-full" />
           </article>
-          <CreateNewSyncButton />
+          <ConnectDataSource />
         </section>
       ) : error ? (
         <h2>Error: {error.message}</h2>
       ) : data ? (
         <section className="grid gap-7 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {data.externalDataSourceUpdateConfigs.map((updateConfig) => (
-            <ExternalDataSourceUpdateConfigCard
-              key={updateConfig.id}
-              updateConfig={updateConfig}
+          {data.externalDataSources.map((externalDataSource) => (
+            <AutoUpdateCard
+              key={externalDataSource.id}
+              externalDataSource={externalDataSource}
             />
           ))}
-          <CreateNewSyncButton />
+          <ConnectDataSource />
         </section>
       ) : null}
     </div>
@@ -76,11 +77,9 @@ function PageHeader() {
   return (
     <header className="grid grid-rows-2 md:grid-rows-1 md:grid-cols-2  gap-8">
       <div>
-        <h1 className="text-hLg mb-7">CRM Data Updates</h1>
+        <h1 className="text-hLg mb-7">Data Sources</h1>
         <p className="text-meepGray-400 w-[400px]">
-          Maximise your organisations impact by securely connecting your CRM
-          platforms with Mapped and select from a range of data sources to
-          enhance your membership lists.
+          Connect your campaign data systems, auto-update them with useful information, and use the data to design empowering dashboards.
         </p>
       </div>
       <div className="grid grid-cols-2 gap-7">
@@ -95,9 +94,9 @@ function PageHeader() {
   );
 }
 
-function CreateNewSyncButton() {
+function ConnectDataSource() {
   return (
-    <Link href="/external-data-source-updates/new">
+    <Link href="/data-sources/create-auto-update">
       <article className="relative cursor-pointer rounded-xl border border-meepGray-700 px-6 py-5">
         <div className="space-y-5">
           <Skeleton className="h-4 w-full max-w-[100px]" />
@@ -105,7 +104,7 @@ function CreateNewSyncButton() {
         </div>
         <div className="absolute inset-0 top-1/2 -translate-y-1/2 flex items-center justify-center">
           <Button variant="reverse" className="shadow-md">
-            + Create new sync
+            + Connect a data source
           </Button>
         </div>
       </article>

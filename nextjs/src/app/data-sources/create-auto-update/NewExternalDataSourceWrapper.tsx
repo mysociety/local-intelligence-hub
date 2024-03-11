@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createContext } from "react";
 import { twMerge } from "tailwind-merge";
 
-export const NewExternalDataSourceUpdateConfigContext = createContext<{
+export const CreateAutoUpdateFormContext = createContext<{
   step: number;
   setStep: React.Dispatch<React.SetStateAction<number>>;
 }>({
@@ -20,7 +20,7 @@ export default function NewExternalDataSourceWrapper({
   const [step, setStep] = useState<number>(0);
 
   return (
-    <NewExternalDataSourceUpdateConfigContext.Provider
+    <CreateAutoUpdateFormContext.Provider
       value={{
         step,
         setStep,
@@ -56,7 +56,7 @@ export default function NewExternalDataSourceWrapper({
         </div>
         <main className="space-y-7">{children}</main>
       </div>
-    </NewExternalDataSourceUpdateConfigContext.Provider>
+    </CreateAutoUpdateFormContext.Provider>
   );
 }
 

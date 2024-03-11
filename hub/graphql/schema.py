@@ -21,9 +21,7 @@ class Query(UserQueries):
     external_data_sources: List[types.ExternalDataSource] = strawberry_django.field(extensions=[IsAuthenticated()])
     airtable_source: types.AirtableSource = strawberry_django.field(extensions=[IsAuthenticated()])
     airtable_sources: List[types.AirtableSource] = strawberry_django.field(extensions=[IsAuthenticated()])
-    external_data_source_update_config: types.ExternalDataSourceUpdateConfig = strawberry_django.field(extensions=[IsAuthenticated()])
-    external_data_source_update_configs: List[types.ExternalDataSourceUpdateConfig] = strawberry_django.field(extensions=[IsAuthenticated()])
-    event: types.QueueJob = strawberry_django.field(extensions=[IsAuthenticated()])
+    job: types.QueueJob = strawberry_django.field(extensions=[IsAuthenticated()])
     jobs: List[types.QueueJob] = strawberry_django.field(extensions=[IsAuthenticated()])
     
     @strawberry.field
@@ -51,14 +49,10 @@ class Mutation:
     delete_airtable_source: types.AirtableSource = mutations.delete(str, extensions=[IsAuthenticated()])
     delete_external_data_source: types.ExternalDataSource = mutations.delete(mutation_types.IDObject, extensions=[IsAuthenticated()])
 
-    create_external_data_source_update_config: types.ExternalDataSourceUpdateConfig = mutations.create(mutation_types.ExternalDataSourceUpdateConfigInput, extensions=[IsAuthenticated()])
-    update_external_data_source_update_config: types.ExternalDataSourceUpdateConfig = mutations.update(mutation_types.ExternalDataSourceUpdateConfigInput, extensions=[IsAuthenticated()])
-    delete_external_data_source_update_config: types.ExternalDataSourceUpdateConfig = mutations.delete(NodeInput, extensions=[IsAuthenticated()])
-
-    enable_update_config: types.ExternalDataSourceUpdateConfig = mutation_types.enable_update_config
-    disable_update_config: types.ExternalDataSourceUpdateConfig = mutation_types.disable_update_config
-    update_all: types.ExternalDataSourceUpdateConfig = mutation_types.update_all
-    refresh_webhook: types.ExternalDataSourceUpdateConfig = mutation_types.refresh_webhook
+    enable_auto_update: types.ExternalDataSource = mutation_types.enable_auto_update
+    disable_auto_update: types.ExternalDataSource = mutation_types.disable_auto_update
+    trigger_update: types.ExternalDataSource = mutation_types.trigger_update
+    refresh_webhooks: types.ExternalDataSource = mutation_types.refresh_webhooks
 
     create_organisation: types.Membership = mutation_types.create_organisation
     update_organisation: types.Organisation = mutations.update(mutation_types.OrganisationInputPartial, extensions=[IsAuthenticated()])

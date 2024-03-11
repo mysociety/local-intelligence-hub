@@ -12,17 +12,19 @@ import { formatRelative } from "date-fns";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
-  ExternalDataSourceCardSwitch,
-  ExternalDataSourceFullUpdateButton,
-} from "@/components/ExternalDataSourceCard";
+  AutoUpdateSwitch,
+  AutoUpdateWebhookRefresh,
+  TriggerUpdateButton,
+} from "@/components/AutoUpdateCard";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import {
-  DeleteSourceMutation,
-  DeleteSourceMutationVariables,
-  ExternalDataSourceUpdateConfigInput,
-  PageForExternalDataSourceUpdateConfigQuery,
-  PageForExternalDataSourceUpdateConfigQueryVariables,
-  UpdateConfigMutation,
+  DeleteUpdateConfigMutation,
+  DeleteUpdateConfigMutationVariables,
+  ExternalDataSourceInput,
+  ExternalDataSourceInspectPageQuery,
+  ExternalDataSourceInspectPageQueryVariables,
+  UpdateExternalDataSourceMutation,
+  UpdateExternalDataSourceMutationVariables,
 } from "@/__generated__/graphql";
 import { useRouter } from "next/navigation";
 import {
@@ -54,21 +56,32 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { globalID } from "@/lib/graphql";
-import { UpdateConfigForm } from "@/components/UpdateConfig";
+import { AutoUpdateMappingForm } from "@/components/AutoUpdateMappingForm";
+import { UDPATE_EXTERNAL_DATA_SOURCE } from "@/graphql/mutations";
+import { AlertCircle } from "lucide-react"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert"
 
 const GET_UPDATE_CONFIG = gql`
-  query PageForExternalDataSourceUpdateConfig($ID: ID!) {
-    externalDataSourceUpdateConfig(pk: $ID) {
+  query ExternalDataSourceInspectPage($ID: ID!) {
+    externalDataSource(pk: $ID) {
       id
-      externalDataSource {
-        id
-        name
-        connectionDetails {
-          crmType: __typename
+      name
+      connectionDetails {
+        crmType: __typename
+        ... on AirtableSource {
+          baseId
+          tableId
+          apiKey
         }
       }
-      enabled
+      autoUpdateEnabled
+      webhookHealthcheck
+      geographyColumn
+      geographyColumnType
       jobs {
         status
         id
@@ -76,8 +89,7 @@ const GET_UPDATE_CONFIG = gql`
         args
         lastEventAt
       }
-      
-      mapping {
+      autoUpdateMapping {
         source
         sourcePath
         destinationColumn
@@ -86,51 +98,28 @@ const GET_UPDATE_CONFIG = gql`
   }
 `;
 
-const UPDATE_SOURCE = gql`
-  mutation UpdateSource($config: ExternalDataSourceInput!) {
-    updateExternalDataSource(data: $config) {
-      id
-      name
-    }
-  }
-`;
-
-const UPDATE_CONFIG = gql`
-  mutation UpdateConfig($config: ExternalDataSourceUpdateConfigInput!) {
-    updateExternalDataSourceUpdateConfig(data: $config) {
-      id
-      
-      mapping {
-        source
-        sourcePath
-        destinationColumn
-      }
-    }
-  }
-`;
-
-const DELETE_SOURCE = gql`
-  mutation DeleteSource($id: String!) {
+const DELETE_UPDATE_CONFIG = gql`
+  mutation DeleteUpdateConfig($id: String!) {
     deleteExternalDataSource(data: { id: $id }) {
       id
     }
   }
 `;
 
-export default function InspectExternalDataSourceUpdateConfig({
-  externalDataSourceUpdateConfigId,
+export default function InspectExternalDataSource({
+  externalDataSourceId,
 }: {
-  externalDataSourceUpdateConfigId: string;
+  externalDataSourceId: string;
 }) {
   const router = useRouter();
   const client = useApolloClient();
 
   const { loading, error, data, refetch } = useQuery<
-    PageForExternalDataSourceUpdateConfigQuery,
-    PageForExternalDataSourceUpdateConfigQueryVariables
+    ExternalDataSourceInspectPageQuery,
+    ExternalDataSourceInspectPageQueryVariables
   >(GET_UPDATE_CONFIG, {
     variables: {
-      ID: externalDataSourceUpdateConfigId,
+      ID: externalDataSourceId,
     },
   });
 
@@ -138,89 +127,126 @@ export default function InspectExternalDataSourceUpdateConfig({
     return <LoadingIcon />;
   }
 
-  if (!data?.externalDataSourceUpdateConfig) {
+  if (!data?.externalDataSource) {
     return <h2>No data sync found</h2>;
   }
 
-  const config = data.externalDataSourceUpdateConfig;
+  const source = data.externalDataSource
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-7">
       <header className="flex flex-row justify-between gap-8">
         <div className='w-full'>
           <div className="text-meepGray-400">External data source</div>
-          <h1 className="text-hLg" contentEditable id="nickname" onBlur={updateNickname}>
-            {config.externalDataSource.name || config.externalDataSource.connectionDetails.crmType}
+          <h1 className="text-hLg" contentEditable id="nickname" onBlur={d => {
+            updateMutation({
+              name: document.getElementById("nickname")?.textContent?.trim()
+            })
+          }}>
+            {source.name}
           </h1>
-          {config.jobs[0]?.lastEventAt ? (
-            <div className="text-meepGray-400">
-              Last sync:{" "}
-              {formatRelative(config.jobs[0].lastEventAt, new Date())} (
-              {config.jobs[0].status})
-            </div>
-          ) : null}
         </div>
         <div>
-          {config.externalDataSource.connectionDetails.crmType ===
+          {source.connectionDetails.crmType ===
             "AirtableSource" && (
-            <div className="inline-block rounded-xl bg-meepGray-700 px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
+            <div className="inline-flex rounded-xl bg-meepGray-700 px-10 py-6 overflow-hidden flex-row items-center justify-center">
               <AirtableLogo className="w-full" />
             </div>
           )}
         </div>
       </header>
-      <div className="flex flex-row justify-between gap-8">
-        <div className="flex flex-row gap-4 items-center">
-          <ExternalDataSourceFullUpdateButton id={config.id} />
-          <ExternalDataSourceCardSwitch updateConfig={config} />
-        </div>
-        <div className="flex flex-row gap-4">
-          <AlertDialog>
-            <AlertDialogTrigger>
-              <Button variant="destructive">Permanently delete</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                <AlertDialogDescription className="text-base">
-                  This action cannot be undone. This will permanently delete
-                  this configuration from Mapped.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel
-                  className={buttonVariants({ variant: "outline" })}
-                >
-                  Cancel
-                </AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => {
-                    del();
-                  }}
-                  className={buttonVariants({ variant: "destructive" })}
-                >
-                  Confirm delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      </div>
       <div className="border-b border-meepGray-700 pt-10" />
-      <section>
-        <h2 className="text-hSm mb-5">Mapping</h2>
-        <UpdateConfigForm
+      <section className='space-y-4'>
+        <h2 className="text-hSm mb-5">Auto-updates</h2>
+        {source.jobs[0]?.lastEventAt ? (
+          <div className="text-meepGray-400">
+            Last sync:{" "}
+            {formatRelative(source.jobs[0].lastEventAt, new Date())} (
+            {source.jobs[0].status})
+          </div>
+        ) : null}
+        <AutoUpdateSwitch externalDataSource={source} />
+        {source.autoUpdateEnabled && !source.webhookHealthcheck && (
+          <>
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Webhooks unhealthy</AlertTitle>
+              <AlertDescription>
+                The webhook is unhealthy. Please refresh the webhook to fix auto-updates.
+              </AlertDescription>
+            </Alert>
+            <AutoUpdateWebhookRefresh externalDataSourceId={externalDataSourceId} />
+          </>
+        )}
+      </section>
+      <div className="border-b border-meepGray-700 pt-10" />
+      <section className="space-y-4">
+        <header className="flex flex-row justify-between items-center">
+          <h2 className="text-hSm mb-5">Data mapping</h2>
+          <TriggerUpdateButton id={source.id} />
+        </header>
+        <AutoUpdateMappingForm
           saveButtonLabel="Update"
           initialData={{
             // Trim out the __typenames
-            mapping: config.mapping.map((m) => ({
+            geographyColumn: source?.geographyColumn,
+            geographyColumnType: source?.geographyColumnType,
+            autoUpdateMapping: source?.autoUpdateMapping?.map((m) => ({
               source: m.source,
               sourcePath: m.sourcePath,
               destinationColumn: m.destinationColumn,
             })),
           }}
-          onSubmit={saveConfig}
+          onSubmit={updateMutation}
         />
+      </section>
+      <div className="border-b border-meepGray-700 pt-10" />
+      <section className='space-y-4'>
+        <h2 className="text-hSm mb-5">Connection</h2>
+        {!!source.connectionDetails.baseId && (
+          <div className='mt-2'>
+            <code>
+              {source.connectionDetails.apiKey}
+            </code>
+            <br />
+            <code>
+              {source.connectionDetails.baseId}
+            </code>
+            <br />
+            <code>
+              {source.connectionDetails.tableId}
+            </code>
+          </div>
+        )}
+        <AlertDialog>
+          <AlertDialogTrigger>
+            <Button variant="destructive">Permanently delete</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription className="text-base">
+                This action cannot be undone. This will permanently delete
+                this data source connect from Mapped.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel
+                className={buttonVariants({ variant: "outline" })}
+              >
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  del();
+                }}
+                className={buttonVariants({ variant: "destructive" })}
+              >
+                Confirm delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </section>
       <div className="border-b border-meepGray-700 pt-10" />
       <section>
@@ -239,7 +265,7 @@ export default function InspectExternalDataSourceUpdateConfig({
           />
         </h2>
         <LogsTable
-          data={config.jobs}
+          data={source.jobs}
           sortingState={[{ desc: true, id: "lastEventAt" }]}
           columns={[
             {
@@ -287,23 +313,21 @@ export default function InspectExternalDataSourceUpdateConfig({
     </div>
   );
 
-  function updateNickname () {
-    const name = document.getElementById("nickname")?.textContent?.trim()
-    if (name === config.externalDataSource.name) return
-    const update = client.mutate({
-      mutation: UPDATE_SOURCE,
+  function updateMutation (data: ExternalDataSourceInput) {
+    const update = client.mutate<UpdateExternalDataSourceMutation, UpdateExternalDataSourceMutationVariables>({
+      mutation: UDPATE_EXTERNAL_DATA_SOURCE,
       variables: {
-        config: {
-          id: config.externalDataSource.id,
-          name: document.getElementById("nickname")?.textContent
+        input: {
+          id: externalDataSourceId,
+          ...data
         }
       }
     })
     toast.promise(update, {
       loading: "Saving...",
-      success: (d: FetchResult<UpdateConfigMutation>) => {
+      success: (d: FetchResult<UpdateExternalDataSourceMutation>) => {
         if (!d.errors && d.data) {
-          return "Saved source name";
+          return "Saved source";
         }
       },
       error: `Couldn't save source`,
@@ -312,42 +336,21 @@ export default function InspectExternalDataSourceUpdateConfig({
 
   function del() {
     const mutation = client.mutate<
-      DeleteSourceMutation,
-      DeleteSourceMutationVariables
+      DeleteUpdateConfigMutation,
+      DeleteUpdateConfigMutationVariables
     >({
-      mutation: DELETE_SOURCE,
-      variables: { id: config.externalDataSource.id },
+      mutation: DELETE_UPDATE_CONFIG,
+      variables: { id: externalDataSourceId },
     });
     toast.promise(mutation, {
       loading: "Deleting...",
-      success: (e: FetchResult<DeleteSourceMutation>) => {
+      success: (e: FetchResult<DeleteUpdateConfigMutation>) => {
         if (!e.errors) {
-          router.push("/external-data-source-updates");
-          return `Deleted sync for ${config.externalDataSource.connectionDetails.crmType}`;
+          router.push("/data-sources");
+          return `Deleted ${source.name}`;
         }
       },
-      error: `Couldn't delete data source`,
-    });
-  }
-
-  function saveConfig(data: ExternalDataSourceUpdateConfigInput) {
-    const update = client.mutate({
-      mutation: UPDATE_CONFIG,
-      variables: {
-        config: {
-          ...data,
-          id: config.id,
-        },
-      },
-    });
-    toast.promise(update, {
-      loading: "Updating...",
-      success: (d: FetchResult<UpdateConfigMutation>) => {
-        if (!d.errors && d.data) {
-          return "Saved config";
-        }
-      },
-      error: `Couldn't save config`,
+      error: `Couldn't delete ${source.name}`,
     });
   }
 }
@@ -378,7 +381,7 @@ export function LogsTable<TData, TValue>({
   });
 
   return (
-    <div className="rounded-md border border-meepGray-500">
+    <div className="rounded-md border border-meepGray-400">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
