@@ -28,7 +28,7 @@ export default function Verify() {
 
     if (success) {
         // Use a normal <a> here to fix weird behavior if the user was already logged in
-        return <h2>Verified! Please <a href="/login">log in.</a></h2>
+        return <h2>Verified! You may now <a className="underline" href="/login">log in.</a></h2>
     }
 
     if (error || data?.verifyAccount?.errors) {
