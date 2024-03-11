@@ -95,11 +95,6 @@ export function SourcePathSelector({
               ))}
             </CommandGroup>
           ))}
-          <CommandGroup heading="Settings">
-            <CommandItem>Profile</CommandItem>
-            <CommandItem>Billing</CommandItem>
-            <CommandItem>Settings</CommandItem>
-          </CommandGroup>
         </CommandList>
       </CommandDialog>
 {/* 
