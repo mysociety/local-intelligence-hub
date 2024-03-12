@@ -36,7 +36,7 @@ export function SourcePathSelector({
     <div className="flex w-full flex-col items-start justify-between rounded-md border py-2 px-3 sm:flex-row sm:items-center cursor-pointer hover:bg-meepGray-700 text-ellipsis overflow-hidden text-nowrap">
       <div onClick={() => setOpen(true)} className="w-full text-ellipsis overflow-hidden text-nowrap text-sm">
         {value && value.source && value.sourcePath
-              ? `${labelForSourcePath(value.source, value.sourcePath)} (${value.source})`
+              ? `${labelForSourcePath(value.source, value.sourcePath)} (${sourceName(value.source)})`
               : "Click to select data"}
       </div>
       <CommandDialog open={open} onOpenChange={() => setOpen(false)}>
@@ -73,6 +73,11 @@ export function SourcePathSelector({
       </CommandDialog>
     </div>
   );
+
+  function sourceName(source: string) {
+    const sourceDict = sources.find((s) => s.slug === source);
+    return sourceDict ? sourceDict.name : source;
+  }
 }
 
 function label(d: SourcePath) {

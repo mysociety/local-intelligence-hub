@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { enrichmentDataSources } from "@/lib/data";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { ExternalDataSourceInput, GeographyTypes } from "@/__generated__/graphql";
+import { EnrichmentLayersQuery, ExternalDataSourceInput, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
 import { Input } from "@/components/ui/input";
 import { SourcePathSelector } from "@/components/SelectSourceData";
 import { ArrowRight, X, XCircle } from "lucide-react";
@@ -25,8 +25,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { gql, useQuery } from "@apollo/client";
 
-export function AutoUpdateMappingForm({
+const ENRICHMENT_LAYERS = gql`
+  query EnrichmentLayers {
+    externalDataSources {
+      id
+      name
+      geographyColumn
+      fieldDefinitions {
+        label
+        value
+        description
+      }
+    }
+  }
+`;
+
+export function UpdateMappingForm({
   onSubmit,
   initialData,
   children,
@@ -47,9 +63,11 @@ export function AutoUpdateMappingForm({
   const { fields, append, prepend, remove, swap, move, insert } = useFieldArray(
     {
       control: form.control,
-      name: "autoUpdateMapping",
+      name: "updateMapping",
     },
   );
+
+  const customEnrichmentLayers = useQuery<EnrichmentLayersQuery>(ENRICHMENT_LAYERS)
 
   return (
     <FormProvider {...form}>
@@ -87,10 +105,10 @@ export function AutoUpdateMappingForm({
                           <SelectContent>
                             <SelectGroup>
                               <SelectLabel>Geography column type</SelectLabel>
-                              <SelectItem value={GeographyTypes.Postcode}>Postcode</SelectItem>
-                              <SelectItem value={GeographyTypes.Ward}>Ward</SelectItem>
-                              <SelectItem value={GeographyTypes.Council}>Council</SelectItem>
-                              <SelectItem value={GeographyTypes.Constituency}>Constituency</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Constituency}>Constituency</SelectItem>
                             </SelectGroup>
                           </SelectContent>
                         </Select>
@@ -116,16 +134,29 @@ export function AutoUpdateMappingForm({
                       <X />
                     </Button>
                     <SourcePathSelector
-                      focusOnMount
-                      sources={enrichmentDataSources}
+                      focusOnMount={form.watch(`updateMapping.${index}.source`) === "?"}
+                      sources={enrichmentDataSources.concat(
+                        customEnrichmentLayers.data?.externalDataSources
+                        .filter(source => !!source.geographyColumn)
+                        .map((source) => ({
+                          slug: source.id,
+                          name: source.name,
+                          author: "",
+                          description: "",
+                          descriptionURL: "",
+                          colour: "",
+                          builtIn: false,
+                          sourcePaths: source.fieldDefinitions || []
+                        })) || []
+                      )}
                       value={{
-                        source: form.watch(`autoUpdateMapping.${index}.source`),
-                        sourcePath: form.watch(`autoUpdateMapping.${index}.sourcePath`),
+                        source: form.watch(`updateMapping.${index}.source`),
+                        sourcePath: form.watch(`updateMapping.${index}.sourcePath`),
                       }}
                       setValue={(source, sourcePath) => {
-                        form.setValue(`autoUpdateMapping.${index}.source`, source);
+                        form.setValue(`updateMapping.${index}.source`, source);
                         form.setValue(
-                          `autoUpdateMapping.${index}.sourcePath`,
+                          `updateMapping.${index}.sourcePath`,
                           sourcePath,
                         );
                       }}
@@ -137,7 +168,7 @@ export function AutoUpdateMappingForm({
                       className="flex-shrink-0 flex-grow"
                       placeholder="Destination column"
                       key={field.id} // important to include key with field's id
-                      {...form.register(`autoUpdateMapping.${index}.destinationColumn`)}
+                      {...form.register(`updateMapping.${index}.destinationColumn`)}
                     />
                   </td>
                 </tr>
@@ -146,7 +177,7 @@ export function AutoUpdateMappingForm({
             <Button
               onClick={() => {
                 append({
-                  source: "",
+                  source: "?",
                   sourcePath: "",
                   destinationColumn: "",
                 });

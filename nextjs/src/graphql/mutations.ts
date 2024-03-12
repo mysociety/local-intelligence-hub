@@ -8,7 +8,7 @@ export const UDPATE_EXTERNAL_DATA_SOURCE = gql`
       geographyColumn
       geographyColumnType
       autoUpdateEnabled
-      autoUpdateMapping {
+      updateMapping {
         source
         sourcePath
         destinationColumn

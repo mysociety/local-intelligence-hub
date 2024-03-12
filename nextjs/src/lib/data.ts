@@ -29,8 +29,8 @@ export type EnrichmentDataSource = {
 export type SourcePath =
   | {
       value: string;
-      label?: string;
-      description?: string;
+      label?: string | null;
+      description?: string | null;
     }
   | string;
 

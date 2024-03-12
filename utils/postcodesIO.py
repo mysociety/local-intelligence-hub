@@ -25,7 +25,7 @@ class Codes:
 
 
 @dataclass
-class Result:
+class PostcodesIOResult:
     postcode: str
     quality: int
     eastings: int
@@ -57,15 +57,15 @@ class Result:
 
 
 @dataclass
-class PostcodesIOResult:
+class PostcodesIOResponse:
     status: int
-    result: Result
+    result: PostcodesIOResult
 
 
 @dataclass
 class ResultElement:
     query: str
-    result: Result
+    result: PostcodesIOResult
 
 
 @dataclass

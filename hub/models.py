@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 import uuid
-from typing import Iterable, TypedDict, Union, Optional
+from typing import Iterable, TypedDict, Union, Optional, List
 import asyncio
 from asgiref.sync import sync_to_async
 from psycopg.errors import UniqueViolation
@@ -786,21 +786,28 @@ class ExternalDataSource(PolymorphicModel):
     created_at = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(auto_now=True)
     automated_webhooks = False
+    introspect_fields = False
     # Geocoding data
-    class GeographyTypes(models.TextChoices):
+    class PostcodesIOGeographyTypes(models.TextChoices):
         POSTCODE = 'postcode', 'Postcode'
         WARD = 'ward', 'Ward'
-        COUNCIL = 'council', 'Council'
-        CONSTITUENCY = 'constituency', 'Constituency'
-    geography_column_type = TextChoicesField(choices_enum=GeographyTypes, default=GeographyTypes.POSTCODE)
+        COUNCIL = 'admin_district', 'Council'
+        CONSTITUENCY = 'parliamentary_constituency', 'Constituency'
+        CONSTITUENCY_2025 = 'parliamentary_constituency_2025', 'Constituency (2024)'
+    geography_column_type = TextChoicesField(choices_enum=PostcodesIOGeographyTypes, default=PostcodesIOGeographyTypes.POSTCODE)
     geography_column = models.CharField(max_length=250, blank=True, null=True)
+    class FieldDefinition(TypedDict):
+        value: str
+        label: Optional[str]
+        description: Optional[str]
+    fields = JSONField(blank=True, null=True, default=list)
     # Auto-updates
-    class AutoUpdateMapping(TypedDict):
+    class UpdateMapping(TypedDict):
         source: str
         # Can be a dot path, for use with benedict
         source_path: str
         destination_column: str
-    auto_update_mapping = JSONField(blank=True, null=True, default=[])
+    update_mapping = JSONField(blank=True, null=True, default=list)
     auto_update_enabled = models.BooleanField(default=False, blank=True)
     # Auto-import
     auto_import_enabled = models.BooleanField(default=False, blank=True)
@@ -811,8 +818,8 @@ class ExternalDataSource(PolymorphicModel):
     def event_log_queryset(self):
         return ProcrastinateJob.objects.filter(args__external_data_source_id=str(self.id)).order_by('-scheduled_at')
     
-    def get_auto_update_mapping(self) -> list[AutoUpdateMapping]:
-        return ensure_list(self.auto_update_mapping)
+    def get_update_mapping(self) -> list[UpdateMapping]:
+        return ensure_list(self.update_mapping)
     
     def delete(self, *args, **kwargs):
         self.disable_auto_update()
@@ -826,6 +833,12 @@ class ExternalDataSource(PolymorphicModel):
         Check the connection to the API.
         '''
         raise NotImplementedError('Healthcheck not implemented for this data source type.')
+    
+    def field_definitions(self) -> list[FieldDefinition]:
+        '''
+        Get the fields for the data source.
+        '''
+        return ensure_list(self.fields)
 
     def setup_webhooks(self):
         '''
@@ -941,17 +954,31 @@ class ExternalDataSource(PolymorphicModel):
         Get a record as a dictionary.
         '''
         return record
-    
+
     # Mapping mechanics
 
     async def fetch_many_loader(self, keys):
         results = await self.fetch_many(keys)
         # sort results by keys, including None
         return [next((result for result in results if self.get_record_id(result) == key), None) for key in keys]
+    
+    def filter(self, filter: dict) -> dict:
+        '''
+        Look up a record by a value in a column.
+        '''
+        raise NotImplementedError('Lookup not implemented for this data source type.')
 
     class Loaders(TypedDict):
         postcodesIO: DataLoader
         fetch_record: DataLoader
+        fetch_enrichment_data: DataLoader
+
+    class EnrichmentLookup(TypedDict):
+        member_id: str
+        postcode_data: PostcodesIOResult
+        source_id: 'ExternalDataSource'
+        source_path: str
+        source_data: Optional[any]
 
     def get_import_data(self):
         return GenericData.objects.filter(
@@ -959,13 +986,126 @@ class ExternalDataSource(PolymorphicModel):
         )
     
     def get_import_dataframe(self):
-        return pd.DataFrame(list(self.get_cached_data()))
-
+        return pd.DataFrame(list(self.get_import_data()))
+        
     def get_loaders (self) -> Loaders:
-        return {
-            "postcodesIO": DataLoader(load_fn=get_bulk_postcode_geo),
-            "fetch_record": DataLoader(load_fn=self.fetch_many_loader, cache=False)
-        }
+        async def fetch_enrichment_data(keys: List[self.EnrichmentLookup]) -> list[str]:
+            print("fetch_enrichment_data")
+            '''
+            Each key is a member record with postcode data, and a source to join onto via geography_column/geography_column_type, and a path for the source field to select
+            For each row:
+            
+            SELECT members.member_id, source.source_path
+            FROM members
+            JOIN source ON source.geography_column = members.postcode_data.geography_column
+            
+            We can do this via python
+            Or we can do it via SQL, if we have GenericData for both the `members` and `source`.
+            For now we will convert both to pandas dataframes and join them in python
+            '''
+            source_ids: list[str] = list(set([key['source_id'] for key in keys]))
+            updated_keys = keys.copy()
+            # pandas DF for the keys data
+            # Turn EnrichmentLookup into [member_id, ...postcode_data]
+            # keys_df = pd.DataFrame(keys)
+            keys_df = pd.DataFrame([
+                {
+                    **key,
+                    **key['postcode_data']
+                } for key in keys
+            ])
+
+            print(keys_df)
+
+            # batch fetch the source data, joining on the geography_column
+            async for enrichment_layer in ExternalDataSource.objects.filter(id__in=source_ids):
+                print("enrichment_layer", enrichment_layer)
+                # pandas DF for the source data
+                enrichment_df = enrichment_layer.get_import_dataframe()
+                print("enrichment_df", enrichment_df)
+                # join and then return
+                # update_fields_df = pd.merge(
+                #     keys_df,
+                #     enrichment_df,
+                #     left_on=enrichment_layer.geography_column_type,
+                #     right_on=enrichment_layer.geography_column,
+                #     how='left'
+                # )
+                # print("update_fields_df", update_fields_df)
+                # For each row, get the source_path
+                for index, key in enumerate(keys):
+                    if key['source_id'] == enrichment_layer.id:
+                        # query enrichment_df by matching the postcode_data to the geography_column
+                        enrichment_value = enrichment_df.loc[
+                            enrichment_layer.geography_column == key['postcode_data'][enrichment_layer.geography_column_type]
+                        ]
+                        updated_keys[index]['source_data'] = enrichment_value
+                            
+                        # k: self.EnrichmentLookup = key
+                        # # Get the source_path
+                        # source_path = k['source_path']
+                        # # Get the value
+                        # value = enrichment_df.loc[
+                        #     update_fields_df['member_id'] == key['member_id'],
+                        #     source_path
+                        # ]
+                        # updated_keys[index]['source_data'] = value or None
+            
+            return updated_keys
+
+            # # TODO: query GenericData for imported stuff
+            # # A bunch of source / join_from / join_to / selects
+            # # Group by source
+            # # For each source, get the join_from and join_to
+            # # For each join_from, get the join_to
+            # # For each join_to, get the selects
+            # source_ids = list(set([key['source_id'] for key in keys]))
+            # update_df = pd.DataFrame([
+            #     key['postcode_data'] for key in keys
+            # ])
+            # source_dataloaders = []
+            # for source_id in source_ids:
+            #     # pandas DF for the source data
+            #     enrichment_df = self.get_import_dataframe()
+                # pandas DF for the keys data
+                # join and then return
+
+
+                # enrichment_layer: ExternalDataSource = ExternalDataSource.objects.get(id=source_id)
+                # def source_bulk_lookup_fn (keys: self.EnrichmentLookup) -> str:
+                    # keys: member_lookup_values
+                    # How to join the data?
+                    # geography_lookup_values = set()
+                    # for key in keys if key['source_id'] == source_id else []:
+                    # postcode_data = key['postcode_data']
+                    # if enrichment_layer.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE:
+                    #     postcode_lookup_value = postcode_data['postcode']
+                    # elif enrichment_layer.geography_column_type == self.PostcodesIOGeographyTypes.WARD:
+                    #     postcode_lookup_value = postcode_data['ward']
+                    # elif enrichment_layer.geography_column_type == self.PostcodesIOGeographyTypes.COUNCIL:
+                    #     postcode_lookup_value = postcode_data['admin_district']
+                    # elif enrichment_layer.geography_column_type == self.PostcodesIOGeographyTypes.CONSTITUENCY:
+                    #     postcode_lookup_value = postcode_data['parliamentary_constituency']
+                    # elif enrichment_layer.geography_column_type == self.PostcodesIOGeographyTypes.CONSTITUENCY_2025:
+                    # postcode_lookup_value = postcode_data['parliamentary_constituency_2025']
+                    # lookup_data = enrichment_layer.filter({
+                    #     enrichment_layer.geography_column: postcode_lookup_value
+                    # })
+                    #     data = enrichment_layer.get_record_field(lookup_data, key['source_path'])
+                # source_dataloaders.append(DataLoader(
+                #     load_fn=source_bulk_lookup_fn,
+                #     cache=False
+                # ))
+            # return [0 for key in keys]
+        
+        def cache_key_fn (key: self.EnrichmentLookup) -> str:
+            return f"{key['member_id']}_{key['source_id']}"
+
+        return self.Loaders(
+            postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo),
+            fetch_record=DataLoader(load_fn=self.fetch_many_loader, cache=False),
+            fetch_enrichment_data=DataLoader(load_fn=fetch_enrichment_data, cache_key_fn=cache_key_fn)
+        )
 
     async def map_one(self, member: Union[str, dict], loaders: Loaders) -> MappedMember:
         '''
@@ -976,33 +1116,48 @@ class ExternalDataSource(PolymorphicModel):
         update_fields = {}
         try:
             postcode_data = None
-            if self.geography_column_type == self.GeographyTypes.POSTCODE:
+            if self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE:
                 # Get postcode from member
                 postcode = self.get_record_field(member, self.geography_column)
                 # Get relevant config data for that postcode
-                postcode_data = await loaders['postcodesIO'].load(postcode)
+                postcode_data: PostcodesIOResult = await loaders['postcodesIO'].load(postcode)
             # Map the fields
-            for mapping_dict in self.get_auto_update_mapping():
+            for mapping_dict in self.get_update_mapping():
                 source = mapping_dict['source']
-                path = mapping_dict['source_path']
-                field = mapping_dict['destination_column']
+                source_path = mapping_dict['source_path']
+                destination_column = mapping_dict['destination_column']
                 if source == 'postcodes.io':
                     if postcode_data is not None:
-                        update_fields[field] = get(postcode_data, path)
+                        update_fields[destination_column] = get(postcode_data, source_path)
                 else:
-                    # Room for other data sources
-                    pass
+                    update_value = await loaders['fetch_enrichment_data'].load(
+                        self.EnrichmentLookup(
+                            member_id=self.get_record_id(member),
+                            postcode_data=postcode_data,
+                            source_id=source,
+                            source_path=source_path
+                        )
+                    )
+                    print("Custom mapping", source, source_path, update_value)
+                    update_fields[destination_column] = get(update_value['source_data'], source_path)
+                        # enrichment_data = await enrichment_layer.lookup({
+                        #     enrichment_layer.geography_column:
+                        #     postcode_lookup_value
+                        # })
+                        # update_fields[field] = get(enrichment_data[0]['fields'], path)
+                    # except:
+                    #     pass
             # Return the member and config data
-            return {
-                'member': member,
-                'update_fields': update_fields
-            }
+            return self.MappedMember(
+                member=member,
+                update_fields=update_fields
+            )
         except TypeError:
             # Error fetching postcode data
-            return {
-                'member': member,
-                'update_fields': {}
-            }
+            return self.MappedMember(
+                member=member,
+                update_fields={}
+            )
     
     async def map_many(self, members: list[Union[str, any]], loaders: Loaders) -> list[MappedMember]:
         '''
@@ -1018,21 +1173,21 @@ class ExternalDataSource(PolymorphicModel):
         return await asyncio.gather(*[self.map_one(member, loaders) for member in members])
 
     async def refresh_one(self, member_id: Union[str, any]):
-        if len(self.get_auto_update_mapping()) == 0:
+        if len(self.get_update_mapping()) == 0:
             return
         loaders = self.get_loaders()
         mapped_record = await self.map_one(member_id, loaders)
         await self.update_one(mapped_record=mapped_record)
 
     async def refresh_many(self, member_ids: list[Union[str, any]]):
-        if len(self.get_auto_update_mapping()) == 0:
+        if len(self.get_update_mapping()) == 0:
             return
         loaders = self.get_loaders()
         mapped_records = await self.map_many(member_ids, loaders)
         await self.update_many(mapped_records=mapped_records)
 
     async def refresh_all(self):
-        if len(self.get_auto_update_mapping()) == 0:
+        if len(self.get_update_mapping()) == 0:
             return
         loaders = self.get_loaders()
         mapped_records = await self.map_all(loaders)
@@ -1155,6 +1310,7 @@ class AirtableSource(ExternalDataSource):
     base_id = models.CharField(max_length=250)
     table_id = models.CharField(max_length=250)
     automated_webhooks = True
+    introspect_fields = True
 
     class Meta:
         verbose_name = 'Airtable table'
@@ -1178,6 +1334,16 @@ class AirtableSource(ExternalDataSource):
             return True
         return False
     
+    def field_definitions(self):
+        return [
+          self.FieldDefinition(
+            label=field.name,
+            value=field.id,
+            description=field.description
+          )
+          for field in self.table.schema().fields
+        ]
+    
     async def fetch_one(self, member_id):
         record = self.table.get(member_id)
         return record
@@ -1191,6 +1357,13 @@ class AirtableSource(ExternalDataSource):
     
     async def fetch_all(self):
         records = self.table.all()
+        return records
+    
+    def filter(self, d: dict):
+        formula = f'AND('
+        formula += ",".join([f"{key}='{value}'" for key, value in d.items()])
+        formula += ')'
+        records = self.table.all(formula=formula)
         return records
     
     def get_record_id(self, record):

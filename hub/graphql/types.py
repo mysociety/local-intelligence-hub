@@ -6,6 +6,7 @@ from typing import List, Optional, Union
 from hub import models
 from datetime import datetime
 import procrastinate.contrib.django.models
+from .utils import key_resolver
 
 @strawberry_django.filters.filter(procrastinate.contrib.django.models.ProcrastinateJob, lookups=True)
 class QueueFilter:
@@ -96,6 +97,12 @@ class Membership:
 
 # ExternalDataSource
     
+@strawberry.type
+class FieldDefinition:
+    value: str = key_resolver('value')
+    label: Optional[str] = key_resolver('label')
+    description: Optional[str] = key_resolver('description')
+    
 @strawberry_django.type(models.ExternalDataSource)
 class ExternalDataSource:
     id: auto
@@ -106,9 +113,12 @@ class ExternalDataSource:
     organisation: Organisation
     geography_column: auto
     geography_column_type: auto
-    auto_update_mapping: Optional[List['AutoUpdateConfig']]
+    update_mapping: Optional[List['AutoUpdateConfig']]
     auto_update_enabled: auto
     auto_import_enabled: auto
+    field_definitions: Optional[List[FieldDefinition]] = strawberry_django.field(
+        resolver=lambda self: self.field_definitions()
+    )
 
     jobs: List[QueueJob] = strawberry_django.field(
         resolver=lambda self: procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(

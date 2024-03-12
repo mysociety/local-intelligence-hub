@@ -56,7 +56,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { AutoUpdateMappingForm } from "@/components/AutoUpdateMappingForm";
+import { UpdateMappingForm } from "@/components/UpdateMappingForm";
 import { UDPATE_EXTERNAL_DATA_SOURCE } from "@/graphql/mutations";
 import { AlertCircle } from "lucide-react"
 import {
@@ -89,7 +89,7 @@ const GET_UPDATE_CONFIG = gql`
         args
         lastEventAt
       }
-      autoUpdateMapping {
+      updateMapping {
         source
         sourcePath
         destinationColumn
@@ -183,15 +183,17 @@ export default function InspectExternalDataSource({
       <section className="space-y-4">
         <header className="flex flex-row justify-between items-center">
           <h2 className="text-hSm mb-5">Data mapping</h2>
-          <TriggerUpdateButton id={source.id} />
+          {!!source.updateMapping?.length && (
+            <TriggerUpdateButton id={source.id} />
+          )}
         </header>
-        <AutoUpdateMappingForm
+        <UpdateMappingForm
           saveButtonLabel="Update"
           initialData={{
             // Trim out the __typenames
             geographyColumn: source?.geographyColumn,
             geographyColumnType: source?.geographyColumnType,
-            autoUpdateMapping: source?.autoUpdateMapping?.map((m) => ({
+            updateMapping: source?.updateMapping?.map((m) => ({
               source: m.source,
               sourcePath: m.sourcePath,
               destinationColumn: m.destinationColumn,

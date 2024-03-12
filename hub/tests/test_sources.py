@@ -19,7 +19,7 @@ class TestAirtableSource(TestCase):
             api_key=settings.TEST_AIRTABLE_API_KEY,
             geography_column="Postcode",
             auto_update_enabled=True,
-            auto_update_mapping=[
+            update_mapping=[
               {
                 "source": "postcodes.io",
                 "source_path": "parliamentary_constituency_2025",

@@ -30,7 +30,7 @@ import { LoadingIcon } from "@/components/ui/loadingIcon";
 import {
   CreateAirtableSourceMutation,
   CreateAirtableSourceMutationVariables,
-  GeographyTypes,
+  PostcodesIoGeographyTypes,
   TestAirtableSourceQuery,
   TestAirtableSourceQueryVariables,
 } from "@/__generated__/graphql";
@@ -74,7 +74,7 @@ export default function Page({
   const form = useForm<FormInputs>({
     defaultValues: {
       airtable: {
-        geographyColumnType: GeographyTypes.Postcode,
+        geographyColumnType: PostcodesIoGeographyTypes.Postcode,
       },
     },
   });
@@ -323,10 +323,10 @@ export default function Page({
                           <SelectContent>
                             <SelectGroup>
                               <SelectLabel>Geography column type</SelectLabel>
-                              <SelectItem value={GeographyTypes.Postcode}>Postcode</SelectItem>
-                              <SelectItem value={GeographyTypes.Ward}>Ward</SelectItem>
-                              <SelectItem value={GeographyTypes.Council}>Council</SelectItem>
-                              <SelectItem value={GeographyTypes.Constituency}>Constituency</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Constituency}>Constituency</SelectItem>
                             </SelectGroup>
                           </SelectContent>
                         </Select>

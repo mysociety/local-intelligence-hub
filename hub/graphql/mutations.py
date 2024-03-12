@@ -8,13 +8,14 @@ from strawberry.field_extensions import InputMutationExtension
 from strawberry_django.permissions import IsAuthenticated
 from strawberry_django.auth.utils import get_current_user
 from strawberry.types.info import Info
+from asgiref.sync import async_to_sync
 
 @strawberry.input
 class IDObject:
     id: str
 
 @strawberry.input
-class AutoUpdateMappingItemInput:
+class UpdateMappingItemInput:
     source: str
     source_path: str
     destination_column: str
@@ -28,7 +29,7 @@ class ExternalDataSourceInput:
     geography_column: auto
     geography_column_type: auto
     auto_update_enabled: auto
-    auto_update_mapping: Optional[List[AutoUpdateMappingItemInput]]
+    update_mapping: Optional[List[UpdateMappingItemInput]]
     auto_import_enabled: auto
 
 @strawberry_django.input(models.AirtableSource, partial=True)
@@ -66,7 +67,10 @@ def disable_auto_update (external_data_source_id: str) -> models.ExternalDataSou
 @strawberry.mutation(extensions=[IsAuthenticated()])
 def trigger_update(external_data_source_id: str) -> models.ExternalDataSource:
     data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
-    job_id = data_source.schedule_refresh_all()
+    # TODO: Return this to the queue
+    print("Triggering update")
+    async_to_sync(data_source.refresh_all)()
+    # job_id = data_source.schedule_refresh_all()
     return data_source
 
 @strawberry.mutation(extensions=[IsAuthenticated()])

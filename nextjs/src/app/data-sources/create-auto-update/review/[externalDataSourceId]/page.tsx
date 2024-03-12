@@ -21,7 +21,7 @@ const GET_UPDATE_CONFIG = gql`
         crmType: __typename
       }
       autoUpdateEnabled
-      autoUpdateMapping {
+      updateMapping {
         source
         sourcePath
         destinationColumn

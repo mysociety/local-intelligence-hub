@@ -14,7 +14,7 @@ import {
   UpdateExternalDataSourceMutationVariables,
 } from "@/__generated__/graphql";
 import { toast } from "sonner";
-import { AutoUpdateMappingForm } from "@/components/AutoUpdateMappingForm";
+import { UpdateMappingForm } from "@/components/UpdateMappingForm";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import {UDPATE_EXTERNAL_DATA_SOURCE} from '@/graphql/mutations';
 
@@ -23,7 +23,7 @@ const GET_UPDATE_CONFIG = gql`
     externalDataSource(pk: $ID) {
       id
       autoUpdateEnabled
-      autoUpdateMapping {
+      updateMapping {
         destinationColumn
         source
         sourcePath
@@ -88,12 +88,12 @@ export default function Page({
       {externalDataSource.loading ? (
         <LoadingIcon />
       ) : externalDataSource.data ? (
-        <AutoUpdateMappingForm
+        <UpdateMappingForm
           initialData={{
             geographyColumn: externalDataSource.data?.externalDataSource.geographyColumn,
             geographyColumnType: externalDataSource.data?.externalDataSource.geographyColumnType,
             // Trim out the __typenames
-            autoUpdateMapping: externalDataSource.data?.externalDataSource.autoUpdateMapping?.map((m) => ({
+            updateMapping: externalDataSource.data?.externalDataSource.updateMapping?.map((m) => ({
               source: m.source,
               sourcePath: m.sourcePath,
               destinationColumn: m.destinationColumn,
@@ -111,7 +111,7 @@ export default function Page({
           >
             Back
           </Button>
-        </AutoUpdateMappingForm>
+        </UpdateMappingForm>
       ) : null}
     </div>
   );

@@ -22,7 +22,7 @@ const LIST_UPDATE_CONFIGS = gql`
         lastEventAt
         status
       }
-      autoUpdateMapping {
+      updateMapping {
         source
         sourcePath
         destinationColumn

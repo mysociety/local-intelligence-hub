@@ -214,7 +214,7 @@ export const UPDATE_CONFIG_CARD_FRAGMENT = gql`
       crmType: __typename
     }
     autoUpdateEnabled
-    autoUpdateMapping {
+    updateMapping {
       source
       sourcePath
       destinationColumn
