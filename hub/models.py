@@ -1057,17 +1057,19 @@ class ExternalDataSource(PolymorphicModel):
                     if postcode_data is not None:
                         update_fields[destination_column] = get(postcode_data, source_path)
                 else:
-                    print("Custom enrichment layer requested", source, source_path, destination_column)
-                    update_value = await loaders['source_loaders'][source].load(
-                        self.EnrichmentLookup(
-                            member_id=self.get_record_id(member),
-                            postcode_data=postcode_data,
-                            source_id=source,
-                            source_path=source_path
-                        )
-                    )
-                    print("Custom mapping", source, source_path, update_value)
-                    update_fields[destination_column] = get(update_value['source_data'], source_path)
+                    pass
+                    # TODO: fix this — there's an async error when making Django requests inside the source_loader DataLoaders — then re-enable.
+                    # print("Custom enrichment layer requested", source, source_path, destination_column)
+                    # update_value = await loaders['source_loaders'][source].load(
+                    #     self.EnrichmentLookup(
+                    #         member_id=self.get_record_id(member),
+                    #         postcode_data=postcode_data,
+                    #         source_id=source,
+                    #         source_path=source_path
+                    #     )
+                    # )
+                    # print("Custom mapping", source, source_path, update_value)
+                    # update_fields[destination_column] = get(update_value['source_data'], source_path)
             # Return the member and config data
             return self.MappedMember(
                 member=member,

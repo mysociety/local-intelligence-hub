@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { gql, useQuery } from "@apollo/client";
+import { useMemo } from "react";
 
 const ENRICHMENT_LAYERS = gql`
   query EnrichmentLayers {
@@ -67,7 +68,25 @@ export function UpdateMappingForm({
     },
   );
 
-  const customEnrichmentLayers = useQuery<EnrichmentLayersQuery>(ENRICHMENT_LAYERS)
+  // TODO: Fix source_loader code in API, then re-enable this
+  // const customEnrichmentLayers = useQuery<EnrichmentLayersQuery>(ENRICHMENT_LAYERS)
+  // const sources: EnrichmentDataSource[] = useMemo(() => {
+  //   return enrichmentDataSources.concat(
+  //     customEnrichmentLayers.data?.externalDataSources
+  //     .filter(source => !!source.geographyColumn)
+  //     .map((source) => ({
+  //       slug: source.id,
+  //       name: source.name,
+  //       author: "",
+  //       description: "",
+  //       descriptionURL: "",
+  //       colour: "",
+  //       builtIn: false,
+  //       sourcePaths: source.fieldDefinitions || []
+  //     })) || []
+  //   )
+  // }, [enrichmentDataSources, customEnrichmentLayers.data?.externalDataSources])
+  const sources = enrichmentDataSources
 
   return (
     <FormProvider {...form}>
@@ -135,20 +154,7 @@ export function UpdateMappingForm({
                     </Button>
                     <SourcePathSelector
                       focusOnMount={form.watch(`updateMapping.${index}.source`) === "?"}
-                      sources={enrichmentDataSources.concat(
-                        customEnrichmentLayers.data?.externalDataSources
-                        .filter(source => !!source.geographyColumn)
-                        .map((source) => ({
-                          slug: source.id,
-                          name: source.name,
-                          author: "",
-                          description: "",
-                          descriptionURL: "",
-                          colour: "",
-                          builtIn: false,
-                          sourcePaths: source.fieldDefinitions || []
-                        })) || []
-                      )}
+                      sources={sources}
                       value={{
                         source: form.watch(`updateMapping.${index}.source`),
                         sourcePath: form.watch(`updateMapping.${index}.sourcePath`),
