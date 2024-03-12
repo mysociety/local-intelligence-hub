@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { useRequireAuth } from "../../hooks/auth";
 import LogoutForm from "./logout-form";
 
@@ -8,3 +9,7 @@ export default async function Logout() {
 
   return <LogoutForm />;
 }
+
+export const metadata: Metadata = {
+  title: "Logout",
+};

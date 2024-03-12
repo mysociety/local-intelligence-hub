@@ -13,6 +13,7 @@ import Footer from "@/components/footer";
 import Navbar from "@/components/navbar";
 import { AreaPattern } from "@/components/areaPattern";
 
+import { Metadata } from 'next'
 
 
 function MappedIcon() {
@@ -56,4 +57,11 @@ export default async function RootLayout({
       </html>
     </ApolloWrapper>
   );
+}
+ 
+export const metadata: Metadata = {
+  title: {
+    template: '%s | Mapped by CK',
+    default: 'Mapped by Common Knowledge', // a default is required when creating a template
+  },
 }

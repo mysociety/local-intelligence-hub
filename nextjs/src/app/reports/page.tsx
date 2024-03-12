@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { Metadata } from 'next';
 
 export default function Report() {
 
@@ -56,3 +57,7 @@ function PageHeader() {
   </header>
   );
 }
+
+export const metadata: Metadata = {
+  title: "Reports",
+};
