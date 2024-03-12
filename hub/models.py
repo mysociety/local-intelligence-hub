@@ -29,13 +29,12 @@ import utils as lih_utils
 from hub.filters import Filter
 from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
 
-from hub.tasks import refresh_one, refresh_many, refresh_all, refresh_webhooks
+from hub.tasks import refresh_one, refresh_many, refresh_all, refresh_webhooks, import_all
 from utils.postcodesIO import get_postcode_geo, get_bulk_postcode_geo, PostcodesIOResult
 from utils.py import get, ensure_list
 
 from strawberry.dataloader import DataLoader
 from pyairtable import Api as AirtableAPI, Base as AirtableBase, Table as AirtableTable
-
 
 User = get_user_model()
 
@@ -971,7 +970,7 @@ class ExternalDataSource(PolymorphicModel):
     class Loaders(TypedDict):
         postcodesIO: DataLoader
         fetch_record: DataLoader
-        fetch_enrichment_data: DataLoader
+        source_loaders: dict[str, DataLoader]
 
     class EnrichmentLookup(TypedDict):
         member_id: str
@@ -988,124 +987,52 @@ class ExternalDataSource(PolymorphicModel):
     def get_import_dataframe(self):
         return pd.DataFrame(list(self.get_import_data()))
         
-    def get_loaders (self) -> Loaders:
-        async def fetch_enrichment_data(keys: List[self.EnrichmentLookup]) -> list[str]:
-            print("fetch_enrichment_data")
-            '''
-            Each key is a member record with postcode data, and a source to join onto via geography_column/geography_column_type, and a path for the source field to select
-            For each row:
-            
-            SELECT members.member_id, source.source_path
-            FROM members
-            JOIN source ON source.geography_column = members.postcode_data.geography_column
-            
-            We can do this via python
-            Or we can do it via SQL, if we have GenericData for both the `members` and `source`.
-            For now we will convert both to pandas dataframes and join them in python
-            '''
-            source_ids: list[str] = list(set([key['source_id'] for key in keys]))
-            updated_keys = keys.copy()
-            # pandas DF for the keys data
-            # Turn EnrichmentLookup into [member_id, ...postcode_data]
-            # keys_df = pd.DataFrame(keys)
-            keys_df = pd.DataFrame([
-                {
-                    **key,
-                    **key['postcode_data']
-                } for key in keys
-            ])
-
-            print(keys_df)
-
-            # batch fetch the source data, joining on the geography_column
-            async for enrichment_layer in ExternalDataSource.objects.filter(id__in=source_ids):
-                print("enrichment_layer", enrichment_layer)
+    async def get_loaders (self) -> Loaders:
+        def build_source_loader(source: ExternalDataSource) -> DataLoader:
+            async def fetch_enrichment_data(keys: List[self.EnrichmentLookup]) -> list[str]:
+                print("batch querying", source)
+                updated_keys = keys.copy()
+                # batch fetch the source data, joining on the geography_column
+                print("enrichment_layer", source)
                 # pandas DF for the source data
-                enrichment_df = enrichment_layer.get_import_dataframe()
+                enrichment_data = [datum async for datum in GenericData.objects.filter(**{
+                    f"{source.geography_column}__in": [get(key['postcode_data'], source.geography_column_type) for key in keys]
+                }).all()]
+                print("enrichment_data", enrichment_data)
+                enrichment_df = pd.DataFrame(enrichment_data)
                 print("enrichment_df", enrichment_df)
-                # join and then return
-                # update_fields_df = pd.merge(
-                #     keys_df,
-                #     enrichment_df,
-                #     left_on=enrichment_layer.geography_column_type,
-                #     right_on=enrichment_layer.geography_column,
-                #     how='left'
-                # )
-                # print("update_fields_df", update_fields_df)
-                # For each row, get the source_path
                 for index, key in enumerate(keys):
-                    if key['source_id'] == enrichment_layer.id:
+                    # TODO: Use pandas to join dataframes instead
+                    if key['source_id'] == source.id:
                         # query enrichment_df by matching the postcode_data to the geography_column
                         enrichment_value = enrichment_df.loc[
-                            enrichment_layer.geography_column == key['postcode_data'][enrichment_layer.geography_column_type]
+                            source.geography_column == get(key['postcode_data'], source.geography_column_type)
                         ]
                         updated_keys[index]['source_data'] = enrichment_value
-                            
-                        # k: self.EnrichmentLookup = key
-                        # # Get the source_path
-                        # source_path = k['source_path']
-                        # # Get the value
-                        # value = enrichment_df.loc[
-                        #     update_fields_df['member_id'] == key['member_id'],
-                        #     source_path
-                        # ]
-                        # updated_keys[index]['source_data'] = value or None
-            
-            return updated_keys
-
-            # # TODO: query GenericData for imported stuff
-            # # A bunch of source / join_from / join_to / selects
-            # # Group by source
-            # # For each source, get the join_from and join_to
-            # # For each join_from, get the join_to
-            # # For each join_to, get the selects
-            # source_ids = list(set([key['source_id'] for key in keys]))
-            # update_df = pd.DataFrame([
-            #     key['postcode_data'] for key in keys
-            # ])
-            # source_dataloaders = []
-            # for source_id in source_ids:
-            #     # pandas DF for the source data
-            #     enrichment_df = self.get_import_dataframe()
-                # pandas DF for the keys data
-                # join and then return
-
-
-                # enrichment_layer: ExternalDataSource = ExternalDataSource.objects.get(id=source_id)
-                # def source_bulk_lookup_fn (keys: self.EnrichmentLookup) -> str:
-                    # keys: member_lookup_values
-                    # How to join the data?
-                    # geography_lookup_values = set()
-                    # for key in keys if key['source_id'] == source_id else []:
-                    # postcode_data = key['postcode_data']
-                    # if enrichment_layer.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE:
-                    #     postcode_lookup_value = postcode_data['postcode']
-                    # elif enrichment_layer.geography_column_type == self.PostcodesIOGeographyTypes.WARD:
-                    #     postcode_lookup_value = postcode_data['ward']
-                    # elif enrichment_layer.geography_column_type == self.PostcodesIOGeographyTypes.COUNCIL:
-                    #     postcode_lookup_value = postcode_data['admin_district']
-                    # elif enrichment_layer.geography_column_type == self.PostcodesIOGeographyTypes.CONSTITUENCY:
-                    #     postcode_lookup_value = postcode_data['parliamentary_constituency']
-                    # elif enrichment_layer.geography_column_type == self.PostcodesIOGeographyTypes.CONSTITUENCY_2025:
-                    # postcode_lookup_value = postcode_data['parliamentary_constituency_2025']
-                    # lookup_data = enrichment_layer.filter({
-                    #     enrichment_layer.geography_column: postcode_lookup_value
-                    # })
-                    #     data = enrichment_layer.get_record_field(lookup_data, key['source_path'])
-                # source_dataloaders.append(DataLoader(
-                #     load_fn=source_bulk_lookup_fn,
-                #     cache=False
-                # ))
-            # return [0 for key in keys]
+                
+                return updated_keys
         
-        def cache_key_fn (key: self.EnrichmentLookup) -> str:
-            return f"{key['member_id']}_{key['source_id']}"
+            def cache_key_fn (key: self.EnrichmentLookup) -> str:
+                return f"{key['member_id']}_{key['source_id']}"
+            
+            return DataLoader(load_fn=fetch_enrichment_data, cache_key_fn=cache_key_fn)
 
-        return self.Loaders(
+        source_loaders = {}
+
+        async for source in ExternalDataSource.objects.filter(
+            organisation=self.organisation,
+            geography_column__isnull=False,
+            geography_column_type__isnull=False
+        ).all():
+            source_loaders[str(source.id)] = build_source_loader(source)
+
+        loaders = self.Loaders(
             postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo),
             fetch_record=DataLoader(load_fn=self.fetch_many_loader, cache=False),
-            fetch_enrichment_data=DataLoader(load_fn=fetch_enrichment_data, cache_key_fn=cache_key_fn)
+            source_loaders=source_loaders
         )
+
+        return loaders
 
     async def map_one(self, member: Union[str, dict], loaders: Loaders) -> MappedMember:
         '''
@@ -1130,7 +1057,8 @@ class ExternalDataSource(PolymorphicModel):
                     if postcode_data is not None:
                         update_fields[destination_column] = get(postcode_data, source_path)
                 else:
-                    update_value = await loaders['fetch_enrichment_data'].load(
+                    print("Custom enrichment layer requested", source, source_path, destination_column)
+                    update_value = await loaders['source_loaders'][source].load(
                         self.EnrichmentLookup(
                             member_id=self.get_record_id(member),
                             postcode_data=postcode_data,
@@ -1140,13 +1068,6 @@ class ExternalDataSource(PolymorphicModel):
                     )
                     print("Custom mapping", source, source_path, update_value)
                     update_fields[destination_column] = get(update_value['source_data'], source_path)
-                        # enrichment_data = await enrichment_layer.lookup({
-                        #     enrichment_layer.geography_column:
-                        #     postcode_lookup_value
-                        # })
-                        # update_fields[field] = get(enrichment_data[0]['fields'], path)
-                    # except:
-                    #     pass
             # Return the member and config data
             return self.MappedMember(
                 member=member,
@@ -1175,21 +1096,21 @@ class ExternalDataSource(PolymorphicModel):
     async def refresh_one(self, member_id: Union[str, any]):
         if len(self.get_update_mapping()) == 0:
             return
-        loaders = self.get_loaders()
+        loaders = await self.get_loaders()
         mapped_record = await self.map_one(member_id, loaders)
         await self.update_one(mapped_record=mapped_record)
 
     async def refresh_many(self, member_ids: list[Union[str, any]]):
         if len(self.get_update_mapping()) == 0:
             return
-        loaders = self.get_loaders()
+        loaders = await self.get_loaders()
         mapped_records = await self.map_many(member_ids, loaders)
         await self.update_many(mapped_records=mapped_records)
 
     async def refresh_all(self):
         if len(self.get_update_mapping()) == 0:
             return
-        loaders = self.get_loaders()
+        loaders = await self.get_loaders()
         mapped_records = await self.map_all(loaders)
         await self.update_all(mapped_records=mapped_records)
 
@@ -1198,6 +1119,8 @@ class ExternalDataSource(PolymorphicModel):
     def enable_auto_update(self) -> Union[None, int]:
         if self.automated_webhooks:
             self.refresh_webhooks()
+            # And schedule a cron to keep doing it
+            refresh_webhooks.defer()
         self.auto_update_enabled = True
         self.save()
 
