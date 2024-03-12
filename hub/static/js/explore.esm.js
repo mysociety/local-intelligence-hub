@@ -604,7 +604,7 @@ const app = createApp({
         case 'filter':
           return dataset.is_filterable
         case 'shader':
-          return ["party", "constituency_ruc"].includes(dataset.name) || !["text", "json", "date", "profile_id"].includes(dataset.data_type) && dataset.is_shadable
+          return ["party", "constituency_ruc", "council_type"].includes(dataset.name) || !["text", "json", "date", "profile_id"].includes(dataset.data_type) && dataset.is_shadable
         default:
           return true
       }
