@@ -1,4 +1,5 @@
 import json
+
 from django.http import JsonResponse
 from django.views.generic import View
 

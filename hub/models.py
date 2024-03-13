@@ -2,9 +2,11 @@ from datetime import datetime, timezone
 import uuid
 from typing import Iterable, TypedDict, Union, Optional, List
 import asyncio
-from asgiref.sync import sync_to_async
-from psycopg.errors import UniqueViolation
 import hashlib
+import uuid
+from datetime import datetime, timezone
+from typing import TypedDict, Union
+from urllib.parse import urljoin
 
 import json
 from django.contrib.auth import get_user_model
@@ -12,6 +14,8 @@ from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min
 from django.db.models.functions import Cast, Coalesce
 from django.dispatch import receiver
+from django.http import HttpResponse
+from django.urls import reverse
 from django.utils.functional import cached_property
 from django.urls import reverse
 from django.conf import settings
@@ -23,7 +27,15 @@ from django_choices_field import TextChoicesField
 from asgiref.sync import async_to_sync
 import pandas as pd
 
+from asgiref.sync import sync_to_async
 from django_jsonform.models.fields import JSONField
+from polymorphic.models import PolymorphicModel
+from procrastinate.contrib.django.models import ProcrastinateJob
+from psycopg.errors import UniqueViolation
+from pyairtable import Api as AirtableAPI
+from pyairtable import Base as AirtableBase
+from pyairtable import Table as AirtableTable
+from strawberry.dataloader import DataLoader
 
 import utils as lih_utils
 from hub.filters import Filter
@@ -40,8 +52,6 @@ from utils.asyncio import async_queryset
 User = get_user_model()
 
 
-from django.utils.text import slugify
-
 class Organisation(models.Model):
     slug = models.SlugField(max_length=100, unique=True)
     name = models.CharField(max_length=100)
@@ -56,14 +66,16 @@ class Organisation(models.Model):
 
     def __str__(self):
         return self.name
-    
+
 
 class Membership(models.Model):
     class Meta:
-        unique_together = ['user', 'organisation']
+        unique_together = ["user", "organisation"]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="memberships")
-    organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name="members")
+    organisation = models.ForeignKey(
+        Organisation, on_delete=models.CASCADE, related_name="members"
+    )
     role = models.CharField(max_length=250)
 
     def __str__(self):
@@ -771,14 +783,14 @@ def cast_data(sender, instance, *args, **kwargs):
         instance.int = int(instance.data)
         instance.data = ""
 
-from polymorphic.models import PolymorphicModel
 
 class ExternalDataSource(PolymorphicModel):
-    '''
+    """
     A third-party data source that can be read and optionally written back to.
     E.g. Google Sheet or an Action Network table.
     This class is to be subclassed by specific data source types.
-    '''
+    """
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name='external_data_sources', null=True, blank=True)
     class DataSourceType(models.TextChoices):
@@ -902,22 +914,22 @@ class ExternalDataSource(PolymorphicModel):
             )
 
     async def fetch_one(self, member_id: str):
-        '''
+        """
         Get one member from the data source.
-        '''
-        raise NotImplementedError('Get one not implemented for this data source type.')
-    
+        """
+        raise NotImplementedError("Get one not implemented for this data source type.")
+
     async def fetch_many(self, id_list: list[str]):
-        '''
+        """
         Get many members from the data source.
-        '''
-        raise NotImplementedError('Get many not implemented for this data source type.')
-    
+        """
+        raise NotImplementedError("Get many not implemented for this data source type.")
+
     async def fetch_all(self):
-        '''
+        """
         Get all members from the data source.
-        '''
-        raise NotImplementedError('Get all not implemented for this data source type.')
+        """
+        raise NotImplementedError("Get all not implemented for this data source type.")
 
     MappedMember = TypedDict('MatchedMember', {
         'member': dict,
@@ -925,28 +937,34 @@ class ExternalDataSource(PolymorphicModel):
     })
 
     async def update_one(self, mapped_record: MappedMember):
-        '''
+        """
         Append data for one member to the table.
-        '''
-        raise NotImplementedError('Update one not implemented for this data source type.')
-        
+        """
+        raise NotImplementedError(
+            "Update one not implemented for this data source type."
+        )
+
     async def update_many(self, mapped_records: list[MappedMember]):
-        '''
+        """
         Append mapped data to the table.
-        '''
-        raise NotImplementedError('Update many not implemented for this data source type.')
-    
+        """
+        raise NotImplementedError(
+            "Update many not implemented for this data source type."
+        )
+
     async def update_all(self, mapped_records: list[MappedMember]):
-        '''
+        """
         Append all data to the table.
-        '''
-        raise NotImplementedError('Update all not implemented for this data source type.')
-    
+        """
+        raise NotImplementedError(
+            "Update all not implemented for this data source type."
+        )
+
     def get_record_id(self, record):
-        '''
+        """
         Get the ID for a record.
-        '''
-        raise NotImplementedError('Get ID not implemented for this data source type.')
+        """
+        raise NotImplementedError("Get ID not implemented for this data source type.")
 
     def get_record_field(self, record: dict, field: str):
         '''
@@ -1237,15 +1255,19 @@ class AirtableSource(ExternalDataSource):
     '''
     An Airtable table.
     '''
-    api_key = models.CharField(max_length=250, help_text='Personal access token. Requires the following 4 scopes: data.records:read, data.records:write, schema.bases:read, webhook:manage')
+
+    api_key = models.CharField(
+        max_length=250,
+        help_text="Personal access token. Requires the following 4 scopes: data.records:read, data.records:write, schema.bases:read, webhook:manage",
+    )
     base_id = models.CharField(max_length=250)
     table_id = models.CharField(max_length=250)
     automated_webhooks = True
     introspect_fields = True
 
     class Meta:
-        verbose_name = 'Airtable table'
-        unique_together = ['base_id', 'table_id', 'api_key']
+        verbose_name = "Airtable table"
+        unique_together = ["base_id", "table_id", "api_key"]
 
     @cached_property
     def api(self) -> AirtableAPI:
@@ -1258,7 +1280,7 @@ class AirtableSource(ExternalDataSource):
     @cached_property
     def table(self) -> AirtableTable:
         return self.base.table(self.table_id)
-    
+
     def healthcheck(self):
         record = self.table.first()
         if record:
@@ -1282,14 +1304,14 @@ class AirtableSource(ExternalDataSource):
     async def fetch_one(self, member_id):
         record = self.table.get(member_id)
         return record
-    
+
     async def fetch_many(self, id_list: list[str]):
-        formula = f'OR('
+        formula = "OR("
         formula += ",".join([f"RECORD_ID()='{member_id}'" for member_id in id_list])
-        formula += ')'
+        formula += ")"
         records = self.table.all(formula=formula)
         return records
-    
+
     async def fetch_all(self):
         records = self.table.all()
         return records
@@ -1302,10 +1324,10 @@ class AirtableSource(ExternalDataSource):
         return records
     
     def get_record_id(self, record):
-        return record['id']
-    
+        return record["id"]
+
     def get_record_field(self, record, field):
-        return record['fields'].get(str(field))
+        return record["fields"].get(str(field))
 
     def get_record_dict(self, record):
         return record['fields']
@@ -1400,9 +1422,11 @@ class AirtableSource(ExternalDataSource):
 
     def get_member_ids_from_webhook(self, webhook_payload: dict) -> list[str]:
         member_ids: list[str] = []
-        webhook_id = webhook_payload['webhook']['id']
+        webhook_id = webhook_payload["webhook"]["id"]
         webhook = self.base.webhook(webhook_id)
-        webhook_object, is_new = AirtableWebhook.objects.update_or_create(airtable_id=webhook_id)
+        webhook_object, is_new = AirtableWebhook.objects.update_or_create(
+            airtable_id=webhook_id
+        )
         payloads = webhook.payloads(cursor=webhook_object.cursor)
         for payload in payloads:
             webhook_object.cursor = webhook_object.cursor + 1
@@ -1414,11 +1438,13 @@ class AirtableSource(ExternalDataSource):
         member_ids = list(sorted(set(member_ids)))
         print("Webhook member result", webhook_object.cursor, member_ids)
         return member_ids
-    
+
+
 class AirtableWebhook(models.Model):
-    '''
+    """
     We need a way to persist the cursor for the Airtable webhook, so we are saving it per-webhook in the DB.
-    '''
+    """
+
     # Airtable ID
     airtable_id = models.CharField(max_length=250, primary_key=True)
     cursor = models.IntegerField(default=1, blank=True)

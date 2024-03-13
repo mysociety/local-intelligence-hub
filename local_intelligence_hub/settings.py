@@ -10,7 +10,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
-import socket
 from datetime import timedelta
 from pathlib import Path
 
@@ -28,8 +27,7 @@ env = environ.Env(
     SCHEDULED_UPDATE_SECONDS_DELAY=(int, 3),
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, []),
-    CORS_ALLOWED_ORIGINS=(list, ['http://localhost:3000']),
-    HIDE_DEBUG_TOOLBAR=(bool, False),
+    CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3000"]),
     GOOGLE_ANALYTICS=(str, ""),
     GOOGLE_SITE_VERIFICATION=(str, ""),
     TEST_AIRTABLE_MEMBERLIST_BASE_ID=(str, ""),
@@ -53,7 +51,6 @@ DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
 CACHE_FILE = env("CACHE_FILE")
-HIDE_DEBUG_TOOLBAR = env("HIDE_DEBUG_TOOLBAR")
 MAPIT_URL = env("MAPIT_URL")
 MAPIT_API_KEY = env("MAPIT_API_KEY")
 GOOGLE_ANALYTICS = env("GOOGLE_ANALYTICS")
@@ -93,8 +90,8 @@ NON_LOGIN_URLS = (
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
-    'polymorphic',
-    'django.contrib.contenttypes',
+    "polymorphic",
+    "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
@@ -111,16 +108,16 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "hub.middleware.async_whitenoise_middleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "gqlauth.core.middlewares.django_jwt_middleware",
+    "hub.middleware.django_jwt_middleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "hub.middleware.RecordLastSeenMiddleware",
+    "hub.middleware.record_last_seen_middleware",
 ]
 
 ROOT_URLCONF = "local_intelligence_hub.urls"
@@ -239,48 +236,26 @@ BOOTSTRAP5 = {
 # Sending messages
 EMAIL_HOST = env.str("EMAIL_HOST", "localhost")
 EMAIL_PORT = env.str("EMAIL_PORT", 1025)
+EMAIL_HOST_USER = env.str("EMAIL_HOST_USER", False)
+EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD", False)
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", False)
 DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL", "webmaster@localhost")
-
-if DEBUG and HIDE_DEBUG_TOOLBAR is False:  # pragma: no cover
-    hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
-    INTERNAL_IPS = [ip[:-1] + "1" for ip in ips] + ["127.0.0.1", "10.0.2.2"]
-    CSRF_TRUSTED_ORIGINS = ["https://*.preview.app.github.dev"]
-
-    # debug toolbar has to come after django_hosts middleware
-    MIDDLEWARE.insert(1, "debug_toolbar.middleware.DebugToolbarMiddleware")
-
-    INSTALLED_APPS += ("debug_toolbar",)
-
-    DEBUG_TOOLBAR_PANELS = [
-        "debug_toolbar.panels.versions.VersionsPanel",
-        "debug_toolbar.panels.timer.TimerPanel",
-        "debug_toolbar.panels.settings.SettingsPanel",
-        "debug_toolbar.panels.headers.HeadersPanel",
-        "debug_toolbar.panels.request.RequestPanel",
-        "debug_toolbar.panels.sql.SQLPanel",
-        "debug_toolbar.panels.staticfiles.StaticFilesPanel",
-        "debug_toolbar.panels.templates.TemplatesPanel",
-        "debug_toolbar.panels.cache.CachePanel",
-        "debug_toolbar.panels.signals.SignalsPanel",
-        "debug_toolbar.panels.logging.LoggingPanel",
-        "debug_toolbar.panels.redirects.RedirectsPanel",
-    ]
 
 POSTCODES_IO_URL = "https://postcodes.commonknowledge.coop"
 POSTCODES_IO_BATCH_MAXIMUM = 100
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
         },
     },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': env('DJANGO_LOG_LEVEL'),
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": env("DJANGO_LOG_LEVEL"),
         },
     },
 }
@@ -299,9 +274,9 @@ GQL_AUTH = GqlAuthSettings(
     ALLOW_LOGIN_NOT_VERIFIED=True,
 )
 STRAWBERRY_DJANGO = {
-  "TYPE_DESCRIPTION_FROM_MODEL_DOCSTRING": True,
-  "FIELD_DESCRIPTION_FROM_HELP_TEXT": True,
-  "MAP_AUTO_ID_AS_GLOBAL_ID": False
+    "TYPE_DESCRIPTION_FROM_MODEL_DOCSTRING": True,
+    "FIELD_DESCRIPTION_FROM_HELP_TEXT": True,
+    "MAP_AUTO_ID_AS_GLOBAL_ID": False,
 }
 
 SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")

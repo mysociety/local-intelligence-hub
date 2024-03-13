@@ -1,14 +1,20 @@
+from typing import List, Optional
+
 import strawberry
 import strawberry_django
 from strawberry import auto
-from hub import models
-from . import types
-from typing import List, Optional
 from strawberry.field_extensions import InputMutationExtension
+from strawberry.types.info import Info
+from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import IsAuthenticated
 from strawberry_django.auth.utils import get_current_user
 from strawberry.types.info import Info
 from asgiref.sync import async_to_sync
+
+from hub import models
+
+from . import types
+
 
 @strawberry.input
 class IDObject:
@@ -40,11 +46,18 @@ class AirtableSourceInput(ExternalDataSourceInput):
     table_id: auto
   
 @strawberry.mutation(extensions=[IsAuthenticated(), InputMutationExtension()])
-async def create_organisation(info: Info, name: str, slug: Optional[str] = None, description: Optional[str] = None) -> types.Membership:
-    org = await models.Organisation.objects.acreate(name=name, slug=slug, description=description)
+async def create_organisation(
+    info: Info, name: str, slug: Optional[str] = None, description: Optional[str] = None
+) -> types.Membership:
+    org = await models.Organisation.objects.acreate(
+        name=name, slug=slug, description=description
+    )
     user = get_current_user(info)
-    membership = await models.Membership.objects.acreate(user=user, organisation=org, role="owner")
+    membership = await models.Membership.objects.acreate(
+        user=user, organisation=org, role="owner"
+    )
     return membership
+
 
 @strawberry_django.input(models.Organisation, partial=True)
 class OrganisationInputPartial:
@@ -53,11 +66,13 @@ class OrganisationInputPartial:
     slug: Optional[str]
     description: Optional[str]
 
+
 @strawberry.mutation(extensions=[IsAuthenticated()])
 def enable_auto_update (external_data_source_id: str) -> models.ExternalDataSource:
     data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
     data_source.enable_auto_update()
     return data_source
+
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
 def disable_auto_update (external_data_source_id: str) -> models.ExternalDataSource:
@@ -65,17 +80,20 @@ def disable_auto_update (external_data_source_id: str) -> models.ExternalDataSou
     data_source.disable_auto_update()
     return data_source
 
+
 @strawberry.mutation(extensions=[IsAuthenticated()])
 def trigger_update(external_data_source_id: str) -> models.ExternalDataSource:
     data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
     job_id = data_source.schedule_refresh_all()
     return data_source
 
+
 @strawberry.mutation(extensions=[IsAuthenticated()])
 def refresh_webhooks (external_data_source_id: str) -> models.ExternalDataSource:
     data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
     data_source.refresh_webhooks()
     return data_source
+
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
 def create_airtable_source(info: Info, data: AirtableSourceInput) -> models.AirtableSource:
@@ -101,13 +119,10 @@ def get_or_create_organisation_for_source(info: Info, data: any):
         else:
             print("Making an organisation for this user")
             organisation = models.Organisation.objects.create(
-                name=f"{user.username}'s organisation",
-                slug=f'{user.username}-org'
+                name=f"{user.username}'s organisation", slug=f"{user.username}-org"
             )
             models.Membership.objects.create(
-                user=user,
-                organisation=organisation,
-                role="owner"
+                user=user, organisation=organisation, role="owner"
             )
     return organisation
 

@@ -12,14 +12,15 @@ import utils as lih_utils
 register = template.Library()
 User = get_user_model()
 
+
 @register.simple_tag(name="backend_url")
 def backend_url(relative_url: str) -> str:
     return urljoin(settings.BASE_URL, relative_url)
 
+
 @register.simple_tag(name="frontend_url")
 def frontend_url(relative_url: str) -> str:
     return urljoin(settings.FRONTEND_BASE_URL, relative_url)
-
 
 
 @register.filter(name="split")

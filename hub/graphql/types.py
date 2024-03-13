@@ -1,8 +1,12 @@
+from datetime import datetime
+from typing import List, Optional, Union
+
+import procrastinate.contrib.django.models
 import strawberry
 import strawberry_django
-from strawberry_django.auth.utils import get_current_user
 from strawberry import auto
-from typing import List, Optional, Union
+from strawberry_django.auth.utils import get_current_user
+
 from hub import models
 from datetime import datetime
 import procrastinate.contrib.django.models
@@ -62,25 +66,28 @@ class QueueEvent:
 @strawberry_django.type(models.User)
 class User:
     email: auto
-    user_properties: 'UserProperties'
+    user_properties: "UserProperties"
+
 
 @strawberry_django.type(models.UserProperties)
 class UserProperties:
     user: User
     full_name: auto
 
+
 @strawberry_django.type(models.Organisation)
 class Organisation:
     id: auto
     name: auto
     slug: auto
-    members: List['Membership']
-    external_data_sources: List['ExternalDataSource']
+    members: List["Membership"]
+    external_data_sources: List["ExternalDataSource"]
 
     @classmethod
     def get_queryset(cls, queryset, info, **kwargs):
         user = get_current_user(info)
         return queryset.filter(members__user=user)
+
 
 # Membership
 @strawberry_django.type(models.Membership)
@@ -94,6 +101,7 @@ class Membership:
     def get_queryset(cls, queryset, info, **kwargs):
         user = get_current_user(info)
         return queryset.filter(user=user.id)
+
 
 # ExternalDataSource
     
@@ -137,16 +145,14 @@ class ExternalDataSource:
     @classmethod
     def get_queryset(cls, queryset, info, **kwargs):
         user = get_current_user(info)
-        return queryset.filter(
-            organisation__members__user=user.id
-        )
+        return queryset.filter(organisation__members__user=user.id)
 
     @strawberry_django.field
     def healthcheck(self, info) -> bool:
         return self.healthcheck()
 
     @strawberry_django.field
-    def connection_details(self, info) -> Union['AirtableSource']:
+    def connection_details(self, info) -> Union["AirtableSource"]:
         instance = self.get_real_instance()
         return instance
 
@@ -162,15 +168,15 @@ class ExternalDataSource:
 class AutoUpdateConfig:
     @strawberry.field
     def source(self) -> str:
-        return self['source']
-    
+        return self["source"]
+
     @strawberry.field
     def source_path(self) -> str:
-        return self['source_path']
-    
+        return self["source_path"]
+
     @strawberry.field
     def destination_column(self) -> str:
-        return self['destination_column']
+        return self["destination_column"]
 
 @strawberry_django.type(models.AirtableSource)
 class AirtableSource(ExternalDataSource):

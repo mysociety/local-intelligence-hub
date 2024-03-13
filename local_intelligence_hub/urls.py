@@ -18,9 +18,10 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path, re_path
-from django.views.generic.base import RedirectView
-from strawberry.django.views import AsyncGraphQLView
 from django.views.decorators.csrf import csrf_exempt
+from django.views.generic.base import RedirectView
+
+from strawberry.django.views import AsyncGraphQLView
 
 from hub.graphql.schema import schema
 from hub.sitemap import hub_sitemap
@@ -113,7 +114,11 @@ urlpatterns = [
         name="django.contrib.sitemaps.views.sitemap",
     ),
     path("graphql", AsyncGraphQLView.as_view(schema=schema), name="graphql"),
-    path(f"{ExternalDataSourceAutoUpdateWebhook.base_path}/<str:external_data_source_id>", csrf_exempt(ExternalDataSourceAutoUpdateWebhook.as_view()), name="external_data_source_auto_update_webhook")
+    path(
+        f"{ExternalDataSourceAutoUpdateWebhook.base_path}/<str:external_data_source_id>",
+        csrf_exempt(ExternalDataSourceAutoUpdateWebhook.as_view()),
+        name="external_data_source_auto_update_webhook"
+    )
 ]
 
 if settings.DEBUG:  # pragma: no cover

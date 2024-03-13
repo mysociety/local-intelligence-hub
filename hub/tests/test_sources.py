@@ -1,5 +1,3 @@
-from django.test import TestCase
-from django.conf import settings
 from datetime import datetime
 from asgiref.sync import async_to_sync, sync_to_async
 
@@ -7,7 +5,7 @@ from hub.models import AirtableSource, Organisation
 
 
 class TestAirtableSource(TestCase):
-    ### Test prep
+    # Test prep
 
     def setUp(self) -> None:
         self.records_to_delete: list[tuple[str, AirtableSource]] = []
@@ -71,8 +69,8 @@ class TestAirtableSource(TestCase):
         records = source.table.batch_create(records)
         self.records_to_delete += [(record['id'], source)for record in records]
         return records
-    
-    ### Tests begin
+
+    # Tests begin
 
     def test_airtable_source(self):
         self.assertTrue(self.source.healthcheck())
@@ -140,28 +138,24 @@ class TestAirtableSource(TestCase):
         self.assertEqual(len(df.index), import_count)
 
     async def test_airtable_fetch_one(self):
-        record = self.create_test_record({ "Postcode": "EH99 1SP" })
+        record = self.create_test_record({"Postcode": "EH99 1SP"})
         # Test this functionality
         record = await self.source.fetch_one(self.source.get_record_id(record))
         # Check
-        self.assertEqual(
-            self.source.get_record_field(record, 'Postcode'),
-            "EH99 1SP"
-        )
+        self.assertEqual(self.source.get_record_field(record, "Postcode"), "EH99 1SP")
 
     async def test_airtable_fetch_many(self):
         date = str(datetime.now().isoformat())
-        records = self.create_many_test_records([
-            { "Postcode": date + "11111" },
-            { "Postcode": date + "22222" }
-        ])
+        records = self.create_many_test_records(
+            [{"Postcode": date + "11111"}, {"Postcode": date + "22222"}]
+        )
         # Test this functionality
-        records = await self.source.fetch_many([record['id'] for record in records])
+        records = await self.source.fetch_many([record["id"] for record in records])
         # Check
         assert len(records) == 2
         for record in records:
             self.assertTrue(
-                self.source.get_record_field(record, 'Postcode').startswith(date)
+                self.source.get_record_field(record, "Postcode").startswith(date)
             )
 
     async def test_airtable_refresh_one(self):
@@ -171,8 +165,8 @@ class TestAirtableSource(TestCase):
         # Check
         record = await self.source.fetch_one(self.source.get_record_id(record))
         self.assertEqual(
-            self.source.get_record_field(record, 'constituency'),
-            "Edinburgh East and Musselburgh"
+            self.source.get_record_field(record, "constituency"),
+            "Edinburgh East and Musselburgh",
         )
 
     def test_pivot_table(self):
@@ -210,14 +204,11 @@ class TestAirtableSource(TestCase):
         # Test this functionality
         await self.source.refresh_many(records)
         # Check
-        records = await self.source.fetch_many([record['id'] for record in records])
+        records = await self.source.fetch_many([record["id"] for record in records])
         assert len(records) == 2
         for record in records:
             if self.source.get_record_field(record, "Postcode") == "G11 5RD":
-                self.assertEqual(
-                    record['fields']['constituency'],
-                    "Glasgow West"
-                )
+                self.assertEqual(record["fields"]["constituency"], "Glasgow West")
             elif self.source.get_record_field(record, "Postcode") == "G42 8PH":
                 self.assertEqual(
                     record['fields']['constituency'],

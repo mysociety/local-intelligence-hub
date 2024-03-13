@@ -38,10 +38,9 @@ pandas = "^2.2.1"
 django-choices-field = "^2.3.0"
 
 [tool.poetry.dev-dependencies]
-django-debug-toolbar = "^3.7.0"
 black = "^22.8.0"
 coverage = "^6.5.0"
-flake8 = "^5.0.4"
+flake8 = "^6.1.0"
 isort = "^5.10.1"
 
 [build-system]
