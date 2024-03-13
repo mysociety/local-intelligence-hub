@@ -38,7 +38,7 @@ from hub.tasks import (
     refresh_webhooks,
 )
 from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
-from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo, get_postcode_geo
+from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
 from utils.py import ensure_list, get
 
 User = get_user_model()
@@ -807,6 +807,7 @@ class ExternalDataSource(PolymorphicModel):
     automated_webhooks = False
     introspect_fields = False
     # Geocoding data
+
     class PostcodesIOGeographyTypes(models.TextChoices):
         POSTCODE = "postcode", "Postcode"
         WARD = "ward", "Ward"
@@ -827,6 +828,7 @@ class ExternalDataSource(PolymorphicModel):
 
     fields = JSONField(blank=True, null=True, default=list)
     # Auto-updates
+
     class UpdateMapping(TypedDict):
         source: str
         # Can be a dot path, for use with benedict
@@ -1122,7 +1124,7 @@ class ExternalDataSource(PolymorphicModel):
                                     source_path=source_path,
                                 )
                             )
-                    except Exception as e:
+                    except Exception:
                         continue
             # Return the member and config data
             return self.MappedMember(member=member, update_fields=update_fields)
@@ -1357,7 +1359,7 @@ class AirtableSource(ExternalDataSource):
         return records
 
     def filter(self, d: dict):
-        formula = f"AND("
+        formula = "AND("
         formula += ",".join([f"{key}='{value}'" for key, value in d.items()])
         formula += ")"
         records = self.table.all(formula=formula)

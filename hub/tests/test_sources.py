@@ -1,9 +1,12 @@
 from datetime import datetime
 
+from django.conf import settings
+from django.test import TestCase
+
 from asgiref.sync import async_to_sync, sync_to_async
 
 from hub.models import AirtableSource, Organisation
-from django.test import TestCase
+
 
 class TestAirtableSource(TestCase):
     # Test prep
