@@ -9,7 +9,7 @@ import {
   AutoUpdateCreationReviewQuery,
   AutoUpdateCreationReviewQueryVariables,
 } from "@/__generated__/graphql";
-import { AutoUpdateCard } from "@/components/AutoUpdateCard";
+import { AutoUpdateCard, TriggerUpdateButton } from "@/components/AutoUpdateCard";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 
 const GET_UPDATE_CONFIG = gql`
@@ -17,6 +17,7 @@ const GET_UPDATE_CONFIG = gql`
     externalDataSource(pk: $ID) {
       id
       name
+      geographyColumn
       connectionDetails {
         crmType: __typename
       }
@@ -67,26 +68,36 @@ export default function Page({
   return (
     <div className="space-y-7">
       <header>
-        <h1 className="text-hLg">Activate data sync</h1>
-        <p className="mt-6 text-meepGray-400 max-w-sm">
-          Your almost there! Active the data sync to start syncing data. Note,
-          this may take a while if you are using a large amount of data layers.
+        <h1 className="text-hLg">Activate data source</h1>
+        <p className="mt-6 text-meepGray-300 max-w-sm">
+          Your almost there!
         </p>
+        <ul className="list-disc list-outside pl-4 space-y-3 mt-3">
+          <li className="text-meepGray-300 max-w-sm">Active auto-update webhooks to start updating your data source when the <code className='bg-meepGray-700 rounded-md p-1'>{pageQuery.data?.externalDataSource.geographyColumn}</code> column changes.</li>
+          <li className="text-meepGray-300 max-w-sm">Trigger an update to see the data source in action.</li>
+        </ul>
       </header>
       {pageQuery.loading || !pageQuery.data ? (
         <LoadingIcon />
       ) : (
-        <AutoUpdateCard
-          externalDataSource={pageQuery.data.externalDataSource}
-        />
+        <>
+          <div>
+            <AutoUpdateCard
+              externalDataSource={pageQuery.data.externalDataSource}
+            />
+          </div>
+          <div>
+            <TriggerUpdateButton id={externalDataSourceId} className='w-full' variant='reverse' />
+          </div>
+        </>
       )}
       <Button
-        variant={"reverse"}
+        variant={"outline"}
         onClick={() => {
           router.push(`/data-sources`);
         }}
       >
-        Back to data syncs
+        View all data sources
       </Button>
     </div>
   );

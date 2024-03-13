@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/command"
 import { EnrichmentDataSource, SourcePath } from "@/lib/data";
 import { AutoUpdateConfig } from "@/__generated__/graphql";
+import { CommandSeparator } from "cmdk";
 
 export function SourcePathSelector({
   sources,
@@ -43,31 +44,34 @@ export function SourcePathSelector({
         <CommandInput placeholder="Search available data..." />
         <CommandList>
           <CommandEmpty>No data found.</CommandEmpty>
-          {sources.map((source) => (
-            <CommandGroup heading={source.name || source.slug}>
-              {source.sourcePaths.map((sourcePath) => (
-                <CommandItem
-                  key={val(sourcePath)}
-                  value={label(sourcePath)}
-                  onSelect={() => {
-                    setValue(
-                      source.slug,
-                      val(sourcePath),
-                    );
-                    setOpen(false);
-                  }}
-                >
-                  <div>
-                    <div>{label(sourcePath)}</div>
-                    {!!description(sourcePath) && (
-                      <div className="text-xs opacity-70">
-                        {description(sourcePath)}
-                      </div>
-                    )}
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
+          {sources.map((source, i, arr) => (
+            <>
+              <CommandGroup heading={source.name || source.slug}>
+                {source.sourcePaths.map((sourcePath) => (
+                  <CommandItem
+                    key={val(sourcePath)}
+                    value={label(sourcePath)}
+                    onSelect={() => {
+                      setValue(
+                        source.slug,
+                        val(sourcePath),
+                      );
+                      setOpen(false);
+                    }}
+                  >
+                    <div>
+                      <div>{label(sourcePath)}</div>
+                      {!!description(sourcePath) && (
+                        <div className="text-xs opacity-70">
+                          {description(sourcePath)}
+                        </div>
+                      )}
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+              {i < arr.length - 1 && <CommandSeparator className='border border-meepGray-600' />}
+            </>
           ))}
         </CommandList>
       </CommandDialog>

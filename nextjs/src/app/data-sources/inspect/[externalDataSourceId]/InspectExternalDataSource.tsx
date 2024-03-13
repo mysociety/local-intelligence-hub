@@ -18,6 +18,7 @@ import {
 } from "@/components/AutoUpdateCard";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import {
+  DataSourceType,
   DeleteUpdateConfigMutation,
   DeleteUpdateConfigMutationVariables,
   ExternalDataSourceInput,
@@ -70,6 +71,7 @@ const GET_UPDATE_CONFIG = gql`
     externalDataSource(pk: $ID) {
       id
       name
+      dataType
       connectionDetails {
         crmType: __typename
         ... on AirtableSource {
@@ -128,16 +130,19 @@ export default function InspectExternalDataSource({
   }
 
   if (!data?.externalDataSource) {
-    return <h2>No data sync found</h2>;
+    return <h2>No data sources found</h2>;
   }
 
   const source = data.externalDataSource
+  const allowMapping = source.dataType == DataSourceType.Member
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-7">
       <header className="flex flex-row justify-between gap-8">
         <div className='w-full'>
-          <div className="text-meepGray-400">External data source</div>
+          <div className="text-meepGray-400">
+            {source.dataType === DataSourceType.Member ? "Member list" : "Custom data layer"}
+          </div>
           <h1 className="text-hLg" contentEditable id="nickname" onBlur={d => {
             updateMutation({
               name: document.getElementById("nickname")?.textContent?.trim()
@@ -155,40 +160,45 @@ export default function InspectExternalDataSource({
           )}
         </div>
       </header>
-      <div className="border-b border-meepGray-700 pt-10" />
-      <section className='space-y-4'>
-        <h2 className="text-hSm mb-5">Auto-updates</h2>
-        {source.jobs[0]?.lastEventAt ? (
-          <div className="text-meepGray-400">
-            Last sync:{" "}
-            {formatRelative(source.jobs[0].lastEventAt, new Date())} (
-            {source.jobs[0].status})
-          </div>
-        ) : null}
-        <AutoUpdateSwitch externalDataSource={source} />
-        {source.autoUpdateEnabled && !source.webhookHealthcheck && (
-          <>
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Webhooks unhealthy</AlertTitle>
-              <AlertDescription>
-                The webhook is unhealthy. Please refresh the webhook to fix auto-updates.
-              </AlertDescription>
-            </Alert>
-            <AutoUpdateWebhookRefresh externalDataSourceId={externalDataSourceId} />
-          </>
-        )}
-      </section>
+      {allowMapping && (
+        <>
+        <div className="border-b border-meepGray-700 pt-10" />
+        <section className='space-y-4'>
+          <h2 className="text-hSm mb-5">Auto-updates</h2>
+          {source.jobs[0]?.lastEventAt ? (
+            <div className="text-meepGray-400">
+              Last sync:{" "}
+              {formatRelative(source.jobs[0].lastEventAt, new Date())} (
+              {source.jobs[0].status})
+            </div>
+          ) : null}
+          <AutoUpdateSwitch externalDataSource={source} />
+          {source.autoUpdateEnabled && !source.webhookHealthcheck && (
+            <>
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Webhooks unhealthy</AlertTitle>
+                <AlertDescription>
+                  The webhook is unhealthy. Please refresh the webhook to fix auto-updates.
+                </AlertDescription>
+              </Alert>
+              <AutoUpdateWebhookRefresh externalDataSourceId={externalDataSourceId} />
+            </>
+          )}
+        </section>
+        </>
+      )}
       <div className="border-b border-meepGray-700 pt-10" />
       <section className="space-y-4">
         <header className="flex flex-row justify-between items-center">
           <h2 className="text-hSm mb-5">Data mapping</h2>
-          {!!source.updateMapping?.length && (
+          {allowMapping && !!source.updateMapping?.length && (
             <TriggerUpdateButton id={source.id} />
           )}
         </header>
         <UpdateMappingForm
           saveButtonLabel="Update"
+          allowMapping={allowMapping}
           initialData={{
             // Trim out the __typenames
             geographyColumn: source?.geographyColumn,

@@ -22,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { getSourceOptionForTypename } from "@/lib/data";
-import { AutoUpdateCardFieldsFragment, AutoUpdateWebhookRefreshMutation, AutoUpdateWebhookRefreshMutationVariables, DisableAutoUpdateMutation, DisableAutoUpdateMutationVariables, EnableAutoUpdateMutation, EnableAutoUpdateMutationVariables, TriggerFullUpdateMutation, TriggerFullUpdateMutationVariables } from "@/__generated__/graphql";
+import { AutoUpdateCardFieldsFragment, AutoUpdateWebhookRefreshMutation, AutoUpdateWebhookRefreshMutationVariables, DataSourceType, DisableAutoUpdateMutation, DisableAutoUpdateMutationVariables, EnableAutoUpdateMutation, EnableAutoUpdateMutationVariables, TriggerFullUpdateMutation, TriggerFullUpdateMutationVariables } from "@/__generated__/graphql";
 
 export function AutoUpdateCard({
   externalDataSource,
@@ -46,12 +46,13 @@ export function AutoUpdateCard({
           <CogIcon />
         </Link>
       </header>
-      <AutoUpdateSwitch externalDataSource={externalDataSource} />
+      {externalDataSource.dataType === DataSourceType.Member && (
+        <AutoUpdateSwitch externalDataSource={externalDataSource} />
+      )}
       {externalDataSource?.jobs?.[0]?.lastEventAt ? (
         <div className="text-sm text-meepGray-400">
-          Last sync:{" "}
-          {formatRelative(externalDataSource.jobs[0].lastEventAt, new Date())} (
-          {externalDataSource.jobs[0].status})
+          Last background task <span className='text-meepGray-300'>{externalDataSource.jobs[0].status}</span>{" "}
+          {formatRelative(externalDataSource.jobs[0].lastEventAt, new Date())}
         </div>
       ) : null}
     </article>
@@ -72,7 +73,7 @@ export function AutoUpdateSwitch({
           toggleAutoUpdate(client, e, externalDataSource.id)
         }
       />
-      <span className={externalDataSource.autoUpdateEnabled && "text-brandBlue"}>Webhooks</span>
+      <span className={externalDataSource.autoUpdateEnabled && "text-brandBlue"}>Auto-update</span>
     </div>
   );
 }
@@ -112,7 +113,7 @@ export function AutoUpdateWebhookRefresh({
 
 export function TriggerUpdateButton({
   id,
-  label = "Trigger full sync",
+  label = "Trigger full update",
   ...buttonProps
 }: {
   id: string;
@@ -210,6 +211,7 @@ export const UPDATE_CONFIG_CARD_FRAGMENT = gql`
   fragment AutoUpdateCardFields on ExternalDataSource {
     id
     name
+    dataType
     connectionDetails {
       crmType: __typename
     }

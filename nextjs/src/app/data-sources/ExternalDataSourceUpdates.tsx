@@ -6,14 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { AutoUpdateCard } from "@/components/AutoUpdateCard";
-import { ListExternalDataSourcesQuery, ListExternalDataSourcesQueryVariables } from "@/__generated__/graphql";
+import { DataSourceType, ListExternalDataSourcesQuery, ListExternalDataSourcesQueryVariables } from "@/__generated__/graphql";
 import { useEffect } from "react";
+import qs from 'query-string'
 
 const LIST_UPDATE_CONFIGS = gql`
   query ListExternalDataSources {
     externalDataSources {
       id
       name
+      dataType
       connectionDetails {
         crmType: __typename
       }
@@ -43,30 +45,56 @@ export default function ExternalDataSourceUpdates() {
       <PageHeader />
       <div className="border-b border-meepGray-700 pt-10" />
       <header className='flex flex-row justify-end'>
-        <h2 className="text-hSm mr-auto">Your connected data sources</h2>
-        <Button variant="ghost" className="shadow-md">
-          + New auto-update
-        </Button>
+        <h2 className="text-hSm mr-auto">Your team’s membership lists</h2>
       </header>
       {loading ? (
-        <section className="grid gap-7 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+        <section className="grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           <article className="rounded-xl border border-meepGray-700 px-6 py-5 space-y-3">
             <Skeleton className="h-4 w-full max-w-[100px]" />
             <Skeleton className="h-10 w-full" />
           </article>
-          <ConnectDataSource />
+          <ConnectDataSource label="Connect a member list" params={{ dataType: DataSourceType.Member }} />
         </section>
       ) : error ? (
         <h2>Error: {error.message}</h2>
       ) : data ? (
-        <section className="grid gap-7 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {data.externalDataSources.map((externalDataSource) => (
+        <section className="grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {data.externalDataSources
+          .filter(d => d.dataType === DataSourceType.Member)
+          .map((externalDataSource) => (
             <AutoUpdateCard
               key={externalDataSource.id}
               externalDataSource={externalDataSource}
             />
           ))}
-          <ConnectDataSource />
+          <ConnectDataSource label="Connect a member list" params={{ dataType: DataSourceType.Member }} />
+        </section>
+      ) : null}
+      <div className="border-b border-meepGray-700 pt-16" />
+      <header className='flex flex-row justify-end'>
+        <h2 className="text-hSm mr-auto">Custom data layers</h2>
+      </header>
+      {loading ? (
+        <section className="grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <article className="rounded-xl border border-meepGray-700 px-6 py-5 space-y-3">
+            <Skeleton className="h-4 w-full max-w-[100px]" />
+            <Skeleton className="h-10 w-full" />
+          </article>
+          <ConnectDataSource label="Connect a custom data layer" params={{ dataType: DataSourceType.Other }} />
+        </section>
+      ) : error ? (
+        <h2>Error: {error.message}</h2>
+      ) : data ? (
+        <section className="grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {data.externalDataSources
+          .filter(d => d.dataType !== DataSourceType.Member)
+          .map((externalDataSource) => (
+            <AutoUpdateCard
+              key={externalDataSource.id}
+              externalDataSource={externalDataSource}
+            />
+          ))}
+          <ConnectDataSource label="Connect a custom data layer" params={{ dataType: DataSourceType.Other }} />
         </section>
       ) : null}
     </div>
@@ -94,9 +122,13 @@ function PageHeader() {
   );
 }
 
-function ConnectDataSource() {
+function ConnectDataSource({ label = "Connect a data layer", params }: { label?: string, params?: any }) {
+  const link = qs.stringifyUrl({
+    url: "/data-sources/create-auto-update",
+    query: params
+  })
   return (
-    <Link href="/data-sources/create-auto-update">
+    <Link href={link}>
       <article className="relative cursor-pointer rounded-xl border border-meepGray-700 px-6 py-5">
         <div className="space-y-5">
           <Skeleton className="h-4 w-full max-w-[100px]" />
@@ -104,7 +136,7 @@ function ConnectDataSource() {
         </div>
         <div className="absolute inset-0 top-1/2 -translate-y-1/2 flex items-center justify-center">
           <Button variant="reverse" className="shadow-md">
-            + Connect a data source
+            + {label}
           </Button>
         </div>
       </article>

@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { EnrichmentDataSource, enrichmentDataSources } from "@/lib/data";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { EnrichmentLayersQuery, ExternalDataSourceInput, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
+import { DataSourceType, EnrichmentLayersQuery, ExternalDataSourceInput, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
 import { Input } from "@/components/ui/input";
 import { SourcePathSelector } from "@/components/SelectSourceData";
 import { ArrowRight, X, XCircle } from "lucide-react";
@@ -34,6 +34,8 @@ const ENRICHMENT_LAYERS = gql`
       id
       name
       geographyColumn
+      geographyColumnType
+      dataType
       fieldDefinitions {
         label
         value
@@ -47,6 +49,7 @@ export function UpdateMappingForm({
   onSubmit,
   initialData,
   children,
+  allowMapping = true,
   saveButtonLabel = "Update",
 }: {
   onSubmit: (
@@ -55,6 +58,7 @@ export function UpdateMappingForm({
   initialData?: ExternalDataSourceInput;
   saveButtonLabel?: string;
   children?: React.ReactNode;
+  allowMapping?: boolean;
 }) {
   const form = useForm<ExternalDataSourceInput>({
     defaultValues: initialData,
@@ -72,7 +76,12 @@ export function UpdateMappingForm({
   const sources: EnrichmentDataSource[] = useMemo(() => {
     return enrichmentDataSources.concat(
       customEnrichmentLayers.data?.externalDataSources
-      .filter(source => !!source.geographyColumn)
+      .filter(source => (
+        !!source.geographyColumn &&
+        !!source.geographyColumnType && 
+        !!source.fieldDefinitions?.length &&
+        source.dataType !== DataSourceType.Member
+      ))
       .map((source) => ({
         slug: source.id,
         name: source.name,
@@ -138,57 +147,61 @@ export function UpdateMappingForm({
             </FormItem>
           </div>
           <div>
-            <table className='w-full'>
-              {fields.map((field, index) => (
-                <tr key={field.id} className='flex flex-row'>
-                  <td className="w-1/2 grow-0  flex flex-row items-center justify-stretch">
-                    <Button
-                      className="flex-shrink"
-                      onClick={() => {
-                        remove(index);
-                      }}
-                    >
-                      <X />
-                    </Button>
-                    <SourcePathSelector
-                      focusOnMount={form.watch(`updateMapping.${index}.source`) === "?"}
-                      sources={sources}
-                      value={{
-                        source: form.watch(`updateMapping.${index}.source`),
-                        sourcePath: form.watch(`updateMapping.${index}.sourcePath`),
-                      }}
-                      setValue={(source, sourcePath) => {
-                        form.setValue(`updateMapping.${index}.source`, source);
-                        form.setValue(
-                          `updateMapping.${index}.sourcePath`,
-                          sourcePath,
-                        );
-                      }}
-                    />
-                  </td>
-                  <td className="w-1/2 shrink-0 flex flex-row items-center justify-stretch">
-                    <ArrowRight className="flex-shrink-0" />
-                    <Input
-                      className="flex-shrink-0 flex-grow"
-                      placeholder="Destination column"
-                      key={field.id} // important to include key with field's id
-                      {...form.register(`updateMapping.${index}.destinationColumn`)}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </table>
-            <Button
-              onClick={() => {
-                append({
-                  source: "?",
-                  sourcePath: "",
-                  destinationColumn: "",
-                });
-              }}
-            >
-              Add field
-            </Button>
+            {allowMapping && (
+              <>
+                <table className='w-full'>
+                  {fields.map((field, index) => (
+                    <tr key={field.id} className='flex flex-row'>
+                      <td className="w-1/2 grow-0  flex flex-row items-center justify-stretch">
+                        <Button
+                          className="flex-shrink"
+                          onClick={() => {
+                            remove(index);
+                          }}
+                        >
+                          <X />
+                        </Button>
+                        <SourcePathSelector
+                          focusOnMount={form.watch(`updateMapping.${index}.source`) === "?"}
+                          sources={sources}
+                          value={{
+                            source: form.watch(`updateMapping.${index}.source`),
+                            sourcePath: form.watch(`updateMapping.${index}.sourcePath`),
+                          }}
+                          setValue={(source, sourcePath) => {
+                            form.setValue(`updateMapping.${index}.source`, source);
+                            form.setValue(
+                              `updateMapping.${index}.sourcePath`,
+                              sourcePath,
+                            );
+                          }}
+                        />
+                      </td>
+                      <td className="w-1/2 shrink-0 flex flex-row items-center justify-stretch">
+                        <ArrowRight className="flex-shrink-0" />
+                        <Input
+                          className="flex-shrink-0 flex-grow"
+                          placeholder="Destination column"
+                          key={field.id} // important to include key with field's id
+                          {...form.register(`updateMapping.${index}.destinationColumn`)}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </table>
+                <Button
+                  onClick={() => {
+                    append({
+                      source: "?",
+                      sourcePath: "",
+                      destinationColumn: "",
+                    });
+                  }}
+                >
+                  Add field
+                </Button>
+              </>
+            )}
             <div className="flex flex-row gap-x-4 mt-6">
               {children}
               <Button

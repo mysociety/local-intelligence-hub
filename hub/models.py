@@ -781,6 +781,11 @@ class ExternalDataSource(PolymorphicModel):
     '''
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name='external_data_sources', null=True, blank=True)
+    class DataSourceType(models.TextChoices):
+        MEMBER = 'member', 'Members or supporters'
+        REGION = 'region', 'Areas or regions'
+        OTHER = 'other', 'Other'
+    data_type = TextChoicesField(choices_enum=DataSourceType, default=DataSourceType.OTHER)
     name = models.CharField(max_length=250)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1073,14 +1078,16 @@ class ExternalDataSource(PolymorphicModel):
                     if postcode_data is not None:
                         update_fields[destination_column] = get(postcode_data, source_path)
                 else:
-                    update_fields[destination_column] = await loaders['source_loaders'][source].load(
-                        self.EnrichmentLookup(
-                            member_id=self.get_record_id(member),
-                            postcode_data=postcode_data,
-                            source_id=source,
-                            source_path=source_path
+                    source_loader = loaders['source_loaders'].get(source, None)
+                    if source_loader is not None:
+                        update_fields[destination_column] = await source_loader.load(
+                            self.EnrichmentLookup(
+                                member_id=self.get_record_id(member),
+                                postcode_data=postcode_data,
+                                source_id=source,
+                                source_path=source_path
+                            )
                         )
-                    )
             # Return the member and config data
             return self.MappedMember(
                 member=member,
@@ -1133,7 +1140,9 @@ class ExternalDataSource(PolymorphicModel):
         if self.automated_webhooks:
             self.refresh_webhooks()
             # And schedule a cron to keep doing it
-            refresh_webhooks.defer()
+            refresh_webhooks.defer(
+                external_data_source_id=str(self.id),
+            )
         self.auto_update_enabled = True
         self.save()
 

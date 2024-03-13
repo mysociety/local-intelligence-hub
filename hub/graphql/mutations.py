@@ -24,6 +24,7 @@ class UpdateMappingItemInput:
 class ExternalDataSourceInput:
     id: auto
     name: auto
+    data_type: auto
     description: auto
     organisation: auto
     geography_column: auto

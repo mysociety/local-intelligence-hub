@@ -30,6 +30,7 @@ import { LoadingIcon } from "@/components/ui/loadingIcon";
 import {
   CreateAirtableSourceMutation,
   CreateAirtableSourceMutationVariables,
+  DataSourceType,
   PostcodesIoGeographyTypes,
   TestAirtableSourceQuery,
   TestAirtableSourceQueryVariables,
@@ -51,6 +52,7 @@ const CREATE_AIRTABLE_SOURCE = gql`
       id
       name
       healthcheck
+      dataType
     }
   }
 `;
@@ -75,6 +77,7 @@ export default function Page({
     defaultValues: {
       airtable: {
         geographyColumnType: PostcodesIoGeographyTypes.Postcode,
+        dataType: context.dataType
       },
     },
   });
@@ -157,7 +160,10 @@ export default function Page({
     );
   }
 
-  if (createSourceResult.data?.createAirtableSource.healthcheck) {
+  if (
+    createSourceResult.data?.createAirtableSource.healthcheck &&
+    createSourceResult.data?.createAirtableSource.dataType === DataSourceType.Member
+  ) {
     return (
       <div className="space-y-6">
         <h1 className="text-hLg">Connection successful</h1>
@@ -168,17 +174,27 @@ export default function Page({
               router.push(`/data-sources/`);
             }}
           >
-            Back to data sources
+            Back to all data sources
           </Button>
           <Button
+            variant="outline"
             onClick={() => {
-              router.push(
-                `/data-sources/create-auto-update/configure/${createSourceResult.data?.createAirtableSource.id}`,
-              );
+              router.push(`/data-sources/inspect/${createSourceResult.data?.createAirtableSource.id}`);
             }}
           >
-            Configure auto-updates
+            View this data source
           </Button>
+          {createSourceResult.data.createAirtableSource.dataType === DataSourceType.Member && (
+            <Button
+              onClick={() => {
+                router.push(
+                  `/data-sources/create-auto-update/configure/${createSourceResult.data?.createAirtableSource.id}`,
+                );
+              }}
+            >
+              Configure auto-updates
+            </Button>
+          )}
         </div>
       </div>
     )
@@ -201,6 +217,8 @@ export default function Page({
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-7 max-w-sm"
           >
+            <hr />
+            <div className='text-hSm'>General info</div>
             <FormField
               control={form.control}
               name="airtable.name"
@@ -212,13 +230,84 @@ export default function Page({
                     <Input placeholder="My members list" {...field} />
                   </FormControl>
                   <FormDescription>
-                    Give this connection a nickname to help you remember what it 
-                    does. This will be visible to your team.
+                    This will be visible to your team.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="airtable.dataType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Data type</FormLabel>
+                  <FormControl>
+                    {/* @ts-ignore */}
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="What kind of data is this?" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Type of data source</SelectLabel>
+                          <SelectItem value={DataSourceType.Member}>A list of members</SelectItem>
+                          <SelectItem value={DataSourceType.Other}>Other data</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className='grid grid-cols-2 gap-4 w-full'>
+              {/* Postcode field */}
+              <FormField
+                control={form.control}
+                name="airtable.geographyColumn"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Geography Column</FormLabel>
+                      <FormControl>
+                        {/* @ts-ignore */}
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="airtable.geographyColumnType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Geography Type</FormLabel>
+                    <FormControl>
+                      {/* @ts-ignore */}
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a geography type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectLabel>Geography column type</SelectLabel>
+                            <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
+                            <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
+                            <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
+                            <SelectItem value={PostcodesIoGeographyTypes.Constituency}>GE2010-2019 Constituency</SelectItem>
+                            <SelectItem value={PostcodesIoGeographyTypes.Constituency_2025}>GE2024 Constituency</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+            />
+            </div>
+            <hr />
+            <div className='text-hSm'>Connection details</div>
             <FormField
               control={form.control}
               name="airtable.apiKey"
@@ -291,52 +380,7 @@ export default function Page({
                   <FormMessage />
                 </FormItem>
               )}
-            />        
-            <FormItem>
-              <FormLabel>Geography Column</FormLabel>
-              <div className='grid grid-cols-2 gap-4 w-full'>
-                {/* Postcode field */}
-                <FormField
-                  control={form.control}
-                  name="airtable.geographyColumn"
-                  render={({ field }) => (
-                    <>
-                      <FormControl>
-                        {/* @ts-ignore */}
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="airtable.geographyColumnType"
-                  render={({ field }) => (
-                    <>
-                      <FormControl>
-                        {/* @ts-ignore */}
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a geography type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              <SelectLabel>Geography column type</SelectLabel>
-                              <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Constituency}>Constituency</SelectItem>
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </>
-                  )}
-              />
-              </div>
-            </FormItem>
+            />
             <div className="flex flex-row gap-x-4">
               <Button
                 variant="outline"

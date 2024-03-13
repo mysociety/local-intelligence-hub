@@ -10,7 +10,7 @@ import {
   getSourceOptionForTypename,
 } from "@/lib/data";
 import { gql, useQuery } from "@apollo/client";
-import { AllExternalDataSourcesQuery } from "@/__generated__/graphql";
+import { AllExternalDataSourcesQuery, DataSourceType } from "@/__generated__/graphql";
 import { formatRelative } from "date-fns";
 
 const ALL_EXTERNAL_DATA_SOURCES = gql`
@@ -19,6 +19,7 @@ const ALL_EXTERNAL_DATA_SOURCES = gql`
       id
       name
       createdAt
+      dataType
       connectionDetails {
         crmType: __typename
         ... on AirtableSource {
@@ -35,7 +36,7 @@ export default function Page() {
   const router = useRouter();
   const context = useContext(CreateAutoUpdateFormContext);
   const crms = useQuery<AllExternalDataSourcesQuery>(ALL_EXTERNAL_DATA_SOURCES);
-  const unusedCRMs = crms.data?.externalDataSources.filter((d) => !d.autoUpdateEnabled);
+  const unusedCRMs = crms.data?.externalDataSources.filter((d) => !d.autoUpdateEnabled && d.dataType === DataSourceType.Member);
   const [source, setSource] = useState<string | null>(null);
 
   useEffect(() => {
@@ -84,7 +85,7 @@ export default function Page() {
       </Button>
       {!!unusedCRMs?.length && (
         <section className="space-y-7 pt-7">
-          <h2 className="text-hSm">Or use an existing data source</h2>
+          <h2 className="text-hSm">Or configure updates for an existing data source</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-7">
             {unusedCRMs.map((externalDataSource) => {
                 const Logo = getSourceOptionForTypename(

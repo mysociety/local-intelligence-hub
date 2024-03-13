@@ -103,10 +103,16 @@ class FieldDefinition:
     label: Optional[str] = key_resolver('label')
     description: Optional[str] = key_resolver('description')
     
-@strawberry_django.type(models.ExternalDataSource)
+@strawberry_django.filter(models.ExternalDataSource)
+class ExternalDataSourceFilter:
+    data_type: auto
+    geography_column_type: auto
+
+@strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class ExternalDataSource:
     id: auto
     name: auto
+    data_type: auto
     description: auto
     created_at: auto
     last_update: auto
