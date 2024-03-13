@@ -224,7 +224,7 @@ export function UpdateMappingForm({
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectGroup>
-                                    <SelectLabel>Geography column</SelectLabel>
+                                    <SelectLabel>Choose a destination column</SelectLabel>
                                     {fieldDefinitions?.map((field) => (
                                       <SelectItem value={field.value}>
                                         <DataSourceFieldLabel
