@@ -32,9 +32,9 @@ export default function NewExternalDataSourceWrapper({
         dataType: predeterminedDataType
       }}
     >
-      <div className="p-6 max-w-6xl mx-auto flex flex-row gap-20">
+      <div className="p-4 md:p-6 max-w-6xl mx-auto flex flex-row gap-8 md:gap-20">
         <div>
-          <aside className="w-[180px] flex flex-col justify-start items-start gap-4 relative">
+          <aside className="md:w-[180px] flex flex-col justify-start items-start gap-4 sticky top-8 md:top-12 leading-tight">
             <div className="h-full absolute top-0 left-5 border-l border-x-meepGray-400 z-10" />
             <Step number={1} state={step > 1 ? "completed" : "active"}>
               Choose platform
