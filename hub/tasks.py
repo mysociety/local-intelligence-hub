@@ -23,7 +23,7 @@ async def refresh_all(external_data_source_id: str):
 # Refresh webhooks once a day
 @app.periodic(cron="0 3 * * *")
 @app.task(queue="index")
-async def refresh_webhooks(external_data_source_id: str):
+async def refresh_webhooks(external_data_source_id: str, timestamp):
     from hub.models import ExternalDataSource
     await ExternalDataSource.deferred_refresh_webhooks(external_data_source_id=external_data_source_id)
 
