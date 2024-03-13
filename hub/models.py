@@ -35,7 +35,7 @@ from utils.py import get, ensure_list
 
 from strawberry.dataloader import DataLoader
 from pyairtable import Api as AirtableAPI, Base as AirtableBase, Table as AirtableTable
-from utils.asyncio import async_query
+from utils.asyncio import async_queryset
 
 User = get_user_model()
 
@@ -991,39 +991,22 @@ class ExternalDataSource(PolymorphicModel):
         )
     
     def get_import_dataframe(self):
-        return pd.DataFrame(list(self.get_import_data()))
+        enrichment_data = self.get_import_data()
+        json_list = [d.json for d in enrichment_data]
+        enrichment_df = pd.DataFrame.from_records(json_list)
+        return enrichment_df
         
     def data_loader_factory(self):
         async def fetch_enrichment_data(keys: List[self.EnrichmentLookup]) -> list[str]:
             return_data = []
-            # geography_values_from_keys = list(set([
-            #     get(key['postcode_data'], self.geography_column_type)
-            #     for key
-            #     in keys
-            # ]))
-            # Using async_query because Django's own ORM breaks down in this DataLoader
-            enrichment_data = await async_query(
-              GenericData.objects.all()
-              # Filtering GenericData produces this error:
-              # psycopg.errors.InvalidTextRepresentation: invalid input syntax for type json
-              # LINE 1: ...ericdata"."json" -> 'council district') IN (Jsonb('Gateshead...
-              # GenericData.objects.filter(**{
-              #     f"json__'{self.geography_column}'__in": geography_values_from_keys
-              # }).values('json')
-            )
-            json_list = [
-                json.loads(d.json) if d.json is not None and d.json != "" else {}
-                for d in enrichment_data
-            ]
-            enrichment_df = pd.DataFrame.from_records(json_list)
-            for index, key in enumerate(keys):
+            enrichment_df = await sync_to_async(self.get_import_dataframe)()
+            for key in keys:
                 try:
-                    # TODO: Use pandas to join dataframes instead
-                    # query enrichment_df by matching the postcode_data to the geography_column
                     relevant_member_geography = get(key['postcode_data'], self.geography_column_type, "")
                     if relevant_member_geography == "" or relevant_member_geography is None:
                         return_data.append(None)
                     else:
+                        # TODO: Use pandas to join dataframes instead
                         enrichment_value = enrichment_df.loc[
                             enrichment_df[self.geography_column] == relevant_member_geography,
                             key['source_path']
@@ -1078,16 +1061,19 @@ class ExternalDataSource(PolymorphicModel):
                     if postcode_data is not None:
                         update_fields[destination_column] = get(postcode_data, source_path)
                 else:
-                    source_loader = loaders['source_loaders'].get(source, None)
-                    if source_loader is not None:
-                        update_fields[destination_column] = await source_loader.load(
-                            self.EnrichmentLookup(
-                                member_id=self.get_record_id(member),
-                                postcode_data=postcode_data,
-                                source_id=source,
-                                source_path=source_path
+                    try:
+                        source_loader = loaders['source_loaders'].get(source, None)
+                        if source_loader is not None:
+                            update_fields[destination_column] = await source_loader.load(
+                                self.EnrichmentLookup(
+                                    member_id=self.get_record_id(member),
+                                    postcode_data=postcode_data,
+                                    source_id=source,
+                                    source_path=source_path
+                                )
                             )
-                        )
+                    except Exception as e:
+                        continue
             # Return the member and config data
             return self.MappedMember(
                 member=member,
@@ -1118,21 +1104,21 @@ class ExternalDataSource(PolymorphicModel):
             return
         loaders = await self.get_loaders()
         mapped_record = await self.map_one(member_id, loaders)
-        await self.update_one(mapped_record=mapped_record)
+        return await self.update_one(mapped_record=mapped_record)
 
     async def refresh_many(self, member_ids: list[Union[str, any]]):
         if len(self.get_update_mapping()) == 0:
             return
         loaders = await self.get_loaders()
         mapped_records = await self.map_many(member_ids, loaders)
-        await self.update_many(mapped_records=mapped_records)
+        return await self.update_many(mapped_records=mapped_records)
 
     async def refresh_all(self):
         if len(self.get_update_mapping()) == 0:
             return
         loaders = await self.get_loaders()
         mapped_records = await self.map_all(loaders)
-        await self.update_all(mapped_records=mapped_records)
+        return await self.update_all(mapped_records=mapped_records)
 
     # UI
 
@@ -1325,10 +1311,10 @@ class AirtableSource(ExternalDataSource):
         return record['fields']
 
     async def update_one(self, mapped_record):
-        self.table.update(mapped_record['member']['id'], mapped_record['update_fields'])
+        return self.table.update(mapped_record['member']['id'], mapped_record['update_fields'])
 
     async def update_many(self, mapped_records):
-        self.table.batch_update([
+        return self.table.batch_update([
           {
             "id": mapped_record['member']['id'],
             "fields": mapped_record['update_fields']
@@ -1337,7 +1323,7 @@ class AirtableSource(ExternalDataSource):
         ])
 
     async def update_all(self, mapped_records):
-        self.table.batch_update([
+        return self.table.batch_update([
           {
             "id": mapped_record['member']['id'],
             "fields": mapped_record['update_fields']

@@ -1,29 +1,53 @@
 from django.test import TestCase
 from django.conf import settings
 from datetime import datetime
-from asgiref.sync import async_to_sync
+from asgiref.sync import async_to_sync, sync_to_async
 
-from hub.models import AirtableSource
+from hub.models import AirtableSource, Organisation
 
 
 class TestAirtableSource(TestCase):
     ### Test prep
-    source: AirtableSource
 
     def setUp(self) -> None:
-        self.records_to_delete = []
+        self.records_to_delete: list[tuple[str, AirtableSource]] = []
+
+        self.organisation = Organisation.objects.create(
+            name="Test Organisation",
+            slug="test-organisation"
+        )
+
+        self.custom_data_layer: AirtableSource = AirtableSource.objects.create(
+            name="Mayoral regions custom data layer",
+            data_type=AirtableSource.DataSourceType.OTHER,
+            organisation=self.organisation,
+            base_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_BASE_ID,
+            table_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME,
+            api_key=settings.TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY,
+            geography_column="council district",
+            geography_column_type=AirtableSource.PostcodesIOGeographyTypes.COUNCIL,
+        )
+
         self.source: AirtableSource = AirtableSource.objects.create(
-            name="Test Airtable Source",
-            base_id=settings.TEST_AIRTABLE_BASE_ID,
-            table_id=settings.TEST_AIRTABLE_TABLE_NAME,
-            api_key=settings.TEST_AIRTABLE_API_KEY,
+            name="My test Airtable member list",
+            data_type=AirtableSource.DataSourceType.MEMBER,
+            organisation=self.organisation,
+            base_id=settings.TEST_AIRTABLE_MEMBERLIST_BASE_ID,
+            table_id=settings.TEST_AIRTABLE_MEMBERLIST_TABLE_NAME,
+            api_key=settings.TEST_AIRTABLE_MEMBERLIST_API_KEY,
             geography_column="Postcode",
+            geography_column_type=AirtableSource.PostcodesIOGeographyTypes.POSTCODE,
             auto_update_enabled=True,
             update_mapping=[
               {
                 "source": "postcodes.io",
                 "source_path": "parliamentary_constituency_2025",
                 "destination_column": "constituency"
+              },
+              {
+                "source": str(self.custom_data_layer.id),
+                "source_path": "mayoral region",
+                "destination_column": "mayoral region"
               }
             ]
         )
@@ -31,19 +55,21 @@ class TestAirtableSource(TestCase):
         self.source.teardown_webhooks()
 
     def tearDown(self) -> None:
-        for record_id in self.records_to_delete:
-            self.source.table.delete(record_id)
+        for record_id, source in self.records_to_delete:
+            source.table.delete(record_id)
         self.source.teardown_webhooks()
         return super().tearDown()
     
-    def create_test_record(self, record):
-        record = self.source.table.create(record)
-        self.records_to_delete.append(record['id'])
+    def create_test_record(self, record, source=None):
+        source = source or self.source
+        record = source.table.create(record)
+        self.records_to_delete.append((record['id'], source))
         return record
     
-    def create_many_test_records(self, records):
-        records = self.source.table.batch_create(records)
-        self.records_to_delete += [record['id'] for record in records]
+    def create_many_test_records(self, records, source=None):
+        source = source or self.source
+        records = source.table.batch_create(records)
+        self.records_to_delete += [(record['id'], source)for record in records]
         return records
     
     ### Tests begin
@@ -57,21 +83,61 @@ class TestAirtableSource(TestCase):
         self.source.setup_webhooks()
         self.assertTrue(self.source.webhook_healthcheck())
 
+    async def test_import_async(self):
+        self.create_many_test_records([
+            {
+                "council district": "County Durham",
+                "mayoral region": "North East Mayoral Combined Authority"
+            },
+            {
+                "council district": "Northumberland",
+                "mayoral region": "North East Mayoral Combined Authority"
+            }
+        ], source=self.custom_data_layer)
+        await sync_to_async(self.custom_data_layer.import_all)()
+        enrichment_df = await sync_to_async(self.custom_data_layer.get_import_dataframe)()
+        self.assertGreaterEqual(len(enrichment_df.index), 2)
+
     def test_import_all(self):
         # Confirm the database is empty
-        original_count = self.source.get_import_data().count()
-        assert original_count == 0
+        original_count = self.custom_data_layer.get_import_data().count()
+        self.assertEqual(original_count, 0)
         # Add some test data
         self.create_many_test_records([
-            { "Postcode": "import_test_1" },
-            { "Postcode": "import_test_2" }
-        ])
-        assert len(list(async_to_sync(self.source.fetch_all)())) >= 2
+            {
+                "council district": "County Durham",
+                "mayoral region": "North East Mayoral Combined Authority"
+            },
+            {
+                "council district": "Northumberland",
+                "mayoral region": "North East Mayoral Combined Authority"
+            }
+        ], source=self.custom_data_layer)
+        self.assertGreaterEqual(len(list(async_to_sync(self.custom_data_layer.fetch_all)())), 2)
         # Check that the import is storing it all
-        fetch_count = len(list(async_to_sync(self.source.fetch_all)()))
-        self.source.import_all()
-        import_count = self.source.get_import_data().count()
-        assert import_count == fetch_count
+        fetch_count = len(list(async_to_sync(self.custom_data_layer.fetch_all)()))
+        self.custom_data_layer.import_all()
+        import_data = self.custom_data_layer.get_import_data()
+        import_count = len(import_data)
+        self.assertEqual(import_count, fetch_count)
+        # assert that 'council district' and 'mayoral region' keys are in the JSON object
+        self.assertIn("council district", import_data[0].json)
+        self.assertIn("mayoral region", import_data[0].json)
+        self.assertIn(import_data[0].json['council district'], [
+            "Newcastle upon Tyne",
+            "North Tyneside",
+            "South Tyneside",
+            "Gateshead",
+            "County Durham",
+            "Sunderland",
+            "Northumberland",
+        ])
+        self.assertIn(import_data[0].json['mayoral region'], ["North East Mayoral Combined Authority"])
+        df = self.custom_data_layer.get_import_dataframe()
+        # assert len(df.index) == import_count
+        self.assertIn("council district", list(df.columns.values))
+        self.assertIn("mayoral region", list(df.columns.values))
+        self.assertEqual(len(df.index), import_count)
 
     async def test_airtable_fetch_one(self):
         record = self.create_test_record({ "Postcode": "EH99 1SP" })
@@ -107,6 +173,33 @@ class TestAirtableSource(TestCase):
         self.assertEqual(
             self.source.get_record_field(record, 'constituency'),
             "Edinburgh East and Musselburgh"
+        )
+
+    def test_pivot_table(self):
+        '''
+        This is testing the ability for self.source to be updated using data from self.custom_data_layer
+        i.e. to test the pivot table functionality
+        that brings custom campaign data back into the CRM, based on geography
+        '''
+        # Add some test data
+        self.create_many_test_records([
+            {
+                "council district": "County Durham",
+                "mayoral region": "North East Mayoral Combined Authority"
+            },
+            {
+                "council district": "Northumberland",
+                "mayoral region": "North East Mayoral Combined Authority"
+            }
+        ], source=self.custom_data_layer)
+        # Check that the import is storing it all
+        self.custom_data_layer.import_all()
+        # Add a test record
+        record = self.create_test_record({ "Postcode": "NE12 6DD" })
+        mapped_member = async_to_sync(self.source.map_one)(record, loaders=async_to_sync(self.source.get_loaders)())
+        self.assertEqual(
+            mapped_member['update_fields']['mayoral region'],
+            "North East Mayoral Combined Authority"
         )
 
     async def test_airtable_refresh_many(self):
