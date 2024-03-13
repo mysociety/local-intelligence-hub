@@ -8,6 +8,7 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
+from hub.models import Area
 from utils.mapit import (
     BadRequestException,
     ForbiddenException,
@@ -26,6 +27,10 @@ class Command(BaseCommand):
     tqdm.pandas()
 
     out_file = settings.BASE_DIR / "data" / "wildlife_trust_reserves.csv"
+
+    con_gss_codes = list(
+        set([value["gss"] for value in list(Area.objects.values("gss"))])
+    )
 
     def get_dataframe(self):
         if not self._quiet:
@@ -72,7 +77,9 @@ class Command(BaseCommand):
             sleep(60)
             return self.get_gss_code(mapit, postcode)
         if gss_code:
-            return gss_code[0]
+            for code in gss_code:
+                if code in self.con_gss_codes:
+                    return code
 
     def process_data(self, df):
         if not self._quiet:
