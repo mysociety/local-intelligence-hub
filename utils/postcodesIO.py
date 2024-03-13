@@ -3,6 +3,7 @@ from typing import List, Optional
 import requests
 from utils.py import get, get_path, batch_and_aggregate
 from utils.geo import create_point
+import httpx
 
 from dataclasses import dataclass
 
@@ -86,9 +87,13 @@ def get_postcode_geo(postcode: str) -> PostcodesIOResult:
 
 @batch_and_aggregate(settings.POSTCODES_IO_BATCH_MAXIMUM)
 async def get_bulk_postcode_geo(postcodes) -> PostcodesIOBulkResult:
-    response = requests.post(f'{settings.POSTCODES_IO_URL}/postcodes', json={
-        "postcodes": postcodes
-    },)
+    async with httpx.AsyncClient() as client:
+        response = await client.post(f'{settings.POSTCODES_IO_URL}/postcodes', json={
+            "postcodes": postcodes
+        },)
+    if response.status_code != httpx.codes.OK:
+        raise Exception(f'Failed to bulk geocode postcodes: {postcodes}.')
+
     data = response.json()
     status = get(data, 'status')
     result: List[ResultElement] = get(data, 'result')

@@ -1,9 +1,11 @@
 from benedict import benedict
 
-def get(d, path):
+def get(d, path, default=None):
     if isinstance(d, benedict):
-        return d[path]
-    return benedict(d)[path]
+        val = d[path]
+    else:
+        val = benedict(d)[path]
+    return val if val is not None else default
 
 def is_sequence(arg):
     if isinstance(arg, str):

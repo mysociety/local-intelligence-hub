@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { enrichmentDataSources } from "@/lib/data";
+import { EnrichmentDataSource, enrichmentDataSources } from "@/lib/data";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { EnrichmentLayersQuery, ExternalDataSourceInput, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
 import { Input } from "@/components/ui/input";
@@ -68,25 +68,23 @@ export function UpdateMappingForm({
     },
   );
 
-  // TODO: Fix source_loader code in API, then re-enable this
-  // const customEnrichmentLayers = useQuery<EnrichmentLayersQuery>(ENRICHMENT_LAYERS)
-  // const sources: EnrichmentDataSource[] = useMemo(() => {
-  //   return enrichmentDataSources.concat(
-  //     customEnrichmentLayers.data?.externalDataSources
-  //     .filter(source => !!source.geographyColumn)
-  //     .map((source) => ({
-  //       slug: source.id,
-  //       name: source.name,
-  //       author: "",
-  //       description: "",
-  //       descriptionURL: "",
-  //       colour: "",
-  //       builtIn: false,
-  //       sourcePaths: source.fieldDefinitions || []
-  //     })) || []
-  //   )
-  // }, [enrichmentDataSources, customEnrichmentLayers.data?.externalDataSources])
-  const sources = enrichmentDataSources
+  const customEnrichmentLayers = useQuery<EnrichmentLayersQuery>(ENRICHMENT_LAYERS)
+  const sources: EnrichmentDataSource[] = useMemo(() => {
+    return enrichmentDataSources.concat(
+      customEnrichmentLayers.data?.externalDataSources
+      .filter(source => !!source.geographyColumn)
+      .map((source) => ({
+        slug: source.id,
+        name: source.name,
+        author: "",
+        description: "",
+        descriptionURL: "",
+        colour: "",
+        builtIn: false,
+        sourcePaths: source.fieldDefinitions || []
+      })) || []
+    )
+  }, [enrichmentDataSources, customEnrichmentLayers.data?.externalDataSources])
 
   return (
     <FormProvider {...form}>
