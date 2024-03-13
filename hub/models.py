@@ -872,7 +872,7 @@ class ExternalDataSource(PolymorphicModel):
         Get the fields for the data source.
         """
         return ensure_list(self.fields)
-    
+
     def remote_name(self) -> Optional[str]:
         """
         Get the name of the data source in the remote system.
@@ -1329,7 +1329,7 @@ class AirtableSource(ExternalDataSource):
     @cached_property
     def table(self) -> AirtableTable:
         return self.base.table(self.table_id)
-    
+
     @cached_property
     def schema(self) -> AirtableTableSchema:
         return self.table.schema()
