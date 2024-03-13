@@ -78,7 +78,7 @@ export default function Page() {
         disabled={!source}
         variant={"reverse"}
         onClick={() => {
-          router.push(`/data-sources/create-auto-update/connect/${source}`);
+          router.push(`/data-sources/create/connect/${source}`);
         }}
       >
         Continue
@@ -97,7 +97,7 @@ export default function Page() {
                     className="cursor-pointer rounded-3xl border-meepGray-600 px-6 py-5 space-y-3 transition-all hover:border-brandBlue border-2 box-border"
                     onClick={() => {
                       router.push(
-                        `/data-sources/create-auto-update/configure/${externalDataSource.id}`,
+                        `/data-sources/create/configure/${externalDataSource.id}`,
                       );
                     }}
                   >

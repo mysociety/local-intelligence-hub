@@ -21,6 +21,7 @@ export type EnrichmentDataSource = {
   author: string;
   description: string;
   descriptionURL: string;
+  connectionType?: string;
   colour: string;
   builtIn: boolean;
   sourcePaths: SourcePath[];

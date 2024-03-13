@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { EnrichmentDataSource, enrichmentDataSources } from "@/lib/data";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { DataSourceType, EnrichmentLayersQuery, ExternalDataSourceInput, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
+import { DataSourceType, EnrichmentLayersQuery, ExternalDataSourceInput, FieldDefinition, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
 import { Input } from "@/components/ui/input";
 import { SourcePathSelector } from "@/components/SelectSourceData";
 import { ArrowRight, X, XCircle } from "lucide-react";
@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/select"
 import { gql, useQuery } from "@apollo/client";
 import { useMemo } from "react";
+import { DataSourceFieldLabel } from "./DataSourceIcon";
+import { twMerge } from "tailwind-merge";
 
 const ENRICHMENT_LAYERS = gql`
   query EnrichmentLayers {
@@ -36,6 +38,9 @@ const ENRICHMENT_LAYERS = gql`
       geographyColumn
       geographyColumnType
       dataType
+      connectionDetails {
+        __typename
+      }
       fieldDefinitions {
         label
         value
@@ -49,13 +54,17 @@ export function UpdateMappingForm({
   onSubmit,
   initialData,
   children,
+  fieldDefinitions,
+  connectionType,
   allowMapping = true,
   saveButtonLabel = "Update",
 }: {
   onSubmit: (
     data: ExternalDataSourceInput,
   ) => void;
+  connectionType: string;
   initialData?: ExternalDataSourceInput;
+  fieldDefinitions?: FieldDefinition[] | null;
   saveButtonLabel?: string;
   children?: React.ReactNode;
   allowMapping?: boolean;
@@ -85,6 +94,7 @@ export function UpdateMappingForm({
       .map((source) => ({
         slug: source.id,
         name: source.name,
+        connectionType: source.connectionDetails.__typename,
         author: "",
         description: "",
         descriptionURL: "",
@@ -110,8 +120,27 @@ export function UpdateMappingForm({
                   render={({ field }) => (
                     <>
                       <FormControl>
-                        {/* @ts-ignore */}
-                        <Input {...field} />
+                        {fieldDefinitions?.length ? (
+                          // @ts-ignore
+                          <Select value={field.value} onValueChange={field.onChange} required>
+                            <SelectTrigger className='pl-1'>
+                              <SelectValue placeholder={`Choose ${data.geographyColumnType || 'geography'} column`} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectLabel>Geography column</SelectLabel>
+                                {fieldDefinitions?.map((field) => (
+                                  <SelectItem value={field.value}>
+                                    <DataSourceFieldLabel fieldDefinition={field} connectionType={connectionType} />
+                                  </SelectItem>
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          // @ts-ignore
+                          <Input {...field} required />
+                        )}
                       </FormControl>
                       <FormMessage />
                     </>
@@ -124,7 +153,7 @@ export function UpdateMappingForm({
                     <>
                       <FormControl>
                         {/* @ts-ignore */}
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a geography type" />
                           </SelectTrigger>
@@ -178,18 +207,51 @@ export function UpdateMappingForm({
                         />
                       </td>
                       <td className="w-1/2 shrink-0 flex flex-row items-center justify-stretch">
-                        <ArrowRight className="flex-shrink-0" />
-                        <Input
-                          className="flex-shrink-0 flex-grow"
-                          placeholder="Destination column"
-                          key={field.id} // important to include key with field's id
-                          {...form.register(`updateMapping.${index}.destinationColumn`)}
-                        />
+                        <ArrowRight className="flex-shrink-0" /> 
+                        <FormField
+                          control={form.control}
+                          name={`updateMapping.${index}.destinationColumn`}
+                          render={({ field }) => (
+                            <>
+                            {fieldDefinitions?.length ? (
+                              <Select
+                                {...field}
+                                required
+                                onValueChange={field.onChange}
+                              >
+                                <SelectTrigger className={twMerge(field.value && 'pl-1')}>
+                                  <SelectValue aria-label={data.updateMapping?.[index]?.destinationColumn} placeholder={`Choose destination column`} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectGroup>
+                                    <SelectLabel>Geography column</SelectLabel>
+                                    {fieldDefinitions?.map((field) => (
+                                      <SelectItem value={field.value}>
+                                        <DataSourceFieldLabel
+                                          fieldDefinition={field}
+                                          connectionType={connectionType}
+                                        />
+                                      </SelectItem>
+                                    ))}
+                                  </SelectGroup>
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Input
+                                className="flex-shrink-0 flex-grow"
+                                placeholder="Destination column"
+                                {...field}
+                                required
+                              />
+                            )}
+                          </>
+                        )} />
                       </td>
                     </tr>
                   ))}
                 </table>
                 <Button
+                  className='w-full'
                   onClick={() => {
                     append({
                       source: "?",

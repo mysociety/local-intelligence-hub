@@ -28,6 +28,14 @@ const GET_UPDATE_CONFIG = gql`
         source
         sourcePath
       }
+      fieldDefinitions {
+        label
+        value
+        description
+      }
+      connectionDetails {
+        __typename
+      }
       geographyColumn
       geographyColumnType
     }
@@ -63,7 +71,7 @@ export default function Page({
       success: (d: FetchResult<UpdateExternalDataSourceMutation>) => {
         if (!d.errors && d.data) {
           router.push(
-            `/data-sources/create-auto-update/review/${d.data.updateExternalDataSource.id}`,
+            `/data-sources/create/review/${d.data.updateExternalDataSource.id}`,
           );
         }
         return "Saved";
@@ -89,6 +97,7 @@ export default function Page({
         <LoadingIcon />
       ) : externalDataSource.data ? (
         <UpdateMappingForm
+          connectionType={externalDataSource.data?.externalDataSource.connectionDetails.__typename}
           initialData={{
             geographyColumn: externalDataSource.data?.externalDataSource.geographyColumn,
             geographyColumnType: externalDataSource.data?.externalDataSource.geographyColumnType,
@@ -99,6 +108,7 @@ export default function Page({
               destinationColumn: m.destinationColumn,
             })),
           }}
+          fieldDefinitions={externalDataSource.data?.externalDataSource.fieldDefinitions}
           onSubmit={submit}
           saveButtonLabel="Continue"
         >

@@ -124,7 +124,7 @@ function PageHeader() {
 
 function ConnectDataSource({ label = "Connect a data layer", params }: { label?: string, params?: any }) {
   const link = qs.stringifyUrl({
-    url: "/data-sources/create-auto-update",
+    url: "/data-sources/create",
     query: params
   })
   return (

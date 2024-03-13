@@ -45,10 +45,10 @@ class Query(UserQueries):
         api_key: str,
         base_id: str,
         table_id: str,
-    ) -> bool:
+    ) -> types.AirtableSource:
         return models.AirtableSource(
             api_key=api_key, base_id=base_id, table_id=table_id
-        ).healthcheck()
+        )
 
 
 @strawberry.type

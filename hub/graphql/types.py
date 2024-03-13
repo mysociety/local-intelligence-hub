@@ -153,6 +153,13 @@ class ExternalDataSource:
         resolver=lambda self: self.field_definitions()
     )
 
+    @strawberry_django.field
+    def remote_name(self, info) -> Optional[str]:
+        try:
+            return self.remote_name()
+        except AttributeError or NotImplementedError:
+            return None
+
     jobs: List[QueueJob] = strawberry_django.field(
         resolver=lambda self: procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
             args__external_data_source_id=str(self.id)

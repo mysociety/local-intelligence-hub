@@ -11,6 +11,8 @@ import {
 import { EnrichmentDataSource, SourcePath } from "@/lib/data";
 import { AutoUpdateConfig } from "@/__generated__/graphql";
 import { CommandSeparator } from "cmdk";
+import { DataSourceFieldLabel } from "./DataSourceIcon";
+import { twMerge } from "tailwind-merge";
 
 export function SourcePathSelector({
   sources,
@@ -25,20 +27,45 @@ export function SourcePathSelector({
 }) {
   const [open, setOpen] = React.useState(focusOnMount);
 
-  function labelForSourcePath(source: string, sourcePath: SourcePath) {
+  function labelForSourcePath(source: string, sourcePath: SourcePath): string {
     const sourceDict = sources.find((s) => s.slug === source);
-    if (!sourceDict) return sourcePath;
+    if (!sourceDict) return label(sourcePath);
     const sourcePathDict = sourceDict.sourcePaths.find((s) => val(s) === sourcePath);
-    if (!sourcePathDict) return sourcePath;
+    if (!sourcePathDict) return label(sourcePath);
     return label(sourcePathDict)
   }
 
+  const selectedValueSource = sources.find(s => s.slug === value.source)
+
   return (
-    <div className="flex w-full flex-col items-start justify-between rounded-md border py-2 px-3 sm:flex-row sm:items-center cursor-pointer hover:bg-meepGray-700 text-ellipsis overflow-hidden text-nowrap">
+    <div className={twMerge(
+      "flex w-full flex-col items-start justify-between rounded-md border py-2 px-3 sm:flex-row sm:items-center cursor-pointer hover:bg-meepGray-700 text-ellipsis overflow-hidden text-nowrap h-[40px]",
+      selectedValueSource?.connectionType && "pl-1"
+    )}>
       <div onClick={() => setOpen(true)} className="w-full text-ellipsis overflow-hidden text-nowrap text-sm">
         {value && value.source && value.sourcePath
-              ? `${labelForSourcePath(value.source, value.sourcePath)} (${sourceName(value.source)})`
-              : "Click to select data"}
+          ? selectedValueSource?.connectionType ? (
+            <span className='inline-flex flex-row items-center gap-2'>
+              <DataSourceFieldLabel
+                label={value.sourcePath}
+                connectionType={selectedValueSource.connectionType}
+              />
+              <span className="text-xs text-meepGray-400">
+                {sourceName(value.source)}
+              </span>
+            </span>
+          ) : (
+            <span className="flex flex-row gap-2 items-center">
+              <span>
+                {labelForSourcePath(value.source, value.sourcePath)}
+              </span>
+              <span className="text-xs text-meepGray-400">
+                {sourceName(value.source)}
+              </span>
+            </span>
+          ) : (
+            "Click to select data"
+          )}
       </div>
       <CommandDialog open={open} onOpenChange={() => setOpen(false)}>
         <CommandInput placeholder="Search available data..." />
@@ -60,7 +87,16 @@ export function SourcePathSelector({
                     }}
                   >
                     <div>
-                      <div>{label(sourcePath)}</div>
+                      <div>
+                        {source.connectionType ? (
+                          <DataSourceFieldLabel
+                            label={label(sourcePath)}
+                            connectionType={source.connectionType}
+                          />
+                        ) : (
+                          label(sourcePath)
+                        )}
+                      </div>
                       {!!description(sourcePath) && (
                         <div className="text-xs opacity-70">
                           {description(sourcePath)}

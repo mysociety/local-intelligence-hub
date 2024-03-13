@@ -3,10 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ApolloError, gql, useLazyQuery, useMutation } from "@apollo/client";
+import { ApolloError, FetchResult, gql, useLazyQuery, useMutation } from "@apollo/client";
 import { CreateAutoUpdateFormContext } from "../../NewExternalDataSourceWrapper";
 import { toast } from "sonner";
-import { SubmitHandler, useFieldArray, useForm } from "react-hook-form";
+import { NonUndefined, SubmitHandler, useFieldArray, useForm } from "react-hook-form";
 import {
   Form,
   FormControl,
@@ -28,27 +28,37 @@ import {
 import { Input } from "@/components/ui/input";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import {
-  CreateAirtableSourceMutation,
-  CreateAirtableSourceMutationVariables,
+  CreateSourceMutation,
+  CreateSourceMutationVariables,
   DataSourceType,
   PostcodesIoGeographyTypes,
-  TestAirtableSourceQuery,
-  TestAirtableSourceQueryVariables,
+  TestSourceConnectionQuery,
+  TestSourceConnectionQueryVariables,
 } from "@/__generated__/graphql";
+import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 
-const TEST_AIRTABLE_SOURCE = gql`
-  query TestAirtableSource(
+const TEST_SOURCE = gql`
+  query TestSourceConnection(
     $apiKey: String!
     $baseId: String!
     $tableId: String!
   ) {
-    testAirtableSource(apiKey: $apiKey, baseId: $baseId, tableId: $tableId)
+    testSourceConnection: testAirtableSource(apiKey: $apiKey, baseId: $baseId, tableId: $tableId) {
+      remoteName
+      healthcheck
+      fieldDefinitions {
+        label
+        value
+        description
+      }
+      __typename
+    }
   }
 `;
 
-const CREATE_AIRTABLE_SOURCE = gql`
-  mutation CreateAirtableSource($AirtableSource: AirtableSourceInput!) {
-    createAirtableSource(data: $AirtableSource) {
+const CREATE_SOURCE = gql`
+  mutation CreateSource($AirtableSource: AirtableSourceInput!) {
+    createSource: createAirtableSource(data: $AirtableSource) {
       id
       name
       healthcheck
@@ -57,8 +67,9 @@ const CREATE_AIRTABLE_SOURCE = gql`
   }
 `;
 
-type FormInputs = {
-  airtable?: CreateAirtableSourceMutationVariables["AirtableSource"];
+type FormInputs = CreateSourceMutationVariables["AirtableSource"] & {
+  // In time there will be more external data sources with their own fields
+  airtable?: CreateSourceMutationVariables["AirtableSource"];
 };
 
 export default function Page({
@@ -75,27 +86,20 @@ export default function Page({
 
   const form = useForm<FormInputs>({
     defaultValues: {
-      airtable: {
-        geographyColumnType: PostcodesIoGeographyTypes.Postcode,
-        dataType: context.dataType
-      },
-    },
-  });
-
-  const onSubmit: SubmitHandler<FormInputs> = (data) => {
-    if (data.airtable) {
-      testAirtableConnection(data.airtable);
-    } else {
-      toast.error("No details provided");
+      geographyColumnType: PostcodesIoGeographyTypes.Postcode,
+      dataType: context.dataType,
+      airtable: {}
     }
-  };
+  });
 
   const source = form.watch();
 
+  // TODO: Make this generic so it can be reused by different sources
+  // Probably want a `test_connection` resolver that can optionally take `airtable` or `action_network` arguments
   const [testSource, testSourceResult] = useLazyQuery<
-    TestAirtableSourceQuery,
-    TestAirtableSourceQueryVariables
-  >(TEST_AIRTABLE_SOURCE, {
+    TestSourceConnectionQuery,
+    TestSourceConnectionQueryVariables
+  >(TEST_SOURCE, {
     variables: {
       apiKey: source.airtable?.apiKey!,
       baseId: source.airtable?.baseId!,
@@ -103,124 +107,124 @@ export default function Page({
     },
   });
 
+  const [guessedPostcode, setGuessedPostcode] = useState<string | null>(null);
+  useEffect(function guessPostcodeColumn () {
+    let guessedPostcodeColumn = testSourceResult.data?.testSourceConnection.fieldDefinitions?.find(
+      (field) => (
+        field.label?.toLowerCase().replaceAll(' ', '').includes("postcode") ||
+        field.label?.toLowerCase().replaceAll(' ', '').includes("postalcode") ||
+        field.label?.toLowerCase().replaceAll(' ', '').includes("zipcode") ||
+        field.label?.toLowerCase().replaceAll(' ', '').includes("zip") ||
+        field.value?.toLowerCase().replaceAll(' ', '').includes("postcode") ||
+        field.value?.toLowerCase().replaceAll(' ', '').includes("postalcode") ||
+        field.value?.toLowerCase().replaceAll(' ', '').includes("zipcode") ||
+        field.value?.toLowerCase().replaceAll(' ', '').includes("zip")
+      )
+    );
+    if (guessedPostcodeColumn) {
+      setGuessedPostcode(guessedPostcodeColumn.value)
+    }
+  }, [testSourceResult.data?.testSourceConnection.fieldDefinitions, form, setGuessedPostcode])
+
+  useEffect(function proposePostcode() {
+    if (guessedPostcode) {
+      form.setValue('geographyColumn', guessedPostcode)
+      form.setValue('geographyColumnType', PostcodesIoGeographyTypes.Postcode)
+    }
+  }, [guessedPostcode, form])
+
+  // Propose name based on remoteName
+  useEffect(function proposeName () {
+    if (testSourceResult.data?.testSourceConnection.remoteName) {
+      form.setValue('name', testSourceResult.data?.testSourceConnection.remoteName)
+    }
+  }, [testSourceResult.data?.testSourceConnection.remoteName, form])
+
+  // TODO: Make this generic so it can be reused by different sources
+  // Probably want a `create_connection` resolver that can optionally take `airtable` or `action_network` arguments
   const [createSource, createSourceResult] = useMutation<
-    CreateAirtableSourceMutation,
-    CreateAirtableSourceMutationVariables
-  >(CREATE_AIRTABLE_SOURCE, {
+    CreateSourceMutation,
+    CreateSourceMutationVariables
+  >(CREATE_SOURCE, {
     variables: {
-      AirtableSource: source.airtable!,
+      AirtableSource: {
+        ...source,
+        ...source.airtable,
+      }
     },
   });
 
-  async function testAirtableConnection(
-    airtable: CreateAirtableSourceMutationVariables["AirtableSource"],
-  ) {
-    const toastId = toast.loading("Testing connection...");
-    const test = testSource({ variables: airtable as any })
-      .then(async (d) => {
-        if (d.error || !d.data?.testAirtableSource) {
-          return toast.error("Connection failed", { id: toastId });
-        }
-        toast.loading("Saving connection...", { id: toastId });
-        try {
-          const source = await createSource({
-            variables: { AirtableSource: airtable },
-          });
-          toast.success("Connection successful", { id: toastId });
-        } catch (e) {
-          // Check if e is ApolloError
-          if (e instanceof ApolloError) {
-            const description = Object.values(
-              JSON.parse(e.message.replaceAll("'", '"')),
-            )[0];
-            return toast.error("Couldn't save connection", {
-              description: description ? description.toString() : null,
-              id: toastId,
-            });
-          } else {
-            toast.error("Couldn't save details", { id: toastId });
+  // TODO: Make this generic so it can be reused by different sources
+  // Probably want a `test_connection` resolver that can optionally take `airtable` or `action_network` arguments
+  async function submitTestConnection({
+    airtable
+  }: FormInputs) {
+    toast.promise(
+      testSource({ variables: airtable as any }),
+      {
+        loading: "Testing connection...",
+        success: (d: FetchResult<TestSourceConnectionQuery>) => {
+          if (!d.errors && d.data?.testSourceConnection) {
+            return "Connection is healthy";
           }
-        }
-      })
-      .catch((e) => {
-        toast.error("Connection failed", { id: toastId });
-      });
+          return "Connection failed";
+        },
+        error: "Connection failed",
+      },
+    )
   }
 
-  if (testSourceResult.loading || createSourceResult.loading) {
+  async function submitCreateSource({ airtable }: FormInputs) {
+    toast.promise(createSource({ variables: airtable as any }),
+      {
+        loading: "Saving connection...",
+        success: (d: FetchResult<CreateSourceMutation>) => {
+          if (!d.errors && d.data?.createSource) {
+            return "Connection successful";
+          }
+          if (d.data?.createSource.dataType === DataSourceType.Member) {
+            router.push(
+              `/app/data-sources/create/configure/${externalDataSourceType}`,
+            );
+          } else {
+            router.push(
+              `/app/data-sources/inspect/${externalDataSourceType}`,
+            );
+          }
+          return "Connection failed";
+        },
+        error: "Connection failed",
+      },
+    )
+  }
+
+  if (createSourceResult.loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-hLg">Testing connection...</h1>
-        <p className="text-meepGray-400 max-w-sm">
-          Please wait whilst we try to connect to your CRM using the information
-          you provided
+        <h1 className="text-hLg">Saving connection...</h1>
+        <p className="text-meepGray-400 max-w-lg">
+          Please wait whilst we save your connection details
         </p>
         <LoadingIcon />
       </div>
     );
   }
 
-  if (
-    createSourceResult.data?.createAirtableSource.healthcheck &&
-    createSourceResult.data?.createAirtableSource.dataType === DataSourceType.Member
-  ) {
+  if (testSourceResult.data?.testSourceConnection.healthcheck) {
     return (
       <div className="space-y-6">
         <h1 className="text-hLg">Connection successful</h1>
-        <div className='grid grid-cols-1 sm:grid-cols-2 gap-7'>
-          <Button
-            variant="outline"
-            onClick={() => {
-              router.push(`/data-sources/`);
-            }}
-          >
-            Back to all data sources
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              router.push(`/data-sources/inspect/${createSourceResult.data?.createAirtableSource.id}`);
-            }}
-          >
-            View this data source
-          </Button>
-          {createSourceResult.data.createAirtableSource.dataType === DataSourceType.Member && (
-            <Button
-              onClick={() => {
-                router.push(
-                  `/data-sources/create-auto-update/configure/${createSourceResult.data?.createAirtableSource.id}`,
-                );
-              }}
-            >
-              Configure auto-updates
-            </Button>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  if (externalDataSourceType === "airtable") {
-    return (
-      <div className="space-y-7">
-        <header>
-          <h1 className="text-hLg">Connecting to your Airtable base</h1>
-          <p className="mt-6 text-meepGray-400 max-w-sm">
-            In order to send data across to your Airtable, we'll need a few
-            details that gives us permission to make updates to your base, as
-            well as tell us which table to update in the first place.
-          </p>
-        </header>
+        <p className="text-meepGray-400 max-w-lg">
+          Tell us a bit more about the data you're connecting to.
+        </p>
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-7 max-w-sm"
+            onSubmit={form.handleSubmit(submitCreateSource)}
+            className="space-y-7 max-w-lg"
           >
-            <hr />
-            <div className='text-hSm'>About this data</div>
             <FormField
               control={form.control}
-              name="airtable.name"
+              name="name"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nickname</FormLabel>
@@ -237,7 +241,7 @@ export default function Page({
             />
             <FormField
               control={form.control}
-              name="airtable.dataType"
+              name="dataType"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Data type</FormLabel>
@@ -264,21 +268,54 @@ export default function Page({
               {/* Postcode field */}
               <FormField
                 control={form.control}
-                name="airtable.geographyColumn"
+                name="geographyColumn"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Geography Column</FormLabel>
+                    <FormLabel>Geography column</FormLabel>
                       <FormControl>
-                        {/* @ts-ignore */}
-                        <Input {...field} required />
+                        {testSourceResult.data?.testSourceConnection.fieldDefinitions?.length ? (
+                          // @ts-ignore
+                          <Select {...field} onValueChange={field.onChange} required>
+                            <SelectTrigger className='pl-1'>
+                              <SelectValue
+                                placeholder={`Choose ${source.geographyColumnType || 'geography'} column`}
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectLabel>Available columns</SelectLabel>
+                                {testSourceResult.data?.testSourceConnection.fieldDefinitions?.map(
+                                  (field) => (
+                                    <SelectItem value={field.value}>
+                                      <DataSourceFieldLabel
+                                        connectionType={
+                                          testSourceResult.data?.testSourceConnection.__typename!
+                                        }
+                                        fieldDefinition={field}
+                                      />  
+                                    </SelectItem>
+                                  )
+                                )}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          // @ts-ignore
+                          <Input {...field} required />
+                        )}
                       </FormControl>
+                      {!!guessedPostcode && guessedPostcode === form.watch('geographyColumn') && (
+                        <FormDescription className='text-yellow-500 italic'>
+                          Best guess based on available table columns: {guessedPostcode}
+                        </FormDescription>
+                      )}
                       <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
-                name="airtable.geographyColumnType"
+                name="geographyColumnType"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Geography Type</FormLabel>
@@ -305,7 +342,44 @@ export default function Page({
                 )}
             />
             </div>
-            <hr />
+            <Button type='submit' variant="reverse" disabled={createSourceResult.loading}>
+              Save connection
+            </Button>
+          </form>
+        </Form>
+      </div>
+    )
+  }
+
+  if (testSourceResult.loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-hLg">Testing connection...</h1>
+        <p className="text-meepGray-400 max-w-lg">
+          Please wait whilst we try to connect to your CRM using the information
+          you provided
+        </p>
+        <LoadingIcon />
+      </div>
+    );
+  }
+
+  if (externalDataSourceType === "airtable") {
+    return (
+      <div className="space-y-7">
+        <header>
+          <h1 className="text-hLg">Connecting to your Airtable base</h1>
+          <p className="mt-6 text-meepGray-400 max-w-lg">
+            In order to send data across to your Airtable, we'll need a few
+            details that gives us permission to make updates to your base, as
+            well as tell us which table to update in the first place.
+          </p>
+        </header>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(submitTestConnection)}
+            className="space-y-7 max-w-lg"
+          >
             <div className='text-hSm'>Connection details</div>
             <FormField
               control={form.control}
@@ -390,7 +464,7 @@ export default function Page({
               >
                 Back
               </Button>
-              <Button type="submit" variant={"reverse"}>
+              <Button type="submit" variant={"reverse"} disabled={testSourceResult.loading}>
                 Test connection
               </Button>
             </div>

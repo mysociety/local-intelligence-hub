@@ -84,6 +84,11 @@ const GET_UPDATE_CONFIG = gql`
       webhookHealthcheck
       geographyColumn
       geographyColumnType
+      fieldDefinitions {
+        label
+        value
+        description
+      }
       jobs {
         status
         id
@@ -199,6 +204,8 @@ export default function InspectExternalDataSource({
         <UpdateMappingForm
           saveButtonLabel="Update"
           allowMapping={allowMapping}
+          connectionType={source.connectionDetails.crmType}
+          fieldDefinitions={source.fieldDefinitions}
           initialData={{
             // Trim out the __typenames
             geographyColumn: source?.geographyColumn,

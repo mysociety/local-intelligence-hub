@@ -26,6 +26,7 @@ from psycopg.errors import UniqueViolation
 from pyairtable import Api as AirtableAPI
 from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
+from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
 
 import utils as lih_utils
@@ -871,6 +872,12 @@ class ExternalDataSource(PolymorphicModel):
         Get the fields for the data source.
         """
         return ensure_list(self.fields)
+    
+    def remote_name(self) -> Optional[str]:
+        """
+        Get the name of the data source in the remote system.
+        """
+        return None
 
     def setup_webhooks(self):
         """
@@ -1322,6 +1329,10 @@ class AirtableSource(ExternalDataSource):
     @cached_property
     def table(self) -> AirtableTable:
         return self.base.table(self.table_id)
+    
+    @cached_property
+    def schema(self) -> AirtableTableSchema:
+        return self.table.schema()
 
     def healthcheck(self):
         record = self.table.first()
@@ -1342,6 +1353,9 @@ class AirtableSource(ExternalDataSource):
             )
             for field in self.table.schema().fields
         ]
+
+    def remote_name(self):
+        return self.schema.name
 
     async def fetch_one(self, member_id):
         record = self.table.get(member_id)
