@@ -302,12 +302,14 @@ class BaseConstituencyGroupListImportCommand(BaseAreaImportCommand):
                 area=area,
                 json=json,
             )
-
-            count_data, created = AreaData.objects.update_or_create(
-                data_type=self.data_types[self.count_data_type],
-                area=area,
-                data=len(data),
-            )
+            try:
+                count_data, created = AreaData.objects.update_or_create(
+                    data_type=self.data_types[self.count_data_type],
+                    area=area,
+                    data=len(data),
+                )
+            except AttributeError:
+                pass
 
     def handle(self, quiet=False, *args, **kwargs):
         self._quiet = quiet
