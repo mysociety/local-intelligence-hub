@@ -5,7 +5,7 @@ import strawberry_django
 from gqlauth.core.middlewares import JwtSchema
 from gqlauth.user import arg_mutations as auth_mutations
 from gqlauth.user.queries import UserQueries
-from strawberry_django import NodeInput, mutations
+from strawberry_django import mutations
 from strawberry_django.optimizer import DjangoOptimizerExtension
 from strawberry_django.permissions import IsAuthenticated
 
@@ -23,10 +23,18 @@ class Query(UserQueries):
         extensions=[IsAuthenticated()]
     )
 
-    external_data_source: types.ExternalDataSource = strawberry_django.field(extensions=[IsAuthenticated()])
-    external_data_sources: List[types.ExternalDataSource] = strawberry_django.field(extensions=[IsAuthenticated()])
-    airtable_source: types.AirtableSource = strawberry_django.field(extensions=[IsAuthenticated()])
-    airtable_sources: List[types.AirtableSource] = strawberry_django.field(extensions=[IsAuthenticated()])
+    external_data_source: types.ExternalDataSource = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
+    external_data_sources: List[types.ExternalDataSource] = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
+    airtable_source: types.AirtableSource = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
+    airtable_sources: List[types.AirtableSource] = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
     job: types.QueueJob = strawberry_django.field(extensions=[IsAuthenticated()])
     jobs: List[types.QueueJob] = strawberry_django.field(extensions=[IsAuthenticated()])
 
@@ -75,6 +83,7 @@ class Mutation:
     )
 
     import_all: types.ExternalDataSource = mutation_types.import_all
+
 
 schema = JwtSchema(
     query=Query,

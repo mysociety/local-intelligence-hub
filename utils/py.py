@@ -2,6 +2,7 @@ import pprint
 
 from benedict import benedict
 
+
 def get(d, path, default=None):
     if isinstance(d, benedict):
         val = d[path]

@@ -7,9 +7,6 @@ from strawberry.field_extensions import InputMutationExtension
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import IsAuthenticated
-from strawberry_django.auth.utils import get_current_user
-from strawberry.types.info import Info
-from asgiref.sync import async_to_sync
 
 from hub import models
 
@@ -20,11 +17,13 @@ from . import types
 class IDObject:
     id: str
 
+
 @strawberry.input
 class UpdateMappingItemInput:
     source: str
     source_path: str
     destination_column: str
+
 
 @strawberry_django.input(models.ExternalDataSource, partial=True)
 class ExternalDataSourceInput:
@@ -39,12 +38,14 @@ class ExternalDataSourceInput:
     update_mapping: Optional[List[UpdateMappingItemInput]]
     auto_import_enabled: auto
 
+
 @strawberry_django.input(models.AirtableSource, partial=True)
 class AirtableSourceInput(ExternalDataSourceInput):
     api_key: auto
     base_id: auto
     table_id: auto
-  
+
+
 @strawberry.mutation(extensions=[IsAuthenticated(), InputMutationExtension()])
 async def create_organisation(
     info: Info, name: str, slug: Optional[str] = None, description: Optional[str] = None
@@ -68,14 +69,14 @@ class OrganisationInputPartial:
 
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
-def enable_auto_update (external_data_source_id: str) -> models.ExternalDataSource:
+def enable_auto_update(external_data_source_id: str) -> models.ExternalDataSource:
     data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
     data_source.enable_auto_update()
     return data_source
 
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
-def disable_auto_update (external_data_source_id: str) -> models.ExternalDataSource:
+def disable_auto_update(external_data_source_id: str) -> models.ExternalDataSource:
     data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
     data_source.disable_auto_update()
     return data_source
@@ -84,35 +85,39 @@ def disable_auto_update (external_data_source_id: str) -> models.ExternalDataSou
 @strawberry.mutation(extensions=[IsAuthenticated()])
 def trigger_update(external_data_source_id: str) -> models.ExternalDataSource:
     data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
-    job_id = data_source.schedule_refresh_all()
+    data_source.schedule_refresh_all()
     return data_source
 
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
-def refresh_webhooks (external_data_source_id: str) -> models.ExternalDataSource:
+def refresh_webhooks(external_data_source_id: str) -> models.ExternalDataSource:
     data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
     data_source.refresh_webhooks()
     return data_source
 
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
-def create_airtable_source(info: Info, data: AirtableSourceInput) -> models.AirtableSource:
+def create_airtable_source(
+    info: Info, data: AirtableSourceInput
+) -> models.AirtableSource:
     # Override the default strawberry_django.create resolver to add a default organisation
     args = {
         **strawberry_django.mutations.resolvers.parse_input(info, vars(data).copy()),
-        "organisation": get_or_create_organisation_for_source(info, data)
+        "organisation": get_or_create_organisation_for_source(info, data),
     }
     return strawberry_django.mutations.resolvers.create(
-        info,
-        models.AirtableSource,
-        args
+        info, models.AirtableSource, args
     )
+
 
 def get_or_create_organisation_for_source(info: Info, data: any):
     if data.organisation:
         return data.organisation
     user = get_current_user(info)
-    if isinstance(data.organisation, strawberry.unset.UnsetType) or data.organisation is None:
+    if (
+        isinstance(data.organisation, strawberry.unset.UnsetType)
+        or data.organisation is None
+    ):
         if user.memberships.first() is not None:
             print("Assigning the user's default organisation")
             organisation = user.memberships.first().organisation
@@ -125,6 +130,7 @@ def get_or_create_organisation_for_source(info: Info, data: any):
                 user=user, organisation=organisation, role="owner"
             )
     return organisation
+
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
 def import_all(external_data_source_id: str) -> models.ExternalDataSource:

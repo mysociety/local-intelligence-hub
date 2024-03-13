@@ -117,8 +117,8 @@ urlpatterns = [
     path(
         f"{ExternalDataSourceAutoUpdateWebhook.base_path}/<str:external_data_source_id>",
         csrf_exempt(ExternalDataSourceAutoUpdateWebhook.as_view()),
-        name="external_data_source_auto_update_webhook"
-    )
+        name="external_data_source_auto_update_webhook",
+    ),
 ]
 
 if settings.DEBUG:  # pragma: no cover

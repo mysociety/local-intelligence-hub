@@ -1,14 +1,11 @@
-from datetime import datetime, timezone
-import uuid
-from typing import Iterable, TypedDict, Union, Optional, List
 import asyncio
 import hashlib
 import uuid
 from datetime import datetime, timezone
-from typing import TypedDict, Union
+from typing import List, Optional, TypedDict, Union
 from urllib.parse import urljoin
 
-import json
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min
@@ -17,17 +14,11 @@ from django.dispatch import receiver
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.urls import reverse
-from django.conf import settings
-from urllib.parse import urljoin
-from dateutil.parser import parser as date_parser
-from django.http import HttpResponse
-from procrastinate.contrib.django.models import ProcrastinateJob
-from django_choices_field import TextChoicesField
-from asgiref.sync import async_to_sync
-import pandas as pd
+from django.utils.text import slugify
 
-from asgiref.sync import sync_to_async
+import pandas as pd
+from asgiref.sync import async_to_sync, sync_to_async
+from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
 from polymorphic.models import PolymorphicModel
 from procrastinate.contrib.django.models import ProcrastinateJob
@@ -39,15 +30,16 @@ from strawberry.dataloader import DataLoader
 
 import utils as lih_utils
 from hub.filters import Filter
+from hub.tasks import (
+    import_all,
+    refresh_all,
+    refresh_many,
+    refresh_one,
+    refresh_webhooks,
+)
 from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
-
-from hub.tasks import refresh_one, refresh_many, refresh_all, refresh_webhooks, import_all
-from utils.postcodesIO import get_postcode_geo, get_bulk_postcode_geo, PostcodesIOResult
-from utils.py import get, ensure_list
-
-from strawberry.dataloader import DataLoader
-from pyairtable import Api as AirtableAPI, Base as AirtableBase, Table as AirtableTable
-from utils.asyncio import async_queryset
+from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo, get_postcode_geo
+from utils.py import ensure_list, get
 
 User = get_user_model()
 
@@ -792,12 +784,22 @@ class ExternalDataSource(PolymorphicModel):
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name='external_data_sources', null=True, blank=True)
+    organisation = models.ForeignKey(
+        Organisation,
+        on_delete=models.CASCADE,
+        related_name="external_data_sources",
+        null=True,
+        blank=True,
+    )
+
     class DataSourceType(models.TextChoices):
-        MEMBER = 'member', 'Members or supporters'
-        REGION = 'region', 'Areas or regions'
-        OTHER = 'other', 'Other'
-    data_type = TextChoicesField(choices_enum=DataSourceType, default=DataSourceType.OTHER)
+        MEMBER = "member", "Members or supporters"
+        REGION = "region", "Areas or regions"
+        OTHER = "other", "Other"
+
+    data_type = TextChoicesField(
+        choices_enum=DataSourceType, default=DataSourceType.OTHER
+    )
     name = models.CharField(max_length=250)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -806,17 +808,23 @@ class ExternalDataSource(PolymorphicModel):
     introspect_fields = False
     # Geocoding data
     class PostcodesIOGeographyTypes(models.TextChoices):
-        POSTCODE = 'postcode', 'Postcode'
-        WARD = 'ward', 'Ward'
-        COUNCIL = 'admin_district', 'Council'
-        CONSTITUENCY = 'parliamentary_constituency', 'Constituency'
-        CONSTITUENCY_2025 = 'parliamentary_constituency_2025', 'Constituency (2024)'
-    geography_column_type = TextChoicesField(choices_enum=PostcodesIOGeographyTypes, default=PostcodesIOGeographyTypes.POSTCODE)
+        POSTCODE = "postcode", "Postcode"
+        WARD = "ward", "Ward"
+        COUNCIL = "admin_district", "Council"
+        CONSTITUENCY = "parliamentary_constituency", "Constituency"
+        CONSTITUENCY_2025 = "parliamentary_constituency_2025", "Constituency (2024)"
+
+    geography_column_type = TextChoicesField(
+        choices_enum=PostcodesIOGeographyTypes,
+        default=PostcodesIOGeographyTypes.POSTCODE,
+    )
     geography_column = models.CharField(max_length=250, blank=True, null=True)
+
     class FieldDefinition(TypedDict):
         value: str
         label: Optional[str]
         description: Optional[str]
+
     fields = JSONField(blank=True, null=True, default=list)
     # Auto-updates
     class UpdateMapping(TypedDict):
@@ -824,6 +832,7 @@ class ExternalDataSource(PolymorphicModel):
         # Can be a dot path, for use with benedict
         source_path: str
         destination_column: str
+
     update_mapping = JSONField(blank=True, null=True, default=list)
     auto_update_enabled = models.BooleanField(default=False, blank=True)
     # Auto-import
@@ -833,11 +842,13 @@ class ExternalDataSource(PolymorphicModel):
         return self.name if self.name is not None else super().__str__()
 
     def event_log_queryset(self):
-        return ProcrastinateJob.objects.filter(args__external_data_source_id=str(self.id)).order_by('-scheduled_at')
-    
+        return ProcrastinateJob.objects.filter(
+            args__external_data_source_id=str(self.id)
+        ).order_by("-scheduled_at")
+
     def get_update_mapping(self) -> list[UpdateMapping]:
         return ensure_list(self.update_mapping)
-    
+
     def delete(self, *args, **kwargs):
         self.disable_auto_update()
         return super().delete(*args, **kwargs)
@@ -846,60 +857,62 @@ class ExternalDataSource(PolymorphicModel):
     # to be implemented by subclasses
 
     def healthcheck(self):
-        '''
+        """
         Check the connection to the API.
-        '''
-        raise NotImplementedError('Healthcheck not implemented for this data source type.')
-    
+        """
+        raise NotImplementedError(
+            "Healthcheck not implemented for this data source type."
+        )
+
     def field_definitions(self) -> list[FieldDefinition]:
-        '''
+        """
         Get the fields for the data source.
-        '''
+        """
         return ensure_list(self.fields)
 
     def setup_webhooks(self):
-        '''
+        """
         Set up a webhook.
-        '''
-        raise NotImplementedError('Webhook setup not implemented for this data source type.')
-    
+        """
+        raise NotImplementedError(
+            "Webhook setup not implemented for this data source type."
+        )
+
     def refresh_webhooks(self):
-        '''
+        """
         Refresh the webhook.
-        '''
+        """
         return self.setup_webhooks()
-    
+
     def get_member_ids_from_webhook(self, payload: dict) -> list[str]:
-        '''
+        """
         Get the member ID from the webhook payload.
-        '''
-        raise NotImplementedError('Get member ID not implemented for this data source type.')
-    
-    def import_all (self):
-        '''
+        """
+        raise NotImplementedError(
+            "Get member ID not implemented for this data source type."
+        )
+
+    def import_all(self):
+        """
         Copy data to this database for use in dashboarding features.
-        '''
+        """
 
         # A LIH record of this data
         data_set, created = DataSet.objects.update_or_create(
             external_data_source=self,
             defaults={
-              "name": self.name,
-              "data_type": "json",
-              "table": "commondata",
-              "default_value": {},
-              "is_filterable": True,
-              "is_shadable": False,
-              "is_public": False,
-          },
+                "name": self.name,
+                "data_type": "json",
+                "table": "commondata",
+                "default_value": {},
+                "is_filterable": True,
+                "is_shadable": False,
+                "is_public": False,
+            },
         )
 
         data_type, created = DataType.objects.update_or_create(
-            data_set=data_set,
-            name=self.id,
-            defaults={
-                "data_type": "json"
-            }
+            data_set=data_set, name=self.id, defaults={"data_type": "json"}
         )
 
         data = async_to_sync(self.fetch_all)()
@@ -931,10 +944,9 @@ class ExternalDataSource(PolymorphicModel):
         """
         raise NotImplementedError("Get all not implemented for this data source type.")
 
-    MappedMember = TypedDict('MatchedMember', {
-        'member': dict,
-        'update_fields': dict[str, any]
-    })
+    MappedMember = TypedDict(
+        "MatchedMember", {"member": dict, "update_fields": dict[str, any]}
+    )
 
     async def update_one(self, mapped_record: MappedMember):
         """
@@ -967,15 +979,17 @@ class ExternalDataSource(PolymorphicModel):
         raise NotImplementedError("Get ID not implemented for this data source type.")
 
     def get_record_field(self, record: dict, field: str):
-        '''
+        """
         Get a field from a record.
-        '''
-        raise NotImplementedError('Get field not implemented for this data source type.')
-    
+        """
+        raise NotImplementedError(
+            "Get field not implemented for this data source type."
+        )
+
     def get_record_dict(self, record: any) -> dict:
-        '''
+        """
         Get a record as a dictionary.
-        '''
+        """
         return record
 
     # Mapping mechanics
@@ -983,13 +997,19 @@ class ExternalDataSource(PolymorphicModel):
     async def fetch_many_loader(self, keys):
         results = await self.fetch_many(keys)
         # sort results by keys, including None
-        return [next((result for result in results if self.get_record_id(result) == key), None) for key in keys]
-    
+        return [
+            next(
+                (result for result in results if self.get_record_id(result) == key),
+                None,
+            )
+            for key in keys
+        ]
+
     def filter(self, filter: dict) -> dict:
-        '''
+        """
         Look up a record by a value in a column.
-        '''
-        raise NotImplementedError('Lookup not implemented for this data source type.')
+        """
+        raise NotImplementedError("Lookup not implemented for this data source type.")
 
     class Loaders(TypedDict):
         postcodesIO: DataLoader
@@ -999,7 +1019,7 @@ class ExternalDataSource(PolymorphicModel):
     class EnrichmentLookup(TypedDict):
         member_id: str
         postcode_data: PostcodesIOResult
-        source_id: 'ExternalDataSource'
+        source_id: "ExternalDataSource"
         source_path: str
         source_data: Optional[any]
 
@@ -1007,40 +1027,46 @@ class ExternalDataSource(PolymorphicModel):
         return GenericData.objects.filter(
             data_type__data_set__external_data_source_id=self.id
         )
-    
+
     def get_import_dataframe(self):
         enrichment_data = self.get_import_data()
         json_list = [d.json for d in enrichment_data]
         enrichment_df = pd.DataFrame.from_records(json_list)
         return enrichment_df
-        
+
     def data_loader_factory(self):
         async def fetch_enrichment_data(keys: List[self.EnrichmentLookup]) -> list[str]:
             return_data = []
             enrichment_df = await sync_to_async(self.get_import_dataframe)()
             for key in keys:
                 try:
-                    relevant_member_geography = get(key['postcode_data'], self.geography_column_type, "")
-                    if relevant_member_geography == "" or relevant_member_geography is None:
+                    relevant_member_geography = get(
+                        key["postcode_data"], self.geography_column_type, ""
+                    )
+                    if (
+                        relevant_member_geography == ""
+                        or relevant_member_geography is None
+                    ):
                         return_data.append(None)
                     else:
                         # TODO: Use pandas to join dataframes instead
                         enrichment_value = enrichment_df.loc[
-                            enrichment_df[self.geography_column] == relevant_member_geography,
-                            key['source_path']
+                            enrichment_df[self.geography_column]
+                            == relevant_member_geography,
+                            key["source_path"],
                         ].values[0]
                         return_data.append(enrichment_value)
-                except Exception as e:
+                except Exception:
                     return_data.append(None)
-            
+
             return return_data
-    
-        def cache_key_fn (key: self.EnrichmentLookup) -> str:
+
+        def cache_key_fn(key: self.EnrichmentLookup) -> str:
             return f"{key['member_id']}_{key['source_id']}"
-        
+
         return DataLoader(load_fn=fetch_enrichment_data, cache_key_fn=cache_key_fn)
 
-    async def get_loaders (self) -> Loaders:
+    async def get_loaders(self) -> Loaders:
         loaders = self.Loaders(
             postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo),
             fetch_record=DataLoader(load_fn=self.fetch_many_loader, cache=False),
@@ -1049,19 +1075,19 @@ class ExternalDataSource(PolymorphicModel):
                 async for source in ExternalDataSource.objects.filter(
                     organisation=self.organisation_id,
                     geography_column__isnull=False,
-                    geography_column_type__isnull=False
+                    geography_column_type__isnull=False,
                 ).all()
-            }
+            },
         )
 
         return loaders
 
     async def map_one(self, member: Union[str, dict], loaders: Loaders) -> MappedMember:
-        '''
+        """
         Match one member to a record in the data source, via ID or record.
-        '''
-        if type(member) == str:
-            member = await loaders['fetch_record'].load(member)
+        """
+        if type(member) is str:
+            member = await loaders["fetch_record"].load(member)
         update_fields = {}
         try:
             postcode_data = None
@@ -1069,53 +1095,59 @@ class ExternalDataSource(PolymorphicModel):
                 # Get postcode from member
                 postcode = self.get_record_field(member, self.geography_column)
                 # Get relevant config data for that postcode
-                postcode_data: PostcodesIOResult = await loaders['postcodesIO'].load(postcode)
+                postcode_data: PostcodesIOResult = await loaders["postcodesIO"].load(
+                    postcode
+                )
             # Map the fields
             for mapping_dict in self.get_update_mapping():
-                source = mapping_dict['source']
-                source_path = mapping_dict['source_path']
-                destination_column = mapping_dict['destination_column']
-                if source == 'postcodes.io':
+                source = mapping_dict["source"]
+                source_path = mapping_dict["source_path"]
+                destination_column = mapping_dict["destination_column"]
+                if source == "postcodes.io":
                     if postcode_data is not None:
-                        update_fields[destination_column] = get(postcode_data, source_path)
+                        update_fields[destination_column] = get(
+                            postcode_data, source_path
+                        )
                 else:
                     try:
-                        source_loader = loaders['source_loaders'].get(source, None)
+                        source_loader = loaders["source_loaders"].get(source, None)
                         if source_loader is not None:
-                            update_fields[destination_column] = await source_loader.load(
+                            update_fields[
+                                destination_column
+                            ] = await source_loader.load(
                                 self.EnrichmentLookup(
                                     member_id=self.get_record_id(member),
                                     postcode_data=postcode_data,
                                     source_id=source,
-                                    source_path=source_path
+                                    source_path=source_path,
                                 )
                             )
                     except Exception as e:
                         continue
             # Return the member and config data
-            return self.MappedMember(
-                member=member,
-                update_fields=update_fields
-            )
+            return self.MappedMember(member=member, update_fields=update_fields)
         except TypeError:
             # Error fetching postcode data
-            return self.MappedMember(
-                member=member,
-                update_fields={}
-            )
-    
-    async def map_many(self, members: list[Union[str, any]], loaders: Loaders) -> list[MappedMember]:
-        '''
+            return self.MappedMember(member=member, update_fields={})
+
+    async def map_many(
+        self, members: list[Union[str, any]], loaders: Loaders
+    ) -> list[MappedMember]:
+        """
         Match many members to records in the data source.
-        '''
-        return await asyncio.gather(*[self.map_one(member, loaders) for member in members])
-    
+        """
+        return await asyncio.gather(
+            *[self.map_one(member, loaders) for member in members]
+        )
+
     async def map_all(self, loaders: Loaders) -> list[MappedMember]:
-        '''
+        """
         Match all members to records in the data source.
-        '''
+        """
         members = await self.fetch_all()
-        return await asyncio.gather(*[self.map_one(member, loaders) for member in members])
+        return await asyncio.gather(
+            *[self.map_one(member, loaders) for member in members]
+        )
 
     async def refresh_one(self, member_id: Union[str, any]):
         if len(self.get_update_mapping()) == 0:
@@ -1157,7 +1189,7 @@ class ExternalDataSource(PolymorphicModel):
             self.teardown_webhooks()
 
     # Webhooks
-        
+
     def handle_update_webhook_view(self, body):
         member_ids = self.get_member_ids_from_webhook(body)
         if len(member_ids) == 1:
@@ -1165,96 +1197,104 @@ class ExternalDataSource(PolymorphicModel):
         else:
             self.schedule_refresh_many(member_ids=member_ids)
         return HttpResponse(status=200)
-    
+
     # Scheduling
 
     @classmethod
     async def deferred_refresh_one(cls, external_data_source_id: str, member_id: str):
-        external_data_source: ExternalDataSource = await cls.objects.aget(id=external_data_source_id)
+        external_data_source: ExternalDataSource = await cls.objects.aget(
+            id=external_data_source_id
+        )
         if external_data_source.auto_update_enabled:
             await external_data_source.refresh_one(member_id=member_id)
 
     @classmethod
-    async def deferred_refresh_many(cls, external_data_source_id: str, member_ids: list[str]):
-        external_data_source: ExternalDataSource = await cls.objects.aget(id=external_data_source_id)
+    async def deferred_refresh_many(
+        cls, external_data_source_id: str, member_ids: list[str]
+    ):
+        external_data_source: ExternalDataSource = await cls.objects.aget(
+            id=external_data_source_id
+        )
         if external_data_source.auto_update_enabled:
             await external_data_source.refresh_many(member_ids=member_ids)
 
     @classmethod
     async def deferred_refresh_all(cls, external_data_source_id: str):
-        external_data_source: ExternalDataSource = await cls.objects.aget(id=external_data_source_id)
+        external_data_source: ExternalDataSource = await cls.objects.aget(
+            id=external_data_source_id
+        )
         if external_data_source.auto_update_enabled:
             await external_data_source.refresh_all()
 
     @classmethod
     async def deferred_refresh_webhooks(cls, external_data_source_id: str):
-        external_data_source: ExternalDataSource = await cls.objects.aget(pk=external_data_source_id)
-        if external_data_source.auto_update_enabled or external_data_source.auto_import_enabled:
+        external_data_source: ExternalDataSource = await cls.objects.aget(
+            pk=external_data_source_id
+        )
+        if (
+            external_data_source.auto_update_enabled
+            or external_data_source.auto_import_enabled
+        ):
             if external_data_source.automated_webhooks:
                 external_data_source.refresh_webhooks()
 
     @classmethod
     async def deferred_import_all(cls, external_data_source_id: str):
-        external_data_source: ExternalDataSource = await cls.objects.aget(pk=external_data_source_id)
+        external_data_source: ExternalDataSource = await cls.objects.aget(
+            pk=external_data_source_id
+        )
         await external_data_source.import_all()
 
     def schedule_refresh_one(self, member_id: str) -> int:
         try:
-          return refresh_one\
-          .configure(
-            # Dedupe `update_many` jobs for the same config
-            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-            queueing_lock=f"update_one_{str(self.id)}_{str(member_id)}",
-            schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY }
-          )\
-          .defer(external_data_source_id=str(self.id), member_id=member_id)
+            return refresh_one.configure(
+                # Dedupe `update_many` jobs for the same config
+                # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+                queueing_lock=f"update_one_{str(self.id)}_{str(member_id)}",
+                schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+            ).defer(external_data_source_id=str(self.id), member_id=member_id)
         except UniqueViolation:
-          pass
+            pass
 
     def schedule_refresh_many(self, member_ids: list[str]) -> int:
         member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
-          return refresh_many\
-          .configure(
-            # Dedupe `update_many` jobs for the same config
-            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-            queueing_lock=f"update_many_{str(self.id)}_{member_ids_hash}",
-            schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY }
-          )\
-          .defer(external_data_source_id=str(self.id), member_ids=member_ids)
+            return refresh_many.configure(
+                # Dedupe `update_many` jobs for the same config
+                # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+                queueing_lock=f"update_many_{str(self.id)}_{member_ids_hash}",
+                schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+            ).defer(external_data_source_id=str(self.id), member_ids=member_ids)
         except UniqueViolation:
-          pass
+            pass
 
     def schedule_refresh_all(self) -> int:
         try:
-          return refresh_all\
-          .configure(
-            # Dedupe `update_all` jobs for the same config
-            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-            queueing_lock=f"update_all_{str(self.id)}",
-            schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY }
-          )\
-          .defer(external_data_source_id=str(self.id))
+            return refresh_all.configure(
+                # Dedupe `update_all` jobs for the same config
+                # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+                queueing_lock=f"update_all_{str(self.id)}",
+                schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+            ).defer(external_data_source_id=str(self.id))
         except UniqueViolation:
-          pass
+            pass
 
     def schedule_import_all(self) -> int:
         try:
-          return import_all\
-          .configure(
-            # Dedupe `import_all` jobs for the same config
-            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-            queueing_lock=f"import_all_{str(self.id)}",
-            schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY }
-          )\
-          .defer(external_data_source_id=str(self.id))
+            return import_all.configure(
+                # Dedupe `import_all` jobs for the same config
+                # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+                queueing_lock=f"import_all_{str(self.id)}",
+                schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+            ).defer(external_data_source_id=str(self.id))
         except UniqueViolation:
-          pass
-        
+            pass
+
+
 class AirtableSource(ExternalDataSource):
-    '''
+    """
     An Airtable table.
-    '''
+    """
 
     api_key = models.CharField(
         max_length=250,
@@ -1286,21 +1326,21 @@ class AirtableSource(ExternalDataSource):
         if record:
             return True
         return False
-    
+
     def field_definitions(self):
         return [
-          self.FieldDefinition(
-            label=field.name,
-            # For `value`, we use the field name because
-            # because in the UI we want users to type the field name, not the field ID
-            # and so self.fetch_all doesn't use table(return_fields_by_field_id=True)
-            # TODO: implement a field ID lookup in the UI, then revisit this
-            value=field.name,
-            description=field.description
-          )
-          for field in self.table.schema().fields
+            self.FieldDefinition(
+                label=field.name,
+                # For `value`, we use the field name because
+                # because in the UI we want users to type the field name, not the field ID
+                # and so self.fetch_all doesn't use table(return_fields_by_field_id=True)
+                # TODO: implement a field ID lookup in the UI, then revisit this
+                value=field.name,
+                description=field.description,
+            )
+            for field in self.table.schema().fields
         ]
-    
+
     async def fetch_one(self, member_id):
         record = self.table.get(member_id)
         return record
@@ -1315,14 +1355,14 @@ class AirtableSource(ExternalDataSource):
     async def fetch_all(self):
         records = self.table.all()
         return records
-    
+
     def filter(self, d: dict):
-        formula = f'AND('
+        formula = f"AND("
         formula += ",".join([f"{key}='{value}'" for key, value in d.items()])
-        formula += ')'
+        formula += ")"
         records = self.table.all(formula=formula)
         return records
-    
+
     def get_record_id(self, record):
         return record["id"]
 
@@ -1330,59 +1370,72 @@ class AirtableSource(ExternalDataSource):
         return record["fields"].get(str(field))
 
     def get_record_dict(self, record):
-        return record['fields']
+        return record["fields"]
 
     async def update_one(self, mapped_record):
-        return self.table.update(mapped_record['member']['id'], mapped_record['update_fields'])
+        return self.table.update(
+            mapped_record["member"]["id"], mapped_record["update_fields"]
+        )
 
     async def update_many(self, mapped_records):
-        return self.table.batch_update([
-          {
-            "id": mapped_record['member']['id'],
-            "fields": mapped_record['update_fields']
-          } for
-          mapped_record in mapped_records
-        ])
+        return self.table.batch_update(
+            [
+                {
+                    "id": mapped_record["member"]["id"],
+                    "fields": mapped_record["update_fields"],
+                }
+                for mapped_record in mapped_records
+            ]
+        )
 
     async def update_all(self, mapped_records):
-        return self.table.batch_update([
-          {
-            "id": mapped_record['member']['id'],
-            "fields": mapped_record['update_fields']
-          } for
-          mapped_record in mapped_records
-        ])
+        return self.table.batch_update(
+            [
+                {
+                    "id": mapped_record["member"]["id"],
+                    "fields": mapped_record["update_fields"],
+                }
+                for mapped_record in mapped_records
+            ]
+        )
 
     def auto_update_webhook_specification(self):
         if self.geography_column is None:
             raise ValueError("A geography column is required for auto-updates to work.")
         # DOCS: https://airtable.com/developers/web/api/model/webhooks-specification
         return {
-          "options": {
-            "filters": {
-              "recordChangeScope": self.table_id,
-              "watchDataInFieldIds": [
-                # Listen for any geography changes
-                self.table.schema().field(self.geography_column).id
-              ],
-              "dataTypes": [
-                "tableData"
-              ],
-              "changeTypes": [
-                "add",
-                "update",
-              ]
+            "options": {
+                "filters": {
+                    "recordChangeScope": self.table_id,
+                    "watchDataInFieldIds": [
+                        # Listen for any geography changes
+                        self.table.schema()
+                        .field(self.geography_column)
+                        .id
+                    ],
+                    "dataTypes": ["tableData"],
+                    "changeTypes": [
+                        "add",
+                        "update",
+                    ],
+                }
             }
-          }
         }
-    
+
     def auto_update_webhook_url(self):
-        return urljoin(settings.BASE_URL, reverse('external_data_source_auto_update_webhook', args=[self.id]))
+        return urljoin(
+            settings.BASE_URL,
+            reverse("external_data_source_auto_update_webhook", args=[self.id]),
+        )
 
     def get_webhooks(self):
-      list = self.base.webhooks()
-      auto_update_webhook_url = self.auto_update_webhook_url()
-      return [webhook for webhook in list if webhook.notification_url == auto_update_webhook_url]
+        list = self.base.webhooks()
+        auto_update_webhook_url = self.auto_update_webhook_url()
+        return [
+            webhook
+            for webhook in list
+            if webhook.notification_url == auto_update_webhook_url
+        ]
 
     def webhook_healthcheck(self):
         expected_webhooks = 0
@@ -1402,23 +1455,22 @@ class AirtableSource(ExternalDataSource):
                 print("Webhook healthcheck: a webhook expired")
                 return False
         return True
-    
+
     def teardown_webhooks(self):
-      list = self.base.webhooks()
-      url = self.auto_update_webhook_url()
-      for webhook in list:
-          if ExternalDataSourceAutoUpdateWebhook.base_path in url:
-              # Update the webhook in case the spec changed,
-              # which will also refresh the 7 day expiration date
-              webhook.delete()
+        list = self.base.webhooks()
+        url = self.auto_update_webhook_url()
+        for webhook in list:
+            if ExternalDataSourceAutoUpdateWebhook.base_path in url:
+                # Update the webhook in case the spec changed,
+                # which will also refresh the 7 day expiration date
+                webhook.delete()
 
     def setup_webhooks(self):
-      self.teardown_webhooks()
-      # Auto-update
-      self.base.add_webhook(
-          self.auto_update_webhook_url(),
-          self.auto_update_webhook_specification()
-      )
+        self.teardown_webhooks()
+        # Auto-update
+        self.base.add_webhook(
+            self.auto_update_webhook_url(), self.auto_update_webhook_specification()
+        )
 
     def get_member_ids_from_webhook(self, webhook_payload: dict) -> list[str]:
         member_ids: list[str] = []

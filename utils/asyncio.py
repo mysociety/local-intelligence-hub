@@ -1,6 +1,7 @@
-import psycopg
 from django.db import connection
 from django.db.models.query import QuerySet
+
+import psycopg
 
 
 async def async_queryset(queryset: QuerySet, args: list[str] = []):
@@ -8,10 +9,7 @@ async def async_queryset(queryset: QuerySet, args: list[str] = []):
     for arg in args:
         query = query.replace(str(arg), "%s")
     args = [str(arg) for arg in args]
-    results = await async_query(
-        query,
-        args
-    )
+    results = await async_query(query, args)
     return [queryset.model(*result) for result in results]
 
 
@@ -28,9 +26,6 @@ async def async_query(query: str, args: list[str] = []):
     async with aconnection:
         # Create a new async cursor and execute a query.
         async with aconnection.cursor() as cursor:
-            await cursor.execute(
-                query,
-                args
-            )
+            await cursor.execute(query, args)
             results = await cursor.fetchall()
             return results

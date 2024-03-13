@@ -3,10 +3,10 @@ from typing import List, Optional
 
 from django.conf import settings
 
+import httpx
 import requests
 
 from utils.geo import create_point
-import httpx
 from utils.py import batch_and_aggregate, get, get_path
 
 
@@ -92,11 +92,12 @@ def get_postcode_geo(postcode: str) -> PostcodesIOResult:
 @batch_and_aggregate(settings.POSTCODES_IO_BATCH_MAXIMUM)
 async def get_bulk_postcode_geo(postcodes) -> PostcodesIOBulkResult:
     async with httpx.AsyncClient() as client:
-        response = await client.post(f'{settings.POSTCODES_IO_URL}/postcodes', json={
-            "postcodes": postcodes
-        },)
+        response = await client.post(
+            f"{settings.POSTCODES_IO_URL}/postcodes",
+            json={"postcodes": postcodes},
+        )
     if response.status_code != httpx.codes.OK:
-        raise Exception(f'Failed to bulk geocode postcodes: {postcodes}.')
+        raise Exception(f"Failed to bulk geocode postcodes: {postcodes}.")
 
     data = response.json()
     status = get(data, "status")
