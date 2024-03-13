@@ -204,12 +204,11 @@ export default function Page({
     return (
       <div className="space-y-7">
         <header>
-          <h1 className="text-hLg">Syncing to your Airtable base</h1>
+          <h1 className="text-hLg">Connecting to your Airtable base</h1>
           <p className="mt-6 text-meepGray-400 max-w-sm">
-            In order to send data across to your Airtable, we’ll need a few
+            In order to send data across to your Airtable, we'll need a few
             details that gives us permission to make updates to your base, as
-            well as tell us which table to update in the first place. You can
-            find out more about how we do this securely here.
+            well as tell us which table to update in the first place.
           </p>
         </header>
         <Form {...form}>
@@ -218,7 +217,7 @@ export default function Page({
             className="space-y-7 max-w-sm"
           >
             <hr />
-            <div className='text-hSm'>General info</div>
+            <div className='text-hSm'>About this data</div>
             <FormField
               control={form.control}
               name="airtable.name"
@@ -227,7 +226,7 @@ export default function Page({
                   <FormLabel>Nickname</FormLabel>
                   <FormControl>
                     {/* @ts-ignore */}
-                    <Input placeholder="My members list" {...field} />
+                    <Input placeholder="My members list" {...field} required />
                   </FormControl>
                   <FormDescription>
                     This will be visible to your team.
@@ -244,7 +243,7 @@ export default function Page({
                   <FormLabel>Data type</FormLabel>
                   <FormControl>
                     {/* @ts-ignore */}
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} required>
                       <SelectTrigger>
                         <SelectValue placeholder="What kind of data is this?" />
                       </SelectTrigger>
@@ -271,7 +270,7 @@ export default function Page({
                     <FormLabel>Geography Column</FormLabel>
                       <FormControl>
                         {/* @ts-ignore */}
-                        <Input {...field} />
+                        <Input {...field} required />
                       </FormControl>
                       <FormMessage />
                   </FormItem>
@@ -285,7 +284,7 @@ export default function Page({
                     <FormLabel>Geography Type</FormLabel>
                     <FormControl>
                       {/* @ts-ignore */}
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} required>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a geography type" />
                         </SelectTrigger>
@@ -316,7 +315,7 @@ export default function Page({
                   <FormLabel>Airtable access token</FormLabel>
                   <FormControl>
                     {/* @ts-ignore */}
-                    <Input placeholder="patAB1" {...field} />
+                    <Input placeholder="patAB1" {...field} required />
                   </FormControl>
                   <FormDescription>
                     Make sure your token has read and write permissions for
@@ -341,7 +340,7 @@ export default function Page({
                   <FormLabel>Base ID</FormLabel>
                   <FormControl>
                     {/* @ts-ignore */}
-                    <Input placeholder="app1234" {...field} />
+                    <Input placeholder="app1234" {...field} required />
                   </FormControl>
                   <FormDescription>
                     The unique identifier for your base.{" "}
@@ -365,7 +364,7 @@ export default function Page({
                   <FormLabel>Table ID</FormLabel>
                   <FormControl>
                     {/* @ts-ignore */}
-                    <Input placeholder="tbl1234" {...field} />
+                    <Input placeholder="tbl1234" {...field} required />
                   </FormControl>
                   <FormDescription>
                     The unique identifier for your table.{" "}
