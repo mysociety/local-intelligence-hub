@@ -11,10 +11,11 @@ class Command(BaseImportFromDataFrameCommand):
 
     cons_row = "gss-code"
     message = "Importing constituency rural urban classification data"
+    do_not_convert = True
     data_sets = {
         "constituency_ruc": {
             "defaults": {
-                "label": "Urban Rural Classification",
+                "label": "Rural Urban Classification",
                 "description": "A composite measure of 'ruralness' (based population density, settlement size, and drive times) standardised across the countries of the UK.",
                 "data_type": "text",
                 "category": "place",
@@ -39,7 +40,7 @@ class Command(BaseImportFromDataFrameCommand):
     package = {
         "repo_name": "uk_ruc",
         "package_name": "uk_ruc",
-        "version_name": "2.0.0",
+        "version_name": "latest",
         "file_name": "pcon_ruc.csv",
     }
 
@@ -58,12 +59,3 @@ class Command(BaseImportFromDataFrameCommand):
 
     def get_dataframe(self):
         return pd.read_csv(self.data_sets["constituency_ruc"]["defaults"]["data_url"])
-
-    def update_averages(self):
-        pass
-
-    def update_max_min(self):
-        pass
-
-    def convert_to_new_con(self):
-        pass
