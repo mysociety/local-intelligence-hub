@@ -73,7 +73,7 @@ urlpatterns = [
         "mailing-list/", core.MailChimpSignupView.as_view(), name="mailing_list_signup"
     ),
     path(
-        "mailing-list-sucess/",
+        "mailing-list-success/",
         core.MailChimpSuccessView.as_view(),
         name="mailing_list_sucess",
     ),
