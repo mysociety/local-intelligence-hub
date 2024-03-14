@@ -334,6 +334,15 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
             dict(field_lookup="not_in", title="is not one of"),
         ]
 
+    def json_group_comparators():
+        return [
+            dict(field_lookup="contains", title="group name is"),
+            dict(
+                field_lookup="not_contains",
+                title="group name is not",
+            ),
+        ]
+
     OPTIONS_SCHEMA = {
         "type": "array",
         "items": {

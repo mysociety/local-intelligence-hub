@@ -10,11 +10,16 @@ class Filter:
             return "float"
         elif self.dataset.is_number:
             return "int"
+        elif self.dataset.is_json:
+            return "json"
         else:
             return "data"
 
     def run(self, name, comparator, value):
         exclude = comparator.startswith("not_")
+        if self.column() == "json":
+            # value = f"$[*].group_name == {value}"
+            value = [{"group_name": value}]
         kwargs = {
             "{0}__data_type__name".format(self.dataset.table): name,
             "{0}__{1}__{2}".format(
