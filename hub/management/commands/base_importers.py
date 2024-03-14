@@ -87,7 +87,6 @@ class BaseAreaImportCommand(BaseCommand):
                 name=name,
                 defaults={
                     "label": label,
-                    "description": label,
                     **config["defaults"],
                 },
             )
@@ -100,7 +99,6 @@ class BaseAreaImportCommand(BaseCommand):
                 defaults={
                     "data_type": config["defaults"]["data_type"],
                     "label": label,
-                    "description": label,
                 },
             )
 
