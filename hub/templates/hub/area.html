@@ -497,9 +497,9 @@
                             <span>{{ dataset.data.value.link_text|safe }}</span>
                         </a>
                       {% elif dataset.data_type == "integer" %}
-                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value }}</p>
+                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|intcomma }}</p>
                         {% if data.data.average %}
-                        <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }} national average</p>
+                        <p class="card-text mt-2 text-muted">{{dataset.data.average|intcomma }} national average</p>
                         {% endif %}
                       {% elif dataset.is_range and dataset.data|length > 0 %}
                         <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">
@@ -587,7 +587,7 @@
                         <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }}% national average</p>
                       {% elif dataset.data_type == "integer" %}
                         {% if dataset.related_category %}
-                        <p class="card-text mb-3 display-6 lh-1 text-primary">{{ dataset.data.value }}</p>
+                        <p class="card-text mb-3 display-6 lh-1 text-primary">{{ dataset.data.value|intcomma }}</p>
                         <ul class="tag-cloud">
                             {% if dataset.related_category.subcategory == "groups" %}
                               {% for data in dataset.related_category.data.value %} 
@@ -608,8 +608,8 @@
                             {% endif %}
                         </ul>
                         {% else %}
-                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value }}</p>
-                        <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }} national average</p>
+                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|intcomma }}</p>
+                        <p class="card-text mt-2 text-muted">{{dataset.data.average|intcomma }} national average</p>
                         {% endif %}
                       {% elif dataset.is_range %}
                         <table class="table mb-0">
