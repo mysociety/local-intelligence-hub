@@ -35,7 +35,6 @@ const documents = {
     "\n  fragment ExternalDataSourceCardFields on ExternalDataSource {\n    id\n    name\n    connectionDetails {\n      crmType: __typename\n    }\n  }\n": types.ExternalDataSourceCardFieldsFragmentDoc,
     "\n  query ExternalDataSourceCard($ID: ID!) {\n    externalDataSource(pk: $ID) {\n      ...ExternalDataSourceCardFields\n    }\n  }\n  \n": types.ExternalDataSourceCardDocument,
     "\n  query EnrichmentLayers {\n    externalDataSources {\n      id\n      name\n      geographyColumn\n      geographyColumnType\n      dataType\n      connectionDetails {\n        __typename\n      }\n      fieldDefinitions {\n        label\n        value\n        description\n      }\n    }\n  }\n": types.EnrichmentLayersDocument,
-    "\n  mutation UpdateExternalDataSource($input: ExternalDataSourceInput!) {\n    updateExternalDataSource(data: $input) {\n      id\n      name\n      geographyColumn\n      geographyColumnType\n      autoUpdateEnabled\n      updateMapping {\n        source\n        sourcePath\n        destinationColumn\n      }\n    }\n  }\n": types.UpdateExternalDataSourceDocument,
     "\n  query PublicUser {\n    publicUser {\n      id\n      username\n      email\n    }\n  }\n": types.PublicUserDocument,
 };
 
@@ -141,10 +140,6 @@ export function gql(source: "\n  query ExternalDataSourceCard($ID: ID!) {\n    e
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  query EnrichmentLayers {\n    externalDataSources {\n      id\n      name\n      geographyColumn\n      geographyColumnType\n      dataType\n      connectionDetails {\n        __typename\n      }\n      fieldDefinitions {\n        label\n        value\n        description\n      }\n    }\n  }\n"): (typeof documents)["\n  query EnrichmentLayers {\n    externalDataSources {\n      id\n      name\n      geographyColumn\n      geographyColumnType\n      dataType\n      connectionDetails {\n        __typename\n      }\n      fieldDefinitions {\n        label\n        value\n        description\n      }\n    }\n  }\n"];
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(source: "\n  mutation UpdateExternalDataSource($input: ExternalDataSourceInput!) {\n    updateExternalDataSource(data: $input) {\n      id\n      name\n      geographyColumn\n      geographyColumnType\n      autoUpdateEnabled\n      updateMapping {\n        source\n        sourcePath\n        destinationColumn\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateExternalDataSource($input: ExternalDataSourceInput!) {\n    updateExternalDataSource(data: $input) {\n      id\n      name\n      geographyColumn\n      geographyColumnType\n      autoUpdateEnabled\n      updateMapping {\n        source\n        sourcePath\n        destinationColumn\n      }\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

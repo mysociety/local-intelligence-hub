@@ -16,13 +16,25 @@
 }
 
 @font-face {
-  font-family: IBMPlexSans;
+  font-family: IBMPlexSansReg;
   src: url("../fonts/IBMPlexSans/IBMPlexSans-Regular.ttf");
 }
-
+@font-face {
+  font-family: IBMPlexSansMedium;
+  src: url("../fonts/IBMPlexSans/IBMPlexSans-Medium.ttf");
+}
+@font-face {
+  font-family: IBMPlexSansSemiBold;
+  src: url("../fonts/IBMPlexSans/IBMPlexSans-SemiBold.ttf");
+}
 @font-face {
   font-family: IBMPlexSansCondensed;
   src: url("../fonts/IBMPlexSans/IBMPlexSansCondensed-Regular.ttf");
+}
+
+@font-face {
+  font-family: IBMPlexMono;
+  src: url("../fonts/IBMPlexMono/IBMPlexMono-Regular.ttf");
 }
 
 @layer base {
@@ -48,7 +60,7 @@
     --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary-foreground: 222, 14%, 34%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
     --accent: var(--brand-blue);
@@ -74,7 +86,6 @@
   body {
     @apply bg-meepGray-800 text-white font-IBMPlexSans;
   }
-  
 }
 
 @layer components {
