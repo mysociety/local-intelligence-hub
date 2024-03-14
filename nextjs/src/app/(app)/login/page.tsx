@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useRequireNoAuth } from "../../hooks/auth";
+import { useRequireNoAuth } from "../../../hooks/auth";
 import LoginForm from "./login-form";
 import Link from "next/link";
 import { Metadata } from "next";

@@ -62,8 +62,8 @@ export default function Home() {
 
 
     return (
-        <main className="-m-20 static">
-            <div className="h-dvh">
+        <main className="absolute w-full h-full">
+            <div className='w-full h-full'>
                 <Map
                     mapboxAccessToken={mapboxToken}
                     initialViewState={{
@@ -136,7 +136,7 @@ export default function Home() {
                             <CardHeader>
                                 <Tabs defaultValue="all-constituencies" className="w-[300px]">
                                     <TabsList>
-                                        <TabsTrigger value="all-constituencies" type="">All Constituencies</TabsTrigger>
+                                        <TabsTrigger value="all-constituencies">All Constituencies</TabsTrigger>
                                         <TabsTrigger value="selected-cons-1">Bury North</TabsTrigger>
                                     </TabsList>
                                     <TabsContent value="all-constituencies" className="flex flex-col gap-4">

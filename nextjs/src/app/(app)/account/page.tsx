@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { useRequireAuth } from "../../hooks/auth";
+import { useRequireAuth } from "../../../hooks/auth";
 import YourOrganisations from "./your-organisations";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 

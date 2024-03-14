@@ -1,6 +1,6 @@
 "use client";
 
-import { logout } from "../../actions/auth";
+import { logout } from "../../../actions/auth";
 import { MouseEvent } from "react";
 
 export default function LogoutForm() {
