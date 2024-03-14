@@ -3,6 +3,8 @@ from functools import lru_cache
 import pandas as pd
 from mysoc_dataset import get_dataset_url
 
+council_types = {"STC": ["CTY", "LBO", "MD", "SCO", "NID", "UA", "WPA"], "DIS": ["NMD"]}
+
 
 @lru_cache
 def get_authority_mapping() -> pd.DataFrame:
@@ -52,3 +54,22 @@ def add_gss_codes(df: pd.DataFrame, code_column: str):
             df.at[index, "gss_code"] = authority_match["gss-code"].values[0]
 
     return df
+
+
+def _filter_authority_type(df: pd.DataFrame, types: list):
+    authority_df = get_council_df()
+
+    rows = len(df["gss_code"])
+    df["type"] = pd.Series([None] * rows, index=df.index)
+    for index, row in df.iterrows():
+        if not pd.isnull("gss_code"):
+            authority_match = authority_df[authority_df["gss-code"] == row["gss_code"]]
+            df.at[index, "type"] = authority_match["local-authority-type"].values[0]
+
+    df = df.loc[df["type"].isin(types)]
+
+    return df
+
+
+def filter_authority_type(df: pd.DataFrame, authority_type: str):
+    return _filter_authority_type(df, council_types[authority_type])
