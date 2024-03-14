@@ -28,7 +28,7 @@ class Command(BaseConstituencyGroupListImportCommand):
         "default_value": {},
         "data_url": "",
         "exclude_countries": ["Scotland"],
-        "is_filterable": True,
+        "is_filterable": False,
         "is_shadable": False,
         "is_public": True,
         "comparators": DataSet.string_comparators(),

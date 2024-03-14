@@ -295,7 +295,11 @@ class BaseConstituencyGroupListImportCommand(BaseAreaImportCommand):
 
             json = []
             for index, row in data.iterrows():
-                json.append(self.get_group_json(row))
+                group = self.get_group_json(row)
+                if group.get("group_name", None) is None:
+                    print(f"missing group name for {area.name}")
+                    continue
+                json.append(group)
 
             json_data, created = AreaData.objects.update_or_create(
                 data_type=self.data_types[self.group_data_type],
@@ -306,7 +310,7 @@ class BaseConstituencyGroupListImportCommand(BaseAreaImportCommand):
             count_data, created = AreaData.objects.update_or_create(
                 data_type=self.data_types[self.count_data_type],
                 area=area,
-                data=len(data),
+                data=len(json),
             )
 
     def handle(self, quiet=False, *args, **kwargs):
