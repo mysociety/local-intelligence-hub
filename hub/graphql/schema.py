@@ -37,6 +37,8 @@ class Query(UserQueries):
     )
     job: types.QueueJob = strawberry_django.field(extensions=[IsAuthenticated()])
     jobs: List[types.QueueJob] = strawberry_django.field(extensions=[IsAuthenticated()])
+    map_report: types.MapReport = strawberry_django.field(extensions=[IsAuthenticated()])
+    map_reports: List[types.MapReport] = strawberry_django.field(extensions=[IsAuthenticated()])
 
     @strawberry.field
     def test_airtable_source(
@@ -66,7 +68,7 @@ class Mutation:
         mutation_types.ExternalDataSourceInput, extensions=[IsAuthenticated()]
     )
     delete_airtable_source: types.AirtableSource = mutations.delete(
-        str, extensions=[IsAuthenticated()]
+        mutation_types.IDObject, extensions=[IsAuthenticated()]
     )
     delete_external_data_source: types.ExternalDataSource = mutations.delete(
         mutation_types.IDObject, extensions=[IsAuthenticated()]
@@ -83,6 +85,12 @@ class Mutation:
     )
 
     import_all: types.ExternalDataSource = mutation_types.import_all
+
+    create_map_report: types.MapReport = mutation_types.create_map_report
+    update_map_report: types.MapReport = mutations.update(mutation_types.MapReportInput,
+                                                          extensions=[IsAuthenticated()])
+    delete_map_report: types.MapReport = mutations.delete(mutation_types.IDObject,
+                                                          extensions=[IsAuthenticated()])
 
 
 schema = JwtSchema(

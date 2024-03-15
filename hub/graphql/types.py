@@ -211,3 +211,18 @@ class AirtableSource(ExternalDataSource):
     api_key: auto
     base_id: auto
     table_id: auto
+
+@strawberry_django.type(models.MapReport)
+class MapReport:
+    id: auto
+    organisation: auto
+    name: auto
+    slug: auto
+    description: auto
+    created_at: auto
+    last_update: auto
+
+    @classmethod
+    def get_queryset(cls, queryset, info, **kwargs):
+        user = get_current_user(info)
+        return queryset.filter(organisation__members__user=user.id)

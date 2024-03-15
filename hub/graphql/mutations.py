@@ -7,6 +7,7 @@ from strawberry.field_extensions import InputMutationExtension
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import IsAuthenticated
+from django.utils.text import slugify
 
 from hub import models
 
@@ -44,6 +45,17 @@ class AirtableSourceInput(ExternalDataSourceInput):
     api_key: auto
     base_id: auto
     table_id: auto
+
+
+@strawberry_django.input(models.MapReport, partial=True)
+class MapReportInput:
+    id: auto
+    organisation: auto
+    name: auto
+    slug: Optional[str]
+    description: auto
+    created_at: auto
+    last_update: auto
 
 
 @strawberry.mutation(extensions=[IsAuthenticated(), InputMutationExtension()])
@@ -96,17 +108,38 @@ def refresh_webhooks(external_data_source_id: str) -> models.ExternalDataSource:
     return data_source
 
 
-@strawberry.mutation(extensions=[IsAuthenticated()])
-def create_airtable_source(
-    info: Info, data: AirtableSourceInput
-) -> models.AirtableSource:
-    # Override the default strawberry_django.create resolver to add a default organisation
+def create_with_computed_args(model, info, data, computed_args):
     args = {
         **strawberry_django.mutations.resolvers.parse_input(info, vars(data).copy()),
-        "organisation": get_or_create_organisation_for_source(info, data),
+        **computed_args(info, data, model)
     }
     return strawberry_django.mutations.resolvers.create(
-        info, models.AirtableSource, args
+        info, model, args
+    )
+
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def create_airtable_source(
+    info: Info, data: AirtableSourceInput
+) -> models.ExternalDataSource:
+    return create_with_computed_args(
+        models.AirtableSource, info, data,
+        computed_args=lambda info, data, model: {
+            "organisation": get_or_create_organisation_for_source(info, data)
+        }
+    )
+
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()], handle_django_errors=True)
+def create_map_report(
+    info: Info, data: MapReportInput
+) -> models.MapReport:
+    return create_with_computed_args(
+        models.MapReport, info, data,
+        computed_args=lambda info, data, model: {
+            "organisation": get_or_create_organisation_for_source(info, data),
+            "slug": data.slug or slugify(data.name)
+        }
     )
 
 
