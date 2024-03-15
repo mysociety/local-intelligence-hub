@@ -1,5 +1,4 @@
 import Navbar from "@/components/navbar";
-import { AppPageWrapper } from "@/components/page-wrappers";
 import { useAuth } from "@/hooks/auth";
 import { Toaster } from "sonner";
 

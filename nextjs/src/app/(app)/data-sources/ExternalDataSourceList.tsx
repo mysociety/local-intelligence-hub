@@ -33,7 +33,7 @@ const LIST_UPDATE_CONFIGS = gql`
   }
 `;
 
-export default function ExternalDataSourceUpdates() {
+export default function ExternalDataSourceList() {
   const { loading, error, data, refetch } = useQuery<ListExternalDataSourcesQuery, ListExternalDataSourcesQueryVariables>(LIST_UPDATE_CONFIGS);
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export default function ExternalDataSourceUpdates() {
   }, [refetch])
 
   return (
-    <div className=" max-w-7xl space-y-7 w-full">
+    <div className="max-w-7xl space-y-7 w-full">
       <PageHeader />
       <div className="border-b border-meepGray-700 pt-10" />
       <header className='flex flex-row justify-end'>
