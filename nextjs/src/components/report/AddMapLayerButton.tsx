@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils"
 import { Form, useForm } from "react-hook-form"
 import { FormField } from "../ui/form"
 import { ReportContext } from "@/app/reports/[id]/page"
+import { useRouter } from "next/navigation"
 
 type Source = {
   name: string,
@@ -85,6 +86,7 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
   const { id } = useContext(ReportContext)
   const dataSources = useQuery<GetMemberListQuery>(MEMBER_LISTS)
   const selectedSource = dataSources.data?.externalDataSources.find(s => s.id === value?.id)
+  const router = useRouter()
  
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -104,7 +106,11 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
       <PopoverContent className="p-0">
         <Command className='w-full'>
           <CommandInput placeholder="Search your data sources..." />
-          <CommandEmpty>No data sources found.</CommandEmpty>
+          <CommandEmpty onClick={() => {
+            router.push("/data-sources/create?dataType=MEMBER")
+          }}>
+            No data sources found. Click to connect.
+          </CommandEmpty>
           <CommandGroup>
             {dataSources.data?.externalDataSources
             // .filter(s => !report.data?.mapReport?.layers?.some(sL => sL.source.id === s.id))
@@ -129,6 +135,14 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
                 </CommandItem>
               )
             })}
+            <CommandItem
+              onSelect={() => {
+                router.push("/data-sources/create?dataType=MEMBER")
+              }}
+            >
+              <Plus className={"mr-2 h-4 w-4"} />
+              Connect a new data source
+            </CommandItem>
           </CommandGroup>
         </Command>
       </PopoverContent>

@@ -2,7 +2,6 @@
 "use client";
 
 import { useEffect, useState, createContext } from "react";
-import Map, { Marker, Popup } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import Pin from "@/components/Pin";
 import {
@@ -44,6 +43,7 @@ import { Params } from "./lib";
 import { useRouter } from "next/navigation";
 import spaceCase from 'to-space-case'
 import { toastPromise } from "@/lib/toast";
+import { ReportMap } from "@/components/report/ReportMap";
 
 export default function Page({ params: { id } }: { params: Params }) {
   const client = useApolloClient();
@@ -87,18 +87,9 @@ export default function Page({ params: { id } }: { params: Params }) {
     }}>
       <main className="absolute w-full h-full">
         <div className='w-full h-full'>
-          <Map
-            mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
-            initialViewState={{
-              longitude: -2.296605,
-              latitude: 53.593349,
-              zoom: 6
-            }}
-            mapStyle="mapbox://styles/commonknowledge/clqeaydxl00cd01qyhnk70s7s"
-          >
-          </Map>
+          <ReportMap />
         </div>
-        <div className="absolute top-5  left-5 right-0">
+        <div className="absolute top-5  left-5 right-0 w-0">
           <div className="flex flex-col items-start gap-4">
             <Card className="w-[200px] p-4 bg-white border-1 border-meepGray-700 text-meepGray-800">
               <CardHeader className="flex flex-row items-center mb-4">
@@ -134,7 +125,7 @@ export default function Page({ params: { id } }: { params: Params }) {
               </CardContent>
             </Card>
             {isDataConfigOpen && (
-              <DataConfigPanel id={id} />
+              <DataConfigPanel />
             )}
             {isConsDataOpen && (
               <Card className="absolute right-5 p-4 bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700">

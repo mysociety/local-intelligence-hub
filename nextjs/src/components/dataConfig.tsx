@@ -27,9 +27,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import Link from "next/link"
 
-export default function DataConfigPanel ({ id }: { id: string}) {
-  const { update } = useContext(ReportContext)
+export default function DataConfigPanel () {
+  const { id, update } = useContext(ReportContext)
   const layers = useFragment<MapReportLayersSummaryFragment>({
     fragment: MapReportLayersSummaryFragmentStr,
     fragmentName: "MapReportLayersSummary",
@@ -58,6 +59,9 @@ export default function DataConfigPanel ({ id }: { id: string}) {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent>
+                  <Link href={`/data-sources/${layer?.source?.id}`}>
+                    Inspect data source
+                  </Link>
                   <Button onClick={() => {
                     removeLayer(layer?.source?.id!)
                   }} variant='destructive'>Remove layer</Button>

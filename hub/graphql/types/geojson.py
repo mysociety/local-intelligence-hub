@@ -1,32 +1,46 @@
-import strawberry_django
-from typing import List, Union, Literal, Optional
+from typing import List, Union, Optional
+import strawberry
 from strawberry.scalars import JSON
 from hub.graphql.utils import dict_key_field
+from typing import NewType
+from enum import Enum
 
-@strawberry_django.type
+@strawberry.enum
+class GeoJSONTypes(Enum):
+    Feature = "Feature"
+    FeatureCollection = "FeatureCollection"
+    Point = "Point"
+    Polygon = "Polygon"
+    MultiPolygon = "MultiPolygon"
+
+@strawberry.type
 class FeatureCollection:
-    type: Literal["FeatureCollection"]
+    type: GeoJSONTypes.FeatureCollection = GeoJSONTypes.FeatureCollection
     features: List["Feature"]
 
-@strawberry_django.type
+@strawberry.type
 class Feature:
     id: Optional[str]
-    type: Literal["Feature"]
+    type: GeoJSONTypes.Feature = GeoJSONTypes.Feature
     geometry: Union["PointGeometry", "PolygonGeometry", "MultiPolygonGeometry"]
     properties: JSON
 
-@strawberry_django.type
-class PointGeometry:
-    type: Literal["Point"]
+@strawberry.interface
+class Geometry:
+    type: GeoJSONTypes
+
+@strawberry.type
+class PointGeometry(Geometry):
+    type: GeoJSONTypes.Point = GeoJSONTypes.Point
     # lng, lat
     coordinates: List[float]
 
-@strawberry_django.type
-class PolygonGeometry:
-    type: Literal["Polygon"]
+@strawberry.type
+class PolygonGeometry(Geometry):
+    type: GeoJSONTypes.Polygon = GeoJSONTypes.Polygon
     coordinates: List[List[List[float]]]
 
-@strawberry_django.type
-class MultiPolygonGeometry:
-    type: Literal["MultiPolygon"]
+@strawberry.type
+class MultiPolygonGeometry(Geometry):
+    type: GeoJSONTypes.MultiPolygon = GeoJSONTypes.MultiPolygon
     coordinates: List[List[List[List[float]]]]

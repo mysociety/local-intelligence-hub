@@ -8,9 +8,10 @@ import strawberry_django
 from strawberry import auto
 from strawberry_django.auth.utils import get_current_user
 from strawberry.scalars import JSON
+from asgiref.sync import sync_to_async
 
 from hub import models
-from hub.graphql.types.geojson import Feature
+from hub.graphql.types.geojson import Feature, PointGeometry
 import json
 
 from hub.graphql.utils import dict_key_field
@@ -195,21 +196,19 @@ class ExternalDataSource:
         return self.webhook_healthcheck()
     
     @strawberry_django.field
-    def imported_data_count(self: models.ExternalDataSource, info: Info) -> bool:
+    def imported_data_count(self: models.ExternalDataSource, info: Info) -> int:
         return self.imported_data_count()
     
-    @strawberry.field
-    def geojson_data(self: models.ExternalDataSource, info: Info) -> List[JSON]:
+    @strawberry_django.field
+    def geojson_data(self: models.ExternalDataSource, info: Info) -> List[Feature]:
         data = self.get_import_data()
         return [
             Feature(
-                id=feature.id,
-                type="Feature",
-                geometry={
-                    "type": "Point",
-                    "coordinates": [feature.longitude, feature.latitude]
-                },
-                properties=json.dumps(feature)
+                id=str(feature.id),
+                geometry=PointGeometry(
+                    coordinates=[feature.point.x, feature.point.y]
+                ),
+                properties=feature.json
             )
             for feature in data
             if feature.point is not None
