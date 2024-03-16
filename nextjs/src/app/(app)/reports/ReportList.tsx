@@ -39,7 +39,7 @@ export default function ReportList() {
   return (
     <div className="flex flex-row gap-lg">
       {loading ? (
-        <section className="grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="w-full grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           <article className="rounded-xl border border-meepGray-700 px-6 py-5 space-y-3">
             <Skeleton className="h-4 w-full max-w-[100px]" />
             <Skeleton className="h-10 w-full" />
@@ -49,7 +49,7 @@ export default function ReportList() {
       ) : error ? (
         <h2>Error: {error.message}</h2>
       ) : data ? (
-        <section className="grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="w-full grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {data.reports.map((report) => (
             <ReportCard
               key={report.id}

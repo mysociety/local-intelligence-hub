@@ -36,6 +36,7 @@ import {
   TestSourceConnectionQueryVariables,
 } from "@/__generated__/graphql";
 import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
+import { toastPromise } from "@/lib/toast";
 
 const TEST_SOURCE = gql`
   query TestSourceConnection(
@@ -145,14 +146,7 @@ export default function Page({
   const [createSource, createSourceResult] = useMutation<
     CreateSourceMutation,
     CreateSourceMutationVariables
-  >(CREATE_SOURCE, {
-    variables: {
-      AirtableSource: {
-        ...source,
-        ...source.airtable,
-      }
-    },
-  });
+  >(CREATE_SOURCE);
 
   // TODO: Make this generic so it can be reused by different sources
   // Probably want a `test_connection` resolver that can optionally take `airtable` or `action_network` arguments
@@ -174,28 +168,42 @@ export default function Page({
     )
   }
 
-  async function submitCreateSource({ airtable }: FormInputs) {
-    toast.promise(createSource({ variables: airtable as any }),
-      {
-        loading: "Saving connection...",
-        success: (d: FetchResult<CreateSourceMutation>) => {
-          if (!d.errors && d.data?.createSource) {
-            return "Connection successful";
+  async function submitCreateSource(data: FormInputs) {
+    if (data.airtable) {
+      const { airtable, ...genericData } = data;
+      const variables = {
+          AirtableSource: {
+            ...genericData,
+            ...source.airtable,
           }
-          if (d.data?.createSource.dataType === DataSourceType.Member) {
-            router.push(
-              `/app/data-sources/create/configure/${externalDataSourceType}`,
-            );
-          } else {
-            router.push(
-              `/app/data-sources/inspect/${externalDataSourceType}`,
-            );
+      }
+      toastPromise(createSource({ variables }),
+        {
+          loading: "Saving connection...",
+          success: (d: FetchResult<CreateSourceMutation>) => {
+            if (!d.errors && d.data?.createSource) {
+              if (d.data?.createSource.dataType === DataSourceType.Member) {
+                router.push(
+                  `/app/data-sources/create/configure/${externalDataSourceType}`,
+                );
+              } else {
+                router.push(
+                  `/app/data-sources/inspect/${externalDataSourceType}`,
+                );
+              }
+              return "Connection successful";
+            }
+            return "Connection failed";
+          },
+          error(e) {
+            return {
+              title: "Connection failed",
+              description: e.message,
+            }
           }
-          return "Connection failed";
         },
-        error: "Connection failed",
-      },
-    )
+      )
+    }
   }
 
   if (createSourceResult.loading) {
