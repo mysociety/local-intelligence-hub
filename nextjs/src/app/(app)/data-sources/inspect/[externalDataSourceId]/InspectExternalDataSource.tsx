@@ -67,6 +67,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert"
+import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {
@@ -86,6 +87,7 @@ const GET_UPDATE_CONFIG = gql`
       webhookHealthcheck
       geographyColumn
       geographyColumnType
+      importedDataCount
       fieldDefinitions {
         label
         value
@@ -170,35 +172,53 @@ export default function InspectExternalDataSource({
       {allowMapping && (
         <>
         <div className="border-b border-meepGray-700 pt-10" />
-        <section className='space-y-4'>
-          <h2 className="text-hSm mb-5">Auto-updates</h2>
-          {source.jobs[0]?.lastEventAt ? (
-            <div className="text-meepGray-400">
-              Last sync:{" "}
-              {formatRelative(source.jobs[0].lastEventAt, new Date())} (
-              {source.jobs[0].status})
-            </div>
-          ) : null}
-          <AutoUpdateSwitch externalDataSource={source} />
-          {source.autoUpdateEnabled && !source.webhookHealthcheck && (
-            <>
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Webhooks unhealthy</AlertTitle>
-                <AlertDescription>
-                  The webhook is unhealthy. Please refresh the webhook to fix auto-updates.
-                </AlertDescription>
-              </Alert>
-              <AutoUpdateWebhookRefresh externalDataSourceId={externalDataSourceId} />
-            </>
-          )}
-        </section>
+        <div className='grid sm:grid-cols-2 gap-8'>
+          <section className='space-y-4'>
+            <div>Imported records</div>
+            <div className='text-hXlg'>{source.importedDataCount || 0}</div>
+            <p className='text-sm text-meepGray-400'>
+              Import data from this source into Mapped for use in auto-updates and reports.
+            </p>
+            <Button onClick={importData}>Import data</Button>
+          </section>
+          <section className='space-y-4'>
+            <h2 className="text-hSm mb-5">Auto-updates</h2>
+            <p className='text-sm text-meepGray-400'>
+              Auto-updates are {source.autoUpdateEnabled ? "enabled" : "disabled"} for this data source. Mapped can automatically update this data source based on the mapping you've defined in the Data Mapping section.
+            </p>
+            {source.jobs[0]?.lastEventAt ? (
+              <div className="text-meepGray-400">
+                Last sync:{" "}
+                {formatRelative(source.jobs[0].lastEventAt, new Date())} (
+                {source.jobs[0].status})
+              </div>
+            ) : null}
+            <AutoUpdateSwitch externalDataSource={source} />
+            {source.autoUpdateEnabled && !source.webhookHealthcheck && (
+              <>
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Webhooks unhealthy</AlertTitle>
+                  <AlertDescription>
+                    The webhook is unhealthy. Please refresh the webhook to fix auto-updates.
+                  </AlertDescription>
+                </Alert>
+                <AutoUpdateWebhookRefresh externalDataSourceId={externalDataSourceId} />
+              </>
+            )}
+          </section>
+        </div>
         </>
       )}
       <div className="border-b border-meepGray-700 pt-10" />
       <section className="space-y-4">
         <header className="flex flex-row justify-between items-center">
-          <h2 className="text-hSm mb-5">Data mapping</h2>
+          <div>
+            <h2 className="text-hSm mb-5">Data mapping</h2>
+            <p className='text-sm text-meepGray-400'>
+              Pull third party data into your data source's original location, based on the record's <DataSourceFieldLabel label={source.geographyColumnType} connectionType={source.connectionDetails.__typename!} />.
+            </p>
+          </div>
           {allowMapping && !!source.updateMapping?.length && (
             <TriggerUpdateButton id={source.id} />
           )}
@@ -268,7 +288,6 @@ export default function InspectExternalDataSource({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-        <Button onClick={importData}>Import data</Button>
       </section>
       <div className="border-b border-meepGray-700 pt-10" />
       <section>
@@ -381,7 +400,15 @@ export default function InspectExternalDataSource({
       mutation: gql`
         mutation ImportData($id: String!) {
           importAll(externalDataSourceId: $id) {
+            id
             importedDataCount
+            jobs {
+              status
+              id
+              taskName
+              args
+              lastEventAt
+            }
           }
         }
       `,

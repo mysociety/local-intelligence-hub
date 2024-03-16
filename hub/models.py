@@ -936,7 +936,7 @@ class ExternalDataSource(PolymorphicModel):
                 postcode_data: PostcodesIOResult = await loaders["postcodesIO"].load(
                   self.get_record_field(record, self.geography_column)
                 )
-                data, created = GenericData.objects.aupdate_or_create(
+                data, created = await GenericData.objects.aupdate_or_create(
                     data_type=data_type,
                     data=self.get_record_id(record),
                     defaults={
@@ -952,7 +952,7 @@ class ExternalDataSource(PolymorphicModel):
             # TODO: Re-implement this data as `AreaData`, linking each datum to an Area/AreaType as per `self.geography_column` and `self.geography_column_type`.
             # This will require importing other AreaTypes like admin_district, Ward
             for record in data:
-                data, created = GenericData.objects.aupdate_or_create(
+                data, created = await GenericData.objects.aupdate_or_create(
                     data_type=data_type,
                     data=self.get_record_id(record),
                     defaults={"json": self.get_record_dict(record)},

@@ -168,8 +168,8 @@ def get_or_create_organisation_for_source(info: Info, data: any):
     return organisation
 
 
-@strawberry.mutation(extensions=[IsAuthenticated()])
-def import_all(external_data_source_id: str) -> models.ExternalDataSource:
-    data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
-    data_source.import_all()
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+async def import_all(external_data_source_id: str) -> models.ExternalDataSource:
+    data_source = await models.ExternalDataSource.objects.aget(id=external_data_source_id)
+    await data_source.schedule_import_all()
     return data_source
