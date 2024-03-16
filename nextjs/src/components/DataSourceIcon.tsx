@@ -9,7 +9,10 @@ export function DataSourceFieldLabel({ label, fieldDefinition, connectionType, c
   className?: string,
   source?: string
 }) {
-  return <span className={twMerge('rounded-sm bg-meepGray-700 inline-flex gap-1 justify-start items-center overflow-hidden', className)}>
+  return <span className={twMerge(
+    'rounded-sm bg-meepGray-700 inline-flex gap-1 justify-start items-center overflow-hidden text-ellipsis text-nowrap',
+     className
+    )}>
     <span className='px-2 py-1 inline-flex gap-2 items-center'>
       <DataSourceIcon connectionType={connectionType} className={"inline-block w-5"} />
       <span className='font-IBMPlexMono !text-white'>

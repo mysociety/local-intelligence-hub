@@ -80,7 +80,6 @@ const GET_SOURCE_DATA = gql`
           type
           coordinates
         }
-        properties
       }
     }
   }

@@ -167,9 +167,6 @@ export default function Page({ params: { id } }: { params: Params }) {
         </div>
       </main>
       <AlertDialog open={deleteOpen} onOpenChange={() => setDeleteOpen(false)}>
-        <AlertDialogTrigger>
-          Delete
-        </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>

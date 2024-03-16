@@ -6,6 +6,7 @@ import {
   gql,
   useQuery,
   useApolloClient,
+  ApolloClient,
 } from "@apollo/client";
 import { AirtableLogo } from "@/components/logos";
 import { formatRelative } from "date-fns";
@@ -46,8 +47,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowUpDown, RefreshCcw } from "lucide-react";
-import { useState } from "react";
+import { ArrowUpDown, ExternalLink, RefreshCcw } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,6 +69,7 @@ import {
   AlertTitle,
 } from "@/components/ui/alert"
 import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
+import { toastPromise } from "@/lib/toast";
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {
@@ -75,6 +77,7 @@ const GET_UPDATE_CONFIG = gql`
       id
       name
       dataType
+      remoteUrl
       connectionDetails {
         crmType: __typename
         ... on AirtableSource {
@@ -87,6 +90,7 @@ const GET_UPDATE_CONFIG = gql`
       webhookHealthcheck
       geographyColumn
       geographyColumnType
+      isImporting
       importedDataCount
       fieldDefinitions {
         label
@@ -134,7 +138,12 @@ export default function InspectExternalDataSource({
     },
   });
 
-  if (loading) {
+  useEffect(() => {
+    const interval = setInterval(() => refetch(), 5000)
+    return () => clearInterval(interval)
+  }, [refetch])
+
+  if (!data?.externalDataSource && loading) {
     return <LoadingIcon />;
   }
 
@@ -159,6 +168,11 @@ export default function InspectExternalDataSource({
           }}>
             {source.name}
           </h1>
+          {!!source.remoteUrl && (
+            <a href={source.remoteUrl} className="text-meepGray-300 underline text-sm">
+              Visit URL: {source.remoteUrl} <ExternalLink />
+            </a>
+          )}
         </div>
         <div>
           {source.connectionDetails.crmType ===
@@ -179,7 +193,12 @@ export default function InspectExternalDataSource({
             <p className='text-sm text-meepGray-400'>
               Import data from this source into Mapped for use in auto-updates and reports.
             </p>
-            <Button onClick={importData}>Import data</Button>
+            <Button disabled={source.isImporting} onClick={() => importData(client, externalDataSourceId)}>
+              {!source.isImporting ? "Import data" : <span className='flex flex-row gap-2 items-center'>
+                <LoadingIcon size={"18"} />
+                <span>Importing...</span>
+              </span>}
+            </Button>
           </section>
           <section className='space-y-4'>
             <h2 className="text-hSm mb-5">Auto-updates</h2>
@@ -394,38 +413,44 @@ export default function InspectExternalDataSource({
       error: `Couldn't delete ${source.name}`,
     });
   }
+}
 
-  function importData () {
-    const importJob = client.mutate<ImportDataMutation, ImportDataMutationVariables>({
-      mutation: gql`
-        mutation ImportData($id: String!) {
-          importAll(externalDataSourceId: $id) {
+export function importData (client: ApolloClient<any>, externalDataSourceId: string) {
+  const importJob = client.mutate<ImportDataMutation, ImportDataMutationVariables>({
+    mutation: gql`
+      mutation ImportData($id: String!) {
+        importAll(externalDataSourceId: $id) {
+          id
+          importedDataCount
+          isImporting
+          jobs {
+            status
             id
-            importedDataCount
-            jobs {
-              status
-              id
-              taskName
-              args
-              lastEventAt
-            }
+            taskName
+            args
+            lastEventAt
           }
         }
-      `,
-      variables: {
-        id: externalDataSourceId
       }
-    })
-    toast.promise(importJob, {
-      loading: "Importing data...",
-      success: (d: FetchResult) => {
-        if (!d.errors) {
-          return "Imported data";
+    `,
+    variables: {
+      id: externalDataSourceId
+    }
+  })
+  toastPromise(importJob, {
+    loading: "Scheduling data import...",
+    success: (d: FetchResult) => {
+      if (!d.errors) {
+        return {
+          title: "Import is processing",
+          description: "This may take a few minutes. You can check the logs for progress."
         }
-      },
-      error: `Couldn't import data`,
-    });
-  }
+      } else {
+        throw new Error("Couldn't schedule data import")
+      }
+    },
+    error: `Couldn't schedule data import`,
+  });
 }
 
 interface DataTableProps<TData, TValue> {

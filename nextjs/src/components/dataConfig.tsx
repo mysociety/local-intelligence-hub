@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { File, Plus } from "lucide-react"
+import { ArrowRight, File, Plus } from "lucide-react"
 import { gql, useApolloClient, useFragment, useQuery } from "@apollo/client"
 import { AddMapLayerButton } from "./report/AddMapLayerButton"
 import { MapReportLayersSummaryFragment } from "@/__generated__/graphql"
@@ -28,9 +28,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import Link from "next/link"
+import { importData } from "@/app/(app)/data-sources/inspect/[externalDataSourceId]/InspectExternalDataSource"
+import { LoadingIcon } from "./ui/loadingIcon"
 
 export default function DataConfigPanel () {
   const { id, update } = useContext(ReportContext)
+  const client = useApolloClient()
   const layers = useFragment<MapReportLayersSummaryFragment>({
     fragment: MapReportLayersSummaryFragmentStr,
     fragmentName: "MapReportLayersSummary",
@@ -58,10 +61,21 @@ export default function DataConfigPanel () {
                     <span>{layer?.name || layer?.source?.name}</span>
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent>
-                  <Link href={`/data-sources/${layer?.source?.id}`}>
-                    Inspect data source
-                  </Link>
+                <PopoverContent className='space-y-4'>
+                  {!!layer?.source?.id && (
+                    <>
+                      <div className='text-lg'>{layer.source.importedDataCount || 0} records imported</div>
+                      <Link href={`/data-sources/inspect/${layer.source.id}`}>
+                        Inspect data source <ArrowRight />
+                      </Link>
+                      <Button disabled={layer.source.isImporting} onClick={() => importData(client, layer.source!.id)}>
+                        {!layer.source.isImporting ? "Import data" : <span className='flex flex-row gap-2 items-center'>
+                          <LoadingIcon size={"18"} />
+                          <span>Importing...</span>
+                        </span>}
+                      </Button>
+                    </>
+                  )}
                   <Button onClick={() => {
                     removeLayer(layer?.source?.id!)
                   }} variant='destructive'>Remove layer</Button>
@@ -192,6 +206,8 @@ export const MapReportLayersSummaryFragmentStr = gql`
       source {
         id
         name
+        isImporting
+        importedDataCount
       }
     }
   }

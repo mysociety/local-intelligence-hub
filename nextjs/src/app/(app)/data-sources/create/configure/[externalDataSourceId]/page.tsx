@@ -121,6 +121,15 @@ export default function Page({
           >
             Back
           </Button>
+          <Button
+            variant="outline"
+            type="reset"
+            onClick={() => {
+              router.push(`/data-sources/inspect/${externalDataSourceId}`);
+            }}
+          >
+            Skip data updates
+          </Button>
         </UpdateMappingForm>
       ) : null}
     </div>

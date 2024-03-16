@@ -882,6 +882,12 @@ class ExternalDataSource(PolymorphicModel):
         """
         return None
 
+    def remote_url(self) -> Optional[str]:
+        """
+        Get the URL of the data source in the remote system.
+        """
+        return None
+
     def setup_webhooks(self):
         """
         Set up a webhook.
@@ -913,7 +919,7 @@ class ExternalDataSource(PolymorphicModel):
         data_set, created = await DataSet.objects.aupdate_or_create(
             external_data_source=self,
             defaults={
-                "name": self.name,
+                "name": f"Cached dataset for {self.id}",
                 "data_type": "json",
                 "table": "commondata",
                 "default_value": {},
@@ -932,7 +938,7 @@ class ExternalDataSource(PolymorphicModel):
         if self.geography_column and self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE:
             loaders = await self.get_loaders()
 
-            for record in data:
+            async def create_import_record(record):
                 postcode_data: PostcodesIOResult = await loaders["postcodesIO"].load(
                   self.get_record_field(record, self.geography_column)
                 )
@@ -944,9 +950,17 @@ class ExternalDataSource(PolymorphicModel):
                         "point": Point(
                             postcode_data["longitude"],
                             postcode_data["latitude"],
-                        )
+                        ) if (
+                            postcode_data is not None
+                            and "latitude" in postcode_data
+                            and "longitude" in postcode_data
+                        ) else None,
                     }
                 )
+            # TODO: batch this up
+            await asyncio.gather(
+                *[create_import_record(record) for record in data]
+            )
         else:
             # To allow us to lean on LIH's geo-analytics features,
             # TODO: Re-implement this data as `AreaData`, linking each datum to an Area/AreaType as per `self.geography_column` and `self.geography_column_type`.
@@ -1362,6 +1376,9 @@ class AirtableSource(ExternalDataSource):
     @cached_property
     def schema(self) -> AirtableTableSchema:
         return self.table.schema()
+    
+    def remote_url(self) -> str:
+        return f"https://airtable.com/{self.base_id}/{self.table_id}?blocks=hide"
 
     def healthcheck(self):
         record = self.table.first()

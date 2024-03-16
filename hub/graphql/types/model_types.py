@@ -165,6 +165,13 @@ class ExternalDataSource:
         except AttributeError or NotImplementedError:
             return None
 
+    @strawberry_django.field
+    def remote_url(self, info) -> Optional[str]:
+        try:
+            return self.remote_url()
+        except AttributeError or NotImplementedError:
+            return None
+
     jobs: List[QueueJob] = strawberry_django.field(
         resolver=lambda self: procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
             args__external_data_source_id=str(self.id)
@@ -204,15 +211,22 @@ class ExternalDataSource:
         data = self.get_import_data()
         return [
             PointFeature(
-                id=str(feature.id),
+                id=str(generic_datum.data),
                 geometry=PointGeometry(
-                    coordinates=[feature.point.x, feature.point.y]
+                    coordinates=[generic_datum.point.x, generic_datum.point.y]
                 ),
-                properties=feature.json
+                properties=generic_datum.json
             )
-            for feature in data
-            if feature.point is not None
+            for generic_datum in data
+            if generic_datum.point is not None
         ]
+    
+    @strawberry_django.field
+    def is_importing(self: models.ExternalDataSource, info: Info) -> bool:
+        return self.event_log_queryset().filter(
+            status="doing",
+            task_name="hub.tasks.import_all"
+        ).exists()
 
 @strawberry.type
 class AutoUpdateConfig:

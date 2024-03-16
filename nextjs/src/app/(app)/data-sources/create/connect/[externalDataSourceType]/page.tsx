@@ -153,7 +153,7 @@ export default function Page({
   async function submitTestConnection({
     airtable
   }: FormInputs) {
-    toast.promise(
+    toastPromise(
       testSource({ variables: airtable as any }),
       {
         loading: "Testing connection...",
@@ -161,7 +161,7 @@ export default function Page({
           if (!d.errors && d.data?.testSourceConnection) {
             return "Connection is healthy";
           }
-          return "Connection failed";
+          throw new Error(d.errors)
         },
         error: "Connection failed",
       },
@@ -184,16 +184,16 @@ export default function Page({
             if (!d.errors && d.data?.createSource) {
               if (d.data?.createSource.dataType === DataSourceType.Member) {
                 router.push(
-                  `/app/data-sources/create/configure/${externalDataSourceType}`,
+                  `/data-sources/create/configure/${d.data.createSource.id}`,
                 );
               } else {
                 router.push(
-                  `/app/data-sources/inspect/${externalDataSourceType}`,
+                  `/data-sources/create/inspect/${d.data.createSource.id}`,
                 );
               }
               return "Connection successful";
             }
-            return "Connection failed";
+            throw new Error(d.errors)
           },
           error(e) {
             return {

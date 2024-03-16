@@ -35,8 +35,6 @@ const ALL_EXTERNAL_DATA_SOURCES = gql`
 export default function Page() {
   const router = useRouter();
   const context = useContext(CreateAutoUpdateFormContext);
-  const crms = useQuery<AllExternalDataSourcesQuery>(ALL_EXTERNAL_DATA_SOURCES);
-  const unusedCRMs = crms.data?.externalDataSources.filter((d) => !d.autoUpdateEnabled && d.dataType === DataSourceType.Member);
   const [source, setSource] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,7 +53,6 @@ export default function Page() {
           </a>
         </p>
       </header>
-      <h2 className="text-hSm">Connect a new data source</h2>
       {Object.values(externalDataSourceOptions).map((externalDataSource) => (
         <div
           key={externalDataSource.key}
@@ -83,52 +80,6 @@ export default function Page() {
       >
         Continue
       </Button>
-      {!!unusedCRMs?.length && (
-        <section className="space-y-7 pt-7">
-          <h2 className="text-hSm">Or configure updates for an existing data source</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-7">
-            {unusedCRMs.map((externalDataSource) => {
-                const Logo = getSourceOptionForTypename(
-                  externalDataSource.connectionDetails.crmType,
-                )!.logo;
-                return (
-                  <article
-                    key={externalDataSource.id}
-                    className="cursor-pointer rounded-3xl border-meepGray-600 px-6 py-5 space-y-3 transition-all hover:border-brandBlue border-2 box-border"
-                    onClick={() => {
-                      router.push(
-                        `/data-sources/create/configure/${externalDataSource.id}`,
-                      );
-                    }}
-                  >
-                    <Logo className='w-20'/>
-                    <div className="text-hSm font-bold">{externalDataSource.name}</div>
-                    <div className="text-sm text-meepGray-400">
-                      <p>
-                        Created{" "}
-                        {formatRelative(
-                          externalDataSource.createdAt,
-                          new Date(),
-                        )}
-                      </p>
-                      {!!externalDataSource.connectionDetails.baseId && (
-                        <div className='mt-2'>
-                          <code>
-                            {externalDataSource.connectionDetails.baseId}
-                          </code>
-                          <br />
-                          <code>
-                            {externalDataSource.connectionDetails.tableId}
-                          </code>
-                        </div>
-                      )}
-                    </div>
-                  </article>
-                );
-              })}
-          </div>
-        </section>
-      )}
     </div>
   );
 }
