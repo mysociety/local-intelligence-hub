@@ -5,7 +5,7 @@ import strawberry_django
 from gqlauth.core.middlewares import JwtSchema
 from gqlauth.user import arg_mutations as auth_mutations
 from gqlauth.user.queries import UserQueries
-from strawberry_django import mutations
+from strawberry_django import mutations as django_mutations
 from strawberry_django.optimizer import DjangoOptimizerExtension
 from strawberry_django.permissions import IsAuthenticated
 
@@ -37,6 +37,7 @@ class Query(UserQueries):
     )
     job: types.QueueJob = strawberry_django.field(extensions=[IsAuthenticated()])
     jobs: List[types.QueueJob] = strawberry_django.field(extensions=[IsAuthenticated()])
+    reports: List[types.Report] = strawberry_django.field(extensions=[IsAuthenticated()])
     map_report: types.MapReport = strawberry_django.field(extensions=[IsAuthenticated()])
     map_reports: List[types.MapReport] = strawberry_django.field(extensions=[IsAuthenticated()])
 
@@ -61,16 +62,16 @@ class Mutation:
     resend_activation_email = auth_mutations.ResendActivationEmail.field
 
     create_airtable_source: types.AirtableSource = mutation_types.create_airtable_source
-    update_airtable_source: types.AirtableSource = mutations.update(
+    update_airtable_source: types.AirtableSource = django_mutations.update(
         mutation_types.AirtableSourceInput, extensions=[IsAuthenticated()]
     )
-    update_external_data_source: types.ExternalDataSource = mutations.update(
+    update_external_data_source: types.ExternalDataSource = django_mutations.update(
         mutation_types.ExternalDataSourceInput, extensions=[IsAuthenticated()]
     )
-    delete_airtable_source: types.AirtableSource = mutations.delete(
+    delete_airtable_source: types.AirtableSource = django_mutations.delete(
         mutation_types.IDObject, extensions=[IsAuthenticated()]
     )
-    delete_external_data_source: types.ExternalDataSource = mutations.delete(
+    delete_external_data_source: types.ExternalDataSource = django_mutations.delete(
         mutation_types.IDObject, extensions=[IsAuthenticated()]
     )
 
@@ -80,16 +81,16 @@ class Mutation:
     refresh_webhooks: types.ExternalDataSource = mutation_types.refresh_webhooks
 
     create_organisation: types.Membership = mutation_types.create_organisation
-    update_organisation: types.Organisation = mutations.update(
+    update_organisation: types.Organisation = django_mutations.update(
         mutation_types.OrganisationInputPartial, extensions=[IsAuthenticated()]
     )
 
     import_all: types.ExternalDataSource = mutation_types.import_all
 
     create_map_report: types.MapReport = mutation_types.create_map_report
-    update_map_report: types.MapReport = mutations.update(mutation_types.MapReportInput,
+    update_map_report: types.MapReport = django_mutations.update(mutation_types.MapReportInput,
                                                           extensions=[IsAuthenticated()])
-    delete_map_report: types.MapReport = mutations.delete(mutation_types.IDObject,
+    delete_map_report: types.MapReport = django_mutations.delete(mutation_types.IDObject,
                                                           extensions=[IsAuthenticated()])
 
 

@@ -21,16 +21,19 @@ const documents = {
     "\n  query AutoUpdateCreationReview($ID: ID!) {\n    externalDataSource(pk: $ID) {\n      id\n      name\n      geographyColumn\n      connectionDetails {\n        crmType: __typename\n      }\n      autoUpdateEnabled\n      updateMapping {\n        source\n        sourcePath\n        destinationColumn\n      }\n      jobs {\n        lastEventAt\n        status\n      }\n    }\n  }\n": types.AutoUpdateCreationReviewDocument,
     "\n  query ExternalDataSourceInspectPage($ID: ID!) {\n    externalDataSource(pk: $ID) {\n      id\n      name\n      dataType\n      connectionDetails {\n        crmType: __typename\n        ... on AirtableSource {\n          baseId\n          tableId\n          apiKey\n        }\n      }\n      autoUpdateEnabled\n      webhookHealthcheck\n      geographyColumn\n      geographyColumnType\n      fieldDefinitions {\n        label\n        value\n        description\n      }\n      jobs {\n        status\n        id\n        taskName\n        args\n        lastEventAt\n      }\n      updateMapping {\n        source\n        sourcePath\n        destinationColumn\n      }\n    }\n  }\n": types.ExternalDataSourceInspectPageDocument,
     "\n  mutation DeleteUpdateConfig($id: String!) {\n    deleteExternalDataSource(data: { id: $id }) {\n      id\n    }\n  }\n": types.DeleteUpdateConfigDocument,
+    "\n        mutation ImportData($id: String!) {\n          importAll(externalDataSourceId: $id) {\n            importedDataCount\n          }\n        }\n      ": types.ImportDataDocument,
     "\n  query ExternalDataSourceName($externalDataSourceId: ID!) {\n    externalDataSource(pk: $externalDataSourceId) {\n      name\n    }\n  }\n": types.ExternalDataSourceNameDocument,
-    "\n  query ListMapReports {\n    mapReports {\n      id\n      name\n      lastUpdate\n    }\n  }\n": types.ListMapReportsDocument,
+    "\n  query ListReports {\n    reports {\n      id\n      name\n      lastUpdate\n    }\n  }\n": types.ListReportsDocument,
     "\nmutation CreateMapReport($data: MapReportInput!) {\n  createMapReport(data: $data) {\n    ... on MapReport {\n      id\n    }\n    ... on OperationInfo {\n      messages {\n        message\n      }\n    }\n  }\n}\n": types.CreateMapReportDocument,
     "\n  mutation Verify($token: String!) {\n    verifyAccount(token: $token) {\n      errors\n      success\n    }\n  }\n": types.VerifyDocument,
     "\n  query Example {\n    organisations {\n      id\n      name\n    }\n  }\n": types.ExampleDocument,
     "\n  mutation Login($username: String!, $password: String!) {\n    tokenAuth(username: $username, password: $password) {\n      errors\n      success\n      token {\n        token\n        payload {\n          exp\n        }\n      }\n    }\n  }\n": types.LoginDocument,
     "\n  mutation Register($email: String!, $password1: String!, $password2: String!, $username: String!) {\n    register(email: $email, password1: $password1, password2: $password2, username: $username) {\n      errors\n      success\n    }\n  }\n": types.RegisterDocument,
-    "\n  query GetMapReport($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n      description\n    }\n  }\n": types.GetMapReportDocument,
-    "\n  mutation UpdateMapReport($input: MapReportInput!) {\n    updateMapReport(data: $input) {\n      id\n      name\n      description\n    }\n  }\n": types.UpdateMapReportDocument,
+    "\n  query GetMapReportName($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n    }\n  }\n": types.GetMapReportNameDocument,
+    "\n  fragment MapReportPage on MapReport {\n    id\n    name\n    ... MapReportLayersSummary\n  }\n  \n": types.MapReportPageFragmentDoc,
+    "\n  mutation UpdateMapReport($input: MapReportInput!) {\n    updateMapReport(data: $input) {\n      ... MapReportPage\n    }\n  }\n  \n": types.UpdateMapReportDocument,
     "\n  mutation DeleteMapReport($id: IDObject!) {\n    deleteMapReport(data: $id) {\n      id\n    }\n  }\n": types.DeleteMapReportDocument,
+    "\n  query GetMapReport($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n      ... MapReportPage\n    }\n  }\n  \n": types.GetMapReportDocument,
     "\n  mutation AutoUpdateWebhookRefresh($ID: String!) {\n    refreshWebhooks(externalDataSourceId: $ID) {\n      id\n      webhookHealthcheck\n    }\n  }\n": types.AutoUpdateWebhookRefreshDocument,
     "\n  fragment AutoUpdateCardFields on ExternalDataSource {\n    id\n    name\n    dataType\n    connectionDetails {\n      crmType: __typename\n    }\n    autoUpdateEnabled\n    updateMapping {\n      source\n      sourcePath\n      destinationColumn\n    }\n    jobs {\n      lastEventAt\n      status\n    }\n  }\n": types.AutoUpdateCardFieldsFragmentDoc,
     "\n  query ExternalDataSourceAutoUpdateCard($ID: ID!) {\n    externalDataSource(pk: $ID) {\n      ...AutoUpdateCardFields\n    }\n  }\n  \n": types.ExternalDataSourceAutoUpdateCardDocument,
@@ -40,6 +43,8 @@ const documents = {
     "\n  fragment ExternalDataSourceCardFields on ExternalDataSource {\n    id\n    name\n    connectionDetails {\n      crmType: __typename\n    }\n  }\n": types.ExternalDataSourceCardFieldsFragmentDoc,
     "\n  query ExternalDataSourceCard($ID: ID!) {\n    externalDataSource(pk: $ID) {\n      ...ExternalDataSourceCardFields\n    }\n  }\n  \n": types.ExternalDataSourceCardDocument,
     "\n  query EnrichmentLayers {\n    externalDataSources {\n      id\n      name\n      geographyColumn\n      geographyColumnType\n      dataType\n      connectionDetails {\n        __typename\n      }\n      fieldDefinitions {\n        label\n        value\n        description\n      }\n    }\n  }\n": types.EnrichmentLayersDocument,
+    "\n  fragment MapReportLayersSummary on MapReport {\n    layers {\n      name\n      source {\n        id\n        name\n      }\n    }\n  }\n": types.MapReportLayersSummaryFragmentDoc,
+    "\n  query GetMemberList {\n    externalDataSources(filters: { dataType: MEMBER }) {\n      id\n      name\n      importedDataCount\n    }\n  }\n": types.GetMemberListDocument,
     "\n  query PublicUser {\n    publicUser {\n      id\n      username\n      email\n    }\n  }\n": types.PublicUserDocument,
 };
 
@@ -92,11 +97,15 @@ export function gql(source: "\n  mutation DeleteUpdateConfig($id: String!) {\n  
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function gql(source: "\n        mutation ImportData($id: String!) {\n          importAll(externalDataSourceId: $id) {\n            importedDataCount\n          }\n        }\n      "): (typeof documents)["\n        mutation ImportData($id: String!) {\n          importAll(externalDataSourceId: $id) {\n            importedDataCount\n          }\n        }\n      "];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function gql(source: "\n  query ExternalDataSourceName($externalDataSourceId: ID!) {\n    externalDataSource(pk: $externalDataSourceId) {\n      name\n    }\n  }\n"): (typeof documents)["\n  query ExternalDataSourceName($externalDataSourceId: ID!) {\n    externalDataSource(pk: $externalDataSourceId) {\n      name\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  query ListMapReports {\n    mapReports {\n      id\n      name\n      lastUpdate\n    }\n  }\n"): (typeof documents)["\n  query ListMapReports {\n    mapReports {\n      id\n      name\n      lastUpdate\n    }\n  }\n"];
+export function gql(source: "\n  query ListReports {\n    reports {\n      id\n      name\n      lastUpdate\n    }\n  }\n"): (typeof documents)["\n  query ListReports {\n    reports {\n      id\n      name\n      lastUpdate\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -120,15 +129,23 @@ export function gql(source: "\n  mutation Register($email: String!, $password1: 
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  query GetMapReport($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n      description\n    }\n  }\n"): (typeof documents)["\n  query GetMapReport($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n      description\n    }\n  }\n"];
+export function gql(source: "\n  query GetMapReportName($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  query GetMapReportName($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  mutation UpdateMapReport($input: MapReportInput!) {\n    updateMapReport(data: $input) {\n      id\n      name\n      description\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateMapReport($input: MapReportInput!) {\n    updateMapReport(data: $input) {\n      id\n      name\n      description\n    }\n  }\n"];
+export function gql(source: "\n  fragment MapReportPage on MapReport {\n    id\n    name\n    ... MapReportLayersSummary\n  }\n  \n"): (typeof documents)["\n  fragment MapReportPage on MapReport {\n    id\n    name\n    ... MapReportLayersSummary\n  }\n  \n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation UpdateMapReport($input: MapReportInput!) {\n    updateMapReport(data: $input) {\n      ... MapReportPage\n    }\n  }\n  \n"): (typeof documents)["\n  mutation UpdateMapReport($input: MapReportInput!) {\n    updateMapReport(data: $input) {\n      ... MapReportPage\n    }\n  }\n  \n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  mutation DeleteMapReport($id: IDObject!) {\n    deleteMapReport(data: $id) {\n      id\n    }\n  }\n"): (typeof documents)["\n  mutation DeleteMapReport($id: IDObject!) {\n    deleteMapReport(data: $id) {\n      id\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetMapReport($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n      ... MapReportPage\n    }\n  }\n  \n"): (typeof documents)["\n  query GetMapReport($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n      ... MapReportPage\n    }\n  }\n  \n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -165,6 +182,14 @@ export function gql(source: "\n  query ExternalDataSourceCard($ID: ID!) {\n    e
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  query EnrichmentLayers {\n    externalDataSources {\n      id\n      name\n      geographyColumn\n      geographyColumnType\n      dataType\n      connectionDetails {\n        __typename\n      }\n      fieldDefinitions {\n        label\n        value\n        description\n      }\n    }\n  }\n"): (typeof documents)["\n  query EnrichmentLayers {\n    externalDataSources {\n      id\n      name\n      geographyColumn\n      geographyColumnType\n      dataType\n      connectionDetails {\n        __typename\n      }\n      fieldDefinitions {\n        label\n        value\n        description\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  fragment MapReportLayersSummary on MapReport {\n    layers {\n      name\n      source {\n        id\n        name\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment MapReportLayersSummary on MapReport {\n    layers {\n      name\n      source {\n        id\n        name\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetMemberList {\n    externalDataSources(filters: { dataType: MEMBER }) {\n      id\n      name\n      importedDataCount\n    }\n  }\n"): (typeof documents)["\n  query GetMemberList {\n    externalDataSources(filters: { dataType: MEMBER }) {\n      id\n      name\n      importedDataCount\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -24,6 +24,8 @@ import {
   ExternalDataSourceInput,
   ExternalDataSourceInspectPageQuery,
   ExternalDataSourceInspectPageQueryVariables,
+  ImportDataMutation,
+  ImportDataMutationVariables,
   UpdateExternalDataSourceMutation,
   UpdateExternalDataSourceMutationVariables,
 } from "@/__generated__/graphql";
@@ -266,6 +268,7 @@ export default function InspectExternalDataSource({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        <Button onClick={importData}>Import data</Button>
       </section>
       <div className="border-b border-meepGray-700 pt-10" />
       <section>
@@ -370,6 +373,30 @@ export default function InspectExternalDataSource({
         }
       },
       error: `Couldn't delete ${source.name}`,
+    });
+  }
+
+  function importData () {
+    const importJob = client.mutate<ImportDataMutation, ImportDataMutationVariables>({
+      mutation: gql`
+        mutation ImportData($id: String!) {
+          importAll(externalDataSourceId: $id) {
+            importedDataCount
+          }
+        }
+      `,
+      variables: {
+        id: externalDataSourceId
+      }
+    })
+    toast.promise(importJob, {
+      loading: "Importing data...",
+      success: (d: FetchResult) => {
+        if (!d.errors) {
+          return "Imported data";
+        }
+      },
+      error: `Couldn't import data`,
     });
   }
 }

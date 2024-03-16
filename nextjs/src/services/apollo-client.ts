@@ -1,4 +1,4 @@
-import { ApolloLink, HttpLink } from "@apollo/client";
+import { ApolloLink, HttpLink, gql } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
 import {
   NextSSRInMemoryCache,
@@ -6,6 +6,9 @@ import {
 } from "@apollo/experimental-nextjs-app-support/ssr";
 import { registerApolloClient } from "@apollo/experimental-nextjs-app-support/rsc";
 import { cookies } from "next/headers";
+// import { createFragmentRegistry } from "@apollo/client/cache";
+// import { MapReportPageFragmentStr } from "@/app/reports/[id]/page";
+// import { MapReportLayersSummaryFragmentStr } from "@/components/dataConfig";
 
 const getJwt = (): string | undefined => {
   const cookieStore = cookies();
@@ -55,7 +58,12 @@ const makeBackEndClient = () => {
   });
 
   return new NextSSRApolloClient({
-    cache: new NextSSRInMemoryCache(),
+    cache: new NextSSRInMemoryCache({
+      // fragments: createFragmentRegistry(gql`
+      //   ${MapReportPageFragmentStr}
+      //   ${MapReportLayersSummaryFragmentStr}
+      // `)
+    }),
     link: ApolloLink.from([authLink, httpLink]),
   });
 };

@@ -1042,6 +1042,12 @@ class ExternalDataSource(PolymorphicModel):
         json_list = [d.json for d in enrichment_data]
         enrichment_df = pd.DataFrame.from_records(json_list)
         return enrichment_df
+    
+    def imported_data_count(self) -> int:
+        count = self.get_import_data().all().count()
+        if isinstance(count, int):
+            return count
+        return 0
 
     def data_loader_factory(self):
         async def fetch_enrichment_data(keys: List[self.EnrichmentLookup]) -> list[str]:
@@ -1537,4 +1543,11 @@ class Report(PolymorphicModel):
         return self.name
 
 class MapReport(Report):
-    pass
+    layers = models.JSONField(blank=True, null=True, default=list)
+
+    class MapLayer(TypedDict):
+        name: str
+        source: str
+
+    def get_layers(self) -> list[MapLayer]:
+        return self.layers

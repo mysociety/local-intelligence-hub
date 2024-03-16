@@ -3,6 +3,7 @@ from typing import List, Optional, Union
 
 import procrastinate.contrib.django.models
 import strawberry
+from strawberry.types.info import Info
 import strawberry_django
 from strawberry import auto
 from strawberry_django.auth.utils import get_current_user
@@ -174,37 +175,37 @@ class ExternalDataSource:
         return queryset.filter(organisation__members__user=user.id)
 
     @strawberry_django.field
-    def healthcheck(self, info) -> bool:
+    def healthcheck(self: models.ExternalDataSource, info) -> bool:
         return self.healthcheck()
 
     @strawberry_django.field
-    def connection_details(self, info) -> Union["AirtableSource"]:
+    def connection_details(self: models.ExternalDataSource, info) -> Union["AirtableSource"]:
         instance = self.get_real_instance()
         return instance
 
     @strawberry_django.field
-    def auto_update_webhook_url(self, info) -> str:
+    def auto_update_webhook_url(self: models.ExternalDataSource, info) -> str:
         return self.auto_update_webhook_url()
 
     @strawberry_django.field
-    def webhook_healthcheck(self, info) -> bool:
+    def webhook_healthcheck(self: models.ExternalDataSource, info) -> bool:
         return self.webhook_healthcheck()
+    
+    @strawberry_django.field
+    def imported_data_count(self: models.ExternalDataSource, info: Info) -> bool:
+        return self.imported_data_count()
+ 
+def dict_key(root, info: Info) -> str:
+    return root.get(info.python_name, None)
 
+def dict_key_field():
+    return strawberry.field(resolver=dict_key)
 
 @strawberry.type
 class AutoUpdateConfig:
-    @strawberry.field
-    def source(self) -> str:
-        return self["source"]
-
-    @strawberry.field
-    def source_path(self) -> str:
-        return self["source_path"]
-
-    @strawberry.field
-    def destination_column(self) -> str:
-        return self["destination_column"]
-
+    source: str = dict_key_field()
+    source_path: str = dict_key_field()
+    destination_column: str = dict_key_field()
 
 @strawberry_django.type(models.AirtableSource)
 class AirtableSource(ExternalDataSource):
@@ -212,8 +213,8 @@ class AirtableSource(ExternalDataSource):
     base_id: auto
     table_id: auto
 
-@strawberry_django.type(models.MapReport)
-class MapReport:
+@strawberry_django.type(models.Report)
+class Report:
     id: auto
     organisation: auto
     name: auto
@@ -226,3 +227,18 @@ class MapReport:
     def get_queryset(cls, queryset, info, **kwargs):
         user = get_current_user(info)
         return queryset.filter(organisation__members__user=user.id)
+
+
+@strawberry.type
+class MapLayer:
+    name: str = dict_key_field()
+    
+    @strawberry_django.field
+    def source(self, info: Info) -> ExternalDataSource:
+        source_id = self.get(info.python_name, None)
+        return models.ExternalDataSource.objects.get(id=source_id)
+
+
+@strawberry_django.type(models.MapReport)
+class MapReport(Report):
+    layers: Optional[List[MapLayer]]

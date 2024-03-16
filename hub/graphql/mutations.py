@@ -47,6 +47,11 @@ class AirtableSourceInput(ExternalDataSourceInput):
     table_id: auto
 
 
+@strawberry.input
+class MapLayerInput:
+    name: str
+    source: str
+
 @strawberry_django.input(models.MapReport, partial=True)
 class MapReportInput:
     id: auto
@@ -56,7 +61,7 @@ class MapReportInput:
     description: auto
     created_at: auto
     last_update: auto
-
+    layers: Optional[List[MapLayerInput]]
 
 @strawberry.mutation(extensions=[IsAuthenticated(), InputMutationExtension()])
 async def create_organisation(

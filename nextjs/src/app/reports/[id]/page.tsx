@@ -1,7 +1,7 @@
 // page.js
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, createContext } from "react";
 import Map, { Marker, Popup } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import Pin from "@/components/Pin";
@@ -24,7 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BarChart3, Layers, MoreVertical } from "lucide-react"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import ReportsConsItem from "@/components/reportsConstituencyItem";
-import DataConfig from "@/components/dataConfig";
+import DataConfigPanel, { MapReportLayersSummaryFragmentStr } from "@/components/dataConfig";
 import { FetchResult, gql, useApolloClient, useQuery } from "@apollo/client";
 import { toast } from "sonner";
 import { DeleteMapReportMutation, DeleteMapReportMutationVariables, GetMapReportQuery, GetMapReportQueryVariables, MapReportInput, UpdateMapReportMutation, UpdateMapReportMutationVariables } from "@/__generated__/graphql";
@@ -40,24 +40,20 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { buttonVariants } from "@/components/ui/button";
+import { Params } from "./lib";
+import { useRouter } from "next/navigation";
+import spaceCase from 'to-space-case'
+import { toastPromise } from "@/lib/toast";
 
-const GET_MAP_REPORT = gql`
-  query GetMapReport($id: ID!) {
-    mapReport(pk: $id) {
-      id
-      name
-      description
-    }
-  }
-`
-
-export default function Page({ params: { id } }: { params: { id: string } }) {
+export default function Page({ params: { id } }: { params: Params }) {
   const client = useApolloClient();
   const report = useQuery<GetMapReportQuery, GetMapReportQueryVariables>(GET_MAP_REPORT, {
     variables: { id },
   });
+  const router = useRouter();
 
   const [isDataConfigOpen, setDataConfigOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const toggleDataConfig = () => setDataConfigOpen(!isDataConfigOpen);
 
   const [isConsDataOpen, setConsDataOpen] = useState(false);
@@ -85,143 +81,153 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
   }
 
   return (
-    <main className="absolute w-full h-full">
-      <div className='w-full h-full'>
-        <Map
-          mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
-          initialViewState={{
-            longitude: -2.296605,
-            latitude: 53.593349,
-            zoom: 6
-          }}
-          mapStyle="mapbox://styles/commonknowledge/clqeaydxl00cd01qyhnk70s7s"
-        >
-        </Map>
-      </div>
-      <div className="absolute top-5  left-5 right-0">
-        <div className="flex flex-col items-start gap-4">
-          <Card className="w-[200px] p-4 bg-white border-1 border-meepGray-700 text-meepGray-800">
-            <CardHeader className="flex flex-row items-center mb-4">
-              <CardTitle contentEditable id="nickname" className="text-hMd grow font-IBMPlexSansMedium" onBlur={d => {
-                updateMutation({
-                  name: document.getElementById("nickname")?.textContent?.trim()
-                })
-              }}>
-                {report.data?.mapReport.name}
-              </CardTitle>
-              <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <MoreVertical className='w-3' />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent side="right" align="start">
-                  <DropdownMenuLabel>Report Settings</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Share</DropdownMenuItem>
-                  <DropdownMenuItem>Invite</DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <AlertDialog>
-                      <AlertDialogTrigger>
-                        Delete
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription className="text-base">
-                            This action cannot be undone. This will permanently delete
-                            this report.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel
-                            className={buttonVariants({ variant: "outline" })}
-                          >
-                            Cancel
-                          </AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => {
-                              del();
-                            }}
-                            className={buttonVariants({ variant: "destructive" })}
-                          >
-                            Confirm delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </CardHeader>
-            <CardContent>
-              <ToggleGroup type="multiple" variant="outline">
-                <ToggleGroupItem value="a" type="outline" className="p-3 flex gap-2" onClick={toggleDataConfig}>
-                  <Layers className="w-4" /> Data Configuration
-                </ToggleGroupItem>
-                <ToggleGroupItem value="b" type="outline" className="p-3 flex gap-2" onClick={toggleConsData}>
-                  <BarChart3 className="w-4" /> Constituency Data
-                </ToggleGroupItem>
-              </ToggleGroup>
-            </CardContent>
-          </Card>
-          {isDataConfigOpen && (
-            <DataConfig />
-          )}
-          {isConsDataOpen && (
-            <Card className="absolute right-5 p-4 bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700">
-              <CardHeader>
-                <Tabs defaultValue="all-constituencies" className="w-[300px]">
-                  <TabsList>
-                    <TabsTrigger value="all-constituencies">All Constituencies</TabsTrigger>
-                    <TabsTrigger value="selected-cons-1">Bury North</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="all-constituencies" className="flex flex-col gap-4">
-                    <ReportsConsItem
-                      consName="Coventry South"
-                      firstIn2019="Labour"
-                      secondIn2019="Conservative"
-                      mpName="Zarah Sultana"
-                      mpImgUrl="https://www.localintelligencehub.com/media/person/mp_4786_7qDOwxw.jpeg"
-                    />
-                    <ReportsConsItem
-                      consName="Bury North"
-                      firstIn2019="Conservative"
-                      secondIn2019="Labour"
-                      mpName="James Daly"
-                      mpImgUrl="https://www.localintelligencehub.com/media/person/mp_4854_BxRRx9j.jpeg"
-                    />
-                    <ReportsConsItem
-                      consName="Camberwell and Peckham"
-                      firstIn2019="Labour"
-                      secondIn2019="Conservative"
-                      mpName="Harriet Harman"
-                      mpImgUrl="https://www.localintelligencehub.com/media/person/mp_150_rgMOVq7.jpeg"
-                    />
-                  </TabsContent>
-                  <TabsContent value="selected-cons-1">Change your password here.</TabsContent>
-                </Tabs>
-              </CardHeader>
-            </Card>
-          )}
+    <ReportContext.Provider value={{ 
+      id,
+      update: updateMutation
+    }}>
+      <main className="absolute w-full h-full">
+        <div className='w-full h-full'>
+          <Map
+            mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
+            initialViewState={{
+              longitude: -2.296605,
+              latitude: 53.593349,
+              zoom: 6
+            }}
+            mapStyle="mapbox://styles/commonknowledge/clqeaydxl00cd01qyhnk70s7s"
+          >
+          </Map>
         </div>
-      </div>
-    </main>
+        <div className="absolute top-5  left-5 right-0">
+          <div className="flex flex-col items-start gap-4">
+            <Card className="w-[200px] p-4 bg-white border-1 border-meepGray-700 text-meepGray-800">
+              <CardHeader className="flex flex-row items-center mb-4">
+                <CardTitle contentEditable id="nickname" className="text-hMd grow font-IBMPlexSansMedium" onBlur={d => {
+                  updateMutation({
+                    name: document.getElementById("nickname")?.textContent?.trim()
+                  })
+                }}>
+                  {report.data?.mapReport.name}
+                </CardTitle>
+                <DropdownMenu>
+                  <DropdownMenuTrigger>
+                    <MoreVertical className='w-3' />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent side="right" align="start">
+                    <DropdownMenuLabel>Report Settings</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>Share</DropdownMenuItem>
+                    <DropdownMenuItem>Invite</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setDeleteOpen(true)}>Delete</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </CardHeader>
+              <CardContent>
+                <ToggleGroup type="multiple" variant="outline">
+                  <ToggleGroupItem value="a" type="outline" className="p-3 flex gap-2" onClick={toggleDataConfig}>
+                    <Layers className="w-4" /> Data Configuration
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="b" type="outline" className="p-3 flex gap-2" onClick={toggleConsData}>
+                    <BarChart3 className="w-4" /> Constituency Data
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </CardContent>
+            </Card>
+            {isDataConfigOpen && (
+              <DataConfigPanel id={id} />
+            )}
+            {isConsDataOpen && (
+              <Card className="absolute right-5 p-4 bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700">
+                <CardHeader>
+                  <Tabs defaultValue="all-constituencies" className="w-[300px]">
+                    <TabsList>
+                      <TabsTrigger value="all-constituencies">All Constituencies</TabsTrigger>
+                      <TabsTrigger value="selected-cons-1">Bury North</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="all-constituencies" className="flex flex-col gap-4">
+                      <ReportsConsItem
+                        consName="Coventry South"
+                        firstIn2019="Labour"
+                        secondIn2019="Conservative"
+                        mpName="Zarah Sultana"
+                        mpImgUrl="https://www.localintelligencehub.com/media/person/mp_4786_7qDOwxw.jpeg"
+                      />
+                      <ReportsConsItem
+                        consName="Bury North"
+                        firstIn2019="Conservative"
+                        secondIn2019="Labour"
+                        mpName="James Daly"
+                        mpImgUrl="https://www.localintelligencehub.com/media/person/mp_4854_BxRRx9j.jpeg"
+                      />
+                      <ReportsConsItem
+                        consName="Camberwell and Peckham"
+                        firstIn2019="Labour"
+                        secondIn2019="Conservative"
+                        mpName="Harriet Harman"
+                        mpImgUrl="https://www.localintelligencehub.com/media/person/mp_150_rgMOVq7.jpeg"
+                      />
+                    </TabsContent>
+                    <TabsContent value="selected-cons-1">Change your password here.</TabsContent>
+                  </Tabs>
+                </CardHeader>
+              </Card>
+            )}
+          </div>
+        </div>
+      </main>
+      <AlertDialog open={deleteOpen} onOpenChange={() => setDeleteOpen(false)}>
+        <AlertDialogTrigger>
+          Delete
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              This action cannot be undone. This will permanently delete
+              this report.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              className={buttonVariants({ variant: "outline" })}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                del();
+              }}
+              className={buttonVariants({ variant: "destructive" })}
+            >
+              Confirm delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </ReportContext.Provider>
   );
 
-  function updateMutation (data: MapReportInput) {
+  function updateMutation (input: MapReportInput) {
     const update = client.mutate<UpdateMapReportMutation, UpdateMapReportMutationVariables>({
       mutation: UPDATE_MAP_REPORT,
       variables: {
         input: {
           id,
-          ...data
+          ...input
         }
       }
     })
-    toast.promise(update, {
+    toastPromise(update, {
       loading: "Saving...",
-      success: (d: FetchResult<UpdateMapReportMutation>) => {
+      success: (d) => {
         if (!d.errors && d.data) {
-          return "Saved report";
+          console.log(input, Object.keys(input))
+          return {
+            title: "Report saved",
+            description: `Updated ${Object.keys(input).map(spaceCase).join(", ")}`
+          }
+        } else {
+          throw new Error("Couldn't save report")
         }
       },
       error: `Couldn't save report`,
@@ -239,6 +245,7 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
       loading: "Deleting...",
       success: (d: FetchResult) => {
         if (!d.errors && d.data) {
+          router.push("/reports");
           return "Deleted report";
         }
       },
@@ -247,14 +254,30 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
   }
 }
 
+export const ReportContext = createContext<{
+  id: string,
+  update: (data: MapReportInput) => void
+}>({
+  id: '?',
+  update: () => ({} as any)
+})
+
+export const MapReportPageFragmentStr = gql`
+  fragment MapReportPage on MapReport {
+    id
+    name
+    ... MapReportLayersSummary
+  }
+  ${MapReportLayersSummaryFragmentStr}
+`
+
 const UPDATE_MAP_REPORT = gql`
   mutation UpdateMapReport($input: MapReportInput!) {
     updateMapReport(data: $input) {
-      id
-      name
-      description
+      ... MapReportPage
     }
   }
+  ${MapReportPageFragmentStr}
 `
 
 const DELETE_MAP_REPORT = gql`
@@ -263,4 +286,15 @@ const DELETE_MAP_REPORT = gql`
       id
     }
   }
+`
+
+export const GET_MAP_REPORT = gql`
+  query GetMapReport($id: ID!) {
+    mapReport(pk: $id) {
+      id
+      name
+      ... MapReportPage
+    }
+  }
+  ${MapReportPageFragmentStr}
 `

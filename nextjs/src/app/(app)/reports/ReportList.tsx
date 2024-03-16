@@ -15,13 +15,13 @@ import { Metadata } from 'next';
 import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
-import { CreateMapReportMutation, CreateMapReportMutationVariables, ListMapReportsQuery, ListMapReportsQueryVariables } from '@/__generated__/graphql';
+import { CreateMapReportMutation, CreateMapReportMutationVariables, ListReportsQuery, ListReportsQueryVariables } from '@/__generated__/graphql';
 import { formatRelative } from 'date-fns';
 import { useRouter } from 'next/navigation';
 
-const LIST_MAP_REPORTS = gql`
-  query ListMapReports {
-    mapReports {
+const LIST_REPORTS = gql`
+  query ListReports {
+    reports {
       id
       name
       lastUpdate
@@ -30,7 +30,7 @@ const LIST_MAP_REPORTS = gql`
 `;
 
 export default function ReportList() {
-  const { loading, error, data, refetch } = useQuery<ListMapReportsQuery, ListMapReportsQueryVariables>(LIST_MAP_REPORTS);
+  const { loading, error, data, refetch } = useQuery<ListReportsQuery, ListReportsQueryVariables>(LIST_REPORTS);
 
   useEffect(() => {
     refetch()
@@ -50,10 +50,10 @@ export default function ReportList() {
         <h2>Error: {error.message}</h2>
       ) : data ? (
         <section className="grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {data.mapReports.map((mapReport) => (
+          {data.reports.map((report) => (
             <ReportCard
-              key={mapReport.id}
-              report={mapReport}
+              key={report.id}
+              report={report}
             />
           ))}
           <CreateReportCard />
@@ -72,7 +72,7 @@ export function PlaceholderReportCard () {
   );
 }
 
-export function ReportCard ({ report }: { report: ListMapReportsQuery['mapReports'][0] }) {
+export function ReportCard ({ report }: { report: ListReportsQuery['reports'][0] }) {
   return (
     <Link href={`/reports/${report.id}`}>
       <Card>
