@@ -11,7 +11,7 @@ from strawberry.scalars import JSON
 from asgiref.sync import sync_to_async
 
 from hub import models
-from hub.graphql.types.geojson import Feature, PointGeometry
+from hub.graphql.types.geojson import PointFeature, PointGeometry
 import json
 
 from hub.graphql.utils import dict_key_field
@@ -200,10 +200,10 @@ class ExternalDataSource:
         return self.imported_data_count()
     
     @strawberry_django.field
-    def geojson_data(self: models.ExternalDataSource, info: Info) -> List[Feature]:
+    def geojson_point_features(self: models.ExternalDataSource, info: Info) -> List[PointFeature]:
         data = self.get_import_data()
         return [
-            Feature(
+            PointFeature(
                 id=str(feature.id),
                 geometry=PointGeometry(
                     coordinates=[feature.point.x, feature.point.y]

@@ -18,12 +18,16 @@ class FeatureCollection:
     type: GeoJSONTypes.FeatureCollection = GeoJSONTypes.FeatureCollection
     features: List["Feature"]
 
-@strawberry.type
+@strawberry.interface
 class Feature:
     id: Optional[str]
     type: GeoJSONTypes.Feature = GeoJSONTypes.Feature
-    geometry: Union["PointGeometry", "PolygonGeometry", "MultiPolygonGeometry"]
     properties: JSON
+    geometry: Union["PointGeometry", "PolygonGeometry", "MultiPolygonGeometry"]
+
+@strawberry.type
+class PointFeature(Feature):
+    geometry: 'PointGeometry'
 
 @strawberry.interface
 class Geometry:

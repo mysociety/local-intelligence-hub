@@ -53,7 +53,8 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
     <>
       <Source id={id} type="geojson" data={{
         type: "FeatureCollection",
-        features: data?.externalDataSource?.geojsonData || []
+        // @ts-ignore TODO: Fix types
+        features: data?.externalDataSource?.geojsonPointFeatures || []
       }}>
         <Layer
           id={`${id}-circle`}
@@ -61,7 +62,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
           source={id}
           paint={{
             "circle-radius": 10,
-            "circle-color": "#007cbf",
+            "circle-color": `hsl(222, 69%, 65%)`,
           }}
         />
       </Source>
@@ -72,14 +73,12 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
 const GET_SOURCE_DATA = gql`
   query GetSourceGeoJSON($externalDataSourceId: ID!) {
     externalDataSource(pk: $externalDataSourceId) {
-      geojsonData {
+      geojsonPointFeatures {
         id
         type
         geometry {
-          ... on PointGeometry {
-            type
-            coordinates
-          }
+          type
+          coordinates
         }
         properties
       }
