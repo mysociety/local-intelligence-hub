@@ -61,7 +61,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
           type="circle"
           source={id}
           paint={{
-            "circle-radius": 10,
+            "circle-radius": 6,
             "circle-color": `hsl(222, 69%, 65%)`,
           }}
         />
