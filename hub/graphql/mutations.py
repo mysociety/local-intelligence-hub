@@ -11,8 +11,6 @@ from django.utils.text import slugify
 
 from hub import models
 
-from . import types
-
 
 @strawberry.input
 class IDObject:
@@ -66,7 +64,7 @@ class MapReportInput:
 @strawberry.mutation(extensions=[IsAuthenticated(), InputMutationExtension()])
 async def create_organisation(
     info: Info, name: str, slug: Optional[str] = None, description: Optional[str] = None
-) -> types.Membership:
+) -> models.Membership:
     org = await models.Organisation.objects.acreate(
         name=name, slug=slug, description=description
     )

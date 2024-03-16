@@ -28,6 +28,8 @@ from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
+from django.contrib.gis.db.models import PointField, PolygonField
+from django.contrib.gis.geos import Point, Polygon
 
 import utils as lih_utils
 from hub.filters import Filter
@@ -654,7 +656,8 @@ class CommonData(models.Model):
 
 
 class GenericData(CommonData):
-    pass
+    point = PointField(blank=True, null=True)
+    polygon = PolygonField(blank=True, null=True)
 
 
 class Area(models.Model):
@@ -901,13 +904,13 @@ class ExternalDataSource(PolymorphicModel):
             "Get member ID not implemented for this data source type."
         )
 
-    def import_all(self):
+    async def import_all(self):
         """
         Copy data to this database for use in dashboarding features.
         """
 
         # A LIH record of this data
-        data_set, created = DataSet.objects.update_or_create(
+        data_set, created = await DataSet.objects.aupdate_or_create(
             external_data_source=self,
             defaults={
                 "name": self.name,
@@ -920,20 +923,40 @@ class ExternalDataSource(PolymorphicModel):
             },
         )
 
-        data_type, created = DataType.objects.update_or_create(
+        data_type, created = await DataType.objects.aupdate_or_create(
             data_set=data_set, name=self.id, defaults={"data_type": "json"}
         )
 
-        data = async_to_sync(self.fetch_all)()
-        for record in data:
+        data = await self.fetch_all()
+
+        if self.geography_column and self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE:
+            loaders = await self.get_loaders()
+
+            for record in data:
+                postcode_data: PostcodesIOResult = await loaders["postcodesIO"].load(
+                  self.get_record_field(record, self.geography_column)
+                )
+                data, created = GenericData.objects.aupdate_or_create(
+                    data_type=data_type,
+                    data=self.get_record_id(record),
+                    defaults={
+                        "json": self.get_record_dict(record),
+                        "point": Point(
+                            postcode_data["longitude"],
+                            postcode_data["latitude"],
+                        )
+                    }
+                )
+        else:
             # To allow us to lean on LIH's geo-analytics features,
             # TODO: Re-implement this data as `AreaData`, linking each datum to an Area/AreaType as per `self.geography_column` and `self.geography_column_type`.
             # This will require importing other AreaTypes like admin_district, Ward
-            data, created = GenericData.objects.update_or_create(
-                data_type=data_type,
-                data=self.get_record_id(record),
-                defaults={"json": self.get_record_dict(record)},
-            )
+            for record in data:
+                data, created = GenericData.objects.aupdate_or_create(
+                    data_type=data_type,
+                    data=self.get_record_id(record),
+                    defaults={"json": self.get_record_dict(record)},
+                )
 
     async def fetch_one(self, member_id: str):
         """

@@ -7,10 +7,13 @@ from strawberry.types.info import Info
 import strawberry_django
 from strawberry import auto
 from strawberry_django.auth.utils import get_current_user
+from strawberry.scalars import JSON
 
 from hub import models
+from hub.graphql.types.geojson import Feature
+import json
 
-from .utils import key_resolver
+from hub.graphql.utils import dict_key_field
 
 
 @strawberry_django.filters.filter(
@@ -125,9 +128,9 @@ class Membership:
 
 @strawberry.type
 class FieldDefinition:
-    value: str = key_resolver("value")
-    label: Optional[str] = key_resolver("label")
-    description: Optional[str] = key_resolver("description")
+    value: str = dict_key_field()
+    label: Optional[str] = dict_key_field()
+    description: Optional[str] = dict_key_field()
 
 
 @strawberry_django.filter(models.ExternalDataSource)
@@ -194,12 +197,23 @@ class ExternalDataSource:
     @strawberry_django.field
     def imported_data_count(self: models.ExternalDataSource, info: Info) -> bool:
         return self.imported_data_count()
- 
-def dict_key(root, info: Info) -> str:
-    return root.get(info.python_name, None)
-
-def dict_key_field():
-    return strawberry.field(resolver=dict_key)
+    
+    @strawberry.field
+    def geojson_data(self: models.ExternalDataSource, info: Info) -> List[JSON]:
+        data = self.get_import_data()
+        return [
+            Feature(
+                id=feature.id,
+                type="Feature",
+                geometry={
+                    "type": "Point",
+                    "coordinates": [feature.longitude, feature.latitude]
+                },
+                properties=json.dumps(feature)
+            )
+            for feature in data
+            if feature.point is not None
+        ]
 
 @strawberry.type
 class AutoUpdateConfig:
