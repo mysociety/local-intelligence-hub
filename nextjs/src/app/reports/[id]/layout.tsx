@@ -4,8 +4,11 @@ import { Toaster } from "sonner";
 import { GetMapReportNameQuery, GetMapReportNameQueryVariables } from "@/__generated__/graphql";
 import { Metadata } from "next";
 import { getClient } from "@/services/apollo-client";
-import { Params } from './lib'
 import { gql } from "@apollo/client";
+
+type Params = {
+  id: string
+}
 
 export default async function Layout({
   children,
@@ -47,7 +50,7 @@ export async function generateMetadata({ params: { id } }: { params: Params }): 
   }
 }
 
-export const GET_MAP_REPORT_NAME = gql`
+const GET_MAP_REPORT_NAME = gql`
   query GetMapReportName($id: ID!) {
     mapReport(pk: $id) {
       id

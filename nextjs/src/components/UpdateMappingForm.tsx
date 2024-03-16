@@ -130,7 +130,7 @@ export function UpdateMappingForm({
                               <SelectGroup>
                                 <SelectLabel>Geography column</SelectLabel>
                                 {fieldDefinitions?.map((field) => (
-                                  <SelectItem value={field.value}>
+                                  <SelectItem key={field.value} value={field.value}>
                                     <DataSourceFieldLabel fieldDefinition={field} connectionType={connectionType} />
                                   </SelectItem>
                                 ))}
@@ -226,7 +226,7 @@ export function UpdateMappingForm({
                                   <SelectGroup>
                                     <SelectLabel>Choose a destination column</SelectLabel>
                                     {fieldDefinitions?.map((field) => (
-                                      <SelectItem value={field.value}>
+                                      <SelectItem key={field.value} value={field.value}>
                                         <DataSourceFieldLabel
                                           fieldDefinition={field}
                                           connectionType={connectionType}

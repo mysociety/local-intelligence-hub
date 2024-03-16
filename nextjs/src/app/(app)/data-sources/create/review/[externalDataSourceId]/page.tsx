@@ -9,7 +9,7 @@ import {
   AutoUpdateCreationReviewQuery,
   AutoUpdateCreationReviewQueryVariables,
 } from "@/__generated__/graphql";
-import { AutoUpdateCard, TriggerUpdateButton } from "@/components/AutoUpdateCard";
+import { AutoUpdateCard, DATA_SOURCE_FRAGMENT, TriggerUpdateButton } from "@/components/AutoUpdateCard";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 
 const GET_UPDATE_CONFIG = gql`
@@ -18,6 +18,7 @@ const GET_UPDATE_CONFIG = gql`
       id
       name
       geographyColumn
+      dataType
       connectionDetails {
         crmType: __typename
       }
@@ -31,8 +32,10 @@ const GET_UPDATE_CONFIG = gql`
         lastEventAt
         status
       }
+      ...DataSourceCard
     }
   }
+  ${DATA_SOURCE_FRAGMENT}
 `;
 
 export default function Page({

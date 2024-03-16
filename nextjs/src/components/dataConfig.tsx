@@ -21,7 +21,7 @@ import { gql, useApolloClient, useFragment, useQuery } from "@apollo/client"
 import { AddMapLayerButton } from "./report/AddMapLayerButton"
 import { MapReportLayersSummaryFragment } from "@/__generated__/graphql"
 import { useContext } from "react"
-import { ReportContext } from "@/app/reports/[id]/page"
+import { ReportContext } from "@/app/reports/[id]/context"
 import {
   Popover,
   PopoverContent,
@@ -52,8 +52,8 @@ export default function DataConfigPanel () {
 
         <div className="flex flex-col gap-2 mb-2 py-2 border-t border-meepGray-700 ">
           <span className="label mb-2">Added layers</span>
-          {layers.data.layers?.map((layer) => (
-            <div className="flex gap-2 items-center">
+          {layers.data.layers?.map((layer, index) => (
+            <div key={layer?.source?.id || index} className="flex gap-2 items-center">
               <Popover>
                 <PopoverTrigger>
                   <Button variant="brand" className="p-3 gap-2 text-sm">

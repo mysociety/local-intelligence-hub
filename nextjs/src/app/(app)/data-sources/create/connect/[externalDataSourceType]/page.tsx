@@ -161,7 +161,7 @@ export default function Page({
           if (!d.errors && d.data?.testSourceConnection) {
             return "Connection is healthy";
           }
-          throw new Error(d.errors)
+          throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
         },
         error: "Connection failed",
       },
@@ -193,7 +193,7 @@ export default function Page({
               }
               return "Connection successful";
             }
-            throw new Error(d.errors)
+            throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
           },
           error(e) {
             return {
@@ -223,7 +223,7 @@ export default function Page({
       <div className="space-y-6">
         <h1 className="text-hLg">Connection successful</h1>
         <p className="text-meepGray-400 max-w-lg">
-          Tell us a bit more about the data you're connecting to.
+          Tell us a bit more about the data you{"'"}re connecting to.
         </p>
         <Form {...form}>
           <form
@@ -294,7 +294,7 @@ export default function Page({
                                 <SelectLabel>Available columns</SelectLabel>
                                 {testSourceResult.data?.testSourceConnection.fieldDefinitions?.map(
                                   (field) => (
-                                    <SelectItem value={field.value}>
+                                    <SelectItem key={field.value} value={field.value}>
                                       <DataSourceFieldLabel
                                         connectionType={
                                           testSourceResult.data?.testSourceConnection.__typename!
@@ -378,7 +378,7 @@ export default function Page({
         <header>
           <h1 className="text-hLg">Connecting to your Airtable base</h1>
           <p className="mt-6 text-meepGray-400 max-w-lg">
-            In order to send data across to your Airtable, we'll need a few
+            In order to send data across to your Airtable, we{"'"}ll need a few
             details that gives us permission to make updates to your base, as
             well as tell us which table to update in the first place.
           </p>

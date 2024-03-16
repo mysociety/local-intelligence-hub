@@ -203,7 +203,7 @@ export default function InspectExternalDataSource({
           <section className='space-y-4'>
             <h2 className="text-hSm mb-5">Auto-updates</h2>
             <p className='text-sm text-meepGray-400'>
-              Auto-updates are {source.autoUpdateEnabled ? "enabled" : "disabled"} for this data source. Mapped can automatically update this data source based on the mapping you've defined in the Data Mapping section.
+              Auto-updates are {source.autoUpdateEnabled ? "enabled" : "disabled"} for this data source. Mapped can automatically update this data source based on the mapping you{"'"}ve defined in the Data Mapping section.
             </p>
             {source.jobs[0]?.lastEventAt ? (
               <div className="text-meepGray-400">
@@ -235,7 +235,7 @@ export default function InspectExternalDataSource({
           <div>
             <h2 className="text-hSm mb-5">Data mapping</h2>
             <p className='text-sm text-meepGray-400'>
-              Pull third party data into your data source's original location, based on the record's <DataSourceFieldLabel label={source.geographyColumnType} connectionType={source.connectionDetails.__typename!} />.
+              Pull third party data into your data source{"'"}s original location, based on the record{"'"}s <DataSourceFieldLabel label={source.geographyColumnType} connectionType={source.connectionDetails.__typename!} />.
             </p>
           </div>
           {allowMapping && !!source.updateMapping?.length && (

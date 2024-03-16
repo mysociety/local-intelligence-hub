@@ -3,17 +3,13 @@ from typing import List, Optional, Union
 
 import procrastinate.contrib.django.models
 import strawberry
-from strawberry.types.info import Info
 import strawberry_django
 from strawberry import auto
+from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
-from strawberry.scalars import JSON
-from asgiref.sync import sync_to_async
 
 from hub import models
 from hub.graphql.types.geojson import PointFeature, PointGeometry
-import json
-
 from hub.graphql.utils import dict_key_field
 
 
@@ -190,7 +186,9 @@ class ExternalDataSource:
         return self.healthcheck()
 
     @strawberry_django.field
-    def connection_details(self: models.ExternalDataSource, info) -> Union["AirtableSource"]:
+    def connection_details(
+        self: models.ExternalDataSource, info
+    ) -> Union["AirtableSource"]:
         instance = self.get_real_instance()
         return instance
 
@@ -201,13 +199,15 @@ class ExternalDataSource:
     @strawberry_django.field
     def webhook_healthcheck(self: models.ExternalDataSource, info) -> bool:
         return self.webhook_healthcheck()
-    
+
     @strawberry_django.field
     def imported_data_count(self: models.ExternalDataSource, info: Info) -> int:
         return self.imported_data_count()
-    
+
     @strawberry_django.field
-    def geojson_point_features(self: models.ExternalDataSource, info: Info) -> List[PointFeature]:
+    def geojson_point_features(
+        self: models.ExternalDataSource, info: Info
+    ) -> List[PointFeature]:
         data = self.get_import_data()
         return [
             PointFeature(
@@ -215,18 +215,20 @@ class ExternalDataSource:
                 geometry=PointGeometry(
                     coordinates=[generic_datum.point.x, generic_datum.point.y]
                 ),
-                properties=generic_datum.json
+                properties=generic_datum.json,
             )
             for generic_datum in data
             if generic_datum.point is not None
         ]
-    
+
     @strawberry_django.field
     def is_importing(self: models.ExternalDataSource, info: Info) -> bool:
-        return self.event_log_queryset().filter(
-            status="doing",
-            task_name="hub.tasks.import_all"
-        ).exists()
+        return (
+            self.event_log_queryset()
+            .filter(status="doing", task_name="hub.tasks.import_all")
+            .exists()
+        )
+
 
 @strawberry.type
 class AutoUpdateConfig:
@@ -234,11 +236,13 @@ class AutoUpdateConfig:
     source_path: str = dict_key_field()
     destination_column: str = dict_key_field()
 
+
 @strawberry_django.type(models.AirtableSource)
 class AirtableSource(ExternalDataSource):
     api_key: auto
     base_id: auto
     table_id: auto
+
 
 @strawberry_django.type(models.Report)
 class Report:
@@ -259,7 +263,7 @@ class Report:
 @strawberry.type
 class MapLayer:
     name: str = dict_key_field()
-    
+
     @strawberry_django.field
     def source(self, info: Info) -> ExternalDataSource:
         source_id = self.get(info.python_name, None)

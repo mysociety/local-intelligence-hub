@@ -3,7 +3,6 @@
 
 import { useEffect, useState, createContext } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
-import Pin from "@/components/Pin";
 import {
   Card,
   CardContent,
@@ -23,7 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BarChart3, Layers, MoreVertical } from "lucide-react"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import ReportsConsItem from "@/components/reportsConstituencyItem";
-import DataConfigPanel, { MapReportLayersSummaryFragmentStr } from "@/components/dataConfig";
+import DataConfigPanel from "@/components/dataConfig";
 import { FetchResult, gql, useApolloClient, useQuery } from "@apollo/client";
 import { toast } from "sonner";
 import { DeleteMapReportMutation, DeleteMapReportMutationVariables, GetMapReportQuery, GetMapReportQueryVariables, MapReportInput, UpdateMapReportMutation, UpdateMapReportMutationVariables } from "@/__generated__/graphql";
@@ -39,11 +38,16 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { buttonVariants } from "@/components/ui/button";
-import { Params } from "./lib";
 import { useRouter } from "next/navigation";
 import spaceCase from 'to-space-case'
 import { toastPromise } from "@/lib/toast";
 import { ReportMap } from "@/components/report/ReportMap";
+import { MapReportPageFragmentStr } from "./lib";
+import { ReportContext } from "./context";
+
+type Params = {
+  id: string
+}
 
 export default function Page({ params: { id } }: { params: Params }) {
   const client = useApolloClient();
@@ -115,9 +119,11 @@ export default function Page({ params: { id } }: { params: Params }) {
               </CardHeader>
               <CardContent>
                 <ToggleGroup type="multiple" variant="outline">
+                  {/* @ts-ignore */}
                   <ToggleGroupItem value="a" type="outline" className="p-3 flex gap-2" onClick={toggleDataConfig}>
                     <Layers className="w-4" /> Data Configuration
                   </ToggleGroupItem>
+                  {/* @ts-ignore */}
                   <ToggleGroupItem value="b" type="outline" className="p-3 flex gap-2" onClick={toggleConsData}>
                     <BarChart3 className="w-4" /> Constituency Data
                   </ToggleGroupItem>
@@ -242,21 +248,15 @@ export default function Page({ params: { id } }: { params: Params }) {
   }
 }
 
-export const ReportContext = createContext<{
-  id: string,
-  update: (data: MapReportInput) => void
-}>({
-  id: '?',
-  update: () => ({} as any)
-})
-
-export const MapReportPageFragmentStr = gql`
-  fragment MapReportPage on MapReport {
-    id
-    name
-    ... MapReportLayersSummary
+const GET_MAP_REPORT = gql`
+  query GetMapReport($id: ID!) {
+    mapReport(pk: $id) {
+      id
+      name
+      ... MapReportPage
+    }
   }
-  ${MapReportLayersSummaryFragmentStr}
+  ${MapReportPageFragmentStr}
 `
 
 const UPDATE_MAP_REPORT = gql`
@@ -274,15 +274,4 @@ const DELETE_MAP_REPORT = gql`
       id
     }
   }
-`
-
-export const GET_MAP_REPORT = gql`
-  query GetMapReport($id: ID!) {
-    mapReport(pk: $id) {
-      id
-      name
-      ... MapReportPage
-    }
-  }
-  ${MapReportPageFragmentStr}
 `

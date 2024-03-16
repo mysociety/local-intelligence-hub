@@ -1,8 +1,13 @@
 "use client"
 
+import { MapReportLayersSummaryFragmentStr } from "@/components/dataConfig";
 import { gql } from "@apollo/client"
-import { MapReportPageFragmentStr } from "./page"
 
-export type Params = {
-  id: string
-}
+export const MapReportPageFragmentStr = gql`
+  fragment MapReportPage on MapReport {
+    id
+    name
+    ... MapReportLayersSummary
+  }
+  ${MapReportLayersSummaryFragmentStr}
+`

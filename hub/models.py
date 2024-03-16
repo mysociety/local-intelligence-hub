@@ -7,6 +7,8 @@ from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.gis.db.models import PointField, PolygonField
+from django.contrib.gis.geos import Point
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min
 from django.db.models.functions import Cast, Coalesce
@@ -17,7 +19,7 @@ from django.utils.functional import cached_property
 from django.utils.text import slugify
 
 import pandas as pd
-from asgiref.sync import async_to_sync, sync_to_async
+from asgiref.sync import sync_to_async
 from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
 from polymorphic.models import PolymorphicModel
@@ -28,8 +30,6 @@ from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
-from django.contrib.gis.db.models import PointField, PolygonField
-from django.contrib.gis.geos import Point, Polygon
 
 import utils as lih_utils
 from hub.filters import Filter
@@ -935,12 +935,15 @@ class ExternalDataSource(PolymorphicModel):
 
         data = await self.fetch_all()
 
-        if self.geography_column and self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE:
+        if (
+            self.geography_column
+            and self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE
+        ):
             loaders = await self.get_loaders()
 
             async def create_import_record(record):
                 postcode_data: PostcodesIOResult = await loaders["postcodesIO"].load(
-                  self.get_record_field(record, self.geography_column)
+                    self.get_record_field(record, self.geography_column)
                 )
                 data, created = await GenericData.objects.aupdate_or_create(
                     data_type=data_type,
@@ -950,17 +953,18 @@ class ExternalDataSource(PolymorphicModel):
                         "point": Point(
                             postcode_data["longitude"],
                             postcode_data["latitude"],
-                        ) if (
+                        )
+                        if (
                             postcode_data is not None
                             and "latitude" in postcode_data
                             and "longitude" in postcode_data
-                        ) else None,
-                    }
+                        )
+                        else None,
+                    },
                 )
+
             # TODO: batch this up
-            await asyncio.gather(
-                *[create_import_record(record) for record in data]
-            )
+            await asyncio.gather(*[create_import_record(record) for record in data])
         else:
             # To allow us to lean on LIH's geo-analytics features,
             # TODO: Re-implement this data as `AreaData`, linking each datum to an Area/AreaType as per `self.geography_column` and `self.geography_column_type`.
@@ -1079,7 +1083,7 @@ class ExternalDataSource(PolymorphicModel):
         json_list = [d.json for d in enrichment_data]
         enrichment_df = pd.DataFrame.from_records(json_list)
         return enrichment_df
-    
+
     def imported_data_count(self) -> int:
         count = self.get_import_data().all().count()
         if isinstance(count, int):
@@ -1376,7 +1380,7 @@ class AirtableSource(ExternalDataSource):
     @cached_property
     def schema(self) -> AirtableTableSchema:
         return self.table.schema()
-    
+
     def remote_url(self) -> str:
         return f"https://airtable.com/{self.base_id}/{self.table_id}?blocks=hide"
 
@@ -1563,6 +1567,7 @@ class AirtableWebhook(models.Model):
     airtable_id = models.CharField(max_length=250, primary_key=True)
     cursor = models.IntegerField(default=1, blank=True)
 
+
 class Report(PolymorphicModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organisation = models.ForeignKey(
@@ -1581,6 +1586,7 @@ class Report(PolymorphicModel):
 
     def __str__(self):
         return self.name
+
 
 class MapReport(Report):
     layers = models.JSONField(blank=True, null=True, default=list)

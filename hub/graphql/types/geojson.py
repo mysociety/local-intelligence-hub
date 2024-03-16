@@ -1,9 +1,9 @@
-from typing import List, Union, Optional
+from enum import Enum
+from typing import List, Optional, Union
+
 import strawberry
 from strawberry.scalars import JSON
-from hub.graphql.utils import dict_key_field
-from typing import NewType
-from enum import Enum
+
 
 @strawberry.enum
 class GeoJSONTypes(Enum):
@@ -13,10 +13,12 @@ class GeoJSONTypes(Enum):
     Polygon = "Polygon"
     MultiPolygon = "MultiPolygon"
 
+
 @strawberry.type
 class FeatureCollection:
     type: GeoJSONTypes.FeatureCollection = GeoJSONTypes.FeatureCollection
     features: List["Feature"]
+
 
 @strawberry.interface
 class Feature:
@@ -25,13 +27,16 @@ class Feature:
     properties: JSON
     geometry: Union["PointGeometry", "PolygonGeometry", "MultiPolygonGeometry"]
 
+
 @strawberry.type
 class PointFeature(Feature):
-    geometry: 'PointGeometry'
+    geometry: "PointGeometry"
+
 
 @strawberry.interface
 class Geometry:
     type: GeoJSONTypes
+
 
 @strawberry.type
 class PointGeometry(Geometry):
@@ -39,10 +44,12 @@ class PointGeometry(Geometry):
     # lng, lat
     coordinates: List[float]
 
+
 @strawberry.type
 class PolygonGeometry(Geometry):
     type: GeoJSONTypes.Polygon = GeoJSONTypes.Polygon
     coordinates: List[List[List[float]]]
+
 
 @strawberry.type
 class MultiPolygonGeometry(Geometry):

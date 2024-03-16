@@ -1,11 +1,11 @@
 "use client"
 
 import { GetSourceGeoJsonQuery, GetSourceGeoJsonQueryVariables, MapReportLayersSummaryFragment } from "@/__generated__/graphql";
-import { ReportContext } from "@/app/reports/[id]/page";
 import { useContext, useId } from "react";
 import Map, { Layer, Marker, Popup, Source } from "react-map-gl";
 import { MapReportLayersSummaryFragmentStr } from "../dataConfig";
 import { gql, useFragment, useQuery } from "@apollo/client";
+import { ReportContext } from "@/app/reports/[id]/context";
 
 export function ReportMap () {
   const { id, update } = useContext(ReportContext)
@@ -31,7 +31,7 @@ export function ReportMap () {
       {layers.data.layers?.map((layer, index) => {
         return (
           <MapboxGLClusteredPointsLayer
-            key={layer?.source.id || index}
+            key={layer?.source?.id || index}
             externalDataSourceId={layer?.source?.id}
           />
         )
