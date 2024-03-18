@@ -926,9 +926,6 @@ class ExternalDataSource(PolymorphicModel):
 
         data = async_to_sync(self.fetch_all)()
         for record in data:
-            # To allow us to lean on LIH's geo-analytics features,
-            # TODO: Re-implement this data as `AreaData`, linking each datum to an Area/AreaType as per `self.geography_column` and `self.geography_column_type`.
-            # This will require importing other AreaTypes like admin_district, Ward
             data, created = GenericData.objects.update_or_create(
                 data_type=data_type,
                 data=self.get_record_id(record),
@@ -1058,7 +1055,6 @@ class ExternalDataSource(PolymorphicModel):
                     ):
                         return_data.append(None)
                     else:
-                        # TODO: Use pandas to join dataframes instead
                         enrichment_value = enrichment_df.loc[
                             enrichment_df[self.geography_column]
                             == relevant_member_geography,
@@ -1132,6 +1128,7 @@ class ExternalDataSource(PolymorphicModel):
                                 )
                             )
                     except Exception:
+                        # TODO: sentry logging
                         continue
             # Return the member and config data
             return self.MappedMember(member=member, update_fields=update_fields)
