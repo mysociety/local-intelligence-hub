@@ -915,7 +915,7 @@ class ExternalDataSource(PolymorphicModel):
         Copy data to this database for use in dashboarding features.
         """
 
-        # A LIH record of this data
+        # A Local Intelligence Hub record of this data
         data_set, created = await DataSet.objects.aupdate_or_create(
             external_data_source=self,
             defaults={
@@ -1105,7 +1105,6 @@ class ExternalDataSource(PolymorphicModel):
                     ):
                         return_data.append(None)
                     else:
-                        # TODO: Use pandas to join dataframes instead
                         enrichment_value = enrichment_df.loc[
                             enrichment_df[self.geography_column]
                             == relevant_member_geography,
@@ -1179,6 +1178,7 @@ class ExternalDataSource(PolymorphicModel):
                                 )
                             )
                     except Exception:
+                        # TODO: sentry logging
                         continue
             # Return the member and config data
             return self.MappedMember(member=member, update_fields=update_fields)
