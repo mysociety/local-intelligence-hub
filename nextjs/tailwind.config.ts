@@ -40,7 +40,10 @@ const config = {
           lineHeight: '100%',
           fontWeight: '700',
           letterSpacing: '0.05rem'
-
+        }],
+        hLg: ['36px', {
+          lineHeight: '100%',
+          fontWeight: '700'
         }],
         hMd: ['21px', {
           lineHeight: 'normal',
