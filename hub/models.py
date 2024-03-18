@@ -1604,7 +1604,7 @@ class MapReport(Report):
 class MailchimpSource(ExternalDataSource):
     """
     A Mailchimp list.
-    """
+    """ 
     api_key = models.CharField(
         max_length=250,
         help_text="Mailchimp API key.",
@@ -1613,15 +1613,6 @@ class MailchimpSource(ExternalDataSource):
         max_length=250,
         help_text="The unique identifier for the Mailchimp list.",
     )
-
-    member_email = models.EmailField(
-          max_length=250,
-          help_text="Email for member to fetch.",
-    )
-
-    def save(self, *args, **kwargs):
-        self.member_email = self.member_email.lower()  # Convert email to lowercase before saving
-        super(MailchimpSource, self).save(*args, **kwargs)
 
     automated_webhooks = True
     introspect_fields = True
@@ -1634,24 +1625,40 @@ class MailchimpSource(ExternalDataSource):
     def client(self) -> MailChimp:
         # Initializes the MailChimp client 
         return MailChimp(mc_api=self.api_key)
-
+    
+        
     def healthcheck(self):
         # Checks if the Mailchimp list is accessible
         list = self.client.lists.get(self.list_id)
         if list:
             return True
         return False
+    
+    def field_definitions(self):
+        merge_fields = self.client.lists.merge_fields.all(list_id=self.list_id, get_all=True)['merge_fields']
+        self.field_definitions = [
+            {
+                'label': field['name'],
+                'value': field['tag'],  # In Mailchimp, the tag is used as a merge variable
+                'description': field.get('help_text', '')
+            }
+            for field in merge_fields
+        ]
+    
+        return self.field_definitions
+
+    
+    def remote_name(self):
+        data = self.client.lists.all(self.list_id, fields="lists.name")
+        list_name = data['lists'][0]['name']
+        return list_name
    
     async def fetch_all(self):
          # Fetches all members in a list and returns their email addresses
         list = self.client.lists.members.all(self.list_id, fields="members.email_address")
         return list
 
-    def fetch_one(self):
-        # Fetches a single list member by their unique member ID
-        # Mailchimp member IDs are typically the MD5 hash of the lowercase version of the member's email address
-        member = self.client.lists.members.get(list_id=self.list_id, subscriber_hash=self.member_email)
-        return member
+
 
 
 
