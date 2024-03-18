@@ -658,6 +658,13 @@ class CommonData(models.Model):
 class GenericData(CommonData):
     point = PointField(blank=True, null=True)
     polygon = PolygonField(blank=True, null=True)
+    postcode_data = JSONField(blank=True, null=True)
+
+    def get_postcode_data(self) -> Optional[PostcodesIOResult]:
+        if self.postcode_data is None:
+            return None
+
+        return self.postcode_data
 
 
 class Area(models.Model):
@@ -950,11 +957,11 @@ class ExternalDataSource(PolymorphicModel):
                     data=self.get_record_id(record),
                     defaults={
                         "json": self.get_record_dict(record),
+                        "postcode_data": postcode_data,
                         "point": Point(
                             postcode_data["longitude"],
                             postcode_data["latitude"],
-                        )
-                        if (
+                        ) if (
                             postcode_data is not None
                             and "latitude" in postcode_data
                             and "longitude" in postcode_data
