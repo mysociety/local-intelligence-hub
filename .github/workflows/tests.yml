@@ -13,9 +13,12 @@ jobs:
     environment: testing
     services:
       postgres:
-        image: postgres
+        image: kartoza/postgis:13
         env:
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: local-intelligence
+          POSTGRES_PORT: 5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -26,7 +29,7 @@ jobs:
     container:
       image: python:3.12
       env:
-        DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
+        DATABASE_URL: postgis://postgres:password@postgres:5432/local-intelligence
         CACHE_FILE: /tmp/meep
         POETRY_VIRTUALENVS_CREATE: "false"
         MAPIT_URL: https://mapit.mysociety.org/

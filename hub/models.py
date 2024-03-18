@@ -7,6 +7,8 @@ from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.gis.db.models import PointField, PolygonField
+from django.contrib.gis.geos import Point
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min
 from django.db.models.functions import Cast, Coalesce
@@ -17,7 +19,7 @@ from django.utils.functional import cached_property
 from django.utils.text import slugify
 
 import pandas as pd
-from asgiref.sync import async_to_sync, sync_to_async
+from asgiref.sync import sync_to_async
 from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
 from polymorphic.models import PolymorphicModel
@@ -654,7 +656,8 @@ class CommonData(models.Model):
 
 
 class GenericData(CommonData):
-    pass
+    point = PointField(blank=True, null=True)
+    polygon = PolygonField(blank=True, null=True)
 
 
 class Area(models.Model):
@@ -879,6 +882,12 @@ class ExternalDataSource(PolymorphicModel):
         """
         return None
 
+    def remote_url(self) -> Optional[str]:
+        """
+        Get the URL of the data source in the remote system.
+        """
+        return None
+
     def setup_webhooks(self):
         """
         Set up a webhook.
@@ -901,16 +910,16 @@ class ExternalDataSource(PolymorphicModel):
             "Get member ID not implemented for this data source type."
         )
 
-    def import_all(self):
+    async def import_all(self):
         """
         Copy data to this database for use in dashboarding features.
         """
 
         # A Local Intelligence Hub record of this data
-        data_set, created = DataSet.objects.update_or_create(
+        data_set, created = await DataSet.objects.aupdate_or_create(
             external_data_source=self,
             defaults={
-                "name": self.name,
+                "name": f"Cached dataset for {self.id}",
                 "data_type": "json",
                 "table": "commondata",
                 "default_value": {},
@@ -920,17 +929,52 @@ class ExternalDataSource(PolymorphicModel):
             },
         )
 
-        data_type, created = DataType.objects.update_or_create(
+        data_type, created = await DataType.objects.aupdate_or_create(
             data_set=data_set, name=self.id, defaults={"data_type": "json"}
         )
 
-        data = async_to_sync(self.fetch_all)()
-        for record in data:
-            data, created = GenericData.objects.update_or_create(
-                data_type=data_type,
-                data=self.get_record_id(record),
-                defaults={"json": self.get_record_dict(record)},
-            )
+        data = await self.fetch_all()
+
+        if (
+            self.geography_column
+            and self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE
+        ):
+            loaders = await self.get_loaders()
+
+            async def create_import_record(record):
+                postcode_data: PostcodesIOResult = await loaders["postcodesIO"].load(
+                    self.get_record_field(record, self.geography_column)
+                )
+                data, created = await GenericData.objects.aupdate_or_create(
+                    data_type=data_type,
+                    data=self.get_record_id(record),
+                    defaults={
+                        "json": self.get_record_dict(record),
+                        "point": Point(
+                            postcode_data["longitude"],
+                            postcode_data["latitude"],
+                        )
+                        if (
+                            postcode_data is not None
+                            and "latitude" in postcode_data
+                            and "longitude" in postcode_data
+                        )
+                        else None,
+                    },
+                )
+
+            # TODO: batch this up
+            await asyncio.gather(*[create_import_record(record) for record in data])
+        else:
+            # To allow us to lean on LIH's geo-analytics features,
+            # TODO: Re-implement this data as `AreaData`, linking each datum to an Area/AreaType as per `self.geography_column` and `self.geography_column_type`.
+            # This will require importing other AreaTypes like admin_district, Ward
+            for record in data:
+                data, created = await GenericData.objects.aupdate_or_create(
+                    data_type=data_type,
+                    data=self.get_record_id(record),
+                    defaults={"json": self.get_record_dict(record)},
+                )
 
     async def fetch_one(self, member_id: str):
         """
@@ -1039,6 +1083,12 @@ class ExternalDataSource(PolymorphicModel):
         json_list = [d.json for d in enrichment_data]
         enrichment_df = pd.DataFrame.from_records(json_list)
         return enrichment_df
+
+    def imported_data_count(self) -> int:
+        count = self.get_import_data().all().count()
+        if isinstance(count, int):
+            return count
+        return 0
 
     def data_loader_factory(self):
         async def fetch_enrichment_data(keys: List[self.EnrichmentLookup]) -> list[str]:
@@ -1331,6 +1381,9 @@ class AirtableSource(ExternalDataSource):
     def schema(self) -> AirtableTableSchema:
         return self.table.schema()
 
+    def remote_url(self) -> str:
+        return f"https://airtable.com/{self.base_id}/{self.table_id}?blocks=hide"
+
     def healthcheck(self):
         record = self.table.first()
         if record:
@@ -1513,3 +1566,34 @@ class AirtableWebhook(models.Model):
     # Airtable ID
     airtable_id = models.CharField(max_length=250, primary_key=True)
     cursor = models.IntegerField(default=1, blank=True)
+
+
+class Report(PolymorphicModel):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organisation = models.ForeignKey(
+        Organisation, on_delete=models.CASCADE, related_name="reports"
+    )
+    name = models.CharField(max_length=250)
+    slug = models.SlugField(max_length=250, unique=True)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_update = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
+class MapReport(Report):
+    layers = models.JSONField(blank=True, null=True, default=list)
+
+    class MapLayer(TypedDict):
+        name: str
+        source: str
+
+    def get_layers(self) -> list[MapLayer]:
+        return self.layers

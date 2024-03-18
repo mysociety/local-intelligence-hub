@@ -22,12 +22,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { getSourceOptionForTypename } from "@/lib/data";
-import { AutoUpdateCardFieldsFragment, AutoUpdateWebhookRefreshMutation, AutoUpdateWebhookRefreshMutationVariables, DataSourceType, DisableAutoUpdateMutation, DisableAutoUpdateMutationVariables, EnableAutoUpdateMutation, EnableAutoUpdateMutationVariables, TriggerFullUpdateMutation, TriggerFullUpdateMutationVariables } from "@/__generated__/graphql";
+import { DataSourceCardFragment, AutoUpdateWebhookRefreshMutation, AutoUpdateWebhookRefreshMutationVariables, DataSourceType, DisableAutoUpdateMutation, DisableAutoUpdateMutationVariables, EnableAutoUpdateMutation, EnableAutoUpdateMutationVariables, TriggerFullUpdateMutation, TriggerFullUpdateMutationVariables } from "@/__generated__/graphql";
 
 export function AutoUpdateCard({
   externalDataSource,
 }: {
-  externalDataSource: AutoUpdateCardFieldsFragment
+  externalDataSource: DataSourceCardFragment
 }) {
   const Logo = getSourceOptionForTypename(
     externalDataSource.connectionDetails.crmType,
@@ -207,8 +207,8 @@ export function toggleAutoUpdate(
   }
 }
 
-export const UPDATE_CONFIG_CARD_FRAGMENT = gql`
-  fragment AutoUpdateCardFields on ExternalDataSource {
+export const DATA_SOURCE_FRAGMENT = gql`
+  fragment DataSourceCard on ExternalDataSource {
     id
     name
     dataType
@@ -231,10 +231,10 @@ export const UPDATE_CONFIG_CARD_FRAGMENT = gql`
 export const GET_UPDATE_CONFIG_CARD = gql`
   query ExternalDataSourceAutoUpdateCard($ID: ID!) {
     externalDataSource(pk: $ID) {
-      ...AutoUpdateCardFields
+      ...DataSourceCard
     }
   }
-  ${UPDATE_CONFIG_CARD_FRAGMENT}
+  ${DATA_SOURCE_FRAGMENT}
 `;
 
 export const ENABLE_AUTO_UPDATE = gql`

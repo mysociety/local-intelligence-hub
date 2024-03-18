@@ -98,7 +98,7 @@ class TestAirtableSource(TestCase):
             ],
             source=self.custom_data_layer,
         )
-        await sync_to_async(self.custom_data_layer.import_all)()
+        await self.custom_data_layer.import_all()
         enrichment_df = await sync_to_async(
             self.custom_data_layer.get_import_dataframe
         )()
@@ -127,7 +127,7 @@ class TestAirtableSource(TestCase):
         )
         # Check that the import is storing it all
         fetch_count = len(list(async_to_sync(self.custom_data_layer.fetch_all)()))
-        self.custom_data_layer.import_all()
+        async_to_sync(self.custom_data_layer.import_all)()
         import_data = self.custom_data_layer.get_import_data()
         import_count = len(import_data)
         self.assertEqual(import_count, fetch_count)
@@ -209,7 +209,7 @@ class TestAirtableSource(TestCase):
             source=self.custom_data_layer,
         )
         # Check that the import is storing it all
-        self.custom_data_layer.import_all()
+        async_to_sync(self.custom_data_layer.import_all)()
         # Add a test record
         record = self.create_test_record({"Postcode": "NE12 6DD"})
         mapped_member = async_to_sync(self.source.map_one)(

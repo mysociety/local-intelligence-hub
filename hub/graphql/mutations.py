@@ -1,5 +1,7 @@
 from typing import List, Optional
 
+from django.utils.text import slugify
+
 import strawberry
 import strawberry_django
 from strawberry import auto
@@ -9,8 +11,6 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import IsAuthenticated
 
 from hub import models
-
-from . import types
 
 
 @strawberry.input
@@ -46,10 +46,28 @@ class AirtableSourceInput(ExternalDataSourceInput):
     table_id: auto
 
 
+@strawberry.input
+class MapLayerInput:
+    name: str
+    source: str
+
+
+@strawberry_django.input(models.MapReport, partial=True)
+class MapReportInput:
+    id: auto
+    organisation: auto
+    name: auto
+    slug: Optional[str]
+    description: auto
+    created_at: auto
+    last_update: auto
+    layers: Optional[List[MapLayerInput]]
+
+
 @strawberry.mutation(extensions=[IsAuthenticated(), InputMutationExtension()])
 async def create_organisation(
     info: Info, name: str, slug: Optional[str] = None, description: Optional[str] = None
-) -> types.Membership:
+) -> models.Membership:
     org = await models.Organisation.objects.acreate(
         name=name, slug=slug, description=description
     )
@@ -96,17 +114,38 @@ def refresh_webhooks(external_data_source_id: str) -> models.ExternalDataSource:
     return data_source
 
 
-@strawberry.mutation(extensions=[IsAuthenticated()])
-def create_airtable_source(
-    info: Info, data: AirtableSourceInput
-) -> models.AirtableSource:
-    # Override the default strawberry_django.create resolver to add a default organisation
+def create_with_computed_args(model, info, data, computed_args):
     args = {
         **strawberry_django.mutations.resolvers.parse_input(info, vars(data).copy()),
-        "organisation": get_or_create_organisation_for_source(info, data),
+        **computed_args(info, data, model),
     }
-    return strawberry_django.mutations.resolvers.create(
-        info, models.AirtableSource, args
+    return strawberry_django.mutations.resolvers.create(info, model, args)
+
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def create_airtable_source(
+    info: Info, data: AirtableSourceInput
+) -> models.ExternalDataSource:
+    return create_with_computed_args(
+        models.AirtableSource,
+        info,
+        data,
+        computed_args=lambda info, data, model: {
+            "organisation": get_or_create_organisation_for_source(info, data)
+        },
+    )
+
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()], handle_django_errors=True)
+def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
+    return create_with_computed_args(
+        models.MapReport,
+        info,
+        data,
+        computed_args=lambda info, data, model: {
+            "organisation": get_or_create_organisation_for_source(info, data),
+            "slug": data.slug or slugify(data.name),
+        },
     )
 
 
@@ -132,8 +171,8 @@ def get_or_create_organisation_for_source(info: Info, data: any):
     return organisation
 
 
-@strawberry.mutation(extensions=[IsAuthenticated()])
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
 def import_all(external_data_source_id: str) -> models.ExternalDataSource:
     data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
-    data_source.import_all()
+    data_source.schedule_import_all()
     return data_source
