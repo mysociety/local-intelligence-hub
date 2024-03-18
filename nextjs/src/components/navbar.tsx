@@ -74,9 +74,10 @@ export default function Navbar({ isLoggedIn }: NavbarProps) {
       ) : (
         <nav className="p-sm">
           <ul className="flex flex-row">
-            <div className="shrink-0 flex flex-row justify-between items-center basis-1/2 bg-meepGray-700 rounded-lg">
+            <div className="shrink-0 flex flex-row justify-between items-center bg-meepGray-700 rounded-lg pr-1">
               <div className="flex flex-row items-center gap-xs">
-                <Link className="pl-xs" href='/'><MappedIcon />
+                <Link className="pl-xs" href='/'>
+                  <MappedIcon />
                 </Link>
                 <div className="flex flex-col">
                   <Link href='/'>
@@ -85,7 +86,7 @@ export default function Navbar({ isLoggedIn }: NavbarProps) {
                   </Link>
                 </div>
               </div>
-              <div className="basis-1/2 flex flex-row items-center justify-center  gap-md grow">
+              <div className="basis-1/2 flex flex-row items-center justify-center gap-md grow px-3">
 
                 <NavigationMenu>
                   <NavigationMenuList>
@@ -131,25 +132,10 @@ export default function Navbar({ isLoggedIn }: NavbarProps) {
                               title={component.title}
                               href={component.href}
                             >
-                              {component.description}
                             </ListItem>
                           ))}
                         </ul>
                       </NavigationMenuContent>
-                    </NavigationMenuItem>
-                    <NavigationMenuItem>
-                      <Link href="/support" legacyBehavior passHref>
-                        <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                          Support
-                        </NavigationMenuLink>
-                      </Link>
-                    </NavigationMenuItem>
-                    <NavigationMenuItem>
-                      <Link href="/About" legacyBehavior passHref>
-                        <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                          About
-                        </NavigationMenuLink>
-                      </Link>
                     </NavigationMenuItem>
                   </NavigationMenuList>
                 </NavigationMenu>
