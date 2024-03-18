@@ -1,34 +1,40 @@
 "use client";
 
+import { DataSourceType } from "@/__generated__/graphql";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { createContext } from "react";
 import { twMerge } from "tailwind-merge";
 
-export const NewExternalDataSourceUpdateConfigContext = createContext<{
+export const CreateAutoUpdateFormContext = createContext<{
   step: number;
   setStep: React.Dispatch<React.SetStateAction<number>>;
+  dataType?: DataSourceType;
 }>({
   step: 0,
   setStep: () => {},
 });
 
 export default function NewExternalDataSourceWrapper({
-  children,
+  children
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
+  const searchParams = useSearchParams()
+  const predeterminedDataType = searchParams.get("dataType") as DataSourceType || undefined
   const [step, setStep] = useState<number>(0);
 
   return (
-    <NewExternalDataSourceUpdateConfigContext.Provider
+    <CreateAutoUpdateFormContext.Provider
       value={{
         step,
         setStep,
+        dataType: predeterminedDataType
       }}
     >
-      <div className="p-6 max-w-6xl mx-auto flex flex-row gap-20">
+      <div className="p-4 md:p-6 max-w-6xl mx-auto flex flex-row gap-8 md:gap-20">
         <div>
-          <aside className="w-[180px] flex flex-col justify-start items-start gap-4 relative">
+          <aside className="md:w-[180px] flex flex-col justify-start items-start gap-4 sticky top-8 md:top-12 leading-tight">
             <div className="h-full absolute top-0 left-5 border-l border-x-meepGray-400 z-10" />
             <Step number={1} state={step > 1 ? "completed" : "active"}>
               Choose platform
@@ -56,7 +62,7 @@ export default function NewExternalDataSourceWrapper({
         </div>
         <main className="space-y-7">{children}</main>
       </div>
-    </NewExternalDataSourceUpdateConfigContext.Provider>
+    </CreateAutoUpdateFormContext.Provider>
   );
 }
 

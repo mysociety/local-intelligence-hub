@@ -13,6 +13,7 @@ import Footer from "@/components/footer";
 import Navbar from "@/components/navbar";
 import { AreaPattern } from "@/components/areaPattern";
 
+import { Metadata } from 'next'
 
 
 function MappedIcon() {
@@ -47,7 +48,7 @@ export default async function RootLayout({
         <body>
         {!isLoggedIn && <AreaPattern/>}
         <Navbar isLoggedIn={isLoggedIn} />
-        <main className="p-20 relative">{children}</main>
+        <main className="p-4 sm:p-8 md:p-20 relative 2xl:p-24">{children}</main>
           <Toaster />
           {!isLoggedIn && (
             <Footer/>
@@ -56,4 +57,11 @@ export default async function RootLayout({
       </html>
     </ApolloWrapper>
   );
+}
+ 
+export const metadata: Metadata = {
+  title: {
+    template: '%s | Mapped by CK',
+    default: 'Mapped by Common Knowledge', // a default is required when creating a template
+  },
 }

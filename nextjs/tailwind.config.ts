@@ -145,9 +145,9 @@ const config = {
 
       },
       borderRadius: {
-        lg: "50px",
+        lg: "calc(var(--radius))",
         md: "calc(var(--radius) - 2px)",
-        sm: "10px",
+        sm: "calc(var(--radius) - 4px)",
       },
 
       keyframes: {
@@ -166,7 +166,7 @@ const config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), require("@tailwindcss/forms")],
+  plugins: [require("tailwindcss-animate")],
 } satisfies Config;
 
 export default config;

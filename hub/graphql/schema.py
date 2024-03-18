@@ -5,7 +5,7 @@ import strawberry_django
 from gqlauth.core.middlewares import JwtSchema
 from gqlauth.user import arg_mutations as auth_mutations
 from gqlauth.user.queries import UserQueries
-from strawberry_django import NodeInput, mutations
+from strawberry_django import mutations
 from strawberry_django.optimizer import DjangoOptimizerExtension
 from strawberry_django.permissions import IsAuthenticated
 
@@ -35,13 +35,7 @@ class Query(UserQueries):
     airtable_sources: List[types.AirtableSource] = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
-    external_data_source_update_config: types.ExternalDataSourceUpdateConfig = (
-        strawberry_django.field(extensions=[IsAuthenticated()])
-    )
-    external_data_source_update_configs: List[
-        types.ExternalDataSourceUpdateConfig
-    ] = strawberry_django.field(extensions=[IsAuthenticated()])
-    event: types.QueueJob = strawberry_django.field(extensions=[IsAuthenticated()])
+    job: types.QueueJob = strawberry_django.field(extensions=[IsAuthenticated()])
     jobs: List[types.QueueJob] = strawberry_django.field(extensions=[IsAuthenticated()])
 
     @strawberry.field
@@ -51,10 +45,10 @@ class Query(UserQueries):
         api_key: str,
         base_id: str,
         table_id: str,
-    ) -> bool:
+    ) -> types.AirtableSource:
         return models.AirtableSource(
             api_key=api_key, base_id=base_id, table_id=table_id
-        ).healthcheck()
+        )
 
 
 @strawberry.type
@@ -78,37 +72,17 @@ class Mutation:
         mutation_types.IDObject, extensions=[IsAuthenticated()]
     )
 
-    create_external_data_source_update_config: types.ExternalDataSourceUpdateConfig = (
-        mutations.create(
-            mutation_types.ExternalDataSourceUpdateConfigInput,
-            extensions=[IsAuthenticated()],
-        )
-    )
-    update_external_data_source_update_config: types.ExternalDataSourceUpdateConfig = (
-        mutations.update(
-            mutation_types.ExternalDataSourceUpdateConfigInput,
-            extensions=[IsAuthenticated()],
-        )
-    )
-    delete_external_data_source_update_config: types.ExternalDataSourceUpdateConfig = (
-        mutations.delete(NodeInput, extensions=[IsAuthenticated()])
-    )
-
-    enable_update_config: types.ExternalDataSourceUpdateConfig = (
-        mutation_types.enable_update_config
-    )
-    disable_update_config: types.ExternalDataSourceUpdateConfig = (
-        mutation_types.disable_update_config
-    )
-    update_all: types.ExternalDataSourceUpdateConfig = mutation_types.update_all
-    refresh_webhook: types.ExternalDataSourceUpdateConfig = (
-        mutation_types.refresh_webhook
-    )
+    enable_auto_update: types.ExternalDataSource = mutation_types.enable_auto_update
+    disable_auto_update: types.ExternalDataSource = mutation_types.disable_auto_update
+    trigger_update: types.ExternalDataSource = mutation_types.trigger_update
+    refresh_webhooks: types.ExternalDataSource = mutation_types.refresh_webhooks
 
     create_organisation: types.Membership = mutation_types.create_organisation
     update_organisation: types.Organisation = mutations.update(
         mutation_types.OrganisationInputPartial, extensions=[IsAuthenticated()]
     )
+
+    import_all: types.ExternalDataSource = mutation_types.import_all
 
 
 schema = JwtSchema(

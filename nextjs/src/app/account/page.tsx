@@ -1,5 +1,6 @@
+import { Metadata } from "next";
 import { useRequireAuth } from "../../hooks/auth";
-import DataTable from "./data-table";
+import YourOrganisations from "./your-organisations";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default async function Account() {
@@ -12,7 +13,7 @@ export default async function Account() {
       <Tabs defaultValue="account" className="w-[400px]">
         <TabsList className="mb-5">
           <TabsTrigger value="account">Account Information</TabsTrigger>
-          <TabsTrigger value="Table">Table</TabsTrigger>
+          <TabsTrigger value="Table">Your organisations</TabsTrigger>
         </TabsList>
         <TabsContent value="account">
           <div className="flex flex-col gap-5">
@@ -27,12 +28,14 @@ export default async function Account() {
           </div>
         </TabsContent>
         <TabsContent value="Table">
-          Change your password here.
-          <DataTable />
-
-          </TabsContent>
+          <YourOrganisations />
+        </TabsContent>
       </Tabs>
 
     </>
   );
 }
+
+export const metadata: Metadata = {
+  title: "Your Account",
+};

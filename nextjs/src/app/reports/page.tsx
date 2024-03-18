@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { Metadata } from 'next';
 
 export default function Report() {
 
@@ -16,7 +17,7 @@ export default function Report() {
     <div className=" max-w-7xl space-y-7 w-full">
     <PageHeader />
     <div className="border-b border-meepGray-700 pt-10" />
-      <h2 className="text-hSm">Active Syncs</h2>
+      <h2 className="text-hSm">Your reports</h2>
 
       <div className="flex flex-row gap-lg">
         <Card>
@@ -56,3 +57,7 @@ function PageHeader() {
   </header>
   );
 }
+
+export const metadata: Metadata = {
+  title: "Reports",
+};

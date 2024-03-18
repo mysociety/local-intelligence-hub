@@ -47,15 +47,9 @@ export default function Navbar({ isLoggedIn }: NavbarProps) {
           </Link>
           <Link
             className={`link ${pathname === '/data-layers' ? 'active' : 'flex items-center'}`}
-            href="/data-layers"
+            href="/data-sources"
           >
-            Data layers
-          </Link>
-          <Link
-            className={`link ${pathname === '/external-data-source-updates' ? 'active' : 'flex items-center'}`}
-            href="/external-data-source-updates"
-          >
-            CRM Data Sync
+            Data sources
           </Link>
           <div className="ml-auto flex items-stretch gap-md ">
             <Link

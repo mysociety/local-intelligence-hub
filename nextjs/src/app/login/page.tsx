@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useRequireNoAuth } from "../../hooks/auth";
 import LoginForm from "./login-form";
 import Link from "next/link";
+import { Metadata } from "next";
 
 // This has been split into a two components to separate the client-side (LoginForm)
 // and the server side (this component), which allows using useRequireNoAuth() here
@@ -22,3 +23,7 @@ export default async function Login() {
     </div>
   );
 }
+
+export const metadata: Metadata = {
+  title: "Login",
+};
