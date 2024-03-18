@@ -1,4 +1,4 @@
-import { AirtableLogo } from "@/components/logos";
+import { AirtableLogo, MailChimpLogo } from "@/components/logos";
 
 export const externalDataSourceOptions = {
   airtable: {
@@ -6,6 +6,12 @@ export const externalDataSourceOptions = {
     modelName: "AirtableSource",
     name: "Airtable",
     logo: AirtableLogo,
+  },
+  mailchimp: {
+    key: "mailchimp",
+    modelName: "MailchimpSource",
+    name: "MailChimp",
+    logo: MailChimpLogo,
   },
 };
 
