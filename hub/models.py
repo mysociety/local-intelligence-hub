@@ -906,7 +906,7 @@ class ExternalDataSource(PolymorphicModel):
         Copy data to this database for use in dashboarding features.
         """
 
-        # A LIH record of this data
+        # A Local Intelligence Hub record of this data
         data_set, created = DataSet.objects.update_or_create(
             external_data_source=self,
             defaults={
