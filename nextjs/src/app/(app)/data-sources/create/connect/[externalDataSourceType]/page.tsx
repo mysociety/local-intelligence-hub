@@ -482,5 +482,92 @@ export default function Page({
     );
   }
 
+  if (externalDataSourceType === "mailchimp") {
+    return (
+      <div className="space-y-7">
+        <header>
+          <h1 className="text-hLg">Connecting to your Mailchimp audience</h1>
+          <p className="mt-6 text-meepGray-400 max-w-lg">
+            In order to send data across to your Mailchimp audience, we{"'"}ll need a few
+            details that gives us permission to make updates to your audience, as
+            well as tell us which audience to update in the first place.
+          </p>
+        </header>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(submitTestConnection)}
+            className="space-y-7 max-w-lg"
+          >
+            <div className='text-hSm'>Connection details</div>
+            <FormField
+              control={form.control}
+              name="mailchimp.apiKey"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>MailChimp API key</FormLabel>
+                  <FormControl>
+                    {/* @ts-ignore */}
+                    <Input placeholder="patAB1" {...field} required />
+                  </FormControl>
+                  <FormDescription>
+                    {" "}
+                    <a
+                      className="underline"
+                      target="_blank"
+                      href="https://mailchimp.com/help/about-api-keys/"
+                    >
+                      Learn how to find your API key.
+                    </a>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="mailchimp.listId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Audience ID</FormLabel>
+                  <FormControl>
+                    {/* @ts-ignore */}
+                    <Input placeholder="app1234" {...field} required />
+                  </FormControl>
+                  <FormDescription>
+                    The unique identifier for your audience.{" "}
+                    <a
+                      className="underline"
+                      target="_blank"
+                      href="https://mailchimp.com/help/find-audience-id/"
+                    >
+                      Learn how to find your audience ID.
+                    </a>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          
+            <div className="flex flex-row gap-x-4">
+              <Button
+                variant="outline"
+                type="reset"
+                onClick={() => {
+                  router.back();
+                }}
+              >
+                Back
+              </Button>
+              <Button type="submit" variant={"reverse"} disabled={testSourceResult.loading}>
+                Test connection
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
+    );
+  }
+
+
   return null;
 }
