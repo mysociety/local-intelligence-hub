@@ -6,9 +6,6 @@ import {
 } from "@apollo/experimental-nextjs-app-support/ssr";
 import { registerApolloClient } from "@apollo/experimental-nextjs-app-support/rsc";
 import { cookies } from "next/headers";
-// import { createFragmentRegistry } from "@apollo/client/cache";
-// import { MapReportPageFragmentStr } from "@/app/reports/[id]/page";
-// import { MapReportLayersSummaryFragmentStr } from "@/components/dataConfig";
 
 const getJwt = (): string | undefined => {
   const cookieStore = cookies();
@@ -58,12 +55,7 @@ const makeBackEndClient = () => {
   });
 
   return new NextSSRApolloClient({
-    cache: new NextSSRInMemoryCache({
-      // fragments: createFragmentRegistry(gql`
-      //   ${MapReportPageFragmentStr}
-      //   ${MapReportLayersSummaryFragmentStr}
-      // `)
-    }),
+    cache: new NextSSRInMemoryCache(),
     link: ApolloLink.from([authLink, httpLink]),
   });
 };
