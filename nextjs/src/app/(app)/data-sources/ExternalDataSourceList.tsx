@@ -1,7 +1,7 @@
 "use client";
 
 import { gql, useQuery } from "@apollo/client";
-import { ActionNetworkLogo, AirtableLogo } from "@/components/logos";
+import { ActionNetworkLogo, AirtableLogo, MailChimpLogo } from "@/components/logos";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
@@ -9,6 +9,7 @@ import { AutoUpdateCard } from "@/components/AutoUpdateCard";
 import { DataSourceType, ListExternalDataSourcesQuery, ListExternalDataSourcesQueryVariables } from "@/__generated__/graphql";
 import { useEffect } from "react";
 import qs from 'query-string'
+import { Mail } from "lucide-react";
 
 const LIST_UPDATE_CONFIGS = gql`
   query ListExternalDataSources {
@@ -116,6 +117,9 @@ function PageHeader() {
         </div>
         <div className="rounded-3xl bg-meepGray-700 px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
           <AirtableLogo className="w-full" />
+        </div>
+        <div className="rounded-3xl bg-meepGray-700 px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
+          <MailChimpLogo className="w-full" />
         </div>
       </div>
     </header>
