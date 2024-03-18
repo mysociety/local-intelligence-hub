@@ -895,6 +895,20 @@ htmlsoup = ["BeautifulSoup4"]
 source = ["Cython (==0.29.37)"]
 
 [[package]]
+name = "mailchimp3"
+version = "3.0.21"
+description = "A python client for v3 of MailChimp API"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mailchimp3-3.0.21-py2.py3-none-any.whl", hash = "sha256:6eb335fcd915b3233285a0bdf6317fdfc412b4a638c102ae3a7a52019d3f0970"},
+    {file = "mailchimp3-3.0.21.tar.gz", hash = "sha256:5e2930ece6144abb659d45e692e92135ab05c9027d3f5e807c0f66cfb374b9ad"},
+]
+
+[package.dependencies]
+requests = ">=2.7.0"
+
+[[package]]
 name = "mccabe"
 version = "0.7.0"
 description = "McCabe checker, plugin for flake8"
@@ -2151,4 +2165,4 @@ brotli = ["Brotli"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "4548499e72ab917cee83059b165ab62c0db797f8154b7f091fe0dbb3ce6c6bb9"
+content-hash = "6675c786891e9d9858ba8d9b544af541226f8b9e447fdfcdfe6caa94c21d514f"

@@ -37,6 +37,7 @@ strawberry-graphql = {extras = ["asgi"], version = "^0.220.0"}
 pandas = "^2.2.1"
 django-choices-field = "^2.3.0"
 httpx = "^0.27.0"
+mailchimp3 = "^3.0.21"
 
 [tool.poetry.dev-dependencies]
 black = "^22.8.0"
