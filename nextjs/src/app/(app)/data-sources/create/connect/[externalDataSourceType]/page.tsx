@@ -41,10 +41,9 @@ import { toastPromise } from "@/lib/toast";
 const TEST_SOURCE = gql`
   query TestSourceConnection(
     $apiKey: String!
-    $baseId: String!
-    $tableId: String!
+    $listId: String!
   ) {
-    testSourceConnection: testAirtableSource(apiKey: $apiKey, baseId: $baseId, tableId: $tableId) {
+    testSourceConnection: testMailchimpSource(apiKey: $apiKey, listId: $listId) {
       remoteName
       healthcheck
       fieldDefinitions {
@@ -58,8 +57,8 @@ const TEST_SOURCE = gql`
 `;
 
 const CREATE_SOURCE = gql`
-  mutation CreateSource($AirtableSource: AirtableSourceInput!) {
-    createSource: createAirtableSource(data: $AirtableSource) {
+  mutation CreateSource($MailChimpSource: MailChimpSourceInput!) {
+    createSource: createMailchimpSource(data: $MailChimpSource) {
       id
       name
       healthcheck
@@ -68,9 +67,9 @@ const CREATE_SOURCE = gql`
   }
 `;
 
-type FormInputs = CreateSourceMutationVariables["AirtableSource"] & {
+type FormInputs = CreateSourceMutationVariables["MailChimpSource"] & {
   // In time there will be more external data sources with their own fields
-  airtable?: CreateSourceMutationVariables["AirtableSource"];
+  mailchimp?: CreateSourceMutationVariables["MailChimpSource"];
 };
 
 export default function Page({
@@ -89,7 +88,7 @@ export default function Page({
     defaultValues: {
       geographyColumnType: PostcodesIoGeographyTypes.Postcode,
       dataType: context.dataType,
-      airtable: {}
+      mailchimp: {}
     }
   });
 
@@ -102,9 +101,8 @@ export default function Page({
     TestSourceConnectionQueryVariables
   >(TEST_SOURCE, {
     variables: {
-      apiKey: source.airtable?.apiKey!,
-      baseId: source.airtable?.baseId!,
-      tableId: source.airtable?.tableId!,
+      apiKey: source.mailchimp?.apiKey!,
+      listId: source.mailchimp?.listId!
     },
   });
 
@@ -151,10 +149,10 @@ export default function Page({
   // TODO: Make this generic so it can be reused by different sources
   // Probably want a `test_connection` resolver that can optionally take `airtable` or `action_network` arguments
   async function submitTestConnection({
-    airtable
+    mailchimp
   }: FormInputs) {
     toastPromise(
-      testSource({ variables: airtable as any }),
+      testSource({ variables: mailchimp as any }),
       {
         loading: "Testing connection...",
         success: (d: FetchResult<TestSourceConnectionQuery>) => {
@@ -169,12 +167,12 @@ export default function Page({
   }
 
   async function submitCreateSource(data: FormInputs) {
-    if (data.airtable) {
-      const { airtable, ...genericData } = data;
+    if (data.mailchimp) {
+      const { mailchimp, ...genericData } = data;
       const variables = {
-          AirtableSource: {
+          MailChimpSource: {
             ...genericData,
-            ...source.airtable,
+            ...source.mailchimp,
           }
       }
       toastPromise(createSource({ variables }),
@@ -523,6 +521,7 @@ export default function Page({
                 </FormItem>
               )}
             />
+                
             <FormField
               control={form.control}
               name="mailchimp.listId"

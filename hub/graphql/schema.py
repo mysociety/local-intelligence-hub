@@ -72,11 +72,10 @@ class Query(UserQueries):
         self,
         info: strawberry.types.info.Info,
         api_key: str,
-        base_id: str,
-        table_id: str,
+        list_id: str,
     ) -> model_types.MailchimpSource:
         return models.MailchimpSource(
-            api_key=api_key, base_id=base_id, table_id=table_id
+            api_key=api_key, list_id=list_id
         )
 
 @strawberry.type
@@ -91,6 +90,12 @@ class Mutation:
     )
     update_airtable_source: model_types.AirtableSource = django_mutations.update(
         mutation_types.AirtableSourceInput, extensions=[IsAuthenticated()]
+    )
+    create_mailchimp_source: model_types.MailchimpSource = (
+        mutation_types.create_mailchimp_source
+    )
+    update_mailchimp_source: model_types.MailchimpSource = django_mutations.update(
+        mutation_types.MailChimpSourceInput, extensions=[IsAuthenticated()]
     )
     update_external_data_source: model_types.ExternalDataSource = (
         django_mutations.update(

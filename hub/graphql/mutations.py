@@ -45,6 +45,11 @@ class AirtableSourceInput(ExternalDataSourceInput):
     base_id: auto
     table_id: auto
 
+@strawberry_django.input(models.MailchimpSource, partial=True)
+class MailChimpSourceInput(ExternalDataSourceInput):
+    api_key: auto
+    list_id: auto
+
 
 @strawberry.input
 class MapLayerInput:
@@ -134,6 +139,20 @@ def create_airtable_source(
             "organisation": get_or_create_organisation_for_source(info, data)
         },
     )
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def create_mailchimp_source(
+    info: Info, data: MailChimpSourceInput
+) -> models.ExternalDataSource:
+    return create_with_computed_args(
+        models.MailchimpSource,
+        info,
+        data,
+        computed_args=lambda info, data, model: {
+            "organisation": get_or_create_organisation_for_source(info, data)
+        },
+    )
+
 
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()], handle_django_errors=True)
