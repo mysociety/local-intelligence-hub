@@ -243,6 +243,11 @@ class AirtableSource(ExternalDataSource):
     base_id: auto
     table_id: auto
 
+@strawberry_django.type(models.MailchimpSource)
+class MailchimpSource(ExternalDataSource):
+    api_key: auto
+    list_id: auto
+    member_email: auto
 
 @strawberry_django.type(models.Report)
 class Report:

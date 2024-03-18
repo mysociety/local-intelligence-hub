@@ -35,6 +35,12 @@ class Query(UserQueries):
     airtable_sources: List[model_types.AirtableSource] = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
+    mailchimp_source: model_types.MailchimpSource = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
+    mailchimp_sources: List[model_types.MailchimpSource] = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
     job: model_types.QueueJob = strawberry_django.field(extensions=[IsAuthenticated()])
     jobs: List[model_types.QueueJob] = strawberry_django.field(
         extensions=[IsAuthenticated()]
@@ -60,7 +66,18 @@ class Query(UserQueries):
         return models.AirtableSource(
             api_key=api_key, base_id=base_id, table_id=table_id
         )
-
+    
+    @strawberry.field
+    def test_mailchimp_source(
+        self,
+        info: strawberry.types.info.Info,
+        api_key: str,
+        base_id: str,
+        table_id: str,
+    ) -> model_types.MailchimpSource:
+        return models.MailchimpSource(
+            api_key=api_key, base_id=base_id, table_id=table_id
+        )
 
 @strawberry.type
 class Mutation:

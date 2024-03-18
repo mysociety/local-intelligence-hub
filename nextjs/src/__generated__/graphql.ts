@@ -278,6 +278,40 @@ export type IntFilterLookup = {
   startsWith?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** A Mailchimp list. */
+export type MailchimpSource = {
+  __typename?: 'MailchimpSource';
+  /** Mailchimp API key. */
+  apiKey: Scalars['String']['output'];
+  autoImportEnabled: Scalars['Boolean']['output'];
+  autoUpdateEnabled: Scalars['Boolean']['output'];
+  autoUpdateWebhookUrl: Scalars['String']['output'];
+  connectionDetails: AirtableSource;
+  createdAt: Scalars['DateTime']['output'];
+  dataType: DataSourceType;
+  description?: Maybe<Scalars['String']['output']>;
+  fieldDefinitions?: Maybe<Array<FieldDefinition>>;
+  geographyColumn?: Maybe<Scalars['String']['output']>;
+  geographyColumnType: PostcodesIoGeographyTypes;
+  geojsonPointFeatures: Array<PointFeature>;
+  healthcheck: Scalars['Boolean']['output'];
+  id: Scalars['UUID']['output'];
+  importedDataCount: Scalars['Int']['output'];
+  isImporting: Scalars['Boolean']['output'];
+  jobs: Array<QueueJob>;
+  lastUpdate: Scalars['DateTime']['output'];
+  /** The unique identifier for the Mailchimp list. */
+  listId: Scalars['String']['output'];
+  /** Email for member to fetch. */
+  memberEmail: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  organisation: Organisation;
+  remoteName?: Maybe<Scalars['String']['output']>;
+  remoteUrl?: Maybe<Scalars['String']['output']>;
+  updateMapping?: Maybe<Array<AutoUpdateConfig>>;
+  webhookHealthcheck: Scalars['Boolean']['output'];
+};
+
 export type MapLayer = {
   __typename?: 'MapLayer';
   name: Scalars['String']['output'];
@@ -622,6 +656,8 @@ export type Query = {
   externalDataSources: Array<ExternalDataSource>;
   job: QueueJob;
   jobs: Array<QueueJob>;
+  mailchimpSource: MailchimpSource;
+  mailchimpSources: Array<MailchimpSource>;
   mapReport: MapReport;
   mapReports: Array<MapReport>;
   me: UserType;
@@ -657,6 +693,11 @@ export type QueryJobArgs = {
 export type QueryJobsArgs = {
   filters?: InputMaybe<QueueFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryMailchimpSourceArgs = {
+  pk: Scalars['ID']['input'];
 };
 
 
