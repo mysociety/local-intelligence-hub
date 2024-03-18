@@ -7,10 +7,11 @@ import strawberry_django
 from strawberry import auto
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
+from strawberry.scalars import JSON
 
 from hub import models
 from hub.graphql.types.geojson import PointFeature, PointGeometry
-from hub.graphql.utils import dict_key_field
+from hub.graphql.utils import dict_key_field, fn_field
 
 
 @strawberry_django.filters.filter(
@@ -136,6 +137,13 @@ class ExternalDataSourceFilter:
     geography_column_type: auto
 
 
+@strawberry.type
+class GroupedDataCount:
+    label: Optional[str] = dict_key_field()
+    area_id: Optional[str] = dict_key_field()
+    count: int = dict_key_field()
+
+
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class ExternalDataSource:
     id: auto
@@ -220,6 +228,12 @@ class ExternalDataSource:
             for generic_datum in data
             if generic_datum.point is not None
         ]
+    
+    imported_data_count_by_region: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_constituency: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_constituency_2024: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_council: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_ward: List[GroupedDataCount] = fn_field()
 
     @strawberry_django.field
     def is_importing(self: models.ExternalDataSource, info: Info) -> bool:
