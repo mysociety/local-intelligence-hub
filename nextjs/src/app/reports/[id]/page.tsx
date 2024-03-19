@@ -85,16 +85,6 @@ export default function Page({ params: { id } }: { params: Params }) {
     )
   }
 
-  if (report.loading && !report.data?.mapReport) {
-    return (
-      <main className="absolute w-full h-full">
-        <div className="flex flex-col items-center justify-center w-full h-full">
-          <LoadingIcon />
-        </div>
-      </main>
-    )
-  }
-
   return (
     <ReportContext.Provider value={{ 
       id,
@@ -104,84 +94,92 @@ export default function Page({ params: { id } }: { params: Params }) {
         <div className='w-full h-full'>
           <ReportMap />
         </div>
-        <div className="absolute top-5  left-5 right-0 w-0">
-          <div className="flex flex-col items-start gap-4">
-            <Card className="w-[200px] p-4 bg-white border-1 border-meepGray-700 text-meepGray-800">
-              <CardHeader className="flex flex-row items-center mb-4">
-                <CardTitle contentEditable id="nickname" className="text-hMd grow font-IBMPlexSansMedium" onBlur={d => {
-                  updateMutation({
-                    name: document.getElementById("nickname")?.textContent?.trim()
-                  })
-                }}>
-                  {report.data?.mapReport.name}
-                </CardTitle>
-                <DropdownMenu>
-                  <DropdownMenuTrigger>
-                    <MoreVertical className='w-3' />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent side="right" align="start">
-                    <DropdownMenuLabel>Report Settings</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>Share</DropdownMenuItem>
-                    <DropdownMenuItem>Invite</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setDeleteOpen(true)}>Delete</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </CardHeader>
-              <CardContent>
-                <ToggleGroup type="multiple" variant="outline">
-                  {/* @ts-ignore */}
-                  <ToggleGroupItem value="a" type="outline" className="p-3 flex gap-2" onClick={toggleDataConfig}>
-                    <Layers className="w-4" /> Data Configuration
-                  </ToggleGroupItem>
-                  {/* @ts-ignore */}
-                  <ToggleGroupItem value="b" type="outline" className="p-3 flex gap-2" onClick={toggleConsData}>
-                    <BarChart3 className="w-4" /> Constituency Data
-                  </ToggleGroupItem>
-                </ToggleGroup>
-              </CardContent>
-            </Card>
-            {isDataConfigOpen && (
-              <DataConfigPanel />
-            )}
-            {isConsDataOpen && (
-              <Card className="absolute right-5 p-4 bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700">
-                <CardHeader>
-                  <Tabs defaultValue="all-constituencies" className="w-[300px]">
-                    <TabsList>
-                      <TabsTrigger value="all-constituencies">All Constituencies</TabsTrigger>
-                      <TabsTrigger value="selected-cons-1">Bury North</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="all-constituencies" className="flex flex-col gap-4">
-                      <ReportsConsItem
-                        consName="Coventry South"
-                        firstIn2019="Labour"
-                        secondIn2019="Conservative"
-                        mpName="Zarah Sultana"
-                        mpImgUrl="https://www.localintelligencehub.com/media/person/mp_4786_7qDOwxw.jpeg"
-                      />
-                      <ReportsConsItem
-                        consName="Bury North"
-                        firstIn2019="Conservative"
-                        secondIn2019="Labour"
-                        mpName="James Daly"
-                        mpImgUrl="https://www.localintelligencehub.com/media/person/mp_4854_BxRRx9j.jpeg"
-                      />
-                      <ReportsConsItem
-                        consName="Camberwell and Peckham"
-                        firstIn2019="Labour"
-                        secondIn2019="Conservative"
-                        mpName="Harriet Harman"
-                        mpImgUrl="https://www.localintelligencehub.com/media/person/mp_150_rgMOVq7.jpeg"
-                      />
-                    </TabsContent>
-                    <TabsContent value="selected-cons-1">Change your password here.</TabsContent>
-                  </Tabs>
-                </CardHeader>
-              </Card>
-            )}
+        {report.loading && !report.data?.mapReport ? (
+          <div className="absolute w-full h-full inset-0">
+            <div className="flex flex-col items-center justify-center w-full h-full">
+              <LoadingIcon />
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="absolute top-5  left-5 right-0 w-0">
+            <div className="flex flex-col items-start gap-4">
+              <Card className="w-[200px] p-4 bg-white border-1 border-meepGray-700 text-meepGray-800">
+                <CardHeader className="flex flex-row items-center mb-4">
+                  <CardTitle contentEditable id="nickname" className="text-hMd grow font-IBMPlexSansMedium" onBlur={d => {
+                    updateMutation({
+                      name: document.getElementById("nickname")?.textContent?.trim()
+                    })
+                  }}>
+                    {report.data?.mapReport.name}
+                  </CardTitle>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger>
+                      <MoreVertical className='w-3' />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="right" align="start">
+                      <DropdownMenuLabel>Report Settings</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>Share</DropdownMenuItem>
+                      <DropdownMenuItem>Invite</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setDeleteOpen(true)}>Delete</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </CardHeader>
+                <CardContent>
+                  <ToggleGroup type="multiple" variant="outline">
+                    {/* @ts-ignore */}
+                    <ToggleGroupItem value="a" type="outline" className="p-3 flex gap-2" onClick={toggleDataConfig}>
+                      <Layers className="w-4" /> Data Configuration
+                    </ToggleGroupItem>
+                    {/* @ts-ignore */}
+                    <ToggleGroupItem value="b" type="outline" className="p-3 flex gap-2" onClick={toggleConsData}>
+                      <BarChart3 className="w-4" /> Constituency Data
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </CardContent>
+              </Card>
+              {isDataConfigOpen && (
+                <DataConfigPanel />
+              )}
+              {isConsDataOpen && (
+                <Card className="absolute right-5 p-4 bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700">
+                  <CardHeader>
+                    <Tabs defaultValue="all-constituencies" className="w-[300px]">
+                      <TabsList>
+                        <TabsTrigger value="all-constituencies">All Constituencies</TabsTrigger>
+                        <TabsTrigger value="selected-cons-1">Bury North</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="all-constituencies" className="flex flex-col gap-4">
+                        <ReportsConsItem
+                          consName="Coventry South"
+                          firstIn2019="Labour"
+                          secondIn2019="Conservative"
+                          mpName="Zarah Sultana"
+                          mpImgUrl="https://www.localintelligencehub.com/media/person/mp_4786_7qDOwxw.jpeg"
+                        />
+                        <ReportsConsItem
+                          consName="Bury North"
+                          firstIn2019="Conservative"
+                          secondIn2019="Labour"
+                          mpName="James Daly"
+                          mpImgUrl="https://www.localintelligencehub.com/media/person/mp_4854_BxRRx9j.jpeg"
+                        />
+                        <ReportsConsItem
+                          consName="Camberwell and Peckham"
+                          firstIn2019="Labour"
+                          secondIn2019="Conservative"
+                          mpName="Harriet Harman"
+                          mpImgUrl="https://www.localintelligencehub.com/media/person/mp_150_rgMOVq7.jpeg"
+                        />
+                      </TabsContent>
+                      <TabsContent value="selected-cons-1">Change your password here.</TabsContent>
+                    </Tabs>
+                  </CardHeader>
+                </Card>
+              )}
+            </div>
+          </div>
+        )}
       </main>
       <AlertDialog open={deleteOpen} onOpenChange={() => setDeleteOpen(false)}>
         <AlertDialogContent>
