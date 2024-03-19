@@ -209,10 +209,6 @@ class ExternalDataSource:
         return self.webhook_healthcheck()
 
     @strawberry_django.field
-    def imported_data_count(self: models.ExternalDataSource, info: Info) -> int:
-        return self.imported_data_count()
-
-    @strawberry_django.field
     def geojson_point_features(
         self: models.ExternalDataSource, info: Info
     ) -> List[PointFeature]:
@@ -229,6 +225,7 @@ class ExternalDataSource:
             if generic_datum.point is not None
         ]
     
+    imported_data_count: int = fn_field()
     imported_data_count_by_region: List[GroupedDataCount] = fn_field()
     imported_data_count_by_constituency: List[GroupedDataCount] = fn_field()
     imported_data_count_by_constituency_2024: List[GroupedDataCount] = fn_field()
@@ -287,3 +284,10 @@ class MapLayer:
 @strawberry_django.type(models.MapReport)
 class MapReport(Report):
     layers: Optional[List[MapLayer]]
+    
+    imported_data_count: int = fn_field()
+    imported_data_count_by_region: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_constituency: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_constituency_2024: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_council: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_ward: List[GroupedDataCount] = fn_field()

@@ -44,6 +44,7 @@ from hub.tasks import (
 from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
 from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
 from utils.py import ensure_list, get
+from hub.analytics import Analytics
 
 User = get_user_model()
 
@@ -1085,78 +1086,31 @@ class ExternalDataSource(PolymorphicModel):
         return GenericData.objects.filter(
             data_type__data_set__external_data_source_id=self.id
         )
+    
+    @cached_property
+    def analytics(self):
+        return Analytics(qs=self.get_import_data)
 
     def get_import_dataframe(self):
-        enrichment_data = self.get_import_data()
-        json_list = [{**d.postcode_data, **d.json} for d in enrichment_data]
-        enrichment_df = pd.DataFrame.from_records(json_list)
-        return enrichment_df
-
-    class RegionCount(TypedDict):
-        label: str
-        area_id: Optional[str]
-        count: int
+        return self.analytics.get_dataframe()
     
-    def imported_data_count_by_region(self) -> List[RegionCount]:
-        return self.get_import_data()\
-          .annotate(
-              label=F('postcode_data__european_electoral_region'),
-              area_id=F('postcode_data__codes__european_electoral_region')
-          )\
-          .values('label', 'area_id')\
-          .annotate(count=Count('label'))\
-          .order_by('-count')\
-
+    def imported_data_count_by_region(self) -> List[Analytics.RegionCount]:
+        return self.analytics.imported_data_count_by_region()
     
-    def imported_data_count_by_constituency(self) -> List[RegionCount]:
-        return self.get_import_data()\
-          .annotate(
-              label=F('postcode_data__parliamentary_constituency'),
-              area_id=F('postcode_data__codes__parliamentary_constituency')
-          )\
-          .values('label', 'area_id')\
-          .annotate(count=Count('label'))\
-          .order_by('-count')\
-
+    def imported_data_count_by_constituency(self) -> List[Analytics.RegionCount]:
+        return self.analytics.imported_data_count_by_constituency()
     
-    def imported_data_count_by_constituency_2024(self) -> List[RegionCount]:
-        return self.get_import_data()\
-          .annotate(
-              label=F('postcode_data__parliamentary_constituency_2025'),
-              area_id=F('postcode_data__codes__parliamentary_constituency_2025')
-          )\
-          .values('label', 'area_id')\
-          .annotate(count=Count('label'))\
-          .order_by('-count')\
-
+    def imported_data_count_by_constituency_2024(self) -> List[Analytics.RegionCount]:
+        return self.analytics.imported_data_count_by_constituency_2024()
     
-    def imported_data_count_by_council(self) -> List[RegionCount]:
-        return self.get_import_data()\
-          .annotate(
-              label=F('postcode_data__admin_district'),
-              area_id=F('postcode_data__codes__admin_district')
-          )\
-          .values('label', 'area_id')\
-          .annotate(count=Count('label'))\
-          .order_by('-count')\
-
+    def imported_data_count_by_council(self) -> List[Analytics.RegionCount]:
+        return self.analytics.imported_data_count_by_council()
     
-    def imported_data_count_by_ward(self) -> List[RegionCount]:
-        return self.get_import_data()\
-          .annotate(
-              label=F('postcode_data__admin_ward'),
-              area_id=F('postcode_data__codes__admin_ward')
-          )\
-          .values('label', 'area_id')\
-          .annotate(count=Count('label'))\
-          .order_by('-count')\
-
+    def imported_data_count_by_ward(self) -> List[Analytics.RegionCount]:
+        return self.analytics.imported_data_count_by_ward()
 
     def imported_data_count(self) -> int:
-        count = self.get_import_data().all().count()
-        if isinstance(count, int):
-            return count
-        return 0
+        return self.analytics.imported_data_count()
 
     def data_loader_factory(self):
         async def fetch_enrichment_data(keys: List[self.EnrichmentLookup]) -> list[str]:
@@ -1665,3 +1619,34 @@ class MapReport(Report):
 
     def get_layers(self) -> list[MapLayer]:
         return self.layers
+
+    def get_import_data(self):
+        visible_layer_ids = [layer["source"] for layer in self.get_layers() if layer.get("visible", True)]
+        return GenericData.objects.filter(
+            data_type__data_set__external_data_source_id__in=visible_layer_ids
+        )
+    
+    @cached_property
+    def analytics(self):
+        return Analytics(qs=self.get_import_data)
+
+    def get_import_dataframe(self):
+        return self.analytics.get_dataframe()
+    
+    def imported_data_count_by_region(self) -> List[Analytics.RegionCount]:
+        return self.analytics.imported_data_count_by_region()
+    
+    def imported_data_count_by_constituency(self) -> List[Analytics.RegionCount]:
+        return self.analytics.imported_data_count_by_constituency()
+    
+    def imported_data_count_by_constituency_2024(self) -> List[Analytics.RegionCount]:
+        return self.analytics.imported_data_count_by_constituency_2024()
+    
+    def imported_data_count_by_council(self) -> List[Analytics.RegionCount]:
+        return self.analytics.imported_data_count_by_council()
+    
+    def imported_data_count_by_ward(self) -> List[Analytics.RegionCount]:
+        return self.analytics.imported_data_count_by_ward()
+
+    def imported_data_count(self) -> int:
+        return self.analytics.imported_data_count()

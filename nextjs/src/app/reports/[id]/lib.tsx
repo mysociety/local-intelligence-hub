@@ -1,6 +1,6 @@
 "use client"
 
-import { MapReportLayersSummaryFragmentStr } from "@/components/dataConfig";
+import { MAP_REPORT_LAYERS_SUMMARY } from "@/components/dataConfig"
 import { gql } from "@apollo/client"
 
 export const MapReportPageFragmentStr = gql`
@@ -9,5 +9,5 @@ export const MapReportPageFragmentStr = gql`
     name
     ... MapReportLayersSummary
   }
-  ${MapReportLayersSummaryFragmentStr}
+  ${MAP_REPORT_LAYERS_SUMMARY}
 `

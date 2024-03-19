@@ -3,14 +3,14 @@
 import { GetSourceGeoJsonQuery, GetSourceGeoJsonQueryVariables, MapReportLayersSummaryFragment } from "@/__generated__/graphql";
 import { useContext, useId } from "react";
 import Map, { Layer, Marker, Popup, Source } from "react-map-gl";
-import { MapReportLayersSummaryFragmentStr } from "../dataConfig";
+import { MAP_REPORT_LAYERS_SUMMARY } from "../dataConfig";
 import { gql, useFragment, useQuery } from "@apollo/client";
 import { ReportContext } from "@/app/reports/[id]/context";
 
 export function ReportMap () {
   const { id, update } = useContext(ReportContext)
   const layers = useFragment<MapReportLayersSummaryFragment>({
-    fragment: MapReportLayersSummaryFragmentStr,
+    fragment: MAP_REPORT_LAYERS_SUMMARY,
     fragmentName: "MapReportLayersSummary",
     from: {
       __typename: "MapReport",
