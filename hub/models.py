@@ -1100,9 +1100,10 @@ class ExternalDataSource(PolymorphicModel):
     def imported_data_count_by_region(self) -> List[RegionCount]:
         return self.get_import_data()\
           .annotate(
-              label=F('postcode_data__european_electoral_region')
+              label=F('postcode_data__european_electoral_region'),
+              area_id=F('postcode_data__codes__european_electoral_region')
           )\
-          .values('label')\
+          .values('label', 'area_id')\
           .annotate(count=Count('label'))\
           .order_by('-count')\
 
