@@ -46,6 +46,7 @@ class Command(BaseCommand):
             geom = GEOSGeometry(json.dumps(area['geometry']))
             if isinstance(geom, Polygon):
                 geom = MultiPolygon([geom])
+            geom.srid = 27700
             a.geometry = geom_str
             a.polygon = geom
             a.point = a.polygon.centroid

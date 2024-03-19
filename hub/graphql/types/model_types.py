@@ -259,13 +259,13 @@ class ExternalDataSource:
         return self.webhook_healthcheck()
 
     @strawberry_django.field
-    def geojson_point_features(
+    def imported_data_geojson_points(
         self: models.ExternalDataSource, info: Info
     ) -> List[PointFeature]:
         data = self.get_import_data()
         return [
             PointFeature.from_geodjango(
-                point=generic_datum,
+                point=generic_datum.point,
                 id=generic_datum.data,
                 properties=generic_datum.json,
             )

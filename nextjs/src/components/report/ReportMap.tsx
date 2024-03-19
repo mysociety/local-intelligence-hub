@@ -1,17 +1,21 @@
 "use client"
 
 import { GetSourceGeoJsonQuery, GetSourceGeoJsonQueryVariables, GroupedDataCount, MapReportLayersSummaryFragment } from "@/__generated__/graphql";
-import { useContext, useEffect, useId, useRef } from "react";
-import Map, { Layer, MapRef, Marker, Popup, Source, LayerProps, VectorSourceRaw } from "react-map-gl";
+import { Fragment, useContext, useEffect, useRef, useState } from "react";
+import Map, { Layer, MapRef, Source, LayerProps } from "react-map-gl";
 import { MAP_REPORT_LAYERS_SUMMARY } from "../dataConfig";
 import { gql, useFragment, useQuery } from "@apollo/client";
 import { ReportContext } from "@/app/reports/[id]/context";
 import { Expression } from "mapbox-gl";
-import { scaleSequential } from 'd3-scale'
-import { interpolatePlasma } from 'd3-scale-chromatic'
+import { scaleLinear, scaleSequential } from 'd3-scale'
+import { interpolateInferno } from 'd3-scale-chromatic'
+
+const MAX_REGION_ZOOM = 8
+const MAX_CONSTITUENCY_ZOOM = 11.5
+const MIN_MEMBERS_ZOOM = MAX_CONSTITUENCY_ZOOM
 
 export function ReportMap () {
-  const { id, update } = useContext(ReportContext)
+  const { id } = useContext(ReportContext)
   const layers = useFragment<MapReportLayersSummaryFragment>({
     fragment: MAP_REPORT_LAYERS_SUMMARY,
     fragmentName: "MapReportLayersSummary",
@@ -30,7 +34,7 @@ export function ReportMap () {
     sourceLayerId?: string,
     promoteId: string,
     labelId: string,
-    mapboxSourceProps: Omit<VectorSourceRaw, 'type' | 'url' | 'id'>,
+    mapboxSourceProps?: { maxzoom?: number },
     mapboxLayerProps?: Omit<LayerProps, 'type' | 'url' | 'id' | 'paint' | 'layout'>,
     data: Array<GroupedDataCount>,
     downloadUrl?: string
@@ -46,10 +50,10 @@ export function ReportMap () {
       // @ts-ignore
       data: layers.data.importedDataCountByRegion || [],
       mapboxSourceProps: {
-        maxzoom: 9.5
+        maxzoom: MAX_REGION_ZOOM
       },
       mapboxLayerProps: {
-        maxzoom: 9.5
+        maxzoom: MAX_REGION_ZOOM
       }
     },
     constituencies: {
@@ -62,14 +66,27 @@ export function ReportMap () {
       // @ts-ignore
       data: layers.data.importedDataCountByConstituency || [],
       mapboxSourceProps: {
-        minzoom: 9.5,
-        maxzoom: 13,
+        maxzoom: MAX_CONSTITUENCY_ZOOM,
       },
       mapboxLayerProps: {
-        minzoom: 9.5,
-        maxzoom: 13,
+        minzoom: MAX_REGION_ZOOM,
+        maxzoom: MAX_CONSTITUENCY_ZOOM,
       }
     },
+    wards: {
+      name: "wards",
+      singular: "ward",
+      sourceId: "commonknowledge.0rzbo365",
+      sourceLayerId: "Wards_Dec_2023_UK_Boundaries_-7wzb6g",
+      promoteId: "WD23CD",
+      labelId: "WD23NM",
+      // @ts-ignore
+      data: layers.data.importedDataCountByWard || [],
+      mapboxSourceProps: {},
+      mapboxLayerProps: {
+        minzoom: MAX_CONSTITUENCY_ZOOM,
+      }
+    }
     // constituencies2024: {
     //   name: "GE2024 constituencies",
     //   singular: "constituency",
@@ -84,59 +101,67 @@ export function ReportMap () {
     //   promoteId: "ctyua_code",
     //   labelId: "ctyua_name",
     // },
-    wards: {
-      name: "wards",
-      singular: "ward",
-      sourceId: "commonknowledge.0rzbo365",
-      promoteId: "WD23CD",
-      labelId: "WD23NM",
-      // @ts-ignore
-      data: layers.data.importedDataCountByWard || [],
-      mapboxSourceProps: {
-        minzoom: 13,
-        maxzoom: 18,
-      },
-      mapboxLayerProps: {
-        minzoom: 13,
-        maxzoom: 18,
-      }
-    }
   }
 
   useEffect(function setFeatureState() {
-    layers.data.importedDataCountByRegion?.forEach((region) => {
-      if (region?.areaId && region?.count) {
-        mapboxRef.current?.setFeatureState({
-          source: TILESETS.EERs.sourceId,
-          sourceLayer: TILESETS.EERs.sourceLayerId,
-          id: region.areaId,
-        }, {
-          count: region.count,
-          // ...layers.data.layers?.map((layer) => {
-          //   return {
-          //     [layer?.source!.id]: layer?.source?.importedDataCountByRegion?.find(r => r?.areaId === region.areaId)?.count
-          //   }
-          // })
-        })
-        console.log("setFeatureState", region.areaId, region.count)
-      }
+    if (!mapboxRef.current) return
+    if (!layers.data) return
+    Object.values(TILESETS)?.forEach((tileset) => {
+      tileset.data?.forEach((area) => {
+        if (area?.areaId && area?.count) {
+          mapboxRef.current?.setFeatureState({
+            source: tileset.sourceId,
+            sourceLayer: tileset.sourceLayerId,
+            id: area.areaId,
+          }, {
+            count: area.count,
+            // Per-layer data for choloropleths also
+            // ...layers.data.layers?.map((layer) => {
+            //   return {
+            //     [layer?.source!.id]: layer?.source?.importedDataCountByRegion?.find(r => r?.areaId === area.areaId)?.count
+            //   }
+            // })
+          }) 
+        }
+      })
     })
-    // layers.data.layers?.forEach((layer) => {
-    //   if (layer?.source) {
-    //     layer.source.importedDataCountByRegion?.forEach((region) => {
-    //       if (region?.areaId && region?.count) {
-    //         mapboxRef.current?.setFeatureState({
-    //           source: TILESETS.EERs.sourceId,
-    //           id: region.areaId,
-    //         }, {
-    //           totalCount: 
-    //           [layer.source!.id]: region.count,
-    //         })
-    //       }
-    //     })
-    //   }
-    // })
-  }, [layers, mapboxRef])
+  }, [layers, TILESETS, mapboxRef])
+
+  const requiredImages = [
+    {
+      url: () => new URL('/markers/default.png', window.location.href).toString(),
+      name: 'meep-marker'
+    },
+    {
+      url: () => new URL('/markers/selected.png', window.location.href).toString(),
+      name: 'meep-marker-selected'
+    }
+  ]
+
+  const [loadedImages, setLoadedImages] = useState<string[]>([])
+
+  useEffect(function loadIcons() {
+    if (!mapboxRef.current) return
+    requiredImages.forEach((requiredImage) => {
+      console.log("Loading", requiredImage.url())
+      // Load an image from an external URL.
+      mapboxRef.current!.loadImage(
+        requiredImage.url(),
+        (error, image) => {
+          console.log("Loaded image", requiredImage.name, image, error)
+          try {
+            if (error) throw error;
+            if (!image) throw new Error('Marker icon did not load')
+            mapboxRef.current!.addImage(requiredImage.name, image);
+            setLoadedImages(loadedImages => [...loadedImages, requiredImage.name])
+            console.log("Loaded image", requiredImage.name, image)
+          } catch (e) {
+            console.error("Failed to load image", e)
+          }
+        }
+      )
+    })
+  }, [mapboxRef.current, setLoadedImages])
 
   return (
     <Map
@@ -149,7 +174,8 @@ export function ReportMap () {
       mapStyle="mapbox://styles/commonknowledge/clty3prwh004601pr4nqn7l9s"
       ref={mapboxRef}
     >
-      {Object.entries(TILESETS).map(([key, tileset]) => {
+      {!layers.data && null}
+      {!!layers.data && Object.entries(TILESETS).map(([key, tileset]) => {
         const min = tileset.data.reduce(
           (min, p) => p?.count! < min ? p?.count! : min,
           tileset.data?.[0]?.count!
@@ -158,106 +184,167 @@ export function ReportMap () {
           (max, p) => p?.count! > max ? p?.count! : max,
           tileset.data?.[0]?.count!
         ) || 1
-        const scale = scaleSequential()
+
+        // Uses 0-1 for easy interpolation
+        // go from 0-100% and return real numbers
+        const legendScale = scaleLinear()
+          .domain([0, 1])
+          .range([min, max])
+
+        // Map real numbers to colours
+        const colourScale = scaleSequential()
           .domain([min, max])
-          .interpolator(interpolatePlasma)
-        console.log(scale)
+          .interpolator(interpolateInferno)
+
+        // Text scale
+        const textScale = scaleLinear()
+          .domain([min, max])
+          .range([1, 1.5])
+
+        const inDataFilter = [
+          "in",
+          ["get", tileset.promoteId],
+          ["literal", tileset.data.map(d => d.areaId)],
+        ]
+      
+        const steps = Math.min(max, 30)
+        const colourStops = (new Array(steps)).fill(0).map((_, i) => i / steps).map(
+          (n) => [
+            Math.floor(legendScale(n)),
+            colourScale(legendScale(n))
+          ]
+        ).flat()
 
         return (
-          <Source
-            id={tileset.sourceId}
-            type="vector"
-            url={`mapbox://${tileset.sourceId}`}
-            promoteId={tileset.promoteId}
-            {...tileset.mapboxSourceProps || {}}
-          >
-            {/* Shade area by count */}
-            <Layer
-              id={`${tileset.sourceId}-fill`}
-              source={tileset.sourceId}
-              source-layer={tileset.sourceLayerId}
-              type="fill"
-              paint={{
-                // Shade the map by the count of imported data
-                "fill-color": [
-                  "interpolate",
-                  ["linear"],
-                  ['to-number', ["feature-state", "count"], 0],
-                  min, scale(min),
-                  max, scale(max),
-                ]
+          <Fragment key={tileset.sourceId}>
+            <Source
+              id={tileset.sourceId}
+              type="vector"
+              url={`mapbox://${tileset.sourceId}`}
+              promoteId={tileset.promoteId}
+              {...tileset.mapboxSourceProps || {}}
+            >
+              {/* Shade area by count */}
+              <Layer
+                id={`${tileset.sourceId}-fill`}
+                // beforeId="building"
+                source={tileset.sourceId}
+                source-layer={tileset.sourceLayerId}
+                type="fill"
+                filter={inDataFilter}
+                paint={{
+                  // Shade the map by the count of imported data
+                  "fill-color": [
+                    "interpolate",
+                    ["linear"],
+                    ['to-number', ["feature-state", "count"], 0],
+                    // 10 stops
+                    ...colourStops
+                  ],
+                  "fill-opacity": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    MAX_REGION_ZOOM, 0.5,
+                    MAX_CONSTITUENCY_ZOOM, 0.2,
+                  ]
+                }}
+                {...tileset.mapboxLayerProps || {}}
+              />
+              {/* Border of the boundary */}
+              <Layer
+                filter={inDataFilter}
+                id={`${tileset.sourceId}-line`}
+                source={tileset.sourceId}
+                source-layer={tileset.sourceLayerId}
+                type="line"
+                paint={{
+                  "line-color": "white",
+                  "line-width": 1.5,
+                  "line-opacity": 0.5
+                }}
+                {...tileset.mapboxLayerProps || {}}
+              />
+            </Source>
+            <Source
+              id={`${tileset.sourceId}-db-point`}
+              type="geojson"
+              data={{
+                type: "FeatureCollection",
+                // @ts-ignore
+                features: tileset.data.map((d) => {
+                  return {
+                    type: "Feature",
+                    geometry: d.gssArea?.point?.geometry,
+                    properties: {
+                      count: d.count,
+                      label: d.label,
+                    }
+                  }
+                })
               }}
-              {...tileset.mapboxLayerProps || {}}
-            />
-            {/* Border of the boundary */}
-            <Layer
-              id={`${tileset.sourceId}-line`}
-              source={tileset.sourceId}
-              source-layer={tileset.sourceLayerId}
-              type="line"
-              paint={{
-                "line-color": "hsl(222, 69%, 65%)",
-                "line-width": 2,
-              }}
-              {...tileset.mapboxLayerProps || {}}
-            />
-            {/* Display count as a number in the centre of the area by a symbol layer */}
-            <Layer
-              id={`${tileset.sourceId}-label-count`}
-              source={tileset.sourceId}
-              source-layer={tileset.sourceLayerId}
-              type="symbol"
-              layout={{
-                "symbol-spacing": 1000,
-                "text-field": matchMap(
-                  tileset.data || [],
-                  tileset.promoteId,
-                  "areaId",
-                  d => d.count?.toString() || "",
-                  "?"
-                ),
-                "text-size": 25,
-                "symbol-placement": "point",
-                "text-offset": [0, -0.5],
-                "text-allow-overlap": true,
-                // "text-variable-anchor": ["center"],
-                // "text-ignore-placement": true,
-              }}
-              paint={{
-                "text-color": "white",
-              }}
-              {...tileset.mapboxLayerProps || {}}
-            />
-            <Layer
-              id={`${tileset.sourceId}-label-name`}
-              source={tileset.sourceId}
-              source-layer={tileset.sourceLayerId}
-              type="symbol"
-              layout={{
-                "symbol-spacing": 1000,
-                "text-field": matchMap(
-                  tileset.data || [],
-                  tileset.promoteId,
-                  "areaId",
-                  d => d.label || "",
-                  "?"
-                ),
-                "text-size": 13,
-                "symbol-placement": "point",
-                "text-offset": [0, 0.6],
-                "text-allow-overlap": true,
-                // "text-variable-anchor": ["center"],
-                // "text-ignore-placement": true,
-              }}
-              paint={{
-                "text-color": "white",
-                "text-opacity": 0.7
-              }}
-              {...tileset.mapboxLayerProps || {}}
-            />
-          </Source>
+              {...tileset.mapboxSourceProps || {}}
+            >
+              <Layer
+                id={`${tileset.sourceId}-label-count`}
+                source={`${tileset.sourceId}-db-point`}
+                type="symbol"
+                layout={{
+                  "symbol-spacing": 1000,
+                  "text-field": ["get", "count"],
+                  "text-size": [
+                    "interpolate",
+                    ["linear"],
+                    ["get", "count"],
+                    min, textScale(min) * 17,
+                    max, textScale(max) * 17,
+                  ],
+                  "symbol-placement": "point",
+                  "text-offset": [0, -0.5],
+                  "text-allow-overlap": true,
+                  "text-ignore-placement": true,
+                  "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+                }}
+                paint={{
+                  "text-color": "white",
+                  "text-halo-color": "black",
+                  "text-halo-width": 0.3,
+                }}
+                {...tileset.mapboxLayerProps || {}}
+              />
+              <Layer
+                id={`${tileset.sourceId}-label-name`}
+                source={`${tileset.sourceId}-db-point`}
+                type="symbol"
+                layout={{
+                  "symbol-spacing": 1000,
+                  "text-field": ["get", "label"],
+                  "text-size": [
+                    "interpolate",
+                    ["linear"],
+                    ["get", "count"],
+                    min, textScale(min) * 9,
+                    max, textScale(max) * 9,
+                  ],
+                  "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+                  "symbol-placement": "point",
+                  "text-offset": [0, 0.6],
+                  // "text-allow-overlap": true,
+                  // "text-ignore-placement": true,
+                }}
+                paint={{
+                  "text-color": "white",
+                  "text-opacity": 0.9,
+                  "text-halo-color": "black",
+                  "text-halo-width": 0.3,
+                }}
+                {...tileset.mapboxLayerProps || {}}
+              />
+            </Source>
+          </Fragment>
         )
       })}
+      {/* Wait for all icons to load */}
       {layers.data.layers?.map((layer, index) => {
         return (
           <MapboxGLClusteredPointsLayer
@@ -270,24 +357,6 @@ export function ReportMap () {
   )
 }
 
-function matchMap<T extends Record<string, any>>(data: Array<T>, mapboxIdField: string, dataIdField: string, value: (d: T) => string, defaultValue: any): Expression {
-  // For each fromId value, find the corresponding toId value and return the valueId
-  const expression: Expression = [
-    "match",
-    ["get", mapboxIdField],
-    ...data.map((d) => {
-      return [
-        // If
-        d[dataIdField],
-        // Then
-        value(d),
-      ]
-    }).filter((d) => !!d[0]).flat(),
-    defaultValue
-  ]
-  return expression
-}
-
 function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataSourceId: string }) {
   const { data, error } = useQuery<GetSourceGeoJsonQuery, GetSourceGeoJsonQueryVariables>(GET_SOURCE_DATA, {
     variables: {
@@ -295,7 +364,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
     },
   });
 
-  const id = useId()
+  const id = externalDataSourceId
 
   return (
     <>
@@ -305,18 +374,19 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
         data={{
           type: "FeatureCollection",
           // @ts-ignore TODO: Fix types
-          features: data?.externalDataSource?.geojsonPointFeatures || []
+          features: data?.externalDataSource?.importedDataGeojsonPoints || []
         }}
       >
         <Layer
-          id={`${id}-circle`}
-          type="circle"
           source={id}
-          paint={{
-            "circle-radius": 6,
-            "circle-color": `hsl(222, 69%, 65%)`,
+          id={`${id}-marker`}
+          type="symbol"
+          layout={{
+            "icon-image": "meep-marker",
+            "icon-size": 0.75,
+            "icon-anchor": "bottom"
           }}
-          minzoom={18}
+          minzoom={MIN_MEMBERS_ZOOM}
         />
       </Source>
     </>
@@ -326,7 +396,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
 const GET_SOURCE_DATA = gql`
   query GetSourceGeoJSON($externalDataSourceId: ID!) {
     externalDataSource(pk: $externalDataSourceId) {
-      geojsonPointFeatures {
+      importedDataGeojsonPoints {
         id
         type
         geometry {

@@ -9,7 +9,6 @@ from hub.models import Area, AreaType
 from utils import mapit
 import requests
 
-
 class Command(BaseCommand):
     help = "Import historical European regions for high-level aggregation"
 
@@ -46,6 +45,7 @@ class Command(BaseCommand):
             geom = GEOSGeometry(json.dumps(area['geometry']))
             if isinstance(geom, Polygon):
                 geom = MultiPolygon([geom])
+            geom.srid = 27700
             a.geometry = geom_str
             a.polygon = geom
             a.point = a.polygon.centroid

@@ -205,16 +205,46 @@ export const MAP_REPORT_LAYERS_SUMMARY = gql`
       label
       areaId
       count
+      gssArea {
+        point {
+          id
+          type
+          geometry {
+            type
+            coordinates
+          }
+        }
+      }
     }
     importedDataCountByConstituency {
       label
       areaId
       count
+      gssArea {
+        point {
+          id
+          type
+          geometry {
+            type
+            coordinates
+          }
+        }
+      }
     }
     importedDataCountByWard {
       label
       areaId
       count
+      gssArea {
+        point {
+          id
+          type
+          geometry {
+            type
+            coordinates
+          }
+        }
+      }
     }
     layers {
       name

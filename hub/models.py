@@ -658,8 +658,8 @@ class CommonData(models.Model):
 
 
 class GenericData(CommonData):
-    point = PointField(blank=True, null=True)
-    polygon = MultiPolygonField(blank=True, null=True)
+    point = PointField(srid=4326, blank=True, null=True)
+    polygon = MultiPolygonField(srid=4326, blank=True, null=True)
     postcode_data = JSONField(blank=True, null=True)
 
     def get_postcode_data(self) -> Optional[PostcodesIOResult]:
@@ -675,8 +675,8 @@ class Area(models.Model):
     name = models.CharField(max_length=200)
     area_type = models.ForeignKey(AreaType, on_delete=models.CASCADE)
     geometry = models.TextField(blank=True, null=True)
-    polygon = MultiPolygonField(blank=True, null=True)
-    point = PointField(blank=True, null=True)
+    polygon = MultiPolygonField(srid=4326, blank=True, null=True)
+    point = PointField(srid=4326, blank=True, null=True)
     overlaps = models.ManyToManyField("self", through="AreaOverlap")
 
     def __str__(self):
