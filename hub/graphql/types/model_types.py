@@ -10,7 +10,7 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry.scalars import JSON
 
 from hub import models
-from hub.graphql.types.geojson import PointFeature, PointGeometry
+from hub.graphql.types.geojson import PointFeature, MultiPolygonFeature
 from hub.graphql.utils import dict_key_field, fn_field
 
 
@@ -137,11 +137,61 @@ class ExternalDataSourceFilter:
     geography_column_type: auto
 
 
+@strawberry_django.type(models.Area)
+class Area:
+    mapit_id: auto
+    gss: auto
+    name: auto
+    area_type: auto
+    geometry: auto
+    overlaps: auto
+    # So that we can pass in properties to the geojson Feature objects
+    extra_geojson_properties: strawberry.Private[object]
+
+    @strawberry_django.field
+    def polygon(self, info: Info, with_parent_data: bool = False) -> Optional[MultiPolygonFeature]:
+        props = {
+            "name": self.name,
+            "gss": self.gss
+        }
+        if with_parent_data and hasattr(self, "extra_geojson_properties"):
+            props["extra_geojson_properties"] = self.extra_geojson_properties
+
+        return MultiPolygonFeature.from_geodjango(
+            multipolygon=self.polygon,
+            id=self.gss,
+            properties=props
+        )
+
+    @strawberry_django.field
+    def point(self, info: Info, with_parent_data: bool = False) -> Optional[PointFeature]:
+        props = {
+            "name": self.name,
+            "gss": self.gss
+        }
+        if with_parent_data and hasattr(self, "extra_geojson_properties"):
+            props["extra_geojson_properties"] = self.extra_geojson_properties
+
+        return PointFeature.from_geodjango(
+            point=self.point,
+            id=self.gss,
+            properties=props
+        )
+
+
 @strawberry.type
 class GroupedDataCount:
     label: Optional[str] = dict_key_field()
     area_id: Optional[str] = dict_key_field()
     count: int = dict_key_field()
+
+    @strawberry_django.field
+    def gss_area(self, info: Info) -> Optional[Area]:
+        if self.get('area_id', None):
+            area = models.Area.objects.get(gss=self['area_id'])
+            area.extra_geojson_properties = self
+            return area
+        return None
 
 
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
@@ -214,11 +264,9 @@ class ExternalDataSource:
     ) -> List[PointFeature]:
         data = self.get_import_data()
         return [
-            PointFeature(
-                id=str(generic_datum.data),
-                geometry=PointGeometry(
-                    coordinates=[generic_datum.point.x, generic_datum.point.y]
-                ),
+            PointFeature.from_geodjango(
+                point=generic_datum,
+                id=generic_datum.data,
                 properties=generic_datum.json,
             )
             for generic_datum in data
