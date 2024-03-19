@@ -274,6 +274,7 @@ class Report:
 @strawberry.type
 class MapLayer:
     name: str = dict_key_field()
+    visible: Optional[bool] = dict_key_field()
 
     @strawberry_django.field
     def source(self, info: Info) -> ExternalDataSource:
