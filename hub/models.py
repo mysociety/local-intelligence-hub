@@ -1636,16 +1636,16 @@ class MailchimpSource(ExternalDataSource):
     
     def field_definitions(self):
         merge_fields = self.client.lists.merge_fields.all(list_id=self.list_id, get_all=True)['merge_fields']
-        self.field_definitions = [
+        field_definitions = [
             {
                 'label': field['name'],
                 'value': field['tag'],  # In Mailchimp, the tag is used as a merge variable
-                'description': field.get('help_text', '')
+                'description': field.get('help_text', None)
             }
             for field in merge_fields
         ]
     
-        return self.field_definitions
+        return field_definitions
 
     
     def remote_name(self):
