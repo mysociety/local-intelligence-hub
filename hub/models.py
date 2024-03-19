@@ -1646,7 +1646,6 @@ class MailchimpSource(ExternalDataSource):
         ]
     
         return field_definitions
-
     
     def remote_name(self):
         data = self.client.lists.all(self.list_id, fields="lists.name")
@@ -1654,8 +1653,9 @@ class MailchimpSource(ExternalDataSource):
         return list_name
    
     async def fetch_all(self):
-         # Fetches all members in a list and returns their email addresses
-        list = self.client.lists.members.all(self.list_id, fields="members.email_address")
+         # Fetches all members in a list and returns their email address and merge fields
+        fields = "members.email_address,members.merge_fields"
+        list = self.client.lists.members.all(self.list_id, fields=fields)
         return list
 
 
