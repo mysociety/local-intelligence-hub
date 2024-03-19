@@ -1,6 +1,7 @@
 import pandas as pd
 from mysoc_dataset import get_dataset_url
 
+from hub.import_utils import filter_authority_type
 from hub.models import DataSet
 
 from .base_importers import BaseImportFromDataFrameCommand, MultipleAreaTypesMixin
@@ -48,5 +49,6 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
             done_survey=True,
         )
         df = pd.read_csv(url)
+        df = filter_authority_type(df, self.area_type, self.cons_row)
 
         return df
