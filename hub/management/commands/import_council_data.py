@@ -18,17 +18,18 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
         "data_type": "integer",
         "category": "place",
         "subcategory": "",
-        "release_date": "February 2023",
+        "release_date": "2020",
         "label": "Council population",
         "source_label": "Data from mySociety.",
-        "source": "https://www.mysociety.org/",
+        "source": "https://pages.mysociety.org/uk_local_authority_names_and_codes/datasets/uk_la_future/latest",
         "source_type": "csv",
         "table": "areadata",
         "default_value": 1000,
-        "data_url": "",
+        "data_url": "https://pages.mysociety.org/uk_local_authority_names_and_codes/downloads/uk-la-future-uk-local-authorities-future-csv/latest",
         "comparators": DataSet.numerical_comparators(),
         "unit_type": "raw",
         "unit_distribution": "people_in_area",
+        "is_public": True,
     }
 
     data_sets = {
