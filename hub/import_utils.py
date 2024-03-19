@@ -1,3 +1,4 @@
+from datetime import date
 from functools import lru_cache
 
 import pandas as pd
@@ -56,20 +57,38 @@ def add_gss_codes(df: pd.DataFrame, code_column: str):
     return df
 
 
-def _filter_authority_type(df: pd.DataFrame, types: list):
+def _filter_authority_type(df: pd.DataFrame, types: list, gss_code: str):
     authority_df = get_council_df()
 
-    rows = len(df["gss_code"])
+    today = date.today()
+
+    rows = len(df[gss_code])
     df["type"] = pd.Series([None] * rows, index=df.index)
+    df["start-date"] = pd.Series([None] * rows, index=df.index)
+    df["end-date"] = pd.Series([None] * rows, index=df.index)
     for index, row in df.iterrows():
-        if not pd.isnull("gss_code"):
-            authority_match = authority_df[authority_df["gss-code"] == row["gss_code"]]
+        if not pd.isnull(row[gss_code]):
+            authority_match = authority_df[authority_df["gss-code"] == row[gss_code]]
             df.at[index, "type"] = authority_match["local-authority-type"].values[0]
+            df.at[index, "start-date"] = pd.to_datetime(
+                authority_match["start-date"].values[0]
+            ).date()
+            df.at[index, "end-date"] = pd.to_datetime(
+                authority_match["end-date"].values[0]
+            ).date()
 
     df = df.loc[df["type"].isin(types)]
+
+    # only select authorities with a start date in the past
+    df = df.loc[(df["start-date"] < today) | df["start-date"].isna()]
+
+    # only select authorities with an end date in the future
+    df = df.loc[(df["end-date"] > today) | df["end-date"].isna()]
 
     return df
 
 
-def filter_authority_type(df: pd.DataFrame, authority_type: str):
-    return _filter_authority_type(df, council_types[authority_type])
+def filter_authority_type(
+    df: pd.DataFrame, authority_type: str, gss_code: str = "gss-code"
+):
+    return _filter_authority_type(df, council_types[authority_type], gss_code)
