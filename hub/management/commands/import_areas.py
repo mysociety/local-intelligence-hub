@@ -52,7 +52,7 @@ class Command(BaseCommand):
             )
 
             if not quiet:
-                print("Importing Areas")
+                print(f"Importing {b_type['name']} Areas")
             for area in tqdm(areas, disable=quiet):
                 try:
                     geom = mapit_client.area_geometry(area["id"])
