@@ -44,6 +44,7 @@ import { toastPromise } from "@/lib/toast";
 import { ReportMap } from "@/components/report/ReportMap";
 import { MapReportPageFragmentStr } from "./lib";
 import { ReportContext } from "./context";
+import { LoadingIcon } from "@/components/ui/loadingIcon";
 
 type Params = {
   id: string
@@ -79,6 +80,16 @@ export default function Page({ params: { id } }: { params: Params }) {
               </CardDescription>
             </CardContent>
           </Card>
+        </div>
+      </main>
+    )
+  }
+
+  if (report.loading && !report.data?.mapReport) {
+    return (
+      <main className="absolute w-full h-full">
+        <div className="flex flex-col items-center justify-center w-full h-full">
+          <LoadingIcon />
         </div>
       </main>
     )
