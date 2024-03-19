@@ -65,6 +65,7 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
         "is_shadable": True,
         "is_filterable": True,
         "options": type_shades["STC"],
+        "is_public": True,
     }
 
     data_sets = {
