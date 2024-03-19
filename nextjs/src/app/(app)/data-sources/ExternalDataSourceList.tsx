@@ -13,25 +13,33 @@ import { Mail } from "lucide-react";
 
 const LIST_UPDATE_CONFIGS = gql`
   query ListExternalDataSources {
-    externalDataSources {
-      id
-      name
-      dataType
-      connectionDetails {
-        crmType: __typename
+  externalDataSources {
+    id
+    name
+    dataType
+    connectionDetails {
+      __typename
+      ... on AirtableSource {
+        baseId
+        tableId
       }
-      autoUpdateEnabled
-      jobs {
-        lastEventAt
-        status
-      }
-      updateMapping {
-        source
-        sourcePath
-        destinationColumn
+      ... on MailchimpSource {
+        apiKey
+        listId
       }
     }
+    autoUpdateEnabled
+    jobs {
+      lastEventAt
+      status
+    }
+    updateMapping {
+      source
+      sourcePath
+      destinationColumn
+    }
   }
+}
 `;
 
 export default function ExternalDataSourceList() {

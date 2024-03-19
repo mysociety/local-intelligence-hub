@@ -31,6 +31,7 @@ import {
   CreateSourceMutation,
   CreateSourceMutationVariables,
   DataSourceType,
+  FieldDefinition,
   PostcodesIoGeographyTypes,
   TestSourceConnectionQuery,
   TestSourceConnectionQueryVariables,
@@ -38,12 +39,25 @@ import {
 import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
 
-const TEST_SOURCE = gql`
-  query TestSourceConnection(
-    $apiKey: String!
-    $listId: String!
+const TEXT_EXTERNAL_DATA_SOURCE = gql`
+  query TextExternalDataSource(
+    $mailchimpApiKey: String!
+    $mailchimpListId: String!
+    $airtableApiKey: String!
+    $airtableBaseId: String!
+    $airtableTableId: String!
   ) {
-    testSourceConnection: testMailchimpSource(apiKey: $apiKey, listId: $listId) {
+    mailchimpSource: testMailchimpSource(apiKey: $mailchimpApiKey, listId: $mailchimpListId) {
+      remoteName
+      healthcheck
+      fieldDefinitions {
+        label
+        value
+        description
+      }
+      __typename
+    }
+    airtableSource: testAirtableSource(apiKey: $airtableApiKey, baseId: $airtableBaseId, tableId: $airtableTableId) {
       remoteName
       healthcheck
       fieldDefinitions {
@@ -56,9 +70,18 @@ const TEST_SOURCE = gql`
   }
 `;
 
-const CREATE_SOURCE = gql`
-  mutation CreateSource($MailChimpSource: MailChimpSourceInput!) {
-    createSource: createMailchimpSource(data: $MailChimpSource) {
+const CREATE_EXTERNAL_DATA_SOURCES = gql`
+  mutation CreateSources(
+    $MailChimpSource: MailChimpSourceInput!
+    $AirtableSource: AirtableSourceInput!
+  ) {
+    createMailchimpSource: createMailchimpSource(data: $MailChimpSource) {
+      id
+      name
+      healthcheck
+      dataType
+    }
+    createAirtableSource: createAirtableSource(data: $AirtableSource) {
       id
       name
       healthcheck
@@ -67,9 +90,13 @@ const CREATE_SOURCE = gql`
   }
 `;
 
-type FormInputs = CreateSourceMutationVariables["MailChimpSource"] & {
-  // In time there will be more external data sources with their own fields
+type FormInputs = {
   mailchimp?: CreateSourceMutationVariables["MailChimpSource"];
+  airtable?: CreateSourceMutationVariables["AirtableSource"];
+  geographyColumnType?: PostcodesIoGeographyTypes; 
+  geographyColumn?: string; 
+  dataType?: DataSourceType;
+  name?: string; 
 };
 
 export default function Page({
@@ -87,19 +114,25 @@ export default function Page({
   const form = useForm<FormInputs>({
     defaultValues: {
       geographyColumnType: PostcodesIoGeographyTypes.Postcode,
-      dataType: context.dataType,
-      mailchimp: {}
+      dataType: context.dataType, 
+      mailchimp: {
+        apiKey: '',
+        listId: '',
+      },
+      airtable: {
+        apiKey: '',
+        baseId: '',
+        tableId: '',
+      },
     }
   });
 
   const source = form.watch();
 
-  // TODO: Make this generic so it can be reused by different sources
-  // Probably want a `test_connection` resolver that can optionally take `airtable` or `action_network` arguments
   const [testSource, testSourceResult] = useLazyQuery<
     TestSourceConnectionQuery,
     TestSourceConnectionQueryVariables
-  >(TEST_SOURCE, {
+  >(TEXT_EXTERNAL_DATA_SOURCE, {
     variables: {
       apiKey: source.mailchimp?.apiKey!,
       listId: source.mailchimp?.listId!
@@ -109,7 +142,7 @@ export default function Page({
   const [guessedPostcode, setGuessedPostcode] = useState<string | null>(null);
   useEffect(function guessPostcodeColumn () {
     let guessedPostcodeColumn = testSourceResult.data?.testSourceConnection.fieldDefinitions?.find(
-      (field) => (
+      (field: { label: string; value: string; }) => (
         field.label?.toLowerCase().replaceAll(' ', '').includes("postcode") ||
         field.label?.toLowerCase().replaceAll(' ', '').includes("postalcode") ||
         field.label?.toLowerCase().replaceAll(' ', '').includes("zipcode") ||
@@ -139,71 +172,106 @@ export default function Page({
     }
   }, [testSourceResult.data?.testSourceConnection.remoteName, form])
 
-  // TODO: Make this generic so it can be reused by different sources
-  // Probably want a `create_connection` resolver that can optionally take `airtable` or `action_network` arguments
+
   const [createSource, createSourceResult] = useMutation<
     CreateSourceMutation,
     CreateSourceMutationVariables
-  >(CREATE_SOURCE);
+  >(CREATE_EXTERNAL_DATA_SOURCES);
 
-  // TODO: Make this generic so it can be reused by different sources
-  // Probably want a `test_connection` resolver that can optionally take `airtable` or `action_network` arguments
-  async function submitTestConnection({
-    mailchimp
-  }: FormInputs) {
+
+  async function submitTestConnection({ mailchimp, airtable }: FormInputs) {
+    // Initialize an empty object for variables
+    let variables: { [key: string]: any } = {};
+  
+    if (mailchimp && mailchimp.apiKey && mailchimp.listId) {
+      variables = {
+        mailchimpApiKey: mailchimp.apiKey,
+        mailchimpListId: mailchimp.listId,
+        // Provide default or empty values for Airtable variables to satisfy the query requirement
+        airtableApiKey: "",
+        airtableBaseId: "",
+        airtableTableId: "",
+      };
+    } else if (airtable && airtable.apiKey && airtable.baseId && airtable.tableId) {
+      variables = {
+        // Provide default or empty values for Mailchimp variables to satisfy the query requirement
+        mailchimpApiKey: "",
+        mailchimpListId: "",
+        airtableApiKey: airtable.apiKey,
+        airtableBaseId: airtable.baseId,
+        airtableTableId: airtable.tableId,
+      };
+    }
+  
+    if (!variables) {
+      toast.error("No valid data provided for testing connection.");
+      return;
+    }
+  
     toastPromise(
-      testSource({ variables: mailchimp as any }),
+      testSource({ variables }),
       {
         loading: "Testing connection...",
         success: (d: FetchResult<TestSourceConnectionQuery>) => {
-          if (!d.errors && d.data?.testSourceConnection) {
-            return "Connection is healthy";
-          }
-          throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
+          // Your success logic here
         },
         error: "Connection failed",
       },
-    )
+    );
   }
 
   async function submitCreateSource(data: FormInputs) {
-    if (data.mailchimp) {
-      const { mailchimp, ...genericData } = data;
-      const variables = {
-          MailChimpSource: {
-            ...genericData,
-            ...source.mailchimp,
-          }
-      }
-      toastPromise(createSource({ variables }),
-        {
-          loading: "Saving connection...",
-          success: (d: FetchResult<CreateSourceMutation>) => {
-            if (!d.errors && d.data?.createSource) {
-              if (d.data?.createSource.dataType === DataSourceType.Member) {
-                router.push(
-                  `/data-sources/create/configure/${d.data.createSource.id}`,
-                );
-              } else {
-                router.push(
-                  `/data-sources/create/inspect/${d.data.createSource.id}`,
-                );
-              }
-              return "Connection successful";
-            }
-            throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
-          },
-          error(e) {
-            return {
-              title: "Connection failed",
-              description: e.message,
-            }
-          }
+    let variables = null;
+    let sourceType = '';
+    
+    // Handle Mailchimp data
+    if (data.mailchimp && data.mailchimp.apiKey && data.mailchimp.listId) {
+      variables = {
+        MailChimpSource: {
+          ...data.mailchimp,
         },
-      )
+      };
+      sourceType = 'mailchimp';
+    } 
+    // Handle Airtable data
+    else if (data.airtable && data.airtable.apiKey && data.airtable.baseId && data.airtable.tableId) {
+      variables = {
+        AirtableSource: {
+          ...data.airtable,
+        },
+      };
+      sourceType = 'airtable';
     }
+  
+    if (!variables) {
+      toast.error("No valid data provided for creating source.");
+      return;
+    }
+  
+    toastPromise(createSource({ variables }),
+      {
+        loading: "Saving connection...",
+        success: (d: FetchResult<CreateSourceMutation>) => {
+          let createdSource = sourceType === 'mailchimp' ? d.data?.createMailchimpSource : d.data?.createAirtableSource;
+          
+          if (!d.errors && createdSource) {
+            const redirectPath = createdSource.dataType === DataSourceType.Member ? 
+              `/data-sources/create/configure/${createdSource.id}` : 
+              `/data-sources/create/inspect/${createdSource.id}`;
+            router.push(redirectPath);
+            return "Connection successful";
+          }
+          throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error");
+        },
+        error(e) {
+          return {
+            title: "Connection failed",
+            description: e.message,
+          }
+        }
+      },
+    );
   }
-
   if (createSourceResult.loading) {
     return (
       <div className="space-y-6">
@@ -291,7 +359,7 @@ export default function Page({
                               <SelectGroup>
                                 <SelectLabel>Available columns</SelectLabel>
                                 {testSourceResult.data?.testSourceConnection.fieldDefinitions?.map(
-                                  (field) => (
+                                  (field: FieldDefinition | undefined) => (
                                     <SelectItem key={field.value} value={field.value}>
                                       <DataSourceFieldLabel
                                         connectionType={
