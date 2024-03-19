@@ -1,7 +1,7 @@
 import pandas as pd
 from mysoc_dataset import get_dataset_url
 
-from hub.import_utils import add_gss_codes
+from hub.import_utils import add_gss_codes, filter_authority_type
 from hub.models import DataSet
 
 from .base_importers import BaseImportFromDataFrameCommand, MultipleAreaTypesMixin
@@ -62,6 +62,7 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
         df = pd.read_csv(url)
 
         df = add_gss_codes(df, "local-authority-code")
+        df = filter_authority_type(df, self.area_type, self.cons_row)
 
         councils = []
         for index, row in df.iterrows():
