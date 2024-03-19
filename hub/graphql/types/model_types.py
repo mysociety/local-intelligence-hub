@@ -267,7 +267,10 @@ class ExternalDataSource:
             PointFeature.from_geodjango(
                 point=generic_datum.point,
                 id=generic_datum.data,
-                properties=generic_datum.json,
+                properties=dict(
+                    **generic_datum.json,
+                    id=generic_datum.data,
+                )
             )
             for generic_datum in data
             if generic_datum.point is not None

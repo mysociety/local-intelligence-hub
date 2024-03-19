@@ -1,17 +1,25 @@
 "use client"
 
 import { GetSourceGeoJsonQuery, GetSourceGeoJsonQueryVariables, GroupedDataCount, MapReportLayersSummaryFragment } from "@/__generated__/graphql";
-import { Fragment, useContext, useEffect, useRef, useState } from "react";
-import Map, { Layer, MapRef, Source, LayerProps } from "react-map-gl";
+import { Fragment, useContext, useEffect, useId, useRef, useState } from "react";
+import Map, { Layer, MapRef, Source, LayerProps, ImageSourceRaw, Marker, Popup, useMap } from "react-map-gl";
 import { MAP_REPORT_LAYERS_SUMMARY } from "../dataConfig";
 import { gql, useFragment, useQuery } from "@apollo/client";
 import { ReportContext } from "@/app/reports/[id]/context";
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { interpolateInferno } from 'd3-scale-chromatic'
+import { atom, useAtom } from "jotai";
+import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 
 const MAX_REGION_ZOOM = 8
 const MAX_CONSTITUENCY_ZOOM = 11.5
 const MIN_MEMBERS_ZOOM = MAX_CONSTITUENCY_ZOOM
+
+const selectedSourceRecordAtom = atom<{
+  sourceId: string,
+  id: string,
+  feature: GeoJSON.Feature<GeoJSON.Point>
+} | null>(null)
 
 export function ReportMap () {
   const { id } = useContext(ReportContext)
@@ -127,13 +135,11 @@ export function ReportMap () {
       mapboxRef.current!.loadImage(
         requiredImage.url(),
         (error, image) => {
-          console.log("Loaded image", requiredImage.name, image, error)
           try {
             if (error) throw error;
             if (!image) throw new Error('Marker icon did not load')
             mapboxRef.current!.addImage(requiredImage.name, image);
             setLoadedImages(loadedImages => [...loadedImages, requiredImage.name])
-            console.log("Loaded image", requiredImage.name, image)
           } catch (e) {
             console.error("Failed to load image", e)
           }
@@ -141,6 +147,8 @@ export function ReportMap () {
       )
     })
   }, [mapboxRef.current, setLoadedImages])
+
+  const [selectedSourceRecord, setSelectedSourceRecord] = useAtom(selectedSourceRecordAtom)
 
   return (
     <Map
@@ -329,6 +337,19 @@ export function ReportMap () {
           />
         )
       })}
+      {selectedSourceRecord && (
+        <ErrorBoundary errorComponent={() => <></>}>
+          <Popup
+            longitude={selectedSourceRecord?.feature?.geometry?.coordinates?.[0] || 0}
+            latitude={selectedSourceRecord?.feature?.geometry?.coordinates?.[1] || 0}
+            closeOnClick
+            onClose={() => setSelectedSourceRecord(null)}
+          >
+            <div>Selected member</div>
+            <pre>{JSON.stringify(selectedSourceRecord?.feature, null, 2)}</pre>
+          </Popup>
+        </ErrorBoundary>
+      )}
     </Map>
   )
 }
@@ -341,7 +362,33 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
   });
 
   const id = externalDataSourceId
+  const [selectedSourceRecord, setSelectedSourceRecord] = useAtom(selectedSourceRecordAtom)
 
+  const map = useMap()
+  
+  useEffect(() => {
+    map.current?.on('click', `${id}-marker`, e => {
+      if (e.features?.[0]) {
+        const feature = e.features[0]
+        console.log("Selecting", feature)
+        setSelectedSourceRecord({
+          sourceId: id,
+          id: feature.id?.toString()!,
+          // @ts-ignore
+          feature: {
+            type: "Feature",
+            properties: {
+              ...feature.properties,
+              id: feature.id?.toString()!
+            },
+            // @ts-ignore
+            geometry: feature.geometry
+          }
+        })
+      }
+    })
+  }, [map])
+  
   return (
     <>
       <Source
@@ -363,6 +410,11 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
             "icon-anchor": "bottom"
           }}
           minzoom={MIN_MEMBERS_ZOOM}
+          {...(
+            selectedSourceRecord.id
+            ? { filter: ["!=", "id", selectedSourceRecord.id] }
+            : {}
+          )}
         />
       </Source>
     </>
@@ -379,6 +431,7 @@ const GET_SOURCE_DATA = gql`
           type
           coordinates
         }
+        properties
       }
     }
   }
