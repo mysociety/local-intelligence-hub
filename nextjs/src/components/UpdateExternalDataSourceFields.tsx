@@ -13,7 +13,7 @@ export function UpdateExternalDataSourceFields ({
 }: {
   onSubmit: (
     data: ExternalDataSourceInput,
-    e: React.BaseSyntheticEvent<object, any, any> | undefined
+    e?: React.BaseSyntheticEvent<object, any, any> | undefined
   ) => void;
   connectionType: string;
   initialData?: ExternalDataSourceInput;

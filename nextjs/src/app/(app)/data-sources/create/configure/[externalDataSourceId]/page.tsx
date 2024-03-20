@@ -68,7 +68,7 @@ export default function Page({
     },
   });
 
-  function submit(input: ExternalDataSourceInput, e: React.BaseSyntheticEvent<object, any, any> | undefined) {
+  function submit(input: ExternalDataSourceInput, e?: React.BaseSyntheticEvent<object, any, any> | undefined) {
     e?.preventDefault();
     const create = updateSource({
       variables: { input: { id: externalDataSourceId, ...input } },

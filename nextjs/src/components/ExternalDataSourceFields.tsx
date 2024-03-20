@@ -4,6 +4,7 @@ import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessa
 import { FieldDefinition } from "@/__generated__/graphql"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "./ui/select"
 import { DataSourceFieldLabel } from "./DataSourceIcon"
+import { Input } from "./ui/input"
 
 export function PreopulatedSelectField<FormInputs extends object = any>({
   name,
@@ -59,7 +60,6 @@ export function PreopulatedSelectField<FormInputs extends object = any>({
                   </SelectContent>
                 </Select>
               ) : (
-                // @ts-ignore
                 <Input {...field} required />
               )}
             </FormControl>

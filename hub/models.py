@@ -1013,7 +1013,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
             for field in self.import_fields:
                 if getattr(self, field, None) is not None:
-                    update_data[field.removesuffix("_field")] = self.get_record_field(record, getattr(self, field))
+                    update_data[field.removesuffix("_field")] = self.get_record_field(
+                        record, getattr(self, field)
+                    )
 
             return update_data
 
@@ -1035,11 +1037,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     "point": Point(
                         postcode_data["longitude"],
                         postcode_data["latitude"],
-                    ) if (
+                    )
+                    if (
                         postcode_data is not None
                         and "latitude" in postcode_data
                         and "longitude" in postcode_data
-                    ) else None,
+                    )
+                    else None,
                 }
 
                 await GenericData.objects.aupdate_or_create(

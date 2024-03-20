@@ -1,8 +1,13 @@
 from typing import Optional
-import strawberry
-from hub.graphql.utils import dict_key_field
-from .geojson import PointFeature
+
 from django.contrib.gis.geos import Point
+
+import strawberry
+
+from hub.graphql.utils import dict_key_field
+
+from .geojson import PointFeature
+
 
 @strawberry.type
 class PostcodesIOCodes:
@@ -20,6 +25,7 @@ class PostcodesIOCodes:
     msoa: str = dict_key_field()
     lau2: str = dict_key_field()
     pfa: str = dict_key_field()
+
 
 @strawberry.type
 class PostcodesIOResult:
@@ -53,7 +59,4 @@ class PostcodesIOResult:
 
     @strawberry.field
     def feature(self, info: strawberry.types.info.Info) -> PointFeature:
-        return PointFeature(
-            point=Point(self.longitude, self.latitude),
-            properties=self
-        )
+        return PointFeature(point=Point(self.longitude, self.latitude), properties=self)

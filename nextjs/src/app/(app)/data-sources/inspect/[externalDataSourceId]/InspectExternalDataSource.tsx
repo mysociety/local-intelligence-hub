@@ -416,7 +416,7 @@ export default function InspectExternalDataSource({
     </div>
   );
 
-  function updateMutation (data: ExternalDataSourceInput, e: React.BaseSyntheticEvent<object, any, any> | undefined) {
+  function updateMutation (data: ExternalDataSourceInput, e?: React.BaseSyntheticEvent<object, any, any> | undefined) {
     e?.preventDefault();
     const update = client.mutate<UpdateExternalDataSourceMutation, UpdateExternalDataSourceMutationVariables>({
       mutation: UDPATE_EXTERNAL_DATA_SOURCE,

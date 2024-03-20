@@ -11,18 +11,6 @@ import { interpolateInferno } from 'd3-scale-chromatic'
 import { atom, useAtom } from "jotai";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import { z } from "zod";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-import { Button } from "../ui/button";
-import { formatRelative } from "date-fns";
 
 const MAX_REGION_ZOOM = 8
 const MAX_CONSTITUENCY_ZOOM = 11.5

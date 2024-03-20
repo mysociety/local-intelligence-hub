@@ -61,6 +61,7 @@ export function UpdateMappingForm({
 }: {
   onSubmit: (
     data: ExternalDataSourceInput,
+    e?: React.BaseSyntheticEvent,
   ) => void;
   connectionType: string;
   initialData?: ExternalDataSourceInput;

@@ -97,7 +97,7 @@ export default function Page({
         </header>
       ) : (
         <header>
-          <h1 className="text-hLg">You're done!</h1>
+          <h1 className="text-hLg">You{"'"}re done!</h1>
           <p className="mt-6 text-meepGray-300 max-w-sm">
             You can now use this data source.
           </p>
