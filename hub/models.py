@@ -18,6 +18,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 
+import pandas as pd
 from asgiref.sync import sync_to_async
 from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
@@ -1090,6 +1091,17 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     def get_analytics_queryset(self):
         return self.get_import_data()
+
+    def get_imported_dataframe(self):
+        json_list = [
+            {
+                **(d.postcode_data if d.postcode_data else {}),
+                **(d.json if d.json else {}),
+            }
+            for d in self.get_analytics_queryset()
+        ]
+        enrichment_df = pd.DataFrame.from_records(json_list)
+        return enrichment_df
 
     def data_loader_factory(self):
         async def fetch_enrichment_data(keys: List[self.EnrichmentLookup]) -> list[str]:
