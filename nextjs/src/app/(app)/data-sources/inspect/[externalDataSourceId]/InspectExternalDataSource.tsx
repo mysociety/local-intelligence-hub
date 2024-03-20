@@ -70,6 +70,7 @@ import {
 } from "@/components/ui/alert"
 import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
+import { contentEditableMutation } from "@/lib/html";
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {
@@ -161,11 +162,10 @@ export default function InspectExternalDataSource({
           <div className="text-meepGray-400">
             {source.dataType === DataSourceType.Member ? "Member list" : "Custom data layer"}
           </div>
-          <h1 className="text-hLg" contentEditable id="nickname" onBlur={d => {
-            updateMutation({
-              name: document.getElementById("nickname")?.textContent?.trim()
-            })
-          }}>
+          <h1
+            className="text-hLg"
+            {...contentEditableMutation(updateMutation, "name", "Untitled Data Source")}
+          >
             {source.name}
           </h1>
           {!!source.remoteUrl && (

@@ -45,6 +45,7 @@ import { ReportMap } from "@/components/report/ReportMap";
 import { MAP_REPORT_FRAGMENT } from "./lib";
 import { ReportContext } from "./context";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
+import { contentEditableMutation } from "@/lib/html";
 
 type Params = {
   id: string
@@ -105,11 +106,10 @@ export default function Page({ params: { id } }: { params: Params }) {
             <div className="flex flex-col items-start gap-4">
               <Card className="w-[200px] p-4 bg-white border-1 border-meepGray-700 text-meepGray-800">
                 <CardHeader className="flex flex-row items-center mb-4">
-                  <CardTitle contentEditable id="nickname" className="text-hMd grow font-IBMPlexSansMedium" onBlur={d => {
-                    updateMutation({
-                      name: document.getElementById("nickname")?.textContent?.trim()
-                    })
-                  }}>
+                  <CardTitle
+                    className="text-hMd grow font-IBMPlexSansMedium"
+                    {...contentEditableMutation(updateMutation, "name", "Untitled Report")}
+                  >
                     {report.data?.mapReport.name}
                   </CardTitle>
                   <DropdownMenu>
