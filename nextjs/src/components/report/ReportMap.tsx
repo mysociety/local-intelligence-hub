@@ -6,7 +6,6 @@ import Map, { Layer, MapRef, Source, LayerProps } from "react-map-gl";
 import { MAP_REPORT_LAYERS_SUMMARY } from "../dataConfig";
 import { gql, useFragment, useQuery } from "@apollo/client";
 import { ReportContext } from "@/app/reports/[id]/context";
-import { Expression } from "mapbox-gl";
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { interpolateInferno } from 'd3-scale-chromatic'
 
@@ -87,20 +86,6 @@ export function ReportMap () {
         minzoom: MAX_CONSTITUENCY_ZOOM,
       }
     }
-    // constituencies2024: {
-    //   name: "GE2024 constituencies",
-    //   singular: "constituency",
-    //   sourceId: "commonknowledge.b5t8td4w"
-      // promoteId: "PCON25CD",
-      // labelId: "PCON25NM"
-    // },
-    // councils: {
-    //   name: "councils",
-    //   singular: "council",
-    //   sourceId: "commonknowledge.9zcvsx9l",
-    //   promoteId: "ctyua_code",
-    //   labelId: "ctyua_name",
-    // },
   }
 
   useEffect(function setFeatureState() {
@@ -114,14 +99,8 @@ export function ReportMap () {
             sourceLayer: tileset.sourceLayerId,
             id: area.areaId,
           }, {
-            count: area.count,
-            // Per-layer data for choloropleths also
-            // ...layers.data.layers?.map((layer) => {
-            //   return {
-            //     [layer?.source!.id]: layer?.source?.importedDataCountByRegion?.find(r => r?.areaId === area.areaId)?.count
-            //   }
-            // })
-          }) 
+            count: area.count
+          })
         }
       })
     })
@@ -238,7 +217,6 @@ export function ReportMap () {
                     "interpolate",
                     ["linear"],
                     ['to-number', ["feature-state", "count"], 0],
-                    // 10 stops
                     ...colourStops
                   ],
                   "fill-opacity": [
@@ -329,8 +307,6 @@ export function ReportMap () {
                   "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
                   "symbol-placement": "point",
                   "text-offset": [0, 0.6],
-                  // "text-allow-overlap": true,
-                  // "text-ignore-placement": true,
                 }}
                 paint={{
                   "text-color": "white",
@@ -373,7 +349,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
         type="geojson"
         data={{
           type: "FeatureCollection",
-          // @ts-ignore TODO: Fix types
+          // @ts-ignore
           features: data?.externalDataSource?.importedDataGeojsonPoints || []
         }}
       >
