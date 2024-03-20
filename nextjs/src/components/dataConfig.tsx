@@ -253,21 +253,6 @@ export const MAP_REPORT_LAYERS_SUMMARY = gql`
         name
         isImporting
         importedDataCount
-        importedDataCountByRegion {
-          label
-          areaId
-          count
-        }
-        importedDataCountByConstituency {
-          label
-          areaId
-          count
-        }
-        importedDataCountByWard {
-          label
-          areaId
-          count
-        }
       }
     }
   }

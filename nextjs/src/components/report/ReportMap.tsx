@@ -10,16 +10,34 @@ import { scaleLinear, scaleSequential } from 'd3-scale'
 import { interpolateInferno } from 'd3-scale-chromatic'
 import { atom, useAtom } from "jotai";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
+import { z } from "zod";
 
 const MAX_REGION_ZOOM = 8
 const MAX_CONSTITUENCY_ZOOM = 11.5
 const MIN_MEMBERS_ZOOM = MAX_CONSTITUENCY_ZOOM
 
-const selectedSourceRecordAtom = atom<{
-  sourceId: string,
-  id: string,
-  feature: GeoJSON.Feature<GeoJSON.Point>
-} | null>(null)
+export const SelectedMarkerFeatureParser = z.object({
+  type: z.literal('Feature'),
+  id: z.string(),
+  geometry: z.object({
+    type: z.literal('Point'),
+    coordinates: z.tuple([z.number(), z.number()]),
+  }),
+  properties: z
+    .object({
+      id: z.string(),
+    })
+    // pass through unknown keys (https://zod.dev/?id=passthrough)
+    .passthrough()
+});
+
+export const SelectedMarkerParser = z.object({
+  externalDataSourceId: z.string(),
+  id: z.string(),
+  feature: SelectedMarkerFeatureParser,
+});
+
+const selectedSourceRecordAtom = atom<z.infer<typeof SelectedMarkerParser> | null>(null)
 
 export function ReportMap () {
   const { id } = useContext(ReportContext)
@@ -37,7 +55,7 @@ export function ReportMap () {
   const TILESETS: Record<string, {
     name: string,
     singular: string,
-    sourceId: string,
+    mapboxSourceId: string,
     sourceLayerId?: string,
     promoteId: string,
     labelId: string,
@@ -49,7 +67,7 @@ export function ReportMap () {
     EERs: {
       name: "regions",
       singular: "region",
-      sourceId: "commonknowledge.awsfhx20",
+      mapboxSourceId: "commonknowledge.awsfhx20",
       downloadUrl: "https://ckan.publishing.service.gov.uk/dataset/european-electoral-regions-december-2018-boundaries-uk-buc1/resource/b268c97f-2507-4477-9149-0a0c5d2bfbca",
       sourceLayerId: "European_Electoral_Regions_De-bxyqod",
       promoteId: "eer18cd",
@@ -66,7 +84,7 @@ export function ReportMap () {
     constituencies: {
       name: "GE2019 constituencies",
       singular: "constituency",
-      sourceId: "commonknowledge.4xqg91lc",
+      mapboxSourceId: "commonknowledge.4xqg91lc",
       sourceLayerId: "Westminster_Parliamentary_Con-6i1rlq",
       promoteId: "pcon16cd",
       labelId: "pcon16nm",
@@ -83,7 +101,7 @@ export function ReportMap () {
     wards: {
       name: "wards",
       singular: "ward",
-      sourceId: "commonknowledge.0rzbo365",
+      mapboxSourceId: "commonknowledge.0rzbo365",
       sourceLayerId: "Wards_Dec_2023_UK_Boundaries_-7wzb6g",
       promoteId: "WD23CD",
       labelId: "WD23NM",
@@ -103,7 +121,7 @@ export function ReportMap () {
       tileset.data?.forEach((area) => {
         if (area?.areaId && area?.count) {
           mapboxRef.current?.setFeatureState({
-            source: tileset.sourceId,
+            source: tileset.mapboxSourceId,
             sourceLayer: tileset.sourceLayerId,
             id: area.areaId,
           }, {
@@ -160,6 +178,7 @@ export function ReportMap () {
       }}
       mapStyle="mapbox://styles/commonknowledge/clty3prwh004601pr4nqn7l9s"
       ref={mapboxRef}
+      onClick={() => setSelectedSourceRecord(null)}
     >
       {!layers.data && null}
       {!!layers.data && Object.entries(TILESETS).map(([key, tileset]) => {
@@ -203,19 +222,19 @@ export function ReportMap () {
         ).flat()
 
         return (
-          <Fragment key={tileset.sourceId}>
+          <Fragment key={tileset.mapboxSourceId}>
             <Source
-              id={tileset.sourceId}
+              id={tileset.mapboxSourceId}
               type="vector"
-              url={`mapbox://${tileset.sourceId}`}
+              url={`mapbox://${tileset.mapboxSourceId}`}
               promoteId={tileset.promoteId}
               {...tileset.mapboxSourceProps || {}}
             >
               {/* Shade area by count */}
               <Layer
-                id={`${tileset.sourceId}-fill`}
+                id={`${tileset.mapboxSourceId}-fill`}
                 // beforeId="building"
-                source={tileset.sourceId}
+                source={tileset.mapboxSourceId}
                 source-layer={tileset.sourceLayerId}
                 type="fill"
                 filter={inDataFilter}
@@ -240,8 +259,8 @@ export function ReportMap () {
               {/* Border of the boundary */}
               <Layer
                 filter={inDataFilter}
-                id={`${tileset.sourceId}-line`}
-                source={tileset.sourceId}
+                id={`${tileset.mapboxSourceId}-line`}
+                source={tileset.mapboxSourceId}
                 source-layer={tileset.sourceLayerId}
                 type="line"
                 paint={{
@@ -253,7 +272,7 @@ export function ReportMap () {
               />
             </Source>
             <Source
-              id={`${tileset.sourceId}-db-point`}
+              id={`${tileset.mapboxSourceId}-db-point`}
               type="geojson"
               data={{
                 type: "FeatureCollection",
@@ -272,8 +291,8 @@ export function ReportMap () {
               {...tileset.mapboxSourceProps || {}}
             >
               <Layer
-                id={`${tileset.sourceId}-label-count`}
-                source={`${tileset.sourceId}-db-point`}
+                id={`${tileset.mapboxSourceId}-label-count`}
+                source={`${tileset.mapboxSourceId}-db-point`}
                 type="symbol"
                 layout={{
                   "symbol-spacing": 1000,
@@ -299,8 +318,8 @@ export function ReportMap () {
                 {...tileset.mapboxLayerProps || {}}
               />
               <Layer
-                id={`${tileset.sourceId}-label-name`}
-                source={`${tileset.sourceId}-db-point`}
+                id={`${tileset.mapboxSourceId}-label-name`}
+                source={`${tileset.mapboxSourceId}-db-point`}
                 type="symbol"
                 layout={{
                   "symbol-spacing": 1000,
@@ -337,13 +356,16 @@ export function ReportMap () {
           />
         )
       })}
-      {selectedSourceRecord && (
+      {!!selectedSourceRecord?.feature?.geometry?.coordinates?.length && (
         <ErrorBoundary errorComponent={() => <></>}>
           <Popup
+            key={selectedSourceRecord.id}
             longitude={selectedSourceRecord?.feature?.geometry?.coordinates?.[0] || 0}
             latitude={selectedSourceRecord?.feature?.geometry?.coordinates?.[1] || 0}
-            closeOnClick
-            onClose={() => setSelectedSourceRecord(null)}
+            closeOnClick={false}
+            className="text-black"
+            closeButton={false}
+            closeOnMove={false}
           >
             <div>Selected member</div>
             <pre>{JSON.stringify(selectedSourceRecord?.feature, null, 2)}</pre>
@@ -361,30 +383,33 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
     },
   });
 
-  const id = externalDataSourceId
   const [selectedSourceRecord, setSelectedSourceRecord] = useAtom(selectedSourceRecordAtom)
 
   const map = useMap()
   
   useEffect(() => {
-    map.current?.on('click', `${id}-marker`, e => {
-      if (e.features?.[0]) {
-        const feature = e.features[0]
-        console.log("Selecting", feature)
-        setSelectedSourceRecord({
-          sourceId: id,
-          id: feature.id?.toString()!,
-          // @ts-ignore
-          feature: {
-            type: "Feature",
-            properties: {
-              ...feature.properties,
-              id: feature.id?.toString()!
-            },
-            // @ts-ignore
-            geometry: feature.geometry
-          }
-        })
+    map.current?.on('click', `${externalDataSourceId}-marker`, event => {
+      try {
+        const feature = event.features?.[0]
+        if (feature) {
+          const id = feature.properties?.id
+          const selectedRecord = SelectedMarkerParser.parse({
+            externalDataSourceId,
+            id,
+            feature: {
+              // MapboxGL's typings and actual data don't match up, so we try a few things
+              ...feature,
+              // @ts-ignore
+              properties: feature.properties || feature._properties,
+              // @ts-ignore
+              geometry: feature.geometry || feature._geometry,
+              id
+            }
+          })
+          setSelectedSourceRecord(selectedRecord)
+        }
+      } catch (e) {
+        console.error("Failed to parse selected marker", e, event.features?.[0])
       }
     })
   }, [map])
@@ -392,7 +417,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
   return (
     <>
       <Source
-        id={id}
+        id={externalDataSourceId}
         type="geojson"
         data={{
           type: "FeatureCollection",
@@ -401,8 +426,8 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
         }}
       >
         <Layer
-          source={id}
-          id={`${id}-marker`}
+          source={externalDataSourceId}
+          id={`${externalDataSourceId}-marker`}
           type="symbol"
           layout={{
             "icon-image": "meep-marker",
@@ -411,8 +436,8 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
           }}
           minzoom={MIN_MEMBERS_ZOOM}
           {...(
-            selectedSourceRecord.id
-            ? { filter: ["!=", "id", selectedSourceRecord.id] }
+            selectedSourceRecord?.id
+            ? { filter: ["!=", ["get", "id"], selectedSourceRecord.id] }
             : {}
           )}
         />
