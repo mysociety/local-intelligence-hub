@@ -507,12 +507,30 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
             "icon-anchor": "bottom"
           }}
           minzoom={MIN_MEMBERS_ZOOM}
-          // {...(
-          //   selectedSourceRecord?.id
-          //   ? { filter: ["!=", ["get", "id"], selectedSourceRecord.id] }
-          //   : {}
-          // )}
+          {...(
+            selectedSourceRecord?.id
+            ? { filter: ["!=", selectedSourceRecord.id, ["get", "id"]] }
+            : {}
+          )}
         />
+        {!!selectedSourceRecord?.id && (
+          <Layer
+            source={externalDataSourceId}
+            id={`${externalDataSourceId}-marker-selected`}
+            type="symbol"
+            layout={{
+              "icon-image": "meep-marker-selected",
+              "icon-size": 0.75,
+              "icon-anchor": "bottom"
+            }}
+            minzoom={MIN_MEMBERS_ZOOM}
+            {...(
+              selectedSourceRecord?.id
+              ? { filter: ["==", selectedSourceRecord.id, ["get", "id"]] }
+              : {}
+            )}
+          />
+        )}
       </Source>
     </>
   )
