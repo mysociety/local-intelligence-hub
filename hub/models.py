@@ -1095,7 +1095,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     def data_loader_factory(self):
         async def fetch_enrichment_data(keys: List[self.EnrichmentLookup]) -> list[str]:
             return_data = []
-            enrichment_df = await sync_to_async(self.get_import_dataframe)()
+            enrichment_df = await sync_to_async(self.get_imported_dataframe)()
             for key in keys:
                 try:
                     relevant_member_geography = get(

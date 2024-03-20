@@ -6,7 +6,7 @@ from django.db.models.manager import BaseManager
 class Analytics:
     get_analytics_queryset: BaseManager
 
-    def get_dataframe(self, qs):
+    def get_imported_dataframe(self):
         json_list = [{**d.postcode_data, **d.json} for d in self.get_analytics_queryset()]
         enrichment_df = pd.DataFrame.from_records(json_list)
         return enrichment_df

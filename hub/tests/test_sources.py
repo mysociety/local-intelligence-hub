@@ -100,7 +100,7 @@ class TestAirtableSource(TestCase):
         )
         await self.custom_data_layer.import_all()
         enrichment_df = await sync_to_async(
-            self.custom_data_layer.get_import_dataframe
+            self.custom_data_layer.get_imported_dataframe
         )()
         self.assertGreaterEqual(len(enrichment_df.index), 2)
 
@@ -150,7 +150,7 @@ class TestAirtableSource(TestCase):
             import_data[0].json["mayoral region"],
             ["North East Mayoral Combined Authority"],
         )
-        df = self.custom_data_layer.get_import_dataframe()
+        df = self.custom_data_layer.get_imported_dataframe()
         # assert len(df.index) == import_count
         self.assertIn("council district", list(df.columns.values))
         self.assertIn("mayoral region", list(df.columns.values))
