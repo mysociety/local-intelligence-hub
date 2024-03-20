@@ -42,7 +42,7 @@ import { useRouter } from "next/navigation";
 import spaceCase from 'to-space-case'
 import { toastPromise } from "@/lib/toast";
 import { ReportMap } from "@/components/report/ReportMap";
-import { MapReportPageFragmentStr } from "./lib";
+import { MAP_REPORT_FRAGMENT } from "./lib";
 import { ReportContext } from "./context";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 
@@ -210,6 +210,16 @@ export default function Page({ params: { id } }: { params: Params }) {
     </ReportContext.Provider>
   );
 
+  function refreshStatistics () {
+    toastPromise(report.refetch(),
+      {
+        loading: "Refreshing statistics...",
+        success: "Statistics updated",
+        error: `Couldn't update statistics`,
+      }
+    )
+  }
+
   function updateMutation (input: MapReportInput) {
     const update = client.mutate<UpdateMapReportMutation, UpdateMapReportMutationVariables>({
       mutation: UPDATE_MAP_REPORT,
@@ -224,7 +234,11 @@ export default function Page({ params: { id } }: { params: Params }) {
       loading: "Saving...",
       success: (d) => {
         if (!d.errors && d.data) {
-          console.log(input, Object.keys(input))
+          if (input.layers) {
+            // If layers changed, that means
+            // all the member numbers will have changed too.
+            refreshStatistics()
+          }
           return {
             title: "Report saved",
             description: `Updated ${Object.keys(input).map(spaceCase).join(", ")}`
@@ -265,16 +279,25 @@ const GET_MAP_REPORT = gql`
       ... MapReportPage
     }
   }
-  ${MapReportPageFragmentStr}
+  ${MAP_REPORT_FRAGMENT}
 `
 
+// Keep this fragment trim
+// so that updates return fast
 const UPDATE_MAP_REPORT = gql`
   mutation UpdateMapReport($input: MapReportInput!) {
     updateMapReport(data: $input) {
-      ... MapReportPage
+      id
+      name
+      layers {
+        name
+        source {
+          id
+          name
+        }
+      }
     }
   }
-  ${MapReportPageFragmentStr}
 `
 
 const DELETE_MAP_REPORT = gql`

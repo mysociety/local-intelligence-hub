@@ -32,7 +32,7 @@ const documents = {
     "\n  query GetMapReportName($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n    }\n  }\n": types.GetMapReportNameDocument,
     "\n  fragment MapReportPage on MapReport {\n    id\n    name\n    ... MapReportLayersSummary\n  }\n  \n": types.MapReportPageFragmentDoc,
     "\n  query GetMapReport($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n      ... MapReportPage\n    }\n  }\n  \n": types.GetMapReportDocument,
-    "\n  mutation UpdateMapReport($input: MapReportInput!) {\n    updateMapReport(data: $input) {\n      ... MapReportPage\n    }\n  }\n  \n": types.UpdateMapReportDocument,
+    "\n  mutation UpdateMapReport($input: MapReportInput!) {\n    updateMapReport(data: $input) {\n      id\n      name\n      layers {\n        name\n        source {\n          id\n          name\n        }\n      }\n    }\n  }\n": types.UpdateMapReportDocument,
     "\n  mutation DeleteMapReport($id: IDObject!) {\n    deleteMapReport(data: $id) {\n      id\n    }\n  }\n": types.DeleteMapReportDocument,
     "\n  mutation AutoUpdateWebhookRefresh($ID: String!) {\n    refreshWebhooks(externalDataSourceId: $ID) {\n      id\n      webhookHealthcheck\n    }\n  }\n": types.AutoUpdateWebhookRefreshDocument,
     "\n  fragment DataSourceCard on ExternalDataSource {\n    id\n    name\n    dataType\n    connectionDetails {\n      crmType: __typename\n    }\n    autoUpdateEnabled\n    updateMapping {\n      source\n      sourcePath\n      destinationColumn\n    }\n    jobs {\n      lastEventAt\n      status\n    }\n  }\n": types.DataSourceCardFragmentDoc,
@@ -143,7 +143,7 @@ export function gql(source: "\n  query GetMapReport($id: ID!) {\n    mapReport(p
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  mutation UpdateMapReport($input: MapReportInput!) {\n    updateMapReport(data: $input) {\n      ... MapReportPage\n    }\n  }\n  \n"): (typeof documents)["\n  mutation UpdateMapReport($input: MapReportInput!) {\n    updateMapReport(data: $input) {\n      ... MapReportPage\n    }\n  }\n  \n"];
+export function gql(source: "\n  mutation UpdateMapReport($input: MapReportInput!) {\n    updateMapReport(data: $input) {\n      id\n      name\n      layers {\n        name\n        source {\n          id\n          name\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateMapReport($input: MapReportInput!) {\n    updateMapReport(data: $input) {\n      id\n      name\n      layers {\n        name\n        source {\n          id\n          name\n        }\n      }\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
