@@ -18,7 +18,7 @@ const LIST_UPDATE_CONFIGS = gql`
     name
     dataType
     connectionDetails {
-      __typename
+      crmType: __typename
       ... on AirtableSource {
         baseId
         tableId

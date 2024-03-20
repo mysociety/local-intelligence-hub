@@ -1,6 +1,13 @@
 import { AirtableLogo, MailChimpLogo } from "@/components/logos";
 
-export const externalDataSourceOptions = {
+type ModelName = "AirtableSource" | "MailchimpSource";
+
+export const externalDataSourceOptions: Record<string, {
+  key: string,
+  modelName: ModelName, 
+  name: string,
+  logo: ({ className }: { className?: string | undefined; }) => any
+}> = {
   airtable: {
     key: "airtable",
     modelName: "AirtableSource",
@@ -15,7 +22,7 @@ export const externalDataSourceOptions = {
   },
 };
 
-export const getSourceOptionForTypename = (typename: string) => {
+export const getSourceOptionForTypename = (typename: "AirtableSource" | "MailchimpSource") => {
   return Object.values(externalDataSourceOptions).find(
     (option) => option.modelName === typename,
   );

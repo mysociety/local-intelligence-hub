@@ -188,7 +188,7 @@ class ExternalDataSource:
     @strawberry_django.field
     def connection_details(
         self: models.ExternalDataSource, info
-    ) -> Union["AirtableSource"]:
+    ) -> Union["AirtableSource", "MailchimpSource"]:
         instance = self.get_real_instance()
         return instance
 
