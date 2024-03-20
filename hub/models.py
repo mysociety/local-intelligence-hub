@@ -791,7 +791,7 @@ def cast_data(sender, instance, *args, **kwargs):
         instance.data = ""
 
 
-class ExternalDataSource(PolymorphicModel):
+class ExternalDataSource(PolymorphicModel, Analytics):
     """
     A third-party data source that can be read and optionally written back to.
     E.g. Google Sheet or an Action Network table.
@@ -1089,30 +1089,8 @@ class ExternalDataSource(PolymorphicModel):
             data_type__data_set__external_data_source_id=self.id
         )
     
-    @cached_property
-    def analytics(self):
-        return Analytics(qs=self.get_import_data)
-
-    def get_import_dataframe(self):
-        return self.analytics.get_dataframe()
-    
-    def imported_data_count_by_region(self) -> List[Analytics.RegionCount]:
-        return self.analytics.imported_data_count_by_region()
-    
-    def imported_data_count_by_constituency(self) -> List[Analytics.RegionCount]:
-        return self.analytics.imported_data_count_by_constituency()
-    
-    def imported_data_count_by_constituency_2024(self) -> List[Analytics.RegionCount]:
-        return self.analytics.imported_data_count_by_constituency_2024()
-    
-    def imported_data_count_by_council(self) -> List[Analytics.RegionCount]:
-        return self.analytics.imported_data_count_by_council()
-    
-    def imported_data_count_by_ward(self) -> List[Analytics.RegionCount]:
-        return self.analytics.imported_data_count_by_ward()
-
-    def imported_data_count(self) -> int:
-        return self.analytics.imported_data_count()
+    def get_analytics_queryset(self):
+        return self.get_import_data()
 
     def data_loader_factory(self):
         async def fetch_enrichment_data(keys: List[self.EnrichmentLookup]) -> list[str]:
@@ -1612,7 +1590,7 @@ class Report(PolymorphicModel):
         return self.name
 
 
-class MapReport(Report):
+class MapReport(Report, Analytics):
     layers = models.JSONField(blank=True, null=True, default=list)
 
     class MapLayer(TypedDict):
@@ -1629,27 +1607,5 @@ class MapReport(Report):
             data_type__data_set__external_data_source_id__in=visible_layer_ids
         )
     
-    @cached_property
-    def analytics(self):
-        return Analytics(qs=self.get_import_data)
-
-    def get_import_dataframe(self):
-        return self.analytics.get_dataframe()
-    
-    def imported_data_count_by_region(self) -> List[Analytics.RegionCount]:
-        return self.analytics.imported_data_count_by_region()
-    
-    def imported_data_count_by_constituency(self) -> List[Analytics.RegionCount]:
-        return self.analytics.imported_data_count_by_constituency()
-    
-    def imported_data_count_by_constituency_2024(self) -> List[Analytics.RegionCount]:
-        return self.analytics.imported_data_count_by_constituency_2024()
-    
-    def imported_data_count_by_council(self) -> List[Analytics.RegionCount]:
-        return self.analytics.imported_data_count_by_council()
-    
-    def imported_data_count_by_ward(self) -> List[Analytics.RegionCount]:
-        return self.analytics.imported_data_count_by_ward()
-
-    def imported_data_count(self) -> int:
-        return self.analytics.imported_data_count()
+    def get_analytics_queryset(self):
+        return self.get_import_data()
