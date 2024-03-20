@@ -12,7 +12,10 @@ const config: CodegenConfig = {
   generates: {
     "./src/__generated__/": {
       preset: "client",
-      plugins: ["fragment-matcher"],
+      plugins: [
+        "fragment-matcher"
+        // TODO: https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema
+      ],
       presetConfig: {
         gqlTagName: "gql",
       },

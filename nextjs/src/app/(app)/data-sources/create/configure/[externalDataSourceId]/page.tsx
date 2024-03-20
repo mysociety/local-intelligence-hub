@@ -38,6 +38,12 @@ const GET_UPDATE_CONFIG = gql`
       }
       geographyColumn
       geographyColumnType
+      postcodeField
+      firstNameField
+      lastNameField
+      emailField
+      phoneField
+      addressField
     }
   }
 `;
@@ -62,7 +68,8 @@ export default function Page({
     },
   });
 
-  function submit(input: ExternalDataSourceInput) {
+  function submit(input: ExternalDataSourceInput, e: React.BaseSyntheticEvent<object, any, any> | undefined) {
+    e?.preventDefault();
     const create = updateSource({
       variables: { input: { id: externalDataSourceId, ...input } },
     });
@@ -89,7 +96,7 @@ export default function Page({
         <p className="mt-6 text-meepGray-400 max-w-sm">
           Choose from the following data sources to enhance your CRM with data
           that empower you organisation. For geographic data, we need to know
-          which column has the postcode so we can make sure you are getting
+          which field has the postcode so we can make sure you are getting
           accurate data.
         </p>
       </header>

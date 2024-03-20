@@ -11,7 +11,8 @@ from strawberry.scalars import JSON
 
 from hub import models
 from hub.graphql.types.geojson import PointFeature, MultiPolygonFeature
-from hub.graphql.utils import dict_key_field, fn_field
+from hub.graphql.types.postcodes import PostcodesIOResult
+from hub.graphql.utils import dict_key_field, fn_field, attr_field
 
 
 @strawberry_django.filters.filter(
@@ -194,6 +195,27 @@ class GroupedDataCount:
         return None
 
 
+@strawberry_django.type(models.GenericData)
+class GenericData:
+    last_update: auto
+    id: auto = strawberry_django.field(field_name="data")
+    name: auto = attr_field()
+    first_name: auto
+    last_name: auto
+    full_name: auto
+    email: auto
+    phone: auto
+    address: auto
+    postcode: auto
+    postcode_data: Optional[PostcodesIOResult]
+    json: Optional[JSON]
+
+
+@strawberry.type
+class MapReportMemberFeature(PointFeature):
+    properties: GenericData
+
+
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class ExternalDataSource:
     id: auto
@@ -205,26 +227,23 @@ class ExternalDataSource:
     organisation: Organisation
     geography_column: auto
     geography_column_type: auto
+    postcode_field: auto
+    first_name_field: auto
+    last_name_field: auto
+    full_name_field: auto
+    email_field: auto
+    phone_field: auto
+    address_field: auto
     update_mapping: Optional[List["AutoUpdateConfig"]]
     auto_update_enabled: auto
     auto_import_enabled: auto
     field_definitions: Optional[List[FieldDefinition]] = strawberry_django.field(
         resolver=lambda self: self.field_definitions()
     )
-
-    @strawberry_django.field
-    def remote_name(self, info) -> Optional[str]:
-        try:
-            return self.remote_name()
-        except AttributeError or NotImplementedError:
-            return None
-
-    @strawberry_django.field
-    def remote_url(self, info) -> Optional[str]:
-        try:
-            return self.remote_url()
-        except AttributeError or NotImplementedError:
-            return None
+    record_url_template: Optional[str] = fn_field()
+    remote_name: Optional[str] = fn_field()
+    remote_url: Optional[str] = fn_field()
+    healthcheck: bool = fn_field()
 
     jobs: List[QueueJob] = strawberry_django.field(
         resolver=lambda self: procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
@@ -238,10 +257,6 @@ class ExternalDataSource:
     def get_queryset(cls, queryset, info, **kwargs):
         user = get_current_user(info)
         return queryset.filter(organisation__members__user=user.id)
-
-    @strawberry_django.field
-    def healthcheck(self: models.ExternalDataSource, info) -> bool:
-        return self.healthcheck()
 
     @strawberry_django.field
     def connection_details(
@@ -261,16 +276,13 @@ class ExternalDataSource:
     @strawberry_django.field
     def imported_data_geojson_points(
         self: models.ExternalDataSource, info: Info
-    ) -> List[PointFeature]:
+    ) -> List[MapReportMemberFeature]:
         data = self.get_import_data()
         return [
-            PointFeature.from_geodjango(
+            MapReportMemberFeature.from_geodjango(
                 point=generic_datum.point,
                 id=generic_datum.data,
-                properties=dict(
-                    **generic_datum.json,
-                    id=generic_datum.data,
-                )
+                properties=generic_datum,
             )
             for generic_datum in data
             if generic_datum.point is not None

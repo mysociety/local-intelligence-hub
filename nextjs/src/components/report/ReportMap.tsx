@@ -11,6 +11,18 @@ import { interpolateInferno } from 'd3-scale-chromatic'
 import { atom, useAtom } from "jotai";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import { z } from "zod";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import { Button } from "../ui/button";
+import { formatRelative } from "date-fns";
 
 const MAX_REGION_ZOOM = 8
 const MAX_CONSTITUENCY_ZOOM = 11.5
@@ -25,7 +37,23 @@ export const SelectedMarkerFeatureParser = z.object({
   }),
   properties: z
     .object({
+      originalUrl: z.string().url(),
       id: z.string(),
+      lastUpdate: z.coerce.date(),
+      name: z.string().optional(),
+      phone: z.string().optional(),
+      email: z.string().email().optional(),
+      json: z.preprocess(
+        j => JSON.parse(j?.toString() || "{}"),
+        z.object({})
+          .passthrough()
+      ),
+      postcodeData: z.preprocess(
+        j => JSON.parse(j?.toString() || "{}"),
+        z.object({
+          postcode: z.string(),
+        })
+      )
     })
     // pass through unknown keys (https://zod.dev/?id=passthrough)
     .passthrough()
@@ -363,12 +391,53 @@ export function ReportMap () {
             longitude={selectedSourceRecord?.feature?.geometry?.coordinates?.[0] || 0}
             latitude={selectedSourceRecord?.feature?.geometry?.coordinates?.[1] || 0}
             closeOnClick={false}
-            className="text-black"
+            className="text-black [&>.mapboxgl-popup-content]:p-0 [&>.mapboxgl-popup-content]:overflow-auto w-[150px] [&>.mapboxgl-popup-tip]:!border-t-meepGray-200"
             closeButton={false}
             closeOnMove={false}
+            anchor="bottom"
+            // @ts-ignore bizarre library typing issue
+            offset={[0, -35] as any}
           >
-            <div>Selected member</div>
-            <pre>{JSON.stringify(selectedSourceRecord?.feature, null, 2)}</pre>
+            <div className='font-IBMPlexMono p-2 space-y-1 bg-white'>
+              {!!selectedSourceRecord.feature.properties.name && (
+                <div className='-space-y-1'>
+                  <div className='text-meepGray-400'>NAME</div>
+                  <div>{selectedSourceRecord.feature.properties.name}</div>
+                </div>
+              )}
+              {!!selectedSourceRecord.feature.properties.postcodeData.postcode && (
+                <div className='-space-y-1'>
+                  <div className='text-meepGray-400'>POSTCODE</div>
+                  <pre>{selectedSourceRecord.feature.properties.postcodeData.postcode}</pre>
+                </div>
+              )}
+            </div>
+            <footer className='flex-divide-x bg-meepGray-200 text-meepGray-500 flex flex-row justify-around w-full py-1 px-2 text-center'>
+              {/* If phone */}
+              {!!selectedSourceRecord.feature.properties.phone && (
+                <a href={`tel:${selectedSourceRecord.feature.properties.phone}`} target="_blank">
+                  Call
+                </a>
+              )}
+              {/* Text */}
+              {!!selectedSourceRecord.feature.properties.phone && (
+                <a href={`sms:${selectedSourceRecord.feature.properties.phone}`} target="_blank">
+                  SMS
+                </a>
+              )}
+              {/* If email */}
+              {!!selectedSourceRecord.feature.properties.email && (
+                <a href={`mailto:${selectedSourceRecord.feature.properties.email}`} target="_blank">
+                  Email
+                </a>
+              )}
+              {/* If email */}
+              {!!selectedSourceRecord.feature.properties.email && (
+                <a href={`${selectedSourceRecord.feature.properties.originalUrl}`} target="_blank">
+                  Link
+                </a>
+              )}
+            </footer>
           </Popup>
         </ErrorBoundary>
       )}
@@ -399,8 +468,11 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
             feature: {
               // MapboxGL's typings and actual data don't match up, so we try a few things
               ...feature,
-              // @ts-ignore
-              properties: feature.properties || feature._properties,
+              properties: {
+                // @ts-ignore
+                ...(feature.properties || feature._properties || {}),
+                originalUrl: data?.externalDataSource?.recordUrlTemplate?.replace("{record_id}", id)
+              },
               // @ts-ignore
               geometry: feature.geometry || feature._geometry,
               id
@@ -412,7 +484,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
         console.error("Failed to parse selected marker", e, event.features?.[0])
       }
     })
-  }, [map])
+  }, [map, data?.externalDataSource.recordUrlTemplate])
   
   return (
     <>
@@ -435,11 +507,11 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
             "icon-anchor": "bottom"
           }}
           minzoom={MIN_MEMBERS_ZOOM}
-          {...(
-            selectedSourceRecord?.id
-            ? { filter: ["!=", ["get", "id"], selectedSourceRecord.id] }
-            : {}
-          )}
+          // {...(
+          //   selectedSourceRecord?.id
+          //   ? { filter: ["!=", ["get", "id"], selectedSourceRecord.id] }
+          //   : {}
+          // )}
         />
       </Source>
     </>
@@ -449,6 +521,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
 const GET_SOURCE_DATA = gql`
   query GetSourceGeoJSON($externalDataSourceId: ID!) {
     externalDataSource(pk: $externalDataSourceId) {
+      recordUrlTemplate
       importedDataGeojsonPoints {
         id
         type
@@ -456,7 +529,17 @@ const GET_SOURCE_DATA = gql`
           type
           coordinates
         }
-        properties
+        properties {
+          lastUpdate
+          id
+          name
+          phone
+          email
+          postcodeData {
+            postcode
+          }
+          json
+        }
       }
     }
   }

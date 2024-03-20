@@ -70,6 +70,7 @@ import {
 } from "@/components/ui/alert"
 import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
+import { UpdateExternalDataSourceFields } from "@/components/UpdateExternalDataSourceFields";
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {
@@ -90,6 +91,13 @@ const GET_UPDATE_CONFIG = gql`
       webhookHealthcheck
       geographyColumn
       geographyColumnType
+      postcodeField
+      firstNameField
+      lastNameField
+      fullNameField
+      emailField
+      phoneField
+      addressField
       isImporting
       importedDataCount
       fieldDefinitions {
@@ -233,9 +241,16 @@ export default function InspectExternalDataSource({
       <section className="space-y-4">
         <header className="flex flex-row justify-between items-center">
           <div>
-            <h2 className="text-hSm mb-5">Data mapping</h2>
+            <h2 className="text-hSm mb-5">Data updates</h2>
             <p className='text-sm text-meepGray-400'>
-              Pull third party data into your data source{"'"}s original location, based on the record{"'"}s <DataSourceFieldLabel label={source.geographyColumnType} connectionType={source.connectionDetails.__typename!} />.
+              <span className='align-middle'>
+                Pull third party data into your data source{"'"}s original location, based on the record{"'"}s 
+              </span>
+              <DataSourceFieldLabel
+                className='align-middle'
+                label={source.geographyColumnType}
+                connectionType={source.connectionDetails.__typename!}
+              />
             </p>
           </div>
           {allowMapping && !!source.updateMapping?.length && (
@@ -260,6 +275,34 @@ export default function InspectExternalDataSource({
           onSubmit={updateMutation}
         />
       </section>
+      <div className="border-b border-meepGray-700 pt-10" />
+      {source.dataType === DataSourceType.Member && (
+        <section className="space-y-4">
+          <header className="flex flex-row justify-between items-center">
+            <div>
+              <h2 className="text-hSm mb-5">Member data fields</h2>
+              <p className='text-sm text-meepGray-400'>
+                <span className='align-middle'>
+                  Designate special fields for use in Mapped reports
+                </span>
+              </p>
+            </div>
+          </header>
+          <UpdateExternalDataSourceFields
+            connectionType={source.connectionDetails.crmType}
+            fieldDefinitions={source.fieldDefinitions}
+            initialData={{
+              firstNameField: source.firstNameField,
+              lastNameField: source.lastNameField,
+              fullNameField: source.fullNameField,
+              emailField: source.emailField,
+              phoneField: source.phoneField,
+              addressField: source.addressField,
+            }}
+            onSubmit={updateMutation}
+          />
+        </section>
+      )}
       <div className="border-b border-meepGray-700 pt-10" />
       <section className='space-y-4'>
         <h2 className="text-hSm mb-5">Connection</h2>
@@ -373,7 +416,8 @@ export default function InspectExternalDataSource({
     </div>
   );
 
-  function updateMutation (data: ExternalDataSourceInput) {
+  function updateMutation (data: ExternalDataSourceInput, e: React.BaseSyntheticEvent<object, any, any> | undefined) {
+    e?.preventDefault();
     const update = client.mutate<UpdateExternalDataSourceMutation, UpdateExternalDataSourceMutationVariables>({
       mutation: UDPATE_EXTERNAL_DATA_SOURCE,
       variables: {

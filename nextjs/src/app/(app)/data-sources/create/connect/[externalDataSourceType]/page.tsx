@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ApolloError, FetchResult, gql, useLazyQuery, useMutation } from "@apollo/client";
 import { CreateAutoUpdateFormContext } from "../../NewExternalDataSourceWrapper";
 import { toast } from "sonner";
-import { NonUndefined, SubmitHandler, useFieldArray, useForm } from "react-hook-form";
+import { FieldPath, FormProvider, NonUndefined, SubmitHandler, useFieldArray, useForm } from "react-hook-form";
 import {
   Form,
   FormControl,
@@ -37,6 +37,8 @@ import {
 } from "@/__generated__/graphql";
 import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
+import spaceCase from 'to-space-case'
+import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
 
 const TEST_SOURCE = gql`
   query TestSourceConnection(
@@ -108,31 +110,42 @@ export default function Page({
     },
   });
 
-  const [guessedPostcode, setGuessedPostcode] = useState<string | null>(null);
-  useEffect(function guessPostcodeColumn () {
-    let guessedPostcodeColumn = testSourceResult.data?.testSourceConnection.fieldDefinitions?.find(
-      (field) => (
-        field.label?.toLowerCase().replaceAll(' ', '').includes("postcode") ||
-        field.label?.toLowerCase().replaceAll(' ', '').includes("postalcode") ||
-        field.label?.toLowerCase().replaceAll(' ', '').includes("zipcode") ||
-        field.label?.toLowerCase().replaceAll(' ', '').includes("zip") ||
-        field.value?.toLowerCase().replaceAll(' ', '').includes("postcode") ||
-        field.value?.toLowerCase().replaceAll(' ', '').includes("postalcode") ||
-        field.value?.toLowerCase().replaceAll(' ', '').includes("zipcode") ||
-        field.value?.toLowerCase().replaceAll(' ', '').includes("zip")
-      )
-    );
-    if (guessedPostcodeColumn) {
-      setGuessedPostcode(guessedPostcodeColumn.value)
-    }
-  }, [testSourceResult.data?.testSourceConnection.fieldDefinitions, form, setGuessedPostcode])
+  const [guessed, setGuessed] = useState<
+    Partial<Record<FieldPath<FormInputs>, string | undefined | null>>
+  >({});
 
-  useEffect(function proposePostcode() {
-    if (guessedPostcode) {
-      form.setValue('geographyColumn', guessedPostcode)
-      form.setValue('geographyColumnType', PostcodesIoGeographyTypes.Postcode)
-    }
-  }, [guessedPostcode, form])
+  function useGuessedField<T extends keyof FormInputs>(
+    field: T,
+    guessKeys: string[]
+  ) {
+    useEffect(() => {
+      const guess = testSourceResult.data?.testSourceConnection.fieldDefinitions?.find(
+        (field) => {
+          for (const guessKey of guessKeys) {
+            if (
+              field.label?.toLowerCase().replaceAll(' ', '').includes(guessKey.replaceAll(' ', '')) ||
+              field.value?.toLowerCase().replaceAll(' ', '').includes(guessKey.replaceAll(' ', ''))
+            ) {
+              return true
+            }
+          }
+        }
+      )
+      if (guess?.value) {
+        setGuessed(guesses => ({ ...guesses, [field]: guess?.value }))
+        // @ts-ignore
+        form.setValue(field, guess?.value)
+      }
+    }, [testSourceResult.data?.testSourceConnection.fieldDefinitions, form, setGuessed])
+  }
+
+  useGuessedField('geographyColumn', ["postcode", "postal code", "zip code", "zip"])
+  useGuessedField('emailField', ["email"])
+  useGuessedField('phoneField', ["mobile", "phone"])
+  useGuessedField('addressField', ["street", "line1", "address"])
+  useGuessedField('fullNameField', ["full name", "name"])
+  useGuessedField('firstNameField', ["first name", "given name"])
+  useGuessedField('lastNameField', ["last name", "family name", "surname", "second name"])
 
   // Propose name based on remoteName
   useEffect(function proposeName () {
@@ -218,6 +231,31 @@ export default function Page({
     );
   }
 
+  function FPreopulatedSelectField ({
+    name,
+    label,
+    placeholder,
+    required = false
+  }: {
+    name: FieldPath<FormInputs>,
+    label?: string,
+    placeholder?: string
+    required?: boolean
+  }) {
+    return (
+      <PreopulatedSelectField
+        name={name}
+        label={label}
+        placeholder={placeholder}
+        fieldDefinitions={testSourceResult.data?.testSourceConnection.fieldDefinitions}
+        control={form.control}
+        connectionType={testSourceResult.data?.testSourceConnection.__typename!}
+        guess={guessed[name]}
+        required={required}
+      />
+    )
+  }
+
   if (testSourceResult.data?.testSourceConnection.healthcheck) {
     return (
       <div className="space-y-6">
@@ -225,122 +263,46 @@ export default function Page({
         <p className="text-meepGray-400 max-w-lg">
           Tell us a bit more about the data you{"'"}re connecting to.
         </p>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(submitCreateSource)}
-            className="space-y-7 max-w-lg"
-          >
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nickname</FormLabel>
-                  <FormControl>
-                    {/* @ts-ignore */}
-                    <Input placeholder="My members list" {...field} required />
-                  </FormControl>
-                  <FormDescription>
-                    This will be visible to your team.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="dataType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Data type</FormLabel>
-                  <FormControl>
-                    {/* @ts-ignore */}
-                    <Select onValueChange={field.onChange} defaultValue={field.value} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="What kind of data is this?" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Type of data source</SelectLabel>
-                          <SelectItem value={DataSourceType.Member}>A list of members</SelectItem>
-                          <SelectItem value={DataSourceType.Other}>Other data</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className='grid grid-cols-2 gap-4 w-full'>
-              {/* Postcode field */}
+        <FormProvider {...form}>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(submitCreateSource)}
+              className="space-y-7 max-w-lg"
+            >
               <FormField
                 control={form.control}
-                name="geographyColumn"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Geography column</FormLabel>
-                      <FormControl>
-                        {testSourceResult.data?.testSourceConnection.fieldDefinitions?.length ? (
-                          // @ts-ignore
-                          <Select {...field} onValueChange={field.onChange} required>
-                            <SelectTrigger className='pl-1'>
-                              <SelectValue
-                                placeholder={`Choose ${source.geographyColumnType || 'geography'} column`}
-                              />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectLabel>Available columns</SelectLabel>
-                                {testSourceResult.data?.testSourceConnection.fieldDefinitions?.map(
-                                  (field) => (
-                                    <SelectItem key={field.value} value={field.value}>
-                                      <DataSourceFieldLabel
-                                        connectionType={
-                                          testSourceResult.data?.testSourceConnection.__typename!
-                                        }
-                                        fieldDefinition={field}
-                                      />  
-                                    </SelectItem>
-                                  )
-                                )}
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          // @ts-ignore
-                          <Input {...field} required />
-                        )}
-                      </FormControl>
-                      {!!guessedPostcode && guessedPostcode === form.watch('geographyColumn') && (
-                        <FormDescription className='text-yellow-500 italic'>
-                          Best guess based on available table columns: {guessedPostcode}
-                        </FormDescription>
-                      )}
-                      <FormMessage />
+                    <FormLabel>Nickname</FormLabel>
+                    <FormControl>
+                      {/* @ts-ignore */}
+                      <Input placeholder="My members list" {...field} required />
+                    </FormControl>
+                    <FormDescription>
+                      This will be visible to your team.
+                    </FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
-                name="geographyColumnType"
+                name="dataType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Geography Type</FormLabel>
+                    <FormLabel>Data type</FormLabel>
                     <FormControl>
                       {/* @ts-ignore */}
                       <Select onValueChange={field.onChange} defaultValue={field.value} required>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a geography type" />
+                          <SelectValue placeholder="What kind of data is this?" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            <SelectLabel>Geography column type</SelectLabel>
-                            <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
-                            <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
-                            <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
-                            <SelectItem value={PostcodesIoGeographyTypes.Constituency}>GE2010-2019 Constituency</SelectItem>
-                            <SelectItem value={PostcodesIoGeographyTypes.Constituency_2025}>GE2024 Constituency</SelectItem>
+                            <SelectLabel>Type of data source</SelectLabel>
+                            <SelectItem value={DataSourceType.Member}>A list of members</SelectItem>
+                            <SelectItem value={DataSourceType.Other}>Other data</SelectItem>
                           </SelectGroup>
                         </SelectContent>
                       </Select>
@@ -348,13 +310,54 @@ export default function Page({
                     <FormMessage />
                   </FormItem>
                 )}
-            />
-            </div>
-            <Button type='submit' variant="reverse" disabled={createSourceResult.loading}>
-              Save connection
-            </Button>
-          </form>
-        </Form>
+              />
+              <div className='grid grid-cols-2 gap-4 w-full'>
+                <FPreopulatedSelectField name="geographyColumn" label="geography" required />
+                <FormField
+                  control={form.control}
+                  name="geographyColumnType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Geography Type</FormLabel>
+                      <FormControl>
+                        {/* @ts-ignore */}
+                        <Select onValueChange={field.onChange} defaultValue={field.value} required>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a geography type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectLabel>Geography type</SelectLabel>
+                              <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Constituency}>GE2010-2019 Constituency</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Constituency_2025}>GE2024 Constituency</SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {form.watch('dataType') === DataSourceType.Member && (
+                  <>
+                    <FPreopulatedSelectField name="emailField" />
+                    <FPreopulatedSelectField name="phoneField" />
+                    <FPreopulatedSelectField name="addressField" />
+                    <FPreopulatedSelectField name="fullNameField" />
+                    <FPreopulatedSelectField name="firstNameField" />
+                    <FPreopulatedSelectField name="lastNameField" />
+                  </>
+                )}
+              </div>
+              <Button type='submit' variant="reverse" disabled={createSourceResult.loading}>
+                Save connection
+              </Button>
+            </form>
+          </Form>
+        </FormProvider>
       </div>
     )
   }
@@ -383,101 +386,103 @@ export default function Page({
             well as tell us which table to update in the first place.
           </p>
         </header>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(submitTestConnection)}
-            className="space-y-7 max-w-lg"
-          >
-            <div className='text-hSm'>Connection details</div>
-            <FormField
-              control={form.control}
-              name="airtable.apiKey"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Airtable access token</FormLabel>
-                  <FormControl>
-                    {/* @ts-ignore */}
-                    <Input placeholder="patAB1" {...field} required />
-                  </FormControl>
-                  <FormDescription>
-                    Make sure your token has read and write permissions for
-                    table data, table schema and webhooks.{" "}
-                    <a
-                      className="underline"
-                      target="_blank"
-                      href="https://support.airtable.com/docs/creating-personal-access-tokens#:~:text=Click%20the%20Developer%20hub%20option,right%20portion%20of%20the%20screen."
-                    >
-                      Learn how to find your personal access token.
-                    </a>
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="airtable.baseId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Base ID</FormLabel>
-                  <FormControl>
-                    {/* @ts-ignore */}
-                    <Input placeholder="app1234" {...field} required />
-                  </FormControl>
-                  <FormDescription>
-                    The unique identifier for your base.{" "}
-                    <a
-                      className="underline"
-                      target="_blank"
-                      href="https://support.airtable.com/docs/en/finding-airtable-ids#:~:text=Finding%20base%20URL%20IDs,-Base%20URLs"
-                    >
-                      Learn how to find your base ID.
-                    </a>
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="airtable.tableId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Table ID</FormLabel>
-                  <FormControl>
-                    {/* @ts-ignore */}
-                    <Input placeholder="tbl1234" {...field} required />
-                  </FormControl>
-                  <FormDescription>
-                    The unique identifier for your table.{" "}
-                    <a
-                      className="underline"
-                      target="_blank"
-                      href="https://support.airtable.com/docs/en/finding-airtable-ids#:~:text=Finding%20base%20URL%20IDs,-Base%20URLs"
-                    >
-                      Learn how to find your table ID.
-                    </a>
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="flex flex-row gap-x-4">
-              <Button
-                variant="outline"
-                type="reset"
-                onClick={() => {
-                  router.back();
-                }}
-              >
-                Back
-              </Button>
-              <Button type="submit" variant={"reverse"} disabled={testSourceResult.loading}>
-                Test connection
-              </Button>
-            </div>
-          </form>
-        </Form>
+        <FormProvider {...form}>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(submitTestConnection)}
+              className="space-y-7 max-w-lg"
+            >
+              <div className='text-hSm'>Connection details</div>
+              <FormField
+                control={form.control}
+                name="airtable.apiKey"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Airtable access token</FormLabel>
+                    <FormControl>
+                      {/* @ts-ignore */}
+                      <Input placeholder="patAB1" {...field} required />
+                    </FormControl>
+                    <FormDescription>
+                      Make sure your token has read and write permissions for
+                      table data, table schema and webhooks.{" "}
+                      <a
+                        className="underline"
+                        target="_blank"
+                        href="https://support.airtable.com/docs/creating-personal-access-tokens#:~:text=Click%20the%20Developer%20hub%20option,right%20portion%20of%20the%20screen."
+                      >
+                        Learn how to find your personal access token.
+                      </a>
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="airtable.baseId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Base ID</FormLabel>
+                    <FormControl>
+                      {/* @ts-ignore */}
+                      <Input placeholder="app1234" {...field} required />
+                    </FormControl>
+                    <FormDescription>
+                      The unique identifier for your base.{" "}
+                      <a
+                        className="underline"
+                        target="_blank"
+                        href="https://support.airtable.com/docs/en/finding-airtable-ids#:~:text=Finding%20base%20URL%20IDs,-Base%20URLs"
+                      >
+                        Learn how to find your base ID.
+                      </a>
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="airtable.tableId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Table ID</FormLabel>
+                    <FormControl>
+                      {/* @ts-ignore */}
+                      <Input placeholder="tbl1234" {...field} required />
+                    </FormControl>
+                    <FormDescription>
+                      The unique identifier for your table.{" "}
+                      <a
+                        className="underline"
+                        target="_blank"
+                        href="https://support.airtable.com/docs/en/finding-airtable-ids#:~:text=Finding%20base%20URL%20IDs,-Base%20URLs"
+                      >
+                        Learn how to find your table ID.
+                      </a>
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex flex-row gap-x-4">
+                <Button
+                  variant="outline"
+                  type="reset"
+                  onClick={() => {
+                    router.back();
+                  }}
+                >
+                  Back
+                </Button>
+                <Button type="submit" variant={"reverse"} disabled={testSourceResult.loading}>
+                  Test connection
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </FormProvider>
       </div>
     );
   }

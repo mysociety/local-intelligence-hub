@@ -30,8 +30,10 @@ import {
 import Link from "next/link"
 import { importData } from "@/app/(app)/data-sources/inspect/[externalDataSourceId]/InspectExternalDataSource"
 import { LoadingIcon } from "./ui/loadingIcon"
+import { useRouter } from "next/navigation"
 
 export default function DataConfigPanel () {
+  const router = useRouter()
   const { id, update } = useContext(ReportContext)
   const client = useApolloClient()
   const layers = useFragment<MapReportLayersSummaryFragment>({
@@ -64,10 +66,10 @@ export default function DataConfigPanel () {
                 <PopoverContent className='space-y-4'>
                   {!!layer?.source?.id && (
                     <>
-                      <div className='text-lg'>{layer.source.importedDataCount || 0} records imported</div>
-                      <Link href={`/data-sources/inspect/${layer.source.id}`}>
+                      <div>{layer.source.importedDataCount || 0} records imported</div>
+                      <Button onClick={() => router.push(`/data-sources/inspect/${layer?.source?.id}`)}>
                         Inspect data source <ArrowRight />
-                      </Link>
+                      </Button>
                       <Button disabled={layer.source.isImporting} onClick={() => importData(client, layer.source!.id)}>
                         {!layer.source.isImporting ? "Import data" : <span className='flex flex-row gap-2 items-center'>
                           <LoadingIcon size={"18"} />
@@ -253,6 +255,9 @@ export const MAP_REPORT_LAYERS_SUMMARY = gql`
         name
         isImporting
         importedDataCount
+        connectionDetails {
+          recordUrlTemplate
+        }
       }
     }
   }

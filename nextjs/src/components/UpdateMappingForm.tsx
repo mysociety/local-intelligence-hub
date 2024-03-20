@@ -107,73 +107,72 @@ export function UpdateMappingForm({
 
   return (
     <FormProvider {...form}>
-      <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-7">
           <div className='max-w-md'>
-            <FormItem>
-              <FormLabel>Geography Column</FormLabel>
-              <div className='grid grid-cols-2 gap-4 w-full'>
-                {/* Postcode field */}
-                <FormField
-                  control={form.control}
-                  name="geographyColumn"
-                  render={({ field }) => (
-                    <>
-                      <FormControl>
-                        {fieldDefinitions?.length ? (
-                          // @ts-ignore
-                          <Select value={field.value} onValueChange={field.onChange} required>
-                            <SelectTrigger className='pl-1'>
-                              <SelectValue placeholder={`Choose ${data.geographyColumnType || 'geography'} column`} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectLabel>Geography column</SelectLabel>
-                                {fieldDefinitions?.map((field) => (
-                                  <SelectItem key={field.value} value={field.value}>
-                                    <DataSourceFieldLabel fieldDefinition={field} connectionType={connectionType} />
-                                  </SelectItem>
-                                ))}
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          // @ts-ignore
-                          <Input {...field} required />
-                        )}
-                      </FormControl>
-                      <FormMessage />
-                    </>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="geographyColumnType"
-                  render={({ field }) => (
-                    <>
-                      <FormControl>
-                        {/* @ts-ignore */}
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a geography type" />
+            <div className='grid grid-cols-2 gap-4 w-full'>
+              {/* Postcode field */}
+              <FormField
+                control={form.control}
+                name="geographyColumn"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Geography Field</FormLabel>
+                    <FormControl>
+                      {fieldDefinitions?.length ? (
+                        // @ts-ignore
+                        <Select value={field.value} onValueChange={field.onChange} required>
+                          <SelectTrigger className='pl-1'>
+                            <SelectValue placeholder={`Choose ${data.geographyColumnType || 'geography'} field`} />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectGroup>
-                              <SelectLabel>Geography column type</SelectLabel>
-                              <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Constituency}>Constituency</SelectItem>
+                              <SelectLabel>Geography field</SelectLabel>
+                              {fieldDefinitions?.map((field) => (
+                                <SelectItem key={field.value} value={field.value}>
+                                  <DataSourceFieldLabel fieldDefinition={field} connectionType={connectionType} />
+                                </SelectItem>
+                              ))}
                             </SelectGroup>
                           </SelectContent>
                         </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </>
-                  )}
+                      ) : (
+                        // @ts-ignore
+                        <Input {...field} required />
+                      )}
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              </div>
-            </FormItem>
+              <FormField
+                control={form.control}
+                name="geographyColumnType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Geography Type</FormLabel>
+                    <FormControl>
+                      {/* @ts-ignore */}
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a geography type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectLabel>Geography type</SelectLabel>
+                            <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
+                            <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
+                            <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
+                            <SelectItem value={PostcodesIoGeographyTypes.Constituency}>Constituency</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+            />
+            </div>
           </div>
           <div>
             {allowMapping && (
@@ -220,11 +219,11 @@ export function UpdateMappingForm({
                                 onValueChange={field.onChange}
                               >
                                 <SelectTrigger className={twMerge(field.value && 'pl-1')}>
-                                  <SelectValue aria-label={data.updateMapping?.[index]?.destinationColumn} placeholder={`Choose destination column`} />
+                                  <SelectValue aria-label={data.updateMapping?.[index]?.destinationColumn} placeholder={`Choose field to update`} />
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectGroup>
-                                    <SelectLabel>Choose a destination column</SelectLabel>
+                                    <SelectLabel>Choose a field to update</SelectLabel>
                                     {fieldDefinitions?.map((field) => (
                                       <SelectItem key={field.value} value={field.value}>
                                         <DataSourceFieldLabel
@@ -239,7 +238,7 @@ export function UpdateMappingForm({
                             ) : (
                               <Input
                                 className="flex-shrink-0 flex-grow"
-                                placeholder="Destination column"
+                                placeholder="Field to update"
                                 {...field}
                                 required
                               />
@@ -266,19 +265,13 @@ export function UpdateMappingForm({
             )}
             <div className="flex flex-row gap-x-4 mt-6">
               {children}
-              <Button
-                type="submit"
-                variant={"reverse"}
-                onClick={() => {
-                  onSubmit(data);
-                }}
-              >
+              <Button type="submit">
                 {saveButtonLabel}
               </Button>
             </div>
           </div>
         </div>
-      </Form>
+      </form>
     </FormProvider>
   );
 }
