@@ -1,9 +1,9 @@
 import json
 
 from django.conf import settings
+from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
 from django.core.management.base import BaseCommand
 from django.db.utils import IntegrityError
-from django.contrib.gis.geos import MultiPolygon, GEOSGeometry, Polygon
 
 from mysoc_dataset import get_dataset_df
 from tqdm import tqdm
@@ -60,7 +60,7 @@ class Command(BaseCommand):
             con["properties"]["type"] = "WMC23"
 
             geom_str = json.dumps(con)
-            geom = GEOSGeometry(json.dumps(con['geometry']))
+            geom = GEOSGeometry(json.dumps(con["geometry"]))
             if isinstance(geom, Polygon):
                 geom = MultiPolygon([geom])
             a.geometry = geom_str

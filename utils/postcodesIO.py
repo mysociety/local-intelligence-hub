@@ -6,7 +6,7 @@ from django.conf import settings
 import httpx
 import requests
 
-from utils.geo import create_point, EERs
+from utils.geo import EERs, create_point
 from utils.py import batch_and_aggregate, get, get_path
 
 
@@ -85,10 +85,11 @@ def get_postcode_geo(postcode: str) -> PostcodesIOResult:
 
     if status != 200 or result is None:
         raise Exception(f"Failed to geocode postcode: {postcode}.")
-    
-    result['codes']['european_electoral_region'] = next(
-        filter(lambda eer: eer['label'] == result['european_electoral_region'], EERs), {}
-    ).get('code', None)
+
+    result["codes"]["european_electoral_region"] = next(
+        filter(lambda eer: eer["label"] == result["european_electoral_region"], EERs),
+        {},
+    ).get("code", None)
 
     return result
 
@@ -125,9 +126,13 @@ async def get_bulk_postcode_geo(postcodes) -> PostcodesIOBulkResult:
     # add EER codes
     for index, result in enumerate(results):
         if result is not None:
-            results[index]['codes']['european_electoral_region'] = next(
-                filter(lambda eer: eer['label'] == result['european_electoral_region'], EERs), {}
-            ).get('code', None)
+            results[index]["codes"]["european_electoral_region"] = next(
+                filter(
+                    lambda eer: eer["label"] == result["european_electoral_region"],
+                    EERs,
+                ),
+                {},
+            ).get("code", None)
 
     return results
 

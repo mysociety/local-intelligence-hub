@@ -1,8 +1,7 @@
 import pprint
+from types import SimpleNamespace
 
 from benedict import benedict
-
-from types import SimpleNamespace
 
 
 class DictWithDotNotation(SimpleNamespace):

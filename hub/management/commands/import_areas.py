@@ -1,8 +1,8 @@
 import json
 
-from django.core.management.base import BaseCommand
 # from django postgis
-from django.contrib.gis.geos import MultiPolygon, Polygon, GEOSGeometry
+from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
+from django.core.management.base import BaseCommand
 
 from tqdm import tqdm
 
@@ -54,7 +54,7 @@ class Command(BaseCommand):
             )
 
             geom_str = json.dumps(geom)
-            geom = GEOSGeometry(json.dumps(geom['geometry']))
+            geom = GEOSGeometry(json.dumps(geom["geometry"]))
             if isinstance(geom, Polygon):
                 geom = MultiPolygon([geom])
             a.geometry = geom_str
