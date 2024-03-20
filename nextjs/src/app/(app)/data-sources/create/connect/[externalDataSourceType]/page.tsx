@@ -33,31 +33,15 @@ import {
   DataSourceType,
   FieldDefinition,
   PostcodesIoGeographyTypes,
-  TestSourceConnectionQuery,
-  TestSourceConnectionQueryVariables,
+  airtableSourceQuery,
+  airtableSourceQueryVariables,
 } from "@/__generated__/graphql";
 import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
 
-const TEXT_EXTERNAL_DATA_SOURCE = gql`
-  query TextExternalDataSource(
-    $mailchimpApiKey: String!
-    $mailchimpListId: String!
-    $airtableApiKey: String!
-    $airtableBaseId: String!
-    $airtableTableId: String!
-  ) {
-    mailchimpSource: testMailchimpSource(apiKey: $mailchimpApiKey, listId: $mailchimpListId) {
-      remoteName
-      healthcheck
-      fieldDefinitions {
-        label
-        value
-        description
-      }
-      __typename
-    }
-    airtableSource: testAirtableSource(apiKey: $airtableApiKey, baseId: $airtableBaseId, tableId: $airtableTableId) {
+const TEST_MAILCHIMP_SOURCE = gql`
+  query TestMailchimpSource($apiKey: String!, $listId: String!) {
+    mailchimpSource: testMailchimpSource(apiKey: $apiKey, listId: $listId) {
       remoteName
       healthcheck
       fieldDefinitions {
@@ -70,33 +54,50 @@ const TEXT_EXTERNAL_DATA_SOURCE = gql`
   }
 `;
 
-const CREATE_EXTERNAL_DATA_SOURCES = gql`
-  mutation CreateSources(
-    $MailChimpSource: MailChimpSourceInput!
-    $AirtableSource: AirtableSourceInput!
-  ) {
-    createMailchimpSource: createMailchimpSource(data: $MailChimpSource) {
-      id
-      name
+const TEST_AIRTABLE_SOURCE = gql`
+  query TestAirtableSource($apiKey: String!, $baseId: String!, $tableId: String!) {
+    airtableSource: testAirtableSource(apiKey: $apiKey, baseId: $baseId, tableId: $tableId) {
+      remoteName
       healthcheck
-      dataType
-    }
-    createAirtableSource: createAirtableSource(data: $AirtableSource) {
-      id
-      name
-      healthcheck
-      dataType
+      fieldDefinitions {
+        label
+        value
+        description
+      }
+      __typename
     }
   }
+`;
+
+const CREATE_MAILCHIMP_DATA_SOURCE = gql`
+mutation CreateMailchimpSource($MailChimpSource: MailChimpSourceInput!) {
+  createMailchimpSource: createMailchimpSource(data: $MailChimpSource) {
+    id
+    name
+    healthcheck
+    dataType
+  }
+}
+`;
+
+const CREATE_AIRTABLE_DATA_SOURCE = gql`
+mutation CreateAirtableSource($AirtableSource: AirtableSourceInput!) {
+  createAirtableSource: createAirtableSource(data: $AirtableSource) {
+    id
+    name
+    healthcheck
+    dataType
+  }
+}
 `;
 
 type FormInputs = {
   mailchimp?: CreateSourceMutationVariables["MailChimpSource"];
   airtable?: CreateSourceMutationVariables["AirtableSource"];
-  geographyColumnType?: PostcodesIoGeographyTypes; 
-  geographyColumn?: string; 
+  geographyColumnType?: PostcodesIoGeographyTypes;
+  geographyColumn?: string;
   dataType?: DataSourceType;
-  name?: string; 
+  name?: string;
 };
 
 export default function Page({
@@ -114,7 +115,7 @@ export default function Page({
   const form = useForm<FormInputs>({
     defaultValues: {
       geographyColumnType: PostcodesIoGeographyTypes.Postcode,
-      dataType: context.dataType, 
+      dataType: context.dataType,
       mailchimp: {
         apiKey: '',
         listId: '',
@@ -128,20 +129,32 @@ export default function Page({
   });
 
   const source = form.watch();
+  const [testSourceType, setTestSourceType] = useState<'mailchimp' | 'airtable' | null>(null);
+  const [testSource, testSourceResult] = useLazyQuery(
+    testSourceType === 'mailchimp' ? TEST_MAILCHIMP_SOURCE : TEST_AIRTABLE_SOURCE
+  );
 
-  const [testSource, testSourceResult] = useLazyQuery<
-    TestSourceConnectionQuery,
-    TestSourceConnectionQueryVariables
-  >(TEXT_EXTERNAL_DATA_SOURCE, {
-    variables: {
-      apiKey: source.mailchimp?.apiKey!,
-      listId: source.mailchimp?.listId!
-    },
-  });
+  const [createSourceType, setCreateSourceType] = useState<'mailchimp' | 'airtable' | null>(null);
 
+  useEffect(() => {
+    if (testSourceResult.data && testSourceResult.data.mailchimpSource) {
+      setCreateSourceType('mailchimp');
+    }
+    else if (testSourceResult.data && testSourceResult.data.airtableSource) {
+      setCreateSourceType('airtable');
+    }
+  }, [testSourceResult.data]);
+
+  const [createSource, createSourceResult] = useMutation(
+    createSourceType === 'mailchimp' ? CREATE_MAILCHIMP_DATA_SOURCE : CREATE_AIRTABLE_DATA_SOURCE
+  );
+
+  const currentSource = testSourceType === 'mailchimp' ? testSourceResult.data?.mailchimpSource : testSourceResult.data?.airtableSource;
   const [guessedPostcode, setGuessedPostcode] = useState<string | null>(null);
-  useEffect(function guessPostcodeColumn () {
-    let guessedPostcodeColumn = testSourceResult.data?.testSourceConnection.fieldDefinitions?.find(
+
+  useEffect(() => {
+    // Guessing the geography column based on current source dynamically
+    let guessedPostcodeColumn = currentSource?.fieldDefinitions?.find(
       (field: { label: string; value: string; }) => (
         field.label?.toLowerCase().replaceAll(' ', '').includes("postcode") ||
         field.label?.toLowerCase().replaceAll(' ', '').includes("postalcode") ||
@@ -153,125 +166,84 @@ export default function Page({
         field.value?.toLowerCase().replaceAll(' ', '').includes("zip")
       )
     );
+
     if (guessedPostcodeColumn) {
+      form.setValue('geographyColumn', guessedPostcodeColumn.value);
       setGuessedPostcode(guessedPostcodeColumn.value)
+      form.setValue('geographyColumnType', PostcodesIoGeographyTypes.Postcode);
     }
-  }, [testSourceResult.data?.testSourceConnection.fieldDefinitions, form, setGuessedPostcode])
+  }, [currentSource?.fieldDefinitions, form, setGuessedPostcode]);
 
-  useEffect(function proposePostcode() {
-    if (guessedPostcode) {
-      form.setValue('geographyColumn', guessedPostcode)
-      form.setValue('geographyColumnType', PostcodesIoGeographyTypes.Postcode)
+  useEffect(() => {
+    // Proposing the name based on the remote name from the current source dynamically
+    if (currentSource?.remoteName) {
+      form.setValue('name', currentSource.remoteName);
     }
-  }, [guessedPostcode, form])
-
-  // Propose name based on remoteName
-  useEffect(function proposeName () {
-    if (testSourceResult.data?.testSourceConnection.remoteName) {
-      form.setValue('name', testSourceResult.data?.testSourceConnection.remoteName)
-    }
-  }, [testSourceResult.data?.testSourceConnection.remoteName, form])
-
-
-  const [createSource, createSourceResult] = useMutation<
-    CreateSourceMutation,
-    CreateSourceMutationVariables
-  >(CREATE_EXTERNAL_DATA_SOURCES);
-
+  }, [currentSource?.remoteName, form]);
 
   async function submitTestConnection({ mailchimp, airtable }: FormInputs) {
-    // Initialize an empty object for variables
+    setTestSourceType(null);
+
     let variables: { [key: string]: any } = {};
-  
+
     if (mailchimp && mailchimp.apiKey && mailchimp.listId) {
+      setTestSourceType('mailchimp');
       variables = {
-        mailchimpApiKey: mailchimp.apiKey,
-        mailchimpListId: mailchimp.listId,
-        // Provide default or empty values for Airtable variables to satisfy the query requirement
-        airtableApiKey: "",
-        airtableBaseId: "",
-        airtableTableId: "",
+        apiKey: mailchimp.apiKey,
+        listId: mailchimp.listId,
       };
     } else if (airtable && airtable.apiKey && airtable.baseId && airtable.tableId) {
+      setTestSourceType('airtable');
       variables = {
-        // Provide default or empty values for Mailchimp variables to satisfy the query requirement
-        mailchimpApiKey: "",
-        mailchimpListId: "",
-        airtableApiKey: airtable.apiKey,
-        airtableBaseId: airtable.baseId,
-        airtableTableId: airtable.tableId,
+        apiKey: airtable.apiKey,
+        baseId: airtable.baseId,
+        tableId: airtable.tableId,
       };
     }
-  
-    if (!variables) {
+
+    if (Object.keys(variables).length === 0) {
       toast.error("No valid data provided for testing connection.");
       return;
     }
-  
+
     toastPromise(
       testSource({ variables }),
       {
         loading: "Testing connection...",
-        success: (d: FetchResult<TestSourceConnectionQuery>) => {
-          // Your success logic here
-        },
+        success: "Connection is healthy",
         error: "Connection failed",
       },
     );
   }
-
   async function submitCreateSource(data: FormInputs) {
-    let variables = null;
-    let sourceType = '';
-    
-    // Handle Mailchimp data
-    if (data.mailchimp && data.mailchimp.apiKey && data.mailchimp.listId) {
-      variables = {
-        MailChimpSource: {
-          ...data.mailchimp,
-        },
-      };
-      sourceType = 'mailchimp';
-    } 
-    // Handle Airtable data
-    else if (data.airtable && data.airtable.apiKey && data.airtable.baseId && data.airtable.tableId) {
-      variables = {
-        AirtableSource: {
-          ...data.airtable,
-        },
-      };
-      sourceType = 'airtable';
+    let variables = {};
+    let sourceType = testSourceType;
+
+    if (sourceType === 'mailchimp' && data.mailchimp) {
+      variables = { MailChimpSource: { ...data.mailchimp, name: data.name } };
+    } else if (sourceType === 'airtable' && data.airtable) {
+      variables = { AirtableSource: { ...data.airtable, name: data.name } };
     }
-  
+
     if (!variables) {
       toast.error("No valid data provided for creating source.");
       return;
     }
-  
+
+    if (!variables) {
+      toast.error("No valid data provided for creating source.");
+      return;
+    }
+
     toastPromise(createSource({ variables }),
       {
         loading: "Saving connection...",
-        success: (d: FetchResult<CreateSourceMutation>) => {
-          let createdSource = sourceType === 'mailchimp' ? d.data?.createMailchimpSource : d.data?.createAirtableSource;
-          
-          if (!d.errors && createdSource) {
-            const redirectPath = createdSource.dataType === DataSourceType.Member ? 
-              `/data-sources/create/configure/${createdSource.id}` : 
-              `/data-sources/create/inspect/${createdSource.id}`;
-            router.push(redirectPath);
-            return "Connection successful";
-          }
-          throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error");
-        },
-        error(e) {
-          return {
-            title: "Connection failed",
-            description: e.message,
-          }
-        }
-      },
+        success: "Connection successful",
+        error: "Connection failed",
+      }
     );
   }
+
   if (createSourceResult.loading) {
     return (
       <div className="space-y-6">
@@ -284,7 +256,7 @@ export default function Page({
     );
   }
 
-  if (testSourceResult.data?.testSourceConnection.healthcheck) {
+  if (testSourceType === 'mailchimp' ? testSourceResult.data?.mailchimpSource.healthcheck : testSourceResult.data?.airtableSource.healthcheck) {
     return (
       <div className="space-y-6">
         <h1 className="text-hLg">Connection successful</h1>
@@ -346,8 +318,9 @@ export default function Page({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Geography column</FormLabel>
-                      <FormControl>
-                        {testSourceResult.data?.testSourceConnection.fieldDefinitions?.length ? (
+                    <FormControl>
+                      {
+                        (testSourceType === 'mailchimp' ? testSourceResult.data?.mailchimpSource.fieldDefinitions : testSourceResult.data?.airtableSource.fieldDefinitions)?.length ? (
                           // @ts-ignore
                           <Select {...field} onValueChange={field.onChange} required>
                             <SelectTrigger className='pl-1'>
@@ -358,15 +331,15 @@ export default function Page({
                             <SelectContent>
                               <SelectGroup>
                                 <SelectLabel>Available columns</SelectLabel>
-                                {testSourceResult.data?.testSourceConnection.fieldDefinitions?.map(
+                                {(testSourceType === 'mailchimp' ? testSourceResult.data?.mailchimpSource.fieldDefinitions : testSourceResult.data?.airtableSource.fieldDefinitions)?.map(
                                   (field: FieldDefinition | undefined) => (
                                     <SelectItem key={field.value} value={field.value}>
                                       <DataSourceFieldLabel
                                         connectionType={
-                                          testSourceResult.data?.testSourceConnection.__typename!
+                                          testSourceType === 'mailchimp' ? testSourceResult.data?.mailchimpSource.__typename : testSourceResult.data?.airtableSource.__typename!
                                         }
                                         fieldDefinition={field}
-                                      />  
+                                      />
                                     </SelectItem>
                                   )
                                 )}
@@ -377,13 +350,13 @@ export default function Page({
                           // @ts-ignore
                           <Input {...field} required />
                         )}
-                      </FormControl>
-                      {!!guessedPostcode && guessedPostcode === form.watch('geographyColumn') && (
-                        <FormDescription className='text-yellow-500 italic'>
-                          Best guess based on available table columns: {guessedPostcode}
-                        </FormDescription>
-                      )}
-                      <FormMessage />
+                    </FormControl>
+                    {!!guessedPostcode && guessedPostcode === form.watch('geographyColumn') && (
+                      <FormDescription className='text-yellow-500 italic'>
+                        Best guess based on available table columns: {guessedPostcode}
+                      </FormDescription>
+                    )}
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -414,7 +387,7 @@ export default function Page({
                     <FormMessage />
                   </FormItem>
                 )}
-            />
+              />
             </div>
             <Button type='submit' variant="reverse" disabled={createSourceResult.loading}>
               Save connection
@@ -589,7 +562,7 @@ export default function Page({
                 </FormItem>
               )}
             />
-                
+
             <FormField
               control={form.control}
               name="mailchimp.listId"
@@ -614,7 +587,7 @@ export default function Page({
                 </FormItem>
               )}
             />
-          
+
             <div className="flex flex-row gap-x-4">
               <Button
                 variant="outline"
