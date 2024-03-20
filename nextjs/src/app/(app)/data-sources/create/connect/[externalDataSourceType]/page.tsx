@@ -150,6 +150,7 @@ export default function Page({
   );
 
   const currentSource = testSourceType === 'mailchimp' ? testSourceResult.data?.mailchimpSource : testSourceResult.data?.airtableSource;
+
   const [guessedPostcode, setGuessedPostcode] = useState<string | null>(null);
 
   useEffect(() => {
@@ -210,7 +211,7 @@ export default function Page({
       testSource({ variables }),
       {
         loading: "Testing connection...",
-        success: "Connection is healthy",
+        success: "Connection successful",
         error: "Connection failed",
       },
     );
@@ -238,10 +239,46 @@ export default function Page({
     toastPromise(createSource({ variables }),
       {
         loading: "Saving connection...",
-        success: "Connection successful",
-        error: "Connection failed",
-      }
-    );
+        success: (d: FetchResult<CreateSourceMutation>) => {
+
+
+          if (!d.errors) {
+            if (d.data?.createMailchimpSource) {
+
+              if (d.data?.createMailchimpSource.dataType === DataSourceType.Member) {
+                router.push(
+                  `/data-sources/create/configure/${d.data.createMailchimpSource.id}`,
+                );
+              } else {
+                router.push(
+                  `/data-sources/create/inspect/${d.data.createMailchimpSource.id}`,
+                );
+              }
+            }
+            else if (d.data?.createAirtableSource) {
+              if (d.data?.createAirtableSource.dataType === DataSourceType.Member) {
+                router.push(
+                  `/data-sources/create/configure/${d.data.createAirtableSource.id}`,
+                );
+              } else {
+                router.push(
+                  `/data-sources/create/inspect/${d.data.createAirtableSource.id}`,
+                );
+              }
+            }
+
+            return "Connection successful";
+          }
+          throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
+        },
+        error(e) {
+          return {
+            title: "Connection failed",
+            description: e.message,
+          }
+        }
+      },
+    )
   }
 
   if (createSourceResult.loading) {
