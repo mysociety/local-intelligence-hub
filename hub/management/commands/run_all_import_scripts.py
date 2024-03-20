@@ -56,7 +56,12 @@ class Command(BaseCommand):
         total = str(len(imports))
         i = 1
         failed_imports = {}
-        priority_imports = ["import_regions", "import_areas", "import_mps", "import_mps_election_results"]
+        priority_imports = [
+            "import_regions",
+            "import_areas",
+            "import_mps",
+            "import_mps_election_results",
+        ]
         for importer in priority_imports:
             imports.remove(importer)
             print(f"Running command: {importer} ({str(i)}/{total})")

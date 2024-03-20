@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.gis.db.models import PointField, MultiPolygonField
+from django.contrib.gis.db.models import MultiPolygonField, PointField
 from django.contrib.gis.geos import Point
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min
@@ -17,9 +17,7 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.text import slugify
-from django.db.models import Count, F
 
-import pandas as pd
 from asgiref.sync import sync_to_async
 from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
@@ -33,6 +31,7 @@ from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
 
 import utils as lih_utils
+from hub.analytics import Analytics
 from hub.filters import Filter
 from hub.tasks import (
     import_all,
@@ -44,7 +43,6 @@ from hub.tasks import (
 from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
 from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
 from utils.py import ensure_list, get
-from hub.analytics import Analytics
 
 User = get_user_model()
 
@@ -965,7 +963,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         "point": Point(
                             postcode_data["longitude"],
                             postcode_data["latitude"],
-                        ) if (
+                        )
+                        if (
                             postcode_data is not None
                             and "latitude" in postcode_data
                             and "longitude" in postcode_data
@@ -1088,7 +1087,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         return GenericData.objects.filter(
             data_type__data_set__external_data_source_id=self.id
         )
-    
+
     def get_analytics_queryset(self):
         return self.get_import_data()
 
@@ -1602,10 +1601,12 @@ class MapReport(Report, Analytics):
         return self.layers
 
     def get_import_data(self):
-        visible_layer_ids = [layer["source"] for layer in self.get_layers() if layer.get("visible", True)]
+        visible_layer_ids = [
+            layer["source"] for layer in self.get_layers() if layer.get("visible", True)
+        ]
         return GenericData.objects.filter(
             data_type__data_set__external_data_source_id__in=visible_layer_ids
         )
-    
+
     def get_analytics_queryset(self):
         return self.get_import_data()

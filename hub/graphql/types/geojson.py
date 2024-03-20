@@ -1,11 +1,13 @@
 from enum import Enum
-from typing import List, Optional, Union
-from django.contrib.gis.geos import Point, Polygon, MultiPolygon
+from typing import List, Optional
+
+from django.contrib.gis.geos import MultiPolygon, Point, Polygon
 
 import strawberry
 from strawberry.scalars import JSON
 
 #
+
 
 @strawberry.enum
 class GeoJSONTypes(Enum):
@@ -15,14 +17,18 @@ class GeoJSONTypes(Enum):
     Polygon = "Polygon"
     MultiPolygon = "MultiPolygon"
 
+
 #
+
 
 @strawberry.type
 class FeatureCollection:
     type: GeoJSONTypes.FeatureCollection = GeoJSONTypes.FeatureCollection
     features: List["Feature"]
 
+
 #
+
 
 @strawberry.interface
 class Feature:
@@ -30,7 +36,9 @@ class Feature:
     id: Optional[str]
     properties: Optional[JSON]
 
+
 #
+
 
 @strawberry.type
 class PointGeometry:
@@ -38,50 +46,63 @@ class PointGeometry:
     # lng, lat
     coordinates: List[float]
 
+
 @strawberry.type
 class PointFeature(Feature):
     geometry: PointGeometry
 
     @classmethod
-    def from_geodjango(cls, point: Point, properties: dict = {}, id: str = None) -> "PointFeature":
+    def from_geodjango(
+        cls, point: Point, properties: dict = {}, id: str = None
+    ) -> "PointFeature":
         return PointFeature(
             id=str(id),
             geometry=PointGeometry(coordinates=point),
             properties=properties,
         )
 
+
 #
-    
+
+
 @strawberry.type
 class PolygonGeometry:
     type: GeoJSONTypes.Polygon = GeoJSONTypes.Polygon
     coordinates: List[List[List[float]]]
+
 
 @strawberry.type
 class PolygonFeature(Feature):
     geometry: PolygonGeometry
 
     @classmethod
-    def from_geodjango(cls, polygon: Polygon, properties: dict = {}, id: str = None) -> "PolygonFeature":
+    def from_geodjango(
+        cls, polygon: Polygon, properties: dict = {}, id: str = None
+    ) -> "PolygonFeature":
         return PolygonFeature(
             id=str(id),
             geometry=PolygonGeometry(coordinates=polygon),
             properties=properties,
         )
 
+
 #
-    
+
+
 @strawberry.type
 class MultiPolygonGeometry:
     type: GeoJSONTypes.MultiPolygon = GeoJSONTypes.MultiPolygon
     coordinates: List[List[List[List[float]]]]
+
 
 @strawberry.type
 class MultiPolygonFeature(Feature):
     geometry: MultiPolygonGeometry
 
     @classmethod
-    def from_geodjango(cls, multipolygon: MultiPolygon, properties: dict = {}, id: str = None) -> "MultiPolygonFeature":
+    def from_geodjango(
+        cls, multipolygon: MultiPolygon, properties: dict = {}, id: str = None
+    ) -> "MultiPolygonFeature":
         return MultiPolygonFeature(
             id=str(id),
             geometry=MultiPolygonGeometry(coordinates=multipolygon),
