@@ -83,11 +83,13 @@ const GET_UPDATE_CONFIG = gql`
         ... on AirtableSource {
           baseId
           tableId
+        }
+        ... on MailchimpSource {
           apiKey
+          listId
         }
       }
       autoUpdateEnabled
-      webhookHealthcheck
       geographyColumn
       geographyColumnType
       isImporting
@@ -128,6 +130,7 @@ export default function InspectExternalDataSource({
 }) {
   const router = useRouter();
   const client = useApolloClient();
+  
 
   const { loading, error, data, refetch } = useQuery<
     ExternalDataSourceInspectPageQuery,
