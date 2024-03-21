@@ -1,4 +1,3 @@
-from functools import cache
 from time import sleep
 
 from django.core.management.base import BaseCommand
@@ -27,6 +26,7 @@ class MultipleAreaTypesMixin:
 
 class BaseAreaImportCommand(BaseCommand):
     area_type = "WMC"
+    uses_gss = False
 
     def __init__(self):
         super().__init__()
@@ -53,9 +53,14 @@ class BaseAreaImportCommand(BaseCommand):
                 data_type=data_type, area__area_type__code=self.area_type
             ).delete()
 
-    @cache
     def get_area_type(self):
         return AreaType.objects.get(code=self.area_type)
+
+    def get_cons_col(self):
+        if hasattr(self, "cons_col_map"):
+            return self.cons_col_map[self.area_type]
+
+        return self.cons_col
 
     def add_data_sets(self, df=None):
         for name, config in self.data_sets.items():
@@ -175,6 +180,15 @@ class BaseAreaImportCommand(BaseCommand):
                     data_type, delete_old=True, quiet=self._quiet
                 )
 
+    def handle(self, quiet=False, *args, **kwargs):
+        self._quiet = quiet
+        self.add_data_sets()
+        self.delete_data()
+        self.process_data()
+        self.update_averages()
+        self.update_max_min()
+        self.convert_to_new_con()
+
 
 class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
     uses_gss = True
@@ -278,26 +292,29 @@ class BaseLatLongImportCommand(BaseAreaImportCommand):
 
 
 class BaseConstituencyGroupListImportCommand(BaseAreaImportCommand):
-    use_gss = False
+    do_not_convert = True
 
     def process_data(self):
         df = self.get_df()
 
         if not self._quiet:
-            self.stdout.write(self.message)
+            self.stdout.write(f"{self.message} ({self.area_type})")
 
         group_by = "constituency"
-        if self.use_gss:
+        if self.uses_gss:
             group_by = "gss"
+        if hasattr(self, "area_types"):
+            group_by = self.cons_col_map[self.area_type]
 
         for lookup, data in tqdm(df.groupby(group_by)):
             try:
                 area = Area.objects.filter(area_type__code=self.area_type)
-                if self.use_gss:
+                if self.uses_gss:
                     area = area.get(gss=lookup)
                 else:
                     area = area.get(name=lookup)
             except Area.DoesNotExist:
+                self.stderr.write(f"no area found for {lookup} and {self.area_type}")
                 continue
 
             json = []
@@ -328,16 +345,18 @@ class BaseConstituencyGroupListImportCommand(BaseAreaImportCommand):
 
 
 class BaseConstituencyCountImportCommand(BaseAreaImportCommand):
+    do_not_convert = True
+
     def set_data_type(self):
         self.data_type = list(self.data_types.values())[0]
 
     def get_dataframe(self):
         df = pd.read_csv(self.data_file)
-        df = df.astype({self.cons_col: "str"})
+        df = df.astype({self.get_cons_col(): "str"})
         return df
 
     def _get_areas_from_row(self, row):
-        value = row[self.cons_col]
+        value = row[self.get_cons_col()]
         if self.uses_gss:
             areas = Area.objects.filter(gss__in=value.split(","))
         else:
@@ -347,7 +366,7 @@ class BaseConstituencyCountImportCommand(BaseAreaImportCommand):
 
     def process_data(self, df):
         if not self._quiet:
-            self.stdout.write(self.message)
+            self.stdout.write(f"{self.message} ({self.area_type})")
 
         for index, row in tqdm(df.iterrows(), disable=self._quiet, total=df.shape[0]):
             areas = self._get_areas_from_row(row)
