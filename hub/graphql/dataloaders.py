@@ -3,12 +3,14 @@ from django.db.models import Model as DjangoModel
 from django.db.models.fields.related import RelatedField
 import strawberry
 from strawberry.types import Info
+import strawberry_django
 from strawberry_django.fields.field import StrawberryDjangoField
 from strawberry_django_dataloaders import dataloaders, factories
 from asgiref.sync import sync_to_async
 from hub import models
 import json
 from collections import defaultdict
+from django.db.models import ManyToOneRel
 
 class BasicFieldDataLoader(dataloaders.BaseDjangoModelDataLoader):
     field: str
@@ -215,3 +217,24 @@ class ReverseFKWithFiltersDataLoaderFactory(factories.BaseDjangoModelDataLoaderF
             return await loader(context=info.context).load(root.pk)
 
         return resolver
+    
+def filterable_dataloader_resolver(
+        filter_type,
+        prefetch: list[str] = [],
+        single: bool = False,
+        field_name: str = None
+    ):
+    @strawberry_django.field
+    async def resolver(root, info: Info, filters: filter_type = {}):
+        field_data: "StrawberryDjangoField" = info._field
+        relation: "ManyToOneRel" = root._meta.get_field(field_name=field_name or field_data.django_name)
+        loader = ReverseFKWithFiltersDataLoaderFactory.get_loader_class(
+            relation.related_model,
+            filters=filters,
+            prefetch=prefetch,
+            reverse_path=relation.field.attname
+        )
+        data = await loader(context=info.context).load(root.id)
+        return data[0] if single else data
+    
+    return resolver

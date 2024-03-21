@@ -18,7 +18,7 @@ from hub import models
 from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
-from hub.graphql.dataloaders import FieldDataLoaderFactory, FieldReturningListDataLoaderFactory, PKWithFiltersDataLoaderFactory, ReverseFKWithFiltersDataLoaderFactory
+from hub.graphql.dataloaders import FieldDataLoaderFactory, FieldReturningListDataLoaderFactory, filterable_dataloader_resolver
 
 
 @strawberry_django.filters.filter(
@@ -243,14 +243,21 @@ class PersonDataFilter:
     person: auto
 
 
+@strawberry_django.input(models.PersonData, partial=True)
+class PersonDataloaderFilter:
+    data_type__name: str
+
+
 @strawberry_django.type(models.PersonData, filters=PersonDataFilter)
 class PersonData(CommonData):
     id: auto
     person: "Person" = strawberry_django_dataloaders.fields.auto_dataloader_field()
 
-@strawberry_django.input(models.PersonData, partial=True)
-class PersonDataloaderFilters:
-    data_type__name: str
+
+@strawberry_django.input(models.Person, partial=True)
+class PersonFilter:
+    person_type: str
+
 
 @strawberry_django.type(models.Person)
 class Person:
@@ -263,32 +270,14 @@ class Person:
     photo: auto
     start_date: auto
     end_date: auto
-
-    @strawberry_django.field
-    async def data(self, info: Info, filters: Optional[PersonDataloaderFilters] = {}) -> Optional[List[PersonData]]:
-        field_data: "StrawberryDjangoField" = info._field
-        relation: "ManyToOneRel" = self._meta.get_field(field_name=field_data.django_name)
-        loader = ReverseFKWithFiltersDataLoaderFactory.get_loader_class(
-            models.PersonData,
-            filters=filters,
-            prefetch=[],
-            reverse_path=relation.field.attname
-        )
-        return await loader(context=info.context).load(self.id)
-
-    @strawberry_django.field
-    async def datum(self, info: Info, filters: PersonDataloaderFilters) -> Optional[PersonData]:
-        relation: "ManyToOneRel" = self._meta.get_field(field_name="data")
-        loader = ReverseFKWithFiltersDataLoaderFactory.get_loader_class(
-            models.PersonData,
-            filters=filters,
-            prefetch=[],
-            reverse_path=relation.field.attname
-        )
-        data = await loader(context=info.context).load(self.id)
-        if isinstance(data, list):
-            return data[0]
-        return None
+    data: List[PersonData] = filterable_dataloader_resolver(
+        filter_type=Optional[PersonDataloaderFilter],
+    )
+    datum: Optional[PersonData] = filterable_dataloader_resolver(
+        filter_type=Optional[PersonDataloaderFilter],
+        single=True,
+        field_name="data"
+    )
 
 @strawberry_django.type(models.Area)
 class Area:
@@ -300,7 +289,9 @@ class Area:
     overlaps: auto
     # So that we can pass in properties to the geojson Feature objects
     extra_geojson_properties: strawberry.Private[object]
-    people: List[Person] = strawberry_django_dataloaders.fields.auto_dataloader_field()
+    people: List[Person] = filterable_dataloader_resolver(
+        filter_type=Optional[PersonFilter]
+    )
 
     @strawberry_django.field
     def polygon(
