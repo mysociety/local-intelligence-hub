@@ -180,6 +180,21 @@ class AreaView(BaseAreaView):
             overlap_constituencies[0]["unchanged"] = True
         return overlap_constituencies
 
+    def get_area_country(self, indexed_categories):
+        country = None
+        if indexed_categories.get("country", None) is not None:
+            try:
+                country = indexed_categories["country"]["data"].value()
+            except (ValueError, KeyError):
+                country = None
+        elif indexed_categories.get("council_country", None) is not None:
+            try:
+                country = indexed_categories["council_country"]["data"].value()
+            except (ValueError, KeyError):
+                country = None
+
+        return country
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
@@ -332,33 +347,33 @@ class AreaView(BaseAreaView):
             "constituency_foe_group_count": "constituency_foe_groups",
             "power_postcodes_count": "power_postcodes",
             "tcc_open_letter_signatories_count": "tcc_open_letter_signatories",
+            "council_net_zero_date": "council_net_zero_details",
         }
 
         context["is_related_category"] = context["related_categories"].values()
 
         categories_to_remove = defaultdict(list)
 
-        try:
-            context["country"] = indexed_categories["country"]["data"].value()
-        except (ValueError, KeyError):
-            context["country"] = None
+        area_country = self.get_area_country(indexed_categories)
 
-        if context["country"] is not None:
-            for category, items in categories.items():
-                for data_set in items:
-                    if (
-                        context["related_categories"].get(data_set["db_name"], None)
-                        is not None
-                    ):
-                        data_item = indexed_categories[
-                            context["related_categories"][data_set["db_name"]]
-                        ]
-                        if len(data_item) > 0:
-                            data_set["related_category"] = data_item
-                            categories_to_remove["movement"].append(data_item)
+        for category, items in categories.items():
+            for data_set in items:
+                if (
+                    context["related_categories"].get(data_set["db_name"], None)
+                    is not None
+                ):
+                    data_item = indexed_categories[
+                        context["related_categories"][data_set["db_name"]]
+                    ]
+                    if len(data_item) > 0:
+                        data_set["related_category"] = data_item
+                        categories_to_remove[data_set["category"]].append(data_item)
 
-                    if context["country"] in data_set["excluded_countries"]:
-                        categories_to_remove[category].append(data_set)
+                if (
+                    area_country is not None
+                    and area_country in data_set["excluded_countries"]
+                ):
+                    categories_to_remove[category].append(data_set)
 
         for category_name, items in categories_to_remove.items():
             for item in items:
