@@ -263,11 +263,6 @@ class Person:
     photo: auto
     start_date: auto
     end_date: auto
-    # data: List[PersonData] = strawberry_django_dataloaders.fields.auto_dataloader_field(
-    #     resolver=PKWithFiltersDataLoaderFactory.as_resolver(models.PersonData),
-    #     filters=PersonDataFilter,
-    #     prefetch_related=["data_type", "data_type__data_set"]
-    # )
 
     @strawberry_django.field
     async def data(self, info: Info, filters: Optional[PersonDataloaderFilters] = {}) -> Optional[List[PersonData]]:
@@ -280,17 +275,6 @@ class Person:
             reverse_path=relation.field.attname
         )
         return await loader(context=info.context).load(self.id)
-
-    # async def get_dataloader_resolver(root: "DjangoModel", info: "Info"):
-    #     return await ReverseFKWithFiltersDataLoaderFactory.as_resolver(
-    #         model=models.PersonData,
-    #         filters=PersonDataloaderFilters,
-    #     )(root, info)
-
-    # datum: Optional[PersonData] = strawberry_django_dataloaders.fields.auto_dataloader_field(
-    #     resolver=get_dataloader_resolver,
-    #     # filters=PersonDataloaderFilters
-    # )
 
     @strawberry_django.field
     async def datum(self, info: Info, filters: PersonDataloaderFilters) -> Optional[PersonData]:
