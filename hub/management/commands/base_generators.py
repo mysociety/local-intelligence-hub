@@ -15,8 +15,28 @@ from utils.mapit import (
     RateLimitException,
 )
 
+mapit_types = {
+    "LBO": "STC",
+    "UTA": "STC",
+    "COI": "STC",
+    "LGD": "STC",
+    "CTY": "STC",
+    "MTD": "STC",
+    "NMD": "DIS",
+    "DIS": "DIS",
+    "WMC": "WMC",
+    "WMCF": "WMC23",
+}
+
 
 class BaseLatLonGeneratorCommand(BaseCommand):
+    uses_gss = False
+    uses_postcodes = False
+    out_file = None
+    location_col = "lat_lon"
+    legacy_col = "area"
+    cols = ["WMC", "WMC23", "STC", "DIS"]
+
     tqdm.pandas()
 
     def get_dataframe(self):
@@ -25,53 +45,112 @@ class BaseLatLonGeneratorCommand(BaseCommand):
 
         return df
 
-    def _process_lat_long(self, lat_lon=None, row_name=None):
-        lat = lat_lon[0]
-        lon = lat_lon[1]
+    def _process_location(self, lat_lon=None, postcode=None, row_name=None):
+        lat, lon = None, None
+        if lat_lon is not None:
+            lat = lat_lon[0]
+            lon = lat_lon[1]
 
-        if not pd.isna(lat) and not pd.isna(lon):
+        cols = [self.legacy_col, *self.cols]
+        if (self.uses_postcodes and not pd.isna(postcode)) or (
+            not pd.isna(lat) and not pd.isna(lon)
+        ):
+            areas = {}
             try:
                 mapit = MapIt()
-                gss_codes = mapit.wgs84_point_to_gss_codes(lon, lat)
-
-                area = Area.objects.filter(gss__in=gss_codes).first()
-                if area:
-                    return area.name
+                if self.uses_postcodes:
+                    gss_codes = mapit.postcode_point_to_gss_codes_with_type(postcode)
                 else:
-                    return None
+                    gss_codes = mapit.wgs84_point_to_gss_codes_with_type(lon, lat)
+
+                for area_type, code in gss_codes.items():
+                    if mapit_types.get(area_type, None) is not None:
+                        if self.uses_gss:
+                            areas[mapit_types[area_type]] = code
+                        else:
+                            area = Area.objects.filter(
+                                gss=code, area_type__code=mapit_types[area_type]
+                            ).first()
+                            areas[mapit_types[area_type]] = area.name
+                    else:
+                        continue
             except (
                 NotFoundException,
                 BadRequestException,
                 InternalServerErrorException,
                 ForbiddenException,
             ) as error:
-                print(f"Error fetching row {row_name} with {lat}, {lon}: {error}")
-                return None
+                location_data = lat_lon
+                if self.uses_postcodes:
+                    location_data = postcode
+                self.stderr.write(
+                    f"Error fetching row {row_name} with {location_data}: {error}"
+                )
+                return pd.Series([None for t in cols], index=cols)
             except RateLimitException as error:
-                print(f"Mapit Error - {error}, waiting for a minute")
+                self.stderr.write(f"Mapit Error - {error}, waiting for a minute")
                 sleep(60)
                 return False
-        else:
-            print(f"missing lat or lon for row {row_name}")
-            return None
 
-    def process_lat_long(self, lat_lon=None, row_name=None):
-        success = self._process_lat_long(lat_lon=lat_lon, row_name=row_name)
+            areas[self.legacy_col] = areas.get("WMC", None)
+            vals = [areas.get(t, None) for t in cols]
+            return pd.Series(vals, index=cols)
+        else:
+            self.stderr.write(f"missing location data for row {row_name}")
+            return pd.Series([None for t in cols], index=cols)
+
+    def process_location(self, lat_lon=None, postcode=None, row_name=None):
+        success = self._process_location(
+            lat_lon=lat_lon, postcode=postcode, row_name=row_name
+        )
         # retry once if it fails so we can catch rate limit errors
         if success is False:
-            return self._process_lat_long(lat_lon=lat_lon, row_name=row_name)
+            return self._process_location(
+                lat_lon=lat_lon, postcode=postcode, row_name=row_name
+            )
         else:
             return success
 
+    def get_location_from_row(self, row):
+        if self.uses_postcodes:
+            return {"postcode": row["postcode"]}
+        else:
+            return {"lat_lon": [row["lat"], row["lon"]]}
+
     def process_data(self, df):
         if not self._quiet:
-            self.stdout.write("Generating Area name from lat + lon values")
+            self.stdout.write("Generating Area details from location values")
 
-        df["area"] = df.progress_apply(
-            lambda row: self.process_lat_long(
-                self.get_lat_lon_from_row(row), row[self.row_name]
-            ),
-            axis=1,
+        if not self._ignore and self.out_file is not None:
+            try:
+                # check that we've got all the output we're expecting before using
+                # the old values
+                old_df = pd.read_csv(self.out_file)
+                usecols = list(set(self.cols).intersection(df.columns))
+                if len(usecols) == len(self.cols):
+                    old_df = pd.read_csv(
+                        self.out_file, usecols=[self.lat_lon_row, *self.cols]
+                    )
+                    location_lookup = {
+                        row[self.location_col]: row[self.legacy_col]
+                        for index, row in old_df.iterrows()
+                    }
+                    if not self._quiet:
+                        self.stdout.write("Reading codes from existing file")
+                    df[self.legacy_col] = df.apply(
+                        lambda row: location_lookup.get((row[self.location_col]), None),
+                        axis=1,
+                    )
+            except FileNotFoundError:
+                self.stderr.write("No existing file.")
+
+        df = df.join(
+            df.progress_apply(
+                lambda row: self.process_location(
+                    row_name=row[self.row_name], **self.get_location_from_row(row)
+                ),
+                axis=1,
+            )
         )
 
         return df
@@ -89,6 +168,9 @@ class BaseLatLonGeneratorCommand(BaseCommand):
 
     def handle(self, quiet=False, ignore=False, *args, **options):
         self._quiet = quiet
+
+        if not self._quiet:
+            self.stdout.write(self.message)
         self._ignore = ignore
         df = self.get_dataframe()
         out_df = self.process_data(df)
