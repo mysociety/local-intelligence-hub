@@ -18,6 +18,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 
+import pandas as pd
 from asgiref.sync import sync_to_async
 from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
@@ -29,7 +30,6 @@ from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
-import pandas as pd
 
 import utils as lih_utils
 from hub.analytics import Analytics
