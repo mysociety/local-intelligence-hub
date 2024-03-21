@@ -104,6 +104,8 @@ export type AirtableSourceInput = {
   updateMapping?: InputMaybe<Array<UpdateMappingItemInput>>;
 };
 
+export type AirtableSourceMailchimpSource = AirtableSource | MailchimpSource;
+
 /** Area(id, mapit_id, gss, name, area_type, geometry, polygon, point) */
 export type Area = {
   __typename?: 'Area';
@@ -349,10 +351,15 @@ export type MailchimpSource = {
   fieldDefinitions?: Maybe<Array<FieldDefinition>>;
   geographyColumn?: Maybe<Scalars['String']['output']>;
   geographyColumnType: PostcodesIoGeographyTypes;
-  geojsonPointFeatures: Array<PointFeature>;
   healthcheck: Scalars['Boolean']['output'];
   id: Scalars['UUID']['output'];
   importedDataCount: Scalars['Int']['output'];
+  importedDataCountByConstituency: Array<GroupedDataCount>;
+  importedDataCountByConstituency2024: Array<GroupedDataCount>;
+  importedDataCountByCouncil: Array<GroupedDataCount>;
+  importedDataCountByRegion: Array<GroupedDataCount>;
+  importedDataCountByWard: Array<GroupedDataCount>;
+  importedDataGeojsonPoints: Array<PointFeature>;
   isImporting: Scalars['Boolean']['output'];
   jobs: Array<QueueJob>;
   lastUpdate: Scalars['DateTime']['output'];

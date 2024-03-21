@@ -1294,8 +1294,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
-        if external_data_source.auto_update_enabled:
-            await external_data_source.refresh_all()
+       
+        await external_data_source.refresh_all()
 
     @classmethod
     async def deferred_refresh_webhooks(cls, external_data_source_id: str):
@@ -1601,6 +1601,59 @@ class Report(PolymorphicModel):
 
     def __str__(self):
         return self.name
+    
+class MailchimpSource(ExternalDataSource):
+    """
+    A Mailchimp list.
+    """
+    api_key = models.CharField(
+        max_length=250,
+        help_text="Mailchimp API key.",
+    )
+    list_id = models.CharField(
+        max_length=250,
+        help_text="The unique identifier for the Mailchimp list.",
+    )
+
+    member_email = models.EmailField(
+          max_length=250,
+          help_text="Email for member to fetch.",
+    )
+
+    def save(self, *args, **kwargs):
+        self.member_email = self.member_email.lower()  # Convert email to lowercase before saving
+        super(MailchimpSource, self).save(*args, **kwargs)
+
+    automated_webhooks = True
+    introspect_fields = True
+
+    class Meta:
+        verbose_name = "Mailchimp list"
+        unique_together = ["list_id", "api_key"]
+
+    @cached_property
+    def client(self) -> MailChimp:
+        # Initializes the MailChimp client 
+        return MailChimp(mc_api=self.api_key)
+
+    def healthcheck(self):
+        # Checks if the Mailchimp list is accessible
+        list = self.client.lists.get(self.list_id)
+        if list:
+            return True
+        return False
+   
+    async def fetch_all(self):
+         # Fetches all members in a list and returns their email addresses
+        list = self.client.lists.members.all(self.list_id, fields="members.email_address")
+        return list
+
+    def fetch_one(self):
+        # Fetches a single list member by their unique member ID
+        # Mailchimp member IDs are typically the MD5 hash of the lowercase version of the member's email address
+        member = self.client.lists.members.get(list_id=self.list_id, subscriber_hash=self.member_email)
+        return member
+
 
 
 class MapReport(Report, Analytics):
