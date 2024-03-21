@@ -24,7 +24,8 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
         "label": "Council Net Zero target date",
         "data_type": "integer",
         "category": "place",
-        "source_label": "Data from mySociety",
+        "subcategory": "date",
+        "source_label": "Data from mySociety.",
         "source": "https://pages.mysociety.org/la-plans-promises/",
         "source_type": "csv",
         "table": "areadata",
@@ -35,6 +36,7 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
         "is_public": True,
         "unit_type": "raw",
         "unit_distribution": "physical_area",
+        "fill_blanks": False,
     }
 
     data_sets = {
@@ -42,7 +44,26 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
             "defaults": defaults,
             "col": "year",
         },
+        "council_net_zero_details": {
+            "defaults": {
+                **defaults,
+                "data_type": "json",
+                "label": "Net Zero target date details",
+                "is_filterable": False,
+                "is_shadable": False,
+            },
+            "col": "scope",
+        },
     }
+
+    def get_row_data(self, row, conf):
+        if conf["col"] == "year":
+            return row[conf["col"]]
+
+        if pd.isna(row["url"]):
+            return {"scope": row["scope"]}
+        else:
+            return {"scope": row["scope"], "url": row["url"]}
 
     def get_dataframe(self):
         url = get_dataset_url(
@@ -63,6 +84,8 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
                 {
                     "gss_code": row["gss_code"],
                     "year": row["target"],
+                    "scope": row["scope"],
+                    "url": row["source_url"],
                 }
             )
 
