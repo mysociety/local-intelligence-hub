@@ -1,13 +1,13 @@
 import json
 
+from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
 from django.core.management.base import BaseCommand
-from django.contrib.gis.geos import GEOSGeometry, Polygon, MultiPolygon
 
+import requests
 from tqdm import tqdm
 
 from hub.models import Area, AreaType
-from utils import mapit
-import requests
+
 
 class Command(BaseCommand):
     help = "Import historical European regions for high-level aggregation"
@@ -22,7 +22,7 @@ class Command(BaseCommand):
         download_url = "https://open-geography-portalx-ons.hub.arcgis.com/api/download/v1/items/932f769148bb4753989e55b6703b7add/geojson?layers=0"
 
         data = requests.get(download_url).json()
-        areas = data['features']
+        areas = data["features"]
 
         area_type, created = AreaType.objects.get_or_create(
             name="2018 European Electoral Regions",
@@ -42,7 +42,7 @@ class Command(BaseCommand):
             )
 
             geom_str = json.dumps(area)
-            geom = GEOSGeometry(json.dumps(area['geometry']))
+            geom = GEOSGeometry(json.dumps(area["geometry"]))
             if isinstance(geom, Polygon):
                 geom = MultiPolygon([geom])
             geom.srid = 27700

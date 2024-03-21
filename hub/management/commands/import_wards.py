@@ -1,13 +1,12 @@
 import json
 
+from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
 from django.core.management.base import BaseCommand
-from django.contrib.gis.geos import GEOSGeometry, Polygon, MultiPolygon
 
+import requests
 from tqdm import tqdm
 
 from hub.models import Area, AreaType
-from utils import mapit
-import requests
 
 
 class Command(BaseCommand):
@@ -23,7 +22,7 @@ class Command(BaseCommand):
         download_url = "https://open-geography-portalx-ons.hub.arcgis.com/api/download/v1/items/67c88ea8027244e3b2313c69e3fad503/geojson?layers=0"
 
         data = requests.get(download_url).json()
-        areas = data['features']
+        areas = data["features"]
 
         area_type, created = AreaType.objects.get_or_create(
             name="May 2023 Electoral Wards",
@@ -43,7 +42,7 @@ class Command(BaseCommand):
             )
 
             geom_str = json.dumps(area)
-            geom = GEOSGeometry(json.dumps(area['geometry']))
+            geom = GEOSGeometry(json.dumps(area["geometry"]))
             if isinstance(geom, Polygon):
                 geom = MultiPolygon([geom])
             geom.srid = 27700
