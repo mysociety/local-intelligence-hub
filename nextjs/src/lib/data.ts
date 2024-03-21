@@ -22,7 +22,7 @@ export const externalDataSourceOptions: Record<string, {
   },
 };
 
-export const getSourceOptionForTypename = (typename: "AirtableSource" | "MailchimpSource") => {
+export const getSourceOptionForTypename = (typename: ModelName) => {
   return Object.values(externalDataSourceOptions).find(
     (option) => option.modelName === typename,
   );
