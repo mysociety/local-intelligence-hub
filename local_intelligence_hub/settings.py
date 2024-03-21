@@ -27,6 +27,7 @@ env = environ.Env(
     SCHEDULED_UPDATE_SECONDS_DELAY=(int, 3),
     DEBUG=(bool, False),
     HIDE_DEBUG_TOOLBAR=(bool, False),
+    LOG_QUERIES=(bool, False),
     ALLOWED_HOSTS=(list, []),
     CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3000"]),
     GOOGLE_ANALYTICS=(str, ""),
@@ -50,6 +51,7 @@ FRONTEND_SITE_TITLE = env("FRONTEND_SITE_TITLE")
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 HIDE_DEBUG_TOOLBAR = env("HIDE_DEBUG_TOOLBAR")
+LOG_QUERIES = env("LOG_QUERIES")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
 CACHE_FILE = env("CACHE_FILE")
@@ -267,10 +269,11 @@ LOGGING = {
     }
 }
 if DEBUG:
-    LOGGING["loggers"]["django.db.backends"] = {
-        "handlers": ["console"],
-        "level": "DEBUG",
-    }
+    if LOG_QUERIES:
+        LOGGING["loggers"]["django.db.backends"] = {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        }
 
     if HIDE_DEBUG_TOOLBAR == False:
         import socket
