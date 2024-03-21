@@ -1,5 +1,7 @@
 import json
 
+# from django postgis
+from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
 from django.core.management.base import BaseCommand
 
 from tqdm import tqdm
@@ -9,7 +11,7 @@ from utils import mapit
 
 
 class Command(BaseCommand):
-    help = "Import basic area information from MaPit"
+    help = "Import basic area information from Mapit"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -27,7 +29,7 @@ class Command(BaseCommand):
         )
 
         if not quiet:
-            print("Importing Areas")
+            print("Importing 2010 Constituencies")
         for area in tqdm(areas, disable=quiet):
             try:
                 geom = mapit_client.area_geometry(area["id"])
@@ -40,7 +42,7 @@ class Command(BaseCommand):
                         "type": "WMC",
                     },
                 }
-                geom = json.dumps(geom)
+                geom_str = json.dumps(geom)
             except mapit.NotFoundException:  # pragma: no cover
                 print(f"could not find mapit area for {area['name']}")
                 geom = None
@@ -52,5 +54,10 @@ class Command(BaseCommand):
                 area_type=area_type,
             )
 
-            a.geometry = geom
+            a.geometry = geom_str
+            geom = GEOSGeometry(json.dumps(geom["geometry"]))
+            if isinstance(geom, Polygon):
+                geom = MultiPolygon([geom])
+            a.polygon = geom
+            a.point = a.polygon.centroid
             a.save()

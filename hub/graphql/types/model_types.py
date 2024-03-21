@@ -9,8 +9,8 @@ from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
 
 from hub import models
-from hub.graphql.types.geojson import PointFeature, PointGeometry
-from hub.graphql.utils import dict_key_field
+from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
+from hub.graphql.utils import dict_key_field, fn_field
 
 
 @strawberry_django.filters.filter(
@@ -136,6 +136,57 @@ class ExternalDataSourceFilter:
     geography_column_type: auto
 
 
+@strawberry_django.type(models.Area)
+class Area:
+    mapit_id: auto
+    gss: auto
+    name: auto
+    area_type: auto
+    geometry: auto
+    overlaps: auto
+    # So that we can pass in properties to the geojson Feature objects
+    extra_geojson_properties: strawberry.Private[object]
+
+    @strawberry_django.field
+    def polygon(
+        self, info: Info, with_parent_data: bool = False
+    ) -> Optional[MultiPolygonFeature]:
+        props = {"name": self.name, "gss": self.gss}
+        if with_parent_data and hasattr(self, "extra_geojson_properties"):
+            props["extra_geojson_properties"] = self.extra_geojson_properties
+
+        return MultiPolygonFeature.from_geodjango(
+            multipolygon=self.polygon, id=self.gss, properties=props
+        )
+
+    @strawberry_django.field
+    def point(
+        self, info: Info, with_parent_data: bool = False
+    ) -> Optional[PointFeature]:
+        props = {"name": self.name, "gss": self.gss}
+        if with_parent_data and hasattr(self, "extra_geojson_properties"):
+            props["extra_geojson_properties"] = self.extra_geojson_properties
+
+        return PointFeature.from_geodjango(
+            point=self.point, id=self.gss, properties=props
+        )
+
+
+@strawberry.type
+class GroupedDataCount:
+    label: Optional[str] = dict_key_field()
+    area_id: Optional[str] = dict_key_field()
+    count: int = dict_key_field()
+
+    @strawberry_django.field
+    def gss_area(self, info: Info) -> Optional[Area]:
+        if self.get("area_id", None):
+            area = models.Area.objects.get(gss=self["area_id"])
+            area.extra_geojson_properties = self
+            return area
+        return None
+
+
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class ExternalDataSource:
     id: auto
@@ -201,25 +252,26 @@ class ExternalDataSource:
         return self.webhook_healthcheck()
 
     @strawberry_django.field
-    def imported_data_count(self: models.ExternalDataSource, info: Info) -> int:
-        return self.imported_data_count()
-
-    @strawberry_django.field
-    def geojson_point_features(
+    def imported_data_geojson_points(
         self: models.ExternalDataSource, info: Info
     ) -> List[PointFeature]:
         data = self.get_import_data()
         return [
-            PointFeature(
-                id=str(generic_datum.data),
-                geometry=PointGeometry(
-                    coordinates=[generic_datum.point.x, generic_datum.point.y]
-                ),
+            PointFeature.from_geodjango(
+                point=generic_datum.point,
+                id=generic_datum.data,
                 properties=generic_datum.json,
             )
             for generic_datum in data
             if generic_datum.point is not None
         ]
+
+    imported_data_count: int = fn_field()
+    imported_data_count_by_region: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_constituency: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_constituency_2024: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_council: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_ward: List[GroupedDataCount] = fn_field()
 
     @strawberry_django.field
     def is_importing(self: models.ExternalDataSource, info: Info) -> bool:
@@ -263,6 +315,7 @@ class Report:
 @strawberry.type
 class MapLayer:
     name: str = dict_key_field()
+    visible: Optional[bool] = dict_key_field()
 
     @strawberry_django.field
     def source(self, info: Info) -> ExternalDataSource:
@@ -273,3 +326,10 @@ class MapLayer:
 @strawberry_django.type(models.MapReport)
 class MapReport(Report):
     layers: Optional[List[MapLayer]]
+
+    imported_data_count: int = fn_field()
+    imported_data_count_by_region: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_constituency: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_constituency_2024: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_council: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_ward: List[GroupedDataCount] = fn_field()

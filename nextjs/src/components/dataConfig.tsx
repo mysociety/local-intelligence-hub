@@ -35,7 +35,7 @@ export default function DataConfigPanel () {
   const { id, update } = useContext(ReportContext)
   const client = useApolloClient()
   const layers = useFragment<MapReportLayersSummaryFragment>({
-    fragment: MapReportLayersSummaryFragmentStr,
+    fragment: MAP_REPORT_LAYERS_SUMMARY,
     fragmentName: "MapReportLayersSummary",
     from: {
       __typename: "MapReport",
@@ -199,8 +199,53 @@ export default function DataConfigPanel () {
   }
 };
 
-export const MapReportLayersSummaryFragmentStr = gql`
+export const MAP_REPORT_LAYERS_SUMMARY = gql`
   fragment MapReportLayersSummary on MapReport {
+    importedDataCountByRegion {
+      label
+      areaId
+      count
+      gssArea {
+        point {
+          id
+          type
+          geometry {
+            type
+            coordinates
+          }
+        }
+      }
+    }
+    importedDataCountByConstituency {
+      label
+      areaId
+      count
+      gssArea {
+        point {
+          id
+          type
+          geometry {
+            type
+            coordinates
+          }
+        }
+      }
+    }
+    importedDataCountByWard {
+      label
+      areaId
+      count
+      gssArea {
+        point {
+          id
+          type
+          geometry {
+            type
+            coordinates
+          }
+        }
+      }
+    }
     layers {
       name
       source {
@@ -208,6 +253,21 @@ export const MapReportLayersSummaryFragmentStr = gql`
         name
         isImporting
         importedDataCount
+        importedDataCountByRegion {
+          label
+          areaId
+          count
+        }
+        importedDataCountByConstituency {
+          label
+          areaId
+          count
+        }
+        importedDataCountByWard {
+          label
+          areaId
+          count
+        }
       }
     }
   }

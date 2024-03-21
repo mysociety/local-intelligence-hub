@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.gis.db.models import PointField, PolygonField
+from django.contrib.gis.db.models import MultiPolygonField, PointField
 from django.contrib.gis.geos import Point
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min
@@ -32,6 +32,7 @@ from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
 
 import utils as lih_utils
+from hub.analytics import Analytics
 from hub.filters import Filter
 from hub.tasks import (
     import_all,
@@ -656,8 +657,15 @@ class CommonData(models.Model):
 
 
 class GenericData(CommonData):
-    point = PointField(blank=True, null=True)
-    polygon = PolygonField(blank=True, null=True)
+    point = PointField(srid=4326, blank=True, null=True)
+    polygon = MultiPolygonField(srid=4326, blank=True, null=True)
+    postcode_data = JSONField(blank=True, null=True)
+
+    def get_postcode_data(self) -> Optional[PostcodesIOResult]:
+        if self.postcode_data is None:
+            return None
+
+        return self.postcode_data
 
 
 class Area(models.Model):
@@ -666,6 +674,8 @@ class Area(models.Model):
     name = models.CharField(max_length=200)
     area_type = models.ForeignKey(AreaType, on_delete=models.CASCADE)
     geometry = models.TextField(blank=True, null=True)
+    polygon = MultiPolygonField(srid=4326, blank=True, null=True)
+    point = PointField(srid=4326, blank=True, null=True)
     overlaps = models.ManyToManyField("self", through="AreaOverlap")
 
     def __str__(self):
@@ -780,7 +790,7 @@ def cast_data(sender, instance, *args, **kwargs):
         instance.data = ""
 
 
-class ExternalDataSource(PolymorphicModel):
+class ExternalDataSource(PolymorphicModel, Analytics):
     """
     A third-party data source that can be read and optionally written back to.
     E.g. Google Sheet or an Action Network table.
@@ -950,6 +960,7 @@ class ExternalDataSource(PolymorphicModel):
                     data=self.get_record_id(record),
                     defaults={
                         "json": self.get_record_dict(record),
+                        "postcode_data": postcode_data,
                         "point": Point(
                             postcode_data["longitude"],
                             postcode_data["latitude"],
@@ -1078,22 +1089,24 @@ class ExternalDataSource(PolymorphicModel):
             data_type__data_set__external_data_source_id=self.id
         )
 
-    def get_import_dataframe(self):
-        enrichment_data = self.get_import_data()
-        json_list = [d.json for d in enrichment_data]
+    def get_analytics_queryset(self):
+        return self.get_import_data()
+
+    def get_imported_dataframe(self):
+        json_list = [
+            {
+                **(d.postcode_data if d.postcode_data else {}),
+                **(d.json if d.json else {}),
+            }
+            for d in self.get_analytics_queryset()
+        ]
         enrichment_df = pd.DataFrame.from_records(json_list)
         return enrichment_df
-
-    def imported_data_count(self) -> int:
-        count = self.get_import_data().all().count()
-        if isinstance(count, int):
-            return count
-        return 0
 
     def data_loader_factory(self):
         async def fetch_enrichment_data(keys: List[self.EnrichmentLookup]) -> list[str]:
             return_data = []
-            enrichment_df = await sync_to_async(self.get_import_dataframe)()
+            enrichment_df = await sync_to_async(self.get_imported_dataframe)()
             for key in keys:
                 try:
                     relevant_member_geography = get(
@@ -1588,12 +1601,24 @@ class Report(PolymorphicModel):
         return self.name
 
 
-class MapReport(Report):
+class MapReport(Report, Analytics):
     layers = models.JSONField(blank=True, null=True, default=list)
 
     class MapLayer(TypedDict):
         name: str
         source: str
+        visible: Optional[bool]
 
     def get_layers(self) -> list[MapLayer]:
         return self.layers
+
+    def get_import_data(self):
+        visible_layer_ids = [
+            layer["source"] for layer in self.get_layers() if layer.get("visible", True)
+        ]
+        return GenericData.objects.filter(
+            data_type__data_set__external_data_source_id__in=visible_layer_ids
+        )
+
+    def get_analytics_queryset(self):
+        return self.get_import_data()

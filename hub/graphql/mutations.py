@@ -50,6 +50,7 @@ class AirtableSourceInput(ExternalDataSourceInput):
 class MapLayerInput:
     name: str
     source: str
+    visible: Optional[bool] = True
 
 
 @strawberry_django.input(models.MapReport, partial=True)
