@@ -1,3 +1,5 @@
+from datetime import date
+
 import pandas as pd
 
 from hub.models import DataSet
@@ -18,6 +20,14 @@ type_shades = {
         {"title": "District Council", "shader": "#ADB5BD"},
     ],
 }
+
+
+country_shades = [
+    {"title": "England", "shader": "#f8f9fa"},
+    {"title": "Wales", "shader": "#cc3517"},
+    {"title": "Scotland", "shader": "#202448"},
+    {"title": "Northern Ireland", "shader": "#458945"},
+]
 
 type_map = {
     "STC": {
@@ -51,7 +61,7 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
         "data_type": "text",
         "category": "place",
         "subcategory": "",
-        "release_date": "February 2023",
+        "release_date": str(date.today()),
         "label": "Council type",
         "source_label": "Data from mySociety.",
         "source": "https://mapit.mysociety.org/",
@@ -73,6 +83,15 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
             "defaults": defaults,
             "col": "council-type",
         },
+        "country": {
+            "defaults": {
+                **defaults,
+                "description": "",
+                "label": "Country of the UK",
+                "options": country_shades,
+            },
+            "col": "country",
+        },
     }
 
     def get_dataframe(self):
@@ -84,6 +103,7 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
                 {
                     "gss-code": area["codes"]["gss"],
                     "council-type": type_map[self.area_type][area["type"]],
+                    "country": area["country_name"],
                 }
             )
 
