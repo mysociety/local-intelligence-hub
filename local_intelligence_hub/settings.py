@@ -260,13 +260,15 @@ LOGGING = {
         "django": {
             "handlers": ["console"],
             "level": env("DJANGO_LOG_LEVEL"),
-        },
-        'django.db.backends': {
-            'level': 'DEBUG',
-            'handlers': ['console'],
         }
     }
 }
+if DEBUG:
+    LOGGING["loggers"]["django.db.backends"] = {
+        "handlers": ["console"],
+        "level": "DEBUG",
+    }
+
 # CK Section
 
 # TODO: Decrease this when we go public
