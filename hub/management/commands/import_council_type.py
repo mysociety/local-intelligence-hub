@@ -19,6 +19,14 @@ type_shades = {
     ],
 }
 
+
+country_shades = [
+    {"title": "England", "shader": "#f8f9fa"},
+    {"title": "Wales", "shader": "#cc3517"},
+    {"title": "Scotland", "shader": "#202448"},
+    {"title": "Northern Ireland", "shader": "#458945"},
+]
+
 type_map = {
     "STC": {
         "LBO": "London Borough",
@@ -73,6 +81,14 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
             "defaults": defaults,
             "col": "council-type",
         },
+        "council_country": {
+            "defaults": {
+                **defaults,
+                "label": "Country of the UK",
+                "options": country_shades,
+            },
+            "col": "country",
+        },
     }
 
     def get_dataframe(self):
@@ -84,6 +100,7 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
                 {
                     "gss-code": area["codes"]["gss"],
                     "council-type": type_map[self.area_type][area["type"]],
+                    "country": area["country_name"],
                 }
             )
 
