@@ -21,7 +21,7 @@ from django.urls import include, path, re_path
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import RedirectView
 
-from strawberry.django.views import AsyncGraphQLView
+from strawberry_django_dataloaders.views import DataloaderAsyncGraphQLView
 
 from hub.graphql.schema import schema
 from hub.sitemap import hub_sitemap
@@ -113,7 +113,7 @@ urlpatterns = [
         {"sitemaps": hub_sitemap},
         name="django.contrib.sitemaps.views.sitemap",
     ),
-    path("graphql", AsyncGraphQLView.as_view(schema=schema), name="graphql"),
+    path("graphql", DataloaderAsyncGraphQLView.as_view(schema=schema), name="graphql"),
     path(
         f"{ExternalDataSourceAutoUpdateWebhook.base_path}/<str:external_data_source_id>",
         csrf_exempt(ExternalDataSourceAutoUpdateWebhook.as_view()),

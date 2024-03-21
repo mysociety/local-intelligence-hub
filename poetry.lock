@@ -157,7 +157,6 @@ mypy-extensions = ">=0.4.3"
 pathspec = ">=0.9.0"
 platformdirs = ">=2"
 tomli = {version = ">=1.1.0", markers = "python_full_version < \"3.11.0a7\""}
-typing-extensions = {version = ">=3.10.0.0", markers = "python_version < \"3.10\""}
 
 [package.extras]
 colorama = ["colorama (>=0.4.3)"]
@@ -1917,7 +1916,6 @@ files = [
 
 [package.dependencies]
 anyio = ">=3.4.0,<5"
-typing-extensions = {version = ">=3.10.0", markers = "python_version < \"3.10\""}
 
 [package.extras]
 full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.7)", "pyyaml"]
@@ -1941,6 +1939,21 @@ strawberry-graphql-django = ">=0.10.5"
 
 [package.extras]
 captcha = ["pillow[captcha] (>=9.5,<11.0)"]
+
+[[package]]
+name = "strawberry-django-dataloaders"
+version = "0.2.0"
+description = "A set of tools for using dataloaders with Django and Strawberry GraphQL."
+optional = false
+python-versions = ">=3.10,<4.0"
+files = [
+    {file = "strawberry_django_dataloaders-0.2.0-py3-none-any.whl", hash = "sha256:0a47f61115a3596120e70d5a79cf936b55b20c5472c6b5bad59e0dc7456bc379"},
+    {file = "strawberry_django_dataloaders-0.2.0.tar.gz", hash = "sha256:f76c47c58065fe449b88d0913332ae91e919f60ef9d57ebca2f8ebcb62d7c666"},
+]
+
+[package.dependencies]
+Django = ">=3.2"
+strawberry-graphql-django = ">=0.9"
 
 [[package]]
 name = "strawberry-graphql"
@@ -2150,5 +2163,5 @@ brotli = ["Brotli"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.9,<3.13"
-content-hash = "4548499e72ab917cee83059b165ab62c0db797f8154b7f091fe0dbb3ce6c6bb9"
+python-versions = ">=3.10,<3.13"
+content-hash = "560ff030413685649f7037af29bf2bffba5b0a50d794607d5532cb5d2e2636a1"
