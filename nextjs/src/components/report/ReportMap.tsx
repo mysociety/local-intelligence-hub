@@ -401,25 +401,21 @@ export function ReportMap () {
               )}
             </div>
             <footer className='flex-divide-x bg-meepGray-200 text-meepGray-500 flex flex-row justify-around w-full py-1 px-2 text-center'>
-              {/* If phone */}
               {!!selectedSourceRecord.feature.properties.phone && (
                 <a href={`tel:${selectedSourceRecord.feature.properties.phone}`} target="_blank">
                   Call
                 </a>
               )}
-              {/* Text */}
               {!!selectedSourceRecord.feature.properties.phone && (
                 <a href={`sms:${selectedSourceRecord.feature.properties.phone}`} target="_blank">
                   SMS
                 </a>
               )}
-              {/* If email */}
               {!!selectedSourceRecord.feature.properties.email && (
                 <a href={`mailto:${selectedSourceRecord.feature.properties.email}`} target="_blank">
                   Email
                 </a>
               )}
-              {/* If email */}
               {!!selectedSourceRecord.feature.properties.email && (
                 <a href={`${selectedSourceRecord.feature.properties.originalUrl}`} target="_blank">
                   Link
