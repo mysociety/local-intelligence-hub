@@ -1,6 +1,7 @@
 import json
 
 from django.conf import settings
+from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
 from django.core.management.base import BaseCommand
 from django.db.utils import IntegrityError
 
@@ -30,7 +31,7 @@ class Command(BaseCommand):
 
     def handle(self, quiet: bool = False, *args, **options):
         if not quiet:
-            print("Importing Areas")
+            print("Importing 2024 Constituencies")
         with open(self.data_file) as f:
             cons = json.load(f)
 
@@ -57,7 +58,14 @@ class Command(BaseCommand):
 
             con["properties"]["PCON13CD"] = area["gss_code"]
             con["properties"]["type"] = "WMC23"
-            a.geometry = json.dumps(con)
+
+            geom_str = json.dumps(con)
+            geom = GEOSGeometry(json.dumps(con["geometry"]))
+            if isinstance(geom, Polygon):
+                geom = MultiPolygon([geom])
+            a.geometry = geom_str
+            a.polygon = geom
+            a.point = a.polygon.centroid
             a.save()
 
         constituency_lookup = (

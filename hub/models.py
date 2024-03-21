@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.gis.db.models import PointField, PolygonField
+from django.contrib.gis.db.models import MultiPolygonField, PointField
 from django.contrib.gis.geos import Point
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min
@@ -34,6 +34,7 @@ from mailchimp3 import MailChimp
 
 
 import utils as lih_utils
+from hub.analytics import Analytics
 from hub.filters import Filter
 from hub.tasks import (
     import_all,
@@ -658,8 +659,15 @@ class CommonData(models.Model):
 
 
 class GenericData(CommonData):
-    point = PointField(blank=True, null=True)
-    polygon = PolygonField(blank=True, null=True)
+    point = PointField(srid=4326, blank=True, null=True)
+    polygon = MultiPolygonField(srid=4326, blank=True, null=True)
+    postcode_data = JSONField(blank=True, null=True)
+
+    def get_postcode_data(self) -> Optional[PostcodesIOResult]:
+        if self.postcode_data is None:
+            return None
+
+        return self.postcode_data
 
 
 class Area(models.Model):
@@ -668,6 +676,8 @@ class Area(models.Model):
     name = models.CharField(max_length=200)
     area_type = models.ForeignKey(AreaType, on_delete=models.CASCADE)
     geometry = models.TextField(blank=True, null=True)
+    polygon = MultiPolygonField(srid=4326, blank=True, null=True)
+    point = PointField(srid=4326, blank=True, null=True)
     overlaps = models.ManyToManyField("self", through="AreaOverlap")
 
     def __str__(self):
@@ -782,7 +792,7 @@ def cast_data(sender, instance, *args, **kwargs):
         instance.data = ""
 
 
-class ExternalDataSource(PolymorphicModel):
+class ExternalDataSource(PolymorphicModel, Analytics):
     """
     A third-party data source that can be read and optionally written back to.
     E.g. Google Sheet or an Action Network table.
@@ -917,7 +927,7 @@ class ExternalDataSource(PolymorphicModel):
         Copy data to this database for use in dashboarding features.
         """
 
-        # A LIH record of this data
+        # A Local Intelligence Hub record of this data
         data_set, created = await DataSet.objects.aupdate_or_create(
             external_data_source=self,
             defaults={
@@ -952,6 +962,7 @@ class ExternalDataSource(PolymorphicModel):
                     data=self.get_record_id(record),
                     defaults={
                         "json": self.get_record_dict(record),
+                        "postcode_data": postcode_data,
                         "point": Point(
                             postcode_data["longitude"],
                             postcode_data["latitude"],
@@ -1080,22 +1091,24 @@ class ExternalDataSource(PolymorphicModel):
             data_type__data_set__external_data_source_id=self.id
         )
 
-    def get_import_dataframe(self):
-        enrichment_data = self.get_import_data()
-        json_list = [d.json for d in enrichment_data]
+    def get_analytics_queryset(self):
+        return self.get_import_data()
+
+    def get_imported_dataframe(self):
+        json_list = [
+            {
+                **(d.postcode_data if d.postcode_data else {}),
+                **(d.json if d.json else {}),
+            }
+            for d in self.get_analytics_queryset()
+        ]
         enrichment_df = pd.DataFrame.from_records(json_list)
         return enrichment_df
-
-    def imported_data_count(self) -> int:
-        count = self.get_import_data().all().count()
-        if isinstance(count, int):
-            return count
-        return 0
 
     def data_loader_factory(self):
         async def fetch_enrichment_data(keys: List[self.EnrichmentLookup]) -> list[str]:
             return_data = []
-            enrichment_df = await sync_to_async(self.get_import_dataframe)()
+            enrichment_df = await sync_to_async(self.get_imported_dataframe)()
             for key in keys:
                 try:
                     relevant_member_geography = get(
@@ -1107,7 +1120,6 @@ class ExternalDataSource(PolymorphicModel):
                     ):
                         return_data.append(None)
                     else:
-                        # TODO: Use pandas to join dataframes instead
                         enrichment_value = enrichment_df.loc[
                             enrichment_df[self.geography_column]
                             == relevant_member_geography,
@@ -1181,6 +1193,7 @@ class ExternalDataSource(PolymorphicModel):
                                 )
                             )
                     except Exception:
+                        # TODO: sentry logging
                         continue
             # Return the member and config data
             return self.MappedMember(member=member, update_fields=update_fields)
@@ -1590,76 +1603,24 @@ class Report(PolymorphicModel):
         return self.name
 
 
-class MapReport(Report):
+class MapReport(Report, Analytics):
     layers = models.JSONField(blank=True, null=True, default=list)
 
     class MapLayer(TypedDict):
         name: str
         source: str
+        visible: Optional[bool]
 
     def get_layers(self) -> list[MapLayer]:
         return self.layers
 
-
-class MailchimpSource(ExternalDataSource):
-    """
-    A Mailchimp list.
-    """ 
-    api_key = models.CharField(
-        max_length=250,
-        help_text="Mailchimp API key.",
-    )
-    list_id = models.CharField(
-        max_length=250,
-        help_text="The unique identifier for the Mailchimp list.",
-    )
-
-    automated_webhooks = True
-    introspect_fields = True
-
-    class Meta:
-        verbose_name = "Mailchimp list"
-        unique_together = ["list_id", "api_key"]
-
-    @cached_property
-    def client(self) -> MailChimp:
-        # Initializes the MailChimp client 
-        return MailChimp(mc_api=self.api_key)
-    
-        
-    def healthcheck(self):
-        # Checks if the Mailchimp list is accessible
-        list = self.client.lists.get(self.list_id)
-        if list:
-            return True
-        return False
-    
-    def field_definitions(self):
-        merge_fields = self.client.lists.merge_fields.all(list_id=self.list_id, get_all=True)['merge_fields']
-        field_definitions = [
-            {
-                'label': field['name'],
-                'value': field['tag'],  # In Mailchimp, the tag is used as a merge variable
-                'description': field.get('help_text', None)
-            }
-            for field in merge_fields
+    def get_import_data(self):
+        visible_layer_ids = [
+            layer["source"] for layer in self.get_layers() if layer.get("visible", True)
         ]
-    
-        return field_definitions
-    
-    def remote_name(self):
-        data = self.client.lists.all(self.list_id, fields="lists.name")
-        list_name = data['lists'][0]['name']
-        return list_name
-   
-    async def fetch_all(self):
-         # Fetches all members in a list and returns their email address and merge fields
-        fields = "members.email_address,members.merge_fields"
-        list = self.client.lists.members.all(self.list_id, fields=fields)
-        return list
+        return GenericData.objects.filter(
+            data_type__data_set__external_data_source_id__in=visible_layer_ids
+        )
 
-
-
-
-
- 
+    def get_analytics_queryset(self):
+        return self.get_import_data()
