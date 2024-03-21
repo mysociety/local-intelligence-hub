@@ -14,6 +14,8 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
+  /** Date (isoformat) */
+  Date: { input: any; output: any; }
   /** Date with time (isoformat) */
   DateTime: { input: any; output: any; }
   /**
@@ -122,14 +124,22 @@ export type AirtableSourceInput = {
 /** Area(id, mapit_id, gss, name, area_type, geometry, polygon, point) */
 export type Area = {
   __typename?: 'Area';
-  areaType: DjangoModelType;
+  areaType: AreaType;
   geometry?: Maybe<Scalars['String']['output']>;
   gss: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
   mapitId: Scalars['String']['output'];
   name: Scalars['String']['output'];
   overlaps: Array<DjangoModelType>;
+  people: Array<Person>;
   point?: Maybe<PointFeature>;
   polygon?: Maybe<MultiPolygonFeature>;
+};
+
+
+/** Area(id, mapit_id, gss, name, area_type, geometry, polygon, point) */
+export type AreaPeopleArgs = {
+  filters?: InputMaybe<PersonFilter>;
 };
 
 
@@ -144,11 +154,30 @@ export type AreaPolygonArgs = {
   withParentData?: Scalars['Boolean']['input'];
 };
 
+/** AreaType(id, name, code, area_type, description) */
+export type AreaType = {
+  __typename?: 'AreaType';
+  areaType: Scalars['String']['output'];
+  code: Scalars['String']['output'];
+  dataTypes: Array<DataType>;
+  description: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
 export type AutoUpdateConfig = {
   __typename?: 'AutoUpdateConfig';
   destinationColumn: Scalars['String']['output'];
   source: Scalars['String']['output'];
   sourcePath: Scalars['String']['output'];
+};
+
+export type CommonData = {
+  data: Scalars['String']['output'];
+  dataType: DataType;
+  date?: Maybe<Scalars['DateTime']['output']>;
+  float?: Maybe<Scalars['Float']['output']>;
+  int?: Maybe<Scalars['Int']['output']>;
+  json?: Maybe<Scalars['JSON']['output']>;
 };
 
 export type CreateMapReportPayload = MapReport | OperationInfo;
@@ -159,11 +188,63 @@ export type CreateOrganisationInput = {
   slug?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** DataSet(id, name, description, label, data_type, last_update, source_label, source, source_type, data_url, release_date, is_upload, is_range, featured, order, category, subcategory, table, comparators, options, default_value, is_filterable, is_shadable, is_public, fill_blanks, exclude_countries, unit_type, unit_distribution, external_data_source) */
+export type DataSet = {
+  __typename?: 'DataSet';
+  areasAvailable: Array<DjangoModelType>;
+  category?: Maybe<Scalars['String']['output']>;
+  dataType: DataType;
+  dataUrl?: Maybe<Scalars['String']['output']>;
+  defaultValue?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  externalDataSource: ExternalDataSource;
+  featured: Scalars['Boolean']['output'];
+  fillBlanks: Scalars['Boolean']['output'];
+  id: Scalars['ID']['output'];
+  isFilterable: Scalars['Boolean']['output'];
+  isPublic: Scalars['Boolean']['output'];
+  isRange: Scalars['Boolean']['output'];
+  isShadable: Scalars['Boolean']['output'];
+  isUpload: Scalars['Boolean']['output'];
+  label?: Maybe<Scalars['String']['output']>;
+  lastUpdate: Scalars['DateTime']['output'];
+  name: Scalars['String']['output'];
+  order?: Maybe<Scalars['Int']['output']>;
+  releaseDate?: Maybe<Scalars['String']['output']>;
+  source: Scalars['String']['output'];
+  sourceLabel?: Maybe<Scalars['String']['output']>;
+  sourceType?: Maybe<Scalars['String']['output']>;
+  subcategory?: Maybe<Scalars['String']['output']>;
+  table?: Maybe<Scalars['String']['output']>;
+  unitDistribution?: Maybe<Scalars['String']['output']>;
+  unitType?: Maybe<Scalars['String']['output']>;
+};
+
 export enum DataSourceType {
   Member = 'MEMBER',
   Other = 'OTHER',
   Region = 'REGION'
 }
+
+/** DataType(id, data_set, name, data_type, last_update, average, maximum, minimum, label, description, order, area_type, auto_converted, auto_converted_text) */
+export type DataType = {
+  __typename?: 'DataType';
+  areaType?: Maybe<DjangoModelType>;
+  /** True if this has been auto converted from an area with overlapping geometry */
+  autoConverted: Scalars['Boolean']['output'];
+  autoConvertedText?: Maybe<Scalars['String']['output']>;
+  average?: Maybe<Scalars['Float']['output']>;
+  dataSet: DataSet;
+  dataType: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  label?: Maybe<Scalars['String']['output']>;
+  lastUpdate: Scalars['DateTime']['output'];
+  maximum?: Maybe<Scalars['Float']['output']>;
+  minimum?: Maybe<Scalars['Float']['output']>;
+  name: Scalars['String']['output'];
+  order?: Maybe<Scalars['Int']['output']>;
+};
 
 export type DatetimeFilterLookup = {
   contains?: InputMaybe<Scalars['DateTime']['input']>;
@@ -183,6 +264,16 @@ export type DatetimeFilterLookup = {
   range?: InputMaybe<Array<Scalars['DateTime']['input']>>;
   regex?: InputMaybe<Scalars['String']['input']>;
   startsWith?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
+export type DjangoImageType = {
+  __typename?: 'DjangoImageType';
+  height: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+  size: Scalars['Int']['output'];
+  url: Scalars['String']['output'];
+  width: Scalars['Int']['output'];
 };
 
 export type DjangoModelType = {
@@ -286,13 +377,18 @@ export type FieldDefinition = {
 };
 
 /** GenericData(id, data_type, data, date, float, int, json, last_update, point, polygon, postcode_data, postcode, first_name, last_name, full_name, email, phone, address) */
-export type GenericData = {
+export type GenericData = CommonData & {
   __typename?: 'GenericData';
   address?: Maybe<Scalars['String']['output']>;
+  data: Scalars['String']['output'];
+  dataType: DataType;
+  date?: Maybe<Scalars['DateTime']['output']>;
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
+  float?: Maybe<Scalars['Float']['output']>;
   fullName?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
+  int?: Maybe<Scalars['Int']['output']>;
   json?: Maybe<Scalars['JSON']['output']>;
   lastName?: Maybe<Scalars['String']['output']>;
   lastUpdate: Scalars['DateTime']['output'];
@@ -692,6 +788,57 @@ export type OutputInterface = {
   success: Scalars['Boolean']['output'];
 };
 
+/** Person(id, person_type, external_id, id_type, name, area, photo, start_date, end_date) */
+export type Person = {
+  __typename?: 'Person';
+  area: Area;
+  data: Array<PersonData>;
+  datum?: Maybe<PersonData>;
+  endDate?: Maybe<Scalars['Date']['output']>;
+  externalId: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  idType: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  personType: Scalars['String']['output'];
+  photo?: Maybe<DjangoImageType>;
+  startDate?: Maybe<Scalars['Date']['output']>;
+};
+
+
+/** Person(id, person_type, external_id, id_type, name, area, photo, start_date, end_date) */
+export type PersonDataArgs = {
+  filters?: InputMaybe<PersonDataloaderFilter>;
+};
+
+
+/** Person(id, person_type, external_id, id_type, name, area, photo, start_date, end_date) */
+export type PersonDatumArgs = {
+  filters?: InputMaybe<PersonDataloaderFilter>;
+};
+
+/** PersonData(id, data_type, data, date, float, int, json, person) */
+export type PersonData = CommonData & {
+  __typename?: 'PersonData';
+  data: Scalars['String']['output'];
+  dataType: DataType;
+  date?: Maybe<Scalars['DateTime']['output']>;
+  float?: Maybe<Scalars['Float']['output']>;
+  id: Scalars['ID']['output'];
+  int?: Maybe<Scalars['Int']['output']>;
+  json?: Maybe<Scalars['JSON']['output']>;
+  person: Person;
+};
+
+/** PersonData(id, data_type, data, date, float, int, json, person) */
+export type PersonDataloaderFilter = {
+  dataType_Name: Scalars['String']['input'];
+};
+
+/** Person(id, person_type, external_id, id_type, name, area, photo, start_date, end_date) */
+export type PersonFilter = {
+  personType: Scalars['String']['input'];
+};
+
 export type PointFeature = Feature & {
   __typename?: 'PointFeature';
   geometry: PointGeometry;
@@ -768,6 +915,7 @@ export type Query = {
   __typename?: 'Query';
   airtableSource: AirtableSource;
   airtableSources: Array<AirtableSource>;
+  area?: Maybe<Area>;
   externalDataSource: ExternalDataSource;
   externalDataSources: Array<ExternalDataSource>;
   job: QueueJob;
@@ -786,6 +934,11 @@ export type Query = {
 
 export type QueryAirtableSourceArgs = {
   pk: Scalars['ID']['input'];
+};
+
+
+export type QueryAreaArgs = {
+  gss: Scalars['String']['input'];
 };
 
 
@@ -1109,6 +1262,13 @@ export type RegisterMutationVariables = Exact<{
 
 export type RegisterMutation = { __typename?: 'Mutation', register: { __typename?: 'MutationNormalOutput', errors?: any | null, success: boolean } };
 
+export type GetConstituencyDataQueryVariables = Exact<{
+  gss: Scalars['String']['input'];
+}>;
+
+
+export type GetConstituencyDataQuery = { __typename?: 'Query', area?: { __typename?: 'Area', id: string, name: string, mp: Array<{ __typename?: 'Person', id: string, name: string, party?: { __typename?: 'PersonData', name: string } | null, last_election_majority?: { __typename?: 'PersonData', votes?: number | null } | null }> } | null };
+
 export type GetMapReportNameQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -1248,6 +1408,7 @@ export const VerifyDocument = {"kind":"Document","definitions":[{"kind":"Operati
 export const ExampleDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"Example"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"organisations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]} as unknown as DocumentNode<ExampleQuery, ExampleQueryVariables>;
 export const LoginDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"Login"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"username"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"password"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"tokenAuth"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"username"},"value":{"kind":"Variable","name":{"kind":"Name","value":"username"}}},{"kind":"Argument","name":{"kind":"Name","value":"password"},"value":{"kind":"Variable","name":{"kind":"Name","value":"password"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"errors"}},{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"token"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"token"}},{"kind":"Field","name":{"kind":"Name","value":"payload"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"exp"}}]}}]}}]}}]}}]} as unknown as DocumentNode<LoginMutation, LoginMutationVariables>;
 export const RegisterDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"Register"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"email"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"password1"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"password2"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"username"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"register"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"email"},"value":{"kind":"Variable","name":{"kind":"Name","value":"email"}}},{"kind":"Argument","name":{"kind":"Name","value":"password1"},"value":{"kind":"Variable","name":{"kind":"Name","value":"password1"}}},{"kind":"Argument","name":{"kind":"Name","value":"password2"},"value":{"kind":"Variable","name":{"kind":"Name","value":"password2"}}},{"kind":"Argument","name":{"kind":"Name","value":"username"},"value":{"kind":"Variable","name":{"kind":"Name","value":"username"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"errors"}},{"kind":"Field","name":{"kind":"Name","value":"success"}}]}}]}}]} as unknown as DocumentNode<RegisterMutation, RegisterMutationVariables>;
+export const GetConstituencyDataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetConstituencyData"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"gss"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"area"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"gss"},"value":{"kind":"Variable","name":{"kind":"Name","value":"gss"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","alias":{"kind":"Name","value":"mp"},"name":{"kind":"Name","value":"people"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"personType"},"value":{"kind":"StringValue","value":"MP","block":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","alias":{"kind":"Name","value":"party"},"name":{"kind":"Name","value":"datum"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"dataType_Name"},"value":{"kind":"StringValue","value":"party","block":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"name"},"name":{"kind":"Name","value":"data"}}]}},{"kind":"Field","alias":{"kind":"Name","value":"last_election_majority"},"name":{"kind":"Name","value":"datum"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"dataType_Name"},"value":{"kind":"StringValue","value":"mp_election_majority","block":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"votes"},"name":{"kind":"Name","value":"int"}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetConstituencyDataQuery, GetConstituencyDataQueryVariables>;
 export const GetMapReportNameDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetMapReportName"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"mapReport"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]} as unknown as DocumentNode<GetMapReportNameQuery, GetMapReportNameQueryVariables>;
 export const GetMapReportDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetMapReport"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"mapReport"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"MapReportPage"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"MapReportLayersSummary"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"MapReport"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"importedDataCountByRegion"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"areaId"}},{"kind":"Field","name":{"kind":"Name","value":"count"}},{"kind":"Field","name":{"kind":"Name","value":"gssArea"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"point"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"geometry"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"coordinates"}}]}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"importedDataCountByConstituency"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"areaId"}},{"kind":"Field","name":{"kind":"Name","value":"count"}},{"kind":"Field","name":{"kind":"Name","value":"gssArea"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"point"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"geometry"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"coordinates"}}]}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"importedDataCountByWard"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"areaId"}},{"kind":"Field","name":{"kind":"Name","value":"count"}},{"kind":"Field","name":{"kind":"Name","value":"gssArea"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"point"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"geometry"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"coordinates"}}]}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"layers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"source"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"isImporting"}},{"kind":"Field","name":{"kind":"Name","value":"importedDataCount"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"recordUrlTemplate"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"MapReportPage"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"MapReport"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"MapReportLayersSummary"}}]}}]} as unknown as DocumentNode<GetMapReportQuery, GetMapReportQueryVariables>;
 export const UpdateMapReportDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateMapReport"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"MapReportInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateMapReport"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"layers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"source"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]}}]} as unknown as DocumentNode<UpdateMapReportMutation, UpdateMapReportMutationVariables>;
@@ -1271,6 +1432,10 @@ export const PublicUserDocument = {"kind":"Document","definitions":[{"kind":"Ope
       }
       const result: PossibleTypesResultData = {
   "possibleTypes": {
+    "CommonData": [
+      "GenericData",
+      "PersonData"
+    ],
     "CreateMapReportPayload": [
       "MapReport",
       "OperationInfo"

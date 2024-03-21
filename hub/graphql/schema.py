@@ -8,6 +8,7 @@ from gqlauth.user.queries import UserQueries
 from strawberry_django import mutations as django_mutations
 from strawberry_django.optimizer import DjangoOptimizerExtension
 from strawberry_django.permissions import IsAuthenticated
+from typing import Optional
 
 from hub import models
 from hub.graphql import mutations as mutation_types
@@ -48,6 +49,7 @@ class Query(UserQueries):
     map_reports: List[model_types.MapReport] = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
+    area: Optional[model_types.Area] = mutation_types.area_by_gss
 
     @strawberry.field
     def test_airtable_source(

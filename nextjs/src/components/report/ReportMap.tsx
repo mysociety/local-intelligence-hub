@@ -53,7 +53,9 @@ export const SelectedMarkerParser = z.object({
   feature: SelectedMarkerFeatureParser,
 });
 
-const selectedSourceRecordAtom = atom<z.infer<typeof SelectedMarkerParser> | null>(null)
+export const selectedSourceRecordAtom = atom<z.infer<typeof SelectedMarkerParser> | null>(null)
+
+export const selectedConstituencyAtom = atom<string | null>(null)
 
 export function ReportMap () {
   const { id } = useContext(ReportContext)
@@ -68,7 +70,7 @@ export function ReportMap () {
 
   const mapboxRef = useRef<MapRef>(null)
 
-  const TILESETS: Record<string, {
+  const TILESETS: Record<"EERs" | "constituencies" | "wards", {
     name: string,
     singular: string,
     mapboxSourceId: string,
@@ -183,6 +185,24 @@ export function ReportMap () {
   }, [mapboxRef.current, setLoadedImages])
 
   const [selectedSourceRecord, setSelectedSourceRecord] = useAtom(selectedSourceRecordAtom)
+  const [selectedConstituency, setSelectedConstituency] = useAtom(selectedConstituencyAtom)
+
+  useEffect(() => {
+    // When you click a constituency
+    mapboxRef.current?.on('click', `${TILESETS.constituencies.mapboxSourceId}-fill`, event => {
+      try {
+        const feature = event.features?.[0]
+        if (feature) {
+          if (feature.source === TILESETS.constituencies.mapboxSourceId) {
+            const id = feature.properties?.[TILESETS.constituencies.promoteId]
+            setSelectedConstituency(id)
+          }
+        }
+      } catch (e) {
+        console.error("Failed to select constituency")
+      }
+    })
+  }, [mapboxRef.current])
 
   return (
     <Map

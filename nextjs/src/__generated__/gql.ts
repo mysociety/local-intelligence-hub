@@ -29,6 +29,7 @@ const documents = {
     "\n  query Example {\n    organisations {\n      id\n      name\n    }\n  }\n": types.ExampleDocument,
     "\n  mutation Login($username: String!, $password: String!) {\n    tokenAuth(username: $username, password: $password) {\n      errors\n      success\n      token {\n        token\n        payload {\n          exp\n        }\n      }\n    }\n  }\n": types.LoginDocument,
     "\n  mutation Register($email: String!, $password1: String!, $password2: String!, $username: String!) {\n    register(email: $email, password1: $password1, password2: $password2, username: $username) {\n      errors\n      success\n    }\n  }\n": types.RegisterDocument,
+    "\n  query GetConstituencyData($gss: String!) {\n    area(gss: $gss) {\n      id\n      name\n      mp: people(filters:{personType:\"MP\"}) {\n        id\n        name\n        party: datum(filters:{\n          dataType_Name: \"party\"\n        }) {\n          name: data\n        }\n        last_election_majority: datum(filters:{\n          dataType_Name: \"mp_election_majority\"\n        }) {\n          votes: int\n        }\n      }\n    }\n  }\n": types.GetConstituencyDataDocument,
     "\n  query GetMapReportName($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n    }\n  }\n": types.GetMapReportNameDocument,
     "\n  fragment MapReportPage on MapReport {\n    id\n    name\n    ... MapReportLayersSummary\n  }\n  \n": types.MapReportPageFragmentDoc,
     "\n  query GetMapReport($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n      ... MapReportPage\n    }\n  }\n  \n": types.GetMapReportDocument,
@@ -128,6 +129,10 @@ export function gql(source: "\n  mutation Login($username: String!, $password: S
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  mutation Register($email: String!, $password1: String!, $password2: String!, $username: String!) {\n    register(email: $email, password1: $password1, password2: $password2, username: $username) {\n      errors\n      success\n    }\n  }\n"): (typeof documents)["\n  mutation Register($email: String!, $password1: String!, $password2: String!, $username: String!) {\n    register(email: $email, password1: $password1, password2: $password2, username: $username) {\n      errors\n      success\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetConstituencyData($gss: String!) {\n    area(gss: $gss) {\n      id\n      name\n      mp: people(filters:{personType:\"MP\"}) {\n        id\n        name\n        party: datum(filters:{\n          dataType_Name: \"party\"\n        }) {\n          name: data\n        }\n        last_election_majority: datum(filters:{\n          dataType_Name: \"mp_election_majority\"\n        }) {\n          votes: int\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetConstituencyData($gss: String!) {\n    area(gss: $gss) {\n      id\n      name\n      mp: people(filters:{personType:\"MP\"}) {\n        id\n        name\n        party: datum(filters:{\n          dataType_Name: \"party\"\n        }) {\n          name: data\n        }\n        last_election_majority: datum(filters:{\n          dataType_Name: \"mp_election_majority\"\n        }) {\n          votes: int\n        }\n      }\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

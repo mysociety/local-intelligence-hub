@@ -198,6 +198,7 @@ class DataType:
     auto_converted: auto
     auto_converted_text: auto
 
+
 @strawberry_django.type(models.AreaType)
 class AreaType:
     name: auto
@@ -279,8 +280,18 @@ class Person:
         field_name="data"
     )
 
-@strawberry_django.type(models.Area)
+
+@strawberry_django.filter(models.Area, lookups=True)
+class AreaFilter:
+    id: auto
+    gss: auto
+    name: auto
+    area_type: auto
+
+
+@strawberry_django.type(models.Area, filters=AreaFilter)
 class Area:
+    id: auto
     mapit_id: auto
     gss: auto
     name: auto
