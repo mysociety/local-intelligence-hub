@@ -9,12 +9,16 @@ from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
 import strawberry_django_dataloaders.fields
+from strawberry_django.fields.field import StrawberryDjangoField
+from django.db.models.fields.related import RelatedField
+from django.db.models import Model as DjangoModel
+from django.db.models import ManyToOneRel
 
 from hub import models
 from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
-from hub.graphql.dataloaders import FieldDataLoaderFactory, FieldReturningListDataLoaderFactory
+from hub.graphql.dataloaders import FieldDataLoaderFactory, FieldReturningListDataLoaderFactory, PKWithFiltersDataLoaderFactory, ReverseFKWithFiltersDataLoaderFactory
 
 
 @strawberry_django.filters.filter(
@@ -140,6 +144,7 @@ class ExternalDataSourceFilter:
 
 @strawberry_django.type(models.DataSet)
 class DataSet:
+    id: auto
     name: auto
     description: auto
     label: auto
@@ -178,6 +183,7 @@ class DataTypeFilters:
 
 @strawberry_django.type(models.DataType, filters=DataTypeFilters)
 class DataType:
+    id: auto
     data_set: 'DataSet' = strawberry_django_dataloaders.fields.auto_dataloader_field()
     name: auto
     data_type: auto
@@ -223,16 +229,32 @@ class CommonData:
 
 @strawberry_django.type(models.AreaData, filters=CommonDataFilter)
 class AreaData(CommonData):
+    id: auto
     area: 'Area' = strawberry_django_dataloaders.fields.auto_dataloader_field()
 
 
-@strawberry_django.type(models.PersonData, filters=CommonDataFilter)
+@strawberry_django.filter(models.PersonData, lookups=True)
+class PersonDataFilter:
+    data_type: DataTypeFilters
+    int: auto
+    date: auto
+    data: auto
+    float: auto
+    person: auto
+
+
+@strawberry_django.type(models.PersonData, filters=PersonDataFilter)
 class PersonData(CommonData):
+    id: auto
     person: "Person" = strawberry_django_dataloaders.fields.auto_dataloader_field()
 
+@strawberry_django.input(models.PersonData, partial=True)
+class PersonDataloaderFilters:
+    data_type__name: str
 
 @strawberry_django.type(models.Person)
 class Person:
+    id: auto
     person_type: auto
     external_id: auto
     id_type: auto
@@ -241,8 +263,48 @@ class Person:
     photo: auto
     start_date: auto
     end_date: auto
-    data: List[PersonData] = strawberry_django_dataloaders.fields.auto_dataloader_field()
+    # data: List[PersonData] = strawberry_django_dataloaders.fields.auto_dataloader_field(
+    #     resolver=PKWithFiltersDataLoaderFactory.as_resolver(models.PersonData),
+    #     filters=PersonDataFilter,
+    #     prefetch_related=["data_type", "data_type__data_set"]
+    # )
 
+    @strawberry_django.field
+    async def data(self, info: Info, filters: Optional[PersonDataloaderFilters] = {}) -> Optional[List[PersonData]]:
+        field_data: "StrawberryDjangoField" = info._field
+        relation: "ManyToOneRel" = self._meta.get_field(field_name=field_data.django_name)
+        loader = ReverseFKWithFiltersDataLoaderFactory.get_loader_class(
+            models.PersonData,
+            filters=filters,
+            prefetch=[],
+            reverse_path=relation.field.attname
+        )
+        return await loader(context=info.context).load(self.id)
+
+    # async def get_dataloader_resolver(root: "DjangoModel", info: "Info"):
+    #     return await ReverseFKWithFiltersDataLoaderFactory.as_resolver(
+    #         model=models.PersonData,
+    #         filters=PersonDataloaderFilters,
+    #     )(root, info)
+
+    # datum: Optional[PersonData] = strawberry_django_dataloaders.fields.auto_dataloader_field(
+    #     resolver=get_dataloader_resolver,
+    #     # filters=PersonDataloaderFilters
+    # )
+
+    @strawberry_django.field
+    async def datum(self, info: Info, filters: PersonDataloaderFilters) -> Optional[PersonData]:
+        relation: "ManyToOneRel" = self._meta.get_field(field_name="data")
+        loader = ReverseFKWithFiltersDataLoaderFactory.get_loader_class(
+            models.PersonData,
+            filters=filters,
+            prefetch=[],
+            reverse_path=relation.field.attname
+        )
+        data = await loader(context=info.context).load(self.id)
+        if isinstance(data, list):
+            return data[0]
+        return None
 
 @strawberry_django.type(models.Area)
 class Area:
