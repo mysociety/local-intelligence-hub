@@ -442,7 +442,8 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
     unit_distribution = models.TextField(null=True, choices=UNIT_DISTRIBUTION_CHOICES)
     areas_available = models.ManyToManyField("AreaType")
     external_data_source = models.ForeignKey(
-        "ExternalDataSource", on_delete=models.CASCADE, null=True, blank=True
+        "ExternalDataSource", on_delete=models.CASCADE, null=True, blank=True,
+        related_name="data_sets"
     )
 
     def __str__(self):
@@ -492,7 +493,7 @@ class AreaType(models.Model):
 
 
 class DataType(TypeMixin, ShaderMixin, models.Model):
-    data_set = models.ForeignKey(DataSet, on_delete=models.CASCADE)
+    data_set = models.ForeignKey(DataSet, on_delete=models.CASCADE, related_name="data_types")
     name = models.CharField(max_length=100)
     data_type = models.CharField(max_length=20, choices=TypeMixin.TYPE_CHOICES)
     last_update = models.DateTimeField(auto_now=True)
@@ -502,7 +503,7 @@ class DataType(TypeMixin, ShaderMixin, models.Model):
     label = models.CharField(max_length=200, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     order = models.IntegerField(blank=True, null=True)
-    area_type = models.ForeignKey(AreaType, on_delete=models.CASCADE, null=True)
+    area_type = models.ForeignKey(AreaType, on_delete=models.CASCADE, null=True, related_name="data_types")
     auto_converted = models.BooleanField(
         default=False,
         help_text="True if this has been auto converted from an area with overlapping geometry",
@@ -698,7 +699,7 @@ class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
     gss = models.CharField(max_length=30)
     name = models.CharField(max_length=200)
-    area_type = models.ForeignKey(AreaType, on_delete=models.CASCADE)
+    area_type = models.ForeignKey(AreaType, on_delete=models.CASCADE, related_name="areas")
     geometry = models.TextField(blank=True, null=True)
     polygon = MultiPolygonField(srid=4326, blank=True, null=True)
     point = PointField(srid=4326, blank=True, null=True)
@@ -759,7 +760,7 @@ class AreaOverlap(models.Model):
 
 
 class AreaData(CommonData):
-    area = models.ForeignKey(Area, on_delete=models.CASCADE)
+    area = models.ForeignKey(Area, on_delete=models.CASCADE, related_name="data")
 
 
 class Person(models.Model):
@@ -767,7 +768,7 @@ class Person(models.Model):
     external_id = models.CharField(db_index=True, max_length=20)
     id_type = models.CharField(max_length=30)
     name = models.CharField(max_length=200)
-    area = models.ForeignKey(Area, on_delete=models.CASCADE)
+    area = models.ForeignKey(Area, on_delete=models.CASCADE, related_name="people")
     photo = models.ImageField(null=True, upload_to="person")
     start_date = models.DateField(null=True)
     end_date = models.DateField(null=True)
@@ -785,7 +786,7 @@ class Person(models.Model):
 
 
 class PersonData(CommonData):
-    person = models.ForeignKey(Person, on_delete=models.CASCADE)
+    person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name="data")
 
 
 class Token(models.Model):

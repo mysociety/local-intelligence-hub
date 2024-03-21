@@ -138,16 +138,123 @@ class ExternalDataSourceFilter:
     geography_column_type: auto
 
 
+@strawberry_django.type(models.DataSet)
+class DataSet:
+    name: auto
+    description: auto
+    label: auto
+    data_type: 'DataType'
+    last_update: auto
+    source_label: auto
+    source: auto
+    source_type: auto
+    data_url: auto
+    release_date: auto
+    is_upload: auto
+    is_range: auto
+    featured: auto
+    order: auto
+    category: auto
+    subcategory: auto
+    table: auto
+    # comparators: auto
+    # options: auto
+    default_value: auto
+    is_filterable: auto
+    is_shadable: auto
+    is_public: auto
+    fill_blanks: auto
+    # exclude_countries: auto
+    unit_type: auto
+    unit_distribution: auto
+    areas_available: auto
+    external_data_source: 'ExternalDataSource'
+
+@strawberry_django.filter(models.DataType)
+class DataTypeFilters:
+    id: auto
+    data_set: auto
+    name: auto
+
+@strawberry_django.type(models.DataType, filters=DataTypeFilters)
+class DataType:
+    data_set: 'DataSet'
+    name: auto
+    data_type: auto
+    last_update: auto
+    average: auto
+    maximum: auto
+    minimum: auto
+    label: auto
+    description: auto
+    order: auto
+    area_type: auto
+    auto_converted: auto
+    auto_converted_text: auto
+
+@strawberry_django.type(models.AreaType)
+class AreaType:
+    name: auto
+    code: auto
+    area_type: auto
+    description: auto
+
+    data_types: List[DataType]
+
+
+@strawberry_django.filter(models.CommonData, lookups=True)
+class CommonDataFilter:
+    data_type: DataTypeFilters
+    int: auto
+    date: auto
+    data: auto
+    float: auto
+
+
+@strawberry_django.interface(models.CommonData)
+class CommonData:
+    data_type: 'DataType'
+    data: auto
+    date: auto
+    float: auto
+    int: auto
+    json: Optional[JSON]
+
+
+@strawberry_django.type(models.AreaData, filters=CommonDataFilter)
+class AreaData(CommonData):
+    area: 'Area'
+
+
+@strawberry_django.type(models.PersonData, filters=CommonDataFilter)
+class PersonData(CommonData):
+    person: "Person"
+
+
+@strawberry_django.type(models.Person)
+class Person:
+    person_type: auto
+    external_id: auto
+    id_type: auto
+    name: auto
+    area: 'Area'
+    photo: auto
+    start_date: auto
+    end_date: auto
+    data: List[PersonData]
+
+
 @strawberry_django.type(models.Area)
 class Area:
     mapit_id: auto
     gss: auto
     name: auto
-    area_type: auto
+    area_type: 'AreaType'
     geometry: auto
     overlaps: auto
     # So that we can pass in properties to the geojson Feature objects
     extra_geojson_properties: strawberry.Private[object]
+    people: List[Person]
 
     @strawberry_django.field
     def polygon(
@@ -189,8 +296,8 @@ class GroupedDataCount:
         return None
 
 
-@strawberry_django.type(models.GenericData)
-class GenericData:
+@strawberry_django.type(models.GenericData, filters=CommonDataFilter)
+class GenericData(CommonData):
     last_update: auto
     id: auto = strawberry_django.field(field_name="data")
     name: auto = attr_field()
@@ -202,7 +309,6 @@ class GenericData:
     address: auto
     postcode: auto
     postcode_data: Optional[PostcodesIOResult]
-    json: Optional[JSON]
 
 
 @strawberry.type
