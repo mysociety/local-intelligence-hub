@@ -221,9 +221,9 @@ export default function Page({
     let sourceType = testSourceType;
 
     if (sourceType === 'mailchimp' && data.mailchimp) {
-      variables = { MailChimpSource: { ...data.mailchimp, name: data.name } };
+      variables = { MailChimpSource: { ...data.mailchimp, name: data.name, dataType: data.dataType } };
     } else if (sourceType === 'airtable' && data.airtable) {
-      variables = { AirtableSource: { ...data.airtable, name: data.name } };
+      variables = { AirtableSource: { ...data.airtable, name: data.name, dataType: data.dataType } };
     }
 
     if (!variables) {
@@ -240,8 +240,6 @@ export default function Page({
       {
         loading: "Saving connection...",
         success: (d: FetchResult<CreateSourceMutation>) => {
-
-
           if (!d.errors) {
             if (d.data?.createMailchimpSource) {
 
