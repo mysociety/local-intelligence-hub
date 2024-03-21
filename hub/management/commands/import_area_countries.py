@@ -33,7 +33,7 @@ class Command(BaseCommand):
             name="country",
             defaults={
                 "data_type": "text",
-                "description": "The country that the constituency is in.",
+                "description": "",
                 "release_date": str(date.today()),
                 "label": "Country of the UK",
                 "source_label": "Data from mySociety.",
