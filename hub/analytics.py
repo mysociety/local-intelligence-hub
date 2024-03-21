@@ -1,20 +1,15 @@
-from typing import List, Optional, TypedDict
+from typing import TYPE_CHECKING, List, Optional, TypedDict
 
 from django.db.models import Count, F
 from django.db.models.manager import BaseManager
 
-import pandas as pd
+if TYPE_CHECKING:
+    from hub.models import GenericData
 
 
 class Analytics:
-    get_analytics_queryset: BaseManager
-
-    def get_dataframe(self, qs):
-        json_list = [
-            {**d.postcode_data, **d.json} for d in self.get_analytics_queryset()
-        ]
-        enrichment_df = pd.DataFrame.from_records(json_list)
-        return enrichment_df
+    def get_analytics_queryset(self) -> BaseManager["GenericData"]:
+        raise NotImplementedError("Subclasses must implement this method")
 
     class RegionCount(TypedDict):
         label: str

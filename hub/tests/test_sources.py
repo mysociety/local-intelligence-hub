@@ -100,7 +100,7 @@ class TestAirtableSource(TestCase):
         )
         await self.custom_data_layer.import_all()
         enrichment_df = await sync_to_async(
-            self.custom_data_layer.get_import_dataframe
+            self.custom_data_layer.get_imported_dataframe
         )()
         self.assertGreaterEqual(len(enrichment_df.index), 2)
 
@@ -150,7 +150,7 @@ class TestAirtableSource(TestCase):
             import_data[0].json["mayoral region"],
             ["North East Mayoral Combined Authority"],
         )
-        df = self.custom_data_layer.get_import_dataframe()
+        df = self.custom_data_layer.get_imported_dataframe()
         # assert len(df.index) == import_count
         self.assertIn("council district", list(df.columns.values))
         self.assertIn("mayoral region", list(df.columns.values))
@@ -247,3 +247,23 @@ class TestAirtableSource(TestCase):
         self.assertEqual(
             self.source.get_record_field(records[0], "Postcode"), date + "11111"
         )
+
+    def test_analytics(self):
+        """
+        This is testing the ability to get analytics from the data source
+        """
+        # Add some test data
+        self.create_many_test_records([{"Postcode": "E5 0AA"}, {"Postcode": "E10 6EF"}])
+        # import
+        async_to_sync(self.source.import_all)()
+        # check analytics
+        analytics = self.source.imported_data_count_by_constituency()
+        constituencies_in_report = list(map(lambda a: a["label"], analytics))
+        self.assertGreaterEqual(len(analytics), 2)
+        self.assertIn("Hackney North and Stoke Newington", constituencies_in_report)
+        self.assertIn("Leyton and Wanstead", constituencies_in_report)
+        for a in analytics:
+            if a["label"] == "Hackney North and Stoke Newington":
+                self.assertGreaterEqual(a["count"], 1)
+            elif a["label"] == "Leyton and Wanstead":
+                self.assertGreaterEqual(a["count"], 1)

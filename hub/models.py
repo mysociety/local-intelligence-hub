@@ -29,6 +29,7 @@ from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
+import pandas as pd
 
 import utils as lih_utils
 from hub.analytics import Analytics
@@ -1025,7 +1026,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
             async def create_import_record(record):
                 structured_data = get_update_data(record)
-                print(self.get_record_id(record), "update_data", structured_data)
                 postcode_data: PostcodesIOResult = await loaders["postcodesIO"].load(
                     self.get_record_field(record, self.geography_column)
                 )
@@ -1169,10 +1169,21 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     def get_analytics_queryset(self):
         return self.get_import_data()
 
+    def get_imported_dataframe(self):
+        json_list = [
+            {
+                **(d.postcode_data if d.postcode_data else {}),
+                **(d.json if d.json else {}),
+            }
+            for d in self.get_analytics_queryset()
+        ]
+        enrichment_df = pd.DataFrame.from_records(json_list)
+        return enrichment_df
+
     def data_loader_factory(self):
         async def fetch_enrichment_data(keys: List[self.EnrichmentLookup]) -> list[str]:
             return_data = []
-            enrichment_df = await sync_to_async(self.get_import_dataframe)()
+            enrichment_df = await sync_to_async(self.get_imported_dataframe)()
             for key in keys:
                 try:
                     relevant_member_geography = get(

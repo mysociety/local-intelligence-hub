@@ -42,6 +42,7 @@ class Command(BaseCommand):
                         "type": "WMC",
                     },
                 }
+                geom_str = json.dumps(geom)
             except mapit.NotFoundException:  # pragma: no cover
                 print(f"could not find mapit area for {area['name']}")
                 geom = None
@@ -53,11 +54,10 @@ class Command(BaseCommand):
                 area_type=area_type,
             )
 
-            geom_str = json.dumps(geom)
+            a.geometry = geom_str
             geom = GEOSGeometry(json.dumps(geom["geometry"]))
             if isinstance(geom, Polygon):
                 geom = MultiPolygon([geom])
-            a.geometry = geom_str
             a.polygon = geom
             a.point = a.polygon.centroid
             a.save()
