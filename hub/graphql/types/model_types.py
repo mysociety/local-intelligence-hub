@@ -375,10 +375,10 @@ class Area:
     data: List[AreaData] = filterable_dataloader_resolver(
         filter_type=Optional[CommonDataLoaderFilter]
     )
-    # datum: Optional[AreaData] = filterable_dataloader_resolver(
-    #     filter_type=Optional[CommonDataLoaderFilter],
-    #     single=True,
-    #     field_name="data"
+    datum: Optional[AreaData] = filterable_dataloader_resolver(
+        filter_type=Optional[CommonDataLoaderFilter],
+        single=True,
+        field_name="data"
     # )
     
     # @strawberry_django.field
