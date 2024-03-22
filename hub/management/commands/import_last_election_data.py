@@ -30,6 +30,7 @@ class Command(BaseCommand):
 
     party_translate_down_dict = {
         "Conservative": "con",
+        "Lab": "lab",
         "Labour": "lab",
         "Green": "green",
         "Liberal Democrats": "ld",
@@ -45,6 +46,7 @@ class Command(BaseCommand):
 
     party_translate_up_dict = {
         "lab": "Labour Party",
+        "Lab": "Labour Party",
         "snp": "Scottish National Party",
         "ld": "Liberal Democrats",
         "ind": "independent politician",
@@ -172,7 +174,6 @@ class Command(BaseCommand):
                     cons = election_data["constituency"]["label"]["_value"]
                     electorate = election_data["electorate"]
                     majority = election_data["majority"]
-                    # turnout = election_data["turnout"]
                     result_of_election = election_data["resultOfElection"]
                     a = Area.get_by_name(cons)
 
@@ -245,6 +246,7 @@ class Command(BaseCommand):
             "sf",
             "sdlp",
             "uup",
+            "ind",
             "alliance",
             "all_other_candidates",
             "of_which_other_winner",
@@ -338,6 +340,7 @@ class Command(BaseCommand):
                     "sf",
                     "sdlp",
                     "uup",
+                    "ind",
                     "alliance",
                     "all_other_candidates",
                     "of_which_other_winner",

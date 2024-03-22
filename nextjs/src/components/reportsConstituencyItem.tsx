@@ -137,6 +137,23 @@ const CONSTITUENCY_DATA = gql`
           votes: int
         }
       }
+      lastElection {
+        stats {
+          electorate
+          validVotes
+          majority
+          firstPartyResult {
+            party
+            shade
+            votes
+          }
+          secondPartyResult {
+            party
+            shade
+            votes
+          }
+        }
+      }
     }
   }
 `

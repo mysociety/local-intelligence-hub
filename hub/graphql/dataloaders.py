@@ -201,7 +201,13 @@ class ReverseFKWithFiltersDataLoaderFactory(factories.BaseDjangoModelDataLoaderF
 
     @classmethod
     def get_loader_key(cls, model: Type["DjangoModel"], filters: dict = {}, prefetch: list[str] = [], **kwargs):
-        key = model, json.dumps(strawberry.asdict(filters), skipkeys=True, default=lambda o: '<not serializable>'), json.dumps(prefetch, skipkeys=True)
+        serialised_filter = json.dumps(
+            filters if isinstance(filters, dict) else strawberry.asdict(filters),
+            skipkeys=True,
+            default=lambda o: '<not serializable>'
+        )
+        serialised_prefetch = json.dumps(prefetch, skipkeys=True)
+        key = model, serialised_filter, serialised_prefetch
         return key
 
     @classmethod
@@ -239,11 +245,14 @@ def filterable_dataloader_resolver(
         #     # print("PREFETCHED", root, attr, getattr(root, attr, None))
         #     return getattr(root, attr, None)
         relation: "ManyToOneRel" = root._meta.get_field(field_name=attr)
+        related_model = relation.related_model
+        reverse_path = relation.field.attname
+        print(related_model, filters, reverse_path)
         loader = ReverseFKWithFiltersDataLoaderFactory.get_loader_class(
-            relation.related_model,
+            related_model,
             filters=filters,
             prefetch=prefetch,
-            reverse_path=relation.field.attname
+            reverse_path=reverse_path
         )
         data = await loader(context=info.context).load(root.id)
         return data[0] if single else data

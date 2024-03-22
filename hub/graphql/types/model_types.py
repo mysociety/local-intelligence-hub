@@ -19,7 +19,7 @@ from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.graphql.dataloaders import FieldDataLoaderFactory, FieldReturningListDataLoaderFactory, filterable_dataloader_resolver, ReverseFKWithFiltersDataLoaderFactory
-
+from hub.management.commands.import_mps import party_shades
 
 @strawberry_django.filters.filter(
     procrastinate.contrib.django.models.ProcrastinateJob, lookups=True
@@ -318,7 +318,24 @@ class AreaFilter:
     area_type: auto
     
 @strawberry.type
+class PartyResult:
+    party: str
+    votes: int
+
+    @strawberry_django.field
+    def shade(self, info: Info) -> str:
+        return party_shades.get(self.party, "#DCDCDC")
+
+@strawberry.type
+class ConstituencyElectionResult:
+    date: str
+    stats: 'ConstituencyElectionStats'
+    results: List[PartyResult]
+
+@strawberry.type
 class ConstituencyElectionStats:
+    json: strawberry.Private[dict]
+
     date: str
     other: float
     result: str
@@ -331,17 +348,35 @@ class ConstituencyElectionStats:
     country_name: str
     second_party: str
     invalid_votes: int
+    member_gender: str
+    ons_region_id: str
+    member_surname: str
+    declaration_time: str
+    constituency_name: str
+    constituency_type: str
+    member_first_name: str
 
-@strawberry.type
-class PartyResult:
-    party: str
-    votes: int
+    @strawberry_django.field
+    def first_party_result(self, info: Info) -> PartyResult:
+        return PartyResult(
+            party=self.first_party,
+            votes=next(
+                (party["votes"] for party in self.json["results"]
+                if party["party"] == self.first_party),
+                0
+            )
+        )
 
-@strawberry.type
-class ConstituencyElectionResult:
-    date: str
-    stats: ConstituencyElectionStats
-    results: List[PartyResult]
+    @strawberry_django.field
+    def second_party_result(self, info: Info) -> PartyResult:
+        return PartyResult(
+            party=self.second_party,
+            votes=next(
+                (party["votes"] for party in self.json["results"]
+                if party["party"] == self.second_party),
+                0
+            )
+        )
 
 @strawberry_django.type(models.Area, filters=AreaFilter)
 class Area:
@@ -379,20 +414,34 @@ class Area:
         filter_type=Optional[CommonDataLoaderFilter],
         single=True,
         field_name="data"
-    # )
-    
-    # @strawberry_django.field
-    # async def last_election(self, info: Info) -> Optional[ConstituencyElectionResult]:
-    #     # return self.data.get(data_type__name="last_election")
-    #     # # Create a dataloader for this
-    #     loader = ReverseFKWithFiltersDataLoaderFactory.get_loader_class(
-    #         "hub.AreaData",
-    #         filters=CommonDataLoaderFilter(
-    #             data_type__name="last_election"
-    #         ),
-    #         reverse_path="data"
-    #     )
-    #     return await loader(context=info.context).load(self.id)
+    )
+    @strawberry_django.field
+    async def last_election(self, info: Info) -> Optional[ConstituencyElectionResult]:
+        # return self.data.get(data_type__name="last_election")
+        # # Create a dataloader for this
+        loader = ReverseFKWithFiltersDataLoaderFactory.get_loader_class(
+            "hub.AreaData",
+            filters=CommonDataLoaderFilter(
+                data_type__name="last_election"
+            ),
+            reverse_path="area_id"
+        )
+        res = await loader(context=info.context).load(self.id)
+        if res is None or res[0] is None or res[0].json is None:
+            return None
+        result = res[0].json
+        cer = ConstituencyElectionResult(
+            date=result["date"],
+            stats=ConstituencyElectionStats(
+                **result["stats"],
+                json=result
+            ),
+            results=[
+                PartyResult(party=party["party"], votes=party["votes"])
+                for party in result["results"]
+            ]
+        )
+        return cer
 
     @strawberry_django.field
     def polygon(
@@ -599,6 +648,6 @@ def area_by_gss(gss: str) -> models.Area:
 def dataset_by_name(name: str) -> models.DataSet:
     return models.DataSet.objects\
         .filter(
-            # Exclude private data sets
+            # Exclude strawberry.private data sets
             external_data_source=None
         ).get(name=name)

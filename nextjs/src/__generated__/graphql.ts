@@ -130,6 +130,7 @@ export type Area = {
   geometry?: Maybe<Scalars['String']['output']>;
   gss: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+  lastElection?: Maybe<ConstituencyElectionResult>;
   mapitId: Scalars['String']['output'];
   name: Scalars['String']['output'];
   overlaps: Array<DjangoModelType>;
@@ -142,13 +143,13 @@ export type Area = {
 
 /** Area(id, mapit_id, gss, name, area_type, geometry, polygon, point) */
 export type AreaDataArgs = {
-  filters?: InputMaybe<PersonFilter>;
+  filters?: InputMaybe<CommonDataLoaderFilter>;
 };
 
 
 /** Area(id, mapit_id, gss, name, area_type, geometry, polygon, point) */
 export type AreaDatumArgs = {
-  filters?: InputMaybe<PersonFilter>;
+  filters?: InputMaybe<CommonDataLoaderFilter>;
 };
 
 
@@ -214,6 +215,42 @@ export type CommonData = {
   int?: Maybe<Scalars['Int']['output']>;
   json?: Maybe<Scalars['JSON']['output']>;
   shade?: Maybe<Scalars['String']['output']>;
+};
+
+export type CommonDataLoaderFilter = {
+  dataType_Name: Scalars['String']['input'];
+};
+
+export type ConstituencyElectionResult = {
+  __typename?: 'ConstituencyElectionResult';
+  date: Scalars['String']['output'];
+  results: Array<PartyResult>;
+  stats: ConstituencyElectionStats;
+};
+
+export type ConstituencyElectionStats = {
+  __typename?: 'ConstituencyElectionStats';
+  constituencyName: Scalars['String']['output'];
+  constituencyType: Scalars['String']['output'];
+  countryName: Scalars['String']['output'];
+  countyName: Scalars['String']['output'];
+  date: Scalars['String']['output'];
+  declarationTime: Scalars['String']['output'];
+  electorate: Scalars['Int']['output'];
+  firstParty: Scalars['String']['output'];
+  firstPartyResult: PartyResult;
+  invalidVotes: Scalars['Int']['output'];
+  majority: Scalars['Int']['output'];
+  memberFirstName: Scalars['String']['output'];
+  memberGender: Scalars['String']['output'];
+  memberSurname: Scalars['String']['output'];
+  onsRegionId: Scalars['String']['output'];
+  other: Scalars['Float']['output'];
+  regionName: Scalars['String']['output'];
+  result: Scalars['String']['output'];
+  secondParty: Scalars['String']['output'];
+  secondPartyResult: PartyResult;
+  validVotes: Scalars['Int']['output'];
 };
 
 export type CreateMapReportPayload = MapReport | OperationInfo;
@@ -832,6 +869,13 @@ export type OutputInterface = {
   success: Scalars['Boolean']['output'];
 };
 
+export type PartyResult = {
+  __typename?: 'PartyResult';
+  party: Scalars['String']['output'];
+  shade: Scalars['String']['output'];
+  votes: Scalars['Int']['output'];
+};
+
 /** Person(id, person_type, external_id, id_type, name, area, photo, start_date, end_date) */
 export type Person = {
   __typename?: 'Person';
@@ -851,13 +895,13 @@ export type Person = {
 
 /** Person(id, person_type, external_id, id_type, name, area, photo, start_date, end_date) */
 export type PersonDataArgs = {
-  filters?: InputMaybe<PersonDataloaderFilter>;
+  filters?: InputMaybe<CommonDataLoaderFilter>;
 };
 
 
 /** Person(id, person_type, external_id, id_type, name, area, photo, start_date, end_date) */
 export type PersonDatumArgs = {
-  filters?: InputMaybe<PersonDataloaderFilter>;
+  filters?: InputMaybe<CommonDataLoaderFilter>;
 };
 
 /** PersonData(id, data_type, data, date, float, int, json, person) */
@@ -872,11 +916,6 @@ export type PersonData = CommonData & {
   json?: Maybe<Scalars['JSON']['output']>;
   person: Person;
   shade?: Maybe<Scalars['String']['output']>;
-};
-
-/** PersonData(id, data_type, data, date, float, int, json, person) */
-export type PersonDataloaderFilter = {
-  dataType_Name: Scalars['String']['input'];
 };
 
 /** Person(id, person_type, external_id, id_type, name, area, photo, start_date, end_date) */
@@ -1425,7 +1464,7 @@ export type GetConstituencyDataQueryVariables = Exact<{
 }>;
 
 
-export type GetConstituencyDataQuery = { __typename?: 'Query', constituency?: { __typename?: 'Area', id: string, name: string, mp?: { __typename?: 'Person', id: string, name: string, party?: { __typename?: 'PersonData', shade?: string | null, name: string } | null, last_election_majority?: { __typename?: 'PersonData', votes?: number | null } | null } | null } | null };
+export type GetConstituencyDataQuery = { __typename?: 'Query', constituency?: { __typename?: 'Area', id: string, name: string, mp?: { __typename?: 'Person', id: string, name: string, party?: { __typename?: 'PersonData', shade?: string | null, name: string } | null, last_election_majority?: { __typename?: 'PersonData', votes?: number | null } | null } | null, lastElection?: { __typename?: 'ConstituencyElectionResult', stats: { __typename?: 'ConstituencyElectionStats', electorate: number, validVotes: number, majority: number, firstPartyResult: { __typename?: 'PartyResult', party: string, shade: string, votes: number }, secondPartyResult: { __typename?: 'PartyResult', party: string, shade: string, votes: number } } } | null } | null };
 
 export type UpdateExternalDataSourceMutationVariables = Exact<{
   input: ExternalDataSourceInput;
@@ -1472,7 +1511,7 @@ export const ExternalDataSourceCardDocument = {"kind":"Document","definitions":[
 export const EnrichmentLayersDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"EnrichmentLayers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSources"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"geographyColumn"}},{"kind":"Field","name":{"kind":"Name","value":"geographyColumnType"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}}]}},{"kind":"Field","name":{"kind":"Name","value":"fieldDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]}}]}}]} as unknown as DocumentNode<EnrichmentLayersQuery, EnrichmentLayersQueryVariables>;
 export const GetMemberListDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetMemberList"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSources"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"dataType"},"value":{"kind":"EnumValue","value":"MEMBER"}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"importedDataCount"}}]}}]}}]} as unknown as DocumentNode<GetMemberListQuery, GetMemberListQueryVariables>;
 export const GetSourceGeoJsonDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetSourceGeoJSON"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"externalDataSourceId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"externalDataSourceId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"recordUrlTemplate"}},{"kind":"Field","name":{"kind":"Name","value":"importedDataGeojsonPoints"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"geometry"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"coordinates"}}]}},{"kind":"Field","name":{"kind":"Name","value":"properties"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"lastUpdate"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"phone"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"postcodeData"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"postcode"}}]}},{"kind":"Field","name":{"kind":"Name","value":"json"}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetSourceGeoJsonQuery, GetSourceGeoJsonQueryVariables>;
-export const GetConstituencyDataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetConstituencyData"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"gss"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"constituency"},"name":{"kind":"Name","value":"area"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"gss"},"value":{"kind":"Variable","name":{"kind":"Name","value":"gss"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","alias":{"kind":"Name","value":"mp"},"name":{"kind":"Name","value":"person"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"personType"},"value":{"kind":"StringValue","value":"MP","block":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","alias":{"kind":"Name","value":"party"},"name":{"kind":"Name","value":"datum"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"dataType_Name"},"value":{"kind":"StringValue","value":"party","block":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"name"},"name":{"kind":"Name","value":"data"}},{"kind":"Field","name":{"kind":"Name","value":"shade"}}]}},{"kind":"Field","alias":{"kind":"Name","value":"last_election_majority"},"name":{"kind":"Name","value":"datum"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"dataType_Name"},"value":{"kind":"StringValue","value":"mp_election_majority","block":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"votes"},"name":{"kind":"Name","value":"int"}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetConstituencyDataQuery, GetConstituencyDataQueryVariables>;
+export const GetConstituencyDataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetConstituencyData"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"gss"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"constituency"},"name":{"kind":"Name","value":"area"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"gss"},"value":{"kind":"Variable","name":{"kind":"Name","value":"gss"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","alias":{"kind":"Name","value":"mp"},"name":{"kind":"Name","value":"person"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"personType"},"value":{"kind":"StringValue","value":"MP","block":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","alias":{"kind":"Name","value":"party"},"name":{"kind":"Name","value":"datum"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"dataType_Name"},"value":{"kind":"StringValue","value":"party","block":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"name"},"name":{"kind":"Name","value":"data"}},{"kind":"Field","name":{"kind":"Name","value":"shade"}}]}},{"kind":"Field","alias":{"kind":"Name","value":"last_election_majority"},"name":{"kind":"Name","value":"datum"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"dataType_Name"},"value":{"kind":"StringValue","value":"mp_election_majority","block":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"votes"},"name":{"kind":"Name","value":"int"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"lastElection"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stats"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"electorate"}},{"kind":"Field","name":{"kind":"Name","value":"validVotes"}},{"kind":"Field","name":{"kind":"Name","value":"majority"}},{"kind":"Field","name":{"kind":"Name","value":"firstPartyResult"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"party"}},{"kind":"Field","name":{"kind":"Name","value":"shade"}},{"kind":"Field","name":{"kind":"Name","value":"votes"}}]}},{"kind":"Field","name":{"kind":"Name","value":"secondPartyResult"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"party"}},{"kind":"Field","name":{"kind":"Name","value":"shade"}},{"kind":"Field","name":{"kind":"Name","value":"votes"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetConstituencyDataQuery, GetConstituencyDataQueryVariables>;
 export const UpdateExternalDataSourceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateExternalDataSource"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ExternalDataSourceInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateExternalDataSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"geographyColumn"}},{"kind":"Field","name":{"kind":"Name","value":"geographyColumnType"}},{"kind":"Field","name":{"kind":"Name","value":"postcodeField"}},{"kind":"Field","name":{"kind":"Name","value":"firstNameField"}},{"kind":"Field","name":{"kind":"Name","value":"lastNameField"}},{"kind":"Field","name":{"kind":"Name","value":"emailField"}},{"kind":"Field","name":{"kind":"Name","value":"phoneField"}},{"kind":"Field","name":{"kind":"Name","value":"addressField"}},{"kind":"Field","name":{"kind":"Name","value":"autoUpdateEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"updateMapping"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"sourcePath"}},{"kind":"Field","name":{"kind":"Name","value":"destinationColumn"}}]}}]}}]}}]} as unknown as DocumentNode<UpdateExternalDataSourceMutation, UpdateExternalDataSourceMutationVariables>;
 export const PublicUserDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"PublicUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"publicUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"username"}},{"kind":"Field","name":{"kind":"Name","value":"email"}}]}}]}}]} as unknown as DocumentNode<PublicUserQuery, PublicUserQueryVariables>;
 
