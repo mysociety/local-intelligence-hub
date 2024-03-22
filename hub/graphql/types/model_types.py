@@ -140,7 +140,11 @@ class FieldDefinition:
 class ExternalDataSourceFilter:
     data_type: auto
     geography_column_type: auto
-
+    
+@strawberry.type
+class DataSetOption:
+    title: str = dict_key_field()
+    shader: str = dict_key_field()
 
 @strawberry_django.type(models.DataSet)
 class DataSet:
@@ -153,6 +157,7 @@ class DataSet:
     source_label: auto
     source: auto
     source_type: auto
+    options: List[DataSetOption]
     data_url: auto
     release_date: auto
     is_upload: auto
@@ -226,6 +231,17 @@ class CommonData:
     float: auto
     int: auto
     json: Optional[JSON]
+    
+    @strawberry_django.field
+    def shade(self, info: Info) -> Optional[str]:
+        # data -> dataType -> dataSet -> options -> shader for data
+        # loader = ShaderLoaderFactory.get_loader_class(models.DataSet, field="name")
+        shader_options = self.data_type.data_set.options
+        if shader_options:
+            return next(
+                (option["shader"] for option in shader_options if option["title"] == self.data),
+                None
+            )
 
 
 @strawberry_django.type(models.AreaData, filters=CommonDataFilter)
@@ -273,11 +289,13 @@ class Person:
     end_date: auto
     data: List[PersonData] = filterable_dataloader_resolver(
         filter_type=Optional[PersonDataloaderFilter],
+        # prefetch=["data_type", "data_type__data_set"],
     )
     datum: Optional[PersonData] = filterable_dataloader_resolver(
         filter_type=Optional[PersonDataloaderFilter],
         single=True,
-        field_name="data"
+        field_name="data",
+        # prefetch=["data_type", "data_type__data_set"],
     )
 
 
@@ -301,7 +319,12 @@ class Area:
     # So that we can pass in properties to the geojson Feature objects
     extra_geojson_properties: strawberry.Private[object]
     people: List[Person] = filterable_dataloader_resolver(
-        filter_type=Optional[PersonFilter]
+        filter_type=Optional[PersonFilter],
+        # prefetch=[
+        #     "data",
+        #     "data__data_type",
+        #     "data__data_type__data_set"
+        # ],
     )
 
     @strawberry_django.field
@@ -500,3 +523,15 @@ class MapReport(Report):
     imported_data_count_by_constituency_2024: List[GroupedDataCount] = fn_field()
     imported_data_count_by_council: List[GroupedDataCount] = fn_field()
     imported_data_count_by_ward: List[GroupedDataCount] = fn_field()
+
+@strawberry_django.field()
+def area_by_gss(gss: str) -> models.Area:
+    return models.Area.objects.get(gss=gss)
+
+@strawberry_django.field()
+def dataset_by_name(name: str) -> models.DataSet:
+    return models.DataSet.objects\
+        .filter(
+            # Exclude private data sets
+            external_data_source=None
+        ).get(name=name)

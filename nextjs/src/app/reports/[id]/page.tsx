@@ -1,7 +1,7 @@
 // page.js
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import {
   Card,
@@ -33,7 +33,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { buttonVariants } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -44,6 +43,7 @@ import { MAP_REPORT_FRAGMENT } from "./lib";
 import { ReportContext } from "./context";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import { Provider as JotaiProvider, useAtom } from "jotai";
+import { atomEffect } from 'jotai-effect'
 import { ConstituenciesPanel } from "./ConstituenciesPanel";
 
 type Params = {
@@ -63,6 +63,11 @@ export default function Page({ params: { id } }: { params: Params }) {
 
   const [isConsDataOpen, setConsDataOpen] = useState(false);
   const toggleConsData = () => setConsDataOpen(c => !c);
+
+  atomEffect((get, set) => {
+    const selectedConstituency = get(selectedConstituencyAtom)
+    setConsDataOpen(!!selectedConstituency)
+  })
 
   if (!report.loading && report.called && !report.data?.mapReport) {
     return (

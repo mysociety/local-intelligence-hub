@@ -1,7 +1,7 @@
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
 import Link from 'next/link';
-import ReportsConsItem from "@/components/reportsConstituencyItem";
+import ConstituencyElectionCard from "@/components/reportsConstituencyItem";
 import Image from "next/image";
 
 export default function MarketingLandingPage() {
@@ -53,24 +53,24 @@ export default function MarketingLandingPage() {
         <p className="text-hMd text-meepGray-300 mb-5">Trending Constituencies</p>
 
         <div className="grid grid-cols-3 gap-5">
-          <ReportsConsItem
-            consName="Coventry South"
-            firstIn2019="Labour"
-            secondIn2019="Conservative"
+          <ConstituencyElectionCard
+            name="Coventry South"
+            firstParty2019={{ name: "Labour", shade: "hsl(var(--labour))" }}
+            secondParty2019={{ name: "Conservative", shade: "hsl(var(--conservative))" }}
             mpName="Zarah Sultana"
             mpImgUrl="https://www.localintelligencehub.com/media/person/mp_4786_7qDOwxw.jpeg"
           />
-          <ReportsConsItem
-            consName="Bury North"
-            firstIn2019="Conservative"
-            secondIn2019="Labour"
+          <ConstituencyElectionCard
+            name="Bury North"
+            firstParty2019={{ name: "Conservative", shade: "hsl(var(--conservative))" }}
+            secondParty2019={{ name: "Labour", shade: "hsl(var(--labour))" }}
             mpName="James Daly"
             mpImgUrl="https://www.localintelligencehub.com/media/person/mp_4854_BxRRx9j.jpeg"
           />
-          <ReportsConsItem
-            consName="Camberwell and Peckham"
-            firstIn2019="Labour"
-            secondIn2019="Conservative"
+          <ConstituencyElectionCard
+            name="Camberwell and Peckham"
+            firstParty2019={{ name: "Labour", shade: "hsl(var(--labour))" }}
+            secondParty2019={{ name: "Conservative", shade: "hsl(var(--conservative))" }}
             mpName="Harriet Harman"
             mpImgUrl="https://www.localintelligencehub.com/media/person/mp_150_rgMOVq7.jpeg"
           />

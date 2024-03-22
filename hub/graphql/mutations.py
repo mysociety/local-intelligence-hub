@@ -184,7 +184,3 @@ def import_all(external_data_source_id: str) -> models.ExternalDataSource:
     data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
     data_source.schedule_import_all()
     return data_source
-
-@strawberry_django.mutation(extensions=[IsAuthenticated()])
-def area_by_gss(gss: str) -> models.Area:
-    return models.Area.objects.get(gss=gss)
