@@ -18,7 +18,7 @@ from hub import models
 from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
-from hub.graphql.dataloaders import FieldDataLoaderFactory, FieldReturningListDataLoaderFactory, filterable_dataloader_resolver
+from hub.graphql.dataloaders import FieldDataLoaderFactory, FieldReturningListDataLoaderFactory, filterable_dataloader_resolver, ReverseFKWithFiltersDataLoaderFactory
 
 
 @strawberry_django.filters.filter(
@@ -244,6 +244,17 @@ class CommonData:
             )
 
 
+@strawberry_django.filter(models.AreaData, lookups=True)
+class AreaDataFilter:
+    id: auto
+    data_type: DataTypeFilters
+
+
+@strawberry_django.input(models.CommonData, partial=True)
+class CommonDataLoaderFilter:
+    data_type__name: str
+
+
 @strawberry_django.type(models.AreaData, filters=CommonDataFilter)
 class AreaData(CommonData):
     id: auto
@@ -288,11 +299,11 @@ class Person:
     start_date: auto
     end_date: auto
     data: List[PersonData] = filterable_dataloader_resolver(
-        filter_type=Optional[PersonDataloaderFilter],
+        filter_type=Optional[CommonDataLoaderFilter],
         # prefetch=["data_type", "data_type__data_set"],
     )
     datum: Optional[PersonData] = filterable_dataloader_resolver(
-        filter_type=Optional[PersonDataloaderFilter],
+        filter_type=Optional[CommonDataLoaderFilter],
         single=True,
         field_name="data",
         # prefetch=["data_type", "data_type__data_set"],
@@ -305,7 +316,32 @@ class AreaFilter:
     gss: auto
     name: auto
     area_type: auto
+    
+@strawberry.type
+class ConstituencyElectionStats:
+    date: str
+    other: float
+    result: str
+    majority: int
+    electorate: int
+    county_name: str
+    first_party: str
+    region_name: str
+    valid_votes: int
+    country_name: str
+    second_party: str
+    invalid_votes: int
 
+@strawberry.type
+class PartyResult:
+    party: str
+    votes: int
+
+@strawberry.type
+class ConstituencyElectionResult:
+    date: str
+    stats: ConstituencyElectionStats
+    results: List[PartyResult]
 
 @strawberry_django.type(models.Area, filters=AreaFilter)
 class Area:
@@ -326,6 +362,37 @@ class Area:
         #     "data__data_type__data_set"
         # ],
     )
+    person: Optional[Person] = filterable_dataloader_resolver(
+        filter_type=Optional[PersonFilter],
+        single=True,
+        field_name="people",
+        # prefetch=[
+        #     "data",
+        #     "data__data_type",
+        #     "data__data_type__data_set"
+        # ],
+    )
+    data: List[AreaData] = filterable_dataloader_resolver(
+        filter_type=Optional[CommonDataLoaderFilter]
+    )
+    # datum: Optional[AreaData] = filterable_dataloader_resolver(
+    #     filter_type=Optional[CommonDataLoaderFilter],
+    #     single=True,
+    #     field_name="data"
+    # )
+    
+    # @strawberry_django.field
+    # async def last_election(self, info: Info) -> Optional[ConstituencyElectionResult]:
+    #     # return self.data.get(data_type__name="last_election")
+    #     # # Create a dataloader for this
+    #     loader = ReverseFKWithFiltersDataLoaderFactory.get_loader_class(
+    #         "hub.AreaData",
+    #         filters=CommonDataLoaderFilter(
+    #             data_type__name="last_election"
+    #         ),
+    #         reverse_path="data"
+    #     )
+    #     return await loader(context=info.context).load(self.id)
 
     @strawberry_django.field
     def polygon(

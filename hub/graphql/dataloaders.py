@@ -161,7 +161,13 @@ class PKWithFiltersDataLoaderFactory(factories.BaseDjangoModelDataLoaderFactory)
 
     @classmethod
     def get_loader_key(cls, model: Type["DjangoModel"], filters: dict = {}, prefetch: list[str] = [], **kwargs):
-        key = model, json.dumps(strawberry.asdict(filters), skipkeys=True, default=lambda o: '<not serializable>'), json.dumps(prefetch, skipkeys=True)
+        serialised_filter = json.dumps(
+            filters if isinstance(filters, dict) else strawberry.asdict(filters),
+            skipkeys=True,
+            default=lambda o: '<not serializable>'
+        )
+        serialised_prefetch = json.dumps(prefetch, skipkeys=True)
+        key = model, serialised_filter, serialised_prefetch
         # TypeError: Object of type UnsetType is not JSON serializable
         # either remove or replace UnsetType with None
         return key

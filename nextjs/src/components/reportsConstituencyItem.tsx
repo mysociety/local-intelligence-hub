@@ -32,10 +32,10 @@ export const QueryConstituencyElectionCard = ({ gss }: { gss: string }) => {
   return (
     <ConstituencyElectionCard
       name={data.constituency.name}
-      firstParty2019={data.constituency.mp[0]?.party}
+      firstParty2019={data.constituency.mp?.party}
       // secondParty2019={data.constituency.mp[1]?.party}
-      mpName={data.constituency.mp[0].name || "Unknown"}
-      // mpImgUrl={data.constituency.mp[0].image || ""}
+      mpName={data.constituency.mp?.name || "Unknown"}
+      // mpImgUrl={data.constituency.mp?.image || ""}
     />
   )
 }
@@ -122,7 +122,7 @@ const CONSTITUENCY_DATA = gql`
     constituency: area(gss: $gss) {
       id
       name
-      mp: people(filters:{personType:"MP"}) {
+      mp: person(filters:{personType:"MP"}) {
         id
         name
         party: datum(filters:{
@@ -138,13 +138,5 @@ const CONSTITUENCY_DATA = gql`
         }
       }
     }
-
-    # Party colour schemes
-    # parties: dataSet(name: "party") {
-    #   colourSchemes: options {
-    #     title
-    #     shader
-    #   }
-    # }
   }
 `
