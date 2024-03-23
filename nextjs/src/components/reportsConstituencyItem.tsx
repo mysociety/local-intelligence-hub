@@ -18,6 +18,13 @@ import Image from "next/image";
 import { ReportContext } from "@/app/reports/[id]/context";
 import { useContext } from "react";
 import { layerColour } from "@/app/reports/[id]/lib";
+import { AlertTriangle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 type Party = {
   name: string;
@@ -43,6 +50,10 @@ export const ConstituencyElectionDeepDive = ({ gss }: { gss: string }) => {
     // First party votes
     data.constituency.lastElection?.stats.firstPartyResult.votes || 0,
   )
+
+  const layersInThisConstituency = data.mapReport.layers
+    .map((l, index)=> ({...l, index}))
+    .filter(l => !!l.source.importedDataCountForConstituency?.count)
 
   return (
     <div key={data.constituency.id}>
@@ -127,47 +138,81 @@ export const ConstituencyElectionDeepDive = ({ gss }: { gss: string }) => {
             {/* First and second parties */}
             <article className='relative z-10 space-y-1'>
               <div className='text-xs'>
-                {format(",")(data.mapReport.importedDataCountForConstituency.count)} {pluralize("member", data.mapReport.importedDataCountForConstituency.count)} in your layers
+                {format(",")(data.mapReport.importedDataCountForConstituency.count)} {pluralize("member", data.mapReport.importedDataCountForConstituency.count)} in this report
+                {/* <br />
+                {layersInThisConstituency.map((layer, i, all) => (
+                  <span>
+                    <span
+                      className='italic'
+                      style={{ color: layerColour(layer.index, layer.source.id) }}
+                      key={layer.source.id}
+                    >
+                      {layer.name}
+                    </span>
+                    &nbsp;
+                    <span>
+                      ({layer.source.importedDataCountForConstituency?.count || 0})
+                    </span>
+                    {i < all.length - 1 ? ", " : ""}
+                  </span>
+                ))} */}
               </div>
-              {data.mapReport.layers.length > 1 ? (
+              {layersInThisConstituency.length ? (
                 <div className='flex flex-row'>
-                  {data.mapReport.layers.map((layer, i) => (
-                    <div key={layer.source.id} className='rounded h-4' style={{
-                      width: format(".0%")(
-                        Math.max(
-                          (layer.source.importedDataCountForConstituency?.count || 0) / fptpMaxCount,
-                          0.02
-                        )
-                      ),
-                      backgroundColor: layerColour(i, layer.source.id)
-                    }} />
+                  {layersInThisConstituency.map((layer) => (
+                    <TooltipProvider key={layer.source.id}>
+                      <Tooltip delayDuration={250}>
+                        <TooltipTrigger asChild>
+                          <div className='rounded h-4' style={{
+                            width: format(".0%")(
+                              Math.max(
+                                (layer.source.importedDataCountForConstituency?.count || 0) / fptpMaxCount,
+                                0.04
+                              )
+                            ),
+                            backgroundColor: layerColour(layer.index, layer.source.id)
+                          }} />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            {format(",")(
+                              layer.source.importedDataCountForConstituency?.count || 0
+                            )} {pluralize("member",
+                              layer.source.importedDataCountForConstituency?.count || 0
+                            )} in {layer.name}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   ))}
                 </div>
               ) : (
-                <div className='rounded w-full h-4 bg-brandBlue' style={{
-                  width: format(".0%")(
-                    Math.max(
-                      data.mapReport.importedDataCountForConstituency.count / fptpMaxCount,
-                      0.02
-                    )
-                  )
-                }} />
+                <div>
+                  No member data in this constituency
+                </div>
               )}
             </article>
             {data.constituency.lastElection && (
-              <article className='relative z-10 space-y-1'>
-                <div className='text-xs'>
-                  {format(",")(data.constituency.lastElection.stats.majority)} winning margin in {getYear(data.constituency.lastElection.stats.date)}
-                </div>
-                <div className='rounded w-full h-4 bg-meepGray-200' style={{
-                  width: format(".0%")(
-                    Math.max(
-                      data.constituency.lastElection.stats.majority / fptpMaxCount,
-                      0.02
+              <>
+                <article className='relative z-10 space-y-1'>
+                  <div className='text-xs'>
+                    {format(",")(data.constituency.lastElection.stats.majority)} winning margin in {getYear(data.constituency.lastElection.stats.date)}
+                  </div>
+                  <div className='rounded w-full h-4 bg-meepGray-200' style={{
+                    width: format(".0%")(
+                      Math.max(
+                        data.constituency.lastElection.stats.majority / fptpMaxCount,
+                        0.04
+                      )
                     )
-                  )
-                }} />
-              </article>
+                  }} />
+                </article>
+                {data.mapReport.importedDataCountForConstituency?.count > 0.75 * data.constituency.lastElection.stats.majority && (
+                  <div className='uppercase font-IBMPlexMono bg-meepGray-700 rounded flex flex-row items-center justify-center text-xs py-2 px-2 gap-1'>
+                    <AlertTriangle className='w-4 h-4' /> High impact constituency
+                  </div>
+                )}
+              </>
             )}
           </div>
         </section>
