@@ -1,7 +1,7 @@
 import { ConstituencyStatsOverviewQuery, ConstituencyStatsOverviewQueryVariables } from "@/__generated__/graphql"
 import { ReportContext } from "@/app/reports/[id]/context"
 import { gql, useQuery } from "@apollo/client"
-import { useContext } from "react"
+import { useContext, useState } from "react"
 import { MemberElectoralInsights, Person } from "./reportsConstituencyItem"
 import { getYear } from "date-fns"
 import { useAtom } from "jotai"
@@ -9,14 +9,17 @@ import { MAX_CONSTITUENCY_ZOOM, selectedConstituencyAtom } from "./report/Report
 import { LoadingIcon } from "./ui/loadingIcon"
 import { useLoadedMap } from "@/app/reports/[id]/lib"
 import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { twMerge } from "tailwind-merge"
+import { setConfig } from "next/dist/shared/lib/runtime-config.external"
 
 export function TopConstituencies() {
   const sortOptions = {
-    totalCount: "Total Count",
-    populationDensity: "Population Density",
+    totalCount: "Total Membership",
     electoralPower: "Electoral Power",
+    populationDensity: "Population Density",
   }
-  const sortBy: keyof typeof sortOptions = "totalCount"
+  const [sortBy, setSortBy] = useState<keyof typeof sortOptions>("totalCount")
 
   const { id } = useContext(ReportContext)
   const constituencyAnalytics = useQuery<ConstituencyStatsOverviewQuery, ConstituencyStatsOverviewQueryVariables>(CONSTITUENCY_STATS_OVERVIEW, {
@@ -27,6 +30,19 @@ export function TopConstituencies() {
   const [selectedConstituency, setSelectedConstituency] = useAtom(selectedConstituencyAtom)
   const [tab, setTab] = useAtom(constituencyPanelTabAtom)
   const map = useLoadedMap()
+
+  const constituencies = constituencyAnalytics.data?.mapReport.importedDataCountByConstituency
+    .filter(constituency => constituency.gssArea)
+    .sort((a, b) => {
+      if (sortBy === "totalCount") {
+        return b.count - a.count
+      } else if (sortBy === "populationDensity") {
+        return (b.count / (b?.gssArea?.lastElection?.stats?.electorate || 0)) - (a.count / (a?.gssArea?.lastElection?.stats?.electorate || 0))
+      } else if (sortBy === "electoralPower") {
+        return (b.count / (b?.gssArea?.lastElection?.stats?.majority || 0)) - (a.count / (a?.gssArea?.lastElection?.stats?.majority || 0))
+      }
+      return 0
+    })
   
   if (constituencyAnalytics.loading && !constituencyAnalytics.data) return <div className='flex flex-row items-center justify-center p-4 gap-2'>
     <LoadingIcon size={"20px"} className='inline-block' />
@@ -37,12 +53,28 @@ export function TopConstituencies() {
     // List of them here
     <div className='grid grid-cols-1 gap-4'>
       <div className='text-meepGray-400 text-xs'>
-        Sorted by {sortOptions[sortBy]}
-        {/* TODO: little dropdown */}
+        <Select
+          value={sortBy}
+          onValueChange={(value) => setSortBy(value as keyof typeof sortOptions)}
+        >
+          <SelectTrigger
+            className={twMerge(
+              "h-7 w-full max-w-[200px] text-xs [&_svg]:h-4 [&_svg]:w-4"
+            )}
+          >
+            <span className="text-muted-foreground">Sort by: </span>
+            <SelectValue placeholder="Select style" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(sortOptions).map(([value, label]) => (
+              <SelectItem key={value} value={value} className="text-xs">
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      {constituencyAnalytics.data?.mapReport.importedDataCountByConstituency
-      .filter(constituency => constituency.gssArea)
-      .map((constituency) => (
+      {constituencies?.map((constituency) => (
         <div onClick={() => {
           setSelectedConstituency(constituency.gss!)
           setTab("selected")
@@ -145,6 +177,7 @@ const CONSTITUENCY_STATS_OVERVIEW = gql`
             stats {
               date
               majority
+              electorate
               firstPartyResult {
                 party
                 shade
