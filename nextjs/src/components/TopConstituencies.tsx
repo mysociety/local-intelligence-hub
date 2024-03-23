@@ -6,6 +6,7 @@ import { MemberElectoralInsights, Person } from "./reportsConstituencyItem"
 import { getYear } from "date-fns"
 import { useAtom } from "jotai"
 import { selectedConstituencyAtom } from "./report/ReportMap"
+import { LoadingIcon } from "./ui/loadingIcon"
 
 export function TopConstituencies() {
   const sortOptions = {
@@ -23,6 +24,11 @@ export function TopConstituencies() {
   })
   const [selectedConstituency, setSelectedConstituency] = useAtom(selectedConstituencyAtom)
   const [tab, setTab] = useAtom(selectedConstituencyAtom)
+  
+  if (constituencyAnalytics.loading && !constituencyAnalytics.data) return <div className='flex flex-row items-center justify-center p-4 gap-2'>
+    <LoadingIcon size={"20px"} className='inline-block' />
+    <span>Loading constituencies...</span>
+  </div>
 
   return (
     // List of them here
