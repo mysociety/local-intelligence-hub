@@ -1,7 +1,6 @@
 import { selectedConstituencyAtom } from "@/components/report/ReportMap"
 import { useAtom } from "jotai"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import  { QueryConstituencyElectionCard } from "@/components/reportsConstituencyItem";
 import {
   Card,
   CardContent,
@@ -9,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { gql, useQuery } from "@apollo/client";
+import { ConstituencyElectionDeepDive } from "@/components/reportsConstituencyItem";
 
 export function ConstituenciesPanel () {
   const [
@@ -55,7 +54,7 @@ export function ConstituenciesPanel () {
           {!!selectedConstituencyId && (
             // <TabsContent value="selected-cons-1">
               // {/* Selected constituency */}
-              <QueryConstituencyElectionCard gss={selectedConstituencyId} />
+              <ConstituencyElectionDeepDive gss={selectedConstituencyId} />
             // </TabsContent>
           )}
         {/* </Tabs> */}

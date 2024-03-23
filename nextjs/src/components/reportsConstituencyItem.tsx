@@ -8,6 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { gql, useQuery } from "@apollo/client";
+import { getYear } from "date-fns";
+import { format } from 'd3-format'
 
 import Image from "next/image";
 
@@ -20,7 +22,7 @@ type DeepNullable<T> = {
   [K in keyof T]: DeepNullable<T[K]> | null;
 };
 
-export const QueryConstituencyElectionCard = ({ gss }: { gss: string }) => {
+export const ConstituencyElectionDeepDive = ({ gss }: { gss: string }) => {
 
   const { data, loading, error } = useQuery<GetConstituencyDataQuery, GetConstituencyDataQueryVariables>(CONSTITUENCY_DATA, {
     variables: { gss },
@@ -30,17 +32,104 @@ export const QueryConstituencyElectionCard = ({ gss }: { gss: string }) => {
   if (!data?.constituency) return <div>Loading constituency...</div>
 
   return (
-    <ConstituencyElectionCard
-      name={data.constituency.name}
-      firstParty2019={data.constituency.mp?.party}
-      // secondParty2019={data.constituency.mp[1]?.party}
-      mpName={data.constituency.mp?.name || "Unknown"}
-      // mpImgUrl={data.constituency.mp?.image || ""}
-    />
+    <div key={data.constituency.id}>
+      <h1 className='font-PPRightGrotesk text-hLgPP'>{data.constituency.name}</h1>
+      <hr className='my-4' />
+      {data.constituency.mp && (
+        <section className='mb-8'>
+          <div className='uppercase font-IBMPlexMono text-xs text-meepGray-400 mb-1'>
+            MP
+          </div>
+          <Person
+            img={data.constituency.mp.photo?.url}
+            name={data.constituency.mp.name}
+            subtitle={data.constituency.mp.party?.name}
+          />
+        </section>
+      )}
+      {!!data.constituency.lastElection && (
+        <section className='font-IBMPlexMono space-y-6'>
+          <section>
+            {/* First and second parties */}
+            <article className='relative z-10 space-y-1'>
+              <div className='uppercase text-xs text-meepGray-400'>
+                1st in {getYear(data.constituency.lastElection.stats.date)}
+              </div>
+              <div>{data.constituency.lastElection.stats.firstPartyResult.party}</div>
+              <div className='rounded w-full h-4' style={{ backgroundColor: data.constituency.lastElection.stats.firstPartyResult.shade }} />
+            </article>
+            <article className='relative z-10 pt-6'>
+              <div
+                aria-roledescription="Margin between first and second party votes"
+                className='bg-meepGray-700 border-l border-r border-meepGray-400 absolute right-0 top-0 h-full z-0'
+                style={{
+                  width: format(".0%")(
+                    1 - (
+                      data.constituency.lastElection.stats.secondPartyResult.votes /
+                      data.constituency.lastElection.stats.firstPartyResult.votes
+                    )
+                  )
+                }}
+              />
+              <div className='relative z-10 space-y-1'>
+                <div className='uppercase text-xs text-meepGray-400'>
+                  2nd in {getYear(data.constituency.lastElection.stats.date)}
+                </div>
+                <div>{data.constituency.lastElection.stats.secondPartyResult.party}</div>
+                <div className='rounded h-4' style={{
+                  backgroundColor: data.constituency.lastElection.stats.secondPartyResult.shade,
+                  width: format(".0%")(
+                    data.constituency.lastElection.stats.secondPartyResult.votes /
+                    data.constituency.lastElection.stats.firstPartyResult.votes
+                  )
+                }} />
+              </div>
+            </article>
+          </section>
+          <section className='grid grid-cols-2 gap-6'>
+            {/* Voting stats */}
+            <article>
+              <div className='uppercase text-xs text-meepGray-400'>Majority</div>
+              <div>{format(",")(data.constituency.lastElection.stats.majority)}</div>
+            </article>
+            <article>
+              <div className='uppercase text-xs text-meepGray-400'>Swing to lose</div>
+              <div>{format(".2%")(data.constituency.lastElection.stats.majority / data.constituency.lastElection.stats.electorate)}</div>
+            </article>
+            <article>
+              <div className='uppercase text-xs text-meepGray-400'>Electorate</div>
+              <div>{format(",")(data.constituency.lastElection.stats.electorate)}</div>
+            </article>
+            <article>
+              <div className='uppercase text-xs text-meepGray-400'>Turnout</div>
+              <div>{format(".2%")(data.constituency.lastElection.stats.validVotes / data.constituency.lastElection.stats.electorate)}</div>
+            </article>
+          </section>
+        </section>
+      )}
+    </div>
   )
 }
 
-const ConstituencyElectionCard = ({
+export function Person ({ img, name, subtitle }: { img?: string, name: string, subtitle?: string }) {
+  return (
+    <div className='flex flex-row items-center gap-2'>
+      {!!img && (
+        // <Image src={img} alt={name} width={41} height={41} className='rounded-full' />
+        <img
+          src={new URL(img, process.env.NEXT_PUBLIC_BACKEND_BASE_URL).toString()}
+          alt={name} width={41} height={41} className='rounded-full'
+        />
+      )}
+      <div className='font-IBMPlexMono -space-y-1'>
+        <div>{name}</div>
+        {!!subtitle && <div className='text-meepGray-400'>{subtitle}</div>}
+      </div>
+    </div>
+  )
+}
+
+export const ConstituencyElectionCard = ({
   name, firstParty2019, secondParty2019, mpName, mpImgUrl
 }: {
   name: string;
@@ -114,8 +203,6 @@ const ConstituencyElectionCard = ({
   )
 };
 
-export default ConstituencyElectionCard;
-
 
 const CONSTITUENCY_DATA = gql`
   query GetConstituencyData($gss: String!) {
@@ -125,20 +212,19 @@ const CONSTITUENCY_DATA = gql`
       mp: person(filters:{personType:"MP"}) {
         id
         name
+        photo {
+          url
+        }
         party: datum(filters:{
           dataType_Name: "party"
         }) {
           name: data
           shade
         }
-        last_election_majority: datum(filters:{
-          dataType_Name: "mp_election_majority"
-        }) {
-          votes: int
-        }
       }
       lastElection {
         stats {
+          date
           electorate
           validVotes
           majority

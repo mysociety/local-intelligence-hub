@@ -30,7 +30,6 @@ class Command(BaseCommand):
 
     party_translate_down_dict = {
         "Conservative": "con",
-        "Lab": "lab",
         "Labour": "lab",
         "Green": "green",
         "Liberal Democrats": "ld",
@@ -46,7 +45,6 @@ class Command(BaseCommand):
 
     party_translate_up_dict = {
         "lab": "Labour Party",
-        "Lab": "Labour Party",
         "snp": "Scottish National Party",
         "ld": "Liberal Democrats",
         "ind": "independent politician",
@@ -252,6 +250,9 @@ class Command(BaseCommand):
             "of_which_other_winner",
         ]
         df[int_cols] = df[int_cols].astype(int)
+        df.first_party = df.first_party.apply(
+            lambda party: self.party_translate_up_dict.get(party.lower(), party)
+        )
         df.second_party = df.second_party.apply(
             lambda party: self.party_translate_up_dict.get(party.lower(), party)
         )

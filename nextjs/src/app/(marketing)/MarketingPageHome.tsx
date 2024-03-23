@@ -1,7 +1,7 @@
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
 import Link from 'next/link';
-import ConstituencyElectionCard from "@/components/reportsConstituencyItem";
+import { ConstituencyElectionCard } from "@/components/reportsConstituencyItem";
 import Image from "next/image";
 
 export default function MarketingLandingPage() {
