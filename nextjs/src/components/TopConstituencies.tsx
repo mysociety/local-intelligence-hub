@@ -7,6 +7,8 @@ import { getYear } from "date-fns"
 import { useAtom } from "jotai"
 import { selectedConstituencyAtom } from "./report/ReportMap"
 import { LoadingIcon } from "./ui/loadingIcon"
+import { useLoadedMap } from "@/app/reports/[id]/lib"
+import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel"
 
 export function TopConstituencies() {
   const sortOptions = {
@@ -23,7 +25,8 @@ export function TopConstituencies() {
     }
   })
   const [selectedConstituency, setSelectedConstituency] = useAtom(selectedConstituencyAtom)
-  const [tab, setTab] = useAtom(selectedConstituencyAtom)
+  const [tab, setTab] = useAtom(constituencyPanelTabAtom)
+  const map = useLoadedMap()
   
   if (constituencyAnalytics.loading && !constituencyAnalytics.data) return <div className='flex flex-row items-center justify-center p-4 gap-2'>
     <LoadingIcon size={"20px"} className='inline-block' />
@@ -43,6 +46,7 @@ export function TopConstituencies() {
         <div onClick={() => {
           setSelectedConstituency(constituency.gss!)
           setTab("selected")
+          map.loadedMap?.fitBounds(constituency.gssArea?.fitBounds)
         }} className='cursor-pointer bg-meepGray-700 group hover:bg-meepGray-600 rounded-lg'>
           <ConstituencySummaryCard
             key={constituency.gss}
@@ -122,14 +126,7 @@ const CONSTITUENCY_STATS_OVERVIEW = gql`
         count
         gssArea {
           name
-          point {
-            id
-            type
-            geometry {
-              type
-              coordinates
-            }
-          }
+          fitBounds
           mp: person(filters:{personType:"MP"}) {
             id
             name

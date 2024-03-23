@@ -744,6 +744,17 @@ class Area(models.Model):
 
         return area
 
+    def fit_bounds(self):
+        '''
+        Useful for mapbox's fitBounds method
+        '''
+        if self.polygon:
+            bounds_tuple = self.polygon.extent
+            return [
+                [bounds_tuple[0], bounds_tuple[1]],
+                [bounds_tuple[2], bounds_tuple[3]],
+            ]
+
     class Meta:
         unique_together = ["gss", "area_type"]
 

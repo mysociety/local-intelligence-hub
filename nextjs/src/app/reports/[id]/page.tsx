@@ -44,6 +44,7 @@ import { ReportContext } from "./context";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import { Provider as JotaiProvider, atom, useAtom } from "jotai";
 import { ConstituenciesPanel } from "./ConstituenciesPanel";
+import { MapProvider } from "react-map-gl";
 import { twMerge } from "tailwind-merge";
 
 type Params = {
@@ -58,16 +59,18 @@ export default function Page({ params: { id } }: { params: Params }) {
   });
 
   return (
-    <JotaiProvider key={id}>
-      <ReportContext.Provider value={{ 
-        id,
-        report,
-        updateReport: updateMutation,
-        deleteReport: del
-      }}>
-        <ReportPage />
-      </ReportContext.Provider>
-    </JotaiProvider>
+    <MapProvider>
+      <JotaiProvider key={id}>
+        <ReportContext.Provider value={{ 
+          id,
+          report,
+          updateReport: updateMutation,
+          deleteReport: del
+        }}>
+          <ReportPage />
+        </ReportContext.Provider>
+      </JotaiProvider>
+    </MapProvider>
   )
 
   function refreshStatistics () {
@@ -216,27 +219,30 @@ export function ReportPage() {
                     Loading...
                   </CardTitle>
                 ) : (
-                  <CardTitle
-                    contentEditable id="nickname"
-                    className="text-hMd grow font-IBMPlexSansMedium"
-                    onBlur={d => {
-                      updateReport({
-                        name: document.getElementById("nickname")?.textContent?.trim()
-                      })
-                    }}
-                  >
-                    {report?.data?.mapReport.name}
-                  </CardTitle>
+                  <>
+                    <CardTitle
+                      contentEditable id="nickname"
+                      className="text-hMd grow font-IBMPlexSansMedium"
+                      onBlur={d => {
+                        updateReport({
+                          name: document.getElementById("nickname")?.textContent?.trim()
+                        })
+                      }}
+                    >
+                      {report?.data?.mapReport.name}
+                    </CardTitle>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger>
+                        <MoreVertical className='w-3' />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent side="right" align="start">
+                        <DropdownMenuItem onClick={() => setDeleteOpen(true)}>Delete</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
                 )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger>
-                    <MoreVertical className='w-3' />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent side="right" align="start">
-                    <DropdownMenuItem onClick={() => setDeleteOpen(true)}>Delete</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </CardHeader>
+            {report?.data?.mapReport && (
               <CardContent className='grid grid-cols-1 gap-2'>
                 {toggles.map(({ icon: Icon, label, enabled, toggle }) => (
                   <div
@@ -256,6 +262,7 @@ export function ReportPage() {
                   </div>
                 ))}
               </CardContent>
+            )}
             </Card>
             {/* Data config card */}
             {report?.data?.mapReport && isDataConfigOpen && (

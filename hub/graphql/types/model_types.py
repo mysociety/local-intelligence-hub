@@ -414,6 +414,7 @@ class Area:
         single=True,
         field_name="data"
     )
+    fit_bounds: Optional[JSON] = fn_field()
     @strawberry_django.field
     async def last_election(self, info: Info) -> Optional[ConstituencyElectionResult]:
         # return self.data.get(data_type__name="last_election")
