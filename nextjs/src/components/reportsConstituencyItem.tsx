@@ -25,6 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { LoadingIcon } from "./ui/loadingIcon";
 
 type Party = {
   name: string;
@@ -42,7 +43,10 @@ export const ConstituencyElectionDeepDive = ({ gss }: { gss: string }) => {
   })
   
   if (!loading && error) return <div>Error loading constituency {gss}</div>
-  if (!data?.constituency || !data.mapReport) return <div>Loading constituency...</div>
+  if (!data?.constituency || !data.mapReport) return <div className='flex flex-row items-center justify-center p-4 gap-2'>
+    <LoadingIcon size={"20px"} className='inline-block' />
+    <span>Loading constituency...</span>
+  </div>
 
   const layersInThisConstituency = data.mapReport.layers
     .map((l, index)=> ({...l, index}))

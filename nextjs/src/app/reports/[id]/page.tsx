@@ -1,7 +1,7 @@
 // page.js
 "use client";
 
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import {
   Card,
@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { BarChart3, Layers, MoreVertical } from "lucide-react"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { Toggle } from "@/components/ui/toggle"
 import DataConfigPanel from "@/components/dataConfig";
 import { FetchResult, gql, useApolloClient, useQuery } from "@apollo/client";
 import { toast } from "sonner";
@@ -42,8 +42,9 @@ import { MAP_REPORT_LAYER_ANALYTICS, ReportMap, selectedConstituencyAtom } from 
 import { MAP_REPORT_FRAGMENT } from "./lib";
 import { ReportContext } from "./context";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
-import { Provider as JotaiProvider, useAtom } from "jotai";
+import { Provider as JotaiProvider, atom, useAtom } from "jotai";
 import { ConstituenciesPanel } from "./ConstituenciesPanel";
+import { twMerge } from "tailwind-merge";
 
 type Params = {
   id: string
@@ -137,12 +138,24 @@ export default function Page({ params: { id } }: { params: Params }) {
   }
 }
 
+export const isDataConfigOpenAtom = atom(false)
+export const isConstituencyPanelOpenAtom = atom(false)
+
 export function ReportPage() {
   const { id, report, updateReport, deleteReport } = useContext(ReportContext);
-  const [isDataConfigOpen, setDataConfigOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const toggleDataConfig = () => setDataConfigOpen(!isDataConfigOpen);
+  const [isDataConfigOpen, setDataConfigOpen] = useAtom(isDataConfigOpenAtom);
+  const toggleDataConfig = () => setDataConfigOpen(b => !b);
+  const [isConstituencyPanelOpen, setConstituencyPanelOpen] = useAtom(isConstituencyPanelOpenAtom);
+  const toggleConsData = () => setConstituencyPanelOpen(b => !b);
   const [selectedConstituency, setSelectedConstituency] = useAtom(selectedConstituencyAtom);
+
+  useEffect(() => {
+    // @ts-ignore
+    if (!report?.data?.mapReport?.layers?.length) {
+      return setConstituencyPanelOpen(false)
+    }
+  }, [selectedConstituency, report])
 
   if (!report?.loading && report?.called && !report?.data?.mapReport) {
     return (
@@ -165,6 +178,21 @@ export function ReportPage() {
     )
   }
 
+  const toggles = [
+    {
+      icon: Layers,
+      label: "Map layers",
+      enabled: isDataConfigOpen,
+      toggle: toggleDataConfig
+    },
+    {
+      icon: BarChart3,
+      label: "Constituency data",
+      enabled: isConstituencyPanelOpen,
+      toggle: toggleConsData
+    }
+  ]
+
   return (
     <>
       <main className="absolute w-full h-full flex flex-row pointer-events-none">
@@ -181,7 +209,7 @@ export function ReportPage() {
         {/* Layer card */}
         <aside className="absolute top-5 left-5 right-0 w-0 pointer-events-auto">
           <div className="flex flex-col items-start gap-4">
-            <Card className="w-[200px] p-4 bg-white border-1 border-meepGray-700 text-meepGray-800">
+            <Card className="w-[200px] p-3 bg-white border-1 border-meepGray-700 text-meepGray-800">
               <CardHeader className="flex flex-row items-center mb-4">
                 {report?.loading && !report?.data?.mapReport ? (
                   <CardTitle className="text-hMd grow font-IBMPlexSansMedium">
@@ -205,25 +233,28 @@ export function ReportPage() {
                     <MoreVertical className='w-3' />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side="right" align="start">
-                    <DropdownMenuLabel>Report Settings</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>Share</DropdownMenuItem>
-                    <DropdownMenuItem>Invite</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setDeleteOpen(true)}>Delete</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </CardHeader>
-              <CardContent>
-                <ToggleGroup type="multiple" variant="outline">
-                  {/* @ts-ignore */}
-                  <ToggleGroupItem value="a" type="outline" className="p-3 flex gap-2" onClick={toggleDataConfig}>
-                    <Layers className="w-4" /> Data Configuration
-                  </ToggleGroupItem>
-                  {/* @ts-ignore */}
-                  {/* <ToggleGroupItem value="b" type="outline" className="p-3 flex gap-2" onClick={toggleConsData}>
-                    <BarChart3 className="w-4" /> Constituency Data
-                  </ToggleGroupItem> */}
-                </ToggleGroup>
+              <CardContent className='grid grid-cols-1 gap-2'>
+                {toggles.map(({ icon: Icon, label, enabled, toggle }) => (
+                  <div
+                    key={label}
+                    className='hover:bg-meepGray-100 px-0 flex flex-row gap-2 items-center overflow-hidden text-nowrap text-ellipsis cursor-pointer'
+                    onClick={toggle}>
+                    <div className={twMerge(
+                      'relative rounded inline-block h-9 w-9',
+                      enabled ? "bg-meepGray-800" : "bg-meepGray-100"
+                    )}>
+                      <Icon className={twMerge(
+                        "w-4 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2", 
+                        enabled && "text-white"
+                      )} />
+                    </div>
+                    {label}
+                  </div>
+                ))}
               </CardContent>
             </Card>
             {/* Data config card */}
@@ -232,8 +263,8 @@ export function ReportPage() {
             )}
           </div>
         </aside>
-        {!!selectedConstituency && (
-          <aside className="absolute top-5 right-5 w-[330px] pointer-events-auto h-full">
+        {report?.data?.mapReport && isConstituencyPanelOpen && (
+          <aside className="absolute top-0 right-0 p-5 w-[400px] h-full">
             <ConstituenciesPanel />
           </aside>
         )}

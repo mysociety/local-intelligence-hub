@@ -12,6 +12,8 @@ import { atomWithHash } from "jotai-location"
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import { z } from "zod";
 import { layerColour } from "@/app/reports/[id]/lib";
+import { isConstituencyPanelOpenAtom } from "@/app/reports/[id]/page";
+import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel";
 
 const MAX_REGION_ZOOM = 8
 const MAX_CONSTITUENCY_ZOOM = 11.5
@@ -215,6 +217,9 @@ export function ReportMap () {
 
   const [selectedSourceRecord, setSelectedSourceRecord] = useAtom(selectedSourceRecordAtom)
   const [selectedConstituency, setSelectedConstituency] = useAtom(selectedConstituencyAtom)
+  const [tab, setTab] = useAtom(constituencyPanelTabAtom)
+  // const isConstituencyPanelOpenAtom
+  const [isConstituencyPanelOpen, setIsConstituencyPanelOpen] = useAtom(isConstituencyPanelOpenAtom)
 
   useEffect(function selectConstituency() {
     mapboxRef.current?.on('click', `${TILESETS.constituencies.mapboxSourceId}-fill`, event => {
@@ -223,7 +228,11 @@ export function ReportMap () {
         if (feature) {
           if (feature.source === TILESETS.constituencies.mapboxSourceId) {
             const id = feature.properties?.[TILESETS.constituencies.promoteId]
-            setSelectedConstituency(id)
+            if (id) {
+              setSelectedConstituency(id)
+              setIsConstituencyPanelOpen(true)
+              setTab("selected")
+            }
           }
         }
       } catch (e) {

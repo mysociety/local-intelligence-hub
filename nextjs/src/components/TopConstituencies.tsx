@@ -4,6 +4,8 @@ import { gql, useQuery } from "@apollo/client"
 import { useContext } from "react"
 import { MemberElectoralInsights, Person } from "./reportsConstituencyItem"
 import { getYear } from "date-fns"
+import { useAtom } from "jotai"
+import { selectedConstituencyAtom } from "./report/ReportMap"
 
 export function TopConstituencies() {
   const sortOptions = {
@@ -19,6 +21,8 @@ export function TopConstituencies() {
       reportID: id
     }
   })
+  const [selectedConstituency, setSelectedConstituency] = useAtom(selectedConstituencyAtom)
+  const [tab, setTab] = useAtom(selectedConstituencyAtom)
 
   return (
     // List of them here
@@ -30,11 +34,16 @@ export function TopConstituencies() {
       {constituencyAnalytics.data?.mapReport.importedDataCountByConstituency
       .filter(constituency => constituency.gssArea)
       .map((constituency) => (
-        <ConstituencySummaryCard
-          key={constituency.gss}
-          constituency={constituency.gssArea!}
-          count={constituency.count}
-        />
+        <div onClick={() => {
+          setSelectedConstituency(constituency.gss!)
+          setTab("selected")
+        }} className='cursor-pointer bg-meepGray-700 hover:bg-meepGray-600 rounded-lg'>
+          <ConstituencySummaryCard
+            key={constituency.gss}
+            constituency={constituency.gssArea!}
+            count={constituency.count}
+          />
+        </div>
       ))}
     </div>
   )
@@ -47,7 +56,7 @@ export function ConstituencySummaryCard ({ count, constituency }: {
   count: number
 }) {
   return (
-    <div className='bg-meepGray-700 p-4 rounded-lg'>
+    <div className='p-3 '>
       <h2 className='font-PPRightGrotesk text-hLgPP mb-3'>{constituency.name}</h2>
       {!!constituency.lastElection?.stats && (
         <div className='flex justify-between'>
