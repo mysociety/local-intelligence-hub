@@ -172,6 +172,7 @@ class Command(BaseCommand):
                     cons = election_data["constituency"]["label"]["_value"]
                     electorate = election_data["electorate"]
                     majority = election_data["majority"]
+                    valid_votes = election_data["turnout"]
                     result_of_election = election_data["resultOfElection"]
                     a = Area.get_by_name(cons)
 
@@ -180,6 +181,7 @@ class Command(BaseCommand):
                         "electorate": electorate,
                         "majority": majority,
                         "result": result_of_election,
+                        "valid_votes": valid_votes,
                         # "uri": uri,
                         # "label": election_data["election"]["label"]["_value"],
                         # "Constituency": a.gss,
