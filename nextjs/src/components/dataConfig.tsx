@@ -203,51 +203,6 @@ export default function DataConfigPanel () {
 
 export const MAP_REPORT_LAYERS_SUMMARY = gql`
   fragment MapReportLayersSummary on MapReport {
-    importedDataCountByRegion {
-      label
-      areaId
-      count
-      gssArea {
-        point {
-          id
-          type
-          geometry {
-            type
-            coordinates
-          }
-        }
-      }
-    }
-    importedDataCountByConstituency {
-      label
-      areaId
-      count
-      gssArea {
-        point {
-          id
-          type
-          geometry {
-            type
-            coordinates
-          }
-        }
-      }
-    }
-    importedDataCountByWard {
-      label
-      areaId
-      count
-      gssArea {
-        point {
-          id
-          type
-          geometry {
-            type
-            coordinates
-          }
-        }
-      }
-    }
     layers {
       name
       source {

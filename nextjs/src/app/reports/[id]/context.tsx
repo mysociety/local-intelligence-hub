@@ -1,10 +1,14 @@
-import { MapReportInput } from "@/__generated__/graphql";
+import { Exact, GetMapReportQuery, MapReportInput } from "@/__generated__/graphql";
+import { QueryResult } from "@apollo/client";
 import { createContext } from "react";
 
 export const ReportContext = createContext<{
   id: string,
-  update: (data: MapReportInput) => void
+  updateReport: (data: MapReportInput) => void,
+  deleteReport: () => void,
+  report?: QueryResult<GetMapReportQuery, Exact<{ id: string; }>>
 }>({
   id: '?',
-  update: () => ({} as any)
+  updateReport: () => ({} as any),
+  deleteReport: () => {}
 })

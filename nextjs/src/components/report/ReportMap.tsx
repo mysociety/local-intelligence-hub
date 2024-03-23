@@ -1,6 +1,6 @@
 "use client"
 
-import { GetSourceGeoJsonQuery, GetSourceGeoJsonQueryVariables, GroupedDataCount, MapReportLayersSummaryFragment } from "@/__generated__/graphql";
+import { GroupedDataCount, MapReportLayersSummaryFragment, MapReportLayerAnalyticsQuery, MapReportLayerAnalyticsQueryVariables, MapReportLayerGeoJsonPointsQuery, MapReportLayerGeoJsonPointsQueryVariables } from "@/__generated__/graphql";
 import { Fragment, useContext, useEffect, useId, useRef, useState } from "react";
 import Map, { Layer, MapRef, Source, LayerProps, ImageSourceRaw, Marker, Popup, useMap } from "react-map-gl";
 import { MAP_REPORT_LAYERS_SUMMARY } from "../dataConfig";
@@ -9,6 +9,7 @@ import { ReportContext } from "@/app/reports/[id]/context";
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { interpolateInferno } from 'd3-scale-chromatic'
 import { atom, useAtom } from "jotai";
+import { atomWithHash } from "jotai-location"
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import { z } from "zod";
 
@@ -55,18 +56,15 @@ export const SelectedMarkerParser = z.object({
 
 export const selectedSourceRecordAtom = atom<z.infer<typeof SelectedMarkerParser> | null>(null)
 
-export const selectedConstituencyAtom = atom<string | null>(null)
+export const selectedConstituencyAtom = atomWithHash<string | null>('constituency', null)
 
 export function ReportMap () {
   const { id } = useContext(ReportContext)
-  const layers = useFragment<MapReportLayersSummaryFragment>({
-    fragment: MAP_REPORT_LAYERS_SUMMARY,
-    fragmentName: "MapReportLayersSummary",
-    from: {
-      __typename: "MapReport",
-      id,
-    },
-  });
+  const analytics = useQuery<MapReportLayerAnalyticsQuery, MapReportLayerAnalyticsQueryVariables>(MAP_REPORT_LAYER_ANALYTICS, {
+    variables: {
+      reportID: id,
+    }
+  })
 
   const mapboxRef = useRef<MapRef>(null)
 
@@ -79,7 +77,7 @@ export function ReportMap () {
     labelId: string,
     mapboxSourceProps?: { maxzoom?: number },
     mapboxLayerProps?: Omit<LayerProps, 'type' | 'url' | 'id' | 'paint' | 'layout'>,
-    data: Array<GroupedDataCount>,
+    data: MapReportLayerAnalyticsQuery['mapReport']['importedDataCountByRegion'],
     downloadUrl?: string
   }> = {
     EERs: {
@@ -90,8 +88,7 @@ export function ReportMap () {
       sourceLayerId: "European_Electoral_Regions_De-bxyqod",
       promoteId: "eer18cd",
       labelId: "eer18nm",
-      // @ts-ignore
-      data: layers.data.importedDataCountByRegion || [],
+      data: analytics.data?.mapReport.importedDataCountByRegion || [],
       mapboxSourceProps: {
         maxzoom: MAX_REGION_ZOOM
       },
@@ -106,8 +103,7 @@ export function ReportMap () {
       sourceLayerId: "Westminster_Parliamentary_Con-6i1rlq",
       promoteId: "pcon16cd",
       labelId: "pcon16nm",
-      // @ts-ignore
-      data: layers.data.importedDataCountByConstituency || [],
+      data: analytics.data?.mapReport.importedDataCountByConstituency || [],
       mapboxSourceProps: {
         maxzoom: MAX_CONSTITUENCY_ZOOM,
       },
@@ -123,8 +119,7 @@ export function ReportMap () {
       sourceLayerId: "Wards_Dec_2023_UK_Boundaries_-7wzb6g",
       promoteId: "WD23CD",
       labelId: "WD23NM",
-      // @ts-ignore
-      data: layers.data.importedDataCountByWard || [],
+      data: analytics.data?.mapReport.importedDataCountByWard || [],
       mapboxSourceProps: {},
       mapboxLayerProps: {
         minzoom: MAX_CONSTITUENCY_ZOOM,
@@ -134,7 +129,7 @@ export function ReportMap () {
 
   useEffect(function setFeatureState() {
     if (!mapboxRef.current) return
-    if (!layers.data) return
+    if (!analytics.data) return
     Object.values(TILESETS)?.forEach((tileset) => {
       tileset.data?.forEach((area) => {
         if (area?.areaId && area?.count) {
@@ -148,7 +143,7 @@ export function ReportMap () {
         }
       })
     })
-  }, [layers, TILESETS, mapboxRef])
+  }, [analytics, TILESETS, mapboxRef])
 
   const requiredImages = [
     {
@@ -187,8 +182,7 @@ export function ReportMap () {
   const [selectedSourceRecord, setSelectedSourceRecord] = useAtom(selectedSourceRecordAtom)
   const [selectedConstituency, setSelectedConstituency] = useAtom(selectedConstituencyAtom)
 
-  useEffect(() => {
-    // When you click a constituency
+  useEffect(function selectConstituency() {
     mapboxRef.current?.on('click', `${TILESETS.constituencies.mapboxSourceId}-fill`, event => {
       try {
         const feature = event.features?.[0]
@@ -199,7 +193,7 @@ export function ReportMap () {
           }
         }
       } catch (e) {
-        console.error("Failed to select constituency")
+        console.error("Failed to select constituency", e)
       }
     })
   }, [mapboxRef.current])
@@ -216,8 +210,8 @@ export function ReportMap () {
       ref={mapboxRef}
       onClick={() => setSelectedSourceRecord(null)}
     >
-      {!layers.data && null}
-      {!!layers.data && Object.entries(TILESETS).map(([key, tileset]) => {
+      {!analytics.data && null}
+      {!!analytics.data && Object.entries(TILESETS).map(([key, tileset]) => {
         const min = tileset.data.reduce(
           (min, p) => p?.count! < min ? p?.count! : min,
           tileset.data?.[0]?.count!
@@ -384,7 +378,7 @@ export function ReportMap () {
         )
       })}
       {/* Wait for all icons to load */}
-      {layers.data.layers?.map((layer, index) => {
+      {analytics.data?.mapReport.layers.map((layer, index) => {
         return (
           <MapboxGLClusteredPointsLayer
             key={layer?.source?.id || index}
@@ -450,7 +444,7 @@ export function ReportMap () {
 }
 
 function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataSourceId: string }) {
-  const { data, error } = useQuery<GetSourceGeoJsonQuery, GetSourceGeoJsonQueryVariables>(GET_SOURCE_DATA, {
+  const { data, error } = useQuery<MapReportLayerGeoJsonPointsQuery, MapReportLayerGeoJsonPointsQueryVariables>(MAP_REPORT_LAYER_POINTS, {
     variables: {
       externalDataSourceId,
     },
@@ -460,7 +454,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
 
   const map = useMap()
   
-  useEffect(() => {
+  useEffect(function selectMarker() {
     map.current?.on('click', `${externalDataSourceId}-marker`, event => {
       try {
         const feature = event.features?.[0]
@@ -475,7 +469,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
               properties: {
                 // @ts-ignore
                 ...(feature.properties || feature._properties || {}),
-                originalUrl: data?.externalDataSource?.recordUrlTemplate?.replace("{record_id}", id)
+                originalUrl: data?.externalDataSource.recordUrlTemplate?.replace("{record_id}", id)
               },
               // @ts-ignore
               geometry: feature.geometry || feature._geometry,
@@ -485,7 +479,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
           setSelectedSourceRecord(selectedRecord)
         }
       } catch (e) {
-        console.error("Failed to parse selected marker", e, event.features?.[0])
+        // console.error("Failed to parse selected marker", e, event.features?.[0])
       }
     })
   }, [map, data?.externalDataSource.recordUrlTemplate])
@@ -540,9 +534,10 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
   )
 }
 
-const GET_SOURCE_DATA = gql`
-  query GetSourceGeoJSON($externalDataSourceId: ID!) {
+const MAP_REPORT_LAYER_POINTS = gql`
+  query MapReportLayerGeoJSONPoints($externalDataSourceId: ID!) {
     externalDataSource(pk: $externalDataSourceId) {
+      id
       recordUrlTemplate
       importedDataGeojsonPoints {
         id
@@ -561,6 +556,65 @@ const GET_SOURCE_DATA = gql`
             postcode
           }
           json
+        }
+      }
+    }
+  }
+`
+
+const MAP_REPORT_LAYER_ANALYTICS = gql`
+  query MapReportLayerAnalytics($reportID: ID!) {
+    mapReport(pk: $reportID) {
+      id
+      layers {
+        name
+        source {
+          id
+        }
+      }
+      importedDataCountByRegion {
+        label
+        areaId
+        count
+        gssArea {
+          point {
+            id
+            type
+            geometry {
+              type
+              coordinates
+            }
+          }
+        }
+      }
+      importedDataCountByConstituency {
+        label
+        areaId
+        count
+        gssArea {
+          point {
+            id
+            type
+            geometry {
+              type
+              coordinates
+            }
+          }
+        }
+      }
+      importedDataCountByWard {
+        label
+        areaId
+        count
+        gssArea {
+          point {
+            id
+            type
+            geometry {
+              type
+              coordinates
+            }
+          }
         }
       }
     }

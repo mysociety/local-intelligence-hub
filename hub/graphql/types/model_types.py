@@ -631,8 +631,7 @@ class MapLayer:
 
 @strawberry_django.type(models.MapReport)
 class MapReport(Report):
-    layers: Optional[List[MapLayer]]
-
+    layers: List[MapLayer]
     imported_data_count: int = fn_field()
     imported_data_count_by_region: List[GroupedDataCount] = fn_field()
     imported_data_count_by_constituency: List[GroupedDataCount] = fn_field()
