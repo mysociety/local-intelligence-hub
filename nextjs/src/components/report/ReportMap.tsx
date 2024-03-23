@@ -2,8 +2,7 @@
 
 import { GroupedDataCount, MapReportLayersSummaryFragment, MapReportLayerAnalyticsQuery, MapReportLayerAnalyticsQueryVariables, MapReportLayerGeoJsonPointsQuery, MapReportLayerGeoJsonPointsQueryVariables } from "@/__generated__/graphql";
 import { Fragment, useContext, useEffect, useId, useRef, useState } from "react";
-import Map, { Layer, MapRef, Source, LayerProps, ImageSourceRaw, Marker, Popup, useMap } from "react-map-gl";
-import { MAP_REPORT_LAYERS_SUMMARY } from "../dataConfig";
+import Map, { Layer, MapRef, Source, LayerProps, ImageSourceRaw, Marker, Popup, useMap, ViewState } from "react-map-gl";
 import { gql, useFragment, useQuery } from "@apollo/client";
 import { ReportContext } from "@/app/reports/[id]/context";
 import { scaleLinear, scaleSequential } from 'd3-scale'
@@ -12,10 +11,26 @@ import { atom, useAtom } from "jotai";
 import { atomWithHash } from "jotai-location"
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import { z } from "zod";
+import { layerColour } from "@/app/reports/[id]/lib";
 
 const MAX_REGION_ZOOM = 8
 const MAX_CONSTITUENCY_ZOOM = 11.5
 const MIN_MEMBERS_ZOOM = MAX_CONSTITUENCY_ZOOM
+
+const viewStateAtom = atom<Partial<ViewState>>({
+  longitude: -2.296605,
+  latitude: 53.593349,
+  zoom: 6
+})
+// const viewStateAtom = atomWithHash<Partial<ViewState>>('camera', {
+//   longitude: -2.296605,
+//   latitude: 53.593349,
+//   zoom: 6
+// }, {
+//   serialize: JSON.stringify,
+//   deserialize: JSON.parse,
+//   setHash: "replaceState"
+// })
 
 export const SelectedMarkerFeatureParser = z.object({
   type: z.literal('Feature'),
@@ -127,19 +142,34 @@ export function ReportMap () {
     }
   }
 
+  function addChloroplethDataToMapbox(
+    gss: string,
+    count: number,
+    mapboxSourceId: string,
+    sourceLayerId: string,
+  ) {
+    mapboxRef.current?.setFeatureState({
+      source: mapboxSourceId,
+      sourceLayer: sourceLayerId,
+      id: gss,
+    }, {
+      count: count
+    })
+  }
+
   useEffect(function setFeatureState() {
     if (!mapboxRef.current) return
     if (!analytics.data) return
     Object.values(TILESETS)?.forEach((tileset) => {
       tileset.data?.forEach((area) => {
-        if (area?.areaId && area?.count) {
-          mapboxRef.current?.setFeatureState({
-            source: tileset.mapboxSourceId,
-            sourceLayer: tileset.sourceLayerId,
-            id: area.areaId,
-          }, {
-            count: area.count
-          })
+        if (area?.gss && area?.count && tileset.sourceLayerId) {
+          try {
+            addChloroplethDataToMapbox(area.gss, area.count, tileset.mapboxSourceId, tileset.sourceLayerId)
+          } catch {
+            mapboxRef.current?.on('load', () => {
+              addChloroplethDataToMapbox(area.gss!, area.count, tileset.mapboxSourceId, tileset.sourceLayerId!) 
+            })
+          }
         }
       })
     })
@@ -148,12 +178,16 @@ export function ReportMap () {
   const requiredImages = [
     {
       url: () => new URL('/markers/default.png', window.location.href).toString(),
-      name: 'meep-marker'
+      name: 'meep-marker-0'
+    },
+    {
+      url: () => new URL('/markers/default-2.png', window.location.href).toString(),
+      name: 'meep-marker-1'
     },
     {
       url: () => new URL('/markers/selected.png', window.location.href).toString(),
       name: 'meep-marker-selected'
-    }
+    },
   ]
 
   const [loadedImages, setLoadedImages] = useState<string[]>([])
@@ -198,14 +232,13 @@ export function ReportMap () {
     })
   }, [mapboxRef.current])
 
+  const [viewState, setViewState] = useAtom(viewStateAtom)
+
   return (
     <Map
       mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
-      initialViewState={{
-        longitude: -2.296605,
-        latitude: 53.593349,
-        zoom: 6
-      }}
+      {...viewState}
+      onMove={(e) => setViewState(e.viewState)}
       mapStyle="mapbox://styles/commonknowledge/clty3prwh004601pr4nqn7l9s"
       ref={mapboxRef}
       onClick={() => setSelectedSourceRecord(null)}
@@ -240,13 +273,13 @@ export function ReportMap () {
         const inDataFilter = [
           "in",
           ["get", tileset.promoteId],
-          ["literal", tileset.data.map(d => d.areaId)],
+          ["literal", tileset.data.map(d => d.gss)],
         ]
       
         const steps = Math.min(max, 30)
-        const colourStops = (new Array(steps)).fill(0).map((_, i) => i / steps).map(
+        const colourStops = (new Array(steps - 1)).fill(0).map((_, i) => i / steps).map(
           (n) => [
-            Math.floor(legendScale(n)),
+            legendScale(n),
             colourScale(legendScale(n))
           ]
         ).flat()
@@ -382,6 +415,7 @@ export function ReportMap () {
         return (
           <MapboxGLClusteredPointsLayer
             key={layer?.source?.id || index}
+            index={index}
             externalDataSourceId={layer?.source?.id}
           />
         )
@@ -443,7 +477,7 @@ export function ReportMap () {
   )
 }
 
-function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataSourceId: string }) {
+function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { externalDataSourceId: string, index: number }) {
   const { data, error } = useQuery<MapReportLayerGeoJsonPointsQuery, MapReportLayerGeoJsonPointsQueryVariables>(MAP_REPORT_LAYER_POINTS, {
     variables: {
       externalDataSourceId,
@@ -495,22 +529,42 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
           features: data?.externalDataSource?.importedDataGeojsonPoints || []
         }}
       >
-        <Layer
-          source={externalDataSourceId}
-          id={`${externalDataSourceId}-marker`}
-          type="symbol"
-          layout={{
-            "icon-image": "meep-marker",
-            "icon-size": 0.75,
-            "icon-anchor": "bottom"
-          }}
-          minzoom={MIN_MEMBERS_ZOOM}
-          {...(
-            selectedSourceRecord?.id
-            ? { filter: ["!=", selectedSourceRecord.id, ["get", "id"]] }
-            : {}
-          )}
-        />
+        {index <= 1 ? (
+          <Layer
+            source={externalDataSourceId}
+            id={`${externalDataSourceId}-marker`}
+            type="symbol"
+            layout={{
+              "icon-image": `meep-marker-${index}`,
+              "icon-allow-overlap": true,
+              "icon-ignore-placement": true,
+              "icon-size": 0.75,
+              "icon-anchor": "bottom"
+            }}
+            minzoom={MIN_MEMBERS_ZOOM}
+            {...(
+              selectedSourceRecord?.id
+              ? { filter: ["!=", selectedSourceRecord.id, ["get", "id"]] }
+              : {}
+            )}
+          />
+        ) : (
+          <Layer
+            source={externalDataSourceId}
+            id={`${externalDataSourceId}-marker`}
+            type="circle"
+            paint={{
+              "circle-radius": 0.2,
+              "circle-color": layerColour(index, externalDataSourceId),
+            }}
+            minzoom={MIN_MEMBERS_ZOOM}
+            {...(
+              selectedSourceRecord?.id
+              ? { filter: ["!=", selectedSourceRecord.id, ["get", "id"]] }
+              : {}
+            )}
+          />
+        )}
         {!!selectedSourceRecord?.id && (
           <Layer
             source={externalDataSourceId}
@@ -519,7 +573,9 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId }: { externalDataS
             layout={{
               "icon-image": "meep-marker-selected",
               "icon-size": 0.75,
-              "icon-anchor": "bottom"
+              "icon-anchor": "bottom",
+              "icon-allow-overlap": true,
+              "icon-ignore-placement": true
             }}
             minzoom={MIN_MEMBERS_ZOOM}
             {...(
@@ -562,7 +618,7 @@ const MAP_REPORT_LAYER_POINTS = gql`
   }
 `
 
-const MAP_REPORT_LAYER_ANALYTICS = gql`
+export const MAP_REPORT_LAYER_ANALYTICS = gql`
   query MapReportLayerAnalytics($reportID: ID!) {
     mapReport(pk: $reportID) {
       id
@@ -574,7 +630,7 @@ const MAP_REPORT_LAYER_ANALYTICS = gql`
       }
       importedDataCountByRegion {
         label
-        areaId
+        gss
         count
         gssArea {
           point {
@@ -589,7 +645,7 @@ const MAP_REPORT_LAYER_ANALYTICS = gql`
       }
       importedDataCountByConstituency {
         label
-        areaId
+        gss
         count
         gssArea {
           point {
@@ -604,7 +660,7 @@ const MAP_REPORT_LAYER_ANALYTICS = gql`
       }
       importedDataCountByWard {
         label
-        areaId
+        gss
         count
         gssArea {
           point {

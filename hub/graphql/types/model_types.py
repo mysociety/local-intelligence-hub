@@ -470,13 +470,13 @@ class Area:
 @strawberry.type
 class GroupedDataCount:
     label: Optional[str] = dict_key_field()
-    area_id: Optional[str] = dict_key_field()
+    gss: Optional[str] = dict_key_field()
     count: int = dict_key_field()
 
     @strawberry_django.field
     async def gss_area(self, info: Info) -> Optional[Area]:
         loader = FieldDataLoaderFactory.get_loader_class(models.Area, field="gss")
-        return await loader(context=info.context).load(self.get("area_id", None))
+        return await loader(context=info.context).load(self.get("gss", None))
 
 
 @strawberry_django.type(models.GenericData, filters=CommonDataFilter)
@@ -498,9 +498,31 @@ class GenericData(CommonData):
 class MapReportMemberFeature(PointFeature):
     properties: GenericData
 
+@strawberry.interface
+class Analytics:
+    imported_data_count: int = fn_field()
+    imported_data_count_by_region: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_constituency: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_constituency_2024: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_council: List[GroupedDataCount] = fn_field()
+    imported_data_count_by_ward: List[GroupedDataCount] = fn_field()
+
+    @strawberry_django.field
+    def imported_data_count_for_constituency(self, info: Info, gss: str) -> Optional[GroupedDataCount]:
+        res = self.imported_data_count_by_constituency(gss=gss)
+        if len(res) == 0:
+            return None
+        return res[0]
+
+    @strawberry_django.field
+    def imported_data_count_for_constituency_2024(self, info: Info, gss: str) -> Optional[GroupedDataCount]:
+        res = self.imported_data_count_by_constituency_2024(gss=gss)
+        if len(res) == 0:
+            return None
+        return res[0]
 
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
-class ExternalDataSource:
+class ExternalDataSource(Analytics):
     id: auto
     name: auto
     data_type: auto
@@ -616,7 +638,6 @@ class Report:
         user = get_current_user(info)
         return queryset.filter(organisation__members__user=user.id)
 
-
 @strawberry.type
 class MapLayer:
     name: str = dict_key_field()
@@ -627,16 +648,9 @@ class MapLayer:
         source_id = self.get(info.python_name, None)
         return models.ExternalDataSource.objects.get(id=source_id)
 
-
 @strawberry_django.type(models.MapReport)
-class MapReport(Report):
+class MapReport(Report, Analytics):
     layers: List[MapLayer]
-    imported_data_count: int = fn_field()
-    imported_data_count_by_region: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_constituency: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_constituency_2024: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_council: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_ward: List[GroupedDataCount] = fn_field()
 
 @strawberry_django.field()
 def area_by_gss(gss: str) -> models.Area:

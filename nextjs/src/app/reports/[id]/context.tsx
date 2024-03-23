@@ -1,4 +1,6 @@
-import { Exact, GetMapReportQuery, MapReportInput } from "@/__generated__/graphql";
+"use client"
+
+import { Exact, GetMapReportQuery, MapReportInput, MapReportLayerAnalyticsQuery } from "@/__generated__/graphql";
 import { QueryResult } from "@apollo/client";
 import { createContext } from "react";
 

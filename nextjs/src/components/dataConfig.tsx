@@ -31,10 +31,11 @@ import Link from "next/link"
 import { importData } from "@/app/(app)/data-sources/inspect/[externalDataSourceId]/InspectExternalDataSource"
 import { LoadingIcon } from "./ui/loadingIcon"
 import { useRouter } from "next/navigation"
+import { MAP_REPORT_LAYERS_SUMMARY, layerColour } from "@/app/reports/[id]/lib"
 
 export default function DataConfigPanel () {
   const router = useRouter()
-  const { id, update } = useContext(ReportContext)
+  const { id, updateReport } = useContext(ReportContext)
   const client = useApolloClient()
   const layers = useFragment<MapReportLayersSummaryFragment>({
     fragment: MAP_REPORT_LAYERS_SUMMARY,
@@ -58,7 +59,9 @@ export default function DataConfigPanel () {
             <div key={layer?.source?.id || index} className="flex gap-2 items-center">
               <Popover>
                 <PopoverTrigger>
-                  <Button variant="brand" className="p-3 gap-2 text-sm">
+                  <Button className="p-3 gap-2 text-sm" style={{
+                    background: layerColour(index, layer?.source?.id)
+                  }}>
                     <File className="w-4" />
                     <span>{layer?.name || layer?.source?.name}</span>
                   </Button>
@@ -188,7 +191,7 @@ export default function DataConfigPanel () {
     if (!oldLayers) return
     if (oldLayers.find(l => l.source === source.id)) return
     const combinedLayers = oldLayers?.concat([newLayer])
-    update({ layers: combinedLayers })
+    updateReport({ layers: combinedLayers })
   }
 
   function removeLayer (sourceId: string) {
@@ -197,23 +200,6 @@ export default function DataConfigPanel () {
       source: l!.source?.id,
     }))
     const newLayers = oldLayers?.filter(l => l.source !== sourceId)
-    update({ layers: newLayers })
+    updateReport({ layers: newLayers })
   }
 };
-
-export const MAP_REPORT_LAYERS_SUMMARY = gql`
-  fragment MapReportLayersSummary on MapReport {
-    layers {
-      name
-      source {
-        id
-        name
-        isImporting
-        importedDataCount
-        connectionDetails {
-          recordUrlTemplate
-        }
-      }
-    }
-  }
-`

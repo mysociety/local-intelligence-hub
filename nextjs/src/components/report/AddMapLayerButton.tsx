@@ -42,9 +42,10 @@ type Source = {
 export function AddMapLayerButton({ addLayer }: { addLayer(layer: Source): void }) {
   const { id  } = useContext(ReportContext)
   const form = useForm<{ source?: Source }>()
+  const [open, setOpen] = useState(false)
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={(o) => setOpen(o)}>
       <DialogTrigger asChild>
         <Button variant="outline">
           <Plus className="w-4" /> Add map layer
@@ -53,7 +54,8 @@ export function AddMapLayerButton({ addLayer }: { addLayer(layer: Source): void 
       <Form {...form}>
         <DialogContent className="sm:max-w-[425px]">
           <form onSubmit={form.handleSubmit(d => {
-            if (!d.source) return
+            setOpen(false)
+            if (!d.source) return 
             addLayer(d.source)
           })}>
             <DialogHeader>

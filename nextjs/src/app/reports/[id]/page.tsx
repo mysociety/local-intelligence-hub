@@ -23,7 +23,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import DataConfigPanel from "@/components/dataConfig";
 import { FetchResult, gql, useApolloClient, useQuery } from "@apollo/client";
 import { toast } from "sonner";
-import { DeleteMapReportMutation, DeleteMapReportMutationVariables, GetMapReportQuery, GetMapReportQueryVariables, MapReportInput, UpdateMapReportMutation, UpdateMapReportMutationVariables } from "@/__generated__/graphql";
+import { DeleteMapReportMutation, DeleteMapReportMutationVariables, GetMapReportQuery, GetMapReportQueryVariables, MapReportInput, MapReportLayerAnalyticsQuery, MapReportLayerAnalyticsQueryVariables, UpdateMapReportMutation, UpdateMapReportMutationVariables } from "@/__generated__/graphql";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +38,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import spaceCase from 'to-space-case'
 import { toastPromise } from "@/lib/toast";
-import { ReportMap, selectedConstituencyAtom } from "@/components/report/ReportMap";
+import { MAP_REPORT_LAYER_ANALYTICS, ReportMap, selectedConstituencyAtom } from "@/components/report/ReportMap";
 import { MAP_REPORT_FRAGMENT } from "./lib";
 import { ReportContext } from "./context";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
@@ -70,7 +70,14 @@ export default function Page({ params: { id } }: { params: Params }) {
   )
 
   function refreshStatistics () {
-    toastPromise(report.refetch(),
+    toastPromise(
+      client.refetchQueries({
+        include: [
+          // Queries that involve member data
+          "MapReportLayerAnalytics",
+          "GetConstituencyData"
+        ],
+      }),
       {
         loading: "Refreshing statistics...",
         success: "Statistics updated",
