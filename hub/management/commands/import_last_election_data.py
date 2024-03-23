@@ -65,6 +65,9 @@ class Command(BaseCommand):
         "pbpa": "People Before Profit Alliance",
     }
 
+    def up(self, value):
+        return self.party_translate_up_dict.get(value.lower(), value)
+
     party_options = [
         {"title": "Alba Party", "shader": "#005EB8"},
         {"title": "Alliance Party of Northern Ireland", "shader": "#F6CB2F"},
@@ -92,7 +95,7 @@ class Command(BaseCommand):
     def get_area_type(self):
         return AreaType.objects.get(code=self.area_type)
     
-    str_columns = list(map(format_key, [
+    unformatted_str_columns = [
       # from CSV:
       "ONS ID",
       "ONS region ID",
@@ -110,14 +113,16 @@ class Command(BaseCommand):
       "Second party",
       # manually added columns:
       "date"
-    ]))
+    ]
+    str_columns = list(map(format_key, unformatted_str_columns))
 
-    stats_columns = list(map(format_key, [
+    unformatted_stats_columns = [
       "Electorate",
       "Valid votes",
       "Invalid votes",
       "Majority",
-    ]))
+    ]
+    stats_columns = list(map(format_key, unformatted_stats_columns))
 
     def get_general_election_data(self):
         df = pd.read_csv(self.general_election_source_file).set_flags(
@@ -125,9 +130,17 @@ class Command(BaseCommand):
         )
         df["date"] = "2019-12-12"
         # convert to pythonic snake_case
-        df.columns = (df.columns
-          .str.replace('\s', '_', regex=True)
-          .str.lower()
+        # df.columns = (df.columns
+        #   .str.replace('\s', '_', regex=True)
+        #   .str.lower()
+        # )
+        party_keys = [
+            col for col in df.columns
+            if col not in self.unformatted_str_columns
+            and col not in self.unformatted_stats_columns
+        ]
+        df = df.rename(
+            columns=lambda column: format_key(column) if column not in party_keys else self.up(column)
         )
         # df["spk"] = df["Of which other winner"]
         # df["All other candidates"] = df["All other candidates"] - df.spk
@@ -177,34 +190,29 @@ class Command(BaseCommand):
                         "electorate": electorate,
                         "majority": majority,
                         "result": result_of_election,
-                        "valid_votes": valid_votes,
-                        # "uri": uri,
-                        # "label": election_data["election"]["label"]["_value"],
-                        # "Constituency": a.gss,
-                        # "Constituency name": cons,
+                        "valid_votes": valid_votes
                     }
-                    sorted_results = sorted(
+                    def name_votes(candidate):
+                        return {
+                            "name": (
+                                self.up(candidate["party"]["_value"])
+                                # prevent attributing votes for one indie to another in the UI
+                                if candidate["party"]["_value"].lower() != "ind"
+                                else candidate["fullName"]["_value"]
+                            ),
+                            "numberOfVotes": int(candidate["numberOfVotes"]),
+                        }
+
+                    sorted_results = list(map(name_votes, sorted(
                         election_data["candidate"],
                         key=lambda c: int(c["numberOfVotes"]),
                         reverse=True,
-                    )
+                    )))
+
                     for candidate in sorted_results:
-                        # party_name = self.party_translate_up_dict.get(
-                        #   candidate["party"]["_value"].lower(),
-                        #   candidate["party"]["_value"]
-                        # )
-                        party_name = format_key(candidate["party"]["_value"])
-                        result[party_name] = candidate["numberOfVotes"]
-                    result["first_party"] = format_key(sorted_results[0]["party"]["_value"])
-                    result["second_party"] = format_key(sorted_results[1]["party"]["_value"])
-                    # result["first_party"] = self.party_translate_up_dict.get(
-                    #     sorted_results[0]["party"]["_value"].lower(),
-                    #     sorted_results[0]["party"]["_value"],
-                    # )
-                    # result["second_party"] = self.party_translate_up_dict.get(
-                    #     sorted_results[1]["party"]["_value"].lower(),
-                    #     sorted_results[0]["party"]["_value"],
-                    # )
+                        result[candidate['name']] = candidate["numberOfVotes"]
+                    result["first_party"] = sorted_results[0]["name"]
+                    result["second_party"] = sorted_results[1]["name"]
 
                     by_election_data[a.gss] = result
 
@@ -213,9 +221,7 @@ class Command(BaseCommand):
         return df
 
     def get_last_election_df(self):
-        print("Getting last general election data")
         df = self.get_general_election_data()
-        print("Adding by-election data")
         be_df = self.get_by_elections_data()
         # Remove the election results from the general election df, where there has been a by-election since
         cols = df.columns.to_list()[1:]
@@ -226,14 +232,14 @@ class Command(BaseCommand):
         # cols = [col for col in df.columns if "party" not in col and "date" not in col]
         int_cols = [col for col in df.columns if col not in self.str_columns]
         df[int_cols] = df[int_cols].astype(int)
-        # df.first_party = df.first_party.apply(
-        #     lambda party: self.party_translate_up_dict.get(party.lower(), party)
-        # )
-        # df.second_party = df.second_party.apply(
-        #     lambda party: self.party_translate_up_dict.get(party.lower(), party)
-        # )
+        df.first_party = df.first_party.apply(
+            lambda party: self.up(party)
+        )
+        df.second_party = df.second_party.apply(
+            lambda party: self.up(party)
+        )
         df = df.rename(
-            columns=lambda party: self.party_translate_up_dict.get(party.lower(), party)
+            columns=lambda party: self.up(party)
         )
         return df
 
@@ -305,18 +311,17 @@ class Command(BaseCommand):
         for gss, dataset in tqdm(df.iterrows(), disable=self._quiet):
             try:
                 area = Area.get_by_gss(gss, area_type=self.area_type)
-                parties = list(map(lambda key: self.party_translate_up_dict.get(key, key),
-                                   [
-                                       c for c in dataset.keys()
-                                       if c not in self.str_columns
-                                       and c not in self.stats_columns
-                                  ]))
+                party_keys = [
+                    col for col in dataset.keys() if col
+                    not in self.str_columns
+                    and col not in self.stats_columns
+                ]
                 json_data = {
                     "date": dataset.date,
-                    "stats": dataset.drop(parties).to_dict(),
+                    "stats": dataset.drop(party_keys).to_dict(),
                     "results": [
                         {"party": k, "votes": v}
-                        for k, v in dataset.filter(parties)
+                        for k, v in dataset.filter(party_keys)
                         .to_dict()
                         .items()
                     ],
