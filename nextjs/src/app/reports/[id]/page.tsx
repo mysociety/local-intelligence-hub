@@ -42,6 +42,7 @@ import { MAP_REPORT_LAYER_ANALYTICS, ReportMap, selectedConstituencyAtom } from 
 import { MAP_REPORT_FRAGMENT, isConstituencyPanelOpenAtom, isDataConfigOpenAtom } from "./lib";
 import { ReportContext } from "./context";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
+import { contentEditableMutation } from "@/lib/html";
 import { Provider as JotaiProvider, atom, useAtom } from "jotai";
 import { ConstituenciesPanel } from "./ConstituenciesPanel";
 import { MapProvider } from "react-map-gl";
@@ -227,11 +228,7 @@ function ReportPage() {
                     <CardTitle
                       contentEditable id="nickname"
                       className="text-hMd grow font-IBMPlexSansMedium"
-                      onBlur={d => {
-                        updateReport({
-                          name: document.getElementById("nickname")?.textContent?.trim()
-                        })
-                      }}
+                      {...contentEditableMutation(updateReport, "name", "Untitled Report")}
                     >
                       {report?.data?.mapReport.name}
                     </CardTitle>
