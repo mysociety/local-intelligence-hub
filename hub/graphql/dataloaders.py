@@ -240,14 +240,14 @@ def filterable_dataloader_resolver(
     async def resolver(root, info: Info, filters: filter_type = {}):
         field_data: "StrawberryDjangoField" = info._field
         attr = field_name or field_data.django_name
-        # In case it was prefetched
+        # TODO: don't re-load prefetched data
+        # but also apply filters to the prefetched data
         # if hasattr(root, attr):
         #     # print("PREFETCHED", root, attr, getattr(root, attr, None))
         #     return getattr(root, attr, None)
         relation: "ManyToOneRel" = root._meta.get_field(field_name=attr)
         related_model = relation.related_model
         reverse_path = relation.field.attname
-        print(related_model, filters, reverse_path)
         loader = ReverseFKWithFiltersDataLoaderFactory.get_loader_class(
             related_model,
             filters=filters,

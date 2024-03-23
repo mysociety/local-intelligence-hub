@@ -337,7 +337,6 @@ class ConstituencyElectionStats:
     json: strawberry.Private[dict]
 
     date: str
-    other: float
     result: str
     majority: int
     electorate: int
@@ -427,7 +426,7 @@ class Area:
             reverse_path="area_id"
         )
         res = await loader(context=info.context).load(self.id)
-        if res is None or res[0] is None or res[0].json is None:
+        if res is None or len(res) == 0 or res[0] is None or res[0].json is None:
             return None
         result = res[0].json
         cer = ConstituencyElectionResult(

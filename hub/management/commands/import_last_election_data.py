@@ -13,6 +13,9 @@ from tqdm import tqdm
 from hub.models import Area, AreaData, AreaType, DataSet, DataType
 
 
+def format_key(value):
+    return value.replace(' ', '_').lower()
+
 class Command(BaseCommand):
     help = "Import data from the last election"
     source_url = "https://commonslibrary.parliament.uk/tag/elections-data/"
@@ -88,44 +91,37 @@ class Command(BaseCommand):
 
     def get_area_type(self):
         return AreaType.objects.get(code=self.area_type)
+    
+    str_columns = list(map(format_key, [
+      # from CSV:
+      "ONS ID",
+      "ONS region ID",
+      "Constituency name",
+      "County name",
+      "Region name",
+      "Country name",
+      "Constituency type",
+      "Declaration time",
+      "Member first name",
+      "Member surname",
+      "Member gender",
+      "Result",
+      "First party",
+      "Second party",
+      # manually added columns:
+      "date"
+    ]))
+
+    stats_columns = list(map(format_key, [
+      "Electorate",
+      "Valid votes",
+      "Invalid votes",
+      "Majority",
+    ]))
 
     def get_general_election_data(self):
-        df = pd.read_csv(
-            self.general_election_source_file,
-            usecols=[
-                "ONS ID",
-                "ONS region ID",
-                "Constituency name",
-                "County name",
-                "Region name",
-                "Country name",
-                "Constituency type",
-                "Declaration time",
-                "Member first name",
-                "Member surname",
-                "Member gender",
-                "Result",
-                "First party",
-                "Second party",
-                "Electorate",
-                "Valid votes",
-                "Invalid votes",
-                "Majority",
-                "Con",
-                "Lab",
-                "LD",
-                "Brexit",
-                "Green",
-                "SNP",
-                "PC",
-                "DUP",
-                "SF",
-                "SDLP",
-                "UUP",
-                "Alliance",
-                "All other candidates",
-                "Of which other winner",
-            ],
+        df = pd.read_csv(self.general_election_source_file).set_flags(
+            allows_duplicate_labels=False
         )
         df["date"] = "2019-12-12"
         # convert to pythonic snake_case
@@ -187,32 +183,28 @@ class Command(BaseCommand):
                         # "Constituency": a.gss,
                         # "Constituency name": cons,
                     }
-
-                    for candidate in election_data["candidate"]:
-                        party = candidate["party"]["_value"].lower()
-                        party_name = self.party_translate_up_dict.get(party, "other")
-
-                        # consolidate the minor parties
-                        if party_name == "other":
-                            count = result.get("other", 0)
-                            count = count + candidate["numberOfVotes"]
-                            result["other"] = count
-                        else:
-                            result[party] = candidate["numberOfVotes"]
-
                     sorted_results = sorted(
                         election_data["candidate"],
-                        key=lambda c: c["numberOfVotes"],
+                        key=lambda c: int(c["numberOfVotes"]),
                         reverse=True,
                     )
-                    result["first_party"] = self.party_translate_up_dict.get(
-                        sorted_results[0]["party"]["_value"].lower(),
-                        sorted_results[0]["party"]["_value"].lower(),
-                    )
-                    result["second_party"] = self.party_translate_up_dict.get(
-                        sorted_results[1]["party"]["_value"].lower(),
-                        sorted_results[1]["party"]["_value"].lower(),
-                    )
+                    for candidate in sorted_results:
+                        # party_name = self.party_translate_up_dict.get(
+                        #   candidate["party"]["_value"].lower(),
+                        #   candidate["party"]["_value"]
+                        # )
+                        party_name = format_key(candidate["party"]["_value"])
+                        result[party_name] = candidate["numberOfVotes"]
+                    result["first_party"] = format_key(sorted_results[0]["party"]["_value"])
+                    result["second_party"] = format_key(sorted_results[1]["party"]["_value"])
+                    # result["first_party"] = self.party_translate_up_dict.get(
+                    #     sorted_results[0]["party"]["_value"].lower(),
+                    #     sorted_results[0]["party"]["_value"],
+                    # )
+                    # result["second_party"] = self.party_translate_up_dict.get(
+                    #     sorted_results[1]["party"]["_value"].lower(),
+                    #     sorted_results[0]["party"]["_value"],
+                    # )
 
                     by_election_data[a.gss] = result
 
@@ -221,7 +213,9 @@ class Command(BaseCommand):
         return df
 
     def get_last_election_df(self):
+        print("Getting last general election data")
         df = self.get_general_election_data()
+        print("Adding by-election data")
         be_df = self.get_by_elections_data()
         # Remove the election results from the general election df, where there has been a by-election since
         cols = df.columns.to_list()[1:]
@@ -230,34 +224,14 @@ class Command(BaseCommand):
         df = df.combine_first(be_df)
         df = df.fillna(0)
         # cols = [col for col in df.columns if "party" not in col and "date" not in col]
-        int_cols = [
-            "electorate",
-            "valid_votes",
-            "invalid_votes",
-            "majority",
-            "con",
-            "lab",
-            "ld",
-            "brexit",
-            "green",
-            "snp",
-            "pc",
-            "dup",
-            "sf",
-            "sdlp",
-            "uup",
-            "ind",
-            "alliance",
-            "all_other_candidates",
-            "of_which_other_winner",
-        ]
+        int_cols = [col for col in df.columns if col not in self.str_columns]
         df[int_cols] = df[int_cols].astype(int)
-        df.first_party = df.first_party.apply(
-            lambda party: self.party_translate_up_dict.get(party.lower(), party)
-        )
-        df.second_party = df.second_party.apply(
-            lambda party: self.party_translate_up_dict.get(party.lower(), party)
-        )
+        # df.first_party = df.first_party.apply(
+        #     lambda party: self.party_translate_up_dict.get(party.lower(), party)
+        # )
+        # df.second_party = df.second_party.apply(
+        #     lambda party: self.party_translate_up_dict.get(party.lower(), party)
+        # )
         df = df.rename(
             columns=lambda party: self.party_translate_up_dict.get(party.lower(), party)
         )
@@ -331,23 +305,12 @@ class Command(BaseCommand):
         for gss, dataset in tqdm(df.iterrows(), disable=self._quiet):
             try:
                 area = Area.get_by_gss(gss, area_type=self.area_type)
-                parties = list(map(lambda key: self.party_translate_up_dict.get(key, key), [
-                    "con",
-                    "lab",
-                    "ld",
-                    "brexit",
-                    "green",
-                    "snp",
-                    "pc",
-                    "dup",
-                    "sf",
-                    "sdlp",
-                    "uup",
-                    "ind",
-                    "alliance",
-                    "all_other_candidates",
-                    "of_which_other_winner",
-                ]))
+                parties = list(map(lambda key: self.party_translate_up_dict.get(key, key),
+                                   [
+                                       c for c in dataset.keys()
+                                       if c not in self.str_columns
+                                       and c not in self.stats_columns
+                                  ]))
                 json_data = {
                     "date": dataset.date,
                     "stats": dataset.drop(parties).to_dict(),
