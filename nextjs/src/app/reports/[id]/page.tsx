@@ -150,8 +150,15 @@ export function ReportPage() {
   const [isDataConfigOpen, setDataConfigOpen] = useAtom(isDataConfigOpenAtom);
   const toggleDataConfig = () => setDataConfigOpen(b => !b);
   const [isConstituencyPanelOpen, setConstituencyPanelOpen] = useAtom(isConstituencyPanelOpenAtom);
-  const toggleConsData = () => setConstituencyPanelOpen(b => !b);
   const [selectedConstituency, setSelectedConstituency] = useAtom(selectedConstituencyAtom);
+  const toggleConsData = () => {
+    setConstituencyPanelOpen(b => {
+      if (b) {
+        setSelectedConstituency(null)
+      }
+      return !b
+    })
+  }
 
   useEffect(() => {
     // @ts-ignore

@@ -16,7 +16,7 @@ import { isConstituencyPanelOpenAtom } from "@/app/reports/[id]/page";
 import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel";
 
 const MAX_REGION_ZOOM = 8
-const MAX_CONSTITUENCY_ZOOM = 11.5
+export const MAX_CONSTITUENCY_ZOOM = 11.5
 const MIN_MEMBERS_ZOOM = MAX_CONSTITUENCY_ZOOM
 
 const viewStateAtom = atom<Partial<ViewState>>({
@@ -98,7 +98,7 @@ export function ReportMap () {
       labelId: "eer18nm",
       data: analytics.data?.mapReport.importedDataCountByRegion || [],
       mapboxSourceProps: {
-        maxzoom: MAX_REGION_ZOOM
+      //   maxzoom: MAX_REGION_ZOOM
       },
       mapboxLayerProps: {
         maxzoom: MAX_REGION_ZOOM
@@ -113,7 +113,7 @@ export function ReportMap () {
       labelId: "pcon16nm",
       data: analytics.data?.mapReport.importedDataCountByConstituency || [],
       mapboxSourceProps: {
-        maxzoom: MAX_CONSTITUENCY_ZOOM,
+      //   maxzoom: MAX_CONSTITUENCY_ZOOM,
       },
       mapboxLayerProps: {
         minzoom: MAX_REGION_ZOOM,
@@ -213,6 +213,16 @@ export function ReportMap () {
   const [isConstituencyPanelOpen, setIsConstituencyPanelOpen] = useAtom(isConstituencyPanelOpenAtom)
 
   useEffect(function selectConstituency() {
+    mapbox.loadedMap?.on('mouseover', `${TILESETS.constituencies.mapboxSourceId}-fill`, () => {
+      const canvas = mapbox.loadedMap?.getCanvas()
+      if (!canvas) return
+      canvas.style.cursor = 'pointer'
+    })
+    mapbox.loadedMap?.on('mouseleave', `${TILESETS.constituencies.mapboxSourceId}-fill`, () => {
+      const canvas = mapbox.loadedMap?.getCanvas()
+      if (!canvas) return
+      canvas.style.cursor = ''
+    })
     mapbox.loadedMap?.on('click', `${TILESETS.constituencies.mapboxSourceId}-fill`, event => {
       try {
         const feature = event.features?.[0]
@@ -350,7 +360,6 @@ export function ReportMap () {
                   }
                 })
               }}
-              {...tileset.mapboxSourceProps || {}}
             >
               <Layer
                 id={`${tileset.mapboxSourceId}-label-count`}
@@ -409,6 +418,24 @@ export function ReportMap () {
           </Fragment>
         )
       })}
+      {!!selectedConstituency && (
+        <Layer
+          filter={[
+            "in",
+            ["get", TILESETS.constituencies.promoteId],
+            ["literal", selectedConstituency],
+          ]}
+          id={`${TILESETS.constituencies}-selected-line`}
+          source={TILESETS.constituencies.mapboxSourceId}
+          source-layer={TILESETS.constituencies.sourceLayerId}
+          type="line"
+          paint={{
+            "line-color": "white",
+            "line-width": 4,
+            "line-opacity": 1
+          }}
+        />
+      )}
       {/* Wait for all icons to load */}
       {analytics.data?.mapReport.layers.map((layer, index) => {
         return (
@@ -487,6 +514,16 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
   const [selectedSourceRecord, setSelectedSourceRecord] = useAtom(selectedSourceRecordAtom)
   
   useEffect(function selectMarker() {
+    mapbox.loadedMap?.on('mouseover', `${externalDataSourceId}-marker`, () => {
+      const canvas = mapbox.loadedMap?.getCanvas()
+      if (!canvas) return
+      canvas.style.cursor = 'pointer'
+    })
+    mapbox.loadedMap?.on('mouseleave', `${externalDataSourceId}-marker`, () => {
+      const canvas = mapbox.loadedMap?.getCanvas()
+      if (!canvas) return
+      canvas.style.cursor = ''
+    })
     mapbox.loadedMap?.on('click', `${externalDataSourceId}-marker`, event => {
       try {
         const feature = event.features?.[0]

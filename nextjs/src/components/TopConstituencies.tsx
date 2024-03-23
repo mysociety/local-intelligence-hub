@@ -5,7 +5,7 @@ import { useContext } from "react"
 import { MemberElectoralInsights, Person } from "./reportsConstituencyItem"
 import { getYear } from "date-fns"
 import { useAtom } from "jotai"
-import { selectedConstituencyAtom } from "./report/ReportMap"
+import { MAX_CONSTITUENCY_ZOOM, selectedConstituencyAtom } from "./report/ReportMap"
 import { LoadingIcon } from "./ui/loadingIcon"
 import { useLoadedMap } from "@/app/reports/[id]/lib"
 import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel"
@@ -46,7 +46,9 @@ export function TopConstituencies() {
         <div onClick={() => {
           setSelectedConstituency(constituency.gss!)
           setTab("selected")
-          map.loadedMap?.fitBounds(constituency.gssArea?.fitBounds)
+          map.loadedMap?.fitBounds(constituency.gssArea?.fitBounds, {
+            maxZoom: MAX_CONSTITUENCY_ZOOM - 0.1
+          })
         }} className='cursor-pointer bg-meepGray-700 group hover:bg-meepGray-600 rounded-lg'>
           <ConstituencySummaryCard
             key={constituency.gss}
