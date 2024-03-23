@@ -167,8 +167,8 @@ export function ReportPage() {
 
   return (
     <>
-      <main className="absolute w-full h-full">
-        <div className='w-full h-full'>
+      <main className="absolute w-full h-full flex flex-row pointer-events-none">
+        <div className='w-full h-full pointer-events-auto'>
           <ReportMap />
         </div>
         {report?.loading && !report?.data?.mapReport && (
@@ -179,7 +179,7 @@ export function ReportPage() {
           </div>
         )}
         {/* Layer card */}
-        <aside className="absolute top-5 left-5 right-0 w-0">
+        <aside className="absolute top-5 left-5 right-0 w-0 pointer-events-auto">
           <div className="flex flex-col items-start gap-4">
             <Card className="w-[200px] p-4 bg-white border-1 border-meepGray-700 text-meepGray-800">
               <CardHeader className="flex flex-row items-center mb-4">
@@ -233,7 +233,7 @@ export function ReportPage() {
           </div>
         </aside>
         {!!selectedConstituency && (
-          <aside className="absolute top-5 right-5 w-[330px]">
+          <aside className="absolute top-5 right-5 w-[330px] pointer-events-auto h-full">
             <ConstituenciesPanel />
           </aside>
         )}

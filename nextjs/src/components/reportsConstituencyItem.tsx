@@ -44,13 +44,6 @@ export const ConstituencyElectionDeepDive = ({ gss }: { gss: string }) => {
   if (!loading && error) return <div>Error loading constituency {gss}</div>
   if (!data?.constituency || !data.mapReport) return <div>Loading constituency...</div>
 
-  const fptpMaxCount = Math.max(
-    // Member count
-    data.mapReport.importedDataCountForConstituency?.count || 0,
-    // First party votes
-    data.constituency.lastElection?.stats.firstPartyResult.votes || 0,
-  )
-
   const layersInThisConstituency = data.mapReport.layers
     .map((l, index)=> ({...l, index}))
     .filter(l => !!l.source.importedDataCountForConstituency?.count)
@@ -132,92 +125,125 @@ export const ConstituencyElectionDeepDive = ({ gss }: { gss: string }) => {
         </section>
       )}
       {!!data.mapReport.importedDataCountForConstituency && (
-        <section className='mt-10 border border-meepGray-500 rounded relative p-2'>
-          <div className='absolute -top-2 left-2 bg-meepGray-800 px-1 text-meepGray-400 uppercase text-xs inline-flex flex-row items-center gap-1'><OverlapIcon /> Member insights</div>
-          <div className='space-y-3 pt-2 pb-1'>
-            {/* First and second parties */}
-            <article className='relative z-10 space-y-1'>
-              <div className='text-xs'>
-                {format(",")(data.mapReport.importedDataCountForConstituency.count)} {pluralize("member", data.mapReport.importedDataCountForConstituency.count)} in this report
-                {/* <br />
-                {layersInThisConstituency.map((layer, i, all) => (
-                  <span>
-                    <span
-                      className='italic'
-                      style={{ color: layerColour(layer.index, layer.source.id) }}
-                      key={layer.source.id}
-                    >
-                      {layer.name}
-                    </span>
-                    &nbsp;
-                    <span>
-                      ({layer.source.importedDataCountForConstituency?.count || 0})
-                    </span>
-                    {i < all.length - 1 ? ", " : ""}
-                  </span>
-                ))} */}
-              </div>
-              {layersInThisConstituency.length ? (
-                <div className='flex flex-row'>
-                  {layersInThisConstituency.map((layer) => (
-                    <TooltipProvider key={layer.source.id}>
-                      <Tooltip delayDuration={250}>
-                        <TooltipTrigger asChild>
-                          <div className='rounded h-4' style={{
-                            width: format(".0%")(
-                              Math.max(
-                                (layer.source.importedDataCountForConstituency?.count || 0) / fptpMaxCount,
-                                0.04
-                              )
-                            ),
-                            backgroundColor: layerColour(layer.index, layer.source.id)
-                          }} />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>
-                            {format(",")(
-                              layer.source.importedDataCountForConstituency?.count || 0
-                            )} {pluralize("member",
-                              layer.source.importedDataCountForConstituency?.count || 0
-                            )} in {layer.name}
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  ))}
-                </div>
-              ) : (
-                <div>
-                  No member data in this constituency
-                </div>
-              )}
-            </article>
-            {data.constituency.lastElection && (
-              <>
-                <article className='relative z-10 space-y-1'>
-                  <div className='text-xs'>
-                    {format(",")(data.constituency.lastElection.stats.majority)} winning margin in {getYear(data.constituency.lastElection.stats.date)}
-                  </div>
-                  <div className='rounded w-full h-4 bg-meepGray-200' style={{
-                    width: format(".0%")(
-                      Math.max(
-                        data.constituency.lastElection.stats.majority / fptpMaxCount,
-                        0.04
-                      )
-                    )
-                  }} />
-                </article>
-                {data.mapReport.importedDataCountForConstituency?.count > 0.75 * data.constituency.lastElection.stats.majority && (
-                  <div className='uppercase font-IBMPlexMono bg-meepGray-700 rounded flex flex-row items-center justify-center text-xs py-2 px-2 gap-1'>
-                    <AlertTriangle className='w-4 h-4' /> High impact constituency
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </section>
+        <div className='mt-10'>
+          <MemberElectoralInsights
+            totalCount={data.mapReport.importedDataCountForConstituency.count}
+            layersInThisConstituency={layersInThisConstituency}
+            electionStats={data.constituency.lastElection?.stats}
+          />
+        </div>
       )}
     </div>
+  )
+}
+
+export function MemberElectoralInsights({
+  totalCount,
+  electionStats,
+  layersInThisConstituency
+}: {
+  totalCount: number;
+  electionStats?: {
+      date: string;
+      majority: number;
+      firstPartyResult: {
+          votes: number
+      }
+  }
+  layersInThisConstituency?: Array<{
+    name: string;
+    index: any;
+    source: {
+        id: any;
+        importedDataCountForConstituency?: {
+            count: number | null;
+        } | null
+    }
+  }>
+}) {
+  const maxCount = Math.max(
+    // Member count
+    totalCount,
+    // First party votes
+    electionStats?.firstPartyResult.votes || 0,
+  )
+
+  return (
+    <section className='border border-meepGray-500 rounded relative p-2'>
+      <div className='absolute -top-2 left-2 bg-meepGray-800 px-1 text-meepGray-400 uppercase text-xs inline-flex flex-row items-center gap-1'><OverlapIcon /> Member insights</div>
+      <div className='space-y-3 pt-2 pb-1'>
+        <article className='relative z-10 space-y-1'>
+          <div className='text-xs'>
+            {format(",")(totalCount)} {pluralize("member", totalCount)} in this report
+          </div>
+          {layersInThisConstituency?.length ? (
+            <div className='flex flex-row'>
+              {layersInThisConstituency.map((layer) => (
+                <TooltipProvider key={layer.source.id}>
+                  <Tooltip delayDuration={250}>
+                    <TooltipTrigger asChild>
+                      <div className='rounded h-4' style={{
+                        width: format(".0%")(
+                          Math.max(
+                            (layer.source.importedDataCountForConstituency?.count || 0) / maxCount,
+                            0.04
+                          )
+                        ),
+                        backgroundColor: layerColour(layer.index, layer.source.id)
+                      }} />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        {format(",")(
+                          layer.source.importedDataCountForConstituency?.count || 0
+                        )} {pluralize("member",
+                          layer.source.importedDataCountForConstituency?.count || 0
+                        )} in {layer.name}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ))}
+            </div>
+          ) : totalCount ? (
+            <div className='rounded h-4 bg-brandBlue' style={{
+              width: format(".0%")(
+                Math.max(
+                  totalCount / maxCount,
+                  0.04
+                )
+              )
+            }} />
+          ) :(
+            <div>
+              No member data in this constituency
+            </div>
+          )}
+        </article>
+        {electionStats && (
+          <>
+            <article className='relative z-10 space-y-1'>
+              <div className='text-xs'>
+                {format(",")(electionStats.majority)} winning margin in {getYear(electionStats.date)}
+              </div>
+              <div className='rounded w-full h-4 bg-meepGray-200' style={{
+                width: format(".0%")(
+                  Math.max(
+                    electionStats.majority / maxCount,
+                    0.04
+                  )
+                )
+              }} />
+            </article>
+            {totalCount > 0.75 * electionStats.majority && (
+              <div className='uppercase font-IBMPlexMono bg-meepGray-700 rounded flex flex-row items-center justify-center text-xs py-2 px-2 gap-1'>
+                <AlertTriangle className='w-4 h-4' /> High impact constituency
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </section>
   )
 }
 
