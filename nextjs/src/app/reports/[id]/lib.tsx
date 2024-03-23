@@ -2,6 +2,9 @@
 
 import { gql } from "@apollo/client"
 import ColorHash from 'color-hash'
+import { atom, useAtom } from "jotai";
+import { useEffect, useRef } from "react";
+import { useMap } from "react-map-gl";
 var colorHash = new ColorHash();
 
 export const MAP_REPORT_LAYERS_SUMMARY = gql`
@@ -39,4 +42,23 @@ export const layerColour = (index: any, id?: any) => {
     return arr[index]
   }
   return colorHash.hex(id || index)
+}
+
+export const mapHasLoaded = atom(false)
+
+export function useLoadedMap () {
+  const [loaded, setLoaded] = useAtom(mapHasLoaded)
+  const map = useMap()
+  // const intervalRef = useRef<NodeJS.Timeout>()
+  useEffect(() => {
+    if (loaded || !map.default) return
+    map.default?.on('load', () => {
+      setLoaded(true)
+    })
+  }, [map, loaded, setLoaded])
+  return {
+    ...map,
+    loadedMap: loaded ? map.default : null,
+    loaded,
+  }
 }

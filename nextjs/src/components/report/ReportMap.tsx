@@ -11,7 +11,7 @@ import { atom, useAtom } from "jotai";
 import { atomWithHash } from "jotai-location"
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import { z } from "zod";
-import { layerColour } from "@/app/reports/[id]/lib";
+import { layerColour, useLoadedMap } from "@/app/reports/[id]/lib";
 import { isConstituencyPanelOpenAtom } from "@/app/reports/[id]/page";
 import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel";
 
@@ -24,15 +24,6 @@ const viewStateAtom = atom<Partial<ViewState>>({
   latitude: 53.593349,
   zoom: 6
 })
-// const viewStateAtom = atomWithHash<Partial<ViewState>>('camera', {
-//   longitude: -2.296605,
-//   latitude: 53.593349,
-//   zoom: 6
-// }, {
-//   serialize: JSON.stringify,
-//   deserialize: JSON.parse,
-//   setHash: "replaceState"
-// })
 
 export const SelectedMarkerFeatureParser = z.object({
   type: z.literal('Feature'),
@@ -83,7 +74,7 @@ export function ReportMap () {
     }
   })
 
-  const mapboxRef = useRef<MapRef>(null)
+  const mapbox = useLoadedMap()
 
   const TILESETS: Record<"EERs" | "constituencies" | "wards", {
     name: string,
@@ -150,7 +141,7 @@ export function ReportMap () {
     mapboxSourceId: string,
     sourceLayerId: string,
   ) {
-    mapboxRef.current?.setFeatureState({
+    mapbox.loadedMap?.setFeatureState({
       source: mapboxSourceId,
       sourceLayer: sourceLayerId,
       id: gss,
@@ -160,7 +151,7 @@ export function ReportMap () {
   }
 
   useEffect(function setFeatureState() {
-    if (!mapboxRef.current) return
+    if (!mapbox.loadedMap) return
     if (!analytics.data) return
     Object.values(TILESETS)?.forEach((tileset) => {
       tileset.data?.forEach((area) => {
@@ -168,14 +159,14 @@ export function ReportMap () {
           try {
             addChloroplethDataToMapbox(area.gss, area.count, tileset.mapboxSourceId, tileset.sourceLayerId)
           } catch {
-            mapboxRef.current?.on('load', () => {
+            mapbox.loadedMap?.on('load', () => {
               addChloroplethDataToMapbox(area.gss!, area.count, tileset.mapboxSourceId, tileset.sourceLayerId!) 
             })
           }
         }
       })
     })
-  }, [analytics, TILESETS, mapboxRef])
+  }, [analytics, TILESETS, mapbox.loadedMap])
 
   const requiredImages = [
     {
@@ -195,17 +186,17 @@ export function ReportMap () {
   const [loadedImages, setLoadedImages] = useState<string[]>([])
 
   useEffect(function loadIcons() {
-    if (!mapboxRef.current) return
+    if (!mapbox.loadedMap) return
     requiredImages.forEach((requiredImage) => {
       console.log("Loading", requiredImage.url())
       // Load an image from an external URL.
-      mapboxRef.current!.loadImage(
+      mapbox.loadedMap!.loadImage(
         requiredImage.url(),
         (error, image) => {
           try {
             if (error) throw error;
             if (!image) throw new Error('Marker icon did not load')
-            mapboxRef.current!.addImage(requiredImage.name, image);
+            mapbox.loadedMap!.addImage(requiredImage.name, image);
             setLoadedImages(loadedImages => [...loadedImages, requiredImage.name])
           } catch (e) {
             console.error("Failed to load image", e)
@@ -213,7 +204,7 @@ export function ReportMap () {
         }
       )
     })
-  }, [mapboxRef.current, setLoadedImages])
+  }, [mapbox.loadedMap, setLoadedImages])
 
   const [selectedSourceRecord, setSelectedSourceRecord] = useAtom(selectedSourceRecordAtom)
   const [selectedConstituency, setSelectedConstituency] = useAtom(selectedConstituencyAtom)
@@ -222,7 +213,7 @@ export function ReportMap () {
   const [isConstituencyPanelOpen, setIsConstituencyPanelOpen] = useAtom(isConstituencyPanelOpenAtom)
 
   useEffect(function selectConstituency() {
-    mapboxRef.current?.on('click', `${TILESETS.constituencies.mapboxSourceId}-fill`, event => {
+    mapbox.loadedMap?.on('click', `${TILESETS.constituencies.mapboxSourceId}-fill`, event => {
       try {
         const feature = event.features?.[0]
         if (feature) {
@@ -239,7 +230,7 @@ export function ReportMap () {
         console.error("Failed to select constituency", e)
       }
     })
-  }, [mapboxRef.current])
+  }, [mapbox.loadedMap])
 
   const [viewState, setViewState] = useAtom(viewStateAtom)
 
@@ -249,7 +240,6 @@ export function ReportMap () {
       {...viewState}
       onMove={(e) => setViewState(e.viewState)}
       mapStyle="mapbox://styles/commonknowledge/clty3prwh004601pr4nqn7l9s"
-      ref={mapboxRef}
       onClick={() => setSelectedSourceRecord(null)}
     >
       {!analytics.data && null}
@@ -493,12 +483,11 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
     },
   });
 
+  const mapbox = useLoadedMap()
   const [selectedSourceRecord, setSelectedSourceRecord] = useAtom(selectedSourceRecordAtom)
-
-  const map = useMap()
   
   useEffect(function selectMarker() {
-    map.current?.on('click', `${externalDataSourceId}-marker`, event => {
+    mapbox.loadedMap?.on('click', `${externalDataSourceId}-marker`, event => {
       try {
         const feature = event.features?.[0]
         if (feature) {
@@ -525,7 +514,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
         // console.error("Failed to parse selected marker", e, event.features?.[0])
       }
     })
-  }, [map, data?.externalDataSource.recordUrlTemplate])
+  }, [mapbox.loadedMap, data?.externalDataSource.recordUrlTemplate])
   
   return (
     <>
