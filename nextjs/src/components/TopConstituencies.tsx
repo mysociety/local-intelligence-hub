@@ -43,7 +43,7 @@ export function TopConstituencies() {
         <div onClick={() => {
           setSelectedConstituency(constituency.gss!)
           setTab("selected")
-        }} className='cursor-pointer bg-meepGray-700 hover:bg-meepGray-600 rounded-lg'>
+        }} className='cursor-pointer bg-meepGray-700 group hover:bg-meepGray-600 rounded-lg'>
           <ConstituencySummaryCard
             key={constituency.gss}
             constituency={constituency.gssArea!}
@@ -106,6 +106,7 @@ export function ConstituencySummaryCard ({ count, constituency }: {
       <MemberElectoralInsights
         totalCount={count}
         electionStats={constituency.lastElection?.stats}
+        bg="bg-meepGray-700 group-hover:bg-meepGray-600"
       />
     </div>
   )

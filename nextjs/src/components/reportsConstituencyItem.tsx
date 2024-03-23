@@ -26,6 +26,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { LoadingIcon } from "./ui/loadingIcon";
+import { twMerge } from "tailwind-merge";
 
 type Party = {
   name: string;
@@ -144,8 +145,10 @@ export const ConstituencyElectionDeepDive = ({ gss }: { gss: string }) => {
 export function MemberElectoralInsights({
   totalCount,
   electionStats,
-  layersInThisConstituency
+  layersInThisConstituency,
+  bg = "bg-meepGray-800"
 }: {
+  bg?: string,
   totalCount: number;
   electionStats?: {
       date: string;
@@ -174,7 +177,9 @@ export function MemberElectoralInsights({
 
   return (
     <section className='border border-meepGray-500 rounded relative p-2'>
-      <div className='absolute -top-2 left-2 bg-meepGray-800 px-1 text-meepGray-400 uppercase text-xs inline-flex flex-row items-center gap-1'><OverlapIcon /> Member insights</div>
+      <div className={twMerge('absolute -top-2 left-2 px-1 text-meepGray-400 uppercase text-xs inline-flex flex-row items-center gap-1',
+      bg
+    )}><OverlapIcon /> Member insights</div>
       <div className='space-y-3 pt-2 pb-1'>
         <article className='relative z-10 space-y-1'>
           <div className='text-xs'>
