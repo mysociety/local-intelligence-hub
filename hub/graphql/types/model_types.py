@@ -4,22 +4,24 @@ from typing import List, Optional, Union
 import procrastinate.contrib.django.models
 import strawberry
 import strawberry_django
+import strawberry_django_dataloaders.fields
 from strawberry import auto
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
-import strawberry_django_dataloaders.fields
-from strawberry_django.fields.field import StrawberryDjangoField
-from django.db.models.fields.related import RelatedField
-from django.db.models import Model as DjangoModel
-from django.db.models import ManyToOneRel
 
 from hub import models
+from hub.graphql.dataloaders import (
+    FieldDataLoaderFactory,
+    FieldReturningListDataLoaderFactory,
+    ReverseFKWithFiltersDataLoaderFactory,
+    filterable_dataloader_resolver,
+)
 from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
-from hub.graphql.dataloaders import FieldDataLoaderFactory, FieldReturningListDataLoaderFactory, filterable_dataloader_resolver, ReverseFKWithFiltersDataLoaderFactory
 from hub.management.commands.import_mps import party_shades
+
 
 @strawberry_django.filters.filter(
     procrastinate.contrib.django.models.ProcrastinateJob, lookups=True
@@ -40,7 +42,7 @@ class QueueFilter:
 @strawberry_django.type(
     procrastinate.contrib.django.models.ProcrastinateJob,
     filters=QueueFilter,
-    pagination=True
+    pagination=True,
 )
 class QueueJob:
     id: auto
@@ -52,14 +54,15 @@ class QueueJob:
     scheduled_at: auto
     attempts: auto
     queueing_lock: auto
-    events: List["QueueEvent"] = strawberry_django_dataloaders.fields.auto_dataloader_field()
+    events: List[
+        "QueueEvent"
+    ] = strawberry_django_dataloaders.fields.auto_dataloader_field()
 
     @strawberry_django.field
     async def last_event_at(self, info) -> datetime:
         loader = FieldReturningListDataLoaderFactory.get_loader_class(
-            "procrastinate.ProcrastinateEvent",
-            field="job_id"
-          )
+            "procrastinate.ProcrastinateEvent", field="job_id"
+        )
         events = await loader(context=info.context).load(self.id)
         return max([event.at for event in events])
 
@@ -140,11 +143,13 @@ class FieldDefinition:
 class ExternalDataSourceFilter:
     data_type: auto
     geography_column_type: auto
-    
+
+
 @strawberry.type
 class DataSetOption:
     title: str = dict_key_field()
     shader: str = dict_key_field()
+
 
 @strawberry_django.type(models.DataSet)
 class DataSet:
@@ -152,7 +157,7 @@ class DataSet:
     name: auto
     description: auto
     label: auto
-    data_type: 'DataType' = strawberry_django_dataloaders.fields.auto_dataloader_field()
+    data_type: "DataType" = strawberry_django_dataloaders.fields.auto_dataloader_field()
     last_update: auto
     source_label: auto
     source: auto
@@ -178,7 +183,10 @@ class DataSet:
     unit_type: auto
     unit_distribution: auto
     areas_available: auto
-    external_data_source: 'ExternalDataSource' = strawberry_django_dataloaders.fields.auto_dataloader_field()
+    external_data_source: "ExternalDataSource" = (
+        strawberry_django_dataloaders.fields.auto_dataloader_field()
+    )
+
 
 @strawberry_django.filter(models.DataType)
 class DataTypeFilters:
@@ -186,10 +194,11 @@ class DataTypeFilters:
     data_set: auto
     name: auto
 
+
 @strawberry_django.type(models.DataType, filters=DataTypeFilters)
 class DataType:
     id: auto
-    data_set: 'DataSet' = strawberry_django_dataloaders.fields.auto_dataloader_field()
+    data_set: "DataSet" = strawberry_django_dataloaders.fields.auto_dataloader_field()
     name: auto
     data_type: auto
     last_update: auto
@@ -211,7 +220,9 @@ class AreaType:
     area_type: auto
     description: auto
 
-    data_types: List[DataType] = strawberry_django_dataloaders.fields.auto_dataloader_field()
+    data_types: List[
+        DataType
+    ] = strawberry_django_dataloaders.fields.auto_dataloader_field()
 
 
 @strawberry_django.filter(models.CommonData, lookups=True)
@@ -225,13 +236,13 @@ class CommonDataFilter:
 
 @strawberry_django.interface(models.CommonData)
 class CommonData:
-    data_type: 'DataType' = strawberry_django_dataloaders.fields.auto_dataloader_field()
+    data_type: "DataType" = strawberry_django_dataloaders.fields.auto_dataloader_field()
     data: auto
     date: auto
     float: auto
     int: auto
     json: Optional[JSON]
-    
+
     @strawberry_django.field
     def shade(self, info: Info) -> Optional[str]:
         # data -> dataType -> dataSet -> options -> shader for data
@@ -239,8 +250,12 @@ class CommonData:
         shader_options = self.data_type.data_set.options
         if shader_options:
             return next(
-                (option["shader"] for option in shader_options if option["title"] == self.data),
-                None
+                (
+                    option["shader"]
+                    for option in shader_options
+                    if option["title"] == self.data
+                ),
+                None,
             )
 
 
@@ -258,7 +273,7 @@ class CommonDataLoaderFilter:
 @strawberry_django.type(models.AreaData, filters=CommonDataFilter)
 class AreaData(CommonData):
     id: auto
-    area: 'Area' = strawberry_django_dataloaders.fields.auto_dataloader_field()
+    area: "Area" = strawberry_django_dataloaders.fields.auto_dataloader_field()
 
 
 @strawberry_django.filter(models.PersonData, lookups=True)
@@ -294,7 +309,7 @@ class Person:
     external_id: auto
     id_type: auto
     name: auto
-    area: 'Area' = strawberry_django_dataloaders.fields.auto_dataloader_field()
+    area: "Area" = strawberry_django_dataloaders.fields.auto_dataloader_field()
     photo: auto
     start_date: auto
     end_date: auto
@@ -316,7 +331,8 @@ class AreaFilter:
     gss: auto
     name: auto
     area_type: auto
-    
+
+
 @strawberry.type
 class PartyResult:
     party: str
@@ -326,11 +342,13 @@ class PartyResult:
     def shade(self, info: Info) -> str:
         return party_shades.get(self.party, "#DCDCDC")
 
+
 @strawberry.type
 class ConstituencyElectionResult:
     date: str
-    stats: 'ConstituencyElectionStats'
+    stats: "ConstituencyElectionStats"
     results: List[PartyResult]
+
 
 @strawberry.type
 class ConstituencyElectionStats:
@@ -360,10 +378,13 @@ class ConstituencyElectionStats:
         return PartyResult(
             party=self.first_party,
             votes=next(
-                (party["votes"] for party in self.json["results"]
-                if party["party"] == self.first_party),
-                0
-            )
+                (
+                    party["votes"]
+                    for party in self.json["results"]
+                    if party["party"] == self.first_party
+                ),
+                0,
+            ),
         )
 
     @strawberry_django.field
@@ -371,11 +392,15 @@ class ConstituencyElectionStats:
         return PartyResult(
             party=self.second_party,
             votes=next(
-                (party["votes"] for party in self.json["results"]
-                if party["party"] == self.second_party),
-                0
-            )
+                (
+                    party["votes"]
+                    for party in self.json["results"]
+                    if party["party"] == self.second_party
+                ),
+                0,
+            ),
         )
+
 
 @strawberry_django.type(models.Area, filters=AreaFilter)
 class Area:
@@ -383,7 +408,7 @@ class Area:
     mapit_id: auto
     gss: auto
     name: auto
-    area_type: 'AreaType' = strawberry_django_dataloaders.fields.auto_dataloader_field()
+    area_type: "AreaType" = strawberry_django_dataloaders.fields.auto_dataloader_field()
     geometry: auto
     overlaps: auto
     # So that we can pass in properties to the geojson Feature objects
@@ -410,21 +435,18 @@ class Area:
         filter_type=Optional[CommonDataLoaderFilter]
     )
     datum: Optional[AreaData] = filterable_dataloader_resolver(
-        filter_type=Optional[CommonDataLoaderFilter],
-        single=True,
-        field_name="data"
+        filter_type=Optional[CommonDataLoaderFilter], single=True, field_name="data"
     )
     fit_bounds: Optional[JSON] = fn_field()
+
     @strawberry_django.field
     async def last_election(self, info: Info) -> Optional[ConstituencyElectionResult]:
         # return self.data.get(data_type__name="last_election")
         # # Create a dataloader for this
         loader = ReverseFKWithFiltersDataLoaderFactory.get_loader_class(
             "hub.AreaData",
-            filters=CommonDataLoaderFilter(
-                data_type__name="last_election"
-            ),
-            reverse_path="area_id"
+            filters=CommonDataLoaderFilter(data_type__name="last_election"),
+            reverse_path="area_id",
         )
         res = await loader(context=info.context).load(self.id)
         if res is None or len(res) == 0 or res[0] is None or res[0].json is None:
@@ -432,14 +454,11 @@ class Area:
         result = res[0].json
         cer = ConstituencyElectionResult(
             date=result["date"],
-            stats=ConstituencyElectionStats(
-                **result["stats"],
-                json=result
-            ),
+            stats=ConstituencyElectionStats(**result["stats"], json=result),
             results=[
                 PartyResult(party=party["party"], votes=party["votes"])
                 for party in result["results"]
-            ]
+            ],
         )
         return cer
 
@@ -499,6 +518,7 @@ class GenericData(CommonData):
 class MapReportMemberFeature(PointFeature):
     properties: GenericData
 
+
 @strawberry.interface
 class Analytics:
     imported_data_count: int = fn_field()
@@ -509,18 +529,23 @@ class Analytics:
     imported_data_count_by_ward: List[GroupedDataCount] = fn_field()
 
     @strawberry_django.field
-    def imported_data_count_for_constituency(self, info: Info, gss: str) -> Optional[GroupedDataCount]:
+    def imported_data_count_for_constituency(
+        self, info: Info, gss: str
+    ) -> Optional[GroupedDataCount]:
         res = self.imported_data_count_by_constituency(gss=gss)
         if len(res) == 0:
             return None
         return res[0]
 
     @strawberry_django.field
-    def imported_data_count_for_constituency_2024(self, info: Info, gss: str) -> Optional[GroupedDataCount]:
+    def imported_data_count_for_constituency_2024(
+        self, info: Info, gss: str
+    ) -> Optional[GroupedDataCount]:
         res = self.imported_data_count_by_constituency_2024(gss=gss)
         if len(res) == 0:
             return None
         return res[0]
+
 
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class ExternalDataSource(Analytics):
@@ -530,7 +555,9 @@ class ExternalDataSource(Analytics):
     description: auto
     created_at: auto
     last_update: auto
-    organisation: Organisation = strawberry_django_dataloaders.fields.auto_dataloader_field()
+    organisation: Organisation = (
+        strawberry_django_dataloaders.fields.auto_dataloader_field()
+    )
     geography_column: auto
     geography_column_type: auto
     postcode_field: auto
@@ -639,6 +666,7 @@ class Report:
         user = get_current_user(info)
         return queryset.filter(organisation__members__user=user.id)
 
+
 @strawberry.type
 class MapLayer:
     name: str = dict_key_field()
@@ -649,18 +677,20 @@ class MapLayer:
         source_id = self.get(info.python_name, None)
         return models.ExternalDataSource.objects.get(id=source_id)
 
+
 @strawberry_django.type(models.MapReport)
 class MapReport(Report, Analytics):
     layers: List[MapLayer]
+
 
 @strawberry_django.field()
 def area_by_gss(gss: str) -> models.Area:
     return models.Area.objects.get(gss=gss)
 
+
 @strawberry_django.field()
 def dataset_by_name(name: str) -> models.DataSet:
-    return models.DataSet.objects\
-        .filter(
-            # Exclude strawberry.private data sets
-            external_data_source=None
-        ).get(name=name)
+    return models.DataSet.objects.filter(
+        # Exclude strawberry.private data sets
+        external_data_source=None
+    ).get(name=name)

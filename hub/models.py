@@ -442,8 +442,11 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
     unit_distribution = models.TextField(null=True, choices=UNIT_DISTRIBUTION_CHOICES)
     areas_available = models.ManyToManyField("AreaType")
     external_data_source = models.ForeignKey(
-        "ExternalDataSource", on_delete=models.CASCADE, null=True, blank=True,
-        related_name="data_sets"
+        "ExternalDataSource",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="data_sets",
     )
 
     def __str__(self):
@@ -493,7 +496,9 @@ class AreaType(models.Model):
 
 
 class DataType(TypeMixin, ShaderMixin, models.Model):
-    data_set = models.ForeignKey(DataSet, on_delete=models.CASCADE, related_name="data_types")
+    data_set = models.ForeignKey(
+        DataSet, on_delete=models.CASCADE, related_name="data_types"
+    )
     name = models.CharField(max_length=100)
     data_type = models.CharField(max_length=20, choices=TypeMixin.TYPE_CHOICES)
     last_update = models.DateTimeField(auto_now=True)
@@ -503,7 +508,9 @@ class DataType(TypeMixin, ShaderMixin, models.Model):
     label = models.CharField(max_length=200, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     order = models.IntegerField(blank=True, null=True)
-    area_type = models.ForeignKey(AreaType, on_delete=models.CASCADE, null=True, related_name="data_types")
+    area_type = models.ForeignKey(
+        AreaType, on_delete=models.CASCADE, null=True, related_name="data_types"
+    )
     auto_converted = models.BooleanField(
         default=False,
         help_text="True if this has been auto converted from an area with overlapping geometry",
@@ -699,7 +706,9 @@ class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
     gss = models.CharField(max_length=30)
     name = models.CharField(max_length=200)
-    area_type = models.ForeignKey(AreaType, on_delete=models.CASCADE, related_name="areas")
+    area_type = models.ForeignKey(
+        AreaType, on_delete=models.CASCADE, related_name="areas"
+    )
     geometry = models.TextField(blank=True, null=True)
     polygon = MultiPolygonField(srid=4326, blank=True, null=True)
     point = PointField(srid=4326, blank=True, null=True)
@@ -745,9 +754,9 @@ class Area(models.Model):
         return area
 
     def fit_bounds(self):
-        '''
+        """
         Useful for mapbox's fitBounds method
-        '''
+        """
         if self.polygon:
             bounds_tuple = self.polygon.extent
             return [

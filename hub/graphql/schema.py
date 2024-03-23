@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import strawberry
 import strawberry_django
@@ -8,7 +8,6 @@ from gqlauth.user.queries import UserQueries
 from strawberry_django import mutations as django_mutations
 from strawberry_django.optimizer import DjangoOptimizerExtension
 from strawberry_django.permissions import IsAuthenticated
-from typing import Optional
 
 from hub import models
 from hub.graphql import mutations as mutation_types

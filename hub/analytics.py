@@ -15,7 +15,7 @@ class Analytics:
         label: str
         gss: Optional[str]
         count: int
-        
+
     def imported_data_count_by_region(self) -> List[RegionCount]:
         return (
             self.get_analytics_queryset()
@@ -34,7 +34,7 @@ class Analytics:
         if gss:
             try:
                 qs = qs.filter(postcode_data__codes__parliamentary_constituency=gss)
-            except:
+            except Exception:
                 return []
 
         return (
@@ -47,13 +47,17 @@ class Analytics:
             .order_by("-count")
         )
 
-    def imported_data_count_by_constituency_2024(self, gss: str = None) -> List[RegionCount]:
+    def imported_data_count_by_constituency_2024(
+        self, gss: str = None
+    ) -> List[RegionCount]:
         qs = self.get_analytics_queryset()
 
         if gss:
             try:
-                qs = qs.filter(postcode_data__codes__parliamentary_constituency_2025=gss)
-            except:
+                qs = qs.filter(
+                    postcode_data__codes__parliamentary_constituency_2025=gss
+                )
+            except Exception:
                 return []
 
         return (

@@ -45,6 +45,8 @@ export const layerColour = (index: any, id?: any) => {
 }
 
 export const mapHasLoaded = atom(false)
+export const isDataConfigOpenAtom = atom(false)
+export const isConstituencyPanelOpenAtom = atom(false)
 
 export function useLoadedMap () {
   const [loaded, setLoaded] = useAtom(mapHasLoaded)

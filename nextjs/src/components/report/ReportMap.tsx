@@ -1,18 +1,16 @@
 "use client"
 
-import { GroupedDataCount, MapReportLayersSummaryFragment, MapReportLayerAnalyticsQuery, MapReportLayerAnalyticsQueryVariables, MapReportLayerGeoJsonPointsQuery, MapReportLayerGeoJsonPointsQueryVariables } from "@/__generated__/graphql";
-import { Fragment, useContext, useEffect, useId, useRef, useState } from "react";
-import Map, { Layer, MapRef, Source, LayerProps, ImageSourceRaw, Marker, Popup, useMap, ViewState } from "react-map-gl";
-import { gql, useFragment, useQuery } from "@apollo/client";
+import { MapReportLayerAnalyticsQuery, MapReportLayerAnalyticsQueryVariables, MapReportLayerGeoJsonPointsQuery, MapReportLayerGeoJsonPointsQueryVariables } from "@/__generated__/graphql";
+import { Fragment, useContext, useEffect, useState } from "react";
+import Map, { Layer, Source, LayerProps, Popup, ViewState } from "react-map-gl";
+import { gql, useQuery } from "@apollo/client";
 import { ReportContext } from "@/app/reports/[id]/context";
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { interpolateInferno } from 'd3-scale-chromatic'
 import { atom, useAtom } from "jotai";
-import { atomWithHash } from "jotai-location"
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import { z } from "zod";
-import { layerColour, useLoadedMap } from "@/app/reports/[id]/lib";
-import { isConstituencyPanelOpenAtom } from "@/app/reports/[id]/page";
+import { layerColour, useLoadedMap, isConstituencyPanelOpenAtom } from "@/app/reports/[id]/lib";
 import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel";
 
 const MAX_REGION_ZOOM = 8
@@ -64,7 +62,7 @@ export const SelectedMarkerParser = z.object({
 
 export const selectedSourceRecordAtom = atom<z.infer<typeof SelectedMarkerParser> | null>(null)
 
-export const selectedConstituencyAtom = atomWithHash<string | null>('constituency', null)
+export const selectedConstituencyAtom = atom<string | null>(null)
 
 export function ReportMap () {
   const { id } = useContext(ReportContext)
@@ -112,9 +110,7 @@ export function ReportMap () {
       promoteId: "pcon16cd",
       labelId: "pcon16nm",
       data: analytics.data?.mapReport.importedDataCountByConstituency || [],
-      mapboxSourceProps: {
-      //   maxzoom: MAX_CONSTITUENCY_ZOOM,
-      },
+      mapboxSourceProps: {},
       mapboxLayerProps: {
         minzoom: MAX_REGION_ZOOM,
         maxzoom: MAX_CONSTITUENCY_ZOOM,
@@ -305,7 +301,6 @@ export function ReportMap () {
               {/* Shade area by count */}
               <Layer
                 id={`${tileset.mapboxSourceId}-fill`}
-                // beforeId="building"
                 source={tileset.mapboxSourceId}
                 source-layer={tileset.sourceLayerId}
                 type="fill"
@@ -348,16 +343,17 @@ export function ReportMap () {
               type="geojson"
               data={{
                 type: "FeatureCollection",
-                // @ts-ignore
-                features: tileset.data.map((d) => {
-                  return {
-                    type: "Feature",
-                    geometry: d.gssArea?.point?.geometry,
-                    properties: {
-                      count: d.count,
-                      label: d.label,
+                features: tileset.data
+                  .filter(d => d.gssArea?.point?.geometry)
+                  .map((d) => {
+                    return {
+                      type: "Feature",
+                      geometry: d.gssArea?.point?.geometry! as GeoJSON.Point,
+                      properties: {
+                        count: d.count,
+                        label: d.label,
+                      }
                     }
-                  }
                 })
               }}
             >
@@ -457,7 +453,6 @@ export function ReportMap () {
             closeButton={false}
             closeOnMove={false}
             anchor="bottom"
-            // @ts-ignore bizarre library typing issue
             offset={[0, -35] as any}
           >
             <div className='font-IBMPlexMono p-2 space-y-1 bg-white'>
@@ -548,7 +543,6 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
           setSelectedSourceRecord(selectedRecord)
         }
       } catch (e) {
-        // console.error("Failed to parse selected marker", e, event.features?.[0])
       }
     })
   }, [mapbox.loadedMap, data?.externalDataSource.recordUrlTemplate])

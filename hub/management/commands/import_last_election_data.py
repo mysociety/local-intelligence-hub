@@ -14,7 +14,8 @@ from hub.models import Area, AreaData, AreaType, DataSet, DataType
 
 
 def format_key(value):
-    return value.replace(' ', '_').lower()
+    return value.replace(" ", "_").lower()
+
 
 class Command(BaseCommand):
     help = "Import data from the last election"
@@ -43,7 +44,7 @@ class Command(BaseCommand):
         "Green Party": "green",
         "Reform UK": "brexit",
         "SNP": "snp",
-        "Other": "all_other_candidates"
+        "Other": "all_other_candidates",
     }
 
     party_translate_up_dict = {
@@ -94,33 +95,33 @@ class Command(BaseCommand):
 
     def get_area_type(self):
         return AreaType.objects.get(code=self.area_type)
-    
+
     unformatted_str_columns = [
-      # from CSV:
-      "ONS ID",
-      "ONS region ID",
-      "Constituency name",
-      "County name",
-      "Region name",
-      "Country name",
-      "Constituency type",
-      "Declaration time",
-      "Member first name",
-      "Member surname",
-      "Member gender",
-      "Result",
-      "First party",
-      "Second party",
-      # manually added columns:
-      "date"
+        # from CSV:
+        "ONS ID",
+        "ONS region ID",
+        "Constituency name",
+        "County name",
+        "Region name",
+        "Country name",
+        "Constituency type",
+        "Declaration time",
+        "Member first name",
+        "Member surname",
+        "Member gender",
+        "Result",
+        "First party",
+        "Second party",
+        # manually added columns:
+        "date",
     ]
     str_columns = list(map(format_key, unformatted_str_columns))
 
     unformatted_stats_columns = [
-      "Electorate",
-      "Valid votes",
-      "Invalid votes",
-      "Majority",
+        "Electorate",
+        "Valid votes",
+        "Invalid votes",
+        "Majority",
     ]
     stats_columns = list(map(format_key, unformatted_stats_columns))
 
@@ -135,12 +136,15 @@ class Command(BaseCommand):
         #   .str.lower()
         # )
         party_keys = [
-            col for col in df.columns
+            col
+            for col in df.columns
             if col not in self.unformatted_str_columns
             and col not in self.unformatted_stats_columns
         ]
         df = df.rename(
-            columns=lambda column: format_key(column) if column not in party_keys else self.up(column)
+            columns=lambda column: format_key(column)
+            if column not in party_keys
+            else self.up(column)
         )
         # df["spk"] = df["Of which other winner"]
         # df["All other candidates"] = df["All other candidates"] - df.spk
@@ -190,8 +194,9 @@ class Command(BaseCommand):
                         "electorate": electorate,
                         "majority": majority,
                         "result": result_of_election,
-                        "valid_votes": valid_votes
+                        "valid_votes": valid_votes,
                     }
+
                     def name_votes(candidate):
                         return {
                             "name": (
@@ -203,14 +208,19 @@ class Command(BaseCommand):
                             "numberOfVotes": int(candidate["numberOfVotes"]),
                         }
 
-                    sorted_results = list(map(name_votes, sorted(
-                        election_data["candidate"],
-                        key=lambda c: int(c["numberOfVotes"]),
-                        reverse=True,
-                    )))
+                    sorted_results = list(
+                        map(
+                            name_votes,
+                            sorted(
+                                election_data["candidate"],
+                                key=lambda c: int(c["numberOfVotes"]),
+                                reverse=True,
+                            ),
+                        )
+                    )
 
                     for candidate in sorted_results:
-                        result[candidate['name']] = candidate["numberOfVotes"]
+                        result[candidate["name"]] = candidate["numberOfVotes"]
                     result["first_party"] = sorted_results[0]["name"]
                     result["second_party"] = sorted_results[1]["name"]
 
@@ -232,15 +242,9 @@ class Command(BaseCommand):
         # cols = [col for col in df.columns if "party" not in col and "date" not in col]
         int_cols = [col for col in df.columns if col not in self.str_columns]
         df[int_cols] = df[int_cols].astype(int)
-        df.first_party = df.first_party.apply(
-            lambda party: self.up(party)
-        )
-        df.second_party = df.second_party.apply(
-            lambda party: self.up(party)
-        )
-        df = df.rename(
-            columns=lambda party: self.up(party)
-        )
+        df.first_party = df.first_party.apply(lambda party: self.up(party))
+        df.second_party = df.second_party.apply(lambda party: self.up(party))
+        df = df.rename(columns=lambda party: self.up(party))
         return df
 
     def create_data_types(self):
@@ -312,18 +316,16 @@ class Command(BaseCommand):
             try:
                 area = Area.get_by_gss(gss, area_type=self.area_type)
                 party_keys = [
-                    col for col in dataset.keys() if col
-                    not in self.str_columns
-                    and col not in self.stats_columns
+                    col
+                    for col in dataset.keys()
+                    if col not in self.str_columns and col not in self.stats_columns
                 ]
                 json_data = {
                     "date": dataset.date,
                     "stats": dataset.drop(party_keys).to_dict(),
                     "results": [
                         {"party": k, "votes": v}
-                        for k, v in dataset.filter(party_keys)
-                        .to_dict()
-                        .items()
+                        for k, v in dataset.filter(party_keys).to_dict().items()
                     ],
                 }
                 data, created = AreaData.objects.update_or_create(

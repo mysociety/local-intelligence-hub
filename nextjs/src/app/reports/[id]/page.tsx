@@ -39,7 +39,7 @@ import { useRouter } from "next/navigation";
 import spaceCase from 'to-space-case'
 import { toastPromise } from "@/lib/toast";
 import { MAP_REPORT_LAYER_ANALYTICS, ReportMap, selectedConstituencyAtom } from "@/components/report/ReportMap";
-import { MAP_REPORT_FRAGMENT } from "./lib";
+import { MAP_REPORT_FRAGMENT, isConstituencyPanelOpenAtom, isDataConfigOpenAtom } from "./lib";
 import { ReportContext } from "./context";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import { Provider as JotaiProvider, atom, useAtom } from "jotai";
@@ -141,11 +141,8 @@ export default function Page({ params: { id } }: { params: Params }) {
   }
 }
 
-export const isDataConfigOpenAtom = atom(false)
-export const isConstituencyPanelOpenAtom = atom(false)
-
-export function ReportPage() {
-  const { id, report, updateReport, deleteReport } = useContext(ReportContext);
+function ReportPage() {
+  const { report, updateReport, deleteReport } = useContext(ReportContext);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDataConfigOpen, setDataConfigOpen] = useAtom(isDataConfigOpenAtom);
   const toggleDataConfig = () => setDataConfigOpen(b => !b);

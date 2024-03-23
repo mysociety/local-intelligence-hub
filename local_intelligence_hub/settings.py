@@ -110,7 +110,7 @@ INSTALLED_APPS = [
     "hub",
     "corsheaders",
     "procrastinate.contrib.django",
-    "strawberry_django"
+    "strawberry_django",
 ]
 
 MIDDLEWARE = [
@@ -266,7 +266,7 @@ LOGGING = {
             "handlers": ["console"],
             "level": env("DJANGO_LOG_LEVEL"),
         }
-    }
+    },
 }
 if DEBUG:
     if LOG_QUERIES:
@@ -275,13 +275,16 @@ if DEBUG:
             "level": "DEBUG",
         }
 
-    if HIDE_DEBUG_TOOLBAR == False:
+    if HIDE_DEBUG_TOOLBAR is False:
         import socket
+
         hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
         INTERNAL_IPS = [ip[:-1] + "1" for ip in ips] + ["127.0.0.1", "10.0.2.2"]
 
         # debug toolbar has to come after django_hosts middleware
-        MIDDLEWARE.insert(1, "strawberry_django.middlewares.debug_toolbar.DebugToolbarMiddleware")
+        MIDDLEWARE.insert(
+            1, "strawberry_django.middlewares.debug_toolbar.DebugToolbarMiddleware"
+        )
 
         INSTALLED_APPS += ("debug_toolbar",)
 

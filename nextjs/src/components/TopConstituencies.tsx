@@ -11,7 +11,6 @@ import { useLoadedMap } from "@/app/reports/[id]/lib"
 import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { twMerge } from "tailwind-merge"
-import { setConfig } from "next/dist/shared/lib/runtime-config.external"
 
 export function TopConstituencies() {
   const sortOptions = {
@@ -75,15 +74,18 @@ export function TopConstituencies() {
         </Select>
       </div>
       {constituencies?.map((constituency) => (
-        <div onClick={() => {
-          setSelectedConstituency(constituency.gss!)
-          setTab("selected")
-          map.loadedMap?.fitBounds(constituency.gssArea?.fitBounds, {
-            maxZoom: MAX_CONSTITUENCY_ZOOM - 0.1
-          })
-        }} className='cursor-pointer bg-meepGray-700 group hover:bg-meepGray-600 rounded-lg'>
+        <div 
+          key={constituency.gss}
+          onClick={() => {
+            setSelectedConstituency(constituency.gss!)
+            setTab("selected")
+            map.loadedMap?.fitBounds(constituency.gssArea?.fitBounds, {
+              maxZoom: MAX_CONSTITUENCY_ZOOM - 0.1
+            })
+          }}
+          className='cursor-pointer bg-meepGray-700 group hover:bg-meepGray-600 rounded-lg'
+        >
           <ConstituencySummaryCard
-            key={constituency.gss}
             constituency={constituency.gssArea!}
             count={constituency.count}
           />
