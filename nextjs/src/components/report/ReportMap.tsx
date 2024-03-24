@@ -1,6 +1,6 @@
 "use client"
 
-import { MapReportLayerAnalyticsQuery, MapReportLayerAnalyticsQueryVariables, MapReportLayerGeoJsonPointsQuery, MapReportLayerGeoJsonPointsQueryVariables } from "@/__generated__/graphql";
+import { MapReportLayerAnalyticsQuery, MapReportLayerAnalyticsQueryVariables, DataSourceGeoJsonPointsQuery, DataSourceGeoJsonPointsQueryVariables } from "@/__generated__/graphql";
 import { Fragment, useContext, useEffect, useState } from "react";
 import Map, { Layer, Source, LayerProps, Popup, ViewState } from "react-map-gl";
 import { gql, useQuery } from "@apollo/client";
@@ -499,7 +499,7 @@ export function ReportMap () {
 }
 
 function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { externalDataSourceId: string, index: number }) {
-  const { data, error } = useQuery<MapReportLayerGeoJsonPointsQuery, MapReportLayerGeoJsonPointsQueryVariables>(MAP_REPORT_LAYER_POINTS, {
+  const { data, error } = useQuery<DataSourceGeoJsonPointsQuery, DataSourceGeoJsonPointsQueryVariables>(MAP_REPORT_LAYER_POINTS, {
     variables: {
       externalDataSourceId,
     },
@@ -620,7 +620,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
 }
 
 const MAP_REPORT_LAYER_POINTS = gql`
-  query MapReportLayerGeoJSONPoints($externalDataSourceId: ID!) {
+  query DataSourceGeoJSONPoints($externalDataSourceId: ID!) {
     externalDataSource(pk: $externalDataSourceId) {
       id
       recordUrlTemplate

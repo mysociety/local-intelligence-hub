@@ -1,6 +1,6 @@
 "use client"
 
-import { GetMemberListQuery } from "@/__generated__/graphql"
+import { GetMemberListQuery, MapReportLayersSummaryFragment } from "@/__generated__/graphql"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -25,7 +25,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { gql, useQuery } from "@apollo/client"
+import { gql, useFragment, useQuery } from "@apollo/client"
 import { useContext, useState } from "react"
 import { Check, ChevronsUpDown, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -33,6 +33,9 @@ import { Form, useForm } from "react-hook-form"
 import { FormField } from "../ui/form"
 import { ReportContext } from "@/app/reports/[id]/context"
 import { useRouter } from "next/navigation"
+import { MAP_REPORT_LAYERS_SUMMARY } from "@/app/reports/[id]/lib"
+import { DataSourceIcon } from "../DataSourceIcon"
+import pluralize from "pluralize"
 
 type Source = {
   name: string,
@@ -85,10 +88,18 @@ export function AddMapLayerButton({ addLayer }: { addLayer(layer: Source): void 
 
 export function MapLayerSelector ({ value, onChange }: { value?: Source, onChange: (value: Source) => void }) {
   const [open, setOpen] = useState(false)
-  const { id } = useContext(ReportContext)
+  const { id, report } = useContext(ReportContext)
   const dataSources = useQuery<GetMemberListQuery>(MEMBER_LISTS)
   const selectedSource = dataSources.data?.externalDataSources.find(s => s.id === value?.id)
   const router = useRouter()
+  const layers = useFragment<MapReportLayersSummaryFragment>({
+    fragment: MAP_REPORT_LAYERS_SUMMARY,
+    fragmentName: "MapReportLayersSummary",
+    from: {
+      __typename: "MapReport",
+      id,
+    },
+  });
  
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -115,25 +126,36 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
           </CommandEmpty>
           <CommandGroup>
             {dataSources.data?.externalDataSources
-            // .filter(s => !report.data?.mapReport?.layers?.some(sL => sL.source.id === s.id))
+            // .filter(s => !report?.data?.mapReport?.layers?.some(sL => sL.source.id === s.id))
             .map((source) => {
               const alreadySelected = source.id === value
+              const alreadyUsed = layers.data?.layers?.some(sL => sL?.source?.id === source.id)
               return (
                 <CommandItem
                   key={source.id}
-                  disabled={alreadySelected}
+                  disabled={alreadySelected || alreadyUsed}
                   onSelect={() => {
                     onChange(source)
                     setOpen(false)
                   }}
+                  className="flex flex-row items-center gap-1"
                 >
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      alreadySelected ? "opacity-100" : "opacity-0"
+                      alreadySelected || alreadyUsed ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {source.name} ({source.importedDataCount} records)
+                  <DataSourceIcon connectionType={source.connectionDetails.__typename} className="w-5" />
+                  &nbsp;
+                  <div className='-space-y-1'>
+                    <div>{source.name}</div>
+                    {!!source?.importedDataCount && (
+                      <div className='text-meepGray-400 text-xs'>
+                        {source?.importedDataCount} {pluralize("member", source?.importedDataCount)}
+                      </div>
+                    )}
+                  </div>
                 </CommandItem>
               )
             })}
@@ -158,6 +180,9 @@ const MEMBER_LISTS = gql`
       id
       name
       importedDataCount
+      connectionDetails {
+        __typename
+      }
     }
   }
 `

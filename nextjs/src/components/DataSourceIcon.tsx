@@ -1,6 +1,7 @@
 import { FieldDefinition } from "@/__generated__/graphql";
 import { AirtableIcon } from "./logos";
 import { twMerge } from "tailwind-merge";
+import { File } from "lucide-react";
 
 export function DataSourceFieldLabel({ label, fieldDefinition, connectionType, className, source }: {
   label?: string,
@@ -27,8 +28,9 @@ export function DataSourceFieldLabel({ label, fieldDefinition, connectionType, c
   </span>
 }
 
-export function DataSourceIcon({ connectionType, className }: { connectionType: string, className?: string}) {
+export function DataSourceIcon({ connectionType, className ='w-4' }: { connectionType?: string, className?: string}) {
   switch (connectionType) {
     case "AirtableSource": return <AirtableIcon className={className} />;
+    default: return <File className={className} />
   }
 }

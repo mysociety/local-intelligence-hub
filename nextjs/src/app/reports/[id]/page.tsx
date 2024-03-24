@@ -78,9 +78,10 @@ export default function Page({ params: { id } }: { params: Params }) {
     toastPromise(
       client.refetchQueries({
         include: [
-          // Queries that involve member data
+          "GetMapReport",
+          "MapReportLayersSummary",
           "MapReportLayerAnalytics",
-          "GetConstituencyData"
+          "GetConstituencyData",
         ],
       }),
       {
@@ -105,7 +106,7 @@ export default function Page({ params: { id } }: { params: Params }) {
       loading: "Saving...",
       success: (d) => {
         if (!d.errors && d.data) {
-          if (input.layers?.length) {
+          if ('layers' in input) {
             // If layers changed, that means
             // all the member numbers will have changed too.
             refreshStatistics()
@@ -226,7 +227,7 @@ function ReportPage() {
                 ) : (
                   <>
                     <CardTitle
-                      contentEditable id="nickname"
+                      id="nickname"
                       className="text-hMd grow font-IBMPlexSansMedium"
                       {...contentEditableMutation(updateReport, "name", "Untitled Report")}
                     >

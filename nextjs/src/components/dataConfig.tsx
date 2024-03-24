@@ -32,6 +32,8 @@ import { importData } from "@/app/(app)/data-sources/inspect/[externalDataSource
 import { LoadingIcon } from "./ui/loadingIcon"
 import { useRouter } from "next/navigation"
 import { MAP_REPORT_LAYERS_SUMMARY, layerColour } from "@/app/reports/[id]/lib"
+import { DataSourceIcon } from "./DataSourceIcon"
+import pluralize from "pluralize"
 
 export default function DataConfigPanel () {
   const router = useRouter()
@@ -58,11 +60,19 @@ export default function DataConfigPanel () {
             <div key={layer?.source?.id || index} className="flex gap-2 items-center">
               <Popover>
                 <PopoverTrigger>
-                  <Button className="p-3 gap-2 text-sm" style={{
-                    background: layerColour(index, layer?.source?.id)
-                  }}>
-                    <File className="w-4" />
+                  <Button className="border-l-4 bg-none p-3 text-sm flex flex-row items-center gap-2 text-left justify-start overflow-hidden text-nowrap text-ellipsis" style={{
+                    borderColor: layerColour(index, layer?.source?.id)
+                  }} 
+                >
+                  <DataSourceIcon connectionType={layer?.source?.connectionDetails?.__typename} className="w-5" />
+                  <div className='-space-y-1'>
                     <span>{layer?.name || layer?.source?.name}</span>
+                    {!!layer?.source?.importedDataCount && (
+                      <div className='text-meepGray-400 text-xs'>
+                        {layer?.source?.importedDataCount} {pluralize("member", layer?.source?.importedDataCount)}
+                      </div>
+                    )}
+                  </div>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className='space-y-4'>
