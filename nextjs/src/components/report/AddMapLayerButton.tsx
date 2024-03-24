@@ -50,8 +50,8 @@ export function AddMapLayerButton({ addLayer }: { addLayer(layer: Source): void 
   return (
     <Dialog open={open} onOpenChange={(o) => setOpen(o)}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <Plus className="w-4" /> Add map layer
+        <Button variant="outline" size='sm'>
+          <Plus className="w-4" /> add data source
         </Button>
       </DialogTrigger>
       <Form {...form}>
@@ -62,7 +62,7 @@ export function AddMapLayerButton({ addLayer }: { addLayer(layer: Source): void 
             addLayer(d.source)
           })}>
             <DialogHeader>
-              <DialogTitle>Add map layer</DialogTitle>
+              <DialogTitle>Add data source</DialogTitle>
               <DialogDescription>
                 Select from existing sources or add a new one
               </DialogDescription>
@@ -132,6 +132,7 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
               const alreadyUsed = layers.data?.layers?.some(sL => sL?.source?.id === source.id)
               return (
                 <CommandItem
+                  value={source.name}
                   key={source.id}
                   disabled={alreadySelected || alreadyUsed}
                   onSelect={() => {

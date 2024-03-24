@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowRight, File, Plus } from "lucide-react"
+import { ArrowRight, File, Plus, Shuffle, X } from "lucide-react"
 import { gql, useApolloClient, useFragment, useQuery } from "@apollo/client"
 import { AddMapLayerButton } from "./report/AddMapLayerButton"
 import { MapReportLayersSummaryFragment } from "@/__generated__/graphql"
@@ -31,9 +31,11 @@ import Link from "next/link"
 import { importData } from "@/app/(app)/data-sources/inspect/[externalDataSourceId]/InspectExternalDataSource"
 import { LoadingIcon } from "./ui/loadingIcon"
 import { useRouter } from "next/navigation"
-import { MAP_REPORT_LAYERS_SUMMARY, layerColour } from "@/app/reports/[id]/lib"
+import { MAP_REPORT_LAYERS_SUMMARY, isDataConfigOpenAtom, layerColour } from "@/app/reports/[id]/lib"
 import { DataSourceIcon } from "./DataSourceIcon"
 import pluralize from "pluralize"
+
+import { useAtom } from "jotai"
 
 export default function DataConfigPanel () {
   const router = useRouter()
@@ -47,15 +49,17 @@ export default function DataConfigPanel () {
       id,
     },
   });
+  const [open, setOpen] = useAtom(isDataConfigOpenAtom)
 
   return (
-    <Card className="p-4 bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700">
-      <CardHeader>
-        <CardTitle className="text-hSm mb-4">Map layers</CardTitle>
+    <Card className="bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700">
+      <CardHeader className='p-3 flex flex-row justify-between items-center'>
+        <CardTitle className="text-hSm font-semibold">Map layers</CardTitle>
+        <X className='w-4 cursor-pointer' onClick={() => { setOpen(false) }} />
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col gap-2 mb-2 py-2 border-t border-meepGray-700 ">
-          <span className="label mb-2">Added layers</span>
+        <div className="p-3 flex flex-col gap-2 border-t border-meepGray-700 ">
+          <span className="text-sm mb-2">Your member lists</span>
           {layers.data.layers?.map((layer, index) => (
             <div key={layer?.source?.id || index} className="flex gap-2 items-center">
               <Popover>
@@ -102,6 +106,23 @@ export default function DataConfigPanel () {
           </div>
         </div>
       </CardContent>
+      <div className='bg-meepGray-700 p-3'>
+        <CardHeader>
+          <h2 className='text-meepGray-400 flex flex-row gap-1 items-center text-sm'>
+            <Shuffle className='w-4'/> Collaborative area
+          </h2>
+        </CardHeader>
+        <CardContent>
+          <p className='text-meepGray-300 text-xs py-4'>
+            Invite to organisations to share membership lists and collaborate on a campaign together.
+          </p>
+          <div className="flex gap-2 items-center">
+            <Button size={'sm'} variant='outline' className='text-sm'>
+              <Plus /> Invite
+            </Button>
+          </div>
+        </CardContent>
+      </div>
     </Card>
   )
 
