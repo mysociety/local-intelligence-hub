@@ -10,13 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+import os
 from datetime import timedelta
 from pathlib import Path
 
 import environ
-from gqlauth.settings_type import GqlAuthSettings
-import os
 import sentry_sdk
+from gqlauth.settings_type import GqlAuthSettings
 from sentry_sdk.integrations.django import DjangoIntegration
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
