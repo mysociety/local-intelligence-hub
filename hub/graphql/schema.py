@@ -132,6 +132,9 @@ class Mutation:
     delete_map_report: model_types.MapReport = django_mutations.delete(
         mutation_types.IDObject, extensions=[IsAuthenticated()]
     )
+    create_external_data_source: model_types.ExternalDataSource = (
+        mutation_types.create_external_data_source
+    )
 
 
 schema = JwtSchema(
