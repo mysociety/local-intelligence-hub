@@ -349,6 +349,7 @@ class Command(BaseImportFromDataFrameCommand):
     def extract_and_save_data(self):
         self.log(self.message)
 
+        area_type = self.get_area_type()
         for file in self.files:
             self.log(file["defaults"]["label"])
 
@@ -371,7 +372,7 @@ class Command(BaseImportFromDataFrameCommand):
                     data_type, created = DataType.objects.update_or_create(
                         data_set=data_set,
                         name=data_type_slug,
-                        area_type=self.get_area_type(),
+                        area_type=area_type,
                         defaults={
                             "data_type": "percent",
                             "label": col["label"],

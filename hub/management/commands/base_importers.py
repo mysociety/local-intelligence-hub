@@ -1,4 +1,3 @@
-from functools import cache
 from time import sleep
 
 from django.core.management.base import BaseCommand
@@ -53,9 +52,14 @@ class BaseAreaImportCommand(BaseCommand):
                 data_type=data_type, area__area_type__code=self.area_type
             ).delete()
 
-    @cache
     def get_area_type(self):
         return AreaType.objects.get(code=self.area_type)
+
+    def get_cons_col(self):
+        if hasattr(self, "cons_col_map"):
+            return self.cons_col_map[self.area_type]
+
+        return self.cons_col
 
     def add_data_sets(self, df=None):
         for name, config in self.data_sets.items():
@@ -331,11 +335,11 @@ class BaseConstituencyCountImportCommand(BaseAreaImportCommand):
 
     def get_dataframe(self):
         df = pd.read_csv(self.data_file)
-        df = df.astype({self.cons_col: "str"})
+        df = df.astype({self.get_cons_col(): "str"})
         return df
 
     def _get_areas_from_row(self, row):
-        value = row[self.cons_col]
+        value = row[self.get_cons_col()]
         if self.uses_gss:
             areas = Area.objects.filter(gss__in=value.split(","))
         else:

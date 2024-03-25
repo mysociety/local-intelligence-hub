@@ -19,6 +19,14 @@ type_shades = {
     ],
 }
 
+
+country_shades = [
+    {"title": "England", "shader": "#f8f9fa"},
+    {"title": "Wales", "shader": "#cc3517"},
+    {"title": "Scotland", "shader": "#202448"},
+    {"title": "Northern Ireland", "shader": "#458945"},
+]
+
 type_map = {
     "STC": {
         "LBO": "London Borough",
@@ -51,7 +59,6 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
         "data_type": "text",
         "category": "place",
         "subcategory": "",
-        "release_date": "February 2023",
         "label": "Council type",
         "source_label": "Data from mySociety.",
         "source": "https://mapit.mysociety.org/",
@@ -62,6 +69,7 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
         "comparators": DataSet.in_comparators(),
         "unit_type": "raw",
         "unit_distribution": "",
+        "is_public": True,
         "is_shadable": True,
         "is_filterable": True,
         "options": type_shades["STC"],
@@ -72,6 +80,14 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
         "council_type": {
             "defaults": defaults,
             "col": "council-type",
+        },
+        "council_country": {
+            "defaults": {
+                **defaults,
+                "label": "Country of the UK",
+                "options": country_shades,
+            },
+            "col": "country",
         },
     }
 
@@ -84,6 +100,7 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
                 {
                     "gss-code": area["codes"]["gss"],
                     "council-type": type_map[self.area_type][area["type"]],
+                    "country": area["country_name"],
                 }
             )
 
