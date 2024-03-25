@@ -290,6 +290,7 @@ SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")
 
 sentry_sdk.init(
     dsn=os.getenv("SENTRY_DSN"),
+    environment=os.getenv("SENTRY_ENV"),
     integrations=[DjangoIntegration()],
     # Optionally, you can adjust the logging level
     traces_sample_rate=1.0,  # Adjust sample rate as needed
