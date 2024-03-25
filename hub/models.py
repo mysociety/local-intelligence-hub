@@ -1618,6 +1618,7 @@ class MailchimpSource(ExternalDataSource):
     member_email = models.EmailField(
           max_length=250,
           help_text="Email for member to fetch.",
+           default='default@example.com',
     )
 
     def save(self, *args, **kwargs):
