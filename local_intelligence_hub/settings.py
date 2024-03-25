@@ -15,6 +15,9 @@ from pathlib import Path
 
 import environ
 from gqlauth.settings_type import GqlAuthSettings
+import os
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -284,3 +287,10 @@ STRAWBERRY_DJANGO = {
 }
 
 SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")
+
+sentry_sdk.init(
+    dsn=os.getenv('SENTRY_DSN'),
+    integrations=[DjangoIntegration()],
+    # Optionally, you can adjust the logging level
+    traces_sample_rate=1.0, # Adjust sample rate as needed
+)
