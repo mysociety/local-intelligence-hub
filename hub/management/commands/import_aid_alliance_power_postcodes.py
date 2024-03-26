@@ -4,16 +4,29 @@ import pandas as pd
 
 from hub.models import Area, DataSet
 
-from .base_importers import BaseConstituencyGroupListImportCommand
+from .base_importers import (
+    BaseConstituencyGroupListImportCommand,
+    MultipleAreaTypesMixin,
+)
 
 
-class Command(BaseConstituencyGroupListImportCommand):
+class Command(MultipleAreaTypesMixin, BaseConstituencyGroupListImportCommand):
     help = "Import Aid Alliance 'Power Postcode' data"
+
+    do_not_convert = True
 
     message = "importing Aid Alliance 'power postcode' data"
     uses_gss = True
     cons_col = "gss"
     data_file = settings.BASE_DIR / "data" / "aid_alliance_power_postcodes.csv"
+
+    area_types = ["WMC", "WMC23", "STC", "DIS"]
+    cons_col_map = {
+        "WMC": "WMC",
+        "WMC23": "WMC23",
+        "STC": "STC",
+        "DIS": "DIS",
+    }
 
     power_postcodes = {
         "label": "Power Postcodes",
@@ -84,6 +97,10 @@ class Command(BaseConstituencyGroupListImportCommand):
             "contact",
             "url",
             "gss",
+            "WMC",
+            "WMC23",
+            "STC",
+            "DIS",
         ]
         # Add Areas to df
         df["constituency"] = df.gss.apply(self.add_area)
