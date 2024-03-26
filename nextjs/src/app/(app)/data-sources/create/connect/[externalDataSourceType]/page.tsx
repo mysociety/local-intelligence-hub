@@ -400,7 +400,7 @@ export default function Page({
                   <FormItem>
                     <FormLabel>Airtable access token</FormLabel>
                     <FormControl>
-                      {/* @ts-ignore */}
+                      {/* @ts-ignore - react hook form is extra fussy about null values but they work, ok! */}
                       <Input placeholder="patAB1" {...field} required />
                     </FormControl>
                     <FormDescription>
