@@ -34,42 +34,33 @@ import {
   CreateSourceMutationVariables,
   DataSourceType,
   ExternalDataSourceInput,
+  TestDataSourceInput,
   FieldDefinition,
   MailChimpSourceInput,
   PostcodesIoGeographyTypes,
+  TestDataSourceQuery,
+  TestDataSourceQueryVariables
 
 } from "@/__generated__/graphql";
 import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
 
-const TEST_MAILCHIMP_SOURCE = gql`
-  query TestMailchimpSource($apiKey: String!, $listId: String!) {
-    mailchimpSource: testMailchimpSource(apiKey: $apiKey, listId: $listId) {
-      remoteName
-      healthcheck
-      fieldDefinitions {
-        label
-        value
-        description
-      }
-      __typename
+const TEST_DATA_SOURCE = gql`
+  query TestDataSource($input: TestDataSourceInput!) {
+  testDataSource(input: $input) {
+    __typename
+    healthcheck
+    fieldDefinitions {
+      description
+      label
+      value
     }
+    remoteName,
+    geographyColumn,
+    geographyColumnType
   }
-`;
+}
 
-const TEST_AIRTABLE_SOURCE = gql`
-  query TestAirtableSource($apiKey: String!, $baseId: String!, $tableId: String!) {
-    airtableSource: testAirtableSource(apiKey: $apiKey, baseId: $baseId, tableId: $tableId) {
-      remoteName
-      healthcheck
-      fieldDefinitions {
-        label
-        value
-        description
-      }
-      __typename
-    }
-  }
 `;
 
 const CREATE_DATA_SOURCE = gql`
@@ -85,7 +76,7 @@ mutation CreateSource ($input: CreateExternalDataSourceInput!) {
 `;
 
 
-type FormInputs = CreateExternalDataSourceInput & ExternalDataSourceInput
+type FormInputs = CreateExternalDataSourceInput & ExternalDataSourceInput & TestDataSourceInput
 
 export default function Page({
   params: { externalDataSourceType },
@@ -108,26 +99,15 @@ export default function Page({
   });
 
   const [createSource, createSourceResult] = useMutation(CREATE_DATA_SOURCE);
+  const [testSource, testSourceResult] = useLazyQuery<TestDataSourceQuery, TestDataSourceQueryVariables>(TEST_DATA_SOURCE);
 
-
-  const source = form.watch();
-
-  const TEST_SOURCE_QUERIES = {
-    mailchimp: TEST_MAILCHIMP_SOURCE,
-    airtable: TEST_AIRTABLE_SOURCE,
-  };
-
-  const [testSource, testSourceResult] = useLazyQuery(
-    TEST_SOURCE_QUERIES[externalDataSourceType as keyof typeof TEST_SOURCE_QUERIES]
-  );
-
-  const currentSource = testSourceResult.data?.[`${externalDataSourceType}Source`];
+  const currentSource = testSourceResult.data;
 
   const [guessedPostcode, setGuessedPostcode] = useState<string | null>(null);
 
   useEffect(() => {
     // Guessing the geography column based on current source dynamically
-    let guessedPostcodeColumn = currentSource?.fieldDefinitions?.find(
+    let guessedPostcodeColumn = currentSource?.testDataSource?.fieldDefinitions?.find(
       (field: { label: string; value: string; }) => (
         field.label?.toLowerCase().replaceAll(' ', '').includes("postcode") ||
         field.label?.toLowerCase().replaceAll(' ', '').includes("postalcode") ||
@@ -145,48 +125,47 @@ export default function Page({
       setGuessedPostcode(guessedPostcodeColumn.value)
       form.setValue('geographyColumnType', PostcodesIoGeographyTypes.Postcode);
     }
-  }, [currentSource?.fieldDefinitions, form, setGuessedPostcode]);
+  }, [currentSource?.testDataSource?.fieldDefinitions, form, setGuessedPostcode]);
 
   useEffect(() => {
     // Proposing the name based on the remote name from the current source dynamically
-    if (currentSource?.remoteName) {
-      form.setValue('name', currentSource.remoteName);
+    if (currentSource?.testDataSource?.remoteName) {
+      form.setValue('name', currentSource?.testDataSource?.remoteName);
     }
-  }, [currentSource?.remoteName, form]);
+  }, [currentSource?.testDataSource?.remoteName, form]);
 
-  async function submitTestConnection(data: FormInputs) {
-    let variables: { apiKey?: string; listId?: string; baseId?: string; tableId?: string } = {};
+  async function submitTestConnection(formData: FormInputs) {
 
-    if (externalDataSourceType === "mailchimp") {
-      if (data.mailchimp) {
-        const { apiKey, listId } = data.mailchimp;
-        if (apiKey && listId) {
-          variables = { apiKey, listId };
-        }
-      }
+    if (!formData[externalDataSourceType]) {
+      throw Error("Need some CRM connection details to proceed!")
+    }
+    // Get the nested data source key e.g. Airtable or Mailchimp
+    const dataSourceKey = Object.keys(formData)[2];
 
-    } else if (externalDataSourceType === "airtable") {
-      if (data.airtable) {
-        const { apiKey, baseId, tableId } = data.airtable;
-        if (apiKey && baseId && tableId) {
-          variables = { apiKey, baseId, tableId };
-        }
-      }
-
+    const dataSourceValue = formData[dataSourceKey];
+   
+    const input = {
+      "type": dataSourceKey, 
+      "apiKey": dataSourceValue.apiKey,
+      "baseId": dataSourceValue.baseId,
+      "tableId": dataSourceValue.tableId,
+      "listId": dataSourceValue.listId,
     }
 
-    // Early return if variables are not set correctly
-    if (!variables.apiKey || !(variables.listId || (variables.baseId && variables.tableId))) {
-      toast.error("No valid data provided for testing connection.");
-      return;
+    {
+      toastPromise(testSource({
+        variables: { input }
+      }), {
+        loading: "Testing connection...",
+        success: (d: FetchResult<TestDataSourceQuery>) => {
+          if (!d.errors && d.data?.testDataSource) {
+            return "Connection is healthy";
+          }
+          throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
+        },
+        error: "Connection failed",
+      });
     }
-
-    // Use the variables to perform the test query
-    toastPromise(testSource({ variables }), {
-      loading: "Testing connection...",
-      success: "Connection successful",
-      error: "Connection failed",
-    });
   }
 
   async function submitCreateSource(formData: FormInputs) {
@@ -205,33 +184,33 @@ export default function Page({
       }
     }
     toastPromise(createSource({ variables: { input } }),
-        {
-          loading: "Saving connection...",
-          success: (d: FetchResult<CreateSourceMutation>) => {
-            console.log(d)
-            if (!d.errors && d.data?.createExternalDataSource.id) {
-              if (d.data?.createExternalDataSource.dataType === DataSourceType.Member) {
-                router.push(
-                  `/data-sources/create/configure/${d.data.createExternalDataSource.id}`,
-                );
-              } else {
-                router.push(
-                  `/data-sources/create/inspect/${d.data.createExternalDataSource.id}`,
-                );
-              }
-              return "Connection successful";
+      {
+        loading: "Saving connection...",
+        success: (d: FetchResult<CreateSourceMutation>) => {
+          console.log(d)
+          if (!d.errors && d.data?.createExternalDataSource.id) {
+            if (d.data?.createExternalDataSource.dataType === DataSourceType.Member) {
+              router.push(
+                `/data-sources/create/configure/${d.data.createExternalDataSource.id}`,
+              );
+            } else {
+              router.push(
+                `/data-sources/create/inspect/${d.data.createExternalDataSource.id}`,
+              );
             }
-            throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
-          },
-          error(e) {
-            return {
-              title: "Connection failed",
-              description: e.message,
-            }
+            return "Connection successful";
           }
+          throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
         },
-      )
-      }
+        error(e) {
+          return {
+            title: "Connection failed",
+            description: e.message,
+          }
+        }
+      },
+    )
+  }
   if (createSourceResult.loading) {
     return (
       <div className="space-y-6">
@@ -244,7 +223,7 @@ export default function Page({
     );
   }
 
-  if (testSourceResult.data?.[`${externalDataSourceType}Source`]?.healthcheck) {
+  if (currentSource?.testDataSource?.healthcheck) {
     return (
       <div className="space-y-6">
         <h1 className="text-hLg">Connection successful</h1>
@@ -308,24 +287,24 @@ export default function Page({
                     <FormLabel>Geography column</FormLabel>
                     <FormControl>
                       {
-                        (testSourceResult.data?.[`${externalDataSourceType}Source`]?.fieldDefinitions?.length) ? (
-                           // @ts-ignore
+                        (currentSource?.testDataSource?.fieldDefinitions?.length) ? (
+                          // @ts-ignore
                           <Select {...field} onValueChange={field.onChange} required>
                             <SelectTrigger className='pl-1'>
                               <SelectValue
-                                placeholder={`Choose ${source.geographyColumnType || 'geography'} column`}
+                                placeholder={`Choose ${currentSource?.testDataSource?.geographyColumnType || 'geography'} column`}
                               />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectGroup>
                                 <SelectLabel>Available columns</SelectLabel>
-                                {testSourceResult.data?.[`${externalDataSourceType}Source`]?.fieldDefinitions?.map(
+                                {currentSource?.testDataSource?.fieldDefinitions?.map(
 
                                   (field: FieldDefinition) => (
                                     <SelectItem key={field.value} value={field.value}>
                                       <DataSourceFieldLabel
                                         connectionType={
-                                          testSourceResult.data?.[`${externalDataSourceType}Source`]?.__typename!
+                                          currentSource?.testDataSource?.__typename!
                                         }
                                         fieldDefinition={field}
                                       />
@@ -500,7 +479,7 @@ export default function Page({
               >
                 Back
               </Button>
-              <Button type="submit" variant={"reverse"} disabled={testSourceResult.loading}>
+              <Button type="submit" variant={"reverse"}>
                 Test connection
               </Button>
             </div>

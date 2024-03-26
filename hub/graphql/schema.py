@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional, Union
 
 import strawberry
 import strawberry_django
@@ -13,6 +13,16 @@ from hub import models
 from hub.graphql import mutations as mutation_types
 from hub.graphql.types import model_types
 
+
+@strawberry.input
+class TestDataSourceInput:
+    type: str
+    api_key: str
+    # For Mailchimp
+    list_id: Optional[str] = None
+    # For Airtable
+    base_id: Optional[str] = None
+    table_id: Optional[str] = None
 
 @strawberry.type
 class Query(UserQueries):
@@ -56,27 +66,23 @@ class Query(UserQueries):
     )
 
     @strawberry.field
-    def test_airtable_source(
-        self,
-        info: strawberry.types.info.Info,
-        api_key: str,
-        base_id: str,
-        table_id: str,
-    ) -> model_types.AirtableSource:
-        return models.AirtableSource(
-            api_key=api_key, base_id=base_id, table_id=table_id
-        )
-    
-    @strawberry.field
-    def test_mailchimp_source(
-        self,
-        info: strawberry.types.info.Info,
-        api_key: str,
-        list_id: str,
-    ) -> model_types.MailchimpSource:
-        return models.MailchimpSource(
-            api_key=api_key, list_id=list_id
-        )
+    def test_data_source(
+        self, 
+        info: strawberry.types.Info, 
+        input: TestDataSourceInput
+    ) -> model_types.ExternalDataSource:
+        if input.type == 'airtable':
+            return models.AirtableSource(
+                api_key=input.api_key, base_id=input.base_id, table_id=input.table_id
+            )
+        elif input.type == 'mailchimp':
+            return models.MailchimpSource(
+                api_key=input.api_key, list_id=input.list_id
+            )
+        else:
+            raise ValueError("Unsupported data source type")
+
+
 
 @strawberry.type
 class Mutation:
