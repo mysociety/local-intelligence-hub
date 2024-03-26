@@ -92,7 +92,7 @@ class PolygonFeature(Feature):
 @strawberry.type
 class MultiPolygonGeometry:
     type: GeoJSONTypes.MultiPolygon = GeoJSONTypes.MultiPolygon
-    coordinates: List[List[List[List[float]]]]
+    coordinates: JSON
 
 
 @strawberry.type
@@ -105,6 +105,6 @@ class MultiPolygonFeature(Feature):
     ) -> "MultiPolygonFeature":
         return MultiPolygonFeature(
             id=str(id),
-            geometry=MultiPolygonGeometry(coordinates=multipolygon),
+            geometry=MultiPolygonGeometry(coordinates=multipolygon.json),
             properties=properties,
         )
