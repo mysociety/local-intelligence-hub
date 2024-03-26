@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowRight, File, Plus, Shuffle, X } from "lucide-react"
+import { ArrowRight, ClipboardCopy, File, Plus, Shuffle, X } from "lucide-react"
 import { gql, useApolloClient, useFragment, useQuery } from "@apollo/client"
 import { AddMapLayerButton } from "./report/AddMapLayerButton"
 import { MapReportLayersSummaryFragment } from "@/__generated__/graphql"
@@ -34,12 +34,24 @@ import { useRouter } from "next/navigation"
 import { MAP_REPORT_LAYERS_SUMMARY, isDataConfigOpenAtom, layerColour } from "@/app/reports/[id]/lib"
 import { DataSourceIcon } from "./DataSourceIcon"
 import pluralize from "pluralize"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 import { useAtom } from "jotai"
+import { Input } from "./ui/input"
+import { toast } from "sonner"
 
 export default function DataConfigPanel () {
   const router = useRouter()
-  const { id, updateReport } = useContext(ReportContext)
+  const { id, report, updateReport } = useContext(ReportContext)
   const client = useApolloClient()
   const layers = useFragment<MapReportLayersSummaryFragment>({
     fragment: MAP_REPORT_LAYERS_SUMMARY,
@@ -50,6 +62,7 @@ export default function DataConfigPanel () {
     },
   });
   const [open, setOpen] = useAtom(isDataConfigOpenAtom)
+  const shareURL = () => new URL(`/data-sources/share/${report?.data?.mapReport.organisation.slug}`, window.location.toString()).toString()
 
   return (
     <Card className="bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700">
@@ -117,9 +130,36 @@ export default function DataConfigPanel () {
             Invite to organisations to share membership lists and collaborate on a campaign together.
           </p>
           <div className="flex gap-2 items-center">
-            <Button size={'sm'} variant='outline' className='text-sm'>
-              <Plus /> Invite
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button size={'sm'} variant='outline' className='text-sm'>
+                  <Plus /> Invite
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Request data from other campaigns</DialogTitle>
+                  <DialogDescription>
+                    Share this URL to request data from other campaigns. They{"'"}ll be able to pick and choose which data sources to share with you, with some data privacy options.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex w-full max-w-sm items-center space-x-2">
+                  <Input value={shareURL()} />
+                  <Button onClick={() => {
+                    navigator.clipboard.writeText(shareURL())
+                    toast.success("Copied to clipboard")
+                  }}><ClipboardCopy /></Button>
+                </div>
+                <DialogFooter>
+                  <DialogClose onClick={() => {
+                    navigator.clipboard.writeText(shareURL())
+                    toast.success("Copied to clipboard")
+                  }}>
+                    Copy and close
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardContent>
       </div>

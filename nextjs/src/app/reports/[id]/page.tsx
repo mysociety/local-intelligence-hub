@@ -313,6 +313,11 @@ const GET_MAP_REPORT = gql`
     mapReport(pk: $id) {
       id
       name
+      organisation {
+        id
+        slug
+        name
+      }
       ... MapReportPage
     }
   }

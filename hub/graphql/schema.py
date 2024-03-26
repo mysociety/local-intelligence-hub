@@ -19,7 +19,10 @@ class Query(UserQueries):
     memberships: List[model_types.Membership] = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
-    organisations: List[model_types.Organisation] = strawberry_django.field(
+    all_organisations: List[model_types.PublicOrganisation] = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
+    my_organisations: List[model_types.Organisation] = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
 
@@ -112,6 +115,16 @@ class Mutation:
     delete_map_report: model_types.MapReport = django_mutations.delete(
         mutation_types.IDObject, extensions=[IsAuthenticated()]
     )
+
+    create_sharing_permission: model_types.SharingPermission = django_mutations.create(
+      mutation_types.SharingPermissionInput,
+      extensions=[IsAuthenticated()]
+    )
+    delete_sharing_permission: model_types.SharingPermission = django_mutations.delete(
+      mutation_types.IDObject,
+      extensions=[IsAuthenticated()]
+    )
+    update_sharing_permissions: List[model_types.ExternalDataSource] = mutation_types.update_sharing_permissions
 
 
 schema = JwtSchema(

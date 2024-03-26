@@ -23,16 +23,19 @@ const documents = {
     "\n  mutation DeleteUpdateConfig($id: String!) {\n    deleteExternalDataSource(data: { id: $id }) {\n      id\n    }\n  }\n": types.DeleteUpdateConfigDocument,
     "\n      mutation ImportData($id: String!) {\n        importAll(externalDataSourceId: $id) {\n          id\n          importedDataCount\n          isImporting\n          jobs {\n            status\n            id\n            taskName\n            args\n            lastEventAt\n          }\n        }\n      }\n    ": types.ImportDataDocument,
     "\n  query ExternalDataSourceName($externalDataSourceId: ID!) {\n    externalDataSource(pk: $externalDataSourceId) {\n      name\n    }\n  }\n": types.ExternalDataSourceNameDocument,
+    "\n          mutation ShareDataSources($fromOrgId: String!, $toOrgId: String!, $permissions: [SharingPermissionInput!]!) {\n            updateSharingPermissions(fromOrgId: $fromOrgId, toOrgId: $toOrgId, permissions: $permissions) {\n              id\n              sharingPermissions {\n                id\n                organisationId\n                externalDataSourceId\n                visibilityRecordCoordinates\n                visibilityRecordDetails\n                deleted\n              }\n            }\n          }\n        ": types.ShareDataSourcesDocument,
+    "\n  query YourSourcesForSharing {\n    myOrganisations {\n      id\n      name\n      externalDataSources {\n        id\n        name\n        connectionDetails {\n          __typename\n        }\n        importedDataCount\n        dataType\n        fieldDefinitions {\n          label\n        }\n        organisationId\n        sharingPermissions {\n          id\n          organisationId\n          externalDataSourceId\n          visibilityRecordCoordinates\n          visibilityRecordDetails\n          deleted\n        }\n      }\n    }\n  }\n": types.YourSourcesForSharingDocument,
+    "\n  query ShareWithOrgPage($orgSlug: String!) {\n    allOrganisations(filters: {slug: $orgSlug}) {\n      id\n      name\n    }\n  }\n": types.ShareWithOrgPageDocument,
     "\n  query ListReports {\n    reports {\n      id\n      name\n      lastUpdate\n    }\n  }\n": types.ListReportsDocument,
     "\nmutation CreateMapReport($data: MapReportInput!) {\n  createMapReport(data: $data) {\n    ... on MapReport {\n      id\n    }\n    ... on OperationInfo {\n      messages {\n        message\n      }\n    }\n  }\n}\n": types.CreateMapReportDocument,
     "\n  mutation Verify($token: String!) {\n    verifyAccount(token: $token) {\n      errors\n      success\n    }\n  }\n": types.VerifyDocument,
-    "\n  query Example {\n    organisations {\n      id\n      name\n    }\n  }\n": types.ExampleDocument,
+    "\n  query Example {\n    myOrganisations {\n      id\n      name\n    }\n  }\n": types.ExampleDocument,
     "\n  mutation Login($username: String!, $password: String!) {\n    tokenAuth(username: $username, password: $password) {\n      errors\n      success\n      token {\n        token\n        payload {\n          exp\n        }\n      }\n    }\n  }\n": types.LoginDocument,
     "\n  mutation Register($email: String!, $password1: String!, $password2: String!, $username: String!) {\n    register(email: $email, password1: $password1, password2: $password2, username: $username) {\n      errors\n      success\n    }\n  }\n": types.RegisterDocument,
     "\n  query GetMapReportName($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n    }\n  }\n": types.GetMapReportNameDocument,
     "\n  fragment MapReportLayersSummary on MapReport {\n    layers {\n      name\n      source {\n        id\n        name\n        isImporting\n        importedDataCount\n        connectionDetails {\n          __typename\n          recordUrlTemplate\n        }\n      }\n    }\n  }\n": types.MapReportLayersSummaryFragmentDoc,
     "\n  fragment MapReportPage on MapReport {\n    id\n    name\n    ... MapReportLayersSummary\n  }\n  \n": types.MapReportPageFragmentDoc,
-    "\n  query GetMapReport($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n      ... MapReportPage\n    }\n  }\n  \n": types.GetMapReportDocument,
+    "\n  query GetMapReport($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n      organisation {\n        id\n        slug\n        name\n      }\n      ... MapReportPage\n    }\n  }\n  \n": types.GetMapReportDocument,
     "\n  mutation UpdateMapReport($input: MapReportInput!) {\n    updateMapReport(data: $input) {\n      id\n      name\n      layers {\n        name\n        source {\n          id\n          name\n        }\n      }\n    }\n  }\n": types.UpdateMapReportDocument,
     "\n  mutation DeleteMapReport($id: IDObject!) {\n    deleteMapReport(data: $id) {\n      id\n    }\n  }\n": types.DeleteMapReportDocument,
     "\n  mutation AutoUpdateWebhookRefresh($ID: String!) {\n    refreshWebhooks(externalDataSourceId: $ID) {\n      id\n      webhookHealthcheck\n    }\n  }\n": types.AutoUpdateWebhookRefreshDocument,
@@ -110,6 +113,18 @@ export function gql(source: "\n  query ExternalDataSourceName($externalDataSourc
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function gql(source: "\n          mutation ShareDataSources($fromOrgId: String!, $toOrgId: String!, $permissions: [SharingPermissionInput!]!) {\n            updateSharingPermissions(fromOrgId: $fromOrgId, toOrgId: $toOrgId, permissions: $permissions) {\n              id\n              sharingPermissions {\n                id\n                organisationId\n                externalDataSourceId\n                visibilityRecordCoordinates\n                visibilityRecordDetails\n                deleted\n              }\n            }\n          }\n        "): (typeof documents)["\n          mutation ShareDataSources($fromOrgId: String!, $toOrgId: String!, $permissions: [SharingPermissionInput!]!) {\n            updateSharingPermissions(fromOrgId: $fromOrgId, toOrgId: $toOrgId, permissions: $permissions) {\n              id\n              sharingPermissions {\n                id\n                organisationId\n                externalDataSourceId\n                visibilityRecordCoordinates\n                visibilityRecordDetails\n                deleted\n              }\n            }\n          }\n        "];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query YourSourcesForSharing {\n    myOrganisations {\n      id\n      name\n      externalDataSources {\n        id\n        name\n        connectionDetails {\n          __typename\n        }\n        importedDataCount\n        dataType\n        fieldDefinitions {\n          label\n        }\n        organisationId\n        sharingPermissions {\n          id\n          organisationId\n          externalDataSourceId\n          visibilityRecordCoordinates\n          visibilityRecordDetails\n          deleted\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query YourSourcesForSharing {\n    myOrganisations {\n      id\n      name\n      externalDataSources {\n        id\n        name\n        connectionDetails {\n          __typename\n        }\n        importedDataCount\n        dataType\n        fieldDefinitions {\n          label\n        }\n        organisationId\n        sharingPermissions {\n          id\n          organisationId\n          externalDataSourceId\n          visibilityRecordCoordinates\n          visibilityRecordDetails\n          deleted\n        }\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query ShareWithOrgPage($orgSlug: String!) {\n    allOrganisations(filters: {slug: $orgSlug}) {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  query ShareWithOrgPage($orgSlug: String!) {\n    allOrganisations(filters: {slug: $orgSlug}) {\n      id\n      name\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function gql(source: "\n  query ListReports {\n    reports {\n      id\n      name\n      lastUpdate\n    }\n  }\n"): (typeof documents)["\n  query ListReports {\n    reports {\n      id\n      name\n      lastUpdate\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -122,7 +137,7 @@ export function gql(source: "\n  mutation Verify($token: String!) {\n    verifyA
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  query Example {\n    organisations {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  query Example {\n    organisations {\n      id\n      name\n    }\n  }\n"];
+export function gql(source: "\n  query Example {\n    myOrganisations {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  query Example {\n    myOrganisations {\n      id\n      name\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -146,7 +161,7 @@ export function gql(source: "\n  fragment MapReportPage on MapReport {\n    id\n
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  query GetMapReport($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n      ... MapReportPage\n    }\n  }\n  \n"): (typeof documents)["\n  query GetMapReport($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n      ... MapReportPage\n    }\n  }\n  \n"];
+export function gql(source: "\n  query GetMapReport($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n      organisation {\n        id\n        slug\n        name\n      }\n      ... MapReportPage\n    }\n  }\n  \n"): (typeof documents)["\n  query GetMapReport($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n      organisation {\n        id\n        slug\n        name\n      }\n      ... MapReportPage\n    }\n  }\n  \n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

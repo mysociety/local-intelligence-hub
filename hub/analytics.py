@@ -46,6 +46,26 @@ class Analytics:
             .annotate(count=Count("label"))
             .order_by("-count")
         )
+    
+    def imported_data_count_by_constituency_by_source(self, gss: str = None) -> List[RegionCount]:
+        qs = self.get_analytics_queryset()
+
+        if gss:
+            try:
+                qs = qs.filter(postcode_data__codes__parliamentary_constituency=gss)
+            except Exception:
+                return []
+
+        return (
+            qs.annotate(
+                label=F("postcode_data__parliamentary_constituency"),
+                gss=F("postcode_data__codes__parliamentary_constituency"),
+                source_id=F("data_type__data_set__external_data_source_id"),
+            )
+            .values("label", "gss", "source_id")
+            .annotate(count=Count("label"))
+            .order_by("-count")
+        )
 
     def imported_data_count_by_constituency_2024(
         self, gss: str = None
