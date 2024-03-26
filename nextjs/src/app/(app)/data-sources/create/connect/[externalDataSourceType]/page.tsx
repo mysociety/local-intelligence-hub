@@ -29,15 +29,15 @@ import { Input } from "@/components/ui/input";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import {
   AirtableSourceInput,
+  CreateExternalDataSourceInput,
   CreateSourceMutation,
   CreateSourceMutationVariables,
   DataSourceType,
+  ExternalDataSourceInput,
   FieldDefinition,
   MailChimpSourceInput,
   PostcodesIoGeographyTypes,
-  airtableSourceQuery,
-  airtableSourceQueryVariables,
-  
+
 } from "@/__generated__/graphql";
 import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
@@ -72,26 +72,11 @@ const TEST_AIRTABLE_SOURCE = gql`
   }
 `;
 
-// const CREATE_MAILCHIMP_DATA_SOURCE = gql`
-// mutation CreateMailchimpSource($MailChimpSource: MailChimpSourceInput!) {
-//   createMailchimpSource: createMailchimpSource(data: $MailChimpSource) {
-//     id
-//     name
-//     healthcheck
-//     dataType
-//   }
-// }
-// `;
-
-interface ExternalDataSourceInput {
-  mailchimp: MailChimpSourceInput
-  airtable: AirtableSourceInput
-}
-
-
 const CREATE_DATA_SOURCE = gql`
-mutation CreateSource ($input: ExternalDataSourceInput!) {
+mutation CreateSource ($input: CreateExternalDataSourceInput!) {
     createExternalDataSource (input: $input) {
+      id,
+      dataType,
         connectionDetails {
             __typename
         } 
@@ -99,23 +84,13 @@ mutation CreateSource ($input: ExternalDataSourceInput!) {
 }
 `;
 
-type FormInputs = {
-  sourceDetails: {
-    apiKey?: string;
-    listId?: string;
-    baseId?: string;
-    tableId?: string;
-    name?: string;
-    dataType?: DataSourceType;
-  };
-  geographyColumnType?: PostcodesIoGeographyTypes;
-  geographyColumn?: string;
-};
+
+type FormInputs = CreateExternalDataSourceInput & ExternalDataSourceInput
 
 export default function Page({
   params: { externalDataSourceType },
 }: {
-  params: { externalDataSourceType: string };
+  params: { externalDataSourceType: keyof CreateExternalDataSourceInput };
 }) {
   const router = useRouter();
   const context = useContext(CreateAutoUpdateFormContext);
@@ -128,13 +103,7 @@ export default function Page({
   const form = useForm<FormInputs>({
     defaultValues: {
       geographyColumnType: PostcodesIoGeographyTypes.Postcode,
-      sourceDetails: {
-        dataType: context.dataType,
-        apiKey: '', 
-        listId: '', 
-        baseId: '',
-        tableId:'',
-      },
+      dataType: context.dataType,
     },
   });
 
@@ -150,11 +119,7 @@ export default function Page({
 
   const [testSource, testSourceResult] = useLazyQuery(
     TEST_SOURCE_QUERIES[externalDataSourceType as keyof typeof TEST_SOURCE_QUERIES]
-    );
-
-
-
-
+  );
 
   const currentSource = testSourceResult.data?.[`${externalDataSourceType}Source`];
 
@@ -185,34 +150,37 @@ export default function Page({
   useEffect(() => {
     // Proposing the name based on the remote name from the current source dynamically
     if (currentSource?.remoteName) {
-      form.setValue('sourceDetails.name', currentSource.remoteName);
+      form.setValue('name', currentSource.remoteName);
     }
   }, [currentSource?.remoteName, form]);
 
   async function submitTestConnection(data: FormInputs) {
     let variables: { apiKey?: string; listId?: string; baseId?: string; tableId?: string } = {};
-  
-    // Adjust this part based on how your form data is structured for different source types
+
     if (externalDataSourceType === "mailchimp") {
-      // Assuming `data.sourceDetails` contains Mailchimp-specific fields
-      const { apiKey, listId } = data.sourceDetails;
-      if (apiKey && listId) {
-        variables = { apiKey, listId };
+      if (data.mailchimp) {
+        const { apiKey, listId } = data.mailchimp;
+        if (apiKey && listId) {
+          variables = { apiKey, listId };
+        }
       }
+
     } else if (externalDataSourceType === "airtable") {
-      // Assuming `data.sourceDetails` contains Airtable-specific fields
-      const { apiKey, baseId, tableId } = data.sourceDetails;
-      if (apiKey && baseId && tableId) {
-        variables = { apiKey, baseId, tableId };
+      if (data.airtable) {
+        const { apiKey, baseId, tableId } = data.airtable;
+        if (apiKey && baseId && tableId) {
+          variables = { apiKey, baseId, tableId };
+        }
       }
+
     }
-  
+
     // Early return if variables are not set correctly
     if (!variables.apiKey || !(variables.listId || (variables.baseId && variables.tableId))) {
       toast.error("No valid data provided for testing connection.");
       return;
     }
-  
+
     // Use the variables to perform the test query
     toastPromise(testSource({ variables }), {
       loading: "Testing connection...",
@@ -221,29 +189,49 @@ export default function Page({
     });
   }
 
-  async function submitCreateSource(data: FormInputs) {
-    let input = {
-      ...data.sourceDetails,
-      geographyColumn: data.geographyColumn,
-      geographyColumnType: data.geographyColumnType,
-    };
- 
-
-    if (!input.apiKey || !(input.listId || (input.baseId && input.tableId))) {
-      toast.error("No valid data provided for creating source.");
-      return;
+  async function submitCreateSource(formData: FormInputs) {
+    if (!formData[externalDataSourceType]) {
+      throw Error("Need some CRM connection details to proceed!")
     }
-
-    toastPromise(createSource({ variables: { input } }), {
-      loading: "Saving connection...",
-      success: "Connection successful",
-      error: "Connection failed",
-    }).then((result) => {
-      
-   console.log(result)
-    });
-  }
-
+    // To avoid mutation of the form data
+    const genericCRMData = Object.assign({}, formData)
+    // Remove specific CRM data from the generic data
+    delete genericCRMData[externalDataSourceType]
+    const CRMSpecificData = formData[externalDataSourceType]
+    let input: CreateExternalDataSourceInput = {
+      [externalDataSourceType]: {
+        ...genericCRMData,
+        ...CRMSpecificData
+      }
+    }
+    toastPromise(createSource({ variables: { input } }),
+        {
+          loading: "Saving connection...",
+          success: (d: FetchResult<CreateSourceMutation>) => {
+            console.log(d)
+            if (!d.errors && d.data?.createExternalDataSource.id) {
+              if (d.data?.createExternalDataSource.dataType === DataSourceType.Member) {
+                router.push(
+                  `/data-sources/create/configure/${d.data.createExternalDataSource.id}`,
+                );
+              } else {
+                router.push(
+                  `/data-sources/create/inspect/${d.data.createExternalDataSource.id}`,
+                );
+              }
+              return "Connection successful";
+            }
+            throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
+          },
+          error(e) {
+            return {
+              title: "Connection failed",
+              description: e.message,
+            }
+          }
+        },
+      )
+      }
   if (createSourceResult.loading) {
     return (
       <div className="space-y-6">
@@ -270,7 +258,7 @@ export default function Page({
           >
             <FormField
               control={form.control}
-              name="sourceDetails.name"
+              name="name"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nickname</FormLabel>
@@ -287,7 +275,7 @@ export default function Page({
             />
             <FormField
               control={form.control}
-              name="sourceDetails.dataType"
+              name="dataType"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Data type</FormLabel>
@@ -321,6 +309,7 @@ export default function Page({
                     <FormControl>
                       {
                         (testSourceResult.data?.[`${externalDataSourceType}Source`]?.fieldDefinitions?.length) ? (
+                           // @ts-ignore
                           <Select {...field} onValueChange={field.onChange} required>
                             <SelectTrigger className='pl-1'>
                               <SelectValue
@@ -332,7 +321,7 @@ export default function Page({
                                 <SelectLabel>Available columns</SelectLabel>
                                 {testSourceResult.data?.[`${externalDataSourceType}Source`]?.fieldDefinitions?.map(
 
-                                  (field: FieldDefinition | undefined) => (
+                                  (field: FieldDefinition) => (
                                     <SelectItem key={field.value} value={field.value}>
                                       <DataSourceFieldLabel
                                         connectionType={
@@ -430,7 +419,7 @@ export default function Page({
             <div className='text-hSm'>Connection details</div>
             <FormField
               control={form.control}
-              name="sourceDetails.apiKey"
+              name="airtable.apiKey"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Airtable access token</FormLabel>
@@ -455,7 +444,7 @@ export default function Page({
             />
             <FormField
               control={form.control}
-              name="sourceDetails.baseId"
+              name="airtable.baseId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Base ID</FormLabel>
@@ -479,7 +468,7 @@ export default function Page({
             />
             <FormField
               control={form.control}
-              name="sourceDetails.tableId"
+              name="airtable.tableId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Table ID</FormLabel>

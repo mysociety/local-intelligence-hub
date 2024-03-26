@@ -169,6 +169,11 @@ class MailChimpSourceInput(ExternalDataSourceInput):
     api_key: auto
     list_id: auto
 
+@strawberry.input()
+class CreateExternalDataSourceInput():
+    mailchimp: Optional[MailChimpSourceInput] = None
+    airtable: Optional[AirtableSourceInput] = None
+
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
 def create_mailchimp_source(
@@ -180,10 +185,9 @@ def create_mailchimp_source(
         data,
         computed_args=lambda info, data, model: {
             "organisation": get_or_create_organisation_for_source(info, data)
-        },
+        }, 
     )
 
-@strawberry_django.mutation(extensions=[IsAuthenticated()])
 def create_airtable_source(
     info: Info, data: AirtableSourceInput
 ) -> models.ExternalDataSource:
@@ -197,8 +201,7 @@ def create_airtable_source(
     )
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
-
-def create_external_data_source(info: Info, input: ExternalDataSourceInput) -> models.ExternalDataSource:
+def create_external_data_source(info: Info, input: CreateExternalDataSourceInput) -> models.ExternalDataSource:
     source_creators = {
         "airtable": create_airtable_source,
         "mailchimp": create_mailchimp_source,

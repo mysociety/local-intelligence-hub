@@ -85,9 +85,6 @@ class Mutation:
     verify_account = auth_mutations.VerifyAccount.field
     resend_activation_email = auth_mutations.ResendActivationEmail.field
 
-    create_airtable_source: model_types.AirtableSource = (
-        mutation_types.create_airtable_source
-    )
     update_airtable_source: model_types.AirtableSource = django_mutations.update(
         mutation_types.AirtableSourceInput, extensions=[IsAuthenticated()]
     )
