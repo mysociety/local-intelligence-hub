@@ -6,15 +6,27 @@ import pandas as pd
 
 from hub.models import DataSet
 
-from .base_importers import BaseConstituencyGroupListImportCommand
+from .base_importers import (
+    BaseConstituencyGroupListImportCommand,
+    MultipleAreaTypesMixin,
+)
 
 
-class Command(BaseConstituencyGroupListImportCommand):
+class Command(MultipleAreaTypesMixin, BaseConstituencyGroupListImportCommand):
     help = "Import data about WI groups per constituency"
     message = "Importing Women's Institute group data"
 
     data_file = settings.BASE_DIR / "data" / "wi_groups.csv"
     source_url = "https://www.thewi.org.uk/wis-a-z"
+
+    uses_gss = True
+    area_types = ["WMC", "WMC23", "STC", "DIS"]
+    cons_col_map = {
+        "WMC": "WMC",
+        "WMC23": "WMC23",
+        "STC": "STC",
+        "DIS": "DIS",
+    }
     defaults = {
         "label": "Women’s Institute groups",
         "data_type": "json",
@@ -70,7 +82,7 @@ class Command(BaseConstituencyGroupListImportCommand):
         df.group_name = df.group_name.apply(
             lambda x: x.split(" | ")[0] if isinstance(x, str) else x
         )
-        df.columns = ["group_name", "url", "lat_lon", "constituency"]
+        df.columns = ["group_name", "url", "lat_lon", "constituency", *self.area_types]
         return df
 
     def get_group_json(self, row):
