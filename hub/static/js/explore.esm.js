@@ -29,7 +29,14 @@ const app = createApp({
       }, {
         slug: "WMC23",
         label: "Future constituencies"
+      }, {
+        slug: "STC",
+        label: "Single Tier councils"
+      }, {
+        slug: "DIS",
+        label: "District councils"
       }],
+      area_header_label: "constituencies",
 
       filters_applied: false, // were filters applied on the last Update?
       area_count: 0, // number of areas returned on last Update
@@ -305,7 +312,7 @@ const app = createApp({
     geomUrl() {
       let url = new URL(window.location.origin + '/exploregeometry.json')
 
-      if (["WMC", "WMC23"].includes(this.area_type)) {
+      if (["WMC", "WMC23", "DIS", "STC"].includes(this.area_type)) {
         url = new URL(window.location.origin + '/exploregeometry/' + this.area_type + '.json')
       }
 
@@ -471,6 +478,11 @@ const app = createApp({
           });
 
           this.area_count = Object.keys(features).length
+          if (["DIS", "STC"].includes(this.area_type)) {
+            this.area_header_label = "councils"
+          } else {
+            this.area_header_label = "constituencies"
+          }
 
           window.geojson.eachLayer(function (layer) {
             if ( features[layer.feature.properties.PCON13CD] ) {
@@ -517,6 +529,14 @@ const app = createApp({
     updateTable() {
       this.loading = true
       this.filters_applied = (this.filters.length > 0)
+
+      if (this.sortBy == 'Constituency Name' || this.sortBy == 'Council Name') {
+          if (["DIS", "STC"].includes(this.area_type)) {
+            this.sortBy = "Council Name"
+          } else {
+            this.sortBy = "Constituency Name"
+          }
+      }
 
       fetch(this.url('/explore.csv'))
         .then(response => response.blob())
@@ -584,7 +604,7 @@ const app = createApp({
         case 'filter':
           return dataset.is_filterable
         case 'shader':
-          return ["party", "constituency_ruc"].includes(dataset.name) || !["text", "json", "date", "profile_id"].includes(dataset.data_type)
+          return ["party", "constituency_ruc", "council_type"].includes(dataset.name) || !["text", "json", "date", "profile_id"].includes(dataset.data_type) && dataset.is_shadable
         default:
           return true
       }

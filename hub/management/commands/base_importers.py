@@ -18,6 +18,13 @@ from utils.mapit import (
 )
 
 
+class MultipleAreaTypesMixin:
+    def handle(self, *args, **options):
+        for area_type in self.area_types:
+            self.area_type = area_type
+            super(MultipleAreaTypesMixin, self).handle(*args, **options)
+
+
 class BaseAreaImportCommand(BaseCommand):
     area_type = "WMC"
 
@@ -42,7 +49,9 @@ class BaseAreaImportCommand(BaseCommand):
 
     def delete_data(self):
         for data_type in self.data_types.values():
-            AreaData.objects.filter(data_type=data_type).delete()
+            AreaData.objects.filter(
+                data_type=data_type, area__area_type__code=self.area_type
+            ).delete()
 
     @cache
     def get_area_type(self):
@@ -78,7 +87,6 @@ class BaseAreaImportCommand(BaseCommand):
                 name=name,
                 defaults={
                     "label": label,
-                    "description": label,
                     **config["defaults"],
                 },
             )
@@ -91,7 +99,6 @@ class BaseAreaImportCommand(BaseCommand):
                 defaults={
                     "data_type": config["defaults"]["data_type"],
                     "label": label,
-                    "description": label,
                 },
             )
 

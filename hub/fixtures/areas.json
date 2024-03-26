@@ -5,7 +5,7 @@
     "fields": {
       "name": "Constituency",
       "code": "WMC",
-      "area_type": "Constituency",
+      "area_type": "Westminster Constituency",
       "description": "Constituency"
     }
   },
@@ -15,7 +15,7 @@
     "fields": {
       "name": "Constituency 2023",
       "code": "WMC23",
-      "area_type": "Constituency 2023",
+      "area_type": "Westminster Constituency",
       "description": "Constituency 2023"
     }
   },
