@@ -251,6 +251,7 @@ export function UpdateMappingForm({
                   ))}
                 </table>
                 <Button
+                  type="button"
                   className='w-full'
                   onClick={() => {
                     append({

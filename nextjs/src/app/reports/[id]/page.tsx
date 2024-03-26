@@ -226,7 +226,7 @@ function ReportPage() {
                 ) : (
                   <>
                     <CardTitle
-                      contentEditable id="nickname"
+                      id="nickname"
                       className="text-hMd grow font-IBMPlexSansMedium"
                       {...contentEditableMutation(updateReport, "name", "Untitled Report")}
                     >
