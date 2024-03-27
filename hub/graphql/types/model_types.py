@@ -553,7 +553,8 @@ class GenericData(CommonData):
 
 @strawberry.type
 class MapReportMemberFeature(PointFeature):
-    properties: GenericData
+    # Optional, because of sharing options
+    properties: Optional[GenericData]
 
 
 @strawberry.interface
@@ -564,21 +565,6 @@ class Analytics:
     imported_data_count_by_constituency_2024: List[GroupedDataCount] = fn_field()
     imported_data_count_by_council: List[GroupedDataCount] = fn_field()
     imported_data_count_by_ward: List[GroupedDataCount] = fn_field()
-
-    @strawberry_django.field
-    def imported_data_geojson_points(
-        self: models.ExternalDataSource, info: Info
-    ) -> List[MapReportMemberFeature]:
-        data = self.get_import_data()
-        return [
-            MapReportMemberFeature.from_geodjango(
-                point=generic_datum.point,
-                id=generic_datum.data,
-                properties=generic_datum,
-            )
-            for generic_datum in data
-            if generic_datum.point is not None
-        ]
 
     @strawberry_django.field
     def imported_data_count_by_constituency_by_source(
@@ -628,7 +614,7 @@ class Analytics:
         return res[0]
 
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
-class BaseDataSource(Analytics):
+class BaseDataSource:
     id: auto
     name: auto
     crm_type: str = attr_field()
@@ -659,7 +645,7 @@ class BaseDataSource(Analytics):
         )
 
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
-class SharedDataSource(BaseDataSource):
+class SharedDataSource(BaseDataSource, Analytics):
     organisation: PublicOrganisation = (
         strawberry_django_dataloaders.fields.auto_dataloader_field()
     )
@@ -677,6 +663,36 @@ class SharedDataSource(BaseDataSource):
                 ).values_list("external_data_source_id", flat=True)
               )
         )
+
+    @strawberry_django.field
+    def imported_data_geojson_points(
+        self: models.ExternalDataSource, info: Info
+    ) -> List[MapReportMemberFeature]:
+        user = get_current_user(info)
+        can_display_points = self.organisation.members.filter(user=user).exists()
+        can_display_details = can_display_points
+        if not can_display_points:
+            permission = models.SharingPermission.objects.filter(
+                external_data_source=self,
+                organisation__members__user=user
+            ).first()
+            if permission is None:
+                return []
+            if not permission.visibility_record_coordinates:
+                return []
+            if permission.visibility_record_details:
+                can_display_details = True
+
+        data = self.get_import_data()
+        return [
+            MapReportMemberFeature.from_geodjango(
+                point=generic_datum.point,
+                id=generic_datum.data,
+                properties=generic_datum if can_display_details else None,
+            )
+            for generic_datum in data
+            if generic_datum.point is not None
+        ]
     
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class ExternalDataSource(BaseDataSource):
