@@ -12,7 +12,13 @@ export const MAP_REPORT_LAYERS_SUMMARY = gql`
     layers {
       id
       name
-      isSharedSource
+      sharingPermission {
+        visibilityRecordDetails
+        visibilityRecordCoordinates
+        organisation {
+          name
+        }
+      }
       source {
         id
         name

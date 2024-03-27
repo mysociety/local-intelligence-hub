@@ -85,13 +85,13 @@ export default function DataConfigPanel () {
                   <CRMSelection
                     // @ts-ignore: Property 'id' is optional in type 'DeepPartialObject - a silly Fragment typing
                     source={layer.source}
-                    isShared={layer.isSharedSource}
+                    isShared={!!layer.sharingPermission}
                   />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className='space-y-4'>
                   {!!layer?.source?.id && (
-                    !layer.isSharedSource ? (
+                    !layer.sharingPermission ? (
                       <>
                         <div>{layer.source.importedDataCount || 0} records imported</div>
                         <Link href={`/data-sources/inspect/${layer?.source?.id}`} className='underline py-2 text-sm'>
@@ -105,8 +105,40 @@ export default function DataConfigPanel () {
                         </Button>
                       </>
                     ) : (
-                      <div className='text-meepGray-400 text-xs'>
-                        This data source is managed by {layer.source.organisation?.name}.
+                      <div className='text-sm'>
+                        <div>This data source is managed by {layer.source.organisation?.name}.</div>
+                        <div className='flex flex-col gap-2 mt-4'>
+                          <div className='flex flex-row gap-1 uppercase font-semibold text-sm text-meepGray-400'>
+                            <span>Their share settings</span>
+                          </div>
+                          <div className='flex flex-row gap-1 items-start'>
+                            <Checkbox
+                              checked={!!layer.sharingPermission?.visibilityRecordCoordinates}
+                              disabled
+                            />
+                            <label className='-mt-1'>
+                              <span>
+                                Precise record locations
+                              </span>
+                              <p className='text-meepGray-400 text-xs'>
+                                If enabled, pins will be placed on a map for each record. If disabled, only aggregate ward / constituency / region data will be shared.  
+                              </p>
+                            </label>
+                          </div>
+                          <div className='flex flex-row gap-1 items-start'>
+                            <Checkbox
+                              checked={!!layer.sharingPermission?.visibilityRecordDetails}
+                              disabled
+                            />
+                            <label className='-mt-1'>
+                              <span>
+                                Record details
+                              </span>
+                              <p className='text-meepGray-400 text-xs'>
+                                Specific data like {'"'}name{'"'}</p>
+                            </label>
+                          </div>
+                        </div>
                       </div>
                     )
                   )}
