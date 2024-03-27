@@ -626,7 +626,7 @@ class Analytics:
         if len(res) == 0:
             return None
         return res[0]
-    
+
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class BaseDataSource(Analytics):
     id: auto
@@ -645,6 +645,7 @@ class BaseDataSource(Analytics):
     email_field: auto
     phone_field: auto
     address_field: auto
+    record_url_template: Optional[str] = fn_field()
     organisation_id: str = strawberry_django.field(
         resolver=lambda self: self.organisation_id
     )
@@ -662,6 +663,20 @@ class SharedDataSource(BaseDataSource):
     organisation: PublicOrganisation = (
         strawberry_django_dataloaders.fields.auto_dataloader_field()
     )
+
+    @classmethod
+    def get_queryset(cls, queryset, info, **kwargs):
+        user = get_current_user(info)
+        return queryset.filter(
+            # allow querying your orgs' data sources
+            Q(organisation__members__user=user.id)
+            # and also data sources shared with your orgs
+            | Q(
+                id__in=models.SharingPermission.objects.filter(
+                    organisation__members__user=user.id
+                ).values_list("external_data_source_id", flat=True)
+              )
+        )
     
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class ExternalDataSource(BaseDataSource):
@@ -674,7 +689,6 @@ class ExternalDataSource(BaseDataSource):
     field_definitions: Optional[List[FieldDefinition]] = strawberry_django.field(
         resolver=lambda self: self.field_definitions()
     )
-    record_url_template: Optional[str] = fn_field()
     remote_name: Optional[str] = fn_field()
     remote_url: Optional[str] = fn_field()
     healthcheck: bool = fn_field()
@@ -700,8 +714,6 @@ class ExternalDataSource(BaseDataSource):
         return queryset.filter(
             # allow querying your orgs' data sources
             Q(organisation__members__user=user.id)
-            # and also data sources shared with your orgs
-            # | Q(sharing_permissions__organisation__members__user=user.id)
         )
 
     @strawberry_django.field

@@ -29,8 +29,14 @@ class Query(UserQueries):
     external_data_source: model_types.ExternalDataSource = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
+    shared_data_source: model_types.SharedDataSource = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
     external_data_sources: List[
         model_types.ExternalDataSource
+    ] = strawberry_django.field(extensions=[IsAuthenticated()])
+    shared_data_sources: List[
+        model_types.SharedDataSource
     ] = strawberry_django.field(extensions=[IsAuthenticated()])
     airtable_source: model_types.AirtableSource = strawberry_django.field(
         extensions=[IsAuthenticated()]

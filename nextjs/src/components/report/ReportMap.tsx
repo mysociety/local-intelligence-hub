@@ -245,7 +245,7 @@ export function ReportMap () {
       mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
       {...viewState}
       onMove={(e) => setViewState(e.viewState)}
-      mapStyle="mapbox://styles/commonknowledge/clty3prwh004601pr4nqn7l9s"
+      mapStyle="mapbox://styles/commonknowledge/clty3prwh004601pr4nqn7l9s/draft"
       onClick={() => setSelectedSourceRecord(null)}
     >
       {!analytics.data && null}
@@ -533,7 +533,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
               properties: {
                 // @ts-ignore
                 ...(feature.properties || feature._properties || {}),
-                originalUrl: data?.externalDataSource.recordUrlTemplate?.replace("{record_id}", id)
+                originalUrl: data?.sharedDataSource?.recordUrlTemplate?.replace("{record_id}", id)
               },
               // @ts-ignore
               geometry: feature.geometry || feature._geometry,
@@ -545,7 +545,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
       } catch (e) {
       }
     })
-  }, [mapbox.loadedMap, data?.externalDataSource.recordUrlTemplate])
+  }, [mapbox.loadedMap, data?.sharedDataSource?.recordUrlTemplate])
   
   return (
     <>
@@ -555,7 +555,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
         data={{
           type: "FeatureCollection",
           // @ts-ignore
-          features: data?.externalDataSource?.importedDataGeojsonPoints || []
+          features: data?.sharedDataSource?.importedDataGeojsonPoints || []
         }}
       >
         {index <= 1 ? (
@@ -621,7 +621,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
 
 const MAP_REPORT_LAYER_POINTS = gql`
   query DataSourceGeoJSONPoints($externalDataSourceId: ID!) {
-    externalDataSource(pk: $externalDataSourceId) {
+    sharedDataSource(pk: $externalDataSourceId) {
       id
       recordUrlTemplate
       importedDataGeojsonPoints {
