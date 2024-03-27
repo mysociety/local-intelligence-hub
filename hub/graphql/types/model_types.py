@@ -313,15 +313,16 @@ class Person:
     photo: auto
     start_date: auto
     end_date: auto
-    data: List[PersonData] = filterable_dataloader_resolver(
+    person_data: List[PersonData] = filterable_dataloader_resolver(
         filter_type=Optional[CommonDataLoaderFilter],
-        # prefetch=["data_type", "data_type__data_set"],
+        field_name="persondata",
+        prefetch=["data_type", "data_type__data_set"],
     )
-    datum: Optional[PersonData] = filterable_dataloader_resolver(
+    person_datum: Optional[PersonData] = filterable_dataloader_resolver(
         filter_type=Optional[CommonDataLoaderFilter],
+        field_name="persondata",
         single=True,
-        field_name="data",
-        # prefetch=["data_type", "data_type__data_set"],
+        prefetch=["data_type", "data_type__data_set"],
     )
 
 
@@ -415,21 +416,22 @@ class Area:
     extra_geojson_properties: strawberry.Private[object]
     people: List[Person] = filterable_dataloader_resolver(
         filter_type=Optional[PersonFilter],
-        # prefetch=[
-        #     "data",
-        #     "data__data_type",
-        #     "data__data_type__data_set"
-        # ],
+        field_name="person",
+        prefetch=[
+            "persondata_set",
+            "persondata_set__data_type",
+            "persondata_set__data_type__data_set",
+        ],
     )
     person: Optional[Person] = filterable_dataloader_resolver(
         filter_type=Optional[PersonFilter],
+        field_name="person",
         single=True,
-        field_name="people",
-        # prefetch=[
-        #     "data",
-        #     "data__data_type",
-        #     "data__data_type__data_set"
-        # ],
+        prefetch=[
+            "persondata_set",
+            "persondata_set__data_type",
+            "persondata_set__data_type__data_set",
+        ],
     )
     data: List[AreaData] = filterable_dataloader_resolver(
         filter_type=Optional[CommonDataLoaderFilter]

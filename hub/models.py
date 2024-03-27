@@ -788,7 +788,7 @@ class Person(models.Model):
     external_id = models.CharField(db_index=True, max_length=20)
     id_type = models.CharField(max_length=30)
     name = models.CharField(max_length=200)
-    area = models.ForeignKey(Area, on_delete=models.CASCADE, related_name="people")
+    area = models.ForeignKey(Area, on_delete=models.CASCADE)
     photo = models.ImageField(null=True, upload_to="person")
     start_date = models.DateField(null=True)
     end_date = models.DateField(null=True)
@@ -806,7 +806,7 @@ class Person(models.Model):
 
 
 class PersonData(CommonData):
-    person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name="data")
+    person = models.ForeignKey(Person, on_delete=models.CASCADE)
 
 
 class Token(models.Model):

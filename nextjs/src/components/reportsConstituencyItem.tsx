@@ -369,7 +369,7 @@ const CONSTITUENCY_DATA = gql`
         photo {
           url
         }
-        party: datum(filters:{
+        party: personDatum(filters:{
           dataType_Name: "party"
         }) {
           name: data

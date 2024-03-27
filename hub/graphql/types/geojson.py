@@ -99,7 +99,6 @@ class MultiPolygonGeometry:
         self.coordinates = coordinates.json
 
 
-
 @strawberry.type
 class MultiPolygonFeature(Feature):
     geometry: MultiPolygonGeometry

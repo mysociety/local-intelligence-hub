@@ -169,7 +169,7 @@ const CONSTITUENCY_STATS_OVERVIEW = gql`
             photo {
               url
             }
-            party: datum(filters:{
+            party: personDatum(filters:{
               dataType_Name: "party"
             }) {
               name: data
