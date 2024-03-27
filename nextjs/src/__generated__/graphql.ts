@@ -63,6 +63,7 @@ export type AirtableSource = Analytics & {
   baseId: Scalars['String']['output'];
   connectionDetails: AirtableSource;
   createdAt: Scalars['DateTime']['output'];
+  crmType: Scalars['String']['output'];
   dataType: DataSourceType;
   description?: Maybe<Scalars['String']['output']>;
   emailField?: Maybe<Scalars['String']['output']>;
@@ -431,6 +432,7 @@ export type ExternalDataSource = Analytics & {
   autoUpdateWebhookUrl: Scalars['String']['output'];
   connectionDetails: AirtableSource;
   createdAt: Scalars['DateTime']['output'];
+  crmType: Scalars['String']['output'];
   dataType: DataSourceType;
   description?: Maybe<Scalars['String']['output']>;
   emailField?: Maybe<Scalars['String']['output']>;
@@ -1003,19 +1005,13 @@ export type Organisation = {
   id: Scalars['ID']['output'];
   members: Array<Membership>;
   name: Scalars['String']['output'];
+  sharingPermissionsFromOtherOrgs: Array<SharingPermission>;
   slug: Scalars['String']['output'];
-  sourcesFromOtherOrgs: Array<ExternalDataSource>;
 };
 
 
 /** Organisation(id, slug, name, description, website, logo) */
 export type OrganisationExternalDataSourcesArgs = {
-  filters?: InputMaybe<ExternalDataSourceFilter>;
-};
-
-
-/** Organisation(id, slug, name, description, website, logo) */
-export type OrganisationSourcesFromOtherOrgsArgs = {
   filters?: InputMaybe<ExternalDataSourceFilter>;
 };
 
@@ -1325,16 +1321,83 @@ export type Report = {
   slug: Scalars['String']['output'];
 };
 
+/**
+ * A third-party data source that can be read and optionally written back to.
+ * E.g. Google Sheet or an Action Network table.
+ * This class is to be subclassed by specific data source types.
+ */
+export type SharedDataSource = Analytics & {
+  __typename?: 'SharedDataSource';
+  addressField?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['DateTime']['output'];
+  crmType: Scalars['String']['output'];
+  dataType: DataSourceType;
+  description?: Maybe<Scalars['String']['output']>;
+  emailField?: Maybe<Scalars['String']['output']>;
+  firstNameField?: Maybe<Scalars['String']['output']>;
+  fullNameField?: Maybe<Scalars['String']['output']>;
+  geographyColumn?: Maybe<Scalars['String']['output']>;
+  geographyColumnType: PostcodesIoGeographyTypes;
+  id: Scalars['UUID']['output'];
+  importedDataCount: Scalars['Int']['output'];
+  importedDataCountByConstituency: Array<GroupedDataCount>;
+  importedDataCountByConstituency2024: Array<GroupedDataCount>;
+  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
+  importedDataCountByCouncil: Array<GroupedDataCount>;
+  importedDataCountByRegion: Array<GroupedDataCount>;
+  importedDataCountByWard: Array<GroupedDataCount>;
+  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
+  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
+  isImporting: Scalars['Boolean']['output'];
+  lastNameField?: Maybe<Scalars['String']['output']>;
+  lastUpdate: Scalars['DateTime']['output'];
+  name: Scalars['String']['output'];
+  organisation: PublicOrganisation;
+  organisationId: Scalars['String']['output'];
+  phoneField?: Maybe<Scalars['String']['output']>;
+  postcodeField?: Maybe<Scalars['String']['output']>;
+};
+
+
+/**
+ * A third-party data source that can be read and optionally written back to.
+ * E.g. Google Sheet or an Action Network table.
+ * This class is to be subclassed by specific data source types.
+ */
+export type SharedDataSourceImportedDataCountByConstituencyBySourceArgs = {
+  gss: Scalars['String']['input'];
+};
+
+
+/**
+ * A third-party data source that can be read and optionally written back to.
+ * E.g. Google Sheet or an Action Network table.
+ * This class is to be subclassed by specific data source types.
+ */
+export type SharedDataSourceImportedDataCountForConstituencyArgs = {
+  gss: Scalars['String']['input'];
+};
+
+
+/**
+ * A third-party data source that can be read and optionally written back to.
+ * E.g. Google Sheet or an Action Network table.
+ * This class is to be subclassed by specific data source types.
+ */
+export type SharedDataSourceImportedDataCountForConstituency2024Args = {
+  gss: Scalars['String']['input'];
+};
+
 /** SharingPermission(id, created_at, last_update, external_data_source, organisation, visibility_record_coordinates, visibility_record_details) */
 export type SharingPermission = {
   __typename?: 'SharingPermission';
   createdAt: Scalars['DateTime']['output'];
   deleted: Scalars['Boolean']['output'];
-  externalDataSource: ExternalDataSource;
+  externalDataSource: SharedDataSource;
   externalDataSourceId: Scalars['String']['output'];
   id: Scalars['UUID']['output'];
   lastUpdate: Scalars['DateTime']['output'];
-  organisation: Organisation;
+  organisation: PublicOrganisation;
   organisationId: Scalars['String']['output'];
   visibilityRecordCoordinates?: Maybe<Scalars['Boolean']['output']>;
   visibilityRecordDetails?: Maybe<Scalars['Boolean']['output']>;
@@ -1459,7 +1522,7 @@ export type UserType = {
 export type ListExternalDataSourcesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ListExternalDataSourcesQuery = { __typename?: 'Query', externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, autoUpdateEnabled: boolean, connectionDetails: { __typename?: 'AirtableSource', crmType: 'AirtableSource' }, jobs: Array<{ __typename?: 'QueueJob', lastEventAt: any, status: string }>, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null }> };
+export type ListExternalDataSourcesQuery = { __typename?: 'Query', myOrganisations: Array<{ __typename?: 'Organisation', externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, autoUpdateEnabled: boolean, connectionDetails: { __typename?: 'AirtableSource', crmType: 'AirtableSource' }, jobs: Array<{ __typename?: 'QueueJob', lastEventAt: any, status: string }>, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null }>, sharingPermissionsFromOtherOrgs: Array<{ __typename?: 'SharingPermission', id: any, externalDataSource: { __typename?: 'SharedDataSource', id: any, name: string, dataType: DataSourceType, crmType: string, organisation: { __typename?: 'PublicOrganisation', name: string } } }> }> };
 
 export type GetSourceMappingQueryVariables = Exact<{
   ID: Scalars['ID']['input'];
@@ -1735,7 +1798,7 @@ export const MapReportLayersSummaryFragmentDoc = {"kind":"Document","definitions
 export const MapReportPageFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"MapReportPage"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"MapReport"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"MapReportLayersSummary"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"MapReportLayersSummary"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"MapReport"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"layers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"source"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"isImporting"}},{"kind":"Field","name":{"kind":"Name","value":"importedDataCount"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"Field","name":{"kind":"Name","value":"recordUrlTemplate"}}]}}]}}]}}]}}]} as unknown as DocumentNode<MapReportPageFragment, unknown>;
 export const DataSourceCardFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"DataSourceCard"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ExternalDataSource"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"crmType"},"name":{"kind":"Name","value":"__typename"}}]}},{"kind":"Field","name":{"kind":"Name","value":"autoUpdateEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"updateMapping"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"sourcePath"}},{"kind":"Field","name":{"kind":"Name","value":"destinationColumn"}}]}},{"kind":"Field","name":{"kind":"Name","value":"jobs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"lastEventAt"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}}]}}]} as unknown as DocumentNode<DataSourceCardFragment, unknown>;
 export const ExternalDataSourceCardFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ExternalDataSourceCardFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ExternalDataSource"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"crmType"},"name":{"kind":"Name","value":"__typename"}}]}}]}}]} as unknown as DocumentNode<ExternalDataSourceCardFieldsFragment, unknown>;
-export const ListExternalDataSourcesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ListExternalDataSources"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSources"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"crmType"},"name":{"kind":"Name","value":"__typename"}}]}},{"kind":"Field","name":{"kind":"Name","value":"autoUpdateEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"jobs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"lastEventAt"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}},{"kind":"Field","name":{"kind":"Name","value":"updateMapping"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"sourcePath"}},{"kind":"Field","name":{"kind":"Name","value":"destinationColumn"}}]}}]}}]}}]} as unknown as DocumentNode<ListExternalDataSourcesQuery, ListExternalDataSourcesQueryVariables>;
+export const ListExternalDataSourcesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ListExternalDataSources"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"myOrganisations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSources"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"crmType"},"name":{"kind":"Name","value":"__typename"}}]}},{"kind":"Field","name":{"kind":"Name","value":"autoUpdateEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"jobs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"lastEventAt"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}},{"kind":"Field","name":{"kind":"Name","value":"updateMapping"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"sourcePath"}},{"kind":"Field","name":{"kind":"Name","value":"destinationColumn"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"sharingPermissionsFromOtherOrgs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}},{"kind":"Field","name":{"kind":"Name","value":"crmType"}},{"kind":"Field","name":{"kind":"Name","value":"organisation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<ListExternalDataSourcesQuery, ListExternalDataSourcesQueryVariables>;
 export const GetSourceMappingDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetSourceMapping"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"autoUpdateEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"updateMapping"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"destinationColumn"}},{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"sourcePath"}}]}},{"kind":"Field","name":{"kind":"Name","value":"fieldDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}}]}},{"kind":"Field","name":{"kind":"Name","value":"geographyColumn"}},{"kind":"Field","name":{"kind":"Name","value":"geographyColumnType"}},{"kind":"Field","name":{"kind":"Name","value":"postcodeField"}},{"kind":"Field","name":{"kind":"Name","value":"firstNameField"}},{"kind":"Field","name":{"kind":"Name","value":"lastNameField"}},{"kind":"Field","name":{"kind":"Name","value":"emailField"}},{"kind":"Field","name":{"kind":"Name","value":"phoneField"}},{"kind":"Field","name":{"kind":"Name","value":"addressField"}}]}}]}}]} as unknown as DocumentNode<GetSourceMappingQuery, GetSourceMappingQueryVariables>;
 export const TestSourceConnectionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"TestSourceConnection"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"apiKey"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"baseId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"tableId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"testSourceConnection"},"name":{"kind":"Name","value":"testAirtableSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"apiKey"},"value":{"kind":"Variable","name":{"kind":"Name","value":"apiKey"}}},{"kind":"Argument","name":{"kind":"Name","value":"baseId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"baseId"}}},{"kind":"Argument","name":{"kind":"Name","value":"tableId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"tableId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"remoteName"}},{"kind":"Field","name":{"kind":"Name","value":"healthcheck"}},{"kind":"Field","name":{"kind":"Name","value":"fieldDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}},{"kind":"Field","name":{"kind":"Name","value":"__typename"}}]}}]}}]} as unknown as DocumentNode<TestSourceConnectionQuery, TestSourceConnectionQueryVariables>;
 export const CreateSourceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateSource"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"AirtableSource"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"AirtableSourceInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"createSource"},"name":{"kind":"Name","value":"createAirtableSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"AirtableSource"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"healthcheck"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}}]}}]}}]} as unknown as DocumentNode<CreateSourceMutation, CreateSourceMutationVariables>;
@@ -1783,7 +1846,8 @@ export const PublicUserDocument = {"kind":"Document","definitions":[{"kind":"Ope
     "Analytics": [
       "AirtableSource",
       "ExternalDataSource",
-      "MapReport"
+      "MapReport",
+      "SharedDataSource"
     ],
     "CommonData": [
       "AreaData",

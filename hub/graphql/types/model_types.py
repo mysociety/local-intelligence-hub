@@ -120,7 +120,12 @@ class PublicOrganisation:
 class Organisation(PublicOrganisation):
     members: List["Membership"]
     external_data_sources: List["ExternalDataSource"]
-    sources_from_other_orgs: List["ExternalDataSource"]
+
+    @strawberry_django.field
+    def sharing_permissions_from_other_orgs(self, info: Info) -> List["SharingPermission"]:
+        # Sources shared to this org via SharingPermission
+        results = models.SharingPermission.objects.filter(organisation=self)
+        return results
 
     @classmethod
     def get_queryset(cls, queryset, info, **kwargs):
@@ -606,20 +611,16 @@ class Analytics:
         if len(res) == 0:
             return None
         return res[0]
-
-
+    
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
-class ExternalDataSource(Analytics):
+class BaseDataSource(Analytics):
     id: auto
     name: auto
+    crm_type: str = attr_field()
     data_type: auto
     description: auto
     created_at: auto
     last_update: auto
-    organisation_id: str
-    organisation: Organisation = (
-        strawberry_django_dataloaders.fields.auto_dataloader_field()
-    )
     geography_column: auto
     geography_column_type: auto
     postcode_field: auto
@@ -629,6 +630,29 @@ class ExternalDataSource(Analytics):
     email_field: auto
     phone_field: auto
     address_field: auto
+    organisation_id: str = strawberry_django.field(
+        resolver=lambda self: self.organisation_id
+    )
+
+    @strawberry_django.field
+    def is_importing(self: models.ExternalDataSource, info: Info) -> bool:
+        return (
+            self.event_log_queryset()
+            .filter(status="doing", task_name="hub.tasks.import_all")
+            .exists()
+        )
+
+@strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
+class SharedDataSource(BaseDataSource):
+    organisation: PublicOrganisation = (
+        strawberry_django_dataloaders.fields.auto_dataloader_field()
+    )
+    
+@strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
+class ExternalDataSource(BaseDataSource):
+    organisation: Organisation = (
+        strawberry_django_dataloaders.fields.auto_dataloader_field()
+    )
     update_mapping: Optional[List["AutoUpdateConfig"]]
     auto_update_enabled: auto
     auto_import_enabled: auto
@@ -695,21 +719,6 @@ class ExternalDataSource(Analytics):
             if generic_datum.point is not None
         ]
 
-    imported_data_count: int = fn_field()
-    imported_data_count_by_region: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_constituency: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_constituency_2024: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_council: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_ward: List[GroupedDataCount] = fn_field()
-
-    @strawberry_django.field
-    def is_importing(self: models.ExternalDataSource, info: Info) -> bool:
-        return (
-            self.event_log_queryset()
-            .filter(status="doing", task_name="hub.tasks.import_all")
-            .exists()
-        )
-
 
 @strawberry.type
 class AutoUpdateConfig:
@@ -748,7 +757,7 @@ class MapLayer:
     visible: Optional[bool] = dict_key_field()
 
     @strawberry_django.field
-    def source(self, info: Info) -> ExternalDataSource:
+    def source(self, info: Info) -> SharedDataSource:
         source_id = self.get(info.python_name, None)
         return models.ExternalDataSource.objects.get(id=source_id)
 
@@ -759,11 +768,11 @@ class SharingPermission:
     external_data_source_id: str = strawberry_django.field(
         resolver=lambda self: self.external_data_source_id
     )
-    external_data_source: ExternalDataSource = strawberry_django_dataloaders.fields.auto_dataloader_field()
+    external_data_source: SharedDataSource = strawberry_django_dataloaders.fields.auto_dataloader_field()
     organisation_id: str = strawberry_django.field(
         resolver=lambda self: self.organisation_id
     )
-    organisation: Organisation = strawberry_django_dataloaders.fields.auto_dataloader_field()
+    organisation: PublicOrganisation = strawberry_django_dataloaders.fields.auto_dataloader_field()
     created_at: auto
     last_update: auto
     visibility_record_coordinates: auto

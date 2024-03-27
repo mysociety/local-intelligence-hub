@@ -9,25 +9,41 @@ import { AutoUpdateCard } from "@/components/AutoUpdateCard";
 import { DataSourceType, ListExternalDataSourcesQuery, ListExternalDataSourcesQueryVariables } from "@/__generated__/graphql";
 import { useEffect } from "react";
 import qs from 'query-string'
+import { Card } from "@/components/ui/card";
+import { SharedDataSource } from "@/components/cards/SharedDataSource";
 
 const LIST_UPDATE_CONFIGS = gql`
   query ListExternalDataSources {
-    externalDataSources {
-      id
-      name
-      dataType
-      connectionDetails {
-        crmType: __typename
+    myOrganisations {
+      externalDataSources {
+        id
+        name
+        dataType
+        connectionDetails {
+          crmType: __typename
+        }
+        autoUpdateEnabled
+        jobs {
+          lastEventAt
+          status
+        }
+        updateMapping {
+          source
+          sourcePath
+          destinationColumn
+        }
       }
-      autoUpdateEnabled
-      jobs {
-        lastEventAt
-        status
-      }
-      updateMapping {
-        source
-        sourcePath
-        destinationColumn
+      sharingPermissionsFromOtherOrgs {
+        id
+        externalDataSource {
+          id
+          name
+          dataType
+          crmType
+          organisation {
+            name
+          }
+        }
       }
     }
   }
@@ -59,7 +75,7 @@ export default function ExternalDataSourceList() {
         <h2>Error: {error.message}</h2>
       ) : data ? (
         <section className="w-full grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {data.externalDataSources
+          {data.myOrganisations[0].externalDataSources
           .filter(d => d.dataType === DataSourceType.Member)
           .map((externalDataSource) => (
             <AutoUpdateCard
@@ -70,6 +86,35 @@ export default function ExternalDataSourceList() {
           <ConnectDataSource label="Connect a member list" params={{ dataType: DataSourceType.Member }} />
         </section>
       ) : null}
+      {!!data?.myOrganisations[0]?.sharingPermissionsFromOtherOrgs?.length && (
+        <>
+          <div className="border-b border-meepGray-700 pt-10" />
+          <header className='flex flex-row justify-end'>
+            <h2 className="text-hSm mr-auto">Shared with you</h2>
+          </header>
+          {loading ? (
+            <section className="w-full grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              <article className="rounded-xl border border-meepGray-700 px-6 py-5 space-y-3">
+                <Skeleton className="h-4 w-full max-w-[100px]" />
+                <Skeleton className="h-10 w-full" />
+              </article>
+            </section>
+          ) : error ? (
+            <h2>Error: {error.message}</h2>
+          ) : data ? (
+            <section className="w-full grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              {data.myOrganisations[0].sharingPermissionsFromOtherOrgs
+              .filter(share => share.externalDataSource.dataType === DataSourceType.Member)
+              .map((share) => (
+                <SharedDataSource
+                  key={share.externalDataSource.id}
+                  externalDataSource={share.externalDataSource}
+                />
+              ))}
+            </section>
+          ) : null}
+        </>
+      )}
       <div className="border-b border-meepGray-700 pt-16" />
       <header className='flex flex-row justify-end'>
         <h2 className="text-hSm mr-auto">Custom data layers</h2>
@@ -86,7 +131,7 @@ export default function ExternalDataSourceList() {
         <h2>Error: {error.message}</h2>
       ) : data ? (
         <section className="grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {data.externalDataSources
+          {data.myOrganisations[0].externalDataSources
           .filter(d => d.dataType !== DataSourceType.Member)
           .map((externalDataSource) => (
             <AutoUpdateCard

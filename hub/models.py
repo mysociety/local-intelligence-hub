@@ -1475,6 +1475,7 @@ class AirtableSource(ExternalDataSource):
     An Airtable table.
     """
 
+    crm_type = "airtable"
     api_key = models.CharField(
         max_length=250,
         help_text="Personal access token. Requires the following 4 scopes: data.records:read, data.records:write, schema.bases:read, webhook:manage",
