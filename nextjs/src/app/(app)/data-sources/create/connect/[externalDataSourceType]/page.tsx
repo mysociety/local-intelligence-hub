@@ -37,6 +37,8 @@ import {
 } from "@/__generated__/graphql";
 import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
+import { triggerCustomEvent } from "../../../../../../app/utils/posthogutils"; // Adjust the path as needed
+
 
 const TEST_SOURCE = gql`
   query TestSourceConnection(
@@ -81,6 +83,7 @@ export default function Page({
   const router = useRouter();
   const context = useContext(CreateAutoUpdateFormContext);
 
+
   useEffect(() => {
     context.setStep(2)
   }, [context])
@@ -109,7 +112,7 @@ export default function Page({
   });
 
   const [guessedPostcode, setGuessedPostcode] = useState<string | null>(null);
-  useEffect(function guessPostcodeColumn () {
+  useEffect(function guessPostcodeColumn() {
     let guessedPostcodeColumn = testSourceResult.data?.testSourceConnection.fieldDefinitions?.find(
       (field) => (
         field.label?.toLowerCase().replaceAll(' ', '').includes("postcode") ||
@@ -135,7 +138,7 @@ export default function Page({
   }, [guessedPostcode, form])
 
   // Propose name based on remoteName
-  useEffect(function proposeName () {
+  useEffect(function proposeName() {
     if (testSourceResult.data?.testSourceConnection.remoteName) {
       form.setValue('name', testSourceResult.data?.testSourceConnection.remoteName)
     }
@@ -159,12 +162,24 @@ export default function Page({
         loading: "Testing connection...",
         success: (d: FetchResult<TestSourceConnectionQuery>) => {
           if (!d.errors && d.data?.testSourceConnection) {
+            triggerCustomEvent("connection_is_healthy", {
+              //Replace this hard coded source name 
+              datasource: "Airtable",
+              remoteName: d.data?.testSourceConnection.remoteName,
+            });
             return "Connection is healthy";
           }
           throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
         },
-        error: "Connection failed",
-      },
+        error: (e) => {
+          triggerCustomEvent("connection_failed", {
+            //Replace this hard coded source name 
+            datasource: "Airtable",
+            errorMessage: e.message,
+          });
+          return "Connection failed";
+        },
+      }
     )
   }
 
@@ -172,10 +187,10 @@ export default function Page({
     if (data.airtable) {
       const { airtable, ...genericData } = data;
       const variables = {
-          AirtableSource: {
-            ...genericData,
-            ...source.airtable,
-          }
+        AirtableSource: {
+          ...genericData,
+          ...source.airtable,
+        }
       }
       toastPromise(createSource({ variables }),
         {
@@ -280,44 +295,44 @@ export default function Page({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Geography column</FormLabel>
-                      <FormControl>
-                        {testSourceResult.data?.testSourceConnection.fieldDefinitions?.length ? (
-                          // @ts-ignore
-                          <Select {...field} onValueChange={field.onChange} required>
-                            <SelectTrigger className='pl-1'>
-                              <SelectValue
-                                placeholder={`Choose ${source.geographyColumnType || 'geography'} column`}
-                              />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectLabel>Available columns</SelectLabel>
-                                {testSourceResult.data?.testSourceConnection.fieldDefinitions?.map(
-                                  (field) => (
-                                    <SelectItem key={field.value} value={field.value}>
-                                      <DataSourceFieldLabel
-                                        connectionType={
-                                          testSourceResult.data?.testSourceConnection.__typename!
-                                        }
-                                        fieldDefinition={field}
-                                      />  
-                                    </SelectItem>
-                                  )
-                                )}
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          // @ts-ignore
-                          <Input {...field} required />
-                        )}
-                      </FormControl>
-                      {!!guessedPostcode && guessedPostcode === form.watch('geographyColumn') && (
-                        <FormDescription className='text-yellow-500 italic'>
-                          Best guess based on available table columns: {guessedPostcode}
-                        </FormDescription>
+                    <FormControl>
+                      {testSourceResult.data?.testSourceConnection.fieldDefinitions?.length ? (
+                        // @ts-ignore
+                        <Select {...field} onValueChange={field.onChange} required>
+                          <SelectTrigger className='pl-1'>
+                            <SelectValue
+                              placeholder={`Choose ${source.geographyColumnType || 'geography'} column`}
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectLabel>Available columns</SelectLabel>
+                              {testSourceResult.data?.testSourceConnection.fieldDefinitions?.map(
+                                (field) => (
+                                  <SelectItem key={field.value} value={field.value}>
+                                    <DataSourceFieldLabel
+                                      connectionType={
+                                        testSourceResult.data?.testSourceConnection.__typename!
+                                      }
+                                      fieldDefinition={field}
+                                    />
+                                  </SelectItem>
+                                )
+                              )}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        // @ts-ignore
+                        <Input {...field} required />
                       )}
-                      <FormMessage />
+                    </FormControl>
+                    {!!guessedPostcode && guessedPostcode === form.watch('geographyColumn') && (
+                      <FormDescription className='text-yellow-500 italic'>
+                        Best guess based on available table columns: {guessedPostcode}
+                      </FormDescription>
+                    )}
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -348,7 +363,7 @@ export default function Page({
                     <FormMessage />
                   </FormItem>
                 )}
-            />
+              />
             </div>
             <Button type='submit' variant="reverse" disabled={createSourceResult.loading}>
               Save connection
