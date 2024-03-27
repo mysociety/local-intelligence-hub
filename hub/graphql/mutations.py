@@ -139,7 +139,7 @@ def get_or_create_organisation_for_source(info: Info, data: any):
     return organisation
 
 
-@strawberry_django.mutation
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
 def import_all(external_data_source_id: str) -> models.ExternalDataSource:
     data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
     data_source.schedule_import_all()
@@ -175,7 +175,6 @@ class CreateExternalDataSourceInput():
     airtable: Optional[AirtableSourceInput] = None
 
 
-@strawberry_django.mutation(extensions=[IsAuthenticated()])
 def create_mailchimp_source(
     info: Info, data: MailChimpSourceInput
 ) -> models.ExternalDataSource:

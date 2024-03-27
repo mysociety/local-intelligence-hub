@@ -1615,16 +1615,6 @@ class MailchimpSource(ExternalDataSource):
         help_text="The unique identifier for the Mailchimp list.",
     )
 
-    member_email = models.EmailField(
-          max_length=250,
-          help_text="Email for member to fetch.",
-           default='default@example.com',
-    )
-
-    def save(self, *args, **kwargs):
-        self.member_email = self.member_email.lower()  # Convert email to lowercase before saving
-        super(MailchimpSource, self).save(*args, **kwargs)
-
     automated_webhooks = True
     introspect_fields = True
 
@@ -1643,16 +1633,19 @@ class MailchimpSource(ExternalDataSource):
         if list:
             return True
         return False
-   
+    
+    def get_record_id(self, record):
+        return record.member_email
+
     async def fetch_all(self):
          # Fetches all members in a list and returns their email addresses
         list = self.client.lists.members.all(self.list_id, fields="members.email_address")
         return list
 
-    def fetch_one(self):
+    def fetch_one(self, member_email: str):
         # Fetches a single list member by their unique member ID
         # Mailchimp member IDs are typically the MD5 hash of the lowercase version of the member's email address
-        member = self.client.lists.members.get(list_id=self.list_id, subscriber_hash=self.member_email)
+        member = self.client.lists.members.get(list_id=self.list_id, member_email=member_email)
         return member
 
 

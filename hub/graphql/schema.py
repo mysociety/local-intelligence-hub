@@ -91,14 +91,8 @@ class Mutation:
     verify_account = auth_mutations.VerifyAccount.field
     resend_activation_email = auth_mutations.ResendActivationEmail.field
 
-    update_airtable_source: model_types.AirtableSource = django_mutations.update(
-        mutation_types.AirtableSourceInput, extensions=[IsAuthenticated()]
-    )
-    create_mailchimp_source: model_types.MailchimpSource = (
-        mutation_types.create_mailchimp_source
-    )
-    update_mailchimp_source: model_types.MailchimpSource = django_mutations.update(
-        mutation_types.MailChimpSourceInput, extensions=[IsAuthenticated()]
+    create_external_data_source: model_types.ExternalDataSource = (
+        mutation_types.create_external_data_source
     )
     update_external_data_source: model_types.ExternalDataSource = (
         django_mutations.update(
@@ -134,9 +128,6 @@ class Mutation:
     )
     delete_map_report: model_types.MapReport = django_mutations.delete(
         mutation_types.IDObject, extensions=[IsAuthenticated()]
-    )
-    create_external_data_source: model_types.ExternalDataSource = (
-        mutation_types.create_external_data_source
     )
 
 
