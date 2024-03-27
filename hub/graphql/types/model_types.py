@@ -622,14 +622,13 @@ class ExternalDataSource(Analytics):
             for generic_datum in data
             if generic_datum.point is not None
         ]
-    
+
     @strawberry_django.field
     def imported_data_geojson_point(
         self: models.ExternalDataSource, info: Info, id: str
     ) -> MapReportMemberFeature | None:
         datum = models.GenericData.objects.filter(
-            data=id,
-            data_type__data_set__external_data_source_id=self.id
+            data=id, data_type__data_set__external_data_source_id=self.id
         ).first()
         if not datum or not datum.point:
             return None

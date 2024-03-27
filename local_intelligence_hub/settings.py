@@ -312,9 +312,9 @@ if DEBUG:
         ]
 
 # CK Section
-        
-IMPORT_UPDATE_ALL_BATCH_SIZE=100
-IMPORT_UPDATE_MANY_RETRY_COUNT=3
+
+IMPORT_UPDATE_ALL_BATCH_SIZE = 100
+IMPORT_UPDATE_MANY_RETRY_COUNT = 3
 
 # TODO: Decrease this when we go public
 one_week = timedelta(days=7)

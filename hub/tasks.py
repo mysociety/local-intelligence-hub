@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.conf import settings
 from procrastinate.contrib.django import app
 
+
 @app.task(queue="index")
 async def refresh_one(external_data_source_id: str, member_id: str):
     from hub.models import ExternalDataSource

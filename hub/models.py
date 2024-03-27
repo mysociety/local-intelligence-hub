@@ -1002,7 +1002,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         raise NotImplementedError(
             "Get member ID not implemented for this data source type."
         )
-    
+
     async def import_many(self, member_ids: list[str]):
         """
         Copy data to this database for use in dashboarding features.
@@ -1071,6 +1071,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     data=self.get_record_id(record),
                     defaults=update_data,
                 )
+
             await asyncio.gather(*[create_import_record(record) for record in data])
         else:
             # To allow us to lean on LIH's geo-analytics features,
