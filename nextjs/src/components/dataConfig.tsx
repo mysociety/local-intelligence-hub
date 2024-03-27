@@ -14,14 +14,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowRight, File, Plus } from "lucide-react"
 import { gql, useApolloClient, useFragment, useQuery } from "@apollo/client"
 import { AddMapLayerButton } from "./report/AddMapLayerButton"
 import { MapReportLayersSummaryFragment } from "@/__generated__/graphql"
-import { useContext } from "react"
-import { ReportContext } from "@/app/reports/[id]/context"
+import { useContext, useState } from "react"
+import { ReportContext, useReportContext } from "@/app/reports/[id]/context"
 import {
   Popover,
   PopoverContent,
@@ -33,10 +34,12 @@ import { LoadingIcon } from "./ui/loadingIcon"
 import { useRouter } from "next/navigation"
 import { MAP_REPORT_LAYERS_SUMMARY, layerColour } from "@/app/reports/[id]/lib"
 
-export default function DataConfigPanel () {
+export default function DataConfigPanel() {
   const router = useRouter()
   const { id, updateReport } = useContext(ReportContext)
   const client = useApolloClient()
+  const { showElectionData, setShowElectionData } = useReportContext();
+
   const layers = useFragment<MapReportLayersSummaryFragment>({
     fragment: MAP_REPORT_LAYERS_SUMMARY,
     fragmentName: "MapReportLayersSummary",
@@ -49,11 +52,11 @@ export default function DataConfigPanel () {
   return (
     <Card className="p-4 bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700">
       <CardHeader>
-        <CardTitle className="text-hSm mb-4">Map layers</CardTitle>
+        <CardTitle className="text-hSm mb-4">Data Configuration</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-2 mb-2 py-2 border-t border-meepGray-700 ">
-          <span className="label mb-2">Added layers</span>
+          <span className="label mb-2">Your Membership data</span>
           {layers.data.layers?.map((layer, index) => (
             <div key={layer?.source?.id || index} className="flex gap-2 items-center">
               <Popover>
@@ -91,11 +94,22 @@ export default function DataConfigPanel () {
             <AddMapLayerButton addLayer={addLayer} />
           </div>
         </div>
+        <div className="flex flex-col gap-2 mb-2 py-2 border-t border-meepGray-700 ">
+          <span className="label mb-2">Toggle enhancement data</span>
+          <div> Mapped data sources</div>
+          <p>Members of Parliament</p>
+          <Switch />
+          <p>2019 Election</p>
+          <Switch
+            checked={showElectionData}
+            onCheckedChange={(newCheckedState) => setShowElectionData(newCheckedState)}
+          />
+        </div>
       </CardContent>
     </Card>
   )
 
-  function addLayer (source: { name: string, id: string }) {
+  function addLayer(source: { name: string, id: string }) {
     const oldLayers = layers.data.layers?.map(l => ({
       name: l!.name!,
       source: l!.source?.id,
@@ -110,7 +124,7 @@ export default function DataConfigPanel () {
     updateReport({ layers: combinedLayers })
   }
 
-  function removeLayer (sourceId: string) {
+  function removeLayer(sourceId: string) {
     const oldLayers = layers.data.layers?.map(l => ({
       name: l!.name!,
       source: l!.source?.id,
