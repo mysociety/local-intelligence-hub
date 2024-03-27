@@ -80,12 +80,12 @@ class FilterMixin:
         if mp_name:
             col_names.append("mp_name")
 
-        col_label_map = {"mp_name": "MP Name", "gss": "GSS"}
+        col_label_map = {"mp_name": "MP Name", "gss": "GSS", "url": "URL"}
 
         area_type = self.area_type()
 
         for col in col_names:
-            if col in ["mp_name", "gss"]:
+            if col in ["mp_name", "gss", "url"]:
                 columns.append({"name": col, "label": col_label_map[col]})
                 continue
 
@@ -212,6 +212,12 @@ class FilterMixin:
             elif col["name"] == "gss":
                 for row in self.query():
                     area_data[row.name]["GSS"].append(row.gss)
+                continue
+            elif col["name"] == "url":
+                for row in self.query():
+                    area_data[row.name]["URL"].append(
+                        f"{self.request.build_absolute_uri(row.get_absolute_url())}"
+                    )
                 continue
 
             dataset = col["dataset"]
