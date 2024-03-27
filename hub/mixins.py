@@ -215,8 +215,9 @@ class FilterMixin:
                 continue
             elif col["name"] == "url":
                 for row in self.query():
-                    # TODO: How could we get the real domain in here? Can’t use request.get_host!
-                    area_data[row.name]["URL"].append(f"https://www.localintelligencehub.com{row.get_absolute_url()}")
+                    area_data[row.name]["URL"].append(
+                        f"{self.request.build_absolute_uri(row.get_absolute_url())}"
+                    )
                 continue
 
             dataset = col["dataset"]
