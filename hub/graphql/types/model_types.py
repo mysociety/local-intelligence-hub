@@ -775,8 +775,17 @@ class MapLayer:
         user = get_current_user(info)
         return models.SharingPermission.objects.filter(
             organisation__members__user=user.id,
-            external_data_source_id=self.get("source", None),
+            external_data_source_id=self["source"],
         ).exists()
+
+    @strawberry_django.field
+    def sharing_permission(self, info: Info) -> Optional['SharingPermission']:
+        # see if this source is shared with the user's org
+        user = get_current_user(info)
+        return models.SharingPermission.objects.filter(
+            organisation__members__user=user.id,
+            external_data_source_id=self["source"],
+        ).first()
 
     @strawberry_django.field
     def source(self, info: Info) -> SharedDataSource:

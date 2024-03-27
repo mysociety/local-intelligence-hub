@@ -84,7 +84,7 @@ export default function Page({
               <DataSourceFieldLabel
                 className='align-middle'
                 label={pageQuery.data?.externalDataSource.geographyColumn}
-                crmType={pageQuery.data?.externalDataSource.connectionDetails.crmType}
+                crmType={pageQuery.data?.externalDataSource.crmType}
               />
               <span className='align-middle'>
                 field changes.

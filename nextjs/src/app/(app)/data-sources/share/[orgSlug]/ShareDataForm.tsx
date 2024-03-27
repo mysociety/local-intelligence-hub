@@ -110,11 +110,12 @@ export function SharingForm ({ initialData, fromOrgId, toOrgId }: {
   const client = useApolloClient()
 
   const onSubmit: SubmitHandler<FormInput> = (data, e) => {
+    e?.preventDefault()
     toastPromise(
       client.mutate<ShareDataSourcesMutation, ShareDataSourcesMutationVariables>({
         mutation: gql`
-          mutation ShareDataSources($fromOrgId: String!, $toOrgId: String!, $permissions: [SharingPermissionInput!]!) {
-            updateSharingPermissions(fromOrgId: $fromOrgId, toOrgId: $toOrgId, permissions: $permissions) {
+          mutation ShareDataSources($fromOrgId: String!, $permissions: [SharingPermissionInput!]!) {
+            updateSharingPermissions(fromOrgId: $fromOrgId, permissions: $permissions) {
               id
               sharingPermissions {
                 id
@@ -129,7 +130,6 @@ export function SharingForm ({ initialData, fromOrgId, toOrgId }: {
         `,
         variables: {
           fromOrgId,
-          toOrgId,
           permissions: data.dataSources.map((source) => (
             source.sharingPermissions.map(({ __typename, ...permission }) => ({
               ...permission,

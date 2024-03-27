@@ -187,6 +187,15 @@ def import_all(external_data_source_id: str) -> models.ExternalDataSource:
     return data_source
 
 
+@strawberry_django.input(models.SharingPermission, partial=True)
+class SharingPermissionCUDInput:
+    id: auto
+    external_data_source_id: auto
+    organisation_id: auto
+    visibility_record_coordinates: auto
+    visibility_record_details: auto
+
+
 @strawberry.input
 class SharingPermissionInput:
     id: Optional[strawberry.scalars.ID] = None
@@ -197,7 +206,7 @@ class SharingPermissionInput:
     deleted: Optional[bool] = False
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
-def update_sharing_permissions(info: Info, from_org_id: str, to_org_id: str, permissions: List[SharingPermissionInput]) -> List[models.ExternalDataSource]:
+def update_sharing_permissions(info: Info, from_org_id: str, permissions: List[SharingPermissionInput]) -> List[models.ExternalDataSource]:
     user = get_current_user(info)
     for permission in permissions:
         source = models.ExternalDataSource.objects.get(id=permission.external_data_source_id)

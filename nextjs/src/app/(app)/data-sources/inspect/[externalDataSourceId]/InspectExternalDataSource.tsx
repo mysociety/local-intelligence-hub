@@ -72,6 +72,7 @@ import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
 import { contentEditableMutation } from "@/lib/html";
 import { UpdateExternalDataSourceFields } from "@/components/UpdateExternalDataSourceFields";
+import { ManageSourceSharing } from "./ManageSourceSharing";
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {
@@ -118,6 +119,10 @@ const GET_UPDATE_CONFIG = gql`
         sourcePath
         destinationColumn
       }
+      sharingPermissions {
+        id
+      }
+      organisationId
     }
   }
 `;
@@ -183,7 +188,7 @@ export default function InspectExternalDataSource({
           )}
         </div>
         <div>
-          {source.connectionDetails.crmType ===
+          {source.crmType ===
             "AirtableSource" && (
             <div className="inline-flex rounded-xl bg-meepGray-700 px-10 py-6 overflow-hidden flex-row items-center justify-center">
               <AirtableLogo className="w-full" />
@@ -193,21 +198,113 @@ export default function InspectExternalDataSource({
       </header>
       {allowMapping && (
         <>
-        <div className="border-b border-meepGray-700 pt-10" />
-        <div className='grid sm:grid-cols-2 gap-8'>
-          <section className='space-y-4'>
-            <div>Imported records</div>
-            <div className='text-hXlg'>{source.importedDataCount || 0}</div>
-            <p className='text-sm text-meepGray-400'>
-              Import data from this source into Mapped for use in auto-updates and reports.
-            </p>
-            <Button disabled={source.isImporting} onClick={() => importData(client, externalDataSourceId)}>
-              {!source.isImporting ? "Import data" : <span className='flex flex-row gap-2 items-center'>
-                <LoadingIcon size={"18"} />
-                <span>Importing...</span>
-              </span>}
-            </Button>
+          <div className="border-b border-meepGray-700 pt-10" />
+          <div className='grid sm:grid-cols-2 gap-8'>
+            <section className='space-y-4'>
+              <div>Imported records</div>
+              <div className='text-hXlg'>{source.importedDataCount || 0}</div>
+              <p className='text-sm text-meepGray-400'>
+                Import data from this source into Mapped for use in auto-updates and reports.
+              </p>
+              <Button disabled={source.isImporting} onClick={() => importData(client, externalDataSourceId)}>
+                {!source.isImporting ? "Import data" : <span className='flex flex-row gap-2 items-center'>
+                  <LoadingIcon size={"18"} />
+                  <span>Importing...</span>
+                </span>}
+              </Button>
+            </section>
+          </div>
+        </>
+      )}
+      {source.dataType === DataSourceType.Member && (
+        <>
+          <div className="border-b border-meepGray-700 pt-10" />
+          <section className="space-y-4">
+            <header className="flex flex-row justify-between items-center">
+              <div>
+                <h2 className="text-hSm mb-5">Member data fields</h2>
+                <p className='text-sm text-meepGray-400'>
+                  <span className='align-middle'>
+                    Designate special fields for use in Mapped reports
+                  </span>
+                </p>
+              </div>
+            </header>
+            <UpdateExternalDataSourceFields
+              crmType={source.crmType}
+              fieldDefinitions={source.fieldDefinitions}
+              initialData={{
+                firstNameField: source.firstNameField,
+                lastNameField: source.lastNameField,
+                fullNameField: source.fullNameField,
+                emailField: source.emailField,
+                phoneField: source.phoneField,
+                addressField: source.addressField,
+              }}
+              onSubmit={updateMutation}
+            />
           </section>
+        </>
+      )}
+      {source.dataType === DataSourceType.Member && !!source.sharingPermissions?.length && (
+        <>
+          <div className="border-b border-meepGray-700 pt-10" />
+          <section className="space-y-4">
+            <header className="flex flex-row justify-between items-center">
+              <div>
+                <h2 className="text-hSm mb-5">Sharing</h2>
+                <p className='text-sm text-meepGray-400'>
+                  <span className='align-middle'>
+                    Share this data source with other users in your organization
+                  </span>
+                </p>
+              </div>
+            </header>
+            <ManageSourceSharing externalDataSourceId={externalDataSourceId} />
+          </section>
+        </>
+      )}
+      {source.dataType === DataSourceType.Member && (
+        <>
+          <div className="border-b border-meepGray-700 pt-10" />
+          <section className="space-y-4">
+            <header className="flex flex-row justify-between items-center">
+              <div>
+                <h2 className="text-hSm mb-5">Data updates</h2>
+                <p className='text-sm text-meepGray-400'>
+                  <span className='align-middle'>
+                    Pull third party data into your data source{"'"}s original location, based on the record{"'"}s 
+                  </span>
+                  <DataSourceFieldLabel
+                    className='align-middle'
+                    label={source.geographyColumnType}
+                    crmType={source.crmType!}
+                  />
+                </p>
+              </div>
+              {allowMapping && !!source.updateMapping?.length && (
+                <TriggerUpdateButton id={source.id} />
+              )}
+            </header>
+            <UpdateMappingForm
+              saveButtonLabel="Update"
+              allowMapping={allowMapping}
+              crmType={source.crmType}
+              fieldDefinitions={source.fieldDefinitions}
+              initialData={{
+                // Trim out the __typenames
+                geographyColumn: source?.geographyColumn,
+                geographyColumnType: source?.geographyColumnType,
+                updateMapping: source?.updateMapping?.map((m) => ({
+                  source: m.source,
+                  sourcePath: m.sourcePath,
+                  destinationColumn: m.destinationColumn,
+                })),
+              }}
+              onSubmit={updateMutation}
+            />
+          </section>
+          <div className="border-b border-meepGray-700 pt-10" />
           <section className='space-y-4'>
             <h2 className="text-hSm mb-5">Auto-updates</h2>
             <p className='text-sm text-meepGray-400'>
@@ -234,74 +331,7 @@ export default function InspectExternalDataSource({
               </>
             )}
           </section>
-        </div>
         </>
-      )}
-      <div className="border-b border-meepGray-700 pt-10" />
-      <section className="space-y-4">
-        <header className="flex flex-row justify-between items-center">
-          <div>
-            <h2 className="text-hSm mb-5">Data updates</h2>
-            <p className='text-sm text-meepGray-400'>
-              <span className='align-middle'>
-                Pull third party data into your data source{"'"}s original location, based on the record{"'"}s 
-              </span>
-              <DataSourceFieldLabel
-                className='align-middle'
-                label={source.geographyColumnType}
-                crmType={source.crmType!}
-              />
-            </p>
-          </div>
-          {allowMapping && !!source.updateMapping?.length && (
-            <TriggerUpdateButton id={source.id} />
-          )}
-        </header>
-        <UpdateMappingForm
-          saveButtonLabel="Update"
-          allowMapping={allowMapping}
-          crmType={source.connectionDetails.crmType}
-          fieldDefinitions={source.fieldDefinitions}
-          initialData={{
-            // Trim out the __typenames
-            geographyColumn: source?.geographyColumn,
-            geographyColumnType: source?.geographyColumnType,
-            updateMapping: source?.updateMapping?.map((m) => ({
-              source: m.source,
-              sourcePath: m.sourcePath,
-              destinationColumn: m.destinationColumn,
-            })),
-          }}
-          onSubmit={updateMutation}
-        />
-      </section>
-      <div className="border-b border-meepGray-700 pt-10" />
-      {source.dataType === DataSourceType.Member && (
-        <section className="space-y-4">
-          <header className="flex flex-row justify-between items-center">
-            <div>
-              <h2 className="text-hSm mb-5">Member data fields</h2>
-              <p className='text-sm text-meepGray-400'>
-                <span className='align-middle'>
-                  Designate special fields for use in Mapped reports
-                </span>
-              </p>
-            </div>
-          </header>
-          <UpdateExternalDataSourceFields
-            crmType={source.connectionDetails.crmType}
-            fieldDefinitions={source.fieldDefinitions}
-            initialData={{
-              firstNameField: source.firstNameField,
-              lastNameField: source.lastNameField,
-              fullNameField: source.fullNameField,
-              emailField: source.emailField,
-              phoneField: source.phoneField,
-              addressField: source.addressField,
-            }}
-            onSubmit={updateMutation}
-          />
-        </section>
       )}
       <div className="border-b border-meepGray-700 pt-10" />
       <section className='space-y-4'>
