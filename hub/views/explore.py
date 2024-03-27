@@ -155,6 +155,22 @@ class ExploreDatasetsJSON(TemplateView):
             }
         )
 
+        datasets.append(
+            {
+                "scope": "public",
+                "is_featured": False,
+                "is_favourite": False,
+                "is_filterable": False,
+                "is_shadable": False,
+                "category": "place",
+                "name": "url",
+                "title": "Constituency URL",
+                "description": "A link to this constituency on the Local Intelligence Hub.",
+                "source_label": "Data from mySociety.",
+                "areas_available": ["WMC", "WMC23"],
+            }
+        )
+
         return JsonResponse(list(datasets), safe=False)
 
 
