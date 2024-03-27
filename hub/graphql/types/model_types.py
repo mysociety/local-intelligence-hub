@@ -48,14 +48,7 @@ class QueueJob:
 
     @strawberry_django.field
     def last_event_at(self, info) -> datetime:
-        return (
-            procrastinate.contrib.django.models.ProcrastinateEvent.objects.filter(
-                job_id=self.id
-            )
-            .order_by("-at")
-            .first()
-            .at
-        )
+        return self.procrastinateevent_set.order_by("-at").first().at
 
     @classmethod
     def get_queryset(cls, queryset, info, **kwargs):
@@ -222,7 +215,9 @@ class ExternalDataSource:
     jobs: List[QueueJob] = strawberry_django.field(
         resolver=lambda self: procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
             args__external_data_source_id=str(self.id)
-        ),
+        )
+        .prefetch_related("procrastinateevent_set")
+        .order_by("-id"),
         filters=QueueFilter,
         pagination=True,
     )
@@ -295,10 +290,12 @@ class AirtableSource(ExternalDataSource):
     base_id: auto
     table_id: auto
 
+
 @strawberry_django.type(models.MailchimpSource)
 class MailchimpSource(ExternalDataSource):
     api_key: auto
     list_id: auto
+
 
 @strawberry_django.type(models.Report)
 class Report:

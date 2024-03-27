@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import strawberry
 import strawberry_django
@@ -23,6 +23,7 @@ class TestDataSourceInput:
     # For Airtable
     base_id: Optional[str] = None
     table_id: Optional[str] = None
+
 
 @strawberry.type
 class Query(UserQueries):
@@ -67,21 +68,16 @@ class Query(UserQueries):
 
     @strawberry.field
     def test_data_source(
-        self, 
-        info: strawberry.types.Info, 
-        input: TestDataSourceInput
+        self, info: strawberry.types.Info, input: TestDataSourceInput
     ) -> model_types.ExternalDataSource:
-        if input.type == 'airtable':
+        if input.type == "airtable":
             return models.AirtableSource(
                 api_key=input.api_key, base_id=input.base_id, table_id=input.table_id
             )
-        elif input.type == 'mailchimp':
-            return models.MailchimpSource(
-                api_key=input.api_key, list_id=input.list_id
-            )
+        elif input.type == "mailchimp":
+            return models.MailchimpSource(api_key=input.api_key, list_id=input.list_id)
         else:
             raise ValueError("Unsupported data source type")
-
 
 
 @strawberry.type
@@ -98,9 +94,6 @@ class Mutation:
         django_mutations.update(
             mutation_types.ExternalDataSourceInput, extensions=[IsAuthenticated()]
         )
-    )
-    delete_airtable_source: model_types.AirtableSource = django_mutations.delete(
-        mutation_types.IDObject, extensions=[IsAuthenticated()]
     )
     delete_external_data_source: model_types.ExternalDataSource = (
         django_mutations.delete(mutation_types.IDObject, extensions=[IsAuthenticated()])

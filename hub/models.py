@@ -1,5 +1,6 @@
 import asyncio
 import hashlib
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import List, Optional, TypedDict, Union
@@ -22,6 +23,7 @@ import pandas as pd
 from asgiref.sync import sync_to_async
 from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
+from mailchimp3 import MailChimp
 from polymorphic.models import PolymorphicModel
 from procrastinate.contrib.django.models import ProcrastinateJob
 from psycopg.errors import UniqueViolation
@@ -30,8 +32,6 @@ from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
-from mailchimp3 import MailChimp
-
 
 import utils as lih_utils
 from hub.analytics import Analytics
@@ -48,6 +48,8 @@ from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
 from utils.py import ensure_list, get
 
 User = get_user_model()
+
+logger = logging.getLogger(__name__)
 
 
 class Organisation(models.Model):
@@ -914,6 +916,41 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         return self.setup_webhooks()
 
+    def get_webhooks(self):
+        """
+        Refresh the webhook.
+        """
+        raise NotImplementedError(
+            "Get webhooks not implemented for this data source type."
+        )
+
+    def webhook_healthcheck(self):
+        expected_webhooks = 0
+        if self.auto_update_webhook_url:
+            expected_webhooks += 1
+        if self.auto_import_enabled:
+            expected_webhooks += 1
+        webhooks = self.get_webhooks()
+        if len(webhooks) < expected_webhooks:
+            print("Webhook healthcheck: Not enough webhooks")
+            return False
+        if len(webhooks) > expected_webhooks:
+            print("Webhook healthcheck: Too many webhooks")
+            return False
+
+        self.extra_webhook_healthcheck(webhooks)
+
+        return True
+
+    def extra_webhook_healthcheck(self, webhooks):
+        return True
+
+    def auto_update_webhook_url(self):
+        return urljoin(
+            settings.BASE_URL,
+            reverse("external_data_source_auto_update_webhook", args=[self.id]),
+        )
+
     def get_member_ids_from_webhook(self, payload: dict) -> list[str]:
         """
         Get the member ID from the webhook payload.
@@ -1158,6 +1195,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         if type(member) is str:
             member = await loaders["fetch_record"].load(member)
+        if not member:
+            # TODO: write tests for the case when the loader fails for a member
+            return None
+
         update_fields = {}
         try:
             postcode_data = None
@@ -1256,7 +1297,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     def disable_auto_update(self):
         self.auto_update_enabled = False
         self.save()
-        if self.automated_webhooks:
+        if self.automated_webhooks and hasattr(self, "teardown_webhooks"):
             self.teardown_webhooks()
 
     # Webhooks
@@ -1265,7 +1306,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         member_ids = self.get_member_ids_from_webhook(body)
         if len(member_ids) == 1:
             self.schedule_refresh_one(member_id=member_ids[0])
-        else:
+        elif len(member_ids) > 1:
             self.schedule_refresh_many(member_ids=member_ids)
         return HttpResponse(status=200)
 
@@ -1294,7 +1335,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
-       
+
         await external_data_source.refresh_all()
 
     @classmethod
@@ -1503,12 +1544,6 @@ class AirtableSource(ExternalDataSource):
             }
         }
 
-    def auto_update_webhook_url(self):
-        return urljoin(
-            settings.BASE_URL,
-            reverse("external_data_source_auto_update_webhook", args=[self.id]),
-        )
-
     def get_webhooks(self):
         list = self.base.webhooks()
         auto_update_webhook_url = self.auto_update_webhook_url()
@@ -1518,19 +1553,7 @@ class AirtableSource(ExternalDataSource):
             if webhook.notification_url == auto_update_webhook_url
         ]
 
-    def webhook_healthcheck(self):
-        expected_webhooks = 0
-        if self.auto_update_webhook_url:
-            expected_webhooks += 1
-        if self.auto_import_enabled:
-            expected_webhooks += 1
-        webhooks = self.get_webhooks()
-        if len(webhooks) < expected_webhooks:
-            print("Webhook healthcheck: Not enough webhooks")
-            return False
-        if len(webhooks) > expected_webhooks:
-            print("Webhook healthcheck: Too many webhooks")
-            return False
+    def extra_webhook_healthcheck(self, webhooks):
         for webhook in webhooks:
             if not webhook.is_hook_enabled:
                 print("Webhook healthcheck: a webhook expired")
@@ -1601,11 +1624,13 @@ class Report(PolymorphicModel):
 
     def __str__(self):
         return self.name
-    
+
+
 class MailchimpSource(ExternalDataSource):
     """
     A Mailchimp list.
     """
+
     api_key = models.CharField(
         max_length=250,
         help_text="Mailchimp API key.",
@@ -1624,7 +1649,7 @@ class MailchimpSource(ExternalDataSource):
 
     @cached_property
     def client(self) -> MailChimp:
-        # Initializes the MailChimp client 
+        # Initializes the MailChimp client
         return MailChimp(mc_api=self.api_key)
 
     def healthcheck(self):
@@ -1633,21 +1658,137 @@ class MailchimpSource(ExternalDataSource):
         if list:
             return True
         return False
-    
+
     def get_record_id(self, record):
-        return record.member_email
+        return record["id"]
+
+    def get_record_field(self, record, field):
+        # Support the field being e.g. ADDRESS.zip
+        keys = field.split(".")
+        val = record.get("merge_fields")
+        for key in keys:
+            val = val.get(key)
+            if val is None:
+                return None
+        return val
+
+    def get_webhooks(self):
+        webhooks = self.client.lists.webhooks.all(self.list_id)["webhooks"]
+        return [
+            webhook
+            for webhook in webhooks
+            if webhook["url"] == self.auto_update_webhook_url()
+        ]
+
+    def setup_webhooks(self):
+        self.teardown_webhooks()
+        # Update external data webhook
+        self.client.lists.webhooks.create(
+            self.list_id,
+            data={
+                "url": self.auto_update_webhook_url(),
+                "events": {
+                    "subscribe": True,
+                    "unsubscribe": False,
+                    "profile": True,
+                    "cleaned": True,
+                    "upemail": False,
+                    "campaign": False,
+                },
+                "sources": {
+                    "user": True,
+                    "admin": True,
+                    # Presumably this should be False to avoid
+                    # an infinite loop (but what if other tools
+                    # are updating using the API?)
+                    "api": False,
+                },
+            },
+        )
+
+    def teardown_webhooks(self):
+        webhooks = self.get_webhooks()
+        for webhook in webhooks:
+            self.client.lists.webhooks.delete(self.list_id, webhook["id"])
+
+    def get_member_ids_from_webhook(self, webhook_payload: dict) -> list[str]:
+        # Mailchimp doesn't give the full ID of the member in the Webhook payload?!
+        # Can use the email instead
+        if not webhook_payload:
+            return []
+        return [webhook_payload["data[email]"]]
 
     async def fetch_all(self):
-         # Fetches all members in a list and returns their email addresses
-        list = self.client.lists.members.all(self.list_id, fields="members.email_address")
-        return list
+        # Fetches all members in a list and returns their email addresses
+        list = self.client.lists.members.all(self.list_id, get_all=True)
+        return list["members"]
 
-    def fetch_one(self, member_email: str):
+    async def fetch_many(self, member_ids: list[str]):
+        # TODO: is there a more efficient request to get many members?
+        return [self.fetch_one(member_id) for member_id in member_ids]
+
+    def fetch_one(self, member_id: str):
         # Fetches a single list member by their unique member ID
         # Mailchimp member IDs are typically the MD5 hash of the lowercase version of the member's email address
-        member = self.client.lists.members.get(list_id=self.list_id, member_email=member_email)
+        member = self.client.lists.members.get(
+            list_id=self.list_id, subscriber_hash=member_id
+        )
         return member
 
+    async def fetch_many_loader(self, keys):
+        # For MailChimp, sometimes the keys are IDs, and sometimes
+        # they are email addresses. So the loader has to match
+        # on the ID field first, then the email field.
+        # This is because the webhook payload doesn't include the ID.
+        results = await self.fetch_many(keys)
+        return [
+            next(
+                (
+                    result
+                    for result in results
+                    if (result["id"] == key or result["email_address"] == key)
+                ),
+                None,
+            )
+            for key in keys
+        ]
+
+    async def update_all(self, mapped_records):
+        for mapped_record in mapped_records:
+            try:
+                await self.update_one(mapped_record)
+            except Exception as e:
+                subscriber_hash = mapped_record["member"]["id"]
+                logger.error(f"Error updating Mailchimp record {subscriber_hash}: {e}")
+
+    async def update_one(self, mapped_record):
+        members_client = self.client.lists.members
+        _build_path = members_client._build_path
+
+        # Modify API request to include ?skip_merge_validation=true
+        # Otherwise data can't be updated if the address is not complete
+        # (i.e. with addr1, city, state and country)
+        def build_path_with_skip_validation(self, *args, **kwargs):
+            path = _build_path(self, *args, **kwargs)
+            return f"{path}?skip_merge_validation=true"
+
+        members_client._build_path = build_path_with_skip_validation
+
+        subscriber_hash = mapped_record["member"]["id"]
+        # Have to get the existing member to update the merge fields (the API does not patch the object)
+        # TODO: save all the merge fields in our database so we don't have to do this?
+        existing_member = self.fetch_one(subscriber_hash)
+        merge_fields = {
+            **existing_member["merge_fields"],
+            **mapped_record["update_fields"],
+        }
+        self.client.lists.members.update(
+            list_id=self.list_id,
+            subscriber_hash=subscriber_hash,
+            data={"merge_fields": merge_fields},
+        )
+
+        members_client._build_path = _build_path
 
 
 class MapReport(Report, Analytics):

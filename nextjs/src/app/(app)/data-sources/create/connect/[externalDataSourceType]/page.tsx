@@ -94,7 +94,18 @@ export default function Page({
   const form = useForm<FormInputs>({
     defaultValues: {
       geographyColumnType: PostcodesIoGeographyTypes.Postcode,
+      geographyColumn: externalDataSourceType === "mailchimp" ? 'ADDRESS.zip' : '',
       dataType: context.dataType,
+      name: '',
+      airtable: {
+        apiKey: '',
+        baseId: '',
+        tableId: '',
+      },
+      mailchimp: {
+        apiKey: '',
+        listId: ''
+      }
     },
   });
 
@@ -108,7 +119,7 @@ export default function Page({
   useEffect(() => {
     // Guessing the geography column based on current source dynamically
     let guessedPostcodeColumn = currentSource?.testDataSource?.fieldDefinitions?.find(
-      (field: { label: string; value: string; }) => (
+      (field: { label?: string | null; value: string; }) => (
         field.label?.toLowerCase().replaceAll(' ', '').includes("postcode") ||
         field.label?.toLowerCase().replaceAll(' ', '').includes("postalcode") ||
         field.label?.toLowerCase().replaceAll(' ', '').includes("zipcode") ||
@@ -135,21 +146,21 @@ export default function Page({
   }, [currentSource?.testDataSource?.remoteName, form]);
 
   async function submitTestConnection(formData: FormInputs) {
-
+    console.log('form data', formData)
     if (!formData[externalDataSourceType]) {
       throw Error("Need some CRM connection details to proceed!")
     }
     // Get the nested data source key e.g. Airtable or Mailchimp
-    const dataSourceKey = Object.keys(formData)[2];
+    const dataSourceKey = externalDataSourceType
 
-    const dataSourceValue = formData[dataSourceKey];
+    const dataSourceValue = formData[dataSourceKey] || {};
    
     const input = {
       "type": dataSourceKey, 
-      "apiKey": dataSourceValue.apiKey,
-      "baseId": dataSourceValue.baseId,
-      "tableId": dataSourceValue.tableId,
-      "listId": dataSourceValue.listId,
+      "apiKey": dataSourceValue?.apiKey || '',
+      "baseId": "baseId" in dataSourceValue ? dataSourceValue.baseId : '',
+      "tableId": "tableId" in dataSourceValue ? dataSourceValue.tableId : '',
+      "listId": "listId" in dataSourceValue ? dataSourceValue.listId : '',
     }
 
     {
@@ -174,9 +185,17 @@ export default function Page({
     }
     // To avoid mutation of the form data
     const genericCRMData = Object.assign({}, formData)
-    // Remove specific CRM data from the generic data
-    delete genericCRMData[externalDataSourceType]
     const CRMSpecificData = formData[externalDataSourceType]
+
+    // Remove specific CRM data from the generic data
+    // TODO: make this less fragile. Currently it assumes any nested
+    // object is specific to a CRM.
+    for (const key of Object.keys(formData)) {
+      if (typeof formData[key as keyof FormInputs] === "object") {
+        delete genericCRMData[key as keyof FormInputs]
+      }
+    }
+
     let input: CreateExternalDataSourceInput = {
       [externalDataSourceType]: {
         ...genericCRMData,

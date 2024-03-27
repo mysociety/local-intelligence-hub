@@ -73,7 +73,7 @@ export function AutoUpdateSwitch({
           toggleAutoUpdate(client, e, externalDataSource.id)
         }
       />
-      <span className={externalDataSource.autoUpdateEnabled && "text-brandBlue"}>Auto-update</span>
+      <span className={externalDataSource.autoUpdateEnabled ? "text-brandBlue" : ''}>Auto-update</span>
     </div>
   );
 }
@@ -124,7 +124,9 @@ export function TriggerUpdateButton({
   return (
     <AlertDialog>
       <AlertDialogTrigger {...buttonProps}>
-        <Button variant='outline' {...buttonProps}>{label}</Button>
+        <Button variant='outline' {...buttonProps} asChild={true}>
+          <span>{label}</span>
+        </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

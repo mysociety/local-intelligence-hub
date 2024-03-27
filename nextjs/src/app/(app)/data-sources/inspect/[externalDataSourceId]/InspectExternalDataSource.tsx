@@ -91,6 +91,7 @@ const GET_UPDATE_CONFIG = gql`
         }
       }
       autoUpdateEnabled
+      webhookHealthcheck
       geographyColumn
       geographyColumnType
       isImporting

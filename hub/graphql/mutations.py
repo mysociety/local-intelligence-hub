@@ -25,8 +25,6 @@ class UpdateMappingItemInput:
     destination_column: str
 
 
-
-
 @strawberry.input
 class MapLayerInput:
     name: str
@@ -145,6 +143,7 @@ def import_all(external_data_source_id: str) -> models.ExternalDataSource:
     data_source.schedule_import_all()
     return data_source
 
+
 @strawberry_django.input(models.ExternalDataSource, partial=True)
 class ExternalDataSourceInput:
     id: auto
@@ -158,19 +157,22 @@ class ExternalDataSourceInput:
     update_mapping: Optional[List[UpdateMappingItemInput]]
     auto_import_enabled: auto
 
+
 @strawberry_django.input(models.AirtableSource, partial=True)
 class AirtableSourceInput(ExternalDataSourceInput):
     api_key: auto
     base_id: auto
     table_id: auto
 
+
 @strawberry_django.input(models.MailchimpSource, partial=True)
 class MailChimpSourceInput(ExternalDataSourceInput):
     api_key: auto
     list_id: auto
 
+
 @strawberry.input()
-class CreateExternalDataSourceInput():
+class CreateExternalDataSourceInput:
     mailchimp: Optional[MailChimpSourceInput] = None
     airtable: Optional[AirtableSourceInput] = None
 
@@ -184,8 +186,9 @@ def create_mailchimp_source(
         data,
         computed_args=lambda info, data, model: {
             "organisation": get_or_create_organisation_for_source(info, data)
-        }, 
+        },
     )
+
 
 def create_airtable_source(
     info: Info, data: AirtableSourceInput
@@ -199,8 +202,11 @@ def create_airtable_source(
         },
     )
 
+
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
-def create_external_data_source(info: Info, input: CreateExternalDataSourceInput) -> models.ExternalDataSource:
+def create_external_data_source(
+    info: Info, input: CreateExternalDataSourceInput
+) -> models.ExternalDataSource:
     source_creators = {
         "airtable": create_airtable_source,
         "mailchimp": create_mailchimp_source,
@@ -210,5 +216,5 @@ def create_external_data_source(info: Info, input: CreateExternalDataSourceInput
         source_input = getattr(input, key, None)
         if source_input is not None:
             return creator_fn(info, source_input)
-    
+
     raise ValueError("You must provide input data for a specific source type")
