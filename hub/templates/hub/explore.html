@@ -241,7 +241,7 @@
                 <tbody>
                     <tr v-for="(row, rowKey) in sortedTable" v-bind:key="'row-'+rowKey">
                         <td v-for="(column, columnKey) in table.meta.fields" v-bind:key="'row-'+rowKey+'-column-'+columnKey">
-                            <a v-if="column == 'Constituency Name'" :href="`/area/WMC/${ sortedTable[rowKey][column] }`">
+                            <a v-if="column == 'Constituency Name'" :href="`/area/${ area_type }/${ sortedTable[rowKey][column] }`">
                             ${ sortedTable[rowKey][column] }
                             </a>
                             <span v-else>${ sortedTable[rowKey][column] }</span>
