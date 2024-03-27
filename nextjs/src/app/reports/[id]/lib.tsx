@@ -16,10 +16,7 @@ export const MAP_REPORT_LAYERS_SUMMARY = gql`
         name
         isImporting
         importedDataCount
-        connectionDetails {
-          __typename
-          recordUrlTemplate
-        }
+        crmType
       }
     }
   }

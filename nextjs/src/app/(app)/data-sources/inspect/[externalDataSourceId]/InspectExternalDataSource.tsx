@@ -80,8 +80,8 @@ const GET_UPDATE_CONFIG = gql`
       name
       dataType
       remoteUrl
+      crmType
       connectionDetails {
-        crmType: __typename
         ... on AirtableSource {
           baseId
           tableId
@@ -249,7 +249,7 @@ export default function InspectExternalDataSource({
               <DataSourceFieldLabel
                 className='align-middle'
                 label={source.geographyColumnType}
-                connectionType={source.connectionDetails.__typename!}
+                crmType={source.crmType!}
               />
             </p>
           </div>
@@ -260,7 +260,7 @@ export default function InspectExternalDataSource({
         <UpdateMappingForm
           saveButtonLabel="Update"
           allowMapping={allowMapping}
-          connectionType={source.connectionDetails.crmType}
+          crmType={source.connectionDetails.crmType}
           fieldDefinitions={source.fieldDefinitions}
           initialData={{
             // Trim out the __typenames
@@ -289,7 +289,7 @@ export default function InspectExternalDataSource({
             </div>
           </header>
           <UpdateExternalDataSourceFields
-            connectionType={source.connectionDetails.crmType}
+            crmType={source.connectionDetails.crmType}
             fieldDefinitions={source.fieldDefinitions}
             initialData={{
               firstNameField: source.firstNameField,

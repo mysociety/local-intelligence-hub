@@ -21,9 +21,7 @@ const GET_UPDATE_CONFIG = gql`
       geographyColumn
       geographyColumnType
       dataType
-      connectionDetails {
-        crmType: __typename
-      }
+      crmType
       autoUpdateEnabled
       updateMapping {
         source
@@ -86,7 +84,7 @@ export default function Page({
               <DataSourceFieldLabel
                 className='align-middle'
                 label={pageQuery.data?.externalDataSource.geographyColumn}
-                connectionType={pageQuery.data?.externalDataSource.connectionDetails.crmType}
+                crmType={pageQuery.data?.externalDataSource.connectionDetails.crmType}
               />
               <span className='align-middle'>
                 field changes.

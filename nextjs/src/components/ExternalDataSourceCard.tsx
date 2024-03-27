@@ -21,8 +21,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { getSourceOptionForTypename } from "@/lib/data";
 import { DataSourceCardFragment, AutoUpdateWebhookRefreshMutation, AutoUpdateWebhookRefreshMutationVariables, DataSourceType, DisableAutoUpdateMutation, DisableAutoUpdateMutationVariables, EnableAutoUpdateMutation, EnableAutoUpdateMutationVariables, TriggerFullUpdateMutation, TriggerFullUpdateMutationVariables } from "@/__generated__/graphql";
+import { DataSourceIcon } from "./DataSourceIcon";
 
 export function ExternalDataSourceCard({
   externalDataSource,
@@ -36,10 +36,6 @@ export function ExternalDataSourceCard({
     dataType: DataSourceType,
     autoUpdateEnabled?: boolean,
     crmType?: string
-    connectionDetails?: {
-      __typename?: string,
-      crmType: string
-    },
     jobs?: DataSourceCardFragment['jobs'],
     organisation?: {
       name: string
@@ -54,15 +50,11 @@ export function ExternalDataSourceCard({
   withLink?: boolean
   shared?: boolean
 }) {
-  const Logo = getSourceOptionForTypename(
-    externalDataSource.crmType || externalDataSource?.connectionDetails?.crmType,
-  )?.logo;
-
   return (
     <article className="rounded-xl border border-meepGray-600 px-6 py-5 space-y-3">
       <header className="flex flex-row justify-between items-start">
         <div className='space-y-3'>
-          {!!Logo && <Logo className='w-20'/>}
+          <DataSourceIcon crmType={externalDataSource.crmType} />
           <h3 className="text-hSm">
             {externalDataSource.name || externalDataSource.crmType || "Un-named data source"}
           </h3>
@@ -250,9 +242,6 @@ export const DATA_SOURCE_FRAGMENT = gql`
     name
     dataType
     crmType
-    connectionDetails {
-      crmType: __typename
-    }
     autoUpdateEnabled
     updateMapping {
       source
@@ -341,9 +330,7 @@ export const TRIGGER_FULL_UPDATE = gql`
       }
       id
       name
-      connectionDetails {
-        crmType: __typename
-      }
+      crmType
     }
   }
 `;

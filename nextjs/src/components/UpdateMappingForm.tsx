@@ -38,9 +38,7 @@ const ENRICHMENT_LAYERS = gql`
       geographyColumn
       geographyColumnType
       dataType
-      connectionDetails {
-        __typename
-      }
+      crmType
       fieldDefinitions {
         label
         value
@@ -55,7 +53,7 @@ export function UpdateMappingForm({
   initialData,
   children,
   fieldDefinitions,
-  connectionType,
+  crmType,
   allowMapping = true,
   saveButtonLabel = "Update",
 }: {
@@ -63,7 +61,7 @@ export function UpdateMappingForm({
     data: ExternalDataSourceInput,
     e?: React.BaseSyntheticEvent,
   ) => void;
-  connectionType: string;
+  crmType: string;
   initialData?: ExternalDataSourceInput;
   fieldDefinitions?: FieldDefinition[] | null;
   saveButtonLabel?: string;
@@ -95,7 +93,7 @@ export function UpdateMappingForm({
       .map((source) => ({
         slug: source.id,
         name: source.name,
-        connectionType: source.connectionDetails.__typename,
+        crmType: source.crmType,
         author: "",
         description: "",
         descriptionURL: "",
@@ -131,7 +129,7 @@ export function UpdateMappingForm({
                               <SelectLabel>Geography field</SelectLabel>
                               {fieldDefinitions?.map((field) => (
                                 <SelectItem key={field.value} value={field.value}>
-                                  <DataSourceFieldLabel fieldDefinition={field} connectionType={connectionType} />
+                                  <DataSourceFieldLabel fieldDefinition={field} crmType={crmType} />
                                 </SelectItem>
                               ))}
                             </SelectGroup>
@@ -229,7 +227,7 @@ export function UpdateMappingForm({
                                       <SelectItem key={field.value} value={field.value}>
                                         <DataSourceFieldLabel
                                           fieldDefinition={field}
-                                          connectionType={connectionType}
+                                          crmType={crmType}
                                         />
                                       </SelectItem>
                                     ))}

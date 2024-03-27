@@ -81,7 +81,7 @@ export default function DataConfigPanel () {
                     borderColor: layerColour(index, layer?.source?.id)
                   }} 
                 >
-                  <DataSourceIcon connectionType={layer?.source?.connectionDetails?.__typename} className="w-5" />
+                  <DataSourceIcon crmType={layer?.source?.crmType} className="w-5" />
                   <div className='-space-y-1'>
                     <span>{layer?.name || layer?.source?.name}</span>
                     {!!layer?.source?.importedDataCount && (

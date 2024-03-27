@@ -1,18 +1,13 @@
-import { AirtableLogo } from "@/components/logos";
+import { AirtableLogo, AirtableIcon } from "@/components/logos";
 
 export const externalDataSourceOptions = {
   airtable: {
     key: "airtable",
     modelName: "AirtableSource",
     name: "Airtable",
-    logo: AirtableLogo,
+    icon: AirtableIcon,
+    wordmark: AirtableLogo,
   },
-};
-
-export const getSourceOptionForTypename = (typename?: string) => {
-  return Object.values(externalDataSourceOptions).find(
-    (option) => option.modelName === typename || option.key === typename,
-  );
 };
 
 export type EnrichmentDataSource = {
@@ -21,7 +16,7 @@ export type EnrichmentDataSource = {
   author: string;
   description: string;
   descriptionURL: string;
-  connectionType?: string;
+  crmType?: string;
   colour: string;
   builtIn: boolean;
   sourcePaths: SourcePath[];

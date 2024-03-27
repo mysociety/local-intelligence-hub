@@ -7,7 +7,7 @@ type FormInputs = ExternalDataSourceInput
 
 export function UpdateExternalDataSourceFields ({
   initialData,
-  connectionType,
+  crmType,
   fieldDefinitions,
   onSubmit
 }: {
@@ -15,7 +15,7 @@ export function UpdateExternalDataSourceFields ({
     data: ExternalDataSourceInput,
     e?: React.BaseSyntheticEvent<object, any, any> | undefined
   ) => void;
-  connectionType: string;
+  crmType: string;
   initialData?: ExternalDataSourceInput;
   fieldDefinitions?: FieldDefinition[] | null;
 }) {
@@ -41,7 +41,7 @@ export function UpdateExternalDataSourceFields ({
         placeholder={placeholder}
         fieldDefinitions={fieldDefinitions}
         control={form.control}
-        connectionType={connectionType}
+        crmType={crmType}
         required={required}
       />
     )

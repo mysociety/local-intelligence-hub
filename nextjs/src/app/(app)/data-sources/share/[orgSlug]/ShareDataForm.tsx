@@ -211,7 +211,7 @@ function DataSourceSharingPanel ({
     <Card key={source.id} className='flex flex-col gap-1 px-3 py-2 min-h-14'>
       <div className='flex flex-row items-center gap-1 px-3 py-2 min-h-12 w-full'>
         <div className='flex flex-row gap-1'>
-          <DataSourceIcon connectionType={source?.connectionDetails?.__typename} className="w-5" />
+          <DataSourceIcon crmType={source?.crmType} className="w-5" />
           <div className='-space-y-1'>
             <span>{source?.name}</span>
             {!!source?.importedDataCount && (
@@ -308,9 +308,7 @@ const SHARE_WITH_ORG_PAGE = gql`
       externalDataSources {
         id
         name
-        connectionDetails {
-          __typename
-        }
+        crmType
         importedDataCount
         dataType
         fieldDefinitions {

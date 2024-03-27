@@ -147,7 +147,7 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
                       alreadySelected || alreadyUsed ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  <DataSourceIcon connectionType={source.connectionDetails.__typename} className="w-5" />
+                  <DataSourceIcon crmType={source.crmType} className="w-5" />
                   &nbsp;
                   <div className='-space-y-1'>
                     <div>{source.name}</div>
@@ -181,9 +181,7 @@ const MEMBER_LISTS = gql`
       id
       name
       importedDataCount
-      connectionDetails {
-        __typename
-      }
+      crmType
     }
   }
 `
