@@ -16,7 +16,7 @@ import {
   AutoUpdateSwitch,
   AutoUpdateWebhookRefresh,
   TriggerUpdateButton,
-} from "@/components/AutoUpdateCard";
+} from "@/components/ExternalDataSourceCard";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import {
   DataSourceType,

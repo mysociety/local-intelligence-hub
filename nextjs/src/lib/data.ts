@@ -9,7 +9,7 @@ export const externalDataSourceOptions = {
   },
 };
 
-export const getSourceOptionForTypename = (typename: string) => {
+export const getSourceOptionForTypename = (typename?: string) => {
   return Object.values(externalDataSourceOptions).find(
     (option) => option.modelName === typename || option.key === typename,
   );

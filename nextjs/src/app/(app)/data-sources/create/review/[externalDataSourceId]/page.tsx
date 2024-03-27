@@ -9,7 +9,7 @@ import {
   AutoUpdateCreationReviewQuery,
   AutoUpdateCreationReviewQueryVariables,
 } from "@/__generated__/graphql";
-import { AutoUpdateCard, DATA_SOURCE_FRAGMENT, TriggerUpdateButton } from "@/components/AutoUpdateCard";
+import { ExternalDataSourceCard, DATA_SOURCE_FRAGMENT, TriggerUpdateButton } from "@/components/ExternalDataSourceCard";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 
@@ -108,8 +108,10 @@ export default function Page({
       ) : (
         <>
           <div>
-            <AutoUpdateCard
+            <ExternalDataSourceCard
               externalDataSource={pageQuery.data.externalDataSource}
+              withUpdateOptions
+              withLink
             />
           </div>
           <div>

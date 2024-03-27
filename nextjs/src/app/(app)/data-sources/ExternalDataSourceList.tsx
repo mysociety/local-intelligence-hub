@@ -5,12 +5,10 @@ import { ActionNetworkLogo, AirtableLogo } from "@/components/logos";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-import { AutoUpdateCard } from "@/components/AutoUpdateCard";
 import { DataSourceType, ListExternalDataSourcesQuery, ListExternalDataSourcesQueryVariables } from "@/__generated__/graphql";
 import { useEffect } from "react";
 import qs from 'query-string'
-import { Card } from "@/components/ui/card";
-import { SharedDataSource } from "@/components/cards/SharedDataSource";
+import { ExternalDataSourceCard } from "@/components/ExternalDataSourceCard";
 
 const LIST_UPDATE_CONFIGS = gql`
   query ListExternalDataSources {
@@ -19,9 +17,7 @@ const LIST_UPDATE_CONFIGS = gql`
         id
         name
         dataType
-        connectionDetails {
-          crmType: __typename
-        }
+        crmType
         autoUpdateEnabled
         jobs {
           lastEventAt
@@ -31,6 +27,13 @@ const LIST_UPDATE_CONFIGS = gql`
           source
           sourcePath
           destinationColumn
+        }
+        sharingPermissions {
+          id
+          organisation {
+            id
+            name
+          }
         }
       }
       sharingPermissionsFromOtherOrgs {
@@ -78,9 +81,11 @@ export default function ExternalDataSourceList() {
           {data.myOrganisations[0].externalDataSources
           .filter(d => d.dataType === DataSourceType.Member)
           .map((externalDataSource) => (
-            <AutoUpdateCard
+            <ExternalDataSourceCard
               key={externalDataSource.id}
               externalDataSource={externalDataSource}
+              withLink
+              withUpdateOptions
             />
           ))}
           <ConnectDataSource label="Connect a member list" params={{ dataType: DataSourceType.Member }} />
@@ -106,9 +111,10 @@ export default function ExternalDataSourceList() {
               {data.myOrganisations[0].sharingPermissionsFromOtherOrgs
               .filter(share => share.externalDataSource.dataType === DataSourceType.Member)
               .map((share) => (
-                <SharedDataSource
+                <ExternalDataSourceCard
                   key={share.externalDataSource.id}
                   externalDataSource={share.externalDataSource}
+                  shared
                 />
               ))}
             </section>
@@ -134,9 +140,10 @@ export default function ExternalDataSourceList() {
           {data.myOrganisations[0].externalDataSources
           .filter(d => d.dataType !== DataSourceType.Member)
           .map((externalDataSource) => (
-            <AutoUpdateCard
+            <ExternalDataSourceCard
               key={externalDataSource.id}
               externalDataSource={externalDataSource}
+              withLink
             />
           ))}
           <ConnectDataSource label="Connect a custom data layer" params={{ dataType: DataSourceType.Other }} />
