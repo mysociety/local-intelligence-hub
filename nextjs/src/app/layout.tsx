@@ -1,6 +1,12 @@
 import "./globals.css";
 import { ApolloWrapper } from "@/components/apollo-wrapper";
+import { PHProvider } from './providers'
+import dynamic from 'next/dynamic'
 import { Metadata } from 'next'
+
+const PostHogPageView = dynamic(() => import('./PostHogPageView'), {
+  ssr: false,
+})
 
 export default async function RootLayout({
   children,
@@ -10,9 +16,12 @@ export default async function RootLayout({
   return (
     <ApolloWrapper>
       <html lang="en">
+      <PHProvider>
         <body>
+        <PostHogPageView /> 
           {children}
         </body>
+        </PHProvider>
       </html>
     </ApolloWrapper>
   );
