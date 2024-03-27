@@ -227,7 +227,7 @@ function DataSourceSharingPanel ({
           onCheckedChange={(enabled) => {
             if (hasExistingPermissionInDB) {
               sharingPermissions.update(0, {
-                ...source.sharingPermissions[0],
+                ...source.sharingPermissions[indexOfExistingPermissionInDB],
                 deleted: !enabled
               })
             } else {

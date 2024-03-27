@@ -208,7 +208,7 @@ def update_sharing_permissions(info: Info, from_org_id: str, to_org_id: str, per
             models.SharingPermission.objects.filter(id=permission.id).delete()
         else:
             models.SharingPermission.objects.update_or_create(
-                id=permission.id,
+                # id=permission.id,
                 external_data_source_id=permission.external_data_source_id,
                 organisation_id=permission.organisation_id,
                 defaults={
@@ -218,5 +218,4 @@ def update_sharing_permissions(info: Info, from_org_id: str, to_org_id: str, per
             )
     # Return data sources for the current org
     result = list(models.ExternalDataSource.objects.filter(organisation_id=from_org_id).all())
-    print(result)
     return result
