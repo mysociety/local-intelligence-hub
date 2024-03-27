@@ -662,18 +662,25 @@
     </div>
 </div>
 
-{% if not user.is_authenticated %}
-<div class="py-4 py-lg-5 bg-yellow-100 border-top d-print-none">
+<aside class="py-4 py-lg-5 bg-yellow-100 border-top d-print-none">
     <div class="container">
-        <aside class="d-flex align-items-center">
-            {% include 'hub/includes/icons/tcc-heart.html' with width="3em" height="3em" classes="me-3 me-lg-4 flex-shrink-0 flex-grow-0" %}
-            <div>
-                <h2 class="h4">Climate Coalition member?</h2>
-                <p class="mb-0"><a href="{% url 'login' %}">Sign in</a> or <a href="{% url 'signup' %}">request an account</a> to access exclusive members-only MRP and local movement data.</p>
+        <div class="row">
+          {% if not user.is_authenticated %}
+            <div class="col-lg-5 me-lg-auto">
+                <div class="d-flex align-items-center">
+                    {% include 'hub/includes/icons/tcc-heart.html' with width="3em" height="3em" classes="me-3 me-lg-4 flex-shrink-0 flex-grow-0" %}
+                    <div>
+                        <h2 class="h4">Climate Coalition member?</h2>
+                        <p class="mb-0"><a href="{% url 'login' %}">Sign in</a> or <a href="{% url 'signup' %}">request an account</a> to access exclusive members-only MRP and local movement data.</p>
+                    </div>
+                </div>
             </div>
-        </aside>
+          {% endif %}
+            <div class="col-lg-6">
+                {% include 'hub/includes/mailing-list-form.html' with classes="js-collapsable-mailing-list-form" %}
+            </div>
+        </div>
     </div>
-</div>
-{% endif %}
+</aside>
 
 {% endblock %}

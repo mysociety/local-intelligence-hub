@@ -340,6 +340,28 @@ htmlsoup = ["BeautifulSoup4"]
 source = ["Cython (==0.29.37)"]
 
 [[package]]
+name = "mailchimp-marketing"
+version = "3.0.80"
+description = "Mailchimp Marketing API"
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+
+[package.dependencies]
+certifi = ">=2017.4.17"
+python-dateutil = ">=2.1"
+requests = ">=2.23"
+six = ">=1.10"
+urllib3 = ">=1.23"
+
+[package.source]
+type = "git"
+url = "https://github.com/mailchimp/mailchimp-marketing-python.git"
+reference = "HEAD"
+resolved_reference = "3305fa45b3f436767a539c5fba9cb2b0a083d761"
+
+[[package]]
 name = "mccabe"
 version = "0.7.0"
 description = "McCabe checker, plugin for flake8"
@@ -696,7 +718,7 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "4bddcaf30a4c21bac52e52ecf2f9e830520fae0a6e4104feda5c9d40ff989591"
+content-hash = "a558e14fb2d6a61678f6acc3ea3de3f1c4dca0904f9732293a84296480303f8a"
 
 [metadata.files]
 appdirs = [
@@ -1051,6 +1073,7 @@ lxml = [
     {file = "lxml-4.9.4-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:f10250bb190fb0742e3e1958dd5c100524c2cc5096c67c8da51233f7448dc137"},
     {file = "lxml-4.9.4.tar.gz", hash = "sha256:b1541e50b78e15fa06a2670157a1962ef06591d4c998b998047fff5e3236880e"},
 ]
+mailchimp-marketing = []
 mccabe = [
     {file = "mccabe-0.7.0-py2.py3-none-any.whl", hash = "sha256:6c2d30ab6be0e4a46919781807b4f0d834ebdd6c6e3dca0bda5a15f863427b6e"},
     {file = "mccabe-0.7.0.tar.gz", hash = "sha256:348e0240c33b60bbdf4e523192ef919f28cb2c3d7d5c7794f74009290f236325"},

@@ -69,6 +69,14 @@ urlpatterns = [
     path("location/", area.AreaSearchView.as_view(), name="area_search"),
     path("go/", include(landingpages.urlpatterns)),
     path("style/", core.StyleView.as_view(), name="style"),
+    path(
+        "mailing-list/", core.MailChimpSignupView.as_view(), name="mailing_list_signup"
+    ),
+    path(
+        "mailing-list-success/",
+        core.MailChimpSuccessView.as_view(),
+        name="mailing_list_sucess",
+    ),
     path("status/", core.StatusView.as_view(), name="status"),
     path("me/", accounts.MyAccountView.as_view(), name="my_account"),
     path("signup/", accounts.SignupView.as_view(), name="signup"),
