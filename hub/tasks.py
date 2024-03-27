@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from django.conf import settings
 from procrastinate.contrib.django import app
-
 
 @app.task(queue="index")
 async def refresh_one(external_data_source_id: str, member_id: str):
@@ -12,7 +12,7 @@ async def refresh_one(external_data_source_id: str, member_id: str):
     )
 
 
-@app.task(queue="index")
+@app.task(queue="index", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
 async def refresh_many(external_data_source_id: str, member_ids: list[str]):
     from hub.models import ExternalDataSource
 
@@ -38,6 +38,15 @@ async def refresh_webhooks(external_data_source_id: str, timestamp=None):
 
     await ExternalDataSource.deferred_refresh_webhooks(
         external_data_source_id=external_data_source_id
+    )
+
+
+@app.task(queue="index", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
+async def import_many(external_data_source_id: str, member_ids: list[str]):
+    from hub.models import ExternalDataSource
+
+    await ExternalDataSource.deferred_import_many(
+        external_data_source_id=external_data_source_id, member_ids=member_ids
     )
 
 

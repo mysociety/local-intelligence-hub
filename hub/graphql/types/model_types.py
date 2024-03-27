@@ -610,8 +610,11 @@ class ExternalDataSource(Analytics):
     def imported_data_geojson_points(
         self: models.ExternalDataSource, info: Info
     ) -> List[MapReportMemberFeature]:
+        from datetime import datetime
+        print(f"getting data {datetime.now()}")
         data = self.get_import_data()
-        return [
+        print(f"got data {datetime.now()}")
+        r = [
             MapReportMemberFeature.from_geodjango(
                 point=generic_datum.point,
                 id=generic_datum.data,
@@ -620,6 +623,24 @@ class ExternalDataSource(Analytics):
             for generic_datum in data
             if generic_datum.point is not None
         ]
+        print(f"shaped data {datetime.now()}")
+        return r
+    
+    @strawberry_django.field
+    def imported_data_geojson_point(
+        self: models.ExternalDataSource, info: Info, id: str
+    ) -> MapReportMemberFeature | None:
+        datum = models.GenericData.objects.filter(
+            data=id,
+            data_type__data_set__external_data_source_id=self.id
+        ).first()
+        if not datum or not datum.point:
+            return None
+        return MapReportMemberFeature.from_geodjango(
+            point=datum.point,
+            id=datum.data,
+            properties=datum,
+        )
 
     imported_data_count: int = fn_field()
     imported_data_count_by_region: List[GroupedDataCount] = fn_field()

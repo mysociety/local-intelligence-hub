@@ -406,7 +406,7 @@ export default function InspectExternalDataSource({
               accessorKey: "args",
               cell: (d) => (
                 <code>
-                  <pre>{JSON.stringify(d.getValue() || {}, null, 2)}</pre>
+                  <pre className="max-h-48 overflow-y-auto">{JSON.stringify(d.getValue() || {}, null, 2)}</pre>
                 </code>
               ),
             },

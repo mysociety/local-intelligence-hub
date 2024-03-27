@@ -56,9 +56,9 @@ def chunk_array(arr, max_size):
 def batched(iterable, n):
     "Batch data into tuples of length n. The last batch may be shorter."
     if n < 1:
-        raise ValueError('n must be at least one')
+        raise ValueError("n must be at least one")
     it = iter(iterable)
-    while (batch := tuple(itertools.islice(it, n))):
+    while batch := tuple(itertools.islice(it, n)):
         yield batch
 
 

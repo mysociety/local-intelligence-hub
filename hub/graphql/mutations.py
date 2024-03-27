@@ -109,9 +109,11 @@ def disable_auto_update(external_data_source_id: str) -> models.ExternalDataSour
 
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
-def trigger_update(external_data_source_id: str) -> models.ExternalDataSource:
-    data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
-    data_source.schedule_refresh_all()
+async def trigger_update(external_data_source_id: str) -> models.ExternalDataSource:
+    data_source = await models.ExternalDataSource.objects.aget(
+        id=external_data_source_id
+    )
+    await data_source.schedule_refresh_all()
     return data_source
 
 
@@ -180,7 +182,9 @@ def get_or_create_organisation_for_source(info: Info, data: any):
 
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
-def import_all(external_data_source_id: str) -> models.ExternalDataSource:
-    data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
-    data_source.schedule_import_all()
+async def import_all(external_data_source_id: str) -> models.ExternalDataSource:
+    data_source = await models.ExternalDataSource.objects.aget(
+        id=external_data_source_id
+    )
+    await data_source.schedule_import_all()
     return data_source
