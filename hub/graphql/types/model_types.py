@@ -566,6 +566,21 @@ class Analytics:
     imported_data_count_by_ward: List[GroupedDataCount] = fn_field()
 
     @strawberry_django.field
+    def imported_data_geojson_points(
+        self: models.ExternalDataSource, info: Info
+    ) -> List[MapReportMemberFeature]:
+        data = self.get_import_data()
+        return [
+            MapReportMemberFeature.from_geodjango(
+                point=generic_datum.point,
+                id=generic_datum.data,
+                properties=generic_datum,
+            )
+            for generic_datum in data
+            if generic_datum.point is not None
+        ]
+
+    @strawberry_django.field
     def imported_data_count_by_constituency_by_source(
         self, info: Info, gss: str
     ) -> List[GroupedDataCountWithBreakdown]:
@@ -703,21 +718,6 @@ class ExternalDataSource(BaseDataSource):
     @strawberry_django.field
     def webhook_healthcheck(self: models.ExternalDataSource, info) -> bool:
         return self.webhook_healthcheck()
-
-    @strawberry_django.field
-    def imported_data_geojson_points(
-        self: models.ExternalDataSource, info: Info
-    ) -> List[MapReportMemberFeature]:
-        data = self.get_import_data()
-        return [
-            MapReportMemberFeature.from_geodjango(
-                point=generic_datum.point,
-                id=generic_datum.data,
-                properties=generic_datum,
-            )
-            for generic_datum in data
-            if generic_datum.point is not None
-        ]
 
 
 @strawberry.type
