@@ -316,13 +316,13 @@ class Person:
     person_data: List[PersonData] = filterable_dataloader_resolver(
         filter_type=Optional[CommonDataLoaderFilter],
         field_name="persondata",
-        prefetch=["data_type", "data_type__data_set"],
+        # prefetch=["data_type", "data_type__data_set"],
     )
     person_datum: Optional[PersonData] = filterable_dataloader_resolver(
         filter_type=Optional[CommonDataLoaderFilter],
         field_name="persondata",
         single=True,
-        prefetch=["data_type", "data_type__data_set"],
+        # prefetch=["data_type", "data_type__data_set"],
     )
 
 
@@ -417,21 +417,21 @@ class Area:
     people: List[Person] = filterable_dataloader_resolver(
         filter_type=Optional[PersonFilter],
         field_name="person",
-        prefetch=[
-            "persondata_set",
-            "persondata_set__data_type",
-            "persondata_set__data_type__data_set",
-        ],
+        # prefetch=[
+        #     "persondata_set",
+        #     "persondata_set__data_type",
+        #     "persondata_set__data_type__data_set",
+        # ],
     )
     person: Optional[Person] = filterable_dataloader_resolver(
         filter_type=Optional[PersonFilter],
         field_name="person",
         single=True,
-        prefetch=[
-            "persondata_set",
-            "persondata_set__data_type",
-            "persondata_set__data_type__data_set",
-        ],
+        # prefetch=[
+        #     "persondata_set",
+        #     "persondata_set__data_type",
+        #     "persondata_set__data_type__data_set",
+        # ],
     )
     data: List[AreaData] = filterable_dataloader_resolver(
         filter_type=Optional[CommonDataLoaderFilter]
