@@ -37,7 +37,7 @@ import {
 } from "@/__generated__/graphql";
 import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
-import { triggerCustomEvent } from "../../../../../../app/utils/posthogutils"; // Adjust the path as needed
+import { triggerCustomEvent } from "../../../../../../app/utils/posthogutils";
 
 
 const TEST_SOURCE = gql`
@@ -162,9 +162,8 @@ export default function Page({
         loading: "Testing connection...",
         success: (d: FetchResult<TestSourceConnectionQuery>) => {
           if (!d.errors && d.data?.testSourceConnection) {
-            triggerCustomEvent("connection_is_healthy", {
-              //Replace this hard coded source name 
-              datasource: "Airtable",
+            triggerCustomEvent("Data source connection is healthy", {
+              datasource: d.data?.testSourceConnection.__typename,
               remoteName: d.data?.testSourceConnection.remoteName,
             });
             return "Connection is healthy";
@@ -172,9 +171,7 @@ export default function Page({
           throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
         },
         error: (e) => {
-          triggerCustomEvent("connection_failed", {
-            //Replace this hard coded source name 
-            datasource: "Airtable",
+          triggerCustomEvent("Data source connection failed", {
             errorMessage: e.message,
           });
           return "Connection failed";

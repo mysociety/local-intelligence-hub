@@ -76,14 +76,14 @@ export default function Page({
             `/data-sources/create/review/${d.data.updateExternalDataSource.id}`,
           );
         };
-        triggerCustomEvent("data_source_created_succesfully", {
+        triggerCustomEvent("Data source created successfully", {
           datasource: d.data?.updateExternalDataSource.__typename,
           remoteName: d.data?.updateExternalDataSource.name,
         });
         return "Saved";
       },
       error: (e: any) => {
-        triggerCustomEvent("data_source_creation_failed", {
+        triggerCustomEvent("Data source creation failed", {
           message: e.message, 
         });
         return `Couldn't save`;
