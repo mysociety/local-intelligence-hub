@@ -31,7 +31,7 @@ const viewStateAtom = atom<Partial<ViewState>>({
   latitude: 53.593349,
   zoom: 6
 })
-const loadingAtom = atom<boolean>(true);
+const loadingLayersAtom = atom<{[layerKey:string]: boolean}>({});
 
 export const SelectedMarkerFeatureParser = z.object({
   type: z.literal('Feature'),
@@ -244,7 +244,9 @@ export function ReportMap () {
   }, [mapbox.loadedMap])
 
   const [viewState, setViewState] = useAtom(viewStateAtom)
-  const [loading] = useAtom(loadingAtom)
+  const [loadingLayers] = useAtom(loadingLayersAtom)
+
+  const loading = analytics.loading || Object.values(loadingLayers).includes(true)
 
   return (
     <>
@@ -559,7 +561,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
   });
 
   const mapbox = useLoadedMap()
-  const [loading, setLoading] = useAtom(loadingAtom)
+  const [loadingLayers, setLoadingLayers] = useAtom(loadingLayersAtom)
   const [selectedSourceMarker, setSelectedSourceMarker] =  useAtom(selectedSourceMarkerAtom)
   const [selectedSourceRecord, setSelectedSourceRecord] = useAtom(selectedSourceRecordAtom)
 
@@ -575,8 +577,11 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
   });
 
   useEffect(function updateLoading() {
-    setLoading(pointsLoading)
-  }, [pointsLoading, setLoading])
+    setLoadingLayers({
+      ...loadingLayers,
+      externalDataSourceId: pointsLoading,
+    });
+  }, [pointsLoading, setLoadingLayers])
 
   useEffect(function selectMarker() {
     mapbox.loadedMap?.on('mouseover', `${externalDataSourceId}-marker`, () => {
@@ -592,7 +597,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
     mapbox.loadedMap?.on('click', [`${externalDataSourceId}-marker`, `${externalDataSourceId}-count`], event => {
       const feature = event.features?.[0]
       if (feature?.properties?.id) {
-        setSelectedSourceMarker(feature || null)
+        setSelectedSourceMarker(feature)
       } else {
         setSelectedSourceMarker(null)
       }

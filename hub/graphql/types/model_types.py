@@ -313,14 +313,15 @@ class Person:
     photo: auto
     start_date: auto
     end_date: auto
-    data: List[PersonData] = filterable_dataloader_resolver(
+    person_data: List[PersonData] = filterable_dataloader_resolver(
         filter_type=Optional[CommonDataLoaderFilter],
+        field_name="persondata",
         # prefetch=["data_type", "data_type__data_set"],
     )
-    datum: Optional[PersonData] = filterable_dataloader_resolver(
+    person_datum: Optional[PersonData] = filterable_dataloader_resolver(
         filter_type=Optional[CommonDataLoaderFilter],
+        field_name="persondata",
         single=True,
-        field_name="data",
         # prefetch=["data_type", "data_type__data_set"],
     )
 
@@ -415,20 +416,21 @@ class Area:
     extra_geojson_properties: strawberry.Private[object]
     people: List[Person] = filterable_dataloader_resolver(
         filter_type=Optional[PersonFilter],
+        field_name="person",
         # prefetch=[
-        #     "data",
-        #     "data__data_type",
-        #     "data__data_type__data_set"
+        #     "persondata_set",
+        #     "persondata_set__data_type",
+        #     "persondata_set__data_type__data_set",
         # ],
     )
     person: Optional[Person] = filterable_dataloader_resolver(
         filter_type=Optional[PersonFilter],
+        field_name="person",
         single=True,
-        field_name="people",
         # prefetch=[
-        #     "data",
-        #     "data__data_type",
-        #     "data__data_type__data_set"
+        #     "persondata_set",
+        #     "persondata_set__data_type",
+        #     "persondata_set__data_type__data_set",
         # ],
     )
     data: List[AreaData] = filterable_dataloader_resolver(
@@ -610,11 +612,8 @@ class ExternalDataSource(Analytics):
     def imported_data_geojson_points(
         self: models.ExternalDataSource, info: Info
     ) -> List[MapReportMemberFeature]:
-        from datetime import datetime
-        print(f"getting data {datetime.now()}")
         data = self.get_import_data()
-        print(f"got data {datetime.now()}")
-        r = [
+        return [
             MapReportMemberFeature.from_geodjango(
                 point=generic_datum.point,
                 id=generic_datum.data,
@@ -623,8 +622,6 @@ class ExternalDataSource(Analytics):
             for generic_datum in data
             if generic_datum.point is not None
         ]
-        print(f"shaped data {datetime.now()}")
-        return r
     
     @strawberry_django.field
     def imported_data_geojson_point(
