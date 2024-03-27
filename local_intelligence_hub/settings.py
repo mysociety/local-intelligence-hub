@@ -256,12 +256,22 @@ POSTCODES_IO_BATCH_MAXIMUM = 100
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "procrastinate": {
+            "format": "%(asctime)s %(levelname)-7s %(name)s %(message)s"
+        },
+    },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
         },
     },
     "loggers": {
+        "procrastinate": {
+            "formatter": "procrastinate",
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
         "django": {
             "handlers": ["console"],
             "level": env("DJANGO_LOG_LEVEL"),

@@ -1,5 +1,6 @@
 import asyncio
 import hashlib
+import itertools
 import uuid
 from datetime import datetime, timezone
 from typing import List, Optional, TypedDict, Union
@@ -43,7 +44,7 @@ from hub.tasks import (
 )
 from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
 from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
-from utils.py import ensure_list, get
+from utils.py import ensure_list, get, batched
 
 User = get_user_model()
 
@@ -1070,9 +1071,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     data=self.get_record_id(record),
                     defaults=update_data,
                 )
+                import sys
+                print(f"updated {record}", sys.stderr)
 
             # TODO: batch this up
-            await asyncio.gather(*[create_import_record(record) for record in data])
+            for batch in batched(data, 100):
+                await asyncio.gather(*[create_import_record(record) for record in batch])
         else:
             # To allow us to lean on LIH's geo-analytics features,
             # TODO: Re-implement this data as `AreaData`, linking each datum to an Area/AreaType as per `self.geography_column` and `self.geography_column_type`.
@@ -1252,6 +1256,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         Match one member to a record in the data source, via ID or record.
         """
+        print(f"mapping {member}")
         if type(member) is str:
             member = await loaders["fetch_record"].load(member)
         update_fields = {}
@@ -1307,15 +1312,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             *[self.map_one(member, loaders) for member in members]
         )
 
-    async def map_all(self, loaders: Loaders) -> list[MappedMember]:
-        """
-        Match all members to records in the data source.
-        """
-        members = await self.fetch_all()
-        return await asyncio.gather(
-            *[self.map_one(member, loaders) for member in members]
-        )
-
     async def refresh_one(self, member_id: Union[str, any]):
         if len(self.get_update_mapping()) == 0:
             return
@@ -1333,9 +1329,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     async def refresh_all(self):
         if len(self.get_update_mapping()) == 0:
             return
+        members = await self.fetch_all()
         loaders = await self.get_loaders()
-        mapped_records = await self.map_all(loaders)
-        return await self.update_all(mapped_records=mapped_records)
+
+        batches = batched(members, 100)
+        for batch in batches:
+            mapped_records = await self.map_many(batch, loaders)
+            await self.update_all(mapped_records=mapped_records)
 
     # UI
 
@@ -1390,8 +1390,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
-        if external_data_source.auto_update_enabled:
-            await external_data_source.refresh_all()
+        import sys
+        print(f"external {external_data_source}", file=sys.stderr)
+        #if external_data_source.auto_update_enabled:
+        await external_data_source.refresh_all()
 
     @classmethod
     async def deferred_refresh_webhooks(cls, external_data_source_id: str):
@@ -1533,7 +1535,7 @@ class AirtableSource(ExternalDataSource):
         return records
 
     async def fetch_all(self):
-        records = self.table.all()
+        records = itertools.chain.from_iterable(self.table.iterate())
         return records
 
     def filter(self, d: dict):

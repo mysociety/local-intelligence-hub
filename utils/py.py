@@ -1,3 +1,4 @@
+import itertools
 import pprint
 from types import SimpleNamespace
 
@@ -50,6 +51,15 @@ def get_path(d, *keys):
 def chunk_array(arr, max_size):
     for i in range(0, len(arr), max_size):
         yield arr[i : i + max_size]
+
+
+def batched(iterable, n):
+    "Batch data into tuples of length n. The last batch may be shorter."
+    if n < 1:
+        raise ValueError('n must be at least one')
+    it = iter(iterable)
+    while (batch := tuple(itertools.islice(it, n))):
+        yield batch
 
 
 def batch_and_aggregate(arr_limit):

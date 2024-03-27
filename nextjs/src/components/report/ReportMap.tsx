@@ -14,7 +14,7 @@ import { layerColour, useLoadedMap, isConstituencyPanelOpenAtom } from "@/app/re
 import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel";
 
 const MAX_REGION_ZOOM = 8
-export const MAX_CONSTITUENCY_ZOOM = 11.5
+export const MAX_CONSTITUENCY_ZOOM = 10
 const MIN_MEMBERS_ZOOM = MAX_CONSTITUENCY_ZOOM
 
 const viewStateAtom = atom<Partial<ViewState>>({
@@ -519,7 +519,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
       if (!canvas) return
       canvas.style.cursor = ''
     })
-    mapbox.loadedMap?.on('click', `${externalDataSourceId}-marker`, event => {
+    mapbox.loadedMap?.on('click', [`${externalDataSourceId}-marker`, `${externalDataSourceId}-count`], event => {
       try {
         const feature = event.features?.[0]
         if (feature) {
@@ -552,6 +552,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
       <Source
         id={externalDataSourceId}
         type="geojson"
+        cluster={true}
         data={{
           type: "FeatureCollection",
           // @ts-ignore
@@ -594,6 +595,18 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
             )}
           />
         )}
+        <Layer
+          id={`${externalDataSourceId}-count`}
+          type='symbol'
+          filter={['has', 'point_count']}
+          layout={{
+            'text-field': ['get', 'point_count_abbreviated'],
+            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+            'text-size': 12,
+            'text-offset': [0, -1.5]
+          }}
+          minzoom={MIN_MEMBERS_ZOOM}
+        />
         {!!selectedSourceRecord?.id && (
           <Layer
             source={externalDataSourceId}
