@@ -16,17 +16,17 @@ export default async function RootLayout({
   return (
     <ApolloWrapper>
       <html lang="en">
-      <PHProvider>
-        <body>
-        <PostHogPageView /> 
-          {children}
-        </body>
+        <PHProvider>
+          <body>
+            <PostHogPageView />
+            {children}
+          </body>
         </PHProvider>
       </html>
     </ApolloWrapper>
   );
 }
- 
+
 export const metadata: Metadata = {
   title: {
     template: '%s | Mapped by CK',
