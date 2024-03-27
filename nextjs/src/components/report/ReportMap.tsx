@@ -652,9 +652,13 @@ export const MAP_REPORT_LAYER_ANALYTICS = gql`
     mapReport(pk: $reportID) {
       id
       layers {
+        id
         name
         source {
           id
+          organisation {
+            name
+          }
         }
       }
       importedDataCountByRegion {

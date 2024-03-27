@@ -402,6 +402,7 @@ const CONSTITUENCY_DATA = gql`
         count
       }
       layers {
+        id
         name
         source {
           id

@@ -332,6 +332,7 @@ const UPDATE_MAP_REPORT = gql`
       id
       name
       layers {
+        id
         name
         source {
           id

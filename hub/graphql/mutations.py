@@ -55,6 +55,7 @@ class AirtableSourceInput(ExternalDataSourceInput):
 
 @strawberry.input
 class MapLayerInput:
+    id: str
     name: str
     source: str
     visible: Optional[bool] = True

@@ -753,12 +753,22 @@ class Report:
 
 @strawberry.type
 class MapLayer:
+    id: str = dict_key_field()
     name: str = dict_key_field()
     visible: Optional[bool] = dict_key_field()
 
     @strawberry_django.field
+    def is_shared_source(self, info: Info) -> bool:
+        # see if this source is shared with the user's org
+        user = get_current_user(info)
+        return models.SharingPermission.objects.filter(
+            organisation__members__user=user.id,
+            external_data_source_id=self.get("source", None),
+        ).exists()
+
+    @strawberry_django.field
     def source(self, info: Info) -> SharedDataSource:
-        source_id = self.get(info.python_name, None)
+        source_id = self.get("source", None)
         return models.ExternalDataSource.objects.get(id=source_id)
 
 

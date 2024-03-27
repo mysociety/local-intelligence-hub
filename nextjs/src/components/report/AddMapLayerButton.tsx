@@ -1,6 +1,6 @@
 "use client"
 
-import { GetMemberListQuery, MapReportLayersSummaryFragment } from "@/__generated__/graphql"
+import { DataSourceType, ExternalDataSource, GetMemberListQuery, MapReportLayersSummaryFragment, SharedDataSource } from "@/__generated__/graphql"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -26,7 +26,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { gql, useFragment, useQuery } from "@apollo/client"
-import { useContext, useState } from "react"
+import { useContext, useMemo, useState } from "react"
 import { Check, ChevronsUpDown, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Form, useForm } from "react-hook-form"
@@ -36,6 +36,7 @@ import { useRouter } from "next/navigation"
 import { MAP_REPORT_LAYERS_SUMMARY } from "@/app/reports/[id]/lib"
 import { DataSourceIcon } from "../DataSourceIcon"
 import pluralize from "pluralize"
+import { CRMSelection } from "../CRMButtonItem"
 
 type Source = {
   name: string,
@@ -62,9 +63,9 @@ export function AddMapLayerButton({ addLayer }: { addLayer(layer: Source): void 
             addLayer(d.source)
           })}>
             <DialogHeader>
-              <DialogTitle>Add data source</DialogTitle>
+              <DialogTitle>Add a map layer</DialogTitle>
               <DialogDescription>
-                Select from existing sources or add a new one
+                Select a data source from your org or one that{"'"}s been shared with you.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -90,7 +91,6 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
   const [open, setOpen] = useState(false)
   const { id, report } = useContext(ReportContext)
   const dataSources = useQuery<GetMemberListQuery>(MEMBER_LISTS)
-  const selectedSource = dataSources.data?.externalDataSources.find(s => s.id === value?.id)
   const router = useRouter()
   const layers = useFragment<MapReportLayersSummaryFragment>({
     fragment: MAP_REPORT_LAYERS_SUMMARY,
@@ -100,6 +100,25 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
       id,
     },
   });
+
+  const useableSources = useMemo(() => {
+    const data: Array<
+        GetMemberListQuery['myOrganisations'][0]['sharingPermissionsFromOtherOrgs'][0]['externalDataSource'] | 
+        GetMemberListQuery['myOrganisations'][0]['externalDataSources'][0]
+    > = [
+      ...dataSources.data?.myOrganisations[0]?.externalDataSources.filter(
+        d => d.dataType === DataSourceType.Member
+      ) || [],
+      ...dataSources.data?.myOrganisations[0]?.sharingPermissionsFromOtherOrgs.map(
+        p => p.externalDataSource
+      ).filter(
+        d => d.dataType === DataSourceType.Member
+      ) || []
+    ]
+    return data
+  }, [dataSources.data])
+
+  const selectedSource = useableSources.find(s => s.id === value?.id)
  
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -108,11 +127,18 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="justify-between"
+          className="justify-between group h-14"
         >
-          {value
-            ? "Selected: " + selectedSource?.name
-            : "Select data source"}
+          {value && selectedSource
+            ? (
+              <div className='py-2 text-sm'>
+                <CRMSelection
+                  source={selectedSource}
+                  // @ts-ignore
+                  isShared={!!selectedSource.organisation}
+                />
+              </div>
+            ) : "Select data source"}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -125,9 +151,7 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
             No data sources found. Click to connect.
           </CommandEmpty>
           <CommandGroup>
-            {dataSources.data?.externalDataSources
-            // .filter(s => !report?.data?.mapReport?.layers?.some(sL => sL.source.id === s.id))
-            .map((source) => {
+            {useableSources.map((source) => {
               const alreadySelected = source.id === value
               const alreadyUsed = layers.data?.layers?.some(sL => sL?.source?.id === source.id)
               return (
@@ -147,16 +171,11 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
                       alreadySelected || alreadyUsed ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  <DataSourceIcon crmType={source.crmType} className="w-5" />
-                  &nbsp;
-                  <div className='-space-y-1'>
-                    <div>{source.name}</div>
-                    {!!source?.importedDataCount && (
-                      <div className='text-meepGray-400 text-xs'>
-                        {source?.importedDataCount} {pluralize("member", source?.importedDataCount)}
-                      </div>
-                    )}
-                  </div>
+                  <CRMSelection
+                    source={source}
+                    // @ts-ignore
+                    isShared={!!source.organisation}
+                  />
                 </CommandItem>
               )
             })}
@@ -177,11 +196,26 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
 
 const MEMBER_LISTS = gql`
   query GetMemberList {
-    externalDataSources(filters: { dataType: MEMBER }) {
-      id
-      name
-      importedDataCount
-      crmType
+    myOrganisations {
+      externalDataSources(filters: { dataType: MEMBER }) {
+        id
+        name
+        importedDataCount
+        crmType
+        dataType
+      }
+      sharingPermissionsFromOtherOrgs {
+        externalDataSource {
+          id
+          name
+          importedDataCount
+          crmType
+          dataType
+          organisation {
+            name
+          }
+        }
+      }
     }
   }
 `

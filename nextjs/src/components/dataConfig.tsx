@@ -44,10 +44,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-
+import { uuid } from 'uuidv4';
 import { useAtom } from "jotai"
 import { Input } from "./ui/input"
 import { toast } from "sonner"
+import { CRMSelection } from "./CRMButtonItem"
 
 export default function DataConfigPanel () {
   const router = useRouter()
@@ -73,39 +74,41 @@ export default function DataConfigPanel () {
       <CardContent>
         <div className="p-3 flex flex-col gap-2 border-t border-meepGray-700 ">
           <span className="text-sm mb-2">Your member lists</span>
-          {layers.data.layers?.map((layer, index) => (
+          {layers.data.layers?.map((layer, index) => layer?.source && (
             <div key={layer?.source?.id || index} className="flex gap-2 items-center">
               <Popover>
                 <PopoverTrigger>
-                  <Button className="border-l-4 bg-none p-3 text-sm flex flex-row items-center gap-2 text-left justify-start overflow-hidden text-nowrap text-ellipsis" style={{
+                  <Button className="border-l-4 bg-none p-3 text-sm flex flex-row items-center gap-2 text-left justify-start overflow-hidden text-nowrap text-ellipsis h-14" style={{
                     borderColor: layerColour(index, layer?.source?.id)
                   }} 
                 >
-                  <DataSourceIcon crmType={layer?.source?.crmType} className="w-5" />
-                  <div className='-space-y-1'>
-                    <span>{layer?.name || layer?.source?.name}</span>
-                    {!!layer?.source?.importedDataCount && (
-                      <div className='text-meepGray-400 text-xs'>
-                        {layer?.source?.importedDataCount} {pluralize("member", layer?.source?.importedDataCount)}
-                      </div>
-                    )}
-                  </div>
+                  <CRMSelection
+                    // @ts-ignore: Property 'id' is optional in type 'DeepPartialObject - a silly Fragment typing
+                    source={layer.source}
+                    isShared={layer.isSharedSource}
+                  />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className='space-y-4'>
                   {!!layer?.source?.id && (
-                    <>
-                      <div>{layer.source.importedDataCount || 0} records imported</div>
-                      <Button onClick={() => router.push(`/data-sources/inspect/${layer?.source?.id}`)}>
-                        Inspect data source <ArrowRight />
-                      </Button>
-                      <Button disabled={layer.source.isImporting} onClick={() => importData(client, layer.source!.id)}>
-                        {!layer.source.isImporting ? "Import data" : <span className='flex flex-row gap-2 items-center'>
-                          <LoadingIcon size={"18"} />
-                          <span>Importing...</span>
-                        </span>}
-                      </Button>
-                    </>
+                    !layer.isSharedSource ? (
+                      <>
+                        <div>{layer.source.importedDataCount || 0} records imported</div>
+                        <Link href={`/data-sources/inspect/${layer?.source?.id}`} className='underline py-2 text-sm'>
+                          Inspect data source <ArrowRight />
+                        </Link>
+                        <Button disabled={layer.source.isImporting} onClick={() => importData(client, layer.source!.id)}>
+                          {!layer.source.isImporting ? "Import data" : <span className='flex flex-row gap-2 items-center'>
+                            <LoadingIcon size={"18"} />
+                            <span>Importing...</span>
+                          </span>}
+                        </Button>
+                      </>
+                    ) : (
+                      <div className='text-meepGray-400 text-xs'>
+                        This data source is managed by {layer.source.organisation?.name}.
+                      </div>
+                    )
                   )}
                   <Button onClick={() => {
                     removeLayer(layer?.source?.id!)
@@ -168,12 +171,14 @@ export default function DataConfigPanel () {
 
   function addLayer (source: { name: string, id: string }) {
     const oldLayers = layers.data.layers?.map(l => ({
+      id: l!.id!,
       name: l!.name!,
       source: l!.source?.id,
     }))
     const newLayer = {
       name: source.name!,
       source: source.id,
+      id: uuid(),
     }
     if (!oldLayers) return
     if (oldLayers.find(l => l.source === source.id)) return
@@ -183,6 +188,7 @@ export default function DataConfigPanel () {
 
   function removeLayer (sourceId: string) {
     const oldLayers = layers.data.layers?.map(l => ({
+      id: l!.id!,
       name: l!.name!,
       source: l!.source?.id,
     }))

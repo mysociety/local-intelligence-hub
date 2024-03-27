@@ -37,6 +37,7 @@
     "@types/d3-scale": "^4.0.8",
     "@types/date-fns": "^2.6.0",
     "@types/pluralize": "^0.0.33",
+    "@types/uuidv4": "^5.0.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "cmdk": "^0.2.1",
@@ -65,6 +66,7 @@
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
     "to-space-case": "^1.0.0",
+    "uuidv4": "^6.2.13",
     "zod": "^3.22.4"
   },
   "devDependencies": {
