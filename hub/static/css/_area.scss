@@ -181,3 +181,17 @@
 [data-copy-text][data-copied] {
     animation: 500ms linear success-ping;
 }
+
+// Mailing list signup on area page
+// TODO: This is super hacky, maybe we should make a component for this?
+.row > * + * > .mailing-list-signup {
+    margin-top: map-get($spacers, 4);
+    padding-top: map-get($spacers, 4);
+    border-top: var(--#{$prefix}border-width) var(--#{$prefix}border-style) var(--#{$prefix}border-color);
+
+    @include media-breakpoint-up('lg') {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+    }
+}
