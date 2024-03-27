@@ -35,9 +35,9 @@ class Query(UserQueries):
     external_data_sources: List[
         model_types.ExternalDataSource
     ] = strawberry_django.field(extensions=[IsAuthenticated()])
-    shared_data_sources: List[
-        model_types.SharedDataSource
-    ] = strawberry_django.field(extensions=[IsAuthenticated()])
+    shared_data_sources: List[model_types.SharedDataSource] = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
     airtable_source: model_types.AirtableSource = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
@@ -123,19 +123,18 @@ class Mutation:
     )
 
     create_sharing_permission: model_types.SharingPermission = django_mutations.create(
-      mutation_types.SharingPermissionCUDInput,
-      extensions=[IsAuthenticated()]
+        mutation_types.SharingPermissionCUDInput, extensions=[IsAuthenticated()]
     )
     delete_sharing_permission: model_types.SharingPermission = django_mutations.delete(
-      mutation_types.IDObject,
-      extensions=[IsAuthenticated()]
+        mutation_types.IDObject, extensions=[IsAuthenticated()]
     )
     # TODO: install django-guardian to handle permissions
     update_sharing_permission: model_types.SharingPermission = django_mutations.update(
-      mutation_types.SharingPermissionCUDInput,
-      extensions=[IsAuthenticated()]
+        mutation_types.SharingPermissionCUDInput, extensions=[IsAuthenticated()]
     )
-    update_sharing_permissions: List[model_types.ExternalDataSource] = mutation_types.update_sharing_permissions
+    update_sharing_permissions: List[
+        model_types.ExternalDataSource
+    ] = mutation_types.update_sharing_permissions
 
 
 schema = JwtSchema(

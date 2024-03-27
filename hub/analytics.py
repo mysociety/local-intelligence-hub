@@ -46,8 +46,10 @@ class Analytics:
             .annotate(count=Count("label"))
             .order_by("-count")
         )
-    
-    def imported_data_count_by_constituency_by_source(self, gss: str = None) -> List[RegionCount]:
+
+    def imported_data_count_by_constituency_by_source(
+        self, gss: str = None
+    ) -> List[RegionCount]:
         qs = self.get_analytics_queryset()
 
         if gss:

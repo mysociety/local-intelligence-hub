@@ -856,7 +856,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     orgs_with_access = models.ManyToManyField(
         Organisation,
         through="hub.SharingPermission",
-        related_name="sources_from_other_orgs"
+        related_name="sources_from_other_orgs",
     )
 
     class DataSourceType(models.TextChoices):
@@ -1052,12 +1052,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             loaders = await self.get_loaders()
 
             async def create_import_record(record):
-                '''
+                """
                 Converts a record fetched from the API into
                 a GenericData record in the MEEP db.
 
                 Used to batch-import data.
-                '''
+                """
                 structured_data = get_update_data(record)
                 postcode_data: PostcodesIOResult = await loaders["postcodesIO"].load(
                     self.get_record_field(record, self.geography_column)
@@ -1208,7 +1208,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 **(d.postcode_data if d.postcode_data else {}),
                 **(d.json if d.json else {}),
             }
-            for d in self.get_analytics_queryset()
+            for d in self.get_import_data()
         ]
         enrichment_df = pd.DataFrame.from_records(json_list)
         return enrichment_df
@@ -1700,18 +1700,19 @@ class SharingPermission(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(auto_now=True)
     external_data_source = models.ForeignKey(
-        ExternalDataSource,
-        on_delete=models.CASCADE
+        ExternalDataSource, on_delete=models.CASCADE
     )
-    organisation = models.ForeignKey(
-        Organisation,
-        on_delete=models.CASCADE
+    organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE)
+    visibility_record_coordinates = models.BooleanField(
+        default=False, blank=True, null=True
     )
-    visibility_record_coordinates = models.BooleanField(default=False, blank=True, null=True)
-    visibility_record_details = models.BooleanField(default=False, blank=True, null=True)
+    visibility_record_details = models.BooleanField(
+        default=False, blank=True, null=True
+    )
 
     class Meta:
         unique_together = ["external_data_source", "organisation"]
+
 
 class Report(PolymorphicModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

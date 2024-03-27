@@ -205,15 +205,24 @@ class SharingPermissionInput:
     visibility_record_details: Optional[bool] = False
     deleted: Optional[bool] = False
 
+
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
-def update_sharing_permissions(info: Info, from_org_id: str, permissions: List[SharingPermissionInput]) -> List[models.ExternalDataSource]:
+def update_sharing_permissions(
+    info: Info, from_org_id: str, permissions: List[SharingPermissionInput]
+) -> List[models.ExternalDataSource]:
     user = get_current_user(info)
     for permission in permissions:
-        source = models.ExternalDataSource.objects.get(id=permission.external_data_source_id)
+        source = models.ExternalDataSource.objects.get(
+            id=permission.external_data_source_id
+        )
         if not str(source.organisation_id) == from_org_id:
-            raise PermissionError("This data source does not belong to the organisation you specified.")
+            raise PermissionError(
+                "This data source does not belong to the organisation you specified."
+            )
         if not source.organisation.members.filter(user=user).exists():
-            raise PermissionError("You do not have permission to change sharing preferences for this data source.")
+            raise PermissionError(
+                "You do not have permission to change sharing preferences for this data source."
+            )
         if permission.deleted:
             models.SharingPermission.objects.filter(id=permission.id).delete()
         else:
@@ -224,8 +233,10 @@ def update_sharing_permissions(info: Info, from_org_id: str, permissions: List[S
                 defaults={
                     "visibility_record_coordinates": permission.visibility_record_coordinates,
                     "visibility_record_details": permission.visibility_record_details,
-                }
+                },
             )
     # Return data sources for the current org
-    result = list(models.ExternalDataSource.objects.filter(organisation_id=from_org_id).all())
+    result = list(
+        models.ExternalDataSource.objects.filter(organisation_id=from_org_id).all()
+    )
     return result

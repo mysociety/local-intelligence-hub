@@ -1,4 +1,4 @@
-import { DeleteSourceSharingObjectMutation, DeleteSourceSharingObjectMutationVariables, ManageSourceSharingQuery, ManageSourceSharingQueryVariables, SharingPermission, SharingPermissionInput, UpdateSourceSharingObjectMutation, UpdateSourceSharingObjectMutationVariables } from '@/__generated__/graphql'
+import { DeleteSourceSharingObjectMutation, DeleteSourceSharingObjectMutationVariables, ManageSourceSharingQuery, ManageSourceSharingQueryVariables, SharingPermission, SharingPermissionCudInput, UpdateSourceSharingObjectMutation, UpdateSourceSharingObjectMutationVariables } from '@/__generated__/graphql'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -39,7 +39,7 @@ export function ManageSourceSharing ({
 
   const client = useApolloClient()
 
-  const mutatePermission = (data: SharingPermissionInput) => {
+  const mutatePermission = (data: SharingPermissionCudInput) => {
     toastPromise(
       client.mutate<UpdateSourceSharingObjectMutation, UpdateSourceSharingObjectMutationVariables>({
         mutation: gql`
@@ -140,7 +140,7 @@ export function ManageSourceSharing ({
                   Record details
                 </span>
                 <p className='text-meepGray-400 text-xs'>
-                  Specific data like "name"</p>
+                  Specific data like {'"'}name{'"'}</p>
               </label>
             </div>
           </div>
