@@ -39,7 +39,7 @@ type DeepNullable<T> = {
 };
 
 export const ConstituencyElectionDeepDive = ({ gss }: { gss: string }) => {
-  const { id } = useContext(ReportContext)
+  const { id, displayOptions } = useContext(ReportContext)
   const { data, loading, error } = useQuery<GetConstituencyDataQuery, GetConstituencyDataQueryVariables>(CONSTITUENCY_DATA, {
     variables: { gss, reportID: id },
   })
@@ -58,7 +58,7 @@ export const ConstituencyElectionDeepDive = ({ gss }: { gss: string }) => {
     <div key={data.constituency.id}>
       <h1 className='font-PPRightGrotesk text-hLgPP'>{data.constituency.name}</h1>
       <hr className='my-4' />
-      {data.constituency.mp && (
+      {data.constituency.mp && displayOptions.showMPs && (
         <section className='mb-8'>
           <div className='uppercase font-IBMPlexMono text-xs text-meepGray-400 mb-1'>
             MP
@@ -70,8 +70,8 @@ export const ConstituencyElectionDeepDive = ({ gss }: { gss: string }) => {
           />
         </section>
       )}
-      {!!data.constituency.lastElection && (
-        <section className='font-IBMPlexMono'>
+      {!!data.constituency.lastElection && displayOptions.showLastElectionData && (
+        <section className='font-IBMPlexMono mb-10'>
           <section>
             {/* First and second parties */}
             <article className='relative z-10 space-y-1'>
@@ -131,13 +131,11 @@ export const ConstituencyElectionDeepDive = ({ gss }: { gss: string }) => {
         </section>
       )}
       {!!data.mapReport.importedDataCountForConstituency && (
-        <div className='mt-10'>
-          <MemberElectoralInsights
-            totalCount={data.mapReport.importedDataCountForConstituency.count}
-            layersInThisConstituency={layersInThisConstituency}
-            electionStats={data.constituency.lastElection?.stats}
-          />
-        </div>
+        <MemberElectoralInsights
+          totalCount={data.mapReport.importedDataCountForConstituency.count}
+          layersInThisConstituency={layersInThisConstituency}
+          electionStats={data.constituency.lastElection?.stats}
+        />
       )}
     </div>
   )
@@ -178,7 +176,7 @@ export function MemberElectoralInsights({
   const { displayOptions } = useReportContext();
 
   return (
-    <section className='border border-meepGray-500 rounded relative p-2'>
+    <section className='border border-meepGray-500 rounded relative p-2 mt-2'>
       <div className={twMerge('absolute -top-2 left-2 px-1 text-meepGray-400 uppercase text-xs inline-flex flex-row items-center gap-1',
       bg
     )}><OverlapIcon /> Member insights</div>
@@ -195,9 +193,12 @@ export function MemberElectoralInsights({
                     <TooltipTrigger asChild>
                       <div className='rounded h-4' style={{
                         width: format(".0%")(
-                          Math.max(
-                            (layer.source.importedDataCountForConstituency?.count || 0) / maxCount,
-                            0.04
+                          Math.min(
+                            Math.max(
+                              (layer.source.importedDataCountForConstituency?.count || 0) / maxCount,
+                              0.04
+                            ),
+                            1
                           )
                         ),
                         backgroundColor: layerColour(layer.index, layer.source.id)
@@ -219,9 +220,12 @@ export function MemberElectoralInsights({
           ) : totalCount ? (
             <div className='rounded h-4 bg-brandBlue' style={{
               width: format(".0%")(
-                Math.max(
-                  totalCount / maxCount,
-                  0.04
+                Math.min(
+                  Math.max(
+                    totalCount / maxCount,
+                    0.04
+                  ),
+                  1
                 )
               )
             }} />
@@ -233,22 +237,25 @@ export function MemberElectoralInsights({
         </article>
         {electionStats && (
          <>
-         {displayOptions.showElectionData && (
+         {displayOptions.showLastElectionData && (
            <article className='relative z-10 space-y-1'>
              <div className='text-xs'>
                {format(",")(electionStats?.majority)} winning margin in {getYear(new Date(electionStats?.date))}
              </div>
              <div className='rounded w-full h-4 bg-meepGray-200' style={{
                width: format(".0%")(
-                 Math.max(
-                   electionStats?.majority / totalCount, // Ensure this calculation is appropriate
-                   0.04
+                 Math.min(
+                  Math.max(
+                    electionStats?.majority / totalCount, // Ensure this calculation is appropriate
+                    0.04
+                  ),
+                  1
                  )
                )
              }} />
            </article>
          )}
-         {totalCount > 0.75 * electionStats.majority && (
+         {displayOptions.showLastElectionData && totalCount > 0.75 * electionStats.majority && (
            <div className='uppercase font-IBMPlexMono bg-meepGray-700 rounded flex flex-row items-center justify-center text-xs py-2 px-2 gap-1'>
              <AlertTriangle className='w-4 h-4' /> High impact constituency
            </div>
@@ -270,12 +277,6 @@ export function OverlapIcon() {
 }
 
 export function Person({ img, name, subtitle }: { img?: string, name: string, subtitle?: string }) {
-  const { displayOptions } = useReportContext();
-
-  if (!displayOptions.showMPs) {
-    return null;
-  }
-
   return (
     <div className='flex flex-row items-center gap-2'>
       {!!img && (
@@ -411,6 +412,7 @@ const CONSTITUENCY_DATA = gql`
         count
       }
       layers {
+        id
         name
         source {
           id

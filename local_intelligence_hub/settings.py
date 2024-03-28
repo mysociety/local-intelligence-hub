@@ -60,6 +60,7 @@ FRONTEND_BASE_URL = env("FRONTEND_BASE_URL")
 FRONTEND_SITE_TITLE = env("FRONTEND_SITE_TITLE")
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
+EMAIL_BACKEND = env("EMAIL_BACKEND")
 HIDE_DEBUG_TOOLBAR = env("HIDE_DEBUG_TOOLBAR")
 LOG_QUERIES = env("LOG_QUERIES")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
@@ -266,16 +267,24 @@ POSTCODES_IO_BATCH_MAXIMUM = 100
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "procrastinate": {"format": "%(asctime)s %(levelname)-7s %(name)s %(message)s"},
+    },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
         },
     },
     "loggers": {
+        "procrastinate": {
+            "formatter": "procrastinate",
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
         "django": {
             "handlers": ["console"],
             "level": env("DJANGO_LOG_LEVEL"),
-        }
+        },
     },
 }
 if DEBUG:
@@ -298,22 +307,10 @@ if DEBUG:
 
         INSTALLED_APPS += ("debug_toolbar",)
 
-        DEBUG_TOOLBAR_PANELS = [
-            "debug_toolbar.panels.versions.VersionsPanel",
-            "debug_toolbar.panels.timer.TimerPanel",
-            "debug_toolbar.panels.settings.SettingsPanel",
-            "debug_toolbar.panels.headers.HeadersPanel",
-            "debug_toolbar.panels.request.RequestPanel",
-            "debug_toolbar.panels.sql.SQLPanel",
-            "debug_toolbar.panels.staticfiles.StaticFilesPanel",
-            "debug_toolbar.panels.templates.TemplatesPanel",
-            "debug_toolbar.panels.cache.CachePanel",
-            "debug_toolbar.panels.signals.SignalsPanel",
-            "debug_toolbar.panels.logging.LoggingPanel",
-            "debug_toolbar.panels.redirects.RedirectsPanel",
-        ]
-
 # CK Section
+
+IMPORT_UPDATE_ALL_BATCH_SIZE = 100
+IMPORT_UPDATE_MANY_RETRY_COUNT = 3
 
 # TODO: Decrease this when we go public
 one_week = timedelta(days=7)

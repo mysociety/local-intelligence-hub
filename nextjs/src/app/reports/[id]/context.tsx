@@ -5,26 +5,25 @@ import { QueryResult } from "@apollo/client";
 import { createContext, useContext, useState } from "react";
 
 export type DisplayOptionsType = {
-  showElectionData: boolean,
+  showLastElectionData: boolean,
   showMPs: boolean,
 };
-
-
-
 
 export const ReportContext = createContext<{
   id: string,
   updateReport: (data: MapReportInput) => void,
   deleteReport: () => void,
   report?: QueryResult<GetMapReportQuery, Exact<{ id: string; }>>,
+  refreshReportDataQueries: () => void,
   displayOptions: DisplayOptionsType,
   setDisplayOptions: (options: Partial<DisplayOptionsType>) => void,
 }>({
   id: '?',
-  updateReport: () => {},
+  updateReport: () => ({} as any),
   deleteReport: () => {},
+  refreshReportDataQueries: () => {},
   displayOptions: {
-    showElectionData: false,
+    showLastElectionData: false,
     showMPs: false,
   },
   setDisplayOptions: () => {},

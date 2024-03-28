@@ -19,16 +19,25 @@ class Query(UserQueries):
     memberships: List[model_types.Membership] = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
-    organisations: List[model_types.Organisation] = strawberry_django.field(
+    all_organisations: List[model_types.PublicOrganisation] = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
+    my_organisations: List[model_types.Organisation] = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
 
     external_data_source: model_types.ExternalDataSource = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
+    shared_data_source: model_types.SharedDataSource = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
     external_data_sources: List[
         model_types.ExternalDataSource
     ] = strawberry_django.field(extensions=[IsAuthenticated()])
+    shared_data_sources: List[model_types.SharedDataSource] = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
     airtable_source: model_types.AirtableSource = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
@@ -95,7 +104,9 @@ class Mutation:
     disable_auto_update: model_types.ExternalDataSource = (
         mutation_types.disable_auto_update
     )
-    trigger_update: model_types.ExternalDataSource = mutation_types.trigger_update
+    trigger_update: mutation_types.ExternalDataSourceAction = (
+        mutation_types.trigger_update
+    )
     refresh_webhooks: model_types.ExternalDataSource = mutation_types.refresh_webhooks
 
     create_organisation: model_types.Membership = mutation_types.create_organisation
@@ -103,7 +114,7 @@ class Mutation:
         mutation_types.OrganisationInputPartial, extensions=[IsAuthenticated()]
     )
 
-    import_all: model_types.ExternalDataSource = mutation_types.import_all
+    import_all: mutation_types.ExternalDataSourceAction = mutation_types.import_all
 
     create_map_report: model_types.MapReport = mutation_types.create_map_report
     update_map_report: model_types.MapReport = django_mutations.update(
@@ -112,6 +123,20 @@ class Mutation:
     delete_map_report: model_types.MapReport = django_mutations.delete(
         mutation_types.IDObject, extensions=[IsAuthenticated()]
     )
+
+    create_sharing_permission: model_types.SharingPermission = django_mutations.create(
+        mutation_types.SharingPermissionCUDInput, extensions=[IsAuthenticated()]
+    )
+    delete_sharing_permission: model_types.SharingPermission = django_mutations.delete(
+        mutation_types.IDObject, extensions=[IsAuthenticated()]
+    )
+    # TODO: install django-guardian to handle permissions
+    update_sharing_permission: model_types.SharingPermission = django_mutations.update(
+        mutation_types.SharingPermissionCUDInput, extensions=[IsAuthenticated()]
+    )
+    update_sharing_permissions: List[
+        model_types.ExternalDataSource
+    ] = mutation_types.update_sharing_permissions
 
 
 schema = JwtSchema(

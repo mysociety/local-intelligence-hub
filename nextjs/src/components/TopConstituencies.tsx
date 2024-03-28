@@ -1,5 +1,5 @@
 import { ConstituencyStatsOverviewQuery, ConstituencyStatsOverviewQueryVariables } from "@/__generated__/graphql"
-import { ReportContext } from "@/app/reports/[id]/context"
+import { ReportContext, useReportContext } from "@/app/reports/[id]/context"
 import { gql, useQuery } from "@apollo/client"
 import { useContext, useState } from "react"
 import { MemberElectoralInsights, Person } from "./reportsConstituencyItem"
@@ -101,11 +101,22 @@ export function ConstituencySummaryCard ({ count, constituency }: {
   >
   count: number
 }) {
+  const { displayOptions } = useReportContext()
+
   return (
     <div className='p-3 '>
       <h2 className='font-PPRightGrotesk text-hLgPP mb-3'>{constituency.name}</h2>
-      {!!constituency.lastElection?.stats && (
-        <div className='flex justify-between'>
+      {!!constituency.mp?.name && displayOptions.showMPs && (
+        <div className='mb-5 mt-4'>
+          <Person
+            name={constituency.mp?.name}
+            subtitle={constituency.mp?.party?.name}
+            img={constituency.mp?.photo?.url}
+          />
+        </div>
+      )}
+      {!!constituency.lastElection?.stats && displayOptions.showLastElectionData && (
+        <div className='flex justify-between mb-6'>
           <div className="flex flex-col gap-1">
             <p className="text-dataName font-IBMPlexSansCondensed uppercase text-meepGray-300">
               1st in {getYear(constituency.lastElection.stats.date)}
@@ -134,20 +145,13 @@ export function ConstituencySummaryCard ({ count, constituency }: {
           </div>
         </div>
       )}
-      {!!constituency.mp?.name && (
-        <div className='mb-6 mt-5'>
-          <Person
-            name={constituency.mp?.name}
-            subtitle={constituency.mp?.party?.name}
-            img={constituency.mp?.photo?.url}
-          />
-        </div>
-      )}
-      <MemberElectoralInsights
-        totalCount={count}
-        electionStats={constituency.lastElection?.stats}
-        bg="bg-meepGray-700 group-hover:bg-meepGray-600"
-      />
+      <div>
+        <MemberElectoralInsights
+          totalCount={count}
+          electionStats={constituency.lastElection?.stats}
+          bg="bg-meepGray-700 group-hover:bg-meepGray-600"
+        />
+      </div>
     </div>
   )
 }

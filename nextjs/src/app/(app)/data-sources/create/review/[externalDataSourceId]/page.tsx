@@ -9,7 +9,7 @@ import {
   AutoUpdateCreationReviewQuery,
   AutoUpdateCreationReviewQueryVariables,
 } from "@/__generated__/graphql";
-import { AutoUpdateCard, DATA_SOURCE_FRAGMENT, TriggerUpdateButton } from "@/components/AutoUpdateCard";
+import { ExternalDataSourceCard, DATA_SOURCE_FRAGMENT, TriggerUpdateButton } from "@/components/ExternalDataSourceCard";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 
@@ -21,9 +21,7 @@ const GET_UPDATE_CONFIG = gql`
       geographyColumn
       geographyColumnType
       dataType
-      connectionDetails {
-        crmType: __typename
-      }
+      crmType
       autoUpdateEnabled
       updateMapping {
         source
@@ -76,7 +74,7 @@ export default function Page({
         <header>
           <h1 className="text-hLg">Activate data source</h1>
           <p className="mt-6 text-meepGray-300 max-w-sm">
-            Your almost there!
+            You{"'"}re almost there!
           </p>
           <ul className="list-disc list-outside pl-4 space-y-3 mt-3">
             <li className="text-meepGray-300 max-w-sm">
@@ -86,7 +84,7 @@ export default function Page({
               <DataSourceFieldLabel
                 className='align-middle'
                 label={pageQuery.data?.externalDataSource.geographyColumn}
-                connectionType={pageQuery.data?.externalDataSource.connectionDetails.crmType}
+                crmType={pageQuery.data?.externalDataSource.crmType}
               />
               <span className='align-middle'>
                 field changes.
@@ -108,8 +106,10 @@ export default function Page({
       ) : (
         <>
           <div>
-            <AutoUpdateCard
+            <ExternalDataSourceCard
               externalDataSource={pageQuery.data.externalDataSource}
+              withUpdateOptions
+              withLink
             />
           </div>
           <div>
@@ -128,3 +128,4 @@ export default function Page({
     </div>
   );
 }
+

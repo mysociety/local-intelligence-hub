@@ -5,7 +5,7 @@ import { useQuery } from "@apollo/experimental-nextjs-app-support/ssr";
 
 const YOUR_ORGANISATIONS = gql`
   query Example {
-    organisations {
+    myOrganisations {
       id
       name
     }

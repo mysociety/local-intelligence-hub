@@ -1,6 +1,6 @@
 "use client"
 
-import { GetMemberListQuery } from "@/__generated__/graphql"
+import { DataSourceType, ExternalDataSource, GetMemberListQuery, MapReportLayersSummaryFragment, SharedDataSource } from "@/__generated__/graphql"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -25,14 +25,19 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { gql, useQuery } from "@apollo/client"
-import { useContext, useState } from "react"
-import { Check, ChevronsUpDown, Plus } from "lucide-react"
+import { gql, useFragment, useQuery } from "@apollo/client"
+import { useContext, useMemo, useState } from "react"
+import { Check, ChevronsUpDown, Plus, RefreshCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Form, useForm } from "react-hook-form"
 import { FormField } from "../ui/form"
 import { ReportContext } from "@/app/reports/[id]/context"
 import { useRouter } from "next/navigation"
+import { MAP_REPORT_LAYERS_SUMMARY } from "@/app/reports/[id]/lib"
+import { DataSourceIcon } from "../DataSourceIcon"
+import pluralize from "pluralize"
+import { CRMSelection } from "../CRMButtonItem"
+import { LoadingIcon } from "../ui/loadingIcon"
 
 type Source = {
   name: string,
@@ -47,8 +52,8 @@ export function AddMapLayerButton({ addLayer }: { addLayer(layer: Source): void 
   return (
     <Dialog open={open} onOpenChange={(o) => setOpen(o)}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <Plus className="w-4" /> Add map layer
+        <Button variant="outline" size='sm'>
+          <Plus className="w-4" /> add data source
         </Button>
       </DialogTrigger>
       <Form {...form}>
@@ -59,9 +64,9 @@ export function AddMapLayerButton({ addLayer }: { addLayer(layer: Source): void 
             addLayer(d.source)
           })}>
             <DialogHeader>
-              <DialogTitle>Add map layer</DialogTitle>
+              <DialogTitle>Add a map layer</DialogTitle>
               <DialogDescription>
-                Select from existing sources or add a new one
+                Select a data source from your org or one that{"'"}s been shared with you.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -85,10 +90,36 @@ export function AddMapLayerButton({ addLayer }: { addLayer(layer: Source): void 
 
 export function MapLayerSelector ({ value, onChange }: { value?: Source, onChange: (value: Source) => void }) {
   const [open, setOpen] = useState(false)
-  const { id } = useContext(ReportContext)
+  const { id, report } = useContext(ReportContext)
   const dataSources = useQuery<GetMemberListQuery>(MEMBER_LISTS)
-  const selectedSource = dataSources.data?.externalDataSources.find(s => s.id === value?.id)
   const router = useRouter()
+  const layers = useFragment<MapReportLayersSummaryFragment>({
+    fragment: MAP_REPORT_LAYERS_SUMMARY,
+    fragmentName: "MapReportLayersSummary",
+    from: {
+      __typename: "MapReport",
+      id,
+    },
+  });
+
+  const useableSources = useMemo(() => {
+    const data: Array<
+        GetMemberListQuery['myOrganisations'][0]['sharingPermissionsFromOtherOrgs'][0]['externalDataSource'] | 
+        GetMemberListQuery['myOrganisations'][0]['externalDataSources'][0]
+    > = [
+      ...dataSources.data?.myOrganisations[0]?.externalDataSources.filter(
+        d => d.dataType === DataSourceType.Member
+      ) || [],
+      ...dataSources.data?.myOrganisations[0]?.sharingPermissionsFromOtherOrgs.map(
+        p => p.externalDataSource
+      ).filter(
+        d => d.dataType === DataSourceType.Member
+      ) || []
+    ]
+    return data
+  }, [dataSources.data])
+
+  const selectedSource = useableSources.find(s => s.id === value?.id)
  
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -97,11 +128,18 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="justify-between"
+          className="justify-between group h-14"
         >
-          {value
-            ? "Selected: " + selectedSource?.name
-            : "Select data source"}
+          {value && selectedSource
+            ? (
+              <div className='py-2 text-sm'>
+                <CRMSelection
+                  source={selectedSource}
+                  // @ts-ignore
+                  isShared={!!selectedSource.organisation}
+                />
+              </div>
+            ) : "Select data source"}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -114,29 +152,49 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
             No data sources found. Click to connect.
           </CommandEmpty>
           <CommandGroup>
-            {dataSources.data?.externalDataSources
-            // .filter(s => !report.data?.mapReport?.layers?.some(sL => sL.source.id === s.id))
-            .map((source) => {
+            {useableSources.map((source) => {
               const alreadySelected = source.id === value
+              const alreadyUsed = layers.data?.layers?.some(sL => sL?.source?.id === source.id)
               return (
                 <CommandItem
+                  value={source.name}
                   key={source.id}
-                  disabled={alreadySelected}
+                  disabled={alreadySelected || alreadyUsed}
                   onSelect={() => {
                     onChange(source)
                     setOpen(false)
                   }}
+                  className="flex flex-row items-center gap-1"
                 >
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      alreadySelected ? "opacity-100" : "opacity-0"
+                      alreadySelected || alreadyUsed ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {source.name} ({source.importedDataCount} records)
+                  <CRMSelection
+                    source={source}
+                    // @ts-ignore
+                    isShared={!!source.organisation}
+                  />
                 </CommandItem>
               )
             })}
+            {dataSources.loading ? (
+              <CommandItem disabled>
+                <LoadingIcon className={"mr-2 h-4 w-4 inline-block"} />
+                Loading...
+              </CommandItem>
+            ) : (
+              <CommandItem
+                onSelect={() => {
+                  dataSources.refetch()
+                }}
+              >
+                <RefreshCcw className={"mr-2 h-4 w-4"} />
+                Reload data sources
+              </CommandItem>
+            )}
             <CommandItem
               onSelect={() => {
                 router.push("/data-sources/create?dataType=MEMBER")
@@ -154,10 +212,26 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
 
 const MEMBER_LISTS = gql`
   query GetMemberList {
-    externalDataSources(filters: { dataType: MEMBER }) {
-      id
-      name
-      importedDataCount
+    myOrganisations {
+      externalDataSources(filters: { dataType: MEMBER }) {
+        id
+        name
+        importedDataCount
+        crmType
+        dataType
+      }
+      sharingPermissionsFromOtherOrgs {
+        externalDataSource {
+          id
+          name
+          importedDataCount
+          crmType
+          dataType
+          organisation {
+            name
+          }
+        }
+      }
     }
   }
 `

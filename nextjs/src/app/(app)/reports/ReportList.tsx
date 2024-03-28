@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { CreateMapReportMutation, CreateMapReportMutationVariables, ListReportsQuery, ListReportsQueryVariables } from '@/__generated__/graphql';
 import { formatRelative } from 'date-fns';
 import { useRouter } from 'next/navigation';
+import { triggerAnalyticsEvent } from "@/app/utils/posthogutils";
 
 const LIST_REPORTS = gql`
   query ListReports {
@@ -50,7 +51,10 @@ export default function ReportList() {
         <h2>Error: {error.message}</h2>
       ) : data ? (
         <section className="w-full grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {data.reports.map((report) => (
+          {data.reports?.slice().sort(
+            // Most recently edited
+            (a, b) => b.lastUpdate && a.lastUpdate ? new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime() : 0
+          ).map((report) => (
             <ReportCard
               key={report.id}
               report={report}
@@ -125,17 +129,24 @@ export function CreateReportCard () {
         success: (d: FetchResult<CreateMapReportMutation>) => {
           if (!d.errors && d.data?.createMapReport?.__typename === 'MapReport') {
             router.push(`/reports/${d.data.createMapReport.id}`)
+            triggerAnalyticsEvent("Map report created succesfully", {});
             return 'Report created!'
           } else if (d.data?.createMapReport?.__typename === 'OperationInfo' ) {
             toast.error('Failed to create report', {
               id: tid,
               description: d.data.createMapReport.messages.map(m => m.message).join(', ')
             })
+            triggerAnalyticsEvent("Map report creatio failed", {
+              errorMessages: d.data.createMapReport.messages.map(m => m.message).join(', ')
+            });
           } else {
             toast.error('Failed to create report', {
               id: tid,
               description: d.errors?.map(e => e.message).join(', ')
             })
+            triggerAnalyticsEvent("Report creation failed", {
+              errorMessages: d.errors?.map(e => e.message).join(', ')
+            });
           }
         },
         error: 'Failed to create report',
