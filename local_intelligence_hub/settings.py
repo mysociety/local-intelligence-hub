@@ -23,6 +23,13 @@ from sentry_sdk.integrations.django import DjangoIntegration
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(
+    MINIO_STORAGE_ENDPOINT=(str, False),
+    MINIO_STORAGE_ACCESS_KEY=(str, ""),
+    MINIO_STORAGE_SECRET_KEY=(str, ""),
+    MINIO_STORAGE_MEDIA_BUCKET_NAME=(str, "media"),
+    MINIO_STORAGE_STATIC_BUCKET_NAME=(str, "static"),
+    MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET=(bool, True),
+    MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET=(bool, True),
     EMAIL_BACKEND=(str, "django.core.mail.backends.console.EmailBackend"),
     BASE_URL=(str, False),
     FRONTEND_BASE_URL=(str, False),
@@ -259,16 +266,24 @@ POSTCODES_IO_BATCH_MAXIMUM = 100
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "procrastinate": {"format": "%(asctime)s %(levelname)-7s %(name)s %(message)s"},
+    },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
         },
     },
     "loggers": {
+        "procrastinate": {
+            "formatter": "procrastinate",
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
         "django": {
             "handlers": ["console"],
             "level": env("DJANGO_LOG_LEVEL"),
-        }
+        },
     },
 }
 if DEBUG:
@@ -308,6 +323,9 @@ if DEBUG:
 
 # CK Section
 
+IMPORT_UPDATE_ALL_BATCH_SIZE = 100
+IMPORT_UPDATE_MANY_RETRY_COUNT = 3
+
 # TODO: Decrease this when we go public
 one_week = timedelta(days=7)
 GQL_AUTH = GqlAuthSettings(
@@ -335,3 +353,17 @@ sentry_sdk.init(
     # Optionally, you can adjust the logging level
     traces_sample_rate=1.0,  # Adjust sample rate as needed
 )
+
+MINIO_STORAGE_ENDPOINT = env("MINIO_STORAGE_ENDPOINT")
+if MINIO_STORAGE_ENDPOINT is not False:
+    INSTALLED_APPS += ["minio_storage"]
+    DEFAULT_FILE_STORAGE = "minio_storage.storage.MinioMediaStorage"
+    # STATICFILES_STORAGE = "minio_storage.storage.MinioStaticStorage"
+    MINIO_STORAGE_ACCESS_KEY = env("MINIO_STORAGE_ACCESS_KEY")
+    MINIO_STORAGE_SECRET_KEY = env("MINIO_STORAGE_SECRET_KEY")
+    MINIO_STORAGE_MEDIA_BUCKET_NAME = env("MINIO_STORAGE_MEDIA_BUCKET_NAME")
+    # MINIO_STORAGE_STATIC_BUCKET_NAME = env("MINIO_STORAGE_STATIC_BUCKET_NAME")
+    MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = env(
+        "MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET"
+    )
+    # MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET = env("MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET")

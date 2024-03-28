@@ -14,7 +14,7 @@ export const MAP_REPORT_LAYERS_SUMMARY = gql`
       source {
         id
         name
-        isImporting
+        isImportScheduled
         importedDataCount
         connectionDetails {
           recordUrlTemplate

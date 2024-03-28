@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from typing import List, Optional, Union
 
 import procrastinate.contrib.django.models
@@ -23,12 +24,22 @@ from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
 
 
+# Ideally we'd just import this from the library (procrastinate.jobs.Status) but
+# strawberry doesn't like subclassed Enums for some reason.
+@strawberry.enum
+class ProcrastinateJobStatus(Enum):
+    todo = "todo"  #: The job is waiting in a queue
+    doing = "doing"  #: A worker is running the job
+    succeeded = "succeeded"  #: The job ended successfully
+    failed = "failed"  #: The job ended with an error
+
+
 @strawberry_django.filters.filter(
     procrastinate.contrib.django.models.ProcrastinateJob, lookups=True
 )
 class QueueFilter:
     id: auto
-    status: auto
+    status: ProcrastinateJobStatus
     queue_name: auto
     task_name: auto
     scheduled_at: auto
@@ -50,7 +61,7 @@ class QueueJob:
     task_name: auto
     lock: auto
     args: auto
-    status: auto
+    status: ProcrastinateJobStatus
     scheduled_at: auto
     attempts: auto
     queueing_lock: auto
@@ -549,6 +560,22 @@ class Analytics:
         return res[0]
 
 
+@strawberry.type
+class BatchJobProgress:
+    status: ProcrastinateJobStatus
+    id: strawberry.scalars.ID
+    started_at: datetime
+    total: int
+    succeeded: int
+    doing: int
+    failed: int
+    estimated_seconds_remaining: float
+    estimated_finish_time: datetime
+    seconds_per_record: float
+    done: int
+    remaining: int
+
+
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class ExternalDataSource(Analytics):
     id: auto
@@ -606,7 +633,11 @@ class ExternalDataSource(Analytics):
 
     @strawberry_django.field
     def webhook_healthcheck(self: models.ExternalDataSource, info) -> bool:
-        return self.webhook_healthcheck()
+        try:
+            return self.webhook_healthcheck()
+        except Exception:
+            # TODO: Return the error message to the UI.
+            return False
 
     @strawberry_django.field
     def imported_data_geojson_points(
@@ -623,6 +654,21 @@ class ExternalDataSource(Analytics):
             if generic_datum.point is not None
         ]
 
+    @strawberry_django.field
+    def imported_data_geojson_point(
+        self: models.ExternalDataSource, info: Info, id: str
+    ) -> MapReportMemberFeature | None:
+        datum = models.GenericData.objects.filter(
+            data=id, data_type__data_set__external_data_source_id=self.id
+        ).first()
+        if not datum or not datum.point:
+            return None
+        return MapReportMemberFeature.from_geodjango(
+            point=datum.point,
+            id=datum.data,
+            properties=datum,
+        )
+
     imported_data_count: int = fn_field()
     imported_data_count_by_region: List[GroupedDataCount] = fn_field()
     imported_data_count_by_constituency: List[GroupedDataCount] = fn_field()
@@ -631,12 +677,32 @@ class ExternalDataSource(Analytics):
     imported_data_count_by_ward: List[GroupedDataCount] = fn_field()
 
     @strawberry_django.field
-    def is_importing(self: models.ExternalDataSource, info: Info) -> bool:
-        return (
-            self.event_log_queryset()
-            .filter(status="doing", task_name="hub.tasks.import_all")
-            .exists()
-        )
+    def is_import_scheduled(self: models.ExternalDataSource, info: Info) -> bool:
+        job = self.get_scheduled_import_job()
+        return job is not None
+
+    @strawberry_django.field
+    def import_progress(
+        self: models.ExternalDataSource, info: Info
+    ) -> Optional[BatchJobProgress]:
+        job = self.get_scheduled_import_job()
+        if job is None:
+            return None
+        return BatchJobProgress(**self.get_scheduled_batch_job_progress(job))
+
+    @strawberry_django.field
+    def is_update_scheduled(self: models.ExternalDataSource, info: Info) -> bool:
+        job = self.get_scheduled_update_job()
+        return job is not None
+
+    @strawberry_django.field
+    def update_progress(
+        self: models.ExternalDataSource, info: Info
+    ) -> Optional[BatchJobProgress]:
+        job = self.get_scheduled_update_job()
+        if job is None:
+            return None
+        return BatchJobProgress(**self.get_scheduled_batch_job_progress(job))
 
 
 @strawberry.type

@@ -2,14 +2,12 @@
 
 import {
   FetchResult,
-  MutationResult,
   gql,
   useQuery,
   useApolloClient,
   ApolloClient,
 } from "@apollo/client";
 import { AirtableLogo } from "@/components/logos";
-import { formatRelative } from "date-fns";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
@@ -27,28 +25,12 @@ import {
   ExternalDataSourceInspectPageQueryVariables,
   ImportDataMutation,
   ImportDataMutationVariables,
+  ProcrastinateJobStatus,
   UpdateExternalDataSourceMutation,
   UpdateExternalDataSourceMutationVariables,
 } from "@/__generated__/graphql";
 import { useRouter } from "next/navigation";
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getSortedRowModel,
-  SortingState,
-} from "@tanstack/react-table";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { ArrowUpDown, ExternalLink, RefreshCcw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ExternalLink, RefreshCcw } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -72,6 +54,8 @@ import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
 import { contentEditableMutation } from "@/lib/html";
 import { UpdateExternalDataSourceFields } from "@/components/UpdateExternalDataSourceFields";
+import { format } from "d3-format";
+import { BatchJobProgressBar } from "@/components/BatchJobProgress";
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {
@@ -99,19 +83,27 @@ const GET_UPDATE_CONFIG = gql`
       emailField
       phoneField
       addressField
-      isImporting
+      isImportScheduled
+      importProgress {
+        id
+        status
+        total
+        succeeded
+        estimatedFinishTime
+      }
+      isUpdateScheduled
+      updateProgress {
+        id
+        status
+        total
+        succeeded
+        estimatedFinishTime
+      }
       importedDataCount
       fieldDefinitions {
         label
         value
         description
-      }
-      jobs {
-        status
-        id
-        taskName
-        args
-        lastEventAt
       }
       updateMapping {
         source
@@ -145,12 +137,8 @@ export default function InspectExternalDataSource({
     variables: {
       ID: externalDataSourceId,
     },
+    pollInterval: 10000,
   });
-
-  useEffect(() => {
-    const interval = setInterval(() => refetch(), 5000)
-    return () => clearInterval(interval)
-  }, [refetch])
 
   if (!data?.externalDataSource && loading) {
     return <LoadingIcon />;
@@ -195,31 +183,31 @@ export default function InspectExternalDataSource({
         <>
         <div className="border-b border-meepGray-700 pt-10" />
         <div className='grid sm:grid-cols-2 gap-8'>
-          <section className='space-y-4'>
+          <section className='space-y-4 max-w-sm'>
             <div>Imported records</div>
-            <div className='text-hXlg'>{source.importedDataCount || 0}</div>
+            <div className='text-hXlg'>{format(",")(source.importedDataCount || 0)}</div>
             <p className='text-sm text-meepGray-400'>
               Import data from this source into Mapped for use in auto-updates and reports.
             </p>
-            <Button disabled={source.isImporting} onClick={() => importData(client, externalDataSourceId)}>
-              {!source.isImporting ? "Import data" : <span className='flex flex-row gap-2 items-center'>
+            <Button disabled={source.isImportScheduled} onClick={() => importData(client, externalDataSourceId)}>
+              {!source.isImportScheduled ? "Import data" : <span className='flex flex-row gap-2 items-center'>
                 <LoadingIcon size={"18"} />
-                <span>Importing...</span>
+                <span>{
+                  source.importProgress?.status === ProcrastinateJobStatus.Doing
+                    ? "Importing..."
+                    : "Scheduled"
+                }</span>
               </span>}
             </Button>
+            {source.importProgress?.status === ProcrastinateJobStatus.Doing && (
+              <BatchJobProgressBar batchJobProgress={source.importProgress} pastTenseVerb="Imported" />
+            )}
           </section>
           <section className='space-y-4'>
             <h2 className="text-hSm mb-5">Auto-updates</h2>
             <p className='text-sm text-meepGray-400'>
               Auto-updates are {source.autoUpdateEnabled ? "enabled" : "disabled"} for this data source. Mapped can automatically update this data source based on the mapping you{"'"}ve defined in the Data Mapping section.
             </p>
-            {source.jobs[0]?.lastEventAt ? (
-              <div className="text-meepGray-400">
-                Last sync:{" "}
-                {formatRelative(source.jobs[0].lastEventAt, new Date())} (
-                {source.jobs[0].status})
-              </div>
-            ) : null}
             <AutoUpdateSwitch externalDataSource={source} />
             {source.autoUpdateEnabled && !source.webhookHealthcheck && (
               <>
@@ -253,10 +241,30 @@ export default function InspectExternalDataSource({
               />
             </p>
           </div>
-          {allowMapping && !!source.updateMapping?.length && (
-            <TriggerUpdateButton id={source.id} />
-          )}
         </header>
+        {allowMapping && !!source.updateMapping?.length && (
+          <div className='max-w-sm space-y-4'>
+            {!source.isUpdateScheduled ? (
+              <TriggerUpdateButton id={source.id} />
+            ) : (
+              <>
+                <Button disabled>
+                  {!source.isUpdateScheduled ? "Import data" : <span className='flex flex-row gap-2 items-center'>
+                    <LoadingIcon size={"18"} />
+                    <span>{
+                      source.updateProgress?.status === ProcrastinateJobStatus.Doing
+                        ? "Updating..."
+                        : "Scheduled"
+                    }</span>
+                  </span>}
+                </Button>
+                {source.updateProgress?.status === ProcrastinateJobStatus.Doing && (
+                  <BatchJobProgressBar batchJobProgress={source.updateProgress} pastTenseVerb="Updated" />
+                )}
+              </>
+            )}
+          </div>
+        )}
         <UpdateMappingForm
           saveButtonLabel="Update"
           allowMapping={allowMapping}
@@ -367,51 +375,6 @@ export default function InspectExternalDataSource({
             }}
           />
         </h2>
-        <LogsTable
-          data={source.jobs}
-          sortingState={[{ desc: true, id: "lastEventAt" }]}
-          columns={[
-            {
-              accessorKey: "lastEventAt",
-              header: ({ column }) => {
-                return (
-                  <Button
-                    variant="ghost"
-                    onClick={() =>
-                      column.toggleSorting(column.getIsSorted() === "asc")
-                    }
-                  >
-                    Last Update Time
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
-                );
-              },
-              cell: (d) => {
-                try {
-                  if (d) {
-                    // @ts-ignore
-                    return formatRelative(new Date(d.getValue()), new Date());
-                  }
-                  return null;
-                } catch (e) {
-                  return null;
-                }
-              },
-            },
-            { header: "ID", accessorKey: "id" },
-            { header: "Job", accessorKey: "taskName" },
-            { header: "Status", accessorKey: "status" },
-            {
-              header: "Args",
-              accessorKey: "args",
-              cell: (d) => (
-                <code>
-                  <pre>{JSON.stringify(d.getValue() || {}, null, 2)}</pre>
-                </code>
-              ),
-            },
-          ]}
-        />
       </section>
     </div>
   );
@@ -464,15 +427,18 @@ export function importData (client: ApolloClient<any>, externalDataSourceId: str
     mutation: gql`
       mutation ImportData($id: String!) {
         importAll(externalDataSourceId: $id) {
-          id
-          importedDataCount
-          isImporting
-          jobs {
-            status
+          requestId
+          externalDataSource {
             id
-            taskName
-            args
-            lastEventAt
+            importedDataCount
+            isImportScheduled
+            jobs {
+              status
+              id
+              taskName
+              args
+              lastEventAt
+            }
           }
         }
       }
@@ -495,77 +461,4 @@ export function importData (client: ApolloClient<any>, externalDataSourceId: str
     },
     error: `Couldn't schedule data import`,
   });
-}
-
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
-}
-
-export function LogsTable<TData, TValue>({
-  columns,
-  data,
-  sortingState = [],
-}: DataTableProps<TData, TValue> & {
-  sortingState?: SortingState;
-}) {
-  const [sorting, setSorting] = useState<SortingState>(sortingState);
-
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    state: {
-      sorting,
-    },
-  });
-
-  return (
-    <div className="rounded-md border border-meepGray-400">
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                return (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && "selected"}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
-  );
 }
