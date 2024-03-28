@@ -1,12 +1,11 @@
 import asyncio
-from enum import Enum
 import hashlib
 import itertools
 import uuid
 from datetime import datetime, timezone
+from enum import Enum
 from typing import List, Optional, TypedDict, Union
 from urllib.parse import urljoin
-import pytz
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -22,11 +21,12 @@ from django.utils.functional import cached_property
 from django.utils.text import slugify
 
 import pandas as pd
+import pytz
 from asgiref.sync import async_to_sync, sync_to_async
 from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
 from polymorphic.models import PolymorphicModel
-from procrastinate.contrib.django.models import ProcrastinateJob, ProcrastinateEvent
+from procrastinate.contrib.django.models import ProcrastinateEvent, ProcrastinateJob
 from psycopg.errors import UniqueViolation
 from pyairtable import Api as AirtableAPI
 from pyairtable import Base as AirtableBase
@@ -50,6 +50,7 @@ from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
 from utils.py import batched, ensure_list, get
 
 User = get_user_model()
+
 
 class Organisation(models.Model):
     slug = models.SlugField(max_length=100, unique=True)
@@ -945,9 +946,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         some_active_batch_job_for_this_source = (
             self.event_log_queryset()
             .filter(
-                **filter,
-                status__in=["todo", "doing"],
-                args__request_id__isnull=False
+                **filter, status__in=["todo", "doing"], args__request_id__isnull=False
             )
             .first()
         )
@@ -955,19 +954,24 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             return None
         request_id = some_active_batch_job_for_this_source.args.get("request_id", None)
         # Now find the oldest, first job with that request_id
-        original_job = self.event_log_queryset().filter(args__request_id=request_id).order_by('id').first()
+        original_job = (
+            self.event_log_queryset()
+            .filter(args__request_id=request_id)
+            .order_by("id")
+            .first()
+        )
         return original_job
 
     def get_scheduled_import_job(self):
-        return self.get_scheduled_parent_job(dict(
-            task_name__contains="hub.tasks.import"
-        ))
+        return self.get_scheduled_parent_job(
+            dict(task_name__contains="hub.tasks.import")
+        )
 
     def get_scheduled_update_job(self):
-        return self.get_scheduled_parent_job(dict(
-            task_name__contains="hub.tasks.refresh"
-        ))
-    
+        return self.get_scheduled_parent_job(
+            dict(task_name__contains="hub.tasks.refresh")
+        )
+
     def get_scheduled_batch_job_progress(self, parent_job: ProcrastinateJob):
         request_id = parent_job.args.get("request_id")
 
@@ -997,9 +1001,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
         remaining = total - done
         time_started = (
-            ProcrastinateEvent.objects.filter(
-                job_id=parent_job.id
-            )
+            ProcrastinateEvent.objects.filter(job_id=parent_job.id)
             .order_by("at")
             .first()
             .at.replace(tzinfo=pytz.utc)
