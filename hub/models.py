@@ -1203,12 +1203,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             for key in keys
         ]
 
-    def filter(self, filter: dict) -> dict:
-        """
-        Look up a record by a value in a column.
-        """
-        raise NotImplementedError("Lookup not implemented for this data source type.")
-
     class Loaders(TypedDict):
         postcodesIO: DataLoader
         fetch_record: DataLoader
@@ -1500,6 +1494,31 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         except UniqueViolation:
             pass
 
+    class CUDRecord(TypedDict):
+        '''
+        Used for tests
+        '''
+        email = str
+        postcode = str
+        data = dict
+
+    def delete_one(self, record_id: str):
+        '''
+        Used for tests
+        '''
+        raise NotImplementedError("Delete one not implemented for this data source type.")
+
+    def create_one(self, record: CUDRecord):
+        '''
+        Used for tests
+        '''
+        raise NotImplementedError("Create one not implemented for this data source type.")
+
+    def create_many(self, records: CUDRecord):
+        '''
+        Used for tests
+        '''
+        raise NotImplementedError("Create many not implemented for this data source type.")
 
 class AirtableSource(ExternalDataSource):
     """
@@ -1577,13 +1596,6 @@ class AirtableSource(ExternalDataSource):
 
     async def fetch_all(self):
         records = self.table.all()
-        return records
-
-    def filter(self, d: dict):
-        formula = "AND("
-        formula += ",".join([f"{key}='{value}'" for key, value in d.items()])
-        formula += ")"
-        records = self.table.all(formula=formula)
         return records
 
     def get_record_id(self, record):
@@ -1696,6 +1708,26 @@ class AirtableSource(ExternalDataSource):
         print("Webhook member result", webhook_object.cursor, member_ids)
         return member_ids
 
+    def delete_one(self, record_id):
+        return self.table.delete(record_id)
+
+    def create_one(self, record):
+        record = self.table.create({
+            **record['data'],
+            self.postcode_field: record['postcode'],
+            self.email_field: record['email'],
+        })
+        return record
+
+    def create_many(self, records):
+        records = self.table.batch_create([
+            {
+                **record['data'],
+                self.postcode_field: record['postcode'],
+                self.email_field: record['email'],
+            } for record in records
+        ])
+        return records
 
 class AirtableWebhook(models.Model):
     """
@@ -1764,14 +1796,10 @@ class MailchimpSource(ExternalDataSource):
         return record["id"]
 
     def get_record_field(self, record, field):
-        # Support the field being e.g. ADDRESS.zip
-        keys = field.split(".")
-        val = record.get("merge_fields")
-        for key in keys:
-            val = val.get(key)
-            if val is None:
-                return None
-        return val
+        try:
+            return get(record, field, None)
+        except KeyError:
+            return None
 
     def get_webhooks(self):
         webhooks = self.client.lists.webhooks.all(self.list_id)["webhooks"]
@@ -1891,6 +1919,29 @@ class MailchimpSource(ExternalDataSource):
 
         members_client._build_path = _build_path
 
+    def delete_one(self, record_id):
+        return self.client.lists.members.delete(
+            self.list_id,
+            record_id
+        )
+
+    def create_one(self, record):
+        record = self.client.lists.members.create(
+            self.list_id,
+            data=dict(
+                status="subscribed",
+                email_address=record["email"],
+                record=record["data"],
+                merge_fields=record["data"]
+            )
+        )
+        return record
+
+    def create_many(self, records):
+        records = []
+        for record in records:
+            records += self.create_one(record)
+        return records
 
 class MapReport(Report, Analytics):
     layers = models.JSONField(blank=True, null=True, default=list)
