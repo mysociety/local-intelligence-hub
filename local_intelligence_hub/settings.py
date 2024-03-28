@@ -23,6 +23,13 @@ from sentry_sdk.integrations.django import DjangoIntegration
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(
+    MINIO_STORAGE_ENDPOINT=(str, False),
+    MINIO_STORAGE_ACCESS_KEY=(str, ""),
+    MINIO_STORAGE_SECRET_KEY=(str, ""),
+    MINIO_STORAGE_MEDIA_BUCKET_NAME=(str, "media"),
+    MINIO_STORAGE_STATIC_BUCKET_NAME=(str, "static"),
+    MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET=(bool, True),
+    MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET=(bool, True),
     EMAIL_BACKEND=(str, "django.core.mail.backends.console.EmailBackend"),
     BASE_URL=(str, False),
     FRONTEND_BASE_URL=(str, False),
@@ -335,3 +342,15 @@ sentry_sdk.init(
     # Optionally, you can adjust the logging level
     traces_sample_rate=1.0,  # Adjust sample rate as needed
 )
+
+MINIO_STORAGE_ENDPOINT = env("MINIO_STORAGE_ENDPOINT")
+if MINIO_STORAGE_ENDPOINT is not False:
+    INSTALLED_APPS += ["minio_storage"]
+    DEFAULT_FILE_STORAGE = "minio_storage.storage.MinioMediaStorage"
+    STATICFILES_STORAGE = "minio_storage.storage.MinioStaticStorage"
+    MINIO_STORAGE_ACCESS_KEY = env("MINIO_STORAGE_ACCESS_KEY")
+    MINIO_STORAGE_SECRET_KEY = env("MINIO_STORAGE_SECRET_KEY")
+    MINIO_STORAGE_MEDIA_BUCKET_NAME = env("MINIO_STORAGE_MEDIA_BUCKET_NAME")
+    MINIO_STORAGE_STATIC_BUCKET_NAME = env("MINIO_STORAGE_STATIC_BUCKET_NAME")
+    MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = env("MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET")
+    MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET = env("MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET")
