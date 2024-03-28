@@ -1689,7 +1689,7 @@ class AirtableSource(ExternalDataSource):
                 if not webhook.is_hook_enabled:
                     raise ValueError("Webhook healthcheck: a webhook expired")
             return True
-        except:
+        except Exception:
             raise ValueError("Couldn't fetch webhooks")
 
     def teardown_webhooks(self):

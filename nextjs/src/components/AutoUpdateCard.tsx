@@ -162,7 +162,7 @@ export function TriggerUpdateButton({
     toast.promise(mutation, {
       loading: "Triggering...",
       success: (d: FetchResult<TriggerFullUpdateMutation>) => {
-        return `Triggered sync for ${d.data?.triggerUpdate.name}`;
+        return `Triggered sync for ${d.data?.triggerUpdate.externalDataSource.name}`;
       },
       error: `Couldn't trigger sync`,
     });

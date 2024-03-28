@@ -219,7 +219,7 @@ export default function InspectExternalDataSource({
                   max={source.importProgress.total}
                 />
                 <div className='text-meepGray-300 text-sm'>
-                  Imported <span className='text-meepGray-100'>{format(",")(source.importProgress.succeeded)}</span> of <span className='text-meepGray-100'>{format(",")(source.importProgress.total)}</span>. Estimated finish at <span className='text-meepGray-100'>{formatRelative(source.importProgress.estimatedFinishTime, new Date())}</span>
+                  Imported <span className='text-meepGray-100'>{format(",")(source.importProgress.succeeded)}</span> of <span className='text-meepGray-100'>{format(",")(source.importProgress.total)}</span>. Estimated finish <span className='text-meepGray-100'>{formatRelative(source.importProgress.estimatedFinishTime, new Date())}</span>
                 </div>
               </ErrorBoundary>
             )}

@@ -1,8 +1,6 @@
 from datetime import datetime
 from typing import List, Optional, Union
 
-from django.db.models import Count
-
 import procrastinate.contrib.django.models
 import pytz
 import strawberry
@@ -627,7 +625,7 @@ class ExternalDataSource(Analytics):
     def webhook_healthcheck(self: models.ExternalDataSource, info) -> bool:
         try:
             return self.webhook_healthcheck()
-        except:
+        except Exception:
             # TODO: Return the error message to the UI.
             return False
 
