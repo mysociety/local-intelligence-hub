@@ -37,7 +37,7 @@ import {
 } from "@/__generated__/graphql";
 import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
-import { triggerCustomEvent } from "@/app/utils/posthogutils";
+import { triggerAnalyticsEvent } from "@/app/utils/posthogutils";
 
 
 const TEST_SOURCE = gql`
@@ -162,7 +162,7 @@ export default function Page({
         loading: "Testing connection...",
         success: (d: FetchResult<TestSourceConnectionQuery>) => {
           if (!d.errors && d.data?.testSourceConnection) {
-            triggerCustomEvent("Data source connection is healthy", {
+            triggerAnalyticsEvent("Data source connection is healthy", {
               datasource: d.data?.testSourceConnection.__typename,
               remoteName: d.data?.testSourceConnection.remoteName,
             });
@@ -171,7 +171,7 @@ export default function Page({
           throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
         },
         error: (e) => {
-          triggerCustomEvent("Data source connection failed", {
+          triggerAnalyticsEvent("Data source connection failed", {
             errorMessage: e.message,
           });
           return "Connection failed";
