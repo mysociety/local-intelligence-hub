@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 import { CreateMapReportMutation, CreateMapReportMutationVariables, ListReportsQuery, ListReportsQueryVariables } from '@/__generated__/graphql';
 import { formatRelative } from 'date-fns';
 import { useRouter } from 'next/navigation';
-import { triggerAnalyticsEvent } from "../../../app/utils/posthogutils";
+import { triggerAnalyticsEvent } from "@/app/utils/posthogutils";
 
 const LIST_REPORTS = gql`
   query ListReports {
