@@ -125,10 +125,7 @@ async def trigger_update(external_data_source_id: str) -> ExternalDataSourceActi
     # Use this ID to track all jobs against it
     request_id = str(uuid.uuid4())
     await data_source.schedule_refresh_all(request_id=request_id)
-    return ExternalDataSourceAction(
-        id=request_id,
-        external_data_source=data_source
-    )
+    return ExternalDataSourceAction(id=request_id, external_data_source=data_source)
 
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
@@ -202,10 +199,7 @@ async def import_all(external_data_source_id: str) -> ExternalDataSourceAction:
     )
     request_id = str(uuid.uuid4())
     await data_source.schedule_import_all(request_id=request_id)
-    return ExternalDataSourceAction(
-        id=request_id,
-        external_data_source=data_source
-    )
+    return ExternalDataSourceAction(id=request_id, external_data_source=data_source)
 
 
 @strawberry_django.input(models.SharingPermission, partial=True)

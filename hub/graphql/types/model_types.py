@@ -780,6 +780,7 @@ class SharedDataSource(BaseDataSource):
             )
         )
 
+
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class ExternalDataSource(BaseDataSource):
     organisation: Organisation = (
@@ -817,7 +818,7 @@ class ExternalDataSource(BaseDataSource):
             # allow querying your orgs' data sources
             Q(organisation__members__user=user.id)
         )
-    
+
     @strawberry_django.field
     def last_job(self: models.ExternalDataSource, info: Info) -> Optional[QueueJob]:
         job = procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
