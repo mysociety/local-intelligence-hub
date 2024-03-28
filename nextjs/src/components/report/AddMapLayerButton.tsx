@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/popover"
 import { gql, useFragment, useQuery } from "@apollo/client"
 import { useContext, useMemo, useState } from "react"
-import { Check, ChevronsUpDown, Plus } from "lucide-react"
+import { Check, ChevronsUpDown, Plus, RefreshCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Form, useForm } from "react-hook-form"
 import { FormField } from "../ui/form"
@@ -180,10 +180,19 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
                 </CommandItem>
               )
             })}
-            {dataSources.loading && (
+            {dataSources.loading ? (
               <CommandItem disabled>
                 <LoadingIcon className={"mr-2 h-4 w-4 inline-block"} />
                 Loading...
+              </CommandItem>
+            ) : (
+              <CommandItem
+                onSelect={() => {
+                  dataSources.refetch()
+                }}
+              >
+                <RefreshCcw className={"mr-2 h-4 w-4"} />
+                Reload data sources
               </CommandItem>
             )}
             <CommandItem

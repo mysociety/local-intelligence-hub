@@ -1,8 +1,13 @@
 "use client"
 
-import { Exact, GetMapReportQuery, MapReportInput, MapReportLayerAnalyticsQuery } from "@/__generated__/graphql";
+import { Exact, GetMapReportQuery, MapReportInput } from "@/__generated__/graphql";
 import { QueryResult } from "@apollo/client";
-import { createContext } from "react";
+import { createContext, useContext, useState } from "react";
+
+export type DisplayOptionsType = {
+  showLastElectionData: boolean,
+  showMPs: boolean,
+};
 
 export const ReportContext = createContext<{
   id: string,
@@ -10,9 +15,27 @@ export const ReportContext = createContext<{
   deleteReport: () => void,
   report?: QueryResult<GetMapReportQuery, Exact<{ id: string; }>>,
   refreshReportDataQueries: () => void,
+  displayOptions: DisplayOptionsType,
+  setDisplayOptions: (options: Partial<DisplayOptionsType>) => void,
 }>({
   id: '?',
   updateReport: () => ({} as any),
   deleteReport: () => {},
   refreshReportDataQueries: () => {},
-})
+  displayOptions: {
+    showLastElectionData: false,
+    showMPs: false,
+  },
+  setDisplayOptions: () => {},
+});
+
+export const useReportContext = () => {
+  const context = useContext(ReportContext);
+  const { displayOptions, setDisplayOptions } = context;
+
+  const updateDisplayOptions = (options: Partial<DisplayOptionsType>) => {
+    setDisplayOptions({ ...displayOptions, ...options });
+  };
+
+  return { ...context, updateDisplayOptions };
+};

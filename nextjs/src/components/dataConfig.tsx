@@ -14,14 +14,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowRight, ClipboardCopy, File, Plus, Shuffle, X } from "lucide-react"
 import { gql, useApolloClient, useFragment, useQuery } from "@apollo/client"
 import { AddMapLayerButton } from "./report/AddMapLayerButton"
 import { MapReportLayersSummaryFragment } from "@/__generated__/graphql"
-import { useContext } from "react"
-import { ReportContext } from "@/app/reports/[id]/context"
+import { useContext, useState } from "react"
+import { ReportContext, useReportContext } from "@/app/reports/[id]/context"
 import {
   Popover,
   PopoverContent,
@@ -50,10 +51,21 @@ import { Input } from "./ui/input"
 import { toast } from "sonner"
 import { CRMSelection } from "./CRMButtonItem"
 
-export default function DataConfigPanel () {
+export default function DataConfigPanel() {
   const router = useRouter()
   const { id, report, updateReport } = useContext(ReportContext)
   const client = useApolloClient()
+
+  const { displayOptions, setDisplayOptions } = useReportContext();
+
+  const toggleElectionData = () => {
+    setDisplayOptions({ showLastElectionData: !displayOptions.showLastElectionData });
+  };
+
+  const toggleMps = () => {
+    setDisplayOptions({ showMPs: !displayOptions.showMPs });
+  };
+
   const layers = useFragment<MapReportLayersSummaryFragment>({
     fragment: MAP_REPORT_LAYERS_SUMMARY,
     fragmentName: "MapReportLayersSummary",
@@ -153,6 +165,24 @@ export default function DataConfigPanel () {
             <AddMapLayerButton addLayer={addLayer} />
           </div>
         </div>
+        <div className="p-3 pb-4 flex flex-col gap-2 border-t border-meepGray-700 ">
+          <span className="label mb-2 text-labelLg">Toggle enhancement data</span>
+          <div className="text-labelMain"> Mapped data sources</div>
+          {/* // TODO: map through these rather than hard code */}
+          <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
+            <Switch
+              checked={displayOptions.showMPs}
+              onCheckedChange={toggleMps}
+            />Members of Parliament
+          </div>
+          <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
+            <Switch
+              checked={displayOptions.showLastElectionData}
+              onCheckedChange={toggleElectionData}
+            />
+            2019 Election
+          </div>
+        </div>
       </CardContent>
       <div className='bg-meepGray-700 p-3'>
         <CardHeader>
@@ -201,7 +231,7 @@ export default function DataConfigPanel () {
     </Card>
   )
 
-  function addLayer (source: { name: string, id: string }) {
+  function addLayer(source: { name: string, id: string }) {
     const oldLayers = layers.data.layers?.map(l => ({
       id: l!.id!,
       name: l!.name!,
@@ -218,7 +248,7 @@ export default function DataConfigPanel () {
     updateReport({ layers: combinedLayers })
   }
 
-  function removeLayer (sourceId: string) {
+  function removeLayer(sourceId: string) {
     const oldLayers = layers.data.layers?.map(l => ({
       id: l!.id!,
       name: l!.name!,

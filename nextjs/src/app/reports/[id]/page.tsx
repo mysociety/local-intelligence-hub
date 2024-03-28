@@ -40,7 +40,7 @@ import spaceCase from 'to-space-case'
 import { toastPromise } from "@/lib/toast";
 import { MAP_REPORT_LAYER_ANALYTICS, ReportMap, selectedConstituencyAtom } from "@/components/report/ReportMap";
 import { MAP_REPORT_FRAGMENT, isConstituencyPanelOpenAtom, isDataConfigOpenAtom } from "./lib";
-import { ReportContext } from "./context";
+import { DisplayOptionsType, ReportContext } from "./context";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import { contentEditableMutation } from "@/lib/html";
 import { Provider as JotaiProvider, atom, useAtom } from "jotai";
@@ -55,9 +55,22 @@ type Params = {
 export default function Page({ params: { id } }: { params: Params }) {
   const client = useApolloClient();
   const router = useRouter();
+
+  const [displayOptions, setDisplayOptions] = useState<DisplayOptionsType>({
+    showLastElectionData: false,
+    showMPs: false,
+  });
+  
   const report = useQuery<GetMapReportQuery, GetMapReportQueryVariables>(GET_MAP_REPORT, {
     variables: { id },
   });
+
+  const updateDisplayOptions = (options: Partial<DisplayOptionsType>) => {
+    setDisplayOptions((prevOptions: any) => ({
+      ...prevOptions,
+      ...options,
+    }));
+  };
 
   return (
     <MapProvider>
@@ -67,7 +80,9 @@ export default function Page({ params: { id } }: { params: Params }) {
           report,
           updateReport: updateMutation,
           deleteReport: del,
-          refreshReportDataQueries
+          refreshReportDataQueries,
+          displayOptions,
+          setDisplayOptions: updateDisplayOptions
         }}>
           <ReportPage />
         </ReportContext.Provider>
