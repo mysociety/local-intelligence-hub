@@ -1514,7 +1514,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         '''
         raise NotImplementedError("Create one not implemented for this data source type.")
 
-    def create_many(self, records: CUDRecord):
+    def create_many(self, records: List[CUDRecord]):
         '''
         Used for tests
         '''
@@ -1722,7 +1722,7 @@ class AirtableSource(ExternalDataSource):
     def create_many(self, records):
         records = self.table.batch_create([
             {
-                **record['data'],
+                **record.get('data', {}),
                 self.postcode_field: record['postcode'],
                 self.email_field: record['email'],
             } for record in records

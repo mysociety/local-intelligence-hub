@@ -55,8 +55,8 @@ class TestExternalDataSource:
         self.records_to_delete += [(record["id"], self.source) for record in records]
         return records
 
-    def create_custom_layer_records(self, records: List[models.ExternalDataSource.CUDRecord]):
-        records = self.custom_data_layer.create_many(records)
+    def create_custom_layer_airtable_records(self, records: any):
+        records = self.custom_data_layer.table.batch_create(records)
         self.records_to_delete += [(record["id"], self.custom_data_layer) for record in records]
         return records
 
@@ -72,7 +72,7 @@ class TestExternalDataSource:
         self.assertTrue(self.source.webhook_healthcheck())
 
     async def test_import_async(self):
-        self.create_custom_layer_records(
+        self.create_custom_layer_airtable_records(
             [
                 {
                     "council district": "County Durham",
@@ -95,7 +95,7 @@ class TestExternalDataSource:
         original_count = self.custom_data_layer.get_import_data().count()
         self.assertEqual(original_count, 0)
         # Add some test data
-        self.create_custom_layer_records(
+        self.create_custom_layer_airtable_records(
             [
                 {
                     "council district": "County Durham",
@@ -177,9 +177,11 @@ class TestExternalDataSource:
 
     async def test_refresh_one(self):
         record = self.create_test_record(
-            email="eh991sp@gmail.com",
-            postcode="EH99 1SP",
-            data={}
+            models.ExternalDataSource.CUDRecord(
+              email="eh991sp@gmail.com",
+              postcode="EH99 1SP",
+              data={}
+            )
         )
         # Test this functionality
         await self.source.refresh_one(record)
@@ -197,7 +199,7 @@ class TestExternalDataSource:
         that brings custom campaign data back into the CRM, based on geography
         """
         # Add some test data
-        self.create_custom_layer_records(
+        self.create_custom_layer_airtable_records(
             [
                 {
                     "council district": "County Durham",
@@ -213,9 +215,11 @@ class TestExternalDataSource:
         async_to_sync(self.custom_data_layer.import_all)()
         # Add a test record
         record = self.create_test_record(
-            email="NE126DD@gmail.com",
-            postcode="NE12 6DD",
-            data={}
+            models.ExternalDataSource.CUDRecord(
+              email="NE126DD@gmail.com",
+              postcode="NE12 6DD",
+              data={}
+            )
         )
         mapped_member = async_to_sync(self.source.map_one)(
             record, loaders=async_to_sync(self.source.get_loaders)()
@@ -288,6 +292,8 @@ class TestAirtableSource(TestExternalDataSource, TestCase):
             api_key=settings.TEST_AIRTABLE_MEMBERLIST_API_KEY,
             geography_column="Postcode",
             geography_column_type=models.AirtableSource.PostcodesIOGeographyTypes.POSTCODE,
+            postcode_field="Postcode",
+            email_field="Email",
             auto_update_enabled=True,
             update_mapping=[
                 {
