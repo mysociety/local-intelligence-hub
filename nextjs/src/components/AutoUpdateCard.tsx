@@ -113,7 +113,7 @@ export function AutoUpdateWebhookRefresh({
 
 export function TriggerUpdateButton({
   id,
-  label = "Trigger full update",
+  label = "Trigger CRM update",
   ...buttonProps
 }: {
   id: string;

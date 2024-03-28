@@ -1,8 +1,8 @@
 from datetime import datetime
+from enum import Enum
 from typing import List, Optional, Union
 
 import procrastinate.contrib.django.models
-import pytz
 import strawberry
 import strawberry_django
 import strawberry_django_dataloaders.fields
@@ -24,12 +24,22 @@ from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
 
 
+# Ideally we'd just import this from the library (procrastinate.jobs.Status) but
+# strawberry doesn't like subclassed Enums for some reason.
+@strawberry.enum
+class ProcrastinateJobStatus(Enum):
+    todo = "todo"  #: The job is waiting in a queue
+    doing = "doing"  #: A worker is running the job
+    succeeded = "succeeded"  #: The job ended successfully
+    failed = "failed"  #: The job ended with an error
+
+
 @strawberry_django.filters.filter(
     procrastinate.contrib.django.models.ProcrastinateJob, lookups=True
 )
 class QueueFilter:
     id: auto
-    status: auto
+    status: ProcrastinateJobStatus
     queue_name: auto
     task_name: auto
     scheduled_at: auto
@@ -51,7 +61,7 @@ class QueueJob:
     task_name: auto
     lock: auto
     args: auto
-    status: auto
+    status: ProcrastinateJobStatus
     scheduled_at: auto
     attempts: auto
     queueing_lock: auto
@@ -551,17 +561,17 @@ class Analytics:
 
 
 @strawberry.type
-class ImportProgress:
+class BatchJobProgress:
+    status: ProcrastinateJobStatus
+    id: strawberry.scalars.ID
     started_at: datetime
-    is_importing: bool
     total: int
     succeeded: int
     doing: int
     failed: int
-    request_id: str
     estimated_seconds_remaining: float
     estimated_finish_time: datetime
-    seconds_per_member: float
+    seconds_per_record: float
     done: int
     remaining: int
 
@@ -667,76 +677,32 @@ class ExternalDataSource(Analytics):
     imported_data_count_by_ward: List[GroupedDataCount] = fn_field()
 
     @strawberry_django.field
-    def is_importing(self: models.ExternalDataSource, info: Info) -> bool:
-        active_import_job = self.get_active_import_job()
-        if active_import_job is None:
-            return False
-        # This distinguishes from triggered imports vs patchy webhook imports
-        return active_import_job.args.get("request_id", None) is not None
+    def is_import_scheduled(self: models.ExternalDataSource, info: Info) -> bool:
+        job = self.get_scheduled_import_job()
+        return job is not None
 
     @strawberry_django.field
     def import_progress(
         self: models.ExternalDataSource, info: Info
-    ) -> Optional[ImportProgress]:
-        active_import_job = self.get_active_import_job()
-
-        if active_import_job is None:
+    ) -> Optional[BatchJobProgress]:
+        job = self.get_scheduled_import_job()
+        if job is None:
             return None
+        return BatchJobProgress(**self.get_scheduled_batch_job_progress(job))
 
-        request_id = active_import_job.args.get("request_id")
+    @strawberry_django.field
+    def is_update_scheduled(self: models.ExternalDataSource, info: Info) -> bool:
+        job = self.get_scheduled_update_job()
+        return job is not None
 
-        if request_id is None:
+    @strawberry_django.field
+    def update_progress(
+        self: models.ExternalDataSource, info: Info
+    ) -> Optional[BatchJobProgress]:
+        job = self.get_scheduled_update_job()
+        if job is None:
             return None
-
-        jobs = self.event_log_queryset().filter(args__request_id=request_id).all()
-
-        total = 2
-        statuses = dict()
-
-        for job in jobs:
-            job_count = len(job.args.get("member_ids", []))
-            total += job_count
-            if statuses.get(job.status, None) is not None:
-                statuses[job.status] += job_count
-            else:
-                statuses[job.status] = job_count
-
-        done = (
-            int(
-                statuses.get("succeeded", 0)
-                + statuses.get("failed", 0)
-                + statuses.get("doing", 0)
-            )
-            + 1
-        )
-        remaining = total - done
-        time_started = (
-            procrastinate.contrib.django.models.ProcrastinateEvent.objects.filter(
-                job_id=active_import_job.id
-            )
-            .order_by("at")
-            .first()
-            .at.replace(tzinfo=pytz.utc)
-        )
-        time_so_far = datetime.now(pytz.utc) - time_started
-        duration_per_member = time_so_far / done
-        time_remaining = duration_per_member * remaining
-        estimated_finish_time = datetime.now() + time_remaining
-
-        return ImportProgress(
-            is_importing=request_id is not None,
-            started_at=time_started,
-            estimated_seconds_remaining=time_remaining,
-            estimated_finish_time=estimated_finish_time,
-            seconds_per_member=duration_per_member.seconds,
-            total=total - 2,
-            done=done - 1,
-            remaining=remaining - 1,
-            succeeded=statuses.get("succeeded", 0),
-            failed=statuses.get("failed", 0),
-            doing=statuses.get("doing", 0),
-            request_id=request_id,
-        )
+        return BatchJobProgress(**self.get_scheduled_batch_job_progress(job))
 
 
 @strawberry.type

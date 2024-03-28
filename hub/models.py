@@ -1,10 +1,12 @@
 import asyncio
+from enum import Enum
 import hashlib
 import itertools
 import uuid
 from datetime import datetime, timezone
 from typing import List, Optional, TypedDict, Union
 from urllib.parse import urljoin
+import pytz
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -24,7 +26,7 @@ from asgiref.sync import async_to_sync, sync_to_async
 from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
 from polymorphic.models import PolymorphicModel
-from procrastinate.contrib.django.models import ProcrastinateJob
+from procrastinate.contrib.django.models import ProcrastinateJob, ProcrastinateEvent
 from psycopg.errors import UniqueViolation
 from pyairtable import Api as AirtableAPI
 from pyairtable import Base as AirtableBase
@@ -48,7 +50,6 @@ from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
 from utils.py import batched, ensure_list, get
 
 User = get_user_model()
-
 
 class Organisation(models.Model):
     slug = models.SlugField(max_length=100, unique=True)
@@ -939,13 +940,89 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             args__external_data_source_id=str(self.id)
         ).order_by("-scheduled_at")
 
-    def get_active_import_job(self):
-        active_import_job = (
+    def get_scheduled_parent_job(self, filter: dict):
+        # Find any of this source's jobs that are live, with a request_id which signals a parent job
+        some_active_batch_job_for_this_source = (
             self.event_log_queryset()
-            .filter(task_name__contains="hub.tasks.import", status="doing")
+            .filter(
+                **filter,
+                status__in=["todo", "doing"],
+                args__request_id__isnull=False
+            )
             .first()
         )
-        return active_import_job
+        if some_active_batch_job_for_this_source is None:
+            return None
+        request_id = some_active_batch_job_for_this_source.args.get("request_id", None)
+        # Now find the oldest, first job with that request_id
+        original_job = self.event_log_queryset().filter(args__request_id=request_id).order_by('id').first()
+        return original_job
+
+    def get_scheduled_import_job(self):
+        return self.get_scheduled_parent_job(dict(
+            task_name__contains="hub.tasks.import"
+        ))
+
+    def get_scheduled_update_job(self):
+        return self.get_scheduled_parent_job(dict(
+            task_name__contains="hub.tasks.refresh"
+        ))
+    
+    def get_scheduled_batch_job_progress(self, parent_job: ProcrastinateJob):
+        request_id = parent_job.args.get("request_id")
+
+        if request_id is None:
+            return None
+
+        jobs = self.event_log_queryset().filter(args__request_id=request_id).all()
+
+        total = 2
+        statuses = dict()
+
+        for job in jobs:
+            job_count = len(job.args.get("member_ids", []))
+            total += job_count
+            if statuses.get(job.status, None) is not None:
+                statuses[job.status] += job_count
+            else:
+                statuses[job.status] = job_count
+
+        done = (
+            int(
+                statuses.get("succeeded", 0)
+                + statuses.get("failed", 0)
+                + statuses.get("doing", 0)
+            )
+            + 1
+        )
+        remaining = total - done
+        time_started = (
+            ProcrastinateEvent.objects.filter(
+                job_id=parent_job.id
+            )
+            .order_by("at")
+            .first()
+            .at.replace(tzinfo=pytz.utc)
+        )
+        time_so_far = datetime.now(pytz.utc) - time_started
+        duration_per_record = time_so_far / done
+        time_remaining = duration_per_record * remaining
+        estimated_finish_time = datetime.now() + time_remaining
+
+        return dict(
+            status="todo" if parent_job.status == "todo" else "doing",
+            id=request_id,
+            started_at=time_started,
+            estimated_seconds_remaining=time_remaining,
+            estimated_finish_time=estimated_finish_time,
+            seconds_per_record=duration_per_record.seconds,
+            total=total - 2,
+            done=done - 1,
+            remaining=remaining - 1,
+            succeeded=statuses.get("succeeded", 0),
+            failed=statuses.get("failed", 0),
+            doing=statuses.get("doing", 0),
+        )
 
     def get_update_mapping(self) -> list[UpdateMapping]:
         return ensure_list(self.update_mapping)
