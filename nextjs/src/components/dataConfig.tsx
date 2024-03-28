@@ -109,12 +109,12 @@ export default function DataConfigPanel() {
         <div className="flex flex-col gap-4 mb-4 py-2 border-t border-meepGray-700 ">
           <span className="label mb-2 text-labelLg">Toggle enhancement data</span>
           <div className="text-labelMain"> Mapped data sources</div>
+          {/* // TODO map through these rather than hard code */}
           <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
             <Switch
               checked={displayOptions.showMPs}
               onCheckedChange={toggleMps}
             />Members of Parliament
-
           </div>
           <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
             <Switch
