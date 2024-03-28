@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import strawberry
 import strawberry_django
@@ -48,6 +48,8 @@ class Query(UserQueries):
     map_reports: List[model_types.MapReport] = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
+    area: Optional[model_types.Area] = model_types.area_by_gss
+    dataSet: Optional[model_types.DataSet] = model_types.dataset_by_name
 
     @strawberry.field
     def test_airtable_source(

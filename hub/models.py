@@ -442,7 +442,11 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
     unit_distribution = models.TextField(null=True, choices=UNIT_DISTRIBUTION_CHOICES)
     areas_available = models.ManyToManyField("AreaType")
     external_data_source = models.ForeignKey(
-        "ExternalDataSource", on_delete=models.CASCADE, null=True, blank=True
+        "ExternalDataSource",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="data_sets",
     )
 
     def __str__(self):
@@ -492,7 +496,9 @@ class AreaType(models.Model):
 
 
 class DataType(TypeMixin, ShaderMixin, models.Model):
-    data_set = models.ForeignKey(DataSet, on_delete=models.CASCADE)
+    data_set = models.ForeignKey(
+        DataSet, on_delete=models.CASCADE, related_name="data_types"
+    )
     name = models.CharField(max_length=100)
     data_type = models.CharField(max_length=20, choices=TypeMixin.TYPE_CHOICES)
     last_update = models.DateTimeField(auto_now=True)
@@ -502,7 +508,9 @@ class DataType(TypeMixin, ShaderMixin, models.Model):
     label = models.CharField(max_length=200, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     order = models.IntegerField(blank=True, null=True)
-    area_type = models.ForeignKey(AreaType, on_delete=models.CASCADE, null=True)
+    area_type = models.ForeignKey(
+        AreaType, on_delete=models.CASCADE, null=True, related_name="data_types"
+    )
     auto_converted = models.BooleanField(
         default=False,
         help_text="True if this has been auto converted from an area with overlapping geometry",
@@ -657,9 +665,35 @@ class CommonData(models.Model):
 
 
 class GenericData(CommonData):
+    last_update = models.DateTimeField(auto_now=True)
     point = PointField(srid=4326, blank=True, null=True)
     polygon = MultiPolygonField(srid=4326, blank=True, null=True)
     postcode_data = JSONField(blank=True, null=True)
+    postcode = models.CharField(max_length=10, blank=True, null=True)
+    first_name = models.CharField(max_length=300, blank=True, null=True)
+    last_name = models.CharField(max_length=300, blank=True, null=True)
+    full_name = models.CharField(max_length=300, blank=True, null=True)
+    email = models.EmailField(max_length=300, blank=True, null=True)
+    phone = models.CharField(max_length=100, blank=True, null=True)
+    address = models.CharField(max_length=1000, blank=True, null=True)
+
+    def __str__(self):
+        if self.name:
+            return self.name
+        return self.data
+
+    @property
+    def name(self) -> Optional[str]:
+        if self.full_name:
+            return self.full_name
+        elif self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        elif self.first_name:
+            return self.first_name
+        elif self.last_name:
+            return self.last_name
+
+        return None
 
     def get_postcode_data(self) -> Optional[PostcodesIOResult]:
         if self.postcode_data is None:
@@ -672,7 +706,9 @@ class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
     gss = models.CharField(max_length=30)
     name = models.CharField(max_length=200)
-    area_type = models.ForeignKey(AreaType, on_delete=models.CASCADE)
+    area_type = models.ForeignKey(
+        AreaType, on_delete=models.CASCADE, related_name="areas"
+    )
     geometry = models.TextField(blank=True, null=True)
     polygon = MultiPolygonField(srid=4326, blank=True, null=True)
     point = PointField(srid=4326, blank=True, null=True)
@@ -717,6 +753,17 @@ class Area(models.Model):
 
         return area
 
+    def fit_bounds(self):
+        """
+        Useful for mapbox's fitBounds method
+        """
+        if self.polygon:
+            bounds_tuple = self.polygon.extent
+            return [
+                [bounds_tuple[0], bounds_tuple[1]],
+                [bounds_tuple[2], bounds_tuple[3]],
+            ]
+
     class Meta:
         unique_together = ["gss", "area_type"]
 
@@ -733,7 +780,7 @@ class AreaOverlap(models.Model):
 
 
 class AreaData(CommonData):
-    area = models.ForeignKey(Area, on_delete=models.CASCADE)
+    area = models.ForeignKey(Area, on_delete=models.CASCADE, related_name="data")
 
 
 class Person(models.Model):
@@ -835,6 +882,34 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     )
     geography_column = models.CharField(max_length=250, blank=True, null=True)
 
+    # Useful for explicit querying and interacting with members in the UI
+    postcode_field = models.CharField(max_length=250, blank=True, null=True)
+    first_name_field = models.CharField(max_length=250, blank=True, null=True)
+    last_name_field = models.CharField(max_length=250, blank=True, null=True)
+    full_name_field = models.CharField(max_length=250, blank=True, null=True)
+    email_field = models.CharField(max_length=250, blank=True, null=True)
+    phone_field = models.CharField(max_length=250, blank=True, null=True)
+    address_field = models.CharField(max_length=250, blank=True, null=True)
+
+    import_fields = [
+        "postcode_field",
+        "first_name_field",
+        "last_name_field",
+        "full_name_field",
+        "email_field",
+        "phone_field",
+        "address_field",
+    ]
+
+    def save(self, *args, **kwargs):
+        # Always keep these two in sync
+        if (
+            self.geography_column is not None
+            and self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE
+        ):
+            self.postcode_field = self.geography_column
+        super().save(*args, **kwargs)
+
     class FieldDefinition(TypedDict):
         value: str
         label: Optional[str]
@@ -892,6 +967,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         return None
 
+    def record_url_template(self) -> Optional[str]:
+        """
+        Get the URL template for a record in the remote system.
+        """
+        return None
+
     def remote_url(self) -> Optional[str]:
         """
         Get the URL of the data source in the remote system.
@@ -945,6 +1026,19 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         data = await self.fetch_all()
 
+        def get_update_data(record):
+            update_data = {
+                "json": self.get_record_dict(record),
+            }
+
+            for field in self.import_fields:
+                if getattr(self, field, None) is not None:
+                    update_data[field.removesuffix("_field")] = self.get_record_field(
+                        record, getattr(self, field)
+                    )
+
+            return update_data
+
         if (
             self.geography_column
             and self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE
@@ -952,26 +1046,29 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             loaders = await self.get_loaders()
 
             async def create_import_record(record):
+                structured_data = get_update_data(record)
                 postcode_data: PostcodesIOResult = await loaders["postcodesIO"].load(
                     self.get_record_field(record, self.geography_column)
                 )
-                data, created = await GenericData.objects.aupdate_or_create(
+                update_data = {
+                    **structured_data,
+                    "postcode_data": postcode_data,
+                    "point": Point(
+                        postcode_data["longitude"],
+                        postcode_data["latitude"],
+                    )
+                    if (
+                        postcode_data is not None
+                        and "latitude" in postcode_data
+                        and "longitude" in postcode_data
+                    )
+                    else None,
+                }
+
+                await GenericData.objects.aupdate_or_create(
                     data_type=data_type,
                     data=self.get_record_id(record),
-                    defaults={
-                        "json": self.get_record_dict(record),
-                        "postcode_data": postcode_data,
-                        "point": Point(
-                            postcode_data["longitude"],
-                            postcode_data["latitude"],
-                        )
-                        if (
-                            postcode_data is not None
-                            and "latitude" in postcode_data
-                            and "longitude" in postcode_data
-                        )
-                        else None,
-                    },
+                    defaults=update_data,
                 )
 
             # TODO: batch this up
@@ -981,10 +1078,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             # TODO: Re-implement this data as `AreaData`, linking each datum to an Area/AreaType as per `self.geography_column` and `self.geography_column_type`.
             # This will require importing other AreaTypes like admin_district, Ward
             for record in data:
+                update_data = get_update_data(record)
                 data, created = await GenericData.objects.aupdate_or_create(
                     data_type=data_type,
                     data=self.get_record_id(record),
-                    defaults={"json": self.get_record_dict(record)},
+                    defaults=update_data,
                 )
 
     async def fetch_one(self, member_id: str):
@@ -1419,6 +1517,9 @@ class AirtableSource(ExternalDataSource):
 
     def remote_name(self):
         return self.schema.name
+
+    def record_url_template(self):
+        return f"https://airtable.com/{self.base_id}/{self.table_id}/{{record_id}}"
 
     async def fetch_one(self, member_id):
         record = self.table.get(member_id)
