@@ -253,7 +253,7 @@ export default function InspectExternalDataSource({
                     <LoadingIcon size={"18"} />
                     <span>{
                       source.updateProgress?.status === ProcrastinateJobStatus.Doing
-                        ? "Importing..."
+                        ? "Updating..."
                         : "Scheduled"
                     }</span>
                   </span>}
