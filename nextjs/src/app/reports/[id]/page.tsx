@@ -40,7 +40,7 @@ import spaceCase from 'to-space-case'
 import { toastPromise } from "@/lib/toast";
 import { MAP_REPORT_LAYER_ANALYTICS, ReportMap, selectedConstituencyAtom } from "@/components/report/ReportMap";
 import { MAP_REPORT_FRAGMENT, isConstituencyPanelOpenAtom, isDataConfigOpenAtom } from "./lib";
-import { ReportContext } from "./context";
+import { DisplayOptionsType, ReportContext } from "./context";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import { contentEditableMutation } from "@/lib/html";
 import { Provider as JotaiProvider, atom, useAtom } from "jotai";
@@ -55,22 +55,35 @@ type Params = {
 export default function Page({ params: { id } }: { params: Params }) {
   const client = useApolloClient();
   const router = useRouter();
+
+  const [displayOptions, setDisplayOptions] = useState<DisplayOptionsType>({
+    showElectionData: false,
+    showMPs: false,
+  });
   const report = useQuery<GetMapReportQuery, GetMapReportQueryVariables>(GET_MAP_REPORT, {
     variables: { id },
   });
-  const [showElectionData, setShowElectionData] = useState(false);
+
+  const updateDisplayOptions = (options: Partial<DisplayOptionsType>) => {
+    setDisplayOptions((prevOptions: any) => ({
+      ...prevOptions,
+      ...options,
+    }));
+  };
 
   return (
     <MapProvider>
       <JotaiProvider key={id}>
-        <ReportContext.Provider value={{
-          id,
-          report,
-          updateReport: updateMutation,
-          deleteReport: del,
-          showElectionData,
-          setShowElectionData
-        }}>
+        <ReportContext.Provider
+          value={{
+            id,
+            report,
+            updateReport: updateMutation,
+            deleteReport: del,
+            displayOptions,
+            setDisplayOptions: updateDisplayOptions,
+          }}
+        >
           <ReportPage />
         </ReportContext.Provider>
       </JotaiProvider>

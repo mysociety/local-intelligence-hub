@@ -174,7 +174,8 @@ export function MemberElectoralInsights({
     // First party votes
     electionStats?.firstPartyResult.votes || 0,
   )
-  const { showElectionData } = useReportContext();
+  const { displayOptions } = useReportContext();
+
   return (
     <section className='border border-meepGray-500 rounded relative p-2'>
       <div className={twMerge('absolute -top-2 left-2 px-1 text-meepGray-400 uppercase text-xs inline-flex flex-row items-center gap-1',
@@ -231,7 +232,7 @@ export function MemberElectoralInsights({
         </article>
         {electionStats && (
           <>
-            {showElectionData && (
+            {displayOptions.showElectionData && (
               <article className='relative z-10 space-y-1'>
                 <div className='text-xs'>
                   {format(",")(electionStats?.majority)} winning margin in {getYear(new Date(electionStats?.date))}
@@ -268,10 +269,15 @@ export function OverlapIcon() {
 }
 
 export function Person({ img, name, subtitle }: { img?: string, name: string, subtitle?: string }) {
+  const { displayOptions } = useReportContext();
+
+  if (!displayOptions.showMPs) {
+    return null;
+  }
+
   return (
     <div className='flex flex-row items-center gap-2'>
       {!!img && (
-        // <Image src={img} alt={name} width={41} height={41} className='rounded-full' />
         <img
           src={new URL(img, process.env.NEXT_PUBLIC_BACKEND_BASE_URL).toString()}
           alt={name} width={41} height={41} className='rounded-full'
@@ -282,7 +288,7 @@ export function Person({ img, name, subtitle }: { img?: string, name: string, su
         {!!subtitle && <div className='text-meepGray-400'>{subtitle}</div>}
       </div>
     </div>
-  )
+  );
 }
 
 export const ConstituencyElectionCard = ({

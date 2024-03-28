@@ -38,7 +38,16 @@ export default function DataConfigPanel() {
   const router = useRouter()
   const { id, updateReport } = useContext(ReportContext)
   const client = useApolloClient()
-  const { showElectionData, setShowElectionData } = useReportContext();
+
+  const { displayOptions, setDisplayOptions } = useReportContext();
+
+  const toggleElectionData = () => {
+    setDisplayOptions({ showElectionData: !displayOptions.showElectionData });
+  };
+
+  const toggleMps = () => {
+    setDisplayOptions({ showMPs: !displayOptions.showMPs });
+  };
 
   const layers = useFragment<MapReportLayersSummaryFragment>({
     fragment: MAP_REPORT_LAYERS_SUMMARY,
@@ -48,7 +57,6 @@ export default function DataConfigPanel() {
       id,
     },
   });
-
   return (
     <Card className="p-4 bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700">
       <CardHeader>
@@ -98,11 +106,14 @@ export default function DataConfigPanel() {
           <span className="label mb-2">Toggle enhancement data</span>
           <div> Mapped data sources</div>
           <p>Members of Parliament</p>
-          <Switch />
+          <Switch
+            checked={displayOptions.showMPs}
+            onCheckedChange={toggleMps}
+          />
           <p>2019 Election</p>
           <Switch
-            checked={showElectionData}
-            onCheckedChange={(newCheckedState) => setShowElectionData(newCheckedState)}
+            checked={displayOptions.showElectionData}
+            onCheckedChange={toggleElectionData}
           />
         </div>
       </CardContent>
