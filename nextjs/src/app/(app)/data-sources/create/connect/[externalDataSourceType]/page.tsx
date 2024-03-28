@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ApolloError, FetchResult, gql, useLazyQuery, useMutation } from "@apollo/client";
 import { CreateAutoUpdateFormContext } from "../../NewExternalDataSourceWrapper";
 import { toast } from "sonner";
-import { NonUndefined, SubmitHandler, useFieldArray, useForm } from "react-hook-form";
+import { FieldPath, FormProvider, NonUndefined, SubmitHandler, useFieldArray, useForm } from "react-hook-form";
 import {
   Form,
   FormControl,
@@ -44,6 +44,8 @@ import {
 } from "@/__generated__/graphql";
 import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
+import spaceCase from 'to-space-case'
+import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
 
 const TEST_DATA_SOURCE = gql`
   query TestDataSource($input: TestDataSourceInput!) {
@@ -114,36 +116,42 @@ export default function Page({
 
   const currentSource = testSourceResult.data;
 
-  const [guessedPostcode, setGuessedPostcode] = useState<string | null>(null);
+  const [guessed, setGuessed] = useState<
+    Partial<Record<FieldPath<FormInputs>, string | undefined | null>>
+  >({});
 
-  useEffect(() => {
-    // Guessing the geography column based on current source dynamically
-    let guessedPostcodeColumn = currentSource?.testDataSource?.fieldDefinitions?.find(
-      (field: { label?: string | null; value: string; }) => (
-        field.label?.toLowerCase().replaceAll(' ', '').includes("postcode") ||
-        field.label?.toLowerCase().replaceAll(' ', '').includes("postalcode") ||
-        field.label?.toLowerCase().replaceAll(' ', '').includes("zipcode") ||
-        field.label?.toLowerCase().replaceAll(' ', '').includes("zip") ||
-        field.value?.toLowerCase().replaceAll(' ', '').includes("postcode") ||
-        field.value?.toLowerCase().replaceAll(' ', '').includes("postalcode") ||
-        field.value?.toLowerCase().replaceAll(' ', '').includes("zipcode") ||
-        field.value?.toLowerCase().replaceAll(' ', '').includes("zip")
+  function useGuessedField<T extends keyof FormInputs>(
+    field: T,
+    guessKeys: string[]
+  ) {
+    useEffect(() => {
+      const guess = testSourceResult.data?.testDataSource.fieldDefinitions?.find(
+        (field) => {
+          for (const guessKey of guessKeys) {
+            if (
+              field.label?.toLowerCase().replaceAll(' ', '').includes(guessKey.replaceAll(' ', '')) ||
+              field.value?.toLowerCase().replaceAll(' ', '').includes(guessKey.replaceAll(' ', ''))
+            ) {
+              return true
+            }
+          }
+        }
       )
-    );
+      if (guess?.value) {
+        setGuessed(guesses => ({ ...guesses, [field]: guess?.value }))
+        // @ts-ignore
+        form.setValue(field, guess?.value)
+      }
+    }, [testSourceResult.data?.testDataSource.fieldDefinitions, form, setGuessed])
+  }
 
-    if (guessedPostcodeColumn) {
-      form.setValue('geographyColumn', guessedPostcodeColumn.value);
-      setGuessedPostcode(guessedPostcodeColumn.value)
-      form.setValue('geographyColumnType', PostcodesIoGeographyTypes.Postcode);
-    }
-  }, [currentSource?.testDataSource?.fieldDefinitions, form, setGuessedPostcode]);
-
-  useEffect(() => {
-    // Proposing the name based on the remote name from the current source dynamically
-    if (currentSource?.testDataSource?.remoteName) {
-      form.setValue('name', currentSource?.testDataSource?.remoteName);
-    }
-  }, [currentSource?.testDataSource?.remoteName, form]);
+  useGuessedField('geographyColumn', ["postcode", "postal code", "zip code", "zip"])
+  useGuessedField('emailField', ["email"])
+  useGuessedField('phoneField', ["mobile", "phone"])
+  useGuessedField('addressField', ["street", "line1", "address"])
+  useGuessedField('fullNameField', ["full name", "name"])
+  useGuessedField('firstNameField', ["first name", "given name"])
+  useGuessedField('lastNameField', ["last name", "family name", "surname", "second name"])
 
   async function submitTestConnection(formData: FormInputs) {
     console.log('form data', formData)
@@ -242,6 +250,31 @@ export default function Page({
     );
   }
 
+  function FPreopulatedSelectField ({
+    name,
+    label,
+    placeholder,
+    required = false
+  }: {
+    name: FieldPath<FormInputs>,
+    label?: string,
+    placeholder?: string
+    required?: boolean
+  }) {
+    return (
+      <PreopulatedSelectField
+        name={name}
+        label={label}
+        placeholder={placeholder}
+        fieldDefinitions={testSourceResult.data?.testDataSource.fieldDefinitions}
+        control={form.control}
+        connectionType={testSourceResult.data?.testDataSource.__typename!}
+        guess={guessed[name]}
+        required={required}
+      />
+    )
+  }
+
   if (currentSource?.testDataSource?.healthcheck) {
     return (
       <div className="space-y-6">
@@ -249,124 +282,46 @@ export default function Page({
         <p className="text-meepGray-400 max-w-lg">
           Tell us a bit more about the data you{"'"}re connecting to.
         </p>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(submitCreateSource)}
-            className="space-y-7 max-w-lg"
-          >
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nickname</FormLabel>
-                  <FormControl>
-                    {/* @ts-ignore */}
-                    <Input placeholder="My members list" {...field} required />
-                  </FormControl>
-                  <FormDescription>
-                    This will be visible to your team.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="dataType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Data type</FormLabel>
-                  <FormControl>
-                    {/* @ts-ignore */}
-                    <Select onValueChange={field.onChange} defaultValue={field.value} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="What kind of data is this?" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Type of data source</SelectLabel>
-                          <SelectItem value={DataSourceType.Member}>A list of members</SelectItem>
-                          <SelectItem value={DataSourceType.Other}>Other data</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className='grid grid-cols-2 gap-4 w-full'>
-              {/* Postcode field */}
+        <FormProvider {...form}>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(submitCreateSource)}
+              className="space-y-7 max-w-lg"
+            >
               <FormField
                 control={form.control}
-                name="geographyColumn"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Geography column</FormLabel>
+                    <FormLabel>Nickname</FormLabel>
                     <FormControl>
-                      {
-                        (currentSource?.testDataSource?.fieldDefinitions?.length) ? (
-                          // @ts-ignore
-                          <Select {...field} onValueChange={field.onChange} required>
-                            <SelectTrigger className='pl-1'>
-                              <SelectValue
-                                placeholder={`Choose ${currentSource?.testDataSource?.geographyColumnType || 'geography'} column`}
-                              />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectLabel>Available columns</SelectLabel>
-                                {currentSource?.testDataSource?.fieldDefinitions?.map(
-
-                                  (field: FieldDefinition) => (
-                                    <SelectItem key={field.value} value={field.value}>
-                                      <DataSourceFieldLabel
-                                        connectionType={
-                                          currentSource?.testDataSource?.__typename!
-                                        }
-                                        fieldDefinition={field}
-                                      />
-                                    </SelectItem>
-                                  )
-                                )}
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          // @ts-ignore
-                          <Input {...field} required />
-                        )}
+                      {/* @ts-ignore */}
+                      <Input placeholder="My members list" {...field} required />
                     </FormControl>
-                    {!!guessedPostcode && guessedPostcode === form.watch('geographyColumn') && (
-                      <FormDescription className='text-yellow-500 italic'>
-                        Best guess based on available table columns: {guessedPostcode}
-                      </FormDescription>
-                    )}
+                    <FormDescription>
+                      This will be visible to your team.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
-                name="geographyColumnType"
+                name="dataType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Geography Type</FormLabel>
+                    <FormLabel>Data type</FormLabel>
                     <FormControl>
                       {/* @ts-ignore */}
                       <Select onValueChange={field.onChange} defaultValue={field.value} required>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a geography type" />
+                          <SelectValue placeholder="What kind of data is this?" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            <SelectLabel>Geography column type</SelectLabel>
-                            <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
-                            <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
-                            <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
-                            <SelectItem value={PostcodesIoGeographyTypes.Constituency}>GE2010-2019 Constituency</SelectItem>
-                            <SelectItem value={PostcodesIoGeographyTypes.Constituency_2025}>GE2024 Constituency</SelectItem>
+                            <SelectLabel>Type of data source</SelectLabel>
+                            <SelectItem value={DataSourceType.Member}>A list of members</SelectItem>
+                            <SelectItem value={DataSourceType.Other}>Other data</SelectItem>
                           </SelectGroup>
                         </SelectContent>
                       </Select>
@@ -375,12 +330,53 @@ export default function Page({
                   </FormItem>
                 )}
               />
-            </div>
-            <Button type='submit' variant="reverse" disabled={createSourceResult.loading}>
-              Save connection
-            </Button>
-          </form>
-        </Form>
+              <div className='grid grid-cols-2 gap-4 w-full'>
+                <FPreopulatedSelectField name="geographyColumn" label="geography" required />
+                <FormField
+                  control={form.control}
+                  name="geographyColumnType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Geography Type</FormLabel>
+                      <FormControl>
+                        {/* @ts-ignore */}
+                        <Select onValueChange={field.onChange} defaultValue={field.value} required>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a geography type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectLabel>Geography type</SelectLabel>
+                              <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Constituency}>GE2010-2019 Constituency</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Constituency_2025}>GE2024 Constituency</SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {form.watch('dataType') === DataSourceType.Member && (
+                  <>
+                    <FPreopulatedSelectField name="emailField" />
+                    <FPreopulatedSelectField name="phoneField" />
+                    <FPreopulatedSelectField name="addressField" />
+                    <FPreopulatedSelectField name="fullNameField" />
+                    <FPreopulatedSelectField name="firstNameField" />
+                    <FPreopulatedSelectField name="lastNameField" />
+                  </>
+                )}
+              </div>
+              <Button type='submit' variant="reverse" disabled={createSourceResult.loading}>
+                Save connection
+              </Button>
+            </form>
+          </Form>
+        </FormProvider>
       </div>
     )
   }

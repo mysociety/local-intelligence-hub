@@ -11,6 +11,7 @@ import {
 } from "@/__generated__/graphql";
 import { AutoUpdateCard, DATA_SOURCE_FRAGMENT, TriggerUpdateButton } from "@/components/AutoUpdateCard";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
+import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 
 const GET_UPDATE_CONFIG = gql`
   query AutoUpdateCreationReview($ID: ID!) {
@@ -18,6 +19,7 @@ const GET_UPDATE_CONFIG = gql`
       id
       name
       geographyColumn
+      geographyColumnType
       dataType
       connectionDetails {
         crmType: __typename
@@ -70,16 +72,37 @@ export default function Page({
 
   return (
     <div className="space-y-7">
-      <header>
-        <h1 className="text-hLg">Activate data source</h1>
-        <p className="mt-6 text-meepGray-300 max-w-sm">
-          Your almost there!
-        </p>
-        <ul className="list-disc list-outside pl-4 space-y-3 mt-3">
-          <li className="text-meepGray-300 max-w-sm">Active auto-update webhooks to start updating your data source when the <code className='bg-meepGray-700 rounded-md p-1'>{pageQuery.data?.externalDataSource.geographyColumn}</code> column changes.</li>
-          <li className="text-meepGray-300 max-w-sm">Trigger an update to see the data source in action.</li>
-        </ul>
-      </header>
+      {pageQuery.data?.externalDataSource.geographyColumn ? (
+        <header>
+          <h1 className="text-hLg">Activate data source</h1>
+          <p className="mt-6 text-meepGray-300 max-w-sm">
+            Your almost there!
+          </p>
+          <ul className="list-disc list-outside pl-4 space-y-3 mt-3">
+            <li className="text-meepGray-300 max-w-sm">
+              <span className='align-middle'>
+                Active auto-update webhooks to start updating your data source when the 
+              </span>
+              <DataSourceFieldLabel
+                className='align-middle'
+                label={pageQuery.data?.externalDataSource.geographyColumn}
+                connectionType={pageQuery.data?.externalDataSource.connectionDetails.crmType}
+              />
+              <span className='align-middle'>
+                field changes.
+              </span>
+            </li>
+            <li className="text-meepGray-300 max-w-sm">Trigger an update to see the data source in action.</li>
+          </ul>
+        </header>
+      ) : (
+        <header>
+          <h1 className="text-hLg">You{"'"}re done!</h1>
+          <p className="mt-6 text-meepGray-300 max-w-sm">
+            You can now use this data source.
+          </p>
+        </header>
+      )}
       {pageQuery.loading || !pageQuery.data ? (
         <LoadingIcon />
       ) : (

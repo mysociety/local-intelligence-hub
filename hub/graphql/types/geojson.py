@@ -34,7 +34,6 @@ class FeatureCollection:
 class Feature:
     type: GeoJSONTypes.Feature = GeoJSONTypes.Feature
     id: Optional[str]
-    properties: Optional[JSON]
 
 
 #
@@ -50,6 +49,7 @@ class PointGeometry:
 @strawberry.type
 class PointFeature(Feature):
     geometry: PointGeometry
+    properties: JSON
 
     @classmethod
     def from_geodjango(
@@ -74,6 +74,7 @@ class PolygonGeometry:
 @strawberry.type
 class PolygonFeature(Feature):
     geometry: PolygonGeometry
+    properties: JSON
 
     @classmethod
     def from_geodjango(
@@ -94,10 +95,14 @@ class MultiPolygonGeometry:
     type: GeoJSONTypes.MultiPolygon = GeoJSONTypes.MultiPolygon
     coordinates: JSON
 
+    def __init__(self, coordinates: MultiPolygon):
+        self.coordinates = coordinates.json
+
 
 @strawberry.type
 class MultiPolygonFeature(Feature):
     geometry: MultiPolygonGeometry
+    properties: JSON
 
     @classmethod
     def from_geodjango(

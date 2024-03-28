@@ -1,7 +1,7 @@
 // page.js
 "use client";
 
-import { useEffect, useState, createContext } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import {
   Card,
@@ -18,14 +18,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BarChart3, Layers, MoreVertical } from "lucide-react"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import ReportsConsItem from "@/components/reportsConstituencyItem";
+import { Toggle } from "@/components/ui/toggle"
 import DataConfigPanel from "@/components/dataConfig";
 import { FetchResult, gql, useApolloClient, useQuery } from "@apollo/client";
 import { toast } from "sonner";
-import { DeleteMapReportMutation, DeleteMapReportMutationVariables, GetMapReportQuery, GetMapReportQueryVariables, MapReportInput, UpdateMapReportMutation, UpdateMapReportMutationVariables } from "@/__generated__/graphql";
+import { DeleteMapReportMutation, DeleteMapReportMutationVariables, GetMapReportQuery, GetMapReportQueryVariables, MapReportInput, MapReportLayerAnalyticsQuery, MapReportLayerAnalyticsQueryVariables, UpdateMapReportMutation, UpdateMapReportMutationVariables } from "@/__generated__/graphql";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,17 +33,20 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { buttonVariants } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import spaceCase from 'to-space-case'
 import { toastPromise } from "@/lib/toast";
-import { ReportMap } from "@/components/report/ReportMap";
-import { MAP_REPORT_FRAGMENT } from "./lib";
+import { MAP_REPORT_LAYER_ANALYTICS, ReportMap, selectedConstituencyAtom } from "@/components/report/ReportMap";
+import { MAP_REPORT_FRAGMENT, isConstituencyPanelOpenAtom, isDataConfigOpenAtom } from "./lib";
 import { ReportContext } from "./context";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import { contentEditableMutation } from "@/lib/html";
+import { Provider as JotaiProvider, atom, useAtom } from "jotai";
+import { ConstituenciesPanel } from "./ConstituenciesPanel";
+import { MapProvider } from "react-map-gl";
+import { twMerge } from "tailwind-merge";
 
 type Params = {
   id: string
@@ -53,165 +54,35 @@ type Params = {
 
 export default function Page({ params: { id } }: { params: Params }) {
   const client = useApolloClient();
+  const router = useRouter();
   const report = useQuery<GetMapReportQuery, GetMapReportQueryVariables>(GET_MAP_REPORT, {
     variables: { id },
   });
-  const router = useRouter();
-
-  const [isDataConfigOpen, setDataConfigOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const toggleDataConfig = () => setDataConfigOpen(!isDataConfigOpen);
-
-  const [isConsDataOpen, setConsDataOpen] = useState(false);
-  const toggleConsData = () => setConsDataOpen(!isConsDataOpen);
-
-  if (!report.loading && report.called && !report.data?.mapReport) {
-    return (
-      <main className="absolute w-full h-full">
-        <div className="flex flex-col items-center justify-center w-full h-full">
-          <Card className="p-4 bg-white border-1 border-meepGray-700 text-meepGray-800">
-            <CardHeader>
-              <CardTitle className="text-hMd grow font-IBMPlexSansMedium">
-                Report not found
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                The report you are looking for does not exist.
-              </CardDescription>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-    )
-  }
 
   return (
-    <ReportContext.Provider value={{ 
-      id,
-      update: updateMutation
-    }}>
-      <main className="absolute w-full h-full">
-        <div className='w-full h-full'>
-          <ReportMap />
-        </div>
-        {report.loading && !report.data?.mapReport ? (
-          <div className="absolute w-full h-full inset-0">
-            <div className="flex flex-col items-center justify-center w-full h-full">
-              <LoadingIcon />
-            </div>
-          </div>
-        ) : (
-          <div className="absolute top-5  left-5 right-0 w-0">
-            <div className="flex flex-col items-start gap-4">
-              <Card className="w-[200px] p-4 bg-white border-1 border-meepGray-700 text-meepGray-800">
-                <CardHeader className="flex flex-row items-center mb-4">
-                  <CardTitle
-                    className="text-hMd grow font-IBMPlexSansMedium"
-                    {...contentEditableMutation(updateMutation, "name", "Untitled Report")}
-                  >
-                    {report.data?.mapReport.name}
-                  </CardTitle>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger>
-                      <MoreVertical className='w-3' />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent side="right" align="start">
-                      <DropdownMenuLabel>Report Settings</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>Share</DropdownMenuItem>
-                      <DropdownMenuItem>Invite</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setDeleteOpen(true)}>Delete</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </CardHeader>
-                <CardContent>
-                  <ToggleGroup type="multiple" variant="outline">
-                    {/* @ts-ignore */}
-                    <ToggleGroupItem value="a" type="outline" className="p-3 flex gap-2" onClick={toggleDataConfig}>
-                      <Layers className="w-4" /> Data Configuration
-                    </ToggleGroupItem>
-                    {/* @ts-ignore */}
-                    <ToggleGroupItem value="b" type="outline" className="p-3 flex gap-2" onClick={toggleConsData}>
-                      <BarChart3 className="w-4" /> Constituency Data
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </CardContent>
-              </Card>
-              {isDataConfigOpen && (
-                <DataConfigPanel />
-              )}
-              {isConsDataOpen && (
-                <Card className="absolute right-5 p-4 bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700">
-                  <CardHeader>
-                    <Tabs defaultValue="all-constituencies" className="w-[300px]">
-                      <TabsList>
-                        <TabsTrigger value="all-constituencies">All Constituencies</TabsTrigger>
-                        <TabsTrigger value="selected-cons-1">Bury North</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="all-constituencies" className="flex flex-col gap-4">
-                        <ReportsConsItem
-                          consName="Coventry South"
-                          firstIn2019="Labour"
-                          secondIn2019="Conservative"
-                          mpName="Zarah Sultana"
-                          mpImgUrl="https://www.localintelligencehub.com/media/person/mp_4786_7qDOwxw.jpeg"
-                        />
-                        <ReportsConsItem
-                          consName="Bury North"
-                          firstIn2019="Conservative"
-                          secondIn2019="Labour"
-                          mpName="James Daly"
-                          mpImgUrl="https://www.localintelligencehub.com/media/person/mp_4854_BxRRx9j.jpeg"
-                        />
-                        <ReportsConsItem
-                          consName="Camberwell and Peckham"
-                          firstIn2019="Labour"
-                          secondIn2019="Conservative"
-                          mpName="Harriet Harman"
-                          mpImgUrl="https://www.localintelligencehub.com/media/person/mp_150_rgMOVq7.jpeg"
-                        />
-                      </TabsContent>
-                      <TabsContent value="selected-cons-1">Change your password here.</TabsContent>
-                    </Tabs>
-                  </CardHeader>
-                </Card>
-              )}
-            </div>
-          </div>
-        )}
-      </main>
-      <AlertDialog open={deleteOpen} onOpenChange={() => setDeleteOpen(false)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription className="text-base">
-              This action cannot be undone. This will permanently delete
-              this report.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              className={buttonVariants({ variant: "outline" })}
-            >
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                del();
-              }}
-              className={buttonVariants({ variant: "destructive" })}
-            >
-              Confirm delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </ReportContext.Provider>
-  );
+    <MapProvider>
+      <JotaiProvider key={id}>
+        <ReportContext.Provider value={{ 
+          id,
+          report,
+          updateReport: updateMutation,
+          deleteReport: del
+        }}>
+          <ReportPage />
+        </ReportContext.Provider>
+      </JotaiProvider>
+    </MapProvider>
+  )
 
   function refreshStatistics () {
-    toastPromise(report.refetch(),
+    toastPromise(
+      client.refetchQueries({
+        include: [
+          // Queries that involve member data
+          "MapReportLayerAnalytics",
+          "GetConstituencyData"
+        ],
+      }),
       {
         loading: "Refreshing statistics...",
         success: "Statistics updated",
@@ -234,7 +105,7 @@ export default function Page({ params: { id } }: { params: Params }) {
       loading: "Saving...",
       success: (d) => {
         if (!d.errors && d.data) {
-          if (input.layers) {
+          if (input.layers?.length) {
             // If layers changed, that means
             // all the member numbers will have changed too.
             refreshStatistics()
@@ -269,6 +140,171 @@ export default function Page({ params: { id } }: { params: Params }) {
       error: `Couldn't delete report`,
     });
   }
+}
+
+function ReportPage() {
+  const { report, updateReport, deleteReport } = useContext(ReportContext);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isDataConfigOpen, setDataConfigOpen] = useAtom(isDataConfigOpenAtom);
+  const toggleDataConfig = () => setDataConfigOpen(b => !b);
+  const [isConstituencyPanelOpen, setConstituencyPanelOpen] = useAtom(isConstituencyPanelOpenAtom);
+  const [selectedConstituency, setSelectedConstituency] = useAtom(selectedConstituencyAtom);
+  const toggleConsData = () => {
+    setConstituencyPanelOpen(b => {
+      if (b) {
+        setSelectedConstituency(null)
+      }
+      return !b
+    })
+  }
+
+  useEffect(() => {
+    // @ts-ignore
+    if (!report?.data?.mapReport?.layers?.length) {
+      return setConstituencyPanelOpen(false)
+    }
+  }, [selectedConstituency, report])
+
+  if (!report?.loading && report?.called && !report?.data?.mapReport) {
+    return (
+      <main className="absolute w-full h-full">
+        <div className="flex flex-col items-center justify-center w-full h-full">
+          <Card className="p-4 bg-white border-1 border-meepGray-700 text-meepGray-800">
+            <CardHeader>
+              <CardTitle className="text-hMd grow font-IBMPlexSansMedium">
+                Report not found
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                The report you are looking for does not exist.
+              </CardDescription>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    )
+  }
+
+  const toggles = [
+    {
+      icon: Layers,
+      label: "Map layers",
+      enabled: isDataConfigOpen,
+      toggle: toggleDataConfig
+    },
+    {
+      icon: BarChart3,
+      label: "Constituency data",
+      enabled: isConstituencyPanelOpen,
+      toggle: toggleConsData
+    }
+  ]
+
+  return (
+    <>
+      <main className="absolute w-full h-full flex flex-row pointer-events-none">
+        <div className='w-full h-full pointer-events-auto'>
+          <ReportMap />
+        </div>
+        {report?.loading && !report?.data?.mapReport && (
+          <div className="absolute w-full h-full inset-0">
+            <div className="flex flex-col items-center justify-center w-full h-full">
+              <LoadingIcon />
+            </div>
+          </div>
+        )}
+        {/* Layer card */}
+        <aside className="absolute top-5 left-5 right-0 w-0 pointer-events-auto">
+          <div className="flex flex-col items-start gap-4">
+            <Card className="w-[200px] p-3 bg-white border-1 border-meepGray-700 text-meepGray-800">
+              <CardHeader className="flex flex-row items-center mb-4">
+                {report?.loading && !report?.data?.mapReport ? (
+                  <CardTitle className="text-hMd grow font-IBMPlexSansMedium">
+                    Loading...
+                  </CardTitle>
+                ) : (
+                  <>
+                    <CardTitle
+                      id="nickname"
+                      className="text-hMd grow font-IBMPlexSansMedium"
+                      {...contentEditableMutation(updateReport, "name", "Untitled Report")}
+                    >
+                      {report?.data?.mapReport.name}
+                    </CardTitle>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger>
+                        <MoreVertical className='w-3' />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent side="right" align="start">
+                        <DropdownMenuItem onClick={() => setDeleteOpen(true)}>Delete</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
+                )}
+              </CardHeader>
+            {report?.data?.mapReport && (
+              <CardContent className='grid grid-cols-1 gap-2'>
+                {toggles.map(({ icon: Icon, label, enabled, toggle }) => (
+                  <div
+                    key={label}
+                    className='hover:bg-meepGray-100 px-0 flex flex-row gap-2 items-center overflow-hidden text-nowrap text-ellipsis cursor-pointer'
+                    onClick={toggle}>
+                    <div className={twMerge(
+                      'relative rounded inline-block h-9 w-9',
+                      enabled ? "bg-meepGray-800" : "bg-meepGray-100"
+                    )}>
+                      <Icon className={twMerge(
+                        "w-4 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2", 
+                        enabled && "text-white"
+                      )} />
+                    </div>
+                    {label}
+                  </div>
+                ))}
+              </CardContent>
+            )}
+            </Card>
+            {/* Data config card */}
+            {report?.data?.mapReport && isDataConfigOpen && (
+              <DataConfigPanel />
+            )}
+          </div>
+        </aside>
+        {report?.data?.mapReport && isConstituencyPanelOpen && (
+          <aside className="absolute top-0 right-0 p-5 w-[400px] h-full">
+            <ConstituenciesPanel />
+          </aside>
+        )}
+      </main>
+      <AlertDialog open={deleteOpen} onOpenChange={() => setDeleteOpen(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              This action cannot be undone. This will permanently delete
+              this report.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              className={buttonVariants({ variant: "outline" })}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                deleteReport();
+              }}
+              className={buttonVariants({ variant: "destructive" })}
+            >
+              Confirm delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
 }
 
 const GET_MAP_REPORT = gql`

@@ -153,6 +153,13 @@ class ExternalDataSourceInput:
     organisation: auto
     geography_column: auto
     geography_column_type: auto
+    postcode_field: auto
+    first_name_field: auto
+    last_name_field: auto
+    full_name_field: auto
+    email_field: auto
+    phone_field: auto
+    address_field: auto
     auto_update_enabled: auto
     update_mapping: Optional[List[UpdateMappingItemInput]]
     auto_import_enabled: auto

@@ -11,6 +11,7 @@ export function contentEditableMutation<
 ) {
   return {
     contentEditable: true,
+    suppressContentEditableWarning: true,
     onBlur: (d: FocusEvent<HTMLElement, Element>) => {
       const el = d.currentTarget
       if (!el) return

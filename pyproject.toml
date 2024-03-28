@@ -5,7 +5,7 @@ description = ""
 authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
+python = ">=3.10,<3.13"
 Django = "4.2.10"
 django-bootstrap5 = "^22.1"
 django-environ = "^0.9.0"
@@ -37,6 +37,10 @@ strawberry-graphql = {extras = ["asgi"], version = "^0.220.0"}
 pandas = "^2.2.1"
 django-choices-field = "^2.3.0"
 httpx = "^0.27.0"
+strawberry-django-dataloaders = "^0.2.0"
+django-debug-toolbar = "^4.3.0"
+sentry-sdk = "^1.43.0"
+django-minio-storage = "^0.5.7"
 mailchimp3 = "^3.0.21"
 
 [tool.poetry.dev-dependencies]
