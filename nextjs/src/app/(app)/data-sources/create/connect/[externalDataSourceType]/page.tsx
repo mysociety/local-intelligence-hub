@@ -39,7 +39,6 @@ import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
 import { triggerAnalyticsEvent } from "@/app/utils/posthogutils";
 
-
 const TEST_SOURCE = gql`
   query TestSourceConnection(
     $apiKey: String!
@@ -83,7 +82,6 @@ export default function Page({
   const router = useRouter();
   const context = useContext(CreateAutoUpdateFormContext);
 
-
   useEffect(() => {
     context.setStep(2)
   }, [context])
@@ -112,7 +110,7 @@ export default function Page({
   });
 
   const [guessedPostcode, setGuessedPostcode] = useState<string | null>(null);
-  useEffect(function guessPostcodeColumn() {
+  useEffect(function guessPostcodeColumn () {
     let guessedPostcodeColumn = testSourceResult.data?.testSourceConnection.fieldDefinitions?.find(
       (field) => (
         field.label?.toLowerCase().replaceAll(' ', '').includes("postcode") ||
@@ -138,7 +136,7 @@ export default function Page({
   }, [guessedPostcode, form])
 
   // Propose name based on remoteName
-  useEffect(function proposeName() {
+  useEffect(function proposeName () {
     if (testSourceResult.data?.testSourceConnection.remoteName) {
       form.setValue('name', testSourceResult.data?.testSourceConnection.remoteName)
     }
@@ -360,7 +358,7 @@ export default function Page({
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+            />
             </div>
             <Button type='submit' variant="reverse" disabled={createSourceResult.loading}>
               Save connection
