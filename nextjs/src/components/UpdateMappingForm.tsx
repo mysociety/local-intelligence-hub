@@ -6,7 +6,7 @@ import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { DataSourceType, EnrichmentLayersQuery, ExternalDataSourceInput, FieldDefinition, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
 import { Input } from "@/components/ui/input";
 import { SourcePathSelector } from "@/components/SelectSourceData";
-import { ArrowRight, X, XCircle } from "lucide-react";
+import { ArrowRight, Plus, X, XCircle } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -55,7 +55,7 @@ export function UpdateMappingForm({
   fieldDefinitions,
   crmType,
   allowMapping = true,
-  saveButtonLabel = "Update",
+  saveButtonLabel = "Save settings",
 }: {
   onSubmit: (
     data: ExternalDataSourceInput,
@@ -179,14 +179,15 @@ export function UpdateMappingForm({
                 <table className='w-full'>
                   {fields.map((field, index) => (
                     <tr key={field.id} className='flex flex-row'>
-                      <td className="w-1/2 grow-0  flex flex-row items-center justify-stretch">
+                      <td className="w-1/2 grow-0 flex flex-row items-center justify-stretch gap-1">
                         <Button
                           className="flex-shrink"
                           onClick={() => {
                             remove(index);
                           }}
+                          variant='outline'
                         >
-                          <X />
+                          <X className='w-3 h-3' />
                         </Button>
                         <SourcePathSelector
                           focusOnMount={form.watch(`updateMapping.${index}.source`) === "?"}
@@ -204,7 +205,7 @@ export function UpdateMappingForm({
                           }}
                         />
                       </td>
-                      <td className="w-1/2 shrink-0 flex flex-row items-center justify-stretch">
+                      <td className="w-1/2 shrink-0 flex flex-row items-center justify-stretch gap-1">
                         <ArrowRight className="flex-shrink-0" /> 
                         <FormField
                           control={form.control}
@@ -250,7 +251,6 @@ export function UpdateMappingForm({
                 </table>
                 <Button
                   type="button"
-                  className='w-full'
                   onClick={() => {
                     append({
                       source: "?",
@@ -258,8 +258,11 @@ export function UpdateMappingForm({
                       destinationColumn: "",
                     });
                   }}
+                  variant='outline'
+                  size='sm'
+                  className='my-2'
                 >
-                  Add field
+                  <Plus className='w-4 h-4' /> Add data to another field in your CRM
                 </Button>
               </>
             )}

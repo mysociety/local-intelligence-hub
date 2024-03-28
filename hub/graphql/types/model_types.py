@@ -1,5 +1,6 @@
 import itertools
 from datetime import datetime
+from enum import Enum
 from typing import List, Optional, Union
 
 from django.db.models import Q
@@ -27,12 +28,22 @@ from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
 
 
+# Ideally we'd just import this from the library (procrastinate.jobs.Status) but
+# strawberry doesn't like subclassed Enums for some reason.
+@strawberry.enum
+class ProcrastinateJobStatus(Enum):
+    todo = "todo"  #: The job is waiting in a queue
+    doing = "doing"  #: A worker is running the job
+    succeeded = "succeeded"  #: The job ended successfully
+    failed = "failed"  #: The job ended with an error
+
+
 @strawberry_django.filters.filter(
     procrastinate.contrib.django.models.ProcrastinateJob, lookups=True
 )
 class QueueFilter:
     id: auto
-    status: auto
+    status: ProcrastinateJobStatus
     queue_name: auto
     task_name: auto
     scheduled_at: auto
@@ -54,7 +65,7 @@ class QueueJob:
     task_name: auto
     lock: auto
     args: auto
-    status: auto
+    status: ProcrastinateJobStatus
     scheduled_at: auto
     attempts: auto
     queueing_lock: auto
@@ -625,6 +636,22 @@ class Analytics:
         return res[0]
 
 
+@strawberry.type
+class BatchJobProgress:
+    status: ProcrastinateJobStatus
+    id: strawberry.scalars.ID
+    started_at: datetime
+    total: int
+    succeeded: int
+    doing: int
+    failed: int
+    estimated_seconds_remaining: float
+    estimated_finish_time: datetime
+    seconds_per_record: float
+    done: int
+    remaining: int
+
+
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class BaseDataSource(Analytics):
     id: auto
@@ -647,14 +674,6 @@ class BaseDataSource(Analytics):
     organisation_id: str = strawberry_django.field(
         resolver=lambda self: self.organisation_id
     )
-
-    @strawberry_django.field
-    def is_importing(self: models.ExternalDataSource, info: Info) -> bool:
-        return (
-            self.event_log_queryset()
-            .filter(status="doing", task_name="hub.tasks.import_all")
-            .exists()
-        )
 
     @strawberry_django.field
     def imported_data_geojson_points(
@@ -685,6 +704,61 @@ class BaseDataSource(Analytics):
             if generic_datum.point is not None
         ]
 
+    @strawberry_django.field
+    def imported_data_geojson_point(
+        self: models.ExternalDataSource, info: Info, id: str
+    ) -> MapReportMemberFeature | None:
+        user = get_current_user(info)
+        can_display_points = self.organisation.members.filter(user=user).exists()
+        can_display_details = can_display_points
+        if not can_display_points:
+            permission = models.SharingPermission.objects.filter(
+                external_data_source=self, organisation__members__user=user
+            ).first()
+            if permission is None:
+                return None
+            if not permission.visibility_record_coordinates:
+                return None
+            if permission.visibility_record_details:
+                can_display_details = True
+
+        datum = self.get_import_data().filter(data=id).first()
+        if datum is None or datum.point is None:
+            return None
+        return MapReportMemberFeature.from_geodjango(
+            point=datum.point,
+            id=datum.data,
+            properties=datum if can_display_details else None,
+        )
+
+    @strawberry_django.field
+    def is_import_scheduled(self: models.ExternalDataSource, info: Info) -> bool:
+        job = self.get_scheduled_import_job()
+        return job is not None
+
+    @strawberry_django.field
+    def import_progress(
+        self: models.ExternalDataSource, info: Info
+    ) -> Optional[BatchJobProgress]:
+        job = self.get_scheduled_import_job()
+        if job is None:
+            return None
+        return BatchJobProgress(**self.get_scheduled_batch_job_progress(job))
+
+    @strawberry_django.field
+    def is_update_scheduled(self: models.ExternalDataSource, info: Info) -> bool:
+        job = self.get_scheduled_update_job()
+        return job is not None
+
+    @strawberry_django.field
+    def update_progress(
+        self: models.ExternalDataSource, info: Info
+    ) -> Optional[BatchJobProgress]:
+        job = self.get_scheduled_update_job()
+        if job is None:
+            return None
+        return BatchJobProgress(**self.get_scheduled_batch_job_progress(job))
+
 
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class SharedDataSource(BaseDataSource):
@@ -705,7 +779,6 @@ class SharedDataSource(BaseDataSource):
                 ).values_list("external_data_source_id", flat=True)
             )
         )
-
 
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class ExternalDataSource(BaseDataSource):
@@ -744,6 +817,13 @@ class ExternalDataSource(BaseDataSource):
             # allow querying your orgs' data sources
             Q(organisation__members__user=user.id)
         )
+    
+    @strawberry_django.field
+    def last_job(self: models.ExternalDataSource, info: Info) -> Optional[QueueJob]:
+        job = procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
+            args__external_data_source_id=str(self.id)
+        ).first()
+        return job
 
     @strawberry_django.field
     def connection_details(
@@ -758,7 +838,11 @@ class ExternalDataSource(BaseDataSource):
 
     @strawberry_django.field
     def webhook_healthcheck(self: models.ExternalDataSource, info) -> bool:
-        return self.webhook_healthcheck()
+        try:
+            return self.webhook_healthcheck()
+        except Exception:
+            # TODO: Return the error message to the UI.
+            return False
 
 
 @strawberry.type

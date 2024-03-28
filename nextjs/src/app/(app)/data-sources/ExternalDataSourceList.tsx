@@ -13,6 +13,7 @@ import { ExternalDataSourceCard } from "@/components/ExternalDataSourceCard";
 const LIST_UPDATE_CONFIGS = gql`
   query ListExternalDataSources {
     myOrganisations {
+      id
       externalDataSources {
         id
         name

@@ -104,7 +104,9 @@ class Mutation:
     disable_auto_update: model_types.ExternalDataSource = (
         mutation_types.disable_auto_update
     )
-    trigger_update: model_types.ExternalDataSource = mutation_types.trigger_update
+    trigger_update: mutation_types.ExternalDataSourceAction = (
+        mutation_types.trigger_update
+    )
     refresh_webhooks: model_types.ExternalDataSource = mutation_types.refresh_webhooks
 
     create_organisation: model_types.Membership = mutation_types.create_organisation
@@ -112,7 +114,7 @@ class Mutation:
         mutation_types.OrganisationInputPartial, extensions=[IsAuthenticated()]
     )
 
-    import_all: model_types.ExternalDataSource = mutation_types.import_all
+    import_all: mutation_types.ExternalDataSourceAction = mutation_types.import_all
 
     create_map_report: model_types.MapReport = mutation_types.create_map_report
     update_map_report: model_types.MapReport = django_mutations.update(

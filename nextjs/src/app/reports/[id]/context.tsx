@@ -8,9 +8,11 @@ export const ReportContext = createContext<{
   id: string,
   updateReport: (data: MapReportInput) => void,
   deleteReport: () => void,
-  report?: QueryResult<GetMapReportQuery, Exact<{ id: string; }>>
+  report?: QueryResult<GetMapReportQuery, Exact<{ id: string; }>>,
+  refreshReportDataQueries: () => void,
 }>({
   id: '?',
   updateReport: () => ({} as any),
-  deleteReport: () => {}
+  deleteReport: () => {},
+  refreshReportDataQueries: () => {},
 })

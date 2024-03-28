@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, List, Optional, TypedDict
 
-from django.db.models import Count, F
+from django.db.models import Count, F, QuerySet
 from django.db.models.manager import BaseManager
 
 if TYPE_CHECKING:
@@ -28,7 +28,9 @@ class Analytics:
             .order_by("-count")
         )
 
-    def imported_data_count_by_constituency(self, gss: str = None) -> List[RegionCount]:
+    def imported_data_count_by_constituency(
+        self, gss: str = None
+    ) -> QuerySet[RegionCount]:
         qs = self.get_analytics_queryset()
 
         if gss:

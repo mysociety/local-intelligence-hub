@@ -1,3 +1,4 @@
+import uuid
 from typing import List, Optional
 
 from django.utils.text import slugify
@@ -11,6 +12,7 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import IsAuthenticated
 
 from hub import models
+from hub.graphql.types import model_types
 
 
 @strawberry.input
@@ -109,11 +111,24 @@ def disable_auto_update(external_data_source_id: str) -> models.ExternalDataSour
     return data_source
 
 
+@strawberry.type
+class ExternalDataSourceAction:
+    id: strawberry.scalars.ID
+    external_data_source: model_types.ExternalDataSource
+
+
 @strawberry.mutation(extensions=[IsAuthenticated()])
-def trigger_update(external_data_source_id: str) -> models.ExternalDataSource:
-    data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
-    data_source.schedule_refresh_all()
-    return data_source
+async def trigger_update(external_data_source_id: str) -> ExternalDataSourceAction:
+    data_source = await models.ExternalDataSource.objects.aget(
+        id=external_data_source_id
+    )
+    # Use this ID to track all jobs against it
+    request_id = str(uuid.uuid4())
+    await data_source.schedule_refresh_all(request_id=request_id)
+    return ExternalDataSourceAction(
+        id=request_id,
+        external_data_source=data_source
+    )
 
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
@@ -181,10 +196,16 @@ def get_or_create_organisation_for_source(info: Info, data: any):
 
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
-def import_all(external_data_source_id: str) -> models.ExternalDataSource:
-    data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
-    data_source.schedule_import_all()
-    return data_source
+async def import_all(external_data_source_id: str) -> ExternalDataSourceAction:
+    data_source = await models.ExternalDataSource.objects.aget(
+        id=external_data_source_id
+    )
+    request_id = str(uuid.uuid4())
+    await data_source.schedule_import_all(request_id=request_id)
+    return ExternalDataSourceAction(
+        id=request_id,
+        external_data_source=data_source
+    )
 
 
 @strawberry_django.input(models.SharingPermission, partial=True)

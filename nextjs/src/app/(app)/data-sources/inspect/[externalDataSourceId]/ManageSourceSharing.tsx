@@ -89,28 +89,27 @@ export function ManageSourceSharing ({
   }
 
   return (
-    <div className='space-y-3 divide-y'>
+    <div className='grid md:grid-cols-2 xl:grid-cols-3 gap-4'>
       {permissions.data?.externalDataSource.sharingPermissions.map((permission, index) => (
-        <Card className='p-4' key={permission.id}>
+        <Card className='p-4 px-5 space-y-4' key={permission.id}>
           <header className='flex flex-row justify-between items-start gap-2'>
             <div className='font-bold text-lg'>Sharing to {permission.organisation.name}</div>
-            <Button variant={'destructive'} onClick={() => {
+            <Button size='sm' variant={'outline'} className='text-destructive hover:bg-destructive' onClick={() => {
               deletePermission(permission.id)
             }}>
               Stop sharing
             </Button>
           </header>
-          <div key={index} className='flex flex-col gap-2 min-h-14'>
-            <div className='flex flex-row gap-1 uppercase font-semibold text-sm text-meepGray-400'>
-              <span>Share settings</span>
-            </div>
-            <div className='flex flex-row gap-1 items-start'>
+          <div key={index} className='flex flex-col gap-3 max-w-lg'>
+            <div className='flex flex-row gap-2 items-start'>
               <Checkbox
                 checked={!!permission.visibilityRecordCoordinates}
                 onCheckedChange={() => {
+                  const nextValue = !permission.visibilityRecordCoordinates
                   mutatePermission({
                     id: permission.id,
-                    visibilityRecordCoordinates: !permission.visibilityRecordCoordinates,
+                    visibilityRecordCoordinates: nextValue,
+                    visibilityRecordDetails: !nextValue ? false : permission.visibilityRecordDetails
                   })
                 }}
                 id={`checkbox-location-${index}`}
@@ -119,30 +118,32 @@ export function ManageSourceSharing ({
                 <span>
                   Precise record locations
                 </span>
-                <p className='text-meepGray-400 text-xs'>
+                <p className='text-meepGray-400 text-sm'>
                   If enabled, pins will be placed on a map for each record. If disabled, only aggregate ward / constituency / region data will be shared.  
                 </p>
               </label>
             </div>
-            <div className='flex flex-row gap-1 items-start'>
-              <Checkbox
-                checked={!!permission.visibilityRecordDetails}
-                onCheckedChange={() => {
-                  mutatePermission({
-                    id: permission.id,
-                    visibilityRecordDetails: !permission.visibilityRecordDetails,
-                  })
-                }}
-                id={`checkbox-details-${index}`}
-              />
-              <label htmlFor={`checkbox-details-${index}`} className='-mt-1'>
-                <span>
-                  Record details
-                </span>
-                <p className='text-meepGray-400 text-xs'>
-                  Specific data like {'"'}name{'"'}</p>
-              </label>
-            </div>
+            {!!(permission.visibilityRecordCoordinates || permission.visibilityRecordDetails) && (
+              <div className='flex flex-row gap-2 items-start'>
+                <Checkbox
+                  checked={!!permission.visibilityRecordDetails}
+                  onCheckedChange={() => {
+                    mutatePermission({
+                      id: permission.id,
+                      visibilityRecordDetails: !permission.visibilityRecordDetails,
+                    })
+                  }}
+                  id={`checkbox-details-${index}`}
+                />
+                <label htmlFor={`checkbox-details-${index}`} className='-mt-1'>
+                  <span>
+                    Record details
+                  </span>
+                  <p className='text-meepGray-400 text-sm'>
+                    Specific data like {'"'}name{'"'}</p>
+                </label>
+              </div>
+            )}
           </div>
         </Card>
       ))}

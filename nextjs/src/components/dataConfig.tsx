@@ -66,7 +66,7 @@ export default function DataConfigPanel () {
   const shareURL = () => new URL(`/data-sources/share/${report?.data?.mapReport.organisation.slug}`, window.location.toString()).toString()
 
   return (
-    <Card className="bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700">
+    <Card className="bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700 max-w-xs">
       <CardHeader className='p-3 flex flex-row justify-between items-center'>
         <CardTitle className="text-hSm font-semibold">Map layers</CardTitle>
         <X className='w-4 cursor-pointer' onClick={() => { setOpen(false) }} />
@@ -97,8 +97,8 @@ export default function DataConfigPanel () {
                         <Link href={`/data-sources/inspect/${layer?.source?.id}`} className='underline py-2 text-sm'>
                           Inspect data source <ArrowRight />
                         </Link>
-                        <Button disabled={layer.source.isImporting} onClick={() => importData(client, layer.source!.id)}>
-                          {!layer.source.isImporting ? "Import data" : <span className='flex flex-row gap-2 items-center'>
+                        <Button disabled={layer.source.isImportScheduled} onClick={() => importData(client, layer.source!.id)}>
+                          {!layer.source.isImportScheduled ? "Import data" : <span className='flex flex-row gap-2 items-center'>
                             <LoadingIcon size={"18"} />
                             <span>Importing...</span>
                           </span>}

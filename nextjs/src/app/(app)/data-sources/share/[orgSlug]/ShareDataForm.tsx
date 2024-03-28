@@ -258,9 +258,11 @@ function DataSourceSharingPanel ({
             <Checkbox
               checked={!!permission.visibilityRecordCoordinates}
               onCheckedChange={() => {
+                const nextValue = !permission.visibilityRecordCoordinates
                 sharingPermissions.update(0, {
                   ...permission,
-                  visibilityRecordCoordinates: !permission.visibilityRecordCoordinates,
+                  visibilityRecordCoordinates: nextValue,
+                  visibilityRecordDetails: !nextValue ? false : permission.visibilityRecordDetails
                 })
               }}
               id={`checkbox-location-${index}`}
@@ -274,25 +276,27 @@ function DataSourceSharingPanel ({
               </p>
             </label>
           </div>
-          <div className='flex flex-row gap-1 items-start'>
-            <Checkbox
-              checked={!!permission.visibilityRecordDetails}
-              onCheckedChange={() => {
-                sharingPermissions.update(0, {
-                  ...permission,
-                  visibilityRecordDetails: !permission.visibilityRecordDetails,
-                })
-              }}
-              id={`checkbox-details-${index}`}
-            />
-            <label htmlFor={`checkbox-details-${index}`} className='-mt-1'>
-              <span>
-                {source.dataType === DataSourceType.Member ? "Member" : "Record"} details
-              </span>
-              <p className='text-meepGray-400 text-xs'>
-                Specific data like {source.fieldDefinitions?.length ? <code className='text-sm px-2 rounded bg-meepGray-700 font-IBMPlexMono'>{source.fieldDefinitions[0].label}</code> : "name"}</p>
-            </label>
-          </div>
+          {!!(permission.visibilityRecordCoordinates || permission.visibilityRecordDetails) && (
+            <div className='flex flex-row gap-1 items-start'>
+              <Checkbox
+                checked={!!permission.visibilityRecordDetails}
+                onCheckedChange={() => {
+                  sharingPermissions.update(0, {
+                    ...permission,
+                    visibilityRecordDetails: !permission.visibilityRecordDetails,
+                  })
+                }}
+                id={`checkbox-details-${index}`}
+              />
+              <label htmlFor={`checkbox-details-${index}`} className='-mt-1'>
+                <span>
+                  {source.dataType === DataSourceType.Member ? "Member" : "Record"} details
+                </span>
+                <p className='text-meepGray-400 text-xs'>
+                  Specific data like {source.fieldDefinitions?.length ? <code className='text-sm px-2 rounded bg-meepGray-700 font-IBMPlexMono'>{source.fieldDefinitions[0].label}</code> : "name"}</p>
+              </label>
+            </div>
+          )}
         </div>
       ))}
       </div>
