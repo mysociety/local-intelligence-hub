@@ -76,7 +76,7 @@ export default function Page({
         <header>
           <h1 className="text-hLg">Activate data source</h1>
           <p className="mt-6 text-meepGray-300 max-w-sm">
-            Your almost there!
+            You{"'"}re almost there!
           </p>
           <ul className="list-disc list-outside pl-4 space-y-3 mt-3">
             <li className="text-meepGray-300 max-w-sm">
@@ -128,3 +128,4 @@ export default function Page({
     </div>
   );
 }
+

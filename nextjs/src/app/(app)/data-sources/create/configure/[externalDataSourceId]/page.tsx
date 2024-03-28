@@ -16,7 +16,9 @@ import {
 import { toast } from "sonner";
 import { UpdateMappingForm } from "@/components/UpdateMappingForm";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
-import {UDPATE_EXTERNAL_DATA_SOURCE} from '@/graphql/mutations';
+import { UDPATE_EXTERNAL_DATA_SOURCE } from '@/graphql/mutations';
+import { triggerAnalyticsEvent } from "@/app/utils/posthogutils"; 
+
 
 const GET_UPDATE_CONFIG = gql`
   query GetSourceMapping($ID: ID!) {
@@ -80,10 +82,19 @@ export default function Page({
           router.push(
             `/data-sources/create/review/${d.data.updateExternalDataSource.id}`,
           );
-        }
+        };
+        triggerAnalyticsEvent("Data source created successfully", {
+          datasource: d.data?.updateExternalDataSource.__typename,
+          remoteName: d.data?.updateExternalDataSource.name,
+        });
         return "Saved";
       },
-      error: `Couldn't save`,
+      error: (e: any) => {
+        triggerAnalyticsEvent("Data source creation failed", {
+          message: e.message, 
+        });
+        return `Couldn't save`;
+      },
     });
   }
 
