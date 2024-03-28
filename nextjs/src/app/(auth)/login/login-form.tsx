@@ -2,7 +2,7 @@
 
 import { gql, useMutation } from "@apollo/client";
 import { login } from "../../../actions/auth";
-import { useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod";
 import { Button } from "@/components/ui/button"
@@ -57,7 +57,8 @@ export default function LoginForm() {
     errorMessage = "Bad credentials or user not verified";
   }
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit: SubmitHandler<any> = async (values: any, e) => {
+    e?.preventDefault()
     doLogin({ variables: values });
   };
 

@@ -30,9 +30,12 @@ import {
 import Link from "next/link"
 import { importData } from "@/app/(app)/data-sources/inspect/[externalDataSourceId]/InspectExternalDataSource"
 import { LoadingIcon } from "./ui/loadingIcon"
+import { useRouter } from "next/navigation"
+import { MAP_REPORT_LAYERS_SUMMARY, layerColour } from "@/app/reports/[id]/lib"
 
 export default function DataConfigPanel () {
-  const { id, update } = useContext(ReportContext)
+  const router = useRouter()
+  const { id, updateReport } = useContext(ReportContext)
   const client = useApolloClient()
   const layers = useFragment<MapReportLayersSummaryFragment>({
     fragment: MAP_REPORT_LAYERS_SUMMARY,
@@ -46,17 +49,18 @@ export default function DataConfigPanel () {
   return (
     <Card className="p-4 bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700">
       <CardHeader>
-        <CardTitle className="text-hSm mb-4">Layers</CardTitle>
+        <CardTitle className="text-hSm mb-4">Map layers</CardTitle>
       </CardHeader>
       <CardContent>
-
         <div className="flex flex-col gap-2 mb-2 py-2 border-t border-meepGray-700 ">
           <span className="label mb-2">Added layers</span>
           {layers.data.layers?.map((layer, index) => (
             <div key={layer?.source?.id || index} className="flex gap-2 items-center">
               <Popover>
                 <PopoverTrigger>
-                  <Button variant="brand" className="p-3 gap-2 text-sm">
+                  <Button className="p-3 gap-2 text-sm" style={{
+                    background: layerColour(index, layer?.source?.id)
+                  }}>
                     <File className="w-4" />
                     <span>{layer?.name || layer?.source?.name}</span>
                   </Button>
@@ -64,10 +68,10 @@ export default function DataConfigPanel () {
                 <PopoverContent className='space-y-4'>
                   {!!layer?.source?.id && (
                     <>
-                      <div className='text-lg'>{layer.source.importedDataCount || 0} records imported</div>
-                      <Link href={`/data-sources/inspect/${layer.source.id}`}>
+                      <div>{layer.source.importedDataCount || 0} records imported</div>
+                      <Button onClick={() => router.push(`/data-sources/inspect/${layer?.source?.id}`)}>
                         Inspect data source <ArrowRight />
-                      </Link>
+                      </Button>
                       <Button disabled={layer.source.isImporting} onClick={() => importData(client, layer.source!.id)}>
                         {!layer.source.isImporting ? "Import data" : <span className='flex flex-row gap-2 items-center'>
                           <LoadingIcon size={"18"} />
@@ -87,89 +91,6 @@ export default function DataConfigPanel () {
             <AddMapLayerButton addLayer={addLayer} />
           </div>
         </div>
-
-        <div className="flex flex-col gap-2 mb-2 py-2 border-t border-meepGray-700 ">
-          <span className="label">Data Layers</span>
-          <Accordion type="single" collapsible>
-            <AccordionItem value="geo">
-              <AccordionTrigger>Geographic</AccordionTrigger>
-              <AccordionContent className="flex flex-col gap-2">
-                <div className="items-top flex space-x-2">
-                  <Checkbox id="geo-1" />
-                  <div className="grid gap-1.5 leading-none">
-                    <label
-                      htmlFor="geo-1"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      Constituency
-                    </label>
-                  </div>
-                </div>
-                <div className="items-top flex space-x-2">
-                  <Checkbox id="geo-2" />
-                  <div className="grid gap-1.5 leading-none">
-                    <label
-                      htmlFor="geo-2"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      Wards
-                    </label>
-                  </div>
-                </div>
-                <div className="items-top flex space-x-2">
-                  <Checkbox id="geo-3" />
-                  <div className="grid gap-1.5 leading-none">
-                    <label
-                      htmlFor="geo-3"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      Something else
-                    </label>
-                  </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="dem">
-              <AccordionTrigger>Demographic</AccordionTrigger>
-              <AccordionContent className="flex flex-col gap-2">
-                <div className="items-top flex space-x-2">
-                  <Checkbox id="geo-1" />
-                  <div className="grid gap-1.5 leading-none">
-                    <label
-                      htmlFor="dem-1"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      Nationality
-                    </label>
-                  </div>
-                </div>
-                <div className="items-top flex space-x-2">
-                  <Checkbox id="dem-2" />
-                  <div className="grid gap-1.5 leading-none">
-                    <label
-                      htmlFor="dem-2"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      income
-                    </label>
-                  </div>
-                </div>
-                <div className="items-top flex space-x-2">
-                  <Checkbox id="dem-3" />
-                  <div className="grid gap-1.5 leading-none">
-                    <label
-                      htmlFor="dem-3"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      Something else
-                    </label>
-                  </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-          </Accordion>
-        </div>
       </CardContent>
     </Card>
   )
@@ -186,7 +107,7 @@ export default function DataConfigPanel () {
     if (!oldLayers) return
     if (oldLayers.find(l => l.source === source.id)) return
     const combinedLayers = oldLayers?.concat([newLayer])
-    update({ layers: combinedLayers })
+    updateReport({ layers: combinedLayers })
   }
 
   function removeLayer (sourceId: string) {
@@ -195,80 +116,6 @@ export default function DataConfigPanel () {
       source: l!.source?.id,
     }))
     const newLayers = oldLayers?.filter(l => l.source !== sourceId)
-    update({ layers: newLayers })
+    updateReport({ layers: newLayers })
   }
 };
-
-export const MAP_REPORT_LAYERS_SUMMARY = gql`
-  fragment MapReportLayersSummary on MapReport {
-    importedDataCountByRegion {
-      label
-      areaId
-      count
-      gssArea {
-        point {
-          id
-          type
-          geometry {
-            type
-            coordinates
-          }
-        }
-      }
-    }
-    importedDataCountByConstituency {
-      label
-      areaId
-      count
-      gssArea {
-        point {
-          id
-          type
-          geometry {
-            type
-            coordinates
-          }
-        }
-      }
-    }
-    importedDataCountByWard {
-      label
-      areaId
-      count
-      gssArea {
-        point {
-          id
-          type
-          geometry {
-            type
-            coordinates
-          }
-        }
-      }
-    }
-    layers {
-      name
-      source {
-        id
-        name
-        isImporting
-        importedDataCount
-        importedDataCountByRegion {
-          label
-          areaId
-          count
-        }
-        importedDataCountByConstituency {
-          label
-          areaId
-          count
-        }
-        importedDataCountByWard {
-          label
-          areaId
-          count
-        }
-      }
-    }
-  }
-`

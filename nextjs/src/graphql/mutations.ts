@@ -7,6 +7,12 @@ export const UDPATE_EXTERNAL_DATA_SOURCE = gql`
       name
       geographyColumn
       geographyColumnType
+      postcodeField
+      firstNameField
+      lastNameField
+      emailField
+      phoneField
+      addressField
       autoUpdateEnabled
       updateMapping {
         source

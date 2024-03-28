@@ -48,6 +48,7 @@
     --meep-gray-700: 222, 13%, 19%;
     --meep-gray-800: 222, 14%, 14%;
     --brand-blue: 222, 69%, 65%;
+    --brand-pink: 305 50% 48%;
     --button-text: 220, 25%, 16%;
     --white: 0, 0%, 100%;
     --labour: 4, 100%, 58%;
@@ -91,5 +92,22 @@
 @layer components {
   .active {
     @apply border-b flex items-center;
+  }
+  .flex-divide-x {
+      > :first-child:not([hidden]),
+      > :not([hidden]) ~ :not([hidden]) {
+        @apply flex-1 border-r border-solid;
+        border-color: hsl(var(--flex-divide-x-colour, var(--meep-gray-300)));
+        padding-right: var(--flex-divide-x-spacing, 5px);
+        padding-left: var(--flex-divide-x-spacing, 5px);
+
+        &:first-child {
+          @apply pl-0;
+        }
+
+        &:last-child {
+          @apply pr-0 border-0;
+        }
+    }
   }
 }

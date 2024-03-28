@@ -29,6 +29,8 @@ env = environ.Env(
     FRONTEND_SITE_TITLE=(str, False),
     SCHEDULED_UPDATE_SECONDS_DELAY=(int, 3),
     DEBUG=(bool, False),
+    HIDE_DEBUG_TOOLBAR=(bool, False),
+    LOG_QUERIES=(bool, False),
     ALLOWED_HOSTS=(list, []),
     CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3000"]),
     GOOGLE_ANALYTICS=(str, ""),
@@ -51,6 +53,8 @@ FRONTEND_BASE_URL = env("FRONTEND_BASE_URL")
 FRONTEND_SITE_TITLE = env("FRONTEND_SITE_TITLE")
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
+HIDE_DEBUG_TOOLBAR = env("HIDE_DEBUG_TOOLBAR")
+LOG_QUERIES = env("LOG_QUERIES")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
 CACHE_FILE = env("CACHE_FILE")
@@ -109,6 +113,7 @@ INSTALLED_APPS = [
     "hub",
     "corsheaders",
     "procrastinate.contrib.django",
+    "strawberry_django",
 ]
 
 MIDDLEWARE = [
@@ -263,9 +268,44 @@ LOGGING = {
         "django": {
             "handlers": ["console"],
             "level": env("DJANGO_LOG_LEVEL"),
-        },
+        }
     },
 }
+if DEBUG:
+    if LOG_QUERIES:
+        LOGGING["loggers"]["django.db.backends"] = {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        }
+
+    if HIDE_DEBUG_TOOLBAR is False:
+        import socket
+
+        hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+        INTERNAL_IPS = [ip[:-1] + "1" for ip in ips] + ["127.0.0.1", "10.0.2.2"]
+
+        # debug toolbar has to come after django_hosts middleware
+        MIDDLEWARE.insert(
+            1, "strawberry_django.middlewares.debug_toolbar.DebugToolbarMiddleware"
+        )
+
+        INSTALLED_APPS += ("debug_toolbar",)
+
+        DEBUG_TOOLBAR_PANELS = [
+            "debug_toolbar.panels.versions.VersionsPanel",
+            "debug_toolbar.panels.timer.TimerPanel",
+            "debug_toolbar.panels.settings.SettingsPanel",
+            "debug_toolbar.panels.headers.HeadersPanel",
+            "debug_toolbar.panels.request.RequestPanel",
+            "debug_toolbar.panels.sql.SQLPanel",
+            "debug_toolbar.panels.staticfiles.StaticFilesPanel",
+            "debug_toolbar.panels.templates.TemplatesPanel",
+            "debug_toolbar.panels.cache.CachePanel",
+            "debug_toolbar.panels.signals.SignalsPanel",
+            "debug_toolbar.panels.logging.LoggingPanel",
+            "debug_toolbar.panels.redirects.RedirectsPanel",
+        ]
+
 # CK Section
 
 # TODO: Decrease this when we go public
