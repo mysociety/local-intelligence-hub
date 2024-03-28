@@ -1682,15 +1682,19 @@ class AirtableSource(ExternalDataSource):
         try:
             webhooks = self.get_webhooks()
             if len(webhooks) < expected_webhooks:
-                raise ValueError("Webhook healthcheck: Not enough webhooks")
+                # raise ValueError("Webhook healthcheck: Not enough webhooks")
+                return False
             if len(webhooks) > expected_webhooks:
-                raise ValueError("Webhook healthcheck: Too many webhooks")
+                # raise ValueError("Webhook healthcheck: Too many webhooks")
+                return False
             for webhook in webhooks:
                 if not webhook.is_hook_enabled:
-                    raise ValueError("Webhook healthcheck: a webhook expired")
+                    # raise ValueError("Webhook healthcheck: a webhook expired")
+                    return False
             return True
         except Exception:
-            raise ValueError("Couldn't fetch webhooks")
+            # raise ValueError("Couldn't fetch webhooks")
+            return False
 
     def teardown_webhooks(self):
         list = self.base.webhooks()
