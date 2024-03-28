@@ -1,10 +1,10 @@
 "use client"
 
 import {
+  DataSourceGeoJsonPointsQuery,
+  DataSourceGeoJsonPointsQueryVariables,
   MapReportLayerAnalyticsQuery,
   MapReportLayerAnalyticsQueryVariables,
-  DataSourceGeoJSONPoints,
-  DataSourceGeoJSONPointsVariables,
   MapReportLayerGeoJsonPointQuery,
   MapReportLayerGeoJsonPointQueryVariables,
 } from "@/__generated__/graphql";
@@ -24,7 +24,7 @@ import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel
 
 const MAX_REGION_ZOOM = 8
 export const MAX_CONSTITUENCY_ZOOM = 10
-const MIN_MEMBERS_ZOOM = MAX_CONSTITUENCY_ZOOM
+const MIN_MEMBERS_ZOOM = 12.5
 
 const viewStateAtom = atom<Partial<ViewState>>({
   longitude: -2.296605,
@@ -554,7 +554,7 @@ export function ReportMap () {
 }
 
 function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { externalDataSourceId: string, index: number }) {
-  const { data, error, loading: pointsLoading } = useQuery<DataSourceGeoJSONPoints, DataSourceGeoJSONPointsVariables>(MAP_REPORT_LAYER_POINTS, {
+  const { data, error, loading: pointsLoading } = useQuery<DataSourceGeoJsonPointsQuery, DataSourceGeoJsonPointsQueryVariables>(MAP_REPORT_LAYER_POINTS, {
     variables: {
       externalDataSourceId,
     },

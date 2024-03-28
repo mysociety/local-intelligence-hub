@@ -263,7 +263,7 @@ export default function InspectExternalDataSource({
       </div>
       {source.dataType === DataSourceType.Member && !!source.sharingPermissions?.length && (
         <>
-          <div className="border-b border-meepGray-700 pt-10" />
+          <div className="border-b-4 border-meepGray-700 pt-10" />
           <section className="space-y-4">
             <header className="flex flex-row justify-between items-center">
               <div>

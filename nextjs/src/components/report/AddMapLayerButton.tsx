@@ -37,6 +37,7 @@ import { MAP_REPORT_LAYERS_SUMMARY } from "@/app/reports/[id]/lib"
 import { DataSourceIcon } from "../DataSourceIcon"
 import pluralize from "pluralize"
 import { CRMSelection } from "../CRMButtonItem"
+import { LoadingIcon } from "../ui/loadingIcon"
 
 type Source = {
   name: string,
@@ -179,6 +180,12 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
                 </CommandItem>
               )
             })}
+            {dataSources.loading && (
+              <CommandItem disabled>
+                <LoadingIcon className={"mr-2 h-4 w-4 inline-block"} />
+                Loading...
+              </CommandItem>
+            )}
             <CommandItem
               onSelect={() => {
                 router.push("/data-sources/create?dataType=MEMBER")

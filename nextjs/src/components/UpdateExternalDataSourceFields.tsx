@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { DataSourceFieldLabel } from "./DataSourceIcon";
+import { Input } from "@/components/ui/input";
 
 type FormInputs = ExternalDataSourceInput
 
@@ -96,7 +97,7 @@ export function UpdateExternalDataSourceFields ({
                   </Select>
                 ) : (
                   // @ts-ignore
-                  <Input {...field} required />
+                  <Input {...field} required={required} />
                 )}
               </FormControl>
               <FormMessage />
