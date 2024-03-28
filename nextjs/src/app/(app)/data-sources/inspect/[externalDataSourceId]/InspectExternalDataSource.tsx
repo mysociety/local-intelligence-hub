@@ -166,6 +166,9 @@ export default function InspectExternalDataSource({
   }
 
   const source = data.externalDataSource
+  const sortedJobs = [...source.jobs].sort((a, b) => new Date(b.lastEventAt).getTime() - new Date(a.lastEventAt).getTime());
+  const mostRecent = sortedJobs[0]
+  
   const allowMapping = source.dataType == DataSourceType.Member
 
   return (
@@ -206,6 +209,11 @@ export default function InspectExternalDataSource({
               <p className='text-sm text-meepGray-400'>
                 Import data from this source into Mapped for use in auto-updates and reports.
               </p>
+              <div className="text-meepGray-400">
+               Last import:{" "}
+                {formatRelative(mostRecent.lastEventAt, new Date())}{" "} 
+                ({mostRecent.status})
+                </div>
               <Button disabled={source.isImporting} onClick={() => importData(client, externalDataSourceId)}>
                 {!source.isImporting ? "Import data" : <span className='flex flex-row gap-2 items-center'>
                   <LoadingIcon size={"18"} />
