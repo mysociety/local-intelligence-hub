@@ -2,19 +2,21 @@
 
 import {
   FetchResult,
+  MutationResult,
   gql,
   useQuery,
   useApolloClient,
   ApolloClient,
 } from "@apollo/client";
 import { AirtableLogo } from "@/components/logos";
+import { formatRelative } from "date-fns";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   AutoUpdateSwitch,
   AutoUpdateWebhookRefresh,
   TriggerUpdateButton,
-} from "@/components/AutoUpdateCard";
+} from "@/components/ExternalDataSourceCard";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import {
   DataSourceType,
@@ -30,7 +32,24 @@ import {
   UpdateExternalDataSourceMutationVariables,
 } from "@/__generated__/graphql";
 import { useRouter } from "next/navigation";
-import { ExternalLink, RefreshCcw } from "lucide-react";
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  getSortedRowModel,
+  SortingState,
+} from "@tanstack/react-table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ArrowUpDown, ExternalLink, RefreshCcw } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,8 +73,9 @@ import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
 import { contentEditableMutation } from "@/lib/html";
 import { UpdateExternalDataSourceFields } from "@/components/UpdateExternalDataSourceFields";
-import { format } from "d3-format";
+import { ManageSourceSharing } from "./ManageSourceSharing";
 import { BatchJobProgressBar } from "@/components/BatchJobProgress";
+import { format } from "d3-format";
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {
@@ -64,13 +84,18 @@ const GET_UPDATE_CONFIG = gql`
       name
       dataType
       remoteUrl
+      crmType
       connectionDetails {
-        crmType: __typename
         ... on AirtableSource {
           baseId
           tableId
           apiKey
         }
+      }
+      lastJob {
+        id
+        lastEventAt
+        status
       }
       autoUpdateEnabled
       webhookHealthcheck
@@ -110,6 +135,10 @@ const GET_UPDATE_CONFIG = gql`
         sourcePath
         destinationColumn
       }
+      sharingPermissions {
+        id
+      }
+      organisationId
     }
   }
 `;
@@ -137,7 +166,7 @@ export default function InspectExternalDataSource({
     variables: {
       ID: externalDataSourceId,
     },
-    pollInterval: 10000,
+    pollInterval: 5000
   });
 
   if (!data?.externalDataSource && loading) {
@@ -149,6 +178,7 @@ export default function InspectExternalDataSource({
   }
 
   const source = data.externalDataSource
+  
   const allowMapping = source.dataType == DataSourceType.Member
 
   return (
@@ -171,7 +201,7 @@ export default function InspectExternalDataSource({
           )}
         </div>
         <div>
-          {source.connectionDetails.crmType ===
+          {source.crmType ===
             "AirtableSource" && (
             <div className="inline-flex rounded-xl bg-meepGray-700 px-10 py-6 overflow-hidden flex-row items-center justify-center">
               <AirtableLogo className="w-full" />
@@ -179,139 +209,169 @@ export default function InspectExternalDataSource({
           )}
         </div>
       </header>
-      {allowMapping && (
+      <div className="border-b border-meepGray-700 pt-10" />
+      <div className='grid md:grid-cols-2 gap-4 items-start'>
+        <section className='space-y-4 max-w-sm'>
+          <div>Imported records</div>
+          <div className='text-hXlg'>{format(",")(source.importedDataCount || 0)}</div>
+          <p className='text-sm text-meepGray-400'>
+            Import data from this source into Mapped for use in auto-updates and reports.
+          </p>
+          <Button disabled={source.isImportScheduled} onClick={() => importData(client, externalDataSourceId)}>
+            {!source.isImportScheduled ? "Import all data" : <span className='flex flex-row gap-2 items-center'>
+              <LoadingIcon size={"18"} />
+              <span>{
+                source.importProgress?.status === ProcrastinateJobStatus.Doing
+                  ? "Importing..."
+                  : "Scheduled"
+              }</span>
+            </span>}
+          </Button>
+          {source.importProgress?.status === ProcrastinateJobStatus.Doing && (
+            <BatchJobProgressBar batchJobProgress={source.importProgress} pastTenseVerb="Imported" />
+          )}
+        </section>
+        {source.dataType === DataSourceType.Member && (
+          <section className="space-y-4">
+            <header className="flex flex-row justify-between items-center">
+              <div>
+                <h2 className="text-hSm mb-5">Member data fields</h2>
+                <p className='text-sm text-meepGray-400'>
+                  <span className='align-middle'>
+                    Designate special fields for use in Mapped reports
+                  </span>
+                </p>
+              </div>
+            </header>
+            <UpdateExternalDataSourceFields
+              crmType={source.crmType}
+              fieldDefinitions={source.fieldDefinitions}
+              initialData={{
+                geographyColumn: source.geographyColumn,
+                geographyColumnType: source.geographyColumnType,
+                firstNameField: source.firstNameField,
+                lastNameField: source.lastNameField,
+                fullNameField: source.fullNameField,
+                emailField: source.emailField,
+                phoneField: source.phoneField,
+                addressField: source.addressField,
+              }}
+              onSubmit={updateMutation}
+            />
+          </section>
+        )}
+      </div>
+      {source.dataType === DataSourceType.Member && !!source.sharingPermissions?.length && (
         <>
-        <div className="border-b border-meepGray-700 pt-10" />
-        <div className='grid sm:grid-cols-2 gap-8'>
-          <section className='space-y-4 max-w-sm'>
-            <div>Imported records</div>
-            <div className='text-hXlg'>{format(",")(source.importedDataCount || 0)}</div>
-            <p className='text-sm text-meepGray-400'>
-              Import data from this source into Mapped for use in auto-updates and reports.
-            </p>
-            <Button disabled={source.isImportScheduled} onClick={() => importData(client, externalDataSourceId)}>
-              {!source.isImportScheduled ? "Import data" : <span className='flex flex-row gap-2 items-center'>
-                <LoadingIcon size={"18"} />
-                <span>{
-                  source.importProgress?.status === ProcrastinateJobStatus.Doing
-                    ? "Importing..."
-                    : "Scheduled"
-                }</span>
-              </span>}
-            </Button>
-            {source.importProgress?.status === ProcrastinateJobStatus.Doing && (
-              <BatchJobProgressBar batchJobProgress={source.importProgress} pastTenseVerb="Imported" />
-            )}
+          <div className="border-b-4 border-meepGray-700 pt-10" />
+          <section className="space-y-4">
+            <header className="flex flex-row justify-between items-center">
+              <div>
+                <h2 className="text-hSm mb-5">Sharing</h2>
+                <p className='text-sm text-meepGray-400'>
+                  <span className='align-middle'>
+                    Share this data source with other users in your organization
+                  </span>
+                </p>
+              </div>
+            </header>
+            <ManageSourceSharing externalDataSourceId={externalDataSourceId} />
           </section>
-          <section className='space-y-4'>
-            <h2 className="text-hSm mb-5">Auto-updates</h2>
-            <p className='text-sm text-meepGray-400'>
-              Auto-updates are {source.autoUpdateEnabled ? "enabled" : "disabled"} for this data source. Mapped can automatically update this data source based on the mapping you{"'"}ve defined in the Data Mapping section.
-            </p>
-            <AutoUpdateSwitch externalDataSource={source} />
-            {source.autoUpdateEnabled && !source.webhookHealthcheck && (
-              <>
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Webhooks unhealthy</AlertTitle>
-                  <AlertDescription>
-                    The webhook is unhealthy. Please refresh the webhook to fix auto-updates.
-                  </AlertDescription>
-                </Alert>
-                <AutoUpdateWebhookRefresh externalDataSourceId={externalDataSourceId} />
-              </>
-            )}
-          </section>
-        </div>
         </>
       )}
-      <div className="border-b border-meepGray-700 pt-10" />
-      <section className="space-y-4">
-        <header className="flex flex-row justify-between items-center">
-          <div>
-            <h2 className="text-hSm mb-5">Data updates</h2>
-            <p className='text-sm text-meepGray-400'>
-              <span className='align-middle'>
-                Pull third party data into your data source{"'"}s original location, based on the record{"'"}s 
-              </span>
-              <DataSourceFieldLabel
-                className='align-middle'
-                label={source.geographyColumnType}
-                connectionType={source.connectionDetails.__typename!}
-              />
-            </p>
-          </div>
-        </header>
-        {allowMapping && !!source.updateMapping?.length && (
-          <div className='max-w-sm space-y-4'>
-            {!source.isUpdateScheduled ? (
-              <TriggerUpdateButton id={source.id} />
-            ) : (
-              <>
-                <Button disabled>
-                  {!source.isUpdateScheduled ? "Import data" : <span className='flex flex-row gap-2 items-center'>
-                    <LoadingIcon size={"18"} />
-                    <span>{
-                      source.updateProgress?.status === ProcrastinateJobStatus.Doing
-                        ? "Updating..."
-                        : "Scheduled"
-                    }</span>
-                  </span>}
-                </Button>
-                {source.updateProgress?.status === ProcrastinateJobStatus.Doing && (
-                  <BatchJobProgressBar batchJobProgress={source.updateProgress} pastTenseVerb="Updated" />
-                )}
-              </>
-            )}
-          </div>
-        )}
-        <UpdateMappingForm
-          saveButtonLabel="Update"
-          allowMapping={allowMapping}
-          connectionType={source.connectionDetails.crmType}
-          fieldDefinitions={source.fieldDefinitions}
-          initialData={{
-            // Trim out the __typenames
-            geographyColumn: source?.geographyColumn,
-            geographyColumnType: source?.geographyColumnType,
-            updateMapping: source?.updateMapping?.map((m) => ({
-              source: m.source,
-              sourcePath: m.sourcePath,
-              destinationColumn: m.destinationColumn,
-            })),
-          }}
-          onSubmit={updateMutation}
-        />
-      </section>
-      <div className="border-b border-meepGray-700 pt-10" />
       {source.dataType === DataSourceType.Member && (
-        <section className="space-y-4">
-          <header className="flex flex-row justify-between items-center">
-            <div>
-              <h2 className="text-hSm mb-5">Member data fields</h2>
-              <p className='text-sm text-meepGray-400'>
-                <span className='align-middle'>
-                  Designate special fields for use in Mapped reports
-                </span>
-              </p>
-            </div>
-          </header>
-          <UpdateExternalDataSourceFields
-            connectionType={source.connectionDetails.crmType}
-            fieldDefinitions={source.fieldDefinitions}
-            initialData={{
-              firstNameField: source.firstNameField,
-              lastNameField: source.lastNameField,
-              fullNameField: source.fullNameField,
-              emailField: source.emailField,
-              phoneField: source.phoneField,
-              addressField: source.addressField,
-            }}
-            onSubmit={updateMutation}
-          />
-        </section>
+        <>
+          <div className="border-b-4 border-meepGray-700 pt-10" />
+          <section className="space-y-4">
+            <header className="grid md:grid-cols-2 gap-4 items-start">
+              <section className="space-y-4">
+                <h2 className="text-hSm mb-5">Data updates</h2>
+                <p className='text-sm text-meepGray-400'>
+                  <span className='align-middle'>
+                    Pull third party data into your data source{"'"}s original location, based on the record{"'"}s 
+                  </span>
+                  <DataSourceFieldLabel
+                    className='align-middle'
+                    label={source.geographyColumnType}
+                    crmType={source.crmType}
+                  />
+                </p>
+                {allowMapping && (
+                  <div className='space-y-4'>
+                    {!source.isUpdateScheduled ? (
+                      <TriggerUpdateButton id={source.id} />
+                    ) : (
+                      <>
+                        <Button disabled>
+                          <span className='flex flex-row gap-2 items-center'>
+                            <LoadingIcon size={"18"} />
+                            <span>{
+                              source.updateProgress?.status === ProcrastinateJobStatus.Doing
+                                ? "Updating..."
+                                : "Scheduled"
+                            }</span>
+                          </span>
+                        </Button>
+                        {source.updateProgress?.status === ProcrastinateJobStatus.Doing && (
+                          <BatchJobProgressBar batchJobProgress={source.updateProgress} pastTenseVerb="Updated" />
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </section>
+              {allowMapping && (
+                <section className='space-y-4'>
+                  <h2 className="text-hSm mb-5">Auto-updates</h2>
+                  <p className='text-sm text-meepGray-400'>
+                    Auto-updates are {source.autoUpdateEnabled ? "enabled" : "disabled"} for this data source. Mapped can automatically update this data source based on the mapping you{"'"}ve defined in the Data Mapping section.
+                  </p>
+                  {source.lastJob ? (
+                    <div className="text-meepGray-400">
+                      Last sync:{" "}
+                      {formatRelative(source.lastJob.lastEventAt, new Date())} (
+                      {source.lastJob.status})
+                    </div>
+                  ) : null}
+                  <AutoUpdateSwitch externalDataSource={source} />
+                  {source.autoUpdateEnabled && !source.webhookHealthcheck && (
+                    <>
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Webhooks unhealthy</AlertTitle>
+                        <AlertDescription>
+                          The webhook is unhealthy. Please refresh the webhook to fix auto-updates.
+                        </AlertDescription>
+                      </Alert>
+                      <AutoUpdateWebhookRefresh externalDataSourceId={externalDataSourceId} />
+                    </>
+                  )}
+                </section>
+              )}
+            </header>
+            <div className="border-b border-meepGray-700 pt-10" />
+            <h2 className="text-hSm !mt-8 my-5">Configure data mapping</h2>
+            <UpdateMappingForm
+              saveButtonLabel="Update"
+              allowMapping={allowMapping}
+              crmType={source.crmType}
+              fieldDefinitions={source.fieldDefinitions}
+              initialData={{
+                // Trim out the __typenames
+                geographyColumn: source?.geographyColumn,
+                geographyColumnType: source?.geographyColumnType,
+                updateMapping: source?.updateMapping?.map((m) => ({
+                  source: m.source,
+                  sourcePath: m.sourcePath,
+                  destinationColumn: m.destinationColumn,
+                })),
+              }}
+              onSubmit={updateMutation}
+            />
+          </section>
+        </>
       )}
-      <div className="border-b border-meepGray-700 pt-10" />
+      <div className="border-b-4 border-meepGray-700 pt-10" />
       <section className='space-y-4'>
         <h2 className="text-hSm mb-5">Connection</h2>
         {!!source.connectionDetails.baseId && (
@@ -358,23 +418,6 @@ export default function InspectExternalDataSource({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </section>
-      <div className="border-b border-meepGray-700 pt-10" />
-      <section>
-        <h2 className="text-hSm mb-5 flex flex-row items-center gap-3">
-          <span>Logs</span>
-          <RefreshCcw
-            className="inline-block cursor-pointer w-4 h-4"
-            onClick={async () => {
-              const tid = toast.loading("Refreshing");
-              await refetch();
-              toast.success("Refreshed", {
-                duration: 2000,
-                id: tid,
-              });
-            }}
-          />
-        </h2>
       </section>
     </div>
   );
@@ -427,17 +470,17 @@ export function importData (client: ApolloClient<any>, externalDataSourceId: str
     mutation: gql`
       mutation ImportData($id: String!) {
         importAll(externalDataSourceId: $id) {
-          requestId
+          id
           externalDataSource {
-            id
             importedDataCount
             isImportScheduled
-            jobs {
+            importProgress {
               status
               id
-              taskName
-              args
-              lastEventAt
+              total
+              succeeded
+              failed
+              estimatedFinishTime
             }
           }
         }
@@ -461,4 +504,77 @@ export function importData (client: ApolloClient<any>, externalDataSourceId: str
     },
     error: `Couldn't schedule data import`,
   });
+}
+
+interface DataTableProps<TData, TValue> {
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
+}
+
+export function LogsTable<TData, TValue>({
+  columns,
+  data,
+  sortingState = [],
+}: DataTableProps<TData, TValue> & {
+  sortingState?: SortingState;
+}) {
+  const [sorting, setSorting] = useState<SortingState>(sortingState);
+
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    onSortingChange: setSorting,
+    getSortedRowModel: getSortedRowModel(),
+    state: {
+      sorting,
+    },
+  });
+
+  return (
+    <div className="rounded-md border border-meepGray-400">
+      <Table>
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => {
+                return (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                  </TableHead>
+                );
+              })}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => (
+              <TableRow
+                key={row.id}
+                data-state={row.getIsSelected() && "selected"}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={columns.length} className="h-24 text-center">
+                No results.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
 }

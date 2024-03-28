@@ -5,10 +5,7 @@ import { twMerge } from "tailwind-merge";
 import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CreateAutoUpdateFormContext } from "./NewExternalDataSourceWrapper";
-import {
-  externalDataSourceOptions,
-  getSourceOptionForTypename,
-} from "@/lib/data";
+import { externalDataSourceOptions } from "@/lib/data";
 import { gql, useQuery } from "@apollo/client";
 import { AllExternalDataSourcesQuery, DataSourceType } from "@/__generated__/graphql";
 import { formatRelative } from "date-fns";
@@ -20,8 +17,8 @@ const ALL_EXTERNAL_DATA_SOURCES = gql`
       name
       createdAt
       dataType
+      crmType
       connectionDetails {
-        crmType: __typename
         ... on AirtableSource {
           baseId
           tableId
@@ -67,7 +64,7 @@ export default function Page() {
               source === externalDataSource.key && "border-brandBlue border-2",
             )}
           >
-            <externalDataSource.logo className="w-full" />
+            <externalDataSource.wordmark className="w-full" />
           </div>
         </div>
       ))}

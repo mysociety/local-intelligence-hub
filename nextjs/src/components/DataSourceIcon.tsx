@@ -1,11 +1,12 @@
 import { FieldDefinition } from "@/__generated__/graphql";
-import { AirtableIcon } from "./logos";
 import { twMerge } from "tailwind-merge";
+import { File } from "lucide-react";
+import { externalDataSourceOptions } from "@/lib/data";
 
-export function DataSourceFieldLabel({ label, fieldDefinition, connectionType, className, source }: {
+export function DataSourceFieldLabel({ label, fieldDefinition, crmType, className, source }: {
   label?: string,
   fieldDefinition?: FieldDefinition,
-  connectionType: string,
+  crmType: string,
   className?: string,
   source?: string
 }) {
@@ -14,7 +15,7 @@ export function DataSourceFieldLabel({ label, fieldDefinition, connectionType, c
      className
     )}>
     <span className='px-2 py-1 inline-flex gap-2 items-center'>
-      <DataSourceIcon connectionType={connectionType} className={"inline-block w-5"} />
+      <DataSourceIcon crmType={crmType} className={"inline-block w-5"} />
       <span className='font-IBMPlexMono !text-white'>
         {label || fieldDefinition?.label || fieldDefinition?.value || "Unknown field"}
       </span>
@@ -27,8 +28,22 @@ export function DataSourceFieldLabel({ label, fieldDefinition, connectionType, c
   </span>
 }
 
-export function DataSourceIcon({ connectionType, className }: { connectionType: string, className?: string}) {
-  switch (connectionType) {
-    case "AirtableSource": return <AirtableIcon className={className} />;
+export function DataSourceIcon({
+  crmType,
+  className ='w-4',
+  mode = "icon"
+}: {
+  crmType?: string // keyof typeof externalDataSourceOptions,
+  className?: string
+  mode?: "icon" | "wordmark"
+}) { 
+  const option = externalDataSourceOptions[
+    // @ts-ignore
+    crmType
+  ]
+  if (crmType && !!option) {
+    const Icon = option[mode]
+    return <Icon className={className} />
   }
+  return <File className={className} />
 }

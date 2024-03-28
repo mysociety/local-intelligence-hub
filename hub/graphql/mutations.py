@@ -57,6 +57,7 @@ class AirtableSourceInput(ExternalDataSourceInput):
 
 @strawberry.input
 class MapLayerInput:
+    id: str
     name: str
     source: str
     visible: Optional[bool] = True
@@ -112,7 +113,7 @@ def disable_auto_update(external_data_source_id: str) -> models.ExternalDataSour
 
 @strawberry.type
 class ExternalDataSourceAction:
-    request_id: str
+    id: strawberry.scalars.ID
     external_data_source: model_types.ExternalDataSource
 
 
@@ -124,9 +125,7 @@ async def trigger_update(external_data_source_id: str) -> ExternalDataSourceActi
     # Use this ID to track all jobs against it
     request_id = str(uuid.uuid4())
     await data_source.schedule_refresh_all(request_id=request_id)
-    return ExternalDataSourceAction(
-        request_id=request_id, external_data_source=data_source
-    )
+    return ExternalDataSourceAction(id=request_id, external_data_source=data_source)
 
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
@@ -200,6 +199,59 @@ async def import_all(external_data_source_id: str) -> ExternalDataSourceAction:
     )
     request_id = str(uuid.uuid4())
     await data_source.schedule_import_all(request_id=request_id)
-    return ExternalDataSourceAction(
-        request_id=request_id, external_data_source=data_source
+    return ExternalDataSourceAction(id=request_id, external_data_source=data_source)
+
+
+@strawberry_django.input(models.SharingPermission, partial=True)
+class SharingPermissionCUDInput:
+    id: auto
+    external_data_source_id: auto
+    organisation_id: auto
+    visibility_record_coordinates: auto
+    visibility_record_details: auto
+
+
+@strawberry.input
+class SharingPermissionInput:
+    id: Optional[strawberry.scalars.ID] = None
+    external_data_source_id: strawberry.scalars.ID
+    organisation_id: strawberry.scalars.ID
+    visibility_record_coordinates: Optional[bool] = False
+    visibility_record_details: Optional[bool] = False
+    deleted: Optional[bool] = False
+
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def update_sharing_permissions(
+    info: Info, from_org_id: str, permissions: List[SharingPermissionInput]
+) -> List[models.ExternalDataSource]:
+    user = get_current_user(info)
+    for permission in permissions:
+        source = models.ExternalDataSource.objects.get(
+            id=permission.external_data_source_id
+        )
+        if not str(source.organisation_id) == from_org_id:
+            raise PermissionError(
+                "This data source does not belong to the organisation you specified."
+            )
+        if not source.organisation.members.filter(user=user).exists():
+            raise PermissionError(
+                "You do not have permission to change sharing preferences for this data source."
+            )
+        if permission.deleted:
+            models.SharingPermission.objects.filter(id=permission.id).delete()
+        else:
+            models.SharingPermission.objects.update_or_create(
+                # id=permission.id,
+                external_data_source_id=permission.external_data_source_id,
+                organisation_id=permission.organisation_id,
+                defaults={
+                    "visibility_record_coordinates": permission.visibility_record_coordinates,
+                    "visibility_record_details": permission.visibility_record_details,
+                },
+            )
+    # Return data sources for the current org
+    result = list(
+        models.ExternalDataSource.objects.filter(organisation_id=from_org_id).all()
     )
+    return result
