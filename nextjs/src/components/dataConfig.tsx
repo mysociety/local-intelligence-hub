@@ -58,13 +58,17 @@ export default function DataConfigPanel() {
     },
   });
   return (
-    <Card className="p-4 bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700">
+    <Card className="p-4 bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700 w-[248px]">
       <CardHeader>
-        <CardTitle className="text-hSm mb-4">Data Configuration</CardTitle>
+        <CardTitle className="text-hMd mb-4">Data Configuration</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col gap-2 mb-2 py-2 border-t border-meepGray-700 ">
-          <span className="label mb-2">Your Membership data</span>
+        <div className="flex flex-col gap-4 mb-4 py-2 border-t border-meepGray-700 ">
+          <div className="label mb-2 text-labelLg flex gap-1 items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="9" height="14" viewBox="0 0 9 14" fill="none">
+              <path d="M9 4.98127C9 7.45621 6.98528 9.46254 4.5 9.46254C2.01472 9.46254 0 7.45621 0 4.98127C0 2.50633 2.01472 0.5 4.5 0.5C6.98528 0.5 9 2.50633 9 4.98127Z" fill="#969EB0" />
+              <path d="M5.01947 13.1963C4.79257 13.6012 4.20763 13.6012 3.98073 13.1963L0.47317 6.93775C0.251904 6.54294 0.538517 6.05678 0.992541 6.05678L8.00766 6.05678C8.46168 6.05678 8.74829 6.54294 8.52703 6.93775L5.01947 13.1963Z" fill="#969EB0" />
+            </svg>Your Membership data</div>
           {layers.data.layers?.map((layer, index) => (
             <div key={layer?.source?.id || index} className="flex gap-2 items-center">
               <Popover>
@@ -102,19 +106,23 @@ export default function DataConfigPanel() {
             <AddMapLayerButton addLayer={addLayer} />
           </div>
         </div>
-        <div className="flex flex-col gap-2 mb-2 py-2 border-t border-meepGray-700 ">
-          <span className="label mb-2">Toggle enhancement data</span>
-          <div> Mapped data sources</div>
-          <p>Members of Parliament</p>
-          <Switch
-            checked={displayOptions.showMPs}
-            onCheckedChange={toggleMps}
-          />
-          <p>2019 Election</p>
-          <Switch
-            checked={displayOptions.showElectionData}
-            onCheckedChange={toggleElectionData}
-          />
+        <div className="flex flex-col gap-4 mb-4 py-2 border-t border-meepGray-700 ">
+          <span className="label mb-2 text-labelLg">Toggle enhancement data</span>
+          <div className="text-labelMain"> Mapped data sources</div>
+          <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
+            <Switch
+              checked={displayOptions.showMPs}
+              onCheckedChange={toggleMps}
+            />Members of Parliament
+
+          </div>
+          <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
+            <Switch
+              checked={displayOptions.showElectionData}
+              onCheckedChange={toggleElectionData}
+            />
+            2019 Election
+          </div>
         </div>
       </CardContent>
     </Card>
