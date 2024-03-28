@@ -874,8 +874,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     class PostcodesIOGeographyTypes(models.TextChoices):
         POSTCODE = "postcode", "Postcode"
         WARD = "ward", "Ward"
-        COUNCIL = "admin_district", "Council"
         CONSTITUENCY = "parliamentary_constituency", "Constituency"
+        COUNCIL = "admin_district", "Council"
         CONSTITUENCY_2025 = "parliamentary_constituency_2025", "Constituency (2024)"
 
     geography_column_type = TextChoicesField(
@@ -939,6 +939,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             args__external_data_source_id=str(self.id)
         ).order_by("-scheduled_at")
 
+    def get_active_import_job(self):
+        active_import_job = (
+            self.event_log_queryset()
+            .filter(task_name__contains="hub.tasks.import", status="doing")
+            .first()
+        )
+        return active_import_job
+
     def get_update_mapping(self) -> list[UpdateMapping]:
         return ensure_list(self.update_mapping)
 
@@ -981,6 +989,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         return None
 
+    def webhook_healthcheck(self) -> bool:
+        """
+        Check the connection to the webhook.
+        """
+        raise NotImplementedError(
+            "Webhook healthcheck not implemented for this data source type."
+        )
+
     def setup_webhooks(self):
         """
         Set up a webhook.
@@ -1013,7 +1029,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         data_set, created = await DataSet.objects.aupdate_or_create(
             external_data_source=self,
             defaults={
-                "name": f"Cached dataset for {self.id}",
+                "name": str(self.id),
                 "data_type": "json",
                 "table": "commondata",
                 "default_value": {},
@@ -1363,7 +1379,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     @classmethod
     async def deferred_refresh_many(
-        cls, external_data_source_id: str, member_ids: list[str]
+        cls, external_data_source_id: str, member_ids: list[str], request_id: str = None
     ):
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
@@ -1371,7 +1387,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         await external_data_source.refresh_many(member_ids=member_ids)
 
     @classmethod
-    async def deferred_refresh_all(cls, external_data_source_id: str):
+    async def deferred_refresh_all(
+        cls, external_data_source_id: str, request_id: str = None
+    ):
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
@@ -1382,7 +1400,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             member_ids = [
                 external_data_source.get_record_id(member) for member in batch
             ]
-            await external_data_source.schedule_refresh_many(member_ids)
+            await external_data_source.schedule_refresh_many(member_ids, request_id)
 
     @classmethod
     async def deferred_refresh_webhooks(cls, external_data_source_id: str):
@@ -1398,7 +1416,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     @classmethod
     async def deferred_import_many(
-        cls, external_data_source_id: str, member_ids: list[str]
+        cls, external_data_source_id: str, member_ids: list[str], request_id: str = None
     ):
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
@@ -1406,7 +1424,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         await external_data_source.import_many(member_ids=member_ids)
 
     @classmethod
-    async def deferred_import_all(cls, external_data_source_id: str):
+    async def deferred_import_all(
+        cls, external_data_source_id: str, request_id: str = None
+    ):
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
@@ -1417,7 +1437,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             member_ids = [
                 external_data_source.get_record_id(member) for member in batch
             ]
-            await external_data_source.schedule_import_many(member_ids)
+            await external_data_source.schedule_import_many(
+                member_ids, request_id=request_id
+            )
 
     async def schedule_refresh_one(self, member_id: str) -> int:
         try:
@@ -1430,7 +1452,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         except UniqueViolation:
             pass
 
-    async def schedule_refresh_many(self, member_ids: list[str]) -> int:
+    async def schedule_refresh_many(
+        self, member_ids: list[str], request_id: str = None
+    ) -> int:
         member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
             return await refresh_many.configure(
@@ -1438,22 +1462,28 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"update_many_{str(self.id)}_{member_ids_hash}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
-            ).defer_async(external_data_source_id=str(self.id), member_ids=member_ids)
+            ).defer_async(
+                request_id=request_id,
+                external_data_source_id=str(self.id),
+                member_ids=member_ids,
+            )
         except UniqueViolation:
             pass
 
-    async def schedule_refresh_all(self) -> int:
+    async def schedule_refresh_all(self, request_id: str = None) -> int:
         try:
             return await refresh_all.configure(
                 # Dedupe `update_all` jobs for the same config
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"update_all_{str(self.id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
-            ).defer_async(external_data_source_id=str(self.id))
+            ).defer_async(external_data_source_id=str(self.id), request_id=request_id)
         except UniqueViolation:
             pass
 
-    async def schedule_import_many(self, member_ids: list[str]) -> int:
+    async def schedule_import_many(
+        self, member_ids: list[str], request_id: str = None
+    ) -> int:
         member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
             return await import_many.configure(
@@ -1461,18 +1491,22 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"import_many_{str(self.id)}_{member_ids_hash}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
-            ).defer_async(external_data_source_id=str(self.id), member_ids=member_ids)
+            ).defer_async(
+                external_data_source_id=str(self.id),
+                member_ids=member_ids,
+                request_id=request_id,
+            )
         except UniqueViolation:
             pass
 
-    async def schedule_import_all(self) -> int:
+    async def schedule_import_all(self, request_id: str = None) -> int:
         try:
             return await import_all.configure(
                 # Dedupe `import_all` jobs for the same config
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"import_all_{str(self.id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
-            ).defer_async(external_data_source_id=str(self.id))
+            ).defer_async(external_data_source_id=str(self.id), request_id=request_id)
         except UniqueViolation:
             pass
 
@@ -1645,18 +1679,18 @@ class AirtableSource(ExternalDataSource):
             expected_webhooks += 1
         if self.auto_import_enabled:
             expected_webhooks += 1
-        webhooks = self.get_webhooks()
-        if len(webhooks) < expected_webhooks:
-            print("Webhook healthcheck: Not enough webhooks")
-            return False
-        if len(webhooks) > expected_webhooks:
-            print("Webhook healthcheck: Too many webhooks")
-            return False
-        for webhook in webhooks:
-            if not webhook.is_hook_enabled:
-                print("Webhook healthcheck: a webhook expired")
-                return False
-        return True
+        try:
+            webhooks = self.get_webhooks()
+            if len(webhooks) < expected_webhooks:
+                raise ValueError("Webhook healthcheck: Not enough webhooks")
+            if len(webhooks) > expected_webhooks:
+                raise ValueError("Webhook healthcheck: Too many webhooks")
+            for webhook in webhooks:
+                if not webhook.is_hook_enabled:
+                    raise ValueError("Webhook healthcheck: a webhook expired")
+            return True
+        except:
+            raise ValueError("Couldn't fetch webhooks")
 
     def teardown_webhooks(self):
         list = self.base.webhooks()

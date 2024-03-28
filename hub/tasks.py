@@ -15,20 +15,24 @@ async def refresh_one(external_data_source_id: str, member_id: str):
 
 
 @app.task(queue="index", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
-async def refresh_many(external_data_source_id: str, member_ids: list[str]):
+async def refresh_many(
+    external_data_source_id: str, member_ids: list[str], request_id: str = None
+):
     from hub.models import ExternalDataSource
 
     await ExternalDataSource.deferred_refresh_many(
-        external_data_source_id=external_data_source_id, member_ids=member_ids
+        external_data_source_id=external_data_source_id,
+        member_ids=member_ids,
+        request_id=request_id,
     )
 
 
 @app.task(queue="index")
-async def refresh_all(external_data_source_id: str):
+async def refresh_all(external_data_source_id: str, request_id: str = None):
     from hub.models import ExternalDataSource
 
     await ExternalDataSource.deferred_refresh_all(
-        external_data_source_id=external_data_source_id
+        external_data_source_id=external_data_source_id, request_id=request_id
     )
 
 
@@ -44,18 +48,22 @@ async def refresh_webhooks(external_data_source_id: str, timestamp=None):
 
 
 @app.task(queue="index", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
-async def import_many(external_data_source_id: str, member_ids: list[str]):
+async def import_many(
+    external_data_source_id: str, member_ids: list[str], request_id: str = None
+):
     from hub.models import ExternalDataSource
 
     await ExternalDataSource.deferred_import_many(
-        external_data_source_id=external_data_source_id, member_ids=member_ids
+        external_data_source_id=external_data_source_id,
+        member_ids=member_ids,
+        request_id=request_id,
     )
 
 
 @app.task(queue="index")
-async def import_all(external_data_source_id: str):
+async def import_all(external_data_source_id: str, request_id: str = None):
     from hub.models import ExternalDataSource
 
     await ExternalDataSource.deferred_import_all(
-        external_data_source_id=external_data_source_id
+        external_data_source_id=external_data_source_id, request_id=request_id
     )

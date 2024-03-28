@@ -48,7 +48,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ArrowUpDown, ExternalLink, RefreshCcw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -72,6 +72,9 @@ import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
 import { contentEditableMutation } from "@/lib/html";
 import { UpdateExternalDataSourceFields } from "@/components/UpdateExternalDataSourceFields";
+import { Progress } from "@/components/ui/progress";
+import { format } from "d3-format";
+import { ErrorBoundary } from "@sentry/nextjs";
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {
@@ -100,6 +103,12 @@ const GET_UPDATE_CONFIG = gql`
       phoneField
       addressField
       isImporting
+      importProgress {
+        total
+        succeeded
+        estimatedFinishTime
+        requestId
+      }
       importedDataCount
       fieldDefinitions {
         label
@@ -145,12 +154,8 @@ export default function InspectExternalDataSource({
     variables: {
       ID: externalDataSourceId,
     },
+    pollInterval: 10000,
   });
-
-  useEffect(() => {
-    const interval = setInterval(() => refetch(), 5000)
-    return () => clearInterval(interval)
-  }, [refetch])
 
   if (!data?.externalDataSource && loading) {
     return <LoadingIcon />;
@@ -197,7 +202,7 @@ export default function InspectExternalDataSource({
         <div className='grid sm:grid-cols-2 gap-8'>
           <section className='space-y-4'>
             <div>Imported records</div>
-            <div className='text-hXlg'>{source.importedDataCount || 0}</div>
+            <div className='text-hXlg'>{format(",")(source.importedDataCount || 0)}</div>
             <p className='text-sm text-meepGray-400'>
               Import data from this source into Mapped for use in auto-updates and reports.
             </p>
@@ -207,6 +212,17 @@ export default function InspectExternalDataSource({
                 <span>Importing...</span>
               </span>}
             </Button>
+            {!!source.importProgress && (
+              <ErrorBoundary>
+                <Progress
+                  value={source.importProgress.succeeded}
+                  max={source.importProgress.total}
+                />
+                <div className='text-meepGray-300 text-sm'>
+                  Imported <span className='text-meepGray-100'>{format(",")(source.importProgress.succeeded)}</span> of <span className='text-meepGray-100'>{format(",")(source.importProgress.total)}</span>. Estimated finish at <span className='text-meepGray-100'>{formatRelative(source.importProgress.estimatedFinishTime, new Date())}</span>
+                </div>
+              </ErrorBoundary>
+            )}
           </section>
           <section className='space-y-4'>
             <h2 className="text-hSm mb-5">Auto-updates</h2>
@@ -464,15 +480,18 @@ export function importData (client: ApolloClient<any>, externalDataSourceId: str
     mutation: gql`
       mutation ImportData($id: String!) {
         importAll(externalDataSourceId: $id) {
-          id
-          importedDataCount
-          isImporting
-          jobs {
-            status
+          requestId
+          externalDataSource {
             id
-            taskName
-            args
-            lastEventAt
+            importedDataCount
+            isImporting
+            jobs {
+              status
+              id
+              taskName
+              args
+              lastEventAt
+            }
           }
         }
       }

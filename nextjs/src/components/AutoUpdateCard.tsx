@@ -286,18 +286,21 @@ export function CogIcon() {
 export const TRIGGER_FULL_UPDATE = gql`
   mutation TriggerFullUpdate($externalDataSourceId: String!) {
     triggerUpdate(externalDataSourceId: $externalDataSourceId) {
-      id
-      jobs {
-        status
+      requestId
+      externalDataSource {
         id
-        taskName
-        args
-        lastEventAt
-      }
-      id
-      name
-      connectionDetails {
-        crmType: __typename
+        jobs {
+          status
+          id
+          taskName
+          args
+          lastEventAt
+        }
+        id
+        name
+        connectionDetails {
+          crmType: __typename
+        }
       }
     }
   }

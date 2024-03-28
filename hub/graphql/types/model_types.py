@@ -1,7 +1,10 @@
 from datetime import datetime
 from typing import List, Optional, Union
 
+from django.db.models import Count
+
 import procrastinate.contrib.django.models
+import pytz
 import strawberry
 import strawberry_django
 import strawberry_django_dataloaders.fields
@@ -549,6 +552,22 @@ class Analytics:
         return res[0]
 
 
+@strawberry.type
+class ImportProgress:
+    started_at: datetime
+    is_importing: bool
+    total: int
+    succeeded: int
+    doing: int
+    failed: int
+    request_id: str
+    estimated_seconds_remaining: float
+    estimated_finish_time: datetime
+    seconds_per_member: float
+    done: int
+    remaining: int
+
+
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class ExternalDataSource(Analytics):
     id: auto
@@ -606,7 +625,11 @@ class ExternalDataSource(Analytics):
 
     @strawberry_django.field
     def webhook_healthcheck(self: models.ExternalDataSource, info) -> bool:
-        return self.webhook_healthcheck()
+        try:
+            return self.webhook_healthcheck()
+        except:
+            # TODO: Return the error message to the UI.
+            return False
 
     @strawberry_django.field
     def imported_data_geojson_points(
@@ -647,10 +670,74 @@ class ExternalDataSource(Analytics):
 
     @strawberry_django.field
     def is_importing(self: models.ExternalDataSource, info: Info) -> bool:
-        return (
-            self.event_log_queryset()
-            .filter(status="doing", task_name="hub.tasks.import_all")
-            .exists()
+        active_import_job = self.get_active_import_job()
+        if active_import_job is None:
+            return False
+        # This distinguishes from triggered imports vs patchy webhook imports
+        return active_import_job.args.get("request_id", None) is not None
+
+    @strawberry_django.field
+    def import_progress(
+        self: models.ExternalDataSource, info: Info
+    ) -> Optional[ImportProgress]:
+        active_import_job = self.get_active_import_job()
+
+        if active_import_job is None:
+            return None
+
+        request_id = active_import_job.args.get("request_id")
+
+        if request_id is None:
+            return None
+
+        jobs = self.event_log_queryset().filter(args__request_id=request_id).all()
+
+        total = 2
+        statuses = dict()
+
+        for job in jobs:
+            job_count = len(job.args.get("member_ids", []))
+            total += job_count
+            if statuses.get(job.status, None) is not None:
+                statuses[job.status] += job_count
+            else:
+                statuses[job.status] = job_count
+
+        done = (
+            int(
+                statuses.get("succeeded", 0)
+                + statuses.get("failed", 0)
+                + statuses.get("doing", 0)
+            )
+            + 1
+        )
+        remaining = total - done
+        time_started = (
+            procrastinate.contrib.django.models.ProcrastinateEvent.objects.filter(
+                job_id=active_import_job.id
+            )
+            .order_by("at")
+            .first()
+            .at.replace(tzinfo=pytz.utc)
+        )
+        time_so_far = datetime.now(pytz.utc) - time_started
+        duration_per_member = time_so_far / done
+        time_remaining = duration_per_member * remaining
+        estimated_finish_time = datetime.now() + time_remaining
+
+        return ImportProgress(
+            is_importing=request_id is not None,
+            started_at=time_started,
+            estimated_seconds_remaining=time_remaining,
+            estimated_finish_time=estimated_finish_time,
+            seconds_per_member=duration_per_member.seconds,
+            total=total - 2,
+            done=done - 1,
+            remaining=remaining - 1,
+            succeeded=statuses.get("succeeded", 0),
+            failed=statuses.get("failed", 0),
+            doing=statuses.get("doing", 0),
+            request_id=request_id,
         )
 
 
