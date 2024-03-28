@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { CreateMapReportMutation, CreateMapReportMutationVariables, ListReportsQuery, ListReportsQueryVariables } from '@/__generated__/graphql';
 import { formatRelative } from 'date-fns';
 import { useRouter } from 'next/navigation';
+import { triggerAnalyticsEvent } from "@/app/utils/posthogutils";
 
 const LIST_REPORTS = gql`
   query ListReports {
@@ -125,17 +126,24 @@ export function CreateReportCard () {
         success: (d: FetchResult<CreateMapReportMutation>) => {
           if (!d.errors && d.data?.createMapReport?.__typename === 'MapReport') {
             router.push(`/reports/${d.data.createMapReport.id}`)
+            triggerAnalyticsEvent("Map report created succesfully", {});
             return 'Report created!'
           } else if (d.data?.createMapReport?.__typename === 'OperationInfo' ) {
             toast.error('Failed to create report', {
               id: tid,
               description: d.data.createMapReport.messages.map(m => m.message).join(', ')
             })
+            triggerAnalyticsEvent("Map report creatio failed", {
+              errorMessages: d.data.createMapReport.messages.map(m => m.message).join(', ')
+            });
           } else {
             toast.error('Failed to create report', {
               id: tid,
               description: d.errors?.map(e => e.message).join(', ')
             })
+            triggerAnalyticsEvent("Report creation failed", {
+              errorMessages: d.errors?.map(e => e.message).join(', ')
+            });
           }
         },
         error: 'Failed to create report',
