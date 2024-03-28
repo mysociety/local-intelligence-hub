@@ -60,6 +60,7 @@ export default function Page({ params: { id } }: { params: Params }) {
     showElectionData: false,
     showMPs: false,
   });
+  
   const report = useQuery<GetMapReportQuery, GetMapReportQueryVariables>(GET_MAP_REPORT, {
     variables: { id },
   });
@@ -90,7 +91,8 @@ export default function Page({ params: { id } }: { params: Params }) {
     </MapProvider>
   )
 
-  function refreshStatistics() {
+
+  function refreshStatistics () {
     toastPromise(
       client.refetchQueries({
         include: [
@@ -107,7 +109,7 @@ export default function Page({ params: { id } }: { params: Params }) {
     )
   }
 
-  function updateMutation(input: MapReportInput) {
+  function updateMutation (input: MapReportInput) {
     const update = client.mutate<UpdateMapReportMutation, UpdateMapReportMutationVariables>({
       mutation: UPDATE_MAP_REPORT,
       variables: {
@@ -138,7 +140,7 @@ export default function Page({ params: { id } }: { params: Params }) {
     });
   }
 
-  function del() {
+  function del () {
     const deleteMutation = client.mutate<DeleteMapReportMutation, DeleteMapReportMutationVariables>({
       mutation: DELETE_MAP_REPORT,
       variables: {
@@ -259,27 +261,27 @@ function ReportPage() {
                   </>
                 )}
               </CardHeader>
-              {report?.data?.mapReport && (
-                <CardContent className='grid grid-cols-1 gap-2'>
-                  {toggles.map(({ icon: Icon, label, enabled, toggle }) => (
-                    <div
-                      key={label}
-                      className='hover:bg-meepGray-100 px-0 flex flex-row gap-2 items-center overflow-hidden text-nowrap text-ellipsis cursor-pointer'
-                      onClick={toggle}>
-                      <div className={twMerge(
-                        'relative rounded inline-block h-9 w-9',
-                        enabled ? "bg-meepGray-800" : "bg-meepGray-100"
-                      )}>
-                        <Icon className={twMerge(
-                          "w-4 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
-                          enabled && "text-white"
-                        )} />
-                      </div>
-                      {label}
+            {report?.data?.mapReport && (
+              <CardContent className='grid grid-cols-1 gap-2'>
+                {toggles.map(({ icon: Icon, label, enabled, toggle }) => (
+                  <div
+                    key={label}
+                    className='hover:bg-meepGray-100 px-0 flex flex-row gap-2 items-center overflow-hidden text-nowrap text-ellipsis cursor-pointer'
+                    onClick={toggle}>
+                    <div className={twMerge(
+                      'relative rounded inline-block h-9 w-9',
+                      enabled ? "bg-meepGray-800" : "bg-meepGray-100"
+                    )}>
+                      <Icon className={twMerge(
+                        "w-4 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2", 
+                        enabled && "text-white"
+                      )} />
                     </div>
-                  ))}
-                </CardContent>
-              )}
+                    {label}
+                  </div>
+                ))}
+              </CardContent>
+            )}
             </Card>
             {/* Data config card */}
             {report?.data?.mapReport && isDataConfigOpen && (
