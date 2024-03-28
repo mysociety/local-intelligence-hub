@@ -853,6 +853,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         blank=True,
     )
 
+    orgs_with_access = models.ManyToManyField(
+        Organisation,
+        through="hub.SharingPermission",
+        related_name="sources_from_other_orgs",
+    )
+
     class DataSourceType(models.TextChoices):
         MEMBER = "member", "Members or supporters"
         REGION = "region", "Areas or regions"
@@ -1046,6 +1052,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             loaders = await self.get_loaders()
 
             async def create_import_record(record):
+                """
+                Converts a record fetched from the API into
+                a GenericData record in the MEEP db.
+
+                Used to batch-import data.
+                """
                 structured_data = get_update_data(record)
                 postcode_data: PostcodesIOResult = await loaders["postcodesIO"].load(
                     self.get_record_field(record, self.geography_column)
@@ -1196,7 +1208,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 **(d.postcode_data if d.postcode_data else {}),
                 **(d.json if d.json else {}),
             }
-            for d in self.get_analytics_queryset()
+            for d in self.get_import_data()
         ]
         enrichment_df = pd.DataFrame.from_records(json_list)
         return enrichment_df
@@ -1463,6 +1475,7 @@ class AirtableSource(ExternalDataSource):
     An Airtable table.
     """
 
+    crm_type = "airtable"
     api_key = models.CharField(
         max_length=250,
         help_text="Personal access token. Requires the following 4 scopes: data.records:read, data.records:write, schema.bases:read, webhook:manage",
@@ -1680,6 +1693,25 @@ class AirtableWebhook(models.Model):
     # Airtable ID
     airtable_id = models.CharField(max_length=250, primary_key=True)
     cursor = models.IntegerField(default=1, blank=True)
+
+
+class SharingPermission(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_update = models.DateTimeField(auto_now=True)
+    external_data_source = models.ForeignKey(
+        ExternalDataSource, on_delete=models.CASCADE
+    )
+    organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE)
+    visibility_record_coordinates = models.BooleanField(
+        default=False, blank=True, null=True
+    )
+    visibility_record_details = models.BooleanField(
+        default=False, blank=True, null=True
+    )
+
+    class Meta:
+        unique_together = ["external_data_source", "organisation"]
 
 
 class Report(PolymorphicModel):

@@ -249,7 +249,7 @@ export default function Page({
         placeholder={placeholder}
         fieldDefinitions={testSourceResult.data?.testSourceConnection.fieldDefinitions}
         control={form.control}
-        connectionType={testSourceResult.data?.testSourceConnection.__typename!}
+        crmType={testSourceResult.data?.testSourceConnection.__typename!}
         guess={guessed[name]}
         required={required}
       />

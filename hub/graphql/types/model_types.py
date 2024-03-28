@@ -1,9 +1,13 @@
+import itertools
 from datetime import datetime
 from typing import List, Optional, Union
+
+from django.db.models import Q
 
 import procrastinate.contrib.django.models
 import strawberry
 import strawberry_django
+import strawberry_django_dataloaders.factories
 import strawberry_django_dataloaders.fields
 from strawberry import auto
 from strawberry.scalars import JSON
@@ -97,36 +101,58 @@ class User:
 
 @strawberry_django.type(models.UserProperties)
 class UserProperties:
+    user_id: str
     user: User
     full_name: auto
 
 
-@strawberry_django.type(models.Organisation)
-class Organisation:
+@strawberry_django.filters.filter(models.Organisation)
+class OrganisationFilters:
+    id: auto
+    slug: auto
+
+
+@strawberry_django.type(models.Organisation, filters=OrganisationFilters)
+class PublicOrganisation:
     id: auto
     name: auto
     slug: auto
+
+
+@strawberry_django.type(models.Organisation, filters=OrganisationFilters)
+class Organisation(PublicOrganisation):
     members: List["Membership"]
     external_data_sources: List["ExternalDataSource"]
+
+    @strawberry_django.field
+    def sharing_permissions_from_other_orgs(
+        self, info: Info
+    ) -> List["SharingPermission"]:
+        # Sources shared to this org via SharingPermission
+        results = models.SharingPermission.objects.filter(organisation=self)
+        return results
 
     @classmethod
     def get_queryset(cls, queryset, info, **kwargs):
         user = get_current_user(info)
-        return queryset.filter(members__user=user)
+        return queryset.filter(members__user=user.id)
 
 
 # Membership
 @strawberry_django.type(models.Membership)
 class Membership:
     id: auto
+    user_id: str
     user: User
+    organisation_id: str
     organisation: Organisation
     role: auto
 
     @classmethod
     def get_queryset(cls, queryset, info, **kwargs):
         user = get_current_user(info)
-        return queryset.filter(user=user.id)
+        # Allow querying memberships of your orgs
+        return queryset.filter(organisation__members__user=user.id)
 
 
 # ExternalDataSource
@@ -306,7 +332,7 @@ class PersonFilter:
 class Person:
     id: auto
     person_type: auto
-    external_id: auto
+    external_id: str
     id_type: auto
     name: auto
     area: "Area" = strawberry_django_dataloaders.fields.auto_dataloader_field()
@@ -406,7 +432,7 @@ class ConstituencyElectionStats:
 @strawberry_django.type(models.Area, filters=AreaFilter)
 class Area:
     id: auto
-    mapit_id: auto
+    mapit_id: str
     gss: auto
     name: auto
     area_type: "AreaType" = strawberry_django_dataloaders.fields.auto_dataloader_field()
@@ -501,6 +527,26 @@ class GroupedDataCount:
         return await loader(context=info.context).load(self.get("gss", None))
 
 
+class GroupedDataCountForSource(GroupedDataCount):
+    source_id: Optional[str] = dict_key_field()
+
+    @strawberry_django.field
+    async def source(self: str, info: Info) -> Optional["ExternalDataSource"]:
+        source_id = self.get("source_id", None)
+        if source_id is None:
+            return None
+        loader = strawberry_django_dataloaders.factories.PKDataLoaderFactory.get_loader_class(
+            models.ExternalDataSource,
+        )
+        data = await loader(context=info.context).load(source_id)
+        return data
+
+
+@strawberry.type
+class GroupedDataCountWithBreakdown(GroupedDataCount):
+    sources: List[GroupedDataCountForSource] = dict_key_field()
+
+
 @strawberry_django.type(models.GenericData, filters=CommonDataFilter)
 class GenericData(CommonData):
     last_update: auto
@@ -518,7 +564,8 @@ class GenericData(CommonData):
 
 @strawberry.type
 class MapReportMemberFeature(PointFeature):
-    properties: GenericData
+    # Optional, because of sharing options
+    properties: Optional[GenericData]
 
 
 @strawberry.interface
@@ -529,6 +576,35 @@ class Analytics:
     imported_data_count_by_constituency_2024: List[GroupedDataCount] = fn_field()
     imported_data_count_by_council: List[GroupedDataCount] = fn_field()
     imported_data_count_by_ward: List[GroupedDataCount] = fn_field()
+
+    @strawberry_django.field
+    def imported_data_count_by_constituency_by_source(
+        self, info: Info, gss: str
+    ) -> List[GroupedDataCountWithBreakdown]:
+        results = self.imported_data_count_by_constituency_by_source()
+        print(results)
+        return_data = []
+        for gss, group in itertools.groupby(results, lambda x: x["gss"]):
+            print(gss, group)
+            if gss:
+                group = list(group)
+                return_data.append(
+                    GroupedDataCountWithBreakdown(
+                        label=group[0]["label"],
+                        count=sum([source["count"] for source in group]),
+                        gss=gss,
+                        sources=[
+                            GroupedDataCountForSource(
+                                source_id=source["source_id"],
+                                count=source["count"],
+                                label=source["label"],
+                                gss=gss,
+                            )
+                            for source in group
+                        ],
+                    )
+                )
+        return return_data
 
     @strawberry_django.field
     def imported_data_count_for_constituency(
@@ -550,16 +626,14 @@ class Analytics:
 
 
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
-class ExternalDataSource(Analytics):
+class BaseDataSource(Analytics):
     id: auto
     name: auto
+    crm_type: str = attr_field()
     data_type: auto
     description: auto
     created_at: auto
     last_update: auto
-    organisation: Organisation = (
-        strawberry_django_dataloaders.fields.auto_dataloader_field()
-    )
     geography_column: auto
     geography_column_type: auto
     postcode_field: auto
@@ -569,16 +643,91 @@ class ExternalDataSource(Analytics):
     email_field: auto
     phone_field: auto
     address_field: auto
+    record_url_template: Optional[str] = fn_field()
+    organisation_id: str = strawberry_django.field(
+        resolver=lambda self: self.organisation_id
+    )
+
+    @strawberry_django.field
+    def is_importing(self: models.ExternalDataSource, info: Info) -> bool:
+        return (
+            self.event_log_queryset()
+            .filter(status="doing", task_name="hub.tasks.import_all")
+            .exists()
+        )
+
+    @strawberry_django.field
+    def imported_data_geojson_points(
+        self: models.ExternalDataSource, info: Info
+    ) -> List[MapReportMemberFeature]:
+        user = get_current_user(info)
+        can_display_points = self.organisation.members.filter(user=user).exists()
+        can_display_details = can_display_points
+        if not can_display_points:
+            permission = models.SharingPermission.objects.filter(
+                external_data_source=self, organisation__members__user=user
+            ).first()
+            if permission is None:
+                return []
+            if not permission.visibility_record_coordinates:
+                return []
+            if permission.visibility_record_details:
+                can_display_details = True
+
+        data = self.get_import_data()
+        return [
+            MapReportMemberFeature.from_geodjango(
+                point=generic_datum.point,
+                id=generic_datum.data,
+                properties=generic_datum if can_display_details else None,
+            )
+            for generic_datum in data
+            if generic_datum.point is not None
+        ]
+
+
+@strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
+class SharedDataSource(BaseDataSource):
+    organisation: PublicOrganisation = (
+        strawberry_django_dataloaders.fields.auto_dataloader_field()
+    )
+
+    @classmethod
+    def get_queryset(cls, queryset, info, **kwargs):
+        user = get_current_user(info)
+        return queryset.filter(
+            # allow querying your orgs' data sources
+            Q(organisation__members__user=user.id)
+            # and also data sources shared with your orgs
+            | Q(
+                id__in=models.SharingPermission.objects.filter(
+                    organisation__members__user=user.id
+                ).values_list("external_data_source_id", flat=True)
+            )
+        )
+
+
+@strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
+class ExternalDataSource(BaseDataSource):
+    organisation: Organisation = (
+        strawberry_django_dataloaders.fields.auto_dataloader_field()
+    )
     update_mapping: Optional[List["AutoUpdateConfig"]]
     auto_update_enabled: auto
     auto_import_enabled: auto
     field_definitions: Optional[List[FieldDefinition]] = strawberry_django.field(
         resolver=lambda self: self.field_definitions()
     )
-    record_url_template: Optional[str] = fn_field()
     remote_name: Optional[str] = fn_field()
     remote_url: Optional[str] = fn_field()
     healthcheck: bool = fn_field()
+    orgs_with_access: List[Organisation]
+
+    @strawberry_django.field
+    def sharing_permissions(
+        self: models.ExternalDataSource, info: Info
+    ) -> List["SharingPermission"]:
+        return models.SharingPermission.objects.filter(external_data_source=self.id)
 
     jobs: List[QueueJob] = strawberry_django.field(
         resolver=lambda self: procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
@@ -591,7 +740,10 @@ class ExternalDataSource(Analytics):
     @classmethod
     def get_queryset(cls, queryset, info, **kwargs):
         user = get_current_user(info)
-        return queryset.filter(organisation__members__user=user.id)
+        return queryset.filter(
+            # allow querying your orgs' data sources
+            Q(organisation__members__user=user.id)
+        )
 
     @strawberry_django.field
     def connection_details(
@@ -608,36 +760,6 @@ class ExternalDataSource(Analytics):
     def webhook_healthcheck(self: models.ExternalDataSource, info) -> bool:
         return self.webhook_healthcheck()
 
-    @strawberry_django.field
-    def imported_data_geojson_points(
-        self: models.ExternalDataSource, info: Info
-    ) -> List[MapReportMemberFeature]:
-        data = self.get_import_data()
-        return [
-            MapReportMemberFeature.from_geodjango(
-                point=generic_datum.point,
-                id=generic_datum.data,
-                properties=generic_datum,
-            )
-            for generic_datum in data
-            if generic_datum.point is not None
-        ]
-
-    imported_data_count: int = fn_field()
-    imported_data_count_by_region: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_constituency: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_constituency_2024: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_council: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_ward: List[GroupedDataCount] = fn_field()
-
-    @strawberry_django.field
-    def is_importing(self: models.ExternalDataSource, info: Info) -> bool:
-        return (
-            self.event_log_queryset()
-            .filter(status="doing", task_name="hub.tasks.import_all")
-            .exists()
-        )
-
 
 @strawberry.type
 class AutoUpdateConfig:
@@ -649,14 +771,15 @@ class AutoUpdateConfig:
 @strawberry_django.type(models.AirtableSource)
 class AirtableSource(ExternalDataSource):
     api_key: auto
-    base_id: auto
-    table_id: auto
+    base_id: str
+    table_id: str
 
 
 @strawberry_django.type(models.Report)
 class Report:
     id: auto
-    organisation: auto
+    organisation_id: str
+    organisation: Organisation
     name: auto
     slug: auto
     description: auto
@@ -671,13 +794,54 @@ class Report:
 
 @strawberry.type
 class MapLayer:
+    id: str = dict_key_field()
     name: str = dict_key_field()
     visible: Optional[bool] = dict_key_field()
 
     @strawberry_django.field
-    def source(self, info: Info) -> ExternalDataSource:
-        source_id = self.get(info.python_name, None)
+    def is_shared_source(self, info: Info) -> bool:
+        # see if this source is shared with the user's org
+        user = get_current_user(info)
+        return models.SharingPermission.objects.filter(
+            organisation__members__user=user.id,
+            external_data_source_id=self["source"],
+        ).exists()
+
+    @strawberry_django.field
+    def sharing_permission(self, info: Info) -> Optional["SharingPermission"]:
+        # see if this source is shared with the user's org
+        user = get_current_user(info)
+        return models.SharingPermission.objects.filter(
+            organisation__members__user=user.id,
+            external_data_source_id=self["source"],
+        ).first()
+
+    @strawberry_django.field
+    def source(self, info: Info) -> SharedDataSource:
+        source_id = self.get("source", None)
         return models.ExternalDataSource.objects.get(id=source_id)
+
+
+@strawberry_django.type(model=models.SharingPermission)
+class SharingPermission:
+    id: auto
+    external_data_source_id: str = strawberry_django.field(
+        resolver=lambda self: self.external_data_source_id
+    )
+    external_data_source: SharedDataSource = (
+        strawberry_django_dataloaders.fields.auto_dataloader_field()
+    )
+    organisation_id: str = strawberry_django.field(
+        resolver=lambda self: self.organisation_id
+    )
+    organisation: PublicOrganisation = (
+        strawberry_django_dataloaders.fields.auto_dataloader_field()
+    )
+    created_at: auto
+    last_update: auto
+    visibility_record_coordinates: auto
+    visibility_record_details: auto
+    deleted: bool = strawberry_django.field(resolver=lambda: False)
 
 
 @strawberry_django.type(models.MapReport)

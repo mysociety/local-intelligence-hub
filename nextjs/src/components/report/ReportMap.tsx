@@ -1,6 +1,6 @@
 "use client"
 
-import { MapReportLayerAnalyticsQuery, MapReportLayerAnalyticsQueryVariables, MapReportLayerGeoJsonPointsQuery, MapReportLayerGeoJsonPointsQueryVariables } from "@/__generated__/graphql";
+import { MapReportLayerAnalyticsQuery, MapReportLayerAnalyticsQueryVariables, DataSourceGeoJsonPointsQuery, DataSourceGeoJsonPointsQueryVariables } from "@/__generated__/graphql";
 import { Fragment, useContext, useEffect, useState } from "react";
 import Map, { Layer, Source, LayerProps, Popup, ViewState } from "react-map-gl";
 import { gql, useQuery } from "@apollo/client";
@@ -245,7 +245,7 @@ export function ReportMap () {
       mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
       {...viewState}
       onMove={(e) => setViewState(e.viewState)}
-      mapStyle="mapbox://styles/commonknowledge/clty3prwh004601pr4nqn7l9s"
+      mapStyle="mapbox://styles/commonknowledge/clty3prwh004601pr4nqn7l9s/draft"
       onClick={() => setSelectedSourceRecord(null)}
     >
       {!analytics.data && null}
@@ -499,7 +499,7 @@ export function ReportMap () {
 }
 
 function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { externalDataSourceId: string, index: number }) {
-  const { data, error } = useQuery<MapReportLayerGeoJsonPointsQuery, MapReportLayerGeoJsonPointsQueryVariables>(MAP_REPORT_LAYER_POINTS, {
+  const { data, error } = useQuery<DataSourceGeoJsonPointsQuery, DataSourceGeoJsonPointsQueryVariables>(MAP_REPORT_LAYER_POINTS, {
     variables: {
       externalDataSourceId,
     },
@@ -533,7 +533,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
               properties: {
                 // @ts-ignore
                 ...(feature.properties || feature._properties || {}),
-                originalUrl: data?.externalDataSource.recordUrlTemplate?.replace("{record_id}", id)
+                originalUrl: data?.sharedDataSource?.recordUrlTemplate?.replace("{record_id}", id)
               },
               // @ts-ignore
               geometry: feature.geometry || feature._geometry,
@@ -545,7 +545,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
       } catch (e) {
       }
     })
-  }, [mapbox.loadedMap, data?.externalDataSource.recordUrlTemplate])
+  }, [mapbox.loadedMap, data?.sharedDataSource?.recordUrlTemplate])
   
   return (
     <>
@@ -555,7 +555,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
         data={{
           type: "FeatureCollection",
           // @ts-ignore
-          features: data?.externalDataSource?.importedDataGeojsonPoints || []
+          features: data?.sharedDataSource?.importedDataGeojsonPoints || []
         }}
       >
         {index <= 1 ? (
@@ -620,8 +620,8 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
 }
 
 const MAP_REPORT_LAYER_POINTS = gql`
-  query MapReportLayerGeoJSONPoints($externalDataSourceId: ID!) {
-    externalDataSource(pk: $externalDataSourceId) {
+  query DataSourceGeoJSONPoints($externalDataSourceId: ID!) {
+    sharedDataSource(pk: $externalDataSourceId) {
       id
       recordUrlTemplate
       importedDataGeojsonPoints {
@@ -652,9 +652,13 @@ export const MAP_REPORT_LAYER_ANALYTICS = gql`
     mapReport(pk: $reportID) {
       id
       layers {
+        id
         name
         source {
           id
+          organisation {
+            name
+          }
         }
       }
       importedDataCountByRegion {
