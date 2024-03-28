@@ -113,7 +113,7 @@ export function AutoUpdateWebhookRefresh({
 
 export function TriggerUpdateButton({
   id,
-  label = "Trigger full update",
+  label = "Trigger CRM update",
   ...buttonProps
 }: {
   id: string;
@@ -162,7 +162,7 @@ export function TriggerUpdateButton({
     toast.promise(mutation, {
       loading: "Triggering...",
       success: (d: FetchResult<TriggerFullUpdateMutation>) => {
-        return `Triggered sync for ${d.data?.triggerUpdate.name}`;
+        return `Triggered sync for ${d.data?.triggerUpdate.externalDataSource.name}`;
       },
       error: `Couldn't trigger sync`,
     });
@@ -286,18 +286,21 @@ export function CogIcon() {
 export const TRIGGER_FULL_UPDATE = gql`
   mutation TriggerFullUpdate($externalDataSourceId: String!) {
     triggerUpdate(externalDataSourceId: $externalDataSourceId) {
-      id
-      jobs {
-        status
+      requestId
+      externalDataSource {
         id
-        taskName
-        args
-        lastEventAt
-      }
-      id
-      name
-      connectionDetails {
-        crmType: __typename
+        jobs {
+          status
+          id
+          taskName
+          args
+          lastEventAt
+        }
+        id
+        name
+        connectionDetails {
+          crmType: __typename
+        }
       }
     }
   }

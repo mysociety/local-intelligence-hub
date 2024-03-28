@@ -72,8 +72,8 @@ export default function DataConfigPanel () {
                       <Button onClick={() => router.push(`/data-sources/inspect/${layer?.source?.id}`)}>
                         Inspect data source <ArrowRight />
                       </Button>
-                      <Button disabled={layer.source.isImporting} onClick={() => importData(client, layer.source!.id)}>
-                        {!layer.source.isImporting ? "Import data" : <span className='flex flex-row gap-2 items-center'>
+                      <Button disabled={layer.source.isImportScheduled} onClick={() => importData(client, layer.source!.id)}>
+                        {!layer.source.isImportScheduled ? "Import data" : <span className='flex flex-row gap-2 items-center'>
                           <LoadingIcon size={"18"} />
                           <span>Importing...</span>
                         </span>}

@@ -3,7 +3,7 @@ from datetime import datetime
 from django.conf import settings
 from django.test import TestCase
 
-from asgiref.sync import async_to_sync, sync_to_async
+from asgiref.sync import sync_to_async
 
 from hub.models import AirtableSource, Organisation
 
@@ -98,15 +98,18 @@ class TestAirtableSource(TestCase):
             ],
             source=self.custom_data_layer,
         )
-        await self.custom_data_layer.import_all()
+        records = await self.custom_data_layer.fetch_all()
+        await self.custom_data_layer.import_many(
+            [self.custom_data_layer.get_record_id(record) for record in records]
+        )
         enrichment_df = await sync_to_async(
             self.custom_data_layer.get_imported_dataframe
         )()
         self.assertGreaterEqual(len(enrichment_df.index), 2)
 
-    def test_import_all(self):
+    async def test_import_many(self):
         # Confirm the database is empty
-        original_count = self.custom_data_layer.get_import_data().count()
+        original_count = await self.custom_data_layer.get_import_data().acount()
         self.assertEqual(original_count, 0)
         # Add some test data
         self.create_many_test_records(
@@ -122,20 +125,22 @@ class TestAirtableSource(TestCase):
             ],
             source=self.custom_data_layer,
         )
-        self.assertGreaterEqual(
-            len(list(async_to_sync(self.custom_data_layer.fetch_all)())), 2
-        )
+        records = list(await self.custom_data_layer.fetch_all())
+        fetch_count = len(records)
+        self.assertGreaterEqual(fetch_count, 2)
         # Check that the import is storing it all
-        fetch_count = len(list(async_to_sync(self.custom_data_layer.fetch_all)()))
-        async_to_sync(self.custom_data_layer.import_all)()
+        await self.custom_data_layer.import_many(
+            [self.custom_data_layer.get_record_id(record) for record in records]
+        )
         import_data = self.custom_data_layer.get_import_data()
-        import_count = len(import_data)
+        import_count = await import_data.acount()
         self.assertEqual(import_count, fetch_count)
         # assert that 'council district' and 'mayoral region' keys are in the JSON object
-        self.assertIn("council district", import_data[0].json)
-        self.assertIn("mayoral region", import_data[0].json)
+        first_record = await import_data.afirst()
+        self.assertIn("council district", first_record.json)
+        self.assertIn("mayoral region", first_record.json)
         self.assertIn(
-            import_data[0].json["council district"],
+            first_record.json["council district"],
             [
                 "Newcastle upon Tyne",
                 "North Tyneside",
@@ -147,10 +152,10 @@ class TestAirtableSource(TestCase):
             ],
         )
         self.assertIn(
-            import_data[0].json["mayoral region"],
+            first_record.json["mayoral region"],
             ["North East Mayoral Combined Authority"],
         )
-        df = self.custom_data_layer.get_imported_dataframe()
+        df = await sync_to_async(self.custom_data_layer.get_imported_dataframe)()
         # assert len(df.index) == import_count
         self.assertIn("council district", list(df.columns.values))
         self.assertIn("mayoral region", list(df.columns.values))
@@ -188,7 +193,7 @@ class TestAirtableSource(TestCase):
             "Edinburgh East and Musselburgh",
         )
 
-    def test_pivot_table(self):
+    async def test_pivot_table(self):
         """
         This is testing the ability for self.source to be updated using data from self.custom_data_layer
         i.e. to test the pivot table functionality
@@ -208,12 +213,15 @@ class TestAirtableSource(TestCase):
             ],
             source=self.custom_data_layer,
         )
+        records = await self.custom_data_layer.fetch_all()
         # Check that the import is storing it all
-        async_to_sync(self.custom_data_layer.import_all)()
+        await self.custom_data_layer.import_many(
+            [self.custom_data_layer.get_record_id(record) for record in records]
+        )
         # Add a test record
         record = self.create_test_record({"Postcode": "NE12 6DD"})
-        mapped_member = async_to_sync(self.source.map_one)(
-            record, loaders=async_to_sync(self.source.get_loaders)()
+        mapped_member = await self.source.map_one(
+            record, loaders=await self.source.get_loaders()
         )
         self.assertEqual(
             mapped_member["update_fields"]["mayoral region"],
@@ -248,18 +256,24 @@ class TestAirtableSource(TestCase):
             self.source.get_record_field(records[0], "Postcode"), date + "11111"
         )
 
-    def test_analytics(self):
+    async def test_analytics(self):
         """
         This is testing the ability to get analytics from the data source
         """
         # Add some test data
         self.create_many_test_records([{"Postcode": "E5 0AA"}, {"Postcode": "E10 6EF"}])
         # import
-        async_to_sync(self.source.import_all)()
+        records = await self.source.fetch_all()
+        await self.source.import_many(
+            [self.source.get_record_id(record) for record in records]
+        )
         # check analytics
         analytics = self.source.imported_data_count_by_constituency()
-        constituencies_in_report = list(map(lambda a: a["label"], analytics))
+        # convert query set to list (is there a better way?)
+        analytics = await sync_to_async(list)(analytics)
         self.assertGreaterEqual(len(analytics), 2)
+        constituencies_in_report = [a["label"] for a in analytics]
+
         self.assertIn("Hackney North and Stoke Newington", constituencies_in_report)
         self.assertIn("Leyton and Wanstead", constituencies_in_report)
         for a in analytics:

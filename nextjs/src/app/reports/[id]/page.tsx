@@ -167,7 +167,7 @@ function ReportPage() {
 
   if (!report?.loading && report?.called && !report?.data?.mapReport) {
     return (
-      <main className="absolute w-full h-full">
+      <div className="absolute w-full h-full">
         <div className="flex flex-col items-center justify-center w-full h-full">
           <Card className="p-4 bg-white border-1 border-meepGray-700 text-meepGray-800">
             <CardHeader>
@@ -182,7 +182,7 @@ function ReportPage() {
             </CardContent>
           </Card>
         </div>
-      </main>
+      </div>
     )
   }
 
@@ -203,7 +203,7 @@ function ReportPage() {
 
   return (
     <>
-      <main className="absolute w-full h-full flex flex-row pointer-events-none">
+      <div className="absolute w-full h-full flex flex-row pointer-events-none">
         <div className='w-full h-full pointer-events-auto'>
           <ReportMap />
         </div>
@@ -276,7 +276,7 @@ function ReportPage() {
             <ConstituenciesPanel />
           </aside>
         )}
-      </main>
+      </div>
       <AlertDialog open={deleteOpen} onOpenChange={() => setDeleteOpen(false)}>
         <AlertDialogContent>
           <AlertDialogHeader>
