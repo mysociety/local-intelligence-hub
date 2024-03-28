@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { UpdateMappingForm } from "@/components/UpdateMappingForm";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import { UDPATE_EXTERNAL_DATA_SOURCE } from '@/graphql/mutations';
-import { triggerCustomEvent } from "../../../../../../app/utils/posthogutils"; // Adjust the path as needed
+import { triggerCustomEvent } from "@/app/utils/posthogutils"; 
 
 
 const GET_UPDATE_CONFIG = gql`

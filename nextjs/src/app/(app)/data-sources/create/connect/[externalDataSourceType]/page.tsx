@@ -37,7 +37,7 @@ import {
 } from "@/__generated__/graphql";
 import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
-import { triggerCustomEvent } from "../../../../../../app/utils/posthogutils";
+import { triggerCustomEvent } from "@/app/utils/posthogutils";
 
 
 const TEST_SOURCE = gql`
