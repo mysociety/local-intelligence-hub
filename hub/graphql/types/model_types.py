@@ -528,14 +528,17 @@ class Area:
 
 @strawberry.type
 class GroupedDataCount:
-    label: Optional[str] = dict_key_field()
-    gss: Optional[str] = dict_key_field()
-    count: int = dict_key_field()
+    label: Optional[str]
+    gss: Optional[str]
+    count: int
+    area_data: Optional[strawberry.Private[Area]] = None
 
     @strawberry_django.field
     async def gss_area(self, info: Info) -> Optional[Area]:
+        if self.area_data is not None:
+            return self.area_data
         loader = FieldDataLoaderFactory.get_loader_class(models.Area, field="gss")
-        return await loader(context=info.context).load(self.get("gss", None))
+        return await loader(context=info.context).load(self.gss)
 
 
 class GroupedDataCountForSource(GroupedDataCount):
@@ -582,11 +585,50 @@ class MapReportMemberFeature(PointFeature):
 @strawberry.interface
 class Analytics:
     imported_data_count: int = fn_field()
-    imported_data_count_by_region: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_constituency: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_constituency_2024: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_council: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_ward: List[GroupedDataCount] = fn_field()
+
+    @strawberry_django.field
+    def imported_data_count_by_region(self) -> List[GroupedDataCount]:
+        data = self.imported_data_count_by_region()
+        # areas = models.Area.objects.filter(gss__in=[datum["gss"] for datum in data])
+        return [
+            GroupedDataCount(
+                **datum
+                # area_data=next((area for area in areas if area.gss == datum.get("gss", None)), None),
+            )
+            for datum in data
+        ]
+
+    @strawberry_django.field
+    def imported_data_count_by_constituency(self) -> List[GroupedDataCount]:
+        data = self.imported_data_count_by_constituency()
+        return [
+            GroupedDataCount(label=datum["label"], gss=datum["gss"], count=datum["count"])
+            for datum in data
+        ]
+
+    @strawberry_django.field
+    def imported_data_count_by_constituency_2024(self) -> List[GroupedDataCount]:
+        data = self.imported_data_count_by_constituency_2024()
+        return [
+            GroupedDataCount(label=datum["label"], gss=datum["gss"], count=datum["count"])
+            for datum in data
+        ]
+
+    @strawberry_django.field
+    def imported_data_count_by_council(self) -> List[GroupedDataCount]:
+        data = self.imported_data_count_by_council()
+        return [
+            GroupedDataCount(label=datum["label"], gss=datum["gss"], count=datum["count"])
+            for datum in data
+        ]
+
+    @strawberry_django.field
+    def imported_data_count_by_ward(self) -> List[GroupedDataCount]:
+        data = self.imported_data_count_by_ward()
+        return [
+            GroupedDataCount(label=datum["label"], gss=datum["gss"], count=datum["count"])
+            for datum in data
+        ]
 
     @strawberry_django.field
     def imported_data_count_by_constituency_by_source(
