@@ -1874,6 +1874,7 @@ class Report(PolymorphicModel):
 
 class MapReport(Report, Analytics):
     layers = models.JSONField(blank=True, null=True, default=list)
+    display_options = models.JSONField(blank=True, null=True, default=dict)
 
     class MapLayer(TypedDict):
         name: str

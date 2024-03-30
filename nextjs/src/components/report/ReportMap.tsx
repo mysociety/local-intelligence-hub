@@ -69,7 +69,7 @@ const selectedSourceMarkerAtom = atom<MapboxGeoJSONFeature | null>(null)
 export const selectedConstituencyAtom = atom<string | null>(null)
 
 export function ReportMap () {
-  const { id } = useContext(ReportContext)
+  const { id, displayOptions } = useContext(ReportContext)
   const analytics = useQuery<MapReportLayerAnalyticsQuery, MapReportLayerAnalyticsQueryVariables>(MAP_REPORT_LAYER_ANALYTICS, {
     variables: {
       reportID: id,
@@ -261,7 +261,9 @@ export function ReportMap () {
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
         {...viewState}
         onMove={(e) => setViewState(e.viewState)}
-        mapStyle="mapbox://styles/commonknowledge/clty3prwh004601pr4nqn7l9s"
+        mapStyle={displayOptions.showStreetDetails
+          ? "mapbox://styles/commonknowledge/clubx087l014y01mj1bv63yg8"
+          : "mapbox://styles/commonknowledge/clty3prwh004601pr4nqn7l9s"}
         onClick={() => setSelectedSourceMarker(null)}
       >
         {!analytics.data && null}

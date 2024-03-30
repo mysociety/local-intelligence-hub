@@ -1,12 +1,14 @@
 "use client"
 
 import { Exact, GetMapReportQuery, MapReportInput } from "@/__generated__/graphql";
+import { DISPLAY_OPTIONS_VERSION } from "@/lib/report";
 import { QueryResult } from "@apollo/client";
 import { createContext, useContext, useState } from "react";
 
 export type DisplayOptionsType = {
   showLastElectionData: boolean,
   showMPs: boolean,
+  showStreetDetails: boolean,
 };
 
 export const ReportContext = createContext<{
@@ -25,6 +27,7 @@ export const ReportContext = createContext<{
   displayOptions: {
     showLastElectionData: false,
     showMPs: false,
+    showStreetDetails: false,
   },
   setDisplayOptions: () => {},
 });

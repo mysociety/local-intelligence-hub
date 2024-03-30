@@ -171,6 +171,12 @@ export default function DataConfigPanel() {
           {/* // TODO: map through these rather than hard code */}
           <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
             <Switch
+              checked={displayOptions.showStreetDetails}
+              onCheckedChange={(showStreetDetails) => { setDisplayOptions({ showStreetDetails }) }}
+            />Street details
+          </div>
+          <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
+            <Switch
               checked={displayOptions.showMPs}
               onCheckedChange={toggleMps}
             />Members of Parliament

@@ -47,29 +47,30 @@ import { Provider as JotaiProvider, atom, useAtom } from "jotai";
 import { ConstituenciesPanel } from "./ConstituenciesPanel";
 import { MapProvider } from "react-map-gl";
 import { twMerge } from "tailwind-merge";
+import { merge } from 'lodash'
 
 type Params = {
   id: string
 }
 
+const defaultDisplayOptions = {
+  showLastElectionData: false,
+  showMPs: false,
+  showStreetDetails: true,
+}
+
 export default function Page({ params: { id } }: { params: Params }) {
   const client = useApolloClient();
   const router = useRouter();
-
-  const [displayOptions, setDisplayOptions] = useState<DisplayOptionsType>({
-    showLastElectionData: false,
-    showMPs: false,
-  });
   
   const report = useQuery<GetMapReportQuery, GetMapReportQueryVariables>(GET_MAP_REPORT, {
     variables: { id },
   });
 
+  const displayOptions = merge({}, defaultDisplayOptions, report.data?.mapReport?.displayOptions || {})
+
   const updateDisplayOptions = (options: Partial<DisplayOptionsType>) => {
-    setDisplayOptions((prevOptions: any) => ({
-      ...prevOptions,
-      ...options,
-    }));
+    updateMutation({ displayOptions: { ...displayOptions, ...options } })
   };
 
   return (
@@ -95,7 +96,7 @@ export default function Page({ params: { id } }: { params: Params }) {
       client.refetchQueries({
         include: [
           "GetMapReport",
-          "MapReportLayersSummary",
+          "MapReportPage",
           "MapReportLayerAnalytics",
           "GetConstituencyData",
           "DataSourceGeoJSONPoints",
@@ -339,6 +340,7 @@ const GET_MAP_REPORT = gql`
     mapReport(pk: $id) {
       id
       name
+      displayOptions
       organisation {
         id
         slug

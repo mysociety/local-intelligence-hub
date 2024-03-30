@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Union
 
-from django.db.models import Q
+from django.db.models import Q, Count, F
 
 import procrastinate.contrib.django.models
 import strawberry
@@ -932,6 +932,7 @@ class SharingPermission:
 @strawberry_django.type(models.MapReport)
 class MapReport(Report, Analytics):
     layers: List[MapLayer]
+    display_options: JSON
 
 
 @strawberry_django.field()
