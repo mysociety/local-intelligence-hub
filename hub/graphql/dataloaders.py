@@ -19,23 +19,21 @@ class BasicFieldDataLoader(dataloaders.BaseDjangoModelDataLoader):
 
     @classmethod
     def queryset(cls, keys: list[str]):
-        keys = list(set(keys))
         if len(keys) == 0:
             return []
-        return cls.model.objects.filter(**{f"{cls.field}__in": keys}).all()
+        return cls.model.objects.filter(**{f"{cls.field}__in": set(keys)})
 
     @classmethod
     @sync_to_async
     def load_fn(cls, keys: list[str]):
-        # models.Area.objects.get
-        results = cls.queryset(keys)
-        return [
-            next(
-                (result for result in results if getattr(result, cls.field) == key),
-                None,
-            )
-            for key in keys
-        ]
+        results_dict = (
+            cls.queryset(keys)
+            # Prepare a dictionary where keys are unique field values and values are corresponding objects
+            .in_bulk(keys, field_name=cls.field)
+        )
+        if len(results_dict) == len(keys):
+            return results_dict.values()
+        return [results_dict.get(key, None) for key in keys]
 
 
 class BasicFieldReturningListDataLoader(BasicFieldDataLoader):
@@ -97,15 +95,17 @@ class PKWithFiltersDataLoader(dataloaders.BasicPKDataLoader):
         # strip out any None or '' values from the filter_dict
         filter_dict = {k: v for k, v in filter_dict.items() if v}
 
-        instances: list["DjangoModel"] = list(
+        results_dict = (
             cls.model.objects.filter(pk__in=keys)
             .prefetch_related(*cls.prefetch)
             .filter(**filter_dict)
-            .all()
+            .in_bulk()
         )
+        if len(results_dict) == len(keys):
+            return results_dict.values()
         # ensure instances are ordered in the same way as input 'keys'
-        id_to_instance: dict[str, "DjangoModel"] = {inst.pk: inst for inst in instances}
-        return [id_to_instance.get(id_) for id_ in keys]
+        # id_to_instance: dict[str, "DjangoModel"] = {inst.pk: inst for inst in instances}
+        return [results_dict.get(key, None) for key in keys]
 
 
 # class BasicReverseFKDataLoader(BaseDjangoModelDataLoader):
@@ -149,20 +149,15 @@ class ReverseFKWithFiltersDataLoader(dataloaders.BasicReverseFKDataLoader):
     @sync_to_async
     def load_fn(cls, keys: list[str]) -> list[list[DjangoModel]]:
         filter_dict = strawberry.asdict(cls.filters)
-        # strip out any None or '' values from the filter_dict
-        filter_dict = {k: v for k, v in filter_dict.items() if v}
-
-        instances: list["DjangoModel"] = list(
+        results: list["DjangoModel"] = list(
             cls.model.objects.filter(**{f"{cls.reverse_path}__in": keys})
             .prefetch_related(*cls.prefetch)
             .filter(**filter_dict)
-            .all()
         )
-        # ensure that instances are ordered the same way as input 'ids'
-        id_to_instances: dict[str, list["DjangoModel"]] = defaultdict(list)
-        for instance in instances:
-            id_to_instances[getattr(instance, cls.reverse_path)].append(instance)
-        return [id_to_instances.get(key, []) for key in keys]
+        return [
+            [result for result in results if getattr(result, cls.reverse_path) == key]
+            for key in keys
+        ]
 
 
 class PKWithFiltersDataLoaderFactory(factories.BaseDjangoModelDataLoaderFactory):

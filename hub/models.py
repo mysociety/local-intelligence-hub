@@ -707,7 +707,7 @@ class GenericData(CommonData):
 
 class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
-    gss = models.CharField(max_length=30)
+    gss = models.CharField(max_length=30, unique=True)
     name = models.CharField(max_length=200)
     area_type = models.ForeignKey(
         AreaType, on_delete=models.CASCADE, related_name="areas"
@@ -716,6 +716,11 @@ class Area(models.Model):
     polygon = MultiPolygonField(srid=4326, blank=True, null=True)
     point = PointField(srid=4326, blank=True, null=True)
     overlaps = models.ManyToManyField("self", through="AreaOverlap")
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["gss"])
+        ]
 
     def __str__(self):
         return self.name
