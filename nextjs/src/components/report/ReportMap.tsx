@@ -649,22 +649,59 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
       setSelectedSourceRecord,
     ]
   );
+
+  useEffect(() => {
+    mapbox.loadedMap?.on('mousemove', externalDataSourceId, (e) => {
+      // Change the cursor style as a UI indicator.
+      mapbox.loadedMap!.getCanvas().style.cursor = 'pointer';
+
+      // Use the first found feature.
+      console.log(e.features)
+
+      // Query the counties layer visible in the map.
+      // Only onscreen features are returned.
+      // Use filter to collect only results
+      // with the same county name.
+      const pointsFromVector = mapbox.loadedMap!.querySourceFeatures(externalDataSourceId, {
+          sourceLayer: 'features'
+      });
+
+      console.log({ pointsFromVector })
+    })
+  }, [mapbox.loadedMap, externalDataSourceId])
   
   return (
     <>
       <Source
         id={externalDataSourceId}
-        type="geojson"
-        cluster={true}
-        data={{
-          type: "FeatureCollection",
-          // @ts-ignore
-          features: data?.sharedDataSource?.importedDataGeojsonPoints || []
-        }}
+        // type="geojson"
+        // cluster={true}
+        // data={{
+        //   type: "FeatureCollection",
+        //   // @ts-ignore
+        //   features: data?.sharedDataSource?.importedDataGeojsonPoints || []
+        // }}
+        type="vector"
+        tiles={[
+          `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/tiles/{z}/{x}/{y}`
+        ]}
+        minzoom={MIN_MEMBERS_ZOOM}
       >
-        {index <= 1 ? (
-          <Layer
+        <Layer
+          source={externalDataSourceId}
+          source-layer="features"
+          id={`${externalDataSourceId}-marker`}
+          type="circle"
+          paint={{
+            "circle-radius": 0.2,
+            "circle-color": "red",
+          }}
+          minzoom={MIN_MEMBERS_ZOOM}
+        />
+        {/* {index <= 1 ? ( */}
+          {/* <Layer
             source={externalDataSourceId}
+            source-layer="features"
             id={`${externalDataSourceId}-marker`}
             type="symbol"
             layout={{
@@ -675,13 +712,13 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
               "icon-anchor": "bottom"
             }}
             minzoom={MIN_MEMBERS_ZOOM}
-            {...(
-              selectedSourceMarker?.properties?.id
-              ? { filter: ["!=", selectedSourceMarker?.properties?.id, ["get", "id"]] }
-              : {}
-            )}
-          />
-        ) : (
+            // {...(
+            //   selectedSourceMarker?.properties?.id
+            //   ? { filter: ["!=", selectedSourceMarker?.properties?.id, ["get", "id"]] }
+            //   : {}
+            // )}
+          // /> */}
+        {/* ) : (
           <Layer
             source={externalDataSourceId}
             id={`${externalDataSourceId}-marker`}
@@ -729,7 +766,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
               : {}
             )}
           />
-        )}
+        )} */}
       </Source>
     </>
   )

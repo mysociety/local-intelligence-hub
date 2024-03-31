@@ -602,7 +602,7 @@ class Analytics:
     def imported_data_count_by_constituency(self) -> List[GroupedDataCount]:
         data = self.imported_data_count_by_constituency()
         return [
-            GroupedDataCount(label=datum["label"], gss=datum["gss"], count=datum["count"])
+            GroupedDataCount(**datum)
             for datum in data
         ]
 
@@ -610,7 +610,7 @@ class Analytics:
     def imported_data_count_by_constituency_2024(self) -> List[GroupedDataCount]:
         data = self.imported_data_count_by_constituency_2024()
         return [
-            GroupedDataCount(label=datum["label"], gss=datum["gss"], count=datum["count"])
+            GroupedDataCount(**datum)
             for datum in data
         ]
 
@@ -618,7 +618,7 @@ class Analytics:
     def imported_data_count_by_council(self) -> List[GroupedDataCount]:
         data = self.imported_data_count_by_council()
         return [
-            GroupedDataCount(label=datum["label"], gss=datum["gss"], count=datum["count"])
+            GroupedDataCount(**datum)
             for datum in data
         ]
 
@@ -626,7 +626,7 @@ class Analytics:
     def imported_data_count_by_ward(self) -> List[GroupedDataCount]:
         data = self.imported_data_count_by_ward()
         return [
-            GroupedDataCount(label=datum["label"], gss=datum["gss"], count=datum["count"])
+            GroupedDataCount(**datum)
             for datum in data
         ]
 
@@ -641,22 +641,21 @@ class Analytics:
             print(gss, group)
             if gss:
                 group = list(group)
-                return_data.append(
-                    GroupedDataCountWithBreakdown(
-                        label=group[0]["label"],
-                        count=sum([source["count"] for source in group]),
-                        gss=gss,
-                        sources=[
-                            GroupedDataCountForSource(
-                                source_id=source["source_id"],
-                                count=source["count"],
-                                label=source["label"],
-                                gss=gss,
-                            )
-                            for source in group
-                        ],
+                if len(group) > 0:
+                    return_data.append(
+                        GroupedDataCountWithBreakdown(
+                            label=group[0].get("label"),
+                            count=sum([source.get("count", 0) for source in group]),
+                            gss=gss,
+                            sources=[
+                                GroupedDataCountForSource(
+                                    **source,
+                                    gss=gss,
+                                )
+                                for source in group
+                            ],
+                        )
                     )
-                )
         return return_data
 
     @strawberry_django.field
@@ -666,7 +665,7 @@ class Analytics:
         res = self.imported_data_count_by_constituency(gss=gss)
         if len(res) == 0:
             return None
-        return res[0]
+        return GroupedDataCount(**res[0])
 
     @strawberry_django.field
     def imported_data_count_for_constituency_2024(
@@ -675,7 +674,7 @@ class Analytics:
         res = self.imported_data_count_by_constituency_2024(gss=gss)
         if len(res) == 0:
             return None
-        return res[0]
+        return GroupedDataCount(**res[0])
 
 
 @strawberry.type

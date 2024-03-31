@@ -27,6 +27,7 @@ from hub.graphql.schema import schema
 from hub.sitemap import hub_sitemap
 from hub.views import accounts, area, core, explore, landingpages
 from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
+from hub.views.vector_tiles import GenericDataTileView, FeatureTileJSONView
 
 handler404 = core.NotFoundPageView.as_view()
 
@@ -119,6 +120,8 @@ urlpatterns = [
         csrf_exempt(ExternalDataSourceAutoUpdateWebhook.as_view()),
         name="external_data_source_auto_update_webhook",
     ),
+    path('tiles/<int:z>/<int:x>/<int:y>', GenericDataTileView.as_view(), name="generic_data_tile_view"),
+    path("tiles.json", FeatureTileJSONView.as_view(), name="generic_data_tilejson")
 ]
 
 if settings.DEBUG:  # pragma: no cover

@@ -359,6 +359,7 @@ const UPDATE_MAP_REPORT = gql`
     updateMapReport(data: $input) {
       id
       name
+      displayOptions
       layers {
         id
         name

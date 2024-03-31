@@ -760,6 +760,31 @@ django = "*"
 typing-extensions = "*"
 
 [[package]]
+name = "django-vectortiles"
+version = "1.0.0b3"
+description = "Django vector tile generation"
+optional = false
+python-versions = ">=3.6"
+files = []
+develop = false
+
+[package.dependencies]
+django = "*"
+mercantile = "*"
+
+[package.extras]
+dev = ["black", "coverage", "django-debug-toolbar", "djangorestframework", "factory-boy", "flake8", "isort", "mapbox-vector-tile", "protobuf (<4.21.0)", "psycopg2-binary", "sphinx-rtd-theme"]
+mapbox = ["mapbox-vector-tile", "protobuf (<4.21.0)"]
+python = ["mapbox-vector-tile", "protobuf (<4.21.0)"]
+test = ["black", "coverage", "djangorestframework", "factory-boy", "flake8", "isort", "psycopg2-binary"]
+
+[package.source]
+type = "git"
+url = "https://github.com/submarcos/django-vectortiles.git"
+reference = "HEAD"
+resolved_reference = "44b3ebcb2cec6eefb469c269d24d8e7c2459b646"
+
+[[package]]
 name = "et-xmlfile"
 version = "1.1.0"
 description = "An implementation of lxml.xmlfile for the standard library"
@@ -1128,6 +1153,24 @@ files = [
     {file = "mccabe-0.7.0-py2.py3-none-any.whl", hash = "sha256:6c2d30ab6be0e4a46919781807b4f0d834ebdd6c6e3dca0bda5a15f863427b6e"},
     {file = "mccabe-0.7.0.tar.gz", hash = "sha256:348e0240c33b60bbdf4e523192ef919f28cb2c3d7d5c7794f74009290f236325"},
 ]
+
+[[package]]
+name = "mercantile"
+version = "1.2.1"
+description = "Web mercator XYZ tile utilities"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mercantile-1.2.1-py3-none-any.whl", hash = "sha256:30f457a73ee88261aab787b7069d85961a5703bb09dc57a170190bc042cd023f"},
+    {file = "mercantile-1.2.1.tar.gz", hash = "sha256:fa3c6db15daffd58454ac198b31887519a19caccee3f9d63d17ae7ff61b3b56b"},
+]
+
+[package.dependencies]
+click = ">=3.0"
+
+[package.extras]
+dev = ["check-manifest"]
+test = ["hypothesis", "pytest"]
 
 [[package]]
 name = "minio"
@@ -1699,13 +1742,13 @@ files = [
 
 [[package]]
 name = "pycparser"
-version = "2.21"
+version = "2.22"
 description = "C parser in Python"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+python-versions = ">=3.8"
 files = [
-    {file = "pycparser-2.21-py2.py3-none-any.whl", hash = "sha256:8ee45429555515e1f6b185e78100aea234072576aa43ab53aefcae078162fca9"},
-    {file = "pycparser-2.21.tar.gz", hash = "sha256:e644fdec12f7872f86c58ff790da456218b10f863970249516d60a5eaca77206"},
+    {file = "pycparser-2.22-py3-none-any.whl", hash = "sha256:c3702b6d3dd8c7abc1afa565d7e63d53a1d0bd86cdc24edd75470f4de499cfcc"},
+    {file = "pycparser-2.22.tar.gz", hash = "sha256:491c8be9c040f5390f5bf44a5b07752bd07f56edf992381b05c701439eec10f6"},
 ]
 
 [[package]]
@@ -2205,13 +2248,13 @@ wheel = ">=0.36.1"
 
 [[package]]
 name = "sentry-sdk"
-version = "1.43.0"
+version = "1.44.0"
 description = "Python client for Sentry (https://sentry.io)"
 optional = false
 python-versions = "*"
 files = [
-    {file = "sentry-sdk-1.43.0.tar.gz", hash = "sha256:41df73af89d22921d8733714fb0fc5586c3461907e06688e6537d01a27e0e0f6"},
-    {file = "sentry_sdk-1.43.0-py2.py3-none-any.whl", hash = "sha256:8d768724839ca18d7b4c7463ef7528c40b7aa2bfbf7fe554d5f9a7c044acfd36"},
+    {file = "sentry-sdk-1.44.0.tar.gz", hash = "sha256:f7125a9235795811962d52ff796dc032cd1d0dd98b59beaced8380371cd9c13c"},
+    {file = "sentry_sdk-1.44.0-py2.py3-none-any.whl", hash = "sha256:eb65289da013ca92fad2694851ad2f086aa3825e808dc285bd7dcaf63602bb18"},
 ]
 
 [package.dependencies]
@@ -2334,13 +2377,13 @@ full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.7
 
 [[package]]
 name = "strawberry-django-auth"
-version = "0.376.5"
+version = "0.376.6"
 description = "Graphql authentication system with Strawberry for Django."
 optional = false
-python-versions = ">=3.8,<3.13"
+python-versions = "<3.13,>=3.8"
 files = [
-    {file = "strawberry_django_auth-0.376.5-py3-none-any.whl", hash = "sha256:e2e57d44f7ccec4b6aa831aa4229bb9755c3b15da15c696cb8b7e8ec6617838c"},
-    {file = "strawberry_django_auth-0.376.5.tar.gz", hash = "sha256:2bdf0f43136facdd20dcdf1bd85053d7bb334a6271cee6759c17e13580ee32e7"},
+    {file = "strawberry_django_auth-0.376.6-py3-none-any.whl", hash = "sha256:1182b52e084a7204187d47f8180209dbf5d1dd8a125f5b369123a84bcb2aa8c3"},
+    {file = "strawberry_django_auth-0.376.6.tar.gz", hash = "sha256:521701371c566b9864db3ff9ca325af02ff14ebde54f4e765cc8c2c1af5b86ae"},
 ]
 
 [package.dependencies]
@@ -2578,4 +2621,4 @@ brotli = ["Brotli"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">3.11,<3.13"
-content-hash = "8c45850917dc15619010f2e7e0e10ef0bfee0083e1f93622d86c420d13ff3870"
+content-hash = "420f9880914b73c126d98dc32146e721caf3063813efda511fd7ef31978109fa"

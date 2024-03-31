@@ -73,7 +73,7 @@ class MapReportInput:
     created_at: auto
     last_update: auto
     layers: Optional[List[MapLayerInput]]
-    display_options: strawberry.scalars.JSON
+    display_options: Optional[strawberry.scalars.JSON]
 
 
 @strawberry.mutation(extensions=[IsAuthenticated(), InputMutationExtension()])
