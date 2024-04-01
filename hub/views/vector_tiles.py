@@ -56,10 +56,16 @@ class ExternalDataSourceTileView(MVTView, DetailView):
 
 class ExternalDataSourcePointTileJSONView(TileJSONView, DetailView):
     model = ExternalDataSource
-    name = "My feature dataset"
-    attribution = "@IGN - BD Topo 12/2022"
-    description = "My dataset"
     layer_classes = [GenericDataVectorLayer]
+
+    def get_name(self):
+        return self.get_object().name
+
+    def get_attribution(self):
+        return self.get_object().organisation.name
+    
+    def get_description(self):
+        return f"{self.get_name()} is a {self.get_object().crm_type} source."
 
     def setup(self, *args, **kwargs):
         super().setup(*args, **kwargs)
