@@ -8,8 +8,10 @@ from tqdm import tqdm
 
 from hub.models import Area, AreaData, DataSet, DataType
 
+from .base_importers import BaseAreaImportCommand
 
-class Command(BaseCommand):
+
+class Command(BaseAreaImportCommand):
     help = "Import air-pollution data"
 
     source_url = "https://uk-air.defra.gov.uk/data/modelling-data"
@@ -107,6 +109,8 @@ class Command(BaseCommand):
         data_set, created = DataSet.objects.update_or_create(
             name="constituency_air_quality", defaults=self.defaults
         )
+        data_set.areas_available.add(self.get_area_type())
+
         data_types = []
         for col in tqdm(df.columns, disable=self._quiet):
             label = self.in_files[col]["pollutant"]
@@ -117,6 +121,7 @@ class Command(BaseCommand):
             data_type, created = DataType.objects.update_or_create(
                 data_set=data_set,
                 name=f"air_quality_{col}",
+                area_type=self.get_area_type(),
                 defaults={
                     "data_type": "float",
                     "label": label,
