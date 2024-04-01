@@ -533,6 +533,11 @@ export function ReportMap () {
                       </div>
                     )}
                   </div>
+                  {(analytics.data?.mapReport.layers.length || 0) > 1 && (
+                    <footer className='pb-2 px-2 text-meepGray-400 font-IBMPlexMono text-xs'>
+                      From {selectedPointData?.importedDataGeojsonPoint?.properties?.dataType.dataSet.externalDataSource.name}
+                    </footer>
+                  )}
                   <footer className="flex-divide-x bg-meepGray-200 text-meepGray-500 flex flex-row justify-around w-full py-1 px-2 text-center">
                     {!!selectedPointData?.importedDataGeojsonPoint?.properties?.phone && (
                       <a
@@ -688,6 +693,13 @@ query MapReportLayerGeoJSONPoint($genericDataId: String!) {
       }
       json
       remoteUrl
+      dataType {
+        dataSet {
+          externalDataSource {
+            name
+          }
+        }
+      }
     }
   }
 }
