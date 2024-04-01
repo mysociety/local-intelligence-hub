@@ -56,7 +56,7 @@ type Params = {
 const defaultDisplayOptions = {
   showLastElectionData: false,
   showMPs: false,
-  showStreetDetails: true,
+  showStreetDetails: false,
 }
 
 export default function Page({ params: { id } }: { params: Params }) {
