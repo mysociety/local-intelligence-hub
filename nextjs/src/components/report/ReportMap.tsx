@@ -270,18 +270,19 @@ export function ReportMap () {
           ? "mapbox://styles/commonknowledge/clubx087l014y01mj1bv63yg8"
           : "mapbox://styles/commonknowledge/clty3prwh004601pr4nqn7l9s"}
         onClick={() => setSelectedSourceMarker(null)}
-        // transformRequest={(url, resourceType) => {
-        //   if (url.indexOf(process.env.NEXT_PUBLIC_BACKEND_BASE_URL!) > -1) {
-        //       const obj = {
-        //           url,
-        //           headers: authenticationHeaders(),
-        //           credentials: 'include'  // Include cookies for cross-origin requests
-        //       }
-        //       console.log("Auth'd mapbox request to MEEP server", obj)
-        //       return obj;
-        //   }
-        //   return { url }
-        // }}
+        transformRequest={(url, resourceType) => {
+          if (
+            url.includes(process.env.NEXT_PUBLIC_BACKEND_BASE_URL!)
+            && !url.includes("tiles.json")
+          ) {
+            return {
+              url,
+              headers: authenticationHeaders(),
+              method: "GET"
+            }
+          }
+          return { url }
+        }}
       >
         {Object.entries(TILESETS)
           .map(([key, tileset]) => {

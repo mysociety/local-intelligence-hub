@@ -40,12 +40,12 @@ class ExternalDataSourceTileView(MVTView, DetailView):
     layer_classes = [GenericDataVectorLayer]
 
     def get(self, request, *args, **kwargs):
-        # user_or_error: UserOrError = get_user_or_error(request)
-        # print("user", user_or_error.user)
-        # permissions = ExternalDataSource.user_permissions(user_or_error.user.id, self.get_object())
-        # print(permissions)
-        # if not permissions.get("can_display_points"):
-        #     return HttpResponseForbidden("You don't have permission to view location data for this data source.")
+        user_or_error: UserOrError = get_user_or_error(request)
+        print("user", user_or_error.user)
+        permissions = ExternalDataSource.user_permissions(user_or_error.user.id, self.get_object())
+        print(permissions)
+        if not permissions.get("can_display_points"):
+            return HttpResponseForbidden("You don't have permission to view location data for this data source.")
         return super().get(request, *args, **kwargs)
 
     def get_id(self):

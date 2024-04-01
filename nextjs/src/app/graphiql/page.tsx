@@ -4,15 +4,13 @@ import { createGraphiQLFetcher } from '@graphiql/toolkit';
 import { GraphiQL } from 'graphiql';
 import React, { useMemo } from 'react';
 import 'graphiql/graphiql.css';
+import { authenticationHeaders } from '@/lib/auth';
 
 function getAuthenticatedFetcher () {
   try {
-    const token = localStorage.getItem("jwt");
     return createGraphiQLFetcher({
       url: `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/graphql`,
-      headers: {
-        authorization: token ? `JWT ${token}` : "",
-      }
+      headers: authenticationHeaders()
     });
   } catch (e) {
     console.log(e)

@@ -7,6 +7,7 @@ import {
   NextSSRInMemoryCache,
   NextSSRApolloClient,
 } from "@apollo/experimental-nextjs-app-support/ssr";
+import { authenticationHeaders } from '@/lib/auth';
 
 /**
  * Creates an apollo client that can be used in client components.
@@ -38,11 +39,10 @@ function makeFrontEndClient() {
   });
 
   const authLink = setContext((_, { headers }) => {
-    const token = localStorage.getItem("jwt");
     const config = {
       headers: {
         ...headers,
-        authorization: token ? `JWT ${token}` : "",
+        ...authenticationHeaders(),
       },
     };
     return config;
