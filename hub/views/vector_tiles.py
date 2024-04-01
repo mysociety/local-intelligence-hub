@@ -3,6 +3,7 @@ from django.db.models.base import Model as Model
 from django.db.models.query import QuerySet
 from hub.models import GenericData, ExternalDataSource
 from gqlauth.core.middlewares import get_user_or_error, UserOrError
+from django.utils.functional import cached_property
 
 from vectortiles import VectorLayer
 from vectortiles.views import MVTView
@@ -16,7 +17,7 @@ class GenericDataVectorLayer(VectorLayer):
     model = GenericData
     geom_field = 'point'
 
-    min_zoom = 10
+    min_zoom = 12
 
     id = 'generic_data'
     vector_tile_layer_name = id
@@ -26,13 +27,13 @@ class GenericDataVectorLayer(VectorLayer):
     vector_tile_fields = layer_fields
 
     def __init__(self, *args, **kwargs):
-        self.external_data_source: ExternalDataSource = kwargs.pop('external_data_source', None)
-        if self.external_data_source is None:
+        self.external_data_source_id = kwargs.pop('external_data_source_id', None)
+        if self.external_data_source_id is None:
             raise ValueError('external_data_source is required')
         super().__init__(*args, **kwargs)
 
     def get_queryset(self) -> QuerySet:
-        return self.external_data_source.get_import_data()
+        return ExternalDataSource._get_import_data(self.external_data_source_id)
 
 
 class ExternalDataSourceTileView(MVTView, DetailView):
@@ -41,16 +42,16 @@ class ExternalDataSourceTileView(MVTView, DetailView):
 
     def get(self, request, *args, **kwargs):
         user_or_error: UserOrError = get_user_or_error(request)
-        permissions = ExternalDataSource.user_permissions(user_or_error.user, self.get_object())
+        permissions = ExternalDataSource.user_permissions(user_or_error.user, self.get_id())
         if not permissions.get("can_display_points", False):
             return HttpResponseForbidden("You don't have permission to view location data for this data source.")
         return super().get(request, *args, **kwargs)
 
     def get_id(self):
-        return self.get_object().id
+        return self.kwargs.get(self.pk_url_kwarg)
     
     def get_layer_class_kwargs(self, *args, **kwargs):
-        return { 'external_data_source': self.get_object() }
+        return { 'external_data_source_id': self.get_id() }
 
 
 class ExternalDataSourcePointTileJSONView(TileJSONView, DetailView):
@@ -61,14 +62,13 @@ class ExternalDataSourcePointTileJSONView(TileJSONView, DetailView):
     layer_classes = [GenericDataVectorLayer]
 
     def setup(self, *args, **kwargs):
-        self.pk = kwargs.get('pk', None)
         super().setup(*args, **kwargs)
 
     def get_id(self):
-        return self.pk
+        return self.kwargs.get(self.pk_url_kwarg)
     
     def get_object(self):
-        return ExternalDataSource.objects.get(pk=self.pk)
+        return ExternalDataSource.objects.get(pk=self.get_id())
 
     def get_min_zoom(self, *args, **kwargs):
         return 10
@@ -82,7 +82,7 @@ class ExternalDataSourcePointTileJSONView(TileJSONView, DetailView):
         return str(reverse("external_data_source_point_tile", args=(id, 0, 0, 0))).replace("0/0/0", "{z}/{x}/{y}")
     
     def get_layer_class_kwargs(self, *args, **kwargs):
-        return { 'external_data_source': self.get_object() }
+        return { 'external_data_source_id': self.get_id() }
     
     # def get_layers(self):
     #     return [GenericDataVectorLayer(external_data_source=self.get_object())]

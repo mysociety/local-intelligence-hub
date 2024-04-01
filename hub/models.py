@@ -1298,10 +1298,17 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         source_path: str
         source_data: Optional[any]
 
-    def get_import_data(self):
+    @classmethod
+    def _get_import_data(self, id: str):
+        '''
+        For use by views to query data without having to instantiate the class / query the database for the CRM first
+        '''
         return GenericData.objects.filter(
-            data_type__data_set__external_data_source_id=self.id
+            data_type__data_set__external_data_source_id=id
         )
+
+    def get_import_data(self):
+        return self._get_import_data(self.id)
 
     def get_analytics_queryset(self):
         return self.get_import_data()
@@ -1615,8 +1622,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         can_display_details: bool
 
     @classmethod
-    def user_permissions(cls, user: AbstractBaseUser, external_data_source: Union["ExternalDataSource", str]) -> DataPermissions:
-        permission_cache_key = f"external_data_source_permissions_u:{str(user.id)}_e:{str(external_data_source.id)}"
+    def user_permissions(cls, user: Union[AbstractBaseUser, str], external_data_source: Union["ExternalDataSource", str]) -> DataPermissions:
+        external_data_source_id = external_data_source if not isinstance(external_data_source, ExternalDataSource) else str(external_data_source.id)
+        user_id = user if not isinstance(user, AbstractBaseUser) else str(user.id)
+        permission_cache_key = f"external_data_source_permissions_u:{user_id}_e:{external_data_source_id}"
         permissions_dict = cache.get(permission_cache_key)
         if permissions_dict is not None:
             return permissions_dict
