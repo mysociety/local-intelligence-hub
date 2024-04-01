@@ -637,10 +637,8 @@ class Analytics:
         self, info: Info, gss: str
     ) -> List[GroupedDataCountWithBreakdown]:
         results = self.imported_data_count_by_constituency_by_source()
-        print(results)
         return_data = []
         for gss, group in itertools.groupby(results, lambda x: x["gss"]):
-            print(gss, group)
             if gss:
                 group = list(group)
                 if len(group) > 0:
