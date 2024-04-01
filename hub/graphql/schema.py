@@ -35,6 +35,7 @@ class Query(UserQueries):
     external_data_sources: List[
         model_types.ExternalDataSource
     ] = strawberry_django.field(extensions=[IsAuthenticated()])
+    imported_data_geojson_point: Optional[model_types.MapReportMemberFeature] = model_types.imported_data_geojson_point
     shared_data_sources: List[model_types.SharedDataSource] = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )

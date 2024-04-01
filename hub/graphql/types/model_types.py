@@ -14,6 +14,7 @@ from strawberry import auto
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
+from strawberry_django.permissions import IsAuthenticated
 
 from hub import models
 from hub.graphql.dataloaders import (
@@ -574,6 +575,7 @@ class GenericData(CommonData):
     address: auto
     postcode: auto
     postcode_data: Optional[PostcodesIOResult]
+    remote_url: str = fn_field()
 
 
 @strawberry.type
@@ -717,62 +719,6 @@ class BaseDataSource(Analytics):
     )
 
     @strawberry_django.field
-    def imported_data_geojson_points(
-        self: models.ExternalDataSource, info: Info
-    ) -> List[MapReportMemberFeature]:
-        user = get_current_user(info)
-        can_display_points = self.organisation.members.filter(user=user).exists()
-        can_display_details = can_display_points
-        if not can_display_points:
-            permission = models.SharingPermission.objects.filter(
-                external_data_source=self, organisation__members__user=user
-            ).first()
-            if permission is None:
-                return []
-            if not permission.visibility_record_coordinates:
-                return []
-            if permission.visibility_record_details:
-                can_display_details = True
-
-        data = self.get_import_data()
-        return [
-            MapReportMemberFeature.from_geodjango(
-                point=generic_datum.point,
-                id=generic_datum.data,
-                properties=generic_datum if can_display_details else None,
-            )
-            for generic_datum in data
-            if generic_datum.point is not None
-        ]
-
-    @strawberry_django.field
-    def imported_data_geojson_point(
-        self: models.ExternalDataSource, info: Info, id: str
-    ) -> MapReportMemberFeature | None:
-        user = get_current_user(info)
-        can_display_points = self.organisation.members.filter(user=user).exists()
-        can_display_details = can_display_points
-        if not can_display_points:
-            permission = models.SharingPermission.objects.filter(
-                external_data_source=self, organisation__members__user=user
-            ).first()
-            if permission is None:
-                return None
-            if not permission.visibility_record_coordinates:
-                return None
-            if permission.visibility_record_details:
-                can_display_details = True
-
-        datum = self.get_import_data().filter(data=id).first()
-        if datum is None or datum.point is None:
-            return None
-        return MapReportMemberFeature.from_geodjango(
-            point=datum.point,
-            id=datum.data,
-            properties=datum if can_display_details else None,
-        )
-
-    @strawberry_django.field
     def is_import_scheduled(self: models.ExternalDataSource, info: Info) -> bool:
         job = self.get_scheduled_import_job()
         return job is not None
@@ -800,6 +746,24 @@ class BaseDataSource(Analytics):
             return None
         return BatchJobProgress(**self.get_scheduled_batch_job_progress(job))
 
+
+@strawberry_django.field(extensions=[IsAuthenticated()])
+def imported_data_geojson_point(
+    info: Info, generic_data_id: str
+) -> MapReportMemberFeature | None:
+    datum = models.GenericData.objects.prefetch_related("data_type__data_set__external_data_source").get(pk=generic_data_id)
+    if datum is None or datum.point is None:
+        return None
+    external_data_source = datum.data_type.data_set.external_data_source
+    user = get_current_user(info)
+    permissions = models.ExternalDataSource.user_permissions(user.id, external_data_source)
+    if not permissions.get("can_display_points"):
+        return None
+    return MapReportMemberFeature.from_geodjango(
+        point=datum.point,
+        id=datum.id,
+        properties=datum if permissions.get("can_display_details") else None,
+    )
 
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class SharedDataSource(BaseDataSource):

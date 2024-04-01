@@ -680,6 +680,9 @@ class GenericData(CommonData):
     phone = models.CharField(max_length=100, blank=True, null=True)
     address = models.CharField(max_length=1000, blank=True, null=True)
 
+    def remote_url(self):
+        return self.data_type.data_set.external_data_source.record_url(self.data)
+
     def __str__(self):
         if self.name:
             return self.name
@@ -703,7 +706,6 @@ class GenericData(CommonData):
             return None
 
         return self.postcode_data
-
 
 class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
@@ -1669,6 +1671,9 @@ class AirtableSource(ExternalDataSource):
 
     def record_url_template(self):
         return f"https://airtable.com/{self.base_id}/{self.table_id}/{{record_id}}"
+
+    def record_url(self, record_id: str):
+        return f"https://airtable.com/{self.base_id}/{self.table_id}/{record_id}"
 
     async def fetch_one(self, member_id):
         record = self.table.get(member_id)

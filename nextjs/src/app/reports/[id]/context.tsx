@@ -1,7 +1,6 @@
 "use client"
 
 import { Exact, GetMapReportQuery, MapReportInput } from "@/__generated__/graphql";
-import { DISPLAY_OPTIONS_VERSION } from "@/lib/report";
 import { QueryResult } from "@apollo/client";
 import { createContext, useContext, useState } from "react";
 

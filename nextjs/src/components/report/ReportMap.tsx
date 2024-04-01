@@ -1,12 +1,16 @@
 "use client"
 
 import {
-  DataSourceGeoJsonPointsQuery,
-  DataSourceGeoJsonPointsQueryVariables,
+  MapReportConstituencyStatsQuery,
+  MapReportConstituencyStatsQueryVariables,
   MapReportLayerAnalyticsQuery,
   MapReportLayerAnalyticsQueryVariables,
   MapReportLayerGeoJsonPointQuery,
   MapReportLayerGeoJsonPointQueryVariables,
+  MapReportRegionStatsQuery,
+  MapReportRegionStatsQueryVariables,
+  MapReportWardStatsQuery,
+  MapReportWardStatsQueryVariables,
 } from "@/__generated__/graphql";
 import { Fragment, useContext, useEffect, useState } from "react";
 import Map, { Layer, Source, LayerProps, Popup, ViewState, MapboxGeoJSONFeature } from "react-map-gl";
@@ -21,6 +25,7 @@ import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import { z } from "zod";
 import { layerColour, useLoadedMap, isConstituencyPanelOpenAtom } from "@/app/reports/[id]/lib";
 import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel";
+import { authenticationHeaders } from "@/lib/auth";
 
 const MAX_REGION_ZOOM = 8
 export const MAX_CONSTITUENCY_ZOOM = 10
@@ -33,37 +38,6 @@ const viewStateAtom = atom<Partial<ViewState>>({
 })
 const loadingLayersAtom = atom<{[layerKey:string]: boolean}>({});
 
-export const SelectedMarkerFeatureParser = z.object({
-  type: z.literal('Feature'),
-  id: z.string(),
-  geometry: z.object({
-    type: z.literal('Point'),
-    coordinates: z.tuple([z.number(), z.number()]),
-  }),
-  properties: z
-    .object({
-      originalUrl: z.string().url(),
-      id: z.string(),
-      lastUpdate: z.coerce.date(),
-      name: z.string().nullish(),
-      phone: z.string().nullish(),
-      email: z.string().email().nullish(),
-      json: z.object({}).passthrough(),
-      postcodeData: z.object({
-        postcode: z.string(),
-      })
-    })
-    // pass through unknown keys (https://zod.dev/?id=passthrough)
-    .passthrough()
-});
-
-export const SelectedMarkerParser = z.object({
-  externalDataSourceId: z.string(),
-  id: z.string(),
-  feature: SelectedMarkerFeatureParser,
-});
-
-export const selectedSourceRecordAtom = atom<z.infer<typeof SelectedMarkerParser> | null>(null)
 const selectedSourceMarkerAtom = atom<MapboxGeoJSONFeature | null>(null)
 
 export const selectedConstituencyAtom = atom<string | null>(null)
@@ -76,7 +50,29 @@ export function ReportMap () {
     }
   })
 
+  const regionAnalytics = useQuery<MapReportRegionStatsQuery, MapReportRegionStatsQueryVariables>(MAP_REPORT_REGION_STATS, {
+    variables: {
+      reportID: id,
+    }
+  })
+
+  const constituencyAnalytics = useQuery<MapReportConstituencyStatsQuery, MapReportConstituencyStatsQueryVariables>(MAP_REPORT_CONSTITUENCY_STATS, {
+    variables: {
+      reportID: id,
+    }
+  })
+
+  const wardAnalytics = useQuery<MapReportWardStatsQuery, MapReportWardStatsQueryVariables>(MAP_REPORT_WARD_STATS, {
+    variables: {
+      reportID: id,
+    }
+  })
+
   const mapbox = useLoadedMap()
+
+  useEffect(() => {
+    console.log("Map", mapbox.loadedMap)
+  }, [mapbox.loadedMap])
 
   const TILESETS: Record<"EERs" | "constituencies" | "wards", {
     name: string,
@@ -87,7 +83,7 @@ export function ReportMap () {
     labelId: string,
     mapboxSourceProps?: { maxzoom?: number },
     mapboxLayerProps?: Omit<LayerProps, 'type' | 'url' | 'id' | 'paint' | 'layout'>,
-    data: MapReportLayerAnalyticsQuery['mapReport']['importedDataCountByRegion'],
+    data: MapReportRegionStatsQuery['mapReport']['importedDataCountByRegion'],
     downloadUrl?: string
   }> = {
     EERs: {
@@ -98,7 +94,7 @@ export function ReportMap () {
       sourceLayerId: "European_Electoral_Regions_De-bxyqod",
       promoteId: "eer18cd",
       labelId: "eer18nm",
-      data: analytics.data?.mapReport.importedDataCountByRegion || [],
+      data: regionAnalytics.data?.mapReport.importedDataCountByRegion || [],
       mapboxSourceProps: {
       //   maxzoom: MAX_REGION_ZOOM
       },
@@ -113,7 +109,7 @@ export function ReportMap () {
       sourceLayerId: "Westminster_Parliamentary_Con-6i1rlq",
       promoteId: "pcon16cd",
       labelId: "pcon16nm",
-      data: analytics.data?.mapReport.importedDataCountByConstituency || [],
+      data: constituencyAnalytics.data?.mapReport.importedDataCountByConstituency || [],
       mapboxSourceProps: {},
       mapboxLayerProps: {
         minzoom: MAX_REGION_ZOOM,
@@ -127,7 +123,7 @@ export function ReportMap () {
       sourceLayerId: "Wards_Dec_2023_UK_Boundaries_-7wzb6g",
       promoteId: "WD23CD",
       labelId: "WD23NM",
-      data: analytics.data?.mapReport.importedDataCountByWard || [],
+      data: wardAnalytics.data?.mapReport.importedDataCountByWard || [],
       mapboxSourceProps: {},
       mapboxLayerProps: {
         minzoom: MAX_CONSTITUENCY_ZOOM,
@@ -207,7 +203,6 @@ export function ReportMap () {
   }, [mapbox.loadedMap, setLoadedImages])
 
   const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(selectedSourceMarkerAtom)
-  const [selectedSourceRecord] = useAtom(selectedSourceRecordAtom)
   const [selectedConstituency, setSelectedConstituency] = useAtom(selectedConstituencyAtom)
   const [tab, setTab] = useAtom(constituencyPanelTabAtom)
   // const isConstituencyPanelOpenAtom
@@ -246,6 +241,16 @@ export function ReportMap () {
   const [viewState, setViewState] = useAtom(viewStateAtom)
   const [loadingLayers] = useAtom(loadingLayersAtom)
 
+  const { data: selectedPointData, loading: selectedPointLoading } = useQuery<
+    MapReportLayerGeoJsonPointQuery,
+    MapReportLayerGeoJsonPointQueryVariables
+  >(MAP_REPORT_LAYER_POINT, {
+    skip: !selectedSourceMarker?.properties?.id,
+    variables: {
+      genericDataId: String(selectedSourceMarker?.properties?.id),
+    },
+  });
+
   const loading = analytics.loading || Object.values(loadingLayers).includes(true)
 
   return (
@@ -265,10 +270,22 @@ export function ReportMap () {
           ? "mapbox://styles/commonknowledge/clubx087l014y01mj1bv63yg8"
           : "mapbox://styles/commonknowledge/clty3prwh004601pr4nqn7l9s"}
         onClick={() => setSelectedSourceMarker(null)}
+        // transformRequest={(url, resourceType) => {
+        //   if (url.indexOf(process.env.NEXT_PUBLIC_BACKEND_BASE_URL!) > -1) {
+        //       const obj = {
+        //           url,
+        //           headers: authenticationHeaders(),
+        //           credentials: 'include'  // Include cookies for cross-origin requests
+        //       }
+        //       console.log("Auth'd mapbox request to MEEP server", obj)
+        //       return obj;
+        //   }
+        //   return { url }
+        // }}
       >
-        {!analytics.data && null}
-        {!!analytics.data &&
-          Object.entries(TILESETS).map(([key, tileset]) => {
+        {Object.entries(TILESETS)
+          .map(([key, tileset]) => {
+            if (!tileset.data) return null;
             const min =
               tileset.data.reduce(
                 (min, p) => (p?.count! < min ? p?.count! : min),
@@ -471,15 +488,15 @@ export function ReportMap () {
             />
           );
         })}
-        {!!selectedSourceMarker?.geometry && (
+        {!!selectedSourceMarker?.properties?.id && (
           <ErrorBoundary errorComponent={() => <></>}>
             <Popup
-              key={selectedSourceMarker.properties?.id}
+              key={selectedSourceMarker.properties.id}
               longitude={
-                (selectedSourceMarker?.geometry as Point)?.coordinates?.[0] || 0
+                (selectedSourceMarker.geometry as Point)?.coordinates?.[0] || 0
               }
               latitude={
-                (selectedSourceMarker?.geometry as Point)?.coordinates[1] || 0
+                (selectedSourceMarker.geometry as Point)?.coordinates[1] || 0
               }
               closeOnClick={false}
               className="text-black [&>.mapboxgl-popup-content]:p-0 [&>.mapboxgl-popup-content]:overflow-auto w-[150px] [&>.mapboxgl-popup-tip]:!border-t-meepGray-200"
@@ -488,65 +505,69 @@ export function ReportMap () {
               anchor="bottom"
               offset={[0, -35] as any}
             >
-              <div className="font-IBMPlexMono p-2 space-y-1 bg-white">
-                {!selectedSourceRecord && (
+              {selectedPointLoading ? (
+                <div className="font-IBMPlexMono p-2 space-y-1 bg-white">
                   <div className="-space-y-1">
                     <div className="text-meepGray-400">LOADING</div>
                   </div>
-                )}
-                {!!selectedSourceRecord?.feature.properties.name && (
-                  <div className="-space-y-1">
-                    <div className="text-meepGray-400">NAME</div>
-                    <div>{selectedSourceRecord.feature.properties.name}</div>
+                </div>
+              ) : (
+                <>
+                  <div className="font-IBMPlexMono p-2 space-y-1 bg-white">
+                    {!!selectedPointData?.importedDataGeojsonPoint?.properties?.name && (
+                      <div className="-space-y-1">
+                        <div className="text-meepGray-400">NAME</div>
+                        <div>{selectedPointData?.importedDataGeojsonPoint.properties.name}</div>
+                      </div>
+                    )}
+                    {!!selectedPointData?.importedDataGeojsonPoint?.properties?.postcodeData?.postcode && (
+                      <div className="-space-y-1">
+                        <div className="text-meepGray-400">POSTCODE</div>
+                        <pre>
+                          {
+                            selectedPointData?.importedDataGeojsonPoint.properties.postcodeData
+                              .postcode
+                          }
+                        </pre>
+                      </div>
+                    )}
                   </div>
-                )}
-                {!!selectedSourceRecord?.feature.properties.postcodeData
-                  .postcode && (
-                  <div className="-space-y-1">
-                    <div className="text-meepGray-400">POSTCODE</div>
-                    <pre>
-                      {
-                        selectedSourceRecord.feature.properties.postcodeData
-                          .postcode
-                      }
-                    </pre>
-                  </div>
-                )}
-              </div>
-              <footer className="flex-divide-x bg-meepGray-200 text-meepGray-500 flex flex-row justify-around w-full py-1 px-2 text-center">
-                {!!selectedSourceRecord?.feature.properties.phone && (
-                  <a
-                    href={`tel:${selectedSourceRecord.feature.properties.phone}`}
-                    target="_blank"
-                  >
-                    Call
-                  </a>
-                )}
-                {!!selectedSourceRecord?.feature.properties.phone && (
-                  <a
-                    href={`sms:${selectedSourceRecord.feature.properties.phone}`}
-                    target="_blank"
-                  >
-                    SMS
-                  </a>
-                )}
-                {!!selectedSourceRecord?.feature.properties.email && (
-                  <a
-                    href={`mailto:${selectedSourceRecord.feature.properties.email}`}
-                    target="_blank"
-                  >
-                    Email
-                  </a>
-                )}
-                {!!selectedSourceRecord?.feature.properties.email && (
-                  <a
-                    href={`${selectedSourceRecord.feature.properties.originalUrl}`}
-                    target="_blank"
-                  >
-                    Link
-                  </a>
-                )}
-              </footer>
+                  <footer className="flex-divide-x bg-meepGray-200 text-meepGray-500 flex flex-row justify-around w-full py-1 px-2 text-center">
+                    {!!selectedPointData?.importedDataGeojsonPoint?.properties?.phone && (
+                      <a
+                        href={`tel:${selectedPointData?.importedDataGeojsonPoint?.properties?.phone}`}
+                        target="_blank"
+                      >
+                        Call
+                      </a>
+                    )}
+                    {!!selectedPointData?.importedDataGeojsonPoint?.properties?.phone && (
+                      <a
+                        href={`sms:${selectedPointData?.importedDataGeojsonPoint?.properties?.phone}`}
+                        target="_blank"
+                      >
+                        SMS
+                      </a>
+                    )}
+                    {!!selectedPointData?.importedDataGeojsonPoint?.properties?.email && (
+                      <a
+                        href={`mailto:${selectedPointData?.importedDataGeojsonPoint?.properties.email}`}
+                        target="_blank"
+                      >
+                        Email
+                      </a>
+                    )}
+                    {!!selectedPointData?.importedDataGeojsonPoint?.properties?.remoteUrl && (
+                      <a
+                        href={`${selectedPointData?.importedDataGeojsonPoint?.properties?.remoteUrl}`}
+                        target="_blank"
+                      >
+                        Link
+                      </a>
+                    )}
+                  </footer>
+                </>
+              )}
             </Popup>
           </ErrorBoundary>
         )}
@@ -556,34 +577,8 @@ export function ReportMap () {
 }
 
 function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { externalDataSourceId: string, index: number }) {
-  const { data, error, loading: pointsLoading } = useQuery<DataSourceGeoJsonPointsQuery, DataSourceGeoJsonPointsQueryVariables>(MAP_REPORT_LAYER_POINTS, {
-    variables: {
-      externalDataSourceId,
-    },
-  });
-
   const mapbox = useLoadedMap()
-  const [loadingLayers, setLoadingLayers] = useAtom(loadingLayersAtom)
   const [selectedSourceMarker, setSelectedSourceMarker] =  useAtom(selectedSourceMarkerAtom)
-  const [selectedSourceRecord, setSelectedSourceRecord] = useAtom(selectedSourceRecordAtom)
-
-  const { data: selectedPointData, loading: selectedPointLoading } = useQuery<
-    MapReportLayerGeoJsonPointQuery,
-    MapReportLayerGeoJsonPointQueryVariables
-  >(MAP_REPORT_LAYER_POINT, {
-    skip: !selectedSourceMarker,
-    variables: {
-      externalDataSourceId,
-      recordId: selectedSourceMarker?.properties?.id || "",
-    },
-  });
-
-  useEffect(function updateLoading() {
-    setLoadingLayers({
-      ...loadingLayers,
-      externalDataSourceId: pointsLoading,
-    });
-  }, [pointsLoading, setLoadingLayers])
 
   useEffect(function selectMarker() {
     mapbox.loadedMap?.on('mouseover', `${externalDataSourceId}-marker`, () => {
@@ -596,77 +591,11 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
       if (!canvas) return
       canvas.style.cursor = ''
     })
-    mapbox.loadedMap?.on('click', [`${externalDataSourceId}-marker`, `${externalDataSourceId}-count`], event => {
+    mapbox.loadedMap?.on('click', `${externalDataSourceId}-marker`, event => {
       const feature = event.features?.[0]
       if (feature?.properties?.id) {
         setSelectedSourceMarker(feature)
-      } else {
-        setSelectedSourceMarker(null)
       }
-      setSelectedSourceRecord(null)
-    })
-  }, [mapbox.loadedMap, externalDataSourceId])
-
-  useEffect(
-    function displayRecord() {
-      if (selectedPointLoading || !selectedPointData) {
-        return
-      }
-      const id = selectedSourceMarker?.properties?.id;
-      try {
-        const selectedRecord = SelectedMarkerParser.parse({
-          externalDataSourceId,
-          id,
-          feature: {
-            // MapboxGL's typings and actual data don't match up, so we try a few things
-            ...selectedSourceMarker,
-            properties: {
-              // @ts-ignore
-              ...(selectedSourceMarker.properties || feature._properties || {}),
-              ...selectedPointData?.sharedDataSource.importedDataGeojsonPoint
-                ?.properties,
-              originalUrl:
-                selectedPointData?.sharedDataSource.recordUrlTemplate?.replace(
-                  "{record_id}",
-                  id
-                ),
-            },
-            // @ts-ignore
-            geometry: selectedSourceMarker.geometry || selectedSourceMarker._geometry,
-            id,
-          },
-        });
-        setSelectedSourceRecord(selectedRecord);
-      } catch (e) {
-      }
-    },
-    [
-      mapbox.loadedMap,
-      externalDataSourceId,
-      selectedSourceMarker,
-      selectedPointData,
-      selectedPointLoading,
-      setSelectedSourceRecord,
-    ]
-  );
-
-  useEffect(() => {
-    mapbox.loadedMap?.on('mousemove', externalDataSourceId, (e) => {
-      // Change the cursor style as a UI indicator.
-      mapbox.loadedMap!.getCanvas().style.cursor = 'pointer';
-
-      // Use the first found feature.
-      console.log(e.features)
-
-      // Query the counties layer visible in the map.
-      // Only onscreen features are returned.
-      // Use filter to collect only results
-      // with the same county name.
-      const pointsFromVector = mapbox.loadedMap!.querySourceFeatures(externalDataSourceId, {
-          sourceLayer: 'features'
-      });
-
-      console.log({ pointsFromVector })
     })
   }, [mapbox.loadedMap, externalDataSourceId])
   
@@ -674,35 +603,15 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
     <>
       <Source
         id={externalDataSourceId}
-        // type="geojson"
-        // cluster={true}
-        // data={{
-        //   type: "FeatureCollection",
-        //   // @ts-ignore
-        //   features: data?.sharedDataSource?.importedDataGeojsonPoints || []
-        // }}
         type="vector"
-        tiles={[
-          `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/tiles/{z}/{x}/{y}`
-        ]}
+        url={`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/tiles/external-data-source/${externalDataSourceId}/tiles.json`}
         minzoom={MIN_MEMBERS_ZOOM}
       >
-        <Layer
-          source={externalDataSourceId}
-          source-layer="features"
-          id={`${externalDataSourceId}-marker`}
-          type="circle"
-          paint={{
-            "circle-radius": 0.2,
-            "circle-color": "red",
-          }}
-          minzoom={MIN_MEMBERS_ZOOM}
-        />
-        {/* {index <= 1 ? ( */}
-          {/* <Layer
-            source={externalDataSourceId}
-            source-layer="features"
+        {index <= 1 ? (
+          <Layer
             id={`${externalDataSourceId}-marker`}
+            source={externalDataSourceId}
+            source-layer={"generic_data"}
             type="symbol"
             layout={{
               "icon-image": `meep-marker-${index}`,
@@ -712,16 +621,17 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
               "icon-anchor": "bottom"
             }}
             minzoom={MIN_MEMBERS_ZOOM}
-            // {...(
-            //   selectedSourceMarker?.properties?.id
-            //   ? { filter: ["!=", selectedSourceMarker?.properties?.id, ["get", "id"]] }
-            //   : {}
-            // )}
-          // /> */}
-        {/* ) : (
+            {...(
+              selectedSourceMarker?.properties?.id
+              ? { filter: ["!=", selectedSourceMarker?.properties?.id, ["get", "id"]] }
+              : {}
+            )}
+          />
+        ) : (
           <Layer
-            source={externalDataSourceId}
             id={`${externalDataSourceId}-marker`}
+            source={externalDataSourceId}
+            source-layer={"generic_data"}
             type="circle"
             paint={{
               "circle-radius": 0.2,
@@ -730,27 +640,16 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
             minzoom={MIN_MEMBERS_ZOOM}
             {...(
               selectedSourceMarker?.properties?.id
-              ? { filter: ["!=", selectedSourceMarker?.properties?.id, ["get", "id"]] }
+              ? { filter: ["!=", selectedSourceMarker.properties.id, ["get", "id"]] }
               : {}
             )}
           />
         )}
-        <Layer
-          id={`${externalDataSourceId}-count`}
-          type='symbol'
-          filter={['has', 'point_count']}
-          layout={{
-            'text-field': ['get', 'point_count_abbreviated'],
-            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-            'text-size': 12,
-            'text-offset': [0, -1.5]
-          }}
-          minzoom={MIN_MEMBERS_ZOOM}
-        />
-        {!!selectedSourceMarker && (
+        {!!selectedSourceMarker?.properties?.id && (
           <Layer
-            source={externalDataSourceId}
             id={`${externalDataSourceId}-marker-selected`}
+            source={externalDataSourceId}
+            source-layer={"generic_data"}
             type="symbol"
             layout={{
               "icon-image": "meep-marker-selected",
@@ -760,60 +659,34 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
               "icon-ignore-placement": true
             }}
             minzoom={MIN_MEMBERS_ZOOM}
-            {...(
-              selectedSourceMarker.properties?.id
-              ? { filter: ["==", selectedSourceMarker.properties?.id, ["get", "id"]] }
-              : {}
-            )}
+            filter={["==", selectedSourceMarker.properties.id, ["get", "id"]]}
           />
-        )} */}
+        )}
       </Source>
     </>
   )
 }
 
-const MAP_REPORT_LAYER_POINTS = gql`
-  query DataSourceGeoJSONPoints($externalDataSourceId: ID!) {
-    sharedDataSource(pk: $externalDataSourceId) {
-      id
-      importedDataGeojsonPoints {
-        id
-        type
-        geometry {
-          type
-          coordinates
-        }
-        properties {
-          id
-        }
-      }
-    }
-  }
-`
-
 const MAP_REPORT_LAYER_POINT = gql`
-query MapReportLayerGeoJSONPoint($externalDataSourceId: ID!, $recordId: String!) {
-  sharedDataSource(pk: $externalDataSourceId) {
+query MapReportLayerGeoJSONPoint($genericDataId: String!) {
+  importedDataGeojsonPoint(genericDataId: $genericDataId) {
     id
-    recordUrlTemplate
-    importedDataGeojsonPoint(id: $recordId) {
-      id
+    type
+    geometry {
       type
-      geometry {
-        type
-        coordinates
+      coordinates
+    }
+    properties {
+      id
+      lastUpdate
+      name
+      phone
+      email
+      postcodeData {
+        postcode
       }
-      properties {
-        id
-        lastUpdate
-        name
-        phone
-        email
-        postcodeData {
-          postcode
-        }
-        json
-      }
+      json
+      remoteUrl
     }
   }
 }
@@ -833,6 +706,13 @@ export const MAP_REPORT_LAYER_ANALYTICS = gql`
           }
         }
       }
+    }
+  }
+`
+
+const MAP_REPORT_REGION_STATS = gql`
+  query MapReportRegionStats($reportID: ID!) {
+    mapReport(pk: $reportID) {
       importedDataCountByRegion {
         label
         gss
@@ -848,6 +728,13 @@ export const MAP_REPORT_LAYER_ANALYTICS = gql`
           }
         }
       }
+    }
+  }
+`
+
+const MAP_REPORT_CONSTITUENCY_STATS = gql`
+  query MapReportConstituencyStats($reportID: ID!) {
+    mapReport(pk: $reportID) {
       importedDataCountByConstituency {
         label
         gss
@@ -863,6 +750,13 @@ export const MAP_REPORT_LAYER_ANALYTICS = gql`
           }
         }
       }
+    }
+  }
+`
+
+const MAP_REPORT_WARD_STATS = gql`
+  query MapReportWardStats($reportID: ID!) {
+    mapReport(pk: $reportID) {
       importedDataCountByWard {
         label
         gss
