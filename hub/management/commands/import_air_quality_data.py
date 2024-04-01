@@ -1,7 +1,6 @@
 from functools import reduce
 
 from django.conf import settings
-from django.core.management.base import BaseCommand
 
 import pandas as pd
 from tqdm import tqdm
