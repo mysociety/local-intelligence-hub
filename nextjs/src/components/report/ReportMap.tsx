@@ -29,7 +29,7 @@ import { authenticationHeaders } from "@/lib/auth";
 
 const MAX_REGION_ZOOM = 8
 export const MAX_CONSTITUENCY_ZOOM = 10
-const MIN_MEMBERS_ZOOM = 12.5
+const MIN_MEMBERS_ZOOM = 12
 
 const viewStateAtom = atom<Partial<ViewState>>({
   longitude: -2.296605,
@@ -292,7 +292,6 @@ export function ReportMap () {
       >
         {Object.entries(TILESETS)
           .map(([key, tileset]) => {
-            if (!tileset.data) return null;
             const min =
               tileset.data.reduce(
                 (min, p) => (p?.count! < min ? p?.count! : min),
@@ -329,57 +328,67 @@ export function ReportMap () {
               .map((n) => [legendScale(n), colourScale(legendScale(n))])
               .flat();
 
+            const SOURCE_FILL = `${tileset.name}_SOURCE_FILL`
+            const SOURCE_STROKE = `${tileset.name}_SOURCE_STROKE`
+            const SOURCE_LABEL = `${tileset.name}_SOURCE_LABEL`
+            const SOURCE_POINTS = `${tileset.name}_SOURCE_POINTS`
+
             return (
               <Fragment key={tileset.mapboxSourceId}>
+                <PlaceholderLayer id={SOURCE_FILL} />
+                <PlaceholderLayer id={SOURCE_STROKE} />
+                <PlaceholderLayer id={SOURCE_LABEL} />
+                <PlaceholderLayer id={SOURCE_POINTS} />
                 <Source
                   id={tileset.mapboxSourceId}
                   type="vector"
                   url={`mapbox://${tileset.mapboxSourceId}`}
                   promoteId={tileset.promoteId}
                   {...(tileset.mapboxSourceProps || {})}
-                >
-                  {/* Shade area by count */}
-                  <Layer
-                    id={`${tileset.mapboxSourceId}-fill`}
-                    source={tileset.mapboxSourceId}
-                    source-layer={tileset.sourceLayerId}
-                    type="fill"
-                    filter={inDataFilter}
-                    paint={{
-                      // Shade the map by the count of imported data
-                      "fill-color": [
-                        "interpolate",
-                        ["linear"],
-                        ["to-number", ["feature-state", "count"], 0],
-                        ...colourStops,
-                      ],
-                      "fill-opacity": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        MAX_REGION_ZOOM,
-                        0.5,
-                        MAX_CONSTITUENCY_ZOOM,
-                        0.2,
-                      ],
-                    }}
-                    {...(tileset.mapboxLayerProps || {})}
-                  />
-                  {/* Border of the boundary */}
-                  <Layer
-                    filter={inDataFilter}
-                    id={`${tileset.mapboxSourceId}-line`}
-                    source={tileset.mapboxSourceId}
-                    source-layer={tileset.sourceLayerId}
-                    type="line"
-                    paint={{
-                      "line-color": "white",
-                      "line-width": 1.5,
-                      "line-opacity": 0.5,
-                    }}
-                    {...(tileset.mapboxLayerProps || {})}
-                  />
-                </Source>
+                />
+                {/* Shade area by count */}
+                <Layer
+                  beforeId={SOURCE_FILL}
+                  id={`${tileset.mapboxSourceId}-fill`}
+                  source={tileset.mapboxSourceId}
+                  source-layer={tileset.sourceLayerId}
+                  type="fill"
+                  {...(tileset.data ? { filter: inDataFilter } : {})}
+                  paint={{
+                    // Shade the map by the count of imported data
+                    "fill-color": [
+                      "interpolate",
+                      ["linear"],
+                      ["to-number", ["feature-state", "count"], 0],
+                      ...colourStops,
+                    ],
+                    "fill-opacity": [
+                      "interpolate",
+                      ["linear"],
+                      ["zoom"],
+                      MAX_REGION_ZOOM,
+                      0.5,
+                      MAX_CONSTITUENCY_ZOOM,
+                      0.2,
+                    ],
+                  }}
+                  {...(tileset.mapboxLayerProps || {})}
+                />
+                {/* Border of the boundary */}
+                <Layer
+                  beforeId={SOURCE_STROKE}
+                  {...(tileset.data ? { filter: inDataFilter } : {})}
+                  id={`${tileset.mapboxSourceId}-line`}
+                  source={tileset.mapboxSourceId}
+                  source-layer={tileset.sourceLayerId}
+                  type="line"
+                  paint={{
+                    "line-color": "white",
+                    "line-width": 1.5,
+                    "line-opacity": 0.5,
+                  }}
+                  {...(tileset.mapboxLayerProps || {})}
+                />
                 <Source
                   id={`${tileset.mapboxSourceId}-db-point`}
                   type="geojson"
@@ -399,76 +408,79 @@ export function ReportMap () {
                         };
                       }),
                   }}
-                >
-                  <Layer
-                    id={`${tileset.mapboxSourceId}-label-count`}
-                    source={`${tileset.mapboxSourceId}-db-point`}
-                    type="symbol"
-                    layout={{
-                      "symbol-spacing": 1000,
-                      "text-field": ["get", "count"],
-                      "text-size": [
-                        "interpolate",
-                        ["linear"],
-                        ["get", "count"],
-                        min,
-                        textScale(min) * 17,
-                        max,
-                        textScale(max) * 17,
-                      ],
-                      "symbol-placement": "point",
-                      "text-offset": [0, -0.5],
-                      "text-allow-overlap": true,
-                      "text-ignore-placement": true,
-                      "text-font": [
-                        "DIN Offc Pro Medium",
-                        "Arial Unicode MS Bold",
-                      ],
-                    }}
-                    paint={{
-                      "text-color": "white",
-                      "text-halo-color": "black",
-                      "text-halo-width": 0.3,
-                    }}
-                    {...(tileset.mapboxLayerProps || {})}
-                  />
-                  <Layer
-                    id={`${tileset.mapboxSourceId}-label-name`}
-                    source={`${tileset.mapboxSourceId}-db-point`}
-                    type="symbol"
-                    layout={{
-                      "symbol-spacing": 1000,
-                      "text-field": ["get", "label"],
-                      "text-size": [
-                        "interpolate",
-                        ["linear"],
-                        ["get", "count"],
-                        min,
-                        textScale(min) * 9,
-                        max,
-                        textScale(max) * 9,
-                      ],
-                      "text-font": [
-                        "DIN Offc Pro Medium",
-                        "Arial Unicode MS Bold",
-                      ],
-                      "symbol-placement": "point",
-                      "text-offset": [0, 0.6],
-                    }}
-                    paint={{
-                      "text-color": "white",
-                      "text-opacity": 0.9,
-                      "text-halo-color": "black",
-                      "text-halo-width": 0.3,
-                    }}
-                    {...(tileset.mapboxLayerProps || {})}
-                  />
-                </Source>
+                />
+                <Layer
+                  beforeId={SOURCE_LABEL}
+                  id={`${tileset.mapboxSourceId}-label-count`}
+                  source={`${tileset.mapboxSourceId}-db-point`}
+                  type="symbol"
+                  layout={{
+                    "symbol-spacing": 1000,
+                    "text-field": ["get", "count"],
+                    "text-size": [
+                      "interpolate",
+                      ["linear"],
+                      ["get", "count"],
+                      min,
+                      textScale(min) * 17,
+                      max,
+                      textScale(max) * 17,
+                    ],
+                    "symbol-placement": "point",
+                    "text-offset": [0, -0.5],
+                    "text-allow-overlap": true,
+                    "text-ignore-placement": true,
+                    "text-font": [
+                      "DIN Offc Pro Medium",
+                      "Arial Unicode MS Bold",
+                    ],
+                  }}
+                  paint={{
+                    "text-color": "white",
+                    "text-halo-color": "black",
+                    "text-halo-width": 0.3,
+                  }}
+                  {...(tileset.mapboxLayerProps || {})}
+                />
+                <Layer
+                  beforeId={SOURCE_LABEL}
+                  id={`${tileset.mapboxSourceId}-label-name`}
+                  source={`${tileset.mapboxSourceId}-db-point`}
+                  type="symbol"
+                  layout={{
+                    "symbol-spacing": 1000,
+                    "text-field": ["get", "label"],
+                    "text-size": [
+                      "interpolate",
+                      ["linear"],
+                      ["get", "count"],
+                      min,
+                      textScale(min) * 9,
+                      max,
+                      textScale(max) * 9,
+                    ],
+                    "text-font": [
+                      "DIN Offc Pro Medium",
+                      "Arial Unicode MS Bold",
+                    ],
+                    "symbol-placement": "point",
+                    "text-offset": [0, 0.6],
+                  }}
+                  paint={{
+                    "text-color": "white",
+                    "text-opacity": 0.9,
+                    "text-halo-color": "black",
+                    "text-halo-width": 0.3,
+                  }}
+                  {...(tileset.mapboxLayerProps || {})}
+                />
               </Fragment>
             );
           })}
+        <PlaceholderLayer id={"PLACEHOLDER_SELECTION"} />
         {!!selectedConstituency && (
           <Layer
+            beforeId={"PLACEHOLDER_SELECTION"}
             filter={[
               "in",
               ["get", TILESETS.constituencies.promoteId],
@@ -485,10 +497,11 @@ export function ReportMap () {
             }}
           />
         )}
+        <PlaceholderLayer id={"PLACEHOLDER_MARKERS"} />
         {/* Wait for all icons to load */}
         {analytics.data?.mapReport.layers.map((layer, index) => {
           return (
-            <MapboxGLClusteredPointsLayer
+            <ExternalDataSourcePointMarkers
               key={layer?.source?.id || index}
               index={index}
               externalDataSourceId={layer?.source?.id}
@@ -588,7 +601,7 @@ export function ReportMap () {
   );
 }
 
-function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { externalDataSourceId: string, index: number }) {
+function ExternalDataSourcePointMarkers ({ externalDataSourceId, index }: { externalDataSourceId: string, index: number }) {
   const mapbox = useLoadedMap()
   const [selectedSourceMarker, setSelectedSourceMarker] =  useAtom(selectedSourceMarkerAtom)
 
@@ -621,6 +634,7 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
       >
         {index <= 1 ? (
           <Layer
+            beforeId={"PLACEHOLDER_MARKERS"}
             id={`${externalDataSourceId}-marker`}
             source={externalDataSourceId}
             source-layer={"generic_data"}
@@ -641,24 +655,26 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
           />
         ) : (
           <Layer
+            beforeId={"PLACEHOLDER_MARKERS"}
             id={`${externalDataSourceId}-marker`}
             source={externalDataSourceId}
             source-layer={"generic_data"}
             type="circle"
             paint={{
-              "circle-radius": 0.2,
+              "circle-radius": 5,
               "circle-color": layerColour(index, externalDataSourceId),
             }}
             minzoom={MIN_MEMBERS_ZOOM}
             {...(
               selectedSourceMarker?.properties?.id
-              ? { filter: ["!=", selectedSourceMarker.properties.id, ["get", "id"]] }
+              ? { filter: ["!=", selectedSourceMarker?.properties?.id, ["get", "id"]] }
               : {}
             )}
           />
         )}
         {!!selectedSourceMarker?.properties?.id && (
           <Layer
+            beforeId={"PLACEHOLDER_MARKERS"}
             id={`${externalDataSourceId}-marker-selected`}
             source={externalDataSourceId}
             source-layer={"generic_data"}
@@ -676,6 +692,21 @@ function MapboxGLClusteredPointsLayer ({ externalDataSourceId, index }: { extern
         )}
       </Source>
     </>
+  )
+}
+
+/**
+ * Placeholder layer to refer to in `beforeId`.
+ * See https://github.com/visgl/react-map-gl/issues/939#issuecomment-625290200
+ */
+export function PlaceholderLayer (props: Partial<LayerProps>) {
+  return (
+    <Layer
+      {...props}
+      type='background'
+      layout={{ visibility: 'none' }}
+      paint={{}}
+    />
   )
 }
 
