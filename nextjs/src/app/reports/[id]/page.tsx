@@ -65,6 +65,7 @@ export default function Page({ params: { id } }: { params: Params }) {
   
   const report = useQuery<GetMapReportQuery, GetMapReportQueryVariables>(GET_MAP_REPORT, {
     variables: { id },
+    returnPartialData: true
   });
 
   const displayOptions = merge({}, defaultDisplayOptions, report.data?.mapReport?.displayOptions || {})
@@ -226,13 +227,6 @@ function ReportPage() {
         <div className='w-full h-full pointer-events-auto'>
           <ReportMap />
         </div>
-        {report?.loading && !report?.data?.mapReport && (
-          <div className="absolute w-full h-full inset-0">
-            <div className="flex flex-col items-center justify-center w-full h-full">
-              <LoadingIcon />
-            </div>
-          </div>
-        )}
         {/* Layer card */}
         <aside className="absolute top-5 left-5 right-0 w-0 pointer-events-auto">
           <div className="flex flex-col items-start gap-4">

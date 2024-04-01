@@ -36,7 +36,6 @@ const viewStateAtom = atom<Partial<ViewState>>({
   latitude: 53.593349,
   zoom: 6
 })
-const loadingLayersAtom = atom<{[layerKey:string]: boolean}>({});
 
 const selectedSourceMarkerAtom = atom<MapboxGeoJSONFeature | null>(null)
 
@@ -148,7 +147,6 @@ export function ReportMap () {
 
   useEffect(function setFeatureState() {
     if (!mapbox.loadedMap) return
-    if (!analytics.data) return
     Object.values(TILESETS)?.forEach((tileset) => {
       tileset.data?.forEach((area) => {
         if (area?.gss && area?.count && tileset.sourceLayerId) {
@@ -162,7 +160,7 @@ export function ReportMap () {
         }
       })
     })
-  }, [analytics, TILESETS, mapbox.loadedMap])
+  }, [regionAnalytics, constituencyAnalytics, wardAnalytics, TILESETS, mapbox.loadedMap])
 
   const requiredImages = [
     {
@@ -239,7 +237,6 @@ export function ReportMap () {
   }, [mapbox.loadedMap])
 
   const [viewState, setViewState] = useAtom(viewStateAtom)
-  const [loadingLayers] = useAtom(loadingLayersAtom)
 
   const { data: selectedPointData, loading: selectedPointLoading } = useQuery<
     MapReportLayerGeoJsonPointQuery,
@@ -251,14 +248,23 @@ export function ReportMap () {
     },
   });
 
-  const loading = analytics.loading || Object.values(loadingLayers).includes(true)
+  const loadingLayers = [
+    { execution: analytics, label: "Report layers" },
+    { execution: regionAnalytics, label: "Regional stats" },
+    { execution: constituencyAnalytics, label: "Constituency stats" },
+    { execution: wardAnalytics, label: "Ward stats" }
+  ]
+  const loading = loadingLayers.some((query) => query.execution.loading)
 
   return (
     <>
-      {(analytics.loading || loading) ? (
+      {loading ? (
         <div className="absolute w-full h-full inset-0 z-10 pointer-events-none">
           <div className="flex flex-col items-center justify-center w-full h-full">
             <LoadingIcon />
+            {loadingLayers.filter((query) => query.execution.loading).map((query) => (
+              <div key={query.label} className="text-meepGray-200 px-2">Loading {query.label}</div>
+            ))}
           </div>
         </div>
       ) : null}
