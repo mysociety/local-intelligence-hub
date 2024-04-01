@@ -412,7 +412,7 @@ const app = createApp({
                 fillColor: feature.properties.color,
                 fillOpacity: feature.properties.opacity,
                 color: 'white',
-                weight: 2,
+                weight: 1,
                 opacity: 1,
               }
             },
@@ -421,7 +421,7 @@ const app = createApp({
               layer.bindTooltip(feature.properties.name)
               layer.on({
                 mouseover: (e) => { e.target.setStyle({ weight: 5 }) },
-                mouseout: (e) => { e.target.setStyle({ weight: 2}) },
+                mouseout: (e) => { e.target.setStyle({ weight: 1 }) },
                 click: (e) => {
                   trackEvent('explore_area_click', {
                     'area_type': feature.properties.type,
