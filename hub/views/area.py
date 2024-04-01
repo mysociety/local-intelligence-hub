@@ -392,7 +392,7 @@ class AreaSearchView(TemplateView):
             elif kwargs.get("pc"):
                 gss_codes = mapit.postcode_point_to_gss_codes(kwargs["pc"])
 
-            areas = Area.objects.filter(gss__in=gss_codes, area_type__code="WMC")
+            areas = Area.objects.filter(gss__in=gss_codes)
             areas = list(areas)
         except (
             NotFoundException,
@@ -427,29 +427,62 @@ class AreaSearchView(TemplateView):
             context["areas"] = areas
             context["error"] = error
         elif search == "":
-            context["error"] = "Please enter a constituency name, MP name, or postcode."
+            context[
+                "error"
+            ] = "Please enter a postcode, or the name of a constituency, MP, or local authority"
         else:
-            areas_raw = Area.objects.filter(
-                name__icontains=search, area_type__code="WMC"
-            )
-            people_raw = Person.objects.filter(person_type="MP", name__icontains=search)
+            areas_raw = Area.objects.filter(name__icontains=search)
+            people_raw = Person.objects.filter(name__icontains=search)
 
-            areas = list(areas_raw)
+            context["areas"] = list(areas_raw)
             for person in people_raw:
-                areas.append(person.area)
+                context["areas"].append(person.area)
 
-            if len(areas) == 0:
+            if len(context["areas"]) == 0:
                 context[
                     "error"
-                ] = f"Sorry, we can’t find a UK location matching “{search}”. Try a nearby town or city?"
-            else:
-                for area in areas:
-                    try:
-                        area.mp = Person.objects.get(area=area, end_date__isnull=True)
-                    except Person.DoesNotExist:
-                        pass
-                areas.sort(key=lambda area: area.name)
-                context["areas"] = areas
+                ] = f"Sorry, we can’t find any matches for “{search}”. Try a nearby town or city?"
+
+        if context["areas"] is not None and len(context["areas"]):
+            # Add MPs and PPCs to areas
+            for area in context["areas"]:
+                try:
+                    area.mp = Person.objects.get(
+                        area=area, end_date__isnull=True, person_type="MP"
+                    )
+                except Person.DoesNotExist:
+                    pass
+
+                try:
+                    area.ppcs = Person.objects.filter(
+                        area=area, end_date__isnull=True, person_type="PPC"
+                    )
+                except Person.DoesNotExist:
+                    pass
+
+            # Sort then split by area_type
+            context["areas"].sort(key=lambda area: area.name)
+            context["areas_by_type"] = [
+                {
+                    "type": "current-constituencies",
+                    "areas": [],
+                },
+                {
+                    "type": "future-constituencies",
+                    "areas": [],
+                },
+                {
+                    "type": "local-authorities",
+                    "areas": [],
+                },
+            ]
+            for area in context["areas"]:
+                if area.area_type.code == "WMC":
+                    context["areas_by_type"][0]["areas"].append(area)
+                elif area.area_type.code == "WMC23":
+                    context["areas_by_type"][1]["areas"].append(area)
+                else:
+                    context["areas_by_type"][2]["areas"].append(area)
 
         return context
 
