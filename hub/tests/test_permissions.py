@@ -111,7 +111,7 @@ class TestOwnSources(Setup, TestCase):
         self.token = res.json["tokenAuth"]["token"]["token"]
 
     def test_permissions_calculator(self):
-        permissions = models.ExternalDataSource.user_permissions(self.user.id, self.source)
+        permissions = models.ExternalDataSource.user_permissions(self.user, self.source)
         self.assertDictEqual(permissions, {
             "can_display_points": True,
             "can_display_details": True
@@ -241,7 +241,7 @@ class TestFullSharing(Setup, TestCase):
         self.token = res.json["data"]["tokenAuth"]["token"]["token"]
 
     def test_permissions_calculator(self):
-        permissions = models.ExternalDataSource.user_permissions(self.other_user.id, self.source)
+        permissions = models.ExternalDataSource.user_permissions(self.other_user, self.source)
         self.assertDictEqual(permissions, {
             "can_display_points": True,
             "can_display_details": True
@@ -369,7 +369,7 @@ class TestLocationOnlySharing(Setup, TestCase):
 
 
     def test_permissions_calculator(self):
-        permissions = models.ExternalDataSource.user_permissions(self.other_user.id, self.source)
+        permissions = models.ExternalDataSource.user_permissions(self.other_user, self.source)
         self.assertDictEqual(permissions, {
             "can_display_points": True,
             "can_display_details": False
@@ -487,7 +487,7 @@ class TestAggregateOnlySharing(Setup, TestCase):
         self.token = res.json["data"]["tokenAuth"]["token"]["token"]
 
     def test_permissions_calculator(self):
-        permissions = models.ExternalDataSource.user_permissions(self.other_user.id, self.source)
+        permissions = models.ExternalDataSource.user_permissions(self.other_user, self.source)
         self.assertDictEqual(permissions, {
             "can_display_points": False,
             "can_display_details": False
@@ -594,7 +594,7 @@ class TestNoSharing(Setup, TestCase):
         self.token = res.json["data"]["tokenAuth"]["token"]["token"]
 
     def test_permissions_calculator(self):
-        permissions = models.ExternalDataSource.user_permissions(self.other_user.id, self.source)
+        permissions = models.ExternalDataSource.user_permissions(self.other_user, self.source)
         self.assertDictEqual(permissions, {
             "can_display_points": False,
             "can_display_details": False

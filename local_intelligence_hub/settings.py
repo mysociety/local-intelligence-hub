@@ -353,3 +353,11 @@ if MINIO_STORAGE_ENDPOINT is not False:
         "MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET"
     )
     # MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET = env("MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET")
+
+CACHES = {
+    "default": {
+        # TODO: Set up Redis for production
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+    }
+}

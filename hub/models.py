@@ -20,7 +20,7 @@ from django.utils.functional import cached_property
 from django.utils.text import slugify
 from uuid import UUID
 from django.contrib.auth.models import AbstractBaseUser
-from utils.py import DictWithDotNotation
+from django.core.cache import cache
 
 import pandas as pd
 import pytz
@@ -1615,33 +1615,38 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         can_display_details: bool
 
     @classmethod
-    def user_permissions(cls, user: Union[AbstractBaseUser, int], external_data_source: Union["ExternalDataSource", str]) -> DataPermissions:
-        if user is None or external_data_source is None:
-            return cls.DataPermissions(
-                can_display_points=False,
-                can_display_details=False,
-            )
-        if hasattr(user, 'id'):
-            user = user.id
-        if isinstance(external_data_source, str) or isinstance(external_data_source, UUID):
-            external_data_source = cls.objects.get(pk=external_data_source)
-        can_display_points = external_data_source.organisation.members.filter(user=user).exists()
-        can_display_details = can_display_points
-        if not can_display_points:
-            permission = SharingPermission.objects.filter(
-                external_data_source=external_data_source,
-                organisation__members__user=user
-            ).first()
-            if permission is not None:
-                if permission.visibility_record_coordinates:
-                    can_display_points = True
-                    if permission.visibility_record_details:
-                        can_display_details = True
+    def user_permissions(cls, user: AbstractBaseUser, external_data_source: Union["ExternalDataSource", str]) -> DataPermissions:
+        permission_cache_key = f"external_data_source_permissions_u:{str(user.id)}_e:{str(external_data_source.id)}"
+        permissions_dict = cache.get(permission_cache_key)
+        if permissions_dict is not None:
+            return permissions_dict
+        else:
+            if user is None or external_data_source is None:
+                return cls.DataPermissions(
+                    can_display_points=False,
+                    can_display_details=False,
+                )
+            if isinstance(external_data_source, str) or isinstance(external_data_source, UUID):
+                external_data_source = cls.objects.get(pk=external_data_source)
+            can_display_points = external_data_source.organisation.members.filter(user=user).exists()
+            can_display_details = can_display_points
+            if not can_display_points:
+                permission = SharingPermission.objects.filter(
+                    external_data_source=external_data_source,
+                    organisation__members__user=user
+                ).first()
+                if permission is not None:
+                    if permission.visibility_record_coordinates:
+                        can_display_points = True
+                        if permission.visibility_record_details:
+                            can_display_details = True
 
-        return cls.DataPermissions(
-            can_display_points=can_display_points,
-            can_display_details=can_display_details,
-        )
+            permissions_dict = cls.DataPermissions(
+                can_display_points=can_display_points,
+                can_display_details=can_display_details,
+            )
+            cache.set(permission_cache_key, permissions_dict, timeout=60)
+            return permissions_dict
 
 class AirtableSource(ExternalDataSource):
     """

@@ -754,7 +754,7 @@ def imported_data_geojson_point(
         return None
     external_data_source = datum.data_type.data_set.external_data_source
     user = get_current_user(info)
-    permissions = models.ExternalDataSource.user_permissions(user.id, external_data_source)
+    permissions = models.ExternalDataSource.user_permissions(user, external_data_source)
     if not permissions.get("can_display_points"):
         return None
     return MapReportMemberFeature.from_geodjango(
