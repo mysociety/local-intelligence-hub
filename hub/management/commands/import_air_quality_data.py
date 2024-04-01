@@ -168,7 +168,9 @@ class Command(BaseAreaImportCommand):
                     skiprows=5,
                     na_values="MISSING",
                     dtype={"gridcode": "int", metadata["header_label"]: "float"},
-                ).rename(columns={metadata["header_label"]: label}).assign(WHO_AQG=lambda x: metadata.get('WHO_AQG', None))
+                )
+                .rename(columns={metadata["header_label"]: label})
+                .assign(WHO_AQG=lambda x: metadata.get("WHO_AQG", None))
             )
 
         print("Transforming data")
