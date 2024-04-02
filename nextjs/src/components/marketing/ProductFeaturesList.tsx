@@ -13,7 +13,7 @@ export default function ProductFeaturesList() {
             name: "Mapping",
             icon: Layers,
             screenshot: "/airtable-screenshot.png",
-            link: "/features/mapping",
+            link: "/features/member-maps",
             description: "test"
         },
         dataEnrichment: {
@@ -21,7 +21,7 @@ export default function ProductFeaturesList() {
             name: "Data Enrichment",
             icon: Layers,
             screenshot: "/airtable-screenshot.png",
-            link: "/features/mapping",
+            link: "/features/data-enrichment",
             description: "test"
 
         },
@@ -30,7 +30,7 @@ export default function ProductFeaturesList() {
             name: "Data Sync",
             icon: Repeat,
             screenshot: "/airtable-screenshot.png",
-            link: "/features/mapping",
+            link: "/features/crm-sync",
             description: "test"
 
         },
@@ -41,7 +41,7 @@ export default function ProductFeaturesList() {
 
     return (
         <div className="grid md:grid-cols-3 grid-cols-1 gap-4 ">
-            <Link href="/features/mapping">
+            <Link href="/features/member-maps">
                 <Card className='bg-meepGray-800 border-meepGray-700 hover:bg-meepGray-700 transition h-full '>
                     <div className='block p-4'>
                         <CardTitle className="mb-3 inline-flex gap-2 px-3 py-2 bg-meepGray-600 rounded-lg items-center">
