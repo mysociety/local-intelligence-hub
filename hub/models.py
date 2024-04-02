@@ -8,7 +8,7 @@ from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.contrib.gis.db.models import MultiPolygonField, PointField
 from django.contrib.gis.geos import Point
 from django.core.cache import cache
@@ -1623,12 +1623,22 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         user: Union[AbstractBaseUser, str],
         external_data_source: Union["ExternalDataSource", str],
     ) -> DataPermissions:
+        if user is None or external_data_source is None:
+            return cls.DataPermissions(
+                can_display_points=False,
+                can_display_details=False,
+            )
         external_data_source_id = (
             external_data_source
             if not isinstance(external_data_source, ExternalDataSource)
             else str(external_data_source.id)
         )
-        user_id = user if not isinstance(user, AbstractBaseUser) else str(user.id)
+        user_id = user if not hasattr(user, 'id') else str(user.id)
+        if user_id is None or external_data_source_id is None:
+            return cls.DataPermissions(
+                can_display_points=False,
+                can_display_details=False,
+            )
 
         # Check for cached permissions on this source
         permission_cache_key = SharingPermission._get_cache_key(external_data_source_id)
@@ -1641,18 +1651,24 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             return permissions_dict[user_id]
 
         # Calculate permissions for this source
-        if user is None or external_data_source is None:
+        if not isinstance(external_data_source, ExternalDataSource):
+            external_data_source = cls.objects.get(pk=external_data_source)
+            if external_data_source is None:
+                return cls.DataPermissions(
+                    can_display_points=False,
+                    can_display_details=False,
+                )
+        # If the user's org owns the source, they can see everything
+        if user_id is None or external_data_source.organisation is None:
             return cls.DataPermissions(
                 can_display_points=False,
                 can_display_details=False,
             )
-        if not isinstance(external_data_source, ExternalDataSource):
-            external_data_source = cls.objects.get(pk=external_data_source)
-        # If the user's org owns the source, they can see everything
-        can_display_points = external_data_source.organisation.members.filter(
-            user=user_id
-        ).exists()
-        can_display_details = can_display_points
+        else:
+            can_display_points = external_data_source.organisation.members.filter(
+                user=user_id
+            ).exists()
+            can_display_details = can_display_points
         # Otherwise, check if their org has sharing permissions at any granularity
         if not can_display_points:
             permission = SharingPermission.objects.filter(

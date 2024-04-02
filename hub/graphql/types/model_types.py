@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Union
 
-from django.db.models import Q, Count, F
+from django.db.models import Q
 
 import procrastinate.contrib.django.models
 import strawberry
@@ -564,8 +564,9 @@ class GroupedDataCountWithBreakdown(GroupedDataCount):
 
 @strawberry_django.type(models.GenericData, filters=CommonDataFilter)
 class GenericData(CommonData):
+    id: auto
+    data: auto
     last_update: auto
-    id: auto = strawberry_django.field(field_name="data")
     name: auto = attr_field()
     first_name: auto
     last_name: auto
@@ -581,6 +582,7 @@ class GenericData(CommonData):
 @strawberry.type
 class MapReportMemberFeature(PointFeature):
     # Optional, because of sharing options
+    id: Optional[str]
     properties: Optional[GenericData]
 
 
