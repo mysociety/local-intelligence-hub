@@ -1355,7 +1355,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             return return_data
 
         def cache_key_fn(key: self.EnrichmentLookup) -> str:
-            return f"{key['member_id']}_{key['source_id']}"
+            return f"{key['member_id']}_{key['source']}_{key['source_path']}"
 
         return DataLoader(load_fn=fetch_enrichment_data, cache_key_fn=cache_key_fn)
 
