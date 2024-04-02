@@ -26,7 +26,7 @@ const SignUp: React.FC<SignUpProps> = () => {
             <CardContent className="sm:w-1/2 w-full sm:max-w-md p-8 z-10">
                 <p className="text-labelMain mb-2">Email</p>
                 <Input placeholder="sleve.mcdichael@example.com" className="mb-5 bg-brandBlue border-meepGray-300  placeholder:text-meepGray-200 text-meepGray-100" />
-                <Link href="" className={buttonVariants({ variant: "secondary" })}>Sign Up
+                <Link href="/signup" className={buttonVariants({ variant: "secondary" })}>Sign Up
                 </Link>
             </CardContent>
             <div className='absolute left-[30%]'>
