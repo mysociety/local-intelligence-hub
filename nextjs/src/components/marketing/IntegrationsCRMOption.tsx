@@ -17,19 +17,16 @@ interface IntegrationsCRMOptionProps {
     b2Description: string;
     b3Heading: string;
     b3Description: string;
-
 }
 
 const IntegrationsCRMOption: React.FC<IntegrationsCRMOptionProps> = ({ crmPlatform, comingsoon, benefitsHeading, b1Heading, b1Description, b2Heading, b2Description, b3Heading, b3Description, }) => {
     // Access the CRM platform details based on the provided crmPlatform string
-    const thisCRMPlatform = externalDataSourceOptions[crmPlatform];
+    const thisCRMPlatform = externalDataSourceOptions[crmPlatform as keyof typeof externalDataSourceOptions];
 
     if (!thisCRMPlatform) {
         // Handle case where the CRM platform is not found
         return <div>CRM platform not found</div>;
     }
-
-
 
     const { name, logo, screenshot } = thisCRMPlatform;
     let CRMLogo = logo

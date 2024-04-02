@@ -44,7 +44,7 @@ const Integrate: React.FC<IntegrateProps> = () => {
             <CardContent className="p-8 flex place-content-center">
                 <div className='grid md:grid-cols-3 grid-cols-2 gap-3 md:p-6'>
                     {crmSync.map((component) => (
-                        <Link href={component.href}  >
+                        <Link href={component.href} key={component.href}>
                             <Card className='p-6 h-full place-content-center text-center bg-meepGray-700 hover:bg-meepGray-600'>
                                 {component.title}
                             </Card>

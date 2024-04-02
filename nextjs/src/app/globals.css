@@ -97,21 +97,23 @@
   .active {
     @apply border-b flex items-center;
   }
-  .flex-divide-x {
-      > :first-child:not([hidden]),
-      > :not([hidden]) ~ :not([hidden]) {
-        @apply flex-1 border-r border-solid;
-        border-color: hsl(var(--flex-divide-x-colour, var(--meep-gray-300)));
-        padding-right: var(--flex-divide-x-spacing, 5px);
-        padding-left: var(--flex-divide-x-spacing, 5px);
 
-        &:first-child {
-          @apply pl-0;
-        }
+  .flex-divide-x > :first-child:not([hidden]),
+  .flex-divide-x > :not([hidden]) ~ :not([hidden]) {
+    @apply flex-1 border-r border-solid;
+    border-color: hsl(var(--flex-divide-x-colour, var(--meep-gray-300)));
+    padding-right: var(--flex-divide-x-spacing, 5px);
+    padding-left: var(--flex-divide-x-spacing, 5px);
+  }
 
-        &:last-child {
-          @apply pr-0 border-0;
-        }
-    }
+  .flex-divide-x > :first-child:not([hidden]):first-child,
+  .flex-divide-x > :not([hidden]) ~ :not([hidden]):first-child {
+    @apply pl-0;
+  }
+
+  .flex-divide-x > :first-child:not([hidden]):last-child,
+  .flex-divide-x > :not([hidden]) ~ :not([hidden]):last-child {
+    @apply pr-0 border-0;
   }
 }
+

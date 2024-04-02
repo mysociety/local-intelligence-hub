@@ -1,4 +1,4 @@
-
+import { ReactNode } from "react";
 import MarketingPageHeader from "@/components/marketing/MarkertingPageHeader";
 import { Card, CardTitle, CardHeader, CardDescription } from "@/components/ui/card";
 import Image from "next/image";
