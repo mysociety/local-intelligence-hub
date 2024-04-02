@@ -13,6 +13,7 @@ from django.contrib.gis.geos import Point
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min
 from django.db.models.functions import Cast, Coalesce
+from django.db.utils import IntegrityError
 from django.dispatch import receiver
 from django.http import HttpResponse
 from django.urls import reverse
@@ -1453,9 +1454,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         member_ids = self.get_member_ids_from_webhook(body)
         if len(member_ids) == 1:
-            async_to_sync(self.schedule_refresh_one(member_id=member_ids[0]))
+            async_to_sync(self.schedule_refresh_one)(member_id=member_ids[0])
         else:
-            async_to_sync(self.schedule_refresh_many(member_ids=member_ids))
+            async_to_sync(self.schedule_refresh_many)(member_ids=member_ids)
         return HttpResponse(status=200)
 
     # Scheduling
@@ -1539,7 +1540,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 queueing_lock=f"update_one_{str(self.id)}_{str(member_id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
             ).defer_async(external_data_source_id=str(self.id), member_id=member_id)
-        except UniqueViolation:
+        except (UniqueViolation, IntegrityError):
             pass
 
     async def schedule_refresh_many(
@@ -1557,7 +1558,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 external_data_source_id=str(self.id),
                 member_ids=member_ids,
             )
-        except UniqueViolation:
+        except (UniqueViolation, IntegrityError):
             pass
 
     async def schedule_refresh_all(self, request_id: str = None) -> int:
@@ -1568,7 +1569,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 queueing_lock=f"update_all_{str(self.id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
             ).defer_async(external_data_source_id=str(self.id), request_id=request_id)
-        except UniqueViolation:
+        except (UniqueViolation, IntegrityError):
             pass
 
     async def schedule_import_many(
@@ -1586,7 +1587,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 member_ids=member_ids,
                 request_id=request_id,
             )
-        except UniqueViolation:
+        except (UniqueViolation, IntegrityError):
             pass
 
     async def schedule_import_all(self, request_id: str = None) -> int:
@@ -1597,7 +1598,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 queueing_lock=f"import_all_{str(self.id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
             ).defer_async(external_data_source_id=str(self.id), request_id=request_id)
-        except UniqueViolation:
+        except (UniqueViolation, IntegrityError):
             pass
 
 

@@ -79,7 +79,7 @@ export default function ExternalDataSourceList() {
         <h2>Error: {error.message}</h2>
       ) : data ? (
         <section className="w-full grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {data.myOrganisations[0].externalDataSources
+          {(data.myOrganisations[0]?.externalDataSources || [])
           .filter(d => d.dataType === DataSourceType.Member)
           .map((externalDataSource) => (
             <ExternalDataSourceCard
@@ -138,7 +138,7 @@ export default function ExternalDataSourceList() {
         <h2>Error: {error.message}</h2>
       ) : data ? (
         <section className="grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {data.myOrganisations[0].externalDataSources
+          {(data.myOrganisations[0]?.externalDataSources || [])
           .filter(d => d.dataType !== DataSourceType.Member)
           .map((externalDataSource) => (
             <ExternalDataSourceCard

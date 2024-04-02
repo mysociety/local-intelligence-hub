@@ -31,18 +31,16 @@ export function DataSourceFieldLabel({ label, fieldDefinition, crmType, classNam
 export function DataSourceIcon({
   crmType,
   className ='w-4',
-  mode = "icon"
 }: {
   crmType?: string // keyof typeof externalDataSourceOptions,
   className?: string
-  mode?: "icon" | "wordmark"
 }) { 
   const option = externalDataSourceOptions[
     // @ts-ignore
     crmType
   ]
   if (crmType && !!option) {
-    const Icon = option[mode]
+    const Icon = option.logo
     if (Icon) {
       return <Icon className={className} />
     }
