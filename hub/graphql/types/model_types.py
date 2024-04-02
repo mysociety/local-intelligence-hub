@@ -603,34 +603,22 @@ class Analytics:
     @strawberry_django.field
     def imported_data_count_by_constituency(self) -> List[GroupedDataCount]:
         data = self.imported_data_count_by_constituency()
-        return [
-            GroupedDataCount(**datum)
-            for datum in data
-        ]
+        return [GroupedDataCount(**datum) for datum in data]
 
     @strawberry_django.field
     def imported_data_count_by_constituency_2024(self) -> List[GroupedDataCount]:
         data = self.imported_data_count_by_constituency_2024()
-        return [
-            GroupedDataCount(**datum)
-            for datum in data
-        ]
+        return [GroupedDataCount(**datum) for datum in data]
 
     @strawberry_django.field
     def imported_data_count_by_council(self) -> List[GroupedDataCount]:
         data = self.imported_data_count_by_council()
-        return [
-            GroupedDataCount(**datum)
-            for datum in data
-        ]
+        return [GroupedDataCount(**datum) for datum in data]
 
     @strawberry_django.field
     def imported_data_count_by_ward(self) -> List[GroupedDataCount]:
         data = self.imported_data_count_by_ward()
-        return [
-            GroupedDataCount(**datum)
-            for datum in data
-        ]
+        return [GroupedDataCount(**datum) for datum in data]
 
     @strawberry_django.field
     def imported_data_count_by_constituency_by_source(
@@ -749,7 +737,9 @@ class BaseDataSource(Analytics):
 def imported_data_geojson_point(
     info: Info, generic_data_id: str
 ) -> MapReportMemberFeature | None:
-    datum = models.GenericData.objects.prefetch_related("data_type__data_set__external_data_source").get(pk=generic_data_id)
+    datum = models.GenericData.objects.prefetch_related(
+        "data_type__data_set__external_data_source"
+    ).get(pk=generic_data_id)
     if datum is None or datum.point is None:
         return None
     external_data_source = datum.data_type.data_set.external_data_source
@@ -762,6 +752,7 @@ def imported_data_geojson_point(
         id=datum.id,
         properties=datum if permissions.get("can_display_details") else None,
     )
+
 
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class SharedDataSource(BaseDataSource):

@@ -1,35 +1,32 @@
-from typing import Any
-from django.db.models.base import Model as Model
 from django.db.models.query import QuerySet
-from hub.models import GenericData, ExternalDataSource
-from gqlauth.core.middlewares import get_user_or_error, UserOrError
-from django.utils.functional import cached_property
-
-from vectortiles import VectorLayer
-from vectortiles.views import MVTView
-from django.urls import reverse
-from django.views.generic import DetailView, ListView
-from vectortiles.views import BaseVectorTileView, TileJSONView
-
 from django.http import HttpResponseForbidden
+from django.urls import reverse
+from django.views.generic import DetailView
+
+from gqlauth.core.middlewares import UserOrError, get_user_or_error
+from vectortiles import VectorLayer
+from vectortiles.views import MVTView, TileJSONView
+
+from hub.models import ExternalDataSource, GenericData
+
 
 class GenericDataVectorLayer(VectorLayer):
     model = GenericData
-    geom_field = 'point'
+    geom_field = "point"
 
     min_zoom = 12
 
-    id = 'generic_data'
+    id = "generic_data"
     vector_tile_layer_name = id
 
-    tile_fields = ('id', )
+    tile_fields = ("id",)
     layer_fields = tile_fields
     vector_tile_fields = layer_fields
 
     def __init__(self, *args, **kwargs):
-        self.external_data_source_id = kwargs.pop('external_data_source_id', None)
+        self.external_data_source_id = kwargs.pop("external_data_source_id", None)
         if self.external_data_source_id is None:
-            raise ValueError('external_data_source is required')
+            raise ValueError("external_data_source is required")
         super().__init__(*args, **kwargs)
 
     def get_queryset(self) -> QuerySet:
@@ -42,16 +39,20 @@ class ExternalDataSourceTileView(MVTView, DetailView):
 
     def get(self, request, *args, **kwargs):
         user_or_error: UserOrError = get_user_or_error(request)
-        permissions = ExternalDataSource.user_permissions(user_or_error.user, self.get_id())
+        permissions = ExternalDataSource.user_permissions(
+            user_or_error.user, self.get_id()
+        )
         if not permissions.get("can_display_points", False):
-            return HttpResponseForbidden("You don't have permission to view location data for this data source.")
+            return HttpResponseForbidden(
+                "You don't have permission to view location data for this data source."
+            )
         return super().get(request, *args, **kwargs)
 
     def get_id(self):
         return self.kwargs.get(self.pk_url_kwarg)
-    
+
     def get_layer_class_kwargs(self, *args, **kwargs):
-        return { 'external_data_source_id': self.get_id() }
+        return {"external_data_source_id": self.get_id()}
 
 
 class ExternalDataSourcePointTileJSONView(TileJSONView, DetailView):
@@ -63,7 +64,7 @@ class ExternalDataSourcePointTileJSONView(TileJSONView, DetailView):
 
     def get_attribution(self):
         return self.get_object().organisation.name
-    
+
     def get_description(self):
         return f"{self.get_name()} is a {self.get_object().crm_type} source."
 
@@ -72,7 +73,7 @@ class ExternalDataSourcePointTileJSONView(TileJSONView, DetailView):
 
     def get_id(self):
         return self.kwargs.get(self.pk_url_kwarg)
-    
+
     def get_object(self):
         return ExternalDataSource.objects.get(pk=self.get_id())
 
@@ -85,10 +86,12 @@ class ExternalDataSourcePointTileJSONView(TileJSONView, DetailView):
     def get_tile_url(self):
         id = self.get_id()
         """ Base MVTView Url used to generates urls in TileJSON in a.tiles.xxxx/{z}/{x}/{y} format """
-        return str(reverse("external_data_source_point_tile", args=(id, 0, 0, 0))).replace("0/0/0", "{z}/{x}/{y}")
-    
+        return str(
+            reverse("external_data_source_point_tile", args=(id, 0, 0, 0))
+        ).replace("0/0/0", "{z}/{x}/{y}")
+
     def get_layer_class_kwargs(self, *args, **kwargs):
-        return { 'external_data_source_id': self.get_id() }
-    
+        return {"external_data_source_id": self.get_id()}
+
     # def get_layers(self):
     #     return [GenericDataVectorLayer(external_data_source=self.get_object())]

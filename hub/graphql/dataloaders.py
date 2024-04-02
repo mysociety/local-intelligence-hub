@@ -1,5 +1,4 @@
 import json
-from collections import defaultdict
 from typing import Callable, Coroutine, Type
 
 from django.db.models import ManyToOneRel

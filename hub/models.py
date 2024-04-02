@@ -8,8 +8,10 @@ from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.gis.db.models import MultiPolygonField, PointField
 from django.contrib.gis.geos import Point
+from django.core.cache import cache
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min
 from django.db.models.functions import Cast, Coalesce
@@ -18,9 +20,6 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.text import slugify
-from uuid import UUID
-from django.contrib.auth.models import AbstractBaseUser
-from django.core.cache import cache
 
 import pandas as pd
 import pytz
@@ -710,6 +709,7 @@ class GenericData(CommonData):
 
         return self.postcode_data
 
+
 class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
     gss = models.CharField(max_length=30, unique=True)
@@ -723,9 +723,8 @@ class Area(models.Model):
     overlaps = models.ManyToManyField("self", through="AreaOverlap")
 
     class Meta:
-        indexes = [
-            models.Index(fields=["gss"])
-        ]
+        indexes = [models.Index(fields=["gss"])]
+        unique_together = ["gss", "area_type"]
 
     def __str__(self):
         return self.name
@@ -776,9 +775,6 @@ class Area(models.Model):
                 [bounds_tuple[0], bounds_tuple[1]],
                 [bounds_tuple[2], bounds_tuple[3]],
             ]
-
-    class Meta:
-        unique_together = ["gss", "area_type"]
 
 
 class AreaOverlap(models.Model):
@@ -1300,9 +1296,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     @classmethod
     def _get_import_data(self, id: str):
-        '''
+        """
         For use by views to query data without having to instantiate the class / query the database for the CRM first
-        '''
+        """
         return GenericData.objects.filter(
             data_type__data_set__external_data_source_id=id
         )
@@ -1616,14 +1612,22 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             ).defer_async(external_data_source_id=str(self.id), request_id=request_id)
         except UniqueViolation:
             pass
-        
+
     class DataPermissions(TypedDict):
         can_display_points: bool
         can_display_details: bool
 
     @classmethod
-    def user_permissions(cls, user: Union[AbstractBaseUser, str], external_data_source: Union["ExternalDataSource", str]) -> DataPermissions:
-        external_data_source_id = external_data_source if not isinstance(external_data_source, ExternalDataSource) else str(external_data_source.id)
+    def user_permissions(
+        cls,
+        user: Union[AbstractBaseUser, str],
+        external_data_source: Union["ExternalDataSource", str],
+    ) -> DataPermissions:
+        external_data_source_id = (
+            external_data_source
+            if not isinstance(external_data_source, ExternalDataSource)
+            else str(external_data_source.id)
+        )
         user_id = user if not isinstance(user, AbstractBaseUser) else str(user.id)
 
         # Check for cached permissions on this source
@@ -1635,7 +1639,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         # If cached permissions exist, look for this user's permissions
         elif permissions_dict.get(user_id, None) is not None:
             return permissions_dict[user_id]
-        
+
         # Calculate permissions for this source
         if user is None or external_data_source is None:
             return cls.DataPermissions(
@@ -1645,13 +1649,15 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         if not isinstance(external_data_source, ExternalDataSource):
             external_data_source = cls.objects.get(pk=external_data_source)
         # If the user's org owns the source, they can see everything
-        can_display_points = external_data_source.organisation.members.filter(user=user_id).exists()
+        can_display_points = external_data_source.organisation.members.filter(
+            user=user_id
+        ).exists()
         can_display_details = can_display_points
         # Otherwise, check if their org has sharing permissions at any granularity
         if not can_display_points:
             permission = SharingPermission.objects.filter(
                 external_data_source=external_data_source,
-                organisation__members__user=user_id
+                organisation__members__user=user_id,
             ).first()
             if permission is not None:
                 if permission.visibility_record_coordinates:
@@ -1669,10 +1675,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             permissions_dict,
             # Cached permissions for this source will be reset on save/delete
             # so we can set the timeout to something fairly generous.
-            timeout=60*60
+            timeout=60 * 60,
         )
 
         return permissions_dict[user_id]
+
 
 class AirtableSource(ExternalDataSource):
     """
@@ -1938,9 +1945,9 @@ class SharingPermission(models.Model):
 @receiver(models.signals.pre_delete, sender=SharingPermission)
 @receiver(models.signals.pre_save, sender=SharingPermission)
 def clear_permissions_cache_for_source(sender, instance, *args, **kwargs):
-    '''
+    """
     Clear the cache for the external data source when a sharing permission is saved or deleted
-    '''
+    """
     sharing_permission = instance
     cache.delete(sharing_permission.get_cache_key())
 
@@ -1948,9 +1955,9 @@ def clear_permissions_cache_for_source(sender, instance, *args, **kwargs):
 @receiver(models.signals.pre_delete, sender=Membership)
 @receiver(models.signals.pre_save, sender=Membership)
 def clear_permissions_cache_intersecting_user(sender, instance, *args, **kwargs):
-    '''
+    """
     Since the permissions cache for each source is a dictionary of users, we need to clear it when a membership is saved or deleted as this will affect a user's permissions.
-    '''
+    """
     membership = instance
     sharing_permissions = SharingPermission.objects.filter(
         organisation=membership.organisation

@@ -25,9 +25,8 @@ from strawberry_django_dataloaders.views import DataloaderAsyncGraphQLView
 
 from hub.graphql.schema import schema
 from hub.sitemap import hub_sitemap
-from hub.views import accounts, area, core, explore, landingpages
+from hub.views import accounts, area, core, explore, landingpages, vector_tiles
 from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
-from hub.views import vector_tiles
 
 handler404 = core.NotFoundPageView.as_view()
 
@@ -120,8 +119,16 @@ urlpatterns = [
         csrf_exempt(ExternalDataSourceAutoUpdateWebhook.as_view()),
         name="external_data_source_auto_update_webhook",
     ),
-    path('tiles/external-data-source/<str:pk>/<int:z>/<int:x>/<int:y>', vector_tiles.ExternalDataSourceTileView.as_view(), name="external_data_source_point_tile"),
-    path("tiles/external-data-source/<str:pk>/tiles.json", vector_tiles.ExternalDataSourcePointTileJSONView.as_view(), name="external_data_source_point_tilejson")
+    path(
+        "tiles/external-data-source/<str:pk>/<int:z>/<int:x>/<int:y>",
+        vector_tiles.ExternalDataSourceTileView.as_view(),
+        name="external_data_source_point_tile",
+    ),
+    path(
+        "tiles/external-data-source/<str:pk>/tiles.json",
+        vector_tiles.ExternalDataSourcePointTileJSONView.as_view(),
+        name="external_data_source_point_tilejson",
+    ),
 ]
 
 if settings.DEBUG:  # pragma: no cover
