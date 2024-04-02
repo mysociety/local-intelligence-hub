@@ -5,7 +5,7 @@ import TemplateCard from "./TemplateCard";
 import Link from "next/link";
 
 const octokit = new Octokit({
-    auth: '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'
+    auth: process.env.GITHUB_PAT
 });
 
 const fetchGitHubIssues = async () => {
