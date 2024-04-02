@@ -201,7 +201,7 @@ export default function Page({
                 );
               } else {
                 router.push(
-                  `/data-sources/create/inspect/${d.data.createSource.id}`,
+                  `/data-sources/inspect/${d.data.createSource.id}`,
                 );
               }
               return "Connection successful";
