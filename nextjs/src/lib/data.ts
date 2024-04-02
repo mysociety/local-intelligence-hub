@@ -1,10 +1,11 @@
-import { AirtableLogo, ActionNetworkLogo, MailchimpLogo, GoogleSheetsLogo, CiviCRMLogo, NationBuilderLogo } from "@/components/logos";
+import { AirtableLogo, ActionNetworkLogo, MailchimpLogo, GoogleSheetsLogo, CiviCRMLogo, NationBuilderLogo, AirtableIcon } from "@/components/logos";
 
 export const externalDataSourceOptions = {
   airtable: {
     key: "airtable",
     modelName: "AirtableSource",
     name: "Airtable",
+    icon: AirtableIcon,
     logo: AirtableLogo,
     screenshot: "/airtable-screenshot.png",
     supported: true
