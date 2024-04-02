@@ -23,7 +23,7 @@ export const externalDataSourceOptions = {
     name: "Mailchimp",
     logo: MailchimpLogo,
     screenshot: "/mailchimp-screenshot.png",
-    supported: true
+    supported: false
   },
   googleSheets: {
     key: "google-sheets",
