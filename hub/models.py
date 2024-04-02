@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import List, Optional, TypedDict, Union
 from urllib.parse import urljoin
+import numpy as np
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -1312,30 +1313,49 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         async def fetch_enrichment_data(keys: List[self.EnrichmentLookup]) -> list[str]:
             return_data = []
             enrichment_df = await sync_to_async(self.get_imported_dataframe)()
-            for key in keys:
+            for index, key in enumerate(keys):
                 try:
+                    # print("---Source loader initiated---🔥\n\n", key.get('source', None), self.geography_column_type, key.get('source_path', None), key.get('member_id'), key.get('postcode_data', None), '\n\n')
+                    if key.get('postcode_data', None) is None:
+                        return_data.append(None)
+                        continue
                     relevant_member_geography = get(
                         key["postcode_data"], self.geography_column_type, ""
                     )
+                    # Backup check if the geography refers to the GSS codes, not the name
+                    if (
+                        relevant_member_geography == ""
+                        or relevant_member_geography is None
+                    ):
+                        relevant_member_geography = get(
+                            key["postcode_data"]['codes'], self.geography_column_type, ""
+                        )
                     if (
                         relevant_member_geography == ""
                         or relevant_member_geography is None
                     ):
                         return_data.append(None)
+                        continue
                     else:
                         enrichment_value = enrichment_df.loc[
-                            enrichment_df[self.geography_column]
-                            == relevant_member_geography,
+                            # Match the member's geography to the enrichment source's geography
+                            enrichment_df[self.geography_column] == relevant_member_geography,
+                            # and return the requested value for this enrichment source row
                             key["source_path"],
                         ].values[0]
-                        return_data.append(enrichment_value)
-                except Exception:
+                        # print("MATCH?", relevant_member_geography, enrichment_value, "\n\n")
+                        if enrichment_value is np.nan or enrichment_value == np.nan:
+                            return_data.append(None)
+                        else:
+                            return_data.append(enrichment_value)
+                except Exception as e:
+                    print("Source Loader Error ❌", )
                     return_data.append(None)
 
             return return_data
 
         def cache_key_fn(key: self.EnrichmentLookup) -> str:
-            return f"{key['member_id']}_{key['source_id']}"
+            return f"{key['member_id']}_{key['source']}_{key['source_path']}"
 
         return DataLoader(load_fn=fetch_enrichment_data, cache_key_fn=cache_key_fn)
 
@@ -1384,22 +1404,21 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 else:
                     try:
                         source_loader = loaders["source_loaders"].get(source, None)
-                        if source_loader is not None:
-                            update_fields[
-                                destination_column
-                            ] = await source_loader.load(
-                                self.EnrichmentLookup(
-                                    member_id=self.get_record_id(member),
-                                    postcode_data=postcode_data,
-                                    source_id=source,
-                                    source_path=source_path,
-                                )
+                        if source_loader is not None and postcode_data is not None:
+                            lookup = self.EnrichmentLookup(
+                                member_id=self.get_record_id(member),
+                                postcode_data=postcode_data,
+                                source_id=source,
+                                source_path=source_path,
                             )
+                            update_fields[destination_column] = await source_loader.load(lookup)
                     except Exception:
                         # TODO: sentry logging
                         continue
             # Return the member and config data
-            return self.MappedMember(member=member, update_fields=update_fields)
+            mapped_member = self.MappedMember(member=member, update_fields=update_fields)
+            print("\n\n", mapped_member, "\n\n")
+            return mapped_member
         except TypeError:
             # Error fetching postcode data
             return self.MappedMember(member=member, update_fields={})

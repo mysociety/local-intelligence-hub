@@ -241,35 +241,33 @@ export default function InspectExternalDataSource({
               <BatchJobProgressBar batchJobProgress={source.importProgress} pastTenseVerb="Imported" />
             )}
           </section>
-          {source.dataType === DataSourceType.Member && (
-            <section className="space-y-4">
-              <header className="flex flex-row justify-between items-center">
-                <div>
-                  <h2 className="text-hSm mb-5">Member data fields</h2>
-                  <p className='text-sm text-meepGray-400'>
-                    <span className='align-middle'>
-                      Designate special fields for use in Mapped reports
-                    </span>
-                  </p>
-                </div>
-              </header>
-              <UpdateExternalDataSourceFields
-                crmType={source.crmType}
-                fieldDefinitions={source.fieldDefinitions}
-                initialData={{
-                  geographyColumn: source.geographyColumn,
-                  geographyColumnType: source.geographyColumnType,
-                  firstNameField: source.firstNameField,
-                  lastNameField: source.lastNameField,
-                  fullNameField: source.fullNameField,
-                  emailField: source.emailField,
-                  phoneField: source.phoneField,
-                  addressField: source.addressField,
-                }}
-                onSubmit={updateMutation}
-              />
-            </section>
-          )}
+          <section className="space-y-4">
+            <header className="flex flex-row justify-between items-center">
+              <div>
+                <h2 className="text-hSm mb-5">Data fields</h2>
+                <p className='text-sm text-meepGray-400'>
+                  <span className='align-middle'>
+                    Designate special fields for use in Mapped reports
+                  </span>
+                </p>
+              </div>
+            </header>
+            <UpdateExternalDataSourceFields
+              crmType={source.crmType}
+              fieldDefinitions={source.fieldDefinitions}
+              initialData={{
+                geographyColumn: source.geographyColumn,
+                geographyColumnType: source.geographyColumnType,
+                firstNameField: source.firstNameField,
+                lastNameField: source.lastNameField,
+                fullNameField: source.fullNameField,
+                emailField: source.emailField,
+                phoneField: source.phoneField,
+                addressField: source.addressField,
+              }}
+              onSubmit={updateMutation}
+            />
+          </section>
         </div>
         {source.dataType === DataSourceType.Member && !!source.sharingPermissions?.length && (
           <>
