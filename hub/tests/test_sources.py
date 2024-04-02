@@ -26,7 +26,7 @@ class TestAirtableSource(TestCase):
             table_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME,
             api_key=settings.TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY,
             geography_column="council district",
-            geography_column_type=AirtableSource.PostcodesIOGeographyTypes.COUNCIL,
+            geography_column_type=AirtableSource.GeographyTypes.COUNCIL,
         )
 
         self.source: AirtableSource = AirtableSource.objects.create(
@@ -37,7 +37,7 @@ class TestAirtableSource(TestCase):
             table_id=settings.TEST_AIRTABLE_MEMBERLIST_TABLE_NAME,
             api_key=settings.TEST_AIRTABLE_MEMBERLIST_API_KEY,
             geography_column="Postcode",
-            geography_column_type=AirtableSource.PostcodesIOGeographyTypes.POSTCODE,
+            geography_column_type=AirtableSource.GeographyTypes.POSTCODE,
             auto_update_enabled=True,
             update_mapping=[
                 {

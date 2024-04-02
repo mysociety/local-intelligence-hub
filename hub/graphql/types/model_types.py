@@ -701,6 +701,12 @@ class BaseDataSource(Analytics):
     email_field: auto
     phone_field: auto
     address_field: auto
+    title_field: auto
+    description_field: auto
+    image_field: auto
+    start_time_field: auto
+    end_time_field: auto
+    public_url_field: auto
     record_url_template: Optional[str] = fn_field()
     organisation_id: str = strawberry_django.field(
         resolver=lambda self: self.organisation_id
@@ -878,6 +884,7 @@ class MapLayer:
     id: str = dict_key_field()
     name: str = dict_key_field()
     visible: Optional[bool] = dict_key_field()
+    custom_marker_text: Optional[str] = dict_key_field()
 
     @strawberry_django.field
     def is_shared_source(self, info: Info) -> bool:

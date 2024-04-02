@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { EnrichmentDataSource, enrichmentDataSources } from "@/lib/data";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { DataSourceType, EnrichmentLayersQuery, ExternalDataSourceInput, FieldDefinition, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
+import { DataSourceType, EnrichmentLayersQuery, ExternalDataSourceInput, FieldDefinition, GeographyTypes } from "@/__generated__/graphql";
 import { Input } from "@/components/ui/input";
 import { SourcePathSelector } from "@/components/SelectSourceData";
 import { ArrowRight, Plus, X, XCircle } from "lucide-react";
@@ -159,10 +159,11 @@ export function UpdateMappingForm({
                         <SelectContent>
                           <SelectGroup>
                             <SelectLabel>Geography type</SelectLabel>
-                            <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
-                            <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
-                            <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
-                            <SelectItem value={PostcodesIoGeographyTypes.Constituency}>Constituency</SelectItem>
+                            <SelectItem value={GeographyTypes.Postcode}>Postcode</SelectItem>
+                            <SelectItem value={GeographyTypes.Ward}>Ward</SelectItem>
+                            <SelectItem value={GeographyTypes.Council}>Council</SelectItem>
+                            <SelectItem value={GeographyTypes.Constituency}>Constituency</SelectItem>
+                            <SelectItem value={GeographyTypes.Address}>Address</SelectItem>
                           </SelectGroup>
                         </SelectContent>
                       </Select>

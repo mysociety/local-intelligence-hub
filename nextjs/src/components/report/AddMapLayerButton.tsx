@@ -44,7 +44,12 @@ type Source = {
   id: string
 }
 
-export function AddMapLayerButton({ addLayer }: { addLayer(layer: Source): void }) {
+export type SourceOption = (
+  GetMemberListQuery['myOrganisations'][0]['sharingPermissionsFromOtherOrgs'][0]['externalDataSource'] | 
+  GetMemberListQuery['myOrganisations'][0]['externalDataSources'][0]
+)
+
+export function AddMapLayerButton({ addLayer, filter }: { addLayer(layer: Source): void, filter?: (s: SourceOption) => boolean }) {
   const { id  } = useContext(ReportContext)
   const form = useForm<{ source?: Source }>()
   const [open, setOpen] = useState(false)
@@ -74,7 +79,7 @@ export function AddMapLayerButton({ addLayer }: { addLayer(layer: Source): void 
                 control={form.control}
                 name="source"
                 render={({ field }) => (
-                  <MapLayerSelector value={field.value} onChange={field.onChange} />
+                  <MapLayerSelector value={field.value} onChange={field.onChange} filter={filter} />
                 )}
               />
             </div>
@@ -88,7 +93,7 @@ export function AddMapLayerButton({ addLayer }: { addLayer(layer: Source): void 
   )
 }
 
-export function MapLayerSelector ({ value, onChange }: { value?: Source, onChange: (value: Source) => void }) {
+export function MapLayerSelector ({ value, onChange, filter }: { value?: Source, onChange: (value: Source) => void, filter?: (s: SourceOption) => boolean }) {
   const [open, setOpen] = useState(false)
   const { id, report } = useContext(ReportContext)
   const dataSources = useQuery<GetMemberListQuery>(MEMBER_LISTS)
@@ -103,21 +108,18 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
   });
 
   const useableSources = useMemo(() => {
-    const data: Array<
-        GetMemberListQuery['myOrganisations'][0]['sharingPermissionsFromOtherOrgs'][0]['externalDataSource'] | 
-        GetMemberListQuery['myOrganisations'][0]['externalDataSources'][0]
-    > = [
+    const data: Array<SourceOption> = [
       ...dataSources.data?.myOrganisations[0]?.externalDataSources.filter(
-        d => d.dataType === DataSourceType.Member
+        d => filter ? filter(d) : true
       ) || [],
       ...dataSources.data?.myOrganisations[0]?.sharingPermissionsFromOtherOrgs.map(
         p => p.externalDataSource
       ).filter(
-        d => d.dataType === DataSourceType.Member
+        d => filter ? filter(d) : true
       ) || []
     ]
     return data
-  }, [dataSources.data])
+  }, [dataSources.data, filter])
 
   const selectedSource = useableSources.find(s => s.id === value?.id)
  
@@ -213,7 +215,7 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
 const MEMBER_LISTS = gql`
   query GetMemberList {
     myOrganisations {
-      externalDataSources(filters: { dataType: MEMBER }) {
+      externalDataSources {
         id
         name
         importedDataCount

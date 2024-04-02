@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  DataSourceType,
   MapReportConstituencyStatsQuery,
   MapReportConstituencyStatsQueryVariables,
   MapReportLayerAnalyticsQuery,
@@ -14,7 +15,7 @@ import {
 } from "@/__generated__/graphql";
 import { Fragment, useContext, useEffect, useState } from "react";
 import Map, { Layer, Source, LayerProps, Popup, ViewState, MapboxGeoJSONFeature } from "react-map-gl";
-import { gql, useQuery } from "@apollo/client";
+import { gql, useFragment, useQuery } from "@apollo/client";
 import { ReportContext } from "@/app/reports/[id]/context";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import { scaleLinear, scaleSequential } from 'd3-scale'
@@ -23,7 +24,7 @@ import { Point } from "geojson"
 import { atom, useAtom } from "jotai";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import { z } from "zod";
-import { layerColour, useLoadedMap, isConstituencyPanelOpenAtom } from "@/app/reports/[id]/lib";
+import { layerColour, useLoadedMap, isConstituencyPanelOpenAtom, MAP_REPORT_LAYERS_SUMMARY, layerIdColour } from "@/app/reports/[id]/lib";
 import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel";
 import { authenticationHeaders } from "@/lib/auth";
 
@@ -499,12 +500,14 @@ export function ReportMap () {
         )}
         <PlaceholderLayer id={"PLACEHOLDER_MARKERS"} />
         {/* Wait for all icons to load */}
-        {analytics.data?.mapReport.layers.map((layer, index) => {
+        {analytics.data?.mapReport.layers
+        .map((layer, index) => {
           return (
             <ExternalDataSourcePointMarkers
               key={layer?.source?.id || index}
               index={index}
               externalDataSourceId={layer?.source?.id}
+              layer={layer}
             />
           );
         })}
@@ -601,7 +604,7 @@ export function ReportMap () {
   );
 }
 
-function ExternalDataSourcePointMarkers ({ externalDataSourceId, index }: { externalDataSourceId: string, index: number }) {
+function ExternalDataSourcePointMarkers ({ externalDataSourceId, index, layer }: { externalDataSourceId: string, index: number, layer: MapReportLayerAnalyticsQuery['mapReport']['layers'][0] }) {
   const mapbox = useLoadedMap()
   const [selectedSourceMarker, setSelectedSourceMarker] =  useAtom(selectedSourceMarkerAtom)
 
@@ -632,7 +635,7 @@ function ExternalDataSourcePointMarkers ({ externalDataSourceId, index }: { exte
         url={`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/tiles/external-data-source/${externalDataSourceId}/tiles.json`}
         minzoom={MIN_MEMBERS_ZOOM}
       >
-        {index <= 1 ? (
+        {layer.source.dataType === DataSourceType.Member && index <= 1 ? (
           <Layer
             beforeId={"PLACEHOLDER_MARKERS"}
             id={`${externalDataSourceId}-marker`}
@@ -661,8 +664,8 @@ function ExternalDataSourcePointMarkers ({ externalDataSourceId, index }: { exte
             source-layer={"generic_data"}
             type="circle"
             paint={{
-              "circle-radius": 5,
-              "circle-color": layerColour(index, externalDataSourceId),
+              "circle-radius": layer.source.dataType === DataSourceType.Member ? 5 : 15,
+              "circle-color": layerIdColour(externalDataSourceId),
             }}
             minzoom={MIN_MEMBERS_ZOOM}
             {...(
@@ -672,7 +675,7 @@ function ExternalDataSourcePointMarkers ({ externalDataSourceId, index }: { exte
             )}
           />
         )}
-        {!!selectedSourceMarker?.properties?.id && (
+        {layer.source.dataType === DataSourceType.Member && !!selectedSourceMarker?.properties?.id && (
           <Layer
             beforeId={"PLACEHOLDER_MARKERS"}
             id={`${externalDataSourceId}-marker-selected`}
@@ -749,8 +752,10 @@ export const MAP_REPORT_LAYER_ANALYTICS = gql`
       layers {
         id
         name
+        customMarkerText
         source {
           id
+          dataType
           organisation {
             name
           }

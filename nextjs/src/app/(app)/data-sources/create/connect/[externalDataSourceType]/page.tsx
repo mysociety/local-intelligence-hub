@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ApolloError, FetchResult, gql, useLazyQuery, useMutation } from "@apollo/client";
 import { CreateAutoUpdateFormContext } from "../../NewExternalDataSourceWrapper";
@@ -31,7 +31,7 @@ import {
   CreateSourceMutation,
   CreateSourceMutationVariables,
   DataSourceType,
-  PostcodesIoGeographyTypes,
+  GeographyTypes,
   TestSourceConnectionQuery,
   TestSourceConnectionQueryVariables,
 } from "@/__generated__/graphql";
@@ -39,6 +39,7 @@ import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
 import spaceCase from 'to-space-case'
 import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
+import { getFieldsForDataSourceType } from "@/components/UpdateExternalDataSourceFields";
 
 const TEST_SOURCE = gql`
   query TestSourceConnection(
@@ -49,6 +50,7 @@ const TEST_SOURCE = gql`
     testSourceConnection: testAirtableSource(apiKey: $apiKey, baseId: $baseId, tableId: $tableId) {
       remoteName
       healthcheck
+      crmType
       fieldDefinitions {
         label
         value
@@ -89,7 +91,7 @@ export default function Page({
 
   const form = useForm<FormInputs>({
     defaultValues: {
-      geographyColumnType: PostcodesIoGeographyTypes.Postcode,
+      geographyColumnType: GeographyTypes.Postcode,
       dataType: context.dataType,
       airtable: {}
     }
@@ -145,7 +147,12 @@ export default function Page({
   useGuessedField('addressField', ["street", "line1", "address"])
   useGuessedField('fullNameField', ["full name", "name"])
   useGuessedField('firstNameField', ["first name", "given name"])
-  useGuessedField('lastNameField', ["last name", "family name", "surname", "second name"])
+  useGuessedField('titleField', ["title", "name"])
+  useGuessedField('descriptionField', ["description", "body", "comments", "notes", "about"])
+  useGuessedField('imageField', ["image", "photo", "picture", "avatar", "attachment", "attachments", "file", "files", "graphic", "poster", "logo", "icon"])
+  useGuessedField('startTimeField', ["start", "start time", "start date", "begin", "beginning", "start_at", "start_time", "start_date", "date", "time", "datetime", "timestamp", "from"])
+  useGuessedField('endTimeField', ["end", "end time", "end date", "finish", "finish time", "finish date", "end_at", "end_time", "end_date", "until"])
+  useGuessedField('publicUrlField', ["public url", "public link", "public", "url", "link", "website", "webpage", "web", "page", "site", "address", "href", "uri", "path", "slug", "permalink"])
 
   // Propose name based on remoteName
   useEffect(function proposeName () {
@@ -160,6 +167,10 @@ export default function Page({
     CreateSourceMutation,
     CreateSourceMutationVariables
   >(CREATE_SOURCE);
+
+  const collectFields = useMemo(() => {
+    return getFieldsForDataSourceType(source.dataType || undefined)
+  }, [source.dataType])
 
   // TODO: Make this generic so it can be reused by different sources
   // Probably want a `test_connection` resolver that can optionally take `airtable` or `action_network` arguments
@@ -201,7 +212,7 @@ export default function Page({
                 );
               } else {
                 router.push(
-                  `/data-sources/create/inspect/${d.data.createSource.id}`,
+                  `/data-sources/inspect/${d.data.createSource.id}`,
                 );
               }
               return "Connection successful";
@@ -249,7 +260,7 @@ export default function Page({
         placeholder={placeholder}
         fieldDefinitions={testSourceResult.data?.testSourceConnection.fieldDefinitions}
         control={form.control}
-        crmType={testSourceResult.data?.testSourceConnection.__typename!}
+        crmType={testSourceResult.data?.testSourceConnection.crmType!}
         guess={guessed[name]}
         required={required}
       />
@@ -302,6 +313,9 @@ export default function Page({
                           <SelectGroup>
                             <SelectLabel>Type of data source</SelectLabel>
                             <SelectItem value={DataSourceType.Member}>A list of members</SelectItem>
+                            <SelectItem value={DataSourceType.Location}>Venues and physical locations</SelectItem>
+                            <SelectItem value={DataSourceType.Event}>Calendar events</SelectItem>
+                            <SelectItem value={DataSourceType.Story}>Articles, stories and reports</SelectItem>
                             <SelectItem value={DataSourceType.Other}>Other data</SelectItem>
                           </SelectGroup>
                         </SelectContent>
@@ -328,11 +342,12 @@ export default function Page({
                           <SelectContent>
                             <SelectGroup>
                               <SelectLabel>Geography type</SelectLabel>
-                              <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Constituency}>GE2010-2019 Constituency</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Constituency_2025}>GE2024 Constituency</SelectItem>
+                              <SelectItem value={GeographyTypes.Postcode}>Postcode</SelectItem>
+                              <SelectItem value={GeographyTypes.Ward}>Ward</SelectItem>
+                              <SelectItem value={GeographyTypes.Council}>Council</SelectItem>
+                              <SelectItem value={GeographyTypes.Constituency}>GE2010-2019 Constituency</SelectItem>
+                              <SelectItem value={GeographyTypes.Constituency_2025}>GE2024 Constituency</SelectItem>
+                              <SelectItem value={GeographyTypes.Address}>Address</SelectItem>
                             </SelectGroup>
                           </SelectContent>
                         </Select>
@@ -341,16 +356,9 @@ export default function Page({
                     </FormItem>
                   )}
                 />
-                {form.watch('dataType') === DataSourceType.Member && (
-                  <>
-                    <FPreopulatedSelectField name="emailField" />
-                    <FPreopulatedSelectField name="phoneField" />
-                    <FPreopulatedSelectField name="addressField" />
-                    <FPreopulatedSelectField name="fullNameField" />
-                    <FPreopulatedSelectField name="firstNameField" />
-                    <FPreopulatedSelectField name="lastNameField" />
-                  </>
-                )}
+                {collectFields?.filter(f => f !== "geographyColumn" && f !== "geographyColumnType")?.map((field) => (
+                  <FPreopulatedSelectField key={field} name={field} />
+                ))}
               </div>
               <Button type='submit' variant="reverse" disabled={createSourceResult.loading}>
                 Save connection
