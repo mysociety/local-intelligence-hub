@@ -49,6 +49,7 @@ const TEST_SOURCE = gql`
     testSourceConnection: testAirtableSource(apiKey: $apiKey, baseId: $baseId, tableId: $tableId) {
       remoteName
       healthcheck
+      crmType
       fieldDefinitions {
         label
         value
@@ -249,7 +250,7 @@ export default function Page({
         placeholder={placeholder}
         fieldDefinitions={testSourceResult.data?.testSourceConnection.fieldDefinitions}
         control={form.control}
-        crmType={testSourceResult.data?.testSourceConnection.__typename!}
+        crmType={testSourceResult.data?.testSourceConnection.crmType!}
         guess={guessed[name]}
         required={required}
       />
