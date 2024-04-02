@@ -1307,6 +1307,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             }
             for d in self.get_import_data()
         ]
+        print(f"building imported data frame from {json_list}")
         enrichment_df = pd.DataFrame.from_records(json_list)
         print(f"got imported data frame with {len(json_list)} rows: \n {enrichment_df}")
         return enrichment_df
