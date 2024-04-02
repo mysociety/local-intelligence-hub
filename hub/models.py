@@ -1348,13 +1348,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             == relevant_member_geography,
                             # and return the requested value for this enrichment source row
                             key["source_path"],
-                        ].values[0]
-                        if enrichment_value is np.nan or enrichment_value == np.nan:
+                        ].values
+                        if enrichment_value:
+                            enrichment_value = enrichment_value[0]
+                            if enrichment_value is np.nan or enrichment_value == np.nan:
+                                print(f"missing data for {key['member_id']} {key['source_path']}")
+                                return_data.append(None)
+                            else:
+                                print(f"picked {enrichment_value} for {key['member_id']} {key['source_path']}")
+                                return_data.append(enrichment_value)
+                        else:
                             print(f"missing data for {key['member_id']} {key['source_path']}")
                             return_data.append(None)
-                        else:
-                            print(f"picked {enrichment_value} for {key['member_id']} {key['source_path']}")
-                            return_data.append(enrichment_value)
                 except Exception as e:
                     print(f"loader exception {e}")
                     return_data.append(None)
