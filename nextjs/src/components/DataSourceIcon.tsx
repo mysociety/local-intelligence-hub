@@ -40,7 +40,7 @@ export function DataSourceIcon({
     crmType
   ]
   if (crmType && !!option) {
-    const Icon = option.logo
+    const Icon = option.icon || option.logo
     if (Icon) {
       return <Icon className={className} />
     }
