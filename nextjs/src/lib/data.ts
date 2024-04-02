@@ -1,13 +1,57 @@
-import { AirtableLogo, AirtableIcon } from "@/components/logos";
+import { AirtableLogo, ActionNetworkLogo, MailchimpLogo, GoogleSheetsLogo, CiviCRMLogo, NationBuilderLogo } from "@/components/logos";
 
 export const externalDataSourceOptions = {
   airtable: {
     key: "airtable",
     modelName: "AirtableSource",
     name: "Airtable",
-    icon: AirtableIcon,
-    wordmark: AirtableLogo,
+    logo: AirtableLogo,
+    screenshot: "/airtable-screenshot.png"
   },
+  actionNetwork: {
+    key: "action-network",
+    modelName: "actionNetworkSource",
+    name: "Action Network",
+    logo: ActionNetworkLogo,
+    screenshot: "/actionNetwork-screenshot.png"
+  },
+  mailchimp: {
+    key: "mailchimp",
+    modelName: "mailchimpSource",
+    name: "Mailchimp",
+    logo: MailchimpLogo,
+    screenshot: "/mailchimp-screenshot.png"
+  },
+  googleSheets: {
+    key: "google-sheets",
+    modelName: "googleSheetsSource",
+    name: "Google Sheets",
+    logo: GoogleSheetsLogo,
+    screenshot: "/googleSheets-screenshot.png"
+  },
+  civiCRM: {
+    key: "civi-crm",
+    modelName: "civiCRMSource",
+    name: "Civi CRM",
+    logo: CiviCRMLogo,
+    screenshot: "/civiCRM-screenshot.png"
+  },
+  nationBuilder: {
+    key: "nation-builder",
+    modelName: "nationBuilderSource",
+    name: "NationBuilder",
+    logo: NationBuilderLogo,
+    screenshot: "/nationBuilder-screenshot.png"
+  },
+
+  
+};
+
+
+export const getSourceOptionForTypename = (typename: string) => {
+  return Object.values(externalDataSourceOptions).find(
+    (option) => option.modelName === typename,
+  );
 };
 
 export type EnrichmentDataSource = {
