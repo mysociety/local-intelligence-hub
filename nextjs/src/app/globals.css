@@ -16,6 +16,10 @@
 }
 
 @font-face {
+  font-family: IBMPlexSansLight;
+  src: url("../fonts/IBMPlexSans/IBMPlexSans-Light.ttf");
+}
+@font-face {
   font-family: IBMPlexSansReg;
   src: url("../fonts/IBMPlexSans/IBMPlexSans-Regular.ttf");
 }
@@ -60,11 +64,11 @@
     --primary: 222, 14%, 34%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
-    --secondary-foreground: 225, 14%, 89%;
+    --secondary-foreground: var(--meep-gray-600);
     --muted: 210 40% 96.1%;
     --muted-foreground:  222, 14%, 64%;
-    --accent: var(--brand-blue);
-    --accent-foreground: var(--meep-gray-800);
+    --accent: var(--meep-gray-600);
+    --accent-foreground: var(--meep-gray-200);
     --border: 0, 0%, 100%, 0.32;
 
     --brand: 222, 69%, 65%;

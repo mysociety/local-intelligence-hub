@@ -1,6 +1,8 @@
+import SignUp from "@/components/marketing/SignUp";
 import { AreaPattern } from "@/components/areaPattern";
 import Footer from "@/components/footer";
 import Navbar from "@/components/navbar";
+import PreFooter from "@/components/pre-footer";
 import { useAuth } from "@/hooks/auth";
 import { Toaster } from "sonner";
 
@@ -16,11 +18,14 @@ export default async function Layout({
     <div className='flex flex-col min-h-dvh'>
       <AreaPattern />
       <Navbar isLoggedIn={isLoggedIn} />
-      <main className="p-4 sm:p-8 md:p-20 relative 2xl:p-24">
-          {children}
+      <main className="p-4 relative">
+        {children}
       </main>
+
       <Toaster />
-      <div className='mt-auto'>
+      <div className='flex flex-col gap-4 mt-auto mx-4'>
+        <SignUp />
+        <PreFooter />
         <Footer />
       </div>
     </div>

@@ -2,6 +2,7 @@
 import { useAuth } from "@/hooks/auth";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
+import GetStarted from "@/components/marketing/GetStarted";
 
 
 
@@ -14,14 +15,11 @@ export default async function FeaturesLayout({
     return (
 
         <main className="flex justify-center ">
-            <div className="max-w-4xl flex flex-col items-center ">
+            <div className="flex flex-col items-center max-w-7xl">
                 {children}
-                <div className="space-x-2">
-                    <Link href="/signup" className={buttonVariants({ variant: "brand" })}>Get Started</Link>
-                    <Link href="/about" className={buttonVariants({ variant: "default" })}>Learn more about us</Link>
-                </div>
-            </div>
+            </div>  
         </main>
+        
 
     );
 }
