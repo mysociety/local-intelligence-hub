@@ -1291,6 +1291,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         source_data: Optional[any]
 
     def get_import_data(self):
+        print(f"getting import data where external data source id is {self.id}")
         return GenericData.objects.filter(
             data_type__data_set__external_data_source_id=self.id
         )
@@ -1307,6 +1308,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             for d in self.get_import_data()
         ]
         enrichment_df = pd.DataFrame.from_records(json_list)
+        print(f"got imported data frame with {len(json_list)} rows: \n {enrichment_df}")
         return enrichment_df
 
     def data_loader_factory(self):
