@@ -23,7 +23,7 @@ export default function AboutOveriew() {
                 btnLink={btnLink}
             />
             <div className="-mx-4">
-                <Marquee className="overflow-clip max-w-[100vw]" speed="100" >
+                <Marquee className="overflow-clip max-w-[100vw]" speed={100} >
                     <div className="mx-4">
                         <Image src="/about-marquee-1.jpg"
                             alt="test"
