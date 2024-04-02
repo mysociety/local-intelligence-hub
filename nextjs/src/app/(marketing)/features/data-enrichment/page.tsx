@@ -18,22 +18,19 @@ export default function DataEnrichment() {
         description="Take your organising to the next level with our free to use tools that enhance your existing membership lists with geographic and political data."
         btnText="Get Started"
         btnLink={btnLink}
-        screenshot="/mapping-screenshot.png"
+        screenshot="/features-screenshots/mapping-main.png"
 
-        benefitsHeading="Connect your mailing list to Mapped and see where they are"
+        benefitsHeading="Use Data to inform your campaigns"
 
-        b1Screenshot="/mapping-screenshot.png"
-        b1Heading="Sync memberships"
-        b1Description="Upload a spreadsheet with a column of postcodes to get extra geographic data added on that can help you with your organising efforts."
+        b1Screenshot="/features-screenshots/data-enrichment.png"
+        b1Heading="Toggle different data layers"
+        b1Description="Choose from an evolving series of data sources that interact with the UI to give you more context to inform your campaigns."
       
-        b2Screenshot="/mapping-screenshot.png"
-        b2Heading="Sync memberships"
-        b2Description="Upload a spreadsheet with a column of postcodes to get extra geographic data added on that can help you with your organising efforts."
+        b2Screenshot="/features-screenshots/colloborative.png"
+        b2Heading="Share Memeber Lists"
+        b2Description="Share your member lists between organisations and pool together your members and collaborate on strategy"
         
-        b3Screenshot="/mapping-screenshot.png"
-        b3Heading="Sync memberships"
-        b3Description="Upload a spreadsheet with a column of postcodes to get extra geographic data added on that can help you with your organising efforts."
-      />
+          />
   
   );
 }

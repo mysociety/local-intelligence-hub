@@ -18,22 +18,22 @@ export default function MemberMaps() {
         description="Take your organising to the next level with our free to use tools that enhance your existing membership lists with geographic and political data."
         btnText="Get Started"
         btnLink={btnLink}
-        screenshot="/mapping-screenshot.png"
+        screenshot="/features-screenshots/mapping-main-clean.png"
 
         benefitsHeading="Connect your mailing list to Mapped and see where they are"
         
-        b1Screenshot="/mapping-screenshot.png"
-        b1Heading="Sync memberships"
-        b1Description="Upload a spreadsheet with a column of postcodes to get extra geographic data added on that can help you with your organising efforts."
-      
-        b2Screenshot="/mapping-screenshot.png"
-        b2Heading="Sync memberships"
-        b2Description="Upload a spreadsheet with a column of postcodes to get extra geographic data added on that can help you with your organising efforts."
+        b1Screenshot="/features-screenshots/mapping-third.png"
+        b1Heading="Member Density"
+        b1Description="See the quantity of your members per region represented through colour on the map."
+        b2Screenshot="/features-screenshots/mid-level.png"
+        b2Heading="See your members from different scales"
+        b2Description="The Mapped UI adapts to your zoom level to give you the most useful information for each context."
         
-        b3Screenshot="/mapping-screenshot.png"
-        b3Heading="Sync memberships"
-        b3Description="Upload a spreadsheet with a column of postcodes to get extra geographic data added on that can help you with your organising efforts."
-     />
+        b3Screenshot="/features-screenshots/member-level.png"
+        b3Heading="Get Granular"
+        b3Description="See exactly where your members are as well as access their contact information."
+        />
+        
   );
 }
 export const metadata: Metadata = {
