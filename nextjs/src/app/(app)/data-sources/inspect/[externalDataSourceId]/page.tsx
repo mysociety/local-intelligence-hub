@@ -15,10 +15,17 @@ export default async function Page({
   params: Params;
 }) {
   await useRequireAuth();
+  const data = await getClient().query<ExternalDataSourceNameQuery, ExternalDataSourceNameQueryVariables>({
+    query: EXTERNAL_DATA_SOURCE_NAME,
+    variables: {
+      externalDataSourceId,
+    }
+  });
 
   return (
     <InspectExternalDataSource
       externalDataSourceId={externalDataSourceId}
+      {...data.data.externalDataSource}
     />
   );
 }
@@ -27,6 +34,10 @@ const EXTERNAL_DATA_SOURCE_NAME = gql`
   query ExternalDataSourceName($externalDataSourceId: ID!) {
     externalDataSource(pk: $externalDataSourceId) {
       name
+      crmType
+      dataType
+      name
+      remoteUrl
     }
   }
 `;
