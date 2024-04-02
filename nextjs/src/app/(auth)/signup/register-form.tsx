@@ -14,6 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input";
+import MailchimpForm from "@/components/WaitListSignUp";
 
 const REGISTER_MUTATION = gql`
   mutation Register($email: String!, $password1: String!, $password2: String!, $username: String!) {
@@ -80,63 +81,64 @@ export default function RegisterForm() {
   }
 
   return (
-    <Form {...form}>
-      <form className="pb-4 flex flex-col space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input placeholder="email" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Username</FormLabel>
-              <FormControl>
-                <Input placeholder="username" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password1"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input type='password' placeholder="password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password2"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Confirm password</FormLabel>
-              <FormControl>
-                <Input type='password' placeholder="password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormMessage />
-        <Button variant='reverse' type="submit" disabled={loading}>Sign up</Button>
-      </form>
-    </Form>
+    <MailchimpForm/>
+    // <Form {...form}>
+    //   <form className="pb-4 flex flex-col space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
+    //     <FormField
+    //       control={form.control}
+    //       name="email"
+    //       render={({ field }) => (
+    //         <FormItem>
+    //           <FormLabel>Email</FormLabel>
+    //           <FormControl>
+    //             <Input placeholder="email" {...field} />
+    //           </FormControl>
+    //           <FormMessage />
+    //         </FormItem>
+    //       )}
+    //     />
+    //     <FormField
+    //       control={form.control}
+    //       name="username"
+    //       render={({ field }) => (
+    //         <FormItem>
+    //           <FormLabel>Username</FormLabel>
+    //           <FormControl>
+    //             <Input placeholder="username" {...field} />
+    //           </FormControl>
+    //           <FormMessage />
+    //         </FormItem>
+    //       )}
+    //     />
+    //     <FormField
+    //       control={form.control}
+    //       name="password1"
+    //       render={({ field }) => (
+    //         <FormItem>
+    //           <FormLabel>Password</FormLabel>
+    //           <FormControl>
+    //             <Input type='password' placeholder="password" {...field} />
+    //           </FormControl>
+    //           <FormMessage />
+    //         </FormItem>
+    //       )}
+    //     />
+    //     <FormField
+    //       control={form.control}
+    //       name="password2"
+    //       render={({ field }) => (
+    //         <FormItem>
+    //           <FormLabel>Confirm password</FormLabel>
+    //           <FormControl>
+    //             <Input type='password' placeholder="password" {...field} />
+    //           </FormControl>
+    //           <FormMessage />
+    //         </FormItem>
+    //       )}
+    //     />
+    //     <FormMessage />
+    //     <Button variant='reverse' type="submit" disabled={loading}>Sign up</Button>
+    //   </form>
+    // </Form>
   );
 }
