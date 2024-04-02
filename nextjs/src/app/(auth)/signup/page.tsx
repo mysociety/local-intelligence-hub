@@ -11,7 +11,7 @@ export default async function Login() {
 
   return (
     <div className='m-8 md:ml-36 max-w-xs space-y-4 rounded border border-meepGray-600 bg-meepGray-800 p-8'>
-      <h1 className='text-hLg font-IBMPlexSans'>Sign up</h1>
+      <h1 className='text-hLg font-IBMPlexSans'>Sign up to the waitlist</h1>
       <RegisterForm />
       <div aria-roledescription="divider" className="border-t border-meepGray-600"></div>
       <div className='text-labelMain text-meepGray-400'>Already have an account?</div>
