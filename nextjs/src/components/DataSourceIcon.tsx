@@ -43,7 +43,9 @@ export function DataSourceIcon({
   ]
   if (crmType && !!option) {
     const Icon = option[mode]
-    return <Icon className={className} />
+    if (Icon) {
+      return <Icon className={className} />
+    }
   }
   return <File className={className} />
 }
