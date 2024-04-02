@@ -674,7 +674,7 @@ class GenericData(CommonData):
     point = PointField(srid=4326, blank=True, null=True)
     polygon = MultiPolygonField(srid=4326, blank=True, null=True)
     postcode_data = JSONField(blank=True, null=True)
-    postcode = models.CharField(max_length=10, blank=True, null=True)
+    postcode = models.CharField(max_length=1000, blank=True, null=True)
     first_name = models.CharField(max_length=300, blank=True, null=True)
     last_name = models.CharField(max_length=300, blank=True, null=True)
     full_name = models.CharField(max_length=300, blank=True, null=True)
@@ -1337,14 +1337,16 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         return_data.append(None)
                         continue
                     else:
-                        enrichment_value = enrichment_df.loc[
+                        possible_values = enrichment_df.loc[
                             # Match the member's geography to the enrichment source's geography
                             enrichment_df[self.geography_column] == relevant_member_geography,
                             # and return the requested value for this enrichment source row
                             key["source_path"],
-                        ].values[0]
-                        # print("MATCH?", relevant_member_geography, enrichment_value, "\n\n")
-                        if enrichment_value is np.nan or enrichment_value == np.nan:
+                        ].values
+                        if possible_values.size <= 0:
+                            return_data.append(None)
+                        enrichment_value = possible_values[0]
+                        if enrichment_value is None or enrichment_value is np.nan or enrichment_value == np.nan:
                             return_data.append(None)
                         else:
                             return_data.append(enrichment_value)
