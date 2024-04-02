@@ -31,7 +31,7 @@ export default function AboutRoadmap() {
         heading={<>Have <span className="md:text-hXlgPP text-hLgPP font-PPRightGrotesk">your say</span> on what gets built next</>}
         description="Take your organising to the next level with our free to use tools that enhance your existing membership lists with geographic and political data."
         btnText="Get Started"
-        btnLink=""
+        btnLink={btnLink}
       />
       <div className="py-10 max-w-6xl">
         <div className="relative">

@@ -19,7 +19,7 @@ const GetStarted: React.FC<GetStartedProps> = () => {
                     heading="Start mapping your members"
                     description="Visualise your membership geographically to understand the strength of your campaign at a glance and ground your organisational tactics in real information."
                     btnText="Get Started"
-                    btnLink="/login"
+                    btnLink="/signup"
                 />
             </div>
             <CardContent className="p-14 flex items-center">

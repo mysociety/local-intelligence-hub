@@ -63,7 +63,7 @@ const FeaturesOption: React.FC<FeaturesOptionProps> = ({ screenshot, labelHeadin
                                 heading={benefitsHeading}
                                 description=""
                                 btnText="Get Started"
-                                btnLink=""
+                                btnLink={btnLink}
                             />
                         </div>
                     </div>

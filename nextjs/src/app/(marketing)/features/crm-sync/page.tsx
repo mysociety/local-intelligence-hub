@@ -16,7 +16,7 @@ export default function DataEnrichment() {
         heading={<>Upgrade your <span className="md:text-hXlgPP text-hLgPP font-PPRightGrotesk">workflow</span> by seamlessly integrating mapped your chosen CRM</>}
         description="Take your organising to the next level with our free to use tools that enhance your existing membership lists with geographic and political data."
         btnText="Get Started"
-        btnLink="/login"
+        btnLink={btnLink}
         screenshot="/mapping-screenshot.png"
 
         benefitsHeading="Connect your mailing list to Mapped and see where they are"

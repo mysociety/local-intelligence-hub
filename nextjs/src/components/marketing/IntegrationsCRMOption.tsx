@@ -40,7 +40,7 @@ const IntegrationsCRMOption: React.FC<IntegrationsCRMOptionProps> = ({ crmPlatfo
                 heading={<>Sync with  <span className="md:text-hXlgPP  text-hLgPP font-PPRightGrotesk">{name}</span> for a seamless workflow</>}
                 description="Take your organising to the next level with our free to use tools that enhance your existing membership lists with geographic and political data."
                 btnText={comingsoon ? "Coming Soon" : "Get Started"} // Corrected syntax
-                btnLink="/login"
+                btnLink="/signup"
             />
             <div className="py-10 grid grid-cols-1 md:grid-cols-3 items-center">
                 <Image src={screenshot}
@@ -92,7 +92,7 @@ const IntegrationsCRMOption: React.FC<IntegrationsCRMOptionProps> = ({ crmPlatfo
                             heading={benefitsHeading}
                             description=""
                             btnText="Get Started"
-                            btnLink=""
+                            btnLink="/signup"
                         />
                     </div>
                     <div className="flex flex-col gap-4 place-content-center items-center">
