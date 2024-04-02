@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import FeaturesOption from "@/components/marketing/FeaturesOption";
+import { Metadata } from 'next'
+
 
 export default function MemberMaps() {
 
@@ -33,4 +35,7 @@ export default function MemberMaps() {
         b3Description="Upload a spreadsheet with a column of postcodes to get extra geographic data added on that can help you with your organising efforts."
      />
   );
+}
+export const metadata: Metadata = {
+  title: 'CRM Sync',
 }

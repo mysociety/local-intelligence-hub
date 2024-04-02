@@ -3,6 +3,8 @@ import FeatureTextSection from "@/components/marketing/TemplateTextBlock";
 import { Card, CardTitle, CardHeader, CardDescription } from "@/components/ui/card";
 import Image from "next/image";
 import Link from "next/link";
+import { Metadata } from 'next'
+
 
 import AboutOveriew from "./Overview";
 import AboutRoadmap from "./Roadmap";
@@ -26,13 +28,18 @@ export default function AboutPage() {
                     {/* <TabsTrigger value="history">History</TabsTrigger> */}
 
                 </TabsList>
-                <TabsContent value="overview"><AboutOveriew/></TabsContent>
-                <TabsContent value="roadmap"><AboutRoadmap/></TabsContent>
-                <TabsContent value="history"><AboutHistory/></TabsContent>
+                <TabsContent value="overview"><AboutOveriew /></TabsContent>
+                <TabsContent value="roadmap"><AboutRoadmap /></TabsContent>
+                <TabsContent value="history"><AboutHistory /></TabsContent>
 
             </Tabs>
 
 
         </>
     );
+}
+
+export const metadata: Metadata = {
+    title: 'About',
+
 }
