@@ -17,19 +17,16 @@ interface IntegrationsCRMOptionProps {
     b2Description: string;
     b3Heading: string;
     b3Description: string;
-
 }
 
 const IntegrationsCRMOption: React.FC<IntegrationsCRMOptionProps> = ({ crmPlatform, comingsoon, benefitsHeading, b1Heading, b1Description, b2Heading, b2Description, b3Heading, b3Description, }) => {
     // Access the CRM platform details based on the provided crmPlatform string
-    const thisCRMPlatform = externalDataSourceOptions[crmPlatform];
+    const thisCRMPlatform = externalDataSourceOptions[crmPlatform as keyof typeof externalDataSourceOptions];
 
     if (!thisCRMPlatform) {
         // Handle case where the CRM platform is not found
         return <div>CRM platform not found</div>;
     }
-
-
 
     const { name, logo, screenshot } = thisCRMPlatform;
     let CRMLogo = logo
@@ -43,7 +40,7 @@ const IntegrationsCRMOption: React.FC<IntegrationsCRMOptionProps> = ({ crmPlatfo
                 heading={<>Sync with  <span className="md:text-hXlgPP  text-hLgPP font-PPRightGrotesk">{name}</span> for a seamless workflow</>}
                 description="Take your organising to the next level with our free to use tools that enhance your existing membership lists with geographic and political data."
                 btnText={comingsoon ? "Coming Soon" : "Get Started"} // Corrected syntax
-                btnLink="/login"
+                btnLink="/signup"
             />
             <div className="py-10 grid grid-cols-1 md:grid-cols-3 items-center">
                 <Image src={screenshot}
@@ -95,7 +92,7 @@ const IntegrationsCRMOption: React.FC<IntegrationsCRMOptionProps> = ({ crmPlatfo
                             heading={benefitsHeading}
                             description=""
                             btnText="Get Started"
-                            btnLink=""
+                            btnLink="/signup"
                         />
                     </div>
                     <div className="flex flex-col gap-4 place-content-center items-center">

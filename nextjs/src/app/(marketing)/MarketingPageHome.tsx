@@ -14,7 +14,7 @@ export default function MarketingLandingPage() {
           <h1 className="md:text-hXlg text-hLg font-light font-IBMPlexSansLight w-full max-w-[915px] mb-6 ">
             Empowering <span className="font-PPRightGrotesk md:text-hXlgPP text-hLgPP">organisers</span> and <span className="md:text-hXlgPP text-hLgPP font-PPRightGrotesk">activists</span> with mapping tools and data enrichment ✊</h1>
           <p className="text-base max-w-prose mb-9">Take your organising to the next level with our free to use tools that enhance your existing membership lists with geographic and political data. </p>
-          <Link href="/" className={buttonVariants({ variant: "brand" })}>Get started</Link>
+          <Link href="/signup" className={buttonVariants({ variant: "brand" })}>Get started</Link>
         </div>
         <Image className="hidden md:block absolute -top-20 right-0 -z-10" src={"/hero-bg.svg"} alt="constiteuncy map" width={800} height={700} />
       </div>

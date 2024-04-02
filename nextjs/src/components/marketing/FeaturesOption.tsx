@@ -1,4 +1,4 @@
-
+import { ReactNode } from "react";
 import MarketingPageHeader from "@/components/marketing/MarkertingPageHeader";
 import { Card, CardTitle, CardHeader, CardDescription } from "@/components/ui/card";
 import Image from "next/image";
@@ -63,7 +63,7 @@ const FeaturesOption: React.FC<FeaturesOptionProps> = ({ screenshot, labelHeadin
                                 heading={benefitsHeading}
                                 description=""
                                 btnText="Get Started"
-                                btnLink=""
+                                btnLink={btnLink}
                             />
                         </div>
                     </div>

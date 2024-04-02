@@ -12,7 +12,7 @@ import TemplateTextAndImage from "@/components/marketing/TemplateTextAndImage";
 
 export default function AboutOveriew() {
 
-    let btnLink = ""
+    let btnLink = "/signup"
 
     return (
         <div className="flex flex-col items-center">
@@ -23,7 +23,7 @@ export default function AboutOveriew() {
                 btnLink={btnLink}
             />
             <div className="-mx-4">
-                <Marquee className="overflow-clip max-w-[100vw]" speed="100" >
+                <Marquee className="overflow-clip max-w-[100vw]" speed={100} >
                     <div className="mx-4">
                         <Image src="/about-marquee-1.jpg"
                             alt="test"
@@ -83,7 +83,7 @@ export default function AboutOveriew() {
                             heading="Empowering organisers to create lasting change"
                             description="Mapped is built for organisations and organisers trying to do good in the UK. We facilitated multiple workshops that we designed for a cohort of organisations which included a comprehensive discovery process."
                             btnText="Get Started"
-                            btnLink=""
+                            btnLink={btnLink}
                         />
                     </div>
                     <div className="flex flex-col gap-4 p-10">
@@ -221,7 +221,7 @@ export default function AboutOveriew() {
                             heading="Information into intelligence"
                             description="Organisers can use Mapped to create high-dimensional pictures out of multiple information sources, spark creative thoughts, and develop their campaign strategy based on real data."
                             btnText="Set up integration"
-                            btnLink="/login"
+                            btnLink={btnLink}
                         />
                     </div>
                 </div>

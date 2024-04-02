@@ -7,7 +7,7 @@ import 'graphiql/graphiql.css';
 
 function getAuthenticatedFetcher () {
   try {
-    const token = localStorage.getItem("jwt");
+    const token = typeof window !== 'undefined' ? localStorage.getItem("jwt") : '';
     return createGraphiQLFetcher({
       url: `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/graphql`,
       headers: {

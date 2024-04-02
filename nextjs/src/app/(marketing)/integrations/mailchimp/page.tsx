@@ -1,5 +1,5 @@
 
-import IntegrationsCRMOption from "@/components/marketing/FeaturesOption";
+import IntegrationsCRMOption from "@/components/marketing/IntegrationsCRMOption";
 
 
 

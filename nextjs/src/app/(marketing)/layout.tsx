@@ -24,7 +24,7 @@ export default async function Layout({
 
       <Toaster />
       <div className='flex flex-col gap-4 mt-auto mx-4'>
-        <SignUp />
+        {!isLoggedIn && <SignUp />}
         <PreFooter />
         <Footer />
       </div>

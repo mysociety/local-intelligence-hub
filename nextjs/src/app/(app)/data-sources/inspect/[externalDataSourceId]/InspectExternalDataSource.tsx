@@ -161,7 +161,7 @@ export default function InspectExternalDataSource({
   externalDataSourceId: string;
   name?: string;
   dataType?: DataSourceType;
-  remoteUrl?: string;
+  remoteUrl?: string|null;
   crmType?: string;
 }) {
   const router = useRouter();
@@ -178,7 +178,7 @@ export default function InspectExternalDataSource({
   });
 
   if (!loading && !data?.externalDataSource) {
-    return <h2>Couldn't find this data source</h2>;
+    return <h2>Couldn{"'"}t find this data source</h2>;
   }
 
   const source = data?.externalDataSource
