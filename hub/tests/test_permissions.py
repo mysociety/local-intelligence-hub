@@ -34,7 +34,7 @@ class Setup:
                 "european_electoral_region": "XXX",
                 "codes": {
                     "european_electoral_region": "XXX",
-                }
+                },
             },
             data_type=dt,
         )
@@ -73,10 +73,10 @@ class TestOwnSources(Setup, TestCase):
         self.client.login(username="testuser", password="12345")
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
+            content_type="application/json",
             data={
-              "variables": {"username": "testuser", "password": "12345"},
-              "query": """
+                "variables": {"username": "testuser", "password": "12345"},
+                "query": """
                   mutation Login($username: String!, $password: String!) {
                     tokenAuth(username: $username, password: $password) {
                       errors
@@ -87,10 +87,10 @@ class TestOwnSources(Setup, TestCase):
                     }
                   }
               """,
-            }
+            },
         )
         self.assertIn(res.status_code, [200, 204])
-        self.token =  res.json()['data']["tokenAuth"]["token"]["token"]
+        self.token = res.json()["data"]["tokenAuth"]["token"]["token"]
 
     def test_permissions_calculator(self):
         permissions = models.ExternalDataSource.user_permissions(self.user, self.source)
@@ -114,17 +114,18 @@ class TestOwnSources(Setup, TestCase):
 
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
+            content_type="application/json",
             data={"query": query, "variables": {"sourceId": str(self.source.id)}},
-            headers={"Authorization": f"JWT {self.token}",
-            }
+            headers={
+                "Authorization": f"JWT {self.token}",
+            },
         )
         result = res.json()
 
-        self.assertIsNone(result.get('errors', None))
+        self.assertIsNone(result.get("errors", None))
         self.assertEqual(
             [{"gss": "XXX", "count": 1}],
-            result['data']["sharedDataSource"]["importedDataCountByRegion"]
+            result["data"]["sharedDataSource"]["importedDataCountByRegion"],
         )
 
     # Test graphQL query for geojson point
@@ -146,26 +147,34 @@ class TestOwnSources(Setup, TestCase):
 
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
-            data={"query": query, "variables": {"genericDataId": str(self.generic_data.id) }},
-            headers={"Authorization": f"JWT {self.token}"}
+            content_type="application/json",
+            data={
+                "query": query,
+                "variables": {"genericDataId": str(self.generic_data.id)},
+            },
+            headers={"Authorization": f"JWT {self.token}"},
         )
         result = res.json()
 
-        self.assertIsNone(result.get('errors', None))
+        self.assertIsNone(result.get("errors", None))
         self.assertDictEqual(
-            result['data']["importedDataGeojsonPoint"],
+            result["data"]["importedDataGeojsonPoint"],
             {
                 "id": str(self.generic_data.id),
                 "geometry": {"coordinates": [0.0, 0.0]},
                 "properties": {"id": str(self.generic_data.id), "email": "xyz@bbc.com"},
-            }
+            },
         )
 
     # Test tileserver query for vector tiles
     def test_vector_tiles_visibility(self):
         zoom = 13
-        kwargs = {"pk": str(self.source.id), "z": zoom, "x": geo.lon2tile(self.generic_data.point.x, zoom), "y": geo.lat2tile(self.generic_data.point.y, zoom)}
+        kwargs = {
+            "pk": str(self.source.id),
+            "z": zoom,
+            "x": geo.lon2tile(self.generic_data.point.x, zoom),
+            "y": geo.lat2tile(self.generic_data.point.y, zoom),
+        }
         res = self.client.get(
             reverse(
                 "external_data_source_point_tile",
@@ -189,9 +198,7 @@ class TestFullSharing(Setup, TestCase):
             name="otherorg", slug="otherorg"
         )
         models.Membership.objects.create(
-            user=self.other_user,
-            organisation=self.other_org,
-            role="owner"
+            user=self.other_user, organisation=self.other_org, role="owner"
         )
         self.sharing = models.SharingPermission.objects.create(
             external_data_source=self.source,
@@ -202,7 +209,7 @@ class TestFullSharing(Setup, TestCase):
         self.client.login(username="otheruser", password="12345")
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
+            content_type="application/json",
             data={
                 "variables": {"username": "otheruser", "password": "12345"},
                 "query": """
@@ -217,8 +224,7 @@ class TestFullSharing(Setup, TestCase):
             }
             """,
             },
-            headers={
-            }
+            headers={},
         )
         self.token = res.json()["data"]["tokenAuth"]["token"]["token"]
 
@@ -245,17 +251,18 @@ class TestFullSharing(Setup, TestCase):
 
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
+            content_type="application/json",
             data={"query": query, "variables": {"sourceId": str(self.source.id)}},
-            headers={"Authorization": f"JWT {self.token}",
-            }
+            headers={
+                "Authorization": f"JWT {self.token}",
+            },
         )
         result = res.json()
 
-        self.assertIsNone(result.get('errors', None))
+        self.assertIsNone(result.get("errors", None))
         self.assertEqual(
-            [{"gss": "XXX","count": 1}],
-            result['data']["sharedDataSource"]["importedDataCountByRegion"]
+            [{"gss": "XXX", "count": 1}],
+            result["data"]["sharedDataSource"]["importedDataCountByRegion"],
         )
 
     def test_generic_data_visibility(self):
@@ -276,25 +283,33 @@ class TestFullSharing(Setup, TestCase):
 
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
-            data={"query": query, "variables": {"genericDataId": str(self.generic_data.id) }},
-            headers={"Authorization": f"JWT {self.token}"}
+            content_type="application/json",
+            data={
+                "query": query,
+                "variables": {"genericDataId": str(self.generic_data.id)},
+            },
+            headers={"Authorization": f"JWT {self.token}"},
         )
         result = res.json()
 
-        self.assertIsNone(result.get('errors', None))
+        self.assertIsNone(result.get("errors", None))
         self.assertDictEqual(
-            result['data']["importedDataGeojsonPoint"],
+            result["data"]["importedDataGeojsonPoint"],
             {
                 "id": str(self.generic_data.id),
                 "geometry": {"coordinates": [0.0, 0.0]},
                 "properties": {"id": str(self.generic_data.id), "email": "xyz@bbc.com"},
-            }
+            },
         )
 
     def test_vector_tiles_visibility(self):
         zoom = 13
-        kwargs = {"pk": str(self.source.id), "z": zoom, "x": geo.lon2tile(self.generic_data.point.x, zoom), "y": geo.lat2tile(self.generic_data.point.y, zoom)}
+        kwargs = {
+            "pk": str(self.source.id),
+            "z": zoom,
+            "x": geo.lon2tile(self.generic_data.point.x, zoom),
+            "y": geo.lat2tile(self.generic_data.point.y, zoom),
+        }
         res = self.client.get(
             reverse(
                 "external_data_source_point_tile",
@@ -318,9 +333,7 @@ class TestLocationOnlySharing(Setup, TestCase):
             name="otherorg", slug="otherorg"
         )
         models.Membership.objects.create(
-            user=self.other_user,
-            organisation=self.other_org,
-            role="owner"
+            user=self.other_user, organisation=self.other_org, role="owner"
         )
         self.sharing = models.SharingPermission.objects.create(
             external_data_source=self.source,
@@ -331,7 +344,7 @@ class TestLocationOnlySharing(Setup, TestCase):
         self.client.login(username="otheruser", password="12345")
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
+            content_type="application/json",
             data={
                 "variables": {"username": "otheruser", "password": "12345"},
                 "query": """
@@ -346,8 +359,7 @@ class TestLocationOnlySharing(Setup, TestCase):
             }
             """,
             },
-            headers={
-            }
+            headers={},
         )
         self.token = res.json()["data"]["tokenAuth"]["token"]["token"]
 
@@ -374,22 +386,28 @@ class TestLocationOnlySharing(Setup, TestCase):
 
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
+            content_type="application/json",
             data={"query": query, "variables": {"sourceId": str(self.source.id)}},
-            headers={"Authorization": f"JWT {self.token}",
-            }
+            headers={
+                "Authorization": f"JWT {self.token}",
+            },
         )
         result = res.json()
 
-        self.assertIsNone(result.get('errors', None))
+        self.assertIsNone(result.get("errors", None))
         self.assertEqual(
-            [{"gss": "XXX","count": 1}],
-            result['data']["sharedDataSource"]["importedDataCountByRegion"]
+            [{"gss": "XXX", "count": 1}],
+            result["data"]["sharedDataSource"]["importedDataCountByRegion"],
         )
 
     def test_vector_tiles_visibility(self):
         zoom = 13
-        kwargs = {"pk": str(self.source.id), "z": zoom, "x": geo.lon2tile(self.generic_data.point.x, zoom), "y": geo.lat2tile(self.generic_data.point.y, zoom)}
+        kwargs = {
+            "pk": str(self.source.id),
+            "z": zoom,
+            "x": geo.lon2tile(self.generic_data.point.x, zoom),
+            "y": geo.lat2tile(self.generic_data.point.y, zoom),
+        }
         res = self.client.get(
             reverse(
                 "external_data_source_point_tile",
@@ -419,15 +437,21 @@ class TestLocationOnlySharing(Setup, TestCase):
 
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
-            data={"query": query, "variables": {"genericDataId": str(self.generic_data.id) }},
-            headers={"Authorization": f"JWT {self.token}",
-            }
+            content_type="application/json",
+            data={
+                "query": query,
+                "variables": {"genericDataId": str(self.generic_data.id)},
+            },
+            headers={
+                "Authorization": f"JWT {self.token}",
+            },
         )
         result = res.json()
 
-        self.assertIsNotNone(result['data']['importedDataGeojsonPoint']['geometry']['coordinates'])
-        self.assertIsNone(result['data']['importedDataGeojsonPoint']['properties'])
+        self.assertIsNotNone(
+            result["data"]["importedDataGeojsonPoint"]["geometry"]["coordinates"]
+        )
+        self.assertIsNone(result["data"]["importedDataGeojsonPoint"]["properties"])
 
 
 @override_settings(ALLOWED_HOSTS=["testserver"])
@@ -441,9 +465,7 @@ class TestAggregateOnlySharing(Setup, TestCase):
             name="otherorg", slug="otherorg"
         )
         models.Membership.objects.create(
-            user=self.other_user,
-            organisation=self.other_org,
-            role="owner"
+            user=self.other_user, organisation=self.other_org, role="owner"
         )
         self.sharing = models.SharingPermission.objects.create(
             external_data_source=self.source,
@@ -454,7 +476,7 @@ class TestAggregateOnlySharing(Setup, TestCase):
         self.client.login(username="otheruser", password="12345")
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
+            content_type="application/json",
             data={
                 "variables": {"username": "otheruser", "password": "12345"},
                 "query": """
@@ -469,8 +491,7 @@ class TestAggregateOnlySharing(Setup, TestCase):
             }
             """,
             },
-            headers={
-            }
+            headers={},
         )
         self.token = res.json()["data"]["tokenAuth"]["token"]["token"]
 
@@ -497,7 +518,7 @@ class TestAggregateOnlySharing(Setup, TestCase):
 
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
+            content_type="application/json",
             data={"query": query, "variables": {"sourceId": str(self.source.id)}},
             headers={
                 "Authorization": f"JWT {self.token}",
@@ -505,15 +526,20 @@ class TestAggregateOnlySharing(Setup, TestCase):
         )
         result = res.json()
 
-        self.assertIsNone(result.get('errors', None))
+        self.assertIsNone(result.get("errors", None))
         self.assertEqual(
-            [{"gss": "XXX","count": 1}],
-            result['data']["sharedDataSource"]["importedDataCountByRegion"]
+            [{"gss": "XXX", "count": 1}],
+            result["data"]["sharedDataSource"]["importedDataCountByRegion"],
         )
 
     def test_vector_tiles_visibility(self):
         zoom = 13
-        kwargs = {"pk": str(self.source.id), "z": zoom, "x": geo.lon2tile(self.generic_data.point.x, zoom), "y": geo.lat2tile(self.generic_data.point.y, zoom)}
+        kwargs = {
+            "pk": str(self.source.id),
+            "z": zoom,
+            "x": geo.lon2tile(self.generic_data.point.x, zoom),
+            "y": geo.lat2tile(self.generic_data.point.y, zoom),
+        }
         res = self.client.get(
             reverse(
                 "external_data_source_point_tile",
@@ -542,17 +568,16 @@ class TestAggregateOnlySharing(Setup, TestCase):
 
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
+            content_type="application/json",
             data={
                 "query": query,
-                "variables": {"genericDataId": str(self.generic_data.id) },
+                "variables": {"genericDataId": str(self.generic_data.id)},
             },
-            headers={
-            }
+            headers={},
         )
         result = res.json()
 
-        self.assertIsNone(result['data']['importedDataGeojsonPoint'])
+        self.assertIsNone(result["data"]["importedDataGeojsonPoint"])
 
 
 @override_settings(ALLOWED_HOSTS=["testserver"])
@@ -566,14 +591,12 @@ class TestNoSharing(Setup, TestCase):
             name="otherorg", slug="otherorg"
         )
         models.Membership.objects.create(
-            user=self.other_user,
-            organisation=self.other_org,
-            role="owner"
+            user=self.other_user, organisation=self.other_org, role="owner"
         )
         self.client.login(username="otheruser", password="12345")
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
+            content_type="application/json",
             data={
                 "variables": {"username": "otheruser", "password": "12345"},
                 "query": """
@@ -588,8 +611,7 @@ class TestNoSharing(Setup, TestCase):
             }
             """,
             },
-            headers={
-            }
+            headers={},
         )
         self.token = res.json()["data"]["tokenAuth"]["token"]["token"]
 
@@ -616,18 +638,23 @@ class TestNoSharing(Setup, TestCase):
 
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
+            content_type="application/json",
             data={"query": query, "variables": {"sourceId": str(self.source.id)}},
-            headers={"Authorization": f"JWT {self.token}"}
+            headers={"Authorization": f"JWT {self.token}"},
         )
         result = res.json()
 
-        self.assertIsNotNone(result.get('errors', None))
-        self.assertIsNone(result.get('data', None))
+        self.assertIsNotNone(result.get("errors", None))
+        self.assertIsNone(result.get("data", None))
 
     def test_vector_tiles_visibility(self):
         zoom = 13
-        kwargs = {"pk": str(self.source.id), "z": zoom, "x": geo.lon2tile(self.generic_data.point.x, zoom), "y": geo.lat2tile(self.generic_data.point.y, zoom)}
+        kwargs = {
+            "pk": str(self.source.id),
+            "z": zoom,
+            "x": geo.lon2tile(self.generic_data.point.x, zoom),
+            "y": geo.lat2tile(self.generic_data.point.y, zoom),
+        }
         res = self.client.get(
             reverse(
                 "external_data_source_point_tile",
@@ -656,14 +683,18 @@ class TestNoSharing(Setup, TestCase):
 
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
-            data={"query": query, "variables": {"genericDataId": str(self.generic_data.id) }},
-            headers={"Authorization": f"JWT {self.token}",
-            }
+            content_type="application/json",
+            data={
+                "query": query,
+                "variables": {"genericDataId": str(self.generic_data.id)},
+            },
+            headers={
+                "Authorization": f"JWT {self.token}",
+            },
         )
         result = res.json()
 
-        self.assertIsNone(result['data']['importedDataGeojsonPoint'])
+        self.assertIsNone(result["data"]["importedDataGeojsonPoint"])
 
 
 @override_settings(ALLOWED_HOSTS=["testserver"])
@@ -692,17 +723,22 @@ class TestLoggedOutUserForUnsharedSource(Setup, TestCase):
 
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
-            data={"query": query, "variables": {"sourceId": str(self.source.id)}}
+            content_type="application/json",
+            data={"query": query, "variables": {"sourceId": str(self.source.id)}},
         )
         result = res.json()
 
-        self.assertIsNotNone(result.get('errors', None))
-        self.assertIsNone(result.get('data', None))
+        self.assertIsNotNone(result.get("errors", None))
+        self.assertIsNone(result.get("data", None))
 
     def test_vector_tiles_visibility(self):
         zoom = 13
-        kwargs = {"pk": str(self.source.id), "z": zoom, "x": geo.lon2tile(self.generic_data.point.x, zoom), "y": geo.lat2tile(self.generic_data.point.y, zoom)}
+        kwargs = {
+            "pk": str(self.source.id),
+            "z": zoom,
+            "x": geo.lon2tile(self.generic_data.point.x, zoom),
+            "y": geo.lat2tile(self.generic_data.point.y, zoom),
+        }
         res = self.client.get(
             reverse(
                 "external_data_source_point_tile",
@@ -730,12 +766,15 @@ class TestLoggedOutUserForUnsharedSource(Setup, TestCase):
 
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
-            data={"query": query, "variables": {"genericDataId": str(self.generic_data.id) }},
+            content_type="application/json",
+            data={
+                "query": query,
+                "variables": {"genericDataId": str(self.generic_data.id)},
+            },
         )
         result = res.json()
 
-        self.assertIsNone(result['data']['importedDataGeojsonPoint'])
+        self.assertIsNone(result["data"]["importedDataGeojsonPoint"])
 
 
 @override_settings(ALLOWED_HOSTS=["testserver"])
@@ -749,9 +788,7 @@ class TestLoggedOutUserForSharedSource(Setup, TestCase):
             name="otherorg", slug="otherorg"
         )
         models.Membership.objects.create(
-            user=self.other_user,
-            organisation=self.other_org,
-            role="owner"
+            user=self.other_user, organisation=self.other_org, role="owner"
         )
         self.sharing = models.SharingPermission.objects.create(
             external_data_source=self.source,
@@ -781,17 +818,22 @@ class TestLoggedOutUserForSharedSource(Setup, TestCase):
 
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
-            data={"query": query, "variables": {"sourceId": str(self.source.id)}}
+            content_type="application/json",
+            data={"query": query, "variables": {"sourceId": str(self.source.id)}},
         )
         result = res.json()
 
-        self.assertIsNotNone(result.get('errors', None))
-        self.assertIsNone(result.get('data', None))
+        self.assertIsNotNone(result.get("errors", None))
+        self.assertIsNone(result.get("data", None))
 
     def test_vector_tiles_visibility(self):
         zoom = 13
-        kwargs = {"pk": str(self.source.id), "z": zoom, "x": geo.lon2tile(self.generic_data.point.x, zoom), "y": geo.lat2tile(self.generic_data.point.y, zoom)}
+        kwargs = {
+            "pk": str(self.source.id),
+            "z": zoom,
+            "x": geo.lon2tile(self.generic_data.point.x, zoom),
+            "y": geo.lat2tile(self.generic_data.point.y, zoom),
+        }
         res = self.client.get(
             reverse(
                 "external_data_source_point_tile",
@@ -819,9 +861,12 @@ class TestLoggedOutUserForSharedSource(Setup, TestCase):
 
         res = self.client.post(
             reverse("graphql"),
-            content_type='application/json',
-            data={"query": query, "variables": {"genericDataId": str(self.generic_data.id) }}
+            content_type="application/json",
+            data={
+                "query": query,
+                "variables": {"genericDataId": str(self.generic_data.id)},
+            },
         )
         result = res.json()
 
-        self.assertIsNone(result['data']['importedDataGeojsonPoint'])
+        self.assertIsNone(result["data"]["importedDataGeojsonPoint"])

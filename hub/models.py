@@ -8,7 +8,7 @@ from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
+from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.gis.db.models import MultiPolygonField, PointField
 from django.contrib.gis.geos import Point
 from django.core.cache import cache
@@ -1633,7 +1633,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             if not isinstance(external_data_source, ExternalDataSource)
             else str(external_data_source.id)
         )
-        user_id = user if not hasattr(user, 'id') else str(user.id)
+        user_id = user if not hasattr(user, "id") else str(user.id)
         if user_id is None or external_data_source_id is None:
             return cls.DataPermissions(
                 can_display_points=False,

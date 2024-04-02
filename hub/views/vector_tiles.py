@@ -52,7 +52,7 @@ class ExternalDataSourceTileView(MVTView, DetailView):
                     "You don't have permission to view location data for this data source."
                 )
             return super().get(request, *args, **kwargs)
-        except:
+        except Exception:
             return HttpResponseForbidden(
                 "You don't have permission to view location data for this data source."
             )
