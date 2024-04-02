@@ -26,8 +26,8 @@ interface FeaturesOptionProps {
     b2Description: string;
     b2Screenshot?: string;
 
-    b3Heading: string;
-    b3Description: string;
+    b3Heading?: string;
+    b3Description?: string;
     b3Screenshot?: string;
 
 }
@@ -55,7 +55,7 @@ const FeaturesOption: React.FC<FeaturesOptionProps> = ({ screenshot, labelHeadin
 
                 </div>
 
-                <div className="grid md:grid-cols-2 grid-cols-1 gap-4 py-20 ">
+                <div className="grid md:grid-cols-3 grid-cols-1 gap-4 py-20 ">
                     <div className="relative">
                         <div className="sticky top-0">
                             <TemplateTextBlock
@@ -67,8 +67,8 @@ const FeaturesOption: React.FC<FeaturesOptionProps> = ({ screenshot, labelHeadin
                             />
                         </div>
                     </div>
-                    <div className="flex flex-col gap-4 place-content-center items-center">
-                        <Card className="max-w-lg">
+                    <div className="flex flex-col gap-4 place-content-center items-center col-span-2">
+                        <Card className="">
                             <CardHeader>
                                 {b1Screenshot &&
                                     <Image src={b1Screenshot}
@@ -83,7 +83,7 @@ const FeaturesOption: React.FC<FeaturesOptionProps> = ({ screenshot, labelHeadin
                                 <CardDescription className="text-sm text-meepGray-400 px-6 pb-6">{b1Description}</CardDescription>
                             </CardHeader>
                         </Card>
-                        <Card className="max-w-lg">
+                        <Card className="">
                             <CardHeader>
                                 {b2Screenshot &&
 
@@ -99,7 +99,8 @@ const FeaturesOption: React.FC<FeaturesOptionProps> = ({ screenshot, labelHeadin
                                 <CardDescription className="text-sm text-meepGray-400 px-6 pb-6">{b2Description}</CardDescription>
                             </CardHeader>
                         </Card>
-                        <Card className="max-w-lg">
+                        {b3Heading &&
+                        <Card className="">
                             <CardHeader>
                                 {b3Screenshot &&
 
@@ -115,6 +116,7 @@ const FeaturesOption: React.FC<FeaturesOptionProps> = ({ screenshot, labelHeadin
                                 <CardDescription className="text-sm text-meepGray-400 px-6 pb-6">{b3Description}</CardDescription>
                             </CardHeader>
                         </Card>
+                        }
 
                     </div>
                 </div>
