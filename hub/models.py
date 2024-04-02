@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import List, Optional, TypedDict, Union
 from urllib.parse import urljoin
+import numpy as np
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -1328,6 +1329,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             == relevant_member_geography,
                             key["source_path"],
                         ].values[0]
+                        # print("MATCH?", relevant_member_geography, enrichment_value, "\n\n")
+                        if enrichment_value is np.nan or enrichment_value == np.nan:
+                            return_data.append(None)
+                        else:
                         return_data.append(enrichment_value)
                 except Exception:
                     return_data.append(None)
