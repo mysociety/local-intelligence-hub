@@ -40,7 +40,7 @@ const MailchimpForm = () => {
                     <Input id="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                     <label htmlFor="organisationName">Main organisation name</label>
                     <Input id="organisationName" value={organisationName} onChange={(e) => setOrganisationName(e.target.value)} />
-                    <label htmlFor="role">What's your role?</label>
+                    <label htmlFor="role">What{"'"}s your role?</label>
                     <Input id="role" value={role} onChange={(e) => setRole(e.target.value)} />
                     <label htmlFor="heardAboutMapped">How did you hear about Mapped?</label>
                     <Input id="heardAboutMapped" value={heardAboutMapped} onChange={(e) => setHeardAboutMapped(e.target.value)} />

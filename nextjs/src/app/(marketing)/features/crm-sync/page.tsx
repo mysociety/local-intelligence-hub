@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import TemplateTextBlock from "@/components/marketing/TemplateTextBlock";
 import FeaturesOption from "@/components/marketing/FeaturesOption";
+import { Metadata } from 'next'
 
 export default function DataEnrichment() {
 
@@ -34,4 +35,7 @@ export default function DataEnrichment() {
         b3Description="Upload a spreadsheet with a column of postcodes to get extra geographic data added on that can help you with your organising efforts."
      />
   );
+}
+export const metadata: Metadata = {
+  title: 'CRM Sync',
 }

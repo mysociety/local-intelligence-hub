@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import FeaturesOption from "@/components/marketing/FeaturesOption";
+import { Metadata } from 'next'
 
 export default function DataEnrichment() {
 
@@ -35,4 +36,7 @@ export default function DataEnrichment() {
       />
   
   );
+}
+export const metadata: Metadata = {
+  title: 'Data Enrichment',
 }
