@@ -6,42 +6,48 @@ export const externalDataSourceOptions = {
     modelName: "AirtableSource",
     name: "Airtable",
     logo: AirtableLogo,
-    screenshot: "/airtable-screenshot.png"
+    screenshot: "/airtable-screenshot.png",
+    supported: true
   },
   actionNetwork: {
     key: "action-network",
     modelName: "actionNetworkSource",
     name: "Action Network",
     logo: ActionNetworkLogo,
-    screenshot: "/actionNetwork-screenshot.png"
+    screenshot: "/actionNetwork-screenshot.png",
+    supported: false
   },
   mailchimp: {
     key: "mailchimp",
     modelName: "mailchimpSource",
     name: "Mailchimp",
     logo: MailchimpLogo,
-    screenshot: "/mailchimp-screenshot.png"
+    screenshot: "/mailchimp-screenshot.png",
+    supported: true
   },
   googleSheets: {
     key: "google-sheets",
     modelName: "googleSheetsSource",
     name: "Google Sheets",
     logo: GoogleSheetsLogo,
-    screenshot: "/googleSheets-screenshot.png"
+    screenshot: "/googleSheets-screenshot.png",
+    supported: false
   },
   civiCRM: {
     key: "civi-crm",
     modelName: "civiCRMSource",
     name: "Civi CRM",
     logo: CiviCRMLogo,
-    screenshot: "/civiCRM-screenshot.png"
+    screenshot: "/civiCRM-screenshot.png",
+    supported: false
   },
   nationBuilder: {
     key: "nation-builder",
     modelName: "nationBuilderSource",
     name: "NationBuilder",
     logo: NationBuilderLogo,
-    screenshot: "/nationBuilder-screenshot.png"
+    screenshot: "/nationBuilder-screenshot.png",
+    supported: false
   },
 
   
