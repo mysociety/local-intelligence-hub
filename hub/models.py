@@ -1314,10 +1314,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             return_data = []
             enrichment_df = await sync_to_async(self.get_imported_dataframe)()
             for key in keys:
-                print(f"loading key {key}")
+                print(f"loading enrichment data for key {key['member_id']} {key['source_id']} {key['source_path']}")
                 try:
                     if key.get("postcode_data", None) is None:
-                        print("returning none because postcode data is none")
+                        print(f"returning none for key {key['member_id']} because postcode data is none")
                         return_data.append(None)
                         continue
                     relevant_member_geography = get(
@@ -1337,13 +1337,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         relevant_member_geography == ""
                         or relevant_member_geography is None
                     ):
-                        print(f"returning none because {relevant_member_geography}")
+                        print(f"returning none for key {key['member_id']} because {relevant_member_geography}")
                         return_data.append(None)
                         continue
                     else:
-                        print(
-                            f"*** picking {key['source_path']} from \n {enrichment_df}"
-                        )
+                        print(f"picking key {key['member_id']} {key['source_path']} from data frame")
                         enrichment_value = enrichment_df.loc[
                             # Match the member's geography to the enrichment source's geography
                             enrichment_df[self.geography_column]
@@ -1352,18 +1350,19 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             key["source_path"],
                         ].values[0]
                         if enrichment_value is np.nan or enrichment_value == np.nan:
+                            print(f"missing data for {key['member_id']} {key['source_path']}")
                             return_data.append(None)
                         else:
+                            print(f"picked {enrichment_value} for {key['member_id']} {key['source_path']}")
                             return_data.append(enrichment_value)
                 except Exception as e:
                     print(f"loader exception {e}")
                     return_data.append(None)
 
-            print(f"returning {return_data}")
             return return_data
 
         def cache_key_fn(key: self.EnrichmentLookup) -> str:
-            return f"{key['member_id']}_{key['source']}_{key['source_path']}"
+            return f"{key['member_id']}_{key['source_id']}_{key['source_path']}"
 
         return DataLoader(load_fn=fetch_enrichment_data, cache_key_fn=cache_key_fn)
 
@@ -1391,7 +1390,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             member = await loaders["fetch_record"].load(member)
         update_fields = {}
         try:
-            print(f"mapping member {member}")
+            print(f"mapping member {member.get('id')}")
             postcode_data = None
             if self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE:
                 # Get postcode from member
@@ -1413,7 +1412,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 else:
                     try:
                         source_loader = loaders["source_loaders"].get(source, None)
-                        print(f"source loader {source_loader}")
                         if source_loader is not None and postcode_data is not None:
                             loaded = await source_loader.load(
                                 self.EnrichmentLookup(
@@ -1428,11 +1426,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             )
                             update_fields[destination_column] = loaded
                     except Exception as e:
-                        print(f"exception {e}")
+                        print(f"mapping exception {e}")
                         # TODO: sentry logging
                         continue
             # Return the member and config data
-            print(f"mapped member {member} {update_fields}")
+            print(f"mapped member {member.get('id')} {update_fields}")
             return self.MappedMember(member=member, update_fields=update_fields)
         except TypeError:
             # Error fetching postcode data
