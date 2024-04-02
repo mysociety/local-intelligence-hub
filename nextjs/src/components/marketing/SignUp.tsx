@@ -19,7 +19,7 @@ const SignUp: React.FC<SignUpProps> = () => {
         <Card className="w-full bg-brandBlue flex flex-col sm:flex-row items-center relative overflow-clip">
             <div className="flex items-center grow">
                 <FeatureTextSection
-                    heading="Sign up"
+                    heading="Sign up to the waitlist"
                     description="We’re always working on new features and integrations. Subscribe to hear about updates as we launch them."
                 />
             </div>

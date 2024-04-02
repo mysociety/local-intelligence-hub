@@ -17,7 +17,7 @@ export default async function Login() {
       <div className='text-labelMain text-meepGray-400'>Don’t have an account?</div>
       <Link href="/signup" className='block'>
         <Button className='w-full' variant='outline' size="sm">
-          Sign up
+          Sign up to the waitlist
         </Button>
       </Link>
     </div>
