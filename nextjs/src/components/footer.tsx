@@ -9,7 +9,7 @@ export default function Footer() {
             <div className="flex flex-row items-center gap-[100px] pt-md">
                 <Link href="https://commonknowledge.coop/"><CommonKnowledgeLogo /></Link>
                 <Link href="https://www.civicpower.org.uk/">   <CiviPowerFundLogo /></Link>
-                <Link href="https://www.jrf.org.uk/"> <JRRTLogo /></Link></div>
+                <Link href="https://www.jrrt.org.uk/"> <JRRTLogo /></Link></div>
             <Link href="/" className="text-muted font-IBMPlexMono text-[15px] tracking-[-0.3px] leading-[150%]">Privacy policy</Link>
         </footer>)
 }
