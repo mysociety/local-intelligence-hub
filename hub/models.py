@@ -9,8 +9,10 @@ import numpy as np
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.gis.db.models import MultiPolygonField, PointField
 from django.contrib.gis.geos import Point
+from django.core.cache import cache
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min
 from django.db.models.functions import Cast, Coalesce
@@ -682,6 +684,9 @@ class GenericData(CommonData):
     phone = models.CharField(max_length=100, blank=True, null=True)
     address = models.CharField(max_length=1000, blank=True, null=True)
 
+    def remote_url(self):
+        return self.data_type.data_set.external_data_source.record_url(self.data)
+
     def __str__(self):
         if self.name:
             return self.name
@@ -709,7 +714,7 @@ class GenericData(CommonData):
 
 class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
-    gss = models.CharField(max_length=30)
+    gss = models.CharField(max_length=30, unique=True)
     name = models.CharField(max_length=200)
     area_type = models.ForeignKey(
         AreaType, on_delete=models.CASCADE, related_name="areas"
@@ -718,6 +723,10 @@ class Area(models.Model):
     polygon = MultiPolygonField(srid=4326, blank=True, null=True)
     point = PointField(srid=4326, blank=True, null=True)
     overlaps = models.ManyToManyField("self", through="AreaOverlap")
+
+    class Meta:
+        indexes = [models.Index(fields=["gss"])]
+        unique_together = ["gss", "area_type"]
 
     def __str__(self):
         return self.name
@@ -768,9 +777,6 @@ class Area(models.Model):
                 [bounds_tuple[0], bounds_tuple[1]],
                 [bounds_tuple[2], bounds_tuple[3]],
             ]
-
-    class Meta:
-        unique_together = ["gss", "area_type"]
 
 
 class AreaOverlap(models.Model):
@@ -1290,11 +1296,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         source_path: str
         source_data: Optional[any]
 
-    def get_import_data(self):
-        print(f"getting import data where external data source id is {self.id}")
+    @classmethod
+    def _get_import_data(self, id: str):
+        """
+        For use by views to query data without having to instantiate the class / query the database for the CRM first
+        """
+        print(f"getting import data where external data source id is {id}")
         return GenericData.objects.filter(
-            data_type__data_set__external_data_source_id=self.id
+            data_type__data_set__external_data_source_id=id
         )
+
+    def get_import_data(self):
+        return self._get_import_data(self.id)
 
     def get_analytics_queryset(self):
         return self.get_import_data()
@@ -1317,10 +1330,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             return_data = []
             enrichment_df = await sync_to_async(self.get_imported_dataframe)()
             for key in keys:
-                print(f"loading enrichment data for key {key['member_id']} {key['source_id']} {key['source_path']}")
+                print(
+                    f"loading enrichment data for key {key['member_id']} {key['source_id']} {key['source_path']}"
+                )
                 try:
                     if key.get("postcode_data", None) is None:
-                        print(f"returning none for key {key['member_id']} because postcode data is none")
+                        print(
+                            f"returning none for key {key['member_id']} because postcode data is none"
+                        )
                         return_data.append(None)
                         continue
                     relevant_member_geography = get(
@@ -1340,11 +1357,15 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         relevant_member_geography == ""
                         or relevant_member_geography is None
                     ):
-                        print(f"returning none for key {key['member_id']} because {relevant_member_geography}")
+                        print(
+                            f"returning none for key {key['member_id']} because {relevant_member_geography}"
+                        )
                         return_data.append(None)
                         continue
                     else:
-                        print(f"picking key {key['member_id']} {key['source_path']} from data frame")
+                        print(
+                            f"picking key {key['member_id']} {key['source_path']} from data frame"
+                        )
                         enrichment_value = enrichment_df.loc[
                             # Match the member's geography to the enrichment source's geography
                             enrichment_df[self.geography_column]
@@ -1355,13 +1376,19 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         if enrichment_value:
                             enrichment_value = enrichment_value[0]
                             if enrichment_value is np.nan or enrichment_value == np.nan:
-                                print(f"missing data for {key['member_id']} {key['source_path']}")
+                                print(
+                                    f"missing data for {key['member_id']} {key['source_path']}"
+                                )
                                 return_data.append(None)
                             else:
-                                print(f"picked {enrichment_value} for {key['member_id']} {key['source_path']}")
+                                print(
+                                    f"picked {enrichment_value} for {key['member_id']} {key['source_path']}"
+                                )
                                 return_data.append(enrichment_value)
                         else:
-                            print(f"missing data for {key['member_id']} {key['source_path']}")
+                            print(
+                                f"missing data for {key['member_id']} {key['source_path']}"
+                            )
                             return_data.append(None)
                 except Exception as e:
                     print(f"loader exception {e}")
@@ -1641,6 +1668,89 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         except (UniqueViolation, IntegrityError):
             pass
 
+    class DataPermissions(TypedDict):
+        can_display_points: bool
+        can_display_details: bool
+
+    @classmethod
+    def user_permissions(
+        cls,
+        user: Union[AbstractBaseUser, str],
+        external_data_source: Union["ExternalDataSource", str],
+    ) -> DataPermissions:
+        if user is None or external_data_source is None:
+            return cls.DataPermissions(
+                can_display_points=False,
+                can_display_details=False,
+            )
+        external_data_source_id = (
+            external_data_source
+            if not isinstance(external_data_source, ExternalDataSource)
+            else str(external_data_source.id)
+        )
+        user_id = user if not hasattr(user, "id") else str(user.id)
+        if user_id is None or external_data_source_id is None:
+            return cls.DataPermissions(
+                can_display_points=False,
+                can_display_details=False,
+            )
+
+        # Check for cached permissions on this source
+        permission_cache_key = SharingPermission._get_cache_key(external_data_source_id)
+        permissions_dict = cache.get(permission_cache_key)
+        if permissions_dict is None:
+            permissions_dict = {}
+
+        # If cached permissions exist, look for this user's permissions
+        elif permissions_dict.get(user_id, None) is not None:
+            return permissions_dict[user_id]
+
+        # Calculate permissions for this source
+        if not isinstance(external_data_source, ExternalDataSource):
+            external_data_source = cls.objects.get(pk=external_data_source)
+            if external_data_source is None:
+                return cls.DataPermissions(
+                    can_display_points=False,
+                    can_display_details=False,
+                )
+        # If the user's org owns the source, they can see everything
+        if user_id is None or external_data_source.organisation is None:
+            return cls.DataPermissions(
+                can_display_points=False,
+                can_display_details=False,
+            )
+        else:
+            can_display_points = external_data_source.organisation.members.filter(
+                user=user_id
+            ).exists()
+            can_display_details = can_display_points
+        # Otherwise, check if their org has sharing permissions at any granularity
+        if not can_display_points:
+            permission = SharingPermission.objects.filter(
+                external_data_source=external_data_source,
+                organisation__members__user=user_id,
+            ).first()
+            if permission is not None:
+                if permission.visibility_record_coordinates:
+                    can_display_points = True
+                    if permission.visibility_record_details:
+                        can_display_details = True
+
+        permissions_dict[user_id] = cls.DataPermissions(
+            can_display_points=can_display_points,
+            can_display_details=can_display_details,
+        )
+
+        cache.set(
+            permission_cache_key,
+            permissions_dict,
+            # Cached permissions for this source will be reset on save/delete
+            # so we can set the timeout to something fairly generous.
+            timeout=60 * 60,
+        )
+
+        return permissions_dict[user_id]
+
 
 class AirtableSource(ExternalDataSource):
     """
@@ -1705,6 +1815,9 @@ class AirtableSource(ExternalDataSource):
 
     def record_url_template(self):
         return f"https://airtable.com/{self.base_id}/{self.table_id}/{{record_id}}"
+
+    def record_url(self, record_id: str):
+        return f"https://airtable.com/{self.base_id}/{self.table_id}/{record_id}"
 
     async def fetch_one(self, member_id):
         record = self.table.get(member_id)
@@ -1892,6 +2005,37 @@ class SharingPermission(models.Model):
     class Meta:
         unique_together = ["external_data_source", "organisation"]
 
+    @classmethod
+    def _get_cache_key(cls, external_data_source_id: str) -> str:
+        return f"external_data_source_permissions:{external_data_source_id}"
+
+    def get_cache_key(self) -> str:
+        return self._get_cache_key(self.external_data_source_id)
+
+
+@receiver(models.signals.pre_delete, sender=SharingPermission)
+@receiver(models.signals.pre_save, sender=SharingPermission)
+def clear_permissions_cache_for_source(sender, instance, *args, **kwargs):
+    """
+    Clear the cache for the external data source when a sharing permission is saved or deleted
+    """
+    sharing_permission = instance
+    cache.delete(sharing_permission.get_cache_key())
+
+
+@receiver(models.signals.pre_delete, sender=Membership)
+@receiver(models.signals.pre_save, sender=Membership)
+def clear_permissions_cache_intersecting_user(sender, instance, *args, **kwargs):
+    """
+    Since the permissions cache for each source is a dictionary of users, we need to clear it when a membership is saved or deleted as this will affect a user's permissions.
+    """
+    membership = instance
+    sharing_permissions = SharingPermission.objects.filter(
+        organisation=membership.organisation
+    )
+    for sharing_permission in sharing_permissions:
+        cache.delete(sharing_permission.get_cache_key())
+
 
 class Report(PolymorphicModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -1915,6 +2059,7 @@ class Report(PolymorphicModel):
 
 class MapReport(Report, Analytics):
     layers = models.JSONField(blank=True, null=True, default=list)
+    display_options = models.JSONField(blank=True, null=True, default=dict)
 
     class MapLayer(TypedDict):
         name: str

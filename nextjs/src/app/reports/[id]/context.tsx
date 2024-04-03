@@ -7,6 +7,7 @@ import { createContext, useContext, useState } from "react";
 export type DisplayOptionsType = {
   showLastElectionData: boolean,
   showMPs: boolean,
+  showStreetDetails: boolean,
 };
 
 export const ReportContext = createContext<{
@@ -25,6 +26,7 @@ export const ReportContext = createContext<{
   displayOptions: {
     showLastElectionData: false,
     showMPs: false,
+    showStreetDetails: false,
   },
   setDisplayOptions: () => {},
 });

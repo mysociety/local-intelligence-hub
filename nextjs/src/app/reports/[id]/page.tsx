@@ -47,29 +47,31 @@ import { Provider as JotaiProvider, atom, useAtom } from "jotai";
 import { ConstituenciesPanel } from "./ConstituenciesPanel";
 import { MapProvider } from "react-map-gl";
 import { twMerge } from "tailwind-merge";
+import { merge } from 'lodash'
 
 type Params = {
   id: string
 }
 
+const defaultDisplayOptions = {
+  showLastElectionData: false,
+  showMPs: false,
+  showStreetDetails: false,
+}
+
 export default function Page({ params: { id } }: { params: Params }) {
   const client = useApolloClient();
   const router = useRouter();
-
-  const [displayOptions, setDisplayOptions] = useState<DisplayOptionsType>({
-    showLastElectionData: false,
-    showMPs: false,
-  });
   
   const report = useQuery<GetMapReportQuery, GetMapReportQueryVariables>(GET_MAP_REPORT, {
     variables: { id },
+    returnPartialData: true
   });
 
+  const displayOptions = merge({}, defaultDisplayOptions, report.data?.mapReport?.displayOptions || {})
+
   const updateDisplayOptions = (options: Partial<DisplayOptionsType>) => {
-    setDisplayOptions((prevOptions: any) => ({
-      ...prevOptions,
-      ...options,
-    }));
+    updateMutation({ displayOptions: { ...displayOptions, ...options } })
   };
 
   return (
@@ -95,7 +97,7 @@ export default function Page({ params: { id } }: { params: Params }) {
       client.refetchQueries({
         include: [
           "GetMapReport",
-          "MapReportLayersSummary",
+          "MapReportPage",
           "MapReportLayerAnalytics",
           "GetConstituencyData",
           "DataSourceGeoJSONPoints",
@@ -225,13 +227,6 @@ function ReportPage() {
         <div className='w-full h-full pointer-events-auto'>
           <ReportMap />
         </div>
-        {report?.loading && !report?.data?.mapReport && (
-          <div className="absolute w-full h-full inset-0">
-            <div className="flex flex-col items-center justify-center w-full h-full">
-              <LoadingIcon />
-            </div>
-          </div>
-        )}
         {/* Layer card */}
         <aside className="absolute top-5 left-5 right-0 w-0 pointer-events-auto">
           <div className="flex flex-col items-start gap-4">
@@ -339,6 +334,7 @@ const GET_MAP_REPORT = gql`
     mapReport(pk: $id) {
       id
       name
+      displayOptions
       organisation {
         id
         slug
@@ -357,6 +353,7 @@ const UPDATE_MAP_REPORT = gql`
     updateMapReport(data: $input) {
       id
       name
+      displayOptions
       layers {
         id
         name

@@ -14,6 +14,7 @@ from strawberry import auto
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
+from strawberry_django.permissions import IsAuthenticated
 
 from hub import models
 from hub.graphql.dataloaders import (
@@ -528,14 +529,17 @@ class Area:
 
 @strawberry.type
 class GroupedDataCount:
-    label: Optional[str] = dict_key_field()
-    gss: Optional[str] = dict_key_field()
-    count: int = dict_key_field()
+    label: Optional[str]
+    gss: Optional[str]
+    count: int
+    area_data: Optional[strawberry.Private[Area]] = None
 
     @strawberry_django.field
     async def gss_area(self, info: Info) -> Optional[Area]:
+        if self.area_data is not None:
+            return self.area_data
         loader = FieldDataLoaderFactory.get_loader_class(models.Area, field="gss")
-        return await loader(context=info.context).load(self.get("gss", None))
+        return await loader(context=info.context).load(self.gss)
 
 
 class GroupedDataCountForSource(GroupedDataCount):
@@ -560,8 +564,9 @@ class GroupedDataCountWithBreakdown(GroupedDataCount):
 
 @strawberry_django.type(models.GenericData, filters=CommonDataFilter)
 class GenericData(CommonData):
+    id: auto
+    data: auto
     last_update: auto
-    id: auto = strawberry_django.field(field_name="data")
     name: auto = attr_field()
     first_name: auto
     last_name: auto
@@ -571,50 +576,76 @@ class GenericData(CommonData):
     address: auto
     postcode: auto
     postcode_data: Optional[PostcodesIOResult]
+    remote_url: str = fn_field()
 
 
 @strawberry.type
 class MapReportMemberFeature(PointFeature):
     # Optional, because of sharing options
+    id: Optional[str]
     properties: Optional[GenericData]
 
 
 @strawberry.interface
 class Analytics:
     imported_data_count: int = fn_field()
-    imported_data_count_by_region: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_constituency: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_constituency_2024: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_council: List[GroupedDataCount] = fn_field()
-    imported_data_count_by_ward: List[GroupedDataCount] = fn_field()
+
+    @strawberry_django.field
+    def imported_data_count_by_region(self) -> List[GroupedDataCount]:
+        data = self.imported_data_count_by_region()
+        # areas = models.Area.objects.filter(gss__in=[datum["gss"] for datum in data])
+        return [
+            GroupedDataCount(
+                **datum
+                # area_data=next((area for area in areas if area.gss == datum.get("gss", None)), None),
+            )
+            for datum in data
+        ]
+
+    @strawberry_django.field
+    def imported_data_count_by_constituency(self) -> List[GroupedDataCount]:
+        data = self.imported_data_count_by_constituency()
+        return [GroupedDataCount(**datum) for datum in data]
+
+    @strawberry_django.field
+    def imported_data_count_by_constituency_2024(self) -> List[GroupedDataCount]:
+        data = self.imported_data_count_by_constituency_2024()
+        return [GroupedDataCount(**datum) for datum in data]
+
+    @strawberry_django.field
+    def imported_data_count_by_council(self) -> List[GroupedDataCount]:
+        data = self.imported_data_count_by_council()
+        return [GroupedDataCount(**datum) for datum in data]
+
+    @strawberry_django.field
+    def imported_data_count_by_ward(self) -> List[GroupedDataCount]:
+        data = self.imported_data_count_by_ward()
+        return [GroupedDataCount(**datum) for datum in data]
 
     @strawberry_django.field
     def imported_data_count_by_constituency_by_source(
         self, info: Info, gss: str
     ) -> List[GroupedDataCountWithBreakdown]:
         results = self.imported_data_count_by_constituency_by_source()
-        print(results)
         return_data = []
         for gss, group in itertools.groupby(results, lambda x: x["gss"]):
-            print(gss, group)
             if gss:
                 group = list(group)
-                return_data.append(
-                    GroupedDataCountWithBreakdown(
-                        label=group[0]["label"],
-                        count=sum([source["count"] for source in group]),
-                        gss=gss,
-                        sources=[
-                            GroupedDataCountForSource(
-                                source_id=source["source_id"],
-                                count=source["count"],
-                                label=source["label"],
-                                gss=gss,
-                            )
-                            for source in group
-                        ],
+                if len(group) > 0:
+                    return_data.append(
+                        GroupedDataCountWithBreakdown(
+                            label=group[0].get("label"),
+                            count=sum([source.get("count", 0) for source in group]),
+                            gss=gss,
+                            sources=[
+                                GroupedDataCountForSource(
+                                    **source,
+                                    gss=gss,
+                                )
+                                for source in group
+                            ],
+                        )
                     )
-                )
         return return_data
 
     @strawberry_django.field
@@ -624,7 +655,7 @@ class Analytics:
         res = self.imported_data_count_by_constituency(gss=gss)
         if len(res) == 0:
             return None
-        return res[0]
+        return GroupedDataCount(**res[0])
 
     @strawberry_django.field
     def imported_data_count_for_constituency_2024(
@@ -633,7 +664,7 @@ class Analytics:
         res = self.imported_data_count_by_constituency_2024(gss=gss)
         if len(res) == 0:
             return None
-        return res[0]
+        return GroupedDataCount(**res[0])
 
 
 @strawberry.type
@@ -676,62 +707,6 @@ class BaseDataSource(Analytics):
     )
 
     @strawberry_django.field
-    def imported_data_geojson_points(
-        self: models.ExternalDataSource, info: Info
-    ) -> List[MapReportMemberFeature]:
-        user = get_current_user(info)
-        can_display_points = self.organisation.members.filter(user=user).exists()
-        can_display_details = can_display_points
-        if not can_display_points:
-            permission = models.SharingPermission.objects.filter(
-                external_data_source=self, organisation__members__user=user
-            ).first()
-            if permission is None:
-                return []
-            if not permission.visibility_record_coordinates:
-                return []
-            if permission.visibility_record_details:
-                can_display_details = True
-
-        data = self.get_import_data()
-        return [
-            MapReportMemberFeature.from_geodjango(
-                point=generic_datum.point,
-                id=generic_datum.data,
-                properties=generic_datum if can_display_details else None,
-            )
-            for generic_datum in data
-            if generic_datum.point is not None
-        ]
-
-    @strawberry_django.field
-    def imported_data_geojson_point(
-        self: models.ExternalDataSource, info: Info, id: str
-    ) -> MapReportMemberFeature | None:
-        user = get_current_user(info)
-        can_display_points = self.organisation.members.filter(user=user).exists()
-        can_display_details = can_display_points
-        if not can_display_points:
-            permission = models.SharingPermission.objects.filter(
-                external_data_source=self, organisation__members__user=user
-            ).first()
-            if permission is None:
-                return None
-            if not permission.visibility_record_coordinates:
-                return None
-            if permission.visibility_record_details:
-                can_display_details = True
-
-        datum = self.get_import_data().filter(data=id).first()
-        if datum is None or datum.point is None:
-            return None
-        return MapReportMemberFeature.from_geodjango(
-            point=datum.point,
-            id=datum.data,
-            properties=datum if can_display_details else None,
-        )
-
-    @strawberry_django.field
     def is_import_scheduled(self: models.ExternalDataSource, info: Info) -> bool:
         job = self.get_scheduled_import_job()
         return job is not None
@@ -758,6 +733,27 @@ class BaseDataSource(Analytics):
         if job is None:
             return None
         return BatchJobProgress(**self.get_scheduled_batch_job_progress(job))
+
+
+@strawberry_django.field(extensions=[IsAuthenticated()])
+def imported_data_geojson_point(
+    info: Info, generic_data_id: str
+) -> MapReportMemberFeature | None:
+    datum = models.GenericData.objects.prefetch_related(
+        "data_type__data_set__external_data_source"
+    ).get(pk=generic_data_id)
+    if datum is None or datum.point is None:
+        return None
+    external_data_source = datum.data_type.data_set.external_data_source
+    user = get_current_user(info)
+    permissions = models.ExternalDataSource.user_permissions(user, external_data_source)
+    if not permissions.get("can_display_points"):
+        return None
+    return MapReportMemberFeature.from_geodjango(
+        point=datum.point,
+        id=datum.id,
+        properties=datum if permissions.get("can_display_details") else None,
+    )
 
 
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
@@ -932,6 +928,7 @@ class SharingPermission:
 @strawberry_django.type(models.MapReport)
 class MapReport(Report, Analytics):
     layers: List[MapLayer]
+    display_options: JSON
 
 
 @strawberry_django.field()

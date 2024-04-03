@@ -36,7 +36,7 @@ env = environ.Env(
     FRONTEND_SITE_TITLE=(str, False),
     SCHEDULED_UPDATE_SECONDS_DELAY=(int, 3),
     DEBUG=(bool, False),
-    HIDE_DEBUG_TOOLBAR=(bool, False),
+    HIDE_DEBUG_TOOLBAR=(bool, True),
     LOG_QUERIES=(bool, False),
     ALLOWED_HOSTS=(list, []),
     CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3000"]),
@@ -135,7 +135,7 @@ MIDDLEWARE = [
     "hub.middleware.django_jwt_middleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "hub.middleware.record_last_seen_middleware",
+    # "hub.middleware.record_last_seen_middleware",
 ]
 
 ROOT_URLCONF = "local_intelligence_hub.urls"
@@ -353,3 +353,11 @@ if MINIO_STORAGE_ENDPOINT is not False:
         "MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET"
     )
     # MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET = env("MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET")
+
+CACHES = {
+    "default": {
+        # TODO: Set up Redis for production
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+    }
+}
