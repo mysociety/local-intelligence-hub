@@ -1,6 +1,6 @@
 import IframeResizer from 'iframe-resizer-react'
 
-const MailchimpForm = () => {
+export default function WaitlistForm () {
     return (
       <IframeResizer
         src="https://us19.list-manage.com/survey?u=7d61a70102ab811e6282bee60&id=089628c6aa&attribution=false"
@@ -9,4 +9,3 @@ const MailchimpForm = () => {
       />
     )
 };
-export default MailchimpForm;
