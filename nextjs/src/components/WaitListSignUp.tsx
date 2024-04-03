@@ -1,3 +1,5 @@
+"use client"
+
 import IframeResizer from 'iframe-resizer-react'
 
 export default function WaitlistForm () {
