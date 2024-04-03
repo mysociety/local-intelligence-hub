@@ -10,16 +10,10 @@ export default async function Login() {
   await useRequireNoAuth();
 
   return (
-    <div className='m-8 md:ml-36 max-w-xs space-y-4 rounded border border-meepGray-600 bg-meepGray-800 p-8'>
-      <h1 className='text-hLg font-IBMPlexSans'>Sign up to the waitlist</h1>
+    <div className='m-8 text-center'>
+      <h1 className='text-hLg font-IBMPlexSans mb-8'>Join the waitlist ⏳</h1>
+      <p className='max-w-md text-center my-8 mx-auto text-lg'>We{"'"}re just getting started and we want to work closely with organisers to make sure we{"'"}re building the right tools and building them right.</p>
       <RegisterForm />
-      <div aria-roledescription="divider" className="border-t border-meepGray-600"></div>
-      <div className='text-labelMain text-meepGray-400'>Already have an account?</div>
-      <Link href="/login" className='block'>
-        <Button className='w-full' variant='outline' size="sm">
-          Login
-        </Button>
-      </Link>
     </div>
   );
 }
