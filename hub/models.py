@@ -5,7 +5,6 @@ import uuid
 from datetime import datetime, timezone
 from typing import List, Optional, TypedDict, Union
 from urllib.parse import urljoin
-import numpy as np
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -23,6 +22,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 
+import numpy as np
 import pandas as pd
 import pytz
 from asgiref.sync import async_to_sync, sync_to_async
