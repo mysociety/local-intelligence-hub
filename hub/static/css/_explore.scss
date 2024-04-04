@@ -48,13 +48,16 @@ $osm-sea-blue: rgb(168, 212, 243);
     background: $osm-sea-blue;
 }
 
-.explore-modal {
+.dataset-modal {
     // Full-width modal, even on large screens.
     .modal-dialog {
         margin: var(--#{$prefix}modal-margin);
         max-width: none;
     }
+}
 
+.dataset-modal,
+.area-type-modal {
     .list-group {
         --#{$prefix}list-group-item-padding-y: 0.75em;
     }
