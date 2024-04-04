@@ -19,7 +19,7 @@
 
             <p>Use data from The Climate Coalition, its member organisations, and the wider sector, to narrow down your focus to the constituencies that matter to you.</p>
 
-            <h2 class="h5 mt-4 mt-lg-5 mb-3 mb-lg-4 text-primary">Step 1: Select an output format</h2>
+            <h2 class="h5 mt-4 mt-lg-5 mb-3 mb-lg-4 text-primary">Select an output format</h2>
 
             <ul class="nav nav-tabs mx-n4 mx-lg-n5 px-4 px-lg-5" id="myTab" role="tablist">
                 <li class="nav-item" role="presentation">
@@ -33,14 +33,55 @@
 
         <div class="p-4 p-lg-5">
             <div class="mb-4 mb-lg-5" v-cloak>
+                <h2 class="h5 mt-2 mt-lg-3 mb-3 mb-lg-4 text-primary">Constituency generation</h2>
+
+                <!-- 
                 <label for="area_type" class="form-label text-muted">Constituency generation</label>
+                -->
+
                 <p class="from-text fs-7">Parliamentary boundaries are changing at the next election. You can search by either the current or future constituencies. Some datasets have been <a href="{% url 'future_constituencies' %}" target="_blank" title="Opens in a new tab">automatically converted</a> to future constituencies.</p>
+                <!--
                 <select id="area_type" class="form-select form-select-lg" v-model="area_type" @change="changeAreaType()">
                     <option v-for="t in area_types" :value="t['slug']">${ t.label }</option>
                 </select>
+                -->
+
+                <button type="button" class="btn btn-outline-secondary p-3 w-100 position-relative" data-bs-toggle="modal" data-bs-target="#areaType">
+                    <p class="mb-1">Current constituencies</p>
+                    <small>These constituencies are the areas which MPs currently represent in UK Parliament.</small>
+                    <!--
+                    <small>This is the constituency in which parliamentary candidates will soon be standing for election.</small>
+                    -->
+                </button>
+
+                <div class="modal fade" id="areaType" tabindex="-1" aria-labelledby="areaTypeLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                        <h5 class="modal-title" id="areaTypeLabel">Select area</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="list-group">
+                                <template v-for="t in area_types">
+                                    <button class="list-group-item list-group-item-action">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <strong class="lh-sm me-auto pe-3">${ t.label }</strong>
+                                        </div>
+                                        <small class="d-block fs-7 mb-2">
+                                            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat
+                                        </small>
+                                        <small>Find out more <a href="https://www.localintelligencehub.com/explore/">here</a></small>
+                                      </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
             </div>
 
-            <h2 class="h5 mb-4 text-primary">Step 2: Filter constituencies</h2>
+            <h2 class="h5 mb-4 text-primary">Filter constituencies</h2>
 
             <div ref="filtersContainer" class="mb-4" hidden>
                 <template v-for="filter in filters">
@@ -122,7 +163,7 @@
             <div class="tab-content">
                 <div class="tab-pane" :class="{ 'active': mapViewActive }" id="options-map" role="tabpanel" aria-labelledby="tab-map" tabindex="0">
 
-                    <h2 class="h5 mt-4 mt-lg-5 mb-3 mb-lg-4 text-primary">Step 3: Shade constituencies (optional)</h2>
+                    <h2 class="h5 mt-4 mt-lg-5 mb-3 mb-lg-4 text-primary">Shade constituencies (optional)</h2>
 
                     <div ref="shaderContainer" hidden>
                         <div v-if="shader" class="filter mb-0" :class="{ 'bg-red-100': !shader.areas_available.includes(area_type) }">
@@ -162,7 +203,7 @@
                 </div>
                 <div class="tab-pane" :class="{ 'active': tableViewActive }" id="options-table" role="tabpanel" aria-labelledby="tab-table" tabindex="0">
 
-                    <h2 class="h5 mt-4 mt-lg-5 mb-3 mb-lg-4 text-primary">Step 3: Add extra columns (optional)</h2>
+                    <h2 class="h5 mt-4 mt-lg-5 mb-3 mb-lg-4 text-primary">Add extra columns (optional)</h2>
 
                     <div ref="columnContainer" class="mb-4" hidden>
                     <template v-for="column in columns">
