@@ -5,13 +5,13 @@ import { ActionNetworkLogo, AirtableLogo } from "@/components/logos";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-import { DataSourceType, ListExternalDataSourcesQuery, ListExternalDataSourcesQueryVariables } from "@/__generated__/graphql";
+import { DataSourceType, ListOrganisationsQuery, ListOrganisationsQueryVariables } from "@/__generated__/graphql";
 import { useEffect } from "react";
 import qs from 'query-string'
 import { ExternalDataSourceCard } from "@/components/ExternalDataSourceCard";
 
 const LIST_UPDATE_CONFIGS = gql`
-  query ListExternalDataSources {
+  query ListOrganisations {
     myOrganisations {
       id
       externalDataSources {
@@ -54,7 +54,7 @@ const LIST_UPDATE_CONFIGS = gql`
 `;
 
 export default function ExternalDataSourceList() {
-  const { loading, error, data, refetch } = useQuery<ListExternalDataSourcesQuery, ListExternalDataSourcesQueryVariables>(LIST_UPDATE_CONFIGS);
+  const { loading, error, data, refetch } = useQuery<ListOrganisationsQuery, ListOrganisationsQueryVariables>(LIST_UPDATE_CONFIGS);
 
   useEffect(() => {
     refetch()

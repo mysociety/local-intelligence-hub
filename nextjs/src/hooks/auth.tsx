@@ -40,7 +40,7 @@ export const useRequireNoAuth = async () => {
   const user = await useAuth();
 
   if (user) {
-    redirect("/account");
+    redirect("/");
   }
 
   return user;

@@ -50,8 +50,9 @@ The worker launch command is: `python manage.py procrastinate worker`
 
 ### Environment Variables
 
-The only required environment variable is:
+The only required environment variables are:
 
+- NEXT_PUBLIC_FRONTEND_BASE_URL: The URL of the frontend website (with https://, no trailing slash)
 - NEXT_PUBLIC_BACKEND_BASE_URL: The URL of the backend web server (with https://, no trailing slash)
 
 ### Launch Commands

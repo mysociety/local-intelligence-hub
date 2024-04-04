@@ -63,10 +63,15 @@ const TEST_SOURCE = gql`
 const CREATE_SOURCE = gql`
   mutation CreateSource($AirtableSource: AirtableSourceInput!) {
     createSource: createAirtableSource(data: $AirtableSource) {
-      id
-      name
-      healthcheck
-      dataType
+      code
+      errors {
+        message
+      }
+      result {
+        id
+        name
+        dataType
+      }
     }
   }
 `;
@@ -195,19 +200,20 @@ export default function Page({
         {
           loading: "Saving connection...",
           success: (d: FetchResult<CreateSourceMutation>) => {
-            if (!d.errors && d.data?.createSource) {
+            const errors = d.errors || d.data?.createSource.errors || []
+            if (!errors.length && d.data?.createSource?.result) {
               if (d.data?.createSource.dataType === DataSourceType.Member) {
                 router.push(
-                  `/data-sources/create/configure/${d.data.createSource.id}`,
+                  `/data-sources/create/configure/${d.data.createSource.result.id}`,
                 );
               } else {
                 router.push(
-                  `/data-sources/inspect/${d.data.createSource.id}`,
+                  `/data-sources/inspect/${d.data.createSource.result.id}`,
                 );
               }
               return "Connection successful";
             }
-            throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
+            throw new Error(errors.map(e => e.message).join(', ') || "Unknown error")
           },
           error(e) {
             return {
@@ -220,7 +226,7 @@ export default function Page({
     }
   }
 
-  if (createSourceResult.loading) {
+  if (createSourceResult.loading || createSourceResult.data?.createSource.result) {
     return (
       <div className="space-y-6">
         <h1 className="text-hLg">Saving connection...</h1>

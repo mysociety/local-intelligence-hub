@@ -65,7 +65,6 @@ export default function Page({ params: { id } }: { params: Params }) {
   
   const report = useQuery<GetMapReportQuery, GetMapReportQueryVariables>(GET_MAP_REPORT, {
     variables: { id },
-    returnPartialData: true
   });
 
   const displayOptions = merge({}, defaultDisplayOptions, report.data?.mapReport?.displayOptions || {})

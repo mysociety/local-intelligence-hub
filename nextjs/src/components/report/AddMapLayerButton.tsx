@@ -29,8 +29,8 @@ import { gql, useFragment, useQuery } from "@apollo/client"
 import { useContext, useMemo, useState } from "react"
 import { Check, ChevronsUpDown, Plus, RefreshCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Form, useForm } from "react-hook-form"
-import { FormField } from "../ui/form"
+import { useForm } from "react-hook-form"
+import { Form, FormField } from "../ui/form"
 import { ReportContext } from "@/app/reports/[id]/context"
 import { useRouter } from "next/navigation"
 import { MAP_REPORT_LAYERS_SUMMARY } from "@/app/reports/[id]/lib"
@@ -56,34 +56,34 @@ export function AddMapLayerButton({ addLayer }: { addLayer(layer: Source): void 
           <Plus className="w-4" /> add data source
         </Button>
       </DialogTrigger>
-      <Form {...form}>
         <DialogContent className="sm:max-w-[425px]">
-          <form onSubmit={form.handleSubmit(d => {
-            setOpen(false)
-            if (!d.source) return 
-            addLayer(d.source)
-          })}>
-            <DialogHeader>
-              <DialogTitle>Add a map layer</DialogTitle>
-              <DialogDescription>
-                Select a data source from your org or one that{"'"}s been shared with you.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <FormField
-                control={form.control}
-                name="source"
-                render={({ field }) => (
-                  <MapLayerSelector value={field.value} onChange={field.onChange} />
-                )}
-              />
-            </div>
-            <DialogFooter>
-              <Button type="submit">Add layer</Button>
-            </DialogFooter>
-          </form>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(d => {
+              setOpen(false)
+              if (!d.source) return 
+              addLayer(d.source)
+            })}>
+              <DialogHeader>
+                <DialogTitle>Add a map layer</DialogTitle>
+                <DialogDescription>
+                  Select a data source from your org or one that{"'"}s been shared with you.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <FormField
+                  control={form.control}
+                  name="source"
+                  render={({ field }) => (
+                    <MapLayerSelector value={field.value} onChange={field.onChange} />
+                  )}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="submit">Add layer</Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
-      </Form>
     </Dialog>
   )
 }

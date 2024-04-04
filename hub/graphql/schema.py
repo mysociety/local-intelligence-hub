@@ -1,10 +1,15 @@
+import logging
 from typing import List, Optional
+
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 
 import strawberry
 import strawberry_django
 from gqlauth.core.middlewares import JwtSchema
 from gqlauth.user import arg_mutations as auth_mutations
 from gqlauth.user.queries import UserQueries
+from graphql import GraphQLError
+from strawberry.types import ExecutionContext
 from strawberry_django import mutations as django_mutations
 from strawberry_django.optimizer import DjangoOptimizerExtension
 from strawberry_django.permissions import IsAuthenticated
@@ -12,6 +17,8 @@ from strawberry_django.permissions import IsAuthenticated
 from hub import models
 from hub.graphql import mutations as mutation_types
 from hub.graphql.types import model_types
+
+logger = logging.getLogger(__name__)
 
 
 @strawberry.type
@@ -83,7 +90,7 @@ class Mutation:
     verify_account = auth_mutations.VerifyAccount.field
     resend_activation_email = auth_mutations.ResendActivationEmail.field
 
-    create_airtable_source: model_types.AirtableSource = (
+    create_airtable_source: mutation_types.CreateSourceMutationOutput = (
         mutation_types.create_airtable_source
     )
     update_airtable_source: model_types.AirtableSource = django_mutations.update(
@@ -142,7 +149,44 @@ class Mutation:
     ] = mutation_types.update_sharing_permissions
 
 
-schema = JwtSchema(
+class CustomErrorLoggingSchema(JwtSchema):
+    errors_to_ignore: List[type[Exception]] = [
+        PermissionDenied,
+        ObjectDoesNotExist,
+    ]
+    """
+    Squash ignorable GraphQL exceptions for cleaner logs
+    (currently just Permissions and Not Found errors)
+    """
+
+    def process_errors(
+        self,
+        errors: List[GraphQLError],
+        execution_context: ExecutionContext | None = None,
+    ) -> None:
+        notable_errors = []
+        for error in errors:
+            matching_ignored_error_class = next(
+                (
+                    cls
+                    for cls in self.errors_to_ignore
+                    if isinstance(error.original_error, cls)
+                ),
+                None,
+            )
+            if matching_ignored_error_class is not None:
+                # Log a warning for an ignored error class
+                logger.warning(
+                    f"GraphQL request raised {matching_ignored_error_class.__name__} exception."
+                )
+            else:
+                # Otherwise pass the error to the default logger
+                # (which prints the full stack trace)
+                notable_errors.append(error)
+        return super().process_errors(notable_errors, execution_context)
+
+
+schema = CustomErrorLoggingSchema(
     query=Query,
     mutation=Mutation,
     extensions=[
