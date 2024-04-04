@@ -25,18 +25,25 @@ const app = createApp({
       area_type_changed: false, // so we know to reload the map
       area_types: [{
         slug: "WMC",
-        label: "Current constituencies"
+        label: "Current constituencies",
+        short_label: "constituencies",
+        description: "These are the constituencies currently represented by MPs in UK Parliament."
       }, {
         slug: "WMC23",
-        label: "Future constituencies"
+        label: "Future constituencies",
+        short_label: "constituencies",
+        description: "These are the constituencies in which parliamentary candidates will soon be standing for election."
       }, {
         slug: "STC",
-        label: "Single Tier councils"
+        label: "Single Tier councils",
+        short_label: "councils",
+        description: "Includes county councils, London boroughs, unitary authorities, and metropolitain districts."
       }, {
         slug: "DIS",
-        label: "District councils"
+        label: "District councils",
+        short_label: "councils",
+        description: "Some places are served by both a county council, and one of these district councils, which handle local services like rubbish collection and planning applications."
       }],
-      area_header_label: "constituencies",
 
       filters_applied: false, // were filters applied on the last Update?
       area_count: 0, // number of areas returned on last Update
@@ -52,10 +59,14 @@ const app = createApp({
     }
   },
   watch: {
+    area_type(newType, oldType) { this.updateState() }
   },
   computed: {
-    modal() {
-      return new Modal(this.$refs.modal)
+    datasetModal() {
+      return new Modal(this.$refs.datasetModal)
+    },
+    areaTypeModal() {
+      return new Modal(this.$refs.areaTypeModal)
     },
     selectableDatasets() {
       let categories = {
@@ -103,11 +114,11 @@ const app = createApp({
     this.$refs.filtersContainer.removeAttribute('hidden')
     this.$refs.shaderContainer.removeAttribute('hidden')
     this.$refs.columnContainer.removeAttribute('hidden')
-    this.$refs.modal.addEventListener('shown.bs.modal', (e) => {
-      this.$refs.modal.querySelector('.search-input input').focus()
-      this.$refs.modal.querySelector('.modal-body:last-child').scrollTop = 0
+    this.$refs.datasetModal.addEventListener('shown.bs.modal', (e) => {
+      this.$refs.datasetModal.querySelector('.search-input input').focus()
+      this.$refs.datasetModal.querySelector('.modal-body:last-child').scrollTop = 0
     })
-    this.$refs.modal.addEventListener('hidden.bs.modal', (e) => {
+    this.$refs.datasetModal.addEventListener('hidden.bs.modal', (e) => {
       this.searchText = ''
     })
 
@@ -171,19 +182,22 @@ const app = createApp({
     },
     selectFilter() {
       this.currentType = 'filter'
-      this.modal.show()
+      this.datasetModal.show()
       this.loadDatasets().then(() => { this.datasetsLoaded = true })
       trackEvent('explore_add_filter_click')
     },
+    selectAreaType() {
+      this.areaTypeModal.show()
+    },
     selectShader() {
       this.currentType = 'shader'
-      this.modal.show()
+      this.datasetModal.show()
       this.loadDatasets().then(() => { this.datasetsLoaded = true })
       trackEvent('explore_add_shader_click')
     },
     selectColumn() {
       this.currentType = 'column'
-      this.modal.show()
+      this.datasetModal.show()
       this.loadDatasets().then(() => { this.datasetsLoaded = true })
       trackEvent('explore_add_column_click')
     },
@@ -193,7 +207,7 @@ const app = createApp({
         case 'shader': this.addShader(datasetName); break
         case 'column': this.addColumn(datasetName); break
       }
-      this.modal.hide()
+      this.datasetModal.hide()
     },
     addFilter(datasetName, current = {}) {
       const dataset = this.getDataset(datasetName)
@@ -371,13 +385,18 @@ const app = createApp({
         }, 100)
       }
     },
-    changeAreaType() {
+    changeAreaType(slug) {
+      this.area_type = slug
       this.area_type_changed = true
+      this.areaTypeModal.hide()
+      trackEvent('explore_area_type_changed', {
+        'area_type': slug
+      });
     },
-    getAreaTypeLabel(slug) {
+    getAreaType(slug) {
       return this.area_types.find((t) => {
         return t["slug"] == slug
-      })["label"]
+      })
     },
     updateResults() {
       if (this.view == 'map') {
@@ -478,11 +497,6 @@ const app = createApp({
           });
 
           this.area_count = Object.keys(features).length
-          if (["DIS", "STC"].includes(this.area_type)) {
-            this.area_header_label = "councils"
-          } else {
-            this.area_header_label = "constituencies"
-          }
 
           window.geojson.eachLayer(function (layer) {
             if ( features[layer.feature.properties.PCON13CD] ) {
