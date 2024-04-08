@@ -146,6 +146,7 @@
             <p class="d-flex flex-wrap align-items-center text-muted">Tap the {% include 'hub/includes/icons/heart-empty.html' %} icon on any dataset to add it to your {% include 'hub/includes/icons/heart-empty.html' %} Favourites tab.</p>
         </aside>
 
+        {% if is_westminster_cons %}
         <section class="mb-5 mb-lg-6 area-section" id="mp">
             {% if area_type == "WMC" %}
             {% if no_mp %}
@@ -382,6 +383,7 @@
             {% endfor %}
             {% endif %}
         </section>
+        {% endif %}
 
         {% if categories.opinion %}
         <section class="mb-5 mb-lg-6 area-section" id="opinion">
