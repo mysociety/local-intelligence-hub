@@ -16,7 +16,7 @@ import {
   AutoUpdateSwitch,
   AutoUpdateWebhookRefresh,
   TriggerUpdateButton,
-} from "@/components/AutoUpdateCard";
+} from "@/components/ExternalDataSourceCard";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import {
   DataSourceType,
@@ -27,6 +27,7 @@ import {
   ExternalDataSourceInspectPageQueryVariables,
   ImportDataMutation,
   ImportDataMutationVariables,
+  ProcrastinateJobStatus,
   UpdateExternalDataSourceMutation,
   UpdateExternalDataSourceMutationVariables,
 } from "@/__generated__/graphql";
@@ -72,6 +73,9 @@ import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
 import { contentEditableMutation } from "@/lib/html";
 import { UpdateExternalDataSourceFields } from "@/components/UpdateExternalDataSourceFields";
+import { ManageSourceSharing } from "./ManageSourceSharing";
+import { BatchJobProgressBar } from "@/components/BatchJobProgress";
+import { format } from "d3-format";
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {
@@ -80,8 +84,8 @@ const GET_UPDATE_CONFIG = gql`
       name
       dataType
       remoteUrl
+      crmType
       connectionDetails {
-        crmType: __typename
         ... on AirtableSource {
           baseId
           tableId
@@ -90,6 +94,11 @@ const GET_UPDATE_CONFIG = gql`
           apiKey
           listId
         }
+      }
+      lastJob {
+        id
+        lastEventAt
+        status
       }
       autoUpdateEnabled
       webhookHealthcheck
@@ -102,25 +111,37 @@ const GET_UPDATE_CONFIG = gql`
       emailField
       phoneField
       addressField
-      isImporting
+      isImportScheduled
+      importProgress {
+        id
+        status
+        total
+        succeeded
+        estimatedFinishTime
+      }
+      isUpdateScheduled
+      updateProgress {
+        id
+        status
+        total
+        succeeded
+        estimatedFinishTime
+      }
       importedDataCount
       fieldDefinitions {
         label
         value
         description
       }
-      jobs {
-        status
-        id
-        taskName
-        args
-        lastEventAt
-      }
       updateMapping {
         source
         sourcePath
         destinationColumn
       }
+      sharingPermissions {
+        id
+      }
+      organisationId
     }
   }
 `;
@@ -135,8 +156,16 @@ const DELETE_UPDATE_CONFIG = gql`
 
 export default function InspectExternalDataSource({
   externalDataSourceId,
+  name,
+  dataType,
+  remoteUrl,
+  crmType
 }: {
   externalDataSourceId: string;
+  name?: string;
+  dataType?: DataSourceType;
+  remoteUrl?: string|null;
+  crmType?: string;
 }) {
   const router = useRouter();
   const client = useApolloClient();
@@ -149,45 +178,38 @@ export default function InspectExternalDataSource({
     variables: {
       ID: externalDataSourceId,
     },
+    pollInterval: 5000
   });
 
-  useEffect(() => {
-    const interval = setInterval(() => refetch(), 5000)
-    return () => clearInterval(interval)
-  }, [refetch])
-
-  if (!data?.externalDataSource && loading) {
-    return <LoadingIcon />;
+  if (!loading && !data?.externalDataSource) {
+    return <h2>Couldn{"'"}t find this data source</h2>;
   }
 
-  if (!data?.externalDataSource) {
-    return <h2>No data sources found</h2>;
-  }
-
-  const source = data.externalDataSource
-  const allowMapping = source.dataType == DataSourceType.Member
+  const source = data?.externalDataSource
+  
+  const allowMapping = source?.dataType == DataSourceType.Member
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-7">
       <header className="flex flex-row justify-between gap-8">
         <div className='w-full'>
           <div className="text-meepGray-400">
-            {source.dataType === DataSourceType.Member ? "Member list" : "Custom data layer"}
+            {dataType === DataSourceType.Member ? "Member list" : "Custom data layer"}
           </div>
           <h1
             className="text-hLg"
             {...contentEditableMutation(updateMutation, "name", "Untitled Data Source")}
           >
-            {source.name}
+            {name}
           </h1>
-          {!!source.remoteUrl && (
-            <a href={source.remoteUrl} className="text-meepGray-300 underline text-sm">
-              Visit URL: {source.remoteUrl} <ExternalLink />
+          {!!remoteUrl && (
+            <a href={remoteUrl} className="text-meepGray-300 underline text-sm">
+              Visit URL: {remoteUrl} <ExternalLink />
             </a>
           )}
         </div>
         <div>
-          {source.connectionDetails.crmType ===
+          {crmType ===
             "AirtableSource" && (
             <div className="inline-flex rounded-xl bg-meepGray-700 px-10 py-6 overflow-hidden flex-row items-center justify-center">
               <AirtableLogo className="w-full" />
@@ -195,228 +217,222 @@ export default function InspectExternalDataSource({
           )}
         </div>
       </header>
-      {allowMapping && (
+      <div className="border-b border-meepGray-700 pt-10" />
+      {(!data?.externalDataSource && loading) || !source ? (
+        <div className='py-8 text-center'>
+          <LoadingIcon />
+        </div>
+      ) : (
         <>
-        <div className="border-b border-meepGray-700 pt-10" />
-        <div className='grid sm:grid-cols-2 gap-8'>
-          <section className='space-y-4'>
+        <div className='grid md:grid-cols-2 gap-4 items-start'>
+          <section className='space-y-4 max-w-sm'>
             <div>Imported records</div>
-            <div className='text-hXlg'>{source.importedDataCount || 0}</div>
+            <div className='text-hXlg'>{format(",")(source.importedDataCount || 0)}</div>
             <p className='text-sm text-meepGray-400'>
               Import data from this source into Mapped for use in auto-updates and reports.
             </p>
-            <Button disabled={source.isImporting} onClick={() => importData(client, externalDataSourceId)}>
-              {!source.isImporting ? "Import data" : <span className='flex flex-row gap-2 items-center'>
+            <Button disabled={source.isImportScheduled} onClick={() => importData(client, externalDataSourceId)}>
+              {!source.isImportScheduled ? "Import all data" : <span className='flex flex-row gap-2 items-center'>
                 <LoadingIcon size={"18"} />
-                <span>Importing...</span>
+                <span>{
+                  source.importProgress?.status === ProcrastinateJobStatus.Doing
+                    ? "Importing..."
+                    : "Scheduled"
+                }</span>
               </span>}
             </Button>
-          </section>
-          <section className='space-y-4'>
-            <h2 className="text-hSm mb-5">Auto-updates</h2>
-            <p className='text-sm text-meepGray-400'>
-              Auto-updates are {source.autoUpdateEnabled ? "enabled" : "disabled"} for this data source. Mapped can automatically update this data source based on the mapping you{"'"}ve defined in the Data Mapping section.
-            </p>
-            {source.jobs[0]?.lastEventAt ? (
-              <div className="text-meepGray-400">
-                Last sync:{" "}
-                {formatRelative(source.jobs[0].lastEventAt, new Date())} (
-                {source.jobs[0].status})
-              </div>
-            ) : null}
-            <AutoUpdateSwitch externalDataSource={source} />
-            {source.autoUpdateEnabled && !source.webhookHealthcheck && (
-              <>
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Webhooks unhealthy</AlertTitle>
-                  <AlertDescription>
-                    The webhook is unhealthy. Please refresh the webhook to fix auto-updates.
-                  </AlertDescription>
-                </Alert>
-                <AutoUpdateWebhookRefresh externalDataSourceId={externalDataSourceId} />
-              </>
+            {source.importProgress?.status === ProcrastinateJobStatus.Doing && (
+              <BatchJobProgressBar batchJobProgress={source.importProgress} pastTenseVerb="Imported" />
             )}
           </section>
+          <section className="space-y-4">
+            <header className="flex flex-row justify-between items-center">
+              <div>
+                <h2 className="text-hSm mb-5">Data fields</h2>
+                <p className='text-sm text-meepGray-400'>
+                  <span className='align-middle'>
+                    Designate special fields for use in Mapped reports
+                  </span>
+                </p>
+              </div>
+            </header>
+            <UpdateExternalDataSourceFields
+              crmType={source.crmType}
+              fieldDefinitions={source.fieldDefinitions}
+              initialData={{
+                geographyColumn: source.geographyColumn,
+                geographyColumnType: source.geographyColumnType,
+                firstNameField: source.firstNameField,
+                lastNameField: source.lastNameField,
+                fullNameField: source.fullNameField,
+                emailField: source.emailField,
+                phoneField: source.phoneField,
+                addressField: source.addressField,
+              }}
+              onSubmit={updateMutation}
+            />
+          </section>
         </div>
-        </>
-      )}
-      <div className="border-b border-meepGray-700 pt-10" />
-      <section className="space-y-4">
-        <header className="flex flex-row justify-between items-center">
-          <div>
-            <h2 className="text-hSm mb-5">Data updates</h2>
-            <p className='text-sm text-meepGray-400'>
-              <span className='align-middle'>
-                Pull third party data into your data source{"'"}s original location, based on the record{"'"}s 
-              </span>
-              <DataSourceFieldLabel
-                className='align-middle'
-                label={source.geographyColumnType}
-                connectionType={source.connectionDetails.__typename!}
-              />
-            </p>
-          </div>
-          {allowMapping && !!source.updateMapping?.length && (
-            <TriggerUpdateButton id={source.id} />
-          )}
-        </header>
-        <UpdateMappingForm
-          saveButtonLabel="Update"
-          allowMapping={allowMapping}
-          connectionType={source.connectionDetails.crmType}
-          fieldDefinitions={source.fieldDefinitions}
-          initialData={{
-            // Trim out the __typenames
-            geographyColumn: source?.geographyColumn,
-            geographyColumnType: source?.geographyColumnType,
-            updateMapping: source?.updateMapping?.map((m) => ({
-              source: m.source,
-              sourcePath: m.sourcePath,
-              destinationColumn: m.destinationColumn,
-            })),
-          }}
-          onSubmit={updateMutation}
-        />
-      </section>
-      <div className="border-b border-meepGray-700 pt-10" />
-      {source.dataType === DataSourceType.Member && (
-        <section className="space-y-4">
-          <header className="flex flex-row justify-between items-center">
-            <div>
-              <h2 className="text-hSm mb-5">Member data fields</h2>
-              <p className='text-sm text-meepGray-400'>
-                <span className='align-middle'>
-                  Designate special fields for use in Mapped reports
-                </span>
-              </p>
-            </div>
-          </header>
-          <UpdateExternalDataSourceFields
-            connectionType={source.connectionDetails.crmType}
-            fieldDefinitions={source.fieldDefinitions}
-            initialData={{
-              firstNameField: source.firstNameField,
-              lastNameField: source.lastNameField,
-              fullNameField: source.fullNameField,
-              emailField: source.emailField,
-              phoneField: source.phoneField,
-              addressField: source.addressField,
-            }}
-            onSubmit={updateMutation}
-          />
-        </section>
-      )}
-      <div className="border-b border-meepGray-700 pt-10" />
-      <section className='space-y-4'>
-        <h2 className="text-hSm mb-5">Connection</h2>
-        {!!source.connectionDetails.baseId && (
-          <div className='mt-2'>
-            <code>
-              {source.connectionDetails.apiKey}
-            </code>
-            <br />
-            <code>
-              {source.connectionDetails.baseId}
-            </code>
-            <br />
-            <code>
-              {source.connectionDetails.tableId}
-            </code>
-          </div>
+        {source.dataType === DataSourceType.Member && !!source.sharingPermissions?.length && (
+          <>
+            <div className="border-b-4 border-meepGray-700 pt-10" />
+            <section className="space-y-4">
+              <header className="flex flex-row justify-between items-center">
+                <div>
+                  <h2 className="text-hSm mb-5">Sharing</h2>
+                  <p className='text-sm text-meepGray-400'>
+                    <span className='align-middle'>
+                      Share this data source with other users in your organization
+                    </span>
+                  </p>
+                </div>
+              </header>
+              <ManageSourceSharing externalDataSourceId={externalDataSourceId} />
+            </section>
+          </>
         )}
-        <AlertDialog>
-          <AlertDialogTrigger>
-            <Button variant="destructive">Permanently delete</Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription className="text-base">
-                This action cannot be undone. This will permanently delete
-                this data source connect from Mapped.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel
-                className={buttonVariants({ variant: "outline" })}
-              >
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => {
-                  del();
+        {source.dataType === DataSourceType.Member && (
+          <>
+            <div className="border-b-4 border-meepGray-700 pt-10" />
+            <section className="space-y-4">
+              <header className="grid md:grid-cols-2 gap-4 items-start">
+                <section className="space-y-4">
+                  <h2 className="text-hSm mb-5">Data updates</h2>
+                  <p className='text-sm text-meepGray-400'>
+                    <span className='align-middle'>
+                      Pull third party data into your data source{"'"}s original location, based on the record{"'"}s 
+                    </span>
+                    <DataSourceFieldLabel
+                      className='align-middle'
+                      label={source.geographyColumnType}
+                      crmType={source.crmType}
+                    />
+                  </p>
+                  {allowMapping && (
+                    <div className='space-y-4'>
+                      {!source.isUpdateScheduled ? (
+                        <TriggerUpdateButton id={source.id} />
+                      ) : (
+                        <>
+                          <Button disabled>
+                            <span className='flex flex-row gap-2 items-center'>
+                              <LoadingIcon size={"18"} />
+                              <span>{
+                                source.updateProgress?.status === ProcrastinateJobStatus.Doing
+                                  ? "Updating..."
+                                  : "Scheduled"
+                              }</span>
+                            </span>
+                          </Button>
+                          {source.updateProgress?.status === ProcrastinateJobStatus.Doing && (
+                            <BatchJobProgressBar batchJobProgress={source.updateProgress} pastTenseVerb="Updated" />
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+                </section>
+                {allowMapping && (
+                  <section className='space-y-4'>
+                    <h2 className="text-hSm mb-5">Auto-updates</h2>
+                    <p className='text-sm text-meepGray-400'>
+                      Auto-updates are {source.autoUpdateEnabled ? "enabled" : "disabled"} for this data source. Mapped can automatically update this data source based on the mapping you{"'"}ve defined in the Data Mapping section.
+                    </p>
+                    {source.lastJob ? (
+                      <div className="text-meepGray-400">
+                        Last sync:{" "}
+                        {formatRelative(source.lastJob.lastEventAt, new Date())} (
+                        {source.lastJob.status})
+                      </div>
+                    ) : null}
+                    <AutoUpdateSwitch externalDataSource={source} />
+                    {source.autoUpdateEnabled && !source.webhookHealthcheck && (
+                      <>
+                        <Alert variant="destructive">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertTitle>Webhooks unhealthy</AlertTitle>
+                          <AlertDescription>
+                            The webhook is unhealthy. Please refresh the webhook to fix auto-updates.
+                          </AlertDescription>
+                        </Alert>
+                        <AutoUpdateWebhookRefresh externalDataSourceId={externalDataSourceId} />
+                      </>
+                    )}
+                  </section>
+                )}
+              </header>
+              <div className="border-b border-meepGray-700 pt-10" />
+              <h2 className="text-hSm !mt-8 my-5">Configure data mapping</h2>
+              <UpdateMappingForm
+                saveButtonLabel="Update"
+                allowMapping={allowMapping}
+                crmType={source.crmType}
+                fieldDefinitions={source.fieldDefinitions}
+                initialData={{
+                  // Trim out the __typenames
+                  geographyColumn: source?.geographyColumn,
+                  geographyColumnType: source?.geographyColumnType,
+                  updateMapping: source?.updateMapping?.map((m) => ({
+                    source: m.source,
+                    sourcePath: m.sourcePath,
+                    destinationColumn: m.destinationColumn,
+                  })),
                 }}
-                className={buttonVariants({ variant: "destructive" })}
-              >
-                Confirm delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </section>
-      <div className="border-b border-meepGray-700 pt-10" />
-      <section>
-        <h2 className="text-hSm mb-5 flex flex-row items-center gap-3">
-          <span>Logs</span>
-          <RefreshCcw
-            className="inline-block cursor-pointer w-4 h-4"
-            onClick={async () => {
-              const tid = toast.loading("Refreshing");
-              await refetch();
-              toast.success("Refreshed", {
-                duration: 2000,
-                id: tid,
-              });
-            }}
-          />
-        </h2>
-        <LogsTable
-          data={source.jobs}
-          sortingState={[{ desc: true, id: "lastEventAt" }]}
-          columns={[
-            {
-              accessorKey: "lastEventAt",
-              header: ({ column }) => {
-                return (
-                  <Button
-                    variant="ghost"
-                    onClick={() =>
-                      column.toggleSorting(column.getIsSorted() === "asc")
-                    }
-                  >
-                    Last Update Time
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
-                );
-              },
-              cell: (d) => {
-                try {
-                  if (d) {
-                    // @ts-ignore
-                    return formatRelative(new Date(d.getValue()), new Date());
-                  }
-                  return null;
-                } catch (e) {
-                  return null;
-                }
-              },
-            },
-            { header: "ID", accessorKey: "id" },
-            { header: "Job", accessorKey: "taskName" },
-            { header: "Status", accessorKey: "status" },
-            {
-              header: "Args",
-              accessorKey: "args",
-              cell: (d) => (
-                <code>
-                  <pre>{JSON.stringify(d.getValue() || {}, null, 2)}</pre>
-                </code>
-              ),
-            },
-          ]}
-        />
-      </section>
+                onSubmit={updateMutation}
+              />
+            </section>
+          </>
+        )}
+        <div className="border-b-4 border-meepGray-700 pt-10" />
+        <section className='space-y-4'>
+          <h2 className="text-hSm mb-5">Connection</h2>
+          {!!source.connectionDetails.baseId && (
+            <div className='mt-2'>
+              <code>
+                {source.connectionDetails.apiKey}
+              </code>
+              <br />
+              <code>
+                {source.connectionDetails.baseId}
+              </code>
+              <br />
+              <code>
+                {source.connectionDetails.tableId}
+              </code>
+            </div>
+          )}
+          <AlertDialog>
+            <AlertDialogTrigger>
+              <Button variant="destructive">Permanently delete</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription className="text-base">
+                  This action cannot be undone. This will permanently delete
+                  this data source connect from Mapped.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel
+                  className={buttonVariants({ variant: "outline" })}
+                >
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    del();
+                  }}
+                  className={buttonVariants({ variant: "destructive" })}
+                >
+                  Confirm delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </section>
+      </>
+      )}
     </div>
   );
 
@@ -455,10 +471,10 @@ export default function InspectExternalDataSource({
       success: (e: FetchResult<DeleteUpdateConfigMutation>) => {
         if (!e.errors) {
           router.push("/data-sources");
-          return `Deleted ${source.name}`;
+          return `Deleted ${source?.name}`;
         }
       },
-      error: `Couldn't delete ${source.name}`,
+      error: `Couldn't delete ${source?.name}`,
     });
   }
 }
@@ -469,14 +485,17 @@ export function importData (client: ApolloClient<any>, externalDataSourceId: str
       mutation ImportData($id: String!) {
         importAll(externalDataSourceId: $id) {
           id
-          importedDataCount
-          isImporting
-          jobs {
-            status
-            id
-            taskName
-            args
-            lastEventAt
+          externalDataSource {
+            importedDataCount
+            isImportScheduled
+            importProgress {
+              status
+              id
+              total
+              succeeded
+              failed
+              estimatedFinishTime
+            }
           }
         }
       }

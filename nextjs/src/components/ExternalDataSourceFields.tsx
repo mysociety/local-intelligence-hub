@@ -12,7 +12,7 @@ export function PreopulatedSelectField<FormInputs extends object = any>({
   placeholder,
   fieldDefinitions,
   control,
-  connectionType,
+  crmType,
   guess,
   required = false
 }: {
@@ -22,7 +22,7 @@ export function PreopulatedSelectField<FormInputs extends object = any>({
   required?: boolean
   fieldDefinitions?: Array<FieldDefinition> | null
   control: Control<FormInputs>
-  connectionType: string
+  crmType: string
   guess?: string | null
 }) {
   const humanisedFieldName = label || `${toSpaceCase(name.replace(/(field)$/ig, ''))} field`
@@ -50,7 +50,7 @@ export function PreopulatedSelectField<FormInputs extends object = any>({
                         (field) => (
                           <SelectItem key={field.value} value={field.value}>
                             <DataSourceFieldLabel
-                              connectionType={connectionType}
+                              crmType={crmType}
                               fieldDefinition={field}
                             />  
                           </SelectItem>

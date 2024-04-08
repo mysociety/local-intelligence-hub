@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { BarChart3, Layers, MoreVertical } from "lucide-react"
+import { BarChart3, Layers, MoreVertical, RefreshCcw, Trash } from "lucide-react"
 import { Toggle } from "@/components/ui/toggle"
 import DataConfigPanel from "@/components/dataConfig";
 import { FetchResult, gql, useApolloClient, useQuery } from "@apollo/client";
@@ -34,30 +34,44 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import spaceCase from 'to-space-case'
 import { toastPromise } from "@/lib/toast";
 import { MAP_REPORT_LAYER_ANALYTICS, ReportMap, selectedConstituencyAtom } from "@/components/report/ReportMap";
 import { MAP_REPORT_FRAGMENT, isConstituencyPanelOpenAtom, isDataConfigOpenAtom } from "./lib";
-import { ReportContext } from "./context";
+import { DisplayOptionsType, ReportContext } from "./context";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import { contentEditableMutation } from "@/lib/html";
 import { Provider as JotaiProvider, atom, useAtom } from "jotai";
 import { ConstituenciesPanel } from "./ConstituenciesPanel";
 import { MapProvider } from "react-map-gl";
 import { twMerge } from "tailwind-merge";
+import { merge } from 'lodash'
 
 type Params = {
   id: string
 }
 
+const defaultDisplayOptions = {
+  showLastElectionData: false,
+  showMPs: false,
+  showStreetDetails: false,
+}
+
 export default function Page({ params: { id } }: { params: Params }) {
   const client = useApolloClient();
   const router = useRouter();
+  
   const report = useQuery<GetMapReportQuery, GetMapReportQueryVariables>(GET_MAP_REPORT, {
     variables: { id },
   });
+
+  const displayOptions = merge({}, defaultDisplayOptions, report.data?.mapReport?.displayOptions || {})
+
+  const updateDisplayOptions = (options: Partial<DisplayOptionsType>) => {
+    updateMutation({ displayOptions: { ...displayOptions, ...options } })
+  };
 
   return (
     <MapProvider>
@@ -66,7 +80,10 @@ export default function Page({ params: { id } }: { params: Params }) {
           id,
           report,
           updateReport: updateMutation,
-          deleteReport: del
+          deleteReport: del,
+          refreshReportDataQueries,
+          displayOptions,
+          setDisplayOptions: updateDisplayOptions
         }}>
           <ReportPage />
         </ReportContext.Provider>
@@ -74,19 +91,21 @@ export default function Page({ params: { id } }: { params: Params }) {
     </MapProvider>
   )
 
-  function refreshStatistics () {
+  function refreshReportDataQueries () {
     toastPromise(
       client.refetchQueries({
         include: [
-          // Queries that involve member data
+          "GetMapReport",
+          "MapReportPage",
           "MapReportLayerAnalytics",
-          "GetConstituencyData"
+          "GetConstituencyData",
+          "DataSourceGeoJSONPoints",
         ],
       }),
       {
-        loading: "Refreshing statistics...",
-        success: "Statistics updated",
-        error: `Couldn't update statistics`,
+        loading: "Refreshing report data...",
+        success: "Report data updated",
+        error: `Couldn't refresh report data`,
       }
     )
   }
@@ -105,10 +124,10 @@ export default function Page({ params: { id } }: { params: Params }) {
       loading: "Saving...",
       success: (d) => {
         if (!d.errors && d.data) {
-          if (input.layers?.length) {
+          if ('layers' in input) {
             // If layers changed, that means
             // all the member numbers will have changed too.
-            refreshStatistics()
+            refreshReportDataQueries()
           }
           return {
             title: "Report saved",
@@ -143,7 +162,7 @@ export default function Page({ params: { id } }: { params: Params }) {
 }
 
 function ReportPage() {
-  const { report, updateReport, deleteReport } = useContext(ReportContext);
+  const { report, updateReport, deleteReport, refreshReportDataQueries } = useContext(ReportContext);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDataConfigOpen, setDataConfigOpen] = useAtom(isDataConfigOpenAtom);
   const toggleDataConfig = () => setDataConfigOpen(b => !b);
@@ -167,7 +186,7 @@ function ReportPage() {
 
   if (!report?.loading && report?.called && !report?.data?.mapReport) {
     return (
-      <main className="absolute w-full h-full">
+      <div className="absolute w-full h-full">
         <div className="flex flex-col items-center justify-center w-full h-full">
           <Card className="p-4 bg-white border-1 border-meepGray-700 text-meepGray-800">
             <CardHeader>
@@ -182,7 +201,7 @@ function ReportPage() {
             </CardContent>
           </Card>
         </div>
-      </main>
+      </div>
     )
   }
 
@@ -203,22 +222,15 @@ function ReportPage() {
 
   return (
     <>
-      <main className="absolute w-full h-full flex flex-row pointer-events-none">
+      <div className="absolute w-full h-full flex flex-row pointer-events-none">
         <div className='w-full h-full pointer-events-auto'>
           <ReportMap />
         </div>
-        {report?.loading && !report?.data?.mapReport && (
-          <div className="absolute w-full h-full inset-0">
-            <div className="flex flex-col items-center justify-center w-full h-full">
-              <LoadingIcon />
-            </div>
-          </div>
-        )}
         {/* Layer card */}
         <aside className="absolute top-5 left-5 right-0 w-0 pointer-events-auto">
           <div className="flex flex-col items-start gap-4">
             <Card className="w-[200px] p-3 bg-white border-1 border-meepGray-700 text-meepGray-800">
-              <CardHeader className="flex flex-row items-center mb-4">
+              <CardHeader className="flex flex-row items-start">
                 {report?.loading && !report?.data?.mapReport ? (
                   <CardTitle className="text-hMd grow font-IBMPlexSansMedium">
                     Loading...
@@ -237,14 +249,23 @@ function ReportPage() {
                         <MoreVertical className='w-3' />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent side="right" align="start">
-                        <DropdownMenuItem onClick={() => setDeleteOpen(true)}>Delete</DropdownMenuItem>
+                        {report?.data?.mapReport && (
+                          <DropdownMenuItem onClick={refreshReportDataQueries}>
+                            <RefreshCcw className='w-4 mr-2' />
+                            Refresh
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => setDeleteOpen(true)} className='text-red-400'>
+                          <Trash className='w-4 mr-2' />
+                          Delete
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </>
                 )}
               </CardHeader>
             {report?.data?.mapReport && (
-              <CardContent className='grid grid-cols-1 gap-2'>
+              <CardContent className='mt-4 grid grid-cols-1 gap-2'>
                 {toggles.map(({ icon: Icon, label, enabled, toggle }) => (
                   <div
                     key={label}
@@ -276,7 +297,7 @@ function ReportPage() {
             <ConstituenciesPanel />
           </aside>
         )}
-      </main>
+      </div>
       <AlertDialog open={deleteOpen} onOpenChange={() => setDeleteOpen(false)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -312,6 +333,12 @@ const GET_MAP_REPORT = gql`
     mapReport(pk: $id) {
       id
       name
+      displayOptions
+      organisation {
+        id
+        slug
+        name
+      }
       ... MapReportPage
     }
   }
@@ -325,7 +352,9 @@ const UPDATE_MAP_REPORT = gql`
     updateMapReport(data: $input) {
       id
       name
+      displayOptions
       layers {
+        id
         name
         source {
           id

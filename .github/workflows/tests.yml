@@ -43,7 +43,7 @@ jobs:
         SECRET_KEY: keyboardcat
     steps:
       - name: Checkout repo content
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Install linux dependencies
         run: |
           curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
@@ -52,7 +52,7 @@ jobs:
       - name: Install poetry
         run: curl -sSL https://install.python-poetry.org | python3 -
       - name: Install python dependencies
-        run: ~/.local/bin/poetry export --with dev -f requirements.txt --output requirements.txt && pip install -r requirements.txt
+        run: ~/.local/bin/poetry export --with dev --without-hashes -f requirements.txt --output requirements.txt && pip install -r requirements.txt
       - name: Start server
         run: gunicorn local_intelligence_hub.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 &
       - name: Start ngrok tunnelling

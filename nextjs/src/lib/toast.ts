@@ -5,15 +5,15 @@ type ToastMessage = {
 } & ExternalToast
 
 export async function toastPromise<T>(promise: Promise<T>, options: {
-  loading: string | ToastMessage,
-  success: string | ToastMessage | ((d: T) => string | ToastMessage)
-  error: string | ToastMessage | ((e: any) => string | ToastMessage)
+  loading?: string | ToastMessage,
+  success?: string | ToastMessage | ((d: T) => string | ToastMessage)
+  error?: string | ToastMessage | ((e: any) => string | ToastMessage)
 }) {
   let id: any
   if (typeof options.loading === 'string') {
     id = toast.loading(options.loading)
   } else {
-    id = toast.loading(options.loading.title)
+    id = toast.loading(options.loading?.title || "Loading")
   }
   try {
     const data = await promise
@@ -21,16 +21,24 @@ export async function toastPromise<T>(promise: Promise<T>, options: {
     if (typeof success === 'string') {
       toast.success(success, { id })
     } else {
-      const { title, ...rest } = success
-      toast.success(title, { id, ...rest })
+      if (!success) {
+        toast.success("Success", { id })
+      } else {
+        const { title, ...rest } = success
+        toast.success(title, { id, ...rest })
+      }
     }
   } catch (e) {
     const error = typeof options.error === 'function' ? options.error(e) : options.error
     if (typeof error === 'string') {
       toast.error(error, { id })
     } else {
-      const { title, ...rest } = error
-      toast.error(title, { id, ...rest })
+      if (!error) {
+        toast.success("Error", { id })
+      } else {
+        const { title, ...rest } = error
+        toast.error(title, { id, ...rest })
+      }
     }
   }
 }

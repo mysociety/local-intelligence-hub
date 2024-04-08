@@ -1,10 +1,20 @@
 'use client'
 
 import { buttonVariants } from "@/components/ui/button"
-import Link from 'next/link';
+import Link, { LinkProps } from "next/link"
 import { twMerge } from 'tailwind-merge';
 import { usePathname } from 'next/navigation'
 import { forwardRef } from "react";
+import { useRouter } from "next/navigation"
+
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+
 
 import { cn } from "@/lib/utils"
 import * as React from "react"
@@ -22,10 +32,24 @@ import { Mail } from "lucide-react";
 import { externalDataSourceOptions } from "@/lib/data";
 
 
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+
+import { useState } from "react";
+
+
+
+
 const crmSync: { title: string; href: string; description: string }[] = [
   ...Object.values(externalDataSourceOptions).map(d => ({
     title: d.name,
-    href: `crm/${d.key}`,
+    href: `/integrations/${d.key}`,
     description: d.name,
   })),
   {
@@ -42,6 +66,9 @@ interface NavbarProps {
 
 export default function Navbar({ isLoggedIn }: NavbarProps) {
   const pathname = usePathname()
+
+  const [open, setOpen] = React.useState(false)
+
   return (
     <>
       {isLoggedIn ? (
@@ -74,9 +101,9 @@ export default function Navbar({ isLoggedIn }: NavbarProps) {
       ) : (
         <nav className="p-sm">
           <ul className="flex flex-row">
-            <div className="shrink-0 flex flex-row justify-between items-center bg-meepGray-700 rounded-lg pr-1">
-              <div className="flex flex-row items-center gap-xs">
-                <Link className="pl-xs" href='/'>
+            <div className="shrink-0 flex flex-row justify-between items-center bg-meepGray-700 border border-meepGray-600 rounded-lg p-2">
+              <div className="flex flex-row items-center gap-xs px-2">
+                <Link className="" href='/'>
                   <MappedIcon />
                 </Link>
                 <div className="flex flex-col">
@@ -86,8 +113,8 @@ export default function Navbar({ isLoggedIn }: NavbarProps) {
                   </Link>
                 </div>
               </div>
-              <div className="basis-1/2 flex flex-row items-center justify-center gap-md grow px-3">
 
+              <div className="basis-1/2 flex-row items-center justify-center gap-md grow px-3 ml-4 hidden sm:flex">
                 <NavigationMenu>
                   <NavigationMenuList>
                     <NavigationMenuItem>
@@ -137,15 +164,107 @@ export default function Navbar({ isLoggedIn }: NavbarProps) {
                         </ul>
                       </NavigationMenuContent>
                     </NavigationMenuItem>
+                    <NavigationMenuItem>
+                      <Link href="/about" legacyBehavior passHref>
+                        <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                          About
+                        </NavigationMenuLink>
+                      </Link>
+                    </NavigationMenuItem>
                   </NavigationMenuList>
                 </NavigationMenu>
               </div>
-              <div>
-                <li>
-                  <Link href="/login" className={buttonVariants({ variant: "brand" })}>Login</Link>
-                </li>
+            </div>
+            <div className="flex grow justify-end items-center">
+              <li className="hidden sm:block">
+                <Link href="/login" className={buttonVariants({ variant: "brand" })}>Login</Link>
+              </li>
+              <div className="sm:hidden">
+                <Sheet open={open} onOpenChange={setOpen}>
+                  <SheetTrigger className={buttonVariants({ variant: "secondary" })}>Menu</SheetTrigger>
+                  <SheetContent className="bg-meepGray-800">
+                    <SheetHeader>
+                      <SheetTitle></SheetTitle>
+                      <SheetDescription>
+
+                      </SheetDescription>
+                    </SheetHeader>
+                    <Accordion type="single" collapsible>
+                      <AccordionItem value="item-1">
+                        <AccordionTrigger className="text-lg p-4 bg-meepGray-700 rounded-md my-2">Features</AccordionTrigger>
+                        <AccordionContent className="flex flex-col gap-2">
+                          <MobileLink
+                            href="/features/member-maps"
+                            onOpenChange={setOpen}
+                            className="p-4 border border-meepGray-600 rounded-md"
+                          >
+                            Member Maps
+                          </MobileLink>
+                          <MobileLink
+                            href="/features/data-enrichment"
+                            onOpenChange={setOpen}
+                            className="p-4 border border-meepGray-600 rounded-md"
+                          >
+                            Data Enrichment
+                          </MobileLink>
+                          <MobileLink
+                            href="/features/crm-sync"
+                            onOpenChange={setOpen}
+                            className="p-4 border border-meepGray-600 rounded-md"
+                          >
+                            CRM Sync
+                          </MobileLink>
+
+
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                    <Accordion type="single" collapsible>
+                      <AccordionItem value="item-2">
+                        <AccordionTrigger className="text-lg p-4 bg-meepGray-700 mb-2 rounded-md">Integrations</AccordionTrigger>
+                        <AccordionContent className="flex flex-col gap-2">
+                          <ul className="flex flex-col gap-2 ">
+                            {crmSync.map((component) => (
+                               <MobileLink
+                               key={component.title}
+
+                               href={component.href}
+                               onOpenChange={setOpen}
+                               className="p-4 border border-meepGray-600 rounded-md"
+                             >
+                                {component.title}
+                             </MobileLink>
+                              
+                            ))}
+                          </ul>
+                        </AccordionContent>
+                      </AccordionItem>
+
+                    </Accordion>
+                    <div className="flex flex-col gap-2">
+                      <MobileLink
+                        href="/about"
+                        onOpenChange={setOpen}
+                        className="text-xl flex w-full p-4 bg-meepGray-700 rounded-md"
+                      >
+                        About
+                      </MobileLink>
+                      <MobileLink
+                        href="/login"
+                        onOpenChange={setOpen}
+                        className="text-xl flex w-full p-4 bg-brandBlue rounded-md"
+                      >
+                        Login
+                      </MobileLink>
+
+                    </div>
+
+                  </SheetContent>
+                </Sheet>
               </div>
             </div>
+
+
           </ul>
         </nav>
       )}
@@ -187,3 +306,33 @@ const ListItem = forwardRef<
   )
 })
 ListItem.displayName = "ListItem"
+
+
+interface MobileLinkProps extends LinkProps {
+  onOpenChange?: (open: boolean) => void
+  children: React.ReactNode
+  className?: string
+}
+
+function MobileLink({
+  href,
+  onOpenChange,
+  className,
+  children,
+  ...props
+}: MobileLinkProps) {
+  const router = useRouter()
+  return (
+    <Link
+      href={href}
+      onClick={() => {
+        router.push(href.toString())
+        onOpenChange?.(false)
+      }}
+      className={cn(className)}
+      {...props}
+    >
+      {children}
+    </Link>
+  )
+}

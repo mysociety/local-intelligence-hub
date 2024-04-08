@@ -6,7 +6,7 @@ import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { DataSourceType, EnrichmentLayersQuery, ExternalDataSourceInput, FieldDefinition, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
 import { Input } from "@/components/ui/input";
 import { SourcePathSelector } from "@/components/SelectSourceData";
-import { ArrowRight, X, XCircle } from "lucide-react";
+import { ArrowRight, Plus, X, XCircle } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -38,9 +38,7 @@ const ENRICHMENT_LAYERS = gql`
       geographyColumn
       geographyColumnType
       dataType
-      connectionDetails {
-        __typename
-      }
+      crmType
       fieldDefinitions {
         label
         value
@@ -55,15 +53,15 @@ export function UpdateMappingForm({
   initialData,
   children,
   fieldDefinitions,
-  connectionType,
+  crmType,
   allowMapping = true,
-  saveButtonLabel = "Update",
+  saveButtonLabel = "Save settings",
 }: {
   onSubmit: (
     data: ExternalDataSourceInput,
     e?: React.BaseSyntheticEvent,
   ) => void;
-  connectionType: string;
+  crmType: string;
   initialData?: ExternalDataSourceInput;
   fieldDefinitions?: FieldDefinition[] | null;
   saveButtonLabel?: string;
@@ -95,7 +93,7 @@ export function UpdateMappingForm({
       .map((source) => ({
         slug: source.id,
         name: source.name,
-        connectionType: source.connectionDetails.__typename,
+        crmType: source.crmType,
         author: "",
         description: "",
         descriptionURL: "",
@@ -131,7 +129,7 @@ export function UpdateMappingForm({
                               <SelectLabel>Geography field</SelectLabel>
                               {fieldDefinitions?.map((field) => (
                                 <SelectItem key={field.value} value={field.value}>
-                                  <DataSourceFieldLabel fieldDefinition={field} connectionType={connectionType} />
+                                  <DataSourceFieldLabel fieldDefinition={field} crmType={crmType} />
                                 </SelectItem>
                               ))}
                             </SelectGroup>
@@ -182,14 +180,15 @@ export function UpdateMappingForm({
                   <tbody>
                     {fields.map((field, index) => (
                       <tr key={field.id} className='flex flex-row'>
-                        <td className="w-1/2 grow-0  flex flex-row items-center justify-stretch">
+                        <td className="w-1/2 grow-0 flex flex-row items-center justify-stretch gap-1">
                           <Button
                             className="flex-shrink"
                             onClick={() => {
                               remove(index);
                             }}
+                            variant='outline'
                           >
-                            <X />
+                            <X className='w-3 h-3' />
                           </Button>
                           <SourcePathSelector
                             focusOnMount={form.watch(`updateMapping.${index}.source`) === "?"}
@@ -207,7 +206,7 @@ export function UpdateMappingForm({
                             }}
                           />
                         </td>
-                        <td className="w-1/2 shrink-0 flex flex-row items-center justify-stretch">
+                        <td className="w-1/2 shrink-0 flex flex-row items-center justify-stretch gap-1">
                           <ArrowRight className="flex-shrink-0" /> 
                           <FormField
                             control={form.control}
@@ -221,16 +220,16 @@ export function UpdateMappingForm({
                                   onValueChange={field.onChange}
                                 >
                                   <SelectTrigger className={twMerge(field.value && 'pl-1')}>
-                                    <SelectValue aria-label={data.updateMapping?.[index]?.destinationColumn} placeholder={`Choose destination column`} />
+                                    <SelectValue aria-label={data.updateMapping?.[index]?.destinationColumn} placeholder={`Choose field to update`} />
                                   </SelectTrigger>
                                   <SelectContent>
                                     <SelectGroup>
-                                      <SelectLabel>Choose a destination column</SelectLabel>
+                                      <SelectLabel>Choose a field to update</SelectLabel>
                                       {fieldDefinitions?.map((field) => (
                                         <SelectItem key={field.value} value={field.value}>
                                           <DataSourceFieldLabel
                                             fieldDefinition={field}
-                                            connectionType={connectionType}
+                                            crmType={crmType}
                                           />
                                         </SelectItem>
                                       ))}
@@ -240,7 +239,7 @@ export function UpdateMappingForm({
                               ) : (
                                 <Input
                                   className="flex-shrink-0 flex-grow"
-                                  placeholder="Destination column"
+                                  placeholder="Field to update"
                                   {...field}
                                   required
                                 />
@@ -254,7 +253,6 @@ export function UpdateMappingForm({
                 </table>
                 <Button
                   type="button"
-                  className='w-full'
                   onClick={() => {
                     append({
                       source: "?",
@@ -262,8 +260,11 @@ export function UpdateMappingForm({
                       destinationColumn: "",
                     });
                   }}
+                  variant='outline'
+                  size='sm'
+                  className='my-2'
                 >
-                  Add field
+                  <Plus className='w-4 h-4' /> Add data to another field in your CRM
                 </Button>
               </>
             )}

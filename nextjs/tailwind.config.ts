@@ -20,6 +20,7 @@ const config = {
     extend: {
       fontFamily: {
         'IBMPlexSans': ["IBMPlexSansReg", 'sans-serif'],
+        'IBMPlexSansLight': ["IBMPlexSansLight", 'sans-serif'],
         'IBMPlexSansSemiBold': ["IBMPlexSansSemiBold", 'sans-serif'],
         'IBMPlexSansMedium': ["IBMPlexSansMedium", 'sans-serif'],
         'IBMPlexSansCondensed': ["IBMPlexSansCondensed", 'sans-serif'],
@@ -30,7 +31,7 @@ const config = {
       fontSize: {
         hXlg: ['4.5rem', {
           lineHeight: '107%',
-          letterSpacing: '-0.1rem',
+          letterSpacing: '-0.2rem',
         }],
         hXlgPP: ['4.7rem', {
           lineHeight: '107%',
@@ -42,8 +43,8 @@ const config = {
           letterSpacing: '0.05rem'
         }],
         hLg: ['36px', {
-          lineHeight: '100%',
-          fontWeight: '700'
+          lineHeight: '120%',
+          fontWeight: '700',
         }],
         hMd: ['21px', {
           lineHeight: 'normal',
@@ -80,6 +81,11 @@ const config = {
           fontWeight: '500',
         }],
         labelLg: ['14px', {
+          lineHeight: 'normal',
+          letterSpacing: '0em',
+          fontWeight: '500',
+        }],
+        labelXlg: ['16px', {
           lineHeight: 'normal',
           letterSpacing: '0em',
           fontWeight: '500',

@@ -5,10 +5,7 @@ import { twMerge } from "tailwind-merge";
 import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CreateAutoUpdateFormContext } from "./NewExternalDataSourceWrapper";
-import {
-  externalDataSourceOptions,
-  getSourceOptionForTypename,
-} from "@/lib/data";
+import { externalDataSourceOptions } from "@/lib/data";
 import { gql, useQuery } from "@apollo/client";
 import { AllExternalDataSourcesQuery, DataSourceType } from "@/__generated__/graphql";
 import { formatRelative } from "date-fns";
@@ -20,8 +17,8 @@ const ALL_EXTERNAL_DATA_SOURCES = gql`
       name
       createdAt
       dataType
+      crmType
       connectionDetails {
-        crmType: __typename
         ... on AirtableSource {
           baseId
           tableId
@@ -57,24 +54,26 @@ export default function Page() {
           </a>
         </p>
       </header>
-      {Object.values(externalDataSourceOptions).map((externalDataSource) => (
-        <div
-          key={externalDataSource.key}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-7"
-        >
+      {Object.values(externalDataSourceOptions)
+        .filter((externalDataSource) => externalDataSource.supported)
+        .map((externalDataSource) => (
           <div
-            onClick={() => {
-              setSource(externalDataSource.key);
-            }}
-            className={twMerge(
-              "cursor-pointer rounded-3xl bg-meepGray-700 px-10 py-6 overflow-hidden flex flex-row items-center justify-center transition-all hover:border-brandBlue border-2 box-border",
-              source === externalDataSource.key && "border-brandBlue border-2",
-            )}
+            key={externalDataSource.key}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-7"
           >
-            <externalDataSource.logo className="w-full" />
+            <div
+              onClick={() => {
+                setSource(externalDataSource.key);
+              }}
+              className={twMerge(
+                "cursor-pointer rounded-3xl bg-meepGray-700 px-10 py-6 overflow-hidden flex flex-row items-center justify-center transition-all hover:border-brandBlue border-2 box-border",
+                source === externalDataSource.key && "border-brandBlue border-2"
+              )}
+            >
+              <externalDataSource.logo className="w-full" />
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
       <Button
         disabled={!source}
         variant={"reverse"}

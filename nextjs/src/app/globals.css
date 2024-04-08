@@ -16,6 +16,10 @@
 }
 
 @font-face {
+  font-family: IBMPlexSansLight;
+  src: url("../fonts/IBMPlexSans/IBMPlexSans-Light.ttf");
+}
+@font-face {
   font-family: IBMPlexSansReg;
   src: url("../fonts/IBMPlexSans/IBMPlexSans-Regular.ttf");
 }
@@ -61,11 +65,11 @@
     --primary: 222, 14%, 34%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
-    --secondary-foreground: 225, 14%, 89%;
+    --secondary-foreground: var(--meep-gray-600);
     --muted: 210 40% 96.1%;
     --muted-foreground:  222, 14%, 64%;
-    --accent: var(--brand-blue);
-    --accent-foreground: var(--meep-gray-800);
+    --accent: var(--meep-gray-600);
+    --accent-foreground: var(--meep-gray-200);
     --border: 0, 0%, 100%, 0.32;
 
     --brand: 222, 69%, 65%;
@@ -93,21 +97,23 @@
   .active {
     @apply border-b flex items-center;
   }
-  .flex-divide-x {
-      > :first-child:not([hidden]),
-      > :not([hidden]) ~ :not([hidden]) {
-        @apply flex-1 border-r border-solid;
-        border-color: hsl(var(--flex-divide-x-colour, var(--meep-gray-300)));
-        padding-right: var(--flex-divide-x-spacing, 5px);
-        padding-left: var(--flex-divide-x-spacing, 5px);
 
-        &:first-child {
-          @apply pl-0;
-        }
+  .flex-divide-x > :first-child:not([hidden]),
+  .flex-divide-x > :not([hidden]) ~ :not([hidden]) {
+    @apply flex-1 border-r border-solid;
+    border-color: hsl(var(--flex-divide-x-colour, var(--meep-gray-300)));
+    padding-right: var(--flex-divide-x-spacing, 5px);
+    padding-left: var(--flex-divide-x-spacing, 5px);
+  }
 
-        &:last-child {
-          @apply pr-0 border-0;
-        }
-    }
+  .flex-divide-x > :first-child:not([hidden]):first-child,
+  .flex-divide-x > :not([hidden]) ~ :not([hidden]):first-child {
+    @apply pl-0;
+  }
+
+  .flex-divide-x > :first-child:not([hidden]):last-child,
+  .flex-divide-x > :not([hidden]) ~ :not([hidden]):last-child {
+    @apply pr-0 border-0;
   }
 }
+

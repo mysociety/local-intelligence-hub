@@ -1,28 +1,69 @@
-import { AirtableLogo, MailChimpLogo } from "@/components/logos";
-
-type ModelName = "AirtableSource" | "MailchimpSource";
+import { AirtableLogo, ActionNetworkLogo, MailchimpLogo, GoogleSheetsLogo, CiviCRMLogo, NationBuilderLogo, AirtableIcon } from "@/components/logos";
 
 export const externalDataSourceOptions: Record<string, {
   key: string,
-  modelName: ModelName, 
+  modelName: string, 
   name: string,
-  logo: ({ className }: { className?: string | undefined; }) => any
+  icon?: ({ className }: { className?: string | undefined; }) => any,
+  logo: ({ className }: { className?: string | undefined; }) => any,
+  screenshot: string,
+  supported: boolean
 }> = {
   airtable: {
     key: "airtable",
     modelName: "AirtableSource",
     name: "Airtable",
+    icon: AirtableIcon,
     logo: AirtableLogo,
+    screenshot: "/airtable-screenshot.png",
+    supported: true
+  },
+  actionNetwork: {
+    key: "action-network",
+    modelName: "actionNetworkSource",
+    name: "Action Network",
+    logo: ActionNetworkLogo,
+    screenshot: "/actionNetwork-screenshot.png",
+    supported: false
   },
   mailchimp: {
     key: "mailchimp",
-    modelName: "MailchimpSource",
-    name: "MailChimp",
-    logo: MailChimpLogo,
+    modelName: "mailchimpSource",
+    name: "Mailchimp",
+    logo: MailchimpLogo,
+    screenshot: "/mailchimp-screenshot.png",
+    supported: false
   },
+  googleSheets: {
+    key: "google-sheets",
+    modelName: "googleSheetsSource",
+    name: "Google Sheets",
+    logo: GoogleSheetsLogo,
+    screenshot: "/googleSheets-screenshot.png",
+    supported: false
+  },
+  civiCRM: {
+    key: "civi-crm",
+    modelName: "civiCRMSource",
+    name: "Civi CRM",
+    logo: CiviCRMLogo,
+    screenshot: "/civiCRM-screenshot.png",
+    supported: false
+  },
+  nationBuilder: {
+    key: "nation-builder",
+    modelName: "nationBuilderSource",
+    name: "NationBuilder",
+    logo: NationBuilderLogo,
+    screenshot: "/nationBuilder-screenshot.png",
+    supported: false
+  },
+
+  
 };
 
-export const getSourceOptionForTypename = (typename: ModelName) => {
+
+export const getSourceOptionForTypename = (typename: string) => {
   return Object.values(externalDataSourceOptions).find(
     (option) => option.modelName === typename,
   );
@@ -34,7 +75,7 @@ export type EnrichmentDataSource = {
   author: string;
   description: string;
   descriptionURL: string;
-  connectionType?: string;
+  crmType?: string;
   colour: string;
   builtIn: boolean;
   sourcePaths: SourcePath[];

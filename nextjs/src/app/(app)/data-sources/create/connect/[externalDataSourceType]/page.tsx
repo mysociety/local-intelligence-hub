@@ -49,13 +49,17 @@ import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
 
 const TEST_DATA_SOURCE = gql`
   query TestDataSource($input: TestDataSourceInput!) {
-  testDataSource(input: $input) {
-    __typename
-    healthcheck
-    fieldDefinitions {
-      description
-      label
-      value
+    testDataSource(input: $input) {
+      __typename
+      remoteName
+      healthcheck
+      crmType
+      fieldDefinitions {
+        label
+        value
+        description
+      }
+      __typename
     }
     remoteName,
     geographyColumn,
@@ -68,11 +72,16 @@ const TEST_DATA_SOURCE = gql`
 const CREATE_DATA_SOURCE = gql`
 mutation CreateSource ($input: CreateExternalDataSourceInput!) {
     createExternalDataSource (input: $input) {
-      id,
-      dataType,
-        connectionDetails {
-            __typename
-        } 
+      code
+      errors {
+        message
+      }
+      result {
+        id
+        name
+        crmType
+        dataType
+      }
     }
 }
 `;
@@ -210,24 +219,24 @@ export default function Page({
         ...CRMSpecificData
       }
     }
-    toastPromise(createSource({ variables: { input } }),
+    toastPromise(createSource({ variables: input }),
       {
         loading: "Saving connection...",
         success: (d: FetchResult<CreateSourceMutation>) => {
-          console.log(d)
-          if (!d.errors && d.data?.createExternalDataSource.id) {
-            if (d.data?.createExternalDataSource.dataType === DataSourceType.Member) {
+          const errors = d.errors || d.data?.createSource.errors || []
+          if (!errors.length && d.data?.createSource?.result) {
+            if (d.data?.createSource.dataType === DataSourceType.Member) {
               router.push(
-                `/data-sources/create/configure/${d.data.createExternalDataSource.id}`,
+                `/data-sources/create/configure/${d.data.createSource.result.id}`,
               );
             } else {
               router.push(
-                `/data-sources/create/inspect/${d.data.createExternalDataSource.id}`,
+                `/data-sources/inspect/${d.data.createSource.result.id}`,
               );
             }
             return "Connection successful";
           }
-          throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
+          throw new Error(errors.map(e => e.message).join(', ') || "Unknown error")
         },
         error(e) {
           return {
@@ -238,7 +247,8 @@ export default function Page({
       },
     )
   }
-  if (createSourceResult.loading) {
+
+  if (createSourceResult.loading || createSourceResult.data?.createSource.result) {
     return (
       <div className="space-y-6">
         <h1 className="text-hLg">Saving connection...</h1>
@@ -268,7 +278,7 @@ export default function Page({
         placeholder={placeholder}
         fieldDefinitions={testSourceResult.data?.testDataSource.fieldDefinitions}
         control={form.control}
-        connectionType={testSourceResult.data?.testDataSource.__typename!}
+        crmType={testSourceResult.data?.testSourceConnection.crmType!}
         guess={guessed[name]}
         required={required}
       />

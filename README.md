@@ -61,7 +61,9 @@ You will likely want to create a Django superuser, by running this inside the co
 
 The superuser will be created with the details specified in the `DJANGO_SUPERUSER_*` environment variables. [Read more about how Docker handles environment variables](https://docs.docker.com/compose/envvars-precedence/).
 
-You will also want to import data. For convenience, there is a script that will automatically run all the `import_*` commands from `hub/management/commands`, one after the other, which you can run from inside the container:
+You will also want to import data. `import_last_election_data` requires you have the 2019 election results ([download here](https://researchbriefings.files.parliament.uk/documents/CBP-8749/HoC-GE2019-results-by-constituency.csv)), saved as `data/2019_general_election.csv`.
+
+For convenience, there is a script that will automatically run all the `import_*` commands from `hub/management/commands`, one after the other, which you can run from inside the container:
 
     script/import-all-data
 

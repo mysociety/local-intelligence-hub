@@ -1,31 +1,64 @@
 "use client";
 
 import { gql, useQuery } from "@apollo/client";
-import { ActionNetworkLogo, AirtableLogo, MailChimpLogo } from "@/components/logos";
+import { ActionNetworkLogo, AirtableLogo, MailchimpLogo } from "@/components/logos";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-import { AutoUpdateCard } from "@/components/AutoUpdateCard";
-import { DataSourceType, ListExternalDataSourcesQuery, ListExternalDataSourcesQueryVariables } from "@/__generated__/graphql";
+import { DataSourceType, ListOrganisationsQuery, ListOrganisationsQueryVariables } from "@/__generated__/graphql";
 import { useEffect } from "react";
 import qs from 'query-string'
 import { Mail } from "lucide-react";
+import { ExternalDataSourceCard } from "@/components/ExternalDataSourceCard";
 
 const LIST_UPDATE_CONFIGS = gql`
-  query ListExternalDataSources {
-  externalDataSources {
-    id
-    name
-    dataType
-    connectionDetails {
-      crmType: __typename
-      ... on AirtableSource {
-        baseId
-        tableId
+  query ListOrganisations {
+    myOrganisations {
+      id
+      externalDataSources {
+        id
+        name
+        dataType
+        connectionDetails {
+          ... on AirtableSource {
+            baseId
+            tableId
+          }
+          ... on MailchimpSource {
+            apiKey
+            listId
+          }
+        }
+        crmType
+        autoUpdateEnabled
+        jobs {
+          lastEventAt
+          status
+        }
+        updateMapping {
+          source
+          sourcePath
+          destinationColumn
+        }
+        sharingPermissions {
+          id
+          organisation {
+            id
+            name
+          }
+        }
       }
-      ... on MailchimpSource {
-        apiKey
-        listId
+      sharingPermissionsFromOtherOrgs {
+        id
+        externalDataSource {
+          id
+          name
+          dataType
+          crmType
+          organisation {
+            name
+          }
+        }
       }
     }
     autoUpdateEnabled
@@ -43,7 +76,7 @@ const LIST_UPDATE_CONFIGS = gql`
 `;
 
 export default function ExternalDataSourceList() {
-  const { loading, error, data, refetch } = useQuery<ListExternalDataSourcesQuery, ListExternalDataSourcesQueryVariables>(LIST_UPDATE_CONFIGS);
+  const { loading, error, data, refetch } = useQuery<ListOrganisationsQuery, ListOrganisationsQueryVariables>(LIST_UPDATE_CONFIGS);
 
   useEffect(() => {
     refetch()
@@ -68,17 +101,49 @@ export default function ExternalDataSourceList() {
         <h2>Error: {error.message}</h2>
       ) : data ? (
         <section className="w-full grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {data.externalDataSources
+          {(data.myOrganisations[0]?.externalDataSources || [])
           .filter(d => d.dataType === DataSourceType.Member)
           .map((externalDataSource) => (
-            <AutoUpdateCard
+            <ExternalDataSourceCard
               key={externalDataSource.id}
               externalDataSource={externalDataSource}
+              withLink
+              withUpdateOptions
             />
           ))}
           <ConnectDataSource label="Connect a member list" params={{ dataType: DataSourceType.Member }} />
         </section>
       ) : null}
+      {!!data?.myOrganisations[0]?.sharingPermissionsFromOtherOrgs?.length && (
+        <>
+          <div className="border-b border-meepGray-700 pt-10" />
+          <header className='flex flex-row justify-end'>
+            <h2 className="text-hSm mr-auto">Shared with you</h2>
+          </header>
+          {loading ? (
+            <section className="w-full grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              <article className="rounded-xl border border-meepGray-700 px-6 py-5 space-y-3">
+                <Skeleton className="h-4 w-full max-w-[100px]" />
+                <Skeleton className="h-10 w-full" />
+              </article>
+            </section>
+          ) : error ? (
+            <h2>Error: {error.message}</h2>
+          ) : data ? (
+            <section className="w-full grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              {data.myOrganisations[0].sharingPermissionsFromOtherOrgs
+              .filter(share => share.externalDataSource.dataType === DataSourceType.Member)
+              .map((share) => (
+                <ExternalDataSourceCard
+                  key={share.externalDataSource.id}
+                  externalDataSource={share.externalDataSource}
+                  shared
+                />
+              ))}
+            </section>
+          ) : null}
+        </>
+      )}
       <div className="border-b border-meepGray-700 pt-16" />
       <header className='flex flex-row justify-end'>
         <h2 className="text-hSm mr-auto">Custom data layers</h2>
@@ -95,12 +160,13 @@ export default function ExternalDataSourceList() {
         <h2>Error: {error.message}</h2>
       ) : data ? (
         <section className="grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {data.externalDataSources
+          {(data.myOrganisations[0]?.externalDataSources || [])
           .filter(d => d.dataType !== DataSourceType.Member)
           .map((externalDataSource) => (
-            <AutoUpdateCard
+            <ExternalDataSourceCard
               key={externalDataSource.id}
               externalDataSource={externalDataSource}
+              withLink
             />
           ))}
           <ConnectDataSource label="Connect a custom data layer" params={{ dataType: DataSourceType.Other }} />
@@ -132,7 +198,7 @@ function PageHeader() {
     </div>
     <div className="rounded-3xl bg-meepGray-700 px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
       <Link href="/data-sources/create/connect/mailchimp">
-          <MailChimpLogo className="w-full" />
+          <MailchimpLogo className="w-full" />
       </Link>
     </div>
       </div>

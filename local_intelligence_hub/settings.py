@@ -36,7 +36,7 @@ env = environ.Env(
     FRONTEND_SITE_TITLE=(str, False),
     SCHEDULED_UPDATE_SECONDS_DELAY=(int, 3),
     DEBUG=(bool, False),
-    HIDE_DEBUG_TOOLBAR=(bool, False),
+    HIDE_DEBUG_TOOLBAR=(bool, True),
     LOG_QUERIES=(bool, False),
     ALLOWED_HOSTS=(list, []),
     CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3000"]),
@@ -62,6 +62,7 @@ FRONTEND_BASE_URL = env("FRONTEND_BASE_URL")
 FRONTEND_SITE_TITLE = env("FRONTEND_SITE_TITLE")
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
+EMAIL_BACKEND = env("EMAIL_BACKEND")
 HIDE_DEBUG_TOOLBAR = env("HIDE_DEBUG_TOOLBAR")
 LOG_QUERIES = env("LOG_QUERIES")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
@@ -138,7 +139,7 @@ MIDDLEWARE = [
     "hub.middleware.django_jwt_middleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "hub.middleware.record_last_seen_middleware",
+    # "hub.middleware.record_last_seen_middleware",
 ]
 
 ROOT_URLCONF = "local_intelligence_hub.urls"
@@ -270,16 +271,24 @@ POSTCODES_IO_BATCH_MAXIMUM = 100
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "procrastinate": {"format": "%(asctime)s %(levelname)-7s %(name)s %(message)s"},
+    },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
         },
     },
     "loggers": {
+        "procrastinate": {
+            "formatter": "procrastinate",
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
         "django": {
             "handlers": ["console"],
             "level": env("DJANGO_LOG_LEVEL"),
-        }
+        },
     },
 }
 if DEBUG:
@@ -302,22 +311,10 @@ if DEBUG:
 
         INSTALLED_APPS += ("debug_toolbar",)
 
-        DEBUG_TOOLBAR_PANELS = [
-            "debug_toolbar.panels.versions.VersionsPanel",
-            "debug_toolbar.panels.timer.TimerPanel",
-            "debug_toolbar.panels.settings.SettingsPanel",
-            "debug_toolbar.panels.headers.HeadersPanel",
-            "debug_toolbar.panels.request.RequestPanel",
-            "debug_toolbar.panels.sql.SQLPanel",
-            "debug_toolbar.panels.staticfiles.StaticFilesPanel",
-            "debug_toolbar.panels.templates.TemplatesPanel",
-            "debug_toolbar.panels.cache.CachePanel",
-            "debug_toolbar.panels.signals.SignalsPanel",
-            "debug_toolbar.panels.logging.LoggingPanel",
-            "debug_toolbar.panels.redirects.RedirectsPanel",
-        ]
-
 # CK Section
+
+IMPORT_UPDATE_ALL_BATCH_SIZE = 100
+IMPORT_UPDATE_MANY_RETRY_COUNT = 3
 
 # TODO: Decrease this when we go public
 one_week = timedelta(days=7)
@@ -356,5 +353,15 @@ if MINIO_STORAGE_ENDPOINT is not False:
     MINIO_STORAGE_SECRET_KEY = env("MINIO_STORAGE_SECRET_KEY")
     MINIO_STORAGE_MEDIA_BUCKET_NAME = env("MINIO_STORAGE_MEDIA_BUCKET_NAME")
     # MINIO_STORAGE_STATIC_BUCKET_NAME = env("MINIO_STORAGE_STATIC_BUCKET_NAME")
-    MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = env("MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET")
+    MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = env(
+        "MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET"
+    )
     # MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET = env("MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET")
+
+CACHES = {
+    "default": {
+        # TODO: Set up Redis for production
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+    }
+}

@@ -1,5 +1,6 @@
 import asyncio
 import hashlib
+import itertools
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -8,24 +9,29 @@ from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.gis.db.models import MultiPolygonField, PointField
 from django.contrib.gis.geos import Point
+from django.core.cache import cache
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min
 from django.db.models.functions import Cast, Coalesce
+from django.db.utils import IntegrityError
 from django.dispatch import receiver
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 
+import numpy as np
 import pandas as pd
-from asgiref.sync import sync_to_async
+import pytz
+from asgiref.sync import async_to_sync, sync_to_async
 from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
 from mailchimp3 import MailChimp
 from polymorphic.models import PolymorphicModel
-from procrastinate.contrib.django.models import ProcrastinateJob
+from procrastinate.contrib.django.models import ProcrastinateEvent, ProcrastinateJob
 from psycopg.errors import UniqueViolation
 from pyairtable import Api as AirtableAPI
 from pyairtable import Base as AirtableBase
@@ -38,6 +44,7 @@ from hub.analytics import Analytics
 from hub.filters import Filter
 from hub.tasks import (
     import_all,
+    import_many,
     refresh_all,
     refresh_many,
     refresh_one,
@@ -45,7 +52,7 @@ from hub.tasks import (
 )
 from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
 from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
-from utils.py import ensure_list, get
+from utils.py import batched, ensure_list, get
 
 User = get_user_model()
 
@@ -673,13 +680,16 @@ class GenericData(CommonData):
     point = PointField(srid=4326, blank=True, null=True)
     polygon = MultiPolygonField(srid=4326, blank=True, null=True)
     postcode_data = JSONField(blank=True, null=True)
-    postcode = models.CharField(max_length=10, blank=True, null=True)
+    postcode = models.CharField(max_length=1000, blank=True, null=True)
     first_name = models.CharField(max_length=300, blank=True, null=True)
     last_name = models.CharField(max_length=300, blank=True, null=True)
     full_name = models.CharField(max_length=300, blank=True, null=True)
     email = models.EmailField(max_length=300, blank=True, null=True)
     phone = models.CharField(max_length=100, blank=True, null=True)
     address = models.CharField(max_length=1000, blank=True, null=True)
+
+    def remote_url(self):
+        return self.data_type.data_set.external_data_source.record_url(self.data)
 
     def __str__(self):
         if self.name:
@@ -708,7 +718,7 @@ class GenericData(CommonData):
 
 class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
-    gss = models.CharField(max_length=30)
+    gss = models.CharField(max_length=30, unique=True)
     name = models.CharField(max_length=200)
     area_type = models.ForeignKey(
         AreaType, on_delete=models.CASCADE, related_name="areas"
@@ -717,6 +727,10 @@ class Area(models.Model):
     polygon = MultiPolygonField(srid=4326, blank=True, null=True)
     point = PointField(srid=4326, blank=True, null=True)
     overlaps = models.ManyToManyField("self", through="AreaOverlap")
+
+    class Meta:
+        indexes = [models.Index(fields=["gss"])]
+        unique_together = ["gss", "area_type"]
 
     def __str__(self):
         return self.name
@@ -767,9 +781,6 @@ class Area(models.Model):
                 [bounds_tuple[0], bounds_tuple[1]],
                 [bounds_tuple[2], bounds_tuple[3]],
             ]
-
-    class Meta:
-        unique_together = ["gss", "area_type"]
 
 
 class AreaOverlap(models.Model):
@@ -857,6 +868,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         blank=True,
     )
 
+    orgs_with_access = models.ManyToManyField(
+        Organisation,
+        through="hub.SharingPermission",
+        related_name="sources_from_other_orgs",
+    )
+
     class DataSourceType(models.TextChoices):
         MEMBER = "member", "Members or supporters"
         REGION = "region", "Areas or regions"
@@ -876,8 +893,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     class PostcodesIOGeographyTypes(models.TextChoices):
         POSTCODE = "postcode", "Postcode"
         WARD = "ward", "Ward"
-        COUNCIL = "admin_district", "Council"
         CONSTITUENCY = "parliamentary_constituency", "Constituency"
+        COUNCIL = "admin_district", "Council"
         CONSTITUENCY_2025 = "parliamentary_constituency_2025", "Constituency (2024)"
 
     geography_column_type = TextChoicesField(
@@ -941,6 +958,91 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             args__external_data_source_id=str(self.id)
         ).order_by("-scheduled_at")
 
+    def get_scheduled_parent_job(self, filter: dict):
+        # Find any of this source's jobs that are live, with a request_id which signals a parent job
+        some_active_batch_job_for_this_source = (
+            self.event_log_queryset()
+            .filter(
+                **filter, status__in=["todo", "doing"], args__request_id__isnull=False
+            )
+            .first()
+        )
+        if some_active_batch_job_for_this_source is None:
+            return None
+        request_id = some_active_batch_job_for_this_source.args.get("request_id", None)
+        # Now find the oldest, first job with that request_id
+        original_job = (
+            self.event_log_queryset()
+            .filter(args__request_id=request_id)
+            .order_by("id")
+            .first()
+        )
+        return original_job
+
+    def get_scheduled_import_job(self):
+        return self.get_scheduled_parent_job(
+            dict(task_name__contains="hub.tasks.import")
+        )
+
+    def get_scheduled_update_job(self):
+        return self.get_scheduled_parent_job(
+            dict(task_name__contains="hub.tasks.refresh")
+        )
+
+    def get_scheduled_batch_job_progress(self, parent_job: ProcrastinateJob):
+        request_id = parent_job.args.get("request_id")
+
+        if request_id is None:
+            return None
+
+        jobs = self.event_log_queryset().filter(args__request_id=request_id).all()
+
+        total = 2
+        statuses = dict()
+
+        for job in jobs:
+            job_count = len(job.args.get("member_ids", []))
+            total += job_count
+            if statuses.get(job.status, None) is not None:
+                statuses[job.status] += job_count
+            else:
+                statuses[job.status] = job_count
+
+        done = (
+            int(
+                statuses.get("succeeded", 0)
+                + statuses.get("failed", 0)
+                + statuses.get("doing", 0)
+            )
+            + 1
+        )
+        remaining = total - done
+        time_started = (
+            ProcrastinateEvent.objects.filter(job_id=parent_job.id)
+            .order_by("at")
+            .first()
+            .at.replace(tzinfo=pytz.utc)
+        )
+        time_so_far = datetime.now(pytz.utc) - time_started
+        duration_per_record = time_so_far / done
+        time_remaining = duration_per_record * remaining
+        estimated_finish_time = datetime.now() + time_remaining
+
+        return dict(
+            status="todo" if parent_job.status == "todo" else "doing",
+            id=request_id,
+            started_at=time_started,
+            estimated_seconds_remaining=time_remaining,
+            estimated_finish_time=estimated_finish_time,
+            seconds_per_record=duration_per_record.seconds,
+            total=total - 2,
+            done=done - 1,
+            remaining=remaining - 1,
+            succeeded=statuses.get("succeeded", 0),
+            failed=statuses.get("failed", 0),
+            doing=statuses.get("doing", 0),
+        )
+
     def get_update_mapping(self) -> list[UpdateMapping]:
         return ensure_list(self.update_mapping)
 
@@ -983,6 +1085,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         return None
 
+    def webhook_healthcheck(self) -> bool:
+        """
+        Check the connection to the webhook.
+        """
+        raise NotImplementedError(
+            "Webhook healthcheck not implemented for this data source type."
+        )
+
     def setup_webhooks(self):
         """
         Set up a webhook.
@@ -1011,17 +1121,19 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             expected_webhooks += 1
         if self.auto_import_enabled:
             expected_webhooks += 1
-        webhooks = self.get_webhooks()
-        if len(webhooks) < expected_webhooks:
-            print("Webhook healthcheck: Not enough webhooks")
-            return False
-        if len(webhooks) > expected_webhooks:
-            print("Webhook healthcheck: Too many webhooks")
-            return False
-
-        self.extra_webhook_healthcheck(webhooks)
-
-        return True
+        try:
+            webhooks = self.get_webhooks()
+            if len(webhooks) < expected_webhooks:
+                raise ValueError("Webhook healthcheck: Not enough webhooks")
+            if len(webhooks) > expected_webhooks:
+                raise ValueError("Webhook healthcheck: Too many webhooks")
+            for webhook in webhooks:
+                if not webhook.is_hook_enabled:
+                    raise ValueError("Webhook healthcheck: a webhook expired")
+            return True
+        except Exception as e:
+            logger.error(f"Could't fetch webhooks: {e}")
+            raise ValueError("Couldn't fetch webhooks")
 
     def extra_webhook_healthcheck(self, webhooks):
         return True
@@ -1040,16 +1152,17 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             "Get member ID not implemented for this data source type."
         )
 
-    async def import_all(self):
+    async def import_many(self, member_ids: list[str]):
         """
         Copy data to this database for use in dashboarding features.
         """
+        data = await self.fetch_many(member_ids)
 
         # A Local Intelligence Hub record of this data
         data_set, created = await DataSet.objects.aupdate_or_create(
             external_data_source=self,
             defaults={
-                "name": f"Cached dataset for {self.id}",
+                "name": str(self.id),
                 "data_type": "json",
                 "table": "commondata",
                 "default_value": {},
@@ -1062,8 +1175,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         data_type, created = await DataType.objects.aupdate_or_create(
             data_set=data_set, name=self.id, defaults={"data_type": "json"}
         )
-
-        data = await self.fetch_all()
 
         def get_update_data(record):
             update_data = {
@@ -1085,6 +1196,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             loaders = await self.get_loaders()
 
             async def create_import_record(record):
+                """
+                Converts a record fetched from the API into
+                a GenericData record in the MEEP db.
+
+                Used to batch-import data.
+                """
                 structured_data = get_update_data(record)
                 postcode_data: PostcodesIOResult = await loaders["postcodesIO"].load(
                     self.get_record_field(record, self.geography_column)
@@ -1110,7 +1227,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     defaults=update_data,
                 )
 
-            # TODO: batch this up
             await asyncio.gather(*[create_import_record(record) for record in data])
         else:
             # To allow us to lean on LIH's geo-analytics features,
@@ -1215,10 +1331,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         source_path: str
         source_data: Optional[any]
 
-    def get_import_data(self):
+    @classmethod
+    def _get_import_data(self, id: str):
+        """
+        For use by views to query data without having to instantiate the class / query the database for the CRM first
+        """
+        print(f"getting import data where external data source id is {id}")
         return GenericData.objects.filter(
-            data_type__data_set__external_data_source_id=self.id
+            data_type__data_set__external_data_source_id=id
         )
+
+    def get_import_data(self):
+        return self._get_import_data(self.id)
 
     def get_analytics_queryset(self):
         return self.get_import_data()
@@ -1229,9 +1353,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 **(d.postcode_data if d.postcode_data else {}),
                 **(d.json if d.json else {}),
             }
-            for d in self.get_analytics_queryset()
+            for d in self.get_import_data()
         ]
+        print(f"building imported data frame from {json_list}")
         enrichment_df = pd.DataFrame.from_records(json_list)
+        print(f"got imported data frame with {len(json_list)} rows: \n {enrichment_df}")
         return enrichment_df
 
     def data_loader_factory(self):
@@ -1239,29 +1365,74 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             return_data = []
             enrichment_df = await sync_to_async(self.get_imported_dataframe)()
             for key in keys:
+                print(
+                    f"loading enrichment data for key {key['member_id']} {key['source_id']} {key['source_path']}"
+                )
                 try:
+                    if key.get("postcode_data", None) is None:
+                        print(
+                            f"returning none for key {key['member_id']} because postcode data is none"
+                        )
+                        return_data.append(None)
+                        continue
                     relevant_member_geography = get(
                         key["postcode_data"], self.geography_column_type, ""
                     )
+                    # Backup check if the geography refers to the GSS codes, not the name
                     if (
                         relevant_member_geography == ""
                         or relevant_member_geography is None
                     ):
+                        relevant_member_geography = get(
+                            key["postcode_data"]["codes"],
+                            self.geography_column_type,
+                            "",
+                        )
+                    if (
+                        relevant_member_geography == ""
+                        or relevant_member_geography is None
+                    ):
+                        print(
+                            f"returning none for key {key['member_id']} because {relevant_member_geography}"
+                        )
                         return_data.append(None)
+                        continue
                     else:
+                        print(
+                            f"picking key {key['member_id']} {key['source_path']} from data frame"
+                        )
                         enrichment_value = enrichment_df.loc[
+                            # Match the member's geography to the enrichment source's geography
                             enrichment_df[self.geography_column]
                             == relevant_member_geography,
+                            # and return the requested value for this enrichment source row
                             key["source_path"],
-                        ].values[0]
-                        return_data.append(enrichment_value)
-                except Exception:
+                        ].values
+                        if enrichment_value:
+                            enrichment_value = enrichment_value[0]
+                            if enrichment_value is np.nan or enrichment_value == np.nan:
+                                print(
+                                    f"missing data for {key['member_id']} {key['source_path']}"
+                                )
+                                return_data.append(None)
+                            else:
+                                print(
+                                    f"picked {enrichment_value} for {key['member_id']} {key['source_path']}"
+                                )
+                                return_data.append(enrichment_value)
+                        else:
+                            print(
+                                f"missing data for {key['member_id']} {key['source_path']}"
+                            )
+                            return_data.append(None)
+                except Exception as e:
+                    print(f"loader exception {e}")
                     return_data.append(None)
 
             return return_data
 
         def cache_key_fn(key: self.EnrichmentLookup) -> str:
-            return f"{key['member_id']}_{key['source_id']}"
+            return f"{key['member_id']}_{key['source_id']}_{key['source_path']}"
 
         return DataLoader(load_fn=fetch_enrichment_data, cache_key_fn=cache_key_fn)
 
@@ -1293,6 +1464,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         update_fields = {}
         try:
+            print(f"mapping member {member.get('id')}")
             postcode_data = None
             if self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE:
                 # Get postcode from member
@@ -1314,10 +1486,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 else:
                     try:
                         source_loader = loaders["source_loaders"].get(source, None)
-                        if source_loader is not None:
-                            update_fields[
-                                destination_column
-                            ] = await source_loader.load(
+                        if source_loader is not None and postcode_data is not None:
+                            loaded = await source_loader.load(
                                 self.EnrichmentLookup(
                                     member_id=self.get_record_id(member),
                                     postcode_data=postcode_data,
@@ -1325,10 +1495,16 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                                     source_path=source_path,
                                 )
                             )
-                    except Exception:
+                            print(
+                                f"setting {source_path} {destination_column} to {loaded}"
+                            )
+                            update_fields[destination_column] = loaded
+                    except Exception as e:
+                        print(f"mapping exception {e}")
                         # TODO: sentry logging
                         continue
             # Return the member and config data
+            print(f"mapped member {member.get('id')} {update_fields}")
             return self.MappedMember(member=member, update_fields=update_fields)
         except TypeError:
             # Error fetching postcode data
@@ -1340,15 +1516,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         Match many members to records in the data source.
         """
-        return await asyncio.gather(
-            *[self.map_one(member, loaders) for member in members]
-        )
-
-    async def map_all(self, loaders: Loaders) -> list[MappedMember]:
-        """
-        Match all members to records in the data source.
-        """
-        members = await self.fetch_all()
         return await asyncio.gather(
             *[self.map_one(member, loaders) for member in members]
         )
@@ -1366,13 +1533,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         loaders = await self.get_loaders()
         mapped_records = await self.map_many(member_ids, loaders)
         return await self.update_many(mapped_records=mapped_records)
-
-    async def refresh_all(self):
-        if len(self.get_update_mapping()) == 0:
-            return
-        loaders = await self.get_loaders()
-        mapped_records = await self.map_all(loaders)
-        return await self.update_all(mapped_records=mapped_records)
 
     # UI
 
@@ -1395,11 +1555,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     # Webhooks
 
     def handle_update_webhook_view(self, body):
+        if not self.auto_update_enabled:
+            return HttpResponse(status=200)
+
         member_ids = self.get_member_ids_from_webhook(body)
         if len(member_ids) == 1:
-            self.schedule_refresh_one(member_id=member_ids[0])
-        elif len(member_ids) > 1:
-            self.schedule_refresh_many(member_ids=member_ids)
+            async_to_sync(self.schedule_refresh_one)(member_id=member_ids[0])
+        else:
+            async_to_sync(self.schedule_refresh_many)(member_ids=member_ids)
         return HttpResponse(status=200)
 
     # Scheduling
@@ -1409,26 +1572,32 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
-        if external_data_source.auto_update_enabled:
-            await external_data_source.refresh_one(member_id=member_id)
+        await external_data_source.refresh_one(member_id=member_id)
 
     @classmethod
     async def deferred_refresh_many(
-        cls, external_data_source_id: str, member_ids: list[str]
+        cls, external_data_source_id: str, member_ids: list[str], request_id: str = None
     ):
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
-        if external_data_source.auto_update_enabled:
-            await external_data_source.refresh_many(member_ids=member_ids)
+        await external_data_source.refresh_many(member_ids=member_ids)
 
     @classmethod
-    async def deferred_refresh_all(cls, external_data_source_id: str):
+    async def deferred_refresh_all(
+        cls, external_data_source_id: str, request_id: str = None
+    ):
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
 
-        await external_data_source.refresh_all()
+        members = await external_data_source.fetch_all()
+        batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
+        for batch in batches:
+            member_ids = [
+                external_data_source.get_record_id(member) for member in batch
+            ]
+            await external_data_source.schedule_refresh_many(member_ids, request_id)
 
     @classmethod
     async def deferred_refresh_webhooks(cls, external_data_source_id: str):
@@ -1443,88 +1612,224 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 external_data_source.refresh_webhooks()
 
     @classmethod
-    async def deferred_import_all(cls, external_data_source_id: str):
+    async def deferred_import_many(
+        cls, external_data_source_id: str, member_ids: list[str], request_id: str = None
+    ):
         external_data_source: ExternalDataSource = await cls.objects.aget(
-            pk=external_data_source_id
+            id=external_data_source_id
         )
-        await external_data_source.import_all()
+        await external_data_source.import_many(member_ids=member_ids)
 
-    def schedule_refresh_one(self, member_id: str) -> int:
+    @classmethod
+    async def deferred_import_all(
+        cls, external_data_source_id: str, request_id: str = None
+    ):
+        external_data_source: ExternalDataSource = await cls.objects.aget(
+            id=external_data_source_id
+        )
+
+        members = await external_data_source.fetch_all()
+        batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
+        for batch in batches:
+            member_ids = [
+                external_data_source.get_record_id(member) for member in batch
+            ]
+            await external_data_source.schedule_import_many(
+                member_ids, request_id=request_id
+            )
+
+    async def schedule_refresh_one(self, member_id: str) -> int:
         try:
-            return refresh_one.configure(
+            return await refresh_one.configure(
                 # Dedupe `update_many` jobs for the same config
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"update_one_{str(self.id)}_{str(member_id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
-            ).defer(external_data_source_id=str(self.id), member_id=member_id)
-        except UniqueViolation:
+            ).defer_async(external_data_source_id=str(self.id), member_id=member_id)
+        except (UniqueViolation, IntegrityError):
             pass
 
-    def schedule_refresh_many(self, member_ids: list[str]) -> int:
+    async def schedule_refresh_many(
+        self, member_ids: list[str], request_id: str = None
+    ) -> int:
         member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
-            return refresh_many.configure(
+            return await refresh_many.configure(
                 # Dedupe `update_many` jobs for the same config
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"update_many_{str(self.id)}_{member_ids_hash}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
-            ).defer(external_data_source_id=str(self.id), member_ids=member_ids)
-        except UniqueViolation:
+            ).defer_async(
+                request_id=request_id,
+                external_data_source_id=str(self.id),
+                member_ids=member_ids,
+            )
+        except (UniqueViolation, IntegrityError):
             pass
 
-    def schedule_refresh_all(self) -> int:
+    async def schedule_refresh_all(self, request_id: str = None) -> int:
         try:
-            return refresh_all.configure(
+            return await refresh_all.configure(
                 # Dedupe `update_all` jobs for the same config
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"update_all_{str(self.id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
-            ).defer(external_data_source_id=str(self.id))
-        except UniqueViolation:
+            ).defer_async(external_data_source_id=str(self.id), request_id=request_id)
+        except (UniqueViolation, IntegrityError):
             pass
 
-    def schedule_import_all(self) -> int:
+    async def schedule_import_many(
+        self, member_ids: list[str], request_id: str = None
+    ) -> int:
+        member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
-            return import_all.configure(
+            return await import_many.configure(
+                # Dedupe `import_many` jobs for the same config
+                # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+                queueing_lock=f"import_many_{str(self.id)}_{member_ids_hash}",
+                schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+            ).defer_async(
+                external_data_source_id=str(self.id),
+                member_ids=member_ids,
+                request_id=request_id,
+            )
+        except (UniqueViolation, IntegrityError):
+            pass
+
+    async def schedule_import_all(self, request_id: str = None) -> int:
+        try:
+            return await import_all.configure(
                 # Dedupe `import_all` jobs for the same config
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"import_all_{str(self.id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
-            ).defer(external_data_source_id=str(self.id))
-        except UniqueViolation:
+            ).defer_async(external_data_source_id=str(self.id), request_id=request_id)
+        except (UniqueViolation, IntegrityError):
             pass
 
     class CUDRecord(TypedDict):
-        '''
+        """
         Used for tests
-        '''
+        """
+
         email = str
         postcode = str
         data = dict
 
     def delete_one(self, record_id: str):
-        '''
+        """
         Used for tests
-        '''
-        raise NotImplementedError("Delete one not implemented for this data source type.")
+        """
+        raise NotImplementedError(
+            "Delete one not implemented for this data source type."
+        )
 
     def create_one(self, record: CUDRecord):
-        '''
+        """
         Used for tests
-        '''
-        raise NotImplementedError("Create one not implemented for this data source type.")
+        """
+        raise NotImplementedError(
+            "Create one not implemented for this data source type."
+        )
 
     def create_many(self, records: List[CUDRecord]):
-        '''
+        """
         Used for tests
-        '''
-        raise NotImplementedError("Create many not implemented for this data source type.")
+        """
+        raise NotImplementedError(
+            "Create many not implemented for this data source type."
+        )
+
+    class DataPermissions(TypedDict):
+        can_display_points: bool
+        can_display_details: bool
+
+    @classmethod
+    def user_permissions(
+        cls,
+        user: Union[AbstractBaseUser, str],
+        external_data_source: Union["ExternalDataSource", str],
+    ) -> DataPermissions:
+        if user is None or external_data_source is None:
+            return cls.DataPermissions(
+                can_display_points=False,
+                can_display_details=False,
+            )
+        external_data_source_id = (
+            external_data_source
+            if not isinstance(external_data_source, ExternalDataSource)
+            else str(external_data_source.id)
+        )
+        user_id = user if not hasattr(user, "id") else str(user.id)
+        if user_id is None or external_data_source_id is None:
+            return cls.DataPermissions(
+                can_display_points=False,
+                can_display_details=False,
+            )
+
+        # Check for cached permissions on this source
+        permission_cache_key = SharingPermission._get_cache_key(external_data_source_id)
+        permissions_dict = cache.get(permission_cache_key)
+        if permissions_dict is None:
+            permissions_dict = {}
+
+        # If cached permissions exist, look for this user's permissions
+        elif permissions_dict.get(user_id, None) is not None:
+            return permissions_dict[user_id]
+
+        # Calculate permissions for this source
+        if not isinstance(external_data_source, ExternalDataSource):
+            external_data_source = cls.objects.get(pk=external_data_source)
+            if external_data_source is None:
+                return cls.DataPermissions(
+                    can_display_points=False,
+                    can_display_details=False,
+                )
+        # If the user's org owns the source, they can see everything
+        if user_id is None or external_data_source.organisation is None:
+            return cls.DataPermissions(
+                can_display_points=False,
+                can_display_details=False,
+            )
+        else:
+            can_display_points = external_data_source.organisation.members.filter(
+                user=user_id
+            ).exists()
+            can_display_details = can_display_points
+        # Otherwise, check if their org has sharing permissions at any granularity
+        if not can_display_points:
+            permission = SharingPermission.objects.filter(
+                external_data_source=external_data_source,
+                organisation__members__user=user_id,
+            ).first()
+            if permission is not None:
+                if permission.visibility_record_coordinates:
+                    can_display_points = True
+                    if permission.visibility_record_details:
+                        can_display_details = True
+
+        permissions_dict[user_id] = cls.DataPermissions(
+            can_display_points=can_display_points,
+            can_display_details=can_display_details,
+        )
+
+        cache.set(
+            permission_cache_key,
+            permissions_dict,
+            # Cached permissions for this source will be reset on save/delete
+            # so we can set the timeout to something fairly generous.
+            timeout=60 * 60,
+        )
+
+        return permissions_dict[user_id]
+
 
 class AirtableSource(ExternalDataSource):
     """
     An Airtable table.
     """
 
+    crm_type = "airtable"
     api_key = models.CharField(
         max_length=250,
         help_text="Personal access token. Requires the following 4 scopes: data.records:read, data.records:write, schema.bases:read, webhook:manage",
@@ -1583,6 +1888,9 @@ class AirtableSource(ExternalDataSource):
     def record_url_template(self):
         return f"https://airtable.com/{self.base_id}/{self.table_id}/{{record_id}}"
 
+    def record_url(self, record_id: str):
+        return f"https://airtable.com/{self.base_id}/{self.table_id}/{record_id}"
+
     async def fetch_one(self, member_id):
         record = self.table.get(member_id)
         return record
@@ -1595,8 +1903,11 @@ class AirtableSource(ExternalDataSource):
         return records
 
     async def fetch_all(self):
-        records = self.table.all()
-        return records
+        # iterate() returns an Iterator[List[RecordDict]]
+        # chain converts this into an Iterator[RecordDict]
+        # this makes the data loading from AirTable lazy
+        # and reduces memory load
+        return itertools.chain.from_iterable(self.table.iterate())
 
     def get_record_id(self, record):
         return record["id"]
@@ -1670,8 +1981,6 @@ class AirtableSource(ExternalDataSource):
         for webhook in webhooks:
             if not webhook.is_hook_enabled:
                 print("Webhook healthcheck: a webhook expired")
-                return False
-        return True
 
     def teardown_webhooks(self):
         list = self.base.webhooks()
@@ -1712,22 +2021,28 @@ class AirtableSource(ExternalDataSource):
         return self.table.delete(record_id)
 
     def create_one(self, record):
-        record = self.table.create({
-            **record['data'],
-            self.postcode_field: record['postcode'],
-            self.email_field: record['email'],
-        })
+        record = self.table.create(
+            {
+                **record["data"],
+                self.postcode_field: record["postcode"],
+                self.email_field: record["email"],
+            }
+        )
         return record
 
     def create_many(self, records):
-        records = self.table.batch_create([
-            {
-                **record.get('data', {}),
-                self.postcode_field: record['postcode'],
-                self.email_field: record['email'],
-            } for record in records
-        ])
+        records = self.table.batch_create(
+            [
+                {
+                    **record.get("data", {}),
+                    self.postcode_field: record["postcode"],
+                    self.email_field: record["email"],
+                }
+                for record in records
+            ]
+        )
         return records
+
 
 class AirtableWebhook(models.Model):
     """
@@ -1737,6 +2052,56 @@ class AirtableWebhook(models.Model):
     # Airtable ID
     airtable_id = models.CharField(max_length=250, primary_key=True)
     cursor = models.IntegerField(default=1, blank=True)
+
+
+class SharingPermission(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_update = models.DateTimeField(auto_now=True)
+    external_data_source = models.ForeignKey(
+        ExternalDataSource, on_delete=models.CASCADE
+    )
+    organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE)
+    visibility_record_coordinates = models.BooleanField(
+        default=False, blank=True, null=True
+    )
+    visibility_record_details = models.BooleanField(
+        default=False, blank=True, null=True
+    )
+
+    class Meta:
+        unique_together = ["external_data_source", "organisation"]
+
+    @classmethod
+    def _get_cache_key(cls, external_data_source_id: str) -> str:
+        return f"external_data_source_permissions:{external_data_source_id}"
+
+    def get_cache_key(self) -> str:
+        return self._get_cache_key(self.external_data_source_id)
+
+
+@receiver(models.signals.pre_delete, sender=SharingPermission)
+@receiver(models.signals.pre_save, sender=SharingPermission)
+def clear_permissions_cache_for_source(sender, instance, *args, **kwargs):
+    """
+    Clear the cache for the external data source when a sharing permission is saved or deleted
+    """
+    sharing_permission = instance
+    cache.delete(sharing_permission.get_cache_key())
+
+
+@receiver(models.signals.pre_delete, sender=Membership)
+@receiver(models.signals.pre_save, sender=Membership)
+def clear_permissions_cache_intersecting_user(sender, instance, *args, **kwargs):
+    """
+    Since the permissions cache for each source is a dictionary of users, we need to clear it when a membership is saved or deleted as this will affect a user's permissions.
+    """
+    membership = instance
+    sharing_permissions = SharingPermission.objects.filter(
+        organisation=membership.organisation
+    )
+    for sharing_permission in sharing_permissions:
+        cache.delete(sharing_permission.get_cache_key())
 
 
 class Report(PolymorphicModel):
@@ -1920,10 +2285,7 @@ class MailchimpSource(ExternalDataSource):
         members_client._build_path = _build_path
 
     def delete_one(self, record_id):
-        return self.client.lists.members.delete(
-            self.list_id,
-            record_id
-        )
+        return self.client.lists.members.delete(self.list_id, record_id)
 
     def create_one(self, record):
         record = self.client.lists.members.create(
@@ -1932,8 +2294,8 @@ class MailchimpSource(ExternalDataSource):
                 status="subscribed",
                 email_address=record["email"],
                 record=record["data"],
-                merge_fields=record["data"]
-            )
+                merge_fields=record["data"],
+            ),
         )
         return record
 
@@ -1943,8 +2305,10 @@ class MailchimpSource(ExternalDataSource):
             records += self.create_one(record)
         return records
 
+
 class MapReport(Report, Analytics):
     layers = models.JSONField(blank=True, null=True, default=list)
+    display_options = models.JSONField(blank=True, null=True, default=dict)
 
     class MapLayer(TypedDict):
         name: str

@@ -40,15 +40,15 @@ export function SourcePathSelector({
   return (
     <div className={twMerge(
       "flex w-full flex-col items-start justify-between rounded-md border py-2 px-3 sm:flex-row sm:items-center cursor-pointer hover:bg-meepGray-700 text-ellipsis overflow-hidden text-nowrap h-[40px]",
-      selectedValueSource?.connectionType && "pl-1"
+      selectedValueSource?.crmType && "pl-1"
     )}>
       <div onClick={() => setOpen(true)} className="w-full text-ellipsis overflow-hidden text-nowrap text-sm">
         {value && value.source && value.sourcePath
-          ? selectedValueSource?.connectionType ? (
+          ? selectedValueSource?.crmType ? (
             <span className='inline-flex flex-row items-center gap-2'>
               <DataSourceFieldLabel
                 label={value.sourcePath}
-                connectionType={selectedValueSource.connectionType}
+                crmType={selectedValueSource.crmType}
               />
               <span className="text-xs text-meepGray-400">
                 {sourceName(value.source)}
@@ -88,10 +88,10 @@ export function SourcePathSelector({
                   >
                     <div>
                       <div>
-                        {source.connectionType ? (
+                        {source.crmType ? (
                           <DataSourceFieldLabel
                             label={label(sourcePath)}
-                            connectionType={source.connectionType}
+                            crmType={source.crmType}
                           />
                         ) : (
                           label(sourcePath)

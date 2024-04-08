@@ -33,7 +33,7 @@ class FeatureCollection:
 @strawberry.interface
 class Feature:
     type: GeoJSONTypes.Feature = GeoJSONTypes.Feature
-    id: Optional[str]
+    id: Optional[str] = None
 
 
 #

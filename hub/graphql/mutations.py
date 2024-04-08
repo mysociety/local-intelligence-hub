@@ -1,9 +1,12 @@
+import logging
+import uuid
 from typing import List, Optional
 
 from django.utils.text import slugify
 
 import strawberry
 import strawberry_django
+from asgiref.sync import async_to_sync
 from strawberry import auto
 from strawberry.field_extensions import InputMutationExtension
 from strawberry.types.info import Info
@@ -11,6 +14,21 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import IsAuthenticated
 
 from hub import models
+from hub.graphql.types import model_types
+
+logger = logging.getLogger(__name__)
+
+
+@strawberry.type
+class MutationError:
+    code: int
+    message: str
+
+
+@strawberry.type
+class MutationOutput:
+    code: int
+    errors: list[MutationError]
 
 
 @strawberry.input
@@ -27,6 +45,7 @@ class UpdateMappingItemInput:
 
 @strawberry.input
 class MapLayerInput:
+    id: str
     name: str
     source: str
     visible: Optional[bool] = True
@@ -42,6 +61,7 @@ class MapReportInput:
     created_at: auto
     last_update: auto
     layers: Optional[List[MapLayerInput]]
+    display_options: Optional[strawberry.scalars.JSON]
 
 
 @strawberry.mutation(extensions=[IsAuthenticated(), InputMutationExtension()])
@@ -80,11 +100,21 @@ def disable_auto_update(external_data_source_id: str) -> models.ExternalDataSour
     return data_source
 
 
+@strawberry.type
+class ExternalDataSourceAction:
+    id: strawberry.scalars.ID
+    external_data_source: model_types.ExternalDataSource
+
+
 @strawberry.mutation(extensions=[IsAuthenticated()])
-def trigger_update(external_data_source_id: str) -> models.ExternalDataSource:
-    data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
-    data_source.schedule_refresh_all()
-    return data_source
+async def trigger_update(external_data_source_id: str) -> ExternalDataSourceAction:
+    data_source = await models.ExternalDataSource.objects.aget(
+        id=external_data_source_id
+    )
+    # Use this ID to track all jobs against it
+    request_id = str(uuid.uuid4())
+    await data_source.schedule_refresh_all(request_id=request_id)
+    return ExternalDataSourceAction(id=request_id, external_data_source=data_source)
 
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
@@ -102,9 +132,73 @@ def create_with_computed_args(model, info, data, computed_args):
     return strawberry_django.mutations.resolvers.create(info, model, args)
 
 
+def get_or_create_with_computed_args(model, info, find_filter, data, computed_args):
+    """
+    Returns tuple: (instance: Model, created: bool)
+    """
+    instance = model.objects.filter(**find_filter).first()
+    if instance:
+        return instance, False
+    instance = create_with_computed_args(model, info, data, computed_args)
+    return instance, True
+
+
+@strawberry.type
+class CreateSourceMutationOutput(MutationOutput):
+    result: Optional[model_types.ExternalDataSource]
+
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def create_airtable_source(
+    info: Info, data: "AirtableSourceInput"
+) -> CreateSourceMutationOutput:
+    try:
+        source, created = get_or_create_with_computed_args(
+            models.AirtableSource,
+            info,
+            find_filter={
+                "api_key": data.api_key,
+                "base_id": data.base_id,
+                "table_id": data.table_id,
+            },
+            data=data,
+            computed_args=lambda info, data, model: {
+                "organisation": get_or_create_organisation_for_source(info, data)
+            },
+        )
+
+        if created:
+            async_to_sync(source.schedule_import_all)()
+            return CreateSourceMutationOutput(code=200, errors=[], result=source)
+
+        user = get_current_user(info)
+        if user.memberships.filter(id=source.organisation.id).exists():
+            return CreateSourceMutationOutput(code=409, errors=[], result=source)
+
+        return CreateSourceMutationOutput(
+            code=409,
+            errors=[
+                MutationError(
+                    code=409,
+                    message=(
+                        "This source already exists in Mapped through another "
+                        "organisation. Please contact us for assistance."
+                    ),
+                )
+            ],
+            result=None,
+        )
+    except Exception as e:
+        logger.debug(f"create_airtable_source error: {e.message}")
+        return CreateSourceMutationOutput(code=500, errors=[], result=None)
+
+
 @strawberry_django.mutation(extensions=[IsAuthenticated()], handle_django_errors=True)
 def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
-    return create_with_computed_args(
+    existing_reports = model_types.Report.get_queryset(
+        models.Report.objects.get_queryset(), info
+    ).exists()
+    map_report = create_with_computed_args(
         models.MapReport,
         info,
         data,
@@ -113,6 +207,29 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
             "slug": data.slug or slugify(data.name),
         },
     )
+    if existing_reports:
+        return map_report
+    # If this is the first report, add the user's first member list to it
+    member_list = (
+        model_types.ExternalDataSource.get_queryset(
+            models.ExternalDataSource.objects.get_queryset(),
+            info,
+        )
+        .filter(data_type=models.ExternalDataSource.DataSourceType.MEMBER)
+        .first()
+    )
+    if member_list:
+        map_report.name = f"Auto-generated report on {member_list.name}"
+        map_report.layers = [
+            {
+                "id": str(uuid.uuid4()),
+                "name": member_list.name,
+                "source": str(member_list.id),
+                "visible": True,
+            }
+        ]
+        map_report.save()
+    return map_report
 
 
 def get_or_create_organisation_for_source(info: Info, data: any):
@@ -123,9 +240,10 @@ def get_or_create_organisation_for_source(info: Info, data: any):
         isinstance(data.organisation, strawberry.unset.UnsetType)
         or data.organisation is None
     ):
-        if user.memberships.first() is not None:
+        membership = user.memberships.first()
+        if membership is not None:
             print("Assigning the user's default organisation")
-            organisation = user.memberships.first().organisation
+            organisation = membership.organisation
         else:
             print("Making an organisation for this user")
             organisation = models.Organisation.objects.create(
@@ -138,10 +256,13 @@ def get_or_create_organisation_for_source(info: Info, data: any):
 
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
-def import_all(external_data_source_id: str) -> models.ExternalDataSource:
-    data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
-    data_source.schedule_import_all()
-    return data_source
+async def import_all(external_data_source_id: str) -> ExternalDataSourceAction:
+    data_source = await models.ExternalDataSource.objects.aget(
+        id=external_data_source_id
+    )
+    request_id = str(uuid.uuid4())
+    await data_source.schedule_import_all(request_id=request_id)
+    return ExternalDataSourceAction(id=request_id, external_data_source=data_source)
 
 
 @strawberry_django.input(models.ExternalDataSource, partial=True)
@@ -225,3 +346,58 @@ def create_external_data_source(
             return creator_fn(info, source_input)
 
     raise ValueError("You must provide input data for a specific source type")
+
+
+@strawberry_django.input(models.SharingPermission, partial=True)
+class SharingPermissionCUDInput:
+    id: auto
+    external_data_source_id: auto
+    organisation_id: auto
+    visibility_record_coordinates: auto
+    visibility_record_details: auto
+
+
+@strawberry.input
+class SharingPermissionInput:
+    id: Optional[strawberry.scalars.ID] = None
+    external_data_source_id: strawberry.scalars.ID
+    organisation_id: strawberry.scalars.ID
+    visibility_record_coordinates: Optional[bool] = False
+    visibility_record_details: Optional[bool] = False
+    deleted: Optional[bool] = False
+
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def update_sharing_permissions(
+    info: Info, from_org_id: str, permissions: List[SharingPermissionInput]
+) -> List[models.ExternalDataSource]:
+    user = get_current_user(info)
+    for permission in permissions:
+        source = models.ExternalDataSource.objects.get(
+            id=permission.external_data_source_id
+        )
+        if not str(source.organisation_id) == from_org_id:
+            raise PermissionError(
+                "This data source does not belong to the organisation you specified."
+            )
+        if not source.organisation.members.filter(user=user).exists():
+            raise PermissionError(
+                "You do not have permission to change sharing preferences for this data source."
+            )
+        if permission.deleted:
+            models.SharingPermission.objects.filter(id=permission.id).delete()
+        else:
+            models.SharingPermission.objects.update_or_create(
+                # id=permission.id,
+                external_data_source_id=permission.external_data_source_id,
+                organisation_id=permission.organisation_id,
+                defaults={
+                    "visibility_record_coordinates": permission.visibility_record_coordinates,
+                    "visibility_record_details": permission.visibility_record_details,
+                },
+            )
+    # Return data sources for the current org
+    result = list(
+        models.ExternalDataSource.objects.filter(organisation_id=from_org_id).all()
+    )
+    return result

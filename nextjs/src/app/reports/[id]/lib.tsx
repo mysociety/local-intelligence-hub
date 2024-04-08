@@ -10,13 +10,26 @@ var colorHash = new ColorHash();
 export const MAP_REPORT_LAYERS_SUMMARY = gql`
   fragment MapReportLayersSummary on MapReport {
     layers {
+      id
       name
+      sharingPermission {
+        visibilityRecordDetails
+        visibilityRecordCoordinates
+        organisation {
+          name
+        }
+      }
       source {
         id
         name
-        isImporting
+        isImportScheduled
         importedDataCount
         recordUrlTemplate
+        crmType
+        dataType
+        organisation {
+          name
+        }
       }
     }
   }

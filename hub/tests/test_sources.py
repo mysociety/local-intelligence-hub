@@ -1,10 +1,10 @@
 from datetime import datetime
-from typing import TypedDict, List
+from typing import List, TypedDict
 
 from django.conf import settings
 from django.test import TestCase
 
-from asgiref.sync import async_to_sync, sync_to_async
+from asgiref.sync import sync_to_async
 
 from hub import models
 
@@ -50,14 +50,18 @@ class TestExternalDataSource:
         self.records_to_delete.append((record["id"], self.source))
         return record
 
-    def create_many_test_records(self, records: List[models.ExternalDataSource.CUDRecord]):
+    def create_many_test_records(
+        self, records: List[models.ExternalDataSource.CUDRecord]
+    ):
         records = self.source.create_many(records)
         self.records_to_delete += [(record["id"], self.source) for record in records]
         return records
 
     def create_custom_layer_airtable_records(self, records: any):
         records = self.custom_data_layer.table.batch_create(records)
-        self.records_to_delete += [(record["id"], self.custom_data_layer) for record in records]
+        self.records_to_delete += [
+            (record["id"], self.custom_data_layer) for record in records
+        ]
         return records
 
     # Tests begin
@@ -84,15 +88,18 @@ class TestExternalDataSource:
                 },
             ]
         )
-        await self.custom_data_layer.import_all()
+        records = await self.custom_data_layer.fetch_all()
+        await self.custom_data_layer.import_many(
+            [self.custom_data_layer.get_record_id(record) for record in records]
+        )
         enrichment_df = await sync_to_async(
             self.custom_data_layer.get_imported_dataframe
         )()
         self.assertGreaterEqual(len(enrichment_df.index), 2)
 
-    def test_import_all(self):
+    async def test_import_many(self):
         # Confirm the database is empty
-        original_count = self.custom_data_layer.get_import_data().count()
+        original_count = await self.custom_data_layer.get_import_data().acount()
         self.assertEqual(original_count, 0)
         # Add some test data
         self.create_custom_layer_airtable_records(
@@ -107,20 +114,22 @@ class TestExternalDataSource:
                 },
             ]
         )
-        self.assertGreaterEqual(
-            len(list(async_to_sync(self.custom_data_layer.fetch_all)())), 2
-        )
+        records = list(await self.custom_data_layer.fetch_all())
+        fetch_count = len(records)
+        self.assertGreaterEqual(fetch_count, 2)
         # Check that the import is storing it all
-        fetch_count = len(list(async_to_sync(self.custom_data_layer.fetch_all)()))
-        async_to_sync(self.custom_data_layer.import_all)()
+        await self.custom_data_layer.import_many(
+            [self.custom_data_layer.get_record_id(record) for record in records]
+        )
         import_data = self.custom_data_layer.get_import_data()
-        import_count = len(import_data)
+        import_count = await import_data.acount()
         self.assertEqual(import_count, fetch_count)
         # assert that 'council district' and 'mayoral region' keys are in the JSON object
-        self.assertIn("council district", import_data[0].json)
-        self.assertIn("mayoral region", import_data[0].json)
+        first_record = await import_data.afirst()
+        self.assertIn("council district", first_record.json)
+        self.assertIn("mayoral region", first_record.json)
         self.assertIn(
-            import_data[0].json["council district"],
+            first_record.json["council district"],
             [
                 "Newcastle upon Tyne",
                 "North Tyneside",
@@ -132,10 +141,10 @@ class TestExternalDataSource:
             ],
         )
         self.assertIn(
-            import_data[0].json["mayoral region"],
+            first_record.json["mayoral region"],
             ["North East Mayoral Combined Authority"],
         )
-        df = self.custom_data_layer.get_imported_dataframe()
+        df = await sync_to_async(self.custom_data_layer.get_imported_dataframe)()
         # assert len(df.index) == import_count
         self.assertIn("council district", list(df.columns.values))
         self.assertIn("mayoral region", list(df.columns.values))
@@ -144,9 +153,7 @@ class TestExternalDataSource:
     async def test_fetch_one(self):
         record = self.create_test_record(
             models.ExternalDataSource.CUDRecord(
-              email="eh991sp@gmail.com",
-              postcode="EH99 1SP",
-              data={}
+                email="eh991sp@gmail.com", postcode="EH99 1SP", data={}
             )
         )
         # Test this functionality
@@ -159,10 +166,10 @@ class TestExternalDataSource:
         records = self.create_many_test_records(
             [
                 models.ExternalDataSource.CUDRecord(
-                  postcode=date + "11111", email="1111111111@gmail.com", data={}
+                    postcode=date + "11111", email="1111111111@gmail.com", data={}
                 ),
                 models.ExternalDataSource.CUDRecord(
-                  postcode=date + "22222", email="2222222222@gmail.com", data={}
+                    postcode=date + "22222", email="2222222222@gmail.com", data={}
                 ),
             ]
         )
@@ -178,9 +185,7 @@ class TestExternalDataSource:
     async def test_refresh_one(self):
         record = self.create_test_record(
             models.ExternalDataSource.CUDRecord(
-              email="eh991sp@gmail.com",
-              postcode="EH99 1SP",
-              data={}
+                email="eh991sp@gmail.com", postcode="EH99 1SP", data={}
             )
         )
         # Test this functionality
@@ -192,7 +197,7 @@ class TestExternalDataSource:
             "Edinburgh East and Musselburgh",
         )
 
-    def test_pivot_table(self):
+    async def test_pivot_table(self):
         """
         This is testing the ability for self.source to be updated using data from self.custom_data_layer
         i.e. to test the pivot table functionality
@@ -211,18 +216,19 @@ class TestExternalDataSource:
                 },
             ]
         )
+        records = await self.custom_data_layer.fetch_all()
         # Check that the import is storing it all
-        async_to_sync(self.custom_data_layer.import_all)()
+        await self.custom_data_layer.import_many(
+            [self.custom_data_layer.get_record_id(record) for record in records]
+        )
         # Add a test record
         record = self.create_test_record(
             models.ExternalDataSource.CUDRecord(
-              email="NE126DD@gmail.com",
-              postcode="NE12 6DD",
-              data={}
+                email="NE126DD@gmail.com", postcode="NE12 6DD", data={}
             )
         )
-        mapped_member = async_to_sync(self.source.map_one)(
-            record, loaders=async_to_sync(self.source.get_loaders)()
+        mapped_member = await self.source.map_one(
+            record, loaders=await self.source.get_loaders()
         )
         self.assertEqual(
             mapped_member["update_fields"]["mayoral region"],
@@ -233,10 +239,10 @@ class TestExternalDataSource:
         records = self.create_many_test_records(
             [
                 models.ExternalDataSource.CUDRecord(
-                  postcode="G11 5RD", email="gg111155rardd@gmail.com", data={}
+                    postcode="G11 5RD", email="gg111155rardd@gmail.com", data={}
                 ),
                 models.ExternalDataSource.CUDRecord(
-                  postcode="G42 8PH", email="ag342423423rwefw@gmail.com", data={}
+                    postcode="G42 8PH", email="ag342423423rwefw@gmail.com", data={}
                 ),
             ]
         )
@@ -251,7 +257,20 @@ class TestExternalDataSource:
             elif self.source.get_record_field(record, "Postcode") == "G42 8PH":
                 self.assertEqual(record["fields"]["constituency"], "Glasgow South")
 
-    def test_analytics(self):
+    def test_airtable_filter(self):
+        date = str(datetime.now().isoformat())
+        self.create_many_test_records(
+            [{"Postcode": date + "11111"}, {"Postcode": date + "22222"}]
+        )
+        # Test this functionality
+        records = self.source.filter({"Postcode": date + "11111"})
+        # Check
+        assert len(records) == 1
+        self.assertEqual(
+            self.source.get_record_field(records[0], "Postcode"), date + "11111"
+        )
+
+    async def test_analytics(self):
         """
         This is testing the ability to get analytics from the data source
         """
@@ -259,19 +278,25 @@ class TestExternalDataSource:
         self.create_many_test_records(
             [
                 models.ExternalDataSource.CUDRecord(
-                  postcode="E5 0AA", email="E50AA@gmail.com", data={}
+                    postcode="E5 0AA", email="E50AA@gmail.com", data={}
                 ),
                 models.ExternalDataSource.CUDRecord(
-                  postcode="E10 6EF", email="E106EF@gmail.com", data={}
+                    postcode="E10 6EF", email="E106EF@gmail.com", data={}
                 ),
             ]
         )
         # import
-        async_to_sync(self.source.import_all)()
+        records = await self.source.fetch_all()
+        await self.source.import_many(
+            [self.source.get_record_id(record) for record in records]
+        )
         # check analytics
         analytics = self.source.imported_data_count_by_constituency()
-        constituencies_in_report = list(map(lambda a: a["label"], analytics))
+        # convert query set to list (is there a better way?)
+        analytics = await sync_to_async(list)(analytics)
         self.assertGreaterEqual(len(analytics), 2)
+        constituencies_in_report = [a["label"] for a in analytics]
+
         self.assertIn("Hackney North and Stoke Newington", constituencies_in_report)
         self.assertIn("Leyton and Wanstead", constituencies_in_report)
         for a in analytics:
@@ -309,7 +334,7 @@ class TestAirtableSource(TestExternalDataSource, TestCase):
             ],
         )
         return self.source
-    
+
 
 class TestMailchimpSource(TestExternalDataSource, TestCase):
     def create_test_source(self):
