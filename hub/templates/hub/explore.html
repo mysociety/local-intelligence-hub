@@ -46,14 +46,14 @@
                 </select>
                 -->
 
-                <button type="button" class="btn btn-outline-secondary p-3 w-100 position-relative" data-bs-toggle="modal" data-bs-target="#areaType">
+                <button type="button" class="btn btn-outline-secondary p-3 w-100 position-relative mb-3" data-bs-toggle="modal" data-bs-target="#areaType">
                     <p class="mb-1">Current constituencies</p>
-                    <small>These constituencies are the areas which MPs currently represent in UK Parliament.</small>
                     {% include "hub/includes/icons/select.html" with classes="position-absolute top-50 start-95 translate-middle" %}
                     <!--
                     <small>This is the constituency in which parliamentary candidates will soon be standing for election.</small>
                     -->
                 </button>
+                <p class="from-text fs-7"><span class="fw-bold">Current constituencies</span> are the areas which MPs currently represent in UK Parliament.</p>
 
                 <div class="modal fade" id="areaType" tabindex="-1" aria-labelledby="areaTypeLabel" aria-hidden="true">
                     <div class="modal-dialog">
