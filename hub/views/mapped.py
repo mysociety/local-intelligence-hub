@@ -31,9 +31,9 @@ class ExternalDataSourceAutoUpdateWebhook(View):
     def handle(self, request, external_data_source_id: str, data: dict):
         print("Webhook received", self.kwargs, data)
         # 1. Match the payload to a ExternalDataSource
-        external_data_source = models.ExternalDataSource.objects.get(
+        external_data_source = models.ExternalDataSource.objects.filter(
             id=external_data_source_id
-        )
+        ).first()
         if not external_data_source:
             return JsonResponse({"status": "You need to set up a webhook first."})
         if not external_data_source.auto_update_enabled:

@@ -1085,14 +1085,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         return None
 
-    def webhook_healthcheck(self) -> bool:
-        """
-        Check the connection to the webhook.
-        """
-        raise NotImplementedError(
-            "Webhook healthcheck not implemented for this data source type."
-        )
-
     def setup_webhooks(self):
         """
         Set up a webhook.
@@ -1117,23 +1109,21 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     def webhook_healthcheck(self):
         expected_webhooks = 0
-        if self.auto_update_webhook_url:
+        if self.auto_update_enabled:
             expected_webhooks += 1
         if self.auto_import_enabled:
             expected_webhooks += 1
+        webhooks = []
         try:
             webhooks = self.get_webhooks()
-            if len(webhooks) < expected_webhooks:
-                raise ValueError("Webhook healthcheck: Not enough webhooks")
-            if len(webhooks) > expected_webhooks:
-                raise ValueError("Webhook healthcheck: Too many webhooks")
-            for webhook in webhooks:
-                if not webhook.is_hook_enabled:
-                    raise ValueError("Webhook healthcheck: a webhook expired")
-            return True
         except Exception as e:
             logger.error(f"Could't fetch webhooks: {e}")
             raise ValueError("Couldn't fetch webhooks")
+        if len(webhooks) < expected_webhooks:
+            raise ValueError("Webhook healthcheck: Not enough webhooks")
+        if len(webhooks) > expected_webhooks:
+            raise ValueError("Webhook healthcheck: Too many webhooks")
+        return True
 
     def extra_webhook_healthcheck(self, webhooks):
         return True
@@ -1276,14 +1266,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         raise NotImplementedError(
             "Update many not implemented for this data source type."
-        )
-
-    async def update_all(self, mapped_records: list[MappedMember]):
-        """
-        Append all data to the table.
-        """
-        raise NotImplementedError(
-            "Update all not implemented for this data source type."
         )
 
     def get_record_id(self, record):
@@ -1823,6 +1805,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         return permissions_dict[user_id]
 
+    def filter(self, filter: dict) -> dict:
+        """
+        Look up a record by a value in a column.
+        """
+        raise NotImplementedError("Lookup not implemented for this data source type.")
+
 
 class AirtableSource(ExternalDataSource):
     """
@@ -1934,17 +1922,6 @@ class AirtableSource(ExternalDataSource):
             ]
         )
 
-    async def update_all(self, mapped_records):
-        return self.table.batch_update(
-            [
-                {
-                    "id": mapped_record["member"]["id"],
-                    "fields": mapped_record["update_fields"],
-                }
-                for mapped_record in mapped_records
-            ]
-        )
-
     def auto_update_webhook_specification(self):
         if self.geography_column is None:
             raise ValueError("A geography column is required for auto-updates to work.")
@@ -1981,6 +1958,8 @@ class AirtableSource(ExternalDataSource):
         for webhook in webhooks:
             if not webhook.is_hook_enabled:
                 print("Webhook healthcheck: a webhook expired")
+                return False
+        return True
 
     def teardown_webhooks(self):
         list = self.base.webhooks()
@@ -2041,6 +2020,13 @@ class AirtableSource(ExternalDataSource):
                 for record in records
             ]
         )
+        return records
+
+    def filter(self, d: dict):
+        formula = "AND("
+        formula += ",".join([f"{key}='{value}'" for key, value in d.items()])
+        formula += ")"
+        records = self.table.all(formula=formula)
         return records
 
 
@@ -2148,7 +2134,20 @@ class MailchimpSource(ExternalDataSource):
     @cached_property
     def client(self) -> MailChimp:
         # Initializes the MailChimp client
-        return MailChimp(mc_api=self.api_key)
+        client = MailChimp(mc_api=self.api_key)
+
+        members_client = client.lists.members
+        _build_path = members_client._build_path
+
+        # Modify API request to include ?skip_merge_validation=true
+        # Otherwise data can't be updated if the address is not complete
+        # (i.e. with addr1, city, state and country)
+        def build_path_with_skip_validation(self, *args, **kwargs):
+            path = _build_path(self, *args, **kwargs)
+            return f"{path}?skip_merge_validation=true"
+
+        members_client._build_path = build_path_with_skip_validation
+        return client
 
     def healthcheck(self):
         # Checks if the Mailchimp list is accessible
@@ -2160,11 +2159,25 @@ class MailchimpSource(ExternalDataSource):
     def get_record_id(self, record):
         return record["id"]
 
-    def get_record_field(self, record, field):
-        try:
-            return get(record, field, None)
-        except KeyError:
-            return None
+    def get_record_field(self, record, field: str):
+        field_options = [
+            field,
+            f"merge_fields.{field}",
+            # Mailchimp custom fields are max 10 chars long and typically uppercase
+            f"merge_fields.{field[0:10].upper()}",
+        ]
+
+        value = None
+
+        for field in field_options:
+            try:
+                value = get(record, field)
+                if value:
+                    break
+            except KeyError:
+                pass
+
+        return value
 
     def get_webhooks(self):
         webhooks = self.client.lists.webhooks.all(self.list_id)["webhooks"]
@@ -2219,9 +2232,11 @@ class MailchimpSource(ExternalDataSource):
 
     async def fetch_many(self, member_ids: list[str]):
         # TODO: is there a more efficient request to get many members?
-        return [self.fetch_one(member_id) for member_id in member_ids]
+        return await asyncio.gather(
+            *[self.fetch_one(member_id) for member_id in member_ids]
+        )
 
-    def fetch_one(self, member_id: str):
+    async def fetch_one(self, member_id: str):
         # Fetches a single list member by their unique member ID
         # Mailchimp member IDs are typically the MD5 hash of the lowercase version of the member's email address
         member = self.client.lists.members.get(
@@ -2247,7 +2262,7 @@ class MailchimpSource(ExternalDataSource):
             for key in keys
         ]
 
-    async def update_all(self, mapped_records):
+    async def update_many(self, mapped_records):
         for mapped_record in mapped_records:
             try:
                 await self.update_one(mapped_record)
@@ -2256,22 +2271,10 @@ class MailchimpSource(ExternalDataSource):
                 logger.error(f"Error updating Mailchimp record {subscriber_hash}: {e}")
 
     async def update_one(self, mapped_record):
-        members_client = self.client.lists.members
-        _build_path = members_client._build_path
-
-        # Modify API request to include ?skip_merge_validation=true
-        # Otherwise data can't be updated if the address is not complete
-        # (i.e. with addr1, city, state and country)
-        def build_path_with_skip_validation(self, *args, **kwargs):
-            path = _build_path(self, *args, **kwargs)
-            return f"{path}?skip_merge_validation=true"
-
-        members_client._build_path = build_path_with_skip_validation
-
         subscriber_hash = mapped_record["member"]["id"]
         # Have to get the existing member to update the merge fields (the API does not patch the object)
         # TODO: save all the merge fields in our database so we don't have to do this?
-        existing_member = self.fetch_one(subscriber_hash)
+        existing_member = await self.fetch_one(subscriber_hash)
         merge_fields = {
             **existing_member["merge_fields"],
             **mapped_record["update_fields"],
@@ -2282,28 +2285,48 @@ class MailchimpSource(ExternalDataSource):
             data={"merge_fields": merge_fields},
         )
 
-        members_client._build_path = _build_path
-
     def delete_one(self, record_id):
         return self.client.lists.members.delete(self.list_id, record_id)
 
-    def create_one(self, record):
+    def create_one(self, record: ExternalDataSource.CUDRecord):
         record = self.client.lists.members.create(
             self.list_id,
             data=dict(
                 status="subscribed",
                 email_address=record["email"],
-                record=record["data"],
-                merge_fields=record["data"],
+                merge_fields={
+                    "ADDRESS": {
+                        "addr1": record["data"].get("addr1"),
+                        "city": record["data"].get("city"),
+                        "state": record["data"].get("state"),
+                        "country": record["data"].get("country"),
+                        "zip": record["postcode"],
+                    }
+                    if record["data"].get("addr1")
+                    else ""
+                },
             ),
         )
         return record
 
     def create_many(self, records):
-        records = []
+        created_records = []
         for record in records:
-            records += self.create_one(record)
-        return records
+            created_records.append(self.create_one(record))
+        return created_records
+
+    def filter(self, filter: dict) -> dict:
+        list = self.client.lists.members.all(self.list_id, get_all=True)
+        filtered_records = []
+        for record in list["members"]:
+            match = True
+            for field, value in filter.items():
+                if self.get_record_field(record, field) != value:
+                    match = False
+                    break
+            if match:
+                filtered_records.append(record)
+        return filtered_records
 
 
 class MapReport(Report, Analytics):

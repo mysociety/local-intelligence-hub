@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import List, TypedDict
+from random import randint
+from typing import List
 
 from django.conf import settings
 from django.test import TestCase
@@ -71,7 +72,11 @@ class TestExternalDataSource:
 
     async def test_webhooks(self):
         self.source.teardown_webhooks()
-        self.assertFalse(self.source.webhook_healthcheck())
+        try:
+            self.source.webhook_healthcheck()
+            self.fail()
+        except ValueError as e:
+            self.assertTrue("Not enough webhooks" in str(e))
         self.source.setup_webhooks()
         self.assertTrue(self.source.webhook_healthcheck())
 
@@ -153,23 +158,35 @@ class TestExternalDataSource:
     async def test_fetch_one(self):
         record = self.create_test_record(
             models.ExternalDataSource.CUDRecord(
-                email="eh991sp@gmail.com", postcode="EH99 1SP", data={}
+                email=f"eh{randint(0, 1000)}sp@gmail.com",
+                postcode="EH99 1SP",
+                data={
+                    "addr1": "98 Canongate",
+                    "city": "Edinburgh",
+                    "state": "Midlothian",
+                    "country": "GB",
+                }
+                if isinstance(self.source, models.MailchimpSource)
+                else {},
             )
         )
         # Test this functionality
         record = await self.source.fetch_one(self.source.get_record_id(record))
         # Check
-        self.assertEqual(self.source.get_record_field(record, "Postcode"), "EH99 1SP")
+        self.assertEqual(
+            self.source.get_record_field(record, self.source.geography_column),
+            "EH99 1SP",
+        )
 
     async def test_fetch_many(self):
-        date = str(datetime.now().isoformat())
+        now = str(datetime.now().timestamp())
         records = self.create_many_test_records(
             [
                 models.ExternalDataSource.CUDRecord(
-                    postcode=date + "11111", email="1111111111@gmail.com", data={}
+                    postcode=now + "11111", email=now + "11111@gmail.com", data={}
                 ),
                 models.ExternalDataSource.CUDRecord(
-                    postcode=date + "22222", email="2222222222@gmail.com", data={}
+                    postcode=now + "22222", email=now + "22222@gmail.com", data={}
                 ),
             ]
         )
@@ -177,15 +194,28 @@ class TestExternalDataSource:
         records = await self.source.fetch_many([record["id"] for record in records])
         # Check
         assert len(records) == 2
+        # Check the email field instead of postcode, because Mailchimp doesn't set
+        # the postcode without a full address, which is not present in this test
         for record in records:
             self.assertTrue(
-                self.source.get_record_field(record, "Postcode").startswith(date)
+                self.source.get_record_field(
+                    record, self.source.email_field
+                ).startswith(now)
             )
 
     async def test_refresh_one(self):
         record = self.create_test_record(
             models.ExternalDataSource.CUDRecord(
-                email="eh991sp@gmail.com", postcode="EH99 1SP", data={}
+                email=f"eh{randint(0, 1000)}sp@gmail.com",
+                postcode="EH99 1SP",
+                data={
+                    "addr1": "98 Canongate",
+                    "city": "Edinburgh",
+                    "state": "Midlothian",
+                    "country": "GB",
+                }
+                if isinstance(self.source, models.MailchimpSource)
+                else {},
             )
         )
         # Test this functionality
@@ -224,7 +254,16 @@ class TestExternalDataSource:
         # Add a test record
         record = self.create_test_record(
             models.ExternalDataSource.CUDRecord(
-                email="NE126DD@gmail.com", postcode="NE12 6DD", data={}
+                email=f"NE{randint(0, 1000)}DD@gmail.com",
+                postcode="NE12 6DD",
+                data={
+                    "addr1": "Hadrian Court",
+                    "city": "Newcastle upon Tyne",
+                    "state": "Tyne and Wear",
+                    "country": "GB",
+                }
+                if isinstance(self.source, models.MailchimpSource)
+                else {},
             )
         )
         mapped_member = await self.source.map_one(
@@ -239,10 +278,28 @@ class TestExternalDataSource:
         records = self.create_many_test_records(
             [
                 models.ExternalDataSource.CUDRecord(
-                    postcode="G11 5RD", email="gg111155rardd@gmail.com", data={}
+                    postcode="G11 5RD",
+                    email=f"gg{randint(0, 1000)}rardd@gmail.com",
+                    data={
+                        "addr1": "Byres Rd",
+                        "city": "Glasgow",
+                        "state": "Glasgow",
+                        "country": "GB",
+                    }
+                    if isinstance(self.source, models.MailchimpSource)
+                    else {},
                 ),
                 models.ExternalDataSource.CUDRecord(
-                    postcode="G42 8PH", email="ag342423423rwefw@gmail.com", data={}
+                    postcode="G42 8PH",
+                    email=f"ag{randint(0, 1000)}rwefw@gmail.com",
+                    data={
+                        "addr1": "506 Victoria Rd",
+                        "city": "Glasgow",
+                        "state": "Glasgow",
+                        "country": "GB",
+                    }
+                    if isinstance(self.source, models.MailchimpSource)
+                    else {},
                 ),
             ]
         )
@@ -252,22 +309,43 @@ class TestExternalDataSource:
         records = await self.source.fetch_many([record["id"] for record in records])
         assert len(records) == 2
         for record in records:
-            if self.source.get_record_field(record, "Postcode") == "G11 5RD":
-                self.assertEqual(record["fields"]["constituency"], "Glasgow West")
-            elif self.source.get_record_field(record, "Postcode") == "G42 8PH":
-                self.assertEqual(record["fields"]["constituency"], "Glasgow South")
+            if (
+                self.source.get_record_field(record, self.source.geography_column)
+                == "G11 5RD"
+            ):
+                self.assertEqual(
+                    self.source.get_record_field(record, "constituency"), "Glasgow West"
+                )
+            elif (
+                self.source.get_record_field(record, self.source.geography_column)
+                == "G42 8PH"
+            ):
+                self.assertEqual(
+                    self.source.get_record_field(record, "constituency"),
+                    "Glasgow South",
+                )
+            else:
+                self.fail()
 
-    def test_airtable_filter(self):
-        date = str(datetime.now().isoformat())
+    def test_filter(self):
+        now = str(datetime.now().timestamp())
         self.create_many_test_records(
-            [{"Postcode": date + "11111"}, {"Postcode": date + "22222"}]
+            [
+                models.ExternalDataSource.CUDRecord(
+                    postcode=now + "11111", email=f"{now}11111@gmail.com", data={}
+                ),
+                models.ExternalDataSource.CUDRecord(
+                    postcode=now + "22222", email=f"{now}22222@gmail.com", data={}
+                ),
+            ]
         )
         # Test this functionality
-        records = self.source.filter({"Postcode": date + "11111"})
+        records = self.source.filter({self.source.email_field: f"{now}11111@gmail.com"})
         # Check
         assert len(records) == 1
         self.assertEqual(
-            self.source.get_record_field(records[0], "Postcode"), date + "11111"
+            self.source.get_record_field(records[0], self.source.email_field),
+            f"{now}11111@gmail.com",
         )
 
     async def test_analytics(self):
@@ -278,10 +356,28 @@ class TestExternalDataSource:
         self.create_many_test_records(
             [
                 models.ExternalDataSource.CUDRecord(
-                    postcode="E5 0AA", email="E50AA@gmail.com", data={}
+                    postcode="E5 0AA",
+                    email=f"E{randint(0, 1000)}AA@gmail.com",
+                    data={
+                        "addr1": "Millfields Rd",
+                        "city": "London",
+                        "state": "London",
+                        "country": "GB",
+                    }
+                    if isinstance(self.source, models.MailchimpSource)
+                    else {},
                 ),
                 models.ExternalDataSource.CUDRecord(
-                    postcode="E10 6EF", email="E106EF@gmail.com", data={}
+                    postcode="E10 6EF",
+                    email=f"E{randint(0, 1000)}EF@gmail.com",
+                    data={
+                        "addr1": "123 Colchester Rd",
+                        "city": "London",
+                        "state": "London",
+                        "country": "GB",
+                    }
+                    if isinstance(self.source, models.MailchimpSource)
+                    else {},
                 ),
             ]
         )
@@ -344,14 +440,16 @@ class TestMailchimpSource(TestExternalDataSource, TestCase):
             organisation=self.organisation,
             api_key=settings.TEST_MAILCHIMP_MEMBERLIST_API_KEY,
             list_id=settings.TEST_MAILCHIMP_MEMBERLIST_AUDIENCE_ID,
-            geography_column="Postcode",
+            email_field="email_address",
+            geography_column="ADDRESS.zip",
             geography_column_type=models.MailchimpSource.PostcodesIOGeographyTypes.POSTCODE,
             auto_update_enabled=True,
             update_mapping=[
                 {
                     "source": "postcodes.io",
                     "source_path": "parliamentary_constituency_2025",
-                    "destination_column": "constituency",
+                    # 10 characters and uppercase for Mailchimp custom fields
+                    "destination_column": "CONSTITUEN",
                 },
                 {
                     "source": str(self.custom_data_layer.id),

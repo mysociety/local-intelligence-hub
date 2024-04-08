@@ -318,19 +318,6 @@ def create_mailchimp_source(
     )
 
 
-def create_airtable_source(
-    info: Info, data: AirtableSourceInput
-) -> models.ExternalDataSource:
-    return create_with_computed_args(
-        models.AirtableSource,
-        info,
-        data,
-        computed_args=lambda info, data, model: {
-            "organisation": get_or_create_organisation_for_source(info, data)
-        },
-    )
-
-
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
 def create_external_data_source(
     info: Info, input: CreateExternalDataSourceInput
