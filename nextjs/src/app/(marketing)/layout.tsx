@@ -5,6 +5,7 @@ import Navbar from "@/components/navbar";
 import PreFooter from "@/components/pre-footer";
 import { useAuth } from "@/hooks/auth";
 import { Toaster } from "sonner";
+import FeedbackBanner from "@/components/marketing/FeedbackBanner";
 
 export default async function Layout({
   children,
@@ -17,11 +18,11 @@ export default async function Layout({
   return (
     <div className='flex flex-col min-h-dvh'>
       <AreaPattern />
-      <Navbar isLoggedIn={isLoggedIn} />
       <main className="p-4 relative">
+      <FeedbackBanner/>
+      <Navbar isLoggedIn={isLoggedIn} />
         {children}
       </main>
-
       <Toaster />
       <div className='flex flex-col gap-4 mt-auto mx-4'>
         {!isLoggedIn && <SignUp />}
