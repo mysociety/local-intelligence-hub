@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { getSourceOptionForTypename } from "@/lib/data";
 import { DataSourceCardFragment, AutoUpdateWebhookRefreshMutation, AutoUpdateWebhookRefreshMutationVariables, DataSourceType, DisableAutoUpdateMutation, DisableAutoUpdateMutationVariables, EnableAutoUpdateMutation, EnableAutoUpdateMutationVariables, TriggerFullUpdateMutation, TriggerFullUpdateMutationVariables } from "@/__generated__/graphql";
+import { DATA_SOURCE_FRAGMENT, TRIGGER_FULL_UPDATE } from "./ExternalDataSourceCard";
 
 export function AutoUpdateCard({
   externalDataSource,
@@ -30,7 +31,7 @@ export function AutoUpdateCard({
   externalDataSource: DataSourceCardFragment
 }) {
   const Logo = getSourceOptionForTypename(
-    externalDataSource.connectionDetails.crmType,
+    externalDataSource.crmType,
   )!.logo;
 
   return (
@@ -209,27 +210,6 @@ export function toggleAutoUpdate(
   }
 }
 
-export const DATA_SOURCE_FRAGMENT = gql`
-  fragment DataSourceCard on ExternalDataSource {
-    id
-    name
-    dataType
-    connectionDetails {
-      crmType: __typename
-    }
-    autoUpdateEnabled
-    updateMapping {
-      source
-      sourcePath
-      destinationColumn
-    }
-    jobs {
-      lastEventAt
-      status
-    }
-  }
-`;
-
 export const GET_UPDATE_CONFIG_CARD = gql`
   query ExternalDataSourceAutoUpdateCard($ID: ID!) {
     externalDataSource(pk: $ID) {
@@ -284,23 +264,3 @@ export function CogIcon() {
     </svg>
   );
 }
-
-export const TRIGGER_FULL_UPDATE = gql`
-  mutation TriggerFullUpdate($externalDataSourceId: String!) {
-    triggerUpdate(externalDataSourceId: $externalDataSourceId) {
-      id
-      jobs {
-        status
-        id
-        taskName
-        args
-        lastEventAt
-      }
-      id
-      name
-      connectionDetails {
-        crmType: __typename
-      }
-    }
-  }
-`;

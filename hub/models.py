@@ -2114,7 +2114,7 @@ class MailchimpSource(ExternalDataSource):
     """
     A Mailchimp list.
     """
-
+    crm_type = "mailchimp"
     api_key = models.CharField(
         max_length=250,
         help_text="Mailchimp API key.",
