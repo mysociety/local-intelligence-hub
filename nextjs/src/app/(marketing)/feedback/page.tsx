@@ -51,7 +51,7 @@ const Feedback = () => {
     };
 
     return (
-        <div className='max-w-prose'>
+        <div className='max-w-prose mx-auto'>
             <h1 className='text-hLg font-IBMPlexSans mb-4'>Submit feedback on Mapped</h1>
             {!feedbackSubmitted ? (
                 <>
