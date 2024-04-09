@@ -128,6 +128,8 @@ const config = {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        yellow: "hsl(var(--yellow))",
+        darkSecondary:  "hsl(var(--dark-secondary))",
         background: {
           DEFAULT: "hsl(var(--meepGray-800))",
           secondary: "hsl(var(--meepGray-700))",
