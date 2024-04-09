@@ -71,6 +71,8 @@
     --accent: var(--meep-gray-600);
     --accent-foreground: var(--meep-gray-200);
     --border: 0, 0%, 100%, 0.32;
+    --yellow: 44, 99%, 62%;
+    --dark-secondary: 220, 25%, 16%;
 
     --brand: 222, 69%, 65%;
 
