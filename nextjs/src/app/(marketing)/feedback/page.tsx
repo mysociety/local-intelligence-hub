@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { usePostHog } from 'posthog-js/react';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Metadata } from 'next'
 
 
 const Feedback = () => {
@@ -70,8 +69,3 @@ const Feedback = () => {
 };
 
 export default Feedback;
-
-export const metadata: Metadata = {
-    title: 'Feedback',
-
-}
