@@ -108,14 +108,8 @@ class Mutation:
     verify_account = auth_mutations.VerifyAccount.field
     resend_activation_email = auth_mutations.ResendActivationEmail.field
 
-    create_external_data_source: model_types.ExternalDataSource = (
+    create_external_data_source: mutation_types.CreateExternalDataSourceOutput = (
         mutation_types.create_external_data_source
-    )
-    create_airtable_source: mutation_types.CreateSourceMutationOutput = (
-        mutation_types.create_airtable_source
-    )
-    update_airtable_source: model_types.AirtableSource = django_mutations.update(
-        mutation_types.AirtableSourceInput, extensions=[IsAuthenticated()]
     )
     update_external_data_source: model_types.ExternalDataSource = (
         django_mutations.update(

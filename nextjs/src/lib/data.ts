@@ -32,7 +32,7 @@ export const externalDataSourceOptions: Record<string, {
     name: "Mailchimp",
     logo: MailchimpLogo,
     screenshot: "/mailchimp-screenshot.png",
-    supported: false
+    supported: true
   },
   googleSheets: {
     key: "google-sheets",

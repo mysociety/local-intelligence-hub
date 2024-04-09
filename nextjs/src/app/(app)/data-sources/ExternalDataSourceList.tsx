@@ -61,18 +61,7 @@ const LIST_UPDATE_CONFIGS = gql`
         }
       }
     }
-    autoUpdateEnabled
-    jobs {
-      lastEventAt
-      status
-    }
-    updateMapping {
-      source
-      sourcePath
-      destinationColumn
-    }
   }
-}
 `;
 
 export default function ExternalDataSourceList() {

@@ -3,10 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ApolloError, FetchResult, gql, useLazyQuery, useMutation } from "@apollo/client";
+import { FetchResult, gql, useLazyQuery, useMutation } from "@apollo/client";
 import { CreateAutoUpdateFormContext } from "../../NewExternalDataSourceWrapper";
-import { toast } from "sonner";
-import { FieldPath, FormProvider, NonUndefined, SubmitHandler, useFieldArray, useForm } from "react-hook-form";
+import { FieldPath, FormProvider, useForm } from "react-hook-form";
 import {
   Form,
   FormControl,
@@ -28,49 +27,39 @@ import {
 import { Input } from "@/components/ui/input";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import {
-  AirtableSourceInput,
   CreateExternalDataSourceInput,
-  CreateSourceMutation,
-  CreateSourceMutationVariables,
+  CreateExternalDataSourceOutput,
   DataSourceType,
   ExternalDataSourceInput,
   TestDataSourceInput,
-  FieldDefinition,
-  MailChimpSourceInput,
   PostcodesIoGeographyTypes,
   TestDataSourceQuery,
   TestDataSourceQueryVariables
 
 } from "@/__generated__/graphql";
-import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
-import spaceCase from 'to-space-case'
 import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
 
 const TEST_DATA_SOURCE = gql`
   query TestDataSource($input: TestDataSourceInput!) {
     testDataSource(input: $input) {
       __typename
-      remoteName
-      healthcheck
       crmType
       fieldDefinitions {
         label
         value
         description
       }
-      __typename
+      geographyColumn,
+      geographyColumnType
+      healthcheck
+      remoteName
     }
-    remoteName,
-    geographyColumn,
-    geographyColumnType
   }
-}
-
 `;
 
 const CREATE_DATA_SOURCE = gql`
-mutation CreateSource ($input: CreateExternalDataSourceInput!) {
+  mutation CreateSource ($input: CreateExternalDataSourceInput!) {
     createExternalDataSource (input: $input) {
       code
       errors {
@@ -83,7 +72,7 @@ mutation CreateSource ($input: CreateExternalDataSourceInput!) {
         dataType
       }
     }
-}
+  }
 `;
 
 
@@ -129,17 +118,43 @@ export default function Page({
     Partial<Record<FieldPath<FormInputs>, string | undefined | null>>
   >({});
 
-  function useGuessedField<T extends keyof FormInputs>(
-    field: T,
-    guessKeys: string[]
+  /**
+   * For a field that maps a data source property (e.g. address_field) to
+   * a field on the remote data source (e.g. "Address Line 1"), try to guess the
+   * remote field based on a list of likely options, while preventing bad matches 
+   * (e.g. "Email address" for "Address").
+   * 
+   * In this example, field = "addressField", guessKeys = ["address", "line1", ...],
+   * badKeys = ["email"].
+   */
+  function useGuessedField(
+    field: string,
+    guessKeys: string[],
+    badKeys: string[] = []
   ) {
     useEffect(() => {
       const guess = testSourceResult.data?.testDataSource.fieldDefinitions?.find(
-        (field) => {
+        (field: ({ label?: string, value?: string })) => {
+          const isMatch = (fieldName: string|undefined, guessKey: string) => {
+            if (!fieldName) {
+              return false;
+            }
+            const match = fieldName.toLowerCase().replaceAll(' ', '').includes(guessKey.replaceAll(' ', ''))
+            if (!match) {
+              return false
+            }
+            for (const badKey of badKeys) {
+              const badMatch = fieldName.toLowerCase().replaceAll(' ', '').includes(badKey.replaceAll(' ', ''))
+              if (badMatch) {
+                return false
+              }
+            }
+            return true
+          }
           for (const guessKey of guessKeys) {
             if (
-              field.label?.toLowerCase().replaceAll(' ', '').includes(guessKey.replaceAll(' ', '')) ||
-              field.value?.toLowerCase().replaceAll(' ', '').includes(guessKey.replaceAll(' ', ''))
+              isMatch(field.label, guessKey) ||
+              isMatch(field.value, guessKey)
             ) {
               return true
             }
@@ -157,7 +172,7 @@ export default function Page({
   useGuessedField('geographyColumn', ["postcode", "postal code", "zip code", "zip"])
   useGuessedField('emailField', ["email"])
   useGuessedField('phoneField', ["mobile", "phone"])
-  useGuessedField('addressField', ["street", "line1", "address"])
+  useGuessedField('addressField', ["street", "line1", "address"], ['email'])
   useGuessedField('fullNameField', ["full name", "name"])
   useGuessedField('firstNameField', ["first name", "given name"])
   useGuessedField('lastNameField', ["last name", "family name", "surname", "second name"])
@@ -219,19 +234,19 @@ export default function Page({
         ...CRMSpecificData
       }
     }
-    toastPromise(createSource({ variables: input }),
+    toastPromise(createSource({ variables: { input }}),
       {
         loading: "Saving connection...",
-        success: (d: FetchResult<CreateSourceMutation>) => {
-          const errors = d.errors || d.data?.createSource.errors || []
-          if (!errors.length && d.data?.createSource?.result) {
-            if (d.data?.createSource.dataType === DataSourceType.Member) {
+        success: (d: FetchResult<CreateExternalDataSourceOutput>) => {
+          const errors = d.errors || d.data?.createExternalDataSource.errors || []
+          if (!errors.length && d.data?.createExternalDataSource?.result) {
+            if (d.data?.createExternalDataSource.dataType === DataSourceType.Member) {
               router.push(
-                `/data-sources/create/configure/${d.data.createSource.result.id}`,
+                `/data-sources/create/configure/${d.data.createExternalDataSource.result.id}`,
               );
             } else {
               router.push(
-                `/data-sources/inspect/${d.data.createSource.result.id}`,
+                `/data-sources/inspect/${d.data.createExternalDataSource.result.id}`,
               );
             }
             return "Connection successful";
@@ -248,7 +263,7 @@ export default function Page({
     )
   }
 
-  if (createSourceResult.loading || createSourceResult.data?.createSource.result) {
+  if (createSourceResult.loading || createSourceResult.data?.createExternalDataSource.result) {
     return (
       <div className="space-y-6">
         <h1 className="text-hLg">Saving connection...</h1>
@@ -278,7 +293,7 @@ export default function Page({
         placeholder={placeholder}
         fieldDefinitions={testSourceResult.data?.testDataSource.fieldDefinitions}
         control={form.control}
-        crmType={testSourceResult.data?.testSourceConnection.crmType!}
+        crmType={testSourceResult.data?.testDataSource.crmType!}
         guess={guessed[name]}
         required={required}
       />
@@ -539,7 +554,7 @@ export default function Page({
                   <FormLabel>MailChimp API key</FormLabel>
                   <FormControl>
                     {/* @ts-ignore */}
-                    <Input placeholder="patAB1" {...field} required />
+                    <Input placeholder="X...-usXX" {...field} required />
                   </FormControl>
                   <FormDescription>
                     {" "}
@@ -564,7 +579,7 @@ export default function Page({
                   <FormLabel>Audience ID</FormLabel>
                   <FormControl>
                     {/* @ts-ignore */}
-                    <Input placeholder="app1234" {...field} required />
+                    <Input placeholder="XXXXXXXXXX" {...field} required />
                   </FormControl>
                   <FormDescription>
                     The unique identifier for your audience.{" "}

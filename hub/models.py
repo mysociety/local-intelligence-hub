@@ -2114,6 +2114,7 @@ class MailchimpSource(ExternalDataSource):
     """
     A Mailchimp list.
     """
+
     crm_type = "mailchimp"
     api_key = models.CharField(
         max_length=250,
@@ -2224,6 +2225,54 @@ class MailchimpSource(ExternalDataSource):
         if not webhook_payload:
             return []
         return [webhook_payload["data[email]"]]
+
+    def field_definitions(self):
+        """
+        Mailchimp subscriber built-in fields.
+        """
+        fields = [
+            self.FieldDefinition(
+                label="Email address",
+                value="email_address",
+                description="Email address",
+            ),
+            self.FieldDefinition(
+                label="Phone number",
+                value="PHONE",
+                description="Phone number",
+            ),
+            self.FieldDefinition(
+                label="First name",
+                value="FNAME",
+                description="First name",
+            ),
+            self.FieldDefinition(
+                label="Last name",
+                value="LNAME",
+                description="Last name",
+            ),
+            self.FieldDefinition(
+                label="Address",
+                value="ADDRESS.addr1",
+                description="Address first line",
+            ),
+            self.FieldDefinition(
+                label="Zip",
+                value="ADDRESS.zip",
+                description="Zipcode or Postcode",
+            ),
+        ]
+        merge_fields = self.client.lists.merge_fields.all(self.list_id, get_all=True)
+        for field in merge_fields["merge_fields"]:
+            if field["tag"] not in ["ADDRESS", "PHONE", "FNAME", "LNAME"]:
+                fields.append(
+                    self.FieldDefinition(
+                        label=field["name"],
+                        value=field["tag"],
+                        description=field["name"],
+                    )
+                )
+        return fields
 
     async def fetch_all(self):
         # Fetches all members in a list and returns their email addresses
