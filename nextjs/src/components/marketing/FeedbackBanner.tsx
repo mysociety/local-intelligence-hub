@@ -65,21 +65,26 @@ const FeedbackBanner = () => {
                 <svg onClick={closeBanner} xmlns="http://www.w3.org/2000/svg" width="33" height="36" viewBox="0 0 33 36" fill="none" style={{ cursor: 'pointer' }}>
                     <path fill-rule="evenodd" clip-rule="evenodd" d="M16.2804 2.29877C16.5732 2.00587 16.5732 1.53099 16.2804 1.23809C15.9875 0.94519 15.5126 0.94519 15.2197 1.23809L8.25 8.20788L1.2803 1.23809C0.987401 0.94519 0.512524 0.94519 0.219624 1.23809C-0.0732756 1.53099 -0.0732756 2.00587 0.219624 2.29877L7.18937 9.26852L0.219624 16.2383C-0.0732756 16.5312 -0.0732756 17.006 0.219624 17.2989C0.512524 17.5918 0.987401 17.5918 1.2803 17.2989L8.25 10.3292L15.2197 17.2989C15.5126 17.5918 15.9875 17.5918 16.2804 17.2989C16.5732 17.006 16.5732 16.5312 16.2804 16.2383L9.31065 9.26852L16.2804 2.29877Z" fill="white" />
                 </svg>
-                </div>
+            </div>
             <div className="max-w-prose">
-                <div className="flex flex-col gap-2 mb-4">
-                    <Link
-                        className=""
-                        href="/signup"
-                    >
-                        Join the waitlist
-                    </Link>
-                    <Link
-                        className=""
-                        href="https://mapped.commonknowledge.coop/"
-                    >
-                        Mapped v.1
-                    </Link>
+                <div className="flex flex-col gap-4 mb-4">
+                    <div>
+                        <Button variant="reverse" size='sm'> <Link
+                            className=""
+                            href="/signup"
+                        >
+                            Join the waitlist
+                        </Link>
+                        </Button>
+                    </div>
+                    <div>
+                        <Button variant="reverse" size='sm'> <Link
+                            className=""
+                            href="https://mapped.commonknowledge.coop/"
+                        >
+                            Mapped v.1
+                        </Link></Button>
+                    </div>
                 </div>
                 {!feedbackSubmitted ? (
                     <div>
