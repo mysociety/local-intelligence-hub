@@ -18,9 +18,9 @@ export default async function Layout({
   return (
     <div className='flex flex-col min-h-dvh'>
       <AreaPattern />
-      <main className="p-4 relative">
-      <FeedbackBanner/>
       <Navbar isLoggedIn={isLoggedIn} />
+      <FeedbackBanner/>
+      <main className="p-4 relative">
         {children}
       </main>
       <Toaster />

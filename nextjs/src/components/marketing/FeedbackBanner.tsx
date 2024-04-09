@@ -58,7 +58,7 @@ const FeedbackBanner = () => {
     if (!showBanner) return null;
 
     return (
-        <header className="absolute top-0 left-0 right-0 bg-brandBlue z-20 p-4 flex flex-col gap-4">
+        <div className="absolute top-0 left-0 right-0 bg-brandBlue z-20 p-4 flex flex-col gap-4">
             <div className="flex justify-between">
                 <div><h3 className="text-hLg">Alpha software</h3>
                     <p>This is a rapidly changing prototype</p></div>
@@ -99,7 +99,7 @@ const FeedbackBanner = () => {
                     <div>Thanks for submitting your feedback</div>
                 )}
             </div>
-        </header >
+        </div >
     );
 };
 
