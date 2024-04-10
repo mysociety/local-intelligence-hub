@@ -718,7 +718,10 @@ class BaseDataSource(Analytics):
         job = self.get_scheduled_import_job()
         if job is None:
             return None
-        return BatchJobProgress(**self.get_scheduled_batch_job_progress(job))
+        progress = self.get_scheduled_batch_job_progress(job)
+        if progress is None:
+            return None
+        return BatchJobProgress(**progress)
 
     @strawberry_django.field
     def is_update_scheduled(self: models.ExternalDataSource, info: Info) -> bool:
@@ -732,7 +735,10 @@ class BaseDataSource(Analytics):
         job = self.get_scheduled_update_job()
         if job is None:
             return None
-        return BatchJobProgress(**self.get_scheduled_batch_job_progress(job))
+        progress = self.get_scheduled_batch_job_progress(job)
+        if progress is None:
+            return None
+        return BatchJobProgress(**progress)
 
 
 @strawberry_django.field(extensions=[IsAuthenticated()])

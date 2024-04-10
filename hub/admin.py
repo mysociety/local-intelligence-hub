@@ -7,6 +7,7 @@ from hub.models import (
     DataType,
     Person,
     PersonData,
+    Report,
     UserProperties,
 )
 
@@ -167,3 +168,8 @@ class PersonAdmin(admin.ModelAdmin):
         "name",
         "area__name",
     )
+
+
+@admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
+    pass

@@ -6,7 +6,7 @@ import GetStarted from "@/components/marketing/GetStarted";
 import AboutCTA from "@/components/marketing/AboutCTA";
 import IntegtationsCTA from "@/components/marketing/IntegrationCTA";
 
-export default function MarketingLandingPage() {
+export default function MarketingHome() {
   return (
     <div className="flex flex-col gap-4">
       <div className='display md:grid md:grid-cols-3 gap-5'>

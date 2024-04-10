@@ -321,7 +321,8 @@ export function ReportMap () {
               ["literal", tileset.data.map((d) => d.gss)],
             ];
 
-            const steps = Math.min(max, 30);
+            let steps = Math.min(max, 30); // Max 30 steps
+            steps = Math.max(steps, 3); // Min 3 steps (for valid Mapbox fill-color rule)
             const colourStops = new Array(steps - 1)
               .fill(0)
               .map((_, i) => i / steps)
@@ -763,6 +764,7 @@ export const MAP_REPORT_LAYER_ANALYTICS = gql`
 const MAP_REPORT_REGION_STATS = gql`
   query MapReportRegionStats($reportID: ID!) {
     mapReport(pk: $reportID) {
+      id
       importedDataCountByRegion {
         label
         gss
@@ -785,6 +787,7 @@ const MAP_REPORT_REGION_STATS = gql`
 const MAP_REPORT_CONSTITUENCY_STATS = gql`
   query MapReportConstituencyStats($reportID: ID!) {
     mapReport(pk: $reportID) {
+      id
       importedDataCountByConstituency {
         label
         gss
@@ -807,6 +810,7 @@ const MAP_REPORT_CONSTITUENCY_STATS = gql`
 const MAP_REPORT_WARD_STATS = gql`
   query MapReportWardStats($reportID: ID!) {
     mapReport(pk: $reportID) {
+      id
       importedDataCountByWard {
         label
         gss

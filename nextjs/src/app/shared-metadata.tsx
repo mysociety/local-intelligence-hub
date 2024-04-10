@@ -1,2 +1,5 @@
-export const openGraphImage = { images: ['https://prototype.mapped.commonknowledge.coop/Mapped-ShareCard.png']
-}
+export const openGraphImage = {
+  images: [
+    `${process.env.NEXT_PUBLIC_FRONTEND_BASE_URL}/images/Mapped-ShareCard.png`,
+  ],
+};

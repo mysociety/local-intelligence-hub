@@ -6,10 +6,10 @@ import TemplateTextBlock from "@/components/marketing/TemplateTextBlock";
 
 
 interface GetStartedProps {
-
+    btnLink?: string
 }
 
-const GetStarted: React.FC<GetStartedProps> = () => {
+const GetStarted: React.FC<GetStartedProps> = ({ btnLink }) => {
     return (
 
         <Card className="w-full bg-meepGray-700 grid md:grid-cols-2 grid-cols-1 drop-shadow">
@@ -19,7 +19,7 @@ const GetStarted: React.FC<GetStartedProps> = () => {
                     heading="Start mapping your members"
                     description="Visualise your membership geographically to understand the strength of your campaign at a glance and ground your organisational tactics in real information."
                     btnText="Get Started"
-                    btnLink="/signup"
+                    btnLink={btnLink || "/signup"}
                 />
             </div>
             <CardContent className="p-14 flex items-center">
