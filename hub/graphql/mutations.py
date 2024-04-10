@@ -260,7 +260,6 @@ class CreateExternalDataSourceOutput(MutationOutput):
     result: Optional[model_types.ExternalDataSource]
 
 
-@strawberry_django.mutation(extensions=[IsAuthenticated()])
 def create_airtable_source(
     info: Info, data: CreateExternalDataSourceInput
 ) -> CreateExternalDataSourceOutput:
