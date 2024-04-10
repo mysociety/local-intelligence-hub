@@ -32,7 +32,7 @@ import Link from "next/link"
 import { importData } from "@/app/(app)/data-sources/inspect/[externalDataSourceId]/InspectExternalDataSource"
 import { LoadingIcon } from "./ui/loadingIcon"
 import { useRouter } from "next/navigation"
-import { MAP_REPORT_LAYERS_SUMMARY, isDataConfigOpenAtom, layerColour } from "@/app/reports/[id]/lib"
+import { MAP_REPORT_LAYERS_SUMMARY, isDataConfigOpenAtom, layerColour, useLoadedMap } from "@/app/reports/[id]/lib"
 import { DataSourceIcon } from "./DataSourceIcon"
 import pluralize from "pluralize"
 import {
@@ -57,6 +57,7 @@ export default function DataConfigPanel() {
   const client = useApolloClient()
 
   const { displayOptions, setDisplayOptions } = useReportContext();
+  const { setLoaded } = useLoadedMap();
 
   const toggleElectionData = () => {
     setDisplayOptions({ showLastElectionData: !displayOptions.showLastElectionData });
@@ -172,7 +173,7 @@ export default function DataConfigPanel() {
           <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
             <Switch
               checked={displayOptions.showStreetDetails}
-              onCheckedChange={(showStreetDetails) => { setDisplayOptions({ showStreetDetails }) }}
+              onCheckedChange={(showStreetDetails) => { setLoaded(false); setDisplayOptions({ showStreetDetails }) }}
             />Street details
           </div>
           <div className="text-labelLg text-meepGray-200 flex items-center gap-2">

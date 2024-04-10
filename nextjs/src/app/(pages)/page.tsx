@@ -4,11 +4,10 @@ import MarketingHome from "./MarketingHome";
 
 export default async function Home() {
   const user = await useAuth();
-  const isLoggedIn = Boolean(user);
 
   return (
     <div className="">
-      {isLoggedIn ? (
+      {user ? (
         <Dashboard user={user} />
       ) : (
         <MarketingHome />

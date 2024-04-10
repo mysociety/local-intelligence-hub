@@ -3,7 +3,7 @@
 import { gql } from "@apollo/client"
 import ColorHash from 'color-hash'
 import { atom, useAtom } from "jotai";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useMap } from "react-map-gl";
 var colorHash = new ColorHash();
 
@@ -62,15 +62,29 @@ export function useLoadedMap () {
   const [loaded, setLoaded] = useAtom(mapHasLoaded)
   const map = useMap()
   // const intervalRef = useRef<NodeJS.Timeout>()
+
   useEffect(() => {
-    if (loaded || !map.default) return
-    map.default?.on('load', () => {
-      setLoaded(true)
+    if (loaded || !map.default) {
+      return
+    }
+    const updateLoaded = () => {
+      setLoaded(map.default?.isStyleLoaded() || false)
+    }
+    map.default.on('load', () => {
+      updateLoaded()
+    })
+    map.default.on('style.load', () => {
+      updateLoaded()
+    })
+    map.default.on('style.import.load', () => {
+      updateLoaded()
     })
   }, [map, loaded, setLoaded])
+
   return {
     ...map,
     loadedMap: loaded ? map.default : null,
     loaded,
+    setLoaded
   }
 }

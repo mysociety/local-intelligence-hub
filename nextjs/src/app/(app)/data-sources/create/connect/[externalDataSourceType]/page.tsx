@@ -202,7 +202,7 @@ export default function Page({
           success: (d: FetchResult<CreateSourceMutation>) => {
             const errors = d.errors || d.data?.createSource.errors || []
             if (!errors.length && d.data?.createSource?.result) {
-              if (d.data?.createSource.dataType === DataSourceType.Member) {
+              if (d.data?.createSource.result.dataType === DataSourceType.Member) {
                 router.push(
                   `/data-sources/create/configure/${d.data.createSource.result.id}`,
                 );

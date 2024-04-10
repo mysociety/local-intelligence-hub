@@ -195,7 +195,7 @@ export function MemberElectoralInsights({
                         width: format(".0%")(
                           Math.min(
                             Math.max(
-                              (layer.source.importedDataCountForConstituency?.count || 0) / maxCount,
+                              (totalCount || 0) / maxCount,
                               0.04
                             ),
                             1
@@ -207,9 +207,9 @@ export function MemberElectoralInsights({
                     <TooltipContent>
                       <p>
                         {format(",")(
-                          layer.source.importedDataCountForConstituency?.count || 0
+                          totalCount || 0
                         )} {pluralize("member",
-                          layer.source.importedDataCountForConstituency?.count || 0
+                          totalCount || 0
                         )} in {layer.name}
                       </p>
                     </TooltipContent>
@@ -246,7 +246,7 @@ export function MemberElectoralInsights({
                width: format(".0%")(
                  Math.min(
                   Math.max(
-                    electionStats?.majority / totalCount, // Ensure this calculation is appropriate
+                    electionStats?.majority / maxCount,
                     0.04
                   ),
                   1
