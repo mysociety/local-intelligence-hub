@@ -30,8 +30,6 @@ class BasicFieldDataLoader(dataloaders.BaseDjangoModelDataLoader):
             # Prepare a dictionary where keys are unique field values and values are corresponding objects
             .in_bulk(keys, field_name=cls.field)
         )
-        if len(results_dict) == len(keys):
-            return results_dict.values()
         return [results_dict.get(key, None) for key in keys]
 
 
