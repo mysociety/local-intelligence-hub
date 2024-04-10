@@ -32,7 +32,7 @@ import Link from "next/link"
 import { importData } from "@/app/(app)/data-sources/inspect/[externalDataSourceId]/InspectExternalDataSource"
 import { LoadingIcon } from "./ui/loadingIcon"
 import { useRouter } from "next/navigation"
-import { MAP_REPORT_LAYERS_SUMMARY, isDataConfigOpenAtom, layerColour, useLoadedMap } from "@/app/reports/[id]/lib"
+import { MAP_REPORT_LAYERS_SUMMARY, isDataConfigOpenAtom, layerColour } from "@/app/reports/[id]/lib"
 import { DataSourceIcon } from "./DataSourceIcon"
 import pluralize from "pluralize"
 import {
@@ -57,7 +57,6 @@ export default function DataConfigPanel() {
   const client = useApolloClient()
 
   const { displayOptions, setDisplayOptions } = useReportContext();
-  const { setLoaded } = useLoadedMap();
 
   const toggleElectionData = () => {
     setDisplayOptions({ showLastElectionData: !displayOptions.showLastElectionData });
@@ -90,7 +89,7 @@ export default function DataConfigPanel() {
           {layers.data.layers?.map((layer, index) => layer?.source && (
             <div key={layer?.source?.id || index} className="flex gap-2 items-center">
               <Popover>
-                <PopoverTrigger>
+                <PopoverTrigger asChild>
                   <Button className="border-l-4 bg-none p-3 text-sm flex flex-row items-center gap-2 text-left justify-start overflow-hidden text-nowrap text-ellipsis h-14" style={{
                     borderColor: layerColour(index, layer?.source?.id)
                   }} 
@@ -155,7 +154,7 @@ export default function DataConfigPanel() {
                       </div>
                     )
                   )}
-                  <Button onClick={() => {
+                  <Button className="ml-1" onClick={() => {
                     removeLayer(layer?.source?.id!)
                   }} variant='destructive'>Remove layer</Button>
                 </PopoverContent>
@@ -173,7 +172,7 @@ export default function DataConfigPanel() {
           <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
             <Switch
               checked={displayOptions.showStreetDetails}
-              onCheckedChange={(showStreetDetails) => { setLoaded(false); setDisplayOptions({ showStreetDetails }) }}
+              onCheckedChange={(showStreetDetails) => { setDisplayOptions({ showStreetDetails }) }}
             />Street details
           </div>
           <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
