@@ -1,4 +1,4 @@
-import { AirtableLogo, ActionNetworkLogo, MailchimpLogo, GoogleSheetsLogo, CiviCRMLogo, NationBuilderLogo, AirtableIcon } from "@/components/logos";
+import { AirtableLogo, ActionNetworkLogo, MailchimpIcon, MailchimpLogo, GoogleSheetsLogo, CiviCRMLogo, NationBuilderLogo, AirtableIcon } from "@/components/logos";
 
 export const externalDataSourceOptions: Record<string, {
   key: string,
@@ -30,6 +30,7 @@ export const externalDataSourceOptions: Record<string, {
     key: "mailchimp",
     modelName: "mailchimpSource",
     name: "Mailchimp",
+    icon: MailchimpIcon,
     logo: MailchimpLogo,
     screenshot: "/mailchimp-screenshot.png",
     supported: true
