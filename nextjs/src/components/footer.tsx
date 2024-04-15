@@ -5,8 +5,8 @@ import Image from 'next/image';
 
 export default function Footer() {
     return (
-        <footer className="mx-16 py-8 flex flex-row justify-between items-center border-t border-meepGray-700">
-            <div className="flex flex-row items-center gap-[100px] pt-md">
+        <footer className="md:mx-16 md:py-8 flex flex-col md:flex-row justify-between md:items-center border-t border-meepGray-700">
+            <div className="flex flex-col gap-8 md:flex-row md:items-center md:gap-[100px] pt-md">
                 <Link href="https://commonknowledge.coop/"><CommonKnowledgeLogo /></Link>
                 <Link href="https://www.civicpower.org.uk/">   <CiviPowerFundLogo /></Link>
                 <Link href="https://www.jrrt.org.uk/"> <JRRTLogo /></Link></div>

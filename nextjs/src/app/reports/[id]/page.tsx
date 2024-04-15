@@ -99,7 +99,9 @@ export default function Page({ params: { id } }: { params: Params }) {
           "MapReportPage",
           "MapReportLayerAnalytics",
           "GetConstituencyData",
-          "DataSourceGeoJSONPoints",
+          "MapReportRegionStats",
+          "MapReportConstituencyStats",
+          "MapReportWardStats"
         ],
       }),
       {

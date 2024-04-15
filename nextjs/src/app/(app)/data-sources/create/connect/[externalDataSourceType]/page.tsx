@@ -28,13 +28,13 @@ import { Input } from "@/components/ui/input";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import {
   CreateExternalDataSourceInput,
-  CreateExternalDataSourceOutput,
   DataSourceType,
   ExternalDataSourceInput,
   TestDataSourceInput,
   PostcodesIoGeographyTypes,
   TestDataSourceQuery,
-  TestDataSourceQueryVariables
+  TestDataSourceQueryVariables,
+  CreateSourceMutation
 
 } from "@/__generated__/graphql";
 import { toastPromise } from "@/lib/toast";
@@ -109,7 +109,7 @@ export default function Page({
     },
   });
 
-  const [createSource, createSourceResult] = useMutation(CREATE_DATA_SOURCE);
+  const [createSource, createSourceResult] = useMutation<CreateSourceMutation>(CREATE_DATA_SOURCE);
   const [testSource, testSourceResult] = useLazyQuery<TestDataSourceQuery, TestDataSourceQueryVariables>(TEST_DATA_SOURCE);
 
   const currentSource = testSourceResult.data;
@@ -134,8 +134,8 @@ export default function Page({
   ) {
     useEffect(() => {
       const guess = testSourceResult.data?.testDataSource.fieldDefinitions?.find(
-        (field: ({ label?: string, value?: string })) => {
-          const isMatch = (fieldName: string|undefined, guessKey: string) => {
+        (field: ({ label?: string | null, value: string })) => {
+          const isMatch = (fieldName: string|null|undefined, guessKey: string) => {
             if (!fieldName) {
               return false;
             }
@@ -237,10 +237,10 @@ export default function Page({
     toastPromise(createSource({ variables: { input }}),
       {
         loading: "Saving connection...",
-        success: (d: FetchResult<CreateExternalDataSourceOutput>) => {
+        success: (d) => {
           const errors = d.errors || d.data?.createExternalDataSource.errors || []
-          if (!errors.length && d.data?.createExternalDataSource?.result) {
-            if (d.data?.createExternalDataSource.dataType === DataSourceType.Member) {
+          if (!errors.length && d.data?.createExternalDataSource.result) {
+            if (d.data?.createExternalDataSource.result.dataType === DataSourceType.Member) {
               router.push(
                 `/data-sources/create/configure/${d.data.createExternalDataSource.result.id}`,
               );

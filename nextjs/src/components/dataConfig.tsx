@@ -89,7 +89,7 @@ export default function DataConfigPanel() {
           {layers.data.layers?.map((layer, index) => layer?.source && (
             <div key={layer?.source?.id || index} className="flex gap-2 items-center">
               <Popover>
-                <PopoverTrigger>
+                <PopoverTrigger asChild>
                   <Button className="border-l-4 bg-none p-3 text-sm flex flex-row items-center gap-2 text-left justify-start overflow-hidden text-nowrap text-ellipsis h-14" style={{
                     borderColor: layerColour(index, layer?.source?.id)
                   }} 
@@ -154,7 +154,7 @@ export default function DataConfigPanel() {
                       </div>
                     )
                   )}
-                  <Button onClick={() => {
+                  <Button className="ml-1" onClick={() => {
                     removeLayer(layer?.source?.id!)
                   }} variant='destructive'>Remove layer</Button>
                 </PopoverContent>
