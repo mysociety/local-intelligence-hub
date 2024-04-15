@@ -72,7 +72,7 @@ export function SourcePathSelector({
         <CommandList>
           <CommandEmpty>No data found.</CommandEmpty>
           {sources.map((source, i, arr) => (
-            <>
+            <React.Fragment key={source.slug}>
               <CommandGroup heading={source.name || source.slug}>
                 {source.sourcePaths.map((sourcePath) => (
                   <CommandItem
@@ -107,7 +107,7 @@ export function SourcePathSelector({
                 ))}
               </CommandGroup>
               {i < arr.length - 1 && <CommandSeparator className='border border-meepGray-600' />}
-            </>
+            </React.Fragment>
           ))}
         </CommandList>
       </CommandDialog>

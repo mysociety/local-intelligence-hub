@@ -177,77 +177,79 @@ export function UpdateMappingForm({
             {allowMapping && (
               <>
                 <table className='w-full'>
-                  {fields.map((field, index) => (
-                    <tr key={field.id} className='flex flex-row'>
-                      <td className="w-1/2 grow-0 flex flex-row items-center justify-stretch gap-1">
-                        <Button
-                          className="flex-shrink"
-                          onClick={() => {
-                            remove(index);
-                          }}
-                          variant='outline'
-                        >
-                          <X className='w-3 h-3' />
-                        </Button>
-                        <SourcePathSelector
-                          focusOnMount={form.watch(`updateMapping.${index}.source`) === "?"}
-                          sources={sources}
-                          value={{
-                            source: form.watch(`updateMapping.${index}.source`),
-                            sourcePath: form.watch(`updateMapping.${index}.sourcePath`),
-                          }}
-                          setValue={(source, sourcePath) => {
-                            form.setValue(`updateMapping.${index}.source`, source);
-                            form.setValue(
-                              `updateMapping.${index}.sourcePath`,
-                              sourcePath,
-                            );
-                          }}
-                        />
-                      </td>
-                      <td className="w-1/2 shrink-0 flex flex-row items-center justify-stretch gap-1">
-                        <ArrowRight className="flex-shrink-0" /> 
-                        <FormField
-                          control={form.control}
-                          name={`updateMapping.${index}.destinationColumn`}
-                          render={({ field }) => (
-                            <>
-                            {fieldDefinitions?.length ? (
-                              <Select
-                                {...field}
-                                required
-                                onValueChange={field.onChange}
-                              >
-                                <SelectTrigger className={twMerge(field.value && 'pl-1')}>
-                                  <SelectValue aria-label={data.updateMapping?.[index]?.destinationColumn} placeholder={`Choose field to update`} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    <SelectLabel>Choose a field to update</SelectLabel>
-                                    {fieldDefinitions?.map((field) => (
-                                      <SelectItem key={field.value} value={field.value}>
-                                        <DataSourceFieldLabel
-                                          fieldDefinition={field}
-                                          crmType={crmType}
-                                        />
-                                      </SelectItem>
-                                    ))}
-                                  </SelectGroup>
-                                </SelectContent>
-                              </Select>
-                            ) : (
-                              <Input
-                                className="flex-shrink-0 flex-grow"
-                                placeholder="Field to update"
-                                {...field}
-                                required
-                              />
-                            )}
-                          </>
-                        )} />
-                      </td>
-                    </tr>
-                  ))}
+                  <tbody>
+                    {fields.map((field, index) => (
+                      <tr key={field.id} className='flex flex-row'>
+                        <td className="w-1/2 grow-0 flex flex-row items-center justify-stretch gap-1">
+                          <Button
+                            className="flex-shrink"
+                            onClick={() => {
+                              remove(index);
+                            }}
+                            variant='outline'
+                          >
+                            <X className='w-3 h-3' />
+                          </Button>
+                          <SourcePathSelector
+                            focusOnMount={form.watch(`updateMapping.${index}.source`) === "?"}
+                            sources={sources}
+                            value={{
+                              source: form.watch(`updateMapping.${index}.source`),
+                              sourcePath: form.watch(`updateMapping.${index}.sourcePath`),
+                            }}
+                            setValue={(source, sourcePath) => {
+                              form.setValue(`updateMapping.${index}.source`, source);
+                              form.setValue(
+                                `updateMapping.${index}.sourcePath`,
+                                sourcePath,
+                              );
+                            }}
+                          />
+                        </td>
+                        <td className="w-1/2 shrink-0 flex flex-row items-center justify-stretch gap-1">
+                          <ArrowRight className="flex-shrink-0" /> 
+                          <FormField
+                            control={form.control}
+                            name={`updateMapping.${index}.destinationColumn`}
+                            render={({ field }) => (
+                              <>
+                              {fieldDefinitions?.length ? (
+                                <Select
+                                  {...field}
+                                  required
+                                  onValueChange={field.onChange}
+                                >
+                                  <SelectTrigger className={twMerge(field.value && 'pl-1')}>
+                                    <SelectValue aria-label={data.updateMapping?.[index]?.destinationColumn} placeholder={`Choose field to update`} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectGroup>
+                                      <SelectLabel>Choose a field to update</SelectLabel>
+                                      {fieldDefinitions?.map((field) => (
+                                        <SelectItem key={field.value} value={field.value}>
+                                          <DataSourceFieldLabel
+                                            fieldDefinition={field}
+                                            crmType={crmType}
+                                          />
+                                        </SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
+                              ) : (
+                                <Input
+                                  className="flex-shrink-0 flex-grow"
+                                  placeholder="Field to update"
+                                  {...field}
+                                  required
+                                />
+                              )}
+                            </>
+                          )} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
                 </table>
                 <Button
                   type="button"

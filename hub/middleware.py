@@ -89,8 +89,8 @@ def django_jwt_middleware(get_response):
         async def middleware(request: HttpRequest):
             try:
                 return await gqlauth_middleware(request)
-            except Exception:
-                exception_handler(request)
+            except Exception as e:
+                exception_handler(e, request)
             return await get_response(request)
 
     else:
@@ -98,8 +98,8 @@ def django_jwt_middleware(get_response):
         def middleware(request: HttpRequest):
             try:
                 return gqlauth_middleware(request)
-            except Exception:
-                exception_handler(request)
+            except Exception as e:
+                exception_handler(e, request)
             return get_response(request)
 
     return middleware

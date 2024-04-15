@@ -60,7 +60,7 @@ export function PreopulatedSelectField<FormInputs extends object = any>({
                   </SelectContent>
                 </Select>
               ) : (
-                <Input {...field} required />
+                <Input {...field} required={required} />
               )}
             </FormControl>
             {!!guess && guess === field.value && (

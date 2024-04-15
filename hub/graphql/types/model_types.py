@@ -808,7 +808,9 @@ class ExternalDataSource(BaseDataSource):
     jobs: List[QueueJob] = strawberry_django.field(
         resolver=lambda self: procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
             args__external_data_source_id=str(self.id)
-        ),
+        )
+        .prefetch_related("procrastinateevent_set")
+        .order_by("-id"),
         filters=QueueFilter,
         pagination=True,
     )
@@ -831,7 +833,7 @@ class ExternalDataSource(BaseDataSource):
     @strawberry_django.field
     def connection_details(
         self: models.ExternalDataSource, info
-    ) -> Union["AirtableSource"]:
+    ) -> Union["AirtableSource", "MailchimpSource"]:
         instance = self.get_real_instance()
         return instance
 
@@ -860,6 +862,12 @@ class AirtableSource(ExternalDataSource):
     api_key: auto
     base_id: str
     table_id: str
+
+
+@strawberry_django.type(models.MailchimpSource)
+class MailchimpSource(ExternalDataSource):
+    api_key: auto
+    list_id: auto
 
 
 @strawberry_django.type(models.Report)

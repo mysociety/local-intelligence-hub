@@ -43,34 +43,6 @@ class UpdateMappingItemInput:
     destination_column: str
 
 
-@strawberry_django.input(models.ExternalDataSource, partial=True)
-class ExternalDataSourceInput:
-    id: auto
-    name: auto
-    data_type: auto
-    description: auto
-    organisation: auto
-    geography_column: auto
-    geography_column_type: auto
-    postcode_field: auto
-    first_name_field: auto
-    last_name_field: auto
-    full_name_field: auto
-    email_field: auto
-    phone_field: auto
-    address_field: auto
-    auto_update_enabled: auto
-    update_mapping: Optional[List[UpdateMappingItemInput]]
-    auto_import_enabled: auto
-
-
-@strawberry_django.input(models.AirtableSource, partial=True)
-class AirtableSourceInput(ExternalDataSourceInput):
-    api_key: auto
-    base_id: auto
-    table_id: auto
-
-
 @strawberry.input
 class MapLayerInput:
     id: str
@@ -171,56 +143,6 @@ def get_or_create_with_computed_args(model, info, find_filter, data, computed_ar
     return instance, True
 
 
-@strawberry.type
-class CreateSourceMutationOutput(MutationOutput):
-    result: Optional[model_types.ExternalDataSource]
-
-
-@strawberry_django.mutation(extensions=[IsAuthenticated()])
-def create_airtable_source(
-    info: Info, data: AirtableSourceInput
-) -> CreateSourceMutationOutput:
-    try:
-        source, created = get_or_create_with_computed_args(
-            models.AirtableSource,
-            info,
-            find_filter={
-                "api_key": data.api_key,
-                "base_id": data.base_id,
-                "table_id": data.table_id,
-            },
-            data=data,
-            computed_args=lambda info, data, model: {
-                "organisation": get_or_create_organisation_for_source(info, data)
-            },
-        )
-
-        if created:
-            async_to_sync(source.schedule_import_all)()
-            return CreateSourceMutationOutput(code=200, errors=[], result=source)
-
-        user = get_current_user(info)
-        if user.memberships.filter(id=source.organisation.id).exists():
-            return CreateSourceMutationOutput(code=409, errors=[], result=source)
-
-        return CreateSourceMutationOutput(
-            code=409,
-            errors=[
-                MutationError(
-                    code=409,
-                    message=(
-                        "This source already exists in Mapped through another "
-                        "organisation. Please contact us for assistance."
-                    ),
-                )
-            ],
-            result=None,
-        )
-    except Exception as e:
-        logger.debug(f"create_airtable_source error: {e.message}")
-        return CreateSourceMutationOutput(code=500, errors=[], result=None)
-
-
 @strawberry_django.mutation(extensions=[IsAuthenticated()], handle_django_errors=True)
 def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
     existing_reports = model_types.Report.get_queryset(
@@ -291,6 +213,139 @@ async def import_all(external_data_source_id: str) -> ExternalDataSourceAction:
     request_id = str(uuid.uuid4())
     await data_source.schedule_import_all(request_id=request_id)
     return ExternalDataSourceAction(id=request_id, external_data_source=data_source)
+
+
+@strawberry_django.input(models.ExternalDataSource, partial=True)
+class ExternalDataSourceInput:
+    id: auto
+    name: auto
+    data_type: auto
+    description: auto
+    organisation: auto
+    geography_column: auto
+    geography_column_type: auto
+    postcode_field: auto
+    first_name_field: auto
+    last_name_field: auto
+    full_name_field: auto
+    email_field: auto
+    phone_field: auto
+    address_field: auto
+    auto_update_enabled: auto
+    update_mapping: Optional[List[UpdateMappingItemInput]]
+    auto_import_enabled: auto
+
+
+@strawberry_django.input(models.AirtableSource, partial=True)
+class AirtableSourceInput(ExternalDataSourceInput):
+    api_key: auto
+    base_id: auto
+    table_id: auto
+
+
+@strawberry_django.input(models.MailchimpSource, partial=True)
+class MailChimpSourceInput(ExternalDataSourceInput):
+    api_key: auto
+    list_id: auto
+
+
+@strawberry.input()
+class CreateExternalDataSourceInput:
+    mailchimp: Optional[MailChimpSourceInput] = None
+    airtable: Optional[AirtableSourceInput] = None
+
+
+@strawberry.type
+class CreateExternalDataSourceOutput(MutationOutput):
+    result: Optional[model_types.ExternalDataSource]
+
+
+def create_airtable_source(
+    info: Info, data: CreateExternalDataSourceInput
+) -> CreateExternalDataSourceOutput:
+    return get_or_create_with_computed_args(
+        models.AirtableSource,
+        info,
+        find_filter={
+            "api_key": data.airtable.api_key,
+            "base_id": data.airtable.base_id,
+            "table_id": data.airtable.table_id,
+        },
+        data=data.airtable,
+        computed_args=lambda info, data, model: {
+            "organisation": get_or_create_organisation_for_source(info, data)
+        },
+    )
+
+
+def create_mailchimp_source(
+    info: Info, data: CreateExternalDataSourceInput
+) -> models.ExternalDataSource:
+    return get_or_create_with_computed_args(
+        models.MailchimpSource,
+        info,
+        find_filter={
+            "api_key": data.mailchimp.api_key,
+            "list_id": data.mailchimp.list_id,
+        },
+        data=data.mailchimp,
+        computed_args=lambda info, data, model: {
+            "organisation": get_or_create_organisation_for_source(info, data)
+        },
+    )
+
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def create_external_data_source(
+    info: Info, input: CreateExternalDataSourceInput
+) -> models.ExternalDataSource:
+    source_creators = {
+        "airtable": create_airtable_source,
+        "mailchimp": create_mailchimp_source,
+    }
+
+    creator_fn = None
+    for key, fn in source_creators.items():
+        source_input = getattr(input, key, None)
+        if source_input is not None:
+            creator_fn = fn
+
+    if creator_fn is None:
+        return CreateExternalDataSourceOutput(
+            code=400,
+            errors=["You must provide input data for a specific source type"],
+            result=None,
+        )
+
+    try:
+        result: tuple[models.ExternalDataSource, bool] = creator_fn(info, input)
+        (source, created) = result
+
+        if created:
+            request_id = str(uuid.uuid4())
+            async_to_sync(source.schedule_import_all)(request_id)
+            return CreateExternalDataSourceOutput(code=200, errors=[], result=source)
+
+        user = get_current_user(info)
+        if user.memberships.filter(id=source.organisation.id).exists():
+            return CreateExternalDataSourceOutput(code=409, errors=[], result=source)
+
+        return CreateExternalDataSourceOutput(
+            code=409,
+            errors=[
+                MutationError(
+                    code=409,
+                    message=(
+                        "This source already exists in Mapped through another "
+                        "organisation. Please contact us for assistance."
+                    ),
+                )
+            ],
+            result=None,
+        )
+    except Exception as e:
+        logger.error(f"create_external_data_source error: {e}")
+        return CreateExternalDataSourceOutput(code=500, errors=[], result=None)
 
 
 @strawberry_django.input(models.SharingPermission, partial=True)

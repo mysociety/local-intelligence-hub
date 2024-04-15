@@ -40,6 +40,8 @@ jobs:
         TEST_AIRTABLE_CUSTOMDATALAYER_BASE_ID: ${{ secrets.TEST_AIRTABLE_CUSTOMDATALAYER_BASE_ID }}
         TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME: ${{ secrets.TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME }}
         TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY: ${{ secrets.TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY }}
+        TEST_MAILCHIMP_MEMBERLIST_AUDIENCE_ID: ${{ secrets.TEST_MAILCHIMP_MEMBERLIST_AUDIENCE_ID }}
+        TEST_MAILCHIMP_MEMBERLIST_API_KEY: ${{ secrets.TEST_MAILCHIMP_MEMBERLIST_API_KEY }}
         SECRET_KEY: keyboardcat
     steps:
       - name: Checkout repo content
@@ -53,16 +55,24 @@ jobs:
         run: curl -sSL https://install.python-poetry.org | python3 -
       - name: Install python dependencies
         run: ~/.local/bin/poetry export --with dev --without-hashes -f requirements.txt --output requirements.txt && pip install -r requirements.txt
-      - name: Start server
-        run: gunicorn local_intelligence_hub.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 &
       - name: Start ngrok tunnelling
         run: |
           ngrok authtoken ${{ secrets.NGROK_AUTHTOKEN }}
           ngrok http 8000 --log=stdout > ngrok.log &
       - name: Extract ngrok URL
-        run: BASE_URL=$(cat ngrok.log | grep 'url=' | awk -F= '{print $NF}') && echo "BASE_URL=$BASE_URL" > .env
+        run: |
+          BASE_URL=$(cat ngrok.log | grep 'url=' | awk -F= '{print $NF}')
+          echo "BASE_URL=$BASE_URL" > .env
+          ALLOWED_HOSTS=$(echo $BASE_URL | sed -e "s/https:\/\///g")
+          echo "ALLOWED_HOSTS=$ALLOWED_HOSTS" >> .env
+      - name: Initialize database
+        run: python manage.py migrate
+      - name: Start server
+        run: gunicorn local_intelligence_hub.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 > server.log 2>&1 &
       - name: Run django tests
-        run: cat .env && coverage run --source=. --branch manage.py test
+        run: cat .env && coverage run --source=. --branch manage.py test || touch tests_failed
+      - name: Handle test failure - print server logs
+        run: if [ -e tests_failed ]; then cat server.log && exit 1; else true; fi
       - name: Generate coverage xml
         run: coverage xml
       - name: Upload coverage.xml

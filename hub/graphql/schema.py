@@ -21,6 +21,17 @@ from hub.graphql.types import model_types
 logger = logging.getLogger(__name__)
 
 
+@strawberry.input
+class TestDataSourceInput:
+    type: str
+    api_key: str
+    # For Mailchimp
+    list_id: Optional[str] = None
+    # For Airtable
+    base_id: Optional[str] = None
+    table_id: Optional[str] = None
+
+
 @strawberry.type
 class Query(UserQueries):
     memberships: List[model_types.Membership] = strawberry_django.field(
@@ -54,6 +65,12 @@ class Query(UserQueries):
     airtable_sources: List[model_types.AirtableSource] = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
+    mailchimp_source: model_types.MailchimpSource = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
+    mailchimp_sources: List[model_types.MailchimpSource] = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
     job: model_types.QueueJob = strawberry_django.field(extensions=[IsAuthenticated()])
     jobs: List[model_types.QueueJob] = strawberry_django.field(
         extensions=[IsAuthenticated()]
@@ -71,16 +88,17 @@ class Query(UserQueries):
     dataSet: Optional[model_types.DataSet] = model_types.dataset_by_name
 
     @strawberry.field
-    def test_airtable_source(
-        self,
-        info: strawberry.types.info.Info,
-        api_key: str,
-        base_id: str,
-        table_id: str,
-    ) -> model_types.AirtableSource:
-        return models.AirtableSource(
-            api_key=api_key, base_id=base_id, table_id=table_id
-        )
+    def test_data_source(
+        self, info: strawberry.types.Info, input: TestDataSourceInput
+    ) -> model_types.ExternalDataSource:
+        if input.type == "airtable":
+            return models.AirtableSource(
+                api_key=input.api_key, base_id=input.base_id, table_id=input.table_id
+            )
+        elif input.type == "mailchimp":
+            return models.MailchimpSource(api_key=input.api_key, list_id=input.list_id)
+        else:
+            raise ValueError("Unsupported data source type")
 
 
 @strawberry.type
@@ -90,19 +108,13 @@ class Mutation:
     verify_account = auth_mutations.VerifyAccount.field
     resend_activation_email = auth_mutations.ResendActivationEmail.field
 
-    create_airtable_source: mutation_types.CreateSourceMutationOutput = (
-        mutation_types.create_airtable_source
-    )
-    update_airtable_source: model_types.AirtableSource = django_mutations.update(
-        mutation_types.AirtableSourceInput, extensions=[IsAuthenticated()]
+    create_external_data_source: mutation_types.CreateExternalDataSourceOutput = (
+        mutation_types.create_external_data_source
     )
     update_external_data_source: model_types.ExternalDataSource = (
         django_mutations.update(
             mutation_types.ExternalDataSourceInput, extensions=[IsAuthenticated()]
         )
-    )
-    delete_airtable_source: model_types.AirtableSource = django_mutations.delete(
-        mutation_types.IDObject, extensions=[IsAuthenticated()]
     )
     delete_external_data_source: model_types.ExternalDataSource = (
         django_mutations.delete(mutation_types.IDObject, extensions=[IsAuthenticated()])

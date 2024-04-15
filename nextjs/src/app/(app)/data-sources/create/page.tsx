@@ -23,6 +23,10 @@ const ALL_EXTERNAL_DATA_SOURCES = gql`
           baseId
           tableId
         }
+        ... on MailchimpSource {
+          apiKey
+          listId
+        }
       }
       autoUpdateEnabled
     }

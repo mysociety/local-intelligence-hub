@@ -110,6 +110,6 @@ class MultiPolygonFeature(Feature):
     ) -> "MultiPolygonFeature":
         return MultiPolygonFeature(
             id=str(id),
-            geometry=MultiPolygonGeometry(coordinates=multipolygon),
+            geometry=MultiPolygonGeometry(coordinates=multipolygon.json),
             properties=properties,
         )

@@ -87,9 +87,13 @@ const GET_UPDATE_CONFIG = gql`
       crmType
       connectionDetails {
         ... on AirtableSource {
+          apiKey
           baseId
           tableId
+        }
+        ... on MailchimpSource {
           apiKey
+          listId
         }
       }
       lastJob {
@@ -166,6 +170,7 @@ export default function InspectExternalDataSource({
 }) {
   const router = useRouter();
   const client = useApolloClient();
+  
 
   const { loading, error, data, refetch } = useQuery<
     ExternalDataSourceInspectPageQuery,
@@ -382,7 +387,7 @@ export default function InspectExternalDataSource({
         <div className="border-b-4 border-meepGray-700 pt-10" />
         <section className='space-y-4'>
           <h2 className="text-hSm mb-5">Connection</h2>
-          {!!source.connectionDetails.baseId && (
+          {source.connectionDetails.__typename === 'AirtableSource' ? (
             <div className='mt-2'>
               <code>
                 {source.connectionDetails.apiKey}
@@ -396,7 +401,18 @@ export default function InspectExternalDataSource({
                 {source.connectionDetails.tableId}
               </code>
             </div>
-          )}
+          ) : null}
+          {source.connectionDetails.__typename === 'MailchimpSource' ? (
+            <div className='mt-2'>
+              <code>
+                {source.connectionDetails.apiKey}
+              </code>
+              <br />
+              <code>
+                {source.connectionDetails.listId}
+              </code>
+            </div>
+          ) : null}
           <AlertDialog>
             <AlertDialogTrigger>
               <Button variant="destructive">Permanently delete</Button>

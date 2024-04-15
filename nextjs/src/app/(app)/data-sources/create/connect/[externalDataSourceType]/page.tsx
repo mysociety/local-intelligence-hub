@@ -3,10 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ApolloError, FetchResult, gql, useLazyQuery, useMutation } from "@apollo/client";
+import { FetchResult, gql, useLazyQuery, useMutation } from "@apollo/client";
 import { CreateAutoUpdateFormContext } from "../../NewExternalDataSourceWrapper";
-import { toast } from "sonner";
-import { FieldPath, FormProvider, NonUndefined, SubmitHandler, useFieldArray, useForm } from "react-hook-form";
+import { FieldPath, FormProvider, useForm } from "react-hook-form";
 import {
   Form,
   FormControl,
@@ -28,41 +27,40 @@ import {
 import { Input } from "@/components/ui/input";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import {
-  CreateSourceMutation,
-  CreateSourceMutationVariables,
+  CreateExternalDataSourceInput,
   DataSourceType,
+  ExternalDataSourceInput,
+  TestDataSourceInput,
   PostcodesIoGeographyTypes,
-  TestSourceConnectionQuery,
-  TestSourceConnectionQueryVariables,
+  TestDataSourceQuery,
+  TestDataSourceQueryVariables,
+  CreateSourceMutation
+
 } from "@/__generated__/graphql";
-import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
 import { toastPromise } from "@/lib/toast";
-import spaceCase from 'to-space-case'
 import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
 
-const TEST_SOURCE = gql`
-  query TestSourceConnection(
-    $apiKey: String!
-    $baseId: String!
-    $tableId: String!
-  ) {
-    testSourceConnection: testAirtableSource(apiKey: $apiKey, baseId: $baseId, tableId: $tableId) {
-      remoteName
-      healthcheck
+const TEST_DATA_SOURCE = gql`
+  query TestDataSource($input: TestDataSourceInput!) {
+    testDataSource(input: $input) {
+      __typename
       crmType
       fieldDefinitions {
         label
         value
         description
       }
-      __typename
+      geographyColumn,
+      geographyColumnType
+      healthcheck
+      remoteName
     }
   }
 `;
 
-const CREATE_SOURCE = gql`
-  mutation CreateSource($AirtableSource: AirtableSourceInput!) {
-    createSource: createAirtableSource(data: $AirtableSource) {
+const CREATE_DATA_SOURCE = gql`
+  mutation CreateSource ($input: CreateExternalDataSourceInput!) {
+    createExternalDataSource (input: $input) {
       code
       errors {
         message
@@ -70,24 +68,24 @@ const CREATE_SOURCE = gql`
       result {
         id
         name
+        crmType
         dataType
       }
     }
   }
 `;
 
-type FormInputs = CreateSourceMutationVariables["AirtableSource"] & {
-  // In time there will be more external data sources with their own fields
-  airtable?: CreateSourceMutationVariables["AirtableSource"];
-};
+
+type FormInputs = CreateExternalDataSourceInput & ExternalDataSourceInput & TestDataSourceInput
 
 export default function Page({
   params: { externalDataSourceType },
 }: {
-  params: { externalDataSourceType: string };
+  params: { externalDataSourceType: keyof CreateExternalDataSourceInput };
 }) {
   const router = useRouter();
   const context = useContext(CreateAutoUpdateFormContext);
+
 
   useEffect(() => {
     context.setStep(2)
@@ -96,41 +94,67 @@ export default function Page({
   const form = useForm<FormInputs>({
     defaultValues: {
       geographyColumnType: PostcodesIoGeographyTypes.Postcode,
+      geographyColumn: externalDataSourceType === "mailchimp" ? 'ADDRESS.zip' : '',
       dataType: context.dataType,
-      airtable: {}
-    }
-  });
-
-  const source = form.watch();
-
-  // TODO: Make this generic so it can be reused by different sources
-  // Probably want a `test_connection` resolver that can optionally take `airtable` or `action_network` arguments
-  const [testSource, testSourceResult] = useLazyQuery<
-    TestSourceConnectionQuery,
-    TestSourceConnectionQueryVariables
-  >(TEST_SOURCE, {
-    variables: {
-      apiKey: source.airtable?.apiKey!,
-      baseId: source.airtable?.baseId!,
-      tableId: source.airtable?.tableId!,
+      name: '',
+      airtable: {
+        apiKey: '',
+        baseId: '',
+        tableId: '',
+      },
+      mailchimp: {
+        apiKey: '',
+        listId: ''
+      }
     },
   });
+
+  const [createSource, createSourceResult] = useMutation<CreateSourceMutation>(CREATE_DATA_SOURCE);
+  const [testSource, testSourceResult] = useLazyQuery<TestDataSourceQuery, TestDataSourceQueryVariables>(TEST_DATA_SOURCE);
+
+  const currentSource = testSourceResult.data;
 
   const [guessed, setGuessed] = useState<
     Partial<Record<FieldPath<FormInputs>, string | undefined | null>>
   >({});
 
-  function useGuessedField<T extends keyof FormInputs>(
-    field: T,
-    guessKeys: string[]
+  /**
+   * For a field that maps a data source property (e.g. address_field) to
+   * a field on the remote data source (e.g. "Address Line 1"), try to guess the
+   * remote field based on a list of likely options, while preventing bad matches 
+   * (e.g. "Email address" for "Address").
+   * 
+   * In this example, field = "addressField", guessKeys = ["address", "line1", ...],
+   * badKeys = ["email"].
+   */
+  function useGuessedField(
+    field: string,
+    guessKeys: string[],
+    badKeys: string[] = []
   ) {
     useEffect(() => {
-      const guess = testSourceResult.data?.testSourceConnection.fieldDefinitions?.find(
-        (field) => {
+      const guess = testSourceResult.data?.testDataSource.fieldDefinitions?.find(
+        (field: ({ label?: string | null, value: string })) => {
+          const isMatch = (fieldName: string|null|undefined, guessKey: string) => {
+            if (!fieldName) {
+              return false;
+            }
+            const match = fieldName.toLowerCase().replaceAll(' ', '').includes(guessKey.replaceAll(' ', ''))
+            if (!match) {
+              return false
+            }
+            for (const badKey of badKeys) {
+              const badMatch = fieldName.toLowerCase().replaceAll(' ', '').includes(badKey.replaceAll(' ', ''))
+              if (badMatch) {
+                return false
+              }
+            }
+            return true
+          }
           for (const guessKey of guessKeys) {
             if (
-              field.label?.toLowerCase().replaceAll(' ', '').includes(guessKey.replaceAll(' ', '')) ||
-              field.value?.toLowerCase().replaceAll(' ', '').includes(guessKey.replaceAll(' ', ''))
+              isMatch(field.label, guessKey) ||
+              isMatch(field.value, guessKey)
             ) {
               return true
             }
@@ -142,91 +166,104 @@ export default function Page({
         // @ts-ignore
         form.setValue(field, guess?.value)
       }
-    }, [testSourceResult.data?.testSourceConnection.fieldDefinitions, form, setGuessed])
+    }, [testSourceResult.data?.testDataSource.fieldDefinitions, form, setGuessed])
   }
 
   useGuessedField('geographyColumn', ["postcode", "postal code", "zip code", "zip"])
   useGuessedField('emailField', ["email"])
   useGuessedField('phoneField', ["mobile", "phone"])
-  useGuessedField('addressField', ["street", "line1", "address"])
+  useGuessedField('addressField', ["street", "line1", "address"], ['email'])
   useGuessedField('fullNameField', ["full name", "name"])
   useGuessedField('firstNameField', ["first name", "given name"])
   useGuessedField('lastNameField', ["last name", "family name", "surname", "second name"])
 
-  // Propose name based on remoteName
-  useEffect(function proposeName () {
-    if (testSourceResult.data?.testSourceConnection.remoteName) {
-      form.setValue('name', testSourceResult.data?.testSourceConnection.remoteName)
+  async function submitTestConnection(formData: FormInputs) {
+    console.log('form data', formData)
+    if (!formData[externalDataSourceType]) {
+      throw Error("Need some CRM connection details to proceed!")
     }
-  }, [testSourceResult.data?.testSourceConnection.remoteName, form])
+    // Get the nested data source key e.g. Airtable or Mailchimp
+    const dataSourceKey = externalDataSourceType
 
-  // TODO: Make this generic so it can be reused by different sources
-  // Probably want a `create_connection` resolver that can optionally take `airtable` or `action_network` arguments
-  const [createSource, createSourceResult] = useMutation<
-    CreateSourceMutation,
-    CreateSourceMutationVariables
-  >(CREATE_SOURCE);
+    const dataSourceValue = formData[dataSourceKey] || {};
+   
+    const input = {
+      "type": dataSourceKey, 
+      "apiKey": dataSourceValue?.apiKey || '',
+      "baseId": "baseId" in dataSourceValue ? dataSourceValue.baseId : '',
+      "tableId": "tableId" in dataSourceValue ? dataSourceValue.tableId : '',
+      "listId": "listId" in dataSourceValue ? dataSourceValue.listId : '',
+    }
 
-  // TODO: Make this generic so it can be reused by different sources
-  // Probably want a `test_connection` resolver that can optionally take `airtable` or `action_network` arguments
-  async function submitTestConnection({
-    airtable
-  }: FormInputs) {
-    toastPromise(
-      testSource({ variables: airtable as any }),
-      {
+    {
+      toastPromise(testSource({
+        variables: { input }
+      }), {
         loading: "Testing connection...",
-        success: (d: FetchResult<TestSourceConnectionQuery>) => {
-          if (!d.errors && d.data?.testSourceConnection) {
+        success: (d: FetchResult<TestDataSourceQuery>) => {
+          if (!d.errors && d.data?.testDataSource) {
             return "Connection is healthy";
           }
           throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
         },
         error: "Connection failed",
+      });
+    }
+  }
+
+  async function submitCreateSource(formData: FormInputs) {
+    if (!formData[externalDataSourceType]) {
+      throw Error("Need some CRM connection details to proceed!")
+    }
+    // To avoid mutation of the form data
+    const genericCRMData = Object.assign({}, formData)
+    const CRMSpecificData = formData[externalDataSourceType]
+
+    // Remove specific CRM data from the generic data
+    // TODO: make this less fragile. Currently it assumes any nested
+    // object is specific to a CRM.
+    for (const key of Object.keys(formData)) {
+      if (typeof formData[key as keyof FormInputs] === "object") {
+        delete genericCRMData[key as keyof FormInputs]
+      }
+    }
+
+    let input: CreateExternalDataSourceInput = {
+      [externalDataSourceType]: {
+        ...genericCRMData,
+        ...CRMSpecificData
+      }
+    }
+    toastPromise(createSource({ variables: { input }}),
+      {
+        loading: "Saving connection...",
+        success: (d) => {
+          const errors = d.errors || d.data?.createExternalDataSource.errors || []
+          if (!errors.length && d.data?.createExternalDataSource.result) {
+            if (d.data?.createExternalDataSource.result.dataType === DataSourceType.Member) {
+              router.push(
+                `/data-sources/create/configure/${d.data.createExternalDataSource.result.id}`,
+              );
+            } else {
+              router.push(
+                `/data-sources/inspect/${d.data.createExternalDataSource.result.id}`,
+              );
+            }
+            return "Connection successful";
+          }
+          throw new Error(errors.map(e => e.message).join(', ') || "Unknown error")
+        },
+        error(e) {
+          return {
+            title: "Connection failed",
+            description: e.message,
+          }
+        }
       },
     )
   }
 
-  async function submitCreateSource(data: FormInputs) {
-    if (data.airtable) {
-      const { airtable, ...genericData } = data;
-      const variables = {
-          AirtableSource: {
-            ...genericData,
-            ...source.airtable,
-          }
-      }
-      toastPromise(createSource({ variables }),
-        {
-          loading: "Saving connection...",
-          success: (d: FetchResult<CreateSourceMutation>) => {
-            const errors = d.errors || d.data?.createSource.errors || []
-            if (!errors.length && d.data?.createSource?.result) {
-              if (d.data?.createSource.result.dataType === DataSourceType.Member) {
-                router.push(
-                  `/data-sources/create/configure/${d.data.createSource.result.id}`,
-                );
-              } else {
-                router.push(
-                  `/data-sources/inspect/${d.data.createSource.result.id}`,
-                );
-              }
-              return "Connection successful";
-            }
-            throw new Error(errors.map(e => e.message).join(', ') || "Unknown error")
-          },
-          error(e) {
-            return {
-              title: "Connection failed",
-              description: e.message,
-            }
-          }
-        },
-      )
-    }
-  }
-
-  if (createSourceResult.loading || createSourceResult.data?.createSource.result) {
+  if (createSourceResult.loading || createSourceResult.data?.createExternalDataSource.result) {
     return (
       <div className="space-y-6">
         <h1 className="text-hLg">Saving connection...</h1>
@@ -254,16 +291,16 @@ export default function Page({
         name={name}
         label={label}
         placeholder={placeholder}
-        fieldDefinitions={testSourceResult.data?.testSourceConnection.fieldDefinitions}
+        fieldDefinitions={testSourceResult.data?.testDataSource.fieldDefinitions}
         control={form.control}
-        crmType={testSourceResult.data?.testSourceConnection.crmType!}
+        crmType={testSourceResult.data?.testDataSource.crmType!}
         guess={guessed[name]}
         required={required}
       />
     )
   }
 
-  if (testSourceResult.data?.testSourceConnection.healthcheck) {
+  if (currentSource?.testDataSource?.healthcheck) {
     return (
       <div className="space-y-6">
         <h1 className="text-hLg">Connection successful</h1>
@@ -393,106 +430,192 @@ export default function Page({
             well as tell us which table to update in the first place.
           </p>
         </header>
-        <FormProvider {...form}>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(submitTestConnection)}
-              className="space-y-7 max-w-lg"
-            >
-              <div className='text-hSm'>Connection details</div>
-              <FormField
-                control={form.control}
-                name="airtable.apiKey"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Airtable access token</FormLabel>
-                    <FormControl>
-                      {/* @ts-ignore - react hook form is extra fussy about null values but they work, ok! */}
-                      <Input placeholder="patAB1" {...field} required />
-                    </FormControl>
-                    <FormDescription>
-                      Make sure your token has read and write permissions for
-                      table data, table schema and webhooks.{" "}
-                      <a
-                        className="underline"
-                        target="_blank"
-                        href="https://support.airtable.com/docs/creating-personal-access-tokens#:~:text=Click%20the%20Developer%20hub%20option,right%20portion%20of%20the%20screen."
-                      >
-                        Learn how to find your personal access token.
-                      </a>
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="airtable.baseId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Base ID</FormLabel>
-                    <FormControl>
-                      {/* @ts-ignore */}
-                      <Input placeholder="app1234" {...field} required />
-                    </FormControl>
-                    <FormDescription>
-                      The unique identifier for your base.{" "}
-                      <a
-                        className="underline"
-                        target="_blank"
-                        href="https://support.airtable.com/docs/en/finding-airtable-ids#:~:text=Finding%20base%20URL%20IDs,-Base%20URLs"
-                      >
-                        Learn how to find your base ID.
-                      </a>
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="airtable.tableId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Table ID</FormLabel>
-                    <FormControl>
-                      {/* @ts-ignore */}
-                      <Input placeholder="tbl1234" {...field} required />
-                    </FormControl>
-                    <FormDescription>
-                      The unique identifier for your table.{" "}
-                      <a
-                        className="underline"
-                        target="_blank"
-                        href="https://support.airtable.com/docs/en/finding-airtable-ids#:~:text=Finding%20base%20URL%20IDs,-Base%20URLs"
-                      >
-                        Learn how to find your table ID.
-                      </a>
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="flex flex-row gap-x-4">
-                <Button
-                  variant="outline"
-                  type="reset"
-                  onClick={() => {
-                    router.back();
-                  }}
-                >
-                  Back
-                </Button>
-                <Button type="submit" variant={"reverse"} disabled={testSourceResult.loading}>
-                  Test connection
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </FormProvider>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(submitTestConnection)}
+            className="space-y-7 max-w-lg"
+          >
+            <div className='text-hSm'>Connection details</div>
+            <FormField
+              control={form.control}
+              name="airtable.apiKey"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Airtable access token</FormLabel>
+                  <FormControl>
+                    {/* @ts-ignore */}
+                    <Input placeholder="patAB1" {...field} required />
+                  </FormControl>
+                  <FormDescription>
+                    Make sure your token has read and write permissions for
+                    table data, table schema and webhooks.{" "}
+                    <a
+                      className="underline"
+                      target="_blank"
+                      href="https://support.airtable.com/docs/creating-personal-access-tokens#:~:text=Click%20the%20Developer%20hub%20option,right%20portion%20of%20the%20screen."
+                    >
+                      Learn how to find your personal access token.
+                    </a>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="airtable.baseId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Base ID</FormLabel>
+                  <FormControl>
+                    {/* @ts-ignore */}
+                    <Input placeholder="app1234" {...field} required />
+                  </FormControl>
+                  <FormDescription>
+                    The unique identifier for your base.{" "}
+                    <a
+                      className="underline"
+                      target="_blank"
+                      href="https://support.airtable.com/docs/en/finding-airtable-ids#:~:text=Finding%20base%20URL%20IDs,-Base%20URLs"
+                    >
+                      Learn how to find your base ID.
+                    </a>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="airtable.tableId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Table ID</FormLabel>
+                  <FormControl>
+                    {/* @ts-ignore */}
+                    <Input placeholder="tbl1234" {...field} required />
+                  </FormControl>
+                  <FormDescription>
+                    The unique identifier for your table.{" "}
+                    <a
+                      className="underline"
+                      target="_blank"
+                      href="https://support.airtable.com/docs/en/finding-airtable-ids#:~:text=Finding%20base%20URL%20IDs,-Base%20URLs"
+                    >
+                      Learn how to find your table ID.
+                    </a>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex flex-row gap-x-4">
+              <Button
+                variant="outline"
+                type="reset"
+                onClick={() => {
+                  router.back();
+                }}
+              >
+                Back
+              </Button>
+              <Button type="submit" variant={"reverse"}>
+                Test connection
+              </Button>
+            </div>
+          </form>
+        </Form>
       </div>
     );
   }
+
+  if (externalDataSourceType === "mailchimp") {
+    return (
+      <div className="space-y-7">
+        <header>
+          <h1 className="text-hLg">Connecting to your Mailchimp audience</h1>
+          <p className="mt-6 text-meepGray-400 max-w-lg">
+            In order to send data across to your Mailchimp audience, we{"'"}ll need a few
+            details that gives us permission to make updates to your audience, as
+            well as tell us which audience to update in the first place.
+          </p>
+        </header>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(submitTestConnection)}
+            className="space-y-7 max-w-lg"
+          >
+            <div className='text-hSm'>Connection details</div>
+            <FormField
+              control={form.control}
+              name="mailchimp.apiKey"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>MailChimp API key</FormLabel>
+                  <FormControl>
+                    {/* @ts-ignore */}
+                    <Input placeholder="X...-usXX" {...field} required />
+                  </FormControl>
+                  <FormDescription>
+                    {" "}
+                    <a
+                      className="underline"
+                      target="_blank"
+                      href="https://mailchimp.com/help/about-api-keys/"
+                    >
+                      Learn how to find your API key.
+                    </a>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="mailchimp.listId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Audience ID</FormLabel>
+                  <FormControl>
+                    {/* @ts-ignore */}
+                    <Input placeholder="XXXXXXXXXX" {...field} required />
+                  </FormControl>
+                  <FormDescription>
+                    The unique identifier for your audience.{" "}
+                    <a
+                      className="underline"
+                      target="_blank"
+                      href="https://mailchimp.com/help/find-audience-id/"
+                    >
+                      Learn how to find your audience ID.
+                    </a>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex flex-row gap-x-4">
+              <Button
+                variant="outline"
+                type="reset"
+                onClick={() => {
+                  router.back();
+                }}
+              >
+                Back
+              </Button>
+              <Button type="submit" variant={"reverse"} disabled={testSourceResult.loading}>
+                Test connection
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
+    );
+  }
+
 
   return null;
 }

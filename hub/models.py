@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import itertools
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import List, Optional, TypedDict, Union
@@ -28,6 +29,7 @@ import pytz
 from asgiref.sync import async_to_sync, sync_to_async
 from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
+from mailchimp3 import MailChimp
 from polymorphic.models import PolymorphicModel
 from procrastinate.contrib.django.models import ProcrastinateEvent, ProcrastinateJob
 from psycopg.errors import UniqueViolation
@@ -53,6 +55,8 @@ from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
 from utils.py import batched, ensure_list, get
 
 User = get_user_model()
+
+logger = logging.getLogger(__name__)
 
 
 class Organisation(models.Model):
@@ -1081,14 +1085,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         return None
 
-    def webhook_healthcheck(self) -> bool:
-        """
-        Check the connection to the webhook.
-        """
-        raise NotImplementedError(
-            "Webhook healthcheck not implemented for this data source type."
-        )
-
     def setup_webhooks(self):
         """
         Set up a webhook.
@@ -1102,6 +1098,41 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         Refresh the webhook.
         """
         return self.setup_webhooks()
+
+    def get_webhooks(self):
+        """
+        Refresh the webhook.
+        """
+        raise NotImplementedError(
+            "Get webhooks not implemented for this data source type."
+        )
+
+    def webhook_healthcheck(self):
+        expected_webhooks = 0
+        if self.auto_update_enabled:
+            expected_webhooks += 1
+        if self.auto_import_enabled:
+            expected_webhooks += 1
+        webhooks = []
+        try:
+            webhooks = self.get_webhooks()
+        except Exception as e:
+            logger.error(f"Could't fetch webhooks: {e}")
+            raise ValueError("Couldn't fetch webhooks")
+        if len(webhooks) < expected_webhooks:
+            raise ValueError("Webhook healthcheck: Not enough webhooks")
+        if len(webhooks) > expected_webhooks:
+            raise ValueError("Webhook healthcheck: Too many webhooks")
+        return True
+
+    def extra_webhook_healthcheck(self, webhooks):
+        return True
+
+    def auto_update_webhook_url(self):
+        return urljoin(
+            settings.BASE_URL,
+            reverse("external_data_source_auto_update_webhook", args=[self.id]),
+        )
 
     def get_member_ids_from_webhook(self, payload: dict) -> list[str]:
         """
@@ -1237,14 +1268,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             "Update many not implemented for this data source type."
         )
 
-    async def update_all(self, mapped_records: list[MappedMember]):
-        """
-        Append all data to the table.
-        """
-        raise NotImplementedError(
-            "Update all not implemented for this data source type."
-        )
-
     def get_record_id(self, record):
         """
         Get the ID for a record.
@@ -1277,12 +1300,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             )
             for key in keys
         ]
-
-    def filter(self, filter: dict) -> dict:
-        """
-        Look up a record by a value in a column.
-        """
-        raise NotImplementedError("Lookup not implemented for this data source type.")
 
     class Loaders(TypedDict):
         postcodesIO: DataLoader
@@ -1423,6 +1440,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         if type(member) is str:
             member = await loaders["fetch_record"].load(member)
+        if not member:
+            # TODO: write tests for the case when the loader fails for a member
+            return None
+
         update_fields = {}
         try:
             print(f"mapping member {member.get('id')}")
@@ -1510,7 +1531,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     def disable_auto_update(self):
         self.auto_update_enabled = False
         self.save()
-        if self.automated_webhooks:
+        if self.automated_webhooks and hasattr(self, "teardown_webhooks"):
             self.teardown_webhooks()
 
     # Webhooks
@@ -1668,6 +1689,39 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         except (UniqueViolation, IntegrityError):
             pass
 
+    class CUDRecord(TypedDict):
+        """
+        Used for tests
+        """
+
+        email = str
+        postcode = str
+        data = dict
+
+    def delete_one(self, record_id: str):
+        """
+        Used for tests
+        """
+        raise NotImplementedError(
+            "Delete one not implemented for this data source type."
+        )
+
+    def create_one(self, record: CUDRecord):
+        """
+        Used for tests
+        """
+        raise NotImplementedError(
+            "Create one not implemented for this data source type."
+        )
+
+    def create_many(self, records: List[CUDRecord]):
+        """
+        Used for tests
+        """
+        raise NotImplementedError(
+            "Create many not implemented for this data source type."
+        )
+
     class DataPermissions(TypedDict):
         can_display_points: bool
         can_display_details: bool
@@ -1750,6 +1804,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
         return permissions_dict[user_id]
+
+    def filter(self, filter: dict) -> dict:
+        """
+        Look up a record by a value in a column.
+        """
+        raise NotImplementedError("Lookup not implemented for this data source type.")
 
 
 class AirtableSource(ExternalDataSource):
@@ -1837,13 +1897,6 @@ class AirtableSource(ExternalDataSource):
         # and reduces memory load
         return itertools.chain.from_iterable(self.table.iterate())
 
-    def filter(self, d: dict):
-        formula = "AND("
-        formula += ",".join([f"{key}='{value}'" for key, value in d.items()])
-        formula += ")"
-        records = self.table.all(formula=formula)
-        return records
-
     def get_record_id(self, record):
         return record["id"]
 
@@ -1859,17 +1912,6 @@ class AirtableSource(ExternalDataSource):
         )
 
     async def update_many(self, mapped_records):
-        return self.table.batch_update(
-            [
-                {
-                    "id": mapped_record["member"]["id"],
-                    "fields": mapped_record["update_fields"],
-                }
-                for mapped_record in mapped_records
-            ]
-        )
-
-    async def update_all(self, mapped_records):
         return self.table.batch_update(
             [
                 {
@@ -1903,12 +1945,6 @@ class AirtableSource(ExternalDataSource):
             }
         }
 
-    def auto_update_webhook_url(self):
-        return urljoin(
-            settings.BASE_URL,
-            reverse("external_data_source_auto_update_webhook", args=[self.id]),
-        )
-
     def get_webhooks(self):
         list = self.base.webhooks()
         auto_update_webhook_url = self.auto_update_webhook_url()
@@ -1918,28 +1954,12 @@ class AirtableSource(ExternalDataSource):
             if webhook.notification_url == auto_update_webhook_url
         ]
 
-    def webhook_healthcheck(self):
-        expected_webhooks = 0
-        if self.auto_update_webhook_url:
-            expected_webhooks += 1
-        if self.auto_import_enabled:
-            expected_webhooks += 1
-        try:
-            webhooks = self.get_webhooks()
-            if len(webhooks) < expected_webhooks:
-                # raise ValueError("Webhook healthcheck: Not enough webhooks")
+    def extra_webhook_healthcheck(self, webhooks):
+        for webhook in webhooks:
+            if not webhook.is_hook_enabled:
+                print("Webhook healthcheck: a webhook expired")
                 return False
-            if len(webhooks) > expected_webhooks:
-                # raise ValueError("Webhook healthcheck: Too many webhooks")
-                return False
-            for webhook in webhooks:
-                if not webhook.is_hook_enabled:
-                    # raise ValueError("Webhook healthcheck: a webhook expired")
-                    return False
-            return True
-        except Exception:
-            # raise ValueError("Couldn't fetch webhooks")
-            return False
+        return True
 
     def teardown_webhooks(self):
         list = self.base.webhooks()
@@ -1975,6 +1995,39 @@ class AirtableSource(ExternalDataSource):
         member_ids = list(sorted(set(member_ids)))
         print("Webhook member result", webhook_object.cursor, member_ids)
         return member_ids
+
+    def delete_one(self, record_id):
+        return self.table.delete(record_id)
+
+    def create_one(self, record):
+        record = self.table.create(
+            {
+                **record["data"],
+                self.postcode_field: record["postcode"],
+                self.email_field: record["email"],
+            }
+        )
+        return record
+
+    def create_many(self, records):
+        records = self.table.batch_create(
+            [
+                {
+                    **record.get("data", {}),
+                    self.postcode_field: record["postcode"],
+                    self.email_field: record["email"],
+                }
+                for record in records
+            ]
+        )
+        return records
+
+    def filter(self, d: dict):
+        formula = "AND("
+        formula += ",".join([f"{key}='{value}'" for key, value in d.items()])
+        formula += ")"
+        records = self.table.all(formula=formula)
+        return records
 
 
 class AirtableWebhook(models.Model):
@@ -2055,6 +2108,274 @@ class Report(PolymorphicModel):
 
     def __str__(self):
         return self.name
+
+
+class MailchimpSource(ExternalDataSource):
+    """
+    A Mailchimp list.
+    """
+
+    crm_type = "mailchimp"
+    api_key = models.CharField(
+        max_length=250,
+        help_text="Mailchimp API key.",
+    )
+    list_id = models.CharField(
+        max_length=250,
+        help_text="The unique identifier for the Mailchimp list.",
+    )
+
+    automated_webhooks = True
+    introspect_fields = True
+
+    class Meta:
+        verbose_name = "Mailchimp list"
+        unique_together = ["list_id", "api_key"]
+
+    @cached_property
+    def client(self) -> MailChimp:
+        # Initializes the MailChimp client
+        client = MailChimp(mc_api=self.api_key)
+
+        members_client = client.lists.members
+        _build_path = members_client._build_path
+
+        # Modify API request to include ?skip_merge_validation=true
+        # Otherwise data can't be updated if the address is not complete
+        # (i.e. with addr1, city, state and country)
+        def build_path_with_skip_validation(self, *args, **kwargs):
+            path = _build_path(self, *args, **kwargs)
+            return f"{path}?skip_merge_validation=true"
+
+        members_client._build_path = build_path_with_skip_validation
+        return client
+
+    def healthcheck(self):
+        # Checks if the Mailchimp list is accessible
+        list = self.client.lists.get(self.list_id)
+        if list:
+            return True
+        return False
+
+    def get_record_id(self, record):
+        return record["id"]
+
+    def get_record_field(self, record, field: str):
+        field_options = [
+            field,
+            f"merge_fields.{field}",
+            # Mailchimp custom fields are max 10 chars long and typically uppercase
+            f"merge_fields.{field[0:10].upper()}",
+        ]
+
+        value = None
+
+        for field in field_options:
+            try:
+                value = get(record, field)
+                if value:
+                    break
+            except KeyError:
+                pass
+
+        return value
+
+    def get_webhooks(self):
+        webhooks = self.client.lists.webhooks.all(self.list_id)["webhooks"]
+        return [
+            webhook
+            for webhook in webhooks
+            if webhook["url"] == self.auto_update_webhook_url()
+        ]
+
+    def setup_webhooks(self):
+        self.teardown_webhooks()
+        # Update external data webhook
+        self.client.lists.webhooks.create(
+            self.list_id,
+            data={
+                "url": self.auto_update_webhook_url(),
+                "events": {
+                    "subscribe": True,
+                    "unsubscribe": False,
+                    "profile": True,
+                    "cleaned": True,
+                    "upemail": False,
+                    "campaign": False,
+                },
+                "sources": {
+                    "user": True,
+                    "admin": True,
+                    # Presumably this should be False to avoid
+                    # an infinite loop (but what if other tools
+                    # are updating using the API?)
+                    "api": False,
+                },
+            },
+        )
+
+    def teardown_webhooks(self):
+        webhooks = self.get_webhooks()
+        for webhook in webhooks:
+            self.client.lists.webhooks.delete(self.list_id, webhook["id"])
+
+    def get_member_ids_from_webhook(self, webhook_payload: dict) -> list[str]:
+        # Mailchimp doesn't give the full ID of the member in the Webhook payload?!
+        # Can use the email instead
+        if not webhook_payload:
+            return []
+        return [webhook_payload["data[email]"]]
+
+    def field_definitions(self):
+        """
+        Mailchimp subscriber built-in fields.
+        """
+        fields = [
+            self.FieldDefinition(
+                label="Email address",
+                value="email_address",
+                description="Email address",
+            ),
+            self.FieldDefinition(
+                label="Phone number",
+                value="PHONE",
+                description="Phone number",
+            ),
+            self.FieldDefinition(
+                label="First name",
+                value="FNAME",
+                description="First name",
+            ),
+            self.FieldDefinition(
+                label="Last name",
+                value="LNAME",
+                description="Last name",
+            ),
+            self.FieldDefinition(
+                label="Address",
+                value="ADDRESS.addr1",
+                description="Address first line",
+            ),
+            self.FieldDefinition(
+                label="Zip",
+                value="ADDRESS.zip",
+                description="Zipcode or Postcode",
+            ),
+        ]
+        merge_fields = self.client.lists.merge_fields.all(self.list_id, get_all=True)
+        for field in merge_fields["merge_fields"]:
+            if field["tag"] not in ["ADDRESS", "PHONE", "FNAME", "LNAME"]:
+                fields.append(
+                    self.FieldDefinition(
+                        label=field["name"],
+                        value=field["tag"],
+                        description=field["name"],
+                    )
+                )
+        return fields
+
+    async def fetch_all(self):
+        # Fetches all members in a list and returns their email addresses
+        list = self.client.lists.members.all(self.list_id, get_all=True)
+        return list["members"]
+
+    async def fetch_many(self, member_ids: list[str]):
+        # TODO: is there a more efficient request to get many members?
+        return await asyncio.gather(
+            *[self.fetch_one(member_id) for member_id in member_ids]
+        )
+
+    async def fetch_one(self, member_id: str):
+        # Fetches a single list member by their unique member ID
+        # Mailchimp member IDs are typically the MD5 hash of the lowercase version of the member's email address
+        member = self.client.lists.members.get(
+            list_id=self.list_id, subscriber_hash=member_id
+        )
+        return member
+
+    async def fetch_many_loader(self, keys):
+        # For MailChimp, sometimes the keys are IDs, and sometimes
+        # they are email addresses. So the loader has to match
+        # on the ID field first, then the email field.
+        # This is because the webhook payload doesn't include the ID.
+        results = await self.fetch_many(keys)
+        return [
+            next(
+                (
+                    result
+                    for result in results
+                    if (result["id"] == key or result["email_address"] == key)
+                ),
+                None,
+            )
+            for key in keys
+        ]
+
+    async def update_many(self, mapped_records):
+        for mapped_record in mapped_records:
+            try:
+                await self.update_one(mapped_record)
+            except Exception as e:
+                subscriber_hash = mapped_record["member"]["id"]
+                logger.error(f"Error updating Mailchimp record {subscriber_hash}: {e}")
+
+    async def update_one(self, mapped_record):
+        subscriber_hash = mapped_record["member"]["id"]
+        # Have to get the existing member to update the merge fields (the API does not patch the object)
+        # TODO: save all the merge fields in our database so we don't have to do this?
+        existing_member = await self.fetch_one(subscriber_hash)
+        merge_fields = {
+            **existing_member["merge_fields"],
+            **mapped_record["update_fields"],
+        }
+        self.client.lists.members.update(
+            list_id=self.list_id,
+            subscriber_hash=subscriber_hash,
+            data={"merge_fields": merge_fields},
+        )
+
+    def delete_one(self, record_id):
+        return self.client.lists.members.delete(self.list_id, record_id)
+
+    def create_one(self, record: ExternalDataSource.CUDRecord):
+        record = self.client.lists.members.create(
+            self.list_id,
+            data=dict(
+                status="subscribed",
+                email_address=record["email"],
+                merge_fields={
+                    "ADDRESS": {
+                        "addr1": record["data"].get("addr1"),
+                        "city": record["data"].get("city"),
+                        "state": record["data"].get("state"),
+                        "country": record["data"].get("country"),
+                        "zip": record["postcode"],
+                    }
+                    if record["data"].get("addr1")
+                    else ""
+                },
+            ),
+        )
+        return record
+
+    def create_many(self, records):
+        created_records = []
+        for record in records:
+            created_records.append(self.create_one(record))
+        return created_records
+
+    def filter(self, filter: dict) -> dict:
+        list = self.client.lists.members.all(self.list_id, get_all=True)
+        filtered_records = []
+        for record in list["members"]:
+            match = True
+            for field, value in filter.items():
+                if self.get_record_field(record, field) != value:
+                    match = False
+                    break
+            if match:
+                filtered_records.append(record)
+        return filtered_records
 
 
 class MapReport(Report, Analytics):

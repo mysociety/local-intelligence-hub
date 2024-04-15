@@ -1,13 +1,14 @@
 "use client";
 
 import { gql, useQuery } from "@apollo/client";
-import { ActionNetworkLogo, AirtableLogo } from "@/components/logos";
+import { ActionNetworkLogo, AirtableLogo, MailchimpLogo } from "@/components/logos";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { DataSourceType, ListOrganisationsQuery, ListOrganisationsQueryVariables } from "@/__generated__/graphql";
 import { useEffect } from "react";
 import qs from 'query-string'
+import { Mail } from "lucide-react";
 import { ExternalDataSourceCard } from "@/components/ExternalDataSourceCard";
 
 const LIST_UPDATE_CONFIGS = gql`
@@ -18,6 +19,16 @@ const LIST_UPDATE_CONFIGS = gql`
         id
         name
         dataType
+        connectionDetails {
+          ... on AirtableSource {
+            baseId
+            tableId
+          }
+          ... on MailchimpSource {
+            apiKey
+            listId
+          }
+        }
         crmType
         autoUpdateEnabled
         jobs {
@@ -164,12 +175,21 @@ function PageHeader() {
         </p>
       </div>
       <div className="grid grid-cols-2 gap-7">
-        <div className="rounded-3xl bg-meepGray-700 px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
+      <div className="rounded-3xl bg-meepGray-700 px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
+      <Link href="">
           <ActionNetworkLogo className="w-full" />
-        </div>
-        <div className="rounded-3xl bg-meepGray-700 px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
+      </Link>
+    </div>
+    <div className="rounded-3xl bg-meepGray-700 px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
+      <Link href="/data-sources/create/connect/airtable">
           <AirtableLogo className="w-full" />
-        </div>
+      </Link>
+    </div>
+    <div className="rounded-3xl bg-meepGray-700 px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
+      <Link href="/data-sources/create/connect/mailchimp">
+          <MailchimpLogo className="w-full" />
+      </Link>
+    </div>
       </div>
     </header>
   );
