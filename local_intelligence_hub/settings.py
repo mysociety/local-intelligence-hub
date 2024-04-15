@@ -54,9 +54,6 @@ env = environ.Env(
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
-
 BASE_URL = env("BASE_URL")
 FRONTEND_BASE_URL = env("FRONTEND_BASE_URL")
 FRONTEND_SITE_TITLE = env("FRONTEND_SITE_TITLE")
