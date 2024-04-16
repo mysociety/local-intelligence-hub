@@ -343,7 +343,7 @@ if environment == "production":
         dsn=os.getenv("SENTRY_DSN"),
         environment=environment,
         integrations=[DjangoIntegration()],
-        traces_sample_rate=1.0
+        traces_sample_rate=1.0,
     )
 
 MINIO_STORAGE_ENDPOINT = env("MINIO_STORAGE_ENDPOINT")
