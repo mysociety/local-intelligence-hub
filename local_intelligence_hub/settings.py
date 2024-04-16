@@ -15,7 +15,6 @@ from datetime import timedelta
 from pathlib import Path
 
 import environ
-import sentry_sdk
 from gqlauth.settings_type import GqlAuthSettings
 from sentry_sdk import init
 from sentry_sdk.integrations.django import DjangoIntegration
