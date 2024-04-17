@@ -87,10 +87,10 @@ class Query(UserQueries):
     dataSet: Optional[model_types.DataSet] = model_types.dataset_by_name
 
     enrich_postcode: public_queries.PostcodeQueryResponse = strawberry.field(
-      resolver=public_queries.enrich_postcode
+        resolver=public_queries.enrich_postcode
     )
     enrich_postcodes: List[public_queries.PostcodeQueryResponse] = strawberry.field(
-      resolver=public_queries.enrich_postcodes
+        resolver=public_queries.enrich_postcodes
     )
     # enrich_constituency: public_queries.ConstituencyQueryResponse = public_queries.enrich_constituency
 

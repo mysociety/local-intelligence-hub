@@ -851,10 +851,12 @@ def cast_data(sender, instance, *args, **kwargs):
         instance.int = int(instance.data)
         instance.data = ""
 
+
 class Loaders(TypedDict):
     postcodesIO: DataLoader
     fetch_record: DataLoader
     source_loaders: dict[str, DataLoader]
+
 
 class EnrichmentLookup(TypedDict):
     member_id: str
@@ -862,7 +864,8 @@ class EnrichmentLookup(TypedDict):
     source_id: "ExternalDataSource"
     source_path: str
     source_data: Optional[any]
-    
+
+
 class ExternalDataSource(PolymorphicModel, Analytics):
     """
     A third-party data source that can be read and optionally written back to.
