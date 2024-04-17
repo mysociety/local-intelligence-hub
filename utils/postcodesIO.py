@@ -86,6 +86,9 @@ async def get_postcode_geo(postcode: str) -> PostcodesIOResult:
     status = get(data, "status")
     result: PostcodesIOResult = get(data, "result")
 
+    if status != 200 or result is None:
+        raise Exception(f"Failed to geocode postcode: {postcode}.")
+
     result["codes"]["european_electoral_region"] = next(
         filter(lambda eer: eer["label"] == result["european_electoral_region"], EERs),
         {},
