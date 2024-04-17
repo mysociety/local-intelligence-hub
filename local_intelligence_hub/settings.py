@@ -333,7 +333,7 @@ STRAWBERRY_DJANGO = {
 
 SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")
 
-environment = os.getenv("SENTRY_ENV")
+environment = os.getenv("ENVIRONMENT")
 
 # Configure Sentry only if in production
 if environment == "production":
