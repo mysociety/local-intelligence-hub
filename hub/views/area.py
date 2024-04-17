@@ -3,6 +3,7 @@ from collections import defaultdict
 from django.db.models import Count
 from django.http import Http404, HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.utils.text import slugify
 from django.views.generic import DetailView, TemplateView, View
 
 from hub.mixins import TitleMixin
@@ -213,6 +214,8 @@ class AreaView(BaseAreaView):
         if area_type.area_type != "Westminster Constituency":
             context["is_westminster_cons"] = False
 
+        context["slug"] = slugify(self.object.name)
+
         if context["area_type"] == "WMC23":
             context["PPCs"] = [
                 {
@@ -348,6 +351,7 @@ class AreaView(BaseAreaView):
             "power_postcodes_count": "power_postcodes",
             "tcc_open_letter_signatories_count": "tcc_open_letter_signatories",
             "council_net_zero_date": "council_net_zero_details",
+            "council_action_scorecard_total": "council_action_scorecard_sections",
         }
 
         context["is_related_category"] = context["related_categories"].values()

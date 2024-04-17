@@ -475,6 +475,8 @@
               {% for dataset in categories.place %}
                 {% if dataset.is_range and dataset.data|length > 9 %}
                 <div class="card dataset-card area-data--lg {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %} area-data--featured{% endif %}">
+                {% elif dataset.related_category and dataset.related_category.is_range %}
+                <div class="card dataset-card area-data--md {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %} area-data--featured{% endif %}">
                 {% elif dataset.is_range or dataset.data_type == "json" %}
                 <div class="card dataset-card area-data--md {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %} area-data--featured{% endif %}">
                 {% else %}
@@ -502,7 +504,7 @@
                         {% else %}
                           <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|intcomma }}</p>
                         {% endif %}
-                        {% if dataset.data.average %}
+                        {% if dataset.data.average is not None %}
                           {% if dataset.subcategory == "date" %}
                             <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat:"0" }} national average</p>
                           {% else %}
@@ -513,34 +515,24 @@
                           {% include 'hub/area/_json_data.html' with dataset=dataset.related_category %}
                         {% endif %}
                       {% elif dataset.is_range and dataset.data|length > 0 %}
-                        <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">
-                          <thead>
-                              <tr>
-                                  <th scope="col"></th>
-                                  <th scope="col" data-color="#068670">This area</th>
-                                  <th scope="col" data-color="#ced4da">National average</th>
-                              </tr>
-                          </thead>
-                          <tbody>
-                            {% for row in dataset.data %}
-                              <tr>
-                                <th>
-                                  {{ row.label|html_format_dataset_name|safe }}
-                                </th>
-                                <td>{{ row.value|floatformat }}%</td>
-                                <td>{{ row.average|floatformat }}%</td>
-                              </tr>
-                              {% endfor %}
-                          </tbody>
-                        </table>
+                          {% include 'hub/area/_range_data.html' with dataset=dataset %}
                       {% else %}
                         <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|floatformat }}%</p>
+                        {% if dataset.data.average is not None %}
                         <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }}% national average</p>
+                        {% endif %}
+                        {% if dataset.related_category and dataset.related_category.is_range %}
+                          {% include 'hub/area/_range_data.html' with dataset=dataset.related_category %}
+                        {% endif %}
                       {% endif %}
                     </div>
                     <div class="card-footer">
                       <p class="card-text">
+                        {% if dataset.name.lower == "council climate action scorecard" %}
+                          <a href="{{ dataset.source_url }}councils/{{ slug }}/">{{ dataset.source_name }}</a>
+                        {% else %}
                           <a href="{{ dataset.source_url }}">{{ dataset.source_name }}</a>
+                          {% endif %}
                         {% if dataset.auto_conversion_disclaimer %}
                           <a href="{% url 'future_constituencies' %}">{{ dataset.auto_conversion_disclaimer|safe }}</a>
                         {% endif %}
