@@ -11,12 +11,11 @@ Sentry.init({
   tracesSampleRate: 1,
   debug: false,
 
-  beforeSend(event, hint) {
+  beforeSend(event) {
     console.log('env', process.env.NODE_ENV)
 
     // Do not send events if in development environment
     if (process.env.NODE_ENV === 'development') {
-      console.log('Development issue:', event, hint);
       return null;
     }
     return event;

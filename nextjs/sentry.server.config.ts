@@ -10,10 +10,8 @@ Sentry.init({
   tracesSampleRate: 1,
   debug: false,
 
-  beforeSend(event, hint) {
+  beforeSend(event) {
     if (process.env.NODE_ENV === 'development') {
-
-      console.log('Development issue:', event, hint);
       return null;
     }
     return event;
