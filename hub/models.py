@@ -38,9 +38,10 @@ from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
-from hub.fields import EncryptedCharField
+
 import utils as lih_utils
 from hub.analytics import Analytics
+from hub.fields import EncryptedCharField
 from hub.filters import Filter
 from hub.tasks import (
     import_all,
@@ -1822,9 +1823,9 @@ class AirtableSource(ExternalDataSource):
         max_length=250,
         help_text="Personal access token. Requires the following 4 scopes: data.records:read, data.records:write, schema.bases:read, webhook:manage",
         null=True,
-        blank=True
+        blank=True,
     )
- 
+
     base_id = models.CharField(max_length=250)
     table_id = models.CharField(max_length=250)
     automated_webhooks = True
@@ -2120,16 +2121,12 @@ class MailchimpSource(ExternalDataSource):
 
     crm_type = "mailchimp"
     api_key = EncryptedCharField(
-        max_length=250,
-        help_text="Mailchimp API key.",
-        null=True,
-        blank=True
+        max_length=250, help_text="Mailchimp API key.", null=True, blank=True
     )
     list_id = models.CharField(
         max_length=250,
         help_text="The unique identifier for the Mailchimp list.",
     )
-
 
     automated_webhooks = True
     introspect_fields = True

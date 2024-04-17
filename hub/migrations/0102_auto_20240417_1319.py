@@ -2,17 +2,18 @@
 
 from django.db import migrations
 
+
 def forward_migration(apps, schema_editor):
-    AirtableSource = apps.get_model('hub', 'AirtableSource')
-    MailchimpSource = apps.get_model('hub', 'MailchimpSource')
+    AirtableSource = apps.get_model("hub", "AirtableSource")
+    MailchimpSource = apps.get_model("hub", "MailchimpSource")
     db_alias = schema_editor.connection.alias
-    
+
     # Migrate AirtableSource entries
     airtable_sources = AirtableSource.objects.using(db_alias).all()
     for source in airtable_sources:
         source.encrypted_api_key = source.api_key  # this triggers encryption
         source.save()
-    
+
     # Migrate MailchimpSource entries
     mailchimp_sources = MailchimpSource.objects.using(db_alias).all()
     for source in mailchimp_sources:
@@ -20,11 +21,13 @@ def forward_migration(apps, schema_editor):
 
         source.save()
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
         ("hub", "0101_airtablesource_encrypted_api_key_and_more"),
     ]
 
-    operations = [        migrations.RunPython(forward_migration),
-]
+    operations = [
+        migrations.RunPython(forward_migration),
+    ]

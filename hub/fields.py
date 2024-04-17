@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import base64
 
-from cryptography.fernet import Fernet
 from django.conf import settings
 from django.db import models
 from django.db.backends.base.base import BaseDatabaseWrapper
- 
+
+from cryptography.fernet import Fernet
+
 
 class EncryptedCharField(models.CharField):
     def from_db_value(
