@@ -1,15 +1,17 @@
 import itertools
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Any
 
 from django.db.models import Q
+from django.conf import settings
 
 import procrastinate.contrib.django.models
 import strawberry
 import strawberry_django
 import strawberry_django_dataloaders.factories
 import strawberry_django_dataloaders.fields
+from strawberry.dataloader import DataLoader
 from strawberry import auto
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
@@ -28,10 +30,10 @@ from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.graphql.types import model_types
 from hub.management.commands.import_mps import party_shades
-from utils.postcodesIO import get_postcode_geo
+from utils.postcodesIO import get_postcode_geo, get_bulk_postcode_geo
 
 @strawberry.type
-class CustomSourceData:
+class CustomDataResolver:
     '''
     A field for your third party data sources. e.g:
 
@@ -40,72 +42,142 @@ class CustomSourceData:
       enrichPostcode(postcode: "SW1A 1AA") {
           postcode
           result {
-              customSource(id: "Some Airtable") {
-                  name: field(id: "Name")
-                  address: field(id: "Address")
+              customData(id: "Some Airtable") {
+                  name: field(source: "Some Airtable", sourcePath: "MP name")
+                  address: field(source: "Some Airtable", sourcePath: "MP email")
+                  address: field(source: "Google Sheet", sourcePath: "voting record")
               }
           }
       }
     }
     ```
     '''
+    loaders: strawberry.Private[models.ExternalDataSource.Loaders]
+    postcode_data: strawberry.Private[PostcodesIOResult]
 
     @strawberry.field
-    def field(self, id: str, info: Info) -> str:
-        '''
-        Each column can be accessed by this resolver.
-        '''
-        # TODO: return the field for that source
-        return id
+    async def field(self, source: str, source_path: str, info: Info) -> str:
+        # return self.loaders()
+        source_loader = self.loaders["source_loaders"].get(source, None)
+        if source_loader is not None and postcode_data is not None:
+            loaded = await source_loader.load(
+                self.EnrichmentLookup(
+                    member_id=self.get_record_id(member),
+                    postcode_data=postcode_data,
+                    source_id=source,
+                    source_path=source_path,
+                )
+            )
 
-@strawberry.interface
-class LocationQueryData:
+# @strawberry.interface
+# class LocationQueryData:
+#     postcode: Optional[strawberry.Private[str]]
+#     constituency: Optional[strawberry.Private[str]]
 
-    @strawberry.field
-    def custom_source(id: str) -> CustomSourceData:
-        return CustomSourceData(id=id)
+#     @strawberry.field
+#     async def custom_data(self, info: Info) -> CustomDataResolver:
+#         user = get_current_user(info)
+#         loaders = models.ExternalDataSource.Loaders(
+#             postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo),
+#             source_loaders={
+#                 str(source.id): source.data_loader_factory()
+#                 async for source in models.ExternalDataSource.objects.filter(
+#                     organisation__members__user=user,
+#                     geography_column__isnull=False,
+#                     geography_column_type__isnull=False,
+#                 ).all()
+#             },
+#         )
+#         return CustomDataResolver(
+#             id=id,
+#             loaders=loaders
+#         )
 
-@strawberry.interface
-class LocationQueryResponse:
-    result: LocationQueryData
-    error: Optional[str] = None
+# @strawberry.interface
+# class LocationQueryResponse:
+#     error: Optional[str] = None
+
+# @strawberry.type
+# class ConstituencyQueryData(model_types.Area, LocationQueryData):
+#     pass
 
 @strawberry.type
-class ConstituencyQueryData(model_types.Area, LocationQueryData):
-    pass
-
-@strawberry.type
-class PostcodeQueryData(LocationQueryData):
-    postcodesIO: PostcodesIOResult
+class PostcodeQueryResponse:
+    postcode: str
+    loaders: strawberry.Private[models.ExternalDataSource.Loaders]
+    
+    @strawberry.field
+    async def postcodesIO(self) -> Optional[PostcodesIOResult]:
+        return await self.loaders["postcodesIO"].load(self.postcode)
 
     @strawberry.field
-    async def constituency(self, info: Info) -> model_types.Area:
-        id = self.postcodesIO.codes.parliamentary_constituency
+    async def constituency(self, info: Info) -> Optional[model_types.Area]:
+        postcode_data = await self.loaders["postcodesIO"].load(self.postcode)
+        id = postcode_data.codes.parliamentary_constituency
         return await models.Area.objects.aget(Q(gss=id) | Q(name=id))
 
-@strawberry.type
-class PostcodeQueryResponse(LocationQueryResponse):
-    postcode: str
-    result: PostcodeQueryData
+    @strawberry.field
+    async def custom_source_data(self, source: str, source_path: str, info: Info) -> Optional[str]:
+        # return self.loaders()
+        source_loader = self.loaders["source_loaders"].get(source, None)
+        postcode_data = await self.loaders["postcodesIO"].load(self.postcode)
+        if source_loader is not None and postcode_data is not None:
+            loaded = await source_loader.load(
+                self.EnrichmentLookup(
+                    member_id=self.postcode,
+                    postcode_data=postcode_data,
+                    source_id=source,
+                    source_path=source_path,
+                )
+            )
+        return loaded
 
-@strawberry.type
-class ConstituencyQueryResponse(LocationQueryResponse):
-    constituency: str
-    result: ConstituencyQueryData
+# @strawberry.type
+# class ConstituencyQueryResponse:
+#     constituency: str
+#     result: ConstituencyQueryData
 
-@strawberry_django.field()
-async def enrich_postcode(postcode: str) -> PostcodeQueryResponse:
-    postcode_data = await get_postcode_geo(postcode)
+async def enrich_postcode(postcode: str, info: Info) -> PostcodeQueryResponse:
+    user = get_current_user(info)
+    loaders = models.ExternalDataSource.Loaders(
+        postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo),
+        source_loaders={
+            str(source.id): source.data_loader_factory()
+            async for source in models.ExternalDataSource.objects.filter(
+                organisation__members__user=user,
+                geography_column__isnull=False,
+                geography_column_type__isnull=False,
+            ).all()
+        },
+    )
     return PostcodeQueryResponse(
         postcode=postcode,
-        result=PostcodeQueryData(
-            postcodesIO=postcode_data
-        )
+        loaders=loaders
     )
 
-@strawberry_django.field()
-async def enrich_constituency(constituency: str) -> ConstituencyQueryResponse:
-    return ConstituencyQueryResponse(
-        constituency=constituency,
-        result=models.Area.objects.filter(Q(gss=constituency) | Q(name=constituency)).first()
+async def enrich_postcodes(postcodes: List[str], info: Info) -> PostcodeQueryResponse:
+    if len(postcodes) > settings.POSTCODES_IO_BATCH_MAXIMUM:
+        raise ValueError(f"Batch query takes a maximum of 100 postcodes. You provided {len(postcodes)}")
+    user = get_current_user(info)
+    loaders = models.ExternalDataSource.Loaders(
+        postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo),
+        source_loaders={
+            str(source.id): source.data_loader_factory()
+            async for source in models.ExternalDataSource.objects.filter(
+                organisation__members__user=user,
+                geography_column__isnull=False,
+                geography_column_type__isnull=False,
+            ).all()
+        },
     )
+    return [
+        PostcodeQueryResponse(postcode=postcode, loaders=loaders)
+        for postcode in postcodes
+    ]
+
+# @strawberry_django.field()
+# async def enrich_constituency(constituency: str) -> ConstituencyQueryResponse:
+#     return ConstituencyQueryResponse(
+#         constituency=constituency,
+#         result=models.Area.objects.filter(Q(gss=constituency) | Q(name=constituency)).first()
+#     )

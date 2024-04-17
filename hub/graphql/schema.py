@@ -43,7 +43,6 @@ class Query(UserQueries):
     my_organisations: List[model_types.Organisation] = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
-
     external_data_source: model_types.ExternalDataSource = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
@@ -87,7 +86,12 @@ class Query(UserQueries):
     area: Optional[model_types.Area] = model_types.area_by_gss
     dataSet: Optional[model_types.DataSet] = model_types.dataset_by_name
 
-    enrich_postcode: public_queries.PostcodeQueryResponse = public_queries.enrich_postcode
+    enrich_postcode: public_queries.PostcodeQueryResponse = strawberry.field(
+      resolver=public_queries.enrich_postcode
+    )
+    enrich_postcodes: List[public_queries.PostcodeQueryResponse] = strawberry.field(
+      resolver=public_queries.enrich_postcodes
+    )
     # enrich_constituency: public_queries.ConstituencyQueryResponse = public_queries.enrich_constituency
 
     @strawberry.field
