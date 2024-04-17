@@ -859,14 +859,14 @@ class AutoUpdateConfig:
 
 @strawberry_django.type(models.AirtableSource)
 class AirtableSource(ExternalDataSource):
-    api_key: auto
+    api_key: str
     base_id: str
     table_id: str
 
 
 @strawberry_django.type(models.MailchimpSource)
 class MailchimpSource(ExternalDataSource):
-    api_key: auto
+    api_key: str
     list_id: auto
 
 

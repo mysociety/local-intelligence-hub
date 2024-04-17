@@ -1818,16 +1818,13 @@ class AirtableSource(ExternalDataSource):
     """
 
     crm_type = "airtable"
-    api_key = models.CharField(
+    api_key = EncryptedCharField(
         max_length=250,
         help_text="Personal access token. Requires the following 4 scopes: data.records:read, data.records:write, schema.bases:read, webhook:manage",
+        null=True,
+        blank=True
     )
-    encrypted_api_key = EncryptedCharField(
-        max_length=250,
-        help_text="Personal access token. Requires the following 4 scopes: data.records:read, data.records:write, schema.bases:read, webhook:manage",
-       default='default_value'
-
-    ) 
+ 
     base_id = models.CharField(max_length=250)
     table_id = models.CharField(max_length=250)
     automated_webhooks = True
@@ -2122,18 +2119,17 @@ class MailchimpSource(ExternalDataSource):
     """
 
     crm_type = "mailchimp"
-    api_key = models.CharField(
+    api_key = EncryptedCharField(
         max_length=250,
         help_text="Mailchimp API key.",
+        null=True,
+        blank=True
     )
-    encrypted_api_key = EncryptedCharField(
-        max_length=250,
-        help_text="Mailchimp API key.",
-    ) 
     list_id = models.CharField(
         max_length=250,
         help_text="The unique identifier for the Mailchimp list.",
     )
+
 
     automated_webhooks = True
     introspect_fields = True
