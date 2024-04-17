@@ -851,7 +851,18 @@ def cast_data(sender, instance, *args, **kwargs):
         instance.int = int(instance.data)
         instance.data = ""
 
+class Loaders(TypedDict):
+    postcodesIO: DataLoader
+    fetch_record: DataLoader
+    source_loaders: dict[str, DataLoader]
 
+class EnrichmentLookup(TypedDict):
+    member_id: str
+    postcode_data: PostcodesIOResult
+    source_id: "ExternalDataSource"
+    source_path: str
+    source_data: Optional[any]
+    
 class ExternalDataSource(PolymorphicModel, Analytics):
     """
     A third-party data source that can be read and optionally written back to.
@@ -935,6 +946,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         value: str
         label: Optional[str]
         description: Optional[str]
+        external_id: Optional[str]
 
     fields = JSONField(blank=True, null=True, default=list)
     # Auto-updates
@@ -1301,18 +1313,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             for key in keys
         ]
 
-    class Loaders(TypedDict):
-        postcodesIO: DataLoader
-        fetch_record: DataLoader
-        source_loaders: dict[str, DataLoader]
-
-    class EnrichmentLookup(TypedDict):
-        member_id: str
-        postcode_data: PostcodesIOResult
-        source_id: "ExternalDataSource"
-        source_path: str
-        source_data: Optional[any]
-
     @classmethod
     def _get_import_data(self, id: str):
         """
@@ -1343,7 +1343,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         return enrichment_df
 
     def data_loader_factory(self):
-        async def fetch_enrichment_data(keys: List[self.EnrichmentLookup]) -> list[str]:
+        async def fetch_enrichment_data(keys: List[EnrichmentLookup]) -> list[str]:
             return_data = []
             enrichment_df = await sync_to_async(self.get_imported_dataframe)()
             for key in keys:
@@ -1390,7 +1390,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             # and return the requested value for this enrichment source row
                             key["source_path"],
                         ].values
-                        if enrichment_value:
+                        if enrichment_value is not None:
                             enrichment_value = enrichment_value[0]
                             if enrichment_value is np.nan or enrichment_value == np.nan:
                                 print(
@@ -1413,13 +1413,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
             return return_data
 
-        def cache_key_fn(key: self.EnrichmentLookup) -> str:
+        def cache_key_fn(key: EnrichmentLookup) -> str:
             return f"{key['member_id']}_{key['source_id']}_{key['source_path']}"
 
         return DataLoader(load_fn=fetch_enrichment_data, cache_key_fn=cache_key_fn)
 
     async def get_loaders(self) -> Loaders:
-        loaders = self.Loaders(
+        loaders = Loaders(
             postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo),
             fetch_record=DataLoader(load_fn=self.fetch_many_loader, cache=False),
             source_loaders={
@@ -1470,7 +1470,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         source_loader = loaders["source_loaders"].get(source, None)
                         if source_loader is not None and postcode_data is not None:
                             loaded = await source_loader.load(
-                                self.EnrichmentLookup(
+                                EnrichmentLookup(
                                     member_id=self.get_record_id(member),
                                     postcode_data=postcode_data,
                                     source_id=source,
@@ -1866,6 +1866,7 @@ class AirtableSource(ExternalDataSource):
                 # TODO: implement a field ID lookup in the UI, then revisit this
                 value=field.name,
                 description=field.description,
+                external_id=field.id,
             )
             for field in self.table.schema().fields
         ]

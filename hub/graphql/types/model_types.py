@@ -175,6 +175,7 @@ class FieldDefinition:
     value: str = dict_key_field()
     label: Optional[str] = dict_key_field()
     description: Optional[str] = dict_key_field()
+    external_id: Optional[str] = dict_key_field()
 
 
 @strawberry_django.filter(models.ExternalDataSource)
