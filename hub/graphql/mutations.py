@@ -148,20 +148,20 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
     existing_reports = model_types.Report.get_queryset(
         models.Report.objects.get_queryset(), info
     ).exists()
-    
+
     map_report = create_with_computed_args(
         models.MapReport,
         info,
         data,
         computed_args=lambda info, data, model: {
             "organisation": get_or_create_organisation_for_source(info, data),
-            "slug": data.slug or slugify(data.name), 
-            "name": "Type your report name here"  # Default name for reports 
+            "slug": data.slug or slugify(data.name),
+            "name": "Type your report name here",  # Default name for reports
         },
     )
     if existing_reports:
         return map_report
-    
+
     # If this is the first report, add the user's first member list to it
     member_list = (
         model_types.ExternalDataSource.get_queryset(
@@ -183,6 +183,7 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
         ]
     map_report.save()
     return map_report
+
 
 def get_or_create_organisation_for_source(info: Info, data: any):
     if data.organisation:
