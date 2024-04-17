@@ -365,3 +365,5 @@ CACHES = {
         "LOCATION": "unique-snowflake",
     }
 }
+
+ENCRYPTION_SECRET_KEY= os.getenv("ENCRYPTION_SECRET_KEY")
