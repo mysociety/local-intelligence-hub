@@ -181,7 +181,7 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
                 "visible": True,
             }
         ]
-    map_report.save()
+        map_report.save()
     return map_report
 
 
