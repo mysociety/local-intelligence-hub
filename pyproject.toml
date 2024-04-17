@@ -44,6 +44,7 @@ django-minio-storage = "^0.5.7"
 mailchimp3 = "^3.0.21"
 scalene = "^1.5.38"
 django-vectortiles = { git = "https://github.com/submarcos/django-vectortiles.git" }
+cryptography = "^42.0.5"
 
 [tool.poetry.dev-dependencies]
 black = "^22.8.0"
