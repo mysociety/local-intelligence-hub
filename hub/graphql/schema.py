@@ -16,7 +16,7 @@ from strawberry_django.permissions import IsAuthenticated
 
 from hub import models
 from hub.graphql import mutations as mutation_types
-from hub.graphql.types import model_types
+from hub.graphql.types import model_types, public_queries
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +86,9 @@ class Query(UserQueries):
     )
     area: Optional[model_types.Area] = model_types.area_by_gss
     dataSet: Optional[model_types.DataSet] = model_types.dataset_by_name
+
+    enrich_postcode: public_queries.PostcodeQueryResponse = public_queries.enrich_postcode
+    # enrich_constituency: public_queries.ConstituencyQueryResponse = public_queries.enrich_constituency
 
     @strawberry.field
     def test_data_source(
