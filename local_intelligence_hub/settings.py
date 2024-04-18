@@ -15,8 +15,8 @@ from datetime import timedelta
 from pathlib import Path
 
 import environ
-import sentry_sdk
 from gqlauth.settings_type import GqlAuthSettings
+from sentry_sdk import init
 from sentry_sdk.integrations.django import DjangoIntegration
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -341,13 +341,16 @@ STRAWBERRY_DJANGO = {
 
 SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")
 
-sentry_sdk.init(
-    dsn=os.getenv("SENTRY_DSN"),
-    environment=os.getenv("SENTRY_ENV"),
-    integrations=[DjangoIntegration()],
-    # Optionally, you can adjust the logging level
-    traces_sample_rate=1.0,  # Adjust sample rate as needed
-)
+environment = os.getenv("ENVIRONMENT")
+
+# Configure Sentry only if in production
+if environment == "production":
+    init(
+        dsn=os.getenv("SENTRY_DSN"),
+        environment=environment,
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=1.0,
+    )
 
 MINIO_STORAGE_ENDPOINT = env("MINIO_STORAGE_ENDPOINT")
 if MINIO_STORAGE_ENDPOINT is not False:
