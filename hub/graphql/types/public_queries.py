@@ -37,6 +37,8 @@ class PostcodeQueryResponse:
     @strawberry.field
     async def constituency(self) -> Optional[model_types.Area]:
         postcode_data = await self.loaders["postcodesIO"].load(self.postcode)
+        if postcode_data is None:
+            return None
         id = postcode_data.codes.parliamentary_constituency
         return await models.Area.objects.aget(Q(gss=id) | Q(name=id))
 
@@ -47,7 +49,7 @@ class PostcodeQueryResponse:
         source_loader = self.loaders["source_loaders"].get(source, None)
         postcode_data = await self.loaders["postcodesIO"].load(self.postcode)
         if source_loader is not None and postcode_data is not None:
-            loaded = await source_loader.load(
+            return await source_loader.load(
                 models.EnrichmentLookup(
                     member_id=self.postcode,
                     postcode_data=postcode_data,
@@ -55,7 +57,6 @@ class PostcodeQueryResponse:
                     source_path=source_path,
                 )
             )
-        return loaded
 
 
 async def enrich_postcode(postcode: str, info: Info) -> PostcodeQueryResponse:
