@@ -6,12 +6,23 @@ from django.db.models import Q
 import strawberry
 from strawberry.dataloader import DataLoader
 from strawberry.types.info import Info
+import strawberry_django
 from strawberry_django.auth.utils import get_current_user
+from strawberry_django.permissions import IsAuthenticated
 
 from hub import models
 from hub.graphql.types import model_types
 from hub.graphql.types.postcodes import PostcodesIOResult
 from utils.postcodesIO import get_bulk_postcode_geo
+import datetime
+import json
+import jwt
+import pytz
+from typing import TYPE_CHECKING, Optional, cast
+
+from gqlauth.core.utils import app_settings
+from gqlauth.settings_type import decode_jwt
+from gqlauth.jwt.types_ import TokenPayloadType, TokenType
 
 
 @strawberry.type
@@ -84,3 +95,82 @@ async def enrich_postcodes(postcodes: List[str], info: Info) -> PostcodeQueryRes
         PostcodeQueryResponse(postcode=postcode, loaders=loaders)
         for postcode in postcodes
     ]
+
+########################
+### API token management
+########################
+
+@strawberry_django.type(models.APIToken)
+class APIToken:
+    token: str
+    expires_at: datetime.datetime
+    signature: str
+    created_at: datetime.datetime
+    revoked: bool
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def create_api_token(info: Info, expiry_days: int = 3650) -> APIToken:
+    user = get_current_user(info)
+    user_pk = app_settings.JWT_PAYLOAD_PK.python_name
+    pk_field = {user_pk: getattr(user, user_pk)}
+    expires_at = datetime.datetime.now(tz=pytz.utc) + datetime.timedelta(days=expiry_days)
+    payload = TokenPayloadType(
+        **pk_field,
+        exp=expires_at
+    )
+    serialized = json.dumps(payload.as_dict(), sort_keys=True, indent=1)
+    token = TokenType(
+        token=str(
+            jwt.encode(
+                payload={"payload": serialized },
+                key=cast(str, app_settings.JWT_SECRET_KEY.value),
+                algorithm=app_settings.JWT_ALGORITHM,
+            )
+        ),
+        payload=payload,
+    )
+
+    models.APIToken.objects.create(
+        signature=token.token.split(".")[2],
+        token=token.token,
+        user=user,
+        expires_at=expires_at
+    )
+
+    return token
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def revoke_api_token(signature: str, info: Info) -> APIToken:
+    token = models.APIToken.objects.get(signature=signature)
+    token.revoked=True
+    token.save()
+    return token
+
+@strawberry_django.field(extensions=[IsAuthenticated()])
+def list_api_tokens(info: Info) -> List[APIToken]:
+    tokens = models.APIToken.objects.filter(user=get_current_user(info))
+    return tokens
+
+def decode_jwt(token: str) -> "TokenType":
+    from gqlauth.core.utils import app_settings
+    from gqlauth.jwt.types_ import TokenPayloadType, TokenType
+
+    decoded = json.loads(
+        jwt.decode(
+            token,
+            key=cast(str, app_settings.JWT_SECRET_KEY.value),
+            algorithms=[
+                app_settings.JWT_ALGORITHM,
+            ],
+        )["payload"]
+    )
+
+    signature = token.split(".")[2]
+    db_token = models.APIToken.objects.filter(signature=signature).first()
+    if db_token is None:
+        # Only API tokens can be revoked, so continue
+        pass
+    elif db_token.revoked:
+        raise ValueError("Token has been revoked")
+
+    return TokenType(token=token, payload=TokenPayloadType.from_dict(decoded))

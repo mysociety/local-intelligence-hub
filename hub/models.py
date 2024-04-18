@@ -38,6 +38,7 @@ from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
+from django_cryptography.fields import encrypt
 
 import utils as lih_utils
 from hub.analytics import Analytics
@@ -2404,3 +2405,24 @@ class MapReport(Report, Analytics):
 
     def get_analytics_queryset(self):
         return self.get_import_data()
+
+
+class APIToken(models.Model):
+    """
+    A model to store generated and revoked JWT tokens.
+    """
+    # So we can list tokens for a user
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name="tokens")
+    # In case you need to copy/paste the token again
+    token = encrypt(models.CharField(max_length=1500))
+    expires_at = models.DateTimeField()
+
+    # Unencrypted so we can check if the token is revoked or not
+    signature = models.CharField(primary_key=True, editable=False, max_length=1500)
+    revoked = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_update = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Revoked JWT Token {self.jti}"

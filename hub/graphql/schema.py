@@ -107,6 +107,7 @@ class Query(UserQueries):
         else:
             raise ValueError("Unsupported data source type")
 
+    list_api_tokens = public_queries.list_api_tokens
 
 @strawberry.type
 class Mutation:
@@ -114,6 +115,9 @@ class Mutation:
     register = auth_mutations.Register.field
     verify_account = auth_mutations.VerifyAccount.field
     resend_activation_email = auth_mutations.ResendActivationEmail.field
+
+    create_api_token = public_queries.create_api_token
+    revoke_api_token = public_queries.revoke_api_token
 
     create_external_data_source: mutation_types.CreateExternalDataSourceOutput = (
         mutation_types.create_external_data_source

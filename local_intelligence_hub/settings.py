@@ -313,6 +313,10 @@ if DEBUG:
 IMPORT_UPDATE_ALL_BATCH_SIZE = 100
 IMPORT_UPDATE_MANY_RETRY_COUNT = 3
 
+def jwt_handler(token):
+    from hub.graphql.types.public_queries import decode_jwt
+    return decode_jwt(token)
+
 # TODO: Decrease this when we go public
 one_week = timedelta(days=7)
 GQL_AUTH = GqlAuthSettings(
@@ -321,6 +325,7 @@ GQL_AUTH = GqlAuthSettings(
         "frontend_site_title": FRONTEND_SITE_TITLE,
     },
     JWT_EXPIRATION_DELTA=one_week,
+    JWT_DECODE_HANDLER=jwt_handler,
     LOGIN_REQUIRE_CAPTCHA=False,
     REGISTER_REQUIRE_CAPTCHA=False,
     ALLOW_LOGIN_NOT_VERIFIED=True,
