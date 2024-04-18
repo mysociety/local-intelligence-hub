@@ -1,12 +1,11 @@
-from typing import List
 import json
 
 from django.conf import settings
-from django.contrib.gis.geos import Point
-from django.test import Client, TestCase, override_settings
+from django.test import Client, TestCase
 from django.urls import reverse
 
 from hub import models
+
 
 class TestPublicAPI(TestCase):
     @classmethod
@@ -33,19 +32,21 @@ class TestPublicAPI(TestCase):
             geography_column_type=models.AirtableSource.PostcodesIOGeographyTypes.COUNCIL,
         )
         # Some dummy data
-        ds, x = models.DataSet.objects.update_or_create(name="xyz", external_data_source=cls.custom_data_layer)
+        ds, x = models.DataSet.objects.update_or_create(
+            name="xyz", external_data_source=cls.custom_data_layer
+        )
         dt, x = models.DataType.objects.update_or_create(name="xyz", data_set=ds)
         models.GenericData.objects.update_or_create(
             json={
-              "mayoral region": "North East Mayoral Combined Authority",
-              "council district": "Newcastle upon Tyne",
+                "mayoral region": "North East Mayoral Combined Authority",
+                "council district": "Newcastle upon Tyne",
             },
             data_type=dt,
         )
         models.GenericData.objects.update_or_create(
             json={
-              "mayoral region": "North East Mayoral Combined Authority",
-              "council district": "County Durham",
+                "mayoral region": "North East Mayoral Combined Authority",
+                "council district": "County Durham",
             },
             data_type=dt,
         )
@@ -124,10 +125,13 @@ class TestPublicAPI(TestCase):
         res = self.client.post(
             reverse("graphql"),
             content_type="application/json",
-            data={"query": query, "variables": {
-                "postcode": postcode,
-                "customSourceId": str(self.custom_data_layer.id)
-            }},
+            data={
+                "query": query,
+                "variables": {
+                    "postcode": postcode,
+                    "customSourceId": str(self.custom_data_layer.id),
+                },
+            },
             headers={
                 "Authorization": f"JWT {self.token}",
             },
@@ -138,26 +142,26 @@ class TestPublicAPI(TestCase):
         self.assertJSONEqual(
             json.dumps(result["data"]["enrichPostcode"]),
             {
-              "postcode": "NE13AF",
-              "mayoralRegion": "North East Mayoral Combined Authority",
-              "councilDistrict": "Newcastle upon Tyne",
-              "postcodesIO": {
-                "parliamentaryConstituency": "Newcastle upon Tyne Central"
-              },
-              "constituency": {
-                "name": "Newcastle upon Tyne Central",
-                # TODO: import/mock political data and test this
-                # "lastElection": {
-                #   "date": "2019-12-12"
-                # },
-                # "people": [
-                #   {
-                #     "name": "Chi Onwurah",
-                #     "personType": "MP"
-                #   }
-                # ]
-              }
-            }
+                "postcode": "NE13AF",
+                "mayoralRegion": "North East Mayoral Combined Authority",
+                "councilDistrict": "Newcastle upon Tyne",
+                "postcodesIO": {
+                    "parliamentaryConstituency": "Newcastle upon Tyne Central"
+                },
+                "constituency": {
+                    "name": "Newcastle upon Tyne Central",
+                    # TODO: import/mock political data and test this
+                    # "lastElection": {
+                    #   "date": "2019-12-12"
+                    # },
+                    # "people": [
+                    #   {
+                    #     "name": "Chi Onwurah",
+                    #     "personType": "MP"
+                    #   }
+                    # ]
+                },
+            },
         )
 
     def test_bulk_enrich_postcode(self):
@@ -195,10 +199,13 @@ class TestPublicAPI(TestCase):
         res = self.client.post(
             reverse("graphql"),
             content_type="application/json",
-            data={"query": query, "variables": {
-                "postcodes": postcodes,
-                "customSourceId": str(self.custom_data_layer.id)
-            }},
+            data={
+                "query": query,
+                "variables": {
+                    "postcodes": postcodes,
+                    "customSourceId": str(self.custom_data_layer.id),
+                },
+            },
             headers={
                 "Authorization": f"JWT {self.token}",
             },
@@ -209,49 +216,47 @@ class TestPublicAPI(TestCase):
         self.assertJSONEqual(
             json.dumps(result["data"]["enrichPostcodes"]),
             [
-              {
-                "postcode": "NE13AF",
-                "mayoralRegion": "North East Mayoral Combined Authority",
-                "councilDistrict": "Newcastle upon Tyne",
-                "postcodesIO": {
-                  "parliamentaryConstituency": "Newcastle upon Tyne Central"
+                {
+                    "postcode": "NE13AF",
+                    "mayoralRegion": "North East Mayoral Combined Authority",
+                    "councilDistrict": "Newcastle upon Tyne",
+                    "postcodesIO": {
+                        "parliamentaryConstituency": "Newcastle upon Tyne Central"
+                    },
+                    "constituency": {
+                        "name": "Newcastle upon Tyne Central",
+                        # TODO: import/mock political data and test this
+                        # "lastElection": {
+                        #   "date": "2019-12-12"
+                        # },
+                        # "people": [
+                        #   {
+                        #     "name": "Chi Onwurah",
+                        #     "personType": "MP"
+                        #   }
+                        # ]
+                    },
                 },
-                "constituency": {
-                  "name": "Newcastle upon Tyne Central",
-                  # TODO: import/mock political data and test this
-                  # "lastElection": {
-                  #   "date": "2019-12-12"
-                  # },
-                  # "people": [
-                  #   {
-                  #     "name": "Chi Onwurah",
-                  #     "personType": "MP"
-                  #   }
-                  # ]
-                }
-              },
-              {
-                "postcode": "DH13SG",
-                "mayoralRegion": "North East Mayoral Combined Authority",
-                "councilDistrict": "County Durham",
-                "postcodesIO": {
-                  "parliamentaryConstituency": "City of Durham"
+                {
+                    "postcode": "DH13SG",
+                    "mayoralRegion": "North East Mayoral Combined Authority",
+                    "councilDistrict": "County Durham",
+                    "postcodesIO": {"parliamentaryConstituency": "City of Durham"},
+                    "constituency": {
+                        "name": "City of Durham",
+                        # "gss": "E14000641",
+                        # TODO: import/mock political data and test this
+                        # "mapitId": "66021",
+                        # "lastElection": {
+                        #   "date": "2019-12-12"
+                        # },
+                        # "people": [
+                        #   {
+                        #     "name": "Mary Foy",
+                        #     "personType": "MP"
+                        #   }
+                        # ]
+                    },
                 },
-                "constituency": {
-                  "name": "City of Durham",
-                  # "gss": "E14000641",
-                  # TODO: import/mock political data and test this
-                  # "mapitId": "66021",
-                  # "lastElection": {
-                  #   "date": "2019-12-12"
-                  # },
-                  # "people": [
-                  #   {
-                  #     "name": "Mary Foy",
-                  #     "personType": "MP"
-                  #   }
-                  # ]
-                }
-              }
-            ]
+            ],
         )

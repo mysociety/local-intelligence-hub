@@ -28,6 +28,7 @@ import pandas as pd
 import pytz
 from asgiref.sync import async_to_sync, sync_to_async
 from django_choices_field import TextChoicesField
+from django_cryptography.fields import encrypt
 from django_jsonform.models.fields import JSONField
 from mailchimp3 import MailChimp
 from polymorphic.models import PolymorphicModel
@@ -38,7 +39,6 @@ from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
-from django_cryptography.fields import encrypt
 
 import utils as lih_utils
 from hub.analytics import Analytics
@@ -2411,6 +2411,7 @@ class APIToken(models.Model):
     """
     A model to store generated and revoked JWT tokens.
     """
+
     # So we can list tokens for a user
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name="tokens")
     # In case you need to copy/paste the token again
