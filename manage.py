@@ -7,6 +7,21 @@ import sys
 def main():
     """Run administrative tasks."""
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "local_intelligence_hub.settings")
+
+    ## Telemetry
+    from opentelemetry import trace
+    from opentelemetry.propagate import set_global_textmap
+    from opentelemetry.sdk.trace import TracerProvider
+    from sentry_sdk.integrations.opentelemetry import SentrySpanProcessor, SentryPropagator
+    from opentelemetry.instrumentation.django import DjangoInstrumentor
+
+    DjangoInstrumentor().instrument(is_sql_commentor_enabled=True)
+    provider = TracerProvider()
+    provider.add_span_processor(SentrySpanProcessor())
+    trace.set_tracer_provider(provider)
+    set_global_textmap(SentryPropagator())
+    ##
+
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

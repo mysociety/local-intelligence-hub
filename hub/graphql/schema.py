@@ -13,6 +13,7 @@ from strawberry.types import ExecutionContext
 from strawberry_django import mutations as django_mutations
 from strawberry_django.optimizer import DjangoOptimizerExtension
 from strawberry_django.permissions import IsAuthenticated
+from strawberry.extensions.tracing import OpenTelemetryExtension
 
 from hub import models
 from hub.graphql import mutations as mutation_types
@@ -216,5 +217,6 @@ schema = CustomErrorLoggingSchema(
     mutation=Mutation,
     extensions=[
         DjangoOptimizerExtension,  # not required, but highly recommended
+        OpenTelemetryExtension
     ],
 )

@@ -51,6 +51,7 @@ env = environ.Env(
     TEST_MAILCHIMP_MEMBERLIST_API_KEY=(str, ""),
     TEST_MAILCHIMP_MEMBERLIST_AUDIENCE_ID=(str, ""),
     DJANGO_LOG_LEVEL=(str, "INFO"),
+    SENTRY_TRACE_SAMPLE_RATE=(float, 1.0),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -337,13 +338,15 @@ STRAWBERRY_DJANGO = {
 }
 
 SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")
+SENTRY_TRACE_SAMPLE_RATE = env("SENTRY_TRACE_SAMPLE_RATE")
 
 sentry_sdk.init(
     dsn=os.getenv("SENTRY_DSN"),
     environment=os.getenv("SENTRY_ENV"),
     integrations=[DjangoIntegration()],
-    # Optionally, you can adjust the logging level
-    traces_sample_rate=1.0,  # Adjust sample rate as needed
+    enable_tracing=True,
+    instrumenter="otel",
+    traces_sample_rate=SENTRY_TRACE_SAMPLE_RATE,
 )
 
 MINIO_STORAGE_ENDPOINT = env("MINIO_STORAGE_ENDPOINT")
