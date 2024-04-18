@@ -14,7 +14,7 @@ class PostcodesIOCodes:
     admin_district: str = dict_key_field()
     admin_county: str = dict_key_field()
     admin_ward: str = dict_key_field()
-    parish: str = dict_key_field()
+    parish: Optional[str] = dict_key_field()
     parliamentary_constituency: str = dict_key_field()
     parliamentary_constituency_2025: str = dict_key_field()
     ccg: str = dict_key_field()
@@ -59,4 +59,4 @@ class PostcodesIOResult:
 
     @strawberry.field
     def feature(self, info: strawberry.types.info.Info) -> PointFeature:
-        return PointFeature(point=Point(self.longitude, self.latitude), properties=self)
+        return PointFeature.from_geodjango(point=Point(self.longitude, self.latitude), properties=self)
