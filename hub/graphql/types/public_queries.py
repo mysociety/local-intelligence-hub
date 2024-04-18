@@ -104,7 +104,7 @@ async def enrich_postcodes(postcodes: List[str], info: Info) -> PostcodeQueryRes
 class APIToken:
     token: str
     expires_at: datetime.datetime
-    signature: str
+    signature: strawberry.ID
     created_at: datetime.datetime
     revoked: bool
 
@@ -130,18 +130,18 @@ def create_api_token(info: Info, expiry_days: int = 3650) -> APIToken:
         payload=payload,
     )
 
-    models.APIToken.objects.create(
+    token_db = models.APIToken.objects.create(
         signature=token.token.split(".")[2],
         token=token.token,
         user=user,
         expires_at=expires_at,
     )
 
-    return token
+    return token_db
 
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
-def revoke_api_token(signature: str, info: Info) -> APIToken:
+def revoke_api_token(signature: strawberry.ID, info: Info) -> APIToken:
     token = models.APIToken.objects.get(signature=signature)
     token.revoked = True
     token.save()
@@ -150,7 +150,7 @@ def revoke_api_token(signature: str, info: Info) -> APIToken:
 
 @strawberry_django.field(extensions=[IsAuthenticated()])
 def list_api_tokens(info: Info) -> List[APIToken]:
-    tokens = models.APIToken.objects.filter(user=get_current_user(info))
+    tokens = models.APIToken.objects.filter(user=get_current_user(info), revoked=False)
     return tokens
 
 

@@ -31,6 +31,9 @@ const documents = {
     "\n  query ShareWithOrgPage($orgSlug: String!) {\n    allOrganisations(filters: {slug: $orgSlug}) {\n      id\n      name\n    }\n  }\n": types.ShareWithOrgPageDocument,
     "\n  query ListReports {\n    reports {\n      id\n      name\n      lastUpdate\n    }\n  }\n": types.ListReportsDocument,
     "\nmutation CreateMapReport($data: MapReportInput!) {\n  createMapReport(data: $data) {\n    ... on MapReport {\n      id\n    }\n    ... on OperationInfo {\n      messages {\n        message\n      }\n    }\n  }\n}\n": types.CreateMapReportDocument,
+    "\n  query DeveloperAPIContext {\n    listApiTokens {\n      token\n      signature\n      revoked\n      createdAt\n      expiresAt\n    }\n  }\n": types.DeveloperApiContextDocument,
+    "\n        mutation CreateToken {\n          createApiToken {\n            token\n            signature\n            revoked\n            createdAt\n            expiresAt\n          }\n        }\n      ": types.CreateTokenDocument,
+    "\n        mutation RevokeToken($signature: ID!) {\n          revokeApiToken(signature: $signature) {\n            signature\n            revoked\n          }\n        }\n      ": types.RevokeTokenDocument,
     "\n  mutation Verify($token: String!) {\n    verifyAccount(token: $token) {\n      errors\n      success\n    }\n  }\n": types.VerifyDocument,
     "\n  query Example {\n    myOrganisations {\n      id\n      name\n    }\n  }\n": types.ExampleDocument,
     "\n  mutation Login($username: String!, $password: String!) {\n    tokenAuth(username: $username, password: $password) {\n      errors\n      success\n      token {\n        token\n        payload {\n          exp\n        }\n      }\n    }\n  }\n": types.LoginDocument,
@@ -148,6 +151,18 @@ export function gql(source: "\n  query ListReports {\n    reports {\n      id\n 
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\nmutation CreateMapReport($data: MapReportInput!) {\n  createMapReport(data: $data) {\n    ... on MapReport {\n      id\n    }\n    ... on OperationInfo {\n      messages {\n        message\n      }\n    }\n  }\n}\n"): (typeof documents)["\nmutation CreateMapReport($data: MapReportInput!) {\n  createMapReport(data: $data) {\n    ... on MapReport {\n      id\n    }\n    ... on OperationInfo {\n      messages {\n        message\n      }\n    }\n  }\n}\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query DeveloperAPIContext {\n    listApiTokens {\n      token\n      signature\n      revoked\n      createdAt\n      expiresAt\n    }\n  }\n"): (typeof documents)["\n  query DeveloperAPIContext {\n    listApiTokens {\n      token\n      signature\n      revoked\n      createdAt\n      expiresAt\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n        mutation CreateToken {\n          createApiToken {\n            token\n            signature\n            revoked\n            createdAt\n            expiresAt\n          }\n        }\n      "): (typeof documents)["\n        mutation CreateToken {\n          createApiToken {\n            token\n            signature\n            revoked\n            createdAt\n            expiresAt\n          }\n        }\n      "];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n        mutation RevokeToken($signature: ID!) {\n          revokeApiToken(signature: $signature) {\n            signature\n            revoked\n          }\n        }\n      "): (typeof documents)["\n        mutation RevokeToken($signature: ID!) {\n          revokeApiToken(signature: $signature) {\n            signature\n            revoked\n          }\n        }\n      "];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
