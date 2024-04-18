@@ -28,7 +28,11 @@ export default function PasswordResetForm() {
     const form = useForm({
         resolver: zodResolver(z.object({
             email: z.string().email(),
+
         })),
+        defaultValues: {
+            email: ''
+        }
     });
 
     const [requestPasswordReset, { data, loading, error: gqlError }] = useMutation(RESET_PASSWORD_MUTATION);
