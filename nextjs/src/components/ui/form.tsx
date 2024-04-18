@@ -142,17 +142,29 @@ const FormDescription = React.forwardRef<
 FormDescription.displayName = "FormDescription";
 
 const FormMessage = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, children, ...props }, ref) => {
-  const { error, formMessageId } = useFormField();
-  const body = error ? String(error?.message) : children;
+ HTMLParagraphElement,
+ React.HTMLAttributes<HTMLParagraphElement> & { htmlContent?: string }
+>(({ className, children, htmlContent, ...props }, ref) => {
+ const { error, formMessageId } = useFormField();
+ const body = error ? String(error?.message) : children;
 
-  if (!body) {
+ if (!body && !htmlContent) {
     return null;
-  }
+ }
 
-  return (
+ if (htmlContent) {
+    return (
+      <p
+        ref={ref}
+        id={formMessageId}
+        className={cn("text-sm font-medium text-destructive", className)}
+        {...props}
+        dangerouslySetInnerHTML={{ __html: htmlContent }}
+      />
+    );
+ }
+
+ return (
     <p
       ref={ref}
       id={formMessageId}
@@ -161,7 +173,7 @@ const FormMessage = React.forwardRef<
     >
       {body}
     </p>
-  );
+ );
 });
 FormMessage.displayName = "FormMessage";
 
