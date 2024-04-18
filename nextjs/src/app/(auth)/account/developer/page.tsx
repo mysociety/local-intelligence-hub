@@ -123,7 +123,7 @@ export default function DeveloperConfig() {
       
       <h2 className="text-xl font-semibold mb-3">How to authenticate the API</h2>
       <p>
-        To use the API, simply make a request to <code className='bg-meepGray-700 p-1 rounded-lg'>{process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/graphql</code> and place the token in the Authorization header following "JWT", like so: <code className='bg-meepGray-700 p-1 rounded-lg'>Authorization: "JWT eyJh..."</code>.
+        To use the API, simply make a request to <code className='bg-meepGray-700 p-1 rounded-lg'>{process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/graphql</code> and place the token in the Authorization header following {"'"}JWT{"'"}, like so: <code className='bg-meepGray-700 p-1 rounded-lg'>Authorization: {"'"}JWT eyJh...{"'"}</code>.
       </p>
       <div className="font-semibold mb-3 mt-8 underline">
         <Link href="/graphiql">Visit the API playground &rarr;</Link>
