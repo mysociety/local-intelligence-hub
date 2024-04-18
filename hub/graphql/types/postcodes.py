@@ -59,4 +59,6 @@ class PostcodesIOResult:
 
     @strawberry.field
     def feature(self, info: strawberry.types.info.Info) -> PointFeature:
-        return PointFeature.from_geodjango(point=Point(self.longitude, self.latitude), properties=self)
+        return PointFeature.from_geodjango(
+            point=Point(self.longitude, self.latitude), properties=self
+        )

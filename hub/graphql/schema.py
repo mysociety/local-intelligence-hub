@@ -220,6 +220,6 @@ schema = CustomErrorLoggingSchema(
     extensions=[
         DjangoOptimizerExtension,  # not required, but highly recommended
         APIAnalyticsExtension,
-        QueryDepthLimiter(max_depth=10)
+        QueryDepthLimiter(max_depth=10),
     ],
 )

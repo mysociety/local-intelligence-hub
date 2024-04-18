@@ -10,12 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
-import os
 from datetime import timedelta
 from pathlib import Path
 
 import environ
-from gqlauth.settings_type import GqlAuthSettingsn
+from gqlauth.settings_type import GqlAuthSettings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -351,12 +350,13 @@ if environment == "production":
         import sentry_sdk
         from sentry_sdk.integrations.django import DjangoIntegration
         from sentry_sdk.integrations.strawberry import StrawberryIntegration
+
         sentry_sdk.init(
             dsn=env("SENTRY_DSN"),
             environment=environment,
             integrations=[
                 DjangoIntegration(),
-                StrawberryIntegration(async_execution=True)
+                StrawberryIntegration(async_execution=True),
             ],
             # Optionally, you can adjust the logging level
             traces_sample_rate=1.0,  # Adjust sample rate as needed
@@ -364,6 +364,7 @@ if environment == "production":
 
     if env("POSTHOG_API_KEY") is not False and env("POSTHOG_HOST") is not False:
         import posthog
+
         posthog.project_api_key = env("POSTHOG_API_KEY")
         posthog.host = env("POSTHOG_HOST")
 
