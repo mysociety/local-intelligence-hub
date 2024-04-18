@@ -107,6 +107,8 @@ class Mutation:
     register = auth_mutations.Register.field
     verify_account = auth_mutations.VerifyAccount.field
     resend_activation_email = auth_mutations.ResendActivationEmail.field
+    request_password_reset = auth_mutations.SendPasswordResetEmail.field
+    perform_password_reset = auth_mutations.PasswordReset.field
 
     create_external_data_source: mutation_types.CreateExternalDataSourceOutput = (
         mutation_types.create_external_data_source
