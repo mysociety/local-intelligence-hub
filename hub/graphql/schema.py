@@ -218,6 +218,5 @@ schema = CustomErrorLoggingSchema(
     mutation=Mutation,
     extensions=[
         DjangoOptimizerExtension,  # not required, but highly recommended
-        OpenTelemetryExtension,
     ],
 )
