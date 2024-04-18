@@ -17,6 +17,7 @@ from strawberry_django.permissions import IsAuthenticated
 from hub import models
 from hub.graphql import mutations as mutation_types
 from hub.graphql.types import model_types, public_queries
+from hub.graphql.extensions.ratelimit import ExtensionRatelimit
 
 logger = logging.getLogger(__name__)
 
@@ -213,6 +214,14 @@ schema = CustomErrorLoggingSchema(
     query=Query,
     mutation=Mutation,
     extensions=[
+        # 60req/min
+        ExtensionRatelimit(
+            type_name=['enrichPostcode', 'enrichPostcodes'],
+            rate_max=60,
+            rate_seconds=60,
+            depth_max=5, # Maximum depth of the query
+            call_max=100 # Maximum call count
+        ),
         DjangoOptimizerExtension,  # not required, but highly recommended
     ],
 )
