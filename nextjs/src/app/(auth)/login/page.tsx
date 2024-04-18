@@ -20,6 +20,12 @@ export default async function Login() {
           Sign up to the waitlist
         </Button>
       </Link>
+      <div className='text-labelMain text-meepGray-400'>Forgotten password?</div>
+      <Link href="/resetpassword" className='block'>
+        <Button className='w-full' variant='outline' size="sm">
+          Request password reset
+        </Button>
+      </Link>
     </div>
   );
 }
