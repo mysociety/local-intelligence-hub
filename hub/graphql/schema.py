@@ -9,7 +9,7 @@ from gqlauth.core.middlewares import JwtSchema
 from gqlauth.user import arg_mutations as auth_mutations
 from gqlauth.user.queries import UserQueries
 from graphql import GraphQLError
-from strawberry.extensions.tracing import OpenTelemetryExtension
+from strawberry.extensions import QueryDepthLimiter
 from strawberry.types import ExecutionContext
 from strawberry_django import mutations as django_mutations
 from strawberry_django.optimizer import DjangoOptimizerExtension
@@ -17,6 +17,7 @@ from strawberry_django.permissions import IsAuthenticated
 
 from hub import models
 from hub.graphql import mutations as mutation_types
+from hub.graphql.extensions.analytics import APIAnalyticsExtension
 from hub.graphql.types import model_types, public_queries
 
 logger = logging.getLogger(__name__)
@@ -218,5 +219,7 @@ schema = CustomErrorLoggingSchema(
     mutation=Mutation,
     extensions=[
         DjangoOptimizerExtension,  # not required, but highly recommended
+        APIAnalyticsExtension,
+        QueryDepthLimiter(max_depth=10)
     ],
 )

@@ -15,9 +15,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import environ
-from gqlauth.settings_type import GqlAuthSettings
-from sentry_sdk import init
-from sentry_sdk.integrations.django import DjangoIntegration
+from gqlauth.settings_type import GqlAuthSettingsn
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -51,6 +49,10 @@ env = environ.Env(
     TEST_MAILCHIMP_MEMBERLIST_API_KEY=(str, ""),
     TEST_MAILCHIMP_MEMBERLIST_AUDIENCE_ID=(str, ""),
     DJANGO_LOG_LEVEL=(str, "INFO"),
+    POSTHOG_API_KEY=(str, False),
+    POSTHOG_HOST=(str, False),
+    ENVIRONMENT=(str, "development"),
+    SENTRY_DSN=(str, False),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -341,16 +343,30 @@ STRAWBERRY_DJANGO = {
 
 SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")
 
-environment = os.getenv("ENVIRONMENT")
+environment = env("ENVIRONMENT")
 
 # Configure Sentry only if in production
 if environment == "production":
-    init(
-        dsn=os.getenv("SENTRY_DSN"),
-        environment=environment,
-        integrations=[DjangoIntegration()],
-        traces_sample_rate=1.0,
-    )
+    if env("SENTRY_DSN") is not False:
+        import sentry_sdk
+        from sentry_sdk.integrations.django import DjangoIntegration
+        from sentry_sdk.integrations.strawberry import StrawberryIntegration
+        sentry_sdk.init(
+            dsn=env("SENTRY_DSN"),
+            environment=environment,
+            integrations=[
+                DjangoIntegration(),
+                StrawberryIntegration(async_execution=True)
+            ],
+            # Optionally, you can adjust the logging level
+            traces_sample_rate=1.0,  # Adjust sample rate as needed
+        )
+
+    if env("POSTHOG_API_KEY") is not False and env("POSTHOG_HOST") is not False:
+        import posthog
+        posthog.project_api_key = env("POSTHOG_API_KEY")
+        posthog.host = env("POSTHOG_HOST")
+
 
 MINIO_STORAGE_ENDPOINT = env("MINIO_STORAGE_ENDPOINT")
 if MINIO_STORAGE_ENDPOINT is not False:
