@@ -15,7 +15,7 @@ def cached_fn(key, timeout_seconds=60 * 5, cache_type="default"):
                 return cached_results
 
             try:
-                results = original_fn()
+                results = original_fn(*args, **kwargs)
                 cache.set(cache_key, results, timeout_seconds)
 
                 return results

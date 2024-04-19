@@ -37,10 +37,7 @@ class PostcodeQueryResponse:
     
     @strawberry_django.field
     def electoral_commission(self) -> Optional[ElectoralCommissionPostcodeLookup]:
-        res = electoral_commision_postcode_lookup(self.postcode)
-        if res is None:
-            return None
-        return ElectoralCommissionPostcodeLookup(**res)
+        return electoral_commision_postcode_lookup(self.postcode)
 
     @strawberry_django.field
     async def constituency(self) -> Optional[model_types.Area]:

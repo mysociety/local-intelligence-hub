@@ -28,6 +28,8 @@ from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
 
+from benedict import benedict
+
 
 # Ideally we'd just import this from the library (procrastinate.jobs.Status) but
 # strawberry doesn't like subclassed Enums for some reason.
@@ -576,8 +578,11 @@ class GenericData(CommonData):
     phone: auto
     address: auto
     postcode: auto
-    postcode_data: Optional[PostcodesIOResult]
     remote_url: str = fn_field()
+    
+    @strawberry_django.field
+    def postcode_data(self) -> Optional[PostcodesIOResult]:
+        return benedict(self.postcode_data)
 
 
 @strawberry.type
