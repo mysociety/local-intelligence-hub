@@ -19,6 +19,10 @@ from strawberry_django.permissions import IsAuthenticated
 from hub import models
 from hub.graphql.types import model_types
 from hub.graphql.types.postcodes import PostcodesIOResult
+from hub.graphql.types.electoral_commission import ElectoralCommissionPostcodeLookup
+from hub.enrichment.sources.electoral_commission_postcode_lookup import (
+    electoral_commision_postcode_lookup,
+)
 from utils.postcodesIO import get_bulk_postcode_geo
 
 
@@ -27,11 +31,18 @@ class PostcodeQueryResponse:
     postcode: str
     loaders: strawberry.Private[models.Loaders]
 
-    @strawberry.field
+    @strawberry_django.field
     async def postcodesIO(self) -> Optional[PostcodesIOResult]:
         return await self.loaders["postcodesIO"].load(self.postcode)
+    
+    @strawberry_django.field
+    def electoral_commission(self) -> Optional[ElectoralCommissionPostcodeLookup]:
+        res = electoral_commision_postcode_lookup(self.postcode)
+        if res is None:
+            return None
+        return ElectoralCommissionPostcodeLookup(**res)
 
-    @strawberry.field
+    @strawberry_django.field
     async def constituency(self) -> Optional[model_types.Area]:
         postcode_data = await self.loaders["postcodesIO"].load(self.postcode)
         if postcode_data is None:
@@ -39,7 +50,7 @@ class PostcodeQueryResponse:
         id = postcode_data.codes.parliamentary_constituency
         return await models.Area.objects.aget(Q(gss=id) | Q(name=id))
 
-    @strawberry.field
+    @strawberry_django.field
     async def custom_source_data(
         self, source: str, source_path: str, info: Info
     ) -> Optional[str]:

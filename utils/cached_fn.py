@@ -3,10 +3,8 @@ from threading import Timer
 from django.core.cache import caches
 
 
-# Just caching everything in a hashmap because serialization overhead of django-cache
-# is too high for how we're using it
 def cached_fn(key, timeout_seconds=60 * 5, cache_type="default"):
-    cache = {}
+    cache = caches[cache_type]
 
     def decorator(original_fn):
         def resulting_fn(*args, **kwargs):
@@ -18,9 +16,7 @@ def cached_fn(key, timeout_seconds=60 * 5, cache_type="default"):
 
             try:
                 results = original_fn()
-                cache[cache_key] = results
-
-                Timer(timeout_seconds, lambda: cache.pop(key)).start()
+                cache.set(cache_key, results, timeout_seconds)
 
                 return results
             except:  # noqa: E722

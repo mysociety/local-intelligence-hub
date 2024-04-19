@@ -51,6 +51,7 @@ from hub.tasks import (
     refresh_one,
     refresh_webhooks,
 )
+from hub.enrichment.sources import enrichment_data_sources
 from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
 from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
 from utils.py import batched, ensure_list, get
@@ -1433,7 +1434,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     geography_column__isnull=False,
                     geography_column_type__isnull=False,
                 ).all()
-            },
+            }
         )
 
         return loaders
@@ -1469,26 +1470,30 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         update_fields[destination_column] = get(
                             postcode_data, source_path
                         )
-                else:
-                    try:
-                        source_loader = loaders["source_loaders"].get(source, None)
-                        if source_loader is not None and postcode_data is not None:
-                            loaded = await source_loader.load(
-                                EnrichmentLookup(
-                                    member_id=self.get_record_id(member),
-                                    postcode_data=postcode_data,
-                                    source_id=source,
-                                    source_path=source_path,
-                                )
-                            )
-                            print(
-                                f"setting {source_path} {destination_column} to {loaded}"
-                            )
-                            update_fields[destination_column] = loaded
-                    except Exception as e:
-                        print(f"mapping exception {e}")
-                        # TODO: sentry logging
                         continue
+                if (enrichment_source:=enrichment_data_sources.get(source, None)) is not None and (fetch_fn:=enrichment_source.get("postcode_request", None)) is not None:
+                    row = fetch_fn(postcode)
+                    update_fields[destination_column] = get(row, source_path, None)
+                    continue
+                try:
+                    source_loader = loaders["source_loaders"].get(source, None)
+                    if source_loader is not None and postcode_data is not None:
+                        loaded = await source_loader.load(
+                            self.EnrichmentLookup(
+                                member_id=self.get_record_id(member),
+                                postcode_data=postcode_data,
+                                source_id=source,
+                                source_path=source_path,
+                            )
+                        )
+                        print(
+                            f"setting {source_path} {destination_column} to {loaded}"
+                        )
+                        update_fields[destination_column] = loaded
+                        continue
+                except Exception as e:
+                    print(f"mapping exception {e}")
+                    continue
             # Return the member and config data
             print(f"mapped member {member.get('id')} {update_fields}")
             return self.MappedMember(member=member, update_fields=update_fields)
