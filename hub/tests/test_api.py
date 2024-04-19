@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from hub import models
 
+
 class TestPublicAPI(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -361,6 +362,12 @@ class TestPublicAPI(TestCase):
                 "Authorization": f"JWT {generated_token}",
             }
         )
+
         result = res.json()
-        self.assertIsNone(result.get("data", {}).get("enrichPostcode", None))
-        self.assertIsNotNone(result.get("errors", None))
+        self.assertJSONEqual(
+            json.dumps(result),
+            {
+                'data': None,
+                'errors': [{'message': 'Token has been revoked'}]
+            }
+        )

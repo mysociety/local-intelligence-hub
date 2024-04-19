@@ -96,7 +96,6 @@ class Query(UserQueries):
         resolver=public_queries.enrich_postcodes,
         extensions=[IsAuthenticated()],
     )
-    # enrich_constituency: public_queries.ConstituencyQueryResponse = public_queries.enrich_constituency
 
     @strawberry.field
     def test_data_source(

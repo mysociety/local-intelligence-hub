@@ -52,7 +52,12 @@ env = environ.Env(
     POSTHOG_HOST=(str, False),
     ENVIRONMENT=(str, "development"),
     SENTRY_DSN=(str, False),
+    CRYPTOGRAPHY_KEY=(str, "somemadeupcryptographickeywhichshouldbereplaced"),
+    CRYPTOGRAPHY_SALT=(str, "somesaltthatshouldbereplaced"),
 )
+# Should be alphanumeric
+CRYPTOGRAPHY_KEY = env("CRYPTOGRAPHY_KEY")
+CRYPTOGRAPHY_SALT = env("CRYPTOGRAPHY_SALT")
 environ.Env.read_env(BASE_DIR / ".env")
 
 BASE_URL = env("BASE_URL")
@@ -124,6 +129,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "procrastinate.contrib.django",
     "strawberry_django",
+    "django_cryptography"
 ]
 
 MIDDLEWARE = [
