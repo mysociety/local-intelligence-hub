@@ -343,6 +343,8 @@ STRAWBERRY_DJANGO = {
 SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")
 
 environment = env("ENVIRONMENT")
+import posthog
+posthog.disabled = True
 
 # Configure Sentry only if in production
 if environment == "production":
@@ -363,8 +365,7 @@ if environment == "production":
         )
 
     if env("POSTHOG_API_KEY") is not False and env("POSTHOG_HOST") is not False:
-        import posthog
-
+        posthog.disabled = False
         posthog.project_api_key = env("POSTHOG_API_KEY")
         posthog.host = env("POSTHOG_HOST")
 
