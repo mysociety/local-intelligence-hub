@@ -2427,27 +2427,33 @@ class APIToken(models.Model):
 
     def __str__(self):
         return f"Revoked JWT Token {self.jti}"
-    
+
+
 def api_token_key(signature: str) -> str:
     return f"api_token:{signature}"
+
 
 def refresh_tokens_cache():
     tokens = APIToken.objects.all()
     for token in tokens:
         cache.set(api_token_key(token.signature), token)
-    
+
+
 def get_api_token(signature: str) -> APIToken:
     return cache.get(api_token_key(signature))
+
 
 def is_api_token_revoked(signature: str) -> APIToken:
     token = cache.get(api_token_key(signature))
     return token.revoked if token else False
-    
+
+
 # a signal that, when APIToken is created, updated, updates the apitoken cache
 @receiver(models.signals.post_save, sender=APIToken)
-def update_apitoken_cache(sender, instance, *args, **kwargs):
+def update_apitoken_cache_on_save(sender, instance, *args, **kwargs):
     refresh_tokens_cache()
 
+
 @receiver(models.signals.post_delete, sender=APIToken)
-def update_apitoken_cache(sender, instance, *args, **kwargs):
+def update_apitoken_cache_on_delete(sender, instance, *args, **kwargs):
     refresh_tokens_cache()

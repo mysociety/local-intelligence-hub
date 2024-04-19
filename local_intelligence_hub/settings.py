@@ -14,6 +14,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import environ
+import posthog
 from gqlauth.settings_type import GqlAuthSettings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -129,7 +130,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "procrastinate.contrib.django",
     "strawberry_django",
-    "django_cryptography"
+    "django_cryptography",
 ]
 
 MIDDLEWARE = [
@@ -349,7 +350,7 @@ STRAWBERRY_DJANGO = {
 SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")
 
 environment = env("ENVIRONMENT")
-import posthog
+
 posthog.disabled = True
 
 # Configure Sentry only if in production

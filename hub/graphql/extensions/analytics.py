@@ -1,8 +1,8 @@
 import posthog
 from gqlauth.core.utils import app_settings
-from strawberry.extensions import SchemaExtension
-from graphql.error import GraphQLError
 from graphql import ExecutionResult as GraphQLExecutionResult
+from graphql.error import GraphQLError
+from strawberry.extensions import SchemaExtension
 
 from hub.models import APIToken, get_api_token
 

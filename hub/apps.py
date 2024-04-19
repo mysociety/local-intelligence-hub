@@ -7,4 +7,5 @@ class HubConfig(AppConfig):
 
     def ready(self):
         from hub.models import refresh_tokens_cache
+
         refresh_tokens_cache()

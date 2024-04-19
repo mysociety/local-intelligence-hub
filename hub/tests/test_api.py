@@ -311,7 +311,7 @@ class TestPublicAPI(TestCase):
             },
             headers={
                 "Authorization": f"JWT {generated_token}",
-            }
+            },
         )
         result = res.json()
 
@@ -328,7 +328,7 @@ class TestPublicAPI(TestCase):
             }
           }
         """
-        
+
         res = self.client.post(
             reverse("graphql"),
             content_type="application/json",
@@ -340,7 +340,7 @@ class TestPublicAPI(TestCase):
             },
             headers={
                 "Authorization": f"JWT {self.token}",
-            }
+            },
         )
 
         result = res.json()
@@ -356,18 +356,15 @@ class TestPublicAPI(TestCase):
                 "query": postcode_query,
                 "variables": {
                     "postcode": postcode,
-                }
+                },
             },
             headers={
                 "Authorization": f"JWT {generated_token}",
-            }
+            },
         )
 
         result = res.json()
         self.assertJSONEqual(
             json.dumps(result),
-            {
-                'data': None,
-                'errors': [{'message': 'Token has been revoked'}]
-            }
+            {"data": None, "errors": [{"message": "Token has been revoked"}]},
         )

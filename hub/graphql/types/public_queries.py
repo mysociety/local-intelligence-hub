@@ -170,11 +170,14 @@ def decode_jwt(token: str) -> "TokenType":
     )
 
     signature = token.split(".")[2]
-    
+
     if models.is_api_token_revoked(signature):
-        return ExpiredTokenType(token=token, payload=TokenPayloadType.from_dict(decoded))
+        return ExpiredTokenType(
+            token=token, payload=TokenPayloadType.from_dict(decoded)
+        )
 
     return TokenType(token=token, payload=TokenPayloadType.from_dict(decoded))
+
 
 class ExpiredTokenType(TokenType):
     def is_expired(self) -> bool:
