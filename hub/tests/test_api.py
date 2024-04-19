@@ -6,7 +6,6 @@ from django.urls import reverse
 
 from hub import models
 
-
 class TestPublicAPI(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -260,3 +259,108 @@ class TestPublicAPI(TestCase):
                 },
             ],
         )
+
+    def test_create_use_revoke_api_token(self):
+        # Generate an API token
+        query = """
+          mutation CreateRevokeApiToken {
+            createApiToken {
+              token
+              signature
+            }
+          }
+        """
+
+        res = self.client.post(
+            reverse("graphql"),
+            content_type="application/json",
+            data={
+                "query": query,
+            },
+            headers={
+                "Authorization": f"JWT {self.token}",
+            },
+        )
+        result = res.json()
+
+        generated_token = result["data"]["createApiToken"]["token"]
+        generated_signature = result["data"]["createApiToken"]["signature"]
+
+        self.assertIsNotNone(generated_token)
+
+        # Test the new token
+
+        postcode = "NE13AF"
+        postcode_query = """
+          query EnrichPostcode($postcode: String!) {
+            enrichPostcode(postcode: $postcode) {
+              postcode
+            }
+          }
+        """
+
+        res = self.client.post(
+            reverse("graphql"),
+            content_type="application/json",
+            data={
+                "query": postcode_query,
+                "variables": {
+                    "postcode": postcode,
+                },
+            },
+            headers={
+                "Authorization": f"JWT {generated_token}",
+            }
+        )
+        result = res.json()
+
+        self.assertIsNone(result.get("errors", None))
+        self.assertIsNotNone(result["data"]["enrichPostcode"])
+
+        # Revoke the token
+
+        revoke_query = """
+          mutation RevokeToken($signature: ID!) {
+            revokeApiToken(signature: $signature) {
+              signature
+              revoked
+            }
+          }
+        """
+        
+        res = self.client.post(
+            reverse("graphql"),
+            content_type="application/json",
+            data={
+                "query": revoke_query,
+                "variables": {
+                    "signature": generated_signature,
+                },
+            },
+            headers={
+                "Authorization": f"JWT {self.token}",
+            }
+        )
+
+        result = res.json()
+        self.assertIsNone(result.get("errors", None))
+        self.assertTrue(result["data"]["revokeApiToken"]["revoked"])
+
+        # Now make a new query with the revoked token and check it doesn't work anymore
+
+        res = self.client.post(
+            reverse("graphql"),
+            content_type="application/json",
+            data={
+                "query": postcode_query,
+                "variables": {
+                    "postcode": postcode,
+                }
+            },
+            headers={
+                "Authorization": f"JWT {generated_token}",
+            }
+        )
+        result = res.json()
+        self.assertIsNone(result.get("data", {}).get("enrichPostcode", None))
+        self.assertIsNotNone(result.get("errors", None))
