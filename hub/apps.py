@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+import psycopg.errors
 
 
 class HubConfig(AppConfig):
@@ -6,6 +7,9 @@ class HubConfig(AppConfig):
     name = "hub"
 
     def ready(self):
-        from hub.models import refresh_tokens_cache
-
-        refresh_tokens_cache()
+        try:
+            from hub.models import refresh_tokens_cache
+            refresh_tokens_cache()
+        except psycopg.errors.UndefinedTable:
+            # This is expected when running migrations
+            pass
