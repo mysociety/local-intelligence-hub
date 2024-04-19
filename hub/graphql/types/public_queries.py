@@ -136,7 +136,7 @@ def create_api_token(info: Info, expiry_days: int = 3650) -> APIToken:
         user=user,
         expires_at=expires_at,
     )
-
+    models.refresh_tokens_cache()
     return token_db
 
 
@@ -145,6 +145,7 @@ def revoke_api_token(signature: strawberry.ID, info: Info) -> APIToken:
     token = models.APIToken.objects.get(signature=signature)
     token.revoked = True
     token.save()
+    models.refresh_tokens_cache()
     return token
 
 
@@ -169,11 +170,15 @@ def decode_jwt(token: str) -> "TokenType":
     )
 
     signature = token.split(".")[2]
-    db_token = models.APIToken.objects.filter(signature=signature).first()
-    if db_token is None:
-        # Only API tokens can be revoked, so continue
-        pass
-    elif db_token.revoked:
-        raise ValueError("Token has been revoked")
+    
+    if models.is_api_token_revoked(signature):
+        return ExpiredTokenType(token=token, payload=TokenPayloadType.from_dict(decoded))
 
     return TokenType(token=token, payload=TokenPayloadType.from_dict(decoded))
+
+class ExpiredTokenType(TokenType):
+    def is_expired(self) -> bool:
+        return True
+
+    def expires_at(self) -> datetime.datetime:
+        return datetime.datetime.now()
