@@ -73,7 +73,7 @@ export default function PasswordResetForm() {
                         </FormItem>
                     )}
                 />
-                {!message.includes("A reset link has been sent") && (
+                {!success && (
                     <Button variant='reverse' type="submit" disabled={loading}>Send Reset Link</Button>
                 )}      </form>
         </Form>
