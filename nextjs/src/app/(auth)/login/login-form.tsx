@@ -45,7 +45,6 @@ export default function LoginForm() {
 
   const [doLogin, { data, loading, error: gqlError }] =
     useMutation(LOGIN_MUTATION);
-  const [loginAttemptStarted, setLoginAttemptStarted] = useState(false);
 
 
   const token = data?.tokenAuth?.token?.token;
@@ -64,7 +63,6 @@ export default function LoginForm() {
 
   const handleSubmit: SubmitHandler<any> = async (values: any, e) => {
     e?.preventDefault()
-    setLoginAttemptStarted(true);
     doLogin({ variables: values });
   };
 
@@ -99,7 +97,7 @@ export default function LoginForm() {
         />
         <FormMessage />
         <Button variant='reverse' type="submit" disabled={loading} className="flex items-center justify-center">
-          {(loading || loginAttemptStarted) ? (<>Loading...</>) : 'Login'}
+          {(loading || token) ? (<>Loading...</>) : 'Login'}
         </Button>
         </form>
     </Form>
