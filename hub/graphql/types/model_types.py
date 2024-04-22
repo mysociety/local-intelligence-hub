@@ -18,6 +18,7 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import IsAuthenticated
 
 from hub import models
+from hub.enrichment.sources import builtin_mapping_sources
 from hub.graphql.dataloaders import (
     FieldDataLoaderFactory,
     FieldReturningListDataLoaderFactory,
@@ -28,7 +29,6 @@ from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
-from hub.enrichment.sources import builtin_mapping_sources
 
 
 # Ideally we'd just import this from the library (procrastinate.jobs.Status) but
@@ -963,11 +963,13 @@ def dataset_by_name(name: str) -> models.DataSet:
         external_data_source=None
     ).get(name=name)
 
+
 @strawberry.type
 class MappingSourcePath:
     value: str
     label: Optional[str] = None
     description: Optional[str] = None
+
 
 @strawberry.type
 class MappingSource:
@@ -980,14 +982,13 @@ class MappingSource:
     source_paths: List[MappingSourcePath]
     external_data_source: Optional[SharedDataSource] = None
 
+
 def mapping_sources(info: Info) -> List[MappingSourcePath]:
     user = get_current_user(info)
 
     external_data_sources = models.ExternalDataSource.objects.filter(
         organisation__members__user=user.id,
-    ).exclude(
-        data_type=models.ExternalDataSource.DataSourceType.MEMBER
-    )
+    ).exclude(data_type=models.ExternalDataSource.DataSourceType.MEMBER)
 
     return [
         MappingSource(
@@ -1005,12 +1006,10 @@ def mapping_sources(info: Info) -> List[MappingSourcePath]:
                     description=sp.get("description", None),
                 )
                 for sp in s["source_paths"]
-            ]
-        ) for s in (
-          list(
-              builtin_mapping_sources.values()
-          ) + [
-              source.as_mapping_source() for source in external_data_sources
-          ]
+            ],
+        )
+        for s in (
+            list(builtin_mapping_sources.values())
+            + [source.as_mapping_source() for source in external_data_sources]
         )
     ]

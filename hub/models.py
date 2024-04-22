@@ -961,7 +961,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             "author": self.organisation.name,
             "description": self.description,
             "source_paths": self.field_definitions(),
-            "external_data_source": self
+            "external_data_source": self,
         }
 
     class FieldDefinition(TypedDict):

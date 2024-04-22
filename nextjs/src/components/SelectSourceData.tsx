@@ -142,7 +142,7 @@ export function SourcePathSelector({
         {/* Full list of sources and fields */}
         {!filteredSources?.filteredList?.length && (
           <div className='text-meepGray-300 text-lg p-12 text-center'>
-            No data found for "{searchTerm}"
+            No data found for {"'"}{searchTerm}{"'"}
           </div>
         )}
         {filteredSources?.filteredList?.map((source, i, arr) => (
