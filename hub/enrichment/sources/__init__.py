@@ -1,14 +1,14 @@
 from .electoral_commission_postcode_lookup import electoral_commision_postcode_lookup
 
-enrichment_data_sources = {
+builtin_mapping_sources = {
     "postcodes.io": {
+        "builtin": True,
         "slug": "postcodes.io",
         "name": "Postcodes.io",
         "author": "Ideal Postcodes",
         "description": "Adds UK postcode and associated data.",
-        "descriptionURL": "https://postcodes.io/docs#Data",
-        "colour": "rgb(187 247 208)",
-        "sourcePaths": [
+        "description_url": "https://postcodes.io/docs#Data",
+        "source_paths": [
             {
                 "value": "parliamentary_constituency_2025",
                 "label": "GE2024 Westminster Parliamentary Constituency",
@@ -189,11 +189,14 @@ enrichment_data_sources = {
         ],
     },
     "electoral_commission_postcode_lookup": {
+        "builtin": True,
         "slug": "electoral_commission_postcode_lookup",
         "name": "Electoral Commission Postcode Lookup",
-        "author": "Electoral Commission",
+        "description": "Adds UK election and polling station data.",
+        "description_url": "https://api.electoralcommission.org.uk/docs/",
+        "author": "Democracy Club on behalf of the Electoral Commission",
         "async_postcode_request": electoral_commision_postcode_lookup,
-        "sourcePaths": [
+        "source_paths": [
             {"value": "dates[0].ballots[0].ballot_title", "label": "Next Election"},
             {"value": "dates[0].ballots[0].date", "label": "Next Polling Date"},
             {

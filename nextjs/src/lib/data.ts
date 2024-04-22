@@ -70,18 +70,6 @@ export const getSourceOptionForTypename = (typename: string) => {
   );
 };
 
-export type EnrichmentDataSource = {
-  slug: string;
-  name: string;
-  author: string;
-  description: string;
-  descriptionURL: string;
-  crmType?: string;
-  colour: string;
-  builtIn: boolean;
-  sourcePaths: SourcePath[];
-};
-
 export type SourcePath =
   | {
       value: string;

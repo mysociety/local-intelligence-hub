@@ -1,12 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { EnrichmentDataSource, enrichmentDataSources } from "@/lib/data";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { DataSourceType, EnrichmentLayersQuery, ExternalDataSourceInput, FieldDefinition, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
+import { EnrichmentLayersQuery, ExternalDataSourceInput, FieldDefinition, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
 import { Input } from "@/components/ui/input";
 import { SourcePathSelector } from "@/components/SelectSourceData";
-import { ArrowRight, Plus, X, XCircle } from "lucide-react";
+import { ArrowRight, Plus, X } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -26,23 +25,25 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { gql, useQuery } from "@apollo/client";
-import { useMemo } from "react";
 import { DataSourceFieldLabel } from "./DataSourceIcon";
 import { twMerge } from "tailwind-merge";
 
 const ENRICHMENT_LAYERS = gql`
   query EnrichmentLayers {
-    externalDataSources {
-      id
+    mappingSources {
+      slug
       name
-      geographyColumn
-      geographyColumnType
-      dataType
-      crmType
-      fieldDefinitions {
+      author
+      description
+      descriptionUrl
+      sourcePaths {
         label
         value
         description
+      }
+      # For custom data sources, get some useful data
+      externalDataSource {
+        crmType
       }
     }
   }
@@ -80,29 +81,7 @@ export function UpdateMappingForm({
     },
   );
 
-  const customEnrichmentLayers = useQuery<EnrichmentLayersQuery>(ENRICHMENT_LAYERS)
-  const sources: EnrichmentDataSource[] = useMemo(() => {
-    return enrichmentDataSources.concat(
-      customEnrichmentLayers.data?.externalDataSources
-      .filter(source => (
-        !!source.geographyColumn &&
-        !!source.geographyColumnType && 
-        !!source.fieldDefinitions?.length &&
-        source.dataType !== DataSourceType.Member
-      ))
-      .map((source) => ({
-        slug: source.id,
-        name: source.name,
-        crmType: source.crmType,
-        author: "",
-        description: "",
-        descriptionURL: "",
-        colour: "",
-        builtIn: false,
-        sourcePaths: source.fieldDefinitions || []
-      })) || []
-    )
-  }, [enrichmentDataSources, customEnrichmentLayers.data?.externalDataSources])
+  const enrichmentLayers = useQuery<EnrichmentLayersQuery>(ENRICHMENT_LAYERS)
 
   return (
     <FormProvider {...form}>
@@ -192,7 +171,7 @@ export function UpdateMappingForm({
                           </Button>
                           <SourcePathSelector
                             focusOnMount={form.watch(`updateMapping.${index}.source`) === "?"}
-                            sources={sources}
+                            sources={enrichmentLayers.data?.mappingSources || []}
                             value={{
                               source: form.watch(`updateMapping.${index}.source`),
                               sourcePath: form.watch(`updateMapping.${index}.sourcePath`),

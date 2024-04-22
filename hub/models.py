@@ -42,7 +42,7 @@ from strawberry.dataloader import DataLoader
 
 import utils as lih_utils
 from hub.analytics import Analytics
-from hub.enrichment.sources import enrichment_data_sources
+from hub.enrichment.sources import builtin_mapping_sources
 from hub.filters import Filter
 from hub.tasks import (
     import_all,
@@ -954,6 +954,16 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             self.postcode_field = self.geography_column
         super().save(*args, **kwargs)
 
+    def as_mapping_source(self):
+        return {
+            "slug": self.id,
+            "name": self.name,
+            "author": self.organisation.name,
+            "description": self.description,
+            "source_paths": self.field_definitions(),
+            "external_data_source": self
+        }
+
     class FieldDefinition(TypedDict):
         value: str
         label: Optional[str]
@@ -1481,7 +1491,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         )
                         continue
                 if (
-                    enrichment_source := enrichment_data_sources.get(source, None)
+                    enrichment_source := builtin_mapping_sources.get(source, None)
                 ) is not None and (
                     fetch_fn := enrichment_source.get("async_postcode_request", None)
                 ) is not None:
