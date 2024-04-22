@@ -152,18 +152,6 @@ const FormMessage = React.forwardRef<
     return null;
  }
 
- if (htmlContent) {
-    return (
-      <p
-        ref={ref}
-        id={formMessageId}
-        className={cn("text-sm font-medium text-destructive", className)}
-        {...props}
-        dangerouslySetInnerHTML={{ __html: htmlContent }}
-      />
-    );
- }
-
  return (
     <p
       ref={ref}
