@@ -73,7 +73,6 @@ export default function NewPasswordForm() {
         await performPasswordReset({ variables: { ...values, token } });
     };
 
-    console.log('message', message, 'messagetype', messageType)
     return (
         <Form {...form}>
             <form className="pb-4 flex flex-col space-y-5" onSubmit={form.handleSubmit(handleSubmit)}>
