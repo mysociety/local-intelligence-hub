@@ -868,6 +868,13 @@ class EnrichmentLookup(TypedDict):
     source_data: Optional[any]
 
 
+class UpdateMapping(TypedDict):
+    source: str
+    # Can be a dot path, for use with benedict
+    source_path: str
+    destination_column: str
+
+
 class ExternalDataSource(PolymorphicModel, Analytics):
     """
     A third-party data source that can be read and optionally written back to.
@@ -955,12 +962,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     fields = JSONField(blank=True, null=True, default=list)
     # Auto-updates
-
-    class UpdateMapping(TypedDict):
-        source: str
-        # Can be a dot path, for use with benedict
-        source_path: str
-        destination_column: str
 
     update_mapping = JSONField(blank=True, null=True, default=list)
     auto_update_enabled = models.BooleanField(default=False, blank=True)
@@ -1439,15 +1440,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         return loaders
 
-    async def map_one(self, member: Union[str, dict], loaders: Loaders) -> MappedMember:
+    async def map_one(self, member: Union[str, dict], loaders: Loaders, mapping: list[UpdateMapping] = []) -> MappedMember:
         """
         Match one member to a record in the data source, via ID or record.
         """
         if type(member) is str:
             member = await loaders["fetch_record"].load(member)
-        if not member:
+        if member is None:
             # TODO: write tests for the case when the loader fails for a member
             return None
+        
+        if mapping is None or len(mapping) == 0:
+            return self.MappedMember(member=member, update_fields={})
 
         update_fields = {}
         try:
@@ -1461,7 +1465,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     postcode
                 )
             # Map the fields
-            for mapping_dict in self.get_update_mapping():
+            for mapping_dict in mapping:
                 source = mapping_dict["source"]
                 source_path = mapping_dict["source_path"]
                 destination_column = mapping_dict["destination_column"]
@@ -1479,7 +1483,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     source_loader = loaders["source_loaders"].get(source, None)
                     if source_loader is not None and postcode_data is not None:
                         loaded = await source_loader.load(
-                            self.EnrichmentLookup(
+                            EnrichmentLookup(
                                 member_id=self.get_record_id(member),
                                 postcode_data=postcode_data,
                                 source_id=source,
@@ -1507,15 +1511,17 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         Match many members to records in the data source.
         """
+        mapping = self.get_update_mapping()
         return await asyncio.gather(
-            *[self.map_one(member, loaders) for member in members]
+            *[self.map_one(member, loaders, mapping=mapping) for member in members]
         )
 
     async def refresh_one(self, member_id: Union[str, any]):
         if len(self.get_update_mapping()) == 0:
             return
         loaders = await self.get_loaders()
-        mapped_record = await self.map_one(member_id, loaders)
+        mapping = self.get_update_mapping()
+        mapped_record = await self.map_one(member_id, loaders, mapping=mapping)
         return await self.update_one(mapped_record=mapped_record)
 
     async def refresh_many(self, member_ids: list[Union[str, any]]):
