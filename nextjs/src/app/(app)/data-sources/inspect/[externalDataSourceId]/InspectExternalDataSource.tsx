@@ -369,6 +369,7 @@ export default function InspectExternalDataSource({
                 allowMapping={allowMapping}
                 crmType={source.crmType}
                 fieldDefinitions={source.fieldDefinitions}
+                refreshFieldDefinitions={() => { refetch() }}
                 initialData={{
                   // Trim out the __typenames
                   geographyColumn: source?.geographyColumn,

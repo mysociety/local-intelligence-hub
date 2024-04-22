@@ -5,7 +5,7 @@ import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { EnrichmentLayersQuery, ExternalDataSourceInput, FieldDefinition, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
 import { Input } from "@/components/ui/input";
 import { SourcePathSelector } from "@/components/SelectSourceData";
-import { ArrowRight, Plus, X } from "lucide-react";
+import { ArrowRight, Plus, RefreshCcw, X } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -54,6 +54,7 @@ export function UpdateMappingForm({
   initialData,
   children,
   fieldDefinitions,
+  refreshFieldDefinitions,
   crmType,
   allowMapping = true,
   saveButtonLabel = "Save settings",
@@ -64,6 +65,7 @@ export function UpdateMappingForm({
   ) => void;
   crmType: string;
   initialData?: ExternalDataSourceInput;
+  refreshFieldDefinitions?: () => void;
   fieldDefinitions?: FieldDefinition[] | null;
   saveButtonLabel?: string;
   children?: React.ReactNode;
@@ -87,70 +89,75 @@ export function UpdateMappingForm({
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-7">
-          <div className='max-w-md'>
-            <div className='grid grid-cols-2 gap-4 w-full'>
-              {/* Postcode field */}
-              <FormField
-                control={form.control}
-                name="geographyColumn"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Geography Field</FormLabel>
-                    <FormControl>
-                      {fieldDefinitions?.length ? (
-                        // @ts-ignore
-                        <Select value={field.value} onValueChange={field.onChange} required>
-                          <SelectTrigger className='pl-1'>
-                            <SelectValue placeholder={`Choose ${data.geographyColumnType || 'geography'} field`} />
+          <div className='flex flex-row w-full items-end'>
+            <div className='max-w-md'>
+              <div className='grid grid-cols-2 gap-4 w-full'>
+                {/* Postcode field */}
+                <FormField
+                  control={form.control}
+                  name="geographyColumn"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Geography Field</FormLabel>
+                      <FormControl>
+                        {fieldDefinitions?.length ? (
+                          // @ts-ignore
+                          <Select value={field.value} onValueChange={field.onChange} required>
+                            <SelectTrigger className='pl-1'>
+                              <SelectValue placeholder={`Choose ${data.geographyColumnType || 'geography'} field`} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectLabel>Geography field</SelectLabel>
+                                {fieldDefinitions?.map((field) => (
+                                  <SelectItem key={field.value} value={field.value}>
+                                    <DataSourceFieldLabel fieldDefinition={field} crmType={crmType} />
+                                  </SelectItem>
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          // @ts-ignore
+                          <Input {...field} required />
+                        )}
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="geographyColumnType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Geography Type</FormLabel>
+                      <FormControl>
+                        {/* @ts-ignore */}
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a geography type" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectGroup>
-                              <SelectLabel>Geography field</SelectLabel>
-                              {fieldDefinitions?.map((field) => (
-                                <SelectItem key={field.value} value={field.value}>
-                                  <DataSourceFieldLabel fieldDefinition={field} crmType={crmType} />
-                                </SelectItem>
-                              ))}
+                              <SelectLabel>Geography type</SelectLabel>
+                              <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
+                              <SelectItem value={PostcodesIoGeographyTypes.Constituency}>Constituency</SelectItem>
                             </SelectGroup>
                           </SelectContent>
                         </Select>
-                      ) : (
-                        // @ts-ignore
-                        <Input {...field} required />
-                      )}
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
               />
-              <FormField
-                control={form.control}
-                name="geographyColumnType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Geography Type</FormLabel>
-                    <FormControl>
-                      {/* @ts-ignore */}
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a geography type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectLabel>Geography type</SelectLabel>
-                            <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
-                            <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
-                            <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
-                            <SelectItem value={PostcodesIoGeographyTypes.Constituency}>Constituency</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-            />
+              </div>
             </div>
+            <Button type="button" onClick={refreshFieldDefinitions} variant='outline' className='flex-shrink-0 ml-auto'>
+              <RefreshCcw className='w-4 h-4 mr-2' /> Refresh fields
+            </Button>
           </div>
           <div>
             {allowMapping && (

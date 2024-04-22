@@ -198,7 +198,7 @@ builtin_mapping_sources = {
         "async_postcode_request": electoral_commision_postcode_lookup,
         "source_paths": [
             {"value": "dates[0].ballots[0].ballot_title", "label": "Next Election"},
-            {"value": "dates[0].ballots[0].date", "label": "Next Polling Date"},
+            {"value": "dates[0].date", "label": "Next Polling Date"},
             {
                 "value": "dates[0].polling_station.station.properties.address",
                 "label": "Nearest Polling Station Address",
