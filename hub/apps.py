@@ -1,5 +1,5 @@
 from django.apps import AppConfig
-import psycopg.errors
+from django.db.utils import ProgrammingError
 
 
 class HubConfig(AppConfig):
@@ -9,7 +9,8 @@ class HubConfig(AppConfig):
     def ready(self):
         try:
             from hub.models import refresh_tokens_cache
+
             refresh_tokens_cache()
-        except psycopg.errors.UndefinedTable:
+        except ProgrammingError:
             # This is expected when running migrations
             pass
