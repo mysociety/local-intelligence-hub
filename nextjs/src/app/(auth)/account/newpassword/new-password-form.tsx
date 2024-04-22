@@ -47,20 +47,18 @@ export default function NewPasswordForm() {
         }
     });
 
-    const [message, setMessage] = useState("");
-    const [messageType, setMessageType] = useState("error"); 
+    const [messageType, setMessageType] = useState("error");
 
     const handleCompleted = (data: { performPasswordReset: { success: any; }; }) => {
+
         const success = data?.performPasswordReset?.success;
         if (success) {
             form.reset();
-            setMessage("Your password has been successfully reset. You can now <a href='/login'><em>log in</em></a> with your new password.");
             setMessageType("success");
         }
     };
 
     const handleError = () => {
-        setMessage("Request failed, please try again later.");
         setMessageType("error");
     };
 
@@ -107,14 +105,15 @@ export default function NewPasswordForm() {
                     )}
                 />
 
-                <FormMessage
-                    className={messageType === 'success'? "text-meepGray-100" : ""}
-                    htmlContent={message}
-                />
-                {messageType !== 'success' && (
+                {messageType === 'success' ? (
+                    <FormMessage className="text-meepGray-100">
+                        <span>Password reset successfully! You can now</span>
+                        <a href="/login"> login</a>
+                        <span>.</span>
+                    </FormMessage>
+                ) : (
                     <Button variant='reverse' type="submit" disabled={loading}>Reset Password</Button>
                 )}
-
 
             </form>
         </Form>
