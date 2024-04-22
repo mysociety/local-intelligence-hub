@@ -405,5 +405,5 @@ CACHES = {
         "LOCATION": "cache_table",
         # 1 week
         "TIMEOUT": 60 * 60 * 24 * 7,
-    }
+    },
 }

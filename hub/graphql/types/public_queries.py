@@ -17,12 +17,12 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import IsAuthenticated
 
 from hub import models
-from hub.graphql.types import model_types
-from hub.graphql.types.postcodes import PostcodesIOResult
-from hub.graphql.types.electoral_commission import ElectoralCommissionPostcodeLookup
 from hub.enrichment.sources.electoral_commission_postcode_lookup import (
     electoral_commision_postcode_lookup,
 )
+from hub.graphql.types import model_types
+from hub.graphql.types.electoral_commission import ElectoralCommissionPostcodeLookup
+from hub.graphql.types.postcodes import PostcodesIOResult
 from utils.postcodesIO import get_bulk_postcode_geo
 
 
@@ -34,10 +34,10 @@ class PostcodeQueryResponse:
     @strawberry_django.field
     async def postcodesIO(self) -> Optional[PostcodesIOResult]:
         return await self.loaders["postcodesIO"].load(self.postcode)
-    
+
     @strawberry_django.field
-    def electoral_commission(self) -> Optional[ElectoralCommissionPostcodeLookup]:
-        return electoral_commision_postcode_lookup(self.postcode)
+    async def electoral_commission(self) -> Optional[ElectoralCommissionPostcodeLookup]:
+        return await electoral_commision_postcode_lookup(self.postcode)
 
     @strawberry_django.field
     async def constituency(self) -> Optional[model_types.Area]:

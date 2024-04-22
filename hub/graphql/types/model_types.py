@@ -10,6 +10,7 @@ import strawberry
 import strawberry_django
 import strawberry_django_dataloaders.factories
 import strawberry_django_dataloaders.fields
+from benedict import benedict
 from strawberry import auto
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
@@ -27,8 +28,6 @@ from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
-
-from benedict import benedict
 
 
 # Ideally we'd just import this from the library (procrastinate.jobs.Status) but
@@ -579,7 +578,7 @@ class GenericData(CommonData):
     address: auto
     postcode: auto
     remote_url: str = fn_field()
-    
+
     @strawberry_django.field
     def postcode_data(self) -> Optional[PostcodesIOResult]:
         return benedict(self.postcode_data)

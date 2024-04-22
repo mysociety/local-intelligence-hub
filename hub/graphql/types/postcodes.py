@@ -4,8 +4,6 @@ from django.contrib.gis.geos import Point
 
 import strawberry
 
-from hub.graphql.utils import dict_key_field
-
 from .geojson import PointFeature
 
 

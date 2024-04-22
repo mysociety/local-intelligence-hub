@@ -275,7 +275,7 @@ class TestExternalDataSource:
                     source_path="mayoral region",
                     destination_column="mayoral region",
                 )
-            ]
+            ],
         )
         self.assertEqual(
             mapped_member["update_fields"]["mayoral region"],
@@ -437,15 +437,16 @@ class TestAirtableSource(TestExternalDataSource, TestCase):
             mapping=[
                 models.UpdateMapping(
                     source="electoral_commission_postcode_lookup",
-                    source_path="electoralServices.name",
+                    source_path="electoral_services.name",
                     destination_column="electoral service",
                 )
-            ]
+            ],
         )
         self.assertEqual(
             mapped_member["update_fields"]["electoral service"],
             "Durham County Council",
         )
+
 
 class TestMailchimpSource(TestExternalDataSource, TestCase):
     def create_test_source(self):

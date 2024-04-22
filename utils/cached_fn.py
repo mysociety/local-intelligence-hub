@@ -1,5 +1,3 @@
-from threading import Timer
-
 from django.core.cache import caches
 
 
@@ -17,6 +15,30 @@ def cached_fn(key, timeout_seconds=60 * 5, cache_type="default"):
             try:
                 results = original_fn(*args, **kwargs)
                 cache.set(cache_key, results, timeout_seconds)
+
+                return results
+            except:  # noqa: E722
+                pass
+
+        return resulting_fn
+
+    return decorator
+
+
+def async_cached_fn(key, timeout_seconds=60 * 5, cache_type="default"):
+    cache = caches[cache_type]
+
+    def decorator(original_fn):
+        async def resulting_fn(*args, **kwargs):
+            cache_key = key(*args, **kwargs) if callable(key) else key
+
+            cached_results = await cache.aget(cache_key)
+            if cached_results is not None:
+                return cached_results
+
+            try:
+                results = await original_fn(*args, **kwargs)
+                await cache.aset(cache_key, results, timeout_seconds)
 
                 return results
             except:  # noqa: E722

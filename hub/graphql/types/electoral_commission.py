@@ -37,7 +37,9 @@ class ElectoralCommissionVotingSystem:
 class ElectoralCommissionBallot:
     ballot_paper_id: str
     ballot_title: str
-    poll_open_date: datetime = strawberry.field(resolver=lambda self: datetime.strptime(self.poll_open_date, "%Y-%m-%d"))
+    poll_open_date: datetime = strawberry.field(
+        resolver=lambda self: datetime.strptime(self.poll_open_date, "%Y-%m-%d")
+    )
     elected_role: str
     metadata: None
     cancelled: bool
@@ -78,7 +80,9 @@ class PollingStation:
 
 @strawberry.type
 class ElectionDate:
-    date: datetime = strawberry.field(resolver=lambda self: datetime.strptime(self.date, "%Y-%m-%d"))
+    date: datetime = strawberry.field(
+        resolver=lambda self: datetime.strptime(self.date, "%Y-%m-%d")
+    )
     polling_station: PollingStation
     advance_voting_station: None
     ballots: List[ElectoralCommissionBallot]

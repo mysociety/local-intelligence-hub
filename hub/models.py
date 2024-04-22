@@ -42,6 +42,7 @@ from strawberry.dataloader import DataLoader
 
 import utils as lih_utils
 from hub.analytics import Analytics
+from hub.enrichment.sources import enrichment_data_sources
 from hub.filters import Filter
 from hub.tasks import (
     import_all,
@@ -51,7 +52,6 @@ from hub.tasks import (
     refresh_one,
     refresh_webhooks,
 )
-from hub.enrichment.sources import enrichment_data_sources
 from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
 from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
 from utils.py import batched, ensure_list, get
@@ -1435,12 +1435,17 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     geography_column__isnull=False,
                     geography_column_type__isnull=False,
                 ).all()
-            }
+            },
         )
 
         return loaders
 
-    async def map_one(self, member: Union[str, dict], loaders: Loaders, mapping: list[UpdateMapping] = []) -> MappedMember:
+    async def map_one(
+        self,
+        member: Union[str, dict],
+        loaders: Loaders,
+        mapping: list[UpdateMapping] = [],
+    ) -> MappedMember:
         """
         Match one member to a record in the data source, via ID or record.
         """
@@ -1449,7 +1454,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         if member is None:
             # TODO: write tests for the case when the loader fails for a member
             return None
-        
+
         if mapping is None or len(mapping) == 0:
             return self.MappedMember(member=member, update_fields={})
 
@@ -1475,9 +1480,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             postcode_data, source_path
                         )
                         continue
-                if (enrichment_source:=enrichment_data_sources.get(source, None)) is not None and (fetch_fn:=enrichment_source.get("postcode_request", None)) is not None:
-                    row = fetch_fn(postcode)
-                    update_fields[destination_column] = get(row, source_path, None)
+                if (
+                    enrichment_source := enrichment_data_sources.get(source, None)
+                ) is not None and (
+                    fetch_fn := enrichment_source.get("async_postcode_request", None)
+                ) is not None:
+                    row = await fetch_fn(postcode)
+                    try:
+                        update_fields[destination_column] = get(row, source_path, None)
+                    except Exception as e:
+                        print(f"mapping exception {e}")
+                        # TODO: Sentry logging
+                        pass
                     continue
                 try:
                     source_loader = loaders["source_loaders"].get(source, None)
@@ -1490,9 +1504,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                                 source_path=source_path,
                             )
                         )
-                        print(
-                            f"setting {source_path} {destination_column} to {loaded}"
-                        )
+                        print(f"setting {source_path} {destination_column} to {loaded}")
                         update_fields[destination_column] = loaded
                         continue
                 except Exception as e:
