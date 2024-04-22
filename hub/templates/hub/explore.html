@@ -173,7 +173,7 @@
                             </div>
                             <div :class="{ 'filter__body': true, 'filter__body--expanded': true }">
                                 <select v-if="column.is_range" v-model="column.selectedType" class="form-select form-select-sm flex-grow-0 flex-shrink-1">
-                                <option v-for="ds_type in column.types" :value="ds_type.name">${ ds_type.title }</option>
+                                <option v-for="ds_type in getDataTypesForCurrentArea(column)" :value="ds_type.name">${ ds_type.title }</option>
                                 </select>
                             </div>
                         </div>
