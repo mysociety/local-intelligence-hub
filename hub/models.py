@@ -2094,6 +2094,17 @@ def clear_permissions_cache_intersecting_user(sender, instance, *args, **kwargs)
     for sharing_permission in sharing_permissions:
         cache.delete(sharing_permission.get_cache_key())
 
+from opentelemetry import trace
+from opentelemetry.propagate import set_global_textmap
+from opentelemetry.sdk.trace import TracerProvider
+from sentry_sdk.integrations.opentelemetry import SentrySpanProcessor, SentryPropagator
+
+provider = TracerProvider()
+provider.add_span_processor(SentrySpanProcessor())
+trace.set_tracer_provider(provider)
+set_global_textmap(SentryPropagator())
+
+tracer = trace.get_tracer(__name__)
 
 class Report(PolymorphicModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -2107,9 +2118,11 @@ class Report(PolymorphicModel):
     last_update = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
+        with tracer.start_as_current_span("report_creation"):
+            print('creating a report', tracer)
+            if not self.slug:
+                self.slug = slugify(self.name)
+            super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -2457,3 +2470,13 @@ def update_apitoken_cache_on_save(sender, instance, *args, **kwargs):
 @receiver(models.signals.post_delete, sender=APIToken)
 def update_apitoken_cache_on_delete(sender, instance, *args, **kwargs):
     refresh_tokens_cache()
+
+import time
+from opentelemetry import trace
+
+tracer = trace.get_tracer(__name__)
+
+with tracer.start_as_current_span("test_otel_span"):
+    print("Processing some data...")
+    # Simulate some processing
+    time.sleep(3)

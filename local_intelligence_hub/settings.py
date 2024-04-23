@@ -376,6 +376,8 @@ if environment == "production":
             ],
             # Optionally, you can adjust the logging level
             traces_sample_rate=1.0,  # Adjust sample rate as needed
+            enable_tracing=True,
+            instrumenter="otel",
         )
 
     if env("POSTHOG_API_KEY") is not False and env("POSTHOG_HOST") is not False:
