@@ -1308,7 +1308,7 @@ export type PostcodesIoCodes = {
   lsoa: Scalars['String']['output'];
   msoa: Scalars['String']['output'];
   nuts: Scalars['String']['output'];
-  parish: Scalars['String']['output'];
+  parish?: Maybe<Scalars['String']['output']>;
   parliamentaryConstituency: Scalars['String']['output'];
   parliamentaryConstituency2025: Scalars['String']['output'];
   pfa: Scalars['String']['output'];

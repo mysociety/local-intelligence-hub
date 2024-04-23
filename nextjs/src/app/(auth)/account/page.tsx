@@ -1,7 +1,6 @@
 import { Metadata } from "next";
 import { useRequireAuth } from "../../../hooks/auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import DeveloperConfig from "./developer";
 import YourOrganisations from "./your-organisations";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
