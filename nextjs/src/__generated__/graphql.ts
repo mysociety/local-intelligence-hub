@@ -51,6 +51,16 @@ export type Scalars = {
   UUID: { input: any; output: any; }
 };
 
+/** A model to store generated and revoked JWT tokens. */
+export type ApiToken = {
+  __typename?: 'APIToken';
+  createdAt: Scalars['DateTime']['output'];
+  expiresAt: Scalars['DateTime']['output'];
+  revoked: Scalars['Boolean']['output'];
+  signature: Scalars['ID']['output'];
+  token: Scalars['String']['output'];
+};
+
 /** An Airtable table. */
 export type AirtableSource = Analytics & {
   __typename?: 'AirtableSource';
@@ -599,6 +609,7 @@ export type Feature = {
 export type FieldDefinition = {
   __typename?: 'FieldDefinition';
   description?: Maybe<Scalars['String']['output']>;
+  externalId?: Maybe<Scalars['String']['output']>;
   label?: Maybe<Scalars['String']['output']>;
   value: Scalars['String']['output'];
 };
@@ -909,6 +920,7 @@ export type MultiPolygonGeometry = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  createApiToken: ApiToken;
   createExternalDataSource: CreateExternalDataSourceOutput;
   createMapReport: CreateMapReportPayload;
   createOrganisation: Membership;
@@ -949,6 +961,7 @@ export type Mutation = {
    *
    */
   resendActivationEmail: MutationNormalOutput;
+  revokeApiToken: ApiToken;
   /**
    * Obtain JSON web token for given user.
    *
@@ -978,6 +991,11 @@ export type Mutation = {
    *
    */
   verifyAccount: MutationNormalOutput;
+};
+
+
+export type MutationCreateApiTokenArgs = {
+  expiryDays?: Scalars['Int']['input'];
 };
 
 
@@ -1046,6 +1064,11 @@ export type MutationRegisterArgs = {
 
 export type MutationResendActivationEmailArgs = {
   email: Scalars['String']['input'];
+};
+
+
+export type MutationRevokeApiTokenArgs = {
+  signature: Scalars['ID']['input'];
 };
 
 
@@ -1259,6 +1282,20 @@ export type PointGeometry = {
   type: GeoJsonTypes;
 };
 
+export type PostcodeQueryResponse = {
+  __typename?: 'PostcodeQueryResponse';
+  constituency?: Maybe<Area>;
+  customSourceData?: Maybe<Scalars['String']['output']>;
+  postcode: Scalars['String']['output'];
+  postcodesIO?: Maybe<PostcodesIoResult>;
+};
+
+
+export type PostcodeQueryResponseCustomSourceDataArgs = {
+  source: Scalars['String']['input'];
+  sourcePath: Scalars['String']['input'];
+};
+
 export type PostcodesIoCodes = {
   __typename?: 'PostcodesIOCodes';
   adminCounty: Scalars['String']['output'];
@@ -1339,11 +1376,14 @@ export type Query = {
   allOrganisations: Array<PublicOrganisation>;
   area?: Maybe<Area>;
   dataSet?: Maybe<DataSet>;
+  enrichPostcode: PostcodeQueryResponse;
+  enrichPostcodes: Array<PostcodeQueryResponse>;
   externalDataSource: ExternalDataSource;
   externalDataSources: Array<ExternalDataSource>;
   importedDataGeojsonPoint?: Maybe<MapReportMemberFeature>;
   job: QueueJob;
   jobs: Array<QueueJob>;
+  listApiTokens: Array<ApiToken>;
   mailchimpSource: MailchimpSource;
   mailchimpSources: Array<MailchimpSource>;
   mapReport: MapReport;
@@ -1377,6 +1417,16 @@ export type QueryAreaArgs = {
 
 export type QueryDataSetArgs = {
   name: Scalars['String']['input'];
+};
+
+
+export type QueryEnrichPostcodeArgs = {
+  postcode: Scalars['String']['input'];
+};
+
+
+export type QueryEnrichPostcodesArgs = {
+  postcodes: Array<Scalars['String']['input']>;
 };
 
 
@@ -1846,6 +1896,23 @@ export type CreateMapReportMutationVariables = Exact<{
 
 export type CreateMapReportMutation = { __typename?: 'Mutation', createMapReport: { __typename?: 'MapReport', id: any } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', message: string }> } };
 
+export type DeveloperApiContextQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DeveloperApiContextQuery = { __typename?: 'Query', listApiTokens: Array<{ __typename?: 'APIToken', token: string, signature: string, revoked: boolean, createdAt: any, expiresAt: any }> };
+
+export type CreateTokenMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CreateTokenMutation = { __typename?: 'Mutation', createApiToken: { __typename?: 'APIToken', token: string, signature: string, revoked: boolean, createdAt: any, expiresAt: any } };
+
+export type RevokeTokenMutationVariables = Exact<{
+  signature: Scalars['ID']['input'];
+}>;
+
+
+export type RevokeTokenMutation = { __typename?: 'Mutation', revokeApiToken: { __typename?: 'APIToken', signature: string, revoked: boolean } };
+
 export type VerifyMutationVariables = Exact<{
   token: Scalars['String']['input'];
 }>;
@@ -2062,6 +2129,9 @@ export const YourSourcesForSharingDocument = {"kind":"Document","definitions":[{
 export const ShareWithOrgPageDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ShareWithOrgPage"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"orgSlug"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"allOrganisations"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"slug"},"value":{"kind":"Variable","name":{"kind":"Name","value":"orgSlug"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]} as unknown as DocumentNode<ShareWithOrgPageQuery, ShareWithOrgPageQueryVariables>;
 export const ListReportsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ListReports"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"reports"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"lastUpdate"}}]}}]}}]} as unknown as DocumentNode<ListReportsQuery, ListReportsQueryVariables>;
 export const CreateMapReportDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateMapReport"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"MapReportInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createMapReport"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"MapReport"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"OperationInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"messages"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]}}]} as unknown as DocumentNode<CreateMapReportMutation, CreateMapReportMutationVariables>;
+export const DeveloperApiContextDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"DeveloperAPIContext"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"listApiTokens"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"token"}},{"kind":"Field","name":{"kind":"Name","value":"signature"}},{"kind":"Field","name":{"kind":"Name","value":"revoked"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"expiresAt"}}]}}]}}]} as unknown as DocumentNode<DeveloperApiContextQuery, DeveloperApiContextQueryVariables>;
+export const CreateTokenDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateToken"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createApiToken"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"token"}},{"kind":"Field","name":{"kind":"Name","value":"signature"}},{"kind":"Field","name":{"kind":"Name","value":"revoked"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"expiresAt"}}]}}]}}]} as unknown as DocumentNode<CreateTokenMutation, CreateTokenMutationVariables>;
+export const RevokeTokenDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"RevokeToken"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"signature"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"revokeApiToken"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"signature"},"value":{"kind":"Variable","name":{"kind":"Name","value":"signature"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"signature"}},{"kind":"Field","name":{"kind":"Name","value":"revoked"}}]}}]}}]} as unknown as DocumentNode<RevokeTokenMutation, RevokeTokenMutationVariables>;
 export const VerifyDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"Verify"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"token"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"verifyAccount"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"token"},"value":{"kind":"Variable","name":{"kind":"Name","value":"token"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"errors"}},{"kind":"Field","name":{"kind":"Name","value":"success"}}]}}]}}]} as unknown as DocumentNode<VerifyMutation, VerifyMutationVariables>;
 export const ExampleDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"Example"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"myOrganisations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]} as unknown as DocumentNode<ExampleQuery, ExampleQueryVariables>;
 export const LoginDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"Login"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"username"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"password"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"tokenAuth"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"username"},"value":{"kind":"Variable","name":{"kind":"Name","value":"username"}}},{"kind":"Argument","name":{"kind":"Name","value":"password"},"value":{"kind":"Variable","name":{"kind":"Name","value":"password"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"errors"}},{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"token"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"token"}},{"kind":"Field","name":{"kind":"Name","value":"payload"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"exp"}}]}}]}}]}}]}}]} as unknown as DocumentNode<LoginMutation, LoginMutationVariables>;

@@ -9,6 +9,7 @@ from gqlauth.core.middlewares import JwtSchema
 from gqlauth.user import arg_mutations as auth_mutations
 from gqlauth.user.queries import UserQueries
 from graphql import GraphQLError
+from strawberry.extensions import QueryDepthLimiter
 from strawberry.types import ExecutionContext
 from strawberry_django import mutations as django_mutations
 from strawberry_django.optimizer import DjangoOptimizerExtension
@@ -16,7 +17,8 @@ from strawberry_django.permissions import IsAuthenticated
 
 from hub import models
 from hub.graphql import mutations as mutation_types
-from hub.graphql.types import model_types
+from hub.graphql.extensions.analytics import APIAnalyticsExtension
+from hub.graphql.types import model_types, public_queries
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +45,6 @@ class Query(UserQueries):
     my_organisations: List[model_types.Organisation] = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
-
     external_data_source: model_types.ExternalDataSource = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
@@ -87,6 +88,15 @@ class Query(UserQueries):
     area: Optional[model_types.Area] = model_types.area_by_gss
     dataSet: Optional[model_types.DataSet] = model_types.dataset_by_name
 
+    enrich_postcode: public_queries.PostcodeQueryResponse = strawberry.field(
+        resolver=public_queries.enrich_postcode,
+        extensions=[IsAuthenticated()],
+    )
+    enrich_postcodes: List[public_queries.PostcodeQueryResponse] = strawberry.field(
+        resolver=public_queries.enrich_postcodes,
+        extensions=[IsAuthenticated()],
+    )
+
     @strawberry.field
     def test_data_source(
         self, info: strawberry.types.Info, input: TestDataSourceInput
@@ -100,6 +110,8 @@ class Query(UserQueries):
         else:
             raise ValueError("Unsupported data source type")
 
+    list_api_tokens = public_queries.list_api_tokens
+
 
 @strawberry.type
 class Mutation:
@@ -107,6 +119,9 @@ class Mutation:
     register = auth_mutations.Register.field
     verify_account = auth_mutations.VerifyAccount.field
     resend_activation_email = auth_mutations.ResendActivationEmail.field
+
+    create_api_token = public_queries.create_api_token
+    revoke_api_token = public_queries.revoke_api_token
 
     create_external_data_source: mutation_types.CreateExternalDataSourceOutput = (
         mutation_types.create_external_data_source
@@ -203,5 +218,7 @@ schema = CustomErrorLoggingSchema(
     mutation=Mutation,
     extensions=[
         DjangoOptimizerExtension,  # not required, but highly recommended
+        APIAnalyticsExtension,
+        QueryDepthLimiter(max_depth=10),
     ],
 )

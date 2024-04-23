@@ -1,5 +1,6 @@
 import { useRequireAuth } from "@/hooks/auth";
 import { Metadata } from "next";
+import 'graphiql/graphiql.css';
 
 export default function GraphiQL ({ children }: { children: React.ReactNode }) {
   useRequireAuth()

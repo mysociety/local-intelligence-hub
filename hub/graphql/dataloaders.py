@@ -145,12 +145,16 @@ class ReverseFKWithFiltersDataLoader(dataloaders.BasicReverseFKDataLoader):
     @classmethod
     @sync_to_async
     def load_fn(cls, keys: list[str]) -> list[list[DjangoModel]]:
-        filter_dict = strawberry.asdict(cls.filters)
-        results: list["DjangoModel"] = list(
-            cls.model.objects.filter(**{f"{cls.reverse_path}__in": keys})
-            .prefetch_related(*cls.prefetch)
-            .filter(**filter_dict)
+        unsanitised_filter_dict = strawberry.asdict(cls.filters)
+        filter_dict = {}
+        for key in unsanitised_filter_dict:
+            if unsanitised_filter_dict[key] is not strawberry.UNSET:
+                filter_dict[key] = unsanitised_filter_dict[key]
+        results = cls.model.objects.prefetch_related(*cls.prefetch).filter(
+            **{f"{cls.reverse_path}__in": keys}
         )
+        if len(filter_dict.keys()) > 0:
+            results = results.filter(**filter_dict)
         return [
             [result for result in results if getattr(result, cls.reverse_path) == key]
             for key in keys

@@ -77,11 +77,14 @@ class PostcodesIOBulkResult:
     result: List[ResultElement]
 
 
-def get_postcode_geo(postcode: str) -> PostcodesIOResult:
-    response = requests.get(f"{settings.POSTCODES_IO_URL}/postcodes/{postcode}")
+async def get_postcode_geo(postcode: str) -> PostcodesIOResult:
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"{settings.POSTCODES_IO_URL}/postcodes/{postcode}")
+    if response.status_code != httpx.codes.OK:
+        raise Exception(f"Failed to geocode postcode: {postcode}.")
     data = response.json()
     status = get(data, "status")
-    result = get(data, "result")
+    result: PostcodesIOResult = get(data, "result")
 
     if status != 200 or result is None:
         raise Exception(f"Failed to geocode postcode: {postcode}.")
