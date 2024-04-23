@@ -57,10 +57,17 @@ env = environ.Env(
     CRYPTOGRAPHY_SALT=(str, "somesaltthatshouldbereplaced"),
     ELECTORAL_COMMISSION_API_KEY=(str, ""),
 )
+
+environ.Env.read_env(BASE_DIR / ".env")
+
 # Should be alphanumeric
 CRYPTOGRAPHY_KEY = env("CRYPTOGRAPHY_KEY")
 CRYPTOGRAPHY_SALT = env("CRYPTOGRAPHY_SALT")
-environ.Env.read_env(BASE_DIR / ".env")
+
+if CRYPTOGRAPHY_KEY is None:
+    raise ValueError("CRYPTOGRAPHY_KEY must be set")
+if CRYPTOGRAPHY_SALT is None:
+    raise ValueError("CRYPTOGRAPHY_SALT must be set")
 
 ELECTORAL_COMMISSION_API_KEY = env("ELECTORAL_COMMISSION_API_KEY")
 BASE_URL = env("BASE_URL")
