@@ -625,6 +625,9 @@ const app = createApp({
     },
     getDataTypesForCurrentArea(dataset) {
         return dataset.types.filter(t => t.area_type === this.area_type || t.area_type === null)
+    },
+    areaTypeHasMP(area_type) {
+      return ( area_type === "WMC" || area_type === "WMC23" )
     }
   }
 })
