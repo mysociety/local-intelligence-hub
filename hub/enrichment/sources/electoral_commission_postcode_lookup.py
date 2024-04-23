@@ -23,4 +23,19 @@ async def electoral_commision_postcode_lookup(postcode: str):
             f"https://api.electoralcommission.org.uk/api/v1/postcode/{postcode}/?token={settings.ELECTORAL_COMMISSION_API_KEY}"
         )
         json = response.json()
+        json = sanitise_string_values(json)
         return benedict(json)
+
+def sanitise_string_values(value):
+    # replace \n with ", " in all values of dict
+    if isinstance(value, dict):
+        sanitised_dict = value.copy()
+        for key, value in sanitised_dict.items():
+            sanitised_dict[key] = sanitise_string_values(value)
+        return sanitised_dict
+    elif isinstance(value, str):
+        return value.replace("\n", ", ")
+    elif isinstance(value, list):
+        return [sanitise_string_values(v) for v in value]
+    else:
+        return value
