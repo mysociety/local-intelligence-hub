@@ -119,6 +119,8 @@ class Mutation:
     register = auth_mutations.Register.field
     verify_account = auth_mutations.VerifyAccount.field
     resend_activation_email = auth_mutations.ResendActivationEmail.field
+    request_password_reset = auth_mutations.SendPasswordResetEmail.field
+    perform_password_reset = auth_mutations.PasswordReset.field
 
     create_api_token = public_queries.create_api_token
     revoke_api_token = public_queries.revoke_api_token
