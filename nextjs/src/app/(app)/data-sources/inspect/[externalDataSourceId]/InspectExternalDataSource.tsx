@@ -274,7 +274,7 @@ export default function InspectExternalDataSource({
             />
           </section>
         </div>
-        {source.dataType === DataSourceType.Member && !!source.sharingPermissions?.length && (
+        {!!source.sharingPermissions?.length && (
           <>
             <div className="border-b-4 border-meepGray-700 pt-10" />
             <section className="space-y-4">
@@ -292,7 +292,7 @@ export default function InspectExternalDataSource({
             </section>
           </>
         )}
-        {source.dataType === DataSourceType.Member && (
+        {(
           <>
             <div className="border-b-4 border-meepGray-700 pt-10" />
             <section className="space-y-4">
