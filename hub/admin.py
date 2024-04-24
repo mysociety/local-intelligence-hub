@@ -167,3 +167,4 @@ class PersonAdmin(admin.ModelAdmin):
         "name",
         "area__name",
     )
+    list_filter = ("person_type",)
