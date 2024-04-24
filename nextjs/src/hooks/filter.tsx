@@ -1,4 +1,4 @@
-import Fuse from 'fuse.js';
+import Fuse, { IFuseOptions } from 'fuse.js';
 import * as React from 'react';
 
 /**
@@ -15,7 +15,7 @@ import * as React from 'react';
 export function useFuse<T>(
   list: T[],
   searchTerm: string,
-  fuseOptions?: Fuse.IFuseOptions<T>
+  fuseOptions?: IFuseOptions<T>
 ) {
   const fuse = React.useMemo(() => {
     return new Fuse(list, fuseOptions);
