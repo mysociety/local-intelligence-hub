@@ -21,7 +21,7 @@ export default async function Login() {
         </Button>
       </Link>
       <div className='text-labelMain text-meepGray-400'>Forgotten password?</div>
-      <Link href="/account/resetpassword" className='block'>
+      <Link href="/reset-password" className='block'>
         <Button className='w-full' variant='outline' size="sm">
           Request password reset
         </Button>
