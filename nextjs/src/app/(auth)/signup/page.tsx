@@ -1,5 +1,5 @@
 import WaitlistForm from "@/components/WaitListSignUp";
-import { useRequireNoAuth } from "../../../hooks/auth";
+import { useRequireNoAuth } from "@/hooks/auth";
 import RegisterForm from "./register-form";
 import { Metadata } from "next";
 

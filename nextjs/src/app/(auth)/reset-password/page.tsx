@@ -1,4 +1,4 @@
-import { useRequireNoAuth } from "../../../hooks/auth";
+import { useRequireNoAuth } from "@/hooks/auth";
 import ResetForm from "./reset-password-form";
 import { Metadata } from "next";
 
