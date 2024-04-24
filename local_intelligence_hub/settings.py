@@ -55,6 +55,7 @@ env = environ.Env(
     SENTRY_DSN=(str, False),
     CRYPTOGRAPHY_KEY=(str, "somemadeupcryptographickeywhichshouldbereplaced"),
     CRYPTOGRAPHY_SALT=(str, "somesaltthatshouldbereplaced"),
+    SENTRY_TRACE_SAMPLE_RATE=(float, 1.0),
 )
 
 environ.Env.read_env(BASE_DIR / ".env")
@@ -355,6 +356,7 @@ STRAWBERRY_DJANGO = {
 }
 
 SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")
+SENTRY_TRACE_SAMPLE_RATE = env("SENTRY_TRACE_SAMPLE_RATE")
 
 environment = env("ENVIRONMENT")
 
