@@ -55,6 +55,7 @@ env = environ.Env(
     SENTRY_DSN=(str, False),
     CRYPTOGRAPHY_KEY=(str, "somemadeupcryptographickeywhichshouldbereplaced"),
     CRYPTOGRAPHY_SALT=(str, "somesaltthatshouldbereplaced"),
+    ELECTORAL_COMMISSION_API_KEY=(str, ""),
 )
 
 environ.Env.read_env(BASE_DIR / ".env")
@@ -68,6 +69,7 @@ if CRYPTOGRAPHY_KEY is None:
 if CRYPTOGRAPHY_SALT is None:
     raise ValueError("CRYPTOGRAPHY_SALT must be set")
 
+ELECTORAL_COMMISSION_API_KEY = env("ELECTORAL_COMMISSION_API_KEY")
 BASE_URL = env("BASE_URL")
 FRONTEND_BASE_URL = env("FRONTEND_BASE_URL")
 FRONTEND_SITE_TITLE = env("FRONTEND_SITE_TITLE")
@@ -403,5 +405,12 @@ CACHES = {
         # TODO: Set up Redis for production
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         "LOCATION": "unique-snowflake",
-    }
+    },
+    # database cache for requests
+    "db": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "cache_table",
+        # 1 week
+        "TIMEOUT": 60 * 60 * 24 * 7,
+    },
 }
