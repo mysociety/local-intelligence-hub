@@ -15,7 +15,9 @@ function getAuthenticatedFetcher () {
       }
     });
   } catch (e) {
-    console.log(e)
+    return createGraphiQLFetcher({
+      url: `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/graphql`
+    });
   }
 }
 
