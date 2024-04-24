@@ -1692,24 +1692,16 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         except (UniqueViolation, IntegrityError):
             pass
 
-    async def schedule_refresh_all(self, request_id: str = None, timestamp: float = None) -> int:
-        try:
-            job_args = {
-                "external_data_source_id": str(self.id),
-                "request_id": request_id
-            }
-
-            if timestamp is not None:
-                job_args["timestamp"] = datetime.datetime.utcfromtimestamp(timestamp)
-
-            return await refresh_all.configure(
-                # Dedupe `update_all` jobs for the same config
-                # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-                queueing_lock=f"update_all_{str(self.id)}",
-                schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
-            ).defer_async(**job_args)
-        except (UniqueViolation, IntegrityError):
-            pass
+    async def schedule_refresh_all(self, request_id: str = None) -> int:
+            try:
+                return await refresh_all.configure(
+                    # Dedupe `update_all` jobs for the same config
+                    # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+                    queueing_lock=f"update_all_{str(self.id)}",
+                    schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+                ).defer_async(external_data_source_id=str(self.id), request_id=request_id)
+            except (UniqueViolation, IntegrityError):
+                pass
 
     async def schedule_import_many(
         self, member_ids: list[str], request_id: str = None
