@@ -26,6 +26,7 @@ async def electoral_commision_postcode_lookup(postcode: str):
         json = sanitise_string_values(json)
         return benedict(json)
 
+
 def sanitise_string_values(value):
     # replace \n with ", " in all values of dict
     if isinstance(value, dict):
