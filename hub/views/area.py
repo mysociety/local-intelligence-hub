@@ -462,6 +462,9 @@ class AreaSearchView(TemplateView):
                     "error"
                 ] = f"Sorry, we can’t find any matches for “{search}”. Try a nearby town or city?"
 
+        if context.get("error") is not None:
+            return context
+
         if context["areas"] is not None and len(context["areas"]):
             # Add MPs and PPCs to areas
             for area in context["areas"]:
