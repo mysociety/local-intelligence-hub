@@ -353,8 +353,6 @@ class Command(BaseImportFromDataFrameCommand):
         for file in self.files:
             self.log(file["defaults"]["label"])
 
-            area_type = file.get("area_type", "WMC")
-
             data_set, created = DataSet.objects.update_or_create(
                 name=file["data_set_name"],
                 defaults=file["defaults"],
@@ -391,7 +389,7 @@ class Command(BaseImportFromDataFrameCommand):
             for index, row in tqdm(
                 df.iterrows(), disable=self._quiet, total=df.shape[0]
             ):
-                area = Area.get_by_gss(row["gss_code"], area_type=area_type)
+                area = Area.get_by_gss(row["gss_code"], area_type=self.area_type)
                 if area is None:
                     self.stdout.write(
                         f"Failed to find area with code {row['gss_code']} and type {area_type}"
@@ -437,7 +435,7 @@ class Command(BaseImportFromDataFrameCommand):
                     self.log(f"    {data_type_slug}")
                     data_type = DataType.objects.get(
                         name=data_type_slug,
-                        area_type__code=file.get("area_type", "WMC"),
+                        area_type__code=self.area_type,
                     )
                     average = (
                         AreaData.objects.filter(data_type=data_type)
@@ -464,7 +462,7 @@ class Command(BaseImportFromDataFrameCommand):
                     self.log(f"    {data_type_slug}")
                     data_type = DataType.objects.get(
                         name=data_type_slug,
-                        area_type__code=file.get("area_type", "WMC"),
+                        area_type__code=self.area_type,
                     )
                     base = (
                         AreaData.objects.filter(data_type=data_type)
