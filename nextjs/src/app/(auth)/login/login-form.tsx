@@ -3,9 +3,11 @@
 import { gql, useMutation } from "@apollo/client";
 import { login } from "../../../actions/auth";
 import { SubmitHandler, useForm } from "react-hook-form";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod";
 import { Button } from "@/components/ui/button"
+ 
 import {
   Form,
   FormControl,
@@ -16,6 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input";
+
 
 const LOGIN_MUTATION = gql`
   mutation Login($username: String!, $password: String!) {
@@ -42,6 +45,7 @@ export default function LoginForm() {
 
   const [doLogin, { data, loading, error: gqlError }] =
     useMutation(LOGIN_MUTATION);
+
 
   const token = data?.tokenAuth?.token?.token;
   const authError = data?.tokenAuth?.errors;
@@ -92,8 +96,10 @@ export default function LoginForm() {
           )}
         />
         <FormMessage />
-        <Button variant='reverse' type="submit" disabled={loading}>Login</Button>
-      </form>
+        <Button variant='reverse' type="submit" disabled={loading} className="flex items-center justify-center">
+          {(loading || token) ? (<>Loading...</>) : 'Login'}
+        </Button>
+        </form>
     </Form>
   );
 }
