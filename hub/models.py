@@ -2095,14 +2095,13 @@ def clear_permissions_cache_intersecting_user(sender, instance, *args, **kwargs)
         cache.delete(sharing_permission.get_cache_key())
 
 from opentelemetry import trace
-from opentelemetry.propagate import set_global_textmap
 from opentelemetry.sdk.trace import TracerProvider
-from sentry_sdk.integrations.opentelemetry import SentrySpanProcessor, SentryPropagator
+
+# Removed Sentry-related imports
 
 provider = TracerProvider()
-provider.add_span_processor(SentrySpanProcessor())
+# Removed SentrySpanProcessor and SentryPropagator
 trace.set_tracer_provider(provider)
-set_global_textmap(SentryPropagator())
 
 tracer = trace.get_tracer(__name__)
 
@@ -2119,6 +2118,7 @@ class Report(PolymorphicModel):
 
     def save(self, *args, **kwargs):
         with tracer.start_as_current_span("report_creation"):
+            # Log to console instead of sending to Sentry
             print('creating a report', tracer)
             if not self.slug:
                 self.slug = slugify(self.name)
@@ -2126,7 +2126,6 @@ class Report(PolymorphicModel):
 
     def __str__(self):
         return self.name
-
 
 class MailchimpSource(ExternalDataSource):
     """
