@@ -87,6 +87,10 @@ class Query(UserQueries):
     )
     area: Optional[model_types.Area] = model_types.area_by_gss
     dataSet: Optional[model_types.DataSet] = model_types.dataset_by_name
+    mapping_sources: List[model_types.MappingSource] = strawberry_django.field(
+        resolver=model_types.mapping_sources,
+        extensions=[IsAuthenticated()],
+    )
 
     enrich_postcode: public_queries.PostcodeQueryResponse = strawberry.field(
         resolver=public_queries.enrich_postcode,
