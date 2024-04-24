@@ -40,6 +40,12 @@ from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
 
+from opentelemetry import trace
+from opentelemetry.propagate import set_global_textmap
+from opentelemetry.sdk.trace import TracerProvider
+from sentry_sdk.integrations.opentelemetry import SentrySpanProcessor, SentryPropagator
+
+
 import utils as lih_utils
 from hub.analytics import Analytics
 from hub.filters import Filter
@@ -1004,60 +1010,93 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         return self.get_scheduled_parent_job(
             dict(task_name__contains="hub.tasks.refresh")
         )
+    
+
+    # Add span and provider for sending to sentry  
+
+    provider = TracerProvider()
+    provider.add_span_processor(SentrySpanProcessor())
+    trace.set_tracer_provider(provider)
+    set_global_textmap(SentryPropagator())
+
+    tracer = trace.get_tracer(__name__)
+
 
     def get_scheduled_batch_job_progress(self, parent_job: ProcrastinateJob):
-        request_id = parent_job.args.get("request_id")
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("Import/update job metrics") as span:
+            request_id = parent_job.args.get("request_id")
 
-        if request_id is None:
-            return None
+            if request_id is None:
+                return None
 
-        jobs = self.event_log_queryset().filter(args__request_id=request_id).all()
+            jobs = self.event_log_queryset().filter(args__request_id=request_id).all()
 
-        total = 2
-        statuses = dict()
+            total = 2
+            statuses = dict()
+          
 
-        for job in jobs:
-            job_count = len(job.args.get("member_ids", []))
-            total += job_count
-            if statuses.get(job.status, None) is not None:
-                statuses[job.status] += job_count
-            else:
-                statuses[job.status] = job_count
+            for job in jobs:
+                job_count = len(job.args.get("member_ids", []))
+                total += job_count
+                if statuses.get(job.status, None) is not None:
+                    statuses[job.status] += job_count
+                else:
+                    statuses[job.status] = job_count
 
-        done = (
-            int(
-                statuses.get("succeeded", 0)
-                + statuses.get("failed", 0)
-                + statuses.get("doing", 0)
+
+            done = (
+                int(
+                    statuses.get("succeeded", 0)
+                    + statuses.get("failed", 0)
+                    + statuses.get("doing", 0)
+                )
+                + 1
             )
-            + 1
-        )
-        remaining = total - done
-        time_started = (
-            ProcrastinateEvent.objects.filter(job_id=parent_job.id)
-            .order_by("at")
-            .first()
-            .at.replace(tzinfo=pytz.utc)
-        )
-        time_so_far = datetime.now(pytz.utc) - time_started
-        duration_per_record = time_so_far / done
-        time_remaining = duration_per_record * remaining
-        estimated_finish_time = datetime.now() + time_remaining
 
-        return dict(
-            status="todo" if parent_job.status == "todo" else "doing",
-            id=request_id,
-            started_at=time_started,
-            estimated_seconds_remaining=time_remaining,
-            estimated_finish_time=estimated_finish_time,
-            seconds_per_record=duration_per_record.seconds,
-            total=total - 2,
-            done=done - 1,
-            remaining=remaining - 1,
-            succeeded=statuses.get("succeeded", 0),
-            failed=statuses.get("failed", 0),
-            doing=statuses.get("doing", 0),
-        )
+            time_started = (
+                ProcrastinateEvent.objects.filter(job_id=parent_job.id)
+                .order_by("at")
+                .first()
+                .at.replace(tzinfo=pytz.utc)
+            )
+
+            remaining = total - done
+        
+            time_so_far = datetime.now(pytz.utc) - time_started
+            duration_per_record = time_so_far / done
+            time_remaining = duration_per_record * remaining
+            estimated_finish_time = datetime.now() + time_remaining
+            
+        
+            # Log average number of member IDs (rows) per job
+            rows_per_job = total - 2
+            span.set_attribute("rows per job", rows_per_job)
+            
+            # Log time taken for each job
+            duration_per_job =  duration_per_record.total_seconds() * rows_per_job
+            span.set_attribute("duration per job in seconds", duration_per_job)
+
+            # Check for failed jobs and log the count
+            failed_jobs_count = statuses.get("failed", 0)
+            if failed_jobs_count > 0:
+                span.set_attribute("failed jobs count", failed_jobs_count)
+
+            return dict(
+                status="todo" if parent_job.status == "todo" else "doing",
+                id=request_id,
+                started_at=time_started,
+                estimated_seconds_remaining=time_remaining,
+                estimated_finish_time=estimated_finish_time,
+                seconds_per_record=duration_per_record.seconds,
+                total=total - 2,
+                done=done - 1,
+                remaining=remaining - 1,
+                succeeded=statuses.get("succeeded", 0),
+                failed=statuses.get("failed", 0),
+                doing=statuses.get("doing", 0),
+            )
+
 
     def get_update_mapping(self) -> list[UpdateMapping]:
         return ensure_list(self.update_mapping)
@@ -1653,14 +1692,22 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         except (UniqueViolation, IntegrityError):
             pass
 
-    async def schedule_refresh_all(self, request_id: str = None) -> int:
+    async def schedule_refresh_all(self, request_id: str = None, timestamp: float = None) -> int:
         try:
+            job_args = {
+                "external_data_source_id": str(self.id),
+                "request_id": request_id
+            }
+
+            if timestamp is not None:
+                job_args["timestamp"] = datetime.datetime.utcfromtimestamp(timestamp)
+
             return await refresh_all.configure(
                 # Dedupe `update_all` jobs for the same config
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"update_all_{str(self.id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
-            ).defer_async(external_data_source_id=str(self.id), request_id=request_id)
+            ).defer_async(**job_args)
         except (UniqueViolation, IntegrityError):
             pass
 
@@ -2094,18 +2141,8 @@ def clear_permissions_cache_intersecting_user(sender, instance, *args, **kwargs)
     for sharing_permission in sharing_permissions:
         cache.delete(sharing_permission.get_cache_key())
 
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
 
-# Removed Sentry-related imports
-
-provider = TracerProvider()
-# Removed SentrySpanProcessor and SentryPropagator
-trace.set_tracer_provider(provider)
-
-tracer = trace.get_tracer(__name__)
-
-class Report(PolymorphicModel):
+class Report(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organisation = models.ForeignKey(
         Organisation, on_delete=models.CASCADE, related_name="reports"
@@ -2117,13 +2154,10 @@ class Report(PolymorphicModel):
     last_update = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
-        with tracer.start_as_current_span("report_creation"):
-            # Log to console instead of sending to Sentry
-            print('creating a report', tracer)
-            if not self.slug:
-                self.slug = slugify(self.name)
-            super().save(*args, **kwargs)
-
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+       
     def __str__(self):
         return self.name
 
@@ -2470,12 +2504,3 @@ def update_apitoken_cache_on_save(sender, instance, *args, **kwargs):
 def update_apitoken_cache_on_delete(sender, instance, *args, **kwargs):
     refresh_tokens_cache()
 
-import time
-from opentelemetry import trace
-
-tracer = trace.get_tracer(__name__)
-
-with tracer.start_as_current_span("test_otel_span"):
-    print("Processing some data...")
-    # Simulate some processing
-    time.sleep(3)
