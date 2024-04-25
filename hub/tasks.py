@@ -8,6 +8,10 @@ from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
 
+import functools
+import os
+from opentelemetry.trace import Status, StatusCode
+
 # Setting up the tracer provider:
 trace.set_tracer_provider(TracerProvider())
 
@@ -16,7 +20,6 @@ tracer_provider = trace.get_tracer_provider()
 tracer_provider.add_span_processor(
     SimpleSpanProcessor(ConsoleSpanExporter())
 )
-import functools
 
 # Acquiring a tracer
 tracer = trace.get_tracer(__name__)
@@ -24,14 +27,28 @@ tracer = trace.get_tracer(__name__)
 from opentelemetry.trace import Status, StatusCode
 
 def telemetry_task(func):
-    @functools.wraps(func) 
+    @functools.wraps(func)
     async def wrapper(*args, **kwargs):
-        # Starting a new span for the task:
+        # Get CPU time before task execution
+        cpu_start = os.times()
+
         with tracer.start_as_current_span(f"Task: {func.__name__}") as span:
             try:
                 result = await func(*args, **kwargs)
+                
+                # Get CPU time after task execution
+                cpu_end = os.times()
+                
+                # Calculate the CPU time used during the task
+                user_cpu_time_used = cpu_end.user - cpu_start.user
+                system_cpu_time_used = cpu_end.system - cpu_start.system
+
+                # Set attributes for OpenTelemetry
                 span.set_attribute("task.status", "succeeded")
+                span.set_attribute("cpu.user_time", user_cpu_time_used)
+                span.set_attribute("cpu.system_time", system_cpu_time_used)
                 span.set_status(Status(StatusCode.OK))
+                
                 return result
             except Exception as e:
                 span.set_attribute("task.status", "failed")
