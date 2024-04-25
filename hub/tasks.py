@@ -118,9 +118,24 @@ async def import_many(
 
 @app.task(queue="index")
 @telemetry_task
-async def import_all(external_data_source_id: str, request_id: str = None):
+async def import_all(external_data_source_id: str, request_id: str = None, requested_at: str = None):
     from hub.models import ExternalDataSource
+    import datetime
 
-    await ExternalDataSource.deferred_import_all(
-        external_data_source_id=external_data_source_id, request_id=request_id
-    )
+    # Convert the requested_at ISO string to a datetime object
+    requested_time = datetime.datetime.fromisoformat(requested_at)
+    start_time = datetime.datetime.now(datetime.timezone.utc)
+
+    # Calculate the difference
+    initial_delay = start_time - requested_time
+
+    with tracer.start_as_current_span("Task: import_all") as span:
+        span.set_attribute("task.requested_at", requested_time)
+        span.set_attribute("task.start_time", start_time)
+        span.set_attribute("task.initial_delay_seconds", initial_delay.total_seconds())
+
+        await ExternalDataSource.deferred_import_all(
+            external_data_source_id=external_data_source_id, request_id=request_id
+        )
+
+        span.set_attribute("task.status", "completed")

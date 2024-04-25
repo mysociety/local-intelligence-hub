@@ -1697,14 +1697,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         except (UniqueViolation, IntegrityError):
             pass
 
-    async def schedule_import_all(self, request_id: str = None) -> int:
+    async def schedule_import_all(self, requested_at: str, request_id: str = None) -> int:
         try:
             return await import_all.configure(
                 # Dedupe `import_all` jobs for the same config
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"import_all_{str(self.id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
-            ).defer_async(external_data_source_id=str(self.id), request_id=request_id)
+            ).defer_async(external_data_source_id=str(self.id), request_id=request_id, requested_at=requested_at)
         except (UniqueViolation, IntegrityError):
             pass
 
