@@ -2134,7 +2134,7 @@ def clear_permissions_cache_intersecting_user(sender, instance, *args, **kwargs)
         cache.delete(sharing_permission.get_cache_key())
 
 
-class Report(models.Model):
+class Report(PolymorphicModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organisation = models.ForeignKey(
         Organisation, on_delete=models.CASCADE, related_name="reports"
