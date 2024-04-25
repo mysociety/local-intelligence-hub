@@ -4,8 +4,44 @@ from django.conf import settings
 
 from procrastinate.contrib.django import app
 
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
+
+# Setting up the tracer provider:
+trace.set_tracer_provider(TracerProvider())
+
+# Adding a SimpleSpanProcessor and ConsoleSpanExporter to the tracer provider:
+tracer_provider = trace.get_tracer_provider()
+tracer_provider.add_span_processor(
+    SimpleSpanProcessor(ConsoleSpanExporter())
+)
+import functools
+
+# Acquiring a tracer
+tracer = trace.get_tracer(__name__)
+
+from opentelemetry.trace import Status, StatusCode
+
+def telemetry_task(func):
+    @functools.wraps(func) 
+    async def wrapper(*args, **kwargs):
+        # Starting a new span for the task:
+        with tracer.start_as_current_span(f"Task: {func.__name__}") as span:
+            try:
+                result = await func(*args, **kwargs)
+                span.set_attribute("task.status", "succeeded")
+                span.set_status(Status(StatusCode.OK))
+                return result
+            except Exception as e:
+                span.set_attribute("task.status", "failed")
+                span.record_exception(e)
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+                raise e
+    return wrapper
 
 @app.task(queue="index")
+@telemetry_task
 async def refresh_one(external_data_source_id: str, member_id: str):
     from hub.models import ExternalDataSource
 
@@ -15,6 +51,7 @@ async def refresh_one(external_data_source_id: str, member_id: str):
 
 
 @app.task(queue="index", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
+@telemetry_task
 async def refresh_many(
     external_data_source_id: str, member_ids: list[str], request_id: str = None
 ):
@@ -28,6 +65,7 @@ async def refresh_many(
 
 
 @app.task(queue="index")
+@telemetry_task
 async def refresh_all(external_data_source_id: str, request_id: str = None):
     from hub.models import ExternalDataSource
 
@@ -48,6 +86,7 @@ async def refresh_webhooks(external_data_source_id: str, timestamp=None):
 
 
 @app.task(queue="index", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
+@telemetry_task
 async def import_many(
     external_data_source_id: str, member_ids: list[str], request_id: str = None
 ):
@@ -61,6 +100,7 @@ async def import_many(
 
 
 @app.task(queue="index")
+@telemetry_task
 async def import_all(external_data_source_id: str, request_id: str = None):
     from hub.models import ExternalDataSource
 
