@@ -1653,9 +1653,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     async def schedule_refresh_many(
         self, member_ids: list[str], request_id: str = None
     ) -> int:
+        start_time = datetime.now() 
         member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
-            return await refresh_many.configure(
+            result = await refresh_many.configure(
                 # Dedupe `update_many` jobs for the same config
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"update_many_{str(self.id)}_{member_ids_hash}",
@@ -1665,8 +1666,17 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 external_data_source_id=str(self.id),
                 member_ids=member_ids,
             )
+
+            end_time = datetime.now() 
+            duration = end_time - start_time
+            metrics.update_time_taken.record(duration.total_seconds())
+            return result
         except (UniqueViolation, IntegrityError):
             pass
+
+  
+         
+       
 
     async def schedule_refresh_all(self, request_id: str = None) -> int:
             try:
@@ -1682,9 +1692,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     async def schedule_import_many(
         self, member_ids: list[str], request_id: str = None
     ) -> int:
+        start_time = datetime.now() 
         member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
-            return await import_many.configure(
+            result = await import_many.configure(
                 # Dedupe `import_many` jobs for the same config
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"import_many_{str(self.id)}_{member_ids_hash}",
@@ -1694,9 +1705,15 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 member_ids=member_ids,
                 request_id=request_id,
             )
+            end_time = datetime.now() 
+            duration = end_time - start_time
+         
+            metrics.import_time_taken.record(duration.total_seconds())
+            return result
+        
         except (UniqueViolation, IntegrityError):
             pass
-
+        
     async def schedule_import_all(self, requested_at: str, request_id: str = None) -> int:
         try:
             return await import_all.configure(

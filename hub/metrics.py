@@ -24,3 +24,13 @@ update_rows_requested = jobs_meter.create_histogram(
     name="meep.jobs.update.rows_requested",
     description="measures the number of rows to update"
 )
+
+import_time_taken = jobs_meter.create_histogram(
+    name="meep.jobs.import.time_taken",
+    description="measures the duration of the import"
+)
+
+update_time_taken = jobs_meter.create_histogram(
+    name="meep.jobs.update.time_taken",
+    description="measures the duration of the update"
+)
