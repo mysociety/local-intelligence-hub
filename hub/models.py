@@ -39,11 +39,7 @@ from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
-
-from opentelemetry import trace
-from opentelemetry.propagate import set_global_textmap
-from opentelemetry.sdk.trace import TracerProvider
-from sentry_sdk.integrations.opentelemetry import SentrySpanProcessor, SentryPropagator
+from hub import metrics
 
 
 import utils as lih_utils
@@ -1012,90 +1008,66 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
     
 
-    # Add span and provider for sending to sentry  
-
-    provider = TracerProvider()
-    provider.add_span_processor(SentrySpanProcessor())
-    trace.set_tracer_provider(provider)
-    set_global_textmap(SentryPropagator())
-
-    tracer = trace.get_tracer(__name__)
 
 
     def get_scheduled_batch_job_progress(self, parent_job: ProcrastinateJob):
-        tracer = trace.get_tracer(__name__)
-        with tracer.start_as_current_span("Import/update job metrics") as span:
-            request_id = parent_job.args.get("request_id")
+        request_id = parent_job.args.get("request_id")
 
-            if request_id is None:
-                return None
+        if request_id is None:
+            return None
 
-            jobs = self.event_log_queryset().filter(args__request_id=request_id).all()
+        jobs = self.event_log_queryset().filter(args__request_id=request_id).all()
 
-            total = 2
-            statuses = dict()
-          
-
-            for job in jobs:
-                job_count = len(job.args.get("member_ids", []))
-                total += job_count
-                if statuses.get(job.status, None) is not None:
-                    statuses[job.status] += job_count
-                else:
-                    statuses[job.status] = job_count
-
-
-            done = (
-                int(
-                    statuses.get("succeeded", 0)
-                    + statuses.get("failed", 0)
-                    + statuses.get("doing", 0)
-                )
-                + 1
-            )
-
-            time_started = (
-                ProcrastinateEvent.objects.filter(job_id=parent_job.id)
-                .order_by("at")
-                .first()
-                .at.replace(tzinfo=pytz.utc)
-            )
-
-            remaining = total - done
+        total = 2
+        statuses = dict()
         
-            time_so_far = datetime.now(pytz.utc) - time_started
-            duration_per_record = time_so_far / done
-            time_remaining = duration_per_record * remaining
-            estimated_finish_time = datetime.now() + time_remaining
-            
-        
-            # Log average number of member IDs (rows) per job
-            rows_per_job = total - 2
-            span.set_attribute("rows per job", rows_per_job)
-            
-            # Log time taken for each job
-            duration_per_job =  duration_per_record.total_seconds() * rows_per_job
-            span.set_attribute("duration per job in seconds", duration_per_job)
 
-            # Check for failed jobs and log the count
-            failed_jobs_count = statuses.get("failed", 0)
-            if failed_jobs_count > 0:
-                span.set_attribute("failed jobs count", failed_jobs_count)
+        for job in jobs:
+            job_count = len(job.args.get("member_ids", []))
+            total += job_count
+            if statuses.get(job.status, None) is not None:
+                statuses[job.status] += job_count
+            else:
+                statuses[job.status] = job_count
 
-            return dict(
-                status="todo" if parent_job.status == "todo" else "doing",
-                id=request_id,
-                started_at=time_started,
-                estimated_seconds_remaining=time_remaining,
-                estimated_finish_time=estimated_finish_time,
-                seconds_per_record=duration_per_record.seconds,
-                total=total - 2,
-                done=done - 1,
-                remaining=remaining - 1,
-                succeeded=statuses.get("succeeded", 0),
-                failed=statuses.get("failed", 0),
-                doing=statuses.get("doing", 0),
+
+        done = (
+            int(
+                statuses.get("succeeded", 0)
+                + statuses.get("failed", 0)
+                + statuses.get("doing", 0)
             )
+            + 1
+        )
+
+        time_started = (
+            ProcrastinateEvent.objects.filter(job_id=parent_job.id)
+            .order_by("at")
+            .first()
+            .at.replace(tzinfo=pytz.utc)
+        )
+
+        remaining = total - done
+    
+        time_so_far = datetime.now(pytz.utc) - time_started
+        duration_per_record = time_so_far / done
+        time_remaining = duration_per_record * remaining
+        estimated_finish_time = datetime.now() + time_remaining
+
+        return dict(
+            status="todo" if parent_job.status == "todo" else "doing",
+            id=request_id,
+            started_at=time_started,
+            estimated_seconds_remaining=time_remaining,
+            estimated_finish_time=estimated_finish_time,
+            seconds_per_record=duration_per_record.seconds,
+            total=total - 2,
+            done=done - 1,
+            remaining=remaining - 1,
+            succeeded=statuses.get("succeeded", 0),
+            failed=statuses.get("failed", 0),
+            doing=statuses.get("doing", 0),
+        )
 
 
     def get_update_mapping(self) -> list[UpdateMapping]:
@@ -1617,6 +1589,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
         members = await external_data_source.fetch_all()
+        member_count = len(members)
+        metrics.update_rows_requested.record(member_count)
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
         for batch in batches:
             member_ids = [
@@ -1654,6 +1628,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
         members = await external_data_source.fetch_all()
+        member_count = len(members)
+        metrics.import_rows_requested.record(member_count)
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
         for batch in batches:
             member_ids = [
