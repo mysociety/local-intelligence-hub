@@ -496,9 +496,13 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
 
 
 class AreaType(models.Model):
-    VALID_AREA_TYPES = ["WMC", "WMC23"]
+    VALID_AREA_TYPES = ["WMC", "WMC23", "STC", "DIS"]
 
-    AREA_TYPES = [("westminster_constituency", "Westminster Constituency")]
+    AREA_TYPES = [
+        ("westminster_constituency", "Westminster Constituency"),
+        ("single_tier_council", "Single Tier Council"),
+        ("district_council", "District Council"),
+    ]
     name = models.CharField(max_length=50, unique=True)
     code = models.CharField(max_length=10, unique=True)
     area_type = models.CharField(max_length=50, choices=AREA_TYPES)

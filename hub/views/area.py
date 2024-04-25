@@ -3,6 +3,7 @@ from collections import defaultdict
 from django.db.models import Count
 from django.http import Http404, HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.utils.text import slugify
 from django.views.generic import DetailView, TemplateView, View
 
 from hub.mixins import TitleMixin
@@ -180,6 +181,21 @@ class AreaView(BaseAreaView):
             overlap_constituencies[0]["unchanged"] = True
         return overlap_constituencies
 
+    def get_area_country(self, indexed_categories):
+        country = None
+        if indexed_categories.get("country", None) is not None:
+            try:
+                country = indexed_categories["country"]["data"].value()
+            except (ValueError, KeyError):
+                country = None
+        elif indexed_categories.get("council_country", None) is not None:
+            try:
+                country = indexed_categories["council_country"]["data"].value()
+            except (ValueError, KeyError):
+                country = None
+
+        return country
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
@@ -192,7 +208,14 @@ class AreaView(BaseAreaView):
         ):
             if context["overlap_constituencies"][0].get("unchanged", False):
                 context["overlap_unchanged"] = True
-        context["area_type"] = str(self.object.area_type)
+        area_type = self.object.area_type
+        context["area_type"] = area_type.code
+        context["is_westminster_cons"] = True
+        if area_type.area_type != "Westminster Constituency":
+            context["is_westminster_cons"] = False
+
+        context["slug"] = slugify(self.object.name)
+
         if context["area_type"] == "WMC23":
             context["PPCs"] = [
                 {
@@ -327,33 +350,34 @@ class AreaView(BaseAreaView):
             "constituency_foe_group_count": "constituency_foe_groups",
             "power_postcodes_count": "power_postcodes",
             "tcc_open_letter_signatories_count": "tcc_open_letter_signatories",
+            "council_net_zero_date": "council_net_zero_details",
+            "council_action_scorecard_total": "council_action_scorecard_sections",
         }
 
         context["is_related_category"] = context["related_categories"].values()
 
         categories_to_remove = defaultdict(list)
 
-        try:
-            context["country"] = indexed_categories["country"]["data"].value()
-        except (ValueError, KeyError):
-            context["country"] = None
+        area_country = self.get_area_country(indexed_categories)
 
-        if context["country"] is not None:
-            for category, items in categories.items():
-                for data_set in items:
-                    if (
-                        context["related_categories"].get(data_set["db_name"], None)
-                        is not None
-                    ):
-                        data_item = indexed_categories[
-                            context["related_categories"][data_set["db_name"]]
-                        ]
-                        if len(data_item) > 0:
-                            data_set["related_category"] = data_item
-                            categories_to_remove["movement"].append(data_item)
+        for category, items in categories.items():
+            for data_set in items:
+                if (
+                    context["related_categories"].get(data_set["db_name"], None)
+                    is not None
+                ):
+                    data_item = indexed_categories[
+                        context["related_categories"][data_set["db_name"]]
+                    ]
+                    if len(data_item) > 0:
+                        data_set["related_category"] = data_item
+                        categories_to_remove[data_set["category"]].append(data_item)
 
-                    if context["country"] in data_set["excluded_countries"]:
-                        categories_to_remove[category].append(data_set)
+                if (
+                    area_country is not None
+                    and area_country in data_set["excluded_countries"]
+                ):
+                    categories_to_remove[category].append(data_set)
 
         for category_name, items in categories_to_remove.items():
             for item in items:
@@ -387,7 +411,7 @@ class AreaSearchView(TemplateView):
             elif kwargs.get("pc"):
                 gss_codes = mapit.postcode_point_to_gss_codes(kwargs["pc"])
 
-            areas = Area.objects.filter(gss__in=gss_codes, area_type__code="WMC")
+            areas = Area.objects.filter(gss__in=gss_codes)
             areas = list(areas)
         except (
             NotFoundException,
@@ -422,29 +446,65 @@ class AreaSearchView(TemplateView):
             context["areas"] = areas
             context["error"] = error
         elif search == "":
-            context["error"] = "Please enter a constituency name, MP name, or postcode."
+            context[
+                "error"
+            ] = "Please enter a postcode, or the name of a constituency, MP, or local authority"
         else:
-            areas_raw = Area.objects.filter(
-                name__icontains=search, area_type__code="WMC"
-            )
-            people_raw = Person.objects.filter(person_type="MP", name__icontains=search)
+            areas_raw = Area.objects.filter(name__icontains=search)
+            people_raw = Person.objects.filter(name__icontains=search)
 
-            areas = list(areas_raw)
+            context["areas"] = list(areas_raw)
             for person in people_raw:
-                areas.append(person.area)
+                context["areas"].append(person.area)
 
-            if len(areas) == 0:
+            if len(context["areas"]) == 0:
                 context[
                     "error"
-                ] = f"Sorry, we can’t find a UK location matching “{search}”. Try a nearby town or city?"
-            else:
-                for area in areas:
-                    try:
-                        area.mp = Person.objects.get(area=area, end_date__isnull=True)
-                    except Person.DoesNotExist:
-                        pass
-                areas.sort(key=lambda area: area.name)
-                context["areas"] = areas
+                ] = f"Sorry, we can’t find any matches for “{search}”. Try a nearby town or city?"
+
+        if context.get("error") is not None:
+            return context
+
+        if context["areas"] is not None and len(context["areas"]):
+            # Add MPs and PPCs to areas
+            for area in context["areas"]:
+                try:
+                    area.mp = Person.objects.get(
+                        area=area, end_date__isnull=True, person_type="MP"
+                    )
+                except Person.DoesNotExist:
+                    pass
+
+                try:
+                    area.ppcs = Person.objects.filter(
+                        area=area, end_date__isnull=True, person_type="PPC"
+                    )
+                except Person.DoesNotExist:
+                    pass
+
+            # Sort then split by area_type
+            context["areas"].sort(key=lambda area: area.name)
+            context["areas_by_type"] = [
+                {
+                    "type": "current-constituencies",
+                    "areas": [],
+                },
+                {
+                    "type": "future-constituencies",
+                    "areas": [],
+                },
+                {
+                    "type": "local-authorities",
+                    "areas": [],
+                },
+            ]
+            for area in context["areas"]:
+                if area.area_type.code == "WMC":
+                    context["areas_by_type"][0]["areas"].append(area)
+                elif area.area_type.code == "WMC23":
+                    context["areas_by_type"][1]["areas"].append(area)
+                else:
+                    context["areas_by_type"][2]["areas"].append(area)
 
         return context
 

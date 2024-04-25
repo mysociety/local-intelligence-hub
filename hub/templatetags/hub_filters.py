@@ -35,9 +35,13 @@ def splitlines(value):
 
 @register.filter(name="highlight")
 def highlight(text, search):
-    rgx = re.compile(re.escape(search), re.IGNORECASE)
-    html = rgx.sub(lambda m: f"<mark>{m.group()}</mark>", text)
-    return mark_safe(html)
+    try:
+        rgx = re.compile(re.escape(search), re.IGNORECASE)
+        html = rgx.sub(lambda m: f"<mark>{m.group()}</mark>", text)
+        return mark_safe(html)
+    except TypeError:
+        # search is probably None
+        return text
 
 
 @register.filter

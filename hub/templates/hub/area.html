@@ -120,9 +120,11 @@
                 </a>
             </li>
           {% endif %}
-            <li class="nav-item">
-                <a class="nav-link" href="#mp">{% if area_type == "WMC23" %}PPCs{% else %}MP{% endif %}</a>
-            </li>
+            {% if is_westminster_cons %}
+              <li class="nav-item">
+                  <a class="nav-link" href="#mp">{% if area_type == "WMC23" %}PPCs{% else %}MP{% endif %}</a>
+              </li>
+            {% endif %}
             <li class="nav-item">
                 <a class="nav-link" href="#opinion">Public opinion</a>
             </li>
@@ -144,6 +146,7 @@
             <p class="d-flex flex-wrap align-items-center text-muted">Tap the {% include 'hub/includes/icons/heart-empty.html' %} icon on any dataset to add it to your {% include 'hub/includes/icons/heart-empty.html' %} Favourites tab.</p>
         </aside>
 
+        {% if is_westminster_cons %}
         <section class="mb-5 mb-lg-6 area-section" id="mp">
             {% if area_type == "WMC" %}
             {% if no_mp %}
@@ -229,6 +232,9 @@
                       {% endfor %}
                       {% endwith %}
                         </ul>
+                      {% endif %}
+                      {% if mp.mp_standing_down_2024 == 'Standing Down' %}
+                        <p>This MP will be standing down at the next election</p>
                       {% endif %}
                       {% if mp.cen_member or mp.nzsg_member %}
                         <h4 class="h6 text-muted fw-bold">Political groups</h4>
@@ -380,6 +386,7 @@
             {% endfor %}
             {% endif %}
         </section>
+        {% endif %}
 
         {% if categories.opinion %}
         <section class="mb-5 mb-lg-6 area-section" id="opinion">
@@ -468,6 +475,8 @@
               {% for dataset in categories.place %}
                 {% if dataset.is_range and dataset.data|length > 9 %}
                 <div class="card dataset-card area-data--lg {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %} area-data--featured{% endif %}">
+                {% elif dataset.related_category and dataset.related_category.is_range %}
+                <div class="card dataset-card area-data--md {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %} area-data--featured{% endif %}">
                 {% elif dataset.is_range or dataset.data_type == "json" %}
                 <div class="card dataset-card area-data--md {% if dataset.is_favourite or dataset.data.is_favourite %}dataset-card--favourite{% endif %} {% if dataset.featured %} area-data--featured{% endif %}">
                 {% else %}
@@ -490,39 +499,40 @@
                             <span>{{ dataset.data.value.link_text|safe }}</span>
                         </a>
                       {% elif dataset.data_type == "integer" %}
-                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value }}</p>
-                        {% if data.data.average %}
-                        <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }} national average</p>
+                        {% if dataset.subcategory == "date" %}
+                          <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value }}</p>
+                        {% else %}
+                          <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|intcomma }}</p>
+                        {% endif %}
+                        {% if dataset.data.average is not None %}
+                          {% if dataset.subcategory == "date" %}
+                            <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat:"0" }} national average</p>
+                          {% else %}
+                            <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat:"-1g" }} national average</p>
+                          {% endif %}
+                        {% endif %}
+                        {% if dataset.related_category %}
+                          {% include 'hub/area/_json_data.html' with dataset=dataset.related_category %}
                         {% endif %}
                       {% elif dataset.is_range and dataset.data|length > 0 %}
-                        <table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">
-                          <thead>
-                              <tr>
-                                  <th scope="col"></th>
-                                  <th scope="col" data-color="#068670">This area</th>
-                                  <th scope="col" data-color="#ced4da">National average</th>
-                              </tr>
-                          </thead>
-                          <tbody>
-                            {% for row in dataset.data %}
-                              <tr>
-                                <th>
-                                  {{ row.label|html_format_dataset_name|safe }}
-                                </th>
-                                <td>{{ row.value|floatformat }}%</td>
-                                <td>{{ row.average|floatformat }}%</td>
-                              </tr>
-                              {% endfor %}
-                          </tbody>
-                        </table>
+                          {% include 'hub/area/_range_data.html' with dataset=dataset %}
                       {% else %}
                         <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|floatformat }}%</p>
+                        {% if dataset.data.average is not None %}
                         <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }}% national average</p>
+                        {% endif %}
+                        {% if dataset.related_category and dataset.related_category.is_range %}
+                          {% include 'hub/area/_range_data.html' with dataset=dataset.related_category %}
+                        {% endif %}
                       {% endif %}
                     </div>
                     <div class="card-footer">
                       <p class="card-text">
+                        {% if dataset.name.lower == "council climate action scorecard" %}
+                          <a href="{{ dataset.source_url }}councils/{{ slug }}/">{{ dataset.source_name }}</a>
+                        {% else %}
                           <a href="{{ dataset.source_url }}">{{ dataset.source_name }}</a>
+                          {% endif %}
                         {% if dataset.auto_conversion_disclaimer %}
                           <a href="{% url 'future_constituencies' %}">{{ dataset.auto_conversion_disclaimer|safe }}</a>
                         {% endif %}
@@ -580,7 +590,7 @@
                         <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }}% national average</p>
                       {% elif dataset.data_type == "integer" %}
                         {% if dataset.related_category %}
-                        <p class="card-text mb-3 display-6 lh-1 text-primary">{{ dataset.data.value }}</p>
+                        <p class="card-text mb-3 display-6 lh-1 text-primary">{{ dataset.data.value|intcomma }}</p>
                         <ul class="tag-cloud">
                             {% if dataset.related_category.subcategory == "groups" %}
                               {% for data in dataset.related_category.data.value %} 
@@ -601,8 +611,8 @@
                             {% endif %}
                         </ul>
                         {% else %}
-                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value }}</p>
-                        <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat }} national average</p>
+                        <p class="card-text mb-0 display-6 lh-1 text-primary">{{ dataset.data.value|intcomma }}</p>
+                        <p class="card-text mt-2 text-muted">{{dataset.data.average|floatformat:"-1g" }} national average</p>
                         {% endif %}
                       {% elif dataset.is_range %}
                         <table class="table mb-0">
@@ -662,18 +672,25 @@
     </div>
 </div>
 
-{% if not user.is_authenticated %}
-<div class="py-4 py-lg-5 bg-yellow-100 border-top d-print-none">
+<aside class="py-4 py-lg-5 bg-yellow-100 border-top d-print-none">
     <div class="container">
-        <aside class="d-flex align-items-center">
-            {% include 'hub/includes/icons/tcc-heart.html' with width="3em" height="3em" classes="me-3 me-lg-4 flex-shrink-0 flex-grow-0" %}
-            <div>
-                <h2 class="h4">Climate Coalition member?</h2>
-                <p class="mb-0"><a href="{% url 'login' %}">Sign in</a> or <a href="{% url 'signup' %}">request an account</a> to access exclusive members-only MRP and local movement data.</p>
+        <div class="row">
+          {% if not user.is_authenticated %}
+            <div class="col-lg-5 me-lg-auto">
+                <div class="d-flex align-items-center">
+                    {% include 'hub/includes/icons/tcc-heart.html' with width="3em" height="3em" classes="me-3 me-lg-4 flex-shrink-0 flex-grow-0" %}
+                    <div>
+                        <h2 class="h4">Climate Coalition member?</h2>
+                        <p class="mb-0"><a href="{% url 'login' %}">Sign in</a> or <a href="{% url 'signup' %}">request an account</a> to access exclusive members-only MRP and local movement data.</p>
+                    </div>
+                </div>
             </div>
-        </aside>
+          {% endif %}
+            <div class="col-lg-6">
+                {% include 'hub/includes/mailing-list-form.html' with classes="js-collapsable-mailing-list-form" %}
+            </div>
+        </div>
     </div>
-</div>
-{% endif %}
+</aside>
 
 {% endblock %}

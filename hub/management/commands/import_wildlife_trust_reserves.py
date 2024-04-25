@@ -6,10 +6,13 @@ import pandas as pd
 
 from hub.models import DataSet
 
-from .base_importers import BaseConstituencyGroupListImportCommand
+from .base_importers import (
+    BaseConstituencyGroupListImportCommand,
+    MultipleAreaTypesMixin,
+)
 
 
-class Command(BaseConstituencyGroupListImportCommand):
+class Command(MultipleAreaTypesMixin, BaseConstituencyGroupListImportCommand):
     help = "Import data about wildlife trust reserves in each constituency"
     message = "Importing wildlife trusts reserves data"
 
@@ -62,11 +65,21 @@ class Command(BaseConstituencyGroupListImportCommand):
 
     group_data_type = "wildlife_trusts_reserves"
     count_data_type = "wildlife_trusts_reserves_count"
-    use_gss = True
+
+    uses_gss = True
+    area_types = ["WMC", "WMC23", "STC", "DIS"]
+    cons_col_map = {
+        "WMC": "WMC",
+        "WMC23": "WMC23",
+        "STC": "STC",
+        "DIS": "DIS",
+    }
 
     def get_df(self):
         return pd.read_csv(
-            self.data_file, names=["group_name", "trust", "url", "postcode", "gss"]
+            self.data_file,
+            names=["group_name", "trust", "url", "postcode", "gss", *self.area_types],
+            header=0,
         )
 
     def get_group_json(self, row):

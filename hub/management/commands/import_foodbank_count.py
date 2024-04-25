@@ -2,10 +2,10 @@ from django.conf import settings
 
 from hub.models import AreaData, DataSet
 
-from .base_importers import BaseConstituencyCountImportCommand
+from .base_importers import BaseConstituencyCountImportCommand, MultipleAreaTypesMixin
 
 
-class Command(BaseConstituencyCountImportCommand):
+class Command(MultipleAreaTypesMixin, BaseConstituencyCountImportCommand):
     help = "Import data about number of foodbanks of per constituency"
 
     message = "importing consituency foodbank count"
@@ -13,6 +13,14 @@ class Command(BaseConstituencyCountImportCommand):
     uses_gss = True
     cons_col = "gss"
     data_file = settings.BASE_DIR / "data" / "foodbanks_per_constituency.csv"
+
+    area_types = ["WMC", "WMC23", "STC", "DIS"]
+    cons_col_map = {
+        "WMC": "WMC",
+        "WMC23": "WMC23",
+        "STC": "STC",
+        "DIS": "DIS",
+    }
 
     defaults = {
         "label": "Number of Trussell Trust foodbanks",

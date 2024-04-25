@@ -1,0 +1,25 @@
+{% if type == "current-constituencies" %}
+  {% if areas|length == 1 %}
+    <h2 class="h4 text-primary">Current constituency</h2>
+    <p class="text-muted">This is the constituency currently represented by an MP in UK Parliament.</p>
+  {% else %}
+    <h2 class="h4 text-primary">Current constituencies</h2>
+    <p class="text-muted">These constituencies are the areas which MPs currently represent in UK Parliament.</p>
+  {% endif %}
+{% elif type == "future-constituencies" %}
+  {% if areas|length == 1 %}
+    <h2 class="h4 text-primary">Future constituency</h2>
+    <p class="text-muted">This is the constituency in which parliamentary candidates will soon be standing for election.</p>
+  {% else %}
+    <h2 class="h4 text-primary">Future constituencies</h2>
+    <p class="text-muted">These are the constituencies in which parliamentary candidates will soon be standing for election.</p>
+  {% endif %}
+{% elif type == "local-authorities" %}
+  {% if areas|length == 1 %}
+    <h2 class="h4 text-primary">Local authority</h2>
+    <p class="text-muted">The local authority has powers over local services like education, planning, and transport.</p>
+  {% else %}
+    <h2 class="h4 text-primary">Local authorities</h2>
+    <p class="text-muted">These bodies have powers over local services like education, planning, and transport.</p>
+  {% endif %}
+{% endif %}
