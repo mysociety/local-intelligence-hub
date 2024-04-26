@@ -49,6 +49,7 @@ const TEST_DATA_SOURCE = gql`
         label
         value
         description
+        editable
       }
       geographyColumn,
       geographyColumnType

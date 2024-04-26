@@ -211,7 +211,7 @@ export function UpdateMappingForm({
                                   <SelectContent>
                                     <SelectGroup>
                                       <SelectLabel>Choose a field to update</SelectLabel>
-                                      {fieldDefinitions?.map((field) => (
+                                      {fieldDefinitions?.filter(f => f.editable).map((field) => (
                                         <SelectItem key={field.value} value={field.value}>
                                           <DataSourceFieldLabel
                                             fieldDefinition={field}

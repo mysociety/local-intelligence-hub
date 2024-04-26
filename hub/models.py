@@ -973,6 +973,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         label: Optional[str]
         description: Optional[str]
         external_id: Optional[str]
+        editable: Optional[bool] = True
 
     fields = JSONField(blank=True, null=True, default=list)
     # Auto-updates
@@ -2276,32 +2277,32 @@ class MailchimpSource(ExternalDataSource):
             self.FieldDefinition(
                 label="Email address",
                 value="email_address",
-                description="Email address",
+                editable=False
             ),
             self.FieldDefinition(
                 label="Phone number",
                 value="PHONE",
-                description="Phone number",
+                editable=False
             ),
             self.FieldDefinition(
                 label="First name",
                 value="FNAME",
-                description="First name",
+                editable=False
             ),
             self.FieldDefinition(
                 label="Last name",
                 value="LNAME",
-                description="Last name",
+                editable=False
             ),
             self.FieldDefinition(
                 label="Address",
                 value="ADDRESS.addr1",
-                description="Address first line",
+                editable=False
             ),
             self.FieldDefinition(
                 label="Zip",
                 value="ADDRESS.zip",
-                description="Zipcode or Postcode",
+                editable=False
             ),
         ]
         merge_fields = self.client.lists.merge_fields.all(self.list_id, get_all=True)

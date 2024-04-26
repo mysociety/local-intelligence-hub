@@ -18,9 +18,11 @@ def fn_field(**kwargs):
     return strawberry_django.field(resolver=fn_resolver, **kwargs)
 
 
-def dict_resolver(root, info: Info):
-    return root.get(info.python_name, None)
+def dict_resolver(default=None):
+    def _resolver(root, info: Info):
+        return root.get(info.python_name, default)
+    return _resolver
 
 
-def dict_key_field(**kwargs):
-    return strawberry_django.field(resolver=dict_resolver, **kwargs)
+def dict_key_field(default=None, **kwargs):
+    return strawberry_django.field(resolver=dict_resolver(default), **kwargs)
