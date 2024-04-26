@@ -96,17 +96,7 @@ export default function Page({
     defaultValues: {
       geographyColumnType: PostcodesIoGeographyTypes.Postcode,
       geographyColumn: externalDataSourceType === "mailchimp" ? 'ADDRESS.zip' : '',
-      dataType: context.dataType,
-      name: '',
-      airtable: {
-        apiKey: '',
-        baseId: '',
-        tableId: '',
-      },
-      mailchimp: {
-        apiKey: '',
-        listId: ''
-      }
+      dataType: context.dataType
     },
   });
 
@@ -179,21 +169,27 @@ export default function Page({
   useGuessedField('lastNameField', ["last name", "family name", "surname", "second name"])
 
   async function submitTestConnection(formData: FormInputs) {
-    console.log('form data', formData)
     if (!formData[externalDataSourceType]) {
       throw Error("Need some CRM connection details to proceed!")
     }
-    // Get the nested data source key e.g. Airtable or Mailchimp
-    const dataSourceKey = externalDataSourceType
+    // To avoid mutation of the form data
+    const genericCRMData = Object.assign({}, formData)
+    const CRMSpecificData = formData[externalDataSourceType]
 
-    const dataSourceValue = formData[dataSourceKey] || {};
-   
-    const input = {
-      "type": dataSourceKey, 
-      "apiKey": dataSourceValue?.apiKey || '',
-      "baseId": "baseId" in dataSourceValue ? dataSourceValue.baseId : '',
-      "tableId": "tableId" in dataSourceValue ? dataSourceValue.tableId : '',
-      "listId": "listId" in dataSourceValue ? dataSourceValue.listId : '',
+    // Remove specific CRM data from the generic data
+    // TODO: make this less fragile. Currently it assumes any nested
+    // object is specific to a CRM.
+    for (const key of Object.keys(formData)) {
+      if (typeof formData[key as keyof FormInputs] === "object") {
+        delete genericCRMData[key as keyof FormInputs]
+      }
+    }
+
+    let input: TestDataSourceQueryVariables = {
+      [externalDataSourceType]: {
+        ...genericCRMData,
+        ...CRMSpecificData
+      }
     }
 
     {
@@ -617,6 +613,66 @@ export default function Page({
     );
   }
 
+  if (externalDataSourceType === "actionnetwork") {
+    return (
+      <div className="space-y-7">
+        <header>
+          <h1 className="text-hLg">Connecting to your Action Network instance</h1>
+          <p className="mt-6 text-meepGray-400 max-w-lg">
+            In order to send data across to your Action Network instance, we{"'"}ll need a few
+            details that gives us permission to make updates to your members.
+          </p>
+        </header>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(submitTestConnection)}
+            className="space-y-7 max-w-lg"
+          >
+            <div className='text-hSm'>Connection details</div>
+            <FormField
+              control={form.control}
+              name="actionnetwork.apiKey"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Action Network API key</FormLabel>
+                  <FormControl>
+                    {/* @ts-ignore */}
+                    <Input placeholder="X...-usXX" {...field} required />
+                  </FormControl>
+                  <FormDescription>
+                    Your API keys and sync features can be managed from the {'"'}API & Sync{'"'} link available in the {'"'}Start Organizing{'"'} menu.
+                    <a
+                      className="underline"
+                      target="_blank"
+                      href="https://actionnetwork.org/docs/"
+                    >
+                      Read more.
+                    </a>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex flex-row gap-x-4">
+              <Button
+                variant="outline"
+                type="reset"
+                onClick={() => {
+                  router.back();
+                }}
+              >
+                Back
+              </Button>
+              <Button type="submit" variant={"reverse"} disabled={testSourceResult.loading}>
+                Test connection
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
+    );
+  }
 
   return null;
 }

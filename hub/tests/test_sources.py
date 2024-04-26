@@ -38,30 +38,37 @@ class TestExternalDataSource:
 
         self.source: models.ExternalDataSource = self.create_test_source()
 
-        self.source.teardown_webhooks()
+        if self.source.automated_webhooks:
+            self.source.teardown_webhooks()
 
     def tearDown(self) -> None:
-        for record_id, source in self.records_to_delete:
-            source.delete_one(record_id)
-        self.source.teardown_webhooks()
+        try:
+            for record_id, source in self.records_to_delete:
+                source.delete_one(record_id)
+        except NotImplementedError:
+            # Not all sources support deletion.
+            print("Warning: deletion not implemented for source", self.source.crm_type)
+            pass
+        if self.source.automated_webhooks:
+            self.source.teardown_webhooks()
         return super().tearDown()
 
     def create_test_record(self, record: models.ExternalDataSource.CUDRecord):
         record = self.source.create_one(record)
-        self.records_to_delete.append((record["id"], self.source))
+        self.records_to_delete.append((self.source.get_record_id(record), self.source))
         return record
 
     def create_many_test_records(
         self, records: List[models.ExternalDataSource.CUDRecord]
     ):
         records = self.source.create_many(records)
-        self.records_to_delete += [(record["id"], self.source) for record in records]
+        self.records_to_delete += [(self.source.get_record_id(record), self.source) for record in records]
         return records
 
     def create_custom_layer_airtable_records(self, records: any):
         records = self.custom_data_layer.table.batch_create(records)
         self.records_to_delete += [
-            (record["id"], self.custom_data_layer) for record in records
+            (self.custom_data_layer.get_record_id(record), self.custom_data_layer) for record in records
         ]
         return records
 
@@ -70,7 +77,18 @@ class TestExternalDataSource:
     def test_source(self):
         self.assertTrue(self.source.healthcheck())
 
+    def test_field_definitions(self: TestCase):
+        if self.source.introspect_fields:
+            field_defs = self.source.field_definitions()
+            self.assertIsNotNone(
+                next(filter(lambda x: x.get("label", x["value"]) == "mayoral region", field_defs), None)
+            )
+        else:
+            self.assertRaises(NotImplementedError, self.source.field_definitions)
+
     async def test_webhooks(self):
+        if not self.source.automated_webhooks:
+            return self.skipTest("Webhooks not automated")
         self.source.teardown_webhooks()
         try:
             self.source.webhook_healthcheck()
@@ -191,7 +209,7 @@ class TestExternalDataSource:
             ]
         )
         # Test this functionality
-        records = await self.source.fetch_many([record["id"] for record in records])
+        records = await self.source.fetch_many([self.source.get_record_id(record) for record in records])
         # Check
         assert len(records) == 2
         # Check the email field instead of postcode, because Mailchimp doesn't set
@@ -219,7 +237,9 @@ class TestExternalDataSource:
             )
         )
         # Test this functionality
-        await self.source.refresh_one(record)
+        await self.source.refresh_one(record, update_kwargs=dict(
+            action_network_background_processing=False
+        ))
         # Check
         record = await self.source.fetch_one(self.source.get_record_id(record))
         self.assertEqual(
@@ -312,9 +332,11 @@ class TestExternalDataSource:
             ]
         )
         # Test this functionality
-        await self.source.refresh_many(records)
+        await self.source.refresh_many(records, update_kwargs=dict(
+            action_network_background_processing=False
+        ))
         # Check
-        records = await self.source.fetch_many([record["id"] for record in records])
+        records = await self.source.fetch_many([self.source.get_record_id(record) for record in records])
         assert len(records) == 2
         for record in records:
             if (
@@ -466,6 +488,32 @@ class TestMailchimpSource(TestExternalDataSource, TestCase):
                     "source_path": "parliamentary_constituency_2025",
                     # 10 characters and uppercase for Mailchimp custom fields
                     "destination_column": "CONSTITUEN",
+                },
+                {
+                    "source": str(self.custom_data_layer.id),
+                    "source_path": "mayoral region",
+                    "destination_column": "mayoral region",
+                },
+            ],
+        )
+        return self.source
+
+
+class TestActionNetworkSource(TestExternalDataSource, TestCase):
+    def create_test_source(self):
+        self.source = models.ActionNetworkSource.objects.create(
+            name="Test AN",
+            data_type=models.ActionNetworkSource.DataSourceType.MEMBER,
+            organisation=self.organisation,
+            api_key=settings.TEST_ACTIONNETWORK_MEMBERLIST_API_KEY,
+            geography_column="postal_addresses[0].postal_code",
+            geography_column_type=models.MailchimpSource.PostcodesIOGeographyTypes.POSTCODE,
+            auto_update_enabled=True,
+            update_mapping=[
+                {
+                    "source": "postcodes.io",
+                    "source_path": "parliamentary_constituency_2025",
+                    "destination_column": "constituency",
                 },
                 {
                     "source": str(self.custom_data_layer.id),

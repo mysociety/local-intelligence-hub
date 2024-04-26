@@ -23,17 +23,6 @@ from hub.graphql.types import model_types, public_queries
 logger = logging.getLogger(__name__)
 
 
-@strawberry.input
-class TestDataSourceInput:
-    type: str
-    api_key: str
-    # For Mailchimp
-    list_id: Optional[str] = None
-    # For Airtable
-    base_id: Optional[str] = None
-    table_id: Optional[str] = None
-
-
 @strawberry.type
 class Query(UserQueries):
     memberships: List[model_types.Membership] = strawberry_django.field(
@@ -103,16 +92,19 @@ class Query(UserQueries):
 
     @strawberry.field
     def test_data_source(
-        self, info: strawberry.types.Info, input: TestDataSourceInput
+        self, info: strawberry.types.Info, input: mutation_types.CreateExternalDataSourceInput
     ) -> model_types.ExternalDataSource:
-        if input.type == "airtable":
-            return models.AirtableSource(
-                api_key=input.api_key, base_id=input.base_id, table_id=input.table_id
-            )
-        elif input.type == "mailchimp":
-            return models.MailchimpSource(api_key=input.api_key, list_id=input.list_id)
-        else:
-            raise ValueError("Unsupported data source type")
+        source_models = {
+            "airtable": models.AirtableSource,
+            "mailchimp": models.MailchimpSource,
+            "actionnetwork": models.ActionNetworkSource,
+        }
+
+        for key, model in source_models.items():
+            source_input = getattr(input, key, None)
+            if source_input is not None:
+                return model(**source_input)
+        raise ValueError("Unsupported data source type")
 
     list_api_tokens = public_queries.list_api_tokens
 

@@ -252,10 +252,16 @@ class MailChimpSourceInput(ExternalDataSourceInput):
     list_id: auto
 
 
+@strawberry_django.input(models.ActionNetworkSource, partial=True)
+class ActionNetworkSourceInput(ExternalDataSourceInput):
+    api_key: auto
+
+
 @strawberry.input()
 class CreateExternalDataSourceInput:
     mailchimp: Optional[MailChimpSourceInput] = None
     airtable: Optional[AirtableSourceInput] = None
+    actionnetwork: Optional[ActionNetworkSourceInput] = None
 
 
 @strawberry.type
@@ -298,6 +304,22 @@ def create_mailchimp_source(
     )
 
 
+def create_actionnetwork_source(
+    info: Info, data: CreateExternalDataSourceInput
+) -> models.ExternalDataSource:
+    return get_or_create_with_computed_args(
+        models.ActionNetworkSource,
+        info,
+        find_filter={
+            "api_key": data.actionnetwork.api_key
+        },
+        data=data.actionnetwork,
+        computed_args=lambda info, data, model: {
+            "organisation": get_or_create_organisation_for_source(info, data)
+        },
+    )
+
+
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
 def create_external_data_source(
     info: Info, input: CreateExternalDataSourceInput
@@ -305,6 +327,7 @@ def create_external_data_source(
     source_creators = {
         "airtable": create_airtable_source,
         "mailchimp": create_mailchimp_source,
+        "actionnetwork": create_actionnetwork_source
     }
 
     creator_fn = None
@@ -312,6 +335,7 @@ def create_external_data_source(
         source_input = getattr(input, key, None)
         if source_input is not None:
             creator_fn = fn
+            break
 
     if creator_fn is None:
         return CreateExternalDataSourceOutput(

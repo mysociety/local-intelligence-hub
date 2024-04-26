@@ -24,7 +24,6 @@ django-polymorphic = "^3.1.0"
 pyairtable = "^2.3.0.post1"
 procrastinate = {version = "2.0.0b4", extras = ["django"]}
 psycopg = "^3.1.18"
-aiopg = "^1.4.0"
 strawberry-graphql-django = "^0.32.1"
 strawberry-django-auth = "^0.376.5"
 django-cors-headers = "^4.3.1"
@@ -46,6 +45,11 @@ django-vectortiles = { git = "https://github.com/submarcos/django-vectortiles.gi
 django-cryptography = "^1.1"
 posthog = "^3.5.0"
 mailchimp-marketing = {git = "https://github.com/mailchimp/mailchimp-marketing-python.git"}
+simplejson = "^3.19.2"
+urllib3 = "^2.2.1"
+requests-oauthlib = "^2.0.0"
+requests = "^2.31.0"
+petl = "^1.7.15"
 
 [tool.poetry.dev-dependencies]
 django-debug-toolbar = "^4.3"

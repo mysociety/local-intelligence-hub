@@ -31,6 +31,7 @@ from django_choices_field import TextChoicesField
 from django_cryptography.fields import encrypt
 from django_jsonform.models.fields import JSONField
 from mailchimp3 import MailChimp
+from hub.parsons.action_network.action_network import ActionNetwork
 from polymorphic.models import PolymorphicModel
 from procrastinate.contrib.django.models import ProcrastinateEvent, ProcrastinateJob
 from psycopg.errors import UniqueViolation
@@ -1285,7 +1286,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         "MatchedMember", {"member": dict, "update_fields": dict[str, any]}
     )
 
-    async def update_one(self, mapped_record: MappedMember):
+    async def update_one(self, mapped_record: MappedMember, **kwargs):
         """
         Append data for one member to the table.
         """
@@ -1293,7 +1294,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             "Update one not implemented for this data source type."
         )
 
-    async def update_many(self, mapped_records: list[MappedMember]):
+    async def update_many(self, mapped_records: list[MappedMember], **kwargs):
         """
         Append mapped data to the table.
         """
@@ -1543,20 +1544,20 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             *[self.map_one(member, loaders, mapping=mapping) for member in members]
         )
 
-    async def refresh_one(self, member_id: Union[str, any]):
+    async def refresh_one(self, member_id: Union[str, any], update_kwargs={}):
         if len(self.get_update_mapping()) == 0:
             return
         loaders = await self.get_loaders()
         mapping = self.get_update_mapping()
         mapped_record = await self.map_one(member_id, loaders, mapping=mapping)
-        return await self.update_one(mapped_record=mapped_record)
+        return await self.update_one(mapped_record, **update_kwargs)
 
-    async def refresh_many(self, member_ids: list[Union[str, any]]):
+    async def refresh_many(self, member_ids: list[Union[str, any]], update_kwargs={}):
         if len(self.get_update_mapping()) == 0:
             return
         loaders = await self.get_loaders()
         mapped_records = await self.map_many(member_ids, loaders)
-        return await self.update_many(mapped_records=mapped_records)
+        return await self.update_many(mapped_records=mapped_records, **update_kwargs)
 
     # UI
 
@@ -1949,16 +1950,16 @@ class AirtableSource(ExternalDataSource):
     def get_record_dict(self, record):
         return record["fields"]
 
-    async def update_one(self, mapped_record):
+    async def update_one(self, mapped_record, **kwargs):
         return self.table.update(
-            mapped_record["member"]["id"], mapped_record["update_fields"]
+            self.get_record_id(mapped_record["member"]), mapped_record["update_fields"]
         )
 
-    async def update_many(self, mapped_records):
+    async def update_many(self, mapped_records, **kwargs):
         return self.table.batch_update(
             [
                 {
-                    "id": mapped_record["member"]["id"],
+                    "id": self.get_record_id(mapped_record["member"]),
                     "fields": mapped_record["update_fields"],
                 }
                 for mapped_record in mapped_records
@@ -2347,23 +2348,23 @@ class MailchimpSource(ExternalDataSource):
                 (
                     result
                     for result in results
-                    if (result["id"] == key or result["email_address"] == key)
+                    if (self.get_record_id(result) == key or result["email_address"] == key)
                 ),
                 None,
             )
             for key in keys
         ]
 
-    async def update_many(self, mapped_records):
+    async def update_many(self, mapped_records, **kwargs):
         for mapped_record in mapped_records:
             try:
                 await self.update_one(mapped_record)
             except Exception as e:
-                subscriber_hash = mapped_record["member"]["id"]
+                subscriber_hash = self.get_record_id(mapped_record["member"])
                 logger.error(f"Error updating Mailchimp record {subscriber_hash}: {e}")
 
-    async def update_one(self, mapped_record):
-        subscriber_hash = mapped_record["member"]["id"]
+    async def update_one(self, mapped_record, **kwargs):
+        subscriber_hash = self.get_record_id(mapped_record["member"])
         # Have to get the existing member to update the merge fields (the API does not patch the object)
         # TODO: save all the merge fields in our database so we don't have to do this?
         existing_member = await self.fetch_one(subscriber_hash)
@@ -2419,6 +2420,170 @@ class MailchimpSource(ExternalDataSource):
             if match:
                 filtered_records.append(record)
         return filtered_records
+
+
+class ActionNetworkSource(ExternalDataSource):
+    """
+    An Action Network member list.
+    """
+
+    crm_type = "actionnetwork"
+    api_key = encrypt(
+        models.CharField(
+            max_length=250,
+            unique=True
+        )
+    )
+
+    automated_webhooks = False
+    introspect_fields = True
+
+    class Meta:
+        verbose_name = "Action Network list"
+
+    postcode_field = "postal_addresses[0].postal_code"
+    first_name_field = "given_name"
+    last_name_field = "family_name"
+    full_name_field = None
+    email_field = "email_addresses[0].address"
+    phone_field = "phone_numbers[0].number"
+    address_field = "postal_addresses[0].address_lines[0]"
+
+    @cached_property
+    def client(self) -> ActionNetwork:
+        client = ActionNetwork(api_token=self.api_key)
+        return client
+
+    def healthcheck(self):
+        # Checks if the Mailchimp list is accessible
+        list = self.client.get_custom_fields()
+        if list is not None:
+            return True
+        return False
+
+    # https://actionnetwork.org/docs/v2/#resources
+    def get_record_id(self, record):
+        ids: list[str] = record["identifiers"]
+        for id in ids:
+            if "action_network:" in id:
+                return id
+        return ids[0]
+
+    def get_record_field(self, record, field: str):
+        field_options = [
+            field,
+            f"custom_fields.{field}"
+        ]
+
+        value = None
+
+        for field in field_options:
+            try:
+                value = get(record, field)
+                if value:
+                    break
+            except KeyError:
+                pass
+
+        return value
+
+    def field_definitions(self):
+        """
+        Mailchimp subscriber built-in fields.
+        """
+        fields = [
+            self.FieldDefinition(
+                label="Email address",
+                value="email_addresses[0].address",
+                editable=False
+            ),
+            self.FieldDefinition(
+                label="Phone number",
+                value="phone_numbers[0].number",
+                editable=False
+            ),
+            self.FieldDefinition(
+                label="Given name",
+                value="given_name",
+                editable=False
+            ),
+            self.FieldDefinition(
+                label="Family name",
+                value="family_name",
+                editable=False
+            ),
+            self.FieldDefinition(
+                label="Address",
+                value="postal_addresses[0].address_lines[0]",
+                editable=False
+            ),
+            self.FieldDefinition(
+                label="Postal code",
+                value="postal_addresses[0].postal_code",
+                editable=False
+            ),
+        ]
+        custom_fields = self.client.get_custom_fields()
+        for field in custom_fields["action_network:custom_fields"]:
+            fields.append(
+                self.FieldDefinition(
+                    label=field["name"],
+                    value=field["name"],
+                    description=field.get("notes", None),
+                    external_id=field["numeric_id"],
+                )
+            )
+        return fields
+
+    async def fetch_all(self):
+        # Fetches all members in a list and returns their email addresses
+        list = self.client.get_people()
+        return list.to_dicts()
+
+    async def fetch_many(self, member_ids: list[str]):
+        # TODO: is there a more efficient request to get many members?
+        osdi_filter_str = " or ".join([f"identifier eq '{member_id}'" for member_id in member_ids])
+        return self.client.get_people(filter=osdi_filter_str)
+
+    async def fetch_one(self, member_id: str):
+        # Fetches a single list member by their unique member ID
+        # Mailchimp member IDs are typically the MD5 hash of the lowercase version of the member's email address
+        id = member_id.replace("action_network:", "")
+        member = self.client.get_person(id)
+        return member
+
+    def update_many(self, mapped_records, **kwargs):
+        updated_records = []
+        for record in mapped_records:
+            updated_records.append(self.update_one(record, **kwargs))
+        return updated_records
+
+    async def update_one(self, mapped_record, action_network_background_processing=True, **kwargs):
+        id = self.get_record_id(mapped_record["member"])
+        # TODO: also add standard UK geo data
+        return self.client.update_person(id, action_network_background_processing, custom_fields=mapped_record["update_fields"])
+
+    def delete_one(self, record_id):
+        raise NotImplementedError("Deleting a person is not allowed via the API. DELETE requests will return an error.")
+
+    def create_one(self, record: ExternalDataSource.CUDRecord):
+        record = self.client.upsert_person(
+            email_address=record["email"],
+            postal_addresses=[{
+                "address_lines": [record["data"].get("addr1")],
+                "locality": record["data"].get("city"),
+                "region": record["data"].get("state"),
+                "country": record["data"].get("country"),
+                "postal_code": record["postcode"],
+            }]
+        )
+        return record
+
+    def create_many(self, records):
+        created_records = []
+        for record in records:
+            created_records.append(self.create_one(record))
+        return created_records
 
 
 class MapReport(Report, Analytics):

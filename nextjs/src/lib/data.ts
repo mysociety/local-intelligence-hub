@@ -19,12 +19,12 @@ export const externalDataSourceOptions: Record<string, {
     supported: true
   },
   actionNetwork: {
-    key: "action-network",
+    key: "actionnetwork",
     modelName: "actionNetworkSource",
     name: "Action Network",
     logo: ActionNetworkLogo,
     screenshot: "/actionNetwork-screenshot.png",
-    supported: false
+    supported: true
   },
   mailchimp: {
     key: "mailchimp",
