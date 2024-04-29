@@ -11,7 +11,7 @@ from mailchimp_marketing.api_client import ApiClientError
 
 from hub.forms import MailingListSignupForm
 from hub.mixins import TitleMixin
-from hub.models import Area, DataSet
+from hub.models import Area, AreaType, DataSet
 
 
 class NotFoundPageView(TitleMixin, TemplateView):
@@ -62,6 +62,11 @@ class SourcesView(TitleMixin, TemplateView):
         }
 
         for dataset in DataSet.objects.all().order_by("label"):
+            # MP datasets are associated with a Person not an Area,
+            # so need to default them to WMC.
+            areas_available = dataset.areas_available.all() or [
+                AreaType.objects.get(code="WMC")
+            ]
             categories[dataset.category or "mp"]["datasets"].append(
                 {
                     "name": dataset.name,
@@ -72,6 +77,7 @@ class SourcesView(TitleMixin, TemplateView):
                     "source_label": dataset.source_label,
                     "release_date": dataset.release_date,
                     "is_public": dataset.is_public,
+                    "areas_available": areas_available,
                 }
             )
 
