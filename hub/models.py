@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from operator import itemgetter
 
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -611,6 +612,19 @@ class CommonData(models.Model):
     @property
     def is_url(self):
         return self.data_type.is_url
+
+    def _sorted_json(self, key):
+        if not self.is_json:
+            return None
+
+        data = sorted(self.json, key=itemgetter(key))
+        return data
+
+    def sorted_groups(self):
+        return self._sorted_json("group_name")
+
+    def sorted_json(self):
+        return self._sorted_json("name")
 
     class Meta:
         abstract = True

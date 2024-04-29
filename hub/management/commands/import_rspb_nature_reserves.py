@@ -45,7 +45,7 @@ class Command(MultipleAreaTypesMixin, BaseConstituencyGroupListImportCommand):
     count_defaults = {
         "label": "Number of RSPB Reserves",
         "data_type": "integer",
-        "category": "place",
+        "category": "movement",
         "release_date": "September 2023",
         "source_label": "Data from the RSPB.",
         "source": "https://opendata-rspb.opendata.arcgis.com/datasets/6076715cb76d4c388fa38b87db7d9d24/explore",

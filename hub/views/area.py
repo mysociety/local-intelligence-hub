@@ -342,6 +342,8 @@ class AreaView(BaseAreaView):
             "constituency_foe_group_count": "constituency_foe_groups",
             "power_postcodes_count": "power_postcodes",
             "tcc_open_letter_signatories_count": "tcc_open_letter_signatories",
+            "wildlife_trusts_reserves_count": "wildlife_trusts_reserves",
+            "rspb_reserves_count": "rspb_reserves",
             "council_net_zero_date": "council_net_zero_details",
             "council_action_scorecard_total": "council_action_scorecard_sections",
         }
@@ -373,7 +375,8 @@ class AreaView(BaseAreaView):
 
         for category_name, items in categories_to_remove.items():
             for item in items:
-                categories[category_name].remove(item)
+                if item in categories[category_name]:
+                    categories[category_name].remove(item)
 
         context["categories"] = categories
         context["indexed_categories"] = indexed_categories

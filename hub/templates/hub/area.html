@@ -593,7 +593,7 @@
                         <p class="card-text mb-3 display-6 lh-1 text-primary">{{ dataset.data.value|intcomma }}</p>
                         <ul class="tag-cloud">
                             {% if dataset.related_category.subcategory == "groups" %}
-                              {% for data in dataset.related_category.data.value %} 
+                              {% for data in dataset.related_category.data.sorted_groups %} 
                                 {% if data.url %}
                                   <li><a href="{{ data.url }}" class="tag" title="{{ data.label }}">{{ data.group_name }}</a></li>
                                 {% else %}
@@ -601,7 +601,7 @@
                                 {% endif %}
                               {% endfor %}
                             {% else %}
-                              {% for data in dataset.related_category.data.value %} 
+                              {% for data in dataset.related_category.data.sorted_json %} 
                                 {% if data.url %}
                                   <li><a href="{{ data.url }}" class="tag" title="{{ data.label }}">{{ data.name }}</a></li>
                                 {% else %}

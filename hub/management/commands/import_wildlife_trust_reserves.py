@@ -39,7 +39,7 @@ class Command(MultipleAreaTypesMixin, BaseConstituencyGroupListImportCommand):
     count_defaults = {
         "label": "Number of Wildlife Trusts Reserves",
         "data_type": "integer",
-        "category": "place",
+        "category": "movement",
         "release_date": str(date.today()),
         "source_label": "Data from the Wildlife Trusts.",
         "source": "https://www.wildlifetrusts.org/",
