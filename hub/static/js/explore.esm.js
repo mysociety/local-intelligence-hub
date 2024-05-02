@@ -571,6 +571,7 @@ const app = createApp({
             a.download = "explore.csv"
             a.click()
             window.URL.revokeObjectURL(a.href)
+            trackEvent('explore_download_csv')
           }
 
           this.loading = false
