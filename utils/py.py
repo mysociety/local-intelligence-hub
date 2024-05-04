@@ -95,3 +95,18 @@ def trace(fn):
 
 pp = pprint.PrettyPrinter(indent=4)
 pr = pp.pprint
+
+
+def transform_dict_values_recursive(value, transform_value_fn = lambda v: v, delete_null_keys=False):
+    if isinstance(value, dict):
+        new_dict = {}
+        for key, v in value.items():
+            v_transformed = transform_dict_values_recursive(v, transform_value_fn, delete_null_keys)
+            if delete_null_keys is False or (delete_null_keys is True and v_transformed is not None):
+                print("setting", key, v_transformed, delete_null_keys, v_transformed is None)
+                new_dict[key] = v_transformed
+        return new_dict
+    elif isinstance(value, list):
+        return [transform_dict_values_recursive(v, transform_value_fn, delete_null_keys) for v in value]
+    else:
+        return transform_value_fn(value)

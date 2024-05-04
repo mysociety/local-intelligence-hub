@@ -2660,3 +2660,9 @@ def update_apitoken_cache_on_save(sender, instance, *args, **kwargs):
 @receiver(models.signals.post_delete, sender=APIToken)
 def update_apitoken_cache_on_delete(sender, instance, *args, **kwargs):
     refresh_tokens_cache()
+
+source_models = {
+    "airtable": AirtableSource,
+    "mailchimp": MailchimpSource,
+    "actionnetwork": ActionNetworkSource,
+}

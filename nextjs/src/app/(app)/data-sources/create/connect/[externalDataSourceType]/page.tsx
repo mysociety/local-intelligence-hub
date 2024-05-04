@@ -41,7 +41,7 @@ import { toastPromise } from "@/lib/toast";
 import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
 
 const TEST_DATA_SOURCE = gql`
-  query TestDataSource($input: TestDataSourceInput!) {
+  query TestDataSource($input: CreateExternalDataSourceInput!) {
     testDataSource(input: $input) {
       __typename
       crmType
@@ -95,7 +95,11 @@ export default function Page({
   const form = useForm<FormInputs>({
     defaultValues: {
       geographyColumnType: PostcodesIoGeographyTypes.Postcode,
-      geographyColumn: externalDataSourceType === "mailchimp" ? 'ADDRESS.zip' : '',
+      geographyColumn: externalDataSourceType === "mailchimp"
+        ? 'ADDRESS.zip' :
+        externalDataSourceType === "actionnetwork"
+        ? "postal_addresses[0].postal_code"
+        : '',
       dataType: context.dataType
     },
   });
@@ -185,7 +189,7 @@ export default function Page({
       }
     }
 
-    let input: TestDataSourceQueryVariables = {
+    let input: TestDataSourceQueryVariables['input'] = {
       [externalDataSourceType]: {
         ...genericCRMData,
         ...CRMSpecificData
@@ -637,7 +641,7 @@ export default function Page({
                   <FormLabel>Action Network API key</FormLabel>
                   <FormControl>
                     {/* @ts-ignore */}
-                    <Input placeholder="X...-usXX" {...field} required />
+                    <Input placeholder="52b...bce" {...field} required />
                   </FormControl>
                   <FormDescription>
                     Your API keys and sync features can be managed from the {'"'}API & Sync{'"'} link available in the {'"'}Start Organizing{'"'} menu.

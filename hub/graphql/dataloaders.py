@@ -12,6 +12,8 @@ from strawberry.types import Info
 from strawberry_django.fields.field import StrawberryDjangoField
 from strawberry_django_dataloaders import dataloaders, factories
 
+from hub.graphql.utils import graphql_type_to_dict
+
 
 class BasicFieldDataLoader(dataloaders.BaseDjangoModelDataLoader):
     field: str
@@ -145,11 +147,7 @@ class ReverseFKWithFiltersDataLoader(dataloaders.BasicReverseFKDataLoader):
     @classmethod
     @sync_to_async
     def load_fn(cls, keys: list[str]) -> list[list[DjangoModel]]:
-        unsanitised_filter_dict = strawberry.asdict(cls.filters)
-        filter_dict = {}
-        for key in unsanitised_filter_dict:
-            if unsanitised_filter_dict[key] is not strawberry.UNSET:
-                filter_dict[key] = unsanitised_filter_dict[key]
+        filter_dict = graphql_type_to_dict(cls.filters)
         results = cls.model.objects.prefetch_related(*cls.prefetch).filter(
             **{f"{cls.reverse_path}__in": keys}
         )
