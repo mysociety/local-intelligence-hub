@@ -951,6 +951,14 @@ class MapReport(Report, Analytics):
     display_options: JSON
 
 
+def public_map_report(info: Info, org_slug: str, report_slug: str) -> models.MapReport:
+    return models.MapReport.objects.get(
+        organisation__slug=org_slug,
+        slug=report_slug,
+        public=True
+    )
+
+
 @strawberry_django.field()
 def area_by_gss(gss: str) -> models.Area:
     return models.Area.objects.get(gss=gss)

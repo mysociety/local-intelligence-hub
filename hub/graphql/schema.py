@@ -85,6 +85,9 @@ class Query(UserQueries):
     map_reports: List[model_types.MapReport] = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
+    public_map_report: model_types.MapReport = strawberry_django.field(
+        resolver=model_types.public_map_report
+    )
     area: Optional[model_types.Area] = model_types.area_by_gss
     dataSet: Optional[model_types.DataSet] = model_types.dataset_by_name
     mapping_sources: List[model_types.MappingSource] = strawberry_django.field(
