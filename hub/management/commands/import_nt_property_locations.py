@@ -92,9 +92,9 @@ class Command(MultipleAreaTypesMixin, BaseAreaImportCommand):
             json = []
             for index, row in data.iterrows():
                 p_data = row[["name"]].dropna().to_dict()
-                p_data[
-                    "url"
-                ] = f"https://www.nationaltrust.org.uk/site-search#gsc.q={row['name']}"
+                p_data["url"] = (
+                    f"https://www.nationaltrust.org.uk/site-search#gsc.q={row['name']}"
+                )
                 json.append(p_data)
 
             json_data, created = AreaData.objects.update_or_create(

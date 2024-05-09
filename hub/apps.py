@@ -1,6 +1,8 @@
+import sys
+
 from django.apps import AppConfig
 from django.db.utils import ProgrammingError
-import sys
+
 
 class HubConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
@@ -9,8 +11,8 @@ class HubConfig(AppConfig):
     def ready(self):
         try:
             from hub.models import refresh_tokens_cache
-            
-            if 'migrate' not in sys.argv:
+
+            if "migrate" not in sys.argv:
                 refresh_tokens_cache()
 
         except ProgrammingError:

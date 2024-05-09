@@ -15,8 +15,7 @@ class Migration(migrations.Migration):
             model_name="apitoken",
             name="token_new",
             field=hub.fields.EncryptedCharField(
-                default="default_value",
-                max_length=1500
-            )
+                default="default_value", max_length=1500
+            ),
         )
     ]

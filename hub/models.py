@@ -1231,16 +1231,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 update_data = {
                     **structured_data,
                     "postcode_data": postcode_data,
-                    "point": Point(
-                        postcode_data["longitude"],
-                        postcode_data["latitude"],
-                    )
-                    if (
-                        postcode_data is not None
-                        and "latitude" in postcode_data
-                        and "longitude" in postcode_data
-                    )
-                    else None,
+                    "point": (
+                        Point(
+                            postcode_data["longitude"],
+                            postcode_data["latitude"],
+                        )
+                        if (
+                            postcode_data is not None
+                            and "latitude" in postcode_data
+                            and "longitude" in postcode_data
+                        )
+                        else None
+                    ),
                 }
 
                 await GenericData.objects.aupdate_or_create(
@@ -2388,15 +2390,17 @@ class MailchimpSource(ExternalDataSource):
                 status="subscribed",
                 email_address=record["email"],
                 merge_fields={
-                    "ADDRESS": {
-                        "addr1": record["data"].get("addr1"),
-                        "city": record["data"].get("city"),
-                        "state": record["data"].get("state"),
-                        "country": record["data"].get("country"),
-                        "zip": record["postcode"],
-                    }
-                    if record["data"].get("addr1")
-                    else ""
+                    "ADDRESS": (
+                        {
+                            "addr1": record["data"].get("addr1"),
+                            "city": record["data"].get("city"),
+                            "state": record["data"].get("state"),
+                            "country": record["data"].get("country"),
+                            "zip": record["postcode"],
+                        }
+                        if record["data"].get("addr1")
+                        else ""
+                    )
                 },
             ),
         )

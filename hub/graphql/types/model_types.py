@@ -72,9 +72,9 @@ class QueueJob:
     scheduled_at: auto
     attempts: auto
     queueing_lock: auto
-    events: List[
-        "QueueEvent"
-    ] = strawberry_django_dataloaders.fields.auto_dataloader_field()
+    events: List["QueueEvent"] = (
+        strawberry_django_dataloaders.fields.auto_dataloader_field()
+    )
 
     @strawberry_django.field
     async def last_event_at(self, info) -> datetime:
@@ -261,9 +261,9 @@ class AreaType:
     area_type: auto
     description: auto
 
-    data_types: List[
-        DataType
-    ] = strawberry_django_dataloaders.fields.auto_dataloader_field()
+    data_types: List[DataType] = (
+        strawberry_django_dataloaders.fields.auto_dataloader_field()
+    )
 
 
 @strawberry_django.filter(models.CommonData, lookups=True)

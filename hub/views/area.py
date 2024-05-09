@@ -446,9 +446,9 @@ class AreaSearchView(TemplateView):
             context["areas"] = areas
             context["error"] = error
         elif search == "":
-            context[
-                "error"
-            ] = "Please enter a postcode, or the name of a constituency, MP, or local authority"
+            context["error"] = (
+                "Please enter a postcode, or the name of a constituency, MP, or local authority"
+            )
         else:
             areas_raw = Area.objects.filter(name__icontains=search)
             people_raw = Person.objects.filter(name__icontains=search)
@@ -458,9 +458,9 @@ class AreaSearchView(TemplateView):
                 context["areas"].append(person.area)
 
             if len(context["areas"]) == 0:
-                context[
-                    "error"
-                ] = f"Sorry, we can’t find any matches for “{search}”. Try a nearby town or city?"
+                context["error"] = (
+                    f"Sorry, we can’t find any matches for “{search}”. Try a nearby town or city?"
+                )
 
         if context.get("error") is not None:
             return context
