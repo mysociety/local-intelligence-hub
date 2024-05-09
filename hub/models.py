@@ -44,6 +44,7 @@ from strawberry.dataloader import DataLoader
 import utils as lih_utils
 from hub.analytics import Analytics
 from hub.enrichment.sources import builtin_mapping_sources
+from hub.fields import EncryptedCharField
 from hub.filters import Filter
 from hub.tasks import (
     import_all,
@@ -1861,10 +1862,13 @@ class AirtableSource(ExternalDataSource):
     """
 
     crm_type = "airtable"
-    api_key = models.CharField(
+    api_key = EncryptedCharField(
         max_length=250,
         help_text="Personal access token. Requires the following 4 scopes: data.records:read, data.records:write, schema.bases:read, webhook:manage",
+        null=True,
+        blank=True,
     )
+
     base_id = models.CharField(max_length=250)
     table_id = models.CharField(max_length=250)
     automated_webhooks = True
@@ -2160,9 +2164,8 @@ class MailchimpSource(ExternalDataSource):
     """
 
     crm_type = "mailchimp"
-    api_key = models.CharField(
-        max_length=250,
-        help_text="Mailchimp API key.",
+    api_key = EncryptedCharField(
+        max_length=250, help_text="Mailchimp API key.", null=True, blank=True
     )
     list_id = models.CharField(
         max_length=250,
