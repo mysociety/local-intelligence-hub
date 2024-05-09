@@ -51,6 +51,9 @@ env = environ.Env(
     TEST_MAILCHIMP_MEMBERLIST_API_KEY=(str, ""),
     TEST_MAILCHIMP_MEMBERLIST_AUDIENCE_ID=(str, ""),
     DJANGO_LOG_LEVEL=(str, "INFO"),
+    ENCRYPTION_SECRET_KEY=(str, ""),
+    ENVIRONMENT=(str, "development"),
+    SENTRY_DSN=(str, False),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -333,12 +336,12 @@ STRAWBERRY_DJANGO = {
 
 SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")
 
-environment = os.getenv("ENVIRONMENT")
+environment = env("ENVIRONMENT")
 
 # Configure Sentry only if in production
 if environment == "production":
     init(
-        dsn=os.getenv("SENTRY_DSN"),
+        dsn=env("SENTRY_DSN"),
         environment=environment,
         integrations=[DjangoIntegration()],
         traces_sample_rate=1.0,
@@ -366,4 +369,4 @@ CACHES = {
     }
 }
 
-ENCRYPTION_SECRET_KEY = os.getenv("ENCRYPTION_SECRET_KEY")
+ENCRYPTION_SECRET_KEY = env("ENCRYPTION_SECRET_KEY")
