@@ -336,7 +336,8 @@ class Command(BaseCommand):
 
     def check_for_duplicate_mps(self):
         duplicates = (
-            Person.objects.distinct()
+            Person.objects.filter(person_type="MP")
+            .distinct()
             .values("area_id")
             .annotate(area_count=Count("area_id"))
             .filter(area_count__gt=1)
