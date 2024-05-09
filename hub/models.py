@@ -28,7 +28,6 @@ import pandas as pd
 import pytz
 from asgiref.sync import async_to_sync, sync_to_async
 from django_choices_field import TextChoicesField
-from django_cryptography.fields import encrypt
 from django_jsonform.models.fields import JSONField
 from mailchimp3 import MailChimp
 from polymorphic.models import PolymorphicModel
@@ -2455,7 +2454,7 @@ class APIToken(models.Model):
     # So we can list tokens for a user
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name="tokens")
     # In case you need to copy/paste the token again
-    token = encrypt(models.CharField(max_length=1500))
+    token = EncryptedCharField(max_length=1500, default="default_value")
     expires_at = models.DateTimeField()
 
     # Unencrypted so we can check if the token is revoked or not
