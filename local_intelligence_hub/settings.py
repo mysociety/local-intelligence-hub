@@ -10,14 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
-import os
 from datetime import timedelta
 from pathlib import Path
 
 import environ
+import posthog
 from gqlauth.settings_type import GqlAuthSettings
-from sentry_sdk import init
-from sentry_sdk.integrations.django import DjangoIntegration
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -51,12 +49,36 @@ env = environ.Env(
     TEST_MAILCHIMP_MEMBERLIST_API_KEY=(str, ""),
     TEST_MAILCHIMP_MEMBERLIST_AUDIENCE_ID=(str, ""),
     DJANGO_LOG_LEVEL=(str, "INFO"),
-    ENCRYPTION_SECRET_KEY=(str, ""),
+    POSTHOG_API_KEY=(str, False),
+    POSTHOG_HOST=(str, False),
     ENVIRONMENT=(str, "development"),
     SENTRY_DSN=(str, False),
+    CRYPTOGRAPHY_KEY=(str, "somemadeupcryptographickeywhichshouldbereplaced"),
+    CRYPTOGRAPHY_SALT=(str, "somesaltthatshouldbereplaced"),
+    ENCRYPTION_SECRET_KEY=(str, "somemadeupcryptographickeywhichshouldbereplaced"),
+    ELECTORAL_COMMISSION_API_KEY=(str, ""),
+    MAILCHIMP_MYSOC_KEY=(str, ""),
+    MAILCHIMP_MYSOC_SERVER_PREFIX=(str, ""),
+    MAILCHIMP_MYSOC_LIST_ID=(str, ""),
+    MAILCHIMP_MYSOC_DATA_UPDATE_TAG=(str, ""),
+    MAILCHIMP_MYSOC_CLIMATE_INTEREST=(str, ""),
+    MAILCHIMP_TCC_KEY=(str, ""),
+    MAILCHIMP_TCC_SERVER_PREFIX=(str, ""),
+    MAILCHIMP_TCC_LIST_ID=(str, ""),
 )
+
 environ.Env.read_env(BASE_DIR / ".env")
 
+# Should be alphanumeric
+CRYPTOGRAPHY_KEY = env("CRYPTOGRAPHY_KEY")
+CRYPTOGRAPHY_SALT = env("CRYPTOGRAPHY_SALT")
+
+if CRYPTOGRAPHY_KEY is None:
+    raise ValueError("CRYPTOGRAPHY_KEY must be set")
+if CRYPTOGRAPHY_SALT is None:
+    raise ValueError("CRYPTOGRAPHY_SALT must be set")
+
+ELECTORAL_COMMISSION_API_KEY = env("ELECTORAL_COMMISSION_API_KEY")
 BASE_URL = env("BASE_URL")
 FRONTEND_BASE_URL = env("FRONTEND_BASE_URL")
 FRONTEND_SITE_TITLE = env("FRONTEND_SITE_TITLE")
@@ -82,6 +104,16 @@ TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME = env(
     "TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME"
 )
 TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY = env("TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY")
+
+# mailing list signup config
+MAILCHIMP_MYSOC_KEY = env("MAILCHIMP_MYSOC_KEY")
+MAILCHIMP_MYSOC_SERVER_PREFIX = env("MAILCHIMP_MYSOC_SERVER_PREFIX")
+MAILCHIMP_MYSOC_LIST_ID = env("MAILCHIMP_MYSOC_LIST_ID")
+MAILCHIMP_MYSOC_DATA_UPDATE_TAG = env("MAILCHIMP_MYSOC_DATA_UPDATE_TAG")
+MAILCHIMP_MYSOC_CLIMATE_INTEREST = env("MAILCHIMP_MYSOC_CLIMATE_INTEREST")
+MAILCHIMP_TCC_KEY = env("MAILCHIMP_TCC_KEY")
+MAILCHIMP_TCC_SERVER_PREFIX = env("MAILCHIMP_TCC_SERVER_PREFIX")
+MAILCHIMP_TCC_LIST_ID = env("MAILCHIMP_TCC_LIST_ID")
 
 # make sure CSRF checking still works behind load balancers
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -126,6 +158,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "procrastinate.contrib.django",
     "strawberry_django",
+    "django_cryptography",
 ]
 
 MIDDLEWARE = [
@@ -316,6 +349,13 @@ if DEBUG:
 IMPORT_UPDATE_ALL_BATCH_SIZE = 100
 IMPORT_UPDATE_MANY_RETRY_COUNT = 3
 
+
+def jwt_handler(token):
+    from hub.graphql.types.public_queries import decode_jwt
+
+    return decode_jwt(token)
+
+
 # TODO: Decrease this when we go public
 one_week = timedelta(days=7)
 GQL_AUTH = GqlAuthSettings(
@@ -324,6 +364,7 @@ GQL_AUTH = GqlAuthSettings(
         "frontend_site_title": FRONTEND_SITE_TITLE,
     },
     JWT_EXPIRATION_DELTA=one_week,
+    JWT_DECODE_HANDLER=jwt_handler,
     LOGIN_REQUIRE_CAPTCHA=False,
     REGISTER_REQUIRE_CAPTCHA=False,
     ALLOW_LOGIN_NOT_VERIFIED=True,
@@ -338,14 +379,31 @@ SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")
 
 environment = env("ENVIRONMENT")
 
+posthog.disabled = True
+
 # Configure Sentry only if in production
 if environment == "production":
-    init(
-        dsn=env("SENTRY_DSN"),
-        environment=environment,
-        integrations=[DjangoIntegration()],
-        traces_sample_rate=1.0,
-    )
+    if env("SENTRY_DSN") is not False:
+        import sentry_sdk
+        from sentry_sdk.integrations.django import DjangoIntegration
+        from sentry_sdk.integrations.strawberry import StrawberryIntegration
+
+        sentry_sdk.init(
+            dsn=env("SENTRY_DSN"),
+            environment=environment,
+            integrations=[
+                DjangoIntegration(),
+                StrawberryIntegration(async_execution=True),
+            ],
+            # Optionally, you can adjust the logging level
+            traces_sample_rate=1.0,  # Adjust sample rate as needed
+        )
+
+    if env("POSTHOG_API_KEY") is not False and env("POSTHOG_HOST") is not False:
+        posthog.disabled = False
+        posthog.project_api_key = env("POSTHOG_API_KEY")
+        posthog.host = env("POSTHOG_HOST")
+
 
 MINIO_STORAGE_ENDPOINT = env("MINIO_STORAGE_ENDPOINT")
 if MINIO_STORAGE_ENDPOINT is not False:
@@ -366,7 +424,14 @@ CACHES = {
         # TODO: Set up Redis for production
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         "LOCATION": "unique-snowflake",
-    }
+    },
+    # database cache for requests
+    "db": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "cache_table",
+        # 1 week
+        "TIMEOUT": 60 * 60 * 24 * 7,
+    },
 }
 
 ENCRYPTION_SECRET_KEY = env("ENCRYPTION_SECRET_KEY")

@@ -80,12 +80,12 @@ class FilterMixin:
         if mp_name:
             col_names.append("mp_name")
 
-        col_label_map = {"mp_name": "MP Name", "gss": "GSS"}
+        col_label_map = {"mp_name": "MP Name", "gss": "GSS", "url": "URL"}
 
         area_type = self.area_type()
 
         for col in col_names:
-            if col in ["mp_name", "gss"]:
+            if col in ["mp_name", "gss", "url"]:
                 columns.append({"name": col, "label": col_label_map[col]})
                 continue
 
@@ -159,6 +159,8 @@ class FilterMixin:
 
     def data(self, as_dict=False, mp_name=False):
         headers = ["Constituency Name"]
+        if self.area_type().area_type != "Westminster Constituency":
+            headers = ["Council Name"]
         headers += map(lambda f: f["dataset"].label, self.filters())
         headers += map(
             lambda f: f.get("header_label", f["label"]), self.columns(mp_name=mp_name)
@@ -181,13 +183,17 @@ class FilterMixin:
         shortcut if no filters/columns were requested: just return a single
         column of constituency names
         """
-        if not cols:
+        if not cols or len(cols) == 0:
             areas = Area.objects
             area_type = self.area_type()
             if area_type is not None:
                 areas = areas.filter(area_type=area_type)
             for area in areas.order_by("name"):
                 data.append([area.name])
+            if as_dict:
+                for area in Area.objects.filter(id__in=area_ids):
+                    area_data[area.name]["area"] = area
+                return area_data
             return data
 
         """
@@ -212,6 +218,12 @@ class FilterMixin:
             elif col["name"] == "gss":
                 for row in self.query():
                     area_data[row.name]["GSS"].append(row.gss)
+                continue
+            elif col["name"] == "url":
+                for row in self.query():
+                    area_data[row.name]["URL"].append(
+                        f"{self.request.build_absolute_uri(row.get_absolute_url())}"
+                    )
                 continue
 
             dataset = col["dataset"]

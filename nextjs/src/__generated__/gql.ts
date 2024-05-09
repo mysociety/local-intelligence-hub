@@ -31,9 +31,13 @@ const documents = {
     "\n  query ShareWithOrgPage($orgSlug: String!) {\n    allOrganisations(filters: {slug: $orgSlug}) {\n      id\n      name\n    }\n  }\n": types.ShareWithOrgPageDocument,
     "\n  query ListReports {\n    reports {\n      id\n      name\n      lastUpdate\n    }\n  }\n": types.ListReportsDocument,
     "\nmutation CreateMapReport($data: MapReportInput!) {\n  createMapReport(data: $data) {\n    ... on MapReport {\n      id\n    }\n    ... on OperationInfo {\n      messages {\n        message\n      }\n    }\n  }\n}\n": types.CreateMapReportDocument,
+    "\n  query DeveloperAPIContext {\n    listApiTokens {\n      token\n      signature\n      revoked\n      createdAt\n      expiresAt\n    }\n  }\n": types.DeveloperApiContextDocument,
+    "\n        mutation CreateToken {\n          createApiToken {\n            token\n            signature\n            revoked\n            createdAt\n            expiresAt\n          }\n        }\n      ": types.CreateTokenDocument,
+    "\n        mutation RevokeToken($signature: ID!) {\n          revokeApiToken(signature: $signature) {\n            signature\n            revoked\n          }\n        }\n      ": types.RevokeTokenDocument,
     "\n  mutation Verify($token: String!) {\n    verifyAccount(token: $token) {\n      errors\n      success\n    }\n  }\n": types.VerifyDocument,
     "\n  query Example {\n    myOrganisations {\n      id\n      name\n    }\n  }\n": types.ExampleDocument,
     "\n  mutation Login($username: String!, $password: String!) {\n    tokenAuth(username: $username, password: $password) {\n      errors\n      success\n      token {\n        token\n        payload {\n          exp\n        }\n      }\n    }\n  }\n": types.LoginDocument,
+    "\n  mutation ResetPassword($email: String!) {\n    requestPasswordReset(email: $email) {\n      errors\n      success\n    }\n  }\n": types.ResetPasswordDocument,
     "\n  mutation Register($email: String!, $password1: String!, $password2: String!, $username: String!) {\n    register(email: $email, password1: $password1, password2: $password2, username: $username) {\n      errors\n      success\n    }\n  }\n": types.RegisterDocument,
     "\n  query ListExternalDataSources {\n    myOrganisations {\n      id\n      externalDataSources {\n        id\n      }\n    }\n  }\n": types.ListExternalDataSourcesDocument,
     "\n  query GetMapReportName($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n    }\n  }\n": types.GetMapReportNameDocument,
@@ -50,7 +54,7 @@ const documents = {
     "\n  query ExternalDataSourceExternalDataSourceCard($ID: ID!) {\n    externalDataSource(pk: $ID) {\n      ...DataSourceCard\n    }\n  }\n  \n": types.ExternalDataSourceExternalDataSourceCardDocument,
     "\n  mutation TriggerFullUpdate($externalDataSourceId: String!) {\n    triggerUpdate(externalDataSourceId: $externalDataSourceId) {\n      id\n      externalDataSource {\n        jobs {\n          status\n          id\n          taskName\n          args\n          lastEventAt\n        }\n        id\n        name\n        crmType\n      }\n    }\n  }\n": types.TriggerFullUpdateDocument,
     "\n  query ConstituencyStatsOverview ($reportID: ID!) {\n    mapReport(pk: $reportID) {\n      id\n      importedDataCountByConstituency {\n        label\n        gss\n        count\n        gssArea {\n          name\n          fitBounds\n          mp: person(filters:{personType:\"MP\"}) {\n            id\n            name\n            photo {\n              url\n            }\n            party: personDatum(filters:{\n              dataType_Name: \"party\"\n            }) {\n              name: data\n            }\n          }\n          lastElection {\n            stats {\n              date\n              majority\n              electorate\n              firstPartyResult {\n                party\n                shade\n                votes\n              }\n              secondPartyResult {\n                party\n                shade\n                votes\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n": types.ConstituencyStatsOverviewDocument,
-    "\n  query EnrichmentLayers {\n    externalDataSources {\n      id\n      name\n      geographyColumn\n      geographyColumnType\n      dataType\n      crmType\n      fieldDefinitions {\n        label\n        value\n        description\n      }\n    }\n  }\n": types.EnrichmentLayersDocument,
+    "\n  query EnrichmentLayers {\n    mappingSources {\n      slug\n      name\n      author\n      description\n      descriptionUrl\n      sourcePaths {\n        label\n        value\n        description\n      }\n      # For custom data sources, get some useful data\n      externalDataSource {\n        crmType\n      }\n    }\n  }\n": types.EnrichmentLayersDocument,
     "\n  query GetMemberList {\n    myOrganisations {\n      externalDataSources(filters: { dataType: MEMBER }) {\n        id\n        name\n        importedDataCount\n        crmType\n        dataType\n      }\n      sharingPermissionsFromOtherOrgs {\n        externalDataSource {\n          id\n          name\n          importedDataCount\n          crmType\n          dataType\n          organisation {\n            name\n          }\n        }\n      }\n    }\n  }\n": types.GetMemberListDocument,
     "\nquery MapReportLayerGeoJSONPoint($genericDataId: String!) {\n  importedDataGeojsonPoint(genericDataId: $genericDataId) {\n    id\n    type\n    geometry {\n      type\n      coordinates\n    }\n    properties {\n      id\n      lastUpdate\n      name\n      phone\n      email\n      postcodeData {\n        postcode\n      }\n      json\n      remoteUrl\n      dataType {\n        dataSet {\n          externalDataSource {\n            name\n          }\n        }\n      }\n    }\n  }\n}\n": types.MapReportLayerGeoJsonPointDocument,
     "\n  query MapReportLayerAnalytics($reportID: ID!) {\n    mapReport(pk: $reportID) {\n      id\n      layers {\n        id\n        name\n        source {\n          id\n          organisation {\n            name\n          }\n        }\n      }\n    }\n  }\n": types.MapReportLayerAnalyticsDocument,
@@ -151,6 +155,18 @@ export function gql(source: "\nmutation CreateMapReport($data: MapReportInput!) 
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function gql(source: "\n  query DeveloperAPIContext {\n    listApiTokens {\n      token\n      signature\n      revoked\n      createdAt\n      expiresAt\n    }\n  }\n"): (typeof documents)["\n  query DeveloperAPIContext {\n    listApiTokens {\n      token\n      signature\n      revoked\n      createdAt\n      expiresAt\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n        mutation CreateToken {\n          createApiToken {\n            token\n            signature\n            revoked\n            createdAt\n            expiresAt\n          }\n        }\n      "): (typeof documents)["\n        mutation CreateToken {\n          createApiToken {\n            token\n            signature\n            revoked\n            createdAt\n            expiresAt\n          }\n        }\n      "];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n        mutation RevokeToken($signature: ID!) {\n          revokeApiToken(signature: $signature) {\n            signature\n            revoked\n          }\n        }\n      "): (typeof documents)["\n        mutation RevokeToken($signature: ID!) {\n          revokeApiToken(signature: $signature) {\n            signature\n            revoked\n          }\n        }\n      "];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function gql(source: "\n  mutation Verify($token: String!) {\n    verifyAccount(token: $token) {\n      errors\n      success\n    }\n  }\n"): (typeof documents)["\n  mutation Verify($token: String!) {\n    verifyAccount(token: $token) {\n      errors\n      success\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -160,6 +176,10 @@ export function gql(source: "\n  query Example {\n    myOrganisations {\n      i
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  mutation Login($username: String!, $password: String!) {\n    tokenAuth(username: $username, password: $password) {\n      errors\n      success\n      token {\n        token\n        payload {\n          exp\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation Login($username: String!, $password: String!) {\n    tokenAuth(username: $username, password: $password) {\n      errors\n      success\n      token {\n        token\n        payload {\n          exp\n        }\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation ResetPassword($email: String!) {\n    requestPasswordReset(email: $email) {\n      errors\n      success\n    }\n  }\n"): (typeof documents)["\n  mutation ResetPassword($email: String!) {\n    requestPasswordReset(email: $email) {\n      errors\n      success\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -227,7 +247,7 @@ export function gql(source: "\n  query ConstituencyStatsOverview ($reportID: ID!
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  query EnrichmentLayers {\n    externalDataSources {\n      id\n      name\n      geographyColumn\n      geographyColumnType\n      dataType\n      crmType\n      fieldDefinitions {\n        label\n        value\n        description\n      }\n    }\n  }\n"): (typeof documents)["\n  query EnrichmentLayers {\n    externalDataSources {\n      id\n      name\n      geographyColumn\n      geographyColumnType\n      dataType\n      crmType\n      fieldDefinitions {\n        label\n        value\n        description\n      }\n    }\n  }\n"];
+export function gql(source: "\n  query EnrichmentLayers {\n    mappingSources {\n      slug\n      name\n      author\n      description\n      descriptionUrl\n      sourcePaths {\n        label\n        value\n        description\n      }\n      # For custom data sources, get some useful data\n      externalDataSource {\n        crmType\n      }\n    }\n  }\n"): (typeof documents)["\n  query EnrichmentLayers {\n    mappingSources {\n      slug\n      name\n      author\n      description\n      descriptionUrl\n      sourcePaths {\n        label\n        value\n        description\n      }\n      # For custom data sources, get some useful data\n      externalDataSource {\n        crmType\n      }\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

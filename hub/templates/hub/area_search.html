@@ -7,13 +7,13 @@
 <div class="py-5">
     <div class="container mt-lg-3">
 
-        <h1 class="mb-4 text-primary">Search by location</h1>
-        <label class="form-label" for="search">Enter a constituency name, MP name, or postcode</label>
+        <h1 class="mb-4 text-primary">Search for a location</h1>
+        <label class="form-label" for="search">Enter a postcode, or the name of a constituency, MP, or local authority</label>
         <form class="row mt-2 mb-2 js-homepage-search" style="max-width: 30rem;" action="{% url 'area_search' %}">
             <div class="col">
                 <div class="search-input search-input-lg">
                     {% include 'hub/includes/icons/search.html' %}
-                    <input name="search" value="{{ search }}" type="search" id="search" class="form-control form-control-lg {% if error %}is-invalid{% endif %}">
+                    <input name="search" value="{{ search|default_if_none:"" }}" type="search" id="search" class="form-control form-control-lg {% if error %}is-invalid{% endif %}">
                 </div>
               {% if error %}
                 <div class="invalid-feedback d-block fs-6 mt-2">
@@ -25,24 +25,46 @@
                 <button type="submit" class="btn btn-primary btn-lg">Search</button>
             </div>
         </form>
-        <a class="js-geolocate d-none d-flex align-items-center btn btn-link px-0" href="#">
+        <a class="js-geolocate d-none d-flex align-items-center btn btn-link px-0" href=".">
             {% include 'hub/includes/icons/geolocate.html' with classes="me-2" %}
             Use my current location
         </a>
 
       {% if areas %}
-        <h2 class="mt-5 mb-4 text-primary">{{ areas|length }} matching locations</h2>
-      {% for area in areas %}
-        <div class="card shadow-sm mb-3 mb-md-4" style="max-width: 30em">
-            <div class="card-body">
-                <h3 class="card-title mb-3"><a href="{{ area.get_absolute_url }}" class="stretched-link">{{ area.name|highlight:search }}</a></h3>
-                <div class="d-flex align-items-center">
-                    {% include 'hub/includes/person-photo.html' with person=area.mp width="32" height="32" %}
-                    <p class="mb-0 ms-2 text-muted">{{ area.mp.name|highlight:search }}, MP</p>
+        <div class="search-results">
+          {% for area_type in areas_by_type %}
+          {% if area_type.areas %}
+            {% include 'hub/includes/search-results-area-type-intro.html' with type=area_type.type areas=area_type.areas %}
+            <div>
+              {% for area in area_type.areas %}
+                <div class="card shadow-sm mb-3 mb-md-4">
+                    <div class="card-body">
+                        <h3 class="card-title mb-3"><a href="{{ area.get_absolute_url }}" class="stretched-link">{{ area.name|highlight:search }}</a></h3>
+                      {% if area.mp %}
+                        <div class="d-flex align-items-center">
+                            {% include 'hub/includes/person-photo.html' with person=area.mp width="32" height="32" %}
+                            <p class="mb-0 ms-2 text-muted">{{ area.mp.name|highlight:search }}, MP</p>
+                        </div>
+                      {% elif area.ppcs %}
+                        {% for ppc in area.ppcs %}
+                        <div class="d-flex align-items-center mt-2">
+                            {% include 'hub/includes/person-photo.html' with person=ppc width="32" height="32" %}
+                            <p class="mb-0 ms-2 text-muted">{{ ppc.name|highlight:search }} (PPC)</p>
+                        </div>
+                        {% endfor %}
+                      {% endif %}
+                      {% if area.area_type.code == "STC" %}
+                        <p class="mb-0 text-muted">Single Tier council</p>
+                      {% elif area.area_type.code == "DIS" %}
+                        <p class="mb-0 text-muted">District council</p>
+                      {% endif %}
+                    </div>
                 </div>
+              {% endfor %}
             </div>
+          {% endif %}
+          {% endfor %}
         </div>
-      {% endfor %}
       {% endif %}
 
     </div>

@@ -42,7 +42,11 @@ class Command(BaseCommand):
     def get_ppc_data(self):
         csv = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRhZbBrU2AdJDYyBZViMs6irvH7zVUiZm2rDoADw5B18drp6hILJBr-duSXCmHJ18SmYWm3iq0bbfoR/pub?gid=0&single=true&output=csv"
         df = pd.read_csv(csv)
-        df = df.dropna(subset=["Candidate Name"])
+        df = df.dropna(subset=["Candidate Name", "DC Candidate ID"])
+        df = df.drop(df[df["DC Candidate ID"] == "#REF!"].index)
+        # make sure this is an int as sometimes it thinks it's a float and you
+        # end up with duplicates
+        df["DC Candidate ID"] = df["DC Candidate ID"].astype(int)
 
         return df
 

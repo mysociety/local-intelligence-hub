@@ -155,6 +155,37 @@ class ExploreDatasetsJSON(TemplateView):
             }
         )
 
+        datasets.append(
+            {
+                "scope": "public",
+                "is_featured": False,
+                "is_favourite": False,
+                "is_filterable": False,
+                "is_shadable": False,
+                "category": "place",
+                "name": "gss",
+                "title": "Council GSS code",
+                "source_label": "Data from mySociety.",
+                "areas_available": ["DIS", "STC"],
+            }
+        )
+
+        datasets.append(
+            {
+                "scope": "public",
+                "is_featured": False,
+                "is_favourite": False,
+                "is_filterable": False,
+                "is_shadable": False,
+                "category": "place",
+                "name": "url",
+                "title": "Constituency URL",
+                "description": "A link to this constituency on the Local Intelligence Hub.",
+                "source_label": "Data from mySociety.",
+                "areas_available": ["WMC", "WMC23"],
+            }
+        )
+
         return JsonResponse(list(datasets), safe=False)
 
 
@@ -205,7 +236,10 @@ class ExploreGeometryCachedJSON(ExploreGeometryJSON):
 class ExploreJSON(FilterMixin, TemplateView):
     def render_to_response(self, context, **response_kwargs):
         geom = []
-        areas = self.data(as_dict=True, mp_name=True)
+        mp_name = True
+        if self.area_type().area_type != "Westminster Constituency":
+            mp_name = False
+        areas = self.data(as_dict=True, mp_name=mp_name)
         shader_areas = [a["area"] for a in areas.values()]
         shader = self.shader()
         colours = {}

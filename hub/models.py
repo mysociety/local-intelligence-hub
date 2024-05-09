@@ -28,6 +28,7 @@ import pandas as pd
 import pytz
 from asgiref.sync import async_to_sync, sync_to_async
 from django_choices_field import TextChoicesField
+from django_cryptography.fields import encrypt
 from django_jsonform.models.fields import JSONField
 from mailchimp3 import MailChimp
 from polymorphic.models import PolymorphicModel
@@ -41,6 +42,7 @@ from strawberry.dataloader import DataLoader
 
 import utils as lih_utils
 from hub.analytics import Analytics
+from hub.enrichment.sources import builtin_mapping_sources
 from hub.fields import EncryptedCharField
 from hub.filters import Filter
 from hub.tasks import (
@@ -495,9 +497,13 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
 
 
 class AreaType(models.Model):
-    VALID_AREA_TYPES = ["WMC", "WMC23"]
+    VALID_AREA_TYPES = ["WMC", "WMC23", "STC", "DIS"]
 
-    AREA_TYPES = [("westminster_constituency", "Westminster Constituency")]
+    AREA_TYPES = [
+        ("westminster_constituency", "Westminster Constituency"),
+        ("single_tier_council", "Single Tier Council"),
+        ("district_council", "District Council"),
+    ]
     name = models.CharField(max_length=50, unique=True)
     code = models.CharField(max_length=10, unique=True)
     area_type = models.CharField(max_length=50, choices=AREA_TYPES)
@@ -853,6 +859,27 @@ def cast_data(sender, instance, *args, **kwargs):
         instance.data = ""
 
 
+class Loaders(TypedDict):
+    postcodesIO: DataLoader
+    fetch_record: DataLoader
+    source_loaders: dict[str, DataLoader]
+
+
+class EnrichmentLookup(TypedDict):
+    member_id: str
+    postcode_data: PostcodesIOResult
+    source_id: "ExternalDataSource"
+    source_path: str
+    source_data: Optional[any]
+
+
+class UpdateMapping(TypedDict):
+    source: str
+    # Can be a dot path, for use with benedict
+    source_path: str
+    destination_column: str
+
+
 class ExternalDataSource(PolymorphicModel, Analytics):
     """
     A third-party data source that can be read and optionally written back to.
@@ -932,19 +959,24 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             self.postcode_field = self.geography_column
         super().save(*args, **kwargs)
 
+    def as_mapping_source(self):
+        return {
+            "slug": self.id,
+            "name": self.name,
+            "author": self.organisation.name,
+            "description": self.description,
+            "source_paths": self.field_definitions(),
+            "external_data_source": self,
+        }
+
     class FieldDefinition(TypedDict):
         value: str
         label: Optional[str]
         description: Optional[str]
+        external_id: Optional[str]
 
     fields = JSONField(blank=True, null=True, default=list)
     # Auto-updates
-
-    class UpdateMapping(TypedDict):
-        source: str
-        # Can be a dot path, for use with benedict
-        source_path: str
-        destination_column: str
 
     update_mapping = JSONField(blank=True, null=True, default=list)
     auto_update_enabled = models.BooleanField(default=False, blank=True)
@@ -1302,18 +1334,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             for key in keys
         ]
 
-    class Loaders(TypedDict):
-        postcodesIO: DataLoader
-        fetch_record: DataLoader
-        source_loaders: dict[str, DataLoader]
-
-    class EnrichmentLookup(TypedDict):
-        member_id: str
-        postcode_data: PostcodesIOResult
-        source_id: "ExternalDataSource"
-        source_path: str
-        source_data: Optional[any]
-
     @classmethod
     def _get_import_data(self, id: str):
         """
@@ -1344,7 +1364,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         return enrichment_df
 
     def data_loader_factory(self):
-        async def fetch_enrichment_data(keys: List[self.EnrichmentLookup]) -> list[str]:
+        async def fetch_enrichment_data(keys: List[EnrichmentLookup]) -> list[str]:
             return_data = []
             enrichment_df = await sync_to_async(self.get_imported_dataframe)()
             for key in keys:
@@ -1391,7 +1411,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             # and return the requested value for this enrichment source row
                             key["source_path"],
                         ].values
-                        if enrichment_value:
+                        if enrichment_value is not None:
                             enrichment_value = enrichment_value[0]
                             if enrichment_value is np.nan or enrichment_value == np.nan:
                                 print(
@@ -1414,13 +1434,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
             return return_data
 
-        def cache_key_fn(key: self.EnrichmentLookup) -> str:
+        def cache_key_fn(key: EnrichmentLookup) -> str:
             return f"{key['member_id']}_{key['source_id']}_{key['source_path']}"
 
         return DataLoader(load_fn=fetch_enrichment_data, cache_key_fn=cache_key_fn)
 
     async def get_loaders(self) -> Loaders:
-        loaders = self.Loaders(
+        loaders = Loaders(
             postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo),
             fetch_record=DataLoader(load_fn=self.fetch_many_loader, cache=False),
             source_loaders={
@@ -1435,15 +1455,23 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         return loaders
 
-    async def map_one(self, member: Union[str, dict], loaders: Loaders) -> MappedMember:
+    async def map_one(
+        self,
+        member: Union[str, dict],
+        loaders: Loaders,
+        mapping: list[UpdateMapping] = [],
+    ) -> MappedMember:
         """
         Match one member to a record in the data source, via ID or record.
         """
         if type(member) is str:
             member = await loaders["fetch_record"].load(member)
-        if not member:
+        if member is None:
             # TODO: write tests for the case when the loader fails for a member
             return None
+
+        if mapping is None or len(mapping) == 0:
+            return self.MappedMember(member=member, update_fields={})
 
         update_fields = {}
         try:
@@ -1457,7 +1485,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     postcode
                 )
             # Map the fields
-            for mapping_dict in self.get_update_mapping():
+            for mapping_dict in mapping:
                 source = mapping_dict["source"]
                 source_path = mapping_dict["source_path"]
                 destination_column = mapping_dict["destination_column"]
@@ -1466,26 +1494,37 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         update_fields[destination_column] = get(
                             postcode_data, source_path
                         )
-                else:
+                        continue
+                if (
+                    enrichment_source := builtin_mapping_sources.get(source, None)
+                ) is not None and (
+                    fetch_fn := enrichment_source.get("async_postcode_request", None)
+                ) is not None:
+                    row = await fetch_fn(postcode)
                     try:
-                        source_loader = loaders["source_loaders"].get(source, None)
-                        if source_loader is not None and postcode_data is not None:
-                            loaded = await source_loader.load(
-                                self.EnrichmentLookup(
-                                    member_id=self.get_record_id(member),
-                                    postcode_data=postcode_data,
-                                    source_id=source,
-                                    source_path=source_path,
-                                )
-                            )
-                            print(
-                                f"setting {source_path} {destination_column} to {loaded}"
-                            )
-                            update_fields[destination_column] = loaded
+                        update_fields[destination_column] = get(row, source_path, None)
                     except Exception as e:
                         print(f"mapping exception {e}")
-                        # TODO: sentry logging
+                        # TODO: Sentry logging
+                        pass
+                    continue
+                try:
+                    source_loader = loaders["source_loaders"].get(source, None)
+                    if source_loader is not None and postcode_data is not None:
+                        loaded = await source_loader.load(
+                            EnrichmentLookup(
+                                member_id=self.get_record_id(member),
+                                postcode_data=postcode_data,
+                                source_id=source,
+                                source_path=source_path,
+                            )
+                        )
+                        print(f"setting {source_path} {destination_column} to {loaded}")
+                        update_fields[destination_column] = loaded
                         continue
+                except Exception as e:
+                    print(f"mapping exception {e}")
+                    continue
             # Return the member and config data
             print(f"mapped member {member.get('id')} {update_fields}")
             return self.MappedMember(member=member, update_fields=update_fields)
@@ -1499,15 +1538,17 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         Match many members to records in the data source.
         """
+        mapping = self.get_update_mapping()
         return await asyncio.gather(
-            *[self.map_one(member, loaders) for member in members]
+            *[self.map_one(member, loaders, mapping=mapping) for member in members]
         )
 
     async def refresh_one(self, member_id: Union[str, any]):
         if len(self.get_update_mapping()) == 0:
             return
         loaders = await self.get_loaders()
-        mapped_record = await self.map_one(member_id, loaders)
+        mapping = self.get_update_mapping()
+        mapped_record = await self.map_one(member_id, loaders, mapping=mapping)
         return await self.update_one(mapped_record=mapped_record)
 
     async def refresh_many(self, member_ids: list[Union[str, any]]):
@@ -1870,6 +1911,7 @@ class AirtableSource(ExternalDataSource):
                 # TODO: implement a field ID lookup in the UI, then revisit this
                 value=field.name,
                 description=field.description,
+                external_id=field.id,
             )
             for field in self.table.schema().fields
         ]
@@ -2403,3 +2445,55 @@ class MapReport(Report, Analytics):
 
     def get_analytics_queryset(self):
         return self.get_import_data()
+
+
+class APIToken(models.Model):
+    """
+    A model to store generated and revoked JWT tokens.
+    """
+
+    # So we can list tokens for a user
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name="tokens")
+    # In case you need to copy/paste the token again
+    token = encrypt(models.CharField(max_length=1500))
+    expires_at = models.DateTimeField()
+
+    # Unencrypted so we can check if the token is revoked or not
+    signature = models.CharField(primary_key=True, editable=False, max_length=1500)
+    revoked = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_update = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Revoked JWT Token {self.jti}"
+
+
+def api_token_key(signature: str) -> str:
+    return f"api_token:{signature}"
+
+
+def refresh_tokens_cache():
+    tokens = APIToken.objects.all()
+    for token in tokens:
+        cache.set(api_token_key(token.signature), token)
+
+
+def get_api_token(signature: str) -> APIToken:
+    return cache.get(api_token_key(signature))
+
+
+def is_api_token_revoked(signature: str) -> APIToken:
+    token = cache.get(api_token_key(signature))
+    return token.revoked if token else False
+
+
+# a signal that, when APIToken is created, updated, updates the apitoken cache
+@receiver(models.signals.post_save, sender=APIToken)
+def update_apitoken_cache_on_save(sender, instance, *args, **kwargs):
+    refresh_tokens_cache()
+
+
+@receiver(models.signals.post_delete, sender=APIToken)
+def update_apitoken_cache_on_delete(sender, instance, *args, **kwargs):
+    refresh_tokens_cache()

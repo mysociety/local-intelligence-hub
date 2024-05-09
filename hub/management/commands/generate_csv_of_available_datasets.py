@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 import pandas as pd
 from tqdm import tqdm
 
-from hub.models import Area, DataSet, Person
+from hub.models import DataSet
 
 
 class Command(BaseCommand):
@@ -21,38 +21,6 @@ class Command(BaseCommand):
         self._quiet = quiet
         df = self.build_dataframe()
         df.to_csv(self.out_file)
-
-    def get_area_data(self):
-        area_details = []
-        for area in Area.objects.filter(area_type__code="WMC"):
-            try:
-                mp = Person.objects.get(area=area)
-            except Person.DoesNotExist:
-                print(f"Person does not exist for area {area.gss} {area.name}")
-            area_details.append([area.gss, area.name, area.mapit_id, mp.name])
-        return pd.DataFrame(
-            area_details,
-            columns=["Area GSS code", "Area name", "Area MapIt ID", "MP name"],
-        ).set_index("Area GSS code")
-
-    def create_dataset_df(self, data, label, table):
-        df_data = []
-        for datum in data:
-            if table == "areadata":
-                area = datum.area
-            else:
-                area = datum.person.area
-            df_data.append([area.gss, datum.value()])
-        df = pd.DataFrame(df_data, columns=["Area GSS code", label])
-        # Deal with any multiples, by concatenating them into one string
-        df = df.groupby("Area GSS code").agg(
-            {
-                "Area GSS code": "first",
-                label: lambda data_list: ", ".join([str(x) for x in data_list]),
-            }
-        )
-        df = df.set_index("Area GSS code")
-        return df
 
     def build_dataframe(self):
         # Next, iterate through each (filterable) data set in the db
@@ -72,6 +40,8 @@ class Command(BaseCommand):
                     data_set.is_public,
                     "WMC" in areas_available,
                     "WMC23" in areas_available,
+                    "STC" in areas_available,
+                    "DIS" in areas_available,
                 ]
             )
 
@@ -85,6 +55,8 @@ class Command(BaseCommand):
                 "Public",
                 "2010 Cons",
                 "2024 Cons",
+                "Single Tier Councils",
+                "District Councils",
             ],
         )
         return df

@@ -35,6 +35,15 @@
         {% endfor %}
         </body>
     </table>
+{% elif dataset.name.lower == "net zero details" %}
+    <p class="mt-2 lh-1">
+      Scope of declaration:
+      {% if dataset.data.json.url %}
+        <a href="{{ dataset.data.json.url }}" title="{{ dataset.label }}">{{ dataset.data.json.scope }}</a>
+      {% else %}
+        {{ data.scope }}
+      {% endif %}
+    </p>
 {% elif dataset.subcategory == "groups" %}
     <ul class="tag-cloud">
       {% for data in dataset.data.json %}

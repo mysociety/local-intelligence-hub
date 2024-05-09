@@ -4,6 +4,7 @@ import { PHProvider } from './providers'
 import dynamic from 'next/dynamic'
 import { Metadata } from 'next'
 import { openGraphImage } from './shared-metadata'
+import { Suspense } from "react";
 
 
 const PostHogPageView = dynamic(() => import('./PostHogPageView'), {
@@ -22,7 +23,9 @@ export default async function RootLayout({
       <html lang="en">
         <PHProvider>
           <body>
-            <PostHogPageView />
+            <Suspense>
+              <PostHogPageView />
+            </Suspense>
             {children}
           </body>
         </PHProvider>

@@ -1,38 +1,33 @@
 import { Metadata } from "next";
 import { useRequireAuth } from "../../../hooks/auth";
-import YourOrganisations from "./your-organisations";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import YourOrganisations from "./your-organisations";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function Account() {
   const user = await useRequireAuth();
 
   return (
-    <>
-    
-      <h1 className="mb-10 text-hLg">Welcome to your Mapped Account, {user.username}</h1>
-      <Tabs defaultValue="account" className="w-[400px]">
-        <TabsList className="mb-5">
-          <TabsTrigger value="account">Account Information</TabsTrigger>
-          <TabsTrigger value="Table">Your organisations</TabsTrigger>
-        </TabsList>
-        <TabsContent value="account">
-          <div className="flex flex-col gap-5">
-            <div>
-              <span className="label text-meepGray-300">Username</span>
-              <div>{user.username}</div>
-            </div>
-            <div>
-              <span className="label text-meepGray-300">Email</span>
-              <div>{user.email}</div>
-            </div>
-          </div>
-        </TabsContent>
-        <TabsContent value="Table">
+    <div className='grid grid-cols-1 gap-6'>
+      <h1 className="text-hLg">Welcome to your Mapped Account, {user.username}</h1>
+      <YourOrganisations />
+      <Card className=''>
+        <CardHeader className='p-4'>
+          <CardTitle>Your email</CardTitle>
+        </CardHeader>
+        <CardContent className='px-4'>
+          {user.email}
+        </CardContent>
+      </Card>
+      <Card x-chunk="dashboard-04-chunk-2">
+        <CardHeader className='p-4'>
+          <CardTitle>Your organisations</CardTitle>
+        </CardHeader>
+        <CardContent className='px-4'>
           <YourOrganisations />
-        </TabsContent>
-      </Tabs>
-
-    </>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

@@ -1,0 +1,22 @@
+<div class="modal fade area-type-modal" tabindex="-1" aria-labelledby="areaTypeLabel" aria-hidden="true" ref="areaTypeModal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content overflow-hidden shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title" id="areaTypeLabel">Select area type</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-gray-100">
+                <div class="list-group">
+                    <button v-for="t in area_types" class="list-group-item list-group-item-action" @click="changeAreaType(t.slug)">
+                        <div class="d-flex align-items-center mb-2">
+                            <strong class="lh-sm me-auto pe-3">${ t.label }</strong>
+                        </div>
+                        <small class="d-block fs-7">
+                            ${ t.description }
+                        </small>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

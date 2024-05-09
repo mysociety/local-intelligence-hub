@@ -1,16 +1,29 @@
 from django.conf import settings
 
 import pandas as pd
-from tqdm import tqdm
 
-from hub.models import Area, AreaData, AreaType, DataSet
+from hub.models import DataSet
 
-from .base_importers import BaseAreaImportCommand
+from .base_importers import (
+    BaseConstituencyGroupListImportCommand,
+    MultipleAreaTypesMixin,
+)
 
 
-class Command(BaseAreaImportCommand):
+class Command(MultipleAreaTypesMixin, BaseConstituencyGroupListImportCommand):
     help = "Import data about RSPB reserves in each constituency"
     data_file = settings.BASE_DIR / "data" / "rspb_reserves.csv"
+    message = "Importing RSPB reserves data"
+
+    uses_gss = True
+    area_types = ["WMC", "WMC23", "STC", "DIS"]
+    cons_col_map = {
+        "WMC": "WMC",
+        "WMC23": "WMC23",
+        "STC": "STC",
+        "DIS": "DIS",
+    }
+
     defaults = {
         "label": "RSPB Reserves",
         "data_type": "json",
@@ -53,46 +66,11 @@ class Command(BaseAreaImportCommand):
         },
     }
 
-    def handle(self, quiet=False, *args, **kwargs):
-        self._quiet = quiet
-        self.add_data_sets()
-        self.delete_data()
-        self.process_data()
-        self.update_max_min()
+    group_data_type = "rspb_reserves"
+    count_data_type = "rspb_reserves_count"
 
-    def process_data(self):
-        df = pd.read_csv(self.data_file)
+    def get_df(self):
+        return pd.read_csv(self.data_file)
 
-        if not self._quiet:
-            self.stdout.write("Importing rspb reserves data")
-
-        # Group by the area, and add the data from there
-        for gss_list, data in tqdm(df.groupby("gss")):
-            for gss in gss_list.split(","):
-                try:
-                    area = Area.objects.filter(
-                        area_type=AreaType.objects.get(code="WMC")
-                    ).get(gss=gss)
-                except Area.DoesNotExist:
-                    continue
-
-                json = []
-                for index, row in data.iterrows():
-                    json.append({"group_name": row["name"]})
-
-                json_data, created = AreaData.objects.update_or_create(
-                    data_type=self.data_types["rspb_reserves"],
-                    area=area,
-                    json=json,
-                )
-
-                count_data, created = AreaData.objects.update_or_create(
-                    data_type=self.data_types["rspb_reserves_count"],
-                    area=area,
-                    data=len(data),
-                )
-
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Silence progress bars."
-        )
+    def get_group_json(self, row):
+        return {"group_name": row["name"]}

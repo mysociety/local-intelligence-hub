@@ -21,8 +21,8 @@ module.exports = withSentryConfig(
 
     // Suppresses source map uploading logs during build
     silent: true,
-    org: "common-knowledge-7k",
-    project: "meep",
+    org: process.env.SENTRY_ORG_ID,
+    project: process.env.SENTRY_PROJECT_ID,
   },
   {
     // For all available options, see:

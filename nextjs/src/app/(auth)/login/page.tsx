@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useRequireNoAuth } from "../../../hooks/auth";
+import { useRequireNoAuth } from "@/hooks/auth";
 import LoginForm from "./login-form";
 import Link from "next/link";
 import { Metadata } from "next";
@@ -18,6 +18,12 @@ export default async function Login() {
       <Link href="/signup" className='block'>
         <Button className='w-full' variant='outline' size="sm">
           Sign up to the waitlist
+        </Button>
+      </Link>
+      <div className='text-labelMain text-meepGray-400'>Forgotten password?</div>
+      <Link href="/reset-password" className='block'>
+        <Button className='w-full' variant='outline' size="sm">
+          Request password reset
         </Button>
       </Link>
     </div>
