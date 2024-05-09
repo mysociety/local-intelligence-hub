@@ -840,7 +840,7 @@ class ExternalDataSource(BaseDataSource):
     @strawberry_django.field
     def connection_details(
         self: models.ExternalDataSource, info
-    ) -> Union["AirtableSource", "MailchimpSource"]:
+    ) -> Union["AirtableSource", "MailchimpSource", "ActionNetworkSource"]:
         instance = self.get_real_instance()
         return instance
 
@@ -866,15 +866,20 @@ class AutoUpdateConfig:
 
 @strawberry_django.type(models.AirtableSource)
 class AirtableSource(ExternalDataSource):
-    api_key: auto
+    api_key: str
     base_id: str
     table_id: str
 
 
 @strawberry_django.type(models.MailchimpSource)
 class MailchimpSource(ExternalDataSource):
-    api_key: auto
+    api_key: str
     list_id: auto
+
+
+@strawberry_django.type(models.ActionNetworkSource)
+class ActionNetworkSource(ExternalDataSource):
+    api_key: str
 
 
 @strawberry_django.type(models.Report)
