@@ -21,15 +21,17 @@ class TestPublicAPI(TestCase):
             user=cls.user, organisation=cls.org, role="owner"
         )
         # Create source
-        cls.custom_data_layer: models.AirtableSource = models.AirtableSource.objects.create(
-            name="Mayoral regions custom data layer",
-            data_type=models.AirtableSource.DataSourceType.OTHER,
-            organisation=cls.org,
-            base_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_BASE_ID,
-            table_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME,
-            api_key=settings.TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY,
-            geography_column="council district",
-            geography_column_type=models.AirtableSource.PostcodesIOGeographyTypes.COUNCIL,
+        cls.custom_data_layer: models.AirtableSource = (
+            models.AirtableSource.objects.create(
+                name="Mayoral regions custom data layer",
+                data_type=models.AirtableSource.DataSourceType.OTHER,
+                organisation=cls.org,
+                base_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_BASE_ID,
+                table_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME,
+                api_key=settings.TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY,
+                geography_column="council district",
+                geography_column_type=models.AirtableSource.PostcodesIOGeographyTypes.COUNCIL,
+            )
         )
         # Some dummy data
         ds, x = models.DataSet.objects.update_or_create(

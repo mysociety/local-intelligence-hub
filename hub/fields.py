@@ -18,6 +18,8 @@ class EncryptedCharField(models.CharField):
     ) -> str | None:
         if value is None:
             return None
+        if value == "":
+            return ""
         return self._get_fernet().decrypt(value.encode()).decode()
 
     def get_prep_value(self, value: str | None) -> str | None:

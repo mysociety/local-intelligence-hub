@@ -25,15 +25,17 @@ class TestExternalDataSource:
             name="Test Organisation", slug="test-organisation"
         )
 
-        self.custom_data_layer: models.AirtableSource = models.AirtableSource.objects.create(
-            name="Mayoral regions custom data layer",
-            data_type=models.AirtableSource.DataSourceType.OTHER,
-            organisation=self.organisation,
-            base_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_BASE_ID,
-            table_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME,
-            api_key=settings.TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY,
-            geography_column="council district",
-            geography_column_type=models.AirtableSource.PostcodesIOGeographyTypes.COUNCIL,
+        self.custom_data_layer: models.AirtableSource = (
+            models.AirtableSource.objects.create(
+                name="Mayoral regions custom data layer",
+                data_type=models.AirtableSource.DataSourceType.OTHER,
+                organisation=self.organisation,
+                base_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_BASE_ID,
+                table_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME,
+                api_key=settings.TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY,
+                geography_column="council district",
+                geography_column_type=models.AirtableSource.PostcodesIOGeographyTypes.COUNCIL,
+            )
         )
 
         self.source: models.ExternalDataSource = self.create_test_source()
@@ -178,14 +180,16 @@ class TestExternalDataSource:
             models.ExternalDataSource.CUDRecord(
                 email=f"eh{randint(0, 1000)}sp@gmail.com",
                 postcode="EH99 1SP",
-                data={
-                    "addr1": "98 Canongate",
-                    "city": "Edinburgh",
-                    "state": "Midlothian",
-                    "country": "GB",
-                }
-                if isinstance(self.source, models.MailchimpSource)
-                else {},
+                data=(
+                    {
+                        "addr1": "98 Canongate",
+                        "city": "Edinburgh",
+                        "state": "Midlothian",
+                        "country": "GB",
+                    }
+                    if isinstance(self.source, models.MailchimpSource)
+                    else {}
+                ),
             )
         )
         # Test this functionality
@@ -226,14 +230,16 @@ class TestExternalDataSource:
             models.ExternalDataSource.CUDRecord(
                 email=f"eh{randint(0, 1000)}sp@gmail.com",
                 postcode="EH99 1SP",
-                data={
-                    "addr1": "98 Canongate",
-                    "city": "Edinburgh",
-                    "state": "Midlothian",
-                    "country": "GB",
-                }
-                if isinstance(self.source, models.MailchimpSource)
-                else {},
+                data=(
+                    {
+                        "addr1": "98 Canongate",
+                        "city": "Edinburgh",
+                        "state": "Midlothian",
+                        "country": "GB",
+                    }
+                    if isinstance(self.source, models.MailchimpSource)
+                    else {}
+                ),
             )
         )
         # Test this functionality
@@ -276,14 +282,16 @@ class TestExternalDataSource:
             models.ExternalDataSource.CUDRecord(
                 email=f"NE{randint(0, 1000)}DD@gmail.com",
                 postcode="NE12 6DD",
-                data={
-                    "addr1": "Hadrian Court",
-                    "city": "Newcastle upon Tyne",
-                    "state": "Tyne and Wear",
-                    "country": "GB",
-                }
-                if isinstance(self.source, models.MailchimpSource)
-                else {},
+                data=(
+                    {
+                        "addr1": "Hadrian Court",
+                        "city": "Newcastle upon Tyne",
+                        "state": "Tyne and Wear",
+                        "country": "GB",
+                    }
+                    if isinstance(self.source, models.MailchimpSource)
+                    else {}
+                ),
             )
         )
         mapped_member = await self.source.map_one(
@@ -308,26 +316,30 @@ class TestExternalDataSource:
                 models.ExternalDataSource.CUDRecord(
                     postcode="G11 5RD",
                     email=f"gg{randint(0, 1000)}rardd@gmail.com",
-                    data={
-                        "addr1": "Byres Rd",
-                        "city": "Glasgow",
-                        "state": "Glasgow",
-                        "country": "GB",
-                    }
-                    if isinstance(self.source, models.MailchimpSource)
-                    else {},
+                    data=(
+                        {
+                            "addr1": "Byres Rd",
+                            "city": "Glasgow",
+                            "state": "Glasgow",
+                            "country": "GB",
+                        }
+                        if isinstance(self.source, models.MailchimpSource)
+                        else {}
+                    ),
                 ),
                 models.ExternalDataSource.CUDRecord(
                     postcode="G42 8PH",
                     email=f"ag{randint(0, 1000)}rwefw@gmail.com",
-                    data={
-                        "addr1": "506 Victoria Rd",
-                        "city": "Glasgow",
-                        "state": "Glasgow",
-                        "country": "GB",
-                    }
-                    if isinstance(self.source, models.MailchimpSource)
-                    else {},
+                    data=(
+                        {
+                            "addr1": "506 Victoria Rd",
+                            "city": "Glasgow",
+                            "state": "Glasgow",
+                            "country": "GB",
+                        }
+                        if isinstance(self.source, models.MailchimpSource)
+                        else {}
+                    ),
                 ),
             ]
         )
@@ -367,26 +379,30 @@ class TestExternalDataSource:
                 models.ExternalDataSource.CUDRecord(
                     postcode="E5 0AA",
                     email=f"E{randint(0, 1000)}AA@gmail.com",
-                    data={
-                        "addr1": "Millfields Rd",
-                        "city": "London",
-                        "state": "London",
-                        "country": "GB",
-                    }
-                    if isinstance(self.source, models.MailchimpSource)
-                    else {},
+                    data=(
+                        {
+                            "addr1": "Millfields Rd",
+                            "city": "London",
+                            "state": "London",
+                            "country": "GB",
+                        }
+                        if isinstance(self.source, models.MailchimpSource)
+                        else {}
+                    ),
                 ),
                 models.ExternalDataSource.CUDRecord(
                     postcode="E10 6EF",
                     email=f"E{randint(0, 1000)}EF@gmail.com",
-                    data={
-                        "addr1": "123 Colchester Rd",
-                        "city": "London",
-                        "state": "London",
-                        "country": "GB",
-                    }
-                    if isinstance(self.source, models.MailchimpSource)
-                    else {},
+                    data=(
+                        {
+                            "addr1": "123 Colchester Rd",
+                            "city": "London",
+                            "state": "London",
+                            "country": "GB",
+                        }
+                        if isinstance(self.source, models.MailchimpSource)
+                        else {}
+                    ),
                 ),
             ]
         )

@@ -56,6 +56,7 @@ env = environ.Env(
     SENTRY_DSN=(str, False),
     CRYPTOGRAPHY_KEY=(str, "somemadeupcryptographickeywhichshouldbereplaced"),
     CRYPTOGRAPHY_SALT=(str, "somesaltthatshouldbereplaced"),
+    ENCRYPTION_SECRET_KEY=(str, "somemadeupcryptographickeywhichshouldbereplaced"),
     ELECTORAL_COMMISSION_API_KEY=(str, ""),
     MAILCHIMP_MYSOC_KEY=(str, ""),
     MAILCHIMP_MYSOC_SERVER_PREFIX=(str, ""),
@@ -435,6 +436,6 @@ CACHES = {
     },
 }
 
-PARSONS_LIMITED_DEPENDENCIES=True
+ENCRYPTION_SECRET_KEY = env("ENCRYPTION_SECRET_KEY")
 
-ENCRYPTION_SECRET_KEY = os.getenv("ENCRYPTION_SECRET_KEY")
+PARSONS_LIMITED_DEPENDENCIES=True

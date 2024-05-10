@@ -681,6 +681,21 @@ asgiref = ">=3.6"
 Django = ">=3.2"
 
 [[package]]
+name = "django-cryptography"
+version = "1.1"
+description = "Easily encrypt data in Django"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "django_cryptography-1.1-py2.py3-none-any.whl", hash = "sha256:93702fcf0d75865d55362f20ecd95274c4eef60ccdce46cbdade0420acee07cb"},
+]
+
+[package.dependencies]
+cryptography = "*"
+Django = "*"
+django-appconf = "*"
+
+[[package]]
 name = "django-debug-toolbar"
 version = "4.3.0"
 description = "A configurable set of panels that display various debug information about the current request/response."
@@ -2834,4 +2849,4 @@ brotli = ["Brotli"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">3.11,<3.13"
-content-hash = "0ba21c1fb3df53c955a82caeea1af076c3e04a47232aa82520a64e51520278ef"
+content-hash = "fa32c3dae26e069020a4e28fc1a0fde4c994304b54837444bc3e18e67258b47b"

@@ -41,12 +41,12 @@ class Query(UserQueries):
     shared_data_source: model_types.SharedDataSource = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
-    external_data_sources: List[
-        model_types.ExternalDataSource
-    ] = strawberry_django.field(extensions=[IsAuthenticated()])
-    imported_data_geojson_point: Optional[
-        model_types.MapReportMemberFeature
-    ] = model_types.imported_data_geojson_point
+    external_data_sources: List[model_types.ExternalDataSource] = (
+        strawberry_django.field(extensions=[IsAuthenticated()])
+    )
+    imported_data_geojson_point: Optional[model_types.MapReportMemberFeature] = (
+        model_types.imported_data_geojson_point
+    )
     shared_data_sources: List[model_types.SharedDataSource] = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
@@ -162,9 +162,9 @@ class Mutation:
     update_sharing_permission: model_types.SharingPermission = django_mutations.update(
         mutation_types.SharingPermissionCUDInput, extensions=[IsAuthenticated()]
     )
-    update_sharing_permissions: List[
-        model_types.ExternalDataSource
-    ] = mutation_types.update_sharing_permissions
+    update_sharing_permissions: List[model_types.ExternalDataSource] = (
+        mutation_types.update_sharing_permissions
+    )
 
 
 class CustomErrorLoggingSchema(JwtSchema):

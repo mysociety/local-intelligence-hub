@@ -28,7 +28,6 @@ import pandas as pd
 import pytz
 from asgiref.sync import async_to_sync, sync_to_async
 from django_choices_field import TextChoicesField
-from django_cryptography.fields import encrypt
 from django_jsonform.models.fields import JSONField
 from mailchimp3 import MailChimp
 from hub.parsons.action_network.action_network import ActionNetwork
@@ -1234,16 +1233,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 update_data = {
                     **structured_data,
                     "postcode_data": postcode_data,
-                    "point": Point(
-                        postcode_data["longitude"],
-                        postcode_data["latitude"],
-                    )
-                    if (
-                        postcode_data is not None
-                        and "latitude" in postcode_data
-                        and "longitude" in postcode_data
-                    )
-                    else None,
+                    "point": (
+                        Point(
+                            postcode_data["longitude"],
+                            postcode_data["latitude"],
+                        )
+                        if (
+                            postcode_data is not None
+                            and "latitude" in postcode_data
+                            and "longitude" in postcode_data
+                        )
+                        else None
+                    ),
                 }
 
                 await GenericData.objects.aupdate_or_create(
@@ -2391,15 +2392,17 @@ class MailchimpSource(ExternalDataSource):
                 status="subscribed",
                 email_address=record["email"],
                 merge_fields={
-                    "ADDRESS": {
-                        "addr1": record["data"].get("addr1"),
-                        "city": record["data"].get("city"),
-                        "state": record["data"].get("state"),
-                        "country": record["data"].get("country"),
-                        "zip": record["postcode"],
-                    }
-                    if record["data"].get("addr1")
-                    else ""
+                    "ADDRESS": (
+                        {
+                            "addr1": record["data"].get("addr1"),
+                            "city": record["data"].get("city"),
+                            "state": record["data"].get("state"),
+                            "country": record["data"].get("country"),
+                            "zip": record["postcode"],
+                        }
+                        if record["data"].get("addr1")
+                        else ""
+                    )
                 },
             ),
         )
@@ -2431,11 +2434,9 @@ class ActionNetworkSource(ExternalDataSource):
     """
 
     crm_type = "actionnetwork"
-    api_key = encrypt(
-        models.CharField(
-            max_length=250,
-            unique=True
-        )
+    api_key = EncryptedCharField(
+        max_length=250,
+        unique=True
     )
 
     automated_webhooks = False
@@ -2621,7 +2622,7 @@ class APIToken(models.Model):
     # So we can list tokens for a user
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name="tokens")
     # In case you need to copy/paste the token again
-    token = encrypt(models.CharField(max_length=1500))
+    token = EncryptedCharField(max_length=1500, default="default_value")
     expires_at = models.DateTimeField()
 
     # Unencrypted so we can check if the token is revoked or not

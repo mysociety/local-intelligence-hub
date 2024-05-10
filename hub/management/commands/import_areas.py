@@ -79,10 +79,13 @@ class Command(BaseCommand):
                     area_type=area_type,
                 )
 
-            a.geometry = geom_str
-            geom = GEOSGeometry(json.dumps(geom["geometry"]))
-            if isinstance(geom, Polygon):
-                geom = MultiPolygon([geom])
-            a.polygon = geom
-            a.point = a.polygon.centroid
-            a.save()
+                if geom is not None:
+                    geos = json.dumps(geom["geometry"])
+                    geom = GEOSGeometry(geos)
+                    if isinstance(geom, Polygon):
+                        geom = MultiPolygon([geom])
+
+                    a.geometry = geom_str
+                    a.polygon = geom
+                    a.point = a.polygon.centroid
+                    a.save()
