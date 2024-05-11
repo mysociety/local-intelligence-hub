@@ -64,6 +64,82 @@ export type ApiToken = {
 };
 
 /** An Action Network member list. */
+export type ActionNetworkSource = Analytics & {
+  __typename?: 'ActionNetworkSource';
+  addressField?: Maybe<Scalars['String']['output']>;
+  apiKey: Scalars['String']['output'];
+  autoImportEnabled: Scalars['Boolean']['output'];
+  autoUpdateEnabled: Scalars['Boolean']['output'];
+  autoUpdateWebhookUrl: Scalars['String']['output'];
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSource;
+  createdAt: Scalars['DateTime']['output'];
+  crmType: CrmType;
+  dataType: DataSourceType;
+  description?: Maybe<Scalars['String']['output']>;
+  emailField?: Maybe<Scalars['String']['output']>;
+  fieldDefinitions?: Maybe<Array<FieldDefinition>>;
+  firstNameField?: Maybe<Scalars['String']['output']>;
+  fullNameField?: Maybe<Scalars['String']['output']>;
+  geographyColumn?: Maybe<Scalars['String']['output']>;
+  geographyColumnType: PostcodesIoGeographyTypes;
+  healthcheck: Scalars['Boolean']['output'];
+  id: Scalars['UUID']['output'];
+  importProgress?: Maybe<BatchJobProgress>;
+  importedDataCount: Scalars['Int']['output'];
+  importedDataCountByConstituency: Array<GroupedDataCount>;
+  importedDataCountByConstituency2024: Array<GroupedDataCount>;
+  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
+  importedDataCountByCouncil: Array<GroupedDataCount>;
+  importedDataCountByRegion: Array<GroupedDataCount>;
+  importedDataCountByWard: Array<GroupedDataCount>;
+  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
+  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
+  isImportScheduled: Scalars['Boolean']['output'];
+  isUpdateScheduled: Scalars['Boolean']['output'];
+  jobs: Array<QueueJob>;
+  lastJob?: Maybe<QueueJob>;
+  lastNameField?: Maybe<Scalars['String']['output']>;
+  lastUpdate: Scalars['DateTime']['output'];
+  name: Scalars['String']['output'];
+  organisation: Organisation;
+  organisationId: Scalars['String']['output'];
+  orgsWithAccess: Array<Organisation>;
+  phoneField?: Maybe<Scalars['String']['output']>;
+  postcodeField?: Maybe<Scalars['String']['output']>;
+  recordUrlTemplate?: Maybe<Scalars['String']['output']>;
+  remoteName?: Maybe<Scalars['String']['output']>;
+  remoteUrl?: Maybe<Scalars['String']['output']>;
+  sharingPermissions: Array<SharingPermission>;
+  updateMapping?: Maybe<Array<AutoUpdateConfig>>;
+  updateProgress?: Maybe<BatchJobProgress>;
+  webhookHealthcheck: Scalars['Boolean']['output'];
+};
+
+
+/** An Action Network member list. */
+export type ActionNetworkSourceImportedDataCountByConstituencyBySourceArgs = {
+  gss: Scalars['String']['input'];
+};
+
+
+/** An Action Network member list. */
+export type ActionNetworkSourceImportedDataCountForConstituencyArgs = {
+  gss: Scalars['String']['input'];
+};
+
+
+/** An Action Network member list. */
+export type ActionNetworkSourceImportedDataCountForConstituency2024Args = {
+  gss: Scalars['String']['input'];
+};
+
+
+/** An Action Network member list. */
+export type ActionNetworkSourceOrgsWithAccessArgs = {
+  filters?: InputMaybe<OrganisationFilters>;
+};
+
+/** An Action Network member list. */
 export type ActionNetworkSourceInput = {
   addressField?: InputMaybe<Scalars['String']['input']>;
   apiKey: Scalars['String']['input'];
@@ -95,9 +171,9 @@ export type AirtableSource = Analytics & {
   autoUpdateEnabled: Scalars['Boolean']['output'];
   autoUpdateWebhookUrl: Scalars['String']['output'];
   baseId: Scalars['String']['output'];
-  connectionDetails: AirtableSourceMailchimpSource;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSource;
   createdAt: Scalars['DateTime']['output'];
-  crmType: Scalars['String']['output'];
+  crmType: CrmType;
   dataType: DataSourceType;
   description?: Maybe<Scalars['String']['output']>;
   emailField?: Maybe<Scalars['String']['output']>;
@@ -189,7 +265,7 @@ export type AirtableSourceInput = {
   updateMapping?: InputMaybe<Array<UpdateMappingItemInput>>;
 };
 
-export type AirtableSourceMailchimpSource = AirtableSource | MailchimpSource;
+export type AirtableSourceMailchimpSourceActionNetworkSource = ActionNetworkSource | AirtableSource | MailchimpSource;
 
 export type Analytics = {
   importedDataCount: Scalars['Int']['output'];
@@ -386,6 +462,12 @@ export type CreateOrganisationInput = {
   name: Scalars['String']['input'];
   slug?: InputMaybe<Scalars['String']['input']>;
 };
+
+export enum CrmType {
+  Actionnetwork = 'actionnetwork',
+  Airtable = 'airtable',
+  Mailchimp = 'mailchimp'
+}
 
 /** DataSet(id, name, description, label, data_type, last_update, source_label, source, source_type, data_url, release_date, is_upload, is_range, featured, order, category, subcategory, table, comparators, options, default_value, is_filterable, is_shadable, is_public, fill_blanks, exclude_countries, unit_type, unit_distribution, external_data_source) */
 export type DataSet = {
@@ -589,9 +671,9 @@ export type ExternalDataSource = Analytics & {
   autoImportEnabled: Scalars['Boolean']['output'];
   autoUpdateEnabled: Scalars['Boolean']['output'];
   autoUpdateWebhookUrl: Scalars['String']['output'];
-  connectionDetails: AirtableSourceMailchimpSource;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSource;
   createdAt: Scalars['DateTime']['output'];
-  crmType: Scalars['String']['output'];
+  crmType: CrmType;
   dataType: DataSourceType;
   description?: Maybe<Scalars['String']['output']>;
   emailField?: Maybe<Scalars['String']['output']>;
@@ -860,9 +942,9 @@ export type MailchimpSource = Analytics & {
   autoImportEnabled: Scalars['Boolean']['output'];
   autoUpdateEnabled: Scalars['Boolean']['output'];
   autoUpdateWebhookUrl: Scalars['String']['output'];
-  connectionDetails: AirtableSourceMailchimpSource;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSource;
   createdAt: Scalars['DateTime']['output'];
-  crmType: Scalars['String']['output'];
+  crmType: CrmType;
   dataType: DataSourceType;
   description?: Maybe<Scalars['String']['output']>;
   emailField?: Maybe<Scalars['String']['output']>;
@@ -1744,7 +1826,7 @@ export type SharedDataSource = Analytics & {
   __typename?: 'SharedDataSource';
   addressField?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
-  crmType: Scalars['String']['output'];
+  crmType: CrmType;
   dataType: DataSourceType;
   description?: Maybe<Scalars['String']['output']>;
   emailField?: Maybe<Scalars['String']['output']>;
@@ -1949,33 +2031,33 @@ export type UserType = {
 export type ListOrganisationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ListOrganisationsQuery = { __typename?: 'Query', myOrganisations: Array<{ __typename?: 'Organisation', id: string, externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, crmType: string, autoUpdateEnabled: boolean, connectionDetails: { __typename?: 'AirtableSource', baseId: string, tableId: string } | { __typename?: 'MailchimpSource', apiKey: string, listId: string }, jobs: Array<{ __typename?: 'QueueJob', lastEventAt: any, status: ProcrastinateJobStatus }>, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any, organisation: { __typename?: 'PublicOrganisation', id: string, name: string } }> }>, sharingPermissionsFromOtherOrgs: Array<{ __typename?: 'SharingPermission', id: any, externalDataSource: { __typename?: 'SharedDataSource', id: any, name: string, dataType: DataSourceType, crmType: string, organisation: { __typename?: 'PublicOrganisation', name: string } } }> }> };
+export type ListOrganisationsQuery = { __typename?: 'Query', myOrganisations: Array<{ __typename?: 'Organisation', id: string, externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, crmType: CrmType, autoUpdateEnabled: boolean, connectionDetails: { __typename?: 'ActionNetworkSource' } | { __typename?: 'AirtableSource', baseId: string, tableId: string } | { __typename?: 'MailchimpSource', apiKey: string, listId: string }, jobs: Array<{ __typename?: 'QueueJob', lastEventAt: any, status: ProcrastinateJobStatus }>, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any, organisation: { __typename?: 'PublicOrganisation', id: string, name: string } }> }>, sharingPermissionsFromOtherOrgs: Array<{ __typename?: 'SharingPermission', id: any, externalDataSource: { __typename?: 'SharedDataSource', id: any, name: string, dataType: DataSourceType, crmType: CrmType, organisation: { __typename?: 'PublicOrganisation', name: string } } }> }> };
 
 export type GetSourceMappingQueryVariables = Exact<{
   ID: Scalars['ID']['input'];
 }>;
 
 
-export type GetSourceMappingQuery = { __typename?: 'Query', externalDataSource: { __typename?: 'ExternalDataSource', id: any, autoUpdateEnabled: boolean, crmType: string, geographyColumn?: string | null, geographyColumnType: PostcodesIoGeographyTypes, postcodeField?: string | null, firstNameField?: string | null, lastNameField?: string | null, emailField?: string | null, phoneField?: string | null, addressField?: string | null, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', destinationColumn: string, source: string, sourcePath: string }> | null, fieldDefinitions?: Array<{ __typename?: 'FieldDefinition', label?: string | null, value: string, description?: string | null, editable: boolean }> | null } };
+export type GetSourceMappingQuery = { __typename?: 'Query', externalDataSource: { __typename?: 'ExternalDataSource', id: any, autoUpdateEnabled: boolean, crmType: CrmType, geographyColumn?: string | null, geographyColumnType: PostcodesIoGeographyTypes, postcodeField?: string | null, firstNameField?: string | null, lastNameField?: string | null, emailField?: string | null, phoneField?: string | null, addressField?: string | null, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', destinationColumn: string, source: string, sourcePath: string }> | null, fieldDefinitions?: Array<{ __typename?: 'FieldDefinition', label?: string | null, value: string, description?: string | null, editable: boolean }> | null } };
 
 export type TestDataSourceQueryVariables = Exact<{
   input: CreateExternalDataSourceInput;
 }>;
 
 
-export type TestDataSourceQuery = { __typename?: 'Query', testDataSource: { __typename: 'ExternalDataSource', crmType: string, geographyColumn?: string | null, geographyColumnType: PostcodesIoGeographyTypes, healthcheck: boolean, remoteName?: string | null, fieldDefinitions?: Array<{ __typename?: 'FieldDefinition', label?: string | null, value: string, description?: string | null, editable: boolean }> | null } };
+export type TestDataSourceQuery = { __typename?: 'Query', testDataSource: { __typename: 'ExternalDataSource', crmType: CrmType, geographyColumn?: string | null, geographyColumnType: PostcodesIoGeographyTypes, healthcheck: boolean, remoteName?: string | null, fieldDefinitions?: Array<{ __typename?: 'FieldDefinition', label?: string | null, value: string, description?: string | null, editable: boolean }> | null } };
 
 export type CreateSourceMutationVariables = Exact<{
   input: CreateExternalDataSourceInput;
 }>;
 
 
-export type CreateSourceMutation = { __typename?: 'Mutation', createExternalDataSource: { __typename?: 'CreateExternalDataSourceOutput', code: number, errors: Array<{ __typename?: 'MutationError', message: string }>, result?: { __typename?: 'ExternalDataSource', id: any, name: string, crmType: string, dataType: DataSourceType } | null } };
+export type CreateSourceMutation = { __typename?: 'Mutation', createExternalDataSource: { __typename?: 'CreateExternalDataSourceOutput', code: number, errors: Array<{ __typename?: 'MutationError', message: string }>, result?: { __typename?: 'ExternalDataSource', id: any, name: string, crmType: CrmType, dataType: DataSourceType } | null } };
 
 export type AllExternalDataSourcesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type AllExternalDataSourcesQuery = { __typename?: 'Query', externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, createdAt: any, dataType: DataSourceType, crmType: string, autoUpdateEnabled: boolean, connectionDetails: { __typename?: 'AirtableSource', baseId: string, tableId: string } | { __typename?: 'MailchimpSource', apiKey: string, listId: string } }> };
+export type AllExternalDataSourcesQuery = { __typename?: 'Query', externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, createdAt: any, dataType: DataSourceType, crmType: CrmType, autoUpdateEnabled: boolean, connectionDetails: { __typename?: 'ActionNetworkSource' } | { __typename?: 'AirtableSource', baseId: string, tableId: string } | { __typename?: 'MailchimpSource', apiKey: string, listId: string } }> };
 
 export type AutoUpdateCreationReviewQueryVariables = Exact<{
   ID: Scalars['ID']['input'];
@@ -1983,7 +2065,7 @@ export type AutoUpdateCreationReviewQueryVariables = Exact<{
 
 
 export type AutoUpdateCreationReviewQuery = { __typename?: 'Query', externalDataSource: (
-    { __typename?: 'ExternalDataSource', id: any, name: string, geographyColumn?: string | null, geographyColumnType: PostcodesIoGeographyTypes, dataType: DataSourceType, crmType: string, autoUpdateEnabled: boolean, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, jobs: Array<{ __typename?: 'QueueJob', lastEventAt: any, status: ProcrastinateJobStatus }> }
+    { __typename?: 'ExternalDataSource', id: any, name: string, geographyColumn?: string | null, geographyColumnType: PostcodesIoGeographyTypes, dataType: DataSourceType, crmType: CrmType, autoUpdateEnabled: boolean, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, jobs: Array<{ __typename?: 'QueueJob', lastEventAt: any, status: ProcrastinateJobStatus }> }
     & { ' $fragmentRefs'?: { 'DataSourceCardFragment': DataSourceCardFragment } }
   ) };
 
@@ -1992,7 +2074,7 @@ export type ExternalDataSourceInspectPageQueryVariables = Exact<{
 }>;
 
 
-export type ExternalDataSourceInspectPageQuery = { __typename?: 'Query', externalDataSource: { __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, remoteUrl?: string | null, crmType: string, autoUpdateEnabled: boolean, webhookHealthcheck: boolean, geographyColumn?: string | null, geographyColumnType: PostcodesIoGeographyTypes, postcodeField?: string | null, firstNameField?: string | null, lastNameField?: string | null, fullNameField?: string | null, emailField?: string | null, phoneField?: string | null, addressField?: string | null, isImportScheduled: boolean, isUpdateScheduled: boolean, importedDataCount: number, organisationId: string, connectionDetails: { __typename?: 'AirtableSource', apiKey: string, baseId: string, tableId: string } | { __typename?: 'MailchimpSource', apiKey: string, listId: string }, lastJob?: { __typename?: 'QueueJob', id: string, lastEventAt: any, status: ProcrastinateJobStatus } | null, importProgress?: { __typename?: 'BatchJobProgress', id: string, status: ProcrastinateJobStatus, total: number, succeeded: number, estimatedFinishTime: any } | null, updateProgress?: { __typename?: 'BatchJobProgress', id: string, status: ProcrastinateJobStatus, total: number, succeeded: number, estimatedFinishTime: any } | null, fieldDefinitions?: Array<{ __typename?: 'FieldDefinition', label?: string | null, value: string, description?: string | null, editable: boolean }> | null, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any }> } };
+export type ExternalDataSourceInspectPageQuery = { __typename?: 'Query', externalDataSource: { __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, remoteUrl?: string | null, crmType: CrmType, autoUpdateEnabled: boolean, webhookHealthcheck: boolean, geographyColumn?: string | null, geographyColumnType: PostcodesIoGeographyTypes, postcodeField?: string | null, firstNameField?: string | null, lastNameField?: string | null, fullNameField?: string | null, emailField?: string | null, phoneField?: string | null, addressField?: string | null, isImportScheduled: boolean, isUpdateScheduled: boolean, importedDataCount: number, organisationId: string, connectionDetails: { __typename?: 'ActionNetworkSource' } | { __typename?: 'AirtableSource', apiKey: string, baseId: string, tableId: string } | { __typename?: 'MailchimpSource', apiKey: string, listId: string }, lastJob?: { __typename?: 'QueueJob', id: string, lastEventAt: any, status: ProcrastinateJobStatus } | null, importProgress?: { __typename?: 'BatchJobProgress', id: string, status: ProcrastinateJobStatus, total: number, succeeded: number, estimatedFinishTime: any } | null, updateProgress?: { __typename?: 'BatchJobProgress', id: string, status: ProcrastinateJobStatus, total: number, succeeded: number, estimatedFinishTime: any } | null, fieldDefinitions?: Array<{ __typename?: 'FieldDefinition', label?: string | null, value: string, description?: string | null, editable: boolean }> | null, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any }> } };
 
 export type DeleteUpdateConfigMutationVariables = Exact<{
   id: Scalars['String']['input'];
@@ -2034,7 +2116,7 @@ export type ExternalDataSourceNameQueryVariables = Exact<{
 }>;
 
 
-export type ExternalDataSourceNameQuery = { __typename?: 'Query', externalDataSource: { __typename?: 'ExternalDataSource', name: string, crmType: string, dataType: DataSourceType, remoteUrl?: string | null } };
+export type ExternalDataSourceNameQuery = { __typename?: 'Query', externalDataSource: { __typename?: 'ExternalDataSource', name: string, crmType: CrmType, dataType: DataSourceType, remoteUrl?: string | null } };
 
 export type ShareDataSourcesMutationVariables = Exact<{
   fromOrgId: Scalars['String']['input'];
@@ -2047,7 +2129,7 @@ export type ShareDataSourcesMutation = { __typename?: 'Mutation', updateSharingP
 export type YourSourcesForSharingQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type YourSourcesForSharingQuery = { __typename?: 'Query', myOrganisations: Array<{ __typename?: 'Organisation', id: string, name: string, externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, crmType: string, importedDataCount: number, dataType: DataSourceType, organisationId: string, fieldDefinitions?: Array<{ __typename?: 'FieldDefinition', label?: string | null, editable: boolean }> | null, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any, organisationId: string, externalDataSourceId: string, visibilityRecordCoordinates?: boolean | null, visibilityRecordDetails?: boolean | null, deleted: boolean }> }> }> };
+export type YourSourcesForSharingQuery = { __typename?: 'Query', myOrganisations: Array<{ __typename?: 'Organisation', id: string, name: string, externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, crmType: CrmType, importedDataCount: number, dataType: DataSourceType, organisationId: string, fieldDefinitions?: Array<{ __typename?: 'FieldDefinition', label?: string | null, editable: boolean }> | null, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any, organisationId: string, externalDataSourceId: string, visibilityRecordCoordinates?: boolean | null, visibilityRecordDetails?: boolean | null, deleted: boolean }> }> }> };
 
 export type ShareWithOrgPageQueryVariables = Exact<{
   orgSlug: Scalars['String']['input'];
@@ -2143,7 +2225,7 @@ export type GetMapReportNameQueryVariables = Exact<{
 
 export type GetMapReportNameQuery = { __typename?: 'Query', mapReport: { __typename?: 'MapReport', id: any, name: string } };
 
-export type MapReportLayersSummaryFragment = { __typename?: 'MapReport', layers: Array<{ __typename?: 'MapLayer', id: string, name: string, sharingPermission?: { __typename?: 'SharingPermission', visibilityRecordDetails?: boolean | null, visibilityRecordCoordinates?: boolean | null, organisation: { __typename?: 'PublicOrganisation', name: string } } | null, source: { __typename?: 'SharedDataSource', id: any, name: string, isImportScheduled: boolean, importedDataCount: number, recordUrlTemplate?: string | null, crmType: string, dataType: DataSourceType, organisation: { __typename?: 'PublicOrganisation', name: string } } }> } & { ' $fragmentName'?: 'MapReportLayersSummaryFragment' };
+export type MapReportLayersSummaryFragment = { __typename?: 'MapReport', layers: Array<{ __typename?: 'MapLayer', id: string, name: string, sharingPermission?: { __typename?: 'SharingPermission', visibilityRecordDetails?: boolean | null, visibilityRecordCoordinates?: boolean | null, organisation: { __typename?: 'PublicOrganisation', name: string } } | null, source: { __typename?: 'SharedDataSource', id: any, name: string, isImportScheduled: boolean, importedDataCount: number, recordUrlTemplate?: string | null, crmType: CrmType, dataType: DataSourceType, organisation: { __typename?: 'PublicOrganisation', name: string } } }> } & { ' $fragmentName'?: 'MapReportLayersSummaryFragment' };
 
 export type MapReportPageFragment = (
   { __typename?: 'MapReport', id: any, name: string }
@@ -2205,7 +2287,7 @@ export type DisableAutoUpdateMutationVariables = Exact<{
 
 export type DisableAutoUpdateMutation = { __typename?: 'Mutation', disableAutoUpdate: { __typename?: 'ExternalDataSource', id: any, autoUpdateEnabled: boolean, webhookHealthcheck: boolean, name: string } };
 
-export type DataSourceCardFragment = { __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, crmType: string, autoUpdateEnabled: boolean, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, jobs: Array<{ __typename?: 'QueueJob', lastEventAt: any, status: ProcrastinateJobStatus }>, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any, organisation: { __typename?: 'PublicOrganisation', id: string, name: string } }> } & { ' $fragmentName'?: 'DataSourceCardFragment' };
+export type DataSourceCardFragment = { __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, crmType: CrmType, autoUpdateEnabled: boolean, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, jobs: Array<{ __typename?: 'QueueJob', lastEventAt: any, status: ProcrastinateJobStatus }>, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any, organisation: { __typename?: 'PublicOrganisation', id: string, name: string } }> } & { ' $fragmentName'?: 'DataSourceCardFragment' };
 
 export type ExternalDataSourceExternalDataSourceCardQueryVariables = Exact<{
   ID: Scalars['ID']['input'];
@@ -2222,7 +2304,7 @@ export type TriggerFullUpdateMutationVariables = Exact<{
 }>;
 
 
-export type TriggerFullUpdateMutation = { __typename?: 'Mutation', triggerUpdate: { __typename?: 'ExternalDataSourceAction', id: string, externalDataSource: { __typename?: 'ExternalDataSource', id: any, name: string, crmType: string, jobs: Array<{ __typename?: 'QueueJob', status: ProcrastinateJobStatus, id: string, taskName: string, args: any, lastEventAt: any }> } } };
+export type TriggerFullUpdateMutation = { __typename?: 'Mutation', triggerUpdate: { __typename?: 'ExternalDataSourceAction', id: string, externalDataSource: { __typename?: 'ExternalDataSource', id: any, name: string, crmType: CrmType, jobs: Array<{ __typename?: 'QueueJob', status: ProcrastinateJobStatus, id: string, taskName: string, args: any, lastEventAt: any }> } } };
 
 export type ConstituencyStatsOverviewQueryVariables = Exact<{
   reportID: Scalars['ID']['input'];
@@ -2234,12 +2316,12 @@ export type ConstituencyStatsOverviewQuery = { __typename?: 'Query', mapReport: 
 export type EnrichmentLayersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type EnrichmentLayersQuery = { __typename?: 'Query', mappingSources: Array<{ __typename?: 'MappingSource', slug: string, name: string, author?: string | null, description?: string | null, descriptionUrl?: string | null, sourcePaths: Array<{ __typename?: 'MappingSourcePath', label?: string | null, value: string, description?: string | null }>, externalDataSource?: { __typename?: 'SharedDataSource', crmType: string } | null }> };
+export type EnrichmentLayersQuery = { __typename?: 'Query', mappingSources: Array<{ __typename?: 'MappingSource', slug: string, name: string, author?: string | null, description?: string | null, descriptionUrl?: string | null, sourcePaths: Array<{ __typename?: 'MappingSourcePath', label?: string | null, value: string, description?: string | null }>, externalDataSource?: { __typename?: 'SharedDataSource', crmType: CrmType } | null }> };
 
 export type GetMemberListQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetMemberListQuery = { __typename?: 'Query', myOrganisations: Array<{ __typename?: 'Organisation', externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, importedDataCount: number, crmType: string, dataType: DataSourceType }>, sharingPermissionsFromOtherOrgs: Array<{ __typename?: 'SharingPermission', externalDataSource: { __typename?: 'SharedDataSource', id: any, name: string, importedDataCount: number, crmType: string, dataType: DataSourceType, organisation: { __typename?: 'PublicOrganisation', name: string } } }> }> };
+export type GetMemberListQuery = { __typename?: 'Query', myOrganisations: Array<{ __typename?: 'Organisation', externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, importedDataCount: number, crmType: CrmType, dataType: DataSourceType }>, sharingPermissionsFromOtherOrgs: Array<{ __typename?: 'SharingPermission', externalDataSource: { __typename?: 'SharedDataSource', id: any, name: string, importedDataCount: number, crmType: CrmType, dataType: DataSourceType, organisation: { __typename?: 'PublicOrganisation', name: string } } }> }> };
 
 export type MapReportLayerGeoJsonPointQueryVariables = Exact<{
   genericDataId: Scalars['String']['input'];
@@ -2356,11 +2438,13 @@ export const PublicUserDocument = {"kind":"Document","definitions":[{"kind":"Ope
       }
       const result: PossibleTypesResultData = {
   "possibleTypes": {
-    "AirtableSourceMailchimpSource": [
+    "AirtableSourceMailchimpSourceActionNetworkSource": [
+      "ActionNetworkSource",
       "AirtableSource",
       "MailchimpSource"
     ],
     "Analytics": [
+      "ActionNetworkSource",
       "AirtableSource",
       "ExternalDataSource",
       "MailchimpSource",

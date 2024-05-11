@@ -690,11 +690,18 @@ class BatchJobProgress:
     remaining: int
 
 
+@strawberry.enum
+class CrmType(Enum):
+    airtable = "airtable"
+    mailchimp = "mailchimp"
+    actionnetwork = "actionnetwork"
+
+
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class BaseDataSource(Analytics):
     id: auto
     name: auto
-    crm_type: str = attr_field()
+    crm_type: CrmType = attr_field()
     data_type: auto
     description: auto
     created_at: auto

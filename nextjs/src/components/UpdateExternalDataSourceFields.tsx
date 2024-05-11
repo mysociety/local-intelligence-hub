@@ -1,6 +1,6 @@
 import { FieldPath, FormProvider, useForm } from "react-hook-form";
 import { Button } from "./ui/button";
-import { ExternalDataSourceInput, FieldDefinition, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
+import { CrmType, ExternalDataSourceInput, FieldDefinition, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
 import { PreopulatedSelectField } from "./ExternalDataSourceFields";
 import {
   FormControl,
@@ -33,7 +33,7 @@ export function UpdateExternalDataSourceFields ({
     data: ExternalDataSourceInput,
     e?: React.BaseSyntheticEvent<object, any, any> | undefined
   ) => void;
-  crmType: string;
+  crmType: CrmType;
   initialData?: ExternalDataSourceInput;
   fieldDefinitions?: FieldDefinition[] | null;
 }) {

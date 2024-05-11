@@ -1,7 +1,7 @@
 import { Control, FieldPath } from "react-hook-form"
 import toSpaceCase from "to-space-case"
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "./ui/form"
-import { FieldDefinition } from "@/__generated__/graphql"
+import { CrmType, FieldDefinition } from "@/__generated__/graphql"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "./ui/select"
 import { DataSourceFieldLabel } from "./DataSourceIcon"
 import { Input } from "./ui/input"
@@ -22,7 +22,7 @@ export function PreopulatedSelectField<FormInputs extends object = any>({
   required?: boolean
   fieldDefinitions?: Array<FieldDefinition> | null
   control: Control<FormInputs>
-  crmType: string
+  crmType: CrmType
   guess?: string | null
 }) {
   const humanisedFieldName = label || `${toSpaceCase(name.replace(/(field)$/ig, ''))} field`

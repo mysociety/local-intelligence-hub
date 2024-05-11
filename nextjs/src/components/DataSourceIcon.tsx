@@ -1,4 +1,4 @@
-import { FieldDefinition } from "@/__generated__/graphql";
+import { CrmType, FieldDefinition } from "@/__generated__/graphql";
 import { twMerge } from "tailwind-merge";
 import { File } from "lucide-react";
 import { externalDataSourceOptions } from "@/lib/data";
@@ -6,7 +6,7 @@ import { externalDataSourceOptions } from "@/lib/data";
 export function DataSourceFieldLabel({ label, fieldDefinition, crmType, className, source }: {
   label?: string,
   fieldDefinition?: FieldDefinition,
-  crmType: string,
+  crmType: CrmType,
   className?: string,
   source?: string
 }) {
@@ -32,13 +32,11 @@ export function DataSourceIcon({
   crmType,
   className ='w-4',
 }: {
-  crmType?: string // keyof typeof externalDataSourceOptions,
+  crmType?: CrmType // keyof typeof externalDataSourceOptions,
   className?: string
 }) { 
-  const option = externalDataSourceOptions[
-    // @ts-ignore
-    crmType
-  ]
+  if (!crmType) return <File className={className} />
+  const option = externalDataSourceOptions[crmType]
   if (crmType && !!option) {
     const Icon = option.icon || option.logo
     if (Icon) {
