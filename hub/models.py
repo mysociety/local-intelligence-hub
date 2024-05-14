@@ -1476,9 +1476,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         if mapping is None or len(mapping) == 0:
             return self.MappedMember(member=member, update_fields={})
 
+        id = self.get_record_id(member)
         update_fields = {}
         try:
-            print(f"mapping member {member.get('id')}")
+            print(f"mapping member {id}")
             postcode_data = None
             if self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE:
                 # Get postcode from member
@@ -1529,7 +1530,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     print(f"mapping exception {e}")
                     continue
             # Return the member and config data
-            print(f"mapped member {member.get('id')} {update_fields}")
+            print(f"mapped member {id} {update_fields}")
             return self.MappedMember(member=member, update_fields=update_fields)
         except TypeError:
             # Error fetching postcode data
@@ -2472,6 +2473,14 @@ class ActionNetworkSource(ExternalDataSource):
             if "action_network:" in id:
                 return id
         return ids[0]
+    
+    def get_record_uuid(self, record):
+        '''
+        Action Network prefixes their identifiers with "action_network:"
+        but some APIs expect the UUID without the prefix.
+        '''
+        id = self.get_record_id(record)
+        return id.replace("action_network:", "")
 
     def get_record_field(self, record, field: str):
         field_options = [
@@ -2556,16 +2565,25 @@ class ActionNetworkSource(ExternalDataSource):
         member = self.client.get_person(id)
         return member
 
-    def update_many(self, mapped_records, **kwargs):
+    async def update_many(self, mapped_records, **kwargs):
         updated_records = []
         for record in mapped_records:
-            updated_records.append(self.update_one(record, **kwargs))
+            if len(record.get("update_fields", {})) > 0:
+                updated_records.append(await self.update_one(record, **kwargs))
+            updated_records.append(await self.update_one(record, **kwargs))
         return updated_records
 
     async def update_one(self, mapped_record, action_network_background_processing=True, **kwargs):
-        id = self.get_record_id(mapped_record["member"])
-        # TODO: also add standard UK geo data
-        return self.client.update_person(id, action_network_background_processing, custom_fields=mapped_record["update_fields"])
+        if len(mapped_record.get("update_fields", {})) == 0:
+            return
+        try:
+            id = self.get_record_uuid(mapped_record["member"])
+            # TODO: also add standard UK geo data
+            # print("Updating AN record", id, mapped_record["update_fields"])
+            return self.client.update_person(id, action_network_background_processing, custom_fields=mapped_record["update_fields"])
+        except Exception as e:
+            print("Errored record for update_one", id, mapped_record["update_fields"])
+            raise e
 
     def delete_one(self, record_id):
         raise NotImplementedError("Deleting a person is not allowed via the API. DELETE requests will return an error.")
