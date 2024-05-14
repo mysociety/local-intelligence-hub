@@ -1361,9 +1361,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             }
             for d in self.get_import_data()
         ]
-        print(f"building imported data frame from {json_list}")
+        print(f"building imported data frame")
+        # from {json_list}")
         enrichment_df = pd.DataFrame.from_records(json_list)
-        print(f"got imported data frame with {len(json_list)} rows: \n {enrichment_df}")
+        print(f"got imported data frame with {len(json_list)} rows")
+        # : \n {enrichment_df}")
         return enrichment_df
 
     def data_loader_factory(self):
@@ -1371,14 +1373,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             return_data = []
             enrichment_df = await sync_to_async(self.get_imported_dataframe)()
             for key in keys:
-                print(
-                    f"loading enrichment data for key {key['member_id']} {key['source_id']} {key['source_path']}"
-                )
+                # print(
+                #     f"loading enrichment data for key {key['member_id']} {key['source_id']} {key['source_path']}"
+                # )
                 try:
                     if key.get("postcode_data", None) is None:
-                        print(
-                            f"returning none for key {key['member_id']} because postcode data is none"
-                        )
+                        # print(
+                        #     f"returning none for key {key['member_id']} because postcode data is none"
+                        # )
                         return_data.append(None)
                         continue
                     relevant_member_geography = get(
@@ -1398,15 +1400,15 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         relevant_member_geography == ""
                         or relevant_member_geography is None
                     ):
-                        print(
-                            f"returning none for key {key['member_id']} because {relevant_member_geography}"
-                        )
+                        # print(
+                        #     f"returning none for key {key['member_id']} because {relevant_member_geography}"
+                        # )
                         return_data.append(None)
                         continue
                     else:
-                        print(
-                            f"picking key {key['member_id']} {key['source_path']} from data frame"
-                        )
+                        # print(
+                        #     f"picking key {key['member_id']} {key['source_path']} from data frame"
+                        # )
                         enrichment_value = enrichment_df.loc[
                             # Match the member's geography to the enrichment source's geography
                             enrichment_df[self.geography_column]
@@ -1417,19 +1419,19 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         if enrichment_value is not None:
                             enrichment_value = enrichment_value[0]
                             if enrichment_value is np.nan or enrichment_value == np.nan:
-                                print(
-                                    f"missing data for {key['member_id']} {key['source_path']}"
-                                )
+                                # print(
+                                #     f"missing data for {key['member_id']} {key['source_path']}"
+                                # )
                                 return_data.append(None)
                             else:
-                                print(
-                                    f"picked {enrichment_value} for {key['member_id']} {key['source_path']}"
-                                )
+                                # print(
+                                #     f"picked {enrichment_value} for {key['member_id']} {key['source_path']}"
+                                # )
                                 return_data.append(enrichment_value)
                         else:
-                            print(
-                                f"missing data for {key['member_id']} {key['source_path']}"
-                            )
+                            # print(
+                            #     f"missing data for {key['member_id']} {key['source_path']}"
+                            # )
                             return_data.append(None)
                 except Exception as e:
                     print(f"loader exception {e}")
@@ -1483,6 +1485,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             postcode_data = None
             if self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE:
                 # Get postcode from member
+                print("Getting postcode data", member, self.geography_column)
                 postcode = self.get_record_field(member, self.geography_column)
                 # Get relevant config data for that postcode
                 postcode_data: PostcodesIOResult = await loaders["postcodesIO"].load(
@@ -1523,7 +1526,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                                 source_path=source_path,
                             )
                         )
-                        print(f"setting {source_path} {destination_column} to {loaded}")
+                        # print(f"setting {source_path} {destination_column} to {loaded}")
                         update_fields[destination_column] = loaded
                         continue
                 except Exception as e:
