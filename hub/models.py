@@ -2497,11 +2497,9 @@ class ActionNetworkSource(ExternalDataSource):
             try:
                 value = get(record, field)
                 if value:
-                    break
+                    return value
             except KeyError:
                 pass
-
-        return value
 
     def field_definitions(self):
         """
@@ -2552,14 +2550,18 @@ class ActionNetworkSource(ExternalDataSource):
         return fields
 
     async def fetch_all(self):
-        # Fetches all members in a list and returns their email addresses
+        # TODO: pagination
         list = self.client.get_people()
         return list.to_dicts()
 
     async def fetch_many(self, member_ids: list[str]):
-        # TODO: is there a more efficient request to get many members?
-        osdi_filter_str = " or ".join([f"identifier eq '{member_id}'" for member_id in member_ids])
-        return self.client.get_people(filter=osdi_filter_str)
+        member_ids = list(set(member_ids))
+        member_id_batches = batched(member_ids, 25)
+        members = []
+        for batch in member_id_batches:
+            osdi_filter_str = " or ".join([f"identifier eq '{member_id}'" for member_id in batch])
+            members += self.client.get_people(filter=osdi_filter_str).to_dicts()
+        return members
 
     async def fetch_one(self, member_id: str):
         # Fetches a single list member by their unique member ID
