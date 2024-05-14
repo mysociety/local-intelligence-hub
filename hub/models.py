@@ -23,6 +23,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 
+from benedict import benedict
 import numpy as np
 import pandas as pd
 import pytz
@@ -2527,9 +2528,20 @@ class ActionNetworkSource(ExternalDataSource):
                 editable=False
             ),
             self.FieldDefinition(
-                label="Address",
+                label="Street address",
                 value="postal_addresses[0].address_lines[0]",
                 editable=False
+            ),
+            self.FieldDefinition(
+                label="City",
+                value="postal_addresses[0].locality",
+                description="Town, city, local council or other local administrative area.",
+                editable=True,
+            ),
+            self.FieldDefinition(
+                label="Region / state",
+                value="postal_addresses[0].region",
+                editable=True,
             ),
             self.FieldDefinition(
                 label="Postal code",
@@ -2578,14 +2590,31 @@ class ActionNetworkSource(ExternalDataSource):
             updated_records.append(await self.update_one(record, **kwargs))
         return updated_records
 
+    people_update_fn_keys = [
+        "email_address",
+        "given_name",
+        "family_name",
+        "languages_spoken",
+        "postal_addresses",
+    ]
+
     async def update_one(self, mapped_record, action_network_background_processing=True, **kwargs):
         if len(mapped_record.get("update_fields", {})) == 0:
             return
         try:
             id = self.get_record_uuid(mapped_record["member"])
             # TODO: also add standard UK geo data
-            # print("Updating AN record", id, mapped_record["update_fields"])
-            return self.client.update_person(id, action_network_background_processing, custom_fields=mapped_record["update_fields"])
+            # Use benedict so that keys like `postal_addresses[0].postal_code`
+            # are unpacked into {'postal_addresses': [{'postal_code': 0}]}
+            update_fields = benedict()
+            # Insert non-standard keys as custom fields
+            for key, value in mapped_record["update_fields"].items():
+                if key in self.people_update_fn_keys:
+                    update_fields[key] = value
+                else:
+                    update_fields[f"custom_fields.{key}"] = value
+            # print("Updating AN record", id, update_fields)
+            return self.client.update_person(id, action_network_background_processing, **update_fields)
         except Exception as e:
             print("Errored record for update_one", id, mapped_record["update_fields"])
             raise e
