@@ -1486,7 +1486,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             postcode_data = None
             if self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE:
                 # Get postcode from member
-                print("Getting postcode data", member, self.geography_column)
                 postcode = self.get_record_field(member, self.geography_column)
                 # Get relevant config data for that postcode
                 postcode_data: PostcodesIOResult = await loaders["postcodesIO"].load(
@@ -2487,20 +2486,7 @@ class ActionNetworkSource(ExternalDataSource):
         return id.replace("action_network:", "")
 
     def get_record_field(self, record, field: str):
-        field_options = [
-            field,
-            f"custom_fields.{field}"
-        ]
-
-        value = None
-
-        for field in field_options:
-            try:
-                value = get(record, field)
-                if value:
-                    return value
-            except KeyError:
-                pass
+        return get(record, field)
 
     def field_definitions(self):
         """
@@ -2551,10 +2537,11 @@ class ActionNetworkSource(ExternalDataSource):
         ]
         custom_fields = self.client.get_custom_fields()
         for field in custom_fields["action_network:custom_fields"]:
+            name = field["name"]
             fields.append(
                 self.FieldDefinition(
                     label=field["name"],
-                    value=field["name"],
+                    value=f"custom_fields.{name}",
                     description=field.get("notes", None),
                     external_id=field["numeric_id"],
                 )
@@ -2590,14 +2577,6 @@ class ActionNetworkSource(ExternalDataSource):
             updated_records.append(await self.update_one(record, **kwargs))
         return updated_records
 
-    people_update_fn_keys = [
-        "email_address",
-        "given_name",
-        "family_name",
-        "languages_spoken",
-        "postal_addresses",
-    ]
-
     async def update_one(self, mapped_record, action_network_background_processing=True, **kwargs):
         if len(mapped_record.get("update_fields", {})) == 0:
             return
@@ -2607,12 +2586,8 @@ class ActionNetworkSource(ExternalDataSource):
             # Use benedict so that keys like `postal_addresses[0].postal_code`
             # are unpacked into {'postal_addresses': [{'postal_code': 0}]}
             update_fields = benedict()
-            # Insert non-standard keys as custom fields
             for key, value in mapped_record["update_fields"].items():
-                if key in self.people_update_fn_keys:
-                    update_fields[key] = value
-                else:
-                    update_fields[f"custom_fields.{key}"] = value
+                update_fields[key] = value
             # print("Updating AN record", id, update_fields)
             return self.client.update_person(id, action_network_background_processing, **update_fields)
         except Exception as e:
