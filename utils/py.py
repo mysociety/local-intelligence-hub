@@ -19,7 +19,13 @@ def get(d, path, default=None):
     if isinstance(d, benedict):
         val = d[path]
     else:
-        val = benedict(d)[path]
+        try:
+            o = benedict()
+            for key in d:
+                o[key] = d[key]
+            val = o[path]
+        except Exception as e:
+            return default
     return val if val is not None else default
 
 
