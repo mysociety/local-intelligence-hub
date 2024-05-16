@@ -1465,7 +1465,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         self,
         member: Union[str, dict],
         loaders: Loaders,
-        mapping: list[UpdateMapping] = [],
+        mapping: list[UpdateMapping] = None,
     ) -> MappedMember:
         """
         Match one member to a record in the data source, via ID or record.
@@ -1476,6 +1476,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             # TODO: write tests for the case when the loader fails for a member
             return None
 
+        if mapping is None or len(mapping) == 0:
+            mapping = self.get_update_mapping()
         if mapping is None or len(mapping) == 0:
             return self.MappedMember(member=member, update_fields={})
 
@@ -1540,29 +1542,37 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             return self.MappedMember(member=member, update_fields={})
 
     async def map_many(
-        self, members: list[Union[str, any]], loaders: Loaders
+        self, members: list[Union[str, any]], loaders: Loaders, 
+        mapping: list[UpdateMapping] = None
     ) -> list[MappedMember]:
         """
         Match many members to records in the data source.
         """
-        mapping = self.get_update_mapping()
+        if mapping is None or len(mapping) == 0:
+            mapping = self.get_update_mapping()
+
         return await asyncio.gather(
             *[self.map_one(member, loaders, mapping=mapping) for member in members]
         )
 
-    async def refresh_one(self, member_id: Union[str, any], update_kwargs={}):
-        if len(self.get_update_mapping()) == 0:
+    async def refresh_one(self, member_id: Union[str, any], update_kwargs={}, 
+        mapping: list[UpdateMapping] = None):
+        if mapping is None or len(mapping) == 0:
+            mapping = self.get_update_mapping()
+        if len(mapping) == 0:
             return
         loaders = await self.get_loaders()
-        mapping = self.get_update_mapping()
         mapped_record = await self.map_one(member_id, loaders, mapping=mapping)
         return await self.update_one(mapped_record, **update_kwargs)
 
-    async def refresh_many(self, member_ids: list[Union[str, any]], update_kwargs={}):
-        if len(self.get_update_mapping()) == 0:
+    async def refresh_many(self, member_ids: list[Union[str, any]], update_kwargs={}, 
+        mapping: list[UpdateMapping] = None):
+        if mapping is None or len(mapping) == 0:
+            mapping = self.get_update_mapping()
+        if len(mapping) == 0:
             return
         loaders = await self.get_loaders()
-        mapped_records = await self.map_many(member_ids, loaders)
+        mapped_records = await self.map_many(member_ids, loaders, mapping=mapping)
         return await self.update_many(mapped_records=mapped_records, **update_kwargs)
 
     # UI
@@ -2483,7 +2493,15 @@ class ActionNetworkSource(ExternalDataSource):
         but some APIs expect the UUID without the prefix.
         '''
         id = self.get_record_id(record)
+        return self.prefixed_id_to_uuid(id)
+
+    def prefixed_id_to_uuid(self, id):
         return id.replace("action_network:", "")
+    
+    def uuid_to_prefixed_id(self, uuid: str):
+        if uuid.startswith("action_network:"):
+            return uuid
+        return f"action_network:{uuid}"
 
     def get_record_field(self, record, field: str):
         return get(record, field)
@@ -2554,7 +2572,7 @@ class ActionNetworkSource(ExternalDataSource):
         return list.to_dicts()
 
     async def fetch_many(self, member_ids: list[str]):
-        member_ids = list(set(member_ids))
+        member_ids = [self.uuid_to_prefixed_id(id) for id in list(set(member_ids))]
         member_id_batches = batched(member_ids, 25)
         members = []
         for batch in member_id_batches:
@@ -2565,7 +2583,7 @@ class ActionNetworkSource(ExternalDataSource):
     async def fetch_one(self, member_id: str):
         # Fetches a single list member by their unique member ID
         # Mailchimp member IDs are typically the MD5 hash of the lowercase version of the member's email address
-        id = member_id.replace("action_network:", "")
+        id = self.prefixed_id_to_uuid(member_id)
         member = self.client.get_person(id)
         return member
 
