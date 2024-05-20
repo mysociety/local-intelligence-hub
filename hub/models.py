@@ -22,7 +22,7 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.text import slugify
-import logging
+from utils.log import get_simple_debug_logger
 
 from benedict import benedict
 import numpy as np
@@ -61,7 +61,7 @@ from utils.py import batched, ensure_list, get
 
 User = get_user_model()
 
-logger = logging.getLogger(__name__)
+logger = get_simple_debug_logger(__name__)
 
 
 class Organisation(models.Model):
@@ -1376,13 +1376,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             enrichment_df = await sync_to_async(self.get_imported_dataframe)()
             for key in keys:
                 logger.debug(
-                #     f"loading enrichment data for key {key['member_id']} {key['source_id']} {key['source_path']}"
-                # )
+                    f"loading enrichment data for key {key['member_id']} {key['source_id']} {key['source_path']}"
+                )
                 try:
                     if key.get("postcode_data", None) is None:
                         logger.debug(
-                        #     f"returning none for key {key['member_id']} because postcode data is none"
-                        # )
+                            f"returning none for key {key['member_id']} because postcode data is none"
+                        )
                         return_data.append(None)
                         continue
                     relevant_member_geography = get(
@@ -1403,14 +1403,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         or relevant_member_geography is None
                     ):
                         logger.debug(
-                        #     f"returning none for key {key['member_id']} because {relevant_member_geography}"
-                        # )
+                            f"returning none for key {key['member_id']} because {relevant_member_geography}"
+                        )
                         return_data.append(None)
                         continue
                     else:
                         logger.debug(
-                        #     f"picking key {key['member_id']} {key['source_path']} from data frame"
-                        # )
+                            f"picking key {key['member_id']} {key['source_path']} from data frame"
+                        )
                         enrichment_value = enrichment_df.loc[
                             # Match the member's geography to the enrichment source's geography
                             enrichment_df[self.geography_column]
@@ -1422,18 +1422,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             enrichment_value = enrichment_value[0]
                             if enrichment_value is np.nan or enrichment_value == np.nan:
                                 logger.debug(
-                                #     f"missing data for {key['member_id']} {key['source_path']}"
-                                # )
+                                    f"missing data for {key['member_id']} {key['source_path']}"
+                                )
                                 return_data.append(None)
                             else:
                                 logger.debug(
-                                #     f"picked {enrichment_value} for {key['member_id']} {key['source_path']}"
-                                # )
+                                    f"picked {enrichment_value} for {key['member_id']} {key['source_path']}"
+                                )
                                 return_data.append(enrichment_value)
                         else:
                             logger.debug(
-                            #     f"missing data for {key['member_id']} {key['source_path']}"
-                            # )
+                                f"missing data for {key['member_id']} {key['source_path']}"
+                            )
                             return_data.append(None)
                 except Exception as e:
                     logger.debug(f"loader exception {e}")

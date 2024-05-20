@@ -1,8 +1,8 @@
 import itertools
 import pprint
 from types import SimpleNamespace
-import logging
-logger = logging.getLogger(__name__)
+from utils.log import get_simple_debug_logger
+logger = get_simple_debug_logger(__name__)
 from benedict import benedict
 
 
@@ -110,7 +110,7 @@ def transform_dict_values_recursive(value, transform_value_fn = lambda v: v, del
         for key, v in value.items():
             v_transformed = transform_dict_values_recursive(v, transform_value_fn, delete_null_keys)
             if delete_null_keys is False or (delete_null_keys is True and v_transformed is not None):
-                print("setting", key, v_transformed, delete_null_keys, v_transformed is None)
+                logger.debug("setting", key, v_transformed, delete_null_keys, v_transformed is None)
                 new_dict[key] = v_transformed
         return new_dict
     elif isinstance(value, list):

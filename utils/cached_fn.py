@@ -1,6 +1,6 @@
 from django.core.cache import caches
-import logging
-logger = logging.getLogger(__name__)
+from utils.log import get_simple_debug_logger
+logger = get_simple_debug_logger(__name__)
 
 def cached_fn(key, timeout_seconds=60 * 5, cache_type="default"):
     cache = caches[cache_type]
