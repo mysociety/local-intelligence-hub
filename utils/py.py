@@ -1,7 +1,8 @@
 import itertools
 import pprint
 from types import SimpleNamespace
-
+import logging
+logger = logging.getLogger(__name__)
 from benedict import benedict
 
 
@@ -86,8 +87,8 @@ def trace(fn):
     def wrapped_fn(*args, **kwargs):
         try:
             res = fn(*args, **kwargs)
-            # print(fn.__name__, args, kwargs)
-            # print('->', res)
+            logger.debug(fn.__name__, args, kwargs)
+            logger.debug('->', res)
 
             return res
         except Exception as err:

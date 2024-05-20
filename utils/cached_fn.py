@@ -1,5 +1,6 @@
 from django.core.cache import caches
-
+import logging
+logger = logging.getLogger(__name__)
 
 def cached_fn(key, timeout_seconds=60 * 5, cache_type="default"):
     cache = caches[cache_type]
@@ -80,7 +81,7 @@ def cache_resolve_many(
 
 
 def cache_resolve(key, resolve, bucket, cache_type="default", timeout_seconds=None):
-    # print('lookup', [bucket, key])
+    logger.debug('lookup', [bucket, key])
 
     cache = caches[cache_type]
 

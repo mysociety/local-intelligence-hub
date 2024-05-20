@@ -22,6 +22,7 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.text import slugify
+import logging
 
 from benedict import benedict
 import numpy as np
@@ -1343,7 +1344,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         For use by views to query data without having to instantiate the class / query the database for the CRM first
         """
-        print(f"getting import data where external data source id is {id}")
+        logger.debug(f"getting import data where external data source id is {id}")
         return GenericData.objects.filter(
             data_type__data_set__external_data_source_id=id
         )
@@ -1362,10 +1363,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             }
             for d in self.get_import_data()
         ]
-        print(f"building imported data frame")
+        logger.debug(f"building imported data frame")
         # from {json_list}")
         enrichment_df = pd.DataFrame.from_records(json_list)
-        print(f"got imported data frame with {len(json_list)} rows")
+        logger.debug(f"got imported data frame with {len(json_list)} rows")
         # : \n {enrichment_df}")
         return enrichment_df
 
@@ -1374,12 +1375,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             return_data = []
             enrichment_df = await sync_to_async(self.get_imported_dataframe)()
             for key in keys:
-                # print(
+                logger.debug(
                 #     f"loading enrichment data for key {key['member_id']} {key['source_id']} {key['source_path']}"
                 # )
                 try:
                     if key.get("postcode_data", None) is None:
-                        # print(
+                        logger.debug(
                         #     f"returning none for key {key['member_id']} because postcode data is none"
                         # )
                         return_data.append(None)
@@ -1401,13 +1402,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         relevant_member_geography == ""
                         or relevant_member_geography is None
                     ):
-                        # print(
+                        logger.debug(
                         #     f"returning none for key {key['member_id']} because {relevant_member_geography}"
                         # )
                         return_data.append(None)
                         continue
                     else:
-                        # print(
+                        logger.debug(
                         #     f"picking key {key['member_id']} {key['source_path']} from data frame"
                         # )
                         enrichment_value = enrichment_df.loc[
@@ -1420,22 +1421,22 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         if enrichment_value is not None:
                             enrichment_value = enrichment_value[0]
                             if enrichment_value is np.nan or enrichment_value == np.nan:
-                                # print(
+                                logger.debug(
                                 #     f"missing data for {key['member_id']} {key['source_path']}"
                                 # )
                                 return_data.append(None)
                             else:
-                                # print(
+                                logger.debug(
                                 #     f"picked {enrichment_value} for {key['member_id']} {key['source_path']}"
                                 # )
                                 return_data.append(enrichment_value)
                         else:
-                            # print(
+                            logger.debug(
                             #     f"missing data for {key['member_id']} {key['source_path']}"
                             # )
                             return_data.append(None)
                 except Exception as e:
-                    print(f"loader exception {e}")
+                    logger.debug(f"loader exception {e}")
                     return_data.append(None)
 
             return return_data
@@ -1484,7 +1485,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         id = self.get_record_id(member)
         update_fields = {}
         try:
-            print(f"mapping member {id}")
+            logger.debug(f"mapping member {id}")
             postcode_data = None
             if self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE:
                 # Get postcode from member
@@ -1528,14 +1529,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                                 source_path=source_path,
                             )
                         )
-                        # print(f"setting {source_path} {destination_column} to {loaded}")
+                        logger.debug(f"setting {source_path} {destination_column} to {loaded}")
                         update_fields[destination_column] = loaded
                         continue
                 except Exception as e:
                     print(f"mapping exception {e}")
                     continue
             # Return the member and config data
-            print(f"mapped member {id} {update_fields}")
+            logger.debug(f"mapped member {id} {update_fields}")
             return self.MappedMember(member=member, update_fields=update_fields)
         except TypeError:
             # Error fetching postcode data
@@ -2020,7 +2021,7 @@ class AirtableSource(ExternalDataSource):
     def extra_webhook_healthcheck(self, webhooks):
         for webhook in webhooks:
             if not webhook.is_hook_enabled:
-                print("Webhook healthcheck: a webhook expired")
+                logger.debug("Webhook healthcheck: a webhook expired")
                 return False
         return True
 
@@ -2056,7 +2057,7 @@ class AirtableSource(ExternalDataSource):
                     member_ids += deets.created_records_by_id.keys()
         webhook_object.save()
         member_ids = list(sorted(set(member_ids)))
-        print("Webhook member result", webhook_object.cursor, member_ids)
+        logger.debug("Webhook member result", webhook_object.cursor, member_ids)
         return member_ids
 
     def delete_one(self, record_id):
@@ -2606,7 +2607,7 @@ class ActionNetworkSource(ExternalDataSource):
             update_fields = benedict()
             for key, value in mapped_record["update_fields"].items():
                 update_fields[key] = value
-            # print("Updating AN record", id, update_fields)
+            logger.debug("Updating AN record", id, update_fields)
             return self.client.update_person(id, action_network_background_processing, **update_fields)
         except Exception as e:
             print("Errored record for update_one", id, mapped_record["update_fields"])

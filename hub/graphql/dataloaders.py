@@ -285,7 +285,7 @@ def filterable_dataloader_resolver(
         # TODO: don't re-load prefetched data
         # but also apply filters to the prefetched data
         # if hasattr(root, attr):
-        #     # print("PREFETCHED", root, attr, getattr(root, attr, None))
+        #     logger.debug("PREFETCHED", root, attr, getattr(root, attr, None))
         #     return getattr(root, attr, None)
         relation: "ManyToOneRel" = root._meta.get_field(field_name=attr)
         related_model = relation.related_model
