@@ -10,6 +10,7 @@ import strawberry
 import strawberry_django
 import strawberry_django_dataloaders.factories
 import strawberry_django_dataloaders.fields
+from benedict import benedict
 from strawberry import auto
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
@@ -17,6 +18,7 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import IsAuthenticated
 
 from hub import models
+from hub.enrichment.sources import builtin_mapping_sources
 from hub.graphql.dataloaders import (
     FieldDataLoaderFactory,
     FieldReturningListDataLoaderFactory,
@@ -70,9 +72,9 @@ class QueueJob:
     scheduled_at: auto
     attempts: auto
     queueing_lock: auto
-    events: List[
-        "QueueEvent"
-    ] = strawberry_django_dataloaders.fields.auto_dataloader_field()
+    events: List["QueueEvent"] = (
+        strawberry_django_dataloaders.fields.auto_dataloader_field()
+    )
 
     @strawberry_django.field
     async def last_event_at(self, info) -> datetime:
@@ -259,9 +261,9 @@ class AreaType:
     area_type: auto
     description: auto
 
-    data_types: List[
-        DataType
-    ] = strawberry_django_dataloaders.fields.auto_dataloader_field()
+    data_types: List[DataType] = (
+        strawberry_django_dataloaders.fields.auto_dataloader_field()
+    )
 
 
 @strawberry_django.filter(models.CommonData, lookups=True)
@@ -576,8 +578,11 @@ class GenericData(CommonData):
     phone: auto
     address: auto
     postcode: auto
-    postcode_data: Optional[PostcodesIOResult]
     remote_url: str = fn_field()
+
+    @strawberry_django.field
+    def postcode_data(self) -> Optional[PostcodesIOResult]:
+        return benedict(self.postcode_data)
 
 
 @strawberry.type
@@ -860,14 +865,14 @@ class AutoUpdateConfig:
 
 @strawberry_django.type(models.AirtableSource)
 class AirtableSource(ExternalDataSource):
-    api_key: auto
+    api_key: str
     base_id: str
     table_id: str
 
 
 @strawberry_django.type(models.MailchimpSource)
 class MailchimpSource(ExternalDataSource):
-    api_key: auto
+    api_key: str
     list_id: auto
 
 
@@ -957,3 +962,54 @@ def dataset_by_name(name: str) -> models.DataSet:
         # Exclude strawberry.private data sets
         external_data_source=None
     ).get(name=name)
+
+
+@strawberry.type
+class MappingSourcePath:
+    value: str
+    label: Optional[str] = None
+    description: Optional[str] = None
+
+
+@strawberry.type
+class MappingSource:
+    slug: str
+    name: str
+    author: Optional[str] = None
+    description: Optional[str] = None
+    description_url: Optional[str] = None
+    builtin: bool = False
+    source_paths: List[MappingSourcePath]
+    external_data_source: Optional[SharedDataSource] = None
+
+
+def mapping_sources(info: Info) -> List[MappingSourcePath]:
+    user = get_current_user(info)
+
+    external_data_sources = models.ExternalDataSource.objects.filter(
+        organisation__members__user=user.id,
+    ).exclude(data_type=models.ExternalDataSource.DataSourceType.MEMBER)
+
+    return [
+        MappingSource(
+            slug=s.get("slug", None),
+            name=s.get("name", None),
+            author=s.get("author", None),
+            description=s.get("description", None),
+            description_url=s.get("description_url", None),
+            builtin=s.get("builtin", False),
+            external_data_source=s.get("external_data_source", None),
+            source_paths=[
+                MappingSourcePath(
+                    value=sp["value"],
+                    label=sp.get("label", None),
+                    description=sp.get("description", None),
+                )
+                for sp in s["source_paths"]
+            ],
+        )
+        for s in (
+            list(builtin_mapping_sources.values())
+            + [source.as_mapping_source() for source in external_data_sources]
+        )
+    ]

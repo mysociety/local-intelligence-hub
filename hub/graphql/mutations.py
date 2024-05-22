@@ -242,14 +242,14 @@ class ExternalDataSourceInput:
 
 @strawberry_django.input(models.AirtableSource, partial=True)
 class AirtableSourceInput(ExternalDataSourceInput):
-    api_key: auto
+    api_key: str
     base_id: auto
     table_id: auto
 
 
 @strawberry_django.input(models.MailchimpSource, partial=True)
 class MailChimpSourceInput(ExternalDataSourceInput):
-    api_key: auto
+    api_key: str
     list_id: auto
 
 

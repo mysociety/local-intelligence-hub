@@ -1,0 +1,35 @@
+{% load hub_filters %}
+{% if dataset.name.lower == "action scorecards section scores" %}
+<table class="table mb-0 mt-2" data-chart-type="bar" data-chart-direction="y">
+  <tbody>
+    {% for row in dataset.data %}
+      <tr>
+        <th>
+          {{ row.label|html_format_dataset_name|safe }}
+        </th>
+        <td>{{ row.value|floatformat:"0" }}%</td>
+      </tr>
+      {% endfor %}
+  </tbody>
+{% else %}
+<table class="table mb-0 js-chart" data-chart-type="bar" data-chart-direction="y">
+  <thead>
+      <tr>
+          <th scope="col"></th>
+          <th scope="col" data-color="#068670">This area</th>
+          <th scope="col" data-color="#ced4da">National average</th>
+      </tr>
+  </thead>
+  <tbody>
+    {% for row in dataset.data %}
+      <tr>
+        <th>
+          {{ row.label|html_format_dataset_name|safe }}
+        </th>
+        <td>{{ row.value|floatformat }}%</td>
+        <td>{{ row.average|floatformat }}%</td>
+      </tr>
+      {% endfor %}
+  </tbody>
+{% endif %}
+</table>

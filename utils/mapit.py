@@ -75,6 +75,15 @@ class MapIt(object):
                 gss_codes.append(area["codes"]["gss"])
         return gss_codes
 
+    def postcode_point_to_gss_codes_with_type(self, pc):
+        url = self.postcode_url % (self.base, pc, settings.MAPIT_API_KEY)
+        data = self.get(url)
+        gss_codes = {}
+        for area in data["areas"].values():
+            if "gss" in area["codes"]:
+                gss_codes[area["type"]] = area["codes"]["gss"]
+        return gss_codes
+
     def wgs84_point_to_gss_codes(self, lon, lat):
         url = self.wgs84_url % (self.base, lon, lat, settings.MAPIT_API_KEY)
         data = self.get(url)
@@ -82,6 +91,15 @@ class MapIt(object):
         for area in data.values():
             if "gss" in area["codes"]:
                 gss_codes.append(area["codes"]["gss"])
+        return gss_codes
+
+    def wgs84_point_to_gss_codes_with_type(self, lon, lat):
+        url = self.wgs84_url % (self.base, lon, lat, settings.MAPIT_API_KEY)
+        data = self.get(url)
+        gss_codes = {}
+        for area in data.values():
+            if "gss" in area["codes"]:
+                gss_codes[area["type"]] = area["codes"]["gss"]
         return gss_codes
 
     def areas_of_type(self, types):

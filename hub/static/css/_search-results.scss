@@ -1,0 +1,17 @@
+.search-results {
+    h2 {
+        margin-top: 3rem;
+    }
+
+    @include media-breakpoint-up(lg) {
+        display: grid;
+        grid-auto-flow: column;
+        grid-template-rows: repeat(3, auto);
+        grid-auto-columns: minmax(auto, 30rem); // constrain col width when less than three in grid
+        grid-column-gap: 2rem;
+    }
+
+    @include media-breakpoint-up(xl) {
+        grid-column-gap: 3rem;
+    }
+}

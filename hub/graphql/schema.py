@@ -51,12 +51,12 @@ class Query(UserQueries):
     shared_data_source: model_types.SharedDataSource = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
-    external_data_sources: List[
-        model_types.ExternalDataSource
-    ] = strawberry_django.field(extensions=[IsAuthenticated()])
-    imported_data_geojson_point: Optional[
-        model_types.MapReportMemberFeature
-    ] = model_types.imported_data_geojson_point
+    external_data_sources: List[model_types.ExternalDataSource] = (
+        strawberry_django.field(extensions=[IsAuthenticated()])
+    )
+    imported_data_geojson_point: Optional[model_types.MapReportMemberFeature] = (
+        model_types.imported_data_geojson_point
+    )
     shared_data_sources: List[model_types.SharedDataSource] = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
@@ -87,6 +87,10 @@ class Query(UserQueries):
     )
     area: Optional[model_types.Area] = model_types.area_by_gss
     dataSet: Optional[model_types.DataSet] = model_types.dataset_by_name
+    mapping_sources: List[model_types.MappingSource] = strawberry_django.field(
+        resolver=model_types.mapping_sources,
+        extensions=[IsAuthenticated()],
+    )
 
     enrich_postcode: public_queries.PostcodeQueryResponse = strawberry.field(
         resolver=public_queries.enrich_postcode,
@@ -173,9 +177,9 @@ class Mutation:
     update_sharing_permission: model_types.SharingPermission = django_mutations.update(
         mutation_types.SharingPermissionCUDInput, extensions=[IsAuthenticated()]
     )
-    update_sharing_permissions: List[
-        model_types.ExternalDataSource
-    ] = mutation_types.update_sharing_permissions
+    update_sharing_permissions: List[model_types.ExternalDataSource] = (
+        mutation_types.update_sharing_permissions
+    )
 
 
 class CustomErrorLoggingSchema(JwtSchema):

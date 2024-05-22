@@ -7,6 +7,28 @@ from hub.models import Area
 from utils.mapit import MapIt
 
 
+def mock_areas_of_type(types):
+    if "WMC" in types:
+        return [
+            {
+                "id": 1,
+                "codes": {"gss": "E10000001", "unit_id": "1"},
+                "name": "South Borsetshire",
+                "country": "E",
+                "type": "WMC",
+            },
+            {
+                "id": 4,
+                "codes": {"gss": "E10000004", "unit_id": "4"},
+                "name": "North Borsetshire",
+                "country": "E",
+                "type": "WMC",
+            },
+        ]
+
+    return []
+
+
 class ImportAreasTestCase(TestCase):
     quiet_parameter: bool = False
 
@@ -128,23 +150,8 @@ class ImportAreasTestCase(TestCase):
                 ]
             ],
         }
+        mapit_areas.side_effect = mock_areas_of_type
 
-        mapit_areas.return_value = [
-            {
-                "id": 1,
-                "codes": {"gss": "E10000001", "unit_id": "1"},
-                "name": "South Borsetshire",
-                "country": "E",
-                "type": "WMC",
-            },
-            {
-                "id": 4,
-                "codes": {"gss": "E10000004", "unit_id": "4"},
-                "name": "North Borsetshire",
-                "country": "E",
-                "type": "WMC",
-            },
-        ]
         call_command("import_areas", quiet=self.quiet_parameter)
 
         areas = Area.objects.all()

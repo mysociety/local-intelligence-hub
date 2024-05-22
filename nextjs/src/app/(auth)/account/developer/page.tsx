@@ -1,7 +1,6 @@
 "use client";
 
 import { CreateTokenMutation, CreateTokenMutationVariables, DeveloperApiContextQuery, RevokeTokenMutation, RevokeTokenMutationVariables } from "@/__generated__/graphql";
-import { GraphQLPlayground } from "@/components/graphiql";
 import { Button } from "@/components/ui/button";
 import { toastPromise } from "@/lib/toast";
 import { gql, useApolloClient } from "@apollo/client";

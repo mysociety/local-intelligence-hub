@@ -142,9 +142,9 @@ class Command(BaseCommand):
             and col not in self.unformatted_stats_columns
         ]
         df = df.rename(
-            columns=lambda column: format_key(column)
-            if column not in party_keys
-            else self.up(column)
+            columns=lambda column: (
+                format_key(column) if column not in party_keys else self.up(column)
+            )
         )
         # df["spk"] = df["Of which other winner"]
         # df["All other candidates"] = df["All other candidates"] - df.spk

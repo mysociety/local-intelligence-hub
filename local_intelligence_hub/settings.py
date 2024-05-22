@@ -53,9 +53,19 @@ env = environ.Env(
     POSTHOG_HOST=(str, False),
     ENVIRONMENT=(str, "development"),
     SENTRY_DSN=(str, False),
+    SENTRY_TRACE_SAMPLE_RATE=(float, 1.0),
     CRYPTOGRAPHY_KEY=(str, "somemadeupcryptographickeywhichshouldbereplaced"),
     CRYPTOGRAPHY_SALT=(str, "somesaltthatshouldbereplaced"),
-    SENTRY_TRACE_SAMPLE_RATE=(float, 1.0),
+    ENCRYPTION_SECRET_KEY=(str, "somemadeupcryptographickeywhichshouldbereplaced"),
+    ELECTORAL_COMMISSION_API_KEY=(str, ""),
+    MAILCHIMP_MYSOC_KEY=(str, ""),
+    MAILCHIMP_MYSOC_SERVER_PREFIX=(str, ""),
+    MAILCHIMP_MYSOC_LIST_ID=(str, ""),
+    MAILCHIMP_MYSOC_DATA_UPDATE_TAG=(str, ""),
+    MAILCHIMP_MYSOC_CLIMATE_INTEREST=(str, ""),
+    MAILCHIMP_TCC_KEY=(str, ""),
+    MAILCHIMP_TCC_SERVER_PREFIX=(str, ""),
+    MAILCHIMP_TCC_LIST_ID=(str, ""),
 )
 
 environ.Env.read_env(BASE_DIR / ".env")
@@ -69,6 +79,7 @@ if CRYPTOGRAPHY_KEY is None:
 if CRYPTOGRAPHY_SALT is None:
     raise ValueError("CRYPTOGRAPHY_SALT must be set")
 
+ELECTORAL_COMMISSION_API_KEY = env("ELECTORAL_COMMISSION_API_KEY")
 BASE_URL = env("BASE_URL")
 FRONTEND_BASE_URL = env("FRONTEND_BASE_URL")
 FRONTEND_SITE_TITLE = env("FRONTEND_SITE_TITLE")
@@ -94,6 +105,16 @@ TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME = env(
     "TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME"
 )
 TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY = env("TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY")
+
+# mailing list signup config
+MAILCHIMP_MYSOC_KEY = env("MAILCHIMP_MYSOC_KEY")
+MAILCHIMP_MYSOC_SERVER_PREFIX = env("MAILCHIMP_MYSOC_SERVER_PREFIX")
+MAILCHIMP_MYSOC_LIST_ID = env("MAILCHIMP_MYSOC_LIST_ID")
+MAILCHIMP_MYSOC_DATA_UPDATE_TAG = env("MAILCHIMP_MYSOC_DATA_UPDATE_TAG")
+MAILCHIMP_MYSOC_CLIMATE_INTEREST = env("MAILCHIMP_MYSOC_CLIMATE_INTEREST")
+MAILCHIMP_TCC_KEY = env("MAILCHIMP_TCC_KEY")
+MAILCHIMP_TCC_SERVER_PREFIX = env("MAILCHIMP_TCC_SERVER_PREFIX")
+MAILCHIMP_TCC_LIST_ID = env("MAILCHIMP_TCC_LIST_ID")
 
 # make sure CSRF checking still works behind load balancers
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -407,5 +428,14 @@ CACHES = {
         # TODO: Set up Redis for production
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         "LOCATION": "unique-snowflake",
-    }
+    },
+    # database cache for requests
+    "db": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "cache_table",
+        # 1 week
+        "TIMEOUT": 60 * 60 * 24 * 7,
+    },
 }
+
+ENCRYPTION_SECRET_KEY = env("ENCRYPTION_SECRET_KEY")

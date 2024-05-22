@@ -6,7 +6,7 @@ authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
 python = ">3.11,<3.13"
-Django = "4.2.10"
+Django = "4.2.11"
 django-bootstrap5 = "^22.1"
 django-environ = "^0.9.0"
 psycopg2 = "^2.9.3"
@@ -33,12 +33,11 @@ gunicorn = "^21.2.0"
 whitenoise = "^6.6.0"
 setuptools = "^69.1.1"
 uvicorn = "^0.27.1"
-strawberry-graphql = {extras = ["opentelemetry"], version = "^0.226.0"}
+strawberry-graphql = {extras = ["asgi", "opentelemetry"], version = "^0.226.0"}
 pandas = "^2.2.1"
 django-choices-field = "^2.3.0"
 httpx = "^0.27.0"
 strawberry-django-dataloaders = "^0.2.0"
-django-debug-toolbar = "^4.3.0"
 sentry-sdk = {extras = ["opentelemetry"], version = "^1.45.0"}
 django-minio-storage = "^0.5.7"
 mailchimp3 = "^3.0.21"
@@ -46,9 +45,12 @@ scalene = "^1.5.38"
 django-vectortiles = { git = "https://github.com/submarcos/django-vectortiles.git" }
 django-cryptography = "^1.1"
 posthog = "^3.5.0"
+mailchimp-marketing = {git = "https://github.com/mailchimp/mailchimp-marketing-python.git"}
+cryptography = "^42.0.5"
 
 [tool.poetry.dev-dependencies]
-black = "^22.8.0"
+django-debug-toolbar = "^4.3"
+black = "^24.3.0"
 coverage = "^6.5.0"
 flake8 = "^6.1.0"
 isort = "^5.10.1"

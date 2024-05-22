@@ -5,13 +5,23 @@ from tqdm import tqdm
 
 from hub.models import Area, AreaData, DataSet
 
-from .base_importers import BaseAreaImportCommand
+from .base_importers import BaseAreaImportCommand, MultipleAreaTypesMixin
 
 
-class Command(BaseAreaImportCommand):
+class Command(MultipleAreaTypesMixin, BaseAreaImportCommand):
     help = "Import data about NT properties per constituency"
     data_file = settings.BASE_DIR / "data" / "national_trust_properties.csv"
     source_url = "https://www.nationaltrust.org.uk/search"
+    do_not_convert = True
+
+    area_types = ["WMC", "WMC23", "STC", "DIS"]
+    cons_col_map = {
+        "WMC": "WMC",
+        "WMC23": "WMC23",
+        "STC": "STC",
+        "DIS": "DIS",
+    }
+
     defaults = {
         "label": "National Trust properties",
         "data_type": "json",
@@ -62,14 +72,6 @@ class Command(BaseAreaImportCommand):
         for data_type in self.data_types.values():
             AreaData.objects.filter(data_type=data_type).delete()
 
-    def handle(self, quiet=False, *args, **kwargs):
-        self._quiet = quiet
-        self.add_data_sets()
-        self.delete_data()
-        self.process_data()
-        self.update_averages()
-        self.update_max_min()
-
     def process_data(self):
         df = pd.read_csv(self.data_file)
         # df.group_name = df.group_name.apply(
@@ -81,7 +83,7 @@ class Command(BaseAreaImportCommand):
 
         # Group by the area, and add the data from there
         area_type = self.get_area_type()
-        for area_name, data in tqdm(df.groupby("area")):
+        for area_name, data in tqdm(df.groupby(self.cons_col_map[area_type.code])):
             try:
                 area = Area.objects.get(name=area_name, area_type=area_type)
             except Area.DoesNotExist:
@@ -90,9 +92,9 @@ class Command(BaseAreaImportCommand):
             json = []
             for index, row in data.iterrows():
                 p_data = row[["name"]].dropna().to_dict()
-                p_data[
-                    "url"
-                ] = f"https://www.nationaltrust.org.uk/site-search#gsc.q={row['name']}"
+                p_data["url"] = (
+                    f"https://www.nationaltrust.org.uk/site-search#gsc.q={row['name']}"
+                )
                 json.append(p_data)
 
             json_data, created = AreaData.objects.update_or_create(

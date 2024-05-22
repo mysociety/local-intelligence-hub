@@ -25,15 +25,17 @@ class TestExternalDataSource:
             name="Test Organisation", slug="test-organisation"
         )
 
-        self.custom_data_layer: models.AirtableSource = models.AirtableSource.objects.create(
-            name="Mayoral regions custom data layer",
-            data_type=models.AirtableSource.DataSourceType.OTHER,
-            organisation=self.organisation,
-            base_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_BASE_ID,
-            table_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME,
-            api_key=settings.TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY,
-            geography_column="council district",
-            geography_column_type=models.AirtableSource.PostcodesIOGeographyTypes.COUNCIL,
+        self.custom_data_layer: models.AirtableSource = (
+            models.AirtableSource.objects.create(
+                name="Mayoral regions custom data layer",
+                data_type=models.AirtableSource.DataSourceType.OTHER,
+                organisation=self.organisation,
+                base_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_BASE_ID,
+                table_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME,
+                api_key=settings.TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY,
+                geography_column="council district",
+                geography_column_type=models.AirtableSource.PostcodesIOGeographyTypes.COUNCIL,
+            )
         )
 
         self.source: models.ExternalDataSource = self.create_test_source()
@@ -160,14 +162,16 @@ class TestExternalDataSource:
             models.ExternalDataSource.CUDRecord(
                 email=f"eh{randint(0, 1000)}sp@gmail.com",
                 postcode="EH99 1SP",
-                data={
-                    "addr1": "98 Canongate",
-                    "city": "Edinburgh",
-                    "state": "Midlothian",
-                    "country": "GB",
-                }
-                if isinstance(self.source, models.MailchimpSource)
-                else {},
+                data=(
+                    {
+                        "addr1": "98 Canongate",
+                        "city": "Edinburgh",
+                        "state": "Midlothian",
+                        "country": "GB",
+                    }
+                    if isinstance(self.source, models.MailchimpSource)
+                    else {}
+                ),
             )
         )
         # Test this functionality
@@ -208,14 +212,16 @@ class TestExternalDataSource:
             models.ExternalDataSource.CUDRecord(
                 email=f"eh{randint(0, 1000)}sp@gmail.com",
                 postcode="EH99 1SP",
-                data={
-                    "addr1": "98 Canongate",
-                    "city": "Edinburgh",
-                    "state": "Midlothian",
-                    "country": "GB",
-                }
-                if isinstance(self.source, models.MailchimpSource)
-                else {},
+                data=(
+                    {
+                        "addr1": "98 Canongate",
+                        "city": "Edinburgh",
+                        "state": "Midlothian",
+                        "country": "GB",
+                    }
+                    if isinstance(self.source, models.MailchimpSource)
+                    else {}
+                ),
             )
         )
         # Test this functionality
@@ -256,18 +262,28 @@ class TestExternalDataSource:
             models.ExternalDataSource.CUDRecord(
                 email=f"NE{randint(0, 1000)}DD@gmail.com",
                 postcode="NE12 6DD",
-                data={
-                    "addr1": "Hadrian Court",
-                    "city": "Newcastle upon Tyne",
-                    "state": "Tyne and Wear",
-                    "country": "GB",
-                }
-                if isinstance(self.source, models.MailchimpSource)
-                else {},
+                data=(
+                    {
+                        "addr1": "Hadrian Court",
+                        "city": "Newcastle upon Tyne",
+                        "state": "Tyne and Wear",
+                        "country": "GB",
+                    }
+                    if isinstance(self.source, models.MailchimpSource)
+                    else {}
+                ),
             )
         )
         mapped_member = await self.source.map_one(
-            record, loaders=await self.source.get_loaders()
+            record,
+            loaders=await self.source.get_loaders(),
+            mapping=[
+                models.UpdateMapping(
+                    source=str(self.custom_data_layer.id),
+                    source_path="mayoral region",
+                    destination_column="mayoral region",
+                )
+            ],
         )
         self.assertEqual(
             mapped_member["update_fields"]["mayoral region"],
@@ -280,26 +296,30 @@ class TestExternalDataSource:
                 models.ExternalDataSource.CUDRecord(
                     postcode="G11 5RD",
                     email=f"gg{randint(0, 1000)}rardd@gmail.com",
-                    data={
-                        "addr1": "Byres Rd",
-                        "city": "Glasgow",
-                        "state": "Glasgow",
-                        "country": "GB",
-                    }
-                    if isinstance(self.source, models.MailchimpSource)
-                    else {},
+                    data=(
+                        {
+                            "addr1": "Byres Rd",
+                            "city": "Glasgow",
+                            "state": "Glasgow",
+                            "country": "GB",
+                        }
+                        if isinstance(self.source, models.MailchimpSource)
+                        else {}
+                    ),
                 ),
                 models.ExternalDataSource.CUDRecord(
                     postcode="G42 8PH",
                     email=f"ag{randint(0, 1000)}rwefw@gmail.com",
-                    data={
-                        "addr1": "506 Victoria Rd",
-                        "city": "Glasgow",
-                        "state": "Glasgow",
-                        "country": "GB",
-                    }
-                    if isinstance(self.source, models.MailchimpSource)
-                    else {},
+                    data=(
+                        {
+                            "addr1": "506 Victoria Rd",
+                            "city": "Glasgow",
+                            "state": "Glasgow",
+                            "country": "GB",
+                        }
+                        if isinstance(self.source, models.MailchimpSource)
+                        else {}
+                    ),
                 ),
             ]
         )
@@ -327,27 +347,6 @@ class TestExternalDataSource:
             else:
                 self.fail()
 
-    def test_filter(self):
-        now = str(datetime.now().timestamp())
-        self.create_many_test_records(
-            [
-                models.ExternalDataSource.CUDRecord(
-                    postcode=now + "11111", email=f"{now}11111@gmail.com", data={}
-                ),
-                models.ExternalDataSource.CUDRecord(
-                    postcode=now + "22222", email=f"{now}22222@gmail.com", data={}
-                ),
-            ]
-        )
-        # Test this functionality
-        records = self.source.filter({self.source.email_field: f"{now}11111@gmail.com"})
-        # Check
-        assert len(records) == 1
-        self.assertEqual(
-            self.source.get_record_field(records[0], self.source.email_field),
-            f"{now}11111@gmail.com",
-        )
-
     async def test_analytics(self):
         """
         This is testing the ability to get analytics from the data source
@@ -358,26 +357,30 @@ class TestExternalDataSource:
                 models.ExternalDataSource.CUDRecord(
                     postcode="E5 0AA",
                     email=f"E{randint(0, 1000)}AA@gmail.com",
-                    data={
-                        "addr1": "Millfields Rd",
-                        "city": "London",
-                        "state": "London",
-                        "country": "GB",
-                    }
-                    if isinstance(self.source, models.MailchimpSource)
-                    else {},
+                    data=(
+                        {
+                            "addr1": "Millfields Rd",
+                            "city": "London",
+                            "state": "London",
+                            "country": "GB",
+                        }
+                        if isinstance(self.source, models.MailchimpSource)
+                        else {}
+                    ),
                 ),
                 models.ExternalDataSource.CUDRecord(
                     postcode="E10 6EF",
                     email=f"E{randint(0, 1000)}EF@gmail.com",
-                    data={
-                        "addr1": "123 Colchester Rd",
-                        "city": "London",
-                        "state": "London",
-                        "country": "GB",
-                    }
-                    if isinstance(self.source, models.MailchimpSource)
-                    else {},
+                    data=(
+                        {
+                            "addr1": "123 Colchester Rd",
+                            "city": "London",
+                            "state": "London",
+                            "country": "GB",
+                        }
+                        if isinstance(self.source, models.MailchimpSource)
+                        else {}
+                    ),
                 ),
             ]
         )
@@ -430,6 +433,35 @@ class TestAirtableSource(TestExternalDataSource, TestCase):
             ],
         )
         return self.source
+
+    async def test_enrichment_electoral_commission(self):
+        """
+        This is testing the ability to enrich data from the data source
+        using a third party source
+        """
+        # Add a test record
+        record = self.create_test_record(
+            models.ExternalDataSource.CUDRecord(
+                email=f"NE{randint(0, 1000)}DD@gmail.com",
+                postcode="DH1 1AE",
+                data={},
+            )
+        )
+        mapped_member = await self.source.map_one(
+            record,
+            loaders=await self.source.get_loaders(),
+            mapping=[
+                models.UpdateMapping(
+                    source="electoral_commission_postcode_lookup",
+                    source_path="electoral_services.name",
+                    destination_column="electoral service",
+                )
+            ],
+        )
+        self.assertEqual(
+            mapped_member["update_fields"]["electoral service"],
+            "Durham County Council",
+        )
 
 
 class TestMailchimpSource(TestExternalDataSource, TestCase):

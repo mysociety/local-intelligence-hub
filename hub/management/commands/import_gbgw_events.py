@@ -2,16 +2,23 @@ from django.conf import settings
 
 from hub.models import DataSet
 
-from .base_importers import BaseConstituencyCountImportCommand
+from .base_importers import BaseConstituencyCountImportCommand, MultipleAreaTypesMixin
 
 
-class Command(BaseConstituencyCountImportCommand):
+class Command(MultipleAreaTypesMixin, BaseConstituencyCountImportCommand):
     help = "Import data about number of GBGW events per constituency"
     message = "Importing 2022 GBGW events"
     uses_gss = False
 
     data_file = settings.BASE_DIR / "data" / "gbgw_events_processed.csv"
-    cons_col = "area"
+
+    area_types = ["WMC", "WMC23", "STC", "DIS"]
+    cons_col_map = {
+        "WMC": "WMC",
+        "WMC23": "WMC23",
+        "STC": "STC",
+        "DIS": "DIS",
+    }
 
     data_sets = {
         "constituency_gbgw_2022_event_count": {

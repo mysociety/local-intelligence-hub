@@ -18,7 +18,6 @@ This could in principle be bundled into a quick command-line tool if useful.
 
 """
 
-
 from typing import Literal, get_args
 
 import pandas as pd
