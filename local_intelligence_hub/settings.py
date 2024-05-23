@@ -54,9 +54,9 @@ env = environ.Env(
     ENVIRONMENT=(str, "development"),
     SENTRY_DSN=(str, False),
     SENTRY_TRACE_SAMPLE_RATE=(float, 1.0),
-    CRYPTOGRAPHY_KEY=(str, "somemadeupcryptographickeywhichshouldbereplaced"),
-    CRYPTOGRAPHY_SALT=(str, "somesaltthatshouldbereplaced"),
-    ENCRYPTION_SECRET_KEY=(str, "somemadeupcryptographickeywhichshouldbereplaced"),
+    CRYPTOGRAPHY_KEY=(str, ""),
+    CRYPTOGRAPHY_SALT=(str, ""),
+    ENCRYPTION_SECRET_KEY=(str, ""),
     ELECTORAL_COMMISSION_API_KEY=(str, ""),
     MAILCHIMP_MYSOC_KEY=(str, ""),
     MAILCHIMP_MYSOC_SERVER_PREFIX=(str, ""),
@@ -73,11 +73,14 @@ environ.Env.read_env(BASE_DIR / ".env")
 # Should be alphanumeric
 CRYPTOGRAPHY_KEY = env("CRYPTOGRAPHY_KEY")
 CRYPTOGRAPHY_SALT = env("CRYPTOGRAPHY_SALT")
+ENCRYPTION_SECRET_KEY = env("ENCRYPTION_SECRET_KEY")
 
 if CRYPTOGRAPHY_KEY is None:
     raise ValueError("CRYPTOGRAPHY_KEY must be set")
 if CRYPTOGRAPHY_SALT is None:
     raise ValueError("CRYPTOGRAPHY_SALT must be set")
+if ENCRYPTION_SECRET_KEY is None:
+    raise ValueError("ENCRYPTION_SECRET_KEY must be set")
 
 ELECTORAL_COMMISSION_API_KEY = env("ELECTORAL_COMMISSION_API_KEY")
 BASE_URL = env("BASE_URL")
@@ -399,8 +402,6 @@ if environment == "production":
             ],
             # Optionally, you can adjust the logging level
             traces_sample_rate=1.0,  # Adjust sample rate as needed
-            enable_tracing=True,
-            instrumenter="otel",
         )
 
     if env("POSTHOG_API_KEY") is not False and env("POSTHOG_HOST") is not False:
@@ -437,5 +438,3 @@ CACHES = {
         "TIMEOUT": 60 * 60 * 24 * 7,
     },
 }
-
-ENCRYPTION_SECRET_KEY = env("ENCRYPTION_SECRET_KEY")

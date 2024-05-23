@@ -37,9 +37,8 @@ from pyairtable import Api as AirtableAPI
 from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
+from sentry_sdk import set_measurement
 from strawberry.dataloader import DataLoader
-from hub import metrics
-
 
 import utils as lih_utils
 from hub.analytics import Analytics
@@ -1022,9 +1021,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         return self.get_scheduled_parent_job(
             dict(task_name__contains="hub.tasks.refresh")
         )
-    
-
-
 
     def get_scheduled_batch_job_progress(self, parent_job: ProcrastinateJob):
         request_id = parent_job.args.get("request_id")
@@ -1036,7 +1032,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         total = 2
         statuses = dict()
-        
 
         for job in jobs:
             job_count = len(job.args.get("member_ids", []))
@@ -1045,7 +1040,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 statuses[job.status] += job_count
             else:
                 statuses[job.status] = job_count
-
 
         done = (
             int(
@@ -1064,7 +1058,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
         remaining = total - done
-    
+
         time_so_far = datetime.now(pytz.utc) - time_started
         duration_per_record = time_so_far / done
         time_remaining = duration_per_record * remaining
@@ -1084,7 +1078,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             failed=statuses.get("failed", 0),
             doing=statuses.get("doing", 0),
         )
-
 
     def get_update_mapping(self) -> list[UpdateMapping]:
         return ensure_list(self.update_mapping)
@@ -1628,14 +1621,15 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
         members = await external_data_source.fetch_all()
-        member_count = len(members)
-        metrics.update_rows_requested.record(member_count)
+        member_count = 0
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
         for batch in batches:
+            member_count += len(batch)
             member_ids = [
                 external_data_source.get_record_id(member) for member in batch
             ]
             await external_data_source.schedule_refresh_many(member_ids, request_id)
+        set_measurement("update_rows_requested", member_count)
 
     @classmethod
     async def deferred_refresh_webhooks(cls, external_data_source_id: str):
@@ -1667,16 +1661,17 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
         members = await external_data_source.fetch_all()
-        member_count = len(members)
-        metrics.import_rows_requested.record(member_count)
+        member_count = 0
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
         for batch in batches:
+            member_count += len(batch)
             member_ids = [
                 external_data_source.get_record_id(member) for member in batch
             ]
             await external_data_source.schedule_import_many(
                 member_ids, request_id=request_id
             )
+        set_measurement("import_rows_requested", member_count)
 
     async def schedule_refresh_one(self, member_id: str) -> int:
         try:
@@ -1692,10 +1687,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     async def schedule_refresh_many(
         self, member_ids: list[str], request_id: str = None
     ) -> int:
-        start_time = datetime.now() 
         member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
-            result = await refresh_many.configure(
+            return await refresh_many.configure(
                 # Dedupe `update_many` jobs for the same config
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"update_many_{str(self.id)}_{member_ids_hash}",
@@ -1705,36 +1699,26 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 external_data_source_id=str(self.id),
                 member_ids=member_ids,
             )
-
-            end_time = datetime.now() 
-            duration = end_time - start_time
-            metrics.update_time_taken.record(duration.total_seconds())
-            return result
         except (UniqueViolation, IntegrityError):
             pass
 
-  
-         
-       
-
     async def schedule_refresh_all(self, request_id: str = None) -> int:
-            try:
-                return await refresh_all.configure(
-                    # Dedupe `update_all` jobs for the same config
-                    # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-                    queueing_lock=f"update_all_{str(self.id)}",
-                    schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
-                ).defer_async(external_data_source_id=str(self.id), request_id=request_id)
-            except (UniqueViolation, IntegrityError):
-                pass
+        try:
+            return await refresh_all.configure(
+                # Dedupe `update_all` jobs for the same config
+                # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+                queueing_lock=f"update_all_{str(self.id)}",
+                schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+            ).defer_async(external_data_source_id=str(self.id), request_id=request_id)
+        except (UniqueViolation, IntegrityError):
+            pass
 
     async def schedule_import_many(
         self, member_ids: list[str], request_id: str = None
     ) -> int:
-        start_time = datetime.now() 
         member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
-            result = await import_many.configure(
+            return await import_many.configure(
                 # Dedupe `import_many` jobs for the same config
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"import_many_{str(self.id)}_{member_ids_hash}",
@@ -1744,23 +1728,23 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 member_ids=member_ids,
                 request_id=request_id,
             )
-            end_time = datetime.now() 
-            duration = end_time - start_time
-         
-            metrics.import_time_taken.record(duration.total_seconds())
-            return result
-        
         except (UniqueViolation, IntegrityError):
             pass
-        
-    async def schedule_import_all(self, requested_at: str, request_id: str = None) -> int:
+
+    async def schedule_import_all(
+        self, requested_at: str, request_id: str = None
+    ) -> int:
         try:
             return await import_all.configure(
                 # Dedupe `import_all` jobs for the same config
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"import_all_{str(self.id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
-            ).defer_async(external_data_source_id=str(self.id), request_id=request_id, requested_at=requested_at)
+            ).defer_async(
+                external_data_source_id=str(self.id),
+                requested_at=requested_at,
+                request_id=request_id,
+            )
         except (UniqueViolation, IntegrityError):
             pass
 
@@ -2184,9 +2168,10 @@ class Report(PolymorphicModel):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
-       
+
     def __str__(self):
         return self.name
+
 
 class MailchimpSource(ExternalDataSource):
     """
@@ -2531,4 +2516,3 @@ def update_apitoken_cache_on_save(sender, instance, *args, **kwargs):
 @receiver(models.signals.post_delete, sender=APIToken)
 def update_apitoken_cache_on_delete(sender, instance, *args, **kwargs):
     refresh_tokens_cache()
-

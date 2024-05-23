@@ -1,8 +1,7 @@
+import datetime
 import logging
 import uuid
 from typing import List, Optional
-import datetime
-
 
 from django.utils.text import slugify
 
@@ -212,12 +211,17 @@ def get_or_create_organisation_for_source(info: Info, data: any):
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
 async def import_all(external_data_source_id: str) -> ExternalDataSourceAction:
-    data_source = await models.ExternalDataSource.objects.aget(id=external_data_source_id)
+    data_source: models.ExternalDataSource = (
+        await models.ExternalDataSource.objects.aget(id=external_data_source_id)
+    )
     request_id = str(uuid.uuid4())
-    requested_at = datetime.datetime.now(datetime.timezone.utc).isoformat() 
+    requested_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
-    await data_source.schedule_import_all(request_id=request_id, requested_at=requested_at)
+    await data_source.schedule_import_all(
+        requested_at=requested_at, request_id=request_id
+    )
     return ExternalDataSourceAction(id=request_id, external_data_source=data_source)
+
 
 @strawberry_django.input(models.ExternalDataSource, partial=True)
 class ExternalDataSourceInput:

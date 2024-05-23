@@ -1,61 +1,60 @@
 from __future__ import annotations
 
-from django.conf import settings
-
-from procrastinate.contrib.django import app
-
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
-
+import datetime
 import functools
 import os
-from opentelemetry.trace import Status, StatusCode
 
-# Setting up the tracer provider:
-trace.set_tracer_provider(TracerProvider())
+from django.conf import settings
+from django.db.models import Count, Q
 
-# Adding a SimpleSpanProcessor and ConsoleSpanExporter to the tracer provider:
-tracer_provider = trace.get_tracer_provider()
-tracer_provider.add_span_processor(
-    SimpleSpanProcessor(ConsoleSpanExporter())
-)
+from procrastinate.contrib.django import app
+from procrastinate.contrib.django.models import ProcrastinateJob
+from sentry_sdk import set_measurement
 
-# Acquiring a tracer
-tracer = trace.get_tracer(__name__)
-
-from opentelemetry.trace import Status, StatusCode
 
 def telemetry_task(func):
+    task_name = func.__name__
+    user_cpu_time_metric = f"task.{task_name}.user_cpu_time"
+    system_cpu_time_metric = f"task.{task_name}.system_cpu_time"
+    elapsed_time_metric = f"task.{task_name}.elapsed_time"
+    percentage_failed_metric = f"task.{task_name}.percentage_failed"
+
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
-        # Get CPU time before task execution
+        # Get times before task execution
+        start_time = datetime.datetime.now(datetime.timezone.utc)
         cpu_start = os.times()
 
-        with tracer.start_as_current_span(f"Task: {func.__name__}") as span:
-            try:
-                result = await func(*args, **kwargs)
-                
-                # Get CPU time after task execution
-                cpu_end = os.times()
-                
-                # Calculate the CPU time used during the task
-                user_cpu_time_used = cpu_end.user - cpu_start.user
-                system_cpu_time_used = cpu_end.system - cpu_start.system
+        try:
+            result = await func(*args, **kwargs)
 
-                # Set attributes for OpenTelemetry
-                span.set_attribute("task.status", "succeeded")
-                span.set_attribute("cpu.user_time", user_cpu_time_used)
-                span.set_attribute("cpu.system_time", system_cpu_time_used)
-                span.set_status(Status(StatusCode.OK))
-                
-                return result
-            except Exception as e:
-                span.set_attribute("task.status", "failed")
-                span.record_exception(e)
-                span.set_status(Status(StatusCode.ERROR, str(e)))
-                raise e
+            # Get CPU time after task execution
+            end_time = datetime.datetime.now(datetime.timezone.utc)
+            cpu_end = os.times()
+
+            # Calculate the CPU time used during the task
+            user_cpu_time_used = cpu_end.user - cpu_start.user
+            system_cpu_time_used = cpu_end.system - cpu_start.system
+            elapsed_time = end_time - start_time
+
+            set_measurement(user_cpu_time_metric, user_cpu_time_used)
+            set_measurement(system_cpu_time_metric, system_cpu_time_used)
+            set_measurement(
+                elapsed_time_metric, elapsed_time.total_seconds(), "seconds"
+            )
+
+            return result
+        finally:
+            counts = await ProcrastinateJob.objects.aaggregate(
+                total=Count("id"), failed=Count("id", filter=Q(status="failed"))
+            )
+            percentage_failed = (
+                counts["failed"] * 100 / counts["total"] if counts["total"] else 0
+            )
+            set_measurement(percentage_failed_metric, round(percentage_failed, 2))
+
     return wrapper
+
 
 @app.task(queue="index")
 @telemetry_task
@@ -118,22 +117,11 @@ async def import_many(
 
 @app.task(queue="index")
 @telemetry_task
-async def import_all(external_data_source_id: str, requested_at: str, request_id: str = None):
+async def import_all(
+    external_data_source_id: str, requested_at: str, request_id: str = None
+):
     from hub.models import ExternalDataSource
-    import datetime
 
-    # Convert the requested_at ISO string to a datetime object
-    requested_time = datetime.datetime.fromisoformat(requested_at)
-    start_time = datetime.datetime.now(datetime.timezone.utc)
-
-    # Calculate the difference
-    initial_delay = start_time - requested_time
-
-    with tracer.start_as_current_span("Task: import_all") as span:
-        span.set_attribute("task.initial_delay_seconds", initial_delay.total_seconds())
-
-        await ExternalDataSource.deferred_import_all(
-            external_data_source_id=external_data_source_id, request_id=request_id
-        )
-
-        span.set_attribute("task.status", "completed")
+    await ExternalDataSource.deferred_import_all(
+        external_data_source_id=external_data_source_id, request_id=request_id
+    )
