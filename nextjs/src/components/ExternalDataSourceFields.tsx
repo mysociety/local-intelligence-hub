@@ -36,7 +36,7 @@ export function PreopulatedSelectField<FormInputs extends object = any>({
             <FormControl>
               {fieldDefinitions?.length ? (
                 // @ts-ignore
-                <Select {...field} onValueChange={field.onChange} required={required}>
+                <Select {...{...field, ref: null}} onValueChange={field.onChange} required={required}>
                   <SelectTrigger className='pl-1'>
                     <SelectValue
                       className='capitalize'
