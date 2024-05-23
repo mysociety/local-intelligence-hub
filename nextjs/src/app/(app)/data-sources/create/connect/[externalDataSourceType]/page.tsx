@@ -54,6 +54,8 @@ const TEST_DATA_SOURCE = gql`
       geographyColumn,
       geographyColumnType
       healthcheck
+      predefinedColumnNames
+      defaultDataType
       remoteName
     }
   }
@@ -171,6 +173,12 @@ export default function Page({
   useGuessedField('fullNameField', ["full name", "name"])
   useGuessedField('firstNameField', ["first name", "given name"])
   useGuessedField('lastNameField', ["last name", "family name", "surname", "second name"])
+
+  useEffect(() => {
+    if (testSourceResult.data?.testDataSource?.defaultDataType) {
+      form.setValue("dataType", testSourceResult.data?.testDataSource.defaultDataType)
+    }
+  }, [testSourceResult.data])
 
   async function submitTestConnection(formData: FormInputs) {
     if (!formData[externalDataSourceType]) {
@@ -331,53 +339,24 @@ export default function Page({
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="dataType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data type</FormLabel>
-                    <FormControl>
-                      {/* @ts-ignore */}
-                      <Select onValueChange={field.onChange} defaultValue={field.value} required>
-                        <SelectTrigger>
-                          <SelectValue placeholder="What kind of data is this?" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectLabel>Type of data source</SelectLabel>
-                            <SelectItem value={DataSourceType.Member}>A list of members</SelectItem>
-                            <SelectItem value={DataSourceType.Other}>Other data</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className='grid grid-cols-2 gap-4 w-full'>
-                <FPreopulatedSelectField name="geographyColumn" label="geography" required />
+              {!currentSource?.testDataSource?.defaultDataType && (
                 <FormField
                   control={form.control}
-                  name="geographyColumnType"
+                  name="dataType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Geography Type</FormLabel>
+                      <FormLabel>Data type</FormLabel>
                       <FormControl>
                         {/* @ts-ignore */}
                         <Select onValueChange={field.onChange} defaultValue={field.value} required>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a geography type" />
+                            <SelectValue placeholder="What kind of data is this?" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectGroup>
-                              <SelectLabel>Geography type</SelectLabel>
-                              <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Constituency}>GE2010-2019 Constituency</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Constituency_2025}>GE2024 Constituency</SelectItem>
+                              <SelectLabel>Type of data source</SelectLabel>
+                              <SelectItem value={DataSourceType.Member}>A list of members</SelectItem>
+                              <SelectItem value={DataSourceType.Other}>Other data</SelectItem>
                             </SelectGroup>
                           </SelectContent>
                         </Select>
@@ -386,17 +365,50 @@ export default function Page({
                     </FormItem>
                   )}
                 />
-                {form.watch('dataType') === DataSourceType.Member && (
-                  <>
-                    <FPreopulatedSelectField name="emailField" />
-                    <FPreopulatedSelectField name="phoneField" />
-                    <FPreopulatedSelectField name="addressField" />
-                    <FPreopulatedSelectField name="fullNameField" />
-                    <FPreopulatedSelectField name="firstNameField" />
-                    <FPreopulatedSelectField name="lastNameField" />
-                  </>
-                )}
-              </div>
+              )}
+              {!currentSource?.testDataSource?.predefinedColumnNames && (
+                <div className='grid grid-cols-2 gap-4 w-full'>
+                  <FPreopulatedSelectField name="geographyColumn" label="geography" required />
+                  <FormField
+                    control={form.control}
+                    name="geographyColumnType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Geography Type</FormLabel>
+                        <FormControl>
+                          {/* @ts-ignore */}
+                          <Select onValueChange={field.onChange} defaultValue={field.value} required>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a geography type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectLabel>Geography type</SelectLabel>
+                                <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
+                                <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
+                                <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
+                                <SelectItem value={PostcodesIoGeographyTypes.Constituency}>GE2010-2019 Constituency</SelectItem>
+                                <SelectItem value={PostcodesIoGeographyTypes.Constituency_2025}>GE2024 Constituency</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {form.watch('dataType') === DataSourceType.Member && (
+                    <>
+                      <FPreopulatedSelectField name="emailField" />
+                      <FPreopulatedSelectField name="phoneField" />
+                      <FPreopulatedSelectField name="addressField" />
+                      <FPreopulatedSelectField name="fullNameField" />
+                      <FPreopulatedSelectField name="firstNameField" />
+                      <FPreopulatedSelectField name="lastNameField" />
+                    </>
+                  )}
+                </div>
+              )}
               <Button type='submit' variant="reverse" disabled={createSourceResult.loading}>
                 Save connection
               </Button>

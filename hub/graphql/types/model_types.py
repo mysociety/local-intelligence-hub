@@ -719,6 +719,11 @@ class BaseDataSource(Analytics):
     organisation_id: str = strawberry_django.field(
         resolver=lambda self: self.organisation_id
     )
+    predefined_column_names: bool = attr_field()
+    has_webhooks: bool = attr_field()
+    automated_webhooks: bool = attr_field()
+    introspect_fields: bool = attr_field()
+    default_data_type: bool = attr_field()
 
     @strawberry_django.field
     def is_import_scheduled(self: models.ExternalDataSource, info: Info) -> bool:
@@ -812,6 +817,7 @@ class ExternalDataSource(BaseDataSource):
     remote_url: Optional[str] = fn_field()
     healthcheck: bool = fn_field()
     orgs_with_access: List[Organisation]
+    auto_update_webhook_url: str = fn_field()
 
     @strawberry_django.field
     def sharing_permissions(

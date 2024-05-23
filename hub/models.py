@@ -889,6 +889,31 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     This class is to be subclassed by specific data source types.
     """
 
+    # Set TRUE for CRMs which have specific storage slots for name/address/etc.
+    predefined_column_names = False
+    has_webhooks = False
+    automated_webhooks = False
+    introspect_fields = False
+
+    # Allow sources to define default values for themselves
+    # for example opinionated CRMs which are only for people and have defined slots for data
+    defaults = {}
+    default_options = [
+        # Reports
+        "data_type",
+        # Geocoding
+        "geography_column",
+        "geography_column_type",
+        # Imports
+        "postcode_field",
+        "first_name_field",
+        "last_name_field",
+        "full_name_field",
+        "email_field",
+        "phone_field",
+        "address_field",
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organisation = models.ForeignKey(
         Organisation,
@@ -916,8 +941,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(auto_now=True)
-    automated_webhooks = False
-    introspect_fields = False
     # Geocoding data
 
     class PostcodesIOGeographyTypes(models.TextChoices):
@@ -953,6 +976,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     ]
 
     def save(self, *args, **kwargs):
+        for key, value in self.default_options.items():
+            if (getattr(self, key) is None or getattr(self, key) == "") and (value is not None and value != ""):
+                setattr(self, key, value)
         # Always keep these two in sync
         if (
             self.geography_column is not None
@@ -1144,6 +1170,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
     def webhook_healthcheck(self):
+        if self.has_webhooks is False:
+            return False
+        if self.automated_webhooks is False:
+            return True
         expected_webhooks = 0
         if self.auto_update_enabled:
             expected_webhooks += 1
@@ -1887,6 +1917,7 @@ class AirtableSource(ExternalDataSource):
 
     base_id = models.CharField(max_length=250)
     table_id = models.CharField(max_length=250)
+    has_webhooks = True
     automated_webhooks = True
     introspect_fields = True
 
@@ -2180,6 +2211,32 @@ class MailchimpSource(ExternalDataSource):
     """
 
     crm_type = "mailchimp"
+
+    class Meta:
+        verbose_name = "Mailchimp list"
+        unique_together = ["list_id", "api_key"]
+
+    predefined_column_names = True
+    has_webhooks = True
+    automated_webhooks = True
+    introspect_fields = True
+    
+    defaults = dict(
+        # Reports
+        data_type = ExternalDataSource.DataSourceType.MEMBER,
+        # Geocoding
+        geography_column = "ADDRESS.zip",
+        geography_column_type = ExternalDataSource.PostcodesIOGeographyTypes.POSTCODE,
+        # Imports
+        postcode_field = "ADDRESS.zip",
+        first_name_field = "FNAME",
+        last_name_field = "LNAME",
+        full_name_field = None,
+        email_field = "email_address",
+        phone_field = "PHONE",
+        address_field = "ADDRESS.addr1"
+    )
+
     api_key = EncryptedCharField(
         max_length=250, help_text="Mailchimp API key.", null=True, blank=True
     )
@@ -2187,13 +2244,6 @@ class MailchimpSource(ExternalDataSource):
         max_length=250,
         help_text="The unique identifier for the Mailchimp list.",
     )
-
-    automated_webhooks = True
-    introspect_fields = True
-
-    class Meta:
-        verbose_name = "Mailchimp list"
-        unique_together = ["list_id", "api_key"]
 
     @cached_property
     def client(self) -> MailChimp:
@@ -2449,24 +2499,35 @@ class ActionNetworkSource(ExternalDataSource):
     """
 
     crm_type = "actionnetwork"
-    api_key = EncryptedCharField(
-        max_length=250,
-        unique=True
-    )
-
-    automated_webhooks = False
-    introspect_fields = True
 
     class Meta:
         verbose_name = "Action Network list"
 
-    postcode_field = "postal_addresses[0].postal_code"
-    first_name_field = "given_name"
-    last_name_field = "family_name"
-    full_name_field = None
-    email_field = "email_addresses[0].address"
-    phone_field = "phone_numbers[0].number"
-    address_field = "postal_addresses[0].address_lines[0]"
+    predefined_column_names = True
+    has_webhooks = True
+    automated_webhooks = False
+    introspect_fields = True
+
+    defaults = dict(
+        # Reports
+        data_type = ExternalDataSource.DataSourceType.MEMBER,
+        # Geocoding
+        geography_column = "postal_addresses[0].postal_code",
+        geography_column_type = ExternalDataSource.PostcodesIOGeographyTypes.POSTCODE,
+        # Imports
+        postcode_field = "postal_addresses[0].postal_code",
+        first_name_field = "given_name",
+        last_name_field = "family_name",
+        full_name_field = None,
+        email_field = "email_addresses[0].address",
+        phone_field = "phone_numbers[0].number",
+        address_field = "postal_addresses[0].address_lines[0]"
+    )
+
+    api_key = EncryptedCharField(
+        max_length=250,
+        unique=True
+    )
 
     @cached_property
     def client(self) -> ActionNetwork:

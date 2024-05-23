@@ -75,7 +75,7 @@ export function ExternalDataSourceCard({
           Sharing with {externalDataSource.sharingPermissions.map((p) => p.organisation.name).join(", ")}
         </div>
       )}
-      {withUpdateOptions && externalDataSource.dataType === DataSourceType.Member && (
+      {withUpdateOptions && externalDataSource.dataType === DataSourceType.Member && externalDataSource.automatedWebhooks && (
         <AutoUpdateSwitch externalDataSource={externalDataSource} />
       )}
       {withUpdateOptions && externalDataSource?.jobs?.[0]?.lastEventAt ? (
@@ -111,6 +111,8 @@ const AUTO_UPDATE_WEBHOOK_REFRESH = gql`
   mutation AutoUpdateWebhookRefresh($ID: String!) {
     refreshWebhooks(externalDataSourceId: $ID) {
       id
+      hasWebhooks
+      automatedWebhooks
       webhookHealthcheck
     }
   }
@@ -276,6 +278,8 @@ export const ENABLE_AUTO_UPDATE = gql`
     enableAutoUpdate(externalDataSourceId: $ID) {
       id
       autoUpdateEnabled
+      hasWebhooks
+      automatedWebhooks
       webhookHealthcheck
       name
     }
@@ -287,6 +291,8 @@ export const DISABLE_AUTO_UPDATE = gql`
     disableAutoUpdate(externalDataSourceId: $ID) {
       id
       autoUpdateEnabled
+      hasWebhooks
+      automatedWebhooks
       webhookHealthcheck
       name
     }
