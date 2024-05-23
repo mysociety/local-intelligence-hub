@@ -40,13 +40,11 @@ class Command(BaseCommand):
         self.import_ppcs()
 
     def get_ppc_data(self):
-        csv = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRhZbBrU2AdJDYyBZViMs6irvH7zVUiZm2rDoADw5B18drp6hILJBr-duSXCmHJ18SmYWm3iq0bbfoR/pub?gid=0&single=true&output=csv"
+        csv = "https://candidates.democracyclub.org.uk/data/export_csv/?election_date=&ballot_paper_id=&election_id=parl.2024-07-04&party_id=&cancelled=&extra_fields=gss&format=csv"
         df = pd.read_csv(csv)
-        df = df.dropna(subset=["Candidate Name", "DC Candidate ID"])
-        df = df.drop(df[df["DC Candidate ID"] == "#REF!"].index)
         # make sure this is an int as sometimes it thinks it's a float and you
         # end up with duplicates
-        df["DC Candidate ID"] = df["DC Candidate ID"].astype(int)
+        df["person_id"] = df["person_id"].astype(int)
 
         return df
 
@@ -59,38 +57,40 @@ class Command(BaseCommand):
             print("Importing PPCs")
 
         for _, ppc in tqdm(df.iterrows(), disable=self._quiet, total=df.shape[0]):
-            area = Area.get_by_name(ppc["Constituency"], area_type=self.area_type)
+            area = Area.get_by_gss(ppc["gss"], area_type=self.area_type)
             if area is None:  # pragma: no cover
-                print(
-                    f"Failed to add PPC {ppc['Candidate Name']} as area {ppc['Constituency']} does not exist"
-                )
-                continue
+                area = Area.get_by_name(ppc["post_label"], area_type=self.area_type)
+                if area is None:  # pragma: no cover
+                    print(
+                        f"Failed to add PPC {ppc['person_name']} as area {ppc['gss']}/{ppc['post_label']} does not exist"
+                    )
+                    continue
 
-            if area and "DC Candidate ID" in ppc:
+            if area and "person_id" in ppc:
                 person, created = Person.objects.update_or_create(
                     person_type="PPC",
-                    external_id=ppc["DC Candidate ID"],
+                    external_id=ppc["person_id"],
                     id_type="dc_candidate_id",
                     defaults={
-                        "name": ppc["Candidate Name"],
+                        "name": ppc["person_name"],
                         "area": area,
                     },
                 )
 
             if person:
-                if not pd.isna(ppc["Party"]):
+                if not pd.isna(ppc["party_name"]):
                     try:
                         PersonData.objects.get_or_create(
                             person=person,
                             data_type=party_dt,
-                            defaults={"data": ppc["Party"]},
+                            defaults={"data": ppc["party_name"]},
                         )
                     except PersonData.MultipleObjectsReturned:  # pragma: no cover
                         PersonData.objects.filter(
                             person=person, person_type="PPC", data_type=party_dt
                         ).delete()
                         PersonData.objects.create(
-                            person=person, data_type=party_dt, data=ppc["Party"]
+                            person=person, data_type=party_dt, data=ppc["party_name"]
                         )
 
         dataset = DataSet.objects.filter(name="party", options=list())
