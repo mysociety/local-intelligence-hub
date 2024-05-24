@@ -21,6 +21,7 @@ from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path, re_path
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import RedirectView
+from wagtail.admin import urls as wagtailadmin_urls
 
 from strawberry_django_dataloaders.views import DataloaderAsyncGraphQLView
 
@@ -138,6 +139,7 @@ urlpatterns = [
         vector_tiles.ExternalDataSourcePointTileJSONView.as_view(),
         name="external_data_source_point_tilejson",
     ),
+    path('cms/', include(wagtailadmin_urls)),
 ]
 
 if settings.DEBUG:  # pragma: no cover

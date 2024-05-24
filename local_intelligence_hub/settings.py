@@ -159,6 +159,19 @@ INSTALLED_APPS = [
     "procrastinate.contrib.django",
     "strawberry_django",
     "django_cryptography",
+    'wagtail.contrib.forms',
+    'wagtail.contrib.redirects',
+    'wagtail.embeds',
+    'wagtail.sites',
+    'wagtail.users',
+    'wagtail.snippets',
+    'wagtail.documents',
+    'wagtail.images',
+    'wagtail.search',
+    'wagtail.admin',
+    'wagtail',
+    'modelcluster',
+    'taggit',
 ]
 
 MIDDLEWARE = [
@@ -173,6 +186,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # "hub.middleware.record_last_seen_middleware",
+    'wagtail.contrib.redirects.middleware.RedirectMiddleware',
 ]
 
 ROOT_URLCONF = "local_intelligence_hub.urls"
@@ -435,3 +449,7 @@ CACHES = {
 }
 
 ENCRYPTION_SECRET_KEY = env("ENCRYPTION_SECRET_KEY")
+
+WAGTAIL_SITE_NAME = "Mapped hub page editor"
+WAGTAILADMIN_BASE_URL = BASE_URL
+WAGTAILDOCS_EXTENSIONS = []
