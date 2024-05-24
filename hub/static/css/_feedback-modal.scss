@@ -1,0 +1,43 @@
+.feedback-modal {
+    display: block !important; // temporary!!
+
+    --#{$prefix}modal-padding: 2rem;
+    --#{$prefix}modal-width: 550px;
+
+    @include media-breakpoint-up('lg') {
+        --#{$prefix}modal-padding: 2.5rem;
+    }
+
+    .modal-header {
+        border-bottom: none;
+        align-items: center;
+        padding: var(--#{$prefix}modal-padding) var(--#{$prefix}modal-padding) 0 var(--#{$prefix}modal-padding);
+    }
+
+    .modal-body {
+        padding: 1rem var(--#{$prefix}modal-padding);
+    }
+
+    .modal-footer {
+        border-top: none;
+        justify-content: flex-start;
+        padding: 0 var(--#{$prefix}modal-padding) var(--#{$prefix}modal-padding) var(--#{$prefix}modal-padding);
+
+        & > * {
+            margin: 0;
+        }
+    }
+
+    .close {
+        padding: 1rem 1rem;
+        margin: -1rem -1rem -1rem auto;
+        background: transparent;
+        border: none;
+        color: $text-muted;
+        font-size: 1rem;
+    }
+
+    .form-check {
+        margin-bottom: 0.25rem;
+    }
+}

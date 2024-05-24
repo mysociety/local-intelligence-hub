@@ -1,0 +1,64 @@
+<aside class="modal feedback-modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Hello!</h2>
+                <button type="button" class="close" data-bs-dismiss="modal">Skip</button>
+            </div>
+            <div class="modal-body">
+                <p>We’re the team building this site, to help people like you take action on climate and nature. We hope you find it useful!</p>
+                <p>While you’re here, <strong>could you help us by selecting all the descriptions that apply to you?</strong></p>
+                <fieldset class="mb-3" id="feedback-who">
+                    <legend class="visually-hidden">How would you describe yourself? (Select all that apply)</legend>
+                    <div class="form-check">
+                        <input class="form-check-input" id="feedback-who-tcc" type="checkbox">
+                        <label class="form-check-label" for="feedback-who-tcc">I’m employed by a Climate Coalition member organisation</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" id="feedback-who-activist" type="checkbox">
+                        <label class="form-check-label" for="feedback-who-activist">I’m part of a local climate/nature action group</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" id="feedback-who-political" type="checkbox">
+                        <label class="form-check-label" for="feedback-who-political">I’m a council officer, councillor, or politician</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" id="feedback-who-researcher" type="checkbox">
+                        <label class="form-check-label" for="feedback-who-researcher">I’m a journalist or researcher</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" id="feedback-who-resident" type="checkbox">
+                        <label class="form-check-label" for="feedback-who-resident">I’m just finding out about the place I live in</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" id="feedback-who-none" type="checkbox">
+                        <label class="form-check-label" for="feedback-who-none">None of the above</label>
+                    </div>
+                </fieldset>
+                <p>Would it be ok if we <strong>send you a short survey in a few days’ time</strong>, asking you about your experience of the site?</p>
+                <fieldset class="mb-3">
+                    <legend class="visually-hidden">Can we email you a survey in a few days’ time?</legend>
+                    <div class="form-check">
+                        <input class="form-check-input" id="feedback-followup-yes" name="feedback-followup" type="radio" value="yes">
+                        <label class="mb-0 ml-2" for="feedback-followup-yes">Yes</label>
+                    </div>
+                    <div class="conditional-fields d-none">
+                        <div class="form-group">
+                            <label for="feedback-email">Your email address</label>
+                            <input aria-describedby="feedback-email-hint" class="form-control" id="feedback-email" name="email" type="email">
+                            <small class="form-text text-muted" id="feedback-email-hint">We’ll use this to send you one survey email.</small>
+                        </div>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" id="feedback-followup-no" name="feedback-followup" type="radio" value="no">
+                        <label class="mb-0 ml-2" for="feedback-followup-no">No</label>
+                    </div>
+                </fieldset>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary">Save answers</button>
+            </div>
+        </div>
+    </div>
+</aside>
+<div class="modal-backdrop show"></div>
