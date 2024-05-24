@@ -22,17 +22,15 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.text import slugify
-from utils.log import get_simple_debug_logger
 
-from benedict import benedict
 import numpy as np
 import pandas as pd
 import pytz
 from asgiref.sync import async_to_sync, sync_to_async
+from benedict import benedict
 from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
 from mailchimp3 import MailChimp
-from hub.parsons.action_network.action_network import ActionNetwork
 from polymorphic.models import PolymorphicModel
 from procrastinate.contrib.django.models import ProcrastinateEvent, ProcrastinateJob
 from psycopg.errors import UniqueViolation
@@ -47,6 +45,7 @@ from hub.analytics import Analytics
 from hub.enrichment.sources import builtin_mapping_sources
 from hub.fields import EncryptedCharField
 from hub.filters import Filter
+from hub.parsons.action_network.action_network import ActionNetwork
 from hub.tasks import (
     import_all,
     import_many,
@@ -56,6 +55,7 @@ from hub.tasks import (
     refresh_webhooks,
 )
 from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
+from utils.log import get_simple_debug_logger
 from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
 from utils.py import batched, ensure_list, get
 
@@ -897,22 +897,21 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     # Allow sources to define default values for themselves
     # for example opinionated CRMs which are only for people and have defined slots for data
-    defaults = {}
-    default_options = [
+    defaults = {
         # Reports
-        "data_type",
+        "data_type": None,
         # Geocoding
-        "geography_column",
-        "geography_column_type",
+        "geography_column": None,
+        "geography_column_type": None,
         # Imports
-        "postcode_field",
-        "first_name_field",
-        "last_name_field",
-        "full_name_field",
-        "email_field",
-        "phone_field",
-        "address_field",
-    ]
+        "postcode_field": None,
+        "first_name_field": None,
+        "last_name_field": None,
+        "full_name_field": None,
+        "email_field": None,
+        "phone_field": None,
+        "address_field": None,
+    }
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organisation = models.ForeignKey(
@@ -976,7 +975,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     ]
 
     def save(self, *args, **kwargs):
-        for key, value in self.default_options.items():
+        for key, value in self.defaults.items():
             if (getattr(self, key) is None or getattr(self, key) == "") and (value is not None and value != ""):
                 setattr(self, key, value)
         # Always keep these two in sync
@@ -2570,7 +2569,7 @@ class ActionNetworkSource(ExternalDataSource):
 
     def field_definitions(self):
         """
-        Mailchimp subscriber built-in fields.
+        ActionNetwork activist built-in fields.
         """
         fields = [
             self.FieldDefinition(

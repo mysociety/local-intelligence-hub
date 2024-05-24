@@ -86,7 +86,7 @@ class TestExternalDataSource:
         if self.source.introspect_fields:
             field_defs = self.source.field_definitions()
             self.assertIsNotNone(
-                next(filter(lambda x: x.get("label", x["value"]) == "mayoral region", field_defs), None)
+                next(filter(lambda x: x.get("value") == self.mayoral_field, field_defs), None)
             )
         else:
             self.assertRaises(NotImplementedError, self.source.field_definitions)
