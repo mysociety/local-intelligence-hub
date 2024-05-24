@@ -416,7 +416,9 @@ export default function InspectExternalDataSource({
           ) : null}
           <AlertDialog>
             <AlertDialogTrigger>
-              <Button variant="destructive">Permanently delete</Button>
+              <Button variant="destructive" asChild={true}>
+                <span>Permanently delete</span>
+              </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
