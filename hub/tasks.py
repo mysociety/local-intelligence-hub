@@ -9,7 +9,7 @@ from django.db.models import Count, Q
 
 from procrastinate.contrib.django import app
 from procrastinate.contrib.django.models import ProcrastinateJob
-from sentry_sdk import set_measurement
+from sentry_sdk import metrics
 
 
 def telemetry_task(func):
@@ -37,10 +37,18 @@ def telemetry_task(func):
             system_cpu_time_used = cpu_end.system - cpu_start.system
             elapsed_time = end_time - start_time
 
-            set_measurement(user_cpu_time_metric, user_cpu_time_used)
-            set_measurement(system_cpu_time_metric, system_cpu_time_used)
-            set_measurement(
-                elapsed_time_metric, elapsed_time.total_seconds(), "seconds"
+            metrics.distribution(
+                key=user_cpu_time_metric,
+                value=user_cpu_time_used
+            )
+            metrics.distribution(
+                key=system_cpu_time_metric,
+                value=system_cpu_time_used
+            )
+            metrics.distribution(
+                key=elapsed_time_metric,
+                value=elapsed_time.total_seconds(),
+                unit="seconds"
             )
 
             return result
@@ -51,7 +59,10 @@ def telemetry_task(func):
             percentage_failed = (
                 counts["failed"] * 100 / counts["total"] if counts["total"] else 0
             )
-            set_measurement(percentage_failed_metric, round(percentage_failed, 2))
+            metrics.gauge(
+                key=percentage_failed_metric,
+                value=round(percentage_failed, 2)
+            )
 
     return wrapper
 

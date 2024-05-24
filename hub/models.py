@@ -37,7 +37,7 @@ from pyairtable import Api as AirtableAPI
 from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
-from sentry_sdk import set_measurement
+from sentry_sdk import metrics
 from strawberry.dataloader import DataLoader
 
 import utils as lih_utils
@@ -1629,7 +1629,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 external_data_source.get_record_id(member) for member in batch
             ]
             await external_data_source.schedule_refresh_many(member_ids, request_id)
-        set_measurement("update_rows_requested", member_count)
+        metrics.distribution(
+            key="update_rows_requested",
+            value=member_count
+        )
 
     @classmethod
     async def deferred_refresh_webhooks(cls, external_data_source_id: str):
@@ -1671,7 +1674,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             await external_data_source.schedule_import_many(
                 member_ids, request_id=request_id
             )
-        set_measurement("import_rows_requested", member_count)
+        metrics.distribution(
+            key="import_rows_requested",
+            value=member_count
+        )
 
     async def schedule_refresh_one(self, member_id: str) -> int:
         try:
