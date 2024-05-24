@@ -201,7 +201,7 @@ export function UpdateMappingForm({
                               <>
                               {fieldDefinitions?.length ? (
                                 <Select
-                                  {...field}
+                                  {...{...field, ref: null}}
                                   required
                                   onValueChange={field.onChange}
                                 >

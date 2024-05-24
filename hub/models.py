@@ -28,7 +28,6 @@ import pandas as pd
 import pytz
 from asgiref.sync import async_to_sync, sync_to_async
 from django_choices_field import TextChoicesField
-from django_cryptography.fields import encrypt
 from django_jsonform.models.fields import JSONField
 from mailchimp3 import MailChimp
 from polymorphic.models import PolymorphicModel
@@ -43,6 +42,7 @@ from strawberry.dataloader import DataLoader
 import utils as lih_utils
 from hub.analytics import Analytics
 from hub.enrichment.sources import builtin_mapping_sources
+from hub.fields import EncryptedCharField
 from hub.filters import Filter
 from hub.tasks import (
     import_all,
@@ -1231,16 +1231,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 update_data = {
                     **structured_data,
                     "postcode_data": postcode_data,
-                    "point": Point(
-                        postcode_data["longitude"],
-                        postcode_data["latitude"],
-                    )
-                    if (
-                        postcode_data is not None
-                        and "latitude" in postcode_data
-                        and "longitude" in postcode_data
-                    )
-                    else None,
+                    "point": (
+                        Point(
+                            postcode_data["longitude"],
+                            postcode_data["latitude"],
+                        )
+                        if (
+                            postcode_data is not None
+                            and "latitude" in postcode_data
+                            and "longitude" in postcode_data
+                        )
+                        else None
+                    ),
                 }
 
                 await GenericData.objects.aupdate_or_create(
@@ -1859,10 +1861,13 @@ class AirtableSource(ExternalDataSource):
     """
 
     crm_type = "airtable"
-    api_key = models.CharField(
+    api_key = EncryptedCharField(
         max_length=250,
         help_text="Personal access token. Requires the following 4 scopes: data.records:read, data.records:write, schema.bases:read, webhook:manage",
+        null=True,
+        blank=True,
     )
+
     base_id = models.CharField(max_length=250)
     table_id = models.CharField(max_length=250)
     automated_webhooks = True
@@ -2159,9 +2164,8 @@ class MailchimpSource(ExternalDataSource):
     """
 
     crm_type = "mailchimp"
-    api_key = models.CharField(
-        max_length=250,
-        help_text="Mailchimp API key.",
+    api_key = EncryptedCharField(
+        max_length=250, help_text="Mailchimp API key.", null=True, blank=True
     )
     list_id = models.CharField(
         max_length=250,
@@ -2387,15 +2391,17 @@ class MailchimpSource(ExternalDataSource):
                 status="subscribed",
                 email_address=record["email"],
                 merge_fields={
-                    "ADDRESS": {
-                        "addr1": record["data"].get("addr1"),
-                        "city": record["data"].get("city"),
-                        "state": record["data"].get("state"),
-                        "country": record["data"].get("country"),
-                        "zip": record["postcode"],
-                    }
-                    if record["data"].get("addr1")
-                    else ""
+                    "ADDRESS": (
+                        {
+                            "addr1": record["data"].get("addr1"),
+                            "city": record["data"].get("city"),
+                            "state": record["data"].get("state"),
+                            "country": record["data"].get("country"),
+                            "zip": record["postcode"],
+                        }
+                        if record["data"].get("addr1")
+                        else ""
+                    )
                 },
             ),
         )
@@ -2453,7 +2459,7 @@ class APIToken(models.Model):
     # So we can list tokens for a user
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name="tokens")
     # In case you need to copy/paste the token again
-    token = encrypt(models.CharField(max_length=1500))
+    token = EncryptedCharField(max_length=1500, default="default_value")
     expires_at = models.DateTimeField()
 
     # Unencrypted so we can check if the token is revoked or not

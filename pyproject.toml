@@ -46,6 +46,7 @@ django-vectortiles = { git = "https://github.com/submarcos/django-vectortiles.gi
 django-cryptography = "^1.1"
 posthog = "^3.5.0"
 mailchimp-marketing = {git = "https://github.com/mailchimp/mailchimp-marketing-python.git"}
+cryptography = "^42.0.5"
 
 [tool.poetry.dev-dependencies]
 django-debug-toolbar = "^4.3"
