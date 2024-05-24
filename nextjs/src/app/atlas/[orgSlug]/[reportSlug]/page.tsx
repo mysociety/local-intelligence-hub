@@ -8,6 +8,7 @@ import { Provider as JotaiProvider } from "jotai";
 import { MapProvider } from "react-map-gl";
 import { PublicMap } from "@/components/report/PublicMap";
 import { GetPublicMapReportQuery, GetPublicMapReportQueryVariables } from "@/__generated__/graphql";
+import { LoadingIcon } from "@/components/ui/loadingIcon";
 
 type Params = {
   orgSlug: string
@@ -15,9 +16,6 @@ type Params = {
 }
 
 export default function Page({ params: { orgSlug, reportSlug } }: { params: Params }) {
-  const client = useApolloClient();
-  const router = useRouter();
-  
   const report = useQuery<GetPublicMapReportQuery, GetPublicMapReportQueryVariables>(GET_PUBLIC_MAP_REPORT, {
     variables: { orgSlug, reportSlug },
   });
@@ -25,11 +23,24 @@ export default function Page({ params: { orgSlug, reportSlug } }: { params: Para
   return (
     <MapProvider>
       <JotaiProvider>
-        <PublicMap />
-        <div>
-          <h1>{report.data?.publicMapReport.name}</h1>
-          <p>{report.data?.publicMapReport.organisation.name}</p>
-          <p>{report.data?.publicMapReport.layers.map((layer) => layer.name).join(", ")}</p>
+        <div className="absolute w-full h-full flex flex-row pointer-events-none">
+          <div className='w-full h-full pointer-events-auto'>
+            <PublicMap />
+          </div>
+          {!report.data ? (
+            <div className="absolute w-full h-full inset-0 z-10 pointer-events-none">
+              <div className="flex flex-col items-center justify-center w-full h-full">
+                <LoadingIcon />
+              </div>
+            </div>
+          ) : (
+            <aside className="absolute top-5 left-5 right-0 w-0 pointer-events-auto">
+              <div className='w-[150px] rounded-md bg-meepGray-700 text-white p-4'>
+                <h1 className='text-lg font-bold mb-1 leading-tight'>{report.data?.publicMapReport.name}</h1>
+                <p className='text-sm'>By {report.data?.publicMapReport.organisation.name}</p>
+              </div>
+            </aside>
+          )}
         </div>
       </JotaiProvider>
     </MapProvider>
