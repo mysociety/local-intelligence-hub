@@ -24,5 +24,7 @@ async def electoral_commision_postcode_lookup(postcode: str):
             f"https://api.electoralcommission.org.uk/api/v1/postcode/{postcode}/?token={settings.ELECTORAL_COMMISSION_API_KEY}"
         )
         json = response.json()
-        json = transform_dict_values_recursive(json, lambda v: v.replace("\n", ", ") if isinstance(v, str) else v)
+        json = transform_dict_values_recursive(
+            json, lambda v: v.replace("\n", ", ") if isinstance(v, str) else v
+        )
         return benedict(json)

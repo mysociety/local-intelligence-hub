@@ -93,7 +93,9 @@ class Query(UserQueries):
 
     @strawberry.field
     def test_data_source(
-        self, info: strawberry.types.Info, input: mutation_types.CreateExternalDataSourceInput
+        self,
+        info: strawberry.types.Info,
+        input: mutation_types.CreateExternalDataSourceInput,
     ) -> model_types.ExternalDataSource:
         for crm_type_key, model in models.source_models.items():
             input_dict = graphql_type_to_dict(input)

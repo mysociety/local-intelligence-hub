@@ -134,10 +134,11 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
     map_report = models.MapReport.objects.create(
         **graphql_type_to_dict(data),
         **{
-            "organisation": data.organisation or get_or_create_organisation_for_user(info),
+            "organisation": data.organisation
+            or get_or_create_organisation_for_user(info),
             "slug": data.slug or slugify(data.name),
             "name": "Type your report name here",  # Default name for reports
-        }
+        },
     )
     if existing_reports:
         return map_report
@@ -165,14 +166,11 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
     return map_report
 
 
-def get_or_create_organisation_for_user(info: Info, org = None):
+def get_or_create_organisation_for_user(info: Info, org=None):
     if org:
         return org
     user = get_current_user(info)
-    if (
-        org is None or
-        isinstance(org, strawberry.unset.UnsetType)
-    ):
+    if org is None or isinstance(org, strawberry.unset.UnsetType):
         membership = user.memberships.first()
         if membership is not None:
             print("Assigning the user's default organisation")
@@ -258,21 +256,24 @@ def create_external_data_source(
     for crm_type_key, model in models.source_models.items():
         if crm_type_key in input_dict and input_dict[crm_type_key] is not None:
             kwargs = input_dict[crm_type_key]
-            kwargs['organisation'] = kwargs.get("organisation", None) or get_or_create_organisation_for_user(info)
+            kwargs["organisation"] = kwargs.get(
+                "organisation", None
+            ) or get_or_create_organisation_for_user(info)
             print(f"Creating source of type {crm_type_key}", kwargs)
-            creator_fn = lambda: model.objects.create(**kwargs)
+
+            def creator_fn():  # noqa: F811
+                return model.objects.create(**kwargs)
+
             break
 
     if creator_fn is None:
         return CreateExternalDataSourceOutput(
             code=400,
             errors=[
-              MutationError(
-                  code=400,
-                  message=(
-                      "You must provide input data for a specific source type."
-                  ),
-              )
+                MutationError(
+                    code=400,
+                    message=("You must provide input data for a specific source type."),
+                )
             ],
             result=None,
         )
@@ -318,6 +319,7 @@ def update_external_data_source(
         setattr(source, key, value)
     source.save()
     return source
+
 
 @strawberry_django.input(models.SharingPermission, partial=True)
 class SharingPermissionCUDInput:

@@ -1,9 +1,12 @@
 import itertools
 import pprint
 from types import SimpleNamespace
-from utils.log import get_simple_debug_logger
-logger = get_simple_debug_logger(__name__)
+
 from benedict import benedict
+
+from utils.log import get_simple_debug_logger
+
+logger = get_simple_debug_logger(__name__)
 
 
 class DictWithDotNotation(SimpleNamespace):
@@ -25,7 +28,7 @@ def get(d, path, default=None):
             for key in d:
                 o[key] = d[key]
             val = o[path]
-        except Exception as e:
+        except Exception:
             return default
     return val if val is not None else default
 
@@ -88,7 +91,7 @@ def trace(fn):
         try:
             res = fn(*args, **kwargs)
             logger.debug(fn.__name__, args, kwargs)
-            logger.debug('->', res)
+            logger.debug("->", res)
 
             return res
         except Exception as err:
@@ -104,16 +107,31 @@ pp = pprint.PrettyPrinter(indent=4)
 pr = pp.pprint
 
 
-def transform_dict_values_recursive(value, transform_value_fn = lambda v: v, delete_null_keys=False):
+def transform_dict_values_recursive(
+    value, transform_value_fn=lambda v: v, delete_null_keys=False
+):
     if isinstance(value, dict):
         new_dict = {}
         for key, v in value.items():
-            v_transformed = transform_dict_values_recursive(v, transform_value_fn, delete_null_keys)
-            if delete_null_keys is False or (delete_null_keys is True and v_transformed is not None):
-                logger.debug("setting", key, v_transformed, delete_null_keys, v_transformed is None)
+            v_transformed = transform_dict_values_recursive(
+                v, transform_value_fn, delete_null_keys
+            )
+            if delete_null_keys is False or (
+                delete_null_keys is True and v_transformed is not None
+            ):
+                logger.debug(
+                    "setting",
+                    key,
+                    v_transformed,
+                    delete_null_keys,
+                    v_transformed is None,
+                )
                 new_dict[key] = v_transformed
         return new_dict
     elif isinstance(value, list):
-        return [transform_dict_values_recursive(v, transform_value_fn, delete_null_keys) for v in value]
+        return [
+            transform_dict_values_recursive(v, transform_value_fn, delete_null_keys)
+            for v in value
+        ]
     else:
         return transform_value_fn(value)

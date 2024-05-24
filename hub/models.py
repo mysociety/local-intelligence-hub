@@ -1,7 +1,6 @@
 import asyncio
 import hashlib
 import itertools
-import logging
 import uuid
 from datetime import datetime, timezone
 from typing import List, Optional, TypedDict, Union
@@ -976,7 +975,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     def save(self, *args, **kwargs):
         for key, value in self.defaults.items():
-            if (getattr(self, key) is None or getattr(self, key) == "") and (value is not None and value != ""):
+            if (getattr(self, key) is None or getattr(self, key) == "") and (
+                value is not None and value != ""
+            ):
                 setattr(self, key, value)
         # Always keep these two in sync
         if (
@@ -1392,7 +1393,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             }
             for d in self.get_import_data()
         ]
-        logger.debug(f"building imported data frame")
+        logger.debug("building imported data frame")
         # from {json_list}")
         enrichment_df = pd.DataFrame.from_records(json_list)
         logger.debug(f"got imported data frame with {len(json_list)} rows")
@@ -1558,7 +1559,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                                 source_path=source_path,
                             )
                         )
-                        logger.debug(f"setting {source_path} {destination_column} to {loaded}")
+                        logger.debug(
+                            f"setting {source_path} {destination_column} to {loaded}"
+                        )
                         update_fields[destination_column] = loaded
                         continue
                 except Exception as e:
@@ -1572,8 +1575,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             return self.MappedMember(member=member, update_fields={})
 
     async def map_many(
-        self, members: list[Union[str, any]], loaders: Loaders, 
-        mapping: list[UpdateMapping] = None
+        self,
+        members: list[Union[str, any]],
+        loaders: Loaders,
+        mapping: list[UpdateMapping] = None,
     ) -> list[MappedMember]:
         """
         Match many members to records in the data source.
@@ -1585,8 +1590,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             *[self.map_one(member, loaders, mapping=mapping) for member in members]
         )
 
-    async def refresh_one(self, member_id: Union[str, any], update_kwargs={}, 
-        mapping: list[UpdateMapping] = None):
+    async def refresh_one(
+        self,
+        member_id: Union[str, any],
+        update_kwargs={},
+        mapping: list[UpdateMapping] = None,
+    ):
         if mapping is None or len(mapping) == 0:
             mapping = self.get_update_mapping()
         if len(mapping) == 0:
@@ -1595,8 +1604,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         mapped_record = await self.map_one(member_id, loaders, mapping=mapping)
         return await self.update_one(mapped_record, **update_kwargs)
 
-    async def refresh_many(self, member_ids: list[Union[str, any]], update_kwargs={}, 
-        mapping: list[UpdateMapping] = None):
+    async def refresh_many(
+        self,
+        member_ids: list[Union[str, any]],
+        update_kwargs={},
+        mapping: list[UpdateMapping] = None,
+    ):
         if mapping is None or len(mapping) == 0:
             mapping = self.get_update_mapping()
         if len(mapping) == 0:
@@ -2219,21 +2232,21 @@ class MailchimpSource(ExternalDataSource):
     has_webhooks = True
     automated_webhooks = True
     introspect_fields = True
-    
+
     defaults = dict(
         # Reports
-        data_type = ExternalDataSource.DataSourceType.MEMBER,
+        data_type=ExternalDataSource.DataSourceType.MEMBER,
         # Geocoding
-        geography_column = "ADDRESS.zip",
-        geography_column_type = ExternalDataSource.PostcodesIOGeographyTypes.POSTCODE,
+        geography_column="ADDRESS.zip",
+        geography_column_type=ExternalDataSource.PostcodesIOGeographyTypes.POSTCODE,
         # Imports
-        postcode_field = "ADDRESS.zip",
-        first_name_field = "FNAME",
-        last_name_field = "LNAME",
-        full_name_field = None,
-        email_field = "email_address",
-        phone_field = "PHONE",
-        address_field = "ADDRESS.addr1"
+        postcode_field="ADDRESS.zip",
+        first_name_field="FNAME",
+        last_name_field="LNAME",
+        full_name_field=None,
+        email_field="email_address",
+        phone_field="PHONE",
+        address_field="ADDRESS.addr1",
     )
 
     api_key = EncryptedCharField(
@@ -2344,35 +2357,15 @@ class MailchimpSource(ExternalDataSource):
         """
         fields = [
             self.FieldDefinition(
-                label="Email address",
-                value="email_address",
-                editable=False
+                label="Email address", value="email_address", editable=False
             ),
+            self.FieldDefinition(label="Phone number", value="PHONE", editable=False),
+            self.FieldDefinition(label="First name", value="FNAME", editable=False),
+            self.FieldDefinition(label="Last name", value="LNAME", editable=False),
             self.FieldDefinition(
-                label="Phone number",
-                value="PHONE",
-                editable=False
+                label="Address", value="ADDRESS.addr1", editable=False
             ),
-            self.FieldDefinition(
-                label="First name",
-                value="FNAME",
-                editable=False
-            ),
-            self.FieldDefinition(
-                label="Last name",
-                value="LNAME",
-                editable=False
-            ),
-            self.FieldDefinition(
-                label="Address",
-                value="ADDRESS.addr1",
-                editable=False
-            ),
-            self.FieldDefinition(
-                label="Zip",
-                value="ADDRESS.zip",
-                editable=False
-            ),
+            self.FieldDefinition(label="Zip", value="ADDRESS.zip", editable=False),
         ]
         merge_fields = self.client.lists.merge_fields.all(self.list_id, get_all=True)
         for field in merge_fields["merge_fields"]:
@@ -2416,7 +2409,10 @@ class MailchimpSource(ExternalDataSource):
                 (
                     result
                     for result in results
-                    if (self.get_record_id(result) == key or result["email_address"] == key)
+                    if (
+                        self.get_record_id(result) == key
+                        or result["email_address"] == key
+                    )
                 ),
                 None,
             )
@@ -2509,24 +2505,21 @@ class ActionNetworkSource(ExternalDataSource):
 
     defaults = dict(
         # Reports
-        data_type = ExternalDataSource.DataSourceType.MEMBER,
+        data_type=ExternalDataSource.DataSourceType.MEMBER,
         # Geocoding
-        geography_column = "postal_addresses[0].postal_code",
-        geography_column_type = ExternalDataSource.PostcodesIOGeographyTypes.POSTCODE,
+        geography_column="postal_addresses[0].postal_code",
+        geography_column_type=ExternalDataSource.PostcodesIOGeographyTypes.POSTCODE,
         # Imports
-        postcode_field = "postal_addresses[0].postal_code",
-        first_name_field = "given_name",
-        last_name_field = "family_name",
-        full_name_field = None,
-        email_field = "email_addresses[0].address",
-        phone_field = "phone_numbers[0].number",
-        address_field = "postal_addresses[0].address_lines[0]"
+        postcode_field="postal_addresses[0].postal_code",
+        first_name_field="given_name",
+        last_name_field="family_name",
+        full_name_field=None,
+        email_field="email_addresses[0].address",
+        phone_field="phone_numbers[0].number",
+        address_field="postal_addresses[0].address_lines[0]",
     )
 
-    api_key = EncryptedCharField(
-        max_length=250,
-        unique=True
-    )
+    api_key = EncryptedCharField(max_length=250, unique=True)
 
     @cached_property
     def client(self) -> ActionNetwork:
@@ -2547,18 +2540,18 @@ class ActionNetworkSource(ExternalDataSource):
             if "action_network:" in id:
                 return id
         return ids[0]
-    
+
     def get_record_uuid(self, record):
-        '''
+        """
         Action Network prefixes their identifiers with "action_network:"
         but some APIs expect the UUID without the prefix.
-        '''
+        """
         id = self.get_record_id(record)
         return self.prefixed_id_to_uuid(id)
 
     def prefixed_id_to_uuid(self, id):
         return id.replace("action_network:", "")
-    
+
     def uuid_to_prefixed_id(self, uuid: str):
         if uuid.startswith("action_network:"):
             return uuid
@@ -2575,27 +2568,21 @@ class ActionNetworkSource(ExternalDataSource):
             self.FieldDefinition(
                 label="Email address",
                 value="email_addresses[0].address",
-                editable=False
+                editable=False,
             ),
             self.FieldDefinition(
-                label="Phone number",
-                value="phone_numbers[0].number",
-                editable=False
+                label="Phone number", value="phone_numbers[0].number", editable=False
             ),
             self.FieldDefinition(
-                label="Given name",
-                value="given_name",
-                editable=False
+                label="Given name", value="given_name", editable=False
             ),
             self.FieldDefinition(
-                label="Family name",
-                value="family_name",
-                editable=False
+                label="Family name", value="family_name", editable=False
             ),
             self.FieldDefinition(
                 label="Street address",
                 value="postal_addresses[0].address_lines[0]",
-                editable=False
+                editable=False,
             ),
             self.FieldDefinition(
                 label="City",
@@ -2611,7 +2598,7 @@ class ActionNetworkSource(ExternalDataSource):
             self.FieldDefinition(
                 label="Postal code",
                 value="postal_addresses[0].postal_code",
-                editable=False
+                editable=False,
             ),
         ]
         custom_fields = self.client.get_custom_fields()
@@ -2637,7 +2624,9 @@ class ActionNetworkSource(ExternalDataSource):
         member_id_batches = batched(member_ids, 25)
         members = []
         for batch in member_id_batches:
-            osdi_filter_str = " or ".join([f"identifier eq '{member_id}'" for member_id in batch])
+            osdi_filter_str = " or ".join(
+                [f"identifier eq '{member_id}'" for member_id in batch]
+            )
             members += self.client.get_people(filter=osdi_filter_str).to_dicts()
         return members
 
@@ -2656,7 +2645,9 @@ class ActionNetworkSource(ExternalDataSource):
             updated_records.append(await self.update_one(record, **kwargs))
         return updated_records
 
-    async def update_one(self, mapped_record, action_network_background_processing=True, **kwargs):
+    async def update_one(
+        self, mapped_record, action_network_background_processing=True, **kwargs
+    ):
         if len(mapped_record.get("update_fields", {})) == 0:
             return
         try:
@@ -2668,24 +2659,30 @@ class ActionNetworkSource(ExternalDataSource):
             for key, value in mapped_record["update_fields"].items():
                 update_fields[key] = value
             logger.debug("Updating AN record", id, update_fields)
-            return self.client.update_person(id, action_network_background_processing, **update_fields)
+            return self.client.update_person(
+                id, action_network_background_processing, **update_fields
+            )
         except Exception as e:
             print("Errored record for update_one", id, mapped_record["update_fields"])
             raise e
 
     def delete_one(self, record_id):
-        raise NotImplementedError("Deleting a person is not allowed via the API. DELETE requests will return an error.")
+        raise NotImplementedError(
+            "Deleting a person is not allowed via the API. DELETE requests will return an error."
+        )
 
     def create_one(self, record: ExternalDataSource.CUDRecord):
         record = self.client.upsert_person(
             email_address=record["email"],
-            postal_addresses=[{
-                "address_lines": [record["data"].get("addr1")],
-                "locality": record["data"].get("city"),
-                "region": record["data"].get("state"),
-                "country": record["data"].get("country"),
-                "postal_code": record["postcode"],
-            }]
+            postal_addresses=[
+                {
+                    "address_lines": [record["data"].get("addr1")],
+                    "locality": record["data"].get("city"),
+                    "region": record["data"].get("state"),
+                    "country": record["data"].get("country"),
+                    "postal_code": record["postcode"],
+                }
+            ],
         )
         return record
 
@@ -2770,6 +2767,7 @@ def update_apitoken_cache_on_save(sender, instance, *args, **kwargs):
 @receiver(models.signals.post_delete, sender=APIToken)
 def update_apitoken_cache_on_delete(sender, instance, *args, **kwargs):
     refresh_tokens_cache()
+
 
 source_models = {
     "airtable": AirtableSource,

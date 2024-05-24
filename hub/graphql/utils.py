@@ -24,6 +24,7 @@ def fn_field(**kwargs):
 def dict_resolver(default=None):
     def _resolver(root, info: Info):
         return root.get(info.python_name, default)
+
     return _resolver
 
 
@@ -33,9 +34,9 @@ def dict_key_field(default=None, **kwargs):
 
 def graphql_type_to_dict(value, delete_null_keys=False):
     if not isinstance(value, dict):
-       value = strawberry.asdict(value)
+        value = strawberry.asdict(value)
     return transform_dict_values_recursive(
         value,
         lambda x: x if (x is not strawberry.UNSET) else None,
-        delete_null_keys=delete_null_keys
+        delete_null_keys=delete_null_keys,
     )

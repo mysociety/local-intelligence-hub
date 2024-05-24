@@ -817,7 +817,6 @@ class ExternalDataSource(BaseDataSource):
     remote_url: Optional[str] = fn_field()
     healthcheck: bool = fn_field()
     orgs_with_access: List[Organisation]
-    auto_update_webhook_url: str = fn_field()
 
     @strawberry_django.field
     def sharing_permissions(

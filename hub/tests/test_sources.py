@@ -67,13 +67,16 @@ class TestExternalDataSource:
         self, records: List[models.ExternalDataSource.CUDRecord]
     ):
         records = self.source.create_many(records)
-        self.records_to_delete += [(self.source.get_record_id(record), self.source) for record in records]
+        self.records_to_delete += [
+            (self.source.get_record_id(record), self.source) for record in records
+        ]
         return records
 
     def create_custom_layer_airtable_records(self, records: any):
         records = self.custom_data_layer.table.batch_create(records)
         self.records_to_delete += [
-            (self.custom_data_layer.get_record_id(record), self.custom_data_layer) for record in records
+            (self.custom_data_layer.get_record_id(record), self.custom_data_layer)
+            for record in records
         ]
         return records
 
@@ -86,7 +89,10 @@ class TestExternalDataSource:
         if self.source.introspect_fields:
             field_defs = self.source.field_definitions()
             self.assertIsNotNone(
-                next(filter(lambda x: x.get("value") == self.mayoral_field, field_defs), None)
+                next(
+                    filter(lambda x: x.get("value") == self.mayoral_field, field_defs),
+                    None,
+                )
             )
         else:
             self.assertRaises(NotImplementedError, self.source.field_definitions)
@@ -215,7 +221,9 @@ class TestExternalDataSource:
         ]
         records = self.create_many_test_records(test_record_data)
         # Test this functionality
-        records = await self.source.fetch_many([self.source.get_record_id(record) for record in records])
+        records = await self.source.fetch_many(
+            [self.source.get_record_id(record) for record in records]
+        )
         # Check
         assert len(records) == 2
         # Check the email field instead of postcode, because Mailchimp doesn't set
@@ -223,17 +231,18 @@ class TestExternalDataSource:
         for test_record in test_record_data:
             record = next(
                 filter(
-                    lambda r: self.source.get_record_field(r, self.source.email_field) == test_record["email"],
+                    lambda r: self.source.get_record_field(r, self.source.email_field)
+                    == test_record["email"],
                     records,
                 ),
-                None
+                None,
             )
             self.assertIsNotNone(record)
 
     async def test_refresh_one(self):
         record = self.create_test_record(
             models.ExternalDataSource.CUDRecord(
-                email=f"ehsp@gmail.com",
+                email="ehsp@gmail.com",
                 postcode="EH99 1SP",
                 data=(
                     {
@@ -248,9 +257,9 @@ class TestExternalDataSource:
             )
         )
         # Test this functionality
-        await self.source.refresh_one(record, update_kwargs=dict(
-            action_network_background_processing=False
-        ))
+        await self.source.refresh_one(
+            record, update_kwargs=dict(action_network_background_processing=False)
+        )
         # Check
         record = await self.source.fetch_one(self.source.get_record_id(record))
         self.assertEqual(
@@ -349,11 +358,13 @@ class TestExternalDataSource:
             ]
         )
         # Test this functionality
-        await self.source.refresh_many(records, update_kwargs=dict(
-            action_network_background_processing=False
-        ))
+        await self.source.refresh_many(
+            records, update_kwargs=dict(action_network_background_processing=False)
+        )
         # Check
-        records = await self.source.fetch_many([self.source.get_record_id(record) for record in records])
+        records = await self.source.fetch_many(
+            [self.source.get_record_id(record) for record in records]
+        )
         assert len(records) == 2
         for record in records:
             if (
@@ -361,7 +372,8 @@ class TestExternalDataSource:
                 == "G11 5RD"
             ):
                 self.assertEqual(
-                    self.source.get_record_field(record, self.constituency_field), "Glasgow West"
+                    self.source.get_record_field(record, self.constituency_field),
+                    "Glasgow West",
                 )
             elif (
                 self.source.get_record_field(record, self.source.geography_column)
