@@ -7,6 +7,7 @@
 {% block bodyclass %}js-area-page{% endblock %}
 
 {% block script %}
+    <script type="module" src="{% static 'js/home-out-esm.js' %}"></script>
     <script type="module" src="{% static 'js/area-out-esm.js' %}"></script>
 {% endblock %}
 
@@ -692,5 +693,7 @@
         </div>
     </div>
 </aside>
+
+{% include 'hub/includes/feedback-modal.html' %}
 
 {% endblock %}
