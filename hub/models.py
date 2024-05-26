@@ -928,9 +928,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     )
 
     class DataSourceType(models.TextChoices):
-        MEMBER = "member", "Members or supporters"
-        REGION = "region", "Areas or regions"
-        OTHER = "other", "Other"
+        MEMBER = "MEMBER", "Members or supporters"
+        REGION = "REGION", "Areas or regions"
+        OTHER = "OTHER", "Other"
 
     data_type = TextChoicesField(
         choices_enum=DataSourceType, default=DataSourceType.OTHER
@@ -1394,10 +1394,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             for d in self.get_import_data()
         ]
         logger.debug("building imported data frame")
-        # from {json_list}")
         enrichment_df = pd.DataFrame.from_records(json_list)
         logger.debug(f"got imported data frame with {len(json_list)} rows")
-        # : \n {enrichment_df}")
         return enrichment_df
 
     def data_loader_factory(self):
@@ -1932,6 +1930,7 @@ class AirtableSource(ExternalDataSource):
     has_webhooks = True
     automated_webhooks = True
     introspect_fields = True
+    default_data_type = None
 
     class Meta:
         verbose_name = "Airtable table"
@@ -2232,6 +2231,7 @@ class MailchimpSource(ExternalDataSource):
     has_webhooks = True
     automated_webhooks = True
     introspect_fields = True
+    default_data_type = ExternalDataSource.DataSourceType.MEMBER
 
     defaults = dict(
         # Reports
@@ -2502,6 +2502,7 @@ class ActionNetworkSource(ExternalDataSource):
     has_webhooks = True
     automated_webhooks = False
     introspect_fields = True
+    default_data_type = ExternalDataSource.DataSourceType.MEMBER
 
     defaults = dict(
         # Reports
@@ -2694,8 +2695,8 @@ class ActionNetworkSource(ExternalDataSource):
 
 
 class MapReport(Report, Analytics):
-    layers = models.JSONField(blank=True, null=True, default=list)
-    display_options = models.JSONField(blank=True, null=True, default=dict)
+    layers = models.JSONField(default=list, blank=True)
+    display_options = models.JSONField(default=dict, blank=True)
 
     class MapLayer(TypedDict):
         name: str
@@ -2703,7 +2704,7 @@ class MapReport(Report, Analytics):
         visible: Optional[bool]
 
     def get_layers(self) -> list[MapLayer]:
-        return self.layers
+        return self.layers or []
 
     def get_import_data(self):
         visible_layer_ids = [

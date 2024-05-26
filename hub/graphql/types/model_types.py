@@ -723,7 +723,7 @@ class BaseDataSource(Analytics):
     has_webhooks: bool = attr_field()
     automated_webhooks: bool = attr_field()
     introspect_fields: bool = attr_field()
-    default_data_type: bool = attr_field()
+    default_data_type: Optional[str] = attr_field()
 
     @strawberry_django.field
     def is_import_scheduled(self: models.ExternalDataSource, info: Info) -> bool:

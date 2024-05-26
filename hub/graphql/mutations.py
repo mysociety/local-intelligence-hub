@@ -131,15 +131,17 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
         models.Report.objects.get_queryset(), info
     ).exists()
 
-    map_report = models.MapReport.objects.create(
-        **graphql_type_to_dict(data),
+    params = {
+        **graphql_type_to_dict(data, delete_null_keys=True),
         **{
             "organisation": data.organisation
             or get_or_create_organisation_for_user(info),
             "slug": data.slug or slugify(data.name),
             "name": "Type your report name here",  # Default name for reports
         },
-    )
+    }
+
+    map_report = models.MapReport.objects.create(**params)
     if existing_reports:
         return map_report
 
