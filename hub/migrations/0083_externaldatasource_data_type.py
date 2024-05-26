@@ -17,12 +17,12 @@ class Migration(migrations.Migration):
             name="data_type",
             field=django_choices_field.fields.TextChoicesField(
                 choices=[
-                    ("member", "Members or supporters"),
-                    ("region", "Areas or regions"),
-                    ("other", "Other"),
+                    ("MEMBER", "Members or supporters"),
+                    ("REGION", "Areas or regions"),
+                    ("OTHER", "Other"),
                 ],
                 choices_enum=hub.models.ExternalDataSource.DataSourceType,
-                default="other",
+                default="OTHER",
                 max_length=6,
             ),
         ),
