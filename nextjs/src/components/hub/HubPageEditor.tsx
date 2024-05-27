@@ -126,11 +126,13 @@ export default function HubPageEditor({ hubId, pageId }: { hubId: string, pageId
               </DialogContent>
             </Dialog>
             <div className='flex flex-row gap-4 items-center justify-center'>
-              <Link target="_blank" href={`/hub/render/${pageData.data?.hubPage.urlWithoutProtocol}`}>
-                <PuckButton variant="secondary">
-                  Preview in new tab
-                </PuckButton>
-              </Link>
+              {!!pageData.data?.hubPage.liveUrl && (
+                <Link target="_blank" href={pageData.data?.hubPage.liveUrl}>
+                  <PuckButton variant="secondary">
+                    Visit page
+                  </PuckButton>
+                </Link>
+              )}
               {actions}
             </div>
           </header>
@@ -252,7 +254,7 @@ const GET_PAGE_EDITOR_DATA = gql`
       slug
       puckJsonContent
       modelName
-      urlWithoutProtocol
+      liveUrl
       # For breadcrumbs
       ancestors(inclusive: true) {
         id

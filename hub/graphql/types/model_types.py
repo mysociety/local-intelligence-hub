@@ -1036,7 +1036,11 @@ class WagtailPage:
         return self.get_site().hostname
 
     @strawberry_django.field
-    def url_without_protocol(self) -> str:
+    def live_url(self) -> str:
+        return self.full_url
+
+    @strawberry_django.field
+    def live_url_without_protocol(self) -> str:
         url = self.full_url
         return url.split("://")[1]
 
