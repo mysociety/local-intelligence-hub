@@ -404,3 +404,45 @@ def update_sharing_permissions(
         models.ExternalDataSource.objects.filter(organisation_id=from_org_id).all()
     )
     return result
+
+@strawberry_django.input(models.Page, partial=True)
+class WagtailPageInput:
+    title: Optional[str] = None
+    slug: Optional[str] = None
+    puck_json_content: Optional[strawberry.scalars.JSON] = None
+
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def update_page(
+    info: Info, page_id: str, input: WagtailPageInput
+) -> model_types.WagtailPage:
+    # TODO: permissions check
+    user = get_current_user(info)
+    page = models.Page.objects.get(id=page_id).specific
+    for attr, value in vars(input).items():
+        if value is not strawberry.UNSET and value is not None:
+            setattr(page, attr, value)
+    page.save_revision(user=user, log_action=True).publish()
+    return page
+
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def create_child_page(
+    info: Info, parent_id: str, title: str
+) -> model_types.WagtailPage:
+    # TODO: permissions check
+    user = get_current_user(info)
+    parent = models.Page.objects.get(id=parent_id)
+    page = models.HubContentPage(title=title, owner=user)
+    parent.add_child(instance=page)
+    page.save_revision(user=user, log_action=True).publish()
+    return page
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def delete_page(info: Info, page_id: str) -> bool:
+    # TODO: permissions check
+    user = get_current_user(info)
+    page = models.Page.objects.get(id=page_id)
+    page.unpublish(user=user, log_action=True)
+    page.delete()
+    return True

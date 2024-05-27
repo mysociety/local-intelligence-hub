@@ -3051,6 +3051,19 @@ docs = ["Sphinx (>=1.5.2)", "myst-parser (==2.0.0)", "pyenchant (>=3.1.1,<4)", "
 testing = ["Jinja2 (>=3.0,<3.2)", "azure-mgmt-cdn (>=12.0,<13.0)", "azure-mgmt-frontdoor (>=1.0,<1.1)", "boto3 (>=1.28,<2)", "coverage (>=3.7.0)", "curlylint (==0.13.1)", "django-pattern-library (>=0.7)", "djhtml (==3.0.6)", "doc8 (==0.8.1)", "factory-boy (>=3.2)", "freezegun (>=0.3.8)", "polib (>=1.1,<2.0)", "python-dateutil (>=2.7)", "pytz (>=2014.7)", "ruff (==0.1.5)", "semgrep (==1.40.0)", "tblib (>=2.0,<3.0)"]
 
 [[package]]
+name = "wagtail-json-widget"
+version = "0.0.8"
+description = "JSONEditor for Wagtail CMS"
+optional = false
+python-versions = "*"
+files = [
+    {file = "wagtail_json_widget-0.0.8-py3-none-any.whl", hash = "sha256:8c0cb3d6c882674662e2b00f798c7be122d760e4b91744f490c545f4994a102e"},
+]
+
+[package.dependencies]
+wagtail = ">=4.0"
+
+[[package]]
 name = "wheel"
 version = "0.43.0"
 description = "A built-package format for Python"
@@ -3107,4 +3120,4 @@ wand = ["Wand (>=0.6,<1.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">3.11,<3.13"
-content-hash = "6cb99dedfd149d8cf41982ed883108ac3ea502f7960f2f8561c6358e10f3b548"
+content-hash = "f228a516e54e65a1f855afa6c93f11c03e1a06e0f359cd853ec8532519497511"

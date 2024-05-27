@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { Provider as JotaiProvider } from "jotai";
 import { MapProvider } from "react-map-gl";
 import { PublicMap } from "@/components/report/PublicMap";
-import { GetPublicMapReportQuery, GetPublicMapReportQueryVariables } from "@/__generated__/graphql";
+import { GetPublicMapReportForLayoutQuery, GetPublicMapReportForLayoutQueryVariables } from "@/__generated__/graphql";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 
 type Params = {
@@ -16,7 +16,7 @@ type Params = {
 }
 
 export default function Page({ params: { orgSlug, reportSlug } }: { params: Params }) {
-  const report = useQuery<GetPublicMapReportQuery, GetPublicMapReportQueryVariables>(GET_PUBLIC_MAP_REPORT, {
+  const report = useQuery<GetPublicMapReportForLayoutQuery, GetPublicMapReportForLayoutQueryVariables>(GET_PUBLIC_MAP_REPORT, {
     variables: { orgSlug, reportSlug },
   });
 
@@ -48,7 +48,7 @@ export default function Page({ params: { orgSlug, reportSlug } }: { params: Para
 }
 
 const GET_PUBLIC_MAP_REPORT = gql`
-  query GetPublicMapReport($orgSlug: String!, $reportSlug: String!) {
+  query GetPublicMapReportForLayout($orgSlug: String!, $reportSlug: String!) {
     publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {
       id
       name

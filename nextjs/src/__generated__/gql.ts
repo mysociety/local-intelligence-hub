@@ -41,8 +41,12 @@ const documents = {
     "\n  mutation ResetPassword($email: String!) {\n    requestPasswordReset(email: $email) {\n      errors\n      success\n    }\n  }\n": types.ResetPasswordDocument,
     "\n  mutation Register($email: String!, $password1: String!, $password2: String!, $username: String!) {\n    register(email: $email, password1: $password1, password2: $password2, username: $username) {\n      errors\n      success\n    }\n  }\n": types.RegisterDocument,
     "\n  query ListExternalDataSources {\n    myOrganisations {\n      id\n      externalDataSources {\n        id\n      }\n    }\n  }\n": types.ListExternalDataSourcesDocument,
+    "\n  query GetPublicMapReport($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n    }\n  }\n": types.GetPublicMapReportDocument,
+    "\n  query GetPublicMapReportForLayout($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n      displayOptions\n      organisation {\n        id\n        slug\n        name\n      }\n      layers {\n        id\n        name\n      }\n    }\n  }\n": types.GetPublicMapReportForLayoutDocument,
+    "\n      query GetEditableHubs {\n        hubHomepages {\n          id\n        }\n      }\n    ": types.GetEditableHubsDocument,
+    "\n          query VerifyPage($pageId: ID!) {\n            hubHomepages {\n              id\n            }\n            hubPage(pk: $pageId) {\n              id\n            }\n          }\n        ": types.VerifyPageDocument,
+    "\n  query GetPage($hostname: String!, $path: String) {\n    hubPageByPath(hostname: $hostname, path: $path) {\n      id\n      title\n      path\n      puckJsonContent\n    }\n  }\n": types.GetPageDocument,
     "\n  query GetMapReportName($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n    }\n  }\n": types.GetMapReportNameDocument,
-    "\n  query GetPublicMapReport($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n      displayOptions\n      organisation {\n        id\n        slug\n        name\n      }\n      layers {\n        id\n        name\n      }\n    }\n  }\n": types.GetPublicMapReportDocument,
     "\n  query GetMapReport($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n      slug\n      displayOptions\n      organisation {\n        id\n        slug\n        name\n      }\n      ... MapReportPage\n    }\n  }\n  \n": types.GetMapReportDocument,
     "\n  mutation UpdateMapReport($input: MapReportInput!) {\n    updateMapReport(data: $input) {\n      id\n      name\n      displayOptions\n      layers {\n        id\n        name\n        source {\n          id\n          name\n        }\n      }\n    }\n  }\n": types.UpdateMapReportDocument,
     "\n  mutation DeleteMapReport($id: IDObject!) {\n    deleteMapReport(data: $id) {\n      id\n    }\n  }\n": types.DeleteMapReportDocument,
@@ -55,6 +59,11 @@ const documents = {
     "\n  mutation TriggerFullUpdate($externalDataSourceId: String!) {\n    triggerUpdate(externalDataSourceId: $externalDataSourceId) {\n      id\n      externalDataSource {\n        jobs {\n          status\n          id\n          taskName\n          args\n          lastEventAt\n        }\n        id\n        name\n        crmType\n      }\n    }\n  }\n": types.TriggerFullUpdateDocument,
     "\n  query ConstituencyStatsOverview ($reportID: ID!) {\n    mapReport(pk: $reportID) {\n      id\n      importedDataCountByConstituency {\n        label\n        gss\n        count\n        gssArea {\n          name\n          fitBounds\n          mp: person(filters:{personType:\"MP\"}) {\n            id\n            name\n            photo {\n              url\n            }\n            party: personDatum(filters:{\n              dataType_Name: \"party\"\n            }) {\n              name: data\n            }\n          }\n          lastElection {\n            stats {\n              date\n              majority\n              electorate\n              firstPartyResult {\n                party\n                shade\n                votes\n              }\n              secondPartyResult {\n                party\n                shade\n                votes\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n": types.ConstituencyStatsOverviewDocument,
     "\n  query EnrichmentLayers {\n    mappingSources {\n      slug\n      name\n      author\n      description\n      descriptionUrl\n      sourcePaths {\n        label\n        value\n        description\n      }\n      # For custom data sources, get some useful data\n      externalDataSource {\n        crmType\n      }\n    }\n  }\n": types.EnrichmentLayersDocument,
+    "\n        mutation PublishPage($pageId: String!, $input: WagtailPageInput!) {\n          updatePage(pageId: $pageId, input: $input) {\n            id\n            # Refresh cache\n            title\n            slug\n            puckJsonContent\n          }\n        }\n      ": types.PublishPageDocument,
+    "\n        mutation CreateChildPage($parentId: String!, $title: String!) {\n          createChildPage(parentId: $parentId, title: $title) {\n            id\n          }\n        }\n      ": types.CreateChildPageDocument,
+    "\n        mutation DeletePage($pageId: String!) {\n          deletePage(pageId: $pageId)\n        }\n      ": types.DeletePageDocument,
+    "\n  query GetHubPages($hubId: ID!) {\n    hubHomepage(pk: $hubId) {\n      descendants(inclusive: true) {\n        id\n        title\n        path\n        slug\n        modelName\n        ancestors(inclusive: true) {\n          id\n          title\n          path\n          slug\n          modelName\n        }\n      }\n    }\n  }\n": types.GetHubPagesDocument,
+    "\n  query GetPageEditorData($pageId: ID!) {\n    hubPage(pk: $pageId) {\n      id\n      title\n      path\n      slug\n      puckJsonContent\n      modelName\n      urlWithoutProtocol\n      # For breadcrumbs\n      ancestors(inclusive: true) {\n        id\n        title\n        path\n        slug\n        modelName\n      }\n    }\n  }\n": types.GetPageEditorDataDocument,
     "\n  query GetMemberList {\n    myOrganisations {\n      externalDataSources(filters: { dataType: MEMBER }) {\n        id\n        name\n        importedDataCount\n        crmType\n        dataType\n      }\n      sharingPermissionsFromOtherOrgs {\n        externalDataSource {\n          id\n          name\n          importedDataCount\n          crmType\n          dataType\n          organisation {\n            name\n          }\n        }\n      }\n    }\n  }\n": types.GetMemberListDocument,
     "\nquery MapReportLayerGeoJSONPoint($genericDataId: String!) {\n  importedDataGeojsonPoint(genericDataId: $genericDataId) {\n    id\n    type\n    geometry {\n      type\n      coordinates\n    }\n    properties {\n      id\n      lastUpdate\n      name\n      phone\n      email\n      postcodeData {\n        postcode\n      }\n      json\n      remoteUrl\n      dataType {\n        dataSet {\n          externalDataSource {\n            name\n          }\n        }\n      }\n    }\n  }\n}\n": types.MapReportLayerGeoJsonPointDocument,
     "\n  query MapReportLayerAnalytics($reportID: ID!) {\n    mapReport(pk: $reportID) {\n      id\n      layers {\n        id\n        name\n        source {\n          id\n          organisation {\n            name\n          }\n        }\n      }\n    }\n  }\n": types.MapReportLayerAnalyticsDocument,
@@ -197,11 +206,27 @@ export function gql(source: "\n  query ListExternalDataSources {\n    myOrganisa
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  query GetMapReportName($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  query GetMapReportName($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n    }\n  }\n"];
+export function gql(source: "\n  query GetPublicMapReport($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  query GetPublicMapReport($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  query GetPublicMapReport($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n      displayOptions\n      organisation {\n        id\n        slug\n        name\n      }\n      layers {\n        id\n        name\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetPublicMapReport($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n      displayOptions\n      organisation {\n        id\n        slug\n        name\n      }\n      layers {\n        id\n        name\n      }\n    }\n  }\n"];
+export function gql(source: "\n  query GetPublicMapReportForLayout($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n      displayOptions\n      organisation {\n        id\n        slug\n        name\n      }\n      layers {\n        id\n        name\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetPublicMapReportForLayout($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n      displayOptions\n      organisation {\n        id\n        slug\n        name\n      }\n      layers {\n        id\n        name\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n      query GetEditableHubs {\n        hubHomepages {\n          id\n        }\n      }\n    "): (typeof documents)["\n      query GetEditableHubs {\n        hubHomepages {\n          id\n        }\n      }\n    "];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n          query VerifyPage($pageId: ID!) {\n            hubHomepages {\n              id\n            }\n            hubPage(pk: $pageId) {\n              id\n            }\n          }\n        "): (typeof documents)["\n          query VerifyPage($pageId: ID!) {\n            hubHomepages {\n              id\n            }\n            hubPage(pk: $pageId) {\n              id\n            }\n          }\n        "];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetPage($hostname: String!, $path: String) {\n    hubPageByPath(hostname: $hostname, path: $path) {\n      id\n      title\n      path\n      puckJsonContent\n    }\n  }\n"): (typeof documents)["\n  query GetPage($hostname: String!, $path: String) {\n    hubPageByPath(hostname: $hostname, path: $path) {\n      id\n      title\n      path\n      puckJsonContent\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetMapReportName($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  query GetMapReportName($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -250,6 +275,26 @@ export function gql(source: "\n  query ConstituencyStatsOverview ($reportID: ID!
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  query EnrichmentLayers {\n    mappingSources {\n      slug\n      name\n      author\n      description\n      descriptionUrl\n      sourcePaths {\n        label\n        value\n        description\n      }\n      # For custom data sources, get some useful data\n      externalDataSource {\n        crmType\n      }\n    }\n  }\n"): (typeof documents)["\n  query EnrichmentLayers {\n    mappingSources {\n      slug\n      name\n      author\n      description\n      descriptionUrl\n      sourcePaths {\n        label\n        value\n        description\n      }\n      # For custom data sources, get some useful data\n      externalDataSource {\n        crmType\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n        mutation PublishPage($pageId: String!, $input: WagtailPageInput!) {\n          updatePage(pageId: $pageId, input: $input) {\n            id\n            # Refresh cache\n            title\n            slug\n            puckJsonContent\n          }\n        }\n      "): (typeof documents)["\n        mutation PublishPage($pageId: String!, $input: WagtailPageInput!) {\n          updatePage(pageId: $pageId, input: $input) {\n            id\n            # Refresh cache\n            title\n            slug\n            puckJsonContent\n          }\n        }\n      "];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n        mutation CreateChildPage($parentId: String!, $title: String!) {\n          createChildPage(parentId: $parentId, title: $title) {\n            id\n          }\n        }\n      "): (typeof documents)["\n        mutation CreateChildPage($parentId: String!, $title: String!) {\n          createChildPage(parentId: $parentId, title: $title) {\n            id\n          }\n        }\n      "];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n        mutation DeletePage($pageId: String!) {\n          deletePage(pageId: $pageId)\n        }\n      "): (typeof documents)["\n        mutation DeletePage($pageId: String!) {\n          deletePage(pageId: $pageId)\n        }\n      "];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetHubPages($hubId: ID!) {\n    hubHomepage(pk: $hubId) {\n      descendants(inclusive: true) {\n        id\n        title\n        path\n        slug\n        modelName\n        ancestors(inclusive: true) {\n          id\n          title\n          path\n          slug\n          modelName\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetHubPages($hubId: ID!) {\n    hubHomepage(pk: $hubId) {\n      descendants(inclusive: true) {\n        id\n        title\n        path\n        slug\n        modelName\n        ancestors(inclusive: true) {\n          id\n          title\n          path\n          slug\n          modelName\n        }\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetPageEditorData($pageId: ID!) {\n    hubPage(pk: $pageId) {\n      id\n      title\n      path\n      slug\n      puckJsonContent\n      modelName\n      urlWithoutProtocol\n      # For breadcrumbs\n      ancestors(inclusive: true) {\n        id\n        title\n        path\n        slug\n        modelName\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetPageEditorData($pageId: ID!) {\n    hubPage(pk: $pageId) {\n      id\n      title\n      path\n      slug\n      puckJsonContent\n      modelName\n      urlWithoutProtocol\n      # For breadcrumbs\n      ancestors(inclusive: true) {\n        id\n        title\n        path\n        slug\n        modelName\n      }\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

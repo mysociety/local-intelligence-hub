@@ -22,6 +22,9 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.text import slugify
+from wagtail.models import Page
+from wagtail.admin.panels import FieldPanel
+from wagtail_json_widget.widgets import JSONEditorWidget
 
 import numpy as np
 import pandas as pd
@@ -2450,6 +2453,54 @@ class MapReport(Report, Analytics):
     def get_analytics_queryset(self):
         return self.get_import_data()
 
+
+class HubHomepage(Page):
+    """
+    An microsite that incorporates datasets and content pages,
+    backed by a custom URL.
+    """
+    subpage_types = ["hub.HubContentPage"]
+
+    organisation = models.ForeignKey(
+        Organisation, on_delete=models.CASCADE, related_name="hubs"
+    )
+
+    layers = models.JSONField(blank=True, null=True, default=list)
+    puck_json_content = models.JSONField(blank=True, null=False, default=dict)
+    nav_links = models.JSONField(blank=True, null=True, default=list)
+
+    content_panels = Page.content_panels + [
+        FieldPanel("organisation"),
+        FieldPanel("layers", widget=JSONEditorWidget),
+        FieldPanel("puck_json_content", widget=JSONEditorWidget),
+        FieldPanel("nav_links", widget=JSONEditorWidget),
+    ]
+
+    def get_layers(self) -> list[MapReport.MapLayer]:
+        return self.layers
+
+    class HubNavLinks(TypedDict):
+        label: str
+        link: str
+    
+    def get_nav_links(self) -> list[HubNavLinks]:
+        return self.nav_links
+
+def generate_puck_json_content():
+    return {
+      "content": [],
+      "root": {},
+      "zones": {}
+    }
+
+class HubContentPage(Page):
+    parent_page_type = ["hub.HubHomepage"]
+    subpage_types = ["hub.HubContentPage"]
+    puck_json_content = models.JSONField(blank=True, null=False, default=generate_puck_json_content)
+
+    content_panels = Page.content_panels + [
+        FieldPanel("puck_json_content", widget=JSONEditorWidget),
+    ]
 
 class APIToken(models.Model):
     """

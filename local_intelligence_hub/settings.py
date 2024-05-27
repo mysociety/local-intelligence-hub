@@ -172,6 +172,7 @@ INSTALLED_APPS = [
     'wagtail',
     'modelcluster',
     'taggit',
+    "wagtail_json_widget"
 ]
 
 MIDDLEWARE = [

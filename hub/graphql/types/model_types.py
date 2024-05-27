@@ -16,7 +16,7 @@ from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import IsAuthenticated
-
+from wagtail.models import Site
 from hub import models
 from hub.enrichment.sources import builtin_mapping_sources
 from hub.graphql.dataloaders import (
@@ -29,7 +29,7 @@ from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
-
+from django.http import HttpRequest
 
 # Ideally we'd just import this from the library (procrastinate.jobs.Status) but
 # strawberry doesn't like subclassed Enums for some reason.
@@ -1021,3 +1021,87 @@ def mapping_sources(info: Info) -> List[MappingSourcePath]:
             + [source.as_mapping_source() for source in external_data_sources]
         )
     ]
+
+
+@strawberry_django.type(models.Page)
+class WagtailPage:
+    id: auto
+    title: str
+    slug: str
+    path: str
+    full_url: str = attr_field()
+
+    @strawberry_django.field
+    def hostname(self) -> str:
+        return self.get_site().hostname
+
+    @strawberry_django.field
+    def url_without_protocol(self) -> str:
+        url = self.full_url
+        return url.split("://")[1]
+
+    @strawberry_django.field
+    def puck_json_content(self) -> JSON:
+        specific = self.specific
+        if hasattr(specific, "puck_json_content"):
+            return specific.puck_json_content
+        return {}
+
+    @strawberry_django.field
+    def model_name(self) -> str:
+        return self.specific._meta.object_name
+
+    @strawberry_django.field
+    def ancestors(self, inclusive: bool=False) -> List["WagtailPage"]:
+        return self.get_ancestors(inclusive=inclusive)
+
+    @strawberry_django.field
+    def parent(self) -> Optional["WagtailPage"]:
+        return self.get_parent()
+
+    @strawberry_django.field
+    def children(self) -> List["WagtailPage"]:
+        return self.get_children()
+    
+    @strawberry_django.field
+    def descendants(self, inclusive: bool=False) -> List["WagtailPage"]:
+        return self.get_descendants(inclusive=inclusive)
+
+
+@strawberry.type
+class HubNavLink:
+    label: str = dict_key_field()
+    link: str = dict_key_field()
+
+
+@strawberry_django.type(models.HubHomepage)
+class HubHomepage(WagtailPage):
+    organisation: Organisation
+    custom_domain: Optional[str]
+    layers: List[MapLayer]
+    nav_links: List[HubNavLink]
+
+    # TODO: ultimately all this data will need to be public anyway for public viewing
+    # @classmethod
+    # def get_queryset(cls, queryset, info, **kwargs):
+    #     # Only list pages belonging to this user's orgs
+    #     user = get_current_user(info)
+    #     user_orgs = models.Organisation.objects.filter(members__user=user.id)
+    #     return queryset.filter(
+    #         organisation__in=user_orgs,
+    #     )
+
+@strawberry_django.field()
+def hub_page_by_path(info: Info, hostname: str, path: Optional[str] = None) -> Optional[WagtailPage]:
+    # get request for strawberry query
+    request: HttpRequest = info.context["request"]
+    request.META={
+        **request.META,
+        "HTTP_HOST": hostname,
+        "SERVER_PORT": 80
+    }
+    request.path = path
+    site = Site.objects.get(hostname=hostname)
+    if path is None:
+        return site.root_page.specific
+    return models.Page.find_for_request(request, path).specific

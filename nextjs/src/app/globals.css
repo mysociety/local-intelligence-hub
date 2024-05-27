@@ -119,3 +119,19 @@
   }
 }
 
+#puck-editor-root .Puck {
+  height: 100%;
+
+  & > div {
+    position: relative !important;
+    height: 100% !important;
+  }
+
+  [class^="_PuckCanvas-root"] {
+    opacity: 1 !important;
+  }
+
+  [class^="_Puck-layout"] {
+    height: 100% !important;
+  }
+}

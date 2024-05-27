@@ -85,6 +85,16 @@ class Query(UserQueries):
     map_reports: List[model_types.MapReport] = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
+    hub_homepages: List[model_types.HubHomepage] = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
+    hub_homepage: model_types.HubHomepage = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
+    hub_page: model_types.WagtailPage = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
+    hub_page_by_path: Optional[model_types.WagtailPage] = model_types.hub_page_by_path
     public_map_report: model_types.MapReport = strawberry_django.field(
         resolver=model_types.public_map_report
     )
@@ -183,6 +193,9 @@ class Mutation:
     update_sharing_permissions: List[model_types.ExternalDataSource] = (
         mutation_types.update_sharing_permissions
     )
+    create_child_page: model_types.WagtailPage = mutation_types.create_child_page
+    delete_page: bool = mutation_types.delete_page
+    update_page: model_types.WagtailPage = mutation_types.update_page
 
 
 class CustomErrorLoggingSchema(JwtSchema):

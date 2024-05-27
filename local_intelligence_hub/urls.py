@@ -22,6 +22,8 @@ from django.urls import include, path, re_path
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import RedirectView
 from wagtail.admin import urls as wagtailadmin_urls
+from wagtail import urls as wagtail_urls
+from wagtail.documents import urls as wagtaildocs_urls
 
 from strawberry_django_dataloaders.views import DataloaderAsyncGraphQLView
 
@@ -140,6 +142,9 @@ urlpatterns = [
         name="external_data_source_point_tilejson",
     ),
     path('cms/', include(wagtailadmin_urls)),
+    path('documents/', include(wagtaildocs_urls)),
+    # For multi-tenancy wagtail page router logic
+    path("", include(wagtail_urls)),
 ]
 
 if settings.DEBUG:  # pragma: no cover
