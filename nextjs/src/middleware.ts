@@ -45,7 +45,8 @@ export const middleware: NextMiddleware = (req) => {
 
   // For the main app domain, continue as normal
   if (
-    hostname === "localhost:3000" ||
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
     hostname === process.env.NEXT_PUBLIC_ROOT_DOMAIN
   ) {
     return response
