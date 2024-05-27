@@ -126,7 +126,7 @@ export default function HubPageEditor({ hubId, pageId }: { hubId: string, pageId
               </DialogContent>
             </Dialog>
             <div className='flex flex-row gap-4 items-center justify-center'>
-              <Link target="_blank" href={`/hub/preview/${pageData.data?.hubPage.urlWithoutProtocol}`}>
+              <Link target="_blank" href={`/hub/render/${pageData.data?.hubPage.urlWithoutProtocol}`}>
                 <PuckButton variant="secondary">
                   Preview in new tab
                 </PuckButton>
