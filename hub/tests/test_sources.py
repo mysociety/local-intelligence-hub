@@ -3,6 +3,7 @@ from random import randint
 from typing import List
 
 from django.conf import settings
+from django.db.utils import IntegrityError
 from django.test import TestCase
 
 from asgiref.sync import sync_to_async
@@ -81,6 +82,13 @@ class TestExternalDataSource:
         return records
 
     # Tests begin
+
+    def test_deduplication(self):
+        try:
+            self.create_test_source(name="My duplicate source")  # Create duplicate
+            self.assertTrue(False)  # Force failure if no exception
+        except IntegrityError:
+            pass
 
     def test_source(self):
         self.assertTrue(self.source.healthcheck())
@@ -445,9 +453,9 @@ class TestExternalDataSource:
 
 
 class TestAirtableSource(TestExternalDataSource, TestCase):
-    def create_test_source(self):
+    def create_test_source(self, name="My test Airtable member list"):
         self.source = models.AirtableSource.objects.create(
-            name="My test Airtable member list",
+            name=name,
             data_type=models.AirtableSource.DataSourceType.MEMBER,
             organisation=self.organisation,
             base_id=settings.TEST_AIRTABLE_MEMBERLIST_BASE_ID,
@@ -507,9 +515,9 @@ class TestMailchimpSource(TestExternalDataSource, TestCase):
     constituency_field = "CONSTITUEN"
     mayoral_field = "MAYORAL_RE"
 
-    def create_test_source(self):
+    def create_test_source(self, name="My test Mailchimp member list"):
         self.source = models.MailchimpSource.objects.create(
-            name="My test Mailchimp member list",
+            name=name,
             data_type=models.MailchimpSource.DataSourceType.MEMBER,
             organisation=self.organisation,
             api_key=settings.TEST_MAILCHIMP_MEMBERLIST_API_KEY,
@@ -539,9 +547,9 @@ class TestActionNetworkSource(TestExternalDataSource, TestCase):
     constituency_field = "custom_fields.constituency"
     mayoral_field = "custom_fields.mayoral_region"
 
-    def create_test_source(self):
+    def create_test_source(self, name="My test AN member list"):
         self.source = models.ActionNetworkSource.objects.create(
-            name="Test AN",
+            name=name,
             data_type=models.ActionNetworkSource.DataSourceType.MEMBER,
             organisation=self.organisation,
             api_key=settings.TEST_ACTIONNETWORK_MEMBERLIST_API_KEY,

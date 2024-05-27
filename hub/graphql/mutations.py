@@ -263,8 +263,11 @@ def create_external_data_source(
             ) or get_or_create_organisation_for_user(info)
             print(f"Creating source of type {crm_type_key}", kwargs)
 
-            def creator_fn():  # noqa: F811
-                return model.objects.create(**kwargs)
+            def creator_fn() -> tuple[models.ExternalDataSource, bool]:  # noqa: F811
+                deduplication_hash = model(**kwargs).get_deduplication_hash()
+                return model.objects.get_or_create(
+                    deduplication_hash=deduplication_hash, defaults=kwargs
+                )
 
             break
 
@@ -281,9 +284,9 @@ def create_external_data_source(
         )
 
     try:
-        source = creator_fn()
+        source, created = creator_fn()
 
-        if source:
+        if created:
             request_id = str(uuid.uuid4())
             async_to_sync(source.schedule_import_all)(request_id)
             return CreateExternalDataSourceOutput(code=200, errors=[], result=source)

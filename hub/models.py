@@ -3,7 +3,7 @@ import hashlib
 import itertools
 import uuid
 from datetime import datetime, timezone
-from typing import List, Optional, TypedDict, Union
+from typing import List, Optional, Type, TypedDict, Union
 from urllib.parse import urljoin
 
 from django.conf import settings
@@ -913,6 +913,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     }
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    deduplication_hash = models.CharField(max_length=32, unique=True, editable=False)
     organisation = models.ForeignKey(
         Organisation,
         on_delete=models.CASCADE,
@@ -973,6 +974,28 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         "address_field",
     ]
 
+    @classmethod
+    def get_deduplication_field_names(cls) -> list[str]:
+        """
+        Return the fields that should be used to prevent sources
+        being added multiple times, e.g. ["list_id", "api_key"]
+        for Mailchimp.
+        """
+        raise NotImplementedError(
+            "Deduplication not implemented for this data source type."
+        )
+
+    def get_deduplication_hash(self) -> str:
+        # Special path for ExternalDataSource to make this method work
+        # while also forcing subclasses to implement get_deduplication_field_names
+        if self.__class__ is ExternalDataSource:
+            hash_values = ["name"]
+        else:
+            hash_values = [
+                getattr(self, field) for field in self.get_deduplication_field_names()
+            ]
+        return hashlib.md5("".join(hash_values).encode()).hexdigest()
+
     def save(self, *args, **kwargs):
         for key, value in self.defaults.items():
             if (getattr(self, key) is None or getattr(self, key) == "") and (
@@ -985,6 +1008,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             and self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE
         ):
             self.postcode_field = self.geography_column
+
+        if not self.deduplication_hash:
+            self.deduplication_hash = self.get_deduplication_hash()
+
         super().save(*args, **kwargs)
 
     def as_mapping_source(self):
@@ -1934,7 +1961,10 @@ class AirtableSource(ExternalDataSource):
 
     class Meta:
         verbose_name = "Airtable table"
-        unique_together = ["base_id", "table_id", "api_key"]
+
+    @classmethod
+    def get_deduplication_field_names(self) -> list[str]:
+        return ["base_id", "table_id", "api_key"]
 
     @cached_property
     def api(self) -> AirtableAPI:
@@ -2225,7 +2255,6 @@ class MailchimpSource(ExternalDataSource):
 
     class Meta:
         verbose_name = "Mailchimp list"
-        unique_together = ["list_id", "api_key"]
 
     predefined_column_names = True
     has_webhooks = True
@@ -2256,6 +2285,10 @@ class MailchimpSource(ExternalDataSource):
         max_length=250,
         help_text="The unique identifier for the Mailchimp list.",
     )
+
+    @classmethod
+    def get_deduplication_field_names(self) -> list[str]:
+        return ["list_id", "api_key"]
 
     @cached_property
     def client(self) -> MailChimp:
@@ -2520,7 +2553,11 @@ class ActionNetworkSource(ExternalDataSource):
         address_field="postal_addresses[0].address_lines[0]",
     )
 
-    api_key = EncryptedCharField(max_length=250, unique=True)
+    api_key = EncryptedCharField(max_length=250)
+
+    @classmethod
+    def get_deduplication_field_names(self) -> list[str]:
+        return ["api_key"]
 
     @cached_property
     def client(self) -> ActionNetwork:
@@ -2770,7 +2807,7 @@ def update_apitoken_cache_on_delete(sender, instance, *args, **kwargs):
     refresh_tokens_cache()
 
 
-source_models = {
+source_models: dict[str, Type[ExternalDataSource]] = {
     "airtable": AirtableSource,
     "mailchimp": MailchimpSource,
     "actionnetwork": ActionNetworkSource,

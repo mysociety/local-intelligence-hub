@@ -95,6 +95,9 @@ const GET_UPDATE_CONFIG = gql`
           apiKey
           listId
         }
+        ... on ActionNetworkSource {
+          apiKey
+        }
       }
       lastJob {
         id
@@ -424,6 +427,13 @@ export default function InspectExternalDataSource({
               <br />
               <code>
                 {source.connectionDetails.listId}
+              </code>
+            </div>
+          ) : null}
+          {source.connectionDetails.__typename === 'ActionNetworkSource' ? (
+            <div className='mt-2'>
+              <code>
+                {source.connectionDetails.apiKey}
               </code>
             </div>
           ) : null}
