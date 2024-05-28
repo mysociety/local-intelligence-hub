@@ -1,0 +1,21 @@
+name: Run project tests
+
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+  
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: testing
+    container:
+      image: node:20
+    steps:
+      - name: Checkout repo content
+        uses: actions/checkout@v3
+      - name: Build nextjs app
+        run: cd nextjs && npm i && npm run build
+
