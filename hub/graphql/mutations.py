@@ -15,6 +15,7 @@ from strawberry_django.permissions import IsAuthenticated
 
 from hub import models
 from hub.graphql.types import model_types
+from hub.graphql.utils import graphql_type_to_dict
 
 logger = logging.getLogger(__name__)
 
@@ -124,41 +125,23 @@ def refresh_webhooks(external_data_source_id: str) -> models.ExternalDataSource:
     return data_source
 
 
-def create_with_computed_args(model, info, data, computed_args):
-    args = {
-        **strawberry_django.mutations.resolvers.parse_input(info, vars(data).copy()),
-        **computed_args(info, data, model),
-    }
-    return strawberry_django.mutations.resolvers.create(info, model, args)
-
-
-def get_or_create_with_computed_args(model, info, find_filter, data, computed_args):
-    """
-    Returns tuple: (instance: Model, created: bool)
-    """
-    instance = model.objects.filter(**find_filter).first()
-    if instance:
-        return instance, False
-    instance = create_with_computed_args(model, info, data, computed_args)
-    return instance, True
-
-
 @strawberry_django.mutation(extensions=[IsAuthenticated()], handle_django_errors=True)
 def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
     existing_reports = model_types.Report.get_queryset(
         models.Report.objects.get_queryset(), info
     ).exists()
 
-    map_report = create_with_computed_args(
-        models.MapReport,
-        info,
-        data,
-        computed_args=lambda info, data, model: {
-            "organisation": get_or_create_organisation_for_source(info, data),
+    params = {
+        **graphql_type_to_dict(data, delete_null_keys=True),
+        **{
+            "organisation": data.organisation
+            or get_or_create_organisation_for_user(info),
             "slug": data.slug or slugify(data.name),
             "name": "Type your report name here",  # Default name for reports
         },
-    )
+    }
+
+    map_report = models.MapReport.objects.create(**params)
     if existing_reports:
         return map_report
 
@@ -185,14 +168,11 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
     return map_report
 
 
-def get_or_create_organisation_for_source(info: Info, data: any):
-    if data.organisation:
-        return data.organisation
+def get_or_create_organisation_for_user(info: Info, org=None):
+    if org:
+        return org
     user = get_current_user(info)
-    if (
-        isinstance(data.organisation, strawberry.unset.UnsetType)
-        or data.organisation is None
-    ):
+    if org is None or isinstance(org, strawberry.unset.UnsetType):
         membership = user.memberships.first()
         if membership is not None:
             print("Assigning the user's default organisation")
@@ -242,20 +222,26 @@ class ExternalDataSourceInput:
 @strawberry_django.input(models.AirtableSource, partial=True)
 class AirtableSourceInput(ExternalDataSourceInput):
     api_key: str
-    base_id: auto
-    table_id: auto
+    base_id: str
+    table_id: str
 
 
 @strawberry_django.input(models.MailchimpSource, partial=True)
 class MailChimpSourceInput(ExternalDataSourceInput):
     api_key: str
-    list_id: auto
+    list_id: str
+
+
+@strawberry_django.input(models.ActionNetworkSource, partial=True)
+class ActionNetworkSourceInput(ExternalDataSourceInput):
+    api_key: str
 
 
 @strawberry.input()
 class CreateExternalDataSourceInput:
     mailchimp: Optional[MailChimpSourceInput] = None
     airtable: Optional[AirtableSourceInput] = None
+    actionnetwork: Optional[ActionNetworkSourceInput] = None
 
 
 @strawberry.type
@@ -263,66 +249,42 @@ class CreateExternalDataSourceOutput(MutationOutput):
     result: Optional[model_types.ExternalDataSource]
 
 
-def create_airtable_source(
-    info: Info, data: CreateExternalDataSourceInput
-) -> CreateExternalDataSourceOutput:
-    return get_or_create_with_computed_args(
-        models.AirtableSource,
-        info,
-        find_filter={
-            "api_key": data.airtable.api_key,
-            "base_id": data.airtable.base_id,
-            "table_id": data.airtable.table_id,
-        },
-        data=data.airtable,
-        computed_args=lambda info, data, model: {
-            "organisation": get_or_create_organisation_for_source(info, data)
-        },
-    )
-
-
-def create_mailchimp_source(
-    info: Info, data: CreateExternalDataSourceInput
-) -> models.ExternalDataSource:
-    return get_or_create_with_computed_args(
-        models.MailchimpSource,
-        info,
-        find_filter={
-            "api_key": data.mailchimp.api_key,
-            "list_id": data.mailchimp.list_id,
-        },
-        data=data.mailchimp,
-        computed_args=lambda info, data, model: {
-            "organisation": get_or_create_organisation_for_source(info, data)
-        },
-    )
-
-
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
 def create_external_data_source(
     info: Info, input: CreateExternalDataSourceInput
 ) -> models.ExternalDataSource:
-    source_creators = {
-        "airtable": create_airtable_source,
-        "mailchimp": create_mailchimp_source,
-    }
-
+    input_dict = graphql_type_to_dict(input, delete_null_keys=True)
     creator_fn = None
-    for key, fn in source_creators.items():
-        source_input = getattr(input, key, None)
-        if source_input is not None:
-            creator_fn = fn
+    for crm_type_key, model in models.source_models.items():
+        if crm_type_key in input_dict and input_dict[crm_type_key] is not None:
+            kwargs = input_dict[crm_type_key]
+            kwargs["organisation"] = kwargs.get(
+                "organisation", None
+            ) or get_or_create_organisation_for_user(info)
+            print(f"Creating source of type {crm_type_key}", kwargs)
+
+            def creator_fn() -> tuple[models.ExternalDataSource, bool]:  # noqa: F811
+                deduplication_hash = model(**kwargs).get_deduplication_hash()
+                return model.objects.get_or_create(
+                    deduplication_hash=deduplication_hash, defaults=kwargs
+                )
+
+            break
 
     if creator_fn is None:
         return CreateExternalDataSourceOutput(
             code=400,
-            errors=["You must provide input data for a specific source type"],
+            errors=[
+                MutationError(
+                    code=400,
+                    message=("You must provide input data for a specific source type."),
+                )
+            ],
             result=None,
         )
 
     try:
-        result: tuple[models.ExternalDataSource, bool] = creator_fn(info, input)
-        (source, created) = result
+        source, created = creator_fn()
 
         if created:
             request_id = str(uuid.uuid4())
@@ -349,6 +311,19 @@ def create_external_data_source(
     except Exception as e:
         logger.error(f"create_external_data_source error: {e}")
         return CreateExternalDataSourceOutput(code=500, errors=[], result=None)
+
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def update_external_data_source(
+    info: Info, input: ExternalDataSourceInput
+) -> models.ExternalDataSource:
+    source = models.ExternalDataSource.objects.get(id=input.id)
+    if not source.organisation.members.filter(user=get_current_user(info)).exists():
+        raise PermissionError("You do not have permission to update this data source.")
+    for key, value in graphql_type_to_dict(input, delete_null_keys=True).items():
+        setattr(source, key, value)
+    source.save()
+    return source
 
 
 @strawberry_django.input(models.SharingPermission, partial=True)
@@ -405,6 +380,7 @@ def update_sharing_permissions(
     )
     return result
 
+
 @strawberry_django.input(models.Page, partial=True)
 class WagtailPageInput:
     title: Optional[str] = None
@@ -437,6 +413,7 @@ def create_child_page(
     parent.add_child(instance=page)
     page.save_revision(user=user, log_action=True).publish()
     return page
+
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
 def delete_page(info: Info, page_id: str) -> bool:

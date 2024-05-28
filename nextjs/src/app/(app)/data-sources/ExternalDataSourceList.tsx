@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import qs from 'query-string'
 import { Mail } from "lucide-react";
 import { ExternalDataSourceCard } from "@/components/ExternalDataSourceCard";
+import { externalDataSourceOptions } from "@/lib/data";
 
 const LIST_UPDATE_CONFIGS = gql`
   query ListOrganisations {
@@ -175,21 +176,14 @@ function PageHeader() {
         </p>
       </div>
       <div className="grid grid-cols-2 gap-7">
-      <div className="rounded-3xl bg-meepGray-700 px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
-      <Link href="">
-          <ActionNetworkLogo className="w-full" />
-      </Link>
-    </div>
-    <div className="rounded-3xl bg-meepGray-700 px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
-      <Link href="/data-sources/create/connect/airtable">
-          <AirtableLogo className="w-full" />
-      </Link>
-    </div>
-    <div className="rounded-3xl bg-meepGray-700 px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
-      <Link href="/data-sources/create/connect/mailchimp">
-          <MailchimpLogo className="w-full" />
-      </Link>
-    </div>
+        {Object.values(externalDataSourceOptions).filter(d => d.supported).map(d => {
+          const Logo = d.logo
+          return (
+            <Link key={d.key} href={`/data-sources/create/connect/${d.key}`} className="rounded-3xl bg-meepGray-700 hover:bg-meepGray-600 px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
+              <Logo className="w-full" />
+            </Link>
+          )
+        })}
       </div>
     </header>
   );

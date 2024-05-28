@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { EnrichmentLayersQuery, ExternalDataSourceInput, FieldDefinition, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
+import { CrmType, EnrichmentLayersQuery, ExternalDataSourceInput, FieldDefinition, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
 import { Input } from "@/components/ui/input";
 import { SourcePathSelector } from "@/components/SelectSourceData";
 import { ArrowRight, Plus, RefreshCcw, X } from "lucide-react";
@@ -63,7 +63,7 @@ export function UpdateMappingForm({
     data: ExternalDataSourceInput,
     e?: React.BaseSyntheticEvent,
   ) => void;
-  crmType: string;
+  crmType: CrmType;
   initialData?: ExternalDataSourceInput;
   refreshFieldDefinitions?: () => void;
   fieldDefinitions?: FieldDefinition[] | null;
@@ -211,7 +211,7 @@ export function UpdateMappingForm({
                                   <SelectContent>
                                     <SelectGroup>
                                       <SelectLabel>Choose a field to update</SelectLabel>
-                                      {fieldDefinitions?.map((field) => (
+                                      {fieldDefinitions?.filter(f => f.editable).map((field) => (
                                         <SelectItem key={field.value} value={field.value}>
                                           <DataSourceFieldLabel
                                             fieldDefinition={field}

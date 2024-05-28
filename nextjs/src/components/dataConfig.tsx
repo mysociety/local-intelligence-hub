@@ -32,7 +32,7 @@ import Link from "next/link"
 import { importData } from "@/app/(app)/data-sources/inspect/[externalDataSourceId]/InspectExternalDataSource"
 import { LoadingIcon } from "./ui/loadingIcon"
 import { useRouter } from "next/navigation"
-import { MAP_REPORT_LAYERS_SUMMARY, isDataConfigOpenAtom, layerColour } from "@/app/reports/[id]/lib"
+import { MAP_REPORT_LAYERS_SUMMARY, isDataConfigOpenAtom, layerColour } from "@/lib/map"
 import { DataSourceIcon } from "./DataSourceIcon"
 import pluralize from "pluralize"
 import {
