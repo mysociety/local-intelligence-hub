@@ -26,6 +26,9 @@ class Migration(migrations.Migration):
         try:
             return super().apply(project_state, *args, **kwargs)
         except Exception as e:
-            if str(e) == "Found wrong number (0) of constraints for hub_mailchimpsource(list_id, api_key)":
+            if (
+                str(e)
+                == "Found wrong number (0) of constraints for hub_mailchimpsource(list_id, api_key)"
+            ):
                 return project_state
             raise e

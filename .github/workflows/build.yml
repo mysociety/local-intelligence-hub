@@ -1,4 +1,4 @@
-name: Run project tests
+name: Build nextjs app
 
 concurrency: 
   group: ${{ github.workflow }}-${{ github.ref }}
