@@ -41,7 +41,7 @@ import { toastPromise } from "@/lib/toast";
 import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
 
 const TEST_DATA_SOURCE = gql`
-  query TestDataSource($input: TestDataSourceInput!) {
+  query TestDataSource($input: CreateExternalDataSourceInput!) {
     testDataSource(input: $input) {
       __typename
       crmType
@@ -49,10 +49,13 @@ const TEST_DATA_SOURCE = gql`
         label
         value
         description
+        editable
       }
       geographyColumn,
       geographyColumnType
       healthcheck
+      predefinedColumnNames
+      defaultDataType
       remoteName
     }
   }
@@ -94,18 +97,12 @@ export default function Page({
   const form = useForm<FormInputs>({
     defaultValues: {
       geographyColumnType: PostcodesIoGeographyTypes.Postcode,
-      geographyColumn: externalDataSourceType === "mailchimp" ? 'ADDRESS.zip' : '',
-      dataType: context.dataType,
-      name: '',
-      airtable: {
-        apiKey: '',
-        baseId: '',
-        tableId: '',
-      },
-      mailchimp: {
-        apiKey: '',
-        listId: ''
-      }
+      geographyColumn: externalDataSourceType === "mailchimp"
+        ? 'ADDRESS.zip' :
+        externalDataSourceType === "actionnetwork"
+        ? "postal_addresses[0].postal_code"
+        : '',
+      dataType: context.dataType
     },
   });
 
@@ -177,22 +174,34 @@ export default function Page({
   useGuessedField('firstNameField', ["first name", "given name"])
   useGuessedField('lastNameField', ["last name", "family name", "surname", "second name"])
 
+  useEffect(() => {
+    if (testSourceResult.data?.testDataSource?.defaultDataType) {
+      form.setValue("dataType", testSourceResult.data?.testDataSource.defaultDataType)
+    }
+  }, [testSourceResult.data])
+
   async function submitTestConnection(formData: FormInputs) {
-    console.log('form data', formData)
     if (!formData[externalDataSourceType]) {
       throw Error("Need some CRM connection details to proceed!")
     }
-    // Get the nested data source key e.g. Airtable or Mailchimp
-    const dataSourceKey = externalDataSourceType
+    // To avoid mutation of the form data
+    const genericCRMData = Object.assign({}, formData)
+    const CRMSpecificData = formData[externalDataSourceType]
 
-    const dataSourceValue = formData[dataSourceKey] || {};
-   
-    const input = {
-      "type": dataSourceKey, 
-      "apiKey": dataSourceValue?.apiKey || '',
-      "baseId": "baseId" in dataSourceValue ? dataSourceValue.baseId : '',
-      "tableId": "tableId" in dataSourceValue ? dataSourceValue.tableId : '',
-      "listId": "listId" in dataSourceValue ? dataSourceValue.listId : '',
+    // Remove specific CRM data from the generic data
+    // TODO: make this less fragile. Currently it assumes any nested
+    // object is specific to a CRM.
+    for (const key of Object.keys(formData)) {
+      if (typeof formData[key as keyof FormInputs] === "object") {
+        delete genericCRMData[key as keyof FormInputs]
+      }
+    }
+
+    let input: TestDataSourceQueryVariables['input'] = {
+      [externalDataSourceType]: {
+        ...genericCRMData,
+        ...CRMSpecificData
+      }
     }
 
     {
@@ -330,53 +339,24 @@ export default function Page({
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="dataType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data type</FormLabel>
-                    <FormControl>
-                      {/* @ts-ignore */}
-                      <Select onValueChange={field.onChange} defaultValue={field.value} required>
-                        <SelectTrigger>
-                          <SelectValue placeholder="What kind of data is this?" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectLabel>Type of data source</SelectLabel>
-                            <SelectItem value={DataSourceType.Member}>A list of members</SelectItem>
-                            <SelectItem value={DataSourceType.Other}>Other data</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className='grid grid-cols-2 gap-4 w-full'>
-                <FPreopulatedSelectField name="geographyColumn" label="geography" required />
+              {!currentSource?.testDataSource?.defaultDataType && (
                 <FormField
                   control={form.control}
-                  name="geographyColumnType"
+                  name="dataType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Geography Type</FormLabel>
+                      <FormLabel>Data type</FormLabel>
                       <FormControl>
                         {/* @ts-ignore */}
                         <Select onValueChange={field.onChange} defaultValue={field.value} required>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a geography type" />
+                            <SelectValue placeholder="What kind of data is this?" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectGroup>
-                              <SelectLabel>Geography type</SelectLabel>
-                              <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Constituency}>GE2010-2019 Constituency</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Constituency_2025}>GE2024 Constituency</SelectItem>
+                              <SelectLabel>Type of data source</SelectLabel>
+                              <SelectItem value={DataSourceType.Member}>A list of members</SelectItem>
+                              <SelectItem value={DataSourceType.Other}>Other data</SelectItem>
                             </SelectGroup>
                           </SelectContent>
                         </Select>
@@ -385,17 +365,50 @@ export default function Page({
                     </FormItem>
                   )}
                 />
-                {form.watch('dataType') === DataSourceType.Member && (
-                  <>
-                    <FPreopulatedSelectField name="emailField" />
-                    <FPreopulatedSelectField name="phoneField" />
-                    <FPreopulatedSelectField name="addressField" />
-                    <FPreopulatedSelectField name="fullNameField" />
-                    <FPreopulatedSelectField name="firstNameField" />
-                    <FPreopulatedSelectField name="lastNameField" />
-                  </>
-                )}
-              </div>
+              )}
+              {!currentSource?.testDataSource?.predefinedColumnNames && (
+                <div className='grid grid-cols-2 gap-4 w-full'>
+                  <FPreopulatedSelectField name="geographyColumn" label="geography" required />
+                  <FormField
+                    control={form.control}
+                    name="geographyColumnType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Geography Type</FormLabel>
+                        <FormControl>
+                          {/* @ts-ignore */}
+                          <Select onValueChange={field.onChange} defaultValue={field.value} required>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a geography type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectLabel>Geography type</SelectLabel>
+                                <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
+                                <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
+                                <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
+                                <SelectItem value={PostcodesIoGeographyTypes.Constituency}>GE2010-2019 Constituency</SelectItem>
+                                <SelectItem value={PostcodesIoGeographyTypes.Constituency_2025}>GE2024 Constituency</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {form.watch('dataType') === DataSourceType.Member && (
+                    <>
+                      <FPreopulatedSelectField name="emailField" />
+                      <FPreopulatedSelectField name="phoneField" />
+                      <FPreopulatedSelectField name="addressField" />
+                      <FPreopulatedSelectField name="fullNameField" />
+                      <FPreopulatedSelectField name="firstNameField" />
+                      <FPreopulatedSelectField name="lastNameField" />
+                    </>
+                  )}
+                </div>
+              )}
               <Button type='submit' variant="reverse" disabled={createSourceResult.loading}>
                 Save connection
               </Button>
@@ -616,6 +629,66 @@ export default function Page({
     );
   }
 
+  if (externalDataSourceType === "actionnetwork") {
+    return (
+      <div className="space-y-7">
+        <header>
+          <h1 className="text-hLg">Connecting to your Action Network instance</h1>
+          <p className="mt-6 text-meepGray-400 max-w-lg">
+            In order to send data across to your Action Network instance, we{"'"}ll need a few
+            details that gives us permission to make updates to your members.
+          </p>
+        </header>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(submitTestConnection)}
+            className="space-y-7 max-w-lg"
+          >
+            <div className='text-hSm'>Connection details</div>
+            <FormField
+              control={form.control}
+              name="actionnetwork.apiKey"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Action Network API key</FormLabel>
+                  <FormControl>
+                    {/* @ts-ignore */}
+                    <Input placeholder="52b...bce" {...field} required />
+                  </FormControl>
+                  <FormDescription>
+                    Your API keys and sync features can be managed from the {'"'}API & Sync{'"'} link available in the {'"'}Start Organizing{'"'} menu.
+                    <a
+                      className="underline"
+                      target="_blank"
+                      href="https://actionnetwork.org/docs/"
+                    >
+                      Read more.
+                    </a>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex flex-row gap-x-4">
+              <Button
+                variant="outline"
+                type="reset"
+                onClick={() => {
+                  router.back();
+                }}
+              >
+                Back
+              </Button>
+              <Button type="submit" variant={"reverse"} disabled={testSourceResult.loading}>
+                Test connection
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
+    );
+  }
 
   return null;
 }

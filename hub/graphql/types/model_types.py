@@ -178,6 +178,7 @@ class FieldDefinition:
     label: Optional[str] = dict_key_field()
     description: Optional[str] = dict_key_field()
     external_id: Optional[str] = dict_key_field()
+    editable: bool = dict_key_field(default=True)
 
 
 @strawberry_django.filter(models.ExternalDataSource)
@@ -689,11 +690,18 @@ class BatchJobProgress:
     remaining: int
 
 
+@strawberry.enum
+class CrmType(Enum):
+    airtable = "airtable"
+    mailchimp = "mailchimp"
+    actionnetwork = "actionnetwork"
+
+
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class BaseDataSource(Analytics):
     id: auto
     name: auto
-    crm_type: str = attr_field()
+    crm_type: CrmType = attr_field()
     data_type: auto
     description: auto
     created_at: auto
@@ -711,6 +719,11 @@ class BaseDataSource(Analytics):
     organisation_id: str = strawberry_django.field(
         resolver=lambda self: self.organisation_id
     )
+    predefined_column_names: bool = attr_field()
+    has_webhooks: bool = attr_field()
+    automated_webhooks: bool = attr_field()
+    introspect_fields: bool = attr_field()
+    default_data_type: Optional[str] = attr_field()
 
     @strawberry_django.field
     def is_import_scheduled(self: models.ExternalDataSource, info: Info) -> bool:
@@ -839,7 +852,7 @@ class ExternalDataSource(BaseDataSource):
     @strawberry_django.field
     def connection_details(
         self: models.ExternalDataSource, info
-    ) -> Union["AirtableSource", "MailchimpSource"]:
+    ) -> Union["AirtableSource", "MailchimpSource", "ActionNetworkSource"]:
         instance = self.get_real_instance()
         return instance
 
@@ -874,6 +887,11 @@ class AirtableSource(ExternalDataSource):
 class MailchimpSource(ExternalDataSource):
     api_key: str
     list_id: auto
+
+
+@strawberry_django.type(models.ActionNetworkSource)
+class ActionNetworkSource(ExternalDataSource):
+    api_key: str
 
 
 @strawberry_django.type(models.Report)

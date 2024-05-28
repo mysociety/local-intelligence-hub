@@ -17,6 +17,7 @@ import { twMerge } from "tailwind-merge";
 import { ExternalLink } from "lucide-react";
 import useFuse from "@/hooks/filter";
 import { Input } from "./ui/input";
+import { LoadingIcon } from "./ui/loadingIcon";
 
 type Source = EnrichmentLayersQuery['mappingSources'][0]
 
@@ -99,7 +100,7 @@ export function SourcePathSelector({
                 autoFocus
               />
             </div>
-            <SourceList />
+            {sources ? <SourceList /> : <LoadingIcon />}
           </div>
           <div id={scrollElId} className='col-span-3 overflow-y-auto'>
             <SourceListDetails />
