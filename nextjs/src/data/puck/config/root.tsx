@@ -5,6 +5,9 @@ import { ReactNode } from "react";
 import { BasicLayout } from "./client";
 import Navbar from "./template/Navbar";
 
+
+
+
 export type RootProps = {
   children?: ReactNode;
   title?: string;
@@ -13,8 +16,10 @@ export type RootProps = {
 export default function <Root>({ children, editMode }: RootProps) {
   return (
     <>
-      <main className='px-8 bg-[#f2f2f2] text-jungle-green-800 min-h-[dv100] min-w-screen h-full w-full'>
-        <header>
+    {/* ${publicSans.className} */}
+    <style>{css}</style>
+      <main className={` px-8 bg-[#f2f2f2] text-jungle-green-800 min-h-[dv100] min-w-screen h-full w-full'`}>
+        <header className="sticky top-0 z-10 ">
           <Navbar/>
         </header>
         {children}
@@ -26,6 +31,7 @@ export default function <Root>({ children, editMode }: RootProps) {
 
 function TCCLogo() {
     return (
+
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="186"
@@ -55,3 +61,9 @@ function TCCLogo() {
       </svg>
     );
   }
+
+  const css = `
+  html, body {
+    background: #f2f2f2;
+  }
+  `;

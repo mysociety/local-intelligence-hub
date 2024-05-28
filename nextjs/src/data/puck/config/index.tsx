@@ -10,6 +10,7 @@ import { Flex, FlexProps } from "./blocks/Flex";
 import { Logos, LogosProps } from "./blocks/Logos";
 import { Stats, StatsProps } from "./blocks/Stats";
 import { Text, TextProps } from "./blocks/Text";
+import { EventCard, EventCardProps } from "./blocks/EventCard";
 import { VerticalSpace, VerticalSpaceProps } from "./blocks/VerticalSpace";
 
 export type Props = {
@@ -23,6 +24,7 @@ export type Props = {
   Stats: StatsProps;
   Text: TextProps;
   VerticalSpace: VerticalSpaceProps;
+  EventCard: EventCardProps;
 };
 
 export type UserConfig = Config
@@ -41,6 +43,13 @@ export const conf: UserConfig = {
     render: Root,
   },
   categories: {
+    components: {
+      components: [
+        "Card",
+        "Hero",
+        "EventCard"
+      ],
+    },
     layout: {
       components: [
         "Columns",
@@ -69,6 +78,7 @@ export const conf: UserConfig = {
     Flex,
     PlainText: Text,
     VerticalSpace,
+    EventCard
     // RichText: PuckRichText
   },
 };

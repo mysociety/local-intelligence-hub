@@ -29,6 +29,38 @@ const config = {
         
       },
       fontSize: {
+
+        hubH1: ['3.625rem', {
+          lineHeight: '100%',
+          letterSpacing: '-0.145rem',
+        }],
+
+        hubH2: ['2.86rem', {
+          lineHeight: '100%',
+          letterSpacing: '-0.11rem',
+        }],
+
+        hubH3: ['2.44rem', {
+          lineHeight: '100%',
+          letterSpacing: '-0.1rem',
+        }],
+        hubH4: ['1.75rem', {
+          lineHeight: '100%',
+          letterSpacing: '-0.04rem',
+        }],
+        hubH5: ['1.5rem', {
+          lineHeight: '100%',
+          letterSpacing: '-0.015rem',
+        }],
+        hubH6: ['1.25rem', {
+          lineHeight: '100%',
+          letterSpacing: '0rem',
+        }],
+
+
+        
+
+
         hXlg: ['4.5rem', {
           lineHeight: '107%',
           letterSpacing: '-0.2rem',
@@ -172,7 +204,13 @@ const config = {
           '800': '#0c5948',
           '900': '#0b493d',
           '950': '#052923',
+          'neutral': '#6D6D6D',
+          'bg': '#f2f2f2',
+
         },
+      },
+      boxShadow: {
+        'hover': '0px 0px 30px 0px var(--Jungle-Green-300, #76DFBB)',
       },
       spacing: {
         xs: '10px',

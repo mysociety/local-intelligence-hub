@@ -4,7 +4,7 @@ import { PHProvider } from './providers'
 import dynamic from 'next/dynamic'
 import { Metadata } from 'next'
 import { openGraphImage } from './shared-metadata'
-import { Suspense, useEffect } from "react";
+import { Suspense } from "react";
 import { useAuth } from "@/hooks/auth";
 
 

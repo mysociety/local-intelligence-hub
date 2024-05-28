@@ -2,6 +2,10 @@
 import React from "react";
 import { ComponentConfig } from "@measured/puck";
 
+import CirclePattern from "../../../../../../public/hub/circle-pattern.svg";
+import Image from "next/image";
+import ArrowTopRight from "../../../../../../public/hub/arrow-top-right.svg";
+import Link from "next/link";
 
 import {
   Dialog,
@@ -39,6 +43,7 @@ export type CardProps = {
   title: string;
   description: string;
   type: string;
+  externalLink: string;
 };
 
 export const Card: ComponentConfig<CardProps> = {
@@ -48,6 +53,8 @@ export const Card: ComponentConfig<CardProps> = {
       options: [
         { label: "Resource", value: "resource" },
         { label: "Action", value: "action" },
+        { label: "Header", value: "header" },
+        { label: "Tweet", value: "tweet" },
       ],
     },
     title: {
@@ -56,38 +63,75 @@ export const Card: ComponentConfig<CardProps> = {
     description: {
       type: "textarea",
     },
+    externalLink: {
+      type: "text",
+    },
 
   },
   defaultProps: {
     title: "Heading",
     description: "Dignissimos et eos fugiat. Facere aliquam corrupti est voluptatem veritatis amet id. Nam repudiandae accusamus illum voluptatibus similique consequuntur. Impedit ut rerum quae. Dolore qui mollitia occaecati soluta numquam. Non corrupti mollitia libero aut atque quibusdam tenetur.",
-    type: "Type",
+    type: "resource",
+    externalLink: "www.google.com",
 
   },
-  render: ({ title, description, type }) => {
+  render: ({ title, description, type, externalLink }) => {
+
+
     return (
       <Dialog>
-      <DialogTrigger className="w-full h-full text-left">
-        <div className="bg-white p-5  rounded-[40px] flex flex-col gap-5 justify-between h-full hover:shadow-hover transition-all">
-          <h2 className="text-2xl tracking-tight">{title}</h2>
-          <p className="text-hub-secondary text-lg line-clamp-4">{description}</p>
-          <div>
-            <div className="inline-block text-jungle-700 bg-jungle-green-100 text-md font-normal rounded-full px-3">{type}</div>
+        <DialogTrigger className="w-full h-full text-left">
+          <div className="w-full h-full overflow-clip rounded-[20px] flex flex-col gap-5 justify-between hover:shadow-hover transition-all">
+            {type == "resource" && (
+              <div className="p-5 bg-white h-full flex flex-col gap-4 justify-between">
+                <h2 className="text-hubH3 tracking-tight">{title}</h2>
+                <p className="text-jungle-green-neutral line-clamp-4">{description}</p>
+                <div>
+                  <div className="uppercase inline-block text-jungle-green-700 bg-jungle-green-100 text-lg font-normal rounded-full px-3">{type}</div>
+                </div>
+              </div>
+            )}
+
+            {type === "action" && (
+
+
+              <div className="p-5 bg-jungle-green-600 text-white h-full relative gap-2 flex flex-col align-bottom">
+                <div className=" grow"></div>
+                <Image src={ArrowTopRight} width={30} alt="arrow" />
+                <h2 className="hubH3 tracking-tight">{title}</h2>
+                <div>
+                  <div className="uppercase inline-block text-jungle-green-700 bg-jungle-green-100 text-lg font-normal rounded-full px-3">{type}</div>
+                </div>
+                <Image
+                  className="object-cover rounded-[40px] absolute top-0 left-0 "
+                  src={CirclePattern}
+                  width={500}
+                  alt="hero image"
+                  layout="responsive"
+                />
+              </div>
+            )}
+
+            {type === "header" && (
+              <div className="p-5 border border-jungle-green-200 flex flex-col gap-5 justify-between h-full transition-all">
+                <h2 className="text-5xl tracking-tight">{title}</h2>
+              </div>
+            )}
+
           </div>
-        </div>
+        </DialogTrigger>
+        <DialogContent className="p-10 bg-white">
+          <DialogHeader className="flex flex-col gap-5">
+            <DialogTitle className="text-5xl">{title}</DialogTitle>
+            <DialogDescription className="text-secondary text-lg">
+              {description}
+            </DialogDescription>
 
-      </DialogTrigger>
-      <DialogContent className="p-10 bg-white">
-        <DialogHeader className="flex flex-col gap-5">
-          <DialogTitle className="text-5xl">{title}</DialogTitle>
-          <DialogDescription className="text-secondary text-lg">
-          {description}
-          </DialogDescription>
-          <Button variant="secondary" className="gap-4"><Download />Download Files</Button>
+            <Button variant="secondary" className="gap-4"><Download />Download Files</Button>
 
-        </DialogHeader>
-      </DialogContent>
-    </Dialog>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     );
   },
 };
