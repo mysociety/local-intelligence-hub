@@ -30,7 +30,6 @@ import {
   CreateExternalDataSourceInput,
   DataSourceType,
   ExternalDataSourceInput,
-  TestDataSourceInput,
   PostcodesIoGeographyTypes,
   TestDataSourceQuery,
   TestDataSourceQueryVariables,
@@ -79,7 +78,7 @@ const CREATE_DATA_SOURCE = gql`
 `;
 
 
-type FormInputs = CreateExternalDataSourceInput & ExternalDataSourceInput & TestDataSourceInput
+type FormInputs = CreateExternalDataSourceInput & ExternalDataSourceInput
 
 export default function Page({
   params: { externalDataSourceType },
@@ -176,7 +175,7 @@ export default function Page({
 
   useEffect(() => {
     if (testSourceResult.data?.testDataSource?.defaultDataType) {
-      form.setValue("dataType", testSourceResult.data?.testDataSource.defaultDataType)
+      form.setValue("dataType", testSourceResult.data.testDataSource.defaultDataType as DataSourceType)
     }
   }, [testSourceResult.data])
 

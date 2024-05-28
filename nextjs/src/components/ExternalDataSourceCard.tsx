@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { DataSourceCardFragment, AutoUpdateWebhookRefreshMutation, AutoUpdateWebhookRefreshMutationVariables, DataSourceType, DisableAutoUpdateMutation, DisableAutoUpdateMutationVariables, EnableAutoUpdateMutation, EnableAutoUpdateMutationVariables, TriggerFullUpdateMutation, TriggerFullUpdateMutationVariables } from "@/__generated__/graphql";
+import { DataSourceCardFragment, AutoUpdateWebhookRefreshMutation, AutoUpdateWebhookRefreshMutationVariables, DataSourceType, DisableAutoUpdateMutation, DisableAutoUpdateMutationVariables, EnableAutoUpdateMutation, EnableAutoUpdateMutationVariables, TriggerFullUpdateMutation, TriggerFullUpdateMutationVariables, CrmType } from "@/__generated__/graphql";
 import { DataSourceIcon } from "./DataSourceIcon";
 
 export function ExternalDataSourceCard({
@@ -34,8 +34,9 @@ export function ExternalDataSourceCard({
     id: any,
     name: string,
     dataType: DataSourceType,
+    automatedWebhooks?: boolean,
     autoUpdateEnabled?: boolean,
-    crmType?: string
+    crmType?: CrmType
     jobs?: DataSourceCardFragment['jobs'],
     organisation?: {
       name: string
@@ -246,6 +247,7 @@ export const DATA_SOURCE_FRAGMENT = gql`
     name
     dataType
     crmType
+    automatedWebhooks
     autoUpdateEnabled
     updateMapping {
       source

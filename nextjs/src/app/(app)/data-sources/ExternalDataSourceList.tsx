@@ -179,7 +179,7 @@ function PageHeader() {
         {Object.values(externalDataSourceOptions).filter(d => d.supported).map(d => {
           const Logo = d.logo
           return (
-            <Link href={`/data-sources/create/connect/${d.key}`} className="rounded-3xl bg-meepGray-700 hover:bg-meepGray-600 px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
+            <Link key={d.key} href={`/data-sources/create/connect/${d.key}`} className="rounded-3xl bg-meepGray-700 hover:bg-meepGray-600 px-10 py-6 overflow-hidden flex flex-row items-center justify-center">
               <Logo className="w-full" />
             </Link>
           )
