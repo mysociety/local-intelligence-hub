@@ -25,7 +25,7 @@ export function PublicMap ({
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
         {...viewState}
         onMove={(e) => setViewState(e.viewState)}
-        mapStyle={mapStyle || "mapbox://styles/commonknowledge/clty3prwh004601pr4nqn7l9s"}
+        mapStyle={mapStyle || "mapbox://styles/commonknowledge/clwqeu7rb012301nyh52n3kss/draft"}
         transformRequest={(url, resourceType) => {
           if (
             url.includes(process.env.NEXT_PUBLIC_BACKEND_BASE_URL!) &&
