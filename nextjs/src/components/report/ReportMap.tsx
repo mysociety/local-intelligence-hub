@@ -24,7 +24,7 @@ import { Point } from "geojson"
 import { atom, useAtom } from "jotai";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import { z } from "zod";
-import { layerColour, useLoadedMap, isConstituencyPanelOpenAtom, MAP_REPORT_LAYERS_SUMMARY, layerIdColour } from "@/app/reports/[id]/lib";
+import { layerColour, useLoadedMap, isConstituencyPanelOpenAtom, MAP_REPORT_LAYERS_SUMMARY, layerIdColour } from "@/lib/map";
 import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel";
 import { authenticationHeaders } from "@/lib/auth";
 
@@ -259,7 +259,7 @@ export function ReportMap () {
 
   return (
     <>
-      {loading ? (
+      {loading && (
         <div className="absolute w-full h-full inset-0 z-10 pointer-events-none">
           <div className="flex flex-col items-center justify-center w-full h-full">
             <LoadingIcon />
@@ -272,7 +272,7 @@ export function ReportMap () {
               ))}
           </div>
         </div>
-      ) : null}
+      )}
       <Map
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
         {...viewState}
@@ -550,7 +550,7 @@ export function ReportMap () {
                   closeOnMove={false}
                   anchor="bottom"
                   offset={[0, -35] as any}
-            >
+                >
               {selectedPointLoading ? (
                 <div className="font-IBMPlexMono p-2 space-y-1 bg-white">
                   <div className="-space-y-1">
@@ -558,14 +558,6 @@ export function ReportMap () {
                   </div>
                 </div>
               ) : (
-                <>
-                  <div className="font-IBMPlexMono p-2 space-y-1 bg-white">
-                    {!!selectedPointData?.importedDataGeojsonPoint?.properties?.name && (
-                      <div className="-space-y-1">
-                        <div className="text-meepGray-400">LOADING</div>
-                      </div>
-                    </div>
-                  ) : (
                     <>
                       <div className="font-IBMPlexMono p-2 space-y-1 bg-white">
                         {!!selectedPointData?.importedDataGeojsonPoint
@@ -642,9 +634,9 @@ export function ReportMap () {
                         )}
                       </footer>
                     </>
-                  )}
-                </Popup>
-              </ErrorBoundary>
+              )}
+              </Popup>
+            </ErrorBoundary>
             )}
           </>
         )}

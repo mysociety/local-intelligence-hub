@@ -2511,7 +2511,7 @@ class MapReport(Report, Analytics):
         name: str
         source: str
         visible: Optional[bool]
-        custom_marker_text: Optional[str]
+        custom_marker_text: Optional[str] = None
 
     def get_layers(self) -> list[MapLayer]:
         return self.layers

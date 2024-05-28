@@ -49,7 +49,7 @@ class MapLayerInput:
     name: str
     source: str
     visible: Optional[bool] = True
-    custom_marker_text: Optional[str]
+    custom_marker_text: Optional[str] = None
 
 
 @strawberry_django.input(models.MapReport, partial=True)

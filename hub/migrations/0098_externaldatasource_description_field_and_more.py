@@ -119,9 +119,5 @@ class Migration(migrations.Migration):
             model_name="person",
             name="name",
             field=models.CharField(max_length=500),
-        ),
-        migrations.AddIndex(
-            model_name="area",
-            index=models.Index(fields=["gss"], name="hub_area_gss_635fb0_idx"),
-        ),
+        )
     ]

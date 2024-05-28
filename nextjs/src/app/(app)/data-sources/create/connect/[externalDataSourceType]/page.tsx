@@ -31,9 +31,6 @@ import {
   DataSourceType,
   ExternalDataSourceInput,
   TestDataSourceInput,
-  TestDataSourceQuery,
-  TestDataSourceQueryVariables,
-  CreateSourceMutation
   GeographyTypes,
 } from "@/__generated__/graphql";
 import { toastPromise } from "@/lib/toast";
@@ -86,6 +83,9 @@ export default function Page({
   const router = useRouter();
   const context = useContext(CreateAutoUpdateFormContext);
 
+  const collectFields = useMemo(() => {
+    return getFieldsForDataSourceType(context.dataType)
+  }, [context.dataType])
 
   useEffect(() => {
     context.setStep(2)
@@ -172,7 +172,7 @@ export default function Page({
   useGuessedField('geographyColumn', ["postcode", "postal code", "zip code", "zip"])
   useGuessedField('emailField', ["email"])
   useGuessedField('phoneField', ["mobile", "phone"])
-  useGuessedField('addressField', ["street", "line1", "address"], ['email'])
+  useGuessedField('addressField', ["street", "line1", "address", "location"], ['email'])
   useGuessedField('fullNameField', ["full name", "name"])
   useGuessedField('firstNameField', ["first name", "given name"])
   useGuessedField('titleField', ["title", "name"])
