@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowRight, ClipboardCopy, File, Plus, Shuffle, X } from "lucide-react"
 import { gql, useApolloClient, useFragment, useQuery } from "@apollo/client"
 import { AddMapLayerButton } from "./report/AddMapLayerButton"
-import { MapReportLayersSummaryFragment } from "@/__generated__/graphql"
+import { DataSourceType, MapReportLayersSummaryFragment } from "@/__generated__/graphql"
 import { useContext, useState } from "react"
 import { ReportContext, useReportContext } from "@/app/reports/[id]/context"
 import {
@@ -32,7 +32,7 @@ import Link from "next/link"
 import { importData } from "@/app/(app)/data-sources/inspect/[externalDataSourceId]/InspectExternalDataSource"
 import { LoadingIcon } from "./ui/loadingIcon"
 import { useRouter } from "next/navigation"
-import { MAP_REPORT_LAYERS_SUMMARY, isDataConfigOpenAtom, layerColour } from "@/app/reports/[id]/lib"
+import { MAP_REPORT_LAYERS_SUMMARY, isDataConfigOpenAtom, layerColour, layerIdColour } from "@/app/reports/[id]/lib"
 import { DataSourceIcon } from "./DataSourceIcon"
 import pluralize from "pluralize"
 import {
@@ -86,12 +86,14 @@ export default function DataConfigPanel() {
       <CardContent>
         <div className="p-3 flex flex-col gap-2 border-t border-meepGray-700 ">
           <span className="text-sm mb-2">Your member lists</span>
-          {layers.data.layers?.map((layer, index) => layer?.source && (
+          {layers.data.layers
+            ?.filter(d => d?.source?.dataType === DataSourceType.Member)
+            .map((layer, index) => layer?.source && (
             <div key={layer?.source?.id || index} className="flex gap-2 items-center">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button className="border-l-4 bg-none p-3 text-sm flex flex-row items-center gap-2 text-left justify-start overflow-hidden text-nowrap text-ellipsis h-14" style={{
-                    borderColor: layerColour(index, layer?.source?.id)
+                    borderColor: layerIdColour(layer?.source?.id)
                   }} 
                 >
                   <CRMSelection
@@ -162,7 +164,90 @@ export default function DataConfigPanel() {
             </div>
           ))}
           <div className="flex gap-2 items-center">
-            <AddMapLayerButton addLayer={addLayer} />
+            <AddMapLayerButton addLayer={addLayer} filter={source => source.dataType === DataSourceType.Member} />
+          </div>
+        </div>
+        <div className="p-3 pb-4 flex flex-col gap-2 border-t border-meepGray-700 ">
+          <span className="label mb-2 text-labelLg">Campaign map layers</span>
+          {layers.data.layers
+            ?.filter(d => d?.source?.dataType !== DataSourceType.Member)
+            .map((layer, index) => layer?.source && (
+            <div key={layer?.source?.id || index} className="flex gap-2 items-center">
+              <Popover>
+                <PopoverTrigger>
+                  <Button className="border-l-4 bg-none p-3 text-sm flex flex-row items-center gap-2 text-left justify-start overflow-hidden text-nowrap text-ellipsis h-14" style={{
+                    borderColor: layerIdColour(layer?.source?.id)
+                  }} 
+                >
+                  <CRMSelection
+                    // @ts-ignore: Property 'id' is optional in type 'DeepPartialObject - a silly Fragment typing
+                    source={layer.source}
+                    isShared={!!layer.sharingPermission}
+                  />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className='space-y-4'>
+                  {!!layer?.source?.id && (
+                    !layer.sharingPermission ? (
+                      <>
+                        <div>{layer.source.importedDataCount || 0} records imported</div>
+                        <Link href={`/data-sources/inspect/${layer?.source?.id}`} className='underline py-2 text-sm'>
+                          Inspect data source <ArrowRight />
+                        </Link>
+                        <Button disabled={layer.source.isImportScheduled} onClick={() => importData(client, layer.source!.id)}>
+                          {!layer.source.isImportScheduled ? "Import data" : <span className='flex flex-row gap-2 items-center'>
+                            <LoadingIcon size={"18"} />
+                            <span>Importing...</span>
+                          </span>}
+                        </Button>
+                      </>
+                    ) : (
+                      <div className='text-sm'>
+                        <div>This data source is managed by {layer.source.organisation?.name}.</div>
+                        <div className='flex flex-col gap-2 mt-4'>
+                          <div className='flex flex-row gap-1 uppercase font-semibold text-sm text-meepGray-400'>
+                            <span>Their share settings</span>
+                          </div>
+                          <div className='flex flex-row gap-1 items-start'>
+                            <Checkbox
+                              checked={!!layer.sharingPermission?.visibilityRecordCoordinates}
+                              disabled
+                            />
+                            <label className='-mt-1'>
+                              <span>
+                                Precise record locations
+                              </span>
+                              <p className='text-meepGray-400 text-xs'>
+                                If enabled, pins will be placed on a map for each record. If disabled, only aggregate ward / constituency / region data will be shared.  
+                              </p>
+                            </label>
+                          </div>
+                          <div className='flex flex-row gap-1 items-start'>
+                            <Checkbox
+                              checked={!!layer.sharingPermission?.visibilityRecordDetails}
+                              disabled
+                            />
+                            <label className='-mt-1'>
+                              <span>
+                                Record details
+                              </span>
+                              <p className='text-meepGray-400 text-xs'>
+                                Specific data like {'"'}name{'"'}</p>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  )}
+                  <Button onClick={() => {
+                    removeLayer(layer?.source?.id!)
+                  }} variant='destructive'>Remove layer</Button>
+                </PopoverContent>
+              </Popover>
+            </div>
+          ))}
+          <div className="flex gap-2 items-center">
+            <AddMapLayerButton addLayer={addLayer} filter={source => source.dataType !== DataSourceType.Member} />
           </div>
         </div>
         <div className="p-3 pb-4 flex flex-col gap-2 border-t border-meepGray-700 ">

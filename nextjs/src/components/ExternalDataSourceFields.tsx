@@ -56,6 +56,8 @@ export function PreopulatedSelectField<FormInputs extends object = any>({
                           </SelectItem>
                         )
                       )}
+                      {/* @ts-ignore */}
+                      <SelectItem value={null} onClick={() => { field.onChange(null) }}>N/A</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>

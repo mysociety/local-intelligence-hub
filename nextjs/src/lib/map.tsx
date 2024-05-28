@@ -55,6 +55,10 @@ export const layerColour = (index: any, id?: any) => {
   return colorHash.hex(id || index)
 }
 
+export function layerIdColour (id: string) {
+  return colorHash.hex(id)
+}
+
 export const mapHasLoaded = atom(false)
 export const isDataConfigOpenAtom = atom(false)
 export const isConstituencyPanelOpenAtom = atom(false)

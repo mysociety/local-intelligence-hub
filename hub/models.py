@@ -57,7 +57,9 @@ from hub.tasks import (
 )
 from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
 from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
+from utils.nominatim import address_to_geojson
 from utils.py import batched, ensure_list, get
+from utils.img import download_file_from_url
 
 User = get_user_model()
 
@@ -427,11 +429,11 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
 
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
-    label = models.CharField(max_length=200, blank=True, null=True)
+    label = models.CharField(max_length=500, blank=True, null=True)
     data_type = models.CharField(max_length=20, choices=TypeMixin.TYPE_CHOICES)
     last_update = models.DateTimeField(auto_now=True)
     source_label = models.TextField(max_length=300, blank=True, null=True)
-    source = models.CharField(max_length=200)
+    source = models.CharField(max_length=500)
     source_type = models.TextField(
         max_length=50, blank=True, null=True, choices=SOURCE_CHOICES
     )
@@ -525,7 +527,7 @@ class DataType(TypeMixin, ShaderMixin, models.Model):
     average = models.FloatField(blank=True, null=True)
     maximum = models.FloatField(blank=True, null=True)
     minimum = models.FloatField(blank=True, null=True)
-    label = models.CharField(max_length=200, blank=True, null=True)
+    label = models.CharField(max_length=500, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     order = models.IntegerField(blank=True, null=True)
     area_type = models.ForeignKey(
@@ -695,7 +697,17 @@ class GenericData(CommonData):
     full_name = models.CharField(max_length=300, blank=True, null=True)
     email = models.EmailField(max_length=300, blank=True, null=True)
     phone = models.CharField(max_length=100, blank=True, null=True)
+    start_time = models.DateTimeField(blank=True, null=True)
+    end_time = models.DateTimeField(blank=True, null=True)
+    public_url = models.URLField(max_length=2000, blank=True, null=True)
+    osm_data = JSONField(blank=True, null=True)
     address = models.CharField(max_length=1000, blank=True, null=True)
+    title = models.CharField(max_length=1000, blank=True, null=True)
+    description = models.TextField(max_length=3000, blank=True, null=True)
+    image = models.ImageField(null=True, upload_to="generic_data")
+    start_time = models.DateTimeField(blank=True, null=True)
+    end_time = models.DateTimeField(blank=True, null=True)
+    public_url = models.URLField(max_length=2000, blank=True, null=True)
 
     def remote_url(self):
         return self.data_type.data_set.external_data_source.record_url(self.data)
@@ -715,6 +727,8 @@ class GenericData(CommonData):
             return self.first_name
         elif self.last_name:
             return self.last_name
+        elif self.title:
+            return self.title
 
         return None
 
@@ -728,7 +742,7 @@ class GenericData(CommonData):
 class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
     gss = models.CharField(max_length=30, unique=True)
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=500)
     area_type = models.ForeignKey(
         AreaType, on_delete=models.CASCADE, related_name="areas"
     )
@@ -811,7 +825,7 @@ class Person(models.Model):
     person_type = models.CharField(max_length=10)
     external_id = models.CharField(db_index=True, max_length=20)
     id_type = models.CharField(max_length=30)
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=500)
     area = models.ForeignKey(Area, on_delete=models.CASCADE)
     photo = models.ImageField(null=True, upload_to="person")
     start_date = models.DateField(null=True)
@@ -907,6 +921,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     class DataSourceType(models.TextChoices):
         MEMBER = "member", "Members or supporters"
         REGION = "region", "Areas or regions"
+        EVENT = "event", "Events"
+        LOCATION = "location", "Locations"
+        STORY = "story", "Stories"
         OTHER = "other", "Other"
 
     data_type = TextChoicesField(
@@ -920,20 +937,24 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     introspect_fields = False
     # Geocoding data
 
-    class PostcodesIOGeographyTypes(models.TextChoices):
+    class GeographyTypes(models.TextChoices):
+        ADDRESS = "address", "Address"
         POSTCODE = "postcode", "Postcode"
         WARD = "ward", "Ward"
         CONSTITUENCY = "parliamentary_constituency", "Constituency"
         COUNCIL = "admin_district", "Council"
         CONSTITUENCY_2025 = "parliamentary_constituency_2025", "Constituency (2024)"
+        # TODO: LNG_LAT = "lng_lat", "Longitude and Latitude"
 
     geography_column_type = TextChoicesField(
-        choices_enum=PostcodesIOGeographyTypes,
-        default=PostcodesIOGeographyTypes.POSTCODE,
+        choices_enum=GeographyTypes,
+        default=GeographyTypes.POSTCODE,
     )
     geography_column = models.CharField(max_length=250, blank=True, null=True)
 
     # Useful for explicit querying and interacting with members in the UI
+    # TODO: longitude_field = models.CharField(max_length=250, blank=True, null=True)
+    # TODO: latitude_field = models.CharField(max_length=250, blank=True, null=True)
     postcode_field = models.CharField(max_length=250, blank=True, null=True)
     first_name_field = models.CharField(max_length=250, blank=True, null=True)
     last_name_field = models.CharField(max_length=250, blank=True, null=True)
@@ -941,6 +962,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     email_field = models.CharField(max_length=250, blank=True, null=True)
     phone_field = models.CharField(max_length=250, blank=True, null=True)
     address_field = models.CharField(max_length=250, blank=True, null=True)
+    title_field = models.CharField(max_length=250, blank=True, null=True)
+    description_field = models.CharField(max_length=250, blank=True, null=True)
+    image_field = models.CharField(max_length=250, blank=True, null=True)
+    start_time_field = models.CharField(max_length=250, blank=True, null=True)
+    end_time_field = models.CharField(max_length=250, blank=True, null=True)
+    public_url_field = models.CharField(max_length=250, blank=True, null=True)
 
     import_fields = [
         "postcode_field",
@@ -950,15 +977,26 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         "email_field",
         "phone_field",
         "address_field",
+        "title_field",
+        "description_field",
+        "image_field",
+        "start_time_field",
+        "end_time_field",
+        "public_url_field",
     ]
 
     def save(self, *args, **kwargs):
         # Always keep these two in sync
         if (
             self.geography_column is not None
-            and self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE
+            and self.geography_column_type == self.GeographyTypes.POSTCODE
         ):
             self.postcode_field = self.geography_column
+        elif (
+            self.geography_column is not None
+            and self.geography_column_type == self.GeographyTypes.ADDRESS
+        ):
+            self.address_field = self.geography_column
         super().save(*args, **kwargs)
 
     def as_mapping_source(self):
@@ -1209,14 +1247,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             for field in self.import_fields:
                 if getattr(self, field, None) is not None:
                     update_data[field.removesuffix("_field")] = self.get_record_field(
-                        record, getattr(self, field)
+                        record, getattr(self, field), field
                     )
 
             return update_data
 
         if (
             self.geography_column
-            and self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE
+            and self.geography_column_type == self.GeographyTypes.POSTCODE
         ):
             loaders = await self.get_loaders()
 
@@ -1255,6 +1293,34 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 )
 
             await asyncio.gather(*[create_import_record(record) for record in data])
+        elif (
+            self.geography_column
+            and self.geography_column_type == self.GeographyTypes.ADDRESS
+        ):
+            for record in data:
+                structured_data = get_update_data(record)
+                address = self.get_record_field(record, self.geography_column)
+                try:
+                    osm_data = address_to_geojson(address)
+                except Exception:
+                    osm_data = {}
+                worker_log.warn([address, osm_data])
+                update_data = {
+                    **structured_data,
+                    "osm_data": osm_data,
+                    "point": Point(
+                        osm_data['geometry']['coordinates'][0],
+                        osm_data['geometry']['coordinates'][1],
+                    )
+                    if osm_data is not None and "geometry" in osm_data
+                    else None,
+                }
+
+                await GenericData.objects.aupdate_or_create(
+                    data_type=data_type,
+                    data=self.get_record_id(record),
+                    defaults=update_data,
+                )
         else:
             # To allow us to lean on LIH's geo-analytics features,
             # TODO: Re-implement this data as `AreaData`, linking each datum to an Area/AreaType as per `self.geography_column` and `self.geography_column_type`.
@@ -1311,7 +1377,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         raise NotImplementedError("Get ID not implemented for this data source type.")
 
-    def get_record_field(self, record: dict, field: str):
+    def get_record_field(self, record: dict, field: str, field_type = None):
         """
         Get a field from a record.
         """
@@ -1481,7 +1547,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         try:
             print(f"mapping member {member.get('id')}")
             postcode_data = None
-            if self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE:
+            if self.geography_column_type == self.GeographyTypes.POSTCODE:
                 # Get postcode from member
                 postcode = self.get_record_field(member, self.geography_column)
                 # Get relevant config data for that postcode
@@ -1950,8 +2016,15 @@ class AirtableSource(ExternalDataSource):
     def get_record_id(self, record):
         return record["id"]
 
-    def get_record_field(self, record, field):
-        return record["fields"].get(str(field))
+    def get_record_field(self, record, field, field_type = None):
+        d = record["fields"].get(str(field), None)
+        if field_type == "image_field" and d is not None and len(d) > 0:
+            # TODO: implement image handling
+            # e.g. [{'id': 'attDWjeMhUfNMTqRG', 'width': 2200, 'height': 1518, 'url': 'https://v5.airtableusercontent.com/v3/u/27/27/1712044800000/CxNHcR-sBRUhrWt_54_NFA/wcYpoqFV5W_wRmVwh2RM8qs-mJkwwHkQLZuhtf7rFk5-34gILMXJeIYg9vQMcTtgSEd1dDb7lU0CrgJldTcZBN9VyaTU0IkYiw1e5PzTs8ZsOEmA6wrva7UavQCnoacL8b7yUt4ZuWWhna8wzZD2MTZC1K1C1wLkfA1UyN76ZDO-Q6WkBjgg5uZv7rtXlhj9/WL6lQJQAHKXqA9J1YIteSJ3J0Yepj69c55PducG607k'
+            #     url = d[0]["url"]
+            #     return download_file_from_url(url)
+            return None
+        return d
 
     def get_record_dict(self, record):
         return record["fields"]
@@ -2438,6 +2511,7 @@ class MapReport(Report, Analytics):
         name: str
         source: str
         visible: Optional[bool]
+        custom_marker_text: Optional[str]
 
     def get_layers(self) -> list[MapLayer]:
         return self.layers

@@ -49,6 +49,7 @@ class MapLayerInput:
     name: str
     source: str
     visible: Optional[bool] = True
+    custom_marker_text: Optional[str]
 
 
 @strawberry_django.input(models.MapReport, partial=True)
@@ -234,6 +235,12 @@ class ExternalDataSourceInput:
     email_field: auto
     phone_field: auto
     address_field: auto
+    title_field: auto
+    description_field: auto
+    image_field: auto
+    start_time_field: auto
+    end_time_field: auto
+    public_url_field: auto
     auto_update_enabled: auto
     update_mapping: Optional[List[UpdateMappingItemInput]]
     auto_import_enabled: auto

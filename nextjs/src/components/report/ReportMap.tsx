@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  DataSourceType,
   MapReportConstituencyStatsQuery,
   MapReportConstituencyStatsQueryVariables,
   MapReportLayerAnalyticsQuery,
@@ -14,7 +15,7 @@ import {
 } from "@/__generated__/graphql";
 import { Fragment, useContext, useEffect, useState } from "react";
 import Map, { Layer, Source, LayerProps, Popup, ViewState, MapboxGeoJSONFeature } from "react-map-gl";
-import { gql, useQuery } from "@apollo/client";
+import { gql, useFragment, useQuery } from "@apollo/client";
 import { ReportContext } from "@/app/reports/[id]/context";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import { scaleLinear, scaleSequential } from 'd3-scale'
@@ -23,7 +24,7 @@ import { Point } from "geojson"
 import { atom, useAtom } from "jotai";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import { z } from "zod";
-import { layerColour, useLoadedMap, isConstituencyPanelOpenAtom } from "@/app/reports/[id]/lib";
+import { layerColour, useLoadedMap, isConstituencyPanelOpenAtom, MAP_REPORT_LAYERS_SUMMARY, layerIdColour } from "@/app/reports/[id]/lib";
 import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel";
 import { authenticationHeaders } from "@/lib/auth";
 
@@ -534,7 +535,7 @@ export function ReportMap () {
             {!!selectedSourceMarker?.properties?.id && (
               <ErrorBoundary errorComponent={() => <></>}>
                 <Popup
-                  key={selectedSourceMarker.properties.id}
+              key={selectedSourceMarker.properties.id}
                   longitude={
                     (selectedSourceMarker.geometry as Point)
                       ?.coordinates?.[0] || 0
@@ -549,9 +550,17 @@ export function ReportMap () {
                   closeOnMove={false}
                   anchor="bottom"
                   offset={[0, -35] as any}
-                >
-                  {selectedPointLoading ? (
-                    <div className="font-IBMPlexMono p-2 space-y-1 bg-white">
+            >
+              {selectedPointLoading ? (
+                <div className="font-IBMPlexMono p-2 space-y-1 bg-white">
+                  <div className="-space-y-1">
+                    <div className="text-meepGray-400">LOADING</div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="font-IBMPlexMono p-2 space-y-1 bg-white">
+                    {!!selectedPointData?.importedDataGeojsonPoint?.properties?.name && (
                       <div className="-space-y-1">
                         <div className="text-meepGray-400">LOADING</div>
                       </div>
