@@ -1,30 +1,28 @@
+"use client"
+
 import { DefaultRootProps } from "@measured/puck";
 import { ReactNode } from "react";
+import { BasicLayout } from "./client";
+import Navbar from "./template/Navbar";
 
 export type RootProps = {
   children?: ReactNode;
   title?: string;
 } & DefaultRootProps;
 
-export default function Root({ children, editMode }: RootProps) {
+export default function <Root>({ children, editMode }: RootProps) {
   return (
     <>
-      <style>{css}</style>
-      <main className='p-8 bg-white text-[#0B493D] min-h-[dv100] min-w-screen h-full w-full'>
+      <main className='px-8 bg-[#f2f2f2] text-jungle-green-800 min-h-[dv100] min-w-screen h-full w-full'>
         <header>
-          <TCCLogo />
+          <Navbar/>
         </header>
         {children}
+        <BasicLayout items={12} />
       </main>
     </>
   );
 }
-
-const css = `
-  html, body {
-    background: white;
-  }
-`
 
 function TCCLogo() {
     return (

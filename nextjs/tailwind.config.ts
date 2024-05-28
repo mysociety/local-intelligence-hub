@@ -160,6 +160,19 @@ const config = {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
         },
+        "jungle-green": {
+          '50': '#edfcf6',
+          '100': '#d4f7e7',
+          '200': '#aceed4',
+          '300': '#76dfbb',
+          '400': '#3fc89e',
+          '500': '#1aa680',
+          '600': '#0f8c6c',
+          '700': '#0c705a',
+          '800': '#0c5948',
+          '900': '#0b493d',
+          '950': '#052923',
+        },
       },
       spacing: {
         xs: '10px',
@@ -188,6 +201,41 @@ const config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
+      hub:{
+        border: "#d4f7e7",
+        input: "#76dfbb",
+        ring: "#1aa680",
+        background: "hsl(var(--background))",
+        foreground: "#0b493d",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "#76dfbb",
+          foreground: "#0f8c6c",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+      }
     },
   },
   plugins: [require("tailwindcss-animate")],

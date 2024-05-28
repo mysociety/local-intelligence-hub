@@ -2454,6 +2454,13 @@ class MapReport(Report, Analytics):
         return self.get_import_data()
 
 
+def generate_puck_json_content():
+    return {
+      "content": [],
+      "root": {},
+      "zones": {}
+    }
+
 class HubHomepage(Page):
     """
     An microsite that incorporates datasets and content pages,
@@ -2466,7 +2473,7 @@ class HubHomepage(Page):
     )
 
     layers = models.JSONField(blank=True, null=True, default=list)
-    puck_json_content = models.JSONField(blank=True, null=False, default=dict)
+    puck_json_content = models.JSONField(blank=True, null=False, default=generate_puck_json_content)
     nav_links = models.JSONField(blank=True, null=True, default=list)
 
     content_panels = Page.content_panels + [
@@ -2486,12 +2493,6 @@ class HubHomepage(Page):
     def get_nav_links(self) -> list[HubNavLinks]:
         return self.nav_links
 
-def generate_puck_json_content():
-    return {
-      "content": [],
-      "root": {},
-      "zones": {}
-    }
 
 class HubContentPage(Page):
     parent_page_type = ["hub.HubHomepage"]

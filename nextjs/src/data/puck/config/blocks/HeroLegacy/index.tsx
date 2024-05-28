@@ -4,7 +4,7 @@ import { Button, ComponentConfig } from "@measured/puck";
 import { Section } from "@/data/puck/config/components/Section";
 import { quotes } from "./quotes";
 
-export type HeroProps = {
+export type HeroLegacyProps = {
   quote?: { index: number; label: string };
   title: string;
   description: string;
@@ -22,7 +22,7 @@ export type HeroProps = {
   }[];
 };
 
-export const Hero: ComponentConfig<HeroProps> = {
+export const HeroLegacy: ComponentConfig<HeroLegacyProps> = {
   fields: {
     quote: {
       type: "external",
@@ -124,7 +124,7 @@ export const Hero: ComponentConfig<HeroProps> = {
     padding: { type: "text" },
   },
   defaultProps: {
-    title: "Hero",
+    title: "HeroLegacy",
     align: "left",
     description: "Description",
     buttons: [{ label: "Learn more", href: "#" }],
