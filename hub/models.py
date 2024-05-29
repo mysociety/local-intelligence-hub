@@ -937,6 +937,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     introspect_fields = False
     # Geocoding data
 
+    can_display_points_publicly = models.BooleanField(default=False)
+    can_display_details_publicly = models.BooleanField(default=False)
+
     class GeographyTypes(models.TextChoices):
         ADDRESS = "address", "Address"
         POSTCODE = "postcode", "Postcode"
@@ -1409,7 +1412,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         For use by views to query data without having to instantiate the class / query the database for the CRM first
         """
-        print(f"getting import data where external data source id is {id}")
         return GenericData.objects.filter(
             data_type__data_set__external_data_source_id=id
         )
@@ -1835,33 +1837,43 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
     class DataPermissions(TypedDict):
-        can_display_points: bool
-        can_display_details: bool
+        can_display_points: bool = False
+        can_display_details: bool = False
+
+    # TODO: cache this and bust it when the db fields change
+    def default_data_permissions(self):
+        return ExternalDataSource.DataPermissions(
+            can_display_points=self.can_display_points_publicly,
+            can_display_details=self.can_display_details_publicly,
+        )
 
     @classmethod
     def user_permissions(
         cls,
-        user: Union[AbstractBaseUser, str],
+        user: Union[AbstractBaseUser, str, None],
         external_data_source: Union["ExternalDataSource", str],
     ) -> DataPermissions:
-        if user is None or external_data_source is None:
-            return cls.DataPermissions(
-                can_display_points=False,
-                can_display_details=False,
-            )
-        external_data_source_id = (
-            external_data_source
-            if not isinstance(external_data_source, ExternalDataSource)
-            else str(external_data_source.id)
-        )
-        user_id = user if not hasattr(user, "id") else str(user.id)
-        if user_id is None or external_data_source_id is None:
+        if external_data_source is None:
             return cls.DataPermissions(
                 can_display_points=False,
                 can_display_details=False,
             )
 
+        external_data_source_id = (
+            external_data_source
+            if isinstance(external_data_source, str)
+            else str(external_data_source.id)
+        )
+
+        source = ExternalDataSource.objects.get(pk=external_data_source_id)
+        default_source_permissions = source.default_data_permissions()
+                
+        if user is None or not user.is_authenticated:
+            logger.debug("No user provided, returning default permissions")
+            return default_source_permissions
+
         # Check for cached permissions on this source
+        user_id = user if not hasattr(user, "id") else str(user.id)
         permission_cache_key = SharingPermission._get_cache_key(external_data_source_id)
         permissions_dict = cache.get(permission_cache_key)
         if permissions_dict is None:
@@ -1869,6 +1881,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         # If cached permissions exist, look for this user's permissions
         elif permissions_dict.get(user_id, None) is not None:
+            logger.debug("User provided, returning cached permissions")
             return permissions_dict[user_id]
 
         # Calculate permissions for this source
@@ -1879,13 +1892,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     can_display_points=False,
                     can_display_details=False,
                 )
-        # If the user's org owns the source, they can see everything
         if user_id is None or external_data_source.organisation is None:
-            return cls.DataPermissions(
-                can_display_points=False,
-                can_display_details=False,
-            )
+            return default_source_permissions
         else:
+            # If the user's org owns the source, they can see everything
             can_display_points = external_data_source.organisation.members.filter(
                 user=user_id
             ).exists()

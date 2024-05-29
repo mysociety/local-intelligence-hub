@@ -40,12 +40,9 @@ class ExternalDataSourceTileView(MVTView, DetailView):
     def get(self, request, *args, **kwargs):
         try:
             user_or_error: UserOrError = get_user_or_error(request)
-            if user_or_error.error:
-                return HttpResponseForbidden(
-                    "You don't have permission to view location data for this data source."
-                )
             permissions = ExternalDataSource.user_permissions(
-                user_or_error.user, self.get_id()
+                user_or_error.user if user_or_error.user else None,
+                self.get_id()
             )
             if not permissions.get("can_display_points", False):
                 return HttpResponseForbidden(
