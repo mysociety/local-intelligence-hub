@@ -10,12 +10,9 @@ def address_to_geojson(query: str):
                             "namedetails": 1,
                             "addressdetails": 1
                         })
-    print(response)
-    print(response.url.__str__)
     if response.status_code != httpx.codes.OK:
         return None
     data = response.json()
-    print(data)
     if data["features"] and len(data["features"]) > 0:
         return data["features"][0]
     return None
