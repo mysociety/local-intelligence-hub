@@ -5,7 +5,7 @@ import { DropZone } from "@measured/puck";
 import React from "react";
 import _ from "lodash";
 import { GridLayout as RGL, WidthProvider, Props, Layout } from "react-grid-layout-next";
-import Navbar from "./template/Navbar";
+import Navbar from "./template/HubNavbar";
 const GridLayout = WidthProvider(RGL);
 
 type State = {

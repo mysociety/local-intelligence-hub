@@ -41,8 +41,7 @@ export const SignPost: ComponentConfig<SignPostProps> = {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '25px', marginBottom: '25px' }} >
 
                 <div className="col-span-1 w-full h-full aspect-square overflow-clip rounded-[20px] hover:shadow-hover transition-all">
-                    <div className="p-5 bg-white h-full relative gap-2 flex flex-col align-bottom ">
-                        <div className=" grow"></div>
+                    <div className="p-5 bg-white h-full relative gap-2 flex flex-col justify-end ">
                         <Image src={ArrowTopRight} width={30} alt="arrow" />
                         <h2 className="text-hubH3 tracking-tight">Resources</h2>
                         <p className="text-hubH5 text-jungle-green-700">{actionsSubtitle}</p>
@@ -58,8 +57,7 @@ export const SignPost: ComponentConfig<SignPostProps> = {
                     </div>
                 </div>
                 <div className=" col-span-1  w-full h-full aspect-square overflow-clip rounded-[20px] hover:shadow-hover transition-all">
-                    <div className="p-5 bg-jungle-green-600 text-white h-full relative gap-2 flex flex-col align-bottom">
-                        <div className=" grow"></div>
+                    <div className="p-5 bg-jungle-green-600 text-white h-full relative gap-2 flex flex-col justify-end">
                         <Image src={ArrowTopRight} width={30} alt="arrow" />
                         <h2 className="text-hubH3 tracking-tight">Actions</h2>
                         <p className="text-hubH5 text-jungle-green-100">{resourcesSubtitle}</p>
@@ -74,8 +72,7 @@ export const SignPost: ComponentConfig<SignPostProps> = {
                     </div>
                 </div>
                 <div className=" col-span-2 w-full h-full overflow-clip rounded-[20px] hover:shadow-hover transition-all">
-                    <div className="p-5 bg-jungle-green-50 h-full relative gap-2 flex flex-col align-bottom">
-                        <div className=" grow"></div>
+                    <div className="p-5 bg-jungle-green-50 h-full relative gap-2 flex flex-col justify-end">
                         <Image src={ArrowTopRight} width={30} alt="arrow" />
                         <h2 className="text-hubH3 tracking-tight">Event Map</h2>
                         <p className="text-hubH5 text-jungle-green-700">{mapSubtitle}</p>

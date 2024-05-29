@@ -3,7 +3,8 @@
 import { DefaultRootProps } from "@measured/puck";
 import { ReactNode } from "react";
 import { BasicLayout } from "./client";
-import Navbar from "./template/Navbar";
+import HubNavbar from "./template/HubNavbar";
+import HubFooter from "./template/HubFooter";
 
 
 
@@ -20,9 +21,10 @@ export default function <Root>({ children, editMode }: RootProps) {
       <style>{css}</style>
       <main className={` px-8 text-jungle-green-800 min-h-[dv100] min-w-screen h-full w-full'`}>
         <header className="sticky top-0 z-50 ">
-          <Navbar />
+          <HubNavbar />
         </header>
         {children}
+        <HubFooter />
       </main>
     </>
   );
