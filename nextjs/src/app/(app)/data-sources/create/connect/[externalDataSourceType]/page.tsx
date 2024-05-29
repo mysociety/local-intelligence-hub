@@ -88,10 +88,6 @@ export default function Page({
   const router = useRouter();
   const context = useContext(CreateAutoUpdateFormContext);
 
-  const collectFields = useMemo(() => {
-    return getFieldsForDataSourceType(context.dataType)
-  }, [context.dataType])
-
   useEffect(() => {
     context.setStep(2)
   }, [context])
@@ -117,6 +113,11 @@ export default function Page({
       }
     },
   });
+
+  const dataType = form.watch("dataType") as DataSourceType
+  const collectFields = useMemo(() => {
+    return getFieldsForDataSourceType(dataType)
+  }, [dataType])
 
   const [createSource, createSourceResult] = useMutation<CreateSourceMutation>(CREATE_DATA_SOURCE);
   const [testSource, testSourceResult] = useLazyQuery<TestDataSourceQuery, TestDataSourceQueryVariables>(TEST_DATA_SOURCE);
@@ -193,7 +194,9 @@ export default function Page({
 
   useEffect(() => {
     if (testSourceResult.data?.testDataSource?.defaultDataType) {
-      form.setValue("dataType", testSourceResult.data.testDataSource.defaultDataType as DataSourceType)
+      const dataType = testSourceResult.data.testDataSource.defaultDataType as DataSourceType
+      context.dataType = dataType
+      form.setValue("dataType", dataType)
     }
   }, [testSourceResult.data])
 
@@ -385,12 +388,42 @@ export default function Page({
                   )}
                 />
               )}
-              <div className='grid grid-cols-2 gap-4 w-full'>
-                <FPreopulatedSelectField name="geographyColumn" label="geography" required />
-                {collectFields?.filter(f => f !== "geographyColumn" && f !== "geographyColumnType")?.map((field) => (
-                  <FPreopulatedSelectField key={field} name={field} />
-                ))}
-              </div>
+              {!currentSource?.testDataSource?.predefinedColumnNames && (
+                <div className='grid grid-cols-2 gap-4 w-full'>
+                  <FPreopulatedSelectField name="geographyColumn" label="geography" required />
+                  <FormField
+                    control={form.control}
+                    name="geographyColumnType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Geography Type</FormLabel>
+                        <FormControl>
+                          {/* @ts-ignore */}
+                          <Select onValueChange={field.onChange} defaultValue={field.value} required>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a geography type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectLabel>Geography type</SelectLabel>
+                                <SelectItem value={GeographyTypes.Postcode}>Postcode</SelectItem>
+                                <SelectItem value={GeographyTypes.Ward}>Ward</SelectItem>
+                                <SelectItem value={GeographyTypes.Council}>Council</SelectItem>
+                                <SelectItem value={GeographyTypes.Constituency}>GE2010-2019 Constituency</SelectItem>
+                                <SelectItem value={GeographyTypes.Constituency_2025}>GE2024 Constituency</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {collectFields?.filter(f => f !== "geographyColumn" && f !== "geographyColumnType")?.map((field) => (
+                    <FPreopulatedSelectField key={field} name={field} />
+                  ))}
+                </div>
+              )}
               <Button type='submit' variant="reverse" disabled={createSourceResult.loading}>
                 Save connection
               </Button>
