@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("hub", "0115_merge_20240528_1404"),
+        ("hub", "0116_alter_externaldatasource_deduplication_hash"),
     ]
 
     operations = [

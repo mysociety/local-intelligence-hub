@@ -48,6 +48,7 @@ env = environ.Env(
     TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY=(str, ""),
     TEST_MAILCHIMP_MEMBERLIST_API_KEY=(str, ""),
     TEST_MAILCHIMP_MEMBERLIST_AUDIENCE_ID=(str, ""),
+    TEST_ACTIONNETWORK_MEMBERLIST_API_KEY=(str, ""),
     DJANGO_LOG_LEVEL=(str, "INFO"),
     POSTHOG_API_KEY=(str, False),
     POSTHOG_HOST=(str, False),
@@ -98,6 +99,7 @@ TEST_AIRTABLE_MEMBERLIST_BASE_ID = env("TEST_AIRTABLE_MEMBERLIST_BASE_ID")
 TEST_AIRTABLE_MEMBERLIST_TABLE_NAME = env("TEST_AIRTABLE_MEMBERLIST_TABLE_NAME")
 TEST_MAILCHIMP_MEMBERLIST_API_KEY = env("TEST_MAILCHIMP_MEMBERLIST_API_KEY")
 TEST_MAILCHIMP_MEMBERLIST_AUDIENCE_ID = env("TEST_MAILCHIMP_MEMBERLIST_AUDIENCE_ID")
+TEST_ACTIONNETWORK_MEMBERLIST_API_KEY = env("TEST_ACTIONNETWORK_MEMBERLIST_API_KEY")
 TEST_AIRTABLE_MEMBERLIST_API_KEY = env("TEST_AIRTABLE_MEMBERLIST_API_KEY")
 TEST_AIRTABLE_CUSTOMDATALAYER_BASE_ID = env("TEST_AIRTABLE_CUSTOMDATALAYER_BASE_ID")
 TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME = env(
@@ -159,20 +161,20 @@ INSTALLED_APPS = [
     "procrastinate.contrib.django",
     "strawberry_django",
     "django_cryptography",
-    'wagtail.contrib.forms',
-    'wagtail.contrib.redirects',
-    'wagtail.embeds',
-    'wagtail.sites',
-    'wagtail.users',
-    'wagtail.snippets',
-    'wagtail.documents',
-    'wagtail.images',
-    'wagtail.search',
-    'wagtail.admin',
-    'wagtail',
-    'modelcluster',
-    'taggit',
-    "wagtail_json_widget"
+    "wagtail.contrib.forms",
+    "wagtail.contrib.redirects",
+    "wagtail.embeds",
+    "wagtail.sites",
+    "wagtail.users",
+    "wagtail.snippets",
+    "wagtail.documents",
+    "wagtail.images",
+    "wagtail.search",
+    "wagtail.admin",
+    "wagtail",
+    "modelcluster",
+    "taggit",
+    "wagtail_json_widget",
 ]
 
 MIDDLEWARE = [
@@ -187,7 +189,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # "hub.middleware.record_last_seen_middleware",
-    'wagtail.contrib.redirects.middleware.RedirectMiddleware',
+    "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 
 ROOT_URLCONF = "local_intelligence_hub.urls"
@@ -454,3 +456,5 @@ ENCRYPTION_SECRET_KEY = env("ENCRYPTION_SECRET_KEY")
 WAGTAIL_SITE_NAME = "Mapped hub page editor"
 WAGTAILADMIN_BASE_URL = BASE_URL
 WAGTAILDOCS_EXTENSIONS = []
+
+PARSONS_LIMITED_DEPENDENCIES = True

@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("wagtailcore", "0093_uploadedfile"),
-        ("hub", "0111_merge_20240524_2343"),
+        ("hub", "0112_alter_externaldatasource_data_type"),
     ]
 
     operations = [

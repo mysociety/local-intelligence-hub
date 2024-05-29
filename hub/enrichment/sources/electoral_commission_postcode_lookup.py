@@ -4,6 +4,7 @@ import httpx
 from benedict import benedict
 
 from utils.cached_fn import async_cached_fn
+from utils.py import transform_dict_values_recursive
 
 
 def standardise_postcode(postcode: str):
@@ -23,20 +24,7 @@ async def electoral_commision_postcode_lookup(postcode: str):
             f"https://api.electoralcommission.org.uk/api/v1/postcode/{postcode}/?token={settings.ELECTORAL_COMMISSION_API_KEY}"
         )
         json = response.json()
-        json = sanitise_string_values(json)
+        json = transform_dict_values_recursive(
+            json, lambda v: v.replace("\n", ", ") if isinstance(v, str) else v
+        )
         return benedict(json)
-
-
-def sanitise_string_values(value):
-    # replace \n with ", " in all values of dict
-    if isinstance(value, dict):
-        sanitised_dict = value.copy()
-        for key, value in sanitised_dict.items():
-            sanitised_dict[key] = sanitise_string_values(value)
-        return sanitised_dict
-    elif isinstance(value, str):
-        return value.replace("\n", ", ")
-    elif isinstance(value, list):
-        return [sanitise_string_values(v) for v in value]
-    else:
-        return value

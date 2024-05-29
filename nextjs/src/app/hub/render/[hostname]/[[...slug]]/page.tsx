@@ -1,9 +1,9 @@
-import { gql } from "@apollo/client";
 import { Render } from "@measured/puck/rsc";
 import { getClient } from "@/services/apollo-client";
 import { Metadata } from "next";
 import { GetPageQuery, GetPageQueryVariables } from "@/__generated__/graphql";
 import { conf } from "@/data/puck/config";
+import { GET_PAGE } from "./gql";
 
 type Params = {
   hostname: string
@@ -24,17 +24,6 @@ export default async function Page({ params: { hostname, slug } }: { params: Par
     <Render config={conf} data={page.data?.hubPageByPath?.puckJsonContent} />
   )
 }
-
-export const GET_PAGE = gql`
-  query GetPage($hostname: String!, $path: String) {
-    hubPageByPath(hostname: $hostname, path: $path) {
-      id
-      title
-      path
-      puckJsonContent
-    }
-  }
-`
 
 export const metadata: Metadata = {
   title: "Hub page preview",

@@ -9,7 +9,7 @@ import hub.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("hub", "0097_alter_area_gss"),
+        ("hub", "0119_alter_hubhomepage_organisation"),
     ]
 
     operations = [
@@ -119,5 +119,5 @@ class Migration(migrations.Migration):
             model_name="person",
             name="name",
             field=models.CharField(max_length=500),
-        )
+        ),
     ]
