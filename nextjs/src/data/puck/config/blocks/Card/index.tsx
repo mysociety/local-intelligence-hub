@@ -46,6 +46,14 @@ export type CardProps = {
   externalLink: string;
 };
 
+const TypeBadge = ({ type }) => {
+  return (
+    <div>
+      <div className="uppercase inline-block text-jungle-green-700 bg-jungle-green-100 font-normal rounded-full px-3">{type}</div>
+    </div>
+  );
+}
+
 export const Card: ComponentConfig<CardProps> = {
   fields: {
     type: {
@@ -81,14 +89,14 @@ export const Card: ComponentConfig<CardProps> = {
     return (
       <Dialog>
         <DialogTrigger className="w-full h-full text-left">
-          <div className="w-full h-full overflow-clip rounded-[20px] flex flex-col gap-5 justify-between hover:shadow-hover transition-all">
+          <div className="w-full h-full aspect-square overflow-clip rounded-[20px] flex flex-col gap-5 hover:shadow-hover transition-all">
             {type == "resource" && (
               <div className="p-5 bg-white h-full flex flex-col gap-4 justify-between">
-                <h2 className="text-hubH3 tracking-tight">{title}</h2>
-                <p className="text-jungle-green-neutral line-clamp-4">{description}</p>
-                <div>
-                  <div className="uppercase inline-block text-jungle-green-700 bg-jungle-green-100 text-lg font-normal rounded-full px-3">{type}</div>
+                <div className=" flex flex-col gap-4" >
+                  <h2 className="text-hubH5 tracking-tight">{title}</h2>
+                  <p className="text-jungle-green-neutral line-clamp-6 ">{description}</p>
                 </div>
+                <TypeBadge type={type} />
               </div>
             )}
 
@@ -113,17 +121,18 @@ export const Card: ComponentConfig<CardProps> = {
             )}
 
             {type === "header" && (
-              <div className="p-5 border border-jungle-green-200 flex flex-col gap-5 justify-between h-full transition-all">
+              <div className="rounded-[20px] col-span-2 p-5 border border-jungle-green-200 flex flex-col gap-5 justify-end h-full transition-all">
                 <h2 className="text-5xl tracking-tight">{title}</h2>
+                <p className="text-xl">{description}</p>
               </div>
             )}
 
           </div>
         </DialogTrigger>
-        <DialogContent className="p-10 bg-white">
+        <DialogContent className="p-10 bg-white text-jungle-green-900">
           <DialogHeader className="flex flex-col gap-5">
             <DialogTitle className="text-5xl">{title}</DialogTitle>
-            <DialogDescription className="text-secondary text-lg">
+            <DialogDescription className=" text-lg">
               {description}
             </DialogDescription>
 
