@@ -177,7 +177,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "hub.middleware.async_whitenoise_middleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -189,6 +188,11 @@ MIDDLEWARE = [
     # "hub.middleware.record_last_seen_middleware",
     'wagtail.contrib.redirects.middleware.RedirectMiddleware',
 ]
+
+if not DEBUG:
+    # Apparently this speeds up django hot reload
+    # https://stackoverflow.com/a/49396824/1053937
+    MIDDLEWARE.insert(1, "hub.middleware.async_whitenoise_middleware")
 
 ROOT_URLCONF = "local_intelligence_hub.urls"
 
