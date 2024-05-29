@@ -57,8 +57,8 @@ from hub.tasks import (
     refresh_webhooks,
 )
 from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
-from utils.nominatim import address_to_geojson
 from utils.log import get_simple_debug_logger
+from utils.nominatim import address_to_geojson
 from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
 from utils.py import batched, ensure_list, get
 
@@ -1598,6 +1598,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         if type(member) is str:
             member = await loaders["fetch_record"].load(member)
+
         if member is None:
             # TODO: write tests for the case when the loader fails for a member
             return None

@@ -5,6 +5,7 @@ from django.db.models.functions import Upper
 import django_choices_field.fields
 import hub.models
 
+
 def uppercase_datatype(apps, schema_editor):
     ExternalDataSource = apps.get_model("hub", "ExternalDataSource")
 
