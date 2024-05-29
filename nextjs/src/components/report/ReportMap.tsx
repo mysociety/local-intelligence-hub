@@ -24,7 +24,7 @@ import { Point } from "geojson"
 import { atom, useAtom } from "jotai";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import { z } from "zod";
-import { layerColour, useLoadedMap, isConstituencyPanelOpenAtom, MAP_REPORT_LAYERS_SUMMARY, layerIdColour } from "@/lib/map";
+import { layerColour, useLoadedMap, isConstituencyPanelOpenAtom, MAP_REPORT_LAYERS_SUMMARY, layerIdColour, useMapIcons, PlaceholderLayer } from "@/lib/map";
 import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel";
 import { authenticationHeaders } from "@/lib/auth";
 
@@ -178,28 +178,7 @@ export function ReportMap () {
     },
   ]
 
-  const [loadedImages, setLoadedImages] = useState<string[]>([])
-
-  useEffect(function loadIcons() {
-    if (!mapbox.loadedMap) return
-    requiredImages.forEach((requiredImage) => {
-      console.log("Loading", requiredImage.url())
-      // Load an image from an external URL.
-      mapbox.loadedMap!.loadImage(
-        requiredImage.url(),
-        (error, image) => {
-          try {
-            if (error) throw error;
-            if (!image) throw new Error('Marker icon did not load')
-            mapbox.loadedMap!.addImage(requiredImage.name, image);
-            setLoadedImages(loadedImages => [...loadedImages, requiredImage.name])
-          } catch (e) {
-            console.error("Failed to load image", e)
-          }
-        }
-      )
-    })
-  }, [mapbox.loadedMap, setLoadedImages])
+  const loadedImages = useMapIcons(requiredImages, mapbox)
 
   const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(selectedSourceMarkerAtom)
   const [selectedConstituency, setSelectedConstituency] = useAtom(selectedConstituencyAtom)
@@ -739,20 +718,6 @@ function ExternalDataSourcePointMarkers ({ externalDataSourceId, index }: { exte
   )
 }
 
-/**
- * Placeholder layer to refer to in `beforeId`.
- * See https://github.com/visgl/react-map-gl/issues/939#issuecomment-625290200
- */
-export function PlaceholderLayer (props: Partial<LayerProps>) {
-  return (
-    <Layer
-      {...props}
-      type='background'
-      layout={{ visibility: 'none' }}
-      paint={{}}
-    />
-  )
-}
 
 const MAP_REPORT_LAYER_POINT = gql`
 query MapReportLayerGeoJSONPoint($genericDataId: String!) {

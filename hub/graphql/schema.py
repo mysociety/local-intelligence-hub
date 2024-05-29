@@ -95,6 +95,7 @@ class Query(UserQueries):
         extensions=[IsAuthenticated()]
     )
     hub_page_by_path: Optional[model_types.WagtailPage] = model_types.hub_page_by_path
+    hub_by_hostname: Optional[model_types.HubHomepage] = model_types.hub_by_hostname
     public_map_report: model_types.MapReport = strawberry_django.field(
         resolver=model_types.public_map_report
     )

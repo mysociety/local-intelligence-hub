@@ -1088,7 +1088,6 @@ class HubNavLink:
 @strawberry_django.type(models.HubHomepage)
 class HubHomepage(WagtailPage):
     organisation: Organisation
-    custom_domain: Optional[str]
     layers: List[MapLayer]
     nav_links: List[HubNavLink]
 
@@ -1109,10 +1108,16 @@ def hub_page_by_path(info: Info, hostname: str, path: Optional[str] = None) -> O
     request.META={
         **request.META,
         "HTTP_HOST": hostname,
-        "SERVER_PORT": 80
+        "SERVER_PORT": request.get_port()
     }
     request.path = path
     site = Site.objects.get(hostname=hostname)
     if path is None:
         return site.root_page.specific
     return models.Page.find_for_request(request, path).specific
+
+
+@strawberry_django.field()
+def hub_by_hostname(hostname: str) -> HubHomepage:
+    site = Site.objects.get(hostname=hostname)
+    return site.root_page.specific

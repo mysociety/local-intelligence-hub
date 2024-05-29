@@ -46,6 +46,7 @@ const documents = {
     "\n      query GetEditableHubs {\n        hubHomepages {\n          id\n        }\n      }\n    ": types.GetEditableHubsDocument,
     "\n          query VerifyPage($pageId: ID!) {\n            hubHomepages {\n              id\n            }\n            hubPage(pk: $pageId) {\n              id\n            }\n          }\n        ": types.VerifyPageDocument,
     "\n  query GetPage($hostname: String!, $path: String) {\n    hubPageByPath(hostname: $hostname, path: $path) {\n      id\n      title\n      path\n      puckJsonContent\n    }\n  }\n": types.GetPageDocument,
+    "\n  query GetHubMapData($hostname: String!) {\n    hubByHostname(hostname: $hostname) {\n      id\n      organisation {\n        id\n        slug\n        name\n      }\n      layers {\n        id\n        name\n        visible\n        source {\n          id\n        }\n      }\n    }\n  }\n": types.GetHubMapDataDocument,
     "\n  query GetMapReportName($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n    }\n  }\n": types.GetMapReportNameDocument,
     "\n  query GetMapReport($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n      slug\n      displayOptions\n      organisation {\n        id\n        slug\n        name\n      }\n      ... MapReportPage\n    }\n  }\n  \n": types.GetMapReportDocument,
     "\n  mutation UpdateMapReport($input: MapReportInput!) {\n    updateMapReport(data: $input) {\n      id\n      name\n      displayOptions\n      layers {\n        id\n        name\n        source {\n          id\n          name\n        }\n      }\n    }\n  }\n": types.UpdateMapReportDocument,
@@ -223,6 +224,10 @@ export function gql(source: "\n          query VerifyPage($pageId: ID!) {\n     
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  query GetPage($hostname: String!, $path: String) {\n    hubPageByPath(hostname: $hostname, path: $path) {\n      id\n      title\n      path\n      puckJsonContent\n    }\n  }\n"): (typeof documents)["\n  query GetPage($hostname: String!, $path: String) {\n    hubPageByPath(hostname: $hostname, path: $path) {\n      id\n      title\n      path\n      puckJsonContent\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query GetHubMapData($hostname: String!) {\n    hubByHostname(hostname: $hostname) {\n      id\n      organisation {\n        id\n        slug\n        name\n      }\n      layers {\n        id\n        name\n        visible\n        source {\n          id\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetHubMapData($hostname: String!) {\n    hubByHostname(hostname: $hostname) {\n      id\n      organisation {\n        id\n        slug\n        name\n      }\n      layers {\n        id\n        name\n        visible\n        source {\n          id\n        }\n      }\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

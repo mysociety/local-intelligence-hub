@@ -14,7 +14,7 @@ class GenericDataVectorLayer(VectorLayer):
     model = GenericData
     geom_field = "point"
 
-    min_zoom = 12
+    min_zoom = 1
 
     id = "generic_data"
     vector_tile_layer_name = id
@@ -84,7 +84,7 @@ class ExternalDataSourcePointTileJSONView(TileJSONView, DetailView):
         return ExternalDataSource.objects.get(pk=self.get_id())
 
     def get_min_zoom(self, *args, **kwargs):
-        return 10
+        return 1
 
     def get_max_zoom(self, *args, **kwargs):
         return 30

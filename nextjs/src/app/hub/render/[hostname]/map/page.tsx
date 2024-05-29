@@ -2,23 +2,19 @@
 "use client";
 
 import "mapbox-gl/dist/mapbox-gl.css";
-import { gql, useApolloClient, useQuery } from "@apollo/client";
-import { useRouter } from "next/navigation";
+import { gql, useQuery } from "@apollo/client";
 import { Provider as JotaiProvider } from "jotai";
 import { MapProvider } from "react-map-gl";
-import { PublicMap } from "@/components/report/PublicMap";
-import { GetPublicMapReportForLayoutQuery, GetPublicMapReportForLayoutQueryVariables } from "@/__generated__/graphql";
-import { LoadingIcon } from "@/components/ui/loadingIcon";
+import { HubMap } from "@/components/hub/HubMap";
 
 type Params = {
   hostname: string
-  reportSlug: string
 }
 
 export default function Page({ params: { hostname } }: { params: Params }) {
-  // const report = useQuery<GetPublicMapReportForLayoutQuery, GetPublicMapReportForLayoutQueryVariables>(GET_PUBLIC_MAP_REPORT, {
-  //   variables: { hostname },
-  // });
+  const hub = useQuery(GET_HUB_MAP_DATA, {
+    variables: { hostname },
+  });
 
   return (
     <MapProvider>
@@ -27,7 +23,7 @@ export default function Page({ params: { hostname } }: { params: Params }) {
           <main className="h-full relative overflow-x-hidden overflow-y-hidden flex-grow">
             <div className="absolute w-full h-full flex flex-row pointer-events-none">
               <div className='w-full h-full pointer-events-auto'>
-                <PublicMap />
+                <HubMap externalDataSources={hub.data?.hubByHostname?.layers?.map((i: any) => i.id) || []} />
               </div>
               {/* {!report.data ? (
                 <div className="absolute w-full h-full inset-0 z-10 pointer-events-none">
@@ -55,21 +51,23 @@ export default function Page({ params: { hostname } }: { params: Params }) {
   )
 }
 
-// const GET_PUBLIC_MAP_REPORT = gql`
-//   query GetPublicMapReportForLayout($orgSlug: String!, $reportSlug: String!) {
-//     publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {
-//       id
-//       name
-//       displayOptions
-//       organisation {
-//         id
-//         slug
-//         name
-//       }
-//       layers {
-//         id
-//         name
-//       }
-//     }
-//   }
-// `
+const GET_HUB_MAP_DATA = gql`
+  query GetHubMapData($hostname: String!) {
+    hubByHostname(hostname: $hostname) {
+      id
+      organisation {
+        id
+        slug
+        name
+      }
+      layers {
+        id
+        name
+        visible
+        source {
+          id
+        }
+      }
+    }
+  }
+`
