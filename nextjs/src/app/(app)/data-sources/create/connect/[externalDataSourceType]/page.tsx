@@ -30,7 +30,6 @@ import {
   CreateExternalDataSourceInput,
   DataSourceType,
   ExternalDataSourceInput,
-  TestDataSourceInput,
   GeographyTypes,
   CreateSourceMutation,
   TestDataSourceQuery,
@@ -41,7 +40,7 @@ import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
 import { getFieldsForDataSourceType } from "@/components/UpdateExternalDataSourceFields";
 
 const TEST_DATA_SOURCE = gql`
-  query TestDataSource($input: TestDataSourceInput!) {
+  query TestDataSource($input: CreateExternalDataSourceInput!) {
     testDataSource(input: $input) {
       __typename
       crmType
@@ -49,10 +48,13 @@ const TEST_DATA_SOURCE = gql`
         label
         value
         description
+        editable
       }
       geographyColumn,
       geographyColumnType
       healthcheck
+      predefinedColumnNames
+      defaultDataType
       remoteName
     }
   }
@@ -76,7 +78,7 @@ const CREATE_DATA_SOURCE = gql`
 `;
 
 
-type FormInputs = CreateExternalDataSourceInput & ExternalDataSourceInput & TestDataSourceInput
+type FormInputs = CreateExternalDataSourceInput & ExternalDataSourceInput
 
 export default function Page({
   params: { externalDataSourceType },
@@ -96,10 +98,14 @@ export default function Page({
 
   const form = useForm<FormInputs>({
     defaultValues: {
-      geographyColumnType: GeographyTypes.Postcode,
-      geographyColumn: externalDataSourceType === "mailchimp" ? 'ADDRESS.zip' : '',
-      dataType: context.dataType,
       name: '',
+      geographyColumnType: GeographyTypes.Postcode,
+      geographyColumn: externalDataSourceType === "mailchimp"
+      ? 'ADDRESS.zip' :
+      externalDataSourceType === "actionnetwork"
+      ? "postal_addresses[0].postal_code"
+      : '',
+      dataType: context.dataType,
       airtable: {
         apiKey: '',
         baseId: '',
@@ -185,38 +191,49 @@ export default function Page({
   useGuessedField('endTimeField', ["end", "end time", "end date", "finish", "finish time", "finish date", "end_at", "end_time", "end_date", "until"])
   useGuessedField('publicUrlField', ["public url", "public link", "public", "url", "link", "website", "webpage", "web", "page", "site", "address", "href", "uri", "path", "slug", "permalink"])
 
+  useEffect(() => {
+    if (testSourceResult.data?.testDataSource?.defaultDataType) {
+      form.setValue("dataType", testSourceResult.data.testDataSource.defaultDataType as DataSourceType)
+    }
+  }, [testSourceResult.data])
+
   async function submitTestConnection(formData: FormInputs) {
-    console.log('form data', formData)
     if (!formData[externalDataSourceType]) {
       throw Error("Need some CRM connection details to proceed!")
     }
-    // Get the nested data source key e.g. Airtable or Mailchimp
-    const dataSourceKey = externalDataSourceType
 
-    const dataSourceValue = formData[dataSourceKey] || {};
-   
-    const input: TestDataSourceInput = {
-      "type": dataSourceKey, 
-      "apiKey": "apiKey" in dataSourceValue ? String(dataSourceValue.apiKey) : '',
-      "baseId": "baseId" in dataSourceValue ? String(dataSourceValue.baseId) : '',
-      "tableId": "tableId" in dataSourceValue ? String(dataSourceValue.tableId) : '',
-      "listId": "listId" in dataSourceValue ? String(dataSourceValue.listId) : '',
+    // To avoid mutation of the form data
+    const genericCRMData = Object.assign({}, formData)
+    const CRMSpecificData = formData[externalDataSourceType]
+
+    // Remove specific CRM data from the generic data
+    // TODO: make this less fragile. Currently it assumes any nested
+    // object is specific to a CRM.
+    for (const key of Object.keys(formData)) {
+      if (typeof formData[key as keyof FormInputs] === "object") {
+        delete genericCRMData[key as keyof FormInputs]
+      }
     }
 
-    {
-      toastPromise(testSource({
-        variables: { input }
-      }), {
-        loading: "Testing connection...",
-        success: (d: FetchResult<TestDataSourceQuery>) => {
-          if (!d.errors && d.data?.testDataSource) {
-            return "Connection is healthy";
-          }
-          throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
-        },
-        error: "Connection failed",
-      });
+    const input: TestDataSourceQueryVariables['input'] = {
+      [externalDataSourceType]: {
+        ...genericCRMData,
+        ...CRMSpecificData
+      }
     }
+    
+    toastPromise(testSource({
+      variables: { input }
+    }), {
+      loading: "Testing connection...",
+      success: (d: FetchResult<TestDataSourceQuery>) => {
+        if (!d.errors && d.data?.testDataSource) {
+          return "Connection is healthy";
+        }
+        throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
+      },
+      error: "Connection failed",
+    });
   }
 
   async function submitCreateSource(formData: FormInputs) {
@@ -338,57 +355,27 @@ export default function Page({
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="dataType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data type</FormLabel>
-                    <FormControl>
-                      {/* @ts-ignore */}
-                      <Select onValueChange={field.onChange} defaultValue={field.value} required>
-                        <SelectTrigger>
-                          <SelectValue placeholder="What kind of data is this?" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectLabel>Type of data source</SelectLabel>
-                            <SelectItem value={DataSourceType.Member}>A list of members</SelectItem>
-                            <SelectItem value={DataSourceType.Location}>Venues and physical locations</SelectItem>
-                            <SelectItem value={DataSourceType.Event}>Calendar events</SelectItem>
-                            <SelectItem value={DataSourceType.Story}>Articles, stories and reports</SelectItem>
-                            <SelectItem value={DataSourceType.Other}>Other data</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className='grid grid-cols-2 gap-4 w-full'>
-                <FPreopulatedSelectField name="geographyColumn" label="geography" required />
+              {!currentSource?.testDataSource?.defaultDataType && (
                 <FormField
                   control={form.control}
-                  name="geographyColumnType"
+                  name="dataType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Geography Type</FormLabel>
+                      <FormLabel>Data type</FormLabel>
                       <FormControl>
                         {/* @ts-ignore */}
                         <Select onValueChange={field.onChange} defaultValue={field.value} required>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a geography type" />
+                            <SelectValue placeholder="What kind of data is this?" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectGroup>
-                              <SelectLabel>Geography type</SelectLabel>
-                              <SelectItem value={GeographyTypes.Postcode}>Postcode</SelectItem>
-                              <SelectItem value={GeographyTypes.Ward}>Ward</SelectItem>
-                              <SelectItem value={GeographyTypes.Council}>Council</SelectItem>
-                              <SelectItem value={GeographyTypes.Constituency}>GE2010-2019 Constituency</SelectItem>
-                              <SelectItem value={GeographyTypes.Constituency_2025}>GE2024 Constituency</SelectItem>
-                              <SelectItem value={GeographyTypes.Address}>Address</SelectItem>
+                              <SelectLabel>Type of data source</SelectLabel>
+                              <SelectItem value={DataSourceType.Member}>A list of members</SelectItem>
+                              <SelectItem value={DataSourceType.Location}>Venues and physical locations</SelectItem>
+                              <SelectItem value={DataSourceType.Event}>Calendar events</SelectItem>
+                              <SelectItem value={DataSourceType.Story}>Articles, stories and reports</SelectItem>
+                              <SelectItem value={DataSourceType.Other}>Other data</SelectItem>
                             </SelectGroup>
                           </SelectContent>
                         </Select>
@@ -397,6 +384,9 @@ export default function Page({
                     </FormItem>
                   )}
                 />
+              )}
+              <div className='grid grid-cols-2 gap-4 w-full'>
+                <FPreopulatedSelectField name="geographyColumn" label="geography" required />
                 {collectFields?.filter(f => f !== "geographyColumn" && f !== "geographyColumnType")?.map((field) => (
                   <FPreopulatedSelectField key={field} name={field} />
                 ))}
@@ -621,6 +611,66 @@ export default function Page({
     );
   }
 
+  if (externalDataSourceType === "actionnetwork") {
+    return (
+      <div className="space-y-7">
+        <header>
+          <h1 className="text-hLg">Connecting to your Action Network instance</h1>
+          <p className="mt-6 text-meepGray-400 max-w-lg">
+            In order to send data across to your Action Network instance, we{"'"}ll need a few
+            details that gives us permission to make updates to your members.
+          </p>
+        </header>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(submitTestConnection)}
+            className="space-y-7 max-w-lg"
+          >
+            <div className='text-hSm'>Connection details</div>
+            <FormField
+              control={form.control}
+              name="actionnetwork.apiKey"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Action Network API key</FormLabel>
+                  <FormControl>
+                    {/* @ts-ignore */}
+                    <Input placeholder="52b...bce" {...field} required />
+                  </FormControl>
+                  <FormDescription>
+                    Your API keys and sync features can be managed from the {'"'}API & Sync{'"'} link available in the {'"'}Start Organizing{'"'} menu.
+                    <a
+                      className="underline"
+                      target="_blank"
+                      href="https://actionnetwork.org/docs/"
+                    >
+                      Read more.
+                    </a>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex flex-row gap-x-4">
+              <Button
+                variant="outline"
+                type="reset"
+                onClick={() => {
+                  router.back();
+                }}
+              >
+                Back
+              </Button>
+              <Button type="submit" variant={"reverse"} disabled={testSourceResult.loading}>
+                Test connection
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
+    );
+  }
 
   return null;
 }

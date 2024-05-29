@@ -32,6 +32,8 @@ const GET_UPDATE_CONFIG = gql`
         lastEventAt
         status
       }
+      automatedWebhooks
+      autoUpdateWebhookUrl
       ...DataSourceCard
     }
   }
@@ -77,19 +79,35 @@ export default function Page({
             You{"'"}re almost there!
           </p>
           <ul className="list-disc list-outside pl-4 space-y-3 mt-3">
-            <li className="text-meepGray-300 max-w-sm">
-              <span className='align-middle'>
-                Active auto-update webhooks to start updating your data source when the 
-              </span>
-              <DataSourceFieldLabel
-                className='align-middle'
-                label={pageQuery.data?.externalDataSource.geographyColumn}
-                crmType={pageQuery.data?.externalDataSource.crmType}
-              />
-              <span className='align-middle'>
-                field changes.
-              </span>
-            </li>
+            {pageQuery.data?.externalDataSource.automatedWebhooks ? (
+              <li className="text-meepGray-300 max-w-sm">
+                <span className='align-middle'>
+                  Active auto-update webhooks to start updating your data source when the 
+                </span>
+                <DataSourceFieldLabel
+                  className='align-middle'
+                  label={pageQuery.data?.externalDataSource.geographyColumn}
+                  crmType={pageQuery.data?.externalDataSource.crmType}
+                />
+                <span className='align-middle'>
+                  field changes.
+                </span>
+              </li>
+            ) : pageQuery.data?.externalDataSource.autoUpdateWebhookUrl ? (
+              <li className="text-meepGray-300 max-w-sm">
+                <p className='align-middle'>
+                  Mapped can auto-update {pageQuery.data?.externalDataSource.crmType} if you configure webhooks.
+                </p>
+                <p>
+                  {/* TODO: instruction copy */}
+                  Copy your Mapped webhook and follow this guide.
+                </p>
+                <p>
+                  {/* TODO: Copy/Paste component */}
+                  <code>{pageQuery.data?.externalDataSource.autoUpdateWebhookUrl}</code>
+                </p>
+              </li>
+            ) : null}
             <li className="text-meepGray-300 max-w-sm">Trigger an update to see the data source in action.</li>
           </ul>
         </header>

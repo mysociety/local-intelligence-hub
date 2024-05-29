@@ -95,6 +95,9 @@ const GET_UPDATE_CONFIG = gql`
           apiKey
           listId
         }
+        ... on ActionNetworkSource {
+          apiKey
+        }
       }
       lastJob {
         id
@@ -102,6 +105,9 @@ const GET_UPDATE_CONFIG = gql`
         status
       }
       autoUpdateEnabled
+      hasWebhooks
+      automatedWebhooks
+      autoUpdateWebhookUrl
       webhookHealthcheck
       geographyColumn
       geographyColumnType
@@ -139,6 +145,7 @@ const GET_UPDATE_CONFIG = gql`
         label
         value
         description
+        editable
       }
       updateMapping {
         source
@@ -359,18 +366,27 @@ export default function InspectExternalDataSource({
                         {source.lastJob.status})
                       </div>
                     ) : null}
-                    <AutoUpdateSwitch externalDataSource={source} />
-                    {source.autoUpdateEnabled && !source.webhookHealthcheck && (
+                    {source.automatedWebhooks ? (
                       <>
-                        <Alert variant="destructive">
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertTitle>Webhooks unhealthy</AlertTitle>
-                          <AlertDescription>
-                            The webhook is unhealthy. Please refresh the webhook to fix auto-updates.
-                          </AlertDescription>
-                        </Alert>
-                        <AutoUpdateWebhookRefresh externalDataSourceId={externalDataSourceId} />
+                        <AutoUpdateSwitch externalDataSource={source} />
+                        {source.autoUpdateEnabled && !source.webhookHealthcheck && (
+                          <>
+                            <Alert variant="destructive">
+                              <AlertCircle className="h-4 w-4" />
+                              <AlertTitle>Webhooks unhealthy</AlertTitle>
+                              <AlertDescription>
+                                The webhook is unhealthy. Please refresh the webhook to fix auto-updates.
+                              </AlertDescription>
+                            </Alert>
+                            <AutoUpdateWebhookRefresh externalDataSourceId={externalDataSourceId} />
+                          </>
+                        )}
                       </>
+                    ) : (
+                      <div>
+                        {/* TODO: Add copy etc. */}
+                        Webhook URL for auto-updates: <code>{source.autoUpdateWebhookUrl}</code>
+                      </div>
                     )}
                   </section>
                 )}
@@ -424,6 +440,13 @@ export default function InspectExternalDataSource({
               <br />
               <code>
                 {source.connectionDetails.listId}
+              </code>
+            </div>
+          ) : null}
+          {source.connectionDetails.__typename === 'ActionNetworkSource' ? (
+            <div className='mt-2'>
+              <code>
+                {source.connectionDetails.apiKey}
               </code>
             </div>
           ) : null}

@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("hub", "0113_alter_hubcontentpage_puck_json_content"),
+        ("hub", "0114_alter_airtablesource_unique_together_and_more"),
     ]
 
     operations = [
