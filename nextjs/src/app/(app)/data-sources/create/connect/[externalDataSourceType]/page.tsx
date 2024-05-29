@@ -32,6 +32,9 @@ import {
   ExternalDataSourceInput,
   TestDataSourceInput,
   GeographyTypes,
+  CreateSourceMutation,
+  TestDataSourceQuery,
+  TestDataSourceQueryVariables,
 } from "@/__generated__/graphql";
 import { toastPromise } from "@/lib/toast";
 import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
@@ -192,12 +195,12 @@ export default function Page({
 
     const dataSourceValue = formData[dataSourceKey] || {};
    
-    const input = {
+    const input: TestDataSourceInput = {
       "type": dataSourceKey, 
-      "apiKey": dataSourceValue?.apiKey || '',
-      "baseId": "baseId" in dataSourceValue ? dataSourceValue.baseId : '',
-      "tableId": "tableId" in dataSourceValue ? dataSourceValue.tableId : '',
-      "listId": "listId" in dataSourceValue ? dataSourceValue.listId : '',
+      "apiKey": "apiKey" in dataSourceValue ? String(dataSourceValue.apiKey) : '',
+      "baseId": "baseId" in dataSourceValue ? String(dataSourceValue.baseId) : '',
+      "tableId": "tableId" in dataSourceValue ? String(dataSourceValue.tableId) : '',
+      "listId": "listId" in dataSourceValue ? String(dataSourceValue.listId) : '',
     }
 
     {

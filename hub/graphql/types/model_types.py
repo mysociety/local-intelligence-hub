@@ -4,6 +4,7 @@ from enum import Enum
 from typing import List, Optional, Union
 
 from django.db.models import Q
+from django.http import HttpRequest
 
 import procrastinate.contrib.django.models
 import strawberry
@@ -17,6 +18,7 @@ from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import IsAuthenticated
 from wagtail.models import Site
+
 from hub import models
 from hub.enrichment.sources import builtin_mapping_sources
 from hub.graphql.dataloaders import (
@@ -29,7 +31,7 @@ from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
-from django.http import HttpRequest
+
 
 # Ideally we'd just import this from the library (procrastinate.jobs.Status) but
 # strawberry doesn't like subclassed Enums for some reason.
@@ -960,9 +962,7 @@ class MapReport(Report, Analytics):
 
 def public_map_report(info: Info, org_slug: str, report_slug: str) -> models.MapReport:
     return models.MapReport.objects.get(
-        organisation__slug=org_slug,
-        slug=report_slug,
-        public=True
+        organisation__slug=org_slug, slug=report_slug, public=True
     )
 
 
@@ -1063,7 +1063,7 @@ class WagtailPage:
         return self.specific._meta.object_name
 
     @strawberry_django.field
-    def ancestors(self, inclusive: bool=False) -> List["WagtailPage"]:
+    def ancestors(self, inclusive: bool = False) -> List["WagtailPage"]:
         return self.get_ancestors(inclusive=inclusive)
 
     @strawberry_django.field
@@ -1073,9 +1073,9 @@ class WagtailPage:
     @strawberry_django.field
     def children(self) -> List["WagtailPage"]:
         return self.get_children()
-    
+
     @strawberry_django.field
-    def descendants(self, inclusive: bool=False) -> List["WagtailPage"]:
+    def descendants(self, inclusive: bool = False) -> List["WagtailPage"]:
         return self.get_descendants(inclusive=inclusive)
 
 
@@ -1102,15 +1102,14 @@ class HubHomepage(WagtailPage):
     #         organisation__in=user_orgs,
     #     )
 
+
 @strawberry_django.field()
-def hub_page_by_path(info: Info, hostname: str, path: Optional[str] = None) -> Optional[WagtailPage]:
+def hub_page_by_path(
+    info: Info, hostname: str, path: Optional[str] = None
+) -> Optional[WagtailPage]:
     # get request for strawberry query
     request: HttpRequest = info.context["request"]
-    request.META={
-        **request.META,
-        "HTTP_HOST": hostname,
-        "SERVER_PORT": 80
-    }
+    request.META = {**request.META, "HTTP_HOST": hostname, "SERVER_PORT": 80}
     request.path = path
     site = Site.objects.get(hostname=hostname)
     if path is None:

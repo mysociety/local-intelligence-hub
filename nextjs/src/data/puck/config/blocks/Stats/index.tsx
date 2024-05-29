@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import dynamicIconImports from "lucide-react/dynamicIconImports";
 
 const icons = Object.keys(dynamicIconImports).reduce((acc, iconName) => {
+  // @ts-ignore
   const El = dynamic(dynamicIconImports[iconName]);
 
   return {

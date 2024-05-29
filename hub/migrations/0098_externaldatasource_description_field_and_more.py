@@ -119,5 +119,5 @@ class Migration(migrations.Migration):
             model_name="person",
             name="name",
             field=models.CharField(max_length=500),
-        )
+        ),
     ]

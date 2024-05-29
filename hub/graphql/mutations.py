@@ -412,6 +412,7 @@ def update_sharing_permissions(
     )
     return result
 
+
 @strawberry_django.input(models.Page, partial=True)
 class WagtailPageInput:
     title: Optional[str] = None
@@ -444,6 +445,7 @@ def create_child_page(
     parent.add_child(instance=page)
     page.save_revision(user=user, log_action=True).publish()
     return page
+
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
 def delete_page(info: Info, page_id: str) -> bool:

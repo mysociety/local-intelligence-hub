@@ -18,7 +18,7 @@ export const Flex: ComponentConfig<FlexProps> = {
           min: 0,
         },
       },
-      getItemSummary: (_, id) => `Item ${id + 1}`,
+      getItemSummary: (_, id) => `Item ${(id || 0) + 1}`,
     },
     minItemWidth: {
       label: "Minimum Item Width",

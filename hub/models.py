@@ -22,9 +22,6 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.text import slugify
-from wagtail.models import Page
-from wagtail.admin.panels import FieldPanel
-from wagtail_json_widget.widgets import JSONEditorWidget
 
 import numpy as np
 import pandas as pd
@@ -41,6 +38,9 @@ from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
+from wagtail.admin.panels import FieldPanel
+from wagtail.models import Page
+from wagtail_json_widget.widgets import JSONEditorWidget
 
 import utils as lih_utils
 from hub.analytics import Analytics
@@ -56,10 +56,9 @@ from hub.tasks import (
     refresh_webhooks,
 )
 from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
-from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
 from utils.nominatim import address_to_geojson
+from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
 from utils.py import batched, ensure_list, get
-from utils.img import download_file_from_url
 
 User = get_user_model()
 
@@ -1304,16 +1303,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     osm_data = address_to_geojson(address)
                 except Exception:
                     osm_data = {}
-                worker_log.warn([address, osm_data])
+                logger.warn([address, osm_data])
                 update_data = {
                     **structured_data,
                     "osm_data": osm_data,
-                    "point": Point(
-                        osm_data['geometry']['coordinates'][0],
-                        osm_data['geometry']['coordinates'][1],
-                    )
-                    if osm_data is not None and "geometry" in osm_data
-                    else None,
+                    "point": (
+                        Point(
+                            osm_data["geometry"]["coordinates"][0],
+                            osm_data["geometry"]["coordinates"][1],
+                        )
+                        if osm_data is not None and "geometry" in osm_data
+                        else None
+                    ),
                 }
 
                 await GenericData.objects.aupdate_or_create(
@@ -1377,7 +1378,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         raise NotImplementedError("Get ID not implemented for this data source type.")
 
-    def get_record_field(self, record: dict, field: str, field_type = None):
+    def get_record_field(self, record: dict, field: str, field_type=None):
         """
         Get a field from a record.
         """
@@ -2016,7 +2017,7 @@ class AirtableSource(ExternalDataSource):
     def get_record_id(self, record):
         return record["id"]
 
-    def get_record_field(self, record, field, field_type = None):
+    def get_record_field(self, record, field, field_type=None):
         d = record["fields"].get(str(field), None)
         if field_type == "image_field" and d is not None and len(d) > 0:
             # TODO: implement image handling
@@ -2533,6 +2534,7 @@ class HubHomepage(Page):
     An microsite that incorporates datasets and content pages,
     backed by a custom URL.
     """
+
     subpage_types = ["hub.HubContentPage"]
 
     organisation = models.ForeignKey(
@@ -2556,25 +2558,26 @@ class HubHomepage(Page):
     class HubNavLinks(TypedDict):
         label: str
         link: str
-    
+
     def get_nav_links(self) -> list[HubNavLinks]:
         return self.nav_links
 
+
 def generate_puck_json_content():
-    return {
-      "content": [],
-      "root": {},
-      "zones": {}
-    }
+    return {"content": [], "root": {}, "zones": {}}
+
 
 class HubContentPage(Page):
     parent_page_type = ["hub.HubHomepage"]
     subpage_types = ["hub.HubContentPage"]
-    puck_json_content = models.JSONField(blank=True, null=False, default=generate_puck_json_content)
+    puck_json_content = models.JSONField(
+        blank=True, null=False, default=generate_puck_json_content
+    )
 
     content_panels = Page.content_panels + [
         FieldPanel("puck_json_content", widget=JSONEditorWidget),
     ]
+
 
 class APIToken(models.Model):
     """
