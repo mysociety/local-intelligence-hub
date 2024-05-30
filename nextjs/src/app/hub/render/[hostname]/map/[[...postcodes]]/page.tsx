@@ -16,6 +16,8 @@ import { SIDEBAR_WIDTH } from "@/components/hub/data";
 import { useRouter } from 'next/navigation';
 import { usePathname, useParams } from 'next/navigation' 
 import { SearchPanel } from './SearchPanel';
+import Root from '@/data/puck/config/root';
+
 
 type Params = {
   hostname: string
@@ -46,6 +48,7 @@ export default function Page({ params: { hostname, postcodes } }: { params: Para
   });
 
   return (
+    <Root>
     <MapProvider>
       <JotaiProvider>
         <div className='h-dvh flex flex-col'>
@@ -57,8 +60,8 @@ export default function Page({ params: { hostname, postcodes } }: { params: Para
                   currentConstituency={localData.data?.postcodeSearch.constituency}  
                 />
               </div>
-              <aside className="absolute top-5 left-5 right-0 w-0 pointer-events-auto">
-                <div className='max-w-[100vw] rounded-md bg-meepGray-100 text-green-950 p-6' style={{
+              <aside className="absolute top-[80px] left-5 right-0 w-0 pointer-events-auto">
+                <div className='max-w-[100vw] rounded-[20px] bg-jungle-green-bg text-jungle-green-700 p-6' style={{
                   width: SIDEBAR_WIDTH
                 }}>
                   {!localData.data ? (
@@ -80,6 +83,7 @@ export default function Page({ params: { hostname, postcodes } }: { params: Para
         </div>
       </JotaiProvider>
     </MapProvider>
+    </Root>
   )
 }
 
