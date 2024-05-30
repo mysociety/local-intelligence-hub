@@ -447,6 +447,7 @@ class ConstituencyElectionStats:
 @strawberry_django.type(models.Area, filters=AreaFilter)
 class Area:
     id: auto
+    gss: auto
     mapit_id: str
     gss: auto
     name: auto
@@ -509,7 +510,7 @@ class Area:
     def polygon(
         self, info: Info, with_parent_data: bool = False
     ) -> Optional[MultiPolygonFeature]:
-        props = {"name": self.name, "gss": self.gss}
+        props = {"name": self.name, "gss": self.gss, "id": self.gss, "area_type": self.area_type}
         if with_parent_data and hasattr(self, "extra_geojson_properties"):
             props["extra_geojson_properties"] = self.extra_geojson_properties
 

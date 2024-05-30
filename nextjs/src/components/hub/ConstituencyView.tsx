@@ -7,7 +7,7 @@ export function ConstituencyView ({
 }: {
   data: GetLocalDataQuery
 }) {
-  if (!data?.postcodeSearch?.postcodesIO?.constituencyName) {
+  if (!data?.postcodeSearch?.constituency?.name) {
     return <div>
       <div>Nothing found.</div>
       {/* TODO: something more useful, like other constituencies that *do* have events? */}
@@ -22,11 +22,11 @@ export function ConstituencyView ({
       <header className='mb-4'>
         <div className='text-meepGray-500'>Your constituency is</div>
         <h2 className='text-3xl text-green-950 font-bold'>
-          {data?.postcodeSearch?.postcodesIO?.constituencyName}
+          {data?.postcodeSearch?.constituency?.name}
         </h2>
       </header>
       <div className='mb-4'>
-        Help the campaign in {data?.postcodeSearch?.postcodesIO?.constituencyName} by coming along to one of these upcoming events:
+        Help the campaign in {data?.postcodeSearch?.constituency?.name} by coming along to one of these upcoming events:
       </div>
       <section className='space-y-4'>
         {data?.postcodeSearch?.constituency?.genericDataForHub?.map((i: any) => (

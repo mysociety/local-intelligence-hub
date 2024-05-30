@@ -6,7 +6,7 @@ import { selectedHubSourceMarkerAtom } from "@/components/hub/data"
 import { useEffect } from "react"
 import { Layer, Source } from "react-map-gl"
 
-export function HubPointMarkers ({ externalDataSourceId, index }: { externalDataSourceId: string, index: number }) {
+export function HubPointMarkers ({ externalDataSourceId, index, beforeId }: { externalDataSourceId: string, index: number, beforeId?: string }) {
   const mapbox = useLoadedMap()
   const [selectedSourceMarker, setSelectedSourceMarker] =  useAtom(selectedHubSourceMarkerAtom)
 
@@ -38,7 +38,7 @@ export function HubPointMarkers ({ externalDataSourceId, index }: { externalData
       >
         {/* {index <= 1 ? ( */}
           <Layer
-            beforeId={"PLACEHOLDER_MARKERS"}
+            beforeId={beforeId}
             id={`${externalDataSourceId}-marker`}
             source={externalDataSourceId}
             source-layer={"generic_data"}
@@ -59,7 +59,7 @@ export function HubPointMarkers ({ externalDataSourceId, index }: { externalData
         {/* ) : (
           // In case extra layers are added.
           <Layer
-            beforeId={"PLACEHOLDER_MARKERS"}
+            beforeId={beforeId}
             id={`${externalDataSourceId}-marker`}
             source={externalDataSourceId}
             source-layer={"generic_data"}
@@ -77,7 +77,7 @@ export function HubPointMarkers ({ externalDataSourceId, index }: { externalData
         )}
         {!!selectedSourceMarker?.properties?.id && (
           <Layer
-            beforeId={"PLACEHOLDER_MARKERS"}
+            beforeId={beforeId}
             id={`${externalDataSourceId}-marker-selected`}
             source={externalDataSourceId}
             source-layer={"generic_data"}

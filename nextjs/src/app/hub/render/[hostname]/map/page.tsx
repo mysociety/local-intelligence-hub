@@ -10,6 +10,7 @@ import { useState } from "react";
 import { format, formatRelative } from "date-fns";
 import { ConstituencyView } from "@/components/hub/ConstituencyView";
 import { GetLocalDataQuery, GetLocalDataQueryVariables } from "@/__generated__/graphql";
+import { SIDEBAR_WIDTH } from "@/components/hub/data";
 
 type Params = {
   hostname: string
@@ -22,6 +23,7 @@ export default function Page({ params: { hostname } }: { params: Params }) {
 
   const [postcode, setPostcode] = useState('')
 
+  // TODO: postcode cahnge
   const [fetchLocalData, localData] = useLazyQuery<GetLocalDataQuery, GetLocalDataQueryVariables>(GET_LOCAL_DATA, {
     variables: { postcode, hostname }
   });
@@ -33,10 +35,15 @@ export default function Page({ params: { hostname } }: { params: Params }) {
           <main className="h-full relative overflow-x-hidden overflow-y-hidden flex-grow">
             <div className="absolute w-full h-full flex flex-row pointer-events-none">
               <div className='w-full h-full pointer-events-auto'>
-                <HubMap externalDataSources={hub.data?.hubByHostname?.layers?.map((i: any) => i.id) || []} />
+                <HubMap
+                  externalDataSources={hub.data?.hubByHostname?.layers?.map((i: any) => i.id) || []}
+                  currentConstituency={localData.data?.postcodeSearch.constituency}  
+                />
               </div>
               <aside className="absolute top-5 left-5 right-0 w-0 pointer-events-auto">
-                <div className='w-[350px] max-w-[100vw] rounded-md bg-meepGray-100 text-green-950 p-6'>
+                <div className='max-w-[100vw] rounded-md bg-meepGray-100 text-green-950 p-6' style={{
+                  width: SIDEBAR_WIDTH
+                }}>
                   <h1 className='text-2xl font-bold mb-1 leading-tight'>
                     Find out how you can support the climate and nature
                   </h1>
@@ -94,10 +101,13 @@ const GET_HUB_MAP_DATA = gql`
 const GET_LOCAL_DATA = gql`
   query GetLocalData($postcode: String!, $hostname: String!) {
     postcodeSearch(postcode: $postcode) {
-      postcodesIO {
-        constituencyName: parliamentaryConstituency2025
-      }
       constituency {
+        id
+        gss
+        name
+        # For zooming
+        fitBounds
+        # List of events
         genericDataForHub(hostname: $hostname) {
           id
           title

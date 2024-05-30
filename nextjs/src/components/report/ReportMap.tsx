@@ -70,10 +70,7 @@ export function ReportMap () {
 
   const mapbox = useLoadedMap()
 
-  useEffect(() => {
-    console.log("Map", mapbox.loadedMap)
-  }, [mapbox.loadedMap])
-
+  // TODO: unify this and HubMap's TILESETS
   const TILESETS: Record<"EERs" | "constituencies" | "wards", {
     name: string,
     singular: string,
