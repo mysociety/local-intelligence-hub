@@ -1,3 +1,5 @@
+import logging
+
 from django.db.models.query import QuerySet
 from django.http import HttpResponseForbidden
 from django.urls import reverse
@@ -8,6 +10,8 @@ from vectortiles import VectorLayer
 from vectortiles.views import MVTView, TileJSONView
 
 from hub.models import ExternalDataSource, GenericData
+
+logger = logging.getLogger(__name__)
 
 
 class GenericDataVectorLayer(VectorLayer):
@@ -48,7 +52,8 @@ class ExternalDataSourceTileView(MVTView, DetailView):
                     "You don't have permission to view location data for this data source."
                 )
             return super().get(request, *args, **kwargs)
-        except Exception:
+        except Exception as e:
+            logger.info(f"Could not view location data: {e}")
             return HttpResponseForbidden(
                 "You don't have permission to view location data for this data source."
             )
