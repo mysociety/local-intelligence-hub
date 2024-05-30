@@ -25,7 +25,3 @@ export default async function Page({ params: { hostname, slug } }: { params: Par
     <Render config={conf} data={page.data?.hubPageByPath?.puckJsonContent} />
   )
 }
-
-export const metadata: Metadata = {
-  title: "Hub page preview",
-};
