@@ -11,8 +11,8 @@ type Params = {
   slug: string
 }
 
-export default async function Page({ children }) {
-  return children
+export default async function Page({ children }: { children: React.ReactNode }) {
+  return <>{children}</>
 }
 
 // nextjs metadata function — page title from GetPageQuery

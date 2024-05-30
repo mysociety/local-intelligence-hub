@@ -513,7 +513,12 @@ class Area:
     def polygon(
         self, info: Info, with_parent_data: bool = False
     ) -> Optional[MultiPolygonFeature]:
-        props = {"name": self.name, "gss": self.gss, "id": self.gss, "area_type": self.area_type}
+        props = {
+            "name": self.name,
+            "gss": self.gss,
+            "id": self.gss,
+            "area_type": self.area_type,
+        }
         if with_parent_data and hasattr(self, "extra_geojson_properties"):
             props["extra_geojson_properties"] = self.extra_geojson_properties
 

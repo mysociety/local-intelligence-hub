@@ -1,6 +1,6 @@
 "use client"
 
-import Map, { Layer, Source, ViewState } from "react-map-gl";
+import Map, { Layer, Source, ViewState, LngLatLike } from "react-map-gl";
 import { atom, useAtom } from "jotai";
 import { authenticationHeaders } from "@/lib/auth";
 import { ImmutableLike } from "react-map-gl/dist/esm/types";
@@ -145,7 +145,7 @@ export function HubMap ({
   );
 }
 
-const UK_BOUNDS = [
+const UK_BOUNDS: [LngLatLike, LngLatLike] = [
   [-8.5, 49.5],
   [2, 61]
 ]
