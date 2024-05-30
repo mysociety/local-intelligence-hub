@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import List, Optional
+from urllib.parse import unquote
 
 from django.conf import settings
 
@@ -78,6 +79,7 @@ class PostcodesIOBulkResult:
 
 
 async def get_postcode_geo(postcode: str) -> PostcodesIOResult:
+    postcode = unquote(postcode)  # parse url encoded spaces
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{settings.POSTCODES_IO_URL}/postcodes/{postcode}")
     if response.status_code != httpx.codes.OK:
@@ -99,6 +101,7 @@ async def get_postcode_geo(postcode: str) -> PostcodesIOResult:
 
 @batch_and_aggregate(settings.POSTCODES_IO_BATCH_MAXIMUM)
 async def get_bulk_postcode_geo(postcodes) -> PostcodesIOBulkResult:
+    postcodes = [unquote(postcode) for postcode in postcodes]  # parse url encoded spaces
     async with httpx.AsyncClient() as client:
         response = await client.post(
             f"{settings.POSTCODES_IO_URL}/postcodes",
