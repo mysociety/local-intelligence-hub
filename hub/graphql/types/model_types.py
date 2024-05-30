@@ -542,11 +542,18 @@ class Area:
     def generic_data_for_hub(self, hostname: str) -> List["GenericData"]:
         site = Site.objects.get(hostname=hostname)
         hub = site.root_page.specific
-        source_ids = [layer.get("source") for layer in hub.layers]
-        return models.GenericData.objects.filter(
-            data_type__data_set__external_data_source__in=source_ids,
-            point__within=self.polygon,
-        )
+        data = []
+        for layer in hub.layers:
+            data.extend(
+                models.GenericData.objects.filter(
+                    data_type__data_set__external_data_source=layer.get("source"),
+                    data_type__data_set__external_data_source__can_display_points_publicly=True,
+                    data_type__data_set__external_data_source__can_display_details_publicly=True,
+                    point__within=self.polygon,
+                    **layer.get("filter", {})
+                )
+            )
+        return data
 
 
 @strawberry.type
