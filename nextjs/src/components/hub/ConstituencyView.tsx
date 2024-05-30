@@ -1,5 +1,5 @@
-import { GetLocalDataQuery } from "@/__generated__/graphql";
-import { formatDate, formatRelative } from "date-fns";
+import { DataSourceType, GetLocalDataQuery } from "@/__generated__/graphql";
+import { formatDate, formatRelative, isAfter } from "date-fns";
 import { Ticket } from "lucide-react";
 
 export function ConstituencyView ({
@@ -29,7 +29,17 @@ export function ConstituencyView ({
         Help the campaign in {data?.postcodeSearch?.constituency?.name} by coming along to one of these upcoming events:
       </div>
       <section className='space-y-4'>
-        {data?.postcodeSearch?.constituency?.genericDataForHub?.map((i: any) => (
+        {data?.postcodeSearch?.constituency?.genericDataForHub?.filter(d => (
+            // event type
+            d.dataType.dataSet.externalDataSource.dataType === DataSourceType.Event
+            // future events
+            && isAfter(new Date(d.startTime), new Date())
+          ))
+          .sort((a, b) => 
+            // most recent first
+            isAfter(new Date(a.startTime), new Date(b.startTime)) ? 1 : -1
+          )
+          .map((i: any) => (
           <article key={i.id} className='border-2 border-meepGray-200 rounded-md overflow-hidden p-4'>
             <header>
               <div className='text-meepGray-500'>
