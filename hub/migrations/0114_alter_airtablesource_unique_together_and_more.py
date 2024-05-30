@@ -95,7 +95,7 @@ class Migration(migrations.Migration):
         except Exception as e:
             if (
                 str(e)
-                == "Found wrong number (0) of constraints for hub_externaldatasource(base_id, table_id, api_key)"
+                == "Found wrong number (0) of constraints for hub_airtablesource(base_id, table_id, api_key)"
             ):
                 return project_state
             raise e
