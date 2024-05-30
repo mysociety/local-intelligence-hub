@@ -7,7 +7,7 @@ import logo from "../../../../../public/hub/logo.svg";
 import intersect from "../../../../../public/hub/Intersect.svg";
 
 
-export default function Navbar() {
+export default function HubNavbar() {
     return (
         <div className='flex gap-5 sticky top-0 h-[80px] z-50 justify-between items-center bg-jungle-green-bg'>
             <Image
