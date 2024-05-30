@@ -1,11 +1,12 @@
 "use server"
 
+import { gql } from "@apollo/client";
 import { getClient } from "@/services/apollo-client";
 import { Metadata } from "next";
 import { GetPageQuery, GetPageQueryVariables } from "@/__generated__/graphql";
-import { GET_PAGE } from "./gql";
-import { redirect } from "next/navigation";
 import RenderPuck from "../RenderPuck";
+import { redirect } from "next/navigation";
+import { GET_PAGE } from "./gql";
 
 type Params = {
   hostname: string
@@ -30,10 +31,6 @@ export default async function Page({ params: { hostname, slug } }: { params: Par
   }
 
   return (
-    <RenderPuck page={puckJsonContent} />
+    <RenderPuck page={page.data.hubPageByPath?.puckJsonContent} />
   )
 }
-
-// const metadata: Metadata = {
-//   title: "Hub page preview",
-// };
