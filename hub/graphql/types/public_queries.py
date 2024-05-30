@@ -118,7 +118,7 @@ async def enrich_postcodes(postcodes: List[str], info: Info) -> AuthenticatedPos
 
 
 @strawberry_django.field()
-def hub_postcode_search(postcode: str, info: Info) -> UnauthenticatedPostcodeQueryResponse:
+def postcode_search(postcode: str, info: Info) -> UnauthenticatedPostcodeQueryResponse:
     loaders = models.Loaders(
         postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo)
     )

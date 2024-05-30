@@ -93,7 +93,7 @@ const GET_HUB_MAP_DATA = gql`
 
 const GET_LOCAL_DATA = gql`
   query GetLocalData($postcode: String!, $hostname: String!) {
-    hubPostcodeSearch(postcode: $postcode) {
+    postcodeSearch(postcode: $postcode) {
       postcodesIO {
         constituencyName: parliamentaryConstituency2025
       }
