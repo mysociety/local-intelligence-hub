@@ -20,12 +20,12 @@ export function SearchPanel ({
         <input
           type="text"
           placeholder="Enter your postcode"
-          className='p-4 text-lg w-full rounded-md border border-meepGray-300 mt-4 active:border-green-500'
+          className='p-4 text-lg w-full rounded-md border placeholder:text-jungle-green-600 focus:ring-jungle-green-600 bg-jungle-green-100 border-jungle-green-200 mt-4 active:border-green-500'
           value={postcode}
           onChange={e => setPostcode(e.target.value)}
         />
         <button
-          className='bg-green-500 text-white text-lg font-bold rounded-md w-full p-4 mt-4'
+          className='bg-jungle-green-600 text-white text-lg font-bold rounded-md w-full p-4 mt-4'
           // TODO: add postcode validation
           disabled={!postcode || isLoading}
           onClick={() => onSearch(postcode)}
