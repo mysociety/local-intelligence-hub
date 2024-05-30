@@ -86,6 +86,7 @@ class Query(UserQueries):
     )
     hub_page_by_path: Optional[model_types.WagtailPage] = model_types.hub_page_by_path
     hub_by_hostname: Optional[model_types.HubHomepage] = model_types.hub_by_hostname
+    postcode_search: public_queries.UnauthenticatedPostcodeQueryResponse = public_queries.postcode_search
     public_map_report: model_types.MapReport = strawberry_django.field(
         resolver=model_types.public_map_report
     )
@@ -96,11 +97,11 @@ class Query(UserQueries):
         extensions=[IsAuthenticated()],
     )
 
-    enrich_postcode: public_queries.PostcodeQueryResponse = strawberry.field(
+    enrich_postcode: public_queries.AuthenticatedPostcodeQueryResponse = strawberry.field(
         resolver=public_queries.enrich_postcode,
         extensions=[IsAuthenticated()],
     )
-    enrich_postcodes: List[public_queries.PostcodeQueryResponse] = strawberry.field(
+    enrich_postcodes: List[public_queries.AuthenticatedPostcodeQueryResponse] = strawberry.field(
         resolver=public_queries.enrich_postcodes,
         extensions=[IsAuthenticated()],
     )
