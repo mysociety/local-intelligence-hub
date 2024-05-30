@@ -49,8 +49,9 @@ export function HubMap ({
   useEffect(() => {
     if (currentConstituency) {
       mapbox.loadedMap?.fitBounds(currentConstituency.fitBounds, {
+        // TODO: change for small screen
         padding: {
-          left: SIDEBAR_WIDTH,
+          left: SIDEBAR_WIDTH + 75,
           top: 50,
           right: 50,
           bottom: 50
