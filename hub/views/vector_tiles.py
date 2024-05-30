@@ -53,7 +53,7 @@ class ExternalDataSourceTileView(MVTView, DetailView):
                 )
             return super().get(request, *args, **kwargs)
         except Exception as e:
-            logger.info(f"Could not view location data: {e}")
+            logger.warning(f"Could not view location data: {e}")
             return HttpResponseForbidden(
                 "You don't have permission to view location data for this data source."
             )
