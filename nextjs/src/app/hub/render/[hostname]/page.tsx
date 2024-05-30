@@ -1,16 +1,14 @@
 "use server"
 
-import { gql } from "@apollo/client";
 import { getClient } from "@/services/apollo-client";
-import { Metadata } from "next";
 import { GetPageQuery, GetPageQueryVariables } from "@/__generated__/graphql";
-import RenderPuck from "../RenderPuck";
+import RenderPuck from "./RenderPuck";
 import { redirect } from "next/navigation";
-import { GET_PAGE } from "./gql";
+import { GET_PAGE } from "./query";
 
 type Params = {
   hostname: string
-  slug: string[]
+  slug: string
 }
 
 export default async function Page({ params: { hostname, slug } }: { params: Params }) {
@@ -19,7 +17,7 @@ export default async function Page({ params: { hostname, slug } }: { params: Par
     query: GET_PAGE,
     variables: {
       hostname,
-      path: slug?.join("/")
+      path: slug
     }
   })
 

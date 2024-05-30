@@ -165,6 +165,7 @@ const CONSTITUENCY_STATS_OVERVIEW = gql`
         gss
         count
         gssArea {
+          id
           name
           fitBounds
           mp: person(filters:{personType:"MP"}) {

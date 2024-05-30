@@ -1,12 +1,15 @@
 "use client"
 
-import Map, { ViewState } from "react-map-gl";
+import Map, { Layer, Source, ViewState, LngLatLike } from "react-map-gl";
 import { atom, useAtom } from "jotai";
 import { authenticationHeaders } from "@/lib/auth";
 import { ImmutableLike } from "react-map-gl/dist/esm/types";
 import { PlaceholderLayer, useLoadedMap, useMapIcons } from "@/lib/map";
 import { HubPointMarkers } from "./HubMapPoints";
 import { LoadingIcon } from "../ui/loadingIcon";
+import { GetLocalDataQuery } from "@/__generated__/graphql";
+import { useEffect } from "react";
+import { SIDEBAR_WIDTH } from "./data";
 
 const viewStateAtom = atom<Partial<ViewState>>({
   longitude: -2.296605,
@@ -16,10 +19,12 @@ const viewStateAtom = atom<Partial<ViewState>>({
 
 export function HubMap ({
   mapStyle,
-  externalDataSources
+  externalDataSources,
+  currentConstituency
 }: {
   mapStyle?: string | mapboxgl.Style | ImmutableLike<mapboxgl.Style> | undefined,
-  externalDataSources: string[]
+  externalDataSources: string[],
+  currentConstituency: GetLocalDataQuery['postcodeSearch']['constituency']
 }) {
   const [viewState, setViewState] = useAtom(viewStateAtom)
 
@@ -37,6 +42,23 @@ export function HubMap ({
   const mapbox = useLoadedMap()
 
   const loadedImages = useMapIcons(requiredImages, mapbox)
+
+  // TODO: switch to 2024
+  const tileset = TILESETS.constituencies
+
+  useEffect(() => {
+    if (currentConstituency) {
+      mapbox.loadedMap?.fitBounds(currentConstituency.fitBounds, {
+        // TODO: change for small screen
+        padding: FIT_BOUNDS_PADDING
+      })
+    } else {
+      // Fly to UK bounds
+      mapbox.loadedMap?.fitBounds(UK_BOUNDS, {
+        padding: FIT_BOUNDS_PADDING
+      })
+    }
+  }, [currentConstituency, mapbox.loadedMap])
 
   return (
     <>
@@ -66,10 +88,52 @@ export function HubMap ({
           return { url };
         }}
       >
-        <PlaceholderLayer id={"PLACEHOLDER_MARKERS"} />
+        {/* Layout order */}
+        <PlaceholderLayer id="PLACEHOLDER_MARKERS" />
+        <PlaceholderLayer id="AREA_BOUNDARIES" />
+        {/* Boundaries */}
+        <Source
+          id={tileset.mapboxSourceId}
+          type="vector"
+          url={`mapbox://${tileset.mapboxSourceId}`}
+          promoteId={tileset.promoteId}
+        />
+        <Layer
+          beforeId="AREA_BOUNDARIES"
+          id={`${tileset.mapboxSourceId}-line`}
+          source={tileset.mapboxSourceId}
+          source-layer={tileset.sourceLayerId}
+          type="line"
+          paint={{
+            "line-color": "green",
+            "line-width": 0.5,
+            "line-opacity": 0.25,
+          }}
+        />
+        {currentConstituency && (
+          <Layer
+            beforeId="AREA_BOUNDARIES"
+            filter={[
+              "==",
+              ["get", tileset.promoteId],
+              ["literal", currentConstituency?.gss],
+            ]}
+            id={`${tileset.mapboxSourceId}-selected-line`}
+            source={tileset.mapboxSourceId}
+            source-layer={tileset.sourceLayerId}
+            type="line"
+            paint={{
+              "line-color": "green",
+              "line-width": 1.5,
+              "line-opacity": 0.75,
+            }}
+          />
+        )}
+        {/* Markers */}
         {loadedImages.some(t => t === "tcc-event-marker") && externalDataSources.map(
           (externalDataSourceId, index) => (
             <HubPointMarkers
+              beforeId="PLACEHOLDER_MARKERS"
               key={externalDataSourceId}
               externalDataSourceId={externalDataSourceId}
               index={index}
@@ -79,4 +143,44 @@ export function HubMap ({
       </Map>
     </>
   );
+}
+
+const UK_BOUNDS: [LngLatLike, LngLatLike] = [
+  [-8.5, 49.5],
+  [2, 61]
+]
+
+const FIT_BOUNDS_PADDING = {
+  left: SIDEBAR_WIDTH + 75,
+  top: 50,
+  right: 50,
+  bottom: 50
+}
+
+// TODO: unify this and ReportMap's TILESETS
+const TILESETS: Record<"constituencies" | "constituencies2024", {
+  name: string,
+  singular: string,
+  mapboxSourceId: string,
+  sourceLayerId?: string,
+  promoteId: string,
+  labelId: string
+}> = {
+  constituencies: {
+    name: "GE2019 constituencies",
+    singular: "constituency",
+    mapboxSourceId: "commonknowledge.4xqg91lc",
+    sourceLayerId: "Westminster_Parliamentary_Con-6i1rlq",
+    promoteId: "pcon16cd",
+    labelId: "pcon16nm"
+  },
+  // TODO: when merged
+  constituencies2024: {
+    name: "GE2024 constituencies",
+    singular: "constituency",
+    mapboxSourceId: "commonknowledge.39dnumdm",
+    sourceLayerId: "constituencies_2024_simplifie-7w220i",
+    promoteId: "PCON24CD",
+    labelId: "PCON24NM"
+  }
 }
