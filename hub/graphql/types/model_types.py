@@ -531,7 +531,7 @@ class Area:
         return PointFeature.from_geodjango(
             point=self.point, id=self.gss, properties=props
         )
-    
+
     @strawberry_django.field
     def generic_data_for_hub(self, hostname: str) -> List["GenericData"]:
         site = Site.objects.get(hostname=hostname)
