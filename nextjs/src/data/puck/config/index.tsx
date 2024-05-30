@@ -4,7 +4,7 @@ import Root, { RootProps } from "./root";
 import { ButtonGroup, ButtonGroupProps } from "./blocks/ButtonGroup";
 import { Card, CardProps } from "./blocks/Card";
 import { Columns, ColumnsProps } from "./blocks/Columns";
-import { Hero, HeroProps } from "./blocks/Blank";
+import { Hero, HeroProps } from "./blocks/Hero";
 import { Heading, HeadingProps } from "./blocks/Heading";
 import { Flex, FlexProps } from "./blocks/Flex";
 import { Logos, LogosProps } from "./blocks/Logos";
@@ -14,6 +14,7 @@ import { EventCard, EventCardProps } from "./blocks/EventCard";
 import { VerticalSpace, VerticalSpaceProps } from "./blocks/VerticalSpace";
 import { GridRow, GridRowProps } from "./blocks/GridRow";
 import { SignPost, SignPostProps } from "./blocks/SignPost";
+import { SectionHeader, SectionHeaderProps } from "./blocks/SectionHeader/SectionHeader";
 
 export type Props = {
   ButtonGroup: ButtonGroupProps;
@@ -29,6 +30,7 @@ export type Props = {
   EventCard: EventCardProps;
   GridRow: GridRowProps;
   SignPost: SignPostProps;
+  SectionHeader: SectionHeaderProps;
 };
 
 export type UserConfig = Config
@@ -52,7 +54,8 @@ export const conf: UserConfig = {
         "Card",
         "Hero",
         "EventCard",
-        "SignPost"
+        "SignPost",
+        "SectionHeader"
       ],
     },
     layout: {
@@ -66,7 +69,7 @@ export const conf: UserConfig = {
     typography: {
       components: [
         "Heading",
-        // "RichText",
+        "RichText",
         "PlainText"
       ],
     },
@@ -86,8 +89,9 @@ export const conf: UserConfig = {
     VerticalSpace,
     EventCard,
     GridRow,
-    SignPost
+    SignPost,
+    SectionHeader,
 
-    // RichText: PuckRichText
+    RichText: PuckRichText
   },
 };

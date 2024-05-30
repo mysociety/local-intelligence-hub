@@ -49,7 +49,7 @@ export type CardProps = {
 const TypeBadge = ({ type }) => {
   return (
     <div>
-      <div className="uppercase inline-block text-jungle-green-700 bg-jungle-green-100 font-normal rounded-full px-3">{type}</div>
+      <div className=" uppercase inline-block text-jungle-green-700 bg-jungle-green-100 font-normal rounded-full py-1 px-3">{type}</div>
     </div>
   );
 }
@@ -61,7 +61,6 @@ export const Card: ComponentConfig<CardProps> = {
       options: [
         { label: "Resource", value: "resource" },
         { label: "Action", value: "action" },
-        { label: "Header", value: "header" },
         { label: "Tweet", value: "tweet" },
       ],
     },
@@ -90,10 +89,10 @@ export const Card: ComponentConfig<CardProps> = {
       <Dialog>
         <DialogTrigger className="w-full h-full text-left">
           <div className="w-full h-full aspect-square overflow-clip rounded-[20px] flex flex-col gap-5 hover:shadow-hover transition-all">
-            {type == "resource" && (
+            {type === "resource" && (
               <div className="p-5 bg-white h-full flex flex-col gap-4 justify-between">
                 <div className=" flex flex-col gap-4" >
-                  <h2 className="text-hubH5 tracking-tight">{title}</h2>
+                  <h2 className="lg:text-hub2xl text-hubxl">{title}</h2>
                   <p className="text-jungle-green-neutral line-clamp-6 ">{description}</p>
                 </div>
                 <TypeBadge type={type} />
@@ -104,14 +103,15 @@ export const Card: ComponentConfig<CardProps> = {
 
 
               <div className="p-5 bg-jungle-green-600 text-white h-full relative gap-2 flex flex-col align-bottom">
-                <div className=" grow"></div>
                 <Image src={ArrowTopRight} width={30} alt="arrow" />
-                <h2 className="hubH3 tracking-tight">{title}</h2>
-                <div>
-                  <div className="uppercase inline-block text-jungle-green-700 bg-jungle-green-100 text-lg font-normal rounded-full px-3">{type}</div>
+                <div className="z-10">
+                  <h2 className="lg:text-hub2xl text-hubxl tracking-tight">{title}</h2>
+                  <div>
+                    <div className="uppercase inline-block text-jungle-green-700 bg-jungle-green-100 text-lg font-normal rounded-full px-3">{type}</div>
+                  </div>
                 </div>
                 <Image
-                  className="object-cover rounded-[40px] absolute top-0 left-0 "
+                  className="object-cover rounded-[40px] absolute top-0 left-0"
                   src={CirclePattern}
                   width={500}
                   alt="hero image"
@@ -120,12 +120,7 @@ export const Card: ComponentConfig<CardProps> = {
               </div>
             )}
 
-            {type === "header" && (
-              <div className="rounded-[20px] col-span-2 p-5 border border-jungle-green-200 flex flex-col gap-5 justify-end h-full transition-all">
-                <h2 className="text-5xl tracking-tight">{title}</h2>
-                <p className="text-xl">{description}</p>
-              </div>
-            )}
+           
 
           </div>
         </DialogTrigger>

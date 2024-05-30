@@ -26,39 +26,44 @@ const config = {
         'IBMPlexSansCondensed': ["IBMPlexSansCondensed", 'sans-serif'],
         'IBMPlexMono': ["IBMPlexMono", 'sans-serif'],
         'PPRightGrotesk': ['PPRightGrotesk, sans-serif'],
-        
+        'publicSans': ['publicSans, sans-serif'],
+
       },
       fontSize: {
 
-        hubH1: ['3.625rem', {
+      
+
+        hub6xl: ['3.625rem', {
           lineHeight: '100%',
           letterSpacing: '-0.145rem',
         }],
 
-        hubH2: ['2.86rem', {
+        hub5xl: ['2.86rem', {
           lineHeight: '100%',
           letterSpacing: '-0.11rem',
         }],
 
-        hubH3: ['2.44rem', {
+        hub4xl: ['2.44rem', {
           lineHeight: '100%',
           letterSpacing: '-0.1rem',
         }],
-        hubH4: ['1.75rem', {
+        hub3xl: ['1.75rem', {
           lineHeight: '100%',
           letterSpacing: '-0.04rem',
         }],
-        hubH5: ['1.5rem', {
+        hub2xl: ['1.5rem', {
           lineHeight: '100%',
           letterSpacing: '-0.015rem',
         }],
-        hubH6: ['1.25rem', {
+        hubxl: ['1.25rem', {
           lineHeight: '100%',
           letterSpacing: '0rem',
         }],
 
 
-        
+
+
+
 
 
         hXlg: ['4.5rem', {
@@ -161,7 +166,7 @@ const config = {
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         yellow: "hsl(var(--yellow))",
-        darkSecondary:  "hsl(var(--dark-secondary))",
+        darkSecondary: "hsl(var(--dark-secondary))",
         background: {
           DEFAULT: "hsl(var(--meepGray-800))",
           secondary: "hsl(var(--meepGray-700))",
@@ -208,6 +213,42 @@ const config = {
           'bg': '#f2f2f2',
 
         },
+
+        hub: {
+          border: "#d4f7e7",
+          input: "#76dfbb",
+          ring: "#1aa680",
+          background: "hsl(var(--background))",
+          foreground: "#0b493d",
+          primary: {
+            DEFAULT: "hsl(var(--primary))",
+            foreground: "hsl(var(--primary-foreground))",
+          },
+          secondary: {
+            DEFAULT: "hsl(var(--secondary))",
+            foreground: "hsl(var(--secondary-foreground))",
+          },
+          destructive: {
+            DEFAULT: "hsl(var(--destructive))",
+            foreground: "hsl(var(--destructive-foreground))",
+          },
+          muted: {
+            DEFAULT: "#76dfbb",
+            foreground: "#0f8c6c",
+          },
+          accent: {
+            DEFAULT: "hsl(var(--accent))",
+            foreground: "hsl(var(--accent-foreground))",
+          },
+          popover: {
+            DEFAULT: "hsl(var(--popover))",
+            foreground: "hsl(var(--popover-foreground))",
+          },
+          card: {
+            DEFAULT: "hsl(var(--card))",
+            foreground: "hsl(var(--card-foreground))",
+          },
+        }
       },
       boxShadow: {
         'hover': '0px 0px 30px 0px var(--Jungle-Green-300, #76DFBB)',
@@ -239,41 +280,7 @@ const config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
-      hub:{
-        border: "#d4f7e7",
-        input: "#76dfbb",
-        ring: "#1aa680",
-        background: "hsl(var(--background))",
-        foreground: "#0b493d",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "#76dfbb",
-          foreground: "#0f8c6c",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
-      }
+
     },
   },
   plugins: [require("tailwindcss-animate")],
