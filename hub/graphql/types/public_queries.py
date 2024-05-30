@@ -51,7 +51,7 @@ class UnauthenticatedPostcodeQueryResponse:
         id = postcode_data.codes.parliamentary_constituency_2025
         return await models.Area.objects.aget((
             Q(gss=id) | Q(name=id)) &
-            Q(area_type="WMC23")
+            Q(area_type__code="WMC23")
         )
 
 
