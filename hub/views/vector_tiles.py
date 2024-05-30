@@ -44,8 +44,10 @@ class ExternalDataSourceTileView(MVTView, DetailView):
     def get(self, request, *args, **kwargs):
         try:
             user_or_error: UserOrError = get_user_or_error(request)
-            permissions = ExternalDataSource.user_permissions(
-                user_or_error.user if user_or_error.user else None, self.get_id()
+            user = user_or_error.user if user_or_error.user else None
+            permissions = ExternalDataSource.user_permissions(user, self.get_id())
+            logger.info(
+                f"Got user permissions for {self.get_id()}, user {user}: {permissions}"
             )
             if not permissions.get("can_display_points", False):
                 return HttpResponseForbidden(
