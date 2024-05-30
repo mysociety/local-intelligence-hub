@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  DataSourceType,
   MapReportConstituencyStatsQuery,
   MapReportConstituencyStatsQueryVariables,
   MapReportLayerAnalyticsQuery,
@@ -14,7 +15,7 @@ import {
 } from "@/__generated__/graphql";
 import { Fragment, useContext, useEffect, useState } from "react";
 import Map, { Layer, Source, LayerProps, Popup, ViewState, MapboxGeoJSONFeature } from "react-map-gl";
-import { gql, useQuery } from "@apollo/client";
+import { gql, useFragment, useQuery } from "@apollo/client";
 import { ReportContext } from "@/app/reports/[id]/context";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import { scaleLinear, scaleSequential } from 'd3-scale'
@@ -23,7 +24,7 @@ import { Point } from "geojson"
 import { atom, useAtom } from "jotai";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import { z } from "zod";
-import { layerColour, useLoadedMap, isConstituencyPanelOpenAtom } from "@/app/reports/[id]/lib";
+import { layerColour, useLoadedMap, isConstituencyPanelOpenAtom, MAP_REPORT_LAYERS_SUMMARY, layerIdColour, useMapIcons, PlaceholderLayer } from "@/lib/map";
 import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel";
 import { authenticationHeaders } from "@/lib/auth";
 
@@ -177,28 +178,7 @@ export function ReportMap () {
     },
   ]
 
-  const [loadedImages, setLoadedImages] = useState<string[]>([])
-
-  useEffect(function loadIcons() {
-    if (!mapbox.loadedMap) return
-    requiredImages.forEach((requiredImage) => {
-      console.log("Loading", requiredImage.url())
-      // Load an image from an external URL.
-      mapbox.loadedMap!.loadImage(
-        requiredImage.url(),
-        (error, image) => {
-          try {
-            if (error) throw error;
-            if (!image) throw new Error('Marker icon did not load')
-            mapbox.loadedMap!.addImage(requiredImage.name, image);
-            setLoadedImages(loadedImages => [...loadedImages, requiredImage.name])
-          } catch (e) {
-            console.error("Failed to load image", e)
-          }
-        }
-      )
-    })
-  }, [mapbox.loadedMap, setLoadedImages])
+  const loadedImages = useMapIcons(requiredImages, mapbox)
 
   const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(selectedSourceMarkerAtom)
   const [selectedConstituency, setSelectedConstituency] = useAtom(selectedConstituencyAtom)
@@ -258,7 +238,7 @@ export function ReportMap () {
 
   return (
     <>
-      {loading ? (
+      {loading && (
         <div className="absolute w-full h-full inset-0 z-10 pointer-events-none">
           <div className="flex flex-col items-center justify-center w-full h-full">
             <LoadingIcon />
@@ -271,7 +251,7 @@ export function ReportMap () {
               ))}
           </div>
         </div>
-      ) : null}
+      )}
       <Map
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
         {...viewState}
@@ -419,17 +399,15 @@ export function ReportMap () {
                       type: "FeatureCollection",
                       features: tileset.data
                         .filter((d) => d.gssArea?.point?.geometry)
-                        .map((d) => {
-                          return {
-                            type: "Feature",
-                            geometry: d.gssArea?.point
-                              ?.geometry! as GeoJSON.Point,
-                            properties: {
-                              count: d.count,
-                              label: d.label,
-                            },
-                          };
-                        }),
+                        .map((d) => ({
+                          type: "Feature",
+                          geometry: d.gssArea?.point
+                            ?.geometry! as GeoJSON.Point,
+                          properties: {
+                            count: d.count,
+                            label: d.label,
+                          },
+                        }))
                     }}
                   />
                   <Layer
@@ -534,7 +512,7 @@ export function ReportMap () {
             {!!selectedSourceMarker?.properties?.id && (
               <ErrorBoundary errorComponent={() => <></>}>
                 <Popup
-                  key={selectedSourceMarker.properties.id}
+              key={selectedSourceMarker.properties.id}
                   longitude={
                     (selectedSourceMarker.geometry as Point)
                       ?.coordinates?.[0] || 0
@@ -550,13 +528,13 @@ export function ReportMap () {
                   anchor="bottom"
                   offset={[0, -35] as any}
                 >
-                  {selectedPointLoading ? (
-                    <div className="font-IBMPlexMono p-2 space-y-1 bg-white">
-                      <div className="-space-y-1">
-                        <div className="text-meepGray-400">LOADING</div>
-                      </div>
-                    </div>
-                  ) : (
+              {selectedPointLoading ? (
+                <div className="font-IBMPlexMono p-2 space-y-1 bg-white">
+                  <div className="-space-y-1">
+                    <div className="text-meepGray-400">LOADING</div>
+                  </div>
+                </div>
+              ) : (
                     <>
                       <div className="font-IBMPlexMono p-2 space-y-1 bg-white">
                         {!!selectedPointData?.importedDataGeojsonPoint
@@ -633,9 +611,9 @@ export function ReportMap () {
                         )}
                       </footer>
                     </>
-                  )}
-                </Popup>
-              </ErrorBoundary>
+              )}
+              </Popup>
+            </ErrorBoundary>
             )}
           </>
         )}
@@ -738,20 +716,6 @@ function ExternalDataSourcePointMarkers ({ externalDataSourceId, index }: { exte
   )
 }
 
-/**
- * Placeholder layer to refer to in `beforeId`.
- * See https://github.com/visgl/react-map-gl/issues/939#issuecomment-625290200
- */
-export function PlaceholderLayer (props: Partial<LayerProps>) {
-  return (
-    <Layer
-      {...props}
-      type='background'
-      layout={{ visibility: 'none' }}
-      paint={{}}
-    />
-  )
-}
 
 const MAP_REPORT_LAYER_POINT = gql`
 query MapReportLayerGeoJSONPoint($genericDataId: String!) {

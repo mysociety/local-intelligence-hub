@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { CrmType, EnrichmentLayersQuery, ExternalDataSourceInput, FieldDefinition, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
+import { CrmType, DataSourceType, EnrichmentLayersQuery, ExternalDataSourceInput, FieldDefinition, GeographyTypes } from "@/__generated__/graphql";
 import { Input } from "@/components/ui/input";
 import { SourcePathSelector } from "@/components/SelectSourceData";
 import { ArrowRight, Plus, RefreshCcw, X } from "lucide-react";
@@ -141,10 +141,10 @@ export function UpdateMappingForm({
                           <SelectContent>
                             <SelectGroup>
                               <SelectLabel>Geography type</SelectLabel>
-                              <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Constituency}>Constituency</SelectItem>
+                              <SelectItem value={GeographyTypes.Postcode}>Postcode</SelectItem>
+                              <SelectItem value={GeographyTypes.Ward}>Ward</SelectItem>
+                              <SelectItem value={GeographyTypes.Council}>Council</SelectItem>
+                              <SelectItem value={GeographyTypes.Constituency}>Constituency</SelectItem>
                             </SelectGroup>
                           </SelectContent>
                         </Select>

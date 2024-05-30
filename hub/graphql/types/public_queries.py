@@ -27,7 +27,7 @@ from utils.postcodesIO import get_bulk_postcode_geo
 
 
 @strawberry.type
-class PostcodeQueryResponse:
+class UnauthenticatedPostcodeQueryResponse:
     postcode: str
     loaders: strawberry.Private[models.Loaders]
 
@@ -36,16 +36,29 @@ class PostcodeQueryResponse:
         return await self.loaders["postcodesIO"].load(self.postcode)
 
     @strawberry_django.field
-    async def electoral_commission(self) -> Optional[ElectoralCommissionPostcodeLookup]:
-        return await electoral_commision_postcode_lookup(self.postcode)
-
-    @strawberry_django.field
     async def constituency(self) -> Optional[model_types.Area]:
         postcode_data = await self.loaders["postcodesIO"].load(self.postcode)
         if postcode_data is None:
             return None
         id = postcode_data.codes.parliamentary_constituency
         return await models.Area.objects.aget(Q(gss=id) | Q(name=id))
+
+    @strawberry_django.field
+    async def constituency_2024(self) -> Optional[model_types.Area]:
+        postcode_data = await self.loaders["postcodesIO"].load(self.postcode)
+        if postcode_data is None:
+            return None
+        id = postcode_data.codes.parliamentary_constituency_2025
+        return await models.Area.objects.aget(
+            (Q(gss=id) | Q(name=id)) & Q(area_type__code="WMC23")
+        )
+
+
+@strawberry.type
+class AuthenticatedPostcodeQueryResponse(UnauthenticatedPostcodeQueryResponse):
+    @strawberry_django.field
+    async def electoral_commission(self) -> Optional[ElectoralCommissionPostcodeLookup]:
+        return await electoral_commision_postcode_lookup(self.postcode)
 
     @strawberry_django.field
     async def custom_source_data(
@@ -64,7 +77,9 @@ class PostcodeQueryResponse:
             )
 
 
-async def enrich_postcode(postcode: str, info: Info) -> PostcodeQueryResponse:
+async def enrich_postcode(
+    postcode: str, info: Info
+) -> AuthenticatedPostcodeQueryResponse:
     user = get_current_user(info)
     loaders = models.Loaders(
         postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo),
@@ -77,10 +92,12 @@ async def enrich_postcode(postcode: str, info: Info) -> PostcodeQueryResponse:
             ).all()
         },
     )
-    return PostcodeQueryResponse(postcode=postcode, loaders=loaders)
+    return AuthenticatedPostcodeQueryResponse(postcode=postcode, loaders=loaders)
 
 
-async def enrich_postcodes(postcodes: List[str], info: Info) -> PostcodeQueryResponse:
+async def enrich_postcodes(
+    postcodes: List[str], info: Info
+) -> AuthenticatedPostcodeQueryResponse:
     if len(postcodes) > settings.POSTCODES_IO_BATCH_MAXIMUM:
         raise ValueError(
             f"Batch query takes a maximum of 100 postcodes. You provided {len(postcodes)}"
@@ -98,9 +115,15 @@ async def enrich_postcodes(postcodes: List[str], info: Info) -> PostcodeQueryRes
         },
     )
     return [
-        PostcodeQueryResponse(postcode=postcode, loaders=loaders)
+        AuthenticatedPostcodeQueryResponse(postcode=postcode, loaders=loaders)
         for postcode in postcodes
     ]
+
+
+@strawberry_django.field()
+def postcode_search(postcode: str, info: Info) -> UnauthenticatedPostcodeQueryResponse:
+    loaders = models.Loaders(postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo))
+    return UnauthenticatedPostcodeQueryResponse(postcode=postcode, loaders=loaders)
 
 
 ########################

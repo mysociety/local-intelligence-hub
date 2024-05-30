@@ -9,36 +9,40 @@ export async function toastPromise<T>(promise: Promise<T>, options: {
   success?: string | ToastMessage | ((d: T) => string | ToastMessage)
   error?: string | ToastMessage | ((e: any) => string | ToastMessage)
 }) {
-  let id: any
-  if (typeof options.loading === 'string') {
-    id = toast.loading(options.loading)
-  } else {
-    id = toast.loading(options.loading?.title || "Loading")
-  }
-  try {
-    const data = await promise
-    const success = typeof options.success === 'function' ? options.success(data) : options.success
-    if (typeof success === 'string') {
-      toast.success(success, { id })
+  return new Promise<T>(async (resolve, reject) => {
+    let id: any
+    if (typeof options.loading === 'string') {
+      id = toast.loading(options.loading)
     } else {
-      if (!success) {
-        toast.success("Success", { id })
-      } else {
-        const { title, ...rest } = success
-        toast.success(title, { id, ...rest })
-      }
+      id = toast.loading(options.loading?.title || "Loading")
     }
-  } catch (e) {
-    const error = typeof options.error === 'function' ? options.error(e) : options.error
-    if (typeof error === 'string') {
-      toast.error(error, { id })
-    } else {
-      if (!error) {
-        toast.success("Error", { id })
+    try {
+      const data = await promise
+      const success = typeof options.success === 'function' ? options.success(data) : options.success
+      if (typeof success === 'string') {
+        toast.success(success, { id })
       } else {
-        const { title, ...rest } = error
-        toast.error(title, { id, ...rest })
+        if (!success) {
+          toast.success("Success", { id })
+        } else {
+          const { title, ...rest } = success
+          toast.success(title, { id, ...rest })
+        }
       }
+      resolve(data)
+    } catch (e) {
+      const error = typeof options.error === 'function' ? options.error(e) : options.error
+      if (typeof error === 'string') {
+        toast.error(error, { id })
+      } else {
+        if (!error) {
+          toast.success("Error", { id })
+        } else {
+          const { title, ...rest } = error
+          toast.error(title, { id, ...rest })
+        }
+      }
+      reject(e)
     }
-  }
+  })
 }

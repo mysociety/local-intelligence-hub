@@ -16,6 +16,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("hub", "0111_actionnetworksource"),
+        ("hub", "0111_merge_20240524_2343"),
     ]
 
     operations = [

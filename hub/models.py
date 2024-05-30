@@ -38,6 +38,9 @@ from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
+from wagtail.admin.panels import FieldPanel
+from wagtail.models import Page
+from wagtail_json_widget.widgets import JSONEditorWidget
 
 import utils as lih_utils
 from hub.analytics import Analytics
@@ -55,6 +58,7 @@ from hub.tasks import (
 )
 from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
 from utils.log import get_simple_debug_logger
+from utils.nominatim import address_to_geojson
 from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
 from utils.py import batched, ensure_list, get
 
@@ -426,11 +430,11 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
 
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
-    label = models.CharField(max_length=200, blank=True, null=True)
+    label = models.CharField(max_length=500, blank=True, null=True)
     data_type = models.CharField(max_length=20, choices=TypeMixin.TYPE_CHOICES)
     last_update = models.DateTimeField(auto_now=True)
     source_label = models.TextField(max_length=300, blank=True, null=True)
-    source = models.CharField(max_length=200)
+    source = models.CharField(max_length=500)
     source_type = models.TextField(
         max_length=50, blank=True, null=True, choices=SOURCE_CHOICES
     )
@@ -524,7 +528,7 @@ class DataType(TypeMixin, ShaderMixin, models.Model):
     average = models.FloatField(blank=True, null=True)
     maximum = models.FloatField(blank=True, null=True)
     minimum = models.FloatField(blank=True, null=True)
-    label = models.CharField(max_length=200, blank=True, null=True)
+    label = models.CharField(max_length=500, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     order = models.IntegerField(blank=True, null=True)
     area_type = models.ForeignKey(
@@ -694,7 +698,17 @@ class GenericData(CommonData):
     full_name = models.CharField(max_length=300, blank=True, null=True)
     email = models.EmailField(max_length=300, blank=True, null=True)
     phone = models.CharField(max_length=100, blank=True, null=True)
+    start_time = models.DateTimeField(blank=True, null=True)
+    end_time = models.DateTimeField(blank=True, null=True)
+    public_url = models.URLField(max_length=2000, blank=True, null=True)
+    osm_data = JSONField(blank=True, null=True)
     address = models.CharField(max_length=1000, blank=True, null=True)
+    title = models.CharField(max_length=1000, blank=True, null=True)
+    description = models.TextField(max_length=3000, blank=True, null=True)
+    image = models.ImageField(null=True, upload_to="generic_data")
+    start_time = models.DateTimeField(blank=True, null=True)
+    end_time = models.DateTimeField(blank=True, null=True)
+    public_url = models.URLField(max_length=2000, blank=True, null=True)
 
     def remote_url(self):
         return self.data_type.data_set.external_data_source.record_url(self.data)
@@ -714,6 +728,8 @@ class GenericData(CommonData):
             return self.first_name
         elif self.last_name:
             return self.last_name
+        elif self.title:
+            return self.title
 
         return None
 
@@ -810,7 +826,7 @@ class Person(models.Model):
     person_type = models.CharField(max_length=10)
     external_id = models.CharField(db_index=True, max_length=20)
     id_type = models.CharField(max_length=30)
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=500)
     area = models.ForeignKey(Area, on_delete=models.CASCADE)
     photo = models.ImageField(null=True, upload_to="person")
     start_date = models.DateField(null=True)
@@ -931,6 +947,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     class DataSourceType(models.TextChoices):
         MEMBER = "MEMBER", "Members or supporters"
         REGION = "REGION", "Areas or regions"
+        EVENT = "EVENT", "Events"
+        LOCATION = "LOCATION", "Locations"
+        STORY = "STORY", "Stories"
         OTHER = "OTHER", "Other"
 
     data_type = TextChoicesField(
@@ -942,20 +961,27 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     last_update = models.DateTimeField(auto_now=True)
     # Geocoding data
 
-    class PostcodesIOGeographyTypes(models.TextChoices):
+    can_display_points_publicly = models.BooleanField(default=False)
+    can_display_details_publicly = models.BooleanField(default=False)
+
+    class GeographyTypes(models.TextChoices):
+        ADDRESS = "address", "Address"
         POSTCODE = "postcode", "Postcode"
         WARD = "ward", "Ward"
         CONSTITUENCY = "parliamentary_constituency", "Constituency"
         COUNCIL = "admin_district", "Council"
         CONSTITUENCY_2025 = "parliamentary_constituency_2025", "Constituency (2024)"
+        # TODO: LNG_LAT = "lng_lat", "Longitude and Latitude"
 
     geography_column_type = TextChoicesField(
-        choices_enum=PostcodesIOGeographyTypes,
-        default=PostcodesIOGeographyTypes.POSTCODE,
+        choices_enum=GeographyTypes,
+        default=GeographyTypes.POSTCODE,
     )
     geography_column = models.CharField(max_length=250, blank=True, null=True)
 
     # Useful for explicit querying and interacting with members in the UI
+    # TODO: longitude_field = models.CharField(max_length=250, blank=True, null=True)
+    # TODO: latitude_field = models.CharField(max_length=250, blank=True, null=True)
     postcode_field = models.CharField(max_length=250, blank=True, null=True)
     first_name_field = models.CharField(max_length=250, blank=True, null=True)
     last_name_field = models.CharField(max_length=250, blank=True, null=True)
@@ -963,6 +989,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     email_field = models.CharField(max_length=250, blank=True, null=True)
     phone_field = models.CharField(max_length=250, blank=True, null=True)
     address_field = models.CharField(max_length=250, blank=True, null=True)
+    title_field = models.CharField(max_length=250, blank=True, null=True)
+    description_field = models.CharField(max_length=250, blank=True, null=True)
+    image_field = models.CharField(max_length=250, blank=True, null=True)
+    start_time_field = models.CharField(max_length=250, blank=True, null=True)
+    end_time_field = models.CharField(max_length=250, blank=True, null=True)
+    public_url_field = models.CharField(max_length=250, blank=True, null=True)
 
     import_fields = [
         "postcode_field",
@@ -972,6 +1004,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         "email_field",
         "phone_field",
         "address_field",
+        "title_field",
+        "description_field",
+        "image_field",
+        "start_time_field",
+        "end_time_field",
+        "public_url_field",
     ]
 
     @classmethod
@@ -1005,9 +1043,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         # Always keep these two in sync
         if (
             self.geography_column is not None
-            and self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE
+            and self.geography_column_type == self.GeographyTypes.POSTCODE
         ):
             self.postcode_field = self.geography_column
+        elif (
+            self.geography_column is not None
+            and self.geography_column_type == self.GeographyTypes.ADDRESS
+        ):
+            self.address_field = self.geography_column
 
         if not self.deduplication_hash:
             self.deduplication_hash = self.get_deduplication_hash()
@@ -1267,14 +1310,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             for field in self.import_fields:
                 if getattr(self, field, None) is not None:
                     update_data[field.removesuffix("_field")] = self.get_record_field(
-                        record, getattr(self, field)
+                        record, getattr(self, field), field
                     )
 
             return update_data
 
         if (
             self.geography_column
-            and self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE
+            and self.geography_column_type == self.GeographyTypes.POSTCODE
         ):
             loaders = await self.get_loaders()
 
@@ -1313,6 +1356,36 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 )
 
             await asyncio.gather(*[create_import_record(record) for record in data])
+        elif (
+            self.geography_column
+            and self.geography_column_type == self.GeographyTypes.ADDRESS
+        ):
+            for record in data:
+                structured_data = get_update_data(record)
+                address = self.get_record_field(record, self.geography_column)
+                try:
+                    osm_data = address_to_geojson(address)
+                except Exception:
+                    osm_data = {}
+                logger.warn([address, osm_data])
+                update_data = {
+                    **structured_data,
+                    "osm_data": osm_data,
+                    "point": (
+                        Point(
+                            osm_data["geometry"]["coordinates"][0],
+                            osm_data["geometry"]["coordinates"][1],
+                        )
+                        if osm_data is not None and "geometry" in osm_data
+                        else None
+                    ),
+                }
+
+                await GenericData.objects.aupdate_or_create(
+                    data_type=data_type,
+                    data=self.get_record_id(record),
+                    defaults=update_data,
+                )
         else:
             # To allow us to lean on LIH's geo-analytics features,
             # TODO: Re-implement this data as `AreaData`, linking each datum to an Area/AreaType as per `self.geography_column` and `self.geography_column_type`.
@@ -1369,7 +1442,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         raise NotImplementedError("Get ID not implemented for this data source type.")
 
-    def get_record_field(self, record: dict, field: str):
+    def get_record_field(self, record: dict, field: str, field_type=None):
         """
         Get a field from a record.
         """
@@ -1528,6 +1601,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         if type(member) is str:
             member = await loaders["fetch_record"].load(member)
+
         if member is None:
             # TODO: write tests for the case when the loader fails for a member
             return None
@@ -1542,7 +1616,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         try:
             logger.debug(f"mapping member {id}")
             postcode_data = None
-            if self.geography_column_type == self.PostcodesIOGeographyTypes.POSTCODE:
+            if self.geography_column_type == self.GeographyTypes.POSTCODE:
                 # Get postcode from member
                 postcode = self.get_record_field(member, self.geography_column)
                 # Get relevant config data for that postcode
@@ -1850,33 +1924,43 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
     class DataPermissions(TypedDict):
-        can_display_points: bool
-        can_display_details: bool
+        can_display_points: bool = False
+        can_display_details: bool = False
+
+    # TODO: cache this and bust it when the db fields change
+    def default_data_permissions(self):
+        return ExternalDataSource.DataPermissions(
+            can_display_points=self.can_display_points_publicly,
+            can_display_details=self.can_display_details_publicly,
+        )
 
     @classmethod
     def user_permissions(
         cls,
-        user: Union[AbstractBaseUser, str],
+        user: Union[AbstractBaseUser, str, None],
         external_data_source: Union["ExternalDataSource", str],
     ) -> DataPermissions:
-        if user is None or external_data_source is None:
-            return cls.DataPermissions(
-                can_display_points=False,
-                can_display_details=False,
-            )
-        external_data_source_id = (
-            external_data_source
-            if not isinstance(external_data_source, ExternalDataSource)
-            else str(external_data_source.id)
-        )
-        user_id = user if not hasattr(user, "id") else str(user.id)
-        if user_id is None or external_data_source_id is None:
+        if external_data_source is None:
             return cls.DataPermissions(
                 can_display_points=False,
                 can_display_details=False,
             )
 
+        external_data_source_id = (
+            external_data_source
+            if isinstance(external_data_source, str)
+            else str(external_data_source.id)
+        )
+
+        source = ExternalDataSource.objects.get(pk=external_data_source_id)
+        default_source_permissions = source.default_data_permissions()
+
+        if user is None or not user.is_authenticated:
+            logger.debug("No user provided, returning default permissions")
+            return default_source_permissions
+
         # Check for cached permissions on this source
+        user_id = user if not hasattr(user, "id") else str(user.id)
         permission_cache_key = SharingPermission._get_cache_key(external_data_source_id)
         permissions_dict = cache.get(permission_cache_key)
         if permissions_dict is None:
@@ -1884,6 +1968,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         # If cached permissions exist, look for this user's permissions
         elif permissions_dict.get(user_id, None) is not None:
+            logger.debug("User provided, returning cached permissions")
             return permissions_dict[user_id]
 
         # Calculate permissions for this source
@@ -1894,13 +1979,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     can_display_points=False,
                     can_display_details=False,
                 )
-        # If the user's org owns the source, they can see everything
         if user_id is None or external_data_source.organisation is None:
-            return cls.DataPermissions(
-                can_display_points=False,
-                can_display_details=False,
-            )
+            return default_source_permissions
         else:
+            # If the user's org owns the source, they can see everything
             can_display_points = external_data_source.organisation.members.filter(
                 user=user_id
             ).exists()
@@ -2036,8 +2118,15 @@ class AirtableSource(ExternalDataSource):
     def get_record_id(self, record):
         return record["id"]
 
-    def get_record_field(self, record, field):
-        return record["fields"].get(str(field))
+    def get_record_field(self, record, field, field_type=None):
+        d = record["fields"].get(str(field), None)
+        if field_type == "image_field" and d is not None and len(d) > 0:
+            # TODO: implement image handling
+            # e.g. [{'id': 'attDWjeMhUfNMTqRG', 'width': 2200, 'height': 1518, 'url': 'https://v5.airtableusercontent.com/v3/u/27/27/1712044800000/CxNHcR-sBRUhrWt_54_NFA/wcYpoqFV5W_wRmVwh2RM8qs-mJkwwHkQLZuhtf7rFk5-34gILMXJeIYg9vQMcTtgSEd1dDb7lU0CrgJldTcZBN9VyaTU0IkYiw1e5PzTs8ZsOEmA6wrva7UavQCnoacL8b7yUt4ZuWWhna8wzZD2MTZC1K1C1wLkfA1UyN76ZDO-Q6WkBjgg5uZv7rtXlhj9/WL6lQJQAHKXqA9J1YIteSJ3J0Yepj69c55PducG607k'
+            #     url = d[0]["url"]
+            #     return download_file_from_url(url)
+            return None
+        return d
 
     def get_record_dict(self, record):
         return record["fields"]
@@ -2236,6 +2325,7 @@ class Report(PolymorphicModel):
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(auto_now=True)
+    public = models.BooleanField(default=False, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -2267,7 +2357,7 @@ class MailchimpSource(ExternalDataSource):
         data_type=ExternalDataSource.DataSourceType.MEMBER,
         # Geocoding
         geography_column="ADDRESS.zip",
-        geography_column_type=ExternalDataSource.PostcodesIOGeographyTypes.POSTCODE,
+        geography_column_type=ExternalDataSource.GeographyTypes.POSTCODE,
         # Imports
         postcode_field="ADDRESS.zip",
         first_name_field="FNAME",
@@ -2318,7 +2408,7 @@ class MailchimpSource(ExternalDataSource):
     def get_record_id(self, record):
         return record["id"]
 
-    def get_record_field(self, record, field: str):
+    def get_record_field(self, record, field: str, field_type=None):
         field_options = [
             field,
             f"merge_fields.{field}",
@@ -2542,7 +2632,7 @@ class ActionNetworkSource(ExternalDataSource):
         data_type=ExternalDataSource.DataSourceType.MEMBER,
         # Geocoding
         geography_column="postal_addresses[0].postal_code",
-        geography_column_type=ExternalDataSource.PostcodesIOGeographyTypes.POSTCODE,
+        geography_column_type=ExternalDataSource.GeographyTypes.POSTCODE,
         # Imports
         postcode_field="postal_addresses[0].postal_code",
         first_name_field="given_name",
@@ -2595,7 +2685,7 @@ class ActionNetworkSource(ExternalDataSource):
             return uuid
         return f"action_network:{uuid}"
 
-    def get_record_field(self, record, field: str):
+    def get_record_field(self, record, field: str, field_type=None):
         return get(record, field)
 
     def field_definitions(self):
@@ -2739,6 +2829,7 @@ class MapReport(Report, Analytics):
         name: str
         source: str
         visible: Optional[bool]
+        custom_marker_text: Optional[str] = None
 
     def get_layers(self) -> list[MapLayer]:
         return self.layers or []
@@ -2753,6 +2844,58 @@ class MapReport(Report, Analytics):
 
     def get_analytics_queryset(self):
         return self.get_import_data()
+
+
+def generate_puck_json_content():
+    return {"content": [], "root": {}, "zones": {}}
+
+
+class HubHomepage(Page):
+    """
+    An microsite that incorporates datasets and content pages,
+    backed by a custom URL.
+    """
+
+    subpage_types = ["hub.HubContentPage"]
+
+    organisation = models.ForeignKey(
+        Organisation, on_delete=models.PROTECT, related_name="hubs"
+    )
+
+    layers = models.JSONField(blank=True, null=True, default=list)
+    puck_json_content = models.JSONField(
+        blank=True, null=False, default=generate_puck_json_content
+    )
+    nav_links = models.JSONField(blank=True, null=True, default=list)
+
+    content_panels = Page.content_panels + [
+        FieldPanel("organisation"),
+        FieldPanel("layers", widget=JSONEditorWidget),
+        FieldPanel("puck_json_content", widget=JSONEditorWidget),
+        FieldPanel("nav_links", widget=JSONEditorWidget),
+    ]
+
+    def get_layers(self) -> list[MapReport.MapLayer]:
+        return self.layers
+
+    class HubNavLinks(TypedDict):
+        label: str
+        link: str
+
+    def get_nav_links(self) -> list[HubNavLinks]:
+        return self.nav_links
+
+
+class HubContentPage(Page):
+    parent_page_type = ["hub.HubHomepage"]
+    subpage_types = ["hub.HubContentPage"]
+    puck_json_content = models.JSONField(
+        blank=True, null=False, default=generate_puck_json_content
+    )
+
+    content_panels = Page.content_panels + [
+        FieldPanel("puck_json_content", widget=JSONEditorWidget),
+    ]
 
 
 class APIToken(models.Model):

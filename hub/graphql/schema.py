@@ -75,6 +75,23 @@ class Query(UserQueries):
     map_reports: List[model_types.MapReport] = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
+    hub_homepages: List[model_types.HubHomepage] = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
+    hub_homepage: model_types.HubHomepage = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
+    hub_page: model_types.WagtailPage = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
+    hub_page_by_path: Optional[model_types.WagtailPage] = model_types.hub_page_by_path
+    hub_by_hostname: Optional[model_types.HubHomepage] = model_types.hub_by_hostname
+    postcode_search: public_queries.UnauthenticatedPostcodeQueryResponse = (
+        public_queries.postcode_search
+    )
+    public_map_report: model_types.MapReport = strawberry_django.field(
+        resolver=model_types.public_map_report
+    )
     area: Optional[model_types.Area] = model_types.area_by_gss
     dataSet: Optional[model_types.DataSet] = model_types.dataset_by_name
     mapping_sources: List[model_types.MappingSource] = strawberry_django.field(
@@ -82,13 +99,17 @@ class Query(UserQueries):
         extensions=[IsAuthenticated()],
     )
 
-    enrich_postcode: public_queries.PostcodeQueryResponse = strawberry.field(
-        resolver=public_queries.enrich_postcode,
-        extensions=[IsAuthenticated()],
+    enrich_postcode: public_queries.AuthenticatedPostcodeQueryResponse = (
+        strawberry.field(
+            resolver=public_queries.enrich_postcode,
+            extensions=[IsAuthenticated()],
+        )
     )
-    enrich_postcodes: List[public_queries.PostcodeQueryResponse] = strawberry.field(
-        resolver=public_queries.enrich_postcodes,
-        extensions=[IsAuthenticated()],
+    enrich_postcodes: List[public_queries.AuthenticatedPostcodeQueryResponse] = (
+        strawberry.field(
+            resolver=public_queries.enrich_postcodes,
+            extensions=[IsAuthenticated()],
+        )
     )
 
     @strawberry.field
@@ -167,6 +188,9 @@ class Mutation:
     update_sharing_permissions: List[model_types.ExternalDataSource] = (
         mutation_types.update_sharing_permissions
     )
+    create_child_page: model_types.WagtailPage = mutation_types.create_child_page
+    delete_page: bool = mutation_types.delete_page
+    update_page: model_types.WagtailPage = mutation_types.update_page
 
 
 class CustomErrorLoggingSchema(JwtSchema):

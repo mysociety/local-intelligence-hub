@@ -78,13 +78,19 @@ export default function Navbar({ isLoggedIn }: NavbarProps) {
             className={`link ${pathname === '/reports' ? 'active' : 'flex items-center'}`}
             href="/reports"
           >
-            Reports
+            Maps
           </Link>
           <Link
             className={`link ${pathname === '/data-layers' ? 'active' : 'flex items-center'}`}
             href="/data-sources"
           >
-            Data sources
+            Data
+          </Link>
+          <Link
+            className={`link ${pathname.includes('/hub/editor') ? 'active' : 'flex items-center'}`}
+            href="/hub/editor"
+          >
+            Hub
           </Link>
           <div className="ml-auto flex items-stretch gap-md ">
             <Link

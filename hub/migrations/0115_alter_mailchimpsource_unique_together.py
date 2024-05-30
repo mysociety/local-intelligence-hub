@@ -8,7 +8,7 @@ from django.db.migrations.state import ProjectState
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("hub", "0114_alter_airtablesource_unique_together_and_more"),
+        ("hub", "0114_remove_hubhomepage_custom_domain"),
     ]
 
     operations = [

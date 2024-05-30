@@ -1,0 +1,230 @@
+/* eslint-disable @next/next/no-img-element */
+import React, { useState } from "react";
+import { Button, ComponentConfig } from "@measured/puck";
+import { Section } from "@/data/puck/config/components/Section";
+import { quotes } from "./quotes";
+
+export type HeroProps = {
+  quote?: { index: number; label: string };
+  title: string;
+  description: string;
+  align?: string;
+  padding: string;
+  image?: {
+    mode?: "inline" | "background";
+    url?: string;
+  };
+  buttons: {
+    label: string;
+    href: string;
+    variant?: "primary" | "secondary";
+    more?: { text: string }[];
+  }[];
+};
+
+// TODO: add a comment why we need resolveFields (if we do need it)
+export const Hero: ComponentConfig<HeroProps> & { resolveFields: any } = {
+  fields: {
+    quote: {
+      type: "external",
+      placeholder: "Select a quote",
+      showSearch: true,
+      filterFields: {
+        author: {
+          type: "select",
+          options: [
+            { value: "", label: "Select an author" },
+            { value: "Mark Twain", label: "Mark Twain" },
+            { value: "Henry Ford", label: "Henry Ford" },
+            { value: "Kurt Vonnegut", label: "Kurt Vonnegut" },
+            { value: "Andrew Carnegie", label: "Andrew Carnegie" },
+            { value: "C. S. Lewis", label: "C. S. Lewis" },
+            { value: "Confucius", label: "Confucius" },
+            { value: "Eleanor Roosevelt", label: "Eleanor Roosevelt" },
+            { value: "Samuel Ullman", label: "Samuel Ullman" },
+          ],
+        },
+      },
+      fetchList: async ({ query, filters }) => {
+        // Simulate delay
+        await new Promise((res) => setTimeout(res, 500));
+
+        return quotes
+          .map((quote, idx) => ({
+            index: idx,
+            title: quote.author,
+            description: quote.content,
+          }))
+          .filter((item) => {
+            if (filters?.author && item.title !== filters?.author) {
+              return false;
+            }
+
+            if (!query) return true;
+
+            const queryLowercase = query.toLowerCase();
+
+            if (item.title.toLowerCase().indexOf(queryLowercase) > -1) {
+              return true;
+            }
+
+            if (item.description.toLowerCase().indexOf(queryLowercase) > -1) {
+              return true;
+            }
+          });
+      },
+      mapRow: (item) => ({ title: item.title, description: item.description }),
+      mapProp: (result) => {
+        return { index: result.index, label: result.description };
+      },
+      getItemSummary: (item) => item?.label || "",
+    },
+    title: { type: "text" },
+    description: { type: "textarea" },
+    buttons: {
+      type: "array",
+      min: 1,
+      max: 4,
+      getItemSummary: (item) => item?.label || "Button",
+      arrayFields: {
+        label: { type: "text" },
+        href: { type: "text" },
+        variant: {
+          type: "select",
+          options: [
+            { label: "primary", value: "primary" },
+            { label: "secondary", value: "secondary" },
+          ],
+        },
+      },
+      defaultItemProps: {
+        label: "Button",
+        href: "#",
+      },
+    },
+    align: {
+      type: "radio",
+      options: [
+        { label: "left", value: "left" },
+        { label: "center", value: "center" },
+      ],
+    },
+    image: {
+      type: "object",
+      objectFields: {
+        url: { type: "text" },
+        mode: {
+          type: "radio",
+          options: [
+            { label: "inline", value: "inline" },
+            { label: "background", value: "background" },
+          ],
+        },
+      },
+    },
+    padding: { type: "text" },
+  },
+  defaultProps: {
+    title: "Hero",
+    align: "left",
+    description: "Description",
+    buttons: [{ label: "Learn more", href: "#" }],
+    padding: "64px",
+  },
+  /**
+   * The resolveData method allows us to modify component data after being
+   * set by the user.
+   *
+   * It is called after the page data is changed, but before a component
+   * is rendered. This allows us to make dynamic changes to the props
+   * without storing the data in Puck.
+   *
+   * For example, requesting a third-party API for the latest content.
+   */
+  resolveData: async ({ props }, { changed }) => {
+    if (!props.quote)
+      return { props, readOnly: { title: false, description: false } };
+
+    if (!changed.quote) {
+      return { props };
+    }
+
+    // Simulate a delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    return {
+      props: {
+        title: quotes[props.quote.index].author,
+        description: quotes[props.quote.index].content,
+      },
+      readOnly: { title: true, description: true },
+    };
+  },
+  resolveFields: async (data: any, { fields }: { fields: any }) => {
+    if (data.props.align === "center") {
+      return {
+        ...fields,
+        image: undefined,
+      };
+    }
+
+    return fields;
+  },
+  render: ({ align, title, description, buttons, padding, image }) => {
+    // Empty state allows us to test that components support hooks
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [_] = useState(0);
+
+    return (
+      <Section
+        padding={padding}
+      >
+        {image?.mode === "background" && (
+          <>
+            <div
+              style={{
+                backgroundImage: `url("${image?.url}")`,
+              }}
+            ></div>
+
+            <div></div>
+          </>
+        )}
+
+        <div>
+          <div>
+            <h1>{title}</h1>
+            <p>{description}</p>
+            <div>
+              {buttons.map((button, i) => (
+                <Button
+                  key={i}
+                  href={button.href}
+                  variant={button.variant}
+                  size="large"
+                >
+                  {button.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {align !== "center" && image?.mode !== "background" && image?.url && (
+            <div
+              style={{
+                backgroundImage: `url('${image?.url}')`,
+                backgroundSize: "cover",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "center",
+                borderRadius: 24,
+                height: 356,
+                marginLeft: "auto",
+                width: "100%",
+              }}
+            />
+          )}
+        </div>
+      </Section>
+    );
+  },
+};

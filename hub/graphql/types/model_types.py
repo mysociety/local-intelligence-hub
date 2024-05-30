@@ -4,6 +4,7 @@ from enum import Enum
 from typing import List, Optional, Union
 
 from django.db.models import Q
+from django.http import HttpRequest
 
 import procrastinate.contrib.django.models
 import strawberry
@@ -16,6 +17,7 @@ from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import IsAuthenticated
+from wagtail.models import Site
 
 from hub import models
 from hub.enrichment.sources import builtin_mapping_sources
@@ -530,6 +532,16 @@ class Area:
             point=self.point, id=self.gss, properties=props
         )
 
+    @strawberry_django.field
+    def generic_data_for_hub(self, hostname: str) -> List["GenericData"]:
+        site = Site.objects.get(hostname=hostname)
+        hub = site.root_page.specific
+        source_ids = [layer.get("source") for layer in hub.layers]
+        return models.GenericData.objects.filter(
+            data_type__data_set__external_data_source__in=source_ids,
+            point__within=self.polygon,
+        )
+
 
 @strawberry.type
 class GroupedDataCount:
@@ -586,6 +598,13 @@ class GenericData(CommonData):
     email: auto
     phone: auto
     address: auto
+    title: auto
+    start_time: auto
+    end_time: auto
+    public_url: auto
+    description: auto
+    image: auto
+
     postcode: auto
     remote_url: str = fn_field()
 
@@ -717,6 +736,12 @@ class BaseDataSource(Analytics):
     email_field: auto
     phone_field: auto
     address_field: auto
+    title_field: auto
+    description_field: auto
+    image_field: auto
+    start_time_field: auto
+    end_time_field: auto
+    public_url_field: auto
     record_url_template: Optional[str] = fn_field()
     organisation_id: str = strawberry_django.field(
         resolver=lambda self: self.organisation_id
@@ -918,6 +943,7 @@ class MapLayer:
     id: str = dict_key_field()
     name: str = dict_key_field()
     visible: Optional[bool] = dict_key_field()
+    custom_marker_text: Optional[str] = dict_key_field()
 
     @strawberry_django.field
     def is_shared_source(self, info: Info) -> bool:
@@ -969,6 +995,12 @@ class SharingPermission:
 class MapReport(Report, Analytics):
     layers: List[MapLayer]
     display_options: JSON
+
+
+def public_map_report(info: Info, org_slug: str, report_slug: str) -> models.MapReport:
+    return models.MapReport.objects.get(
+        organisation__slug=org_slug, slug=report_slug, public=True
+    )
 
 
 @strawberry_django.field()
@@ -1033,3 +1065,100 @@ def mapping_sources(info: Info) -> List[MappingSourcePath]:
             + [source.as_mapping_source() for source in external_data_sources]
         )
     ]
+
+
+@strawberry_django.type(models.Page)
+class WagtailPage:
+    id: auto
+    title: str
+    slug: str
+    path: str
+    full_url: Optional[str] = attr_field()
+
+    @strawberry_django.field
+    def hostname(self) -> str:
+        return self.get_site().hostname
+
+    @strawberry_django.field
+    def live_url(self) -> Optional[str]:
+        return self.full_url
+
+    @strawberry_django.field
+    def live_url_without_protocol(self) -> str:
+        url = self.full_url
+        return url.split("://")[1]
+
+    @strawberry_django.field
+    def puck_json_content(self) -> JSON:
+        specific = self.specific
+        if hasattr(specific, "puck_json_content"):
+            return specific.puck_json_content
+        return {}
+
+    @strawberry_django.field
+    def model_name(self) -> str:
+        return self.specific._meta.object_name
+
+    @strawberry_django.field
+    def ancestors(self, inclusive: bool = False) -> List["WagtailPage"]:
+        return self.get_ancestors(inclusive=inclusive)
+
+    @strawberry_django.field
+    def parent(self) -> Optional["WagtailPage"]:
+        return self.get_parent()
+
+    @strawberry_django.field
+    def children(self) -> List["WagtailPage"]:
+        return self.get_children()
+
+    @strawberry_django.field
+    def descendants(self, inclusive: bool = False) -> List["WagtailPage"]:
+        return self.get_descendants(inclusive=inclusive)
+
+
+@strawberry.type
+class HubNavLink:
+    label: str = dict_key_field()
+    link: str = dict_key_field()
+
+
+@strawberry_django.type(models.HubHomepage)
+class HubHomepage(WagtailPage):
+    organisation: Organisation
+    layers: List[MapLayer]
+    nav_links: List[HubNavLink]
+
+    # TODO: ultimately all this data will need to be public anyway for public viewing
+    # @classmethod
+    # def get_queryset(cls, queryset, info, **kwargs):
+    #     # Only list pages belonging to this user's orgs
+    #     user = get_current_user(info)
+    #     user_orgs = models.Organisation.objects.filter(members__user=user.id)
+    #     return queryset.filter(
+    #         organisation__in=user_orgs,
+    #     )
+
+
+@strawberry_django.field()
+def hub_page_by_path(
+    info: Info, hostname: str, path: Optional[str] = None
+) -> Optional[WagtailPage]:
+    # get request for strawberry query
+    request: HttpRequest = info.context["request"]
+    request.META = {
+        **request.META,
+        "HTTP_HOST": hostname,
+        "SERVER_PORT": request.get_port(),
+    }
+    request.path = path
+    site = Site.objects.get(hostname=hostname)
+    if path is None:
+        return site.root_page.specific
+    page = models.Page.find_for_request(request, path)
+    return page.specific if page else None
+
+
+@strawberry_django.field()
+def hub_by_hostname(hostname: str) -> HubHomepage:
+    site = Site.objects.get(hostname=hostname)
+    return site.root_page.specific

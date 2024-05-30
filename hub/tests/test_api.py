@@ -30,7 +30,7 @@ class TestPublicAPI(TestCase):
                 table_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME,
                 api_key=settings.TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY,
                 geography_column="council district",
-                geography_column_type=models.AirtableSource.PostcodesIOGeographyTypes.COUNCIL,
+                geography_column_type=models.AirtableSource.GeographyTypes.COUNCIL,
             )
         )
         # Some dummy data

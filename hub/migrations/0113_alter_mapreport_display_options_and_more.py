@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("hub", "0112_alter_externaldatasource_data_type"),
+        ("hub", "0113_alter_hubcontentpage_puck_json_content"),
     ]
 
     operations = [

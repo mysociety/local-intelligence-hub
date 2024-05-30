@@ -38,7 +38,7 @@ class TestExternalDataSource:
                 table_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME,
                 api_key=settings.TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY,
                 geography_column="council district",
-                geography_column_type=models.AirtableSource.PostcodesIOGeographyTypes.COUNCIL,
+                geography_column_type=models.AirtableSource.GeographyTypes.COUNCIL,
             )
         )
 
@@ -462,7 +462,7 @@ class TestAirtableSource(TestExternalDataSource, TestCase):
             table_id=settings.TEST_AIRTABLE_MEMBERLIST_TABLE_NAME,
             api_key=settings.TEST_AIRTABLE_MEMBERLIST_API_KEY,
             geography_column="Postcode",
-            geography_column_type=models.AirtableSource.PostcodesIOGeographyTypes.POSTCODE,
+            geography_column_type=models.AirtableSource.GeographyTypes.POSTCODE,
             postcode_field="Postcode",
             email_field="Email",
             auto_update_enabled=True,
@@ -524,7 +524,7 @@ class TestMailchimpSource(TestExternalDataSource, TestCase):
             list_id=settings.TEST_MAILCHIMP_MEMBERLIST_AUDIENCE_ID,
             email_field="email_address",
             geography_column="ADDRESS.zip",
-            geography_column_type=models.MailchimpSource.PostcodesIOGeographyTypes.POSTCODE,
+            geography_column_type=models.MailchimpSource.GeographyTypes.POSTCODE,
             auto_update_enabled=True,
             update_mapping=[
                 {
@@ -555,7 +555,7 @@ class TestActionNetworkSource(TestExternalDataSource, TestCase):
             api_key=settings.TEST_ACTIONNETWORK_MEMBERLIST_API_KEY,
             geography_column="postal_addresses[0].postal_code",
             email_field="email_addresses[0].address",
-            geography_column_type=models.MailchimpSource.PostcodesIOGeographyTypes.POSTCODE,
+            geography_column_type=models.MailchimpSource.GeographyTypes.POSTCODE,
             auto_update_enabled=True,
             update_mapping=[
                 {

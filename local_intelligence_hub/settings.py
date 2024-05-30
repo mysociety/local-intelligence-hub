@@ -161,11 +161,24 @@ INSTALLED_APPS = [
     "procrastinate.contrib.django",
     "strawberry_django",
     "django_cryptography",
+    "wagtail.contrib.forms",
+    "wagtail.contrib.redirects",
+    "wagtail.embeds",
+    "wagtail.sites",
+    "wagtail.users",
+    "wagtail.snippets",
+    "wagtail.documents",
+    "wagtail.images",
+    "wagtail.search",
+    "wagtail.admin",
+    "wagtail",
+    "modelcluster",
+    "taggit",
+    "wagtail_json_widget",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "hub.middleware.async_whitenoise_middleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -175,7 +188,13 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # "hub.middleware.record_last_seen_middleware",
+    "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
+
+if not DEBUG:
+    # Apparently this speeds up django hot reload
+    # https://stackoverflow.com/a/49396824/1053937
+    MIDDLEWARE.insert(1, "hub.middleware.async_whitenoise_middleware")
 
 ROOT_URLCONF = "local_intelligence_hub.urls"
 
@@ -437,5 +456,9 @@ CACHES = {
 }
 
 ENCRYPTION_SECRET_KEY = env("ENCRYPTION_SECRET_KEY")
+
+WAGTAIL_SITE_NAME = "Mapped hub page editor"
+WAGTAILADMIN_BASE_URL = BASE_URL
+WAGTAILDOCS_EXTENSIONS = []
 
 PARSONS_LIMITED_DEPENDENCIES = True

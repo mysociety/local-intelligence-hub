@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FetchResult, gql, useLazyQuery, useMutation } from "@apollo/client";
 import { CreateAutoUpdateFormContext } from "../../NewExternalDataSourceWrapper";
@@ -30,14 +30,14 @@ import {
   CreateExternalDataSourceInput,
   DataSourceType,
   ExternalDataSourceInput,
-  PostcodesIoGeographyTypes,
+  GeographyTypes,
+  CreateSourceMutation,
   TestDataSourceQuery,
   TestDataSourceQueryVariables,
-  CreateSourceMutation
-
 } from "@/__generated__/graphql";
 import { toastPromise } from "@/lib/toast";
 import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
+import { getFieldsForDataSourceType } from "@/components/UpdateExternalDataSourceFields";
 
 const TEST_DATA_SOURCE = gql`
   query TestDataSource($input: CreateExternalDataSourceInput!) {
@@ -88,22 +88,36 @@ export default function Page({
   const router = useRouter();
   const context = useContext(CreateAutoUpdateFormContext);
 
-
   useEffect(() => {
     context.setStep(2)
   }, [context])
 
   const form = useForm<FormInputs>({
     defaultValues: {
-      geographyColumnType: PostcodesIoGeographyTypes.Postcode,
+      name: '',
+      geographyColumnType: GeographyTypes.Postcode,
       geographyColumn: externalDataSourceType === "mailchimp"
-        ? 'ADDRESS.zip' :
-        externalDataSourceType === "actionnetwork"
-        ? "postal_addresses[0].postal_code"
-        : '',
-      dataType: context.dataType
+      ? 'ADDRESS.zip' :
+      externalDataSourceType === "actionnetwork"
+      ? "postal_addresses[0].postal_code"
+      : '',
+      dataType: context.dataType,
+      airtable: {
+        apiKey: '',
+        baseId: '',
+        tableId: '',
+      },
+      mailchimp: {
+        apiKey: '',
+        listId: ''
+      }
     },
   });
+
+  const dataType = form.watch("dataType") as DataSourceType
+  const collectFields = useMemo(() => {
+    return getFieldsForDataSourceType(dataType)
+  }, [dataType])
 
   const [createSource, createSourceResult] = useMutation<CreateSourceMutation>(CREATE_DATA_SOURCE);
   const [testSource, testSourceResult] = useLazyQuery<TestDataSourceQuery, TestDataSourceQueryVariables>(TEST_DATA_SOURCE);
@@ -168,14 +182,21 @@ export default function Page({
   useGuessedField('geographyColumn', ["postcode", "postal code", "zip code", "zip"])
   useGuessedField('emailField', ["email"])
   useGuessedField('phoneField', ["mobile", "phone"])
-  useGuessedField('addressField', ["street", "line1", "address"], ['email'])
+  useGuessedField('addressField', ["street", "line1", "address", "location"], ['email'])
   useGuessedField('fullNameField', ["full name", "name"])
   useGuessedField('firstNameField', ["first name", "given name"])
-  useGuessedField('lastNameField', ["last name", "family name", "surname", "second name"])
+  useGuessedField('titleField', ["title", "name"])
+  useGuessedField('descriptionField', ["description", "body", "comments", "notes", "about"])
+  useGuessedField('imageField', ["image", "photo", "picture", "avatar", "attachment", "attachments", "file", "files", "graphic", "poster", "logo", "icon"])
+  useGuessedField('startTimeField', ["start", "start time", "start date", "begin", "beginning", "start_at", "start_time", "start_date", "date", "time", "datetime", "timestamp", "from"])
+  useGuessedField('endTimeField', ["end", "end time", "end date", "finish", "finish time", "finish date", "end_at", "end_time", "end_date", "until"])
+  useGuessedField('publicUrlField', ["public url", "public link", "public", "url", "link", "website", "webpage", "web", "page", "site", "address", "href", "uri", "path", "slug", "permalink"])
 
   useEffect(() => {
     if (testSourceResult.data?.testDataSource?.defaultDataType) {
-      form.setValue("dataType", testSourceResult.data.testDataSource.defaultDataType as DataSourceType)
+      const dataType = testSourceResult.data.testDataSource.defaultDataType as DataSourceType
+      context.dataType = dataType
+      form.setValue("dataType", dataType)
     }
   }, [testSourceResult.data])
 
@@ -183,6 +204,7 @@ export default function Page({
     if (!formData[externalDataSourceType]) {
       throw Error("Need some CRM connection details to proceed!")
     }
+
     // To avoid mutation of the form data
     const genericCRMData = Object.assign({}, formData)
     const CRMSpecificData = formData[externalDataSourceType]
@@ -196,27 +218,25 @@ export default function Page({
       }
     }
 
-    let input: TestDataSourceQueryVariables['input'] = {
+    const input: TestDataSourceQueryVariables['input'] = {
       [externalDataSourceType]: {
         ...genericCRMData,
         ...CRMSpecificData
       }
     }
-
-    {
-      toastPromise(testSource({
-        variables: { input }
-      }), {
-        loading: "Testing connection...",
-        success: (d: FetchResult<TestDataSourceQuery>) => {
-          if (!d.errors && d.data?.testDataSource) {
-            return "Connection is healthy";
-          }
-          throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
-        },
-        error: "Connection failed",
-      });
-    }
+    
+    toastPromise(testSource({
+      variables: { input }
+    }), {
+      loading: "Testing connection...",
+      success: (d: FetchResult<TestDataSourceQuery>) => {
+        if (!d.errors && d.data?.testDataSource) {
+          return "Connection is healthy";
+        }
+        throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
+      },
+      error: "Connection failed",
+    });
   }
 
   async function submitCreateSource(formData: FormInputs) {
@@ -355,6 +375,9 @@ export default function Page({
                             <SelectGroup>
                               <SelectLabel>Type of data source</SelectLabel>
                               <SelectItem value={DataSourceType.Member}>A list of members</SelectItem>
+                              <SelectItem value={DataSourceType.Location}>Venues and physical locations</SelectItem>
+                              <SelectItem value={DataSourceType.Event}>Calendar events</SelectItem>
+                              <SelectItem value={DataSourceType.Story}>Articles, stories and reports</SelectItem>
                               <SelectItem value={DataSourceType.Other}>Other data</SelectItem>
                             </SelectGroup>
                           </SelectContent>
@@ -383,11 +406,11 @@ export default function Page({
                             <SelectContent>
                               <SelectGroup>
                                 <SelectLabel>Geography type</SelectLabel>
-                                <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
-                                <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
-                                <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
-                                <SelectItem value={PostcodesIoGeographyTypes.Constituency}>GE2010-2019 Constituency</SelectItem>
-                                <SelectItem value={PostcodesIoGeographyTypes.Constituency_2025}>GE2024 Constituency</SelectItem>
+                                <SelectItem value={GeographyTypes.Postcode}>Postcode</SelectItem>
+                                <SelectItem value={GeographyTypes.Ward}>Ward</SelectItem>
+                                <SelectItem value={GeographyTypes.Council}>Council</SelectItem>
+                                <SelectItem value={GeographyTypes.Constituency}>GE2010-2019 Constituency</SelectItem>
+                                <SelectItem value={GeographyTypes.Constituency_2025}>GE2024 Constituency</SelectItem>
                               </SelectGroup>
                             </SelectContent>
                           </Select>
@@ -396,16 +419,9 @@ export default function Page({
                       </FormItem>
                     )}
                   />
-                  {form.watch('dataType') === DataSourceType.Member && (
-                    <>
-                      <FPreopulatedSelectField name="emailField" />
-                      <FPreopulatedSelectField name="phoneField" />
-                      <FPreopulatedSelectField name="addressField" />
-                      <FPreopulatedSelectField name="fullNameField" />
-                      <FPreopulatedSelectField name="firstNameField" />
-                      <FPreopulatedSelectField name="lastNameField" />
-                    </>
-                  )}
+                  {collectFields?.filter(f => f !== "geographyColumn" && f !== "geographyColumnType")?.map((field) => (
+                    <FPreopulatedSelectField key={field} name={field} />
+                  ))}
                 </div>
               )}
               <Button type='submit' variant="reverse" disabled={createSourceResult.loading}>
