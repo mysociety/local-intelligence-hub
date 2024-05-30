@@ -38,7 +38,7 @@ export const EventCard: ComponentConfig<EventCardProps> = {
       
           <div className="p-5 w-full h-full overflow-clip rounded-[20px] flex flex-col gap-5 justify-between hover:shadow-hover transition-all">
          
-                <h2 className="text-hubH3 tracking-tight">Test</h2>
+                <h2 className="text-hub4xl tracking-tight">Test</h2>
               
               </div>
             
