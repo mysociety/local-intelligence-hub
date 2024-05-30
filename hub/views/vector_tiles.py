@@ -100,7 +100,7 @@ class ExternalDataSourcePointTileJSONView(TileJSONView, DetailView):
         """ Base MVTView Url used to generates urls in TileJSON in a.tiles.xxxx/{z}/{x}/{y} format """
         return str(
             reverse("external_data_source_point_tile", args=(id, 0, 0, 0))
-        ).replace("0/0/0", "{z}/{x}/{y}")
+        ).replace("/0/0/0", "/{z}/{x}/{y}")
 
     def get_layer_class_kwargs(self, *args, **kwargs):
         return {"external_data_source_id": self.get_id()}
