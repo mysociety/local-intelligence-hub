@@ -112,7 +112,7 @@ const GET_LOCAL_DATA = gql`
   query GetLocalData($postcode: String!, $hostname: String!) {
     postcodeSearch(postcode: $postcode) {
       postcode
-      constituency {
+      constituency: constituency2024 {
         id
         gss
         name
