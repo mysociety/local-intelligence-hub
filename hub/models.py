@@ -2886,10 +2886,6 @@ class HubHomepage(Page):
         return self.nav_links
 
 
-def generate_puck_json_content():
-    return {"content": [], "root": {}, "zones": {}}
-
-
 class HubContentPage(Page):
     parent_page_type = ["hub.HubHomepage"]
     subpage_types = ["hub.HubContentPage"]

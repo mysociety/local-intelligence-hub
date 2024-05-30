@@ -113,3 +113,20 @@ mutation Mutation {e
   }
 }
 ```
+
+
+## Useful Commands
+If you are pulling a branch and the back-end isn't running, you probably need to run these commands:
+
+```bash
+poetry install
+```
+
+```bash
+python manage.py migrate
+```
+
+```bash
+cd nextjs
+npm i
+```
