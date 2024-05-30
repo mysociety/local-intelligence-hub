@@ -19,6 +19,9 @@ class Command(BaseCommand):
         "Matt Hancock": "Matthew Hancock",
         "William Cash": "Bill Cash",
         "Robert Neill": "Bob Neill",
+        "Dan Poulter": "Daniel Poulter",
+        "Jeffrey Donaldson": "Jeffrey M. Donaldson",
+        "David Evenett": "David Evennett",
     }
 
     def get_area_type(self):
