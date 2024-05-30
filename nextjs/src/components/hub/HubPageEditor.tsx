@@ -51,13 +51,21 @@ export default function HubPageEditor({ hubId, pageId }: { hubId: string, pageId
     )
   }
 
+  const puckJsonContent = { ...pageData.data.hubPage.puckJsonContent }
+  if (!puckJsonContent.root) {
+    puckJsonContent.root = {}
+  }
+  if (!puckJsonContent.content) {
+    puckJsonContent.content = []
+  }
+
   return (
     <Puck
       // To force refresh data after deferred initialisation
       key={dbDataKey}
       config={conf}
       // Initial data
-      data={pageData.data.hubPage.puckJsonContent}
+      data={puckJsonContent}
       onPublish={publish}
       overrides={{
         header: ({ actions, children }) => (

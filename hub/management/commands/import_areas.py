@@ -22,6 +22,13 @@ class Command(BaseCommand):
             "description": "Westminster Parliamentary Constituency boundaries, as created in 2010",
         },
         {
+            "mapit_type": ["WMCF"],
+            "name": "2023 Parliamentary Constituency",
+            "code": "WMC23",
+            "area_type": "Westminster Constituency",
+            "description": "Westminster Parliamentary Constituency boundaries, as created in 2023",
+        },
+        {
             "mapit_type": ["LBO", "UTA", "COI", "LGD", "CTY", "MTD"],
             "name": "Single Tier Councils",
             "code": "STC",

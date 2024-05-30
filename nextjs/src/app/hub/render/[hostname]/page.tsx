@@ -1,10 +1,10 @@
-import { gql } from "@apollo/client";
-import { Render } from "@measured/puck/rsc";
+"use server"
+
 import { getClient } from "@/services/apollo-client";
-import { Metadata } from "next";
 import { GetPageQuery, GetPageQueryVariables } from "@/__generated__/graphql";
-import { conf } from "@/data/puck/config";
-import { GET_PAGE } from "@/app/hub/render/[hostname]/query";
+import RenderPuck from "./RenderPuck";
+import { redirect } from "next/navigation";
+import { GET_PAGE } from "./query";
 
 type Params = {
   hostname: string
@@ -21,7 +21,14 @@ export default async function Page({ params: { hostname, slug } }: { params: Par
     }
   })
 
+  const puckJsonContent = page.data?.hubPageByPath?.puckJsonContent
+
+  // TODO: display 404 in this case
+  if (!puckJsonContent) {
+    return redirect('/')
+  }
+
   return (
-    <Render config={conf} data={page.data?.hubPageByPath?.puckJsonContent} />
+    <RenderPuck page={page.data.hubPageByPath?.puckJsonContent} />
   )
 }

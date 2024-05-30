@@ -22,7 +22,8 @@ export type HeroProps = {
   }[];
 };
 
-export const Hero: ComponentConfig<HeroProps> = {
+// TODO: add a comment why we need resolveFields (if we do need it)
+export const Hero: ComponentConfig<HeroProps> & { resolveFields: any } = {
   fields: {
     quote: {
       type: "external",
@@ -159,7 +160,7 @@ export const Hero: ComponentConfig<HeroProps> = {
       readOnly: { title: true, description: true },
     };
   },
-  resolveFields: async (data, { fields }) => {
+  resolveFields: async (data: any, { fields }: { fields: any }) => {
     if (data.props.align === "center") {
       return {
         ...fields,

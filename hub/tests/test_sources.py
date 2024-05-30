@@ -3,6 +3,7 @@ from random import randint
 from typing import List
 
 from django.conf import settings
+from django.db.utils import IntegrityError
 from django.test import TestCase
 
 from asgiref.sync import sync_to_async
@@ -17,6 +18,9 @@ class TestExternalDataSource:
     # Implemented by specific source tests
     # def create_test_source(self):
     #     raise NotImplementedError()
+
+    constituency_field = "constituency"
+    mayoral_field = "mayoral region"
 
     def setUp(self) -> None:
         self.records_to_delete: list[tuple[str, models.ExternalDataSource]] = []
@@ -40,39 +44,70 @@ class TestExternalDataSource:
 
         self.source: models.ExternalDataSource = self.create_test_source()
 
-        self.source.teardown_webhooks()
+        if self.source.automated_webhooks:
+            self.source.teardown_webhooks()
 
     def tearDown(self) -> None:
-        for record_id, source in self.records_to_delete:
-            source.delete_one(record_id)
-        self.source.teardown_webhooks()
+        try:
+            for record_id, source in self.records_to_delete:
+                source.delete_one(record_id)
+        except NotImplementedError:
+            # Not all sources support deletion.
+            print("Warning: deletion not implemented for source", self.source.crm_type)
+            pass
+        if self.source.automated_webhooks:
+            self.source.teardown_webhooks()
         return super().tearDown()
 
     def create_test_record(self, record: models.ExternalDataSource.CUDRecord):
         record = self.source.create_one(record)
-        self.records_to_delete.append((record["id"], self.source))
+        self.records_to_delete.append((self.source.get_record_id(record), self.source))
         return record
 
     def create_many_test_records(
         self, records: List[models.ExternalDataSource.CUDRecord]
     ):
         records = self.source.create_many(records)
-        self.records_to_delete += [(record["id"], self.source) for record in records]
+        self.records_to_delete += [
+            (self.source.get_record_id(record), self.source) for record in records
+        ]
         return records
 
     def create_custom_layer_airtable_records(self, records: any):
         records = self.custom_data_layer.table.batch_create(records)
         self.records_to_delete += [
-            (record["id"], self.custom_data_layer) for record in records
+            (self.custom_data_layer.get_record_id(record), self.custom_data_layer)
+            for record in records
         ]
         return records
 
     # Tests begin
 
+    def test_deduplication(self):
+        try:
+            self.create_test_source(name="My duplicate source")  # Create duplicate
+            self.assertTrue(False)  # Force failure if no exception
+        except IntegrityError:
+            pass
+
     def test_source(self):
         self.assertTrue(self.source.healthcheck())
 
+    def test_field_definitions(self: TestCase):
+        if self.source.introspect_fields:
+            field_defs = self.source.field_definitions()
+            self.assertIsNotNone(
+                next(
+                    filter(lambda x: x.get("value") == self.mayoral_field, field_defs),
+                    None,
+                )
+            )
+        else:
+            self.assertRaises(NotImplementedError, self.source.field_definitions)
+
     async def test_webhooks(self):
+        if not self.source.automated_webhooks:
+            return self.skipTest("Webhooks not automated")
         self.source.teardown_webhooks()
         try:
             self.source.webhook_healthcheck()
@@ -184,33 +219,38 @@ class TestExternalDataSource:
 
     async def test_fetch_many(self):
         now = str(datetime.now().timestamp())
-        records = self.create_many_test_records(
-            [
-                models.ExternalDataSource.CUDRecord(
-                    postcode=now + "11111", email=now + "11111@gmail.com", data={}
-                ),
-                models.ExternalDataSource.CUDRecord(
-                    postcode=now + "22222", email=now + "22222@gmail.com", data={}
-                ),
-            ]
-        )
+        test_record_data = [
+            models.ExternalDataSource.CUDRecord(
+                postcode=now + "11111", email=now + "11111@gmail.com", data={}
+            ),
+            models.ExternalDataSource.CUDRecord(
+                postcode=now + "22222", email=now + "22222@gmail.com", data={}
+            ),
+        ]
+        records = self.create_many_test_records(test_record_data)
         # Test this functionality
-        records = await self.source.fetch_many([record["id"] for record in records])
+        records = await self.source.fetch_many(
+            [self.source.get_record_id(record) for record in records]
+        )
         # Check
         assert len(records) == 2
         # Check the email field instead of postcode, because Mailchimp doesn't set
         # the postcode without a full address, which is not present in this test
-        for record in records:
-            self.assertTrue(
-                self.source.get_record_field(
-                    record, self.source.email_field
-                ).startswith(now)
+        for test_record in test_record_data:
+            record = next(
+                filter(
+                    lambda r: self.source.get_record_field(r, self.source.email_field)
+                    == test_record["email"],
+                    records,
+                ),
+                None,
             )
+            self.assertIsNotNone(record)
 
     async def test_refresh_one(self):
         record = self.create_test_record(
             models.ExternalDataSource.CUDRecord(
-                email=f"eh{randint(0, 1000)}sp@gmail.com",
+                email="ehsp@gmail.com",
                 postcode="EH99 1SP",
                 data=(
                     {
@@ -225,11 +265,13 @@ class TestExternalDataSource:
             )
         )
         # Test this functionality
-        await self.source.refresh_one(record)
+        await self.source.refresh_one(
+            record, update_kwargs=dict(action_network_background_processing=False)
+        )
         # Check
         record = await self.source.fetch_one(self.source.get_record_id(record))
         self.assertEqual(
-            self.source.get_record_field(record, "constituency"),
+            self.source.get_record_field(record, self.constituency_field),
             "Edinburgh East and Musselburgh",
         )
 
@@ -281,12 +323,12 @@ class TestExternalDataSource:
                 models.UpdateMapping(
                     source=str(self.custom_data_layer.id),
                     source_path="mayoral region",
-                    destination_column="mayoral region",
+                    destination_column=self.mayoral_field,
                 )
             ],
         )
         self.assertEqual(
-            mapped_member["update_fields"]["mayoral region"],
+            mapped_member["update_fields"][self.mayoral_field],
             "North East Mayoral Combined Authority",
         )
 
@@ -324,9 +366,13 @@ class TestExternalDataSource:
             ]
         )
         # Test this functionality
-        await self.source.refresh_many(records)
+        await self.source.refresh_many(
+            records, update_kwargs=dict(action_network_background_processing=False)
+        )
         # Check
-        records = await self.source.fetch_many([record["id"] for record in records])
+        records = await self.source.fetch_many(
+            [self.source.get_record_id(record) for record in records]
+        )
         assert len(records) == 2
         for record in records:
             if (
@@ -334,14 +380,15 @@ class TestExternalDataSource:
                 == "G11 5RD"
             ):
                 self.assertEqual(
-                    self.source.get_record_field(record, "constituency"), "Glasgow West"
+                    self.source.get_record_field(record, self.constituency_field),
+                    "Glasgow West",
                 )
             elif (
                 self.source.get_record_field(record, self.source.geography_column)
                 == "G42 8PH"
             ):
                 self.assertEqual(
-                    self.source.get_record_field(record, "constituency"),
+                    self.source.get_record_field(record, self.constituency_field),
                     "Glasgow South",
                 )
             else:
@@ -406,9 +453,9 @@ class TestExternalDataSource:
 
 
 class TestAirtableSource(TestExternalDataSource, TestCase):
-    def create_test_source(self):
+    def create_test_source(self, name="My test Airtable member list"):
         self.source = models.AirtableSource.objects.create(
-            name="My test Airtable member list",
+            name=name,
             data_type=models.AirtableSource.DataSourceType.MEMBER,
             organisation=self.organisation,
             base_id=settings.TEST_AIRTABLE_MEMBERLIST_BASE_ID,
@@ -423,12 +470,12 @@ class TestAirtableSource(TestExternalDataSource, TestCase):
                 {
                     "source": "postcodes.io",
                     "source_path": "parliamentary_constituency_2025",
-                    "destination_column": "constituency",
+                    "destination_column": self.constituency_field,
                 },
                 {
                     "source": str(self.custom_data_layer.id),
                     "source_path": "mayoral region",
-                    "destination_column": "mayoral region",
+                    "destination_column": self.mayoral_field,
                 },
             ],
         )
@@ -465,9 +512,12 @@ class TestAirtableSource(TestExternalDataSource, TestCase):
 
 
 class TestMailchimpSource(TestExternalDataSource, TestCase):
-    def create_test_source(self):
+    constituency_field = "CONSTITUEN"
+    mayoral_field = "MAYORAL_RE"
+
+    def create_test_source(self, name="My test Mailchimp member list"):
         self.source = models.MailchimpSource.objects.create(
-            name="My test Mailchimp member list",
+            name=name,
             data_type=models.MailchimpSource.DataSourceType.MEMBER,
             organisation=self.organisation,
             api_key=settings.TEST_MAILCHIMP_MEMBERLIST_API_KEY,
@@ -481,12 +531,42 @@ class TestMailchimpSource(TestExternalDataSource, TestCase):
                     "source": "postcodes.io",
                     "source_path": "parliamentary_constituency_2025",
                     # 10 characters and uppercase for Mailchimp custom fields
-                    "destination_column": "CONSTITUEN",
+                    "destination_column": self.constituency_field[:10].upper(),
                 },
                 {
                     "source": str(self.custom_data_layer.id),
                     "source_path": "mayoral region",
-                    "destination_column": "mayoral region",
+                    "destination_column": self.mayoral_field[:10].upper(),
+                },
+            ],
+        )
+        return self.source
+
+
+class TestActionNetworkSource(TestExternalDataSource, TestCase):
+    constituency_field = "custom_fields.constituency"
+    mayoral_field = "custom_fields.mayoral_region"
+
+    def create_test_source(self, name="My test AN member list"):
+        self.source = models.ActionNetworkSource.objects.create(
+            name=name,
+            data_type=models.ActionNetworkSource.DataSourceType.MEMBER,
+            organisation=self.organisation,
+            api_key=settings.TEST_ACTIONNETWORK_MEMBERLIST_API_KEY,
+            geography_column="postal_addresses[0].postal_code",
+            email_field="email_addresses[0].address",
+            geography_column_type=models.MailchimpSource.GeographyTypes.POSTCODE,
+            auto_update_enabled=True,
+            update_mapping=[
+                {
+                    "source": "postcodes.io",
+                    "source_path": "parliamentary_constituency_2025",
+                    "destination_column": self.constituency_field,
+                },
+                {
+                    "source": str(self.custom_data_layer.id),
+                    "source_path": "mayoral region",
+                    "destination_column": self.mayoral_field,
                 },
             ],
         )

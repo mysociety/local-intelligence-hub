@@ -1,13 +1,19 @@
-import requests
+import logging
 import tempfile
+
 from django.core import files
+
+import requests
+
+logger = logging.getLogger(__name__)
+
 
 def download_file_from_url(url):
     # Stream the image from the url
     try:
         request = requests.get(url, stream=True)
     except requests.exceptions.RequestException as e:
-        # TODO: log error here
+        logger.error(f"could not fetch url {url}: {e}")
         return None
 
     if request.status_code != requests.codes.ok:

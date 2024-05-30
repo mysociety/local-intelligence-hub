@@ -10,7 +10,10 @@ import { Flex, FlexProps } from "./blocks/Flex";
 import { Logos, LogosProps } from "./blocks/Logos";
 import { Stats, StatsProps } from "./blocks/Stats";
 import { Text, TextProps } from "./blocks/Text";
+import { EventCard, EventCardProps } from "./blocks/EventCard";
 import { VerticalSpace, VerticalSpaceProps } from "./blocks/VerticalSpace";
+import { GridRow, GridRowProps } from "./blocks/GridRow";
+import { SignPost, SignPostProps } from "./blocks/SignPost";
 
 export type Props = {
   ButtonGroup: ButtonGroupProps;
@@ -23,6 +26,9 @@ export type Props = {
   Stats: StatsProps;
   Text: TextProps;
   VerticalSpace: VerticalSpaceProps;
+  EventCard: EventCardProps;
+  GridRow: GridRowProps;
+  SignPost: SignPostProps;
 };
 
 export type UserConfig = Config
@@ -41,8 +47,17 @@ export const conf: UserConfig = {
     render: Root,
   },
   categories: {
+    components: {
+      components: [
+        "Card",
+        "Hero",
+        "EventCard",
+        "SignPost"
+      ],
+    },
     layout: {
       components: [
+        "GridRow",
         "Columns",
         "Flex",
         "VerticalSpace"
@@ -69,6 +84,10 @@ export const conf: UserConfig = {
     Flex,
     PlainText: Text,
     VerticalSpace,
+    EventCard,
+    GridRow,
+    SignPost
+
     // RichText: PuckRichText
   },
 };

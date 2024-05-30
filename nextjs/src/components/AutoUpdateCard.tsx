@@ -47,7 +47,7 @@ export function AutoUpdateCard({
           <CogIcon />
         </Link>
       </header>
-      {externalDataSource.dataType === DataSourceType.Member && (
+      {externalDataSource.dataType === DataSourceType.Member && externalDataSource.automatedWebhooks && (
         <AutoUpdateSwitch externalDataSource={externalDataSource} />
       )}
       {externalDataSource?.jobs?.[0]?.lastEventAt ? (
@@ -83,6 +83,8 @@ const AUTO_UPDATE_WEBHOOK_REFRESH = gql`
   mutation AutoUpdateWebhookRefresh($ID: String!) {
     refreshWebhooks(externalDataSourceId: $ID) {
       id
+      hasWebhooks
+      automatedWebhooks
       webhookHealthcheck
     }
   }
@@ -224,6 +226,8 @@ export const ENABLE_AUTO_UPDATE = gql`
     enableAutoUpdate(externalDataSourceId: $ID) {
       id
       autoUpdateEnabled
+      hasWebhooks
+      automatedWebhooks
       webhookHealthcheck
       name
     }
@@ -235,6 +239,8 @@ export const DISABLE_AUTO_UPDATE = gql`
     disableAutoUpdate(externalDataSourceId: $ID) {
       id
       autoUpdateEnabled
+      hasWebhooks
+      automatedWebhooks
       webhookHealthcheck
       name
     }

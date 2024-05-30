@@ -17,6 +17,7 @@ import { twMerge } from "tailwind-merge";
 import { ExternalLink } from "lucide-react";
 import useFuse from "@/hooks/filter";
 import { Input } from "./ui/input";
+import { LoadingIcon } from "./ui/loadingIcon";
 
 type Source = EnrichmentLayersQuery['mappingSources'][0]
 
@@ -99,7 +100,7 @@ export function SourcePathSelector({
                 autoFocus
               />
             </div>
-            <SourceList />
+            {sources ? <SourceList /> : <LoadingIcon />}
           </div>
           <div id={scrollElId} className='col-span-3 overflow-y-auto'>
             <SourceListDetails />
@@ -125,7 +126,7 @@ export function SourcePathSelector({
               className='flex flex-row cursor-pointer items-center gap-2 text-xs text-meepGray-300'>
                 <div className='w-4 flex-shrink-0 flex-grow-0 overflow-hidden'>
                   <DataSourceIcon
-                    crmType={source.externalDataSource?.crmType || ""}
+                    crmType={source.externalDataSource?.crmType}
                   />
                 </div>
                 {source.name || source.slug}
@@ -150,7 +151,7 @@ export function SourcePathSelector({
             <header className='mb-6'>
               <div className='flex flex-row gap-2 text-2xl font-semibold items-center'>
                 <DataSourceIcon
-                  crmType={source.externalDataSource?.crmType || ""}
+                  crmType={source.externalDataSource?.crmType}
                   className='w-7 h-7'
                 />
                 &nbsp;

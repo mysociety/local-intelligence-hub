@@ -1,10 +1,9 @@
 import asyncio
 import hashlib
 import itertools
-import logging
 import uuid
 from datetime import datetime, timezone
-from typing import List, Optional, TypedDict, Union
+from typing import List, Optional, Type, TypedDict, Union
 from urllib.parse import urljoin
 
 from django.conf import settings
@@ -22,14 +21,12 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.text import slugify
-from wagtail.models import Page
-from wagtail.admin.panels import FieldPanel
-from wagtail_json_widget.widgets import JSONEditorWidget
 
 import numpy as np
 import pandas as pd
 import pytz
 from asgiref.sync import async_to_sync, sync_to_async
+from benedict import benedict
 from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
 from mailchimp3 import MailChimp
@@ -41,12 +38,16 @@ from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
+from wagtail.admin.panels import FieldPanel
+from wagtail.models import Page
+from wagtail_json_widget.widgets import JSONEditorWidget
 
 import utils as lih_utils
 from hub.analytics import Analytics
 from hub.enrichment.sources import builtin_mapping_sources
 from hub.fields import EncryptedCharField
 from hub.filters import Filter
+from hub.parsons.action_network.action_network import ActionNetwork
 from hub.tasks import (
     import_all,
     import_many,
@@ -56,14 +57,14 @@ from hub.tasks import (
     refresh_webhooks,
 )
 from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
-from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
+from utils.log import get_simple_debug_logger
 from utils.nominatim import address_to_geojson
+from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
 from utils.py import batched, ensure_list, get
-from utils.img import download_file_from_url
 
 User = get_user_model()
 
-logger = logging.getLogger(__name__)
+logger = get_simple_debug_logger(__name__)
 
 
 class Organisation(models.Model):
@@ -741,8 +742,8 @@ class GenericData(CommonData):
 
 class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
-    gss = models.CharField(max_length=30, unique=True)
-    name = models.CharField(max_length=500)
+    gss = models.CharField(max_length=30)
+    name = models.CharField(max_length=200)
     area_type = models.ForeignKey(
         AreaType, on_delete=models.CASCADE, related_name="areas"
     )
@@ -903,7 +904,32 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     This class is to be subclassed by specific data source types.
     """
 
+    # Set TRUE for CRMs which have specific storage slots for name/address/etc.
+    predefined_column_names = False
+    has_webhooks = False
+    automated_webhooks = False
+    introspect_fields = False
+
+    # Allow sources to define default values for themselves
+    # for example opinionated CRMs which are only for people and have defined slots for data
+    defaults = {
+        # Reports
+        "data_type": None,
+        # Geocoding
+        "geography_column": None,
+        "geography_column_type": None,
+        # Imports
+        "postcode_field": None,
+        "first_name_field": None,
+        "last_name_field": None,
+        "full_name_field": None,
+        "email_field": None,
+        "phone_field": None,
+        "address_field": None,
+    }
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    deduplication_hash = models.CharField(max_length=32, unique=True, editable=False)
     organisation = models.ForeignKey(
         Organisation,
         on_delete=models.CASCADE,
@@ -919,12 +945,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     )
 
     class DataSourceType(models.TextChoices):
-        MEMBER = "member", "Members or supporters"
-        REGION = "region", "Areas or regions"
-        EVENT = "event", "Events"
-        LOCATION = "location", "Locations"
-        STORY = "story", "Stories"
-        OTHER = "other", "Other"
+        MEMBER = "MEMBER", "Members or supporters"
+        REGION = "REGION", "Areas or regions"
+        EVENT = "EVENT", "Events"
+        LOCATION = "LOCATION", "Locations"
+        STORY = "STORY", "Stories"
+        OTHER = "OTHER", "Other"
 
     data_type = TextChoicesField(
         choices_enum=DataSourceType, default=DataSourceType.OTHER
@@ -933,8 +959,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(auto_now=True)
-    automated_webhooks = False
-    introspect_fields = False
     # Geocoding data
 
     can_display_points_publicly = models.BooleanField(default=False)
@@ -988,7 +1012,34 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         "public_url_field",
     ]
 
+    @classmethod
+    def get_deduplication_field_names(cls) -> list[str]:
+        """
+        Return the fields that should be used to prevent sources
+        being added multiple times, e.g. ["list_id", "api_key"]
+        for Mailchimp.
+        """
+        raise NotImplementedError(
+            "Deduplication not implemented for this data source type."
+        )
+
+    def get_deduplication_hash(self) -> str:
+        # Special path for ExternalDataSource to make this method work
+        # while also forcing subclasses to implement get_deduplication_field_names
+        if self.__class__ is ExternalDataSource:
+            hash_values = ["name"]
+        else:
+            hash_values = [
+                getattr(self, field) for field in self.get_deduplication_field_names()
+            ]
+        return hashlib.md5("".join(hash_values).encode()).hexdigest()
+
     def save(self, *args, **kwargs):
+        for key, value in self.defaults.items():
+            if (getattr(self, key) is None or getattr(self, key) == "") and (
+                value is not None and value != ""
+            ):
+                setattr(self, key, value)
         # Always keep these two in sync
         if (
             self.geography_column is not None
@@ -1000,6 +1051,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             and self.geography_column_type == self.GeographyTypes.ADDRESS
         ):
             self.address_field = self.geography_column
+
+        if not self.deduplication_hash:
+            self.deduplication_hash = self.get_deduplication_hash()
+
         super().save(*args, **kwargs)
 
     def as_mapping_source(self):
@@ -1017,6 +1072,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         label: Optional[str]
         description: Optional[str]
         external_id: Optional[str]
+        editable: Optional[bool] = True
 
     fields = JSONField(blank=True, null=True, default=list)
     # Auto-updates
@@ -1184,6 +1240,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
     def webhook_healthcheck(self):
+        if self.has_webhooks is False:
+            return False
+        if self.automated_webhooks is False:
+            return True
         expected_webhooks = 0
         if self.auto_update_enabled:
             expected_webhooks += 1
@@ -1307,16 +1367,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     osm_data = address_to_geojson(address)
                 except Exception:
                     osm_data = {}
-                worker_log.warn([address, osm_data])
+                logger.warn([address, osm_data])
                 update_data = {
                     **structured_data,
                     "osm_data": osm_data,
-                    "point": Point(
-                        osm_data['geometry']['coordinates'][0],
-                        osm_data['geometry']['coordinates'][1],
-                    )
-                    if osm_data is not None and "geometry" in osm_data
-                    else None,
+                    "point": (
+                        Point(
+                            osm_data["geometry"]["coordinates"][0],
+                            osm_data["geometry"]["coordinates"][1],
+                        )
+                        if osm_data is not None and "geometry" in osm_data
+                        else None
+                    ),
                 }
 
                 await GenericData.objects.aupdate_or_create(
@@ -1358,7 +1420,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         "MatchedMember", {"member": dict, "update_fields": dict[str, any]}
     )
 
-    async def update_one(self, mapped_record: MappedMember):
+    async def update_one(self, mapped_record: MappedMember, **kwargs):
         """
         Append data for one member to the table.
         """
@@ -1366,7 +1428,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             "Update one not implemented for this data source type."
         )
 
-    async def update_many(self, mapped_records: list[MappedMember]):
+    async def update_many(self, mapped_records: list[MappedMember], **kwargs):
         """
         Append mapped data to the table.
         """
@@ -1380,7 +1442,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         raise NotImplementedError("Get ID not implemented for this data source type.")
 
-    def get_record_field(self, record: dict, field: str, field_type = None):
+    def get_record_field(self, record: dict, field: str, field_type=None):
         """
         Get a field from a record.
         """
@@ -1412,6 +1474,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         For use by views to query data without having to instantiate the class / query the database for the CRM first
         """
+        logger.debug(f"getting import data where external data source id is {id}")
         return GenericData.objects.filter(
             data_type__data_set__external_data_source_id=id
         )
@@ -1430,9 +1493,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             }
             for d in self.get_import_data()
         ]
-        print(f"building imported data frame from {json_list}")
+        logger.debug("building imported data frame")
         enrichment_df = pd.DataFrame.from_records(json_list)
-        print(f"got imported data frame with {len(json_list)} rows: \n {enrichment_df}")
+        logger.debug(f"got imported data frame with {len(json_list)} rows")
         return enrichment_df
 
     def data_loader_factory(self):
@@ -1440,12 +1503,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             return_data = []
             enrichment_df = await sync_to_async(self.get_imported_dataframe)()
             for key in keys:
-                print(
+                logger.debug(
                     f"loading enrichment data for key {key['member_id']} {key['source_id']} {key['source_path']}"
                 )
                 try:
                     if key.get("postcode_data", None) is None:
-                        print(
+                        logger.debug(
                             f"returning none for key {key['member_id']} because postcode data is none"
                         )
                         return_data.append(None)
@@ -1467,13 +1530,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         relevant_member_geography == ""
                         or relevant_member_geography is None
                     ):
-                        print(
+                        logger.debug(
                             f"returning none for key {key['member_id']} because {relevant_member_geography}"
                         )
                         return_data.append(None)
                         continue
                     else:
-                        print(
+                        logger.debug(
                             f"picking key {key['member_id']} {key['source_path']} from data frame"
                         )
                         enrichment_value = enrichment_df.loc[
@@ -1486,22 +1549,22 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         if enrichment_value is not None:
                             enrichment_value = enrichment_value[0]
                             if enrichment_value is np.nan or enrichment_value == np.nan:
-                                print(
+                                logger.debug(
                                     f"missing data for {key['member_id']} {key['source_path']}"
                                 )
                                 return_data.append(None)
                             else:
-                                print(
+                                logger.debug(
                                     f"picked {enrichment_value} for {key['member_id']} {key['source_path']}"
                                 )
                                 return_data.append(enrichment_value)
                         else:
-                            print(
+                            logger.debug(
                                 f"missing data for {key['member_id']} {key['source_path']}"
                             )
                             return_data.append(None)
                 except Exception as e:
-                    print(f"loader exception {e}")
+                    logger.debug(f"loader exception {e}")
                     return_data.append(None)
 
             return return_data
@@ -1531,23 +1594,27 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         self,
         member: Union[str, dict],
         loaders: Loaders,
-        mapping: list[UpdateMapping] = [],
+        mapping: list[UpdateMapping] = None,
     ) -> MappedMember:
         """
         Match one member to a record in the data source, via ID or record.
         """
         if type(member) is str:
             member = await loaders["fetch_record"].load(member)
+
         if member is None:
             # TODO: write tests for the case when the loader fails for a member
             return None
 
         if mapping is None or len(mapping) == 0:
+            mapping = self.get_update_mapping()
+        if mapping is None or len(mapping) == 0:
             return self.MappedMember(member=member, update_fields={})
 
+        id = self.get_record_id(member)
         update_fields = {}
         try:
-            print(f"mapping member {member.get('id')}")
+            logger.debug(f"mapping member {id}")
             postcode_data = None
             if self.geography_column_type == self.GeographyTypes.POSTCODE:
                 # Get postcode from member
@@ -1591,44 +1658,64 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                                 source_path=source_path,
                             )
                         )
-                        print(f"setting {source_path} {destination_column} to {loaded}")
+                        logger.debug(
+                            f"setting {source_path} {destination_column} to {loaded}"
+                        )
                         update_fields[destination_column] = loaded
                         continue
                 except Exception as e:
                     print(f"mapping exception {e}")
                     continue
             # Return the member and config data
-            print(f"mapped member {member.get('id')} {update_fields}")
+            logger.debug(f"mapped member {id} {update_fields}")
             return self.MappedMember(member=member, update_fields=update_fields)
         except TypeError:
             # Error fetching postcode data
             return self.MappedMember(member=member, update_fields={})
 
     async def map_many(
-        self, members: list[Union[str, any]], loaders: Loaders
+        self,
+        members: list[Union[str, any]],
+        loaders: Loaders,
+        mapping: list[UpdateMapping] = None,
     ) -> list[MappedMember]:
         """
         Match many members to records in the data source.
         """
-        mapping = self.get_update_mapping()
+        if mapping is None or len(mapping) == 0:
+            mapping = self.get_update_mapping()
+
         return await asyncio.gather(
             *[self.map_one(member, loaders, mapping=mapping) for member in members]
         )
 
-    async def refresh_one(self, member_id: Union[str, any]):
-        if len(self.get_update_mapping()) == 0:
+    async def refresh_one(
+        self,
+        member_id: Union[str, any],
+        update_kwargs={},
+        mapping: list[UpdateMapping] = None,
+    ):
+        if mapping is None or len(mapping) == 0:
+            mapping = self.get_update_mapping()
+        if len(mapping) == 0:
             return
         loaders = await self.get_loaders()
-        mapping = self.get_update_mapping()
         mapped_record = await self.map_one(member_id, loaders, mapping=mapping)
-        return await self.update_one(mapped_record=mapped_record)
+        return await self.update_one(mapped_record, **update_kwargs)
 
-    async def refresh_many(self, member_ids: list[Union[str, any]]):
-        if len(self.get_update_mapping()) == 0:
+    async def refresh_many(
+        self,
+        member_ids: list[Union[str, any]],
+        update_kwargs={},
+        mapping: list[UpdateMapping] = None,
+    ):
+        if mapping is None or len(mapping) == 0:
+            mapping = self.get_update_mapping()
+        if len(mapping) == 0:
             return
         loaders = await self.get_loaders()
-        mapped_records = await self.map_many(member_ids, loaders)
-        return await self.update_many(mapped_records=mapped_records)
+        mapped_records = await self.map_many(member_ids, loaders, mapping=mapping)
+        return await self.update_many(mapped_records=mapped_records, **update_kwargs)
 
     # UI
 
@@ -1867,7 +1954,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         source = ExternalDataSource.objects.get(pk=external_data_source_id)
         default_source_permissions = source.default_data_permissions()
-                
+
         if user is None or not user.is_authenticated:
             logger.debug("No user provided, returning default permissions")
             return default_source_permissions
@@ -1949,12 +2036,17 @@ class AirtableSource(ExternalDataSource):
 
     base_id = models.CharField(max_length=250)
     table_id = models.CharField(max_length=250)
+    has_webhooks = True
     automated_webhooks = True
     introspect_fields = True
+    default_data_type = None
 
     class Meta:
         verbose_name = "Airtable table"
-        unique_together = ["base_id", "table_id", "api_key"]
+
+    @classmethod
+    def get_deduplication_field_names(self) -> list[str]:
+        return ["base_id", "table_id", "api_key"]
 
     @cached_property
     def api(self) -> AirtableAPI:
@@ -2026,7 +2118,7 @@ class AirtableSource(ExternalDataSource):
     def get_record_id(self, record):
         return record["id"]
 
-    def get_record_field(self, record, field, field_type = None):
+    def get_record_field(self, record, field, field_type=None):
         d = record["fields"].get(str(field), None)
         if field_type == "image_field" and d is not None and len(d) > 0:
             # TODO: implement image handling
@@ -2039,16 +2131,16 @@ class AirtableSource(ExternalDataSource):
     def get_record_dict(self, record):
         return record["fields"]
 
-    async def update_one(self, mapped_record):
+    async def update_one(self, mapped_record, **kwargs):
         return self.table.update(
-            mapped_record["member"]["id"], mapped_record["update_fields"]
+            self.get_record_id(mapped_record["member"]), mapped_record["update_fields"]
         )
 
-    async def update_many(self, mapped_records):
+    async def update_many(self, mapped_records, **kwargs):
         return self.table.batch_update(
             [
                 {
-                    "id": mapped_record["member"]["id"],
+                    "id": self.get_record_id(mapped_record["member"]),
                     "fields": mapped_record["update_fields"],
                 }
                 for mapped_record in mapped_records
@@ -2090,7 +2182,7 @@ class AirtableSource(ExternalDataSource):
     def extra_webhook_healthcheck(self, webhooks):
         for webhook in webhooks:
             if not webhook.is_hook_enabled:
-                print("Webhook healthcheck: a webhook expired")
+                logger.debug("Webhook healthcheck: a webhook expired")
                 return False
         return True
 
@@ -2126,7 +2218,7 @@ class AirtableSource(ExternalDataSource):
                     member_ids += deets.created_records_by_id.keys()
         webhook_object.save()
         member_ids = list(sorted(set(member_ids)))
-        print("Webhook member result", webhook_object.cursor, member_ids)
+        logger.debug("Webhook member result", webhook_object.cursor, member_ids)
         return member_ids
 
     def delete_one(self, record_id):
@@ -2250,6 +2342,32 @@ class MailchimpSource(ExternalDataSource):
     """
 
     crm_type = "mailchimp"
+
+    class Meta:
+        verbose_name = "Mailchimp list"
+
+    predefined_column_names = True
+    has_webhooks = True
+    automated_webhooks = True
+    introspect_fields = True
+    default_data_type = ExternalDataSource.DataSourceType.MEMBER
+
+    defaults = dict(
+        # Reports
+        data_type=ExternalDataSource.DataSourceType.MEMBER,
+        # Geocoding
+        geography_column="ADDRESS.zip",
+        geography_column_type=ExternalDataSource.GeographyTypes.POSTCODE,
+        # Imports
+        postcode_field="ADDRESS.zip",
+        first_name_field="FNAME",
+        last_name_field="LNAME",
+        full_name_field=None,
+        email_field="email_address",
+        phone_field="PHONE",
+        address_field="ADDRESS.addr1",
+    )
+
     api_key = EncryptedCharField(
         max_length=250, help_text="Mailchimp API key.", null=True, blank=True
     )
@@ -2258,12 +2376,9 @@ class MailchimpSource(ExternalDataSource):
         help_text="The unique identifier for the Mailchimp list.",
     )
 
-    automated_webhooks = True
-    introspect_fields = True
-
-    class Meta:
-        verbose_name = "Mailchimp list"
-        unique_together = ["list_id", "api_key"]
+    @classmethod
+    def get_deduplication_field_names(self) -> list[str]:
+        return ["list_id", "api_key"]
 
     @cached_property
     def client(self) -> MailChimp:
@@ -2293,7 +2408,7 @@ class MailchimpSource(ExternalDataSource):
     def get_record_id(self, record):
         return record["id"]
 
-    def get_record_field(self, record, field: str):
+    def get_record_field(self, record, field: str, field_type=None):
         field_options = [
             field,
             f"merge_fields.{field}",
@@ -2365,35 +2480,15 @@ class MailchimpSource(ExternalDataSource):
         """
         fields = [
             self.FieldDefinition(
-                label="Email address",
-                value="email_address",
-                description="Email address",
+                label="Email address", value="email_address", editable=False
             ),
+            self.FieldDefinition(label="Phone number", value="PHONE", editable=False),
+            self.FieldDefinition(label="First name", value="FNAME", editable=False),
+            self.FieldDefinition(label="Last name", value="LNAME", editable=False),
             self.FieldDefinition(
-                label="Phone number",
-                value="PHONE",
-                description="Phone number",
+                label="Address", value="ADDRESS.addr1", editable=False
             ),
-            self.FieldDefinition(
-                label="First name",
-                value="FNAME",
-                description="First name",
-            ),
-            self.FieldDefinition(
-                label="Last name",
-                value="LNAME",
-                description="Last name",
-            ),
-            self.FieldDefinition(
-                label="Address",
-                value="ADDRESS.addr1",
-                description="Address first line",
-            ),
-            self.FieldDefinition(
-                label="Zip",
-                value="ADDRESS.zip",
-                description="Zipcode or Postcode",
-            ),
+            self.FieldDefinition(label="Zip", value="ADDRESS.zip", editable=False),
         ]
         merge_fields = self.client.lists.merge_fields.all(self.list_id, get_all=True)
         for field in merge_fields["merge_fields"]:
@@ -2437,23 +2532,26 @@ class MailchimpSource(ExternalDataSource):
                 (
                     result
                     for result in results
-                    if (result["id"] == key or result["email_address"] == key)
+                    if (
+                        self.get_record_id(result) == key
+                        or result["email_address"] == key
+                    )
                 ),
                 None,
             )
             for key in keys
         ]
 
-    async def update_many(self, mapped_records):
+    async def update_many(self, mapped_records, **kwargs):
         for mapped_record in mapped_records:
             try:
                 await self.update_one(mapped_record)
             except Exception as e:
-                subscriber_hash = mapped_record["member"]["id"]
+                subscriber_hash = self.get_record_id(mapped_record["member"])
                 logger.error(f"Error updating Mailchimp record {subscriber_hash}: {e}")
 
-    async def update_one(self, mapped_record):
-        subscriber_hash = mapped_record["member"]["id"]
+    async def update_one(self, mapped_record, **kwargs):
+        subscriber_hash = self.get_record_id(mapped_record["member"])
         # Have to get the existing member to update the merge fields (the API does not patch the object)
         # TODO: save all the merge fields in our database so we don't have to do this?
         existing_member = await self.fetch_one(subscriber_hash)
@@ -2513,9 +2611,219 @@ class MailchimpSource(ExternalDataSource):
         return filtered_records
 
 
+class ActionNetworkSource(ExternalDataSource):
+    """
+    An Action Network member list.
+    """
+
+    crm_type = "actionnetwork"
+
+    class Meta:
+        verbose_name = "Action Network list"
+
+    predefined_column_names = True
+    has_webhooks = True
+    automated_webhooks = False
+    introspect_fields = True
+    default_data_type = ExternalDataSource.DataSourceType.MEMBER
+
+    defaults = dict(
+        # Reports
+        data_type=ExternalDataSource.DataSourceType.MEMBER,
+        # Geocoding
+        geography_column="postal_addresses[0].postal_code",
+        geography_column_type=ExternalDataSource.GeographyTypes.POSTCODE,
+        # Imports
+        postcode_field="postal_addresses[0].postal_code",
+        first_name_field="given_name",
+        last_name_field="family_name",
+        full_name_field=None,
+        email_field="email_addresses[0].address",
+        phone_field="phone_numbers[0].number",
+        address_field="postal_addresses[0].address_lines[0]",
+    )
+
+    api_key = EncryptedCharField(max_length=250)
+
+    @classmethod
+    def get_deduplication_field_names(self) -> list[str]:
+        return ["api_key"]
+
+    @cached_property
+    def client(self) -> ActionNetwork:
+        client = ActionNetwork(api_token=self.api_key)
+        return client
+
+    def healthcheck(self):
+        # Checks if the Mailchimp list is accessible
+        list = self.client.get_custom_fields()
+        if list is not None:
+            return True
+        return False
+
+    # https://actionnetwork.org/docs/v2/#resources
+    def get_record_id(self, record):
+        ids: list[str] = record["identifiers"]
+        for id in ids:
+            if "action_network:" in id:
+                return id
+        return ids[0]
+
+    def get_record_uuid(self, record):
+        """
+        Action Network prefixes their identifiers with "action_network:"
+        but some APIs expect the UUID without the prefix.
+        """
+        id = self.get_record_id(record)
+        return self.prefixed_id_to_uuid(id)
+
+    def prefixed_id_to_uuid(self, id):
+        return id.replace("action_network:", "")
+
+    def uuid_to_prefixed_id(self, uuid: str):
+        if uuid.startswith("action_network:"):
+            return uuid
+        return f"action_network:{uuid}"
+
+    def get_record_field(self, record, field: str, field_type=None):
+        return get(record, field)
+
+    def field_definitions(self):
+        """
+        ActionNetwork activist built-in fields.
+        """
+        fields = [
+            self.FieldDefinition(
+                label="Email address",
+                value="email_addresses[0].address",
+                editable=False,
+            ),
+            self.FieldDefinition(
+                label="Phone number", value="phone_numbers[0].number", editable=False
+            ),
+            self.FieldDefinition(
+                label="Given name", value="given_name", editable=False
+            ),
+            self.FieldDefinition(
+                label="Family name", value="family_name", editable=False
+            ),
+            self.FieldDefinition(
+                label="Street address",
+                value="postal_addresses[0].address_lines[0]",
+                editable=False,
+            ),
+            self.FieldDefinition(
+                label="City",
+                value="postal_addresses[0].locality",
+                description="Town, city, local council or other local administrative area.",
+                editable=True,
+            ),
+            self.FieldDefinition(
+                label="Region / state",
+                value="postal_addresses[0].region",
+                editable=True,
+            ),
+            self.FieldDefinition(
+                label="Postal code",
+                value="postal_addresses[0].postal_code",
+                editable=False,
+            ),
+        ]
+        custom_fields = self.client.get_custom_fields()
+        for field in custom_fields["action_network:custom_fields"]:
+            name = field["name"]
+            fields.append(
+                self.FieldDefinition(
+                    label=field["name"],
+                    value=f"custom_fields.{name}",
+                    description=field.get("notes", None),
+                    external_id=field["numeric_id"],
+                )
+            )
+        return fields
+
+    async def fetch_all(self):
+        # TODO: pagination
+        list = self.client.get_people()
+        return list.to_dicts()
+
+    async def fetch_many(self, member_ids: list[str]):
+        member_ids = [self.uuid_to_prefixed_id(id) for id in list(set(member_ids))]
+        member_id_batches = batched(member_ids, 25)
+        members = []
+        for batch in member_id_batches:
+            osdi_filter_str = " or ".join(
+                [f"identifier eq '{member_id}'" for member_id in batch]
+            )
+            members += self.client.get_people(filter=osdi_filter_str).to_dicts()
+        return members
+
+    async def fetch_one(self, member_id: str):
+        # Fetches a single list member by their unique member ID
+        # Mailchimp member IDs are typically the MD5 hash of the lowercase version of the member's email address
+        id = self.prefixed_id_to_uuid(member_id)
+        member = self.client.get_person(id)
+        return member
+
+    async def update_many(self, mapped_records, **kwargs):
+        updated_records = []
+        for record in mapped_records:
+            if len(record.get("update_fields", {})) > 0:
+                updated_records.append(await self.update_one(record, **kwargs))
+            updated_records.append(await self.update_one(record, **kwargs))
+        return updated_records
+
+    async def update_one(
+        self, mapped_record, action_network_background_processing=True, **kwargs
+    ):
+        if len(mapped_record.get("update_fields", {})) == 0:
+            return
+        try:
+            id = self.get_record_uuid(mapped_record["member"])
+            # TODO: also add standard UK geo data
+            # Use benedict so that keys like `postal_addresses[0].postal_code`
+            # are unpacked into {'postal_addresses': [{'postal_code': 0}]}
+            update_fields = benedict()
+            for key, value in mapped_record["update_fields"].items():
+                update_fields[key] = value
+            logger.debug("Updating AN record", id, update_fields)
+            return self.client.update_person(
+                id, action_network_background_processing, **update_fields
+            )
+        except Exception as e:
+            print("Errored record for update_one", id, mapped_record["update_fields"])
+            raise e
+
+    def delete_one(self, record_id):
+        raise NotImplementedError(
+            "Deleting a person is not allowed via the API. DELETE requests will return an error."
+        )
+
+    def create_one(self, record: ExternalDataSource.CUDRecord):
+        record = self.client.upsert_person(
+            email_address=record["email"],
+            postal_addresses=[
+                {
+                    "address_lines": [record["data"].get("addr1")],
+                    "locality": record["data"].get("city"),
+                    "region": record["data"].get("state"),
+                    "country": record["data"].get("country"),
+                    "postal_code": record["postcode"],
+                }
+            ],
+        )
+        return record
+
+    def create_many(self, records):
+        created_records = []
+        for record in records:
+            created_records.append(self.create_one(record))
+        return created_records
+
+
 class MapReport(Report, Analytics):
-    layers = models.JSONField(blank=True, null=True, default=list)
-    display_options = models.JSONField(blank=True, null=True, default=dict)
+    layers = models.JSONField(default=list, blank=True)
+    display_options = models.JSONField(default=dict, blank=True)
 
     class MapLayer(TypedDict):
         name: str
@@ -2524,7 +2832,7 @@ class MapReport(Report, Analytics):
         custom_marker_text: Optional[str] = None
 
     def get_layers(self) -> list[MapLayer]:
-        return self.layers
+        return self.layers or []
 
     def get_import_data(self):
         visible_layer_ids = [
@@ -2538,19 +2846,26 @@ class MapReport(Report, Analytics):
         return self.get_import_data()
 
 
+def generate_puck_json_content():
+    return {"content": [], "root": {}, "zones": {}}
+
+
 class HubHomepage(Page):
     """
     An microsite that incorporates datasets and content pages,
     backed by a custom URL.
     """
+
     subpage_types = ["hub.HubContentPage"]
 
     organisation = models.ForeignKey(
-        Organisation, on_delete=models.CASCADE, related_name="hubs"
+        Organisation, on_delete=models.PROTECT, related_name="hubs"
     )
 
     layers = models.JSONField(blank=True, null=True, default=list)
-    puck_json_content = models.JSONField(blank=True, null=False, default=dict)
+    puck_json_content = models.JSONField(
+        blank=True, null=False, default=generate_puck_json_content
+    )
     nav_links = models.JSONField(blank=True, null=True, default=list)
 
     content_panels = Page.content_panels + [
@@ -2566,25 +2881,22 @@ class HubHomepage(Page):
     class HubNavLinks(TypedDict):
         label: str
         link: str
-    
+
     def get_nav_links(self) -> list[HubNavLinks]:
         return self.nav_links
 
-def generate_puck_json_content():
-    return {
-      "content": [],
-      "root": {},
-      "zones": {}
-    }
 
 class HubContentPage(Page):
     parent_page_type = ["hub.HubHomepage"]
     subpage_types = ["hub.HubContentPage"]
-    puck_json_content = models.JSONField(blank=True, null=False, default=generate_puck_json_content)
+    puck_json_content = models.JSONField(
+        blank=True, null=False, default=generate_puck_json_content
+    )
 
     content_panels = Page.content_panels + [
         FieldPanel("puck_json_content", widget=JSONEditorWidget),
     ]
+
 
 class APIToken(models.Model):
     """
@@ -2636,3 +2948,10 @@ def update_apitoken_cache_on_save(sender, instance, *args, **kwargs):
 @receiver(models.signals.post_delete, sender=APIToken)
 def update_apitoken_cache_on_delete(sender, instance, *args, **kwargs):
     refresh_tokens_cache()
+
+
+source_models: dict[str, Type[ExternalDataSource]] = {
+    "airtable": AirtableSource,
+    "mailchimp": MailchimpSource,
+    "actionnetwork": ActionNetworkSource,
+}

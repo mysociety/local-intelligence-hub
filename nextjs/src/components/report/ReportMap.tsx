@@ -396,17 +396,15 @@ export function ReportMap () {
                       type: "FeatureCollection",
                       features: tileset.data
                         .filter((d) => d.gssArea?.point?.geometry)
-                        .map((d) => {
-                          return {
-                            type: "Feature",
-                            geometry: d.gssArea?.point
-                              ?.geometry! as GeoJSON.Point,
-                            properties: {
-                              count: d.count,
-                              label: d.label,
-                            },
-                          };
-                        }),
+                        .map((d) => ({
+                          type: "Feature",
+                          geometry: d.gssArea?.point
+                            ?.geometry! as GeoJSON.Point,
+                          properties: {
+                            count: d.count,
+                            label: d.label,
+                          },
+                        }))
                     }}
                   />
                   <Layer

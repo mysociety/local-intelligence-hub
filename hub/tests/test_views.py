@@ -6,7 +6,6 @@ from django.urls import reverse
 
 from hub.models import DataSet, UserDataSets
 
-
 # class Test404Page(TestCase):
 #     def test404page(self):
 #         url = "/page_does_not_exist"

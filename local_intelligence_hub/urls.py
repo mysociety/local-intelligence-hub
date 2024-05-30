@@ -21,11 +21,11 @@ from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path, re_path
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import RedirectView
-from wagtail.admin import urls as wagtailadmin_urls
-from wagtail import urls as wagtail_urls
-from wagtail.documents import urls as wagtaildocs_urls
 
 from strawberry_django_dataloaders.views import DataloaderAsyncGraphQLView
+from wagtail import urls as wagtail_urls
+from wagtail.admin import urls as wagtailadmin_urls
+from wagtail.documents import urls as wagtaildocs_urls
 
 from hub.graphql.schema import schema
 from hub.sitemap import hub_sitemap
@@ -141,8 +141,8 @@ urlpatterns = [
         vector_tiles.ExternalDataSourcePointTileJSONView.as_view(),
         name="external_data_source_point_tilejson",
     ),
-    path('cms/', include(wagtailadmin_urls)),
-    path('documents/', include(wagtaildocs_urls)),
+    path("cms/", include(wagtailadmin_urls)),
+    path("documents/", include(wagtaildocs_urls)),
     # For multi-tenancy wagtail page router logic
     path("", include(wagtail_urls)),
 ]
@@ -155,4 +155,4 @@ if settings.DEBUG:  # pragma: no cover
             path("__debug__/", include(debug_toolbar.urls)),
         ]
 
-        urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
