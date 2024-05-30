@@ -7,6 +7,14 @@ export const GET_PAGE = gql`
       title
       path
       puckJsonContent
+      seoTitle
+      searchDescription
+      hub {
+        faviconUrl
+        seoTitle
+        seoImageUrl
+        searchDescription
+      }
     }
   }
 `

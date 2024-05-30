@@ -32,10 +32,22 @@ export async function generateMetadata(
   })
  
   return {
-    title: page.data.hubPageByPath?.title,
-    // TODO: some hardcoded image
-    // openGraph: {
-    //   images: ['/some-specific-page-image.jpg', ...previousImages],
-    // },
+    title: {
+      absolute: page.data.hubPageByPath?.seoTitle || "Mapped by Common Knowledge",
+      template: `%s | ${page.data.hubPageByPath?.hub.seoTitle}`,
+      default: page.data.hubPageByPath?.hub.seoTitle
+    },
+    description: page.data.hubPageByPath?.searchDescription || page.data.hubPageByPath?.hub.searchDescription,
+    openGraph: page.data.hubPageByPath?.hub.seoImageUrl ? {
+      images: page.data.hubPageByPath?.hub.seoImageUrl,
+    } : undefined,
+    icons: page.data.hubPageByPath?.hub?.faviconUrl ? {
+      icon: [
+        {
+          url: page.data.hubPageByPath?.hub?.faviconUrl,
+          href: page.data.hubPageByPath?.hub?.faviconUrl,
+        }
+      ],
+    } : undefined,
   }
 }

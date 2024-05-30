@@ -1074,12 +1074,18 @@ def mapping_sources(info: Info) -> List[MappingSourcePath]:
 
 
 @strawberry_django.type(models.Page)
-class WagtailPage:
+class HubPage:
     id: auto
     title: str
     slug: str
     path: str
     full_url: Optional[str] = attr_field()
+
+    search_description: Optional[str]
+
+    @strawberry_django.field
+    def seo_title(self) -> str:
+        return self.seo_title or self.title
 
     @strawberry_django.field
     def hostname(self) -> str:
@@ -1106,20 +1112,24 @@ class WagtailPage:
         return self.specific._meta.object_name
 
     @strawberry_django.field
-    def ancestors(self, inclusive: bool = False) -> List["WagtailPage"]:
+    def ancestors(self, inclusive: bool = False) -> List["HubPage"]:
         return self.get_ancestors(inclusive=inclusive)
 
     @strawberry_django.field
-    def parent(self) -> Optional["WagtailPage"]:
+    def parent(self) -> Optional["HubPage"]:
         return self.get_parent()
 
     @strawberry_django.field
-    def children(self) -> List["WagtailPage"]:
+    def children(self) -> List["HubPage"]:
         return self.get_children()
 
     @strawberry_django.field
-    def descendants(self, inclusive: bool = False) -> List["WagtailPage"]:
+    def descendants(self, inclusive: bool = False) -> List["HubPage"]:
         return self.get_descendants(inclusive=inclusive)
+    
+    @strawberry_django.field
+    def hub(self) -> "HubHomepage":
+        return self.get_site().root_page.specific
 
 
 @strawberry.type
@@ -1129,10 +1139,17 @@ class HubNavLink:
 
 
 @strawberry_django.type(models.HubHomepage)
-class HubHomepage(WagtailPage):
+class HubHomepage(HubPage):
     organisation: Organisation
     layers: List[MapLayer]
     nav_links: List[HubNavLink]
+    favicon_url: Optional[str]
+    
+    @strawberry_django.field
+    def seo_image_url(self) -> Optional[str]:
+        if self.seo_image is None:
+            return None
+        return self.seo_image.get_rendition("width-800").full_url
 
     # TODO: ultimately all this data will need to be public anyway for public viewing
     # @classmethod
@@ -1148,7 +1165,7 @@ class HubHomepage(WagtailPage):
 @strawberry_django.field()
 def hub_page_by_path(
     info: Info, hostname: str, path: Optional[str] = None
-) -> Optional[WagtailPage]:
+) -> Optional[HubPage]:
     # get request for strawberry query
     request: HttpRequest = info.context["request"]
     request.META = {

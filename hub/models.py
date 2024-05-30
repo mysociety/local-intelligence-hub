@@ -2850,6 +2850,20 @@ def generate_puck_json_content():
     return {"content": [], "root": {}, "zones": {}}
 
 
+from wagtail.images.models import Image, AbstractImage, AbstractRendition
+
+class HubImage(AbstractImage):
+    admin_form_fields = Image.admin_form_fields 
+
+class HubImageRendition(AbstractRendition):
+    image = models.ForeignKey(HubImage, on_delete=models.CASCADE, related_name='renditions')
+    class Meta:
+        unique_together = (
+            ('image', 'filter_spec', 'focal_point_key'),
+        )
+
+from wagtail.admin.panels import TabbedInterface, TitleFieldPanel, ObjectList
+
 class HubHomepage(Page):
     """
     An microsite that incorporates datasets and content pages,
@@ -2867,13 +2881,35 @@ class HubHomepage(Page):
         blank=True, null=False, default=generate_puck_json_content
     )
     nav_links = models.JSONField(blank=True, null=True, default=list)
+    favicon_url = models.URLField(blank=True, null=True)
+    seo_image = models.ForeignKey(
+        'hub.HubImage',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='+'
+    )
 
     content_panels = Page.content_panels + [
         FieldPanel("organisation"),
         FieldPanel("layers", widget=JSONEditorWidget),
+    ]
+
+    website_panels = [
         FieldPanel("puck_json_content", widget=JSONEditorWidget),
         FieldPanel("nav_links", widget=JSONEditorWidget),
     ]
+
+    promote_panels = Page.promote_panels + [
+        FieldPanel("favicon_url"),
+        FieldPanel("seo_image"),
+    ]
+
+    edit_handler = TabbedInterface([
+        ObjectList(promote_panels, heading='Hub SEO'),
+        ObjectList(content_panels, heading='Hub data'),
+        ObjectList(website_panels, heading='Homepage contents'),
+    ])
 
     def get_layers(self) -> list[MapReport.MapLayer]:
         return self.layers
