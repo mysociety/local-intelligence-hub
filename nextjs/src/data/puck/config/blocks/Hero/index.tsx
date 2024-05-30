@@ -1,230 +1,83 @@
-/* eslint-disable @next/next/no-img-element */
-import React, { useState } from "react";
-import { Button, ComponentConfig } from "@measured/puck";
-import { Section } from "@/data/puck/config/components/Section";
-import { quotes } from "./quotes";
+import { ComponentConfig } from "@measured/puck";
+import React from "react";
+import Image from "next/image";
+import { Input } from "@/components/ui/input";
+
+import heroImg from "../../../../../../public/hub/hero-img.jpg"
+import mapImg from "../../../../../../public/hub/hero-map-search-lg.png"
+
+import { Search } from "lucide-react";
 
 export type HeroProps = {
-  quote?: { index: number; label: string };
   title: string;
   description: string;
-  align?: string;
-  padding: string;
-  image?: {
-    mode?: "inline" | "background";
-    url?: string;
-  };
-  buttons: {
-    label: string;
-    href: string;
-    variant?: "primary" | "secondary";
-    more?: { text: string }[];
-  }[];
+  prompt: string;
 };
 
-// TODO: add a comment why we need resolveFields (if we do need it)
-export const Hero: ComponentConfig<HeroProps> & { resolveFields: any } = {
+export const Hero: ComponentConfig<HeroProps> = {
   fields: {
-    quote: {
-      type: "external",
-      placeholder: "Select a quote",
-      showSearch: true,
-      filterFields: {
-        author: {
-          type: "select",
-          options: [
-            { value: "", label: "Select an author" },
-            { value: "Mark Twain", label: "Mark Twain" },
-            { value: "Henry Ford", label: "Henry Ford" },
-            { value: "Kurt Vonnegut", label: "Kurt Vonnegut" },
-            { value: "Andrew Carnegie", label: "Andrew Carnegie" },
-            { value: "C. S. Lewis", label: "C. S. Lewis" },
-            { value: "Confucius", label: "Confucius" },
-            { value: "Eleanor Roosevelt", label: "Eleanor Roosevelt" },
-            { value: "Samuel Ullman", label: "Samuel Ullman" },
-          ],
-        },
-      },
-      fetchList: async ({ query, filters }) => {
-        // Simulate delay
-        await new Promise((res) => setTimeout(res, 500));
-
-        return quotes
-          .map((quote, idx) => ({
-            index: idx,
-            title: quote.author,
-            description: quote.content,
-          }))
-          .filter((item) => {
-            if (filters?.author && item.title !== filters?.author) {
-              return false;
-            }
-
-            if (!query) return true;
-
-            const queryLowercase = query.toLowerCase();
-
-            if (item.title.toLowerCase().indexOf(queryLowercase) > -1) {
-              return true;
-            }
-
-            if (item.description.toLowerCase().indexOf(queryLowercase) > -1) {
-              return true;
-            }
-          });
-      },
-      mapRow: (item) => ({ title: item.title, description: item.description }),
-      mapProp: (result) => {
-        return { index: result.index, label: result.description };
-      },
-      getItemSummary: (item) => item?.label || "",
+    title: {
+      type: "text",
     },
-    title: { type: "text" },
-    description: { type: "textarea" },
-    buttons: {
-      type: "array",
-      min: 1,
-      max: 4,
-      getItemSummary: (item) => item?.label || "Button",
-      arrayFields: {
-        label: { type: "text" },
-        href: { type: "text" },
-        variant: {
-          type: "select",
-          options: [
-            { label: "primary", value: "primary" },
-            { label: "secondary", value: "secondary" },
-          ],
-        },
-      },
-      defaultItemProps: {
-        label: "Button",
-        href: "#",
-      },
+    description: {
+      type: "textarea",
     },
-    align: {
-      type: "radio",
-      options: [
-        { label: "left", value: "left" },
-        { label: "center", value: "center" },
-      ],
+    prompt: {
+      type: "text"
     },
-    image: {
-      type: "object",
-      objectFields: {
-        url: { type: "text" },
-        mode: {
-          type: "radio",
-          options: [
-            { label: "inline", value: "inline" },
-            { label: "background", value: "background" },
-          ],
-        },
-      },
-    },
-    padding: { type: "text" },
+
   },
   defaultProps: {
-    title: "Hero",
-    align: "left",
+    title: "Heading",
     description: "Description",
-    buttons: [{ label: "Learn more", href: "#" }],
-    padding: "64px",
+    prompt: "Something",
+
   },
-  /**
-   * The resolveData method allows us to modify component data after being
-   * set by the user.
-   *
-   * It is called after the page data is changed, but before a component
-   * is rendered. This allows us to make dynamic changes to the props
-   * without storing the data in Puck.
-   *
-   * For example, requesting a third-party API for the latest content.
-   */
-  resolveData: async ({ props }, { changed }) => {
-    if (!props.quote)
-      return { props, readOnly: { title: false, description: false } };
-
-    if (!changed.quote) {
-      return { props };
-    }
-
-    // Simulate a delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    return {
-      props: {
-        title: quotes[props.quote.index].author,
-        description: quotes[props.quote.index].content,
-      },
-      readOnly: { title: true, description: true },
-    };
-  },
-  resolveFields: async (data: any, { fields }: { fields: any }) => {
-    if (data.props.align === "center") {
-      return {
-        ...fields,
-        image: undefined,
-      };
-    }
-
-    return fields;
-  },
-  render: ({ align, title, description, buttons, padding, image }) => {
-    // Empty state allows us to test that components support hooks
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [_] = useState(0);
-
+  render: ({ title, description, prompt }) => {
     return (
-      <Section
-        padding={padding}
-      >
-        {image?.mode === "background" && (
-          <>
-            <div
-              style={{
-                backgroundImage: `url("${image?.url}")`,
-              }}
-            ></div>
+      <div className=" rounded-[40px] flex flex-col lg:flex-row justify-end overflow-clip lg:gap-[25px] relative mb-[25px]">
+        
+          <Image
+            className="lg:rounded-[40px] lg:absolute h-full w-full"
+            src={heroImg}
+            width={500}
+            height={1000}
+            alt="hero image"
+            layout="responsive"
+          />
+        <div className="lg:absolute w-full ">
+          </div>
+        <div className="z-20 lg:w-1/2 lg:mt-0 lg:py-[20px] lg:pr-[20px] gap-0">
 
-            <div></div>
-          </>
-        )}
-
-        <div>
-          <div>
-            <h1>{title}</h1>
-            <p>{description}</p>
-            <div>
-              {buttons.map((button, i) => (
-                <Button
-                  key={i}
-                  href={button.href}
-                  variant={button.variant}
-                  size="large"
-                >
-                  {button.label}
-                </Button>
-              ))}
+          <div className=" bg-jungle-green-50 lg:rounded-[20px] p-[25px] flex flex-col place-content-center gap-10 justify-between z-10  w-full ">
+            <div className="flex flex-col gap-8">
+              <h1 className="text-hub5xl"><span className="italic">The</span> <span className="text-jungle-green-400">Climate</span> Hub</h1>
+              <p className="text-jungle-green-neutral text-xl">{description}</p>
+            </div>
+            <div className="flex gap-4 border-t border-jungle-green-100 pt-8 ">
+              {/* <div className="aspect-square">
+                <Image
+                  className="aspect-square rounded-[10px] h-full w-full"
+                  src={mapImg}
+                  width={100}
+                  height={100}
+                  alt="map-img image"
+                />
+              </div> */}
+              <div className="flex flex-col gap-4">
+                <p className="text-hubH4">{prompt}</p>
+                <div className=" flex items-center relative text-jungle-green-600">
+                  <Search className="absolute ml-2" />
+                  <Input placeholder="Enter postcode or area" className=" border-hub-foreground p-8 focus-visible:ring-0 text-hub4xl placeholder:text-hub4xl pl-10 placeholder:text-jungle-green-600 bg-jungle-green-100 border-0" />
+                </div>
+                <p className="text-jungle-green-600 text-sm">Powered using <span className="underline">Mapped</span> by Common Knowledge</p>
+              </div>
             </div>
           </div>
-
-          {align !== "center" && image?.mode !== "background" && image?.url && (
-            <div
-              style={{
-                backgroundImage: `url('${image?.url}')`,
-                backgroundSize: "cover",
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "center",
-                borderRadius: 24,
-                height: 356,
-                marginLeft: "auto",
-                width: "100%",
-              }}
-            />
-          )}
         </div>
-      </Section>
+      </div>
+
+
     );
   },
 };

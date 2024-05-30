@@ -7,6 +7,12 @@
 
 
 
+@font-face {
+  font-family: publicSans;
+  src:
+    url('../fonts/hub/PublicSans-Regular.ttf');
+  font-style: normal;
+}
 
 
 @font-face {

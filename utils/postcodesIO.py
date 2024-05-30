@@ -101,7 +101,9 @@ async def get_postcode_geo(postcode: str) -> PostcodesIOResult:
 
 @batch_and_aggregate(settings.POSTCODES_IO_BATCH_MAXIMUM)
 async def get_bulk_postcode_geo(postcodes) -> PostcodesIOBulkResult:
-    postcodes = [unquote(postcode) for postcode in postcodes]  # parse url encoded spaces
+    postcodes = [
+        unquote(postcode or "") for postcode in postcodes
+    ]  # parse url encoded spaces
     async with httpx.AsyncClient() as client:
         response = await client.post(
             f"{settings.POSTCODES_IO_URL}/postcodes",
