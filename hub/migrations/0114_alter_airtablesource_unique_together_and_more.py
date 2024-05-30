@@ -2,6 +2,7 @@
 
 import hashlib
 from django.db import migrations, models
+from django.db.migrations.state import ProjectState
 import hub.fields
 
 
@@ -83,3 +84,18 @@ class Migration(migrations.Migration):
             ),
         ),
     ]
+
+    def apply(self, project_state: ProjectState, *args, **kwargs) -> ProjectState:
+        """
+        The AlterUniqueTogether migration above fails if no unique constraint exists.
+        This try/except allows the migration to succeed in this case.
+        """
+        try:
+            return super().apply(project_state, *args, **kwargs)
+        except Exception as e:
+            if (
+                str(e)
+                == "Found wrong number (0) of constraints for hub_externaldatasource(base_id, table_id, api_key)"
+            ):
+                return project_state
+            raise e
