@@ -48,7 +48,7 @@ export function ConstituencyView ({
               </div>
             </div>
             <p>
-              <b className='text-meepGray-500 font-bold'>What's this about?</b>
+              <b className='text-meepGray-500 font-bold'>What{"'"}s this about?</b>
               &nbsp;
               {i.description}
             </p>
