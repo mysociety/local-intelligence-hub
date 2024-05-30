@@ -1137,7 +1137,8 @@ def hub_page_by_path(
     site = Site.objects.get(hostname=hostname)
     if path is None:
         return site.root_page.specific
-    return models.Page.find_for_request(request, path).specific
+    page = models.Page.find_for_request(request, path)
+    return page.specific if page else None
 
 
 @strawberry_django.field()
