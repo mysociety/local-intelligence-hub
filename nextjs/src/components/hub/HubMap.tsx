@@ -50,12 +50,12 @@ export function HubMap ({
     if (currentConstituency) {
       mapbox.loadedMap?.fitBounds(currentConstituency.fitBounds, {
         // TODO: change for small screen
-        padding: {
-          left: SIDEBAR_WIDTH + 75,
-          top: 50,
-          right: 50,
-          bottom: 50
-        }
+        padding: FIT_BOUNDS_PADDING
+      })
+    } else {
+      // Fly to UK bounds
+      mapbox.loadedMap?.fitBounds(UK_BOUNDS, {
+        padding: FIT_BOUNDS_PADDING
       })
     }
   }, [currentConstituency, mapbox.loadedMap])
@@ -143,6 +143,18 @@ export function HubMap ({
       </Map>
     </>
   );
+}
+
+const UK_BOUNDS = [
+  [-8.5, 49.5],
+  [2, 61]
+]
+
+const FIT_BOUNDS_PADDING = {
+  left: SIDEBAR_WIDTH + 75,
+  top: 50,
+  right: 50,
+  bottom: 50
 }
 
 // TODO: unify this and ReportMap's TILESETS

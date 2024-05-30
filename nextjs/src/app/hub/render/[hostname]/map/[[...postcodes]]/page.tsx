@@ -1,6 +1,8 @@
 // page.js
 "use client";
 
+import React from 'react'
+
 import "mapbox-gl/dist/mapbox-gl.css";
 import { gql, useLazyQuery, useQuery } from "@apollo/client";
 import { Provider as JotaiProvider } from "jotai";
@@ -11,21 +13,35 @@ import { format, formatRelative } from "date-fns";
 import { ConstituencyView } from "@/components/hub/ConstituencyView";
 import { GetLocalDataQuery, GetLocalDataQueryVariables } from "@/__generated__/graphql";
 import { SIDEBAR_WIDTH } from "@/components/hub/data";
+import { useRouter } from 'next/navigation';
+import { usePathname, useParams } from 'next/navigation' 
 
 type Params = {
   hostname: string
+  postcodes?: string[]
 }
 
-export default function Page({ params: { hostname } }: { params: Params }) {
+export default function Page({ params: { hostname, postcodes } }: { params: Params }) {
+  const router = useRouter()
+
   const hub = useQuery(GET_HUB_MAP_DATA, {
     variables: { hostname },
   });
 
-  const [postcode, setPostcode] = useState('')
+  // To listen for any soft changes to the pathname
+  // and extract a postcode
+  // e.g. /map/postcode/E15QJ
+  const pathname = usePathname()
+  const pathnameSegments = pathname.split("/")
+  const postcodeFromPathname = (
+      pathnameSegments &&
+      pathnameSegments.length === 4 &&
+      pathnameSegments[2] === 'postcode'
+    ) ? pathnameSegments[3] : ''
 
-  // TODO: postcode cahnge
-  const [fetchLocalData, localData] = useLazyQuery<GetLocalDataQuery, GetLocalDataQueryVariables>(GET_LOCAL_DATA, {
-    variables: { postcode, hostname }
+  const localData = useQuery<GetLocalDataQuery, GetLocalDataQueryVariables>(GET_LOCAL_DATA, {
+    variables: { postcode: postcodeFromPathname, hostname },
+    skip: !postcodeFromPathname
   });
 
   return (
@@ -44,28 +60,17 @@ export default function Page({ params: { hostname } }: { params: Params }) {
                 <div className='max-w-[100vw] rounded-md bg-meepGray-100 text-green-950 p-6' style={{
                   width: SIDEBAR_WIDTH
                 }}>
-                  <h1 className='text-2xl font-bold mb-1 leading-tight'>
-                    Find out how you can support the climate and nature
-                  </h1>
-                  <p className='text-sm text-meepGray-500'>
-                    Explore our map of Husting events happening all over the uk or input your postcode to see what{"’"}s happening near you. We{"’"}ve had over 300+ events so far.
-                  </p>
-                  <input
-                    type="text"
-                    placeholder="Enter your postcode"
-                    className='p-4 text-lg w-full rounded-md border border-meepGray-300 mt-4 active:border-green-500'
-                    value={postcode}
-                    onChange={e => setPostcode(e.target.value)}
-                  />
-                  <button
-                    className='bg-green-500 text-white text-lg font-bold rounded-md w-full p-4 mt-4'
-                    disabled={!postcode || (localData.loading && !localData.error)}
-                    onClick={() => fetchLocalData()}
-                  >
-                    {localData.loading ? 'Loading...' : 'Search'}
-                  </button>
-                  {localData.data && (
-                    <ConstituencyView data={localData.data} />
+                  {!localData.data ? (
+                    <SearchPanel
+                      onSearch={(postcode) => {
+                        window.history.pushState(null, '', `/map/postcode/${postcode}`)
+                      }}
+                      isLoading={localData.loading}
+                    />
+                  ) : (
+                    <ConstituencyView
+                      data={localData.data}
+                    />
                   )}
                 </div>
               </aside>
@@ -74,6 +79,42 @@ export default function Page({ params: { hostname } }: { params: Params }) {
         </div>
       </JotaiProvider>
     </MapProvider>
+  )
+}
+
+export function SearchPanel ({
+  onSearch,
+  isLoading
+}: {
+  onSearch: (postcode: string) => void,
+  isLoading: boolean
+}) {
+  const [postcode, setPostcode] = useState("")
+
+  return (
+    <>
+      <h1 className='text-2xl font-bold mb-1 leading-tight'>
+        Find out how you can support the climate and nature
+      </h1>
+      <p className='text-sm text-meepGray-500'>
+        Explore our map of Husting events happening all over the uk or input your postcode to see what{"’"}s happening near you. We{"’"}ve had over 300+ events so far.
+      </p>
+      <input
+        type="text"
+        placeholder="Enter your postcode"
+        className='p-4 text-lg w-full rounded-md border border-meepGray-300 mt-4 active:border-green-500'
+        value={postcode}
+        onChange={e => setPostcode(e.target.value)}
+      />
+      <button
+        className='bg-green-500 text-white text-lg font-bold rounded-md w-full p-4 mt-4'
+        // TODO: add postcode validation
+        disabled={!postcode || isLoading}
+        onClick={() => onSearch(postcode)}
+      >
+        {isLoading ? 'Loading...' : 'Search'}
+      </button>
+    </>
   )
 }
 
@@ -101,6 +142,7 @@ const GET_HUB_MAP_DATA = gql`
 const GET_LOCAL_DATA = gql`
   query GetLocalData($postcode: String!, $hostname: String!) {
     postcodeSearch(postcode: $postcode) {
+      postcode
       constituency {
         id
         gss

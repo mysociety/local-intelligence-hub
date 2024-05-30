@@ -1,6 +1,7 @@
 import { DataSourceType, GetLocalDataQuery } from "@/__generated__/graphql";
 import { formatDate, formatRelative, isAfter } from "date-fns";
 import { Ticket } from "lucide-react";
+import Link from "next/link";
 
 export function ConstituencyView ({
   data
@@ -16,9 +17,11 @@ export function ConstituencyView ({
 
   return (
     <>
-      <div>
+      <a className='pointer-cursor' onClick={() => {
+        window.history.pushState(null, '', "/map")
+      }}>
         &larr; Search another postcode
-      </div>
+      </a>
       <header className='mb-4'>
         <div className='text-meepGray-500'>Your constituency is</div>
         <h2 className='text-3xl text-green-950 font-bold'>
