@@ -54,7 +54,7 @@ const config = {
           lineHeight: '100%',
           letterSpacing: '0rem',
         }],
-        
+
         hXlg: ['4.5rem', {
           lineHeight: '107%',
           letterSpacing: '-0.2rem',

@@ -43,7 +43,7 @@ export type CardProps = {
   title: string;
   description: string;
   type: string;
-  externalLink: string;
+  link: string;
 };
 
 const TypeBadge = ({ type }: { type: string }) => {
@@ -70,7 +70,7 @@ export const Card: ComponentConfig<CardProps> = {
     description: {
       type: "textarea",
     },
-    externalLink: {
+    link: {
       type: "text",
     },
 
@@ -79,63 +79,101 @@ export const Card: ComponentConfig<CardProps> = {
     title: "Heading",
     description: "Dignissimos et eos fugiat. Facere aliquam corrupti est voluptatem veritatis amet id. Nam repudiandae accusamus illum voluptatibus similique consequuntur. Impedit ut rerum quae. Dolore qui mollitia occaecati soluta numquam. Non corrupti mollitia libero aut atque quibusdam tenetur.",
     type: "resource",
-    externalLink: "www.google.com",
+    link: "www.google.com",
 
   },
-  render: ({ title, description, type, externalLink }) => {
-
-
-    return (
-      <Dialog>
-        <DialogTrigger className="w-full h-full text-left">
-          <div className="w-full h-full aspect-square overflow-clip rounded-[20px] flex flex-col gap-5 hover:shadow-hover transition-all">
-            {type === "resource" && (
-              <div className="p-5 bg-white h-full flex flex-col gap-4 justify-between">
-                <div className=" flex flex-col gap-4" >
-                  <h2 className="lg:text-hub2xl text-hubxl">{title}</h2>
-                  <p className="text-jungle-green-neutral line-clamp-6 ">{description}</p>
-                </div>
-                <TypeBadge type={type} />
-              </div>
-            )}
-
-            {type === "action" && (
-
-
-              <div className="p-5 bg-jungle-green-600 text-white h-full relative gap-2 flex flex-col align-bottom">
-                <Image src={ArrowTopRight} width={30} alt="arrow" />
-                <div className="z-10">
-                  <h2 className="lg:text-hub2xl text-hubxl tracking-tight">{title}</h2>
-                  <div>
-                    <div className="uppercase inline-block text-jungle-green-700 bg-jungle-green-100 text-lg font-normal rounded-full px-3">{type}</div>
-                  </div>
-                </div>
-                <Image
-                  className="object-cover rounded-[40px] absolute top-0 left-0"
-                  src={CirclePattern}
-                  width={500}
-                  alt="hero image"
-                  layout="responsive"
-                />
-              </div>
-            )}
-
-           
-
+  render: ({ title, description, type, link }) => {
+    const content = (
+      <div className="w-full h-full aspect-square overflow-clip rounded-[20px] flex flex-col gap-5 hover:shadow-hover transition-all">
+        {type === "resource" && (
+          <div className="p-5 bg-white h-full flex flex-col gap-4 justify-between">
+            <div className="flex flex-col gap-4">
+              <h2 className="lg:text-hub2xl text-hubxl">{title}</h2>
+              <p className="text-jungle-green-neutral line-clamp-6">{description}</p>
+            </div>
+            <TypeBadge type={type} />
           </div>
-        </DialogTrigger>
-        <DialogContent className="p-10 bg-white text-jungle-green-900">
-          <DialogHeader className="flex flex-col gap-5">
-            <DialogTitle className="text-5xl">{title}</DialogTitle>
-            <DialogDescription className=" text-lg">
-              {description}
-            </DialogDescription>
-
-            <Button variant="secondary" className="gap-4"><Download />Download Files</Button>
-
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
+        )}
+  
+        {type === "action" && (
+          <div className="p-5 bg-jungle-green-600 text-white h-full relative gap-2 flex flex-col align-bottom">
+            <Image src={ArrowTopRight} width={30} alt="arrow" />
+            <div className="z-10">
+              <h2 className="lg:text-hub2xl text-hubxl tracking-tight">{title}</h2>
+              <div>
+                <div className="uppercase inline-block text-jungle-green-700 bg-jungle-green-100 text-lg font-normal rounded-full px-3">{type}</div>
+              </div>
+            </div>
+            <Image
+              className="object-cover rounded-[40px] absolute top-0 left-0"
+              src={CirclePattern}
+              width={500}
+              alt="hero image"
+              layout="responsive"
+            />
+          </div>
+        )}
+      </div>
     );
+
+    return link ? (
+      <Link href={link}>
+        {content}
+      </Link>
+    ) : (
+      content
+    );
+      //   <Dialog>
+    //     <DialogTrigger className="w-full h-full text-left">
+    //       <div className="w-full h-full aspect-square overflow-clip rounded-[20px] flex flex-col gap-5 hover:shadow-hover transition-all">
+    //         {type === "resource" && (
+    //           <div className="p-5 bg-white h-full flex flex-col gap-4 justify-between">
+    //             <div className=" flex flex-col gap-4" >
+    //               <h2 className="lg:text-hub2xl text-hubxl">{title}</h2>
+    //               <p className="text-jungle-green-neutral line-clamp-6 ">{description}</p>
+    //             </div>
+    //             <TypeBadge type={type} />
+    //           </div>
+    //         )}
+
+    //         {type === "action" && (
+
+
+    //           <div className="p-5 bg-jungle-green-600 text-white h-full relative gap-2 flex flex-col align-bottom">
+    //             <Image src={ArrowTopRight} width={30} alt="arrow" />
+    //             <div className="z-10">
+    //               <h2 className="lg:text-hub2xl text-hubxl tracking-tight">{title}</h2>
+    //               <div>
+    //                 <div className="uppercase inline-block text-jungle-green-700 bg-jungle-green-100 text-lg font-normal rounded-full px-3">{type}</div>
+    //               </div>
+    //             </div>
+    //             <Image
+    //               className="object-cover rounded-[40px] absolute top-0 left-0"
+    //               src={CirclePattern}
+    //               width={500}
+    //               alt="hero image"
+    //               layout="responsive"
+    //             />
+    //           </div>
+    //         )}
+
+
+
+    //       </div>
+    //     </DialogTrigger>
+    //     <DialogContent className="p-10 bg-white text-jungle-green-900">
+    //       <DialogHeader className="flex flex-col gap-5">
+    //         <DialogTitle className="text-5xl">{title}</DialogTitle>
+    //         <DialogDescription className=" text-lg">
+    //           {description}
+    //         </DialogDescription>
+
+    //         <Button variant="secondary" className="gap-4"><Download />Download Files</Button>
+
+    //       </DialogHeader>
+    //     </DialogContent>
+    //   </Dialog>
+    // );
+
   },
 };
