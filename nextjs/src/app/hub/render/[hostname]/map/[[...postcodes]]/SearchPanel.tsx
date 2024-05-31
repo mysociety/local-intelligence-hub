@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { FormEvent, useState } from "react"
 
 export function SearchPanel({
   onSearch,
@@ -11,6 +11,10 @@ export function SearchPanel({
   isLoading: boolean
 }) {
   const [postcode, setPostcode] = useState("")
+  const onSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    onSearch(postcode.replace(/([\s ]*)/mig, "").trim())
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -21,7 +25,7 @@ export function SearchPanel({
         Explore our map of Husting events happening all over the uk or input your postcode to see what{"’"}s happening near you. We{"’"}ve had over 300+ events so far.
       </p>
 
-      <div>
+      <form onSubmit={onSubmit}>
         <input
           type="text"
           placeholder="Enter your postcode"
@@ -33,11 +37,10 @@ export function SearchPanel({
           className='bg-jungle-green-600 text-white text-lg font-bold rounded-md w-full p-4 mt-4'
           // TODO: add postcode validation
           disabled={!postcode || isLoading}
-          onClick={() => onSearch(postcode)}
         >
           {isLoading ? 'Loading...' : 'Search'}
         </button>
-      </div>
+      </form>
       <div className="flex flex-col gap-2 border-t border-jungle-green-bg pt-4 text-jungle-green-neutral ">
         <p>
           Running your own hustings event? Add it to our map

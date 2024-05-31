@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { BasicLayout } from "./client";
 import HubNavbar from "./template/HubNavbar";
 import HubFooter from "./template/HubFooter";
+import { twMerge } from "tailwind-merge";
 
 
 
@@ -11,9 +12,10 @@ import HubFooter from "./template/HubFooter";
 export type RootProps = {
   children?: ReactNode;
   title?: string;
+  fullScreen?: boolean;
 } & DefaultRootProps;
 
-export default function Root({ children, editMode }: RootProps) {
+export default function Root({ children, editMode, fullScreen = false }: RootProps) {
   return (
     <>
       <style>{css}</style>
@@ -21,8 +23,13 @@ export default function Root({ children, editMode }: RootProps) {
         <header className="sticky top-0 z-50 ">
           <HubNavbar />
         </header>
-        {children}
-        <HubFooter />
+        <div className={twMerge(
+          'rounded-2xl overflow-hidden',
+          fullScreen && 'h-full flex-grow mb-2 md:mb-4'
+        )}>
+          {children}
+        </div>
+        {!fullScreen && <HubFooter />}
       </main>
     </>
   );
@@ -32,4 +39,4 @@ const css = `
   html, body {
     background: #f2f2f2;
   }
-  `;
+`;

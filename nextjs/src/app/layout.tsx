@@ -40,8 +40,8 @@ export const metadata: Metadata = {
     ...openGraphImage,
   },
   title: {
-    template: '%s | Mapped by CK',
+    template: '%s | Mapped by Common Knowledge',
     default: 'Mapped by Common Knowledge', // a default is required when creating a template
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_FRONTEND_BASE_URL || 'http://localhost:3000')
+  metadataBase: new URL(process.env.NEXT_PUBLIC_FRONTEND_BASE_URL || 'http://localhost:3000'),
 }

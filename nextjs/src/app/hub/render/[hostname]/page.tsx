@@ -4,12 +4,8 @@ import { getClient } from "@/services/apollo-client";
 import { GetPageQuery, GetPageQueryVariables } from "@/__generated__/graphql";
 import RenderPuck from "./RenderPuck";
 import { redirect } from "next/navigation";
-import { GET_PAGE } from "./query";
-
-type Params = {
-  hostname: string
-  slug: string
-}
+import { GET_PAGE } from "@/app/hub/render/[hostname]/query";
+import { Params } from "@/app/hub/render/[hostname]/params";
 
 export default async function Page({ params: { hostname, slug } }: { params: Params }) {
   const client = getClient();

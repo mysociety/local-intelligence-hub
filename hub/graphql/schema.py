@@ -81,10 +81,10 @@ class Query(UserQueries):
     hub_homepage: model_types.HubHomepage = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
-    hub_page: model_types.WagtailPage = strawberry_django.field(
+    hub_page: model_types.HubPage = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
-    hub_page_by_path: Optional[model_types.WagtailPage] = model_types.hub_page_by_path
+    hub_page_by_path: Optional[model_types.HubPage] = model_types.hub_page_by_path
     hub_by_hostname: Optional[model_types.HubHomepage] = model_types.hub_by_hostname
     postcode_search: public_queries.UnauthenticatedPostcodeQueryResponse = (
         public_queries.postcode_search
@@ -188,9 +188,9 @@ class Mutation:
     update_sharing_permissions: List[model_types.ExternalDataSource] = (
         mutation_types.update_sharing_permissions
     )
-    create_child_page: model_types.WagtailPage = mutation_types.create_child_page
+    create_child_page: model_types.HubPage = mutation_types.create_child_page
     delete_page: bool = mutation_types.delete_page
-    update_page: model_types.WagtailPage = mutation_types.update_page
+    update_page: model_types.HubPage = mutation_types.update_page
 
 
 class CustomErrorLoggingSchema(JwtSchema):

@@ -152,7 +152,7 @@ export default function HubPageEditor({ hubId, pageId }: { hubId: string, pageId
   function publish (data: Data) {
     const p = client.mutate({
       mutation: gql`
-        mutation PublishPage($pageId: String!, $input: WagtailPageInput!) {
+        mutation PublishPage($pageId: String!, $input: HubPageInput!) {
           updatePage(pageId: $pageId, input: $input) {
             id
             # Refresh cache

@@ -250,7 +250,7 @@ class TestExternalDataSource:
     async def test_refresh_one(self):
         record = self.create_test_record(
             models.ExternalDataSource.CUDRecord(
-                email="ehsp@gmail.com",
+                email=f"eh{randint(0, 1000)}sp@gmail.com",
                 postcode="EH99 1SP",
                 data=(
                     {

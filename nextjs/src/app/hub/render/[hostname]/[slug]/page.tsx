@@ -3,11 +3,7 @@ import { Metadata, ResolvingMetadata } from "next";
 import { GetPageQuery, GetPageQueryVariables } from "@/__generated__/graphql";
 import { GET_PAGE } from "@/app/hub/render/[hostname]/query";
 import RenderPuck from "../RenderPuck";
-
-type Params = {
-  hostname: string
-  slug: string
-}
+import { Params } from "@/app/hub/render/[hostname]/params";
 
 export default async function Page({ params: { hostname, slug } }: { params: Params }) {
   const client = getClient();
@@ -42,10 +38,6 @@ export async function generateMetadata(
   })
  
   return {
-    title: page.data.hubPageByPath?.title,
-    // TODO: some hardcoded image
-    // openGraph: {
-    //   images: ['/some-specific-page-image.jpg', ...previousImages],
-    // },
+    title: page.data.hubPageByPath?.seoTitle
   }
 }
