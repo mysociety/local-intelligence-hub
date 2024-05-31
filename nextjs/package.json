@@ -15,6 +15,7 @@
     "@apollo/client": "^3.9.5",
     "@apollo/experimental-nextjs-app-support": "^0.8.0",
     "@hookform/resolvers": "^3.3.4",
+    "@kodingdotninja/use-tailwind-breakpoint": "^1.0.0",
     "@measured/puck": "^0.14.2",
     "@next/bundle-analyzer": "^14.2.3",
     "@parcel/watcher": "^2.4.1",
