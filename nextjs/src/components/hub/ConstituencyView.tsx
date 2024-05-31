@@ -175,7 +175,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery }) {
                   </header>
                   {person.email ? (
                     <a
-                      href={`mailto:${person.email.data}`}
+                      href={`mailto:${person.email.data?.replace(/["']/img, "")}`}
                       target="_blank"
                       className="bg-green-200 text-green-900 px-3 py-2 text-center w-full block rounded-md"
                     >
