@@ -11,20 +11,26 @@ export default function HubFooter() {
       <div className=" flex flex-col gap-4" >
         <p className="text-jungle-green-neutral text-sm justify-between">Navigation</p>
         <div className='grid md:grid-cols-2 grid-cols-1 gap-2'>
-          <p>Home</p>
-          <p>Resources</p>
-          <p>Actions</p>
-          <p>Map</p>
+          <p><a href="/">Home</a></p>
+          {/* <p><a href="/">Resources</a></p>
+          <p><a href="/">Actions</a></p> */}
+          <p><a href="/map">Happening Near Me</a></p>
         </div>
       </div>
-      <p className='max-w-xs'>United for people, climate & nature is a campaign ran by The Climate Coalition. Learn more about us here</p>
+      <p className='max-w-xs'>
+        United for People, Climate and Nature is a campaign developed by The Climate Coalition. <a href='http://theclimatecoalition.org/about'>Learn more about us here.</a>
+      </p>
       <div className="flex justify-between gap-2 items-end" >
-        <p className="text-jungle-green-neutral text-sm text-right">Privacy Policy</p>
-        <p className="text-jungle-green-neutral text-sm text-right">Built by Common Knowledge</p>
+        <p className="text-jungle-green-neutral text-sm text-right">
+          <a href='https://www.theclimatecoalition.org/privacy-policy'>Privacy Policy</a>
+        </p>
+        <p>
+          <a href='https://www.theclimatecoalition.org/cookie-policy'>Cookie Policy</a>
+        </p>
+        <p className="text-jungle-green-neutral text-sm text-right">
+          Built with <a href='https://prototype.mapped.commonknowledge.coop'>Mapped</a> by <a href='https://commonknowledge.coop'>Common Knowledge</a>
+        </p>
       </div>
     </div>
-
-
-
   )
 }
