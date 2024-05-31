@@ -1,12 +1,12 @@
+import urllib.request
 from collections import Counter
 
+from django.core.files import File
 from django.core.management.base import BaseCommand
 
+import magic
 import pandas as pd
 from tqdm import tqdm
-import magic
-from django.core.files import File
-import urllib.request
 
 from hub.models import Area, DataSet, DataType, Person, PersonData
 
@@ -56,9 +56,7 @@ class Command(BaseCommand):
 
         party_dt = DataType.objects.get(name="party")
 
-        ds, created = DataSet.objects.get_or_create(
-            name="email"
-        )
+        ds, created = DataSet.objects.get_or_create(name="email")
         email_dt, created = DataType.objects.get_or_create(data_set=ds, name="email")
 
         if not self._quiet:
@@ -145,4 +143,3 @@ class Command(BaseCommand):
             ppc.save()
         except Exception as e:
             print(f"Error getting image for {ppc} from {image_url}: {e}")
-
