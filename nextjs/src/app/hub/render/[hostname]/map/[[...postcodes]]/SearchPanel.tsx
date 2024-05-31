@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { FormEvent, useState } from "react"
 
 export function SearchPanel ({
     onSearch,
@@ -8,9 +8,13 @@ export function SearchPanel ({
     isLoading: boolean
   }) {
     const [postcode, setPostcode] = useState("")
+    const onSubmit = (e: FormEvent) => {
+      e.preventDefault()
+      onSearch(postcode)
+    }
   
     return (
-      <>
+      <form onSubmit={onSubmit}>
         <h1 className='text-2xl font-bold mb-1 leading-tight'>
           Find out how you can support the climate and nature
         </h1>
@@ -28,11 +32,10 @@ export function SearchPanel ({
           className='bg-jungle-green-600 text-white text-lg font-bold rounded-md w-full p-4 mt-4'
           // TODO: add postcode validation
           disabled={!postcode || isLoading}
-          onClick={() => onSearch(postcode)}
         >
           {isLoading ? 'Loading...' : 'Search'}
         </button>
-      </>
+      </form>
     )
   }
   
