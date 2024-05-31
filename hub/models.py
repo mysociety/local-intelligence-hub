@@ -45,6 +45,7 @@ from wagtail_json_widget.widgets import JSONEditorWidget
 
 import utils as lih_utils
 from hub.analytics import Analytics
+from hub.cache_keys import site_tile_filter_dict
 from hub.enrichment.sources import builtin_mapping_sources
 from hub.fields import EncryptedCharField
 from hub.filters import Filter
@@ -2827,9 +2828,14 @@ class MapReport(Report, Analytics):
     display_options = models.JSONField(default=dict, blank=True)
 
     class MapLayer(TypedDict):
+        id: str
         name: str
         source: str
-        visible: Optional[bool]
+        visible: Optional[bool] = True
+        '''
+        filter: ORM filter dict for GenericData objects like { "json__status": "Published" }
+        '''
+        filter: Optional[dict] = {}
         custom_marker_text: Optional[str] = None
 
     def get_layers(self) -> list[MapLayer]:
@@ -2922,6 +2928,19 @@ class HubHomepage(Page):
 
     def get_nav_links(self) -> list[HubNavLinks]:
         return self.nav_links
+    
+# Signal when HubHomepage.layers changes to bust the filter cache
+# used by tilserver
+@receiver(models.signals.post_save, sender=HubHomepage)
+def update_site_filter_cache_on_save(sender, instance: HubHomepage, *args, **kwargs):
+    for layer in instance.get_layers():
+        cache.set(
+            site_tile_filter_dict(
+                instance.get_site().hostname,
+                layer.get("source")
+            ),
+            layer.get("filter", {})
+        )
 
 
 class HubContentPage(Page):

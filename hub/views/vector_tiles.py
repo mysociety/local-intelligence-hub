@@ -9,7 +9,11 @@ from gqlauth.core.middlewares import UserOrError, get_user_or_error
 from vectortiles import VectorLayer
 from vectortiles.views import MVTView, TileJSONView
 
-from hub.models import ExternalDataSource, GenericData
+from hub.models import ExternalDataSource, GenericData, HubHomepage
+from wagtail.models import Site
+from utils.cached_fn import cached_fn
+from utils.url import get_hostname_from_url
+from hub.cache_keys import site_tile_filter_dict
 
 logger = logging.getLogger(__name__)
 
@@ -27,14 +31,20 @@ class GenericDataVectorLayer(VectorLayer):
     layer_fields = tile_fields
     vector_tile_fields = layer_fields
 
+    external_data_source_id: str
+    filter: dict = {}
+
     def __init__(self, *args, **kwargs):
         self.external_data_source_id = kwargs.pop("external_data_source_id", None)
         if self.external_data_source_id is None:
             raise ValueError("external_data_source is required")
+        self.filter = kwargs.pop("filter", {})
         super().__init__(*args, **kwargs)
 
     def get_queryset(self) -> QuerySet:
-        return ExternalDataSource._get_import_data(self.external_data_source_id)
+        return ExternalDataSource\
+            ._get_import_data(self.external_data_source_id)\
+            .filter(**self.filter)
 
 
 class ExternalDataSourceTileView(MVTView, DetailView):
@@ -64,8 +74,31 @@ class ExternalDataSourceTileView(MVTView, DetailView):
         return self.kwargs.get(self.pk_url_kwarg)
 
     def get_layer_class_kwargs(self, *args, **kwargs):
-        return {"external_data_source_id": self.get_id()}
+        external_data_source_id = self.get_id()
+        return {
+            "external_data_source_id": external_data_source_id,
+            "filter": self.get_site_filter(
+                get_hostname_from_url(self.request.headers.get("Referer")),
+                external_data_source_id
+            )
+        }
 
+    @cached_fn(key=lambda a, hostname, id: site_tile_filter_dict(hostname, id), timeout_seconds=100000, cache_type="default")
+    def get_site_filter(self, hostname: str, external_data_source_id: str):
+        '''
+        Obey hub-level layer filtering logic.
+        '''
+        logger.debug("getting filter", hostname, external_data_source_id)
+        site = Site.objects.filter(hostname=hostname).first()
+        if site is not None:
+            hub: HubHomepage = site.root_page.specific
+            layers = hub.get_layers()
+            logger.debug("filter in layers", layers)
+            if isinstance(layers, list):
+                for layer in layers:
+                    if layer.get("source") == external_data_source_id:
+                        return layer.get("filter", {})
+        return {}
 
 class ExternalDataSourcePointTileJSONView(TileJSONView, DetailView):
     model = ExternalDataSource
