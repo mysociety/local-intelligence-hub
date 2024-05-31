@@ -38,7 +38,8 @@ from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
-from wagtail.admin.panels import FieldPanel
+from wagtail.admin.panels import FieldPanel, ObjectList, TabbedInterface
+from wagtail.images.models import AbstractImage, AbstractRendition, Image
 from wagtail.models import Page
 from wagtail_json_widget.widgets import JSONEditorWidget
 
@@ -2850,19 +2851,18 @@ def generate_puck_json_content():
     return {"content": [], "root": {}, "zones": {}}
 
 
-from wagtail.images.models import Image, AbstractImage, AbstractRendition
-
 class HubImage(AbstractImage):
-    admin_form_fields = Image.admin_form_fields 
+    admin_form_fields = Image.admin_form_fields
+
 
 class HubImageRendition(AbstractRendition):
-    image = models.ForeignKey(HubImage, on_delete=models.CASCADE, related_name='renditions')
-    class Meta:
-        unique_together = (
-            ('image', 'filter_spec', 'focal_point_key'),
-        )
+    image = models.ForeignKey(
+        HubImage, on_delete=models.CASCADE, related_name="renditions"
+    )
 
-from wagtail.admin.panels import TabbedInterface, TitleFieldPanel, ObjectList
+    class Meta:
+        unique_together = (("image", "filter_spec", "focal_point_key"),)
+
 
 class HubHomepage(Page):
     """
@@ -2883,11 +2883,11 @@ class HubHomepage(Page):
     nav_links = models.JSONField(blank=True, null=True, default=list)
     favicon_url = models.URLField(blank=True, null=True)
     seo_image = models.ForeignKey(
-        'hub.HubImage',
+        "hub.HubImage",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name='+'
+        related_name="+",
     )
 
     content_panels = Page.content_panels + [
@@ -2905,11 +2905,13 @@ class HubHomepage(Page):
         FieldPanel("seo_image"),
     ]
 
-    edit_handler = TabbedInterface([
-        ObjectList(promote_panels, heading='Hub SEO'),
-        ObjectList(content_panels, heading='Hub data'),
-        ObjectList(website_panels, heading='Homepage contents'),
-    ])
+    edit_handler = TabbedInterface(
+        [
+            ObjectList(promote_panels, heading="Hub SEO"),
+            ObjectList(content_panels, heading="Hub data"),
+            ObjectList(website_panels, heading="Homepage contents"),
+        ]
+    )
 
     def get_layers(self) -> list[MapReport.MapLayer]:
         return self.layers

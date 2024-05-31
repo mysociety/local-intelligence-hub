@@ -1126,7 +1126,7 @@ class HubPage:
     @strawberry_django.field
     def descendants(self, inclusive: bool = False) -> List["HubPage"]:
         return self.get_descendants(inclusive=inclusive)
-    
+
     @strawberry_django.field
     def hub(self) -> "HubHomepage":
         return self.get_site().root_page.specific
@@ -1144,7 +1144,7 @@ class HubHomepage(HubPage):
     layers: List[MapLayer]
     nav_links: List[HubNavLink]
     favicon_url: Optional[str]
-    
+
     @strawberry_django.field
     def seo_image_url(self) -> Optional[str]:
         if self.seo_image is None:
