@@ -48,7 +48,7 @@ export default function Page({ params: { hostname, postcodes } }: { params: Para
   });
 
   return (
-    <Root>
+    <Root fullScreen>
       <MapProvider>
         <JotaiProvider>
           <div className="h-dvh flex flex-col">
@@ -89,35 +89,6 @@ export default function Page({ params: { hostname, postcodes } }: { params: Para
                   </div>
                 </aside>
               </div>
-              <aside
-                className="absolute right-0 w-0 pointer-events-auto"
-                style={{
-                  top: 155,
-                  left: 32,
-                }}
-              >
-                <div
-                  className="max-w-[100vw] rounded-[20px] bg-jungle-green-bg text-jungle-green-700 p-6"
-                  style={{
-                    width: SIDEBAR_WIDTH,
-                  }}
-                >
-                  {!localData.data ? (
-                    <SearchPanel
-                      onSearch={(postcode) => {
-                        window.history.pushState(
-                          null,
-                          "",
-                          `/map/postcode/${postcode}`
-                        );
-                      }}
-                      isLoading={localData.loading}
-                    />
-                  ) : (
-                    <ConstituencyView data={localData.data} />
-                  )}
-                </div>
-              </aside>
             </main>
           </div>
         </JotaiProvider>
