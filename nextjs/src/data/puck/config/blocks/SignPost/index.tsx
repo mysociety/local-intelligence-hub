@@ -11,11 +11,14 @@ import ukMap from "../../../../../../public/hub/uk-map.svg";
 import tccHeart from "../../../../../../public/hub/tcc-heart.svg";
 
 import HubResponsivity from "../../template/HubReponsivity";
+import Link from "next/link";
 
 export type SignPostProps = {
     resourcesSubtitle: string
     actionsSubtitle: string
     mapSubtitle: string
+    resourcesSubtitleURL: string
+    actionsSubtitleURL: string
 };
 
 export const SignPost: ComponentConfig<SignPostProps> = {
@@ -24,26 +27,32 @@ export const SignPost: ComponentConfig<SignPostProps> = {
         resourcesSubtitle: {
             type: "text",
         },
+        resourcesSubtitleURL: {
+            type: "text",
+        },
         actionsSubtitle: {
+            type: "text",
+        },
+        actionsSubtitleURL: {
             type: "text",
         },
         mapSubtitle: {
             type: "text",
-        },
+        }
     },
     defaultProps: {
         resourcesSubtitle: "Files, links and More",
+        resourcesSubtitleURL: "/resources",
         actionsSubtitle: "Things you can do today",
-        mapSubtitle: "See what’s happening across the UK",
+        actionsSubtitleURL: "/actions",
+        mapSubtitle: "See what’s happening across the UK"
     },
 
 
-    render: ({ resourcesSubtitle, actionsSubtitle, mapSubtitle }) => {
+    render: ({ resourcesSubtitle, resourcesSubtitleURL, actionsSubtitle, actionsSubtitleURL, mapSubtitle }) => {
         return (
             <HubResponsivity>
-
-
-                <div className="col-span-1 w-full h-full md:aspect-square aspect-video overflow-clip rounded-[20px] hover:shadow-hover transition-all">
+                <Link href={resourcesSubtitleURL} className="col-span-1 w-full h-full md:aspect-square aspect-video overflow-clip rounded-[20px] hover:shadow-hover transition-all">
                     <div className="p-5 bg-white h-full relative gap-2 flex flex-col justify-end z-20 ">
                         <div className="z-10 flex flex-col gap-2">
                             <Image src={ArrowTopRight} width={30} alt="arrow" />
@@ -60,8 +69,8 @@ export const SignPost: ComponentConfig<SignPostProps> = {
                                 />
                         </div>
                     </div>
-                </div>
-                <div className=" col-span-1  w-full h-full md:aspect-square aspect-video overflow-clip rounded-[20px] hover:shadow-hover transition-all">
+                </Link>
+                <Link href={actionsSubtitleURL} className=" col-span-1  w-full h-full md:aspect-square aspect-video overflow-clip rounded-[20px] hover:shadow-hover transition-all">
                     <div className="p-5 bg-jungle-green-600 text-white h-full relative gap-2 flex flex-col justify-end">
                         <div className="z-10 flex flex-col gap-2">
 
@@ -78,8 +87,8 @@ export const SignPost: ComponentConfig<SignPostProps> = {
                             layout="responsive"
                           />
                     </div>
-                </div>
-                <div className=" md:col-span-2 w-full h-full md:aspect-auto aspect-video overflow-clip rounded-[20px] hover:shadow-hover transition-all">
+                </Link>
+                <Link href="/map" className=" md:col-span-2 w-full h-full md:aspect-auto aspect-video overflow-clip rounded-[20px] hover:shadow-hover transition-all">
                     <div className="p-5 bg-jungle-green-50 h-full relative gap-2 flex flex-col justify-end">
                         <div className="z-10 flex flex-col gap-2">
                             <Image src={ArrowTopRight} width={30} alt="arrow" />
@@ -96,10 +105,8 @@ export const SignPost: ComponentConfig<SignPostProps> = {
                                 />
                         </div>
                     </div>
-                </div>
-                </HubResponsivity>
-
-            
+                </Link>
+              </HubResponsivity>
         )
     },
 };
