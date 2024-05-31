@@ -45,7 +45,7 @@ export function SearchPanel({
         <p>
           Running your own hustings event? Add it to our map
         </p>
-        <Link href="https://docs.google.com/forms/d/e/1FAIpQLSeQ6L2fko9q1xNvEYt0ZNbIIPDNAq6cs93Pn2Vx8ARtMf6FIg/viewformt" target="_blank" className="">
+        <Link href="https://docs.google.com/forms/d/e/1FAIpQLSeQ6L2fko9q1xNvEYt0ZNbIIPDNAq6cs93Pn2Vx8ARtMf6FIg/viewform" target="_blank" className="">
           <Button className="bg-white border border-jungle-green-600 text-jungle-green-600 gap-2 hover:bg-jungle-green-50">
            <Plus/>
             Add Event
