@@ -7,6 +7,7 @@ import heroImg from "../../../../../../public/hub/hero-img.jpg"
 import mapImg from "../../../../../../public/hub/hero-map-search-lg.png"
 
 import { Search } from "lucide-react";
+import { PuckText } from "../../components/PuckText";
 
 export type HeroProps = {
   title: string;
@@ -52,7 +53,9 @@ export const Hero: ComponentConfig<HeroProps> = {
           <div className=" bg-jungle-green-50 lg:rounded-[20px] p-[25px] flex flex-col place-content-center gap-10 justify-between z-10  w-full ">
             <div className="flex flex-col gap-8">
               <h1 className="text-hub5xl"><span className="italic">The</span> <span className="text-jungle-green-400">Climate</span> Hub</h1>
-              <p className="text-jungle-green-neutral text-xl">{description}</p>
+              <div className="text-jungle-green-neutral text-xl">
+                <PuckText text={description} />
+              </div>
             </div>
             <div className="flex gap-4 border-t border-jungle-green-100 pt-4 ">
               {/* <div className="aspect-square">
