@@ -22,7 +22,7 @@ function NavItems() {
                 Home
             </Link>
             <Link href="/map" className="hover:bg-jungle-green-50 px-4 py-2 rounded-sm">
-                Happening Near Me
+                Near Me
             </Link>
         </>
     )

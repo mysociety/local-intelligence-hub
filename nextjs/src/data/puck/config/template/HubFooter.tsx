@@ -9,26 +9,26 @@ export default function HubFooter() {
 
       <Image src={logo} width={227} height={100} alt="logo" />
       <div className=" flex flex-col gap-4" >
-        <p className="text-jungle-green-neutral text-sm justify-between">Navigation</p>
+        <p className="hidden md:block text-jungle-green-neutral text-sm justify-between">Navigation</p>
         <div className='grid md:grid-cols-2 grid-cols-1 gap-2'>
-          <p><a href="/">Home</a></p>
+          <p><a className='underline' href="/">Home</a></p>
           {/* <p><a href="/">Resources</a></p>
           <p><a href="/">Actions</a></p> */}
-          <p><a href="/map">Happening Near Me</a></p>
+          <p><a className='underline' href="/map">Near Me</a></p>
         </div>
       </div>
       <p className='max-w-xs'>
         United for People, Climate and Nature is a campaign developed by The Climate Coalition. <a href='http://theclimatecoalition.org/about'>Learn more about us here.</a>
       </p>
-      <div className="flex justify-between gap-2 items-end" >
-        <p className="text-jungle-green-neutral text-sm text-right">
-          <a href='https://www.theclimatecoalition.org/privacy-policy'>Privacy Policy</a>
+      <div className="flex justify-between gap-2 items-end text-jungle-green-neutral text-sm md:text-right">
+        <p>
+          <a className='underline' href='https://www.theclimatecoalition.org/privacy-policy'>Privacy Policy</a>
         </p>
         <p>
-          <a href='https://www.theclimatecoalition.org/cookie-policy'>Cookie Policy</a>
+          <a className='underline' href='https://www.theclimatecoalition.org/cookie-policy'>Cookie Policy</a>
         </p>
-        <p className="text-jungle-green-neutral text-sm text-right">
-          Built with <a href='https://prototype.mapped.commonknowledge.coop'>Mapped</a> by <a href='https://commonknowledge.coop'>Common Knowledge</a>
+        <p>
+          Built with <a className='underline' href='https://prototype.mapped.commonknowledge.coop'>Mapped</a> by <a className='underline' href='https://commonknowledge.coop'>Common Knowledge</a>
         </p>
       </div>
     </div>
