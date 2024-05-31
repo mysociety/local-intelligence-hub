@@ -42,7 +42,7 @@ class UnauthenticatedPostcodeQueryResponse:
             return None
         id = postcode_data.codes.parliamentary_constituency
         return await models.Area.objects.aget(
-            Q(gss=id) | Q(name=id) & Q(area_type__code="WMC")
+            (Q(gss=id) | Q(name=id)) & Q(area_type__code="WMC")
         )
 
     @strawberry_django.field
