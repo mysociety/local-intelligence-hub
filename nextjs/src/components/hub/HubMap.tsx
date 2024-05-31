@@ -43,8 +43,7 @@ export function HubMap ({
 
   const loadedImages = useMapIcons(requiredImages, mapbox)
 
-  // TODO: switch to 2024
-  const tileset = TILESETS.constituencies
+  const tileset = TILESETS.constituencies2024
 
   useEffect(() => {
     if (currentConstituency) {
