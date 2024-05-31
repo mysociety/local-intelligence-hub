@@ -60,7 +60,7 @@ export default function Page({ params: { hostname, postcodes } }: { params: Para
             </div>
             <aside className="absolute right-0 w-0 pointer-events-auto" style={{
                 top: 155,
-                left: 50,
+                left: 32,
             }}>
               <div className='max-w-[100vw] rounded-[20px] bg-jungle-green-bg text-jungle-green-700 p-6' style={{
                 width: SIDEBAR_WIDTH
