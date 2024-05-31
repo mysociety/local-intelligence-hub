@@ -85,8 +85,8 @@ export function HubMap ({
         }}
       >
         {/* Layout order */}
-        <PlaceholderLayer id="PLACEHOLDER_MARKERS" />
         <PlaceholderLayer id="AREA_BOUNDARIES" />
+        <PlaceholderLayer id="PLACEHOLDER_MARKERS" />
         {/* Boundaries */}
         <Source
           id={tileset.mapboxSourceId}
@@ -102,28 +102,46 @@ export function HubMap ({
           type="line"
           paint={{
             "line-color": "green",
-            "line-width": 0.5,
+            "line-width": 1,
             "line-opacity": 0.25,
           }}
         />
         {currentConstituency && (
-          <Layer
-            beforeId="AREA_BOUNDARIES"
-            filter={[
-              "==",
-              ["get", tileset.promoteId],
-              ["literal", currentConstituency?.gss],
-            ]}
-            id={`${tileset.mapboxSourceId}-selected-line`}
-            source={tileset.mapboxSourceId}
-            source-layer={tileset.sourceLayerId}
-            type="line"
-            paint={{
-              "line-color": "green",
-              "line-width": 1.5,
-              "line-opacity": 0.75,
-            }}
-          />
+          <>
+            <Layer
+              beforeId="AREA_BOUNDARIES"
+              filter={[
+                "==",
+                ["get", tileset.promoteId],
+                ["literal", currentConstituency?.gss],
+              ]}
+              id={`${tileset.mapboxSourceId}-fill`}
+              source={tileset.mapboxSourceId}
+              source-layer={tileset.sourceLayerId}
+              type="fill"
+              paint={{
+                "fill-color": "green",
+                "fill-opacity": 0.1,
+              }}
+            />
+            <Layer
+              beforeId="AREA_BOUNDARIES"
+              filter={[
+                "==",
+                ["get", tileset.promoteId],
+                ["literal", currentConstituency?.gss],
+              ]}
+              id={`${tileset.mapboxSourceId}-selected-line`}
+              source={tileset.mapboxSourceId}
+              source-layer={tileset.sourceLayerId}
+              type="line"
+              paint={{
+                "line-color": "green",
+                "line-width": 3,
+                "line-opacity": 0.75,
+              }}
+            />
+          </>
         )}
         {/* Markers */}
         {loadedImages.some(t => t === "tcc-event-marker") && externalDataSources.map(
