@@ -41,7 +41,9 @@ export default function HubNavbar() {
                     alt="hero image"
                 />
                 <div className='z-20'>
-                    <Image src={logo} width={227} height={100} alt="logo" className='md:mt-14 w-40 sm:w-auto' />
+                    <Link href="/">
+                        <Image src={logo} width={227} height={100} alt="logo" className='md:mt-14 w-40 sm:w-auto' />
+                    </Link>
                 </div>
 
 
