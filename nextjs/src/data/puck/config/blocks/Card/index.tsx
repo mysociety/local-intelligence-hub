@@ -151,7 +151,6 @@ export const Card: ComponentConfig<CardProps> = {
     //               className="object-cover rounded-[40px] absolute top-0 left-0"
     //               src={CirclePattern}
     //               width={500}
-    //               alt="hero image"
     //               layout="responsive"
     //             />
     //           </div>

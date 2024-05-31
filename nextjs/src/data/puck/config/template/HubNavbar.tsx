@@ -34,15 +34,15 @@ export default function HubNavbar() {
         <>
             <div className='flex py-2 gap-5 sticky top-0  sm:h-[80px] z-50 justify-between items-center bg-jungle-green-bg'>
                 <Image
-                    className="absolute top-[99%]  sm:w-auto w-[180px]"
+                    className="hidden md:block absolute top-[99%] w-[180px] sm:w-auto"
                     src={intersect}
                     width={283}
                     height={100}
-                    alt="hero image"
+                    alt="Background placeholder"
                 />
                 <div className='z-20'>
                     <Link href="/">
-                        <Image src={logo} width={227} height={100} alt="logo" className='md:mt-14 w-40 sm:w-auto' />
+                        <Image src={logo} width={227} height={100} alt="logo" className='w-40 md:w-auto md:mt-14' />
                     </Link>
                 </div>
 

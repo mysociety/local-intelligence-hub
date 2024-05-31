@@ -76,7 +76,7 @@ export const SignPost: ComponentConfig<SignPostProps> = {
                             width={500}
                             alt="hero image"
                             layout="responsive"
-                            />
+                          />
                     </div>
                 </div>
                 <div className=" md:col-span-2 w-full h-full md:aspect-auto aspect-video overflow-clip rounded-[20px] hover:shadow-hover transition-all">
