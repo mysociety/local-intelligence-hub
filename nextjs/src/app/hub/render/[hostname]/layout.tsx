@@ -11,7 +11,7 @@ type Params = {
   slug: string
 }
 
-export default async function Page({ children }: { children: React.ReactNode }) {
+export default async function Layout({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
