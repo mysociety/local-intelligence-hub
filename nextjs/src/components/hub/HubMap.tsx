@@ -32,10 +32,6 @@ export function HubMap ({
     {
       url: () => new URL('/markers/tcc-event-marker.png', window.location.href).toString(),
       name: 'tcc-event-marker'
-    },
-    {
-      url: () => new URL('/markers/default.png', window.location.href).toString(),
-      name: 'meep-marker-0'
     }
   ]
 
