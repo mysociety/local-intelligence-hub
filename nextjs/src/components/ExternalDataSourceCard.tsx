@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { DataSourceCardFragment, AutoUpdateWebhookRefreshMutation, AutoUpdateWebhookRefreshMutationVariables, DataSourceType, DisableAutoUpdateMutation, DisableAutoUpdateMutationVariables, EnableAutoUpdateMutation, EnableAutoUpdateMutationVariables, TriggerFullUpdateMutation, TriggerFullUpdateMutationVariables } from "@/__generated__/graphql";
+import { DataSourceCardFragment, AutoUpdateWebhookRefreshMutation, AutoUpdateWebhookRefreshMutationVariables, DataSourceType, DisableAutoUpdateMutation, DisableAutoUpdateMutationVariables, EnableAutoUpdateMutation, EnableAutoUpdateMutationVariables, TriggerFullUpdateMutation, TriggerFullUpdateMutationVariables, CrmType } from "@/__generated__/graphql";
 import { DataSourceIcon } from "./DataSourceIcon";
 
 export function ExternalDataSourceCard({
@@ -34,8 +34,9 @@ export function ExternalDataSourceCard({
     id: any,
     name: string,
     dataType: DataSourceType,
+    automatedWebhooks?: boolean,
     autoUpdateEnabled?: boolean,
-    crmType?: string
+    crmType?: CrmType
     jobs?: DataSourceCardFragment['jobs'],
     organisation?: {
       name: string
@@ -75,7 +76,7 @@ export function ExternalDataSourceCard({
           Sharing with {externalDataSource.sharingPermissions.map((p) => p.organisation.name).join(", ")}
         </div>
       )}
-      {withUpdateOptions && externalDataSource.dataType === DataSourceType.Member && (
+      {withUpdateOptions && externalDataSource.dataType === DataSourceType.Member && externalDataSource.automatedWebhooks && (
         <AutoUpdateSwitch externalDataSource={externalDataSource} />
       )}
       {withUpdateOptions && externalDataSource?.jobs?.[0]?.lastEventAt ? (
@@ -102,7 +103,7 @@ export function AutoUpdateSwitch({
           toggleAutoUpdate(client, e, externalDataSource.id)
         }
       />
-      <span className={externalDataSource.autoUpdateEnabled && "text-brandBlue"}>Auto-update</span>
+      <span className={externalDataSource.autoUpdateEnabled ? "text-brandBlue" : ""}>Auto-update</span>
     </div>
   );
 }
@@ -111,6 +112,8 @@ const AUTO_UPDATE_WEBHOOK_REFRESH = gql`
   mutation AutoUpdateWebhookRefresh($ID: String!) {
     refreshWebhooks(externalDataSourceId: $ID) {
       id
+      hasWebhooks
+      automatedWebhooks
       webhookHealthcheck
     }
   }
@@ -153,7 +156,9 @@ export function TriggerUpdateButton({
   return (
     <AlertDialog>
       <AlertDialogTrigger {...buttonProps}>
-        <Button {...buttonProps}>{label}</Button>
+        <Button {...buttonProps} asChild={true}>
+          <span>{label}</span>
+        </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -242,6 +247,7 @@ export const DATA_SOURCE_FRAGMENT = gql`
     name
     dataType
     crmType
+    automatedWebhooks
     autoUpdateEnabled
     updateMapping {
       source
@@ -276,6 +282,8 @@ export const ENABLE_AUTO_UPDATE = gql`
     enableAutoUpdate(externalDataSourceId: $ID) {
       id
       autoUpdateEnabled
+      hasWebhooks
+      automatedWebhooks
       webhookHealthcheck
       name
     }
@@ -287,6 +295,8 @@ export const DISABLE_AUTO_UPDATE = gql`
     disableAutoUpdate(externalDataSourceId: $ID) {
       id
       autoUpdateEnabled
+      hasWebhooks
+      automatedWebhooks
       webhookHealthcheck
       name
     }

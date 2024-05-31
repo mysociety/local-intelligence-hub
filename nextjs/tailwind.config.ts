@@ -26,9 +26,35 @@ const config = {
         'IBMPlexSansCondensed': ["IBMPlexSansCondensed", 'sans-serif'],
         'IBMPlexMono': ["IBMPlexMono", 'sans-serif'],
         'PPRightGrotesk': ['PPRightGrotesk, sans-serif'],
-        
+        'publicSans': ['publicSans, sans-serif'],
+
       },
       fontSize: {
+        hub6xl: ['3.625rem', {
+          lineHeight: '100%',
+          letterSpacing: '-0.145rem',
+        }],
+        hub5xl: ['2.86rem', {
+          lineHeight: '100%',
+          letterSpacing: '-0.11rem',
+        }],
+        hub4xl: ['2.44rem', {
+          lineHeight: '100%',
+          letterSpacing: '-0.1rem',
+        }],
+        hub3xl: ['1.75rem', {
+          lineHeight: '100%',
+          letterSpacing: '-0.04rem',
+        }],
+        hub2xl: ['1.5rem', {
+          lineHeight: '100%',
+          letterSpacing: '-0.015rem',
+        }],
+        hubxl: ['1.25rem', {
+          lineHeight: '100%',
+          letterSpacing: '0rem',
+        }],
+
         hXlg: ['4.5rem', {
           lineHeight: '107%',
           letterSpacing: '-0.2rem',
@@ -129,7 +155,7 @@ const config = {
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         yellow: "hsl(var(--yellow))",
-        darkSecondary:  "hsl(var(--dark-secondary))",
+        darkSecondary: "hsl(var(--dark-secondary))",
         background: {
           DEFAULT: "hsl(var(--meepGray-800))",
           secondary: "hsl(var(--meepGray-700))",
@@ -160,6 +186,61 @@ const config = {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
         },
+        "jungle-green": {
+          '50': '#edfcf6',
+          '100': '#d4f7e7',
+          '200': '#aceed4',
+          '300': '#76dfbb',
+          '400': '#3fc89e',
+          '500': '#1aa680',
+          '600': '#0f8c6c',
+          '700': '#0c705a',
+          '800': '#0c5948',
+          '900': '#0b493d',
+          '950': '#052923',
+          'neutral': '#6D6D6D',
+          'bg': '#f2f2f2',
+
+        },
+
+        hub: {
+          border: "#d4f7e7",
+          input: "#76dfbb",
+          ring: "#1aa680",
+          background: "hsl(var(--background))",
+          foreground: "#0b493d",
+          primary: {
+            DEFAULT: "hsl(var(--primary))",
+            foreground: "hsl(var(--primary-foreground))",
+          },
+          secondary: {
+            DEFAULT: "hsl(var(--secondary))",
+            foreground: "hsl(var(--secondary-foreground))",
+          },
+          destructive: {
+            DEFAULT: "hsl(var(--destructive))",
+            foreground: "hsl(var(--destructive-foreground))",
+          },
+          muted: {
+            DEFAULT: "#76dfbb",
+            foreground: "#0f8c6c",
+          },
+          accent: {
+            DEFAULT: "hsl(var(--accent))",
+            foreground: "hsl(var(--accent-foreground))",
+          },
+          popover: {
+            DEFAULT: "hsl(var(--popover))",
+            foreground: "hsl(var(--popover-foreground))",
+          },
+          card: {
+            DEFAULT: "hsl(var(--card))",
+            foreground: "hsl(var(--card-foreground))",
+          },
+        }
+      },
+      boxShadow: {
+        'hover': '0px 0px 30px 0px var(--Jungle-Green-300, #76DFBB)',
       },
       spacing: {
         xs: '10px',
@@ -188,6 +269,7 @@ const config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
+
     },
   },
   plugins: [require("tailwindcss-animate")],

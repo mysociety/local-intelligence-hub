@@ -23,6 +23,7 @@ module.exports = withSentryConfig(
     silent: true,
     org: process.env.SENTRY_ORG_ID,
     project: process.env.SENTRY_PROJECT_ID,
+    
   },
   {
     // For all available options, see:

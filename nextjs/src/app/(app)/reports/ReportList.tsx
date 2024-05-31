@@ -120,7 +120,7 @@ export function CreateReportCard () {
         mutation: CREATE_MAP_REPORT,
         variables: {
           data: {
-            name: new Date().toISOString()
+            name: new Date().toISOString(),
           }
         }
       }),

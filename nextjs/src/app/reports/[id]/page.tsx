@@ -39,7 +39,7 @@ import { useRouter } from "next/navigation";
 import spaceCase from 'to-space-case'
 import { toastPromise } from "@/lib/toast";
 import { MAP_REPORT_LAYER_ANALYTICS, ReportMap, selectedConstituencyAtom } from "@/components/report/ReportMap";
-import { MAP_REPORT_FRAGMENT, isConstituencyPanelOpenAtom, isDataConfigOpenAtom } from "./lib";
+import { MAP_REPORT_FRAGMENT, isConstituencyPanelOpenAtom, isDataConfigOpenAtom } from "@/lib/map";
 import { DisplayOptionsType, ReportContext } from "./context";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import { contentEditableMutation } from "@/lib/html";
@@ -229,8 +229,8 @@ function ReportPage() {
           <ReportMap />
         </div>
         {/* Layer card */}
-        <aside className="absolute top-5 left-5 right-0 w-0 pointer-events-auto">
-          <div className="flex flex-col items-start gap-4">
+        <aside className="absolute top-0 left-0 p-5 w-[200px] h-full pointer-events-auto">
+          <div className="flex flex-col items-start gap-4 max-h-full">
             <Card className="w-[200px] p-3 bg-white border-1 border-meepGray-700 text-meepGray-800">
               <CardHeader className="flex flex-row items-start">
                 {report?.loading && !report?.data?.mapReport ? (
@@ -335,6 +335,7 @@ const GET_MAP_REPORT = gql`
     mapReport(pk: $id) {
       id
       name
+      slug
       displayOptions
       organisation {
         id

@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { Metadata } from 'next'
 import { openGraphImage } from './shared-metadata'
 import { Suspense } from "react";
+import { useAuth } from "@/hooks/auth";
 
 
 const PostHogPageView = dynamic(() => import('./PostHogPageView'), {
@@ -39,8 +40,8 @@ export const metadata: Metadata = {
     ...openGraphImage,
   },
   title: {
-    template: '%s | Mapped by CK',
+    template: '%s | Mapped by Common Knowledge',
     default: 'Mapped by Common Knowledge', // a default is required when creating a template
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_FRONTEND_BASE_URL || 'http://localhost:3000')
+  metadataBase: new URL(process.env.NEXT_PUBLIC_FRONTEND_BASE_URL || 'http://localhost:3000'),
 }

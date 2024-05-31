@@ -33,7 +33,7 @@ import { useForm } from "react-hook-form"
 import { Form, FormField } from "../ui/form"
 import { ReportContext } from "@/app/reports/[id]/context"
 import { useRouter } from "next/navigation"
-import { MAP_REPORT_LAYERS_SUMMARY } from "@/app/reports/[id]/lib"
+import { MAP_REPORT_LAYERS_SUMMARY } from "@/lib/map"
 import { DataSourceIcon } from "../DataSourceIcon"
 import pluralize from "pluralize"
 import { CRMSelection } from "../CRMButtonItem"
@@ -44,7 +44,12 @@ type Source = {
   id: string
 }
 
-export function AddMapLayerButton({ addLayer }: { addLayer(layer: Source): void }) {
+export type SourceOption = (
+  GetMemberListQuery['myOrganisations'][0]['sharingPermissionsFromOtherOrgs'][0]['externalDataSource'] | 
+  GetMemberListQuery['myOrganisations'][0]['externalDataSources'][0]
+)
+
+export function AddMapLayerButton({ addLayer, filter }: { addLayer(layer: Source): void, filter?: (s: SourceOption) => boolean }) {
   const { id  } = useContext(ReportContext)
   const form = useForm<{ source?: Source }>()
   const [open, setOpen] = useState(false)
@@ -57,38 +62,36 @@ export function AddMapLayerButton({ addLayer }: { addLayer(layer: Source): void 
         </Button>
       </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(d => {
-              setOpen(false)
-              if (!d.source) return 
-              addLayer(d.source)
-            })}>
-              <DialogHeader>
-                <DialogTitle>Add a map layer</DialogTitle>
-                <DialogDescription>
-                  Select a data source from your org or one that{"'"}s been shared with you.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <FormField
-                  control={form.control}
-                  name="source"
-                  render={({ field }) => (
-                    <MapLayerSelector value={field.value} onChange={field.onChange} />
-                  )}
-                />
-              </div>
-              <DialogFooter>
-                <Button type="submit">Add layer</Button>
-              </DialogFooter>
-            </form>
-          </Form>
+          <form onSubmit={form.handleSubmit(d => {
+            setOpen(false)
+            if (!d.source) return 
+            addLayer(d.source)
+          })}>
+            <DialogHeader>
+              <DialogTitle>Add a map layer</DialogTitle>
+              <DialogDescription>
+                Select a data source from your org or one that{"'"}s been shared with you.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <FormField
+                control={form.control}
+                name="source"
+                render={({ field }) => (
+                  <MapLayerSelector value={field.value} onChange={field.onChange} filter={filter} />
+                )}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="submit">Add layer</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
     </Dialog>
   )
 }
 
-export function MapLayerSelector ({ value, onChange }: { value?: Source, onChange: (value: Source) => void }) {
+export function MapLayerSelector ({ value, onChange, filter }: { value?: Source, onChange: (value: Source) => void, filter?: (s: SourceOption) => boolean }) {
   const [open, setOpen] = useState(false)
   const { id, report } = useContext(ReportContext)
   const dataSources = useQuery<GetMemberListQuery>(MEMBER_LISTS)
@@ -103,21 +106,18 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
   });
 
   const useableSources = useMemo(() => {
-    const data: Array<
-        GetMemberListQuery['myOrganisations'][0]['sharingPermissionsFromOtherOrgs'][0]['externalDataSource'] | 
-        GetMemberListQuery['myOrganisations'][0]['externalDataSources'][0]
-    > = [
+    const data: Array<SourceOption> = [
       ...dataSources.data?.myOrganisations[0]?.externalDataSources.filter(
-        d => d.dataType === DataSourceType.Member
+        d => filter ? filter(d) : true
       ) || [],
       ...dataSources.data?.myOrganisations[0]?.sharingPermissionsFromOtherOrgs.map(
         p => p.externalDataSource
       ).filter(
-        d => d.dataType === DataSourceType.Member
+        d => filter ? filter(d) : true
       ) || []
     ]
     return data
-  }, [dataSources.data])
+  }, [dataSources.data, filter])
 
   const selectedSource = useableSources.find(s => s.id === value?.id)
  
@@ -213,7 +213,7 @@ export function MapLayerSelector ({ value, onChange }: { value?: Source, onChang
 const MEMBER_LISTS = gql`
   query GetMemberList {
     myOrganisations {
-      externalDataSources(filters: { dataType: MEMBER }) {
+      externalDataSources {
         id
         name
         importedDataCount

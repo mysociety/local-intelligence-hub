@@ -1,6 +1,6 @@
 import { FieldPath, FormProvider, useForm } from "react-hook-form";
 import { Button } from "./ui/button";
-import { ExternalDataSourceInput, FieldDefinition, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
+import { CrmType, DataSourceType, ExternalDataSourceInput, FieldDefinition, GeographyTypes } from "@/__generated__/graphql";
 import { PreopulatedSelectField } from "./ExternalDataSourceFields";
 import {
   FormControl,
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select"
 import { DataSourceFieldLabel } from "./DataSourceIcon";
 import { Input } from "@/components/ui/input";
+import { useMemo } from "react";
 
 type FormInputs = ExternalDataSourceInput
 
@@ -27,15 +28,17 @@ export function UpdateExternalDataSourceFields ({
   initialData,
   crmType,
   fieldDefinitions,
-  onSubmit
+  onSubmit,
+  dataType
 }: {
   onSubmit: (
     data: ExternalDataSourceInput,
     e?: React.BaseSyntheticEvent<object, any, any> | undefined
   ) => void;
-  crmType: string;
+  crmType: CrmType;
   initialData?: ExternalDataSourceInput;
   fieldDefinitions?: FieldDefinition[] | null;
+  dataType: DataSourceType;
 }) {
   const form = useForm<FormInputs>({
     defaultValues: initialData
@@ -64,6 +67,10 @@ export function UpdateExternalDataSourceFields ({
       />
     )
   }
+
+  const collectFields = useMemo(() => {
+    return getFieldsForDataSourceType(dataType)
+  }, [dataType])
 
   return (
     <FormProvider {...form}>
@@ -119,10 +126,11 @@ export function UpdateExternalDataSourceFields ({
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>Geography type</SelectLabel>
-                      <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
-                      <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
-                      <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
-                      <SelectItem value={PostcodesIoGeographyTypes.Constituency}>Constituency</SelectItem>
+                      <SelectItem value={GeographyTypes.Postcode}>Postcode</SelectItem>
+                      <SelectItem value={GeographyTypes.Ward}>Ward</SelectItem>
+                      <SelectItem value={GeographyTypes.Council}>Council</SelectItem>
+                      <SelectItem value={GeographyTypes.Constituency}>Constituency</SelectItem>
+                      <SelectItem value={GeographyTypes.Address}>Address</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -130,15 +138,73 @@ export function UpdateExternalDataSourceFields ({
               <FormMessage />
             </FormItem>
           )}
-      />
-        <FPreopulatedSelectField name="emailField" />
-        <FPreopulatedSelectField name="phoneField" />
-        <FPreopulatedSelectField name="addressField" />
-        <FPreopulatedSelectField name="fullNameField" />
-        <FPreopulatedSelectField name="firstNameField" />
-        <FPreopulatedSelectField name="lastNameField" />
+        />
+        {collectFields?.filter(f => f !== "geographyColumn" && f !== "geographyColumnType")?.map((field) => (
+          <FPreopulatedSelectField key={field} name={field} />
+        ))}
         <Button type='submit' className='mt-4'>Save settings</Button>
       </form>
     </FormProvider>
   )
+}
+
+
+export function getFieldsForDataSourceType (type?: DataSourceType): Array<keyof Omit<ExternalDataSourceInput, (
+  'autoImportEnabled' |
+  'autoUpdateEnabled' |
+  'dataType' |
+  'description' |
+  'id' |
+  'name' |
+  'organisation' |
+  'updateMapping'
+)>> {
+  switch (type) {
+    case DataSourceType.Member:
+      return [
+        "emailField",
+        "phoneField",
+        "addressField",
+        "fullNameField",
+        "firstNameField",
+        "lastNameField",
+      ]
+    case DataSourceType.Location:
+      return [
+        "titleField",
+        "descriptionField",
+        "addressField",
+        "imageField",
+        "publicUrlField",
+        "emailField",
+        "phoneField",
+      ]
+    case DataSourceType.Event:
+      return [
+        "titleField",
+        "descriptionField",
+        "addressField",
+        "imageField",
+        "publicUrlField",
+        "startTimeField",
+        "endTimeField",
+        "emailField",
+        "phoneField",
+      ]
+    case DataSourceType.Story:
+      return [
+        "titleField",
+        "descriptionField",
+        "imageField",
+        "publicUrlField",
+      ]
+    default:
+      return [
+        "titleField",
+        "descriptionField",
+        "addressField",
+        "imageField",
+        "publicUrlField",
+      ]
+  }
 }

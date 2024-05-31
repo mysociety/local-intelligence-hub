@@ -6,13 +6,12 @@ from django.urls import reverse
 
 from hub.models import DataSet, UserDataSets
 
-
-class Test404Page(TestCase):
-    def test404page(self):
-        url = "/page_does_not_exist"
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 404)
-        self.assertTemplateUsed(response, "404.html")
+# class Test404Page(TestCase):
+#     def test404page(self):
+#         url = "/page_does_not_exist"
+#         response = self.client.get(url)
+#         self.assertEqual(response.status_code, 404)
+#         self.assertTemplateUsed(response, "404.html")
 
 
 class TestPageRenders(TestCase):

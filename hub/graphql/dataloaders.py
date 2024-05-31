@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Callable, Coroutine, Type
 
 from django.db.models import ManyToOneRel
@@ -12,24 +13,35 @@ from strawberry.types import Info
 from strawberry_django.fields.field import StrawberryDjangoField
 from strawberry_django_dataloaders import dataloaders, factories
 
+from hub.graphql.utils import graphql_type_to_dict
+
+logger = logging.getLogger(__name__)
+
 
 class BasicFieldDataLoader(dataloaders.BaseDjangoModelDataLoader):
     field: str
+    filters: dict = {}
 
     @classmethod
     def queryset(cls, keys: list[str]):
         if len(keys) == 0:
             return []
-        return cls.model.objects.filter(**{f"{cls.field}__in": set(keys)})
+        return cls.model.objects.filter(
+            **{f"{cls.field}__in": set(keys)}, **cls.filters
+        )
 
     @classmethod
     @sync_to_async
     def load_fn(cls, keys: list[str]):
-        results_dict = (
-            cls.queryset(keys)
-            # Prepare a dictionary where keys are unique field values and values are corresponding objects
-            .in_bulk(keys, field_name=cls.field)
-        )
+        results = cls.queryset(keys)
+        results_dict = {}
+        for result in results:
+            key = getattr(result, cls.field)
+            if key in results_dict:
+                logger.warning(f"multiple dataloader results for key {key}")
+            else:
+                results_dict[key] = result
+
         return [results_dict.get(key, None) for key in keys]
 
 
@@ -54,23 +66,26 @@ class FieldDataLoaderFactory(factories.BaseDjangoModelDataLoaderFactory):
     loader_class = BasicFieldDataLoader
 
     @classmethod
-    def get_loader_key(cls, model: Type["DjangoModel"], field: str, **kwargs):
-        return model, field
+    def get_loader_key(
+        cls, model: Type["DjangoModel"], field: str, filters: dict = {}, **kwargs
+    ):
+        return model, field, json.dumps(filters)
 
     @classmethod
-    def get_loader_class_kwargs(cls, model: Type["DjangoModel"], field: str, **kwargs):
-        return {
-            "model": model,
-            "field": field,
-        }
+    def get_loader_class_kwargs(
+        cls, model: Type["DjangoModel"], field: str, filters: dict = {}, **kwargs
+    ):
+        return {"model": model, "field": field, "filters": filters}
 
     @classmethod
-    def as_resolver(cls, field: str) -> Callable[["DjangoModel", Info], Coroutine]:
+    def as_resolver(
+        cls, field: str, filters: dict = {}
+    ) -> Callable[["DjangoModel", Info], Coroutine]:
         async def resolver(
             root: "DjangoModel", info: "Info"
         ):  # beware, first argument needs to be called 'root'
             field_data: "StrawberryDjangoField" = info._field
-            return await cls.get_loader_class(field_data.django_model, field)(
+            return await cls.get_loader_class(field_data.django_model, field, filters)(
                 context=info.context
             ).load(getattr(root, field))
 
@@ -145,11 +160,7 @@ class ReverseFKWithFiltersDataLoader(dataloaders.BasicReverseFKDataLoader):
     @classmethod
     @sync_to_async
     def load_fn(cls, keys: list[str]) -> list[list[DjangoModel]]:
-        unsanitised_filter_dict = strawberry.asdict(cls.filters)
-        filter_dict = {}
-        for key in unsanitised_filter_dict:
-            if unsanitised_filter_dict[key] is not strawberry.UNSET:
-                filter_dict[key] = unsanitised_filter_dict[key]
+        filter_dict = graphql_type_to_dict(cls.filters)
         results = cls.model.objects.prefetch_related(*cls.prefetch).filter(
             **{f"{cls.reverse_path}__in": keys}
         )
@@ -287,7 +298,6 @@ def filterable_dataloader_resolver(
         # TODO: don't re-load prefetched data
         # but also apply filters to the prefetched data
         # if hasattr(root, attr):
-        #     # print("PREFETCHED", root, attr, getattr(root, attr, None))
         #     return getattr(root, attr, None)
         relation: "ManyToOneRel" = root._meta.get_field(field_name=attr)
         related_model = relation.related_model
@@ -296,6 +306,8 @@ def filterable_dataloader_resolver(
             related_model, filters=filters, prefetch=prefetch, reverse_path=reverse_path
         )
         data = await loader(context=info.context).load(root.id)
-        return data[0] if single else data
+        if single:
+            return data[0] if data else None
+        return data
 
     return resolver

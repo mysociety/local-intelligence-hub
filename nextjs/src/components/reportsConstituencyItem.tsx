@@ -18,7 +18,7 @@ import pluralize from "pluralize";
 import Image from "next/image";
 import { ReportContext, useReportContext } from "@/app/reports/[id]/context";
 import { useContext } from "react";
-import { layerColour } from "@/app/reports/[id]/lib";
+import { layerColour } from "@/lib/map";
 import { AlertTriangle } from "lucide-react";
 import {
   Tooltip,

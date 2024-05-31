@@ -7,7 +7,7 @@ import { getYear } from "date-fns"
 import { useAtom } from "jotai"
 import { MAX_CONSTITUENCY_ZOOM, selectedConstituencyAtom } from "./report/ReportMap"
 import { LoadingIcon } from "./ui/loadingIcon"
-import { useLoadedMap } from "@/app/reports/[id]/lib"
+import { useLoadedMap } from "@/lib/map"
 import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { twMerge } from "tailwind-merge"
@@ -165,6 +165,7 @@ const CONSTITUENCY_STATS_OVERVIEW = gql`
         gss
         count
         gssArea {
+          id
           name
           fitBounds
           mp: person(filters:{personType:"MP"}) {

@@ -19,19 +19,9 @@ from hub import models
 from hub.graphql import mutations as mutation_types
 from hub.graphql.extensions.analytics import APIAnalyticsExtension
 from hub.graphql.types import model_types, public_queries
+from hub.graphql.utils import graphql_type_to_dict
 
 logger = logging.getLogger(__name__)
-
-
-@strawberry.input
-class TestDataSourceInput:
-    type: str
-    api_key: str
-    # For Mailchimp
-    list_id: Optional[str] = None
-    # For Airtable
-    base_id: Optional[str] = None
-    table_id: Optional[str] = None
 
 
 @strawberry.type
@@ -85,6 +75,23 @@ class Query(UserQueries):
     map_reports: List[model_types.MapReport] = strawberry_django.field(
         extensions=[IsAuthenticated()]
     )
+    hub_homepages: List[model_types.HubHomepage] = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
+    hub_homepage: model_types.HubHomepage = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
+    hub_page: model_types.HubPage = strawberry_django.field(
+        extensions=[IsAuthenticated()]
+    )
+    hub_page_by_path: Optional[model_types.HubPage] = model_types.hub_page_by_path
+    hub_by_hostname: Optional[model_types.HubHomepage] = model_types.hub_by_hostname
+    postcode_search: public_queries.UnauthenticatedPostcodeQueryResponse = (
+        public_queries.postcode_search
+    )
+    public_map_report: model_types.MapReport = strawberry_django.field(
+        resolver=model_types.public_map_report
+    )
     area: Optional[model_types.Area] = model_types.area_by_gss
     dataSet: Optional[model_types.DataSet] = model_types.dataset_by_name
     mapping_sources: List[model_types.MappingSource] = strawberry_django.field(
@@ -92,27 +99,30 @@ class Query(UserQueries):
         extensions=[IsAuthenticated()],
     )
 
-    enrich_postcode: public_queries.PostcodeQueryResponse = strawberry.field(
-        resolver=public_queries.enrich_postcode,
-        extensions=[IsAuthenticated()],
+    enrich_postcode: public_queries.AuthenticatedPostcodeQueryResponse = (
+        strawberry.field(
+            resolver=public_queries.enrich_postcode,
+            extensions=[IsAuthenticated()],
+        )
     )
-    enrich_postcodes: List[public_queries.PostcodeQueryResponse] = strawberry.field(
-        resolver=public_queries.enrich_postcodes,
-        extensions=[IsAuthenticated()],
+    enrich_postcodes: List[public_queries.AuthenticatedPostcodeQueryResponse] = (
+        strawberry.field(
+            resolver=public_queries.enrich_postcodes,
+            extensions=[IsAuthenticated()],
+        )
     )
 
     @strawberry.field
     def test_data_source(
-        self, info: strawberry.types.Info, input: TestDataSourceInput
+        self,
+        info: strawberry.types.Info,
+        input: mutation_types.CreateExternalDataSourceInput,
     ) -> model_types.ExternalDataSource:
-        if input.type == "airtable":
-            return models.AirtableSource(
-                api_key=input.api_key, base_id=input.base_id, table_id=input.table_id
-            )
-        elif input.type == "mailchimp":
-            return models.MailchimpSource(api_key=input.api_key, list_id=input.list_id)
-        else:
-            raise ValueError("Unsupported data source type")
+        for crm_type_key, model in models.source_models.items():
+            input_dict = graphql_type_to_dict(input)
+            if crm_type_key in input_dict and input_dict[crm_type_key] is not None:
+                return model(**input_dict[crm_type_key])
+        raise ValueError("Unsupported data source type")
 
     list_api_tokens = public_queries.list_api_tokens
 
@@ -133,9 +143,7 @@ class Mutation:
         mutation_types.create_external_data_source
     )
     update_external_data_source: model_types.ExternalDataSource = (
-        django_mutations.update(
-            mutation_types.ExternalDataSourceInput, extensions=[IsAuthenticated()]
-        )
+        mutation_types.update_external_data_source
     )
     delete_external_data_source: model_types.ExternalDataSource = (
         django_mutations.delete(mutation_types.IDObject, extensions=[IsAuthenticated()])
@@ -180,6 +188,9 @@ class Mutation:
     update_sharing_permissions: List[model_types.ExternalDataSource] = (
         mutation_types.update_sharing_permissions
     )
+    create_child_page: model_types.HubPage = mutation_types.create_child_page
+    delete_page: bool = mutation_types.delete_page
+    update_page: model_types.HubPage = mutation_types.update_page
 
 
 class CustomErrorLoggingSchema(JwtSchema):

@@ -4,6 +4,7 @@ from enum import Enum
 from typing import List, Optional, Union
 
 from django.db.models import Q
+from django.http import HttpRequest
 
 import procrastinate.contrib.django.models
 import strawberry
@@ -16,6 +17,7 @@ from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import IsAuthenticated
+from wagtail.models import Site
 
 from hub import models
 from hub.enrichment.sources import builtin_mapping_sources
@@ -178,6 +180,7 @@ class FieldDefinition:
     label: Optional[str] = dict_key_field()
     description: Optional[str] = dict_key_field()
     external_id: Optional[str] = dict_key_field()
+    editable: bool = dict_key_field(default=True)
 
 
 @strawberry_django.filter(models.ExternalDataSource)
@@ -447,6 +450,7 @@ class ConstituencyElectionStats:
 @strawberry_django.type(models.Area, filters=AreaFilter)
 class Area:
     id: auto
+    gss: auto
     mapit_id: str
     gss: auto
     name: auto
@@ -509,7 +513,12 @@ class Area:
     def polygon(
         self, info: Info, with_parent_data: bool = False
     ) -> Optional[MultiPolygonFeature]:
-        props = {"name": self.name, "gss": self.gss}
+        props = {
+            "name": self.name,
+            "gss": self.gss,
+            "id": self.gss,
+            "area_type": self.area_type,
+        }
         if with_parent_data and hasattr(self, "extra_geojson_properties"):
             props["extra_geojson_properties"] = self.extra_geojson_properties
 
@@ -529,10 +538,29 @@ class Area:
             point=self.point, id=self.gss, properties=props
         )
 
+    @strawberry_django.field
+    def generic_data_for_hub(self, hostname: str) -> List["GenericData"]:
+        site = Site.objects.get(hostname=hostname)
+        hub = site.root_page.specific
+        data = []
+        for layer in hub.layers:
+            data.extend(
+                models.GenericData.objects.filter(
+                    data_type__data_set__external_data_source=layer.get("source"),
+                    data_type__data_set__external_data_source__can_display_points_publicly=True,
+                    data_type__data_set__external_data_source__can_display_details_publicly=True,
+                    point__within=self.polygon,
+                    **layer.get("filter", {}),
+                )
+            )
+        return data
+
 
 @strawberry.type
 class GroupedDataCount:
     label: Optional[str]
+    # Provide area_type if gss code is not unique (e.g. WMC and WMC23 constituencies)
+    area_type: Optional[str] = None
     gss: Optional[str]
     count: int
     area_data: Optional[strawberry.Private[Area]] = None
@@ -541,7 +569,13 @@ class GroupedDataCount:
     async def gss_area(self, info: Info) -> Optional[Area]:
         if self.area_data is not None:
             return self.area_data
-        loader = FieldDataLoaderFactory.get_loader_class(models.Area, field="gss")
+        if self.area_type is not None:
+            filters = {"area_type__code": self.area_type}
+        else:
+            filters = {}
+        loader = FieldDataLoaderFactory.get_loader_class(
+            models.Area, field="gss", filters=filters
+        )
         return await loader(context=info.context).load(self.gss)
 
 
@@ -577,6 +611,13 @@ class GenericData(CommonData):
     email: auto
     phone: auto
     address: auto
+    title: auto
+    start_time: auto
+    end_time: auto
+    public_url: auto
+    description: auto
+    image: auto
+
     postcode: auto
     remote_url: str = fn_field()
 
@@ -599,24 +640,17 @@ class Analytics:
     @strawberry_django.field
     def imported_data_count_by_region(self) -> List[GroupedDataCount]:
         data = self.imported_data_count_by_region()
-        # areas = models.Area.objects.filter(gss__in=[datum["gss"] for datum in data])
-        return [
-            GroupedDataCount(
-                **datum
-                # area_data=next((area for area in areas if area.gss == datum.get("gss", None)), None),
-            )
-            for datum in data
-        ]
+        return [GroupedDataCount(**datum) for datum in data]
 
     @strawberry_django.field
     def imported_data_count_by_constituency(self) -> List[GroupedDataCount]:
         data = self.imported_data_count_by_constituency()
-        return [GroupedDataCount(**datum) for datum in data]
+        return [GroupedDataCount(**datum, area_type="WMC") for datum in data]
 
     @strawberry_django.field
     def imported_data_count_by_constituency_2024(self) -> List[GroupedDataCount]:
         data = self.imported_data_count_by_constituency_2024()
-        return [GroupedDataCount(**datum) for datum in data]
+        return [GroupedDataCount(**datum, area_type="WMC23") for datum in data]
 
     @strawberry_django.field
     def imported_data_count_by_council(self) -> List[GroupedDataCount]:
@@ -646,6 +680,7 @@ class Analytics:
                             sources=[
                                 GroupedDataCountForSource(
                                     **source,
+                                    area_type="WMC",
                                     gss=gss,
                                 )
                                 for source in group
@@ -661,7 +696,7 @@ class Analytics:
         res = self.imported_data_count_by_constituency(gss=gss)
         if len(res) == 0:
             return None
-        return GroupedDataCount(**res[0])
+        return GroupedDataCount(**res[0], area_type="WMC")
 
     @strawberry_django.field
     def imported_data_count_for_constituency_2024(
@@ -670,7 +705,7 @@ class Analytics:
         res = self.imported_data_count_by_constituency_2024(gss=gss)
         if len(res) == 0:
             return None
-        return GroupedDataCount(**res[0])
+        return GroupedDataCount(**res[0], area_type="WMC23")
 
 
 @strawberry.type
@@ -689,11 +724,18 @@ class BatchJobProgress:
     remaining: int
 
 
+@strawberry.enum
+class CrmType(Enum):
+    airtable = "airtable"
+    mailchimp = "mailchimp"
+    actionnetwork = "actionnetwork"
+
+
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class BaseDataSource(Analytics):
     id: auto
     name: auto
-    crm_type: str = attr_field()
+    crm_type: CrmType = attr_field()
     data_type: auto
     description: auto
     created_at: auto
@@ -707,10 +749,21 @@ class BaseDataSource(Analytics):
     email_field: auto
     phone_field: auto
     address_field: auto
+    title_field: auto
+    description_field: auto
+    image_field: auto
+    start_time_field: auto
+    end_time_field: auto
+    public_url_field: auto
     record_url_template: Optional[str] = fn_field()
     organisation_id: str = strawberry_django.field(
         resolver=lambda self: self.organisation_id
     )
+    predefined_column_names: bool = attr_field()
+    has_webhooks: bool = attr_field()
+    automated_webhooks: bool = attr_field()
+    introspect_fields: bool = attr_field()
+    default_data_type: Optional[str] = attr_field()
 
     @strawberry_django.field
     def is_import_scheduled(self: models.ExternalDataSource, info: Info) -> bool:
@@ -839,7 +892,7 @@ class ExternalDataSource(BaseDataSource):
     @strawberry_django.field
     def connection_details(
         self: models.ExternalDataSource, info
-    ) -> Union["AirtableSource", "MailchimpSource"]:
+    ) -> Union["AirtableSource", "MailchimpSource", "ActionNetworkSource"]:
         instance = self.get_real_instance()
         return instance
 
@@ -876,6 +929,11 @@ class MailchimpSource(ExternalDataSource):
     list_id: auto
 
 
+@strawberry_django.type(models.ActionNetworkSource)
+class ActionNetworkSource(ExternalDataSource):
+    api_key: str
+
+
 @strawberry_django.type(models.Report)
 class Report:
     id: auto
@@ -898,6 +956,7 @@ class MapLayer:
     id: str = dict_key_field()
     name: str = dict_key_field()
     visible: Optional[bool] = dict_key_field()
+    custom_marker_text: Optional[str] = dict_key_field()
 
     @strawberry_django.field
     def is_shared_source(self, info: Info) -> bool:
@@ -949,6 +1008,12 @@ class SharingPermission:
 class MapReport(Report, Analytics):
     layers: List[MapLayer]
     display_options: JSON
+
+
+def public_map_report(info: Info, org_slug: str, report_slug: str) -> models.MapReport:
+    return models.MapReport.objects.get(
+        organisation__slug=org_slug, slug=report_slug, public=True
+    )
 
 
 @strawberry_django.field()
@@ -1013,3 +1078,117 @@ def mapping_sources(info: Info) -> List[MappingSourcePath]:
             + [source.as_mapping_source() for source in external_data_sources]
         )
     ]
+
+
+@strawberry_django.type(models.Page)
+class HubPage:
+    id: auto
+    title: str
+    slug: str
+    path: str
+    full_url: Optional[str] = attr_field()
+
+    search_description: Optional[str]
+
+    @strawberry_django.field
+    def seo_title(self) -> str:
+        return self.seo_title or self.title
+
+    @strawberry_django.field
+    def hostname(self) -> str:
+        return self.get_site().hostname
+
+    @strawberry_django.field
+    def live_url(self) -> Optional[str]:
+        return self.full_url
+
+    @strawberry_django.field
+    def live_url_without_protocol(self) -> str:
+        url = self.full_url
+        return url.split("://")[1]
+
+    @strawberry_django.field
+    def puck_json_content(self) -> JSON:
+        specific = self.specific
+        if hasattr(specific, "puck_json_content"):
+            return specific.puck_json_content
+        return {}
+
+    @strawberry_django.field
+    def model_name(self) -> str:
+        return self.specific._meta.object_name
+
+    @strawberry_django.field
+    def ancestors(self, inclusive: bool = False) -> List["HubPage"]:
+        return self.get_ancestors(inclusive=inclusive)
+
+    @strawberry_django.field
+    def parent(self) -> Optional["HubPage"]:
+        return self.get_parent()
+
+    @strawberry_django.field
+    def children(self) -> List["HubPage"]:
+        return self.get_children()
+
+    @strawberry_django.field
+    def descendants(self, inclusive: bool = False) -> List["HubPage"]:
+        return self.get_descendants(inclusive=inclusive)
+
+    @strawberry_django.field
+    def hub(self) -> "HubHomepage":
+        return self.get_site().root_page.specific
+
+
+@strawberry.type
+class HubNavLink:
+    label: str = dict_key_field()
+    link: str = dict_key_field()
+
+
+@strawberry_django.type(models.HubHomepage)
+class HubHomepage(HubPage):
+    organisation: Organisation
+    layers: List[MapLayer]
+    nav_links: List[HubNavLink]
+    favicon_url: Optional[str]
+
+    @strawberry_django.field
+    def seo_image_url(self) -> Optional[str]:
+        if self.seo_image is None:
+            return None
+        return self.seo_image.get_rendition("width-800").full_url
+
+    # TODO: ultimately all this data will need to be public anyway for public viewing
+    # @classmethod
+    # def get_queryset(cls, queryset, info, **kwargs):
+    #     # Only list pages belonging to this user's orgs
+    #     user = get_current_user(info)
+    #     user_orgs = models.Organisation.objects.filter(members__user=user.id)
+    #     return queryset.filter(
+    #         organisation__in=user_orgs,
+    #     )
+
+
+@strawberry_django.field()
+def hub_page_by_path(
+    info: Info, hostname: str, path: Optional[str] = None
+) -> Optional[HubPage]:
+    # get request for strawberry query
+    request: HttpRequest = info.context["request"]
+    request.META = {
+        **request.META,
+        "HTTP_HOST": hostname,
+        "SERVER_PORT": request.get_port(),
+    }
+    request.path = path
+    site = Site.objects.get(hostname=hostname)
+    if path is None:
+        return site.root_page.specific
+    page = models.Page.find_for_request(request, path)
+    return page.specific if page else None
+
+
+@strawberry_django.field()
+def hub_by_hostname(hostname: str) -> HubHomepage:
+    site = Site.objects.get(hostname=hostname)
+    return site.root_page.specific

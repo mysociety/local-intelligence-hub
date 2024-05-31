@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { EnrichmentLayersQuery, ExternalDataSourceInput, FieldDefinition, PostcodesIoGeographyTypes } from "@/__generated__/graphql";
+import { CrmType, DataSourceType, EnrichmentLayersQuery, ExternalDataSourceInput, FieldDefinition, GeographyTypes } from "@/__generated__/graphql";
 import { Input } from "@/components/ui/input";
 import { SourcePathSelector } from "@/components/SelectSourceData";
 import { ArrowRight, Plus, RefreshCcw, X } from "lucide-react";
@@ -63,7 +63,7 @@ export function UpdateMappingForm({
     data: ExternalDataSourceInput,
     e?: React.BaseSyntheticEvent,
   ) => void;
-  crmType: string;
+  crmType: CrmType;
   initialData?: ExternalDataSourceInput;
   refreshFieldDefinitions?: () => void;
   fieldDefinitions?: FieldDefinition[] | null;
@@ -141,10 +141,10 @@ export function UpdateMappingForm({
                           <SelectContent>
                             <SelectGroup>
                               <SelectLabel>Geography type</SelectLabel>
-                              <SelectItem value={PostcodesIoGeographyTypes.Postcode}>Postcode</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Ward}>Ward</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Council}>Council</SelectItem>
-                              <SelectItem value={PostcodesIoGeographyTypes.Constituency}>Constituency</SelectItem>
+                              <SelectItem value={GeographyTypes.Postcode}>Postcode</SelectItem>
+                              <SelectItem value={GeographyTypes.Ward}>Ward</SelectItem>
+                              <SelectItem value={GeographyTypes.Council}>Council</SelectItem>
+                              <SelectItem value={GeographyTypes.Constituency}>Constituency</SelectItem>
                             </SelectGroup>
                           </SelectContent>
                         </Select>
@@ -201,7 +201,7 @@ export function UpdateMappingForm({
                               <>
                               {fieldDefinitions?.length ? (
                                 <Select
-                                  {...field}
+                                  {...{...field, ref: null}}
                                   required
                                   onValueChange={field.onChange}
                                 >
@@ -211,7 +211,7 @@ export function UpdateMappingForm({
                                   <SelectContent>
                                     <SelectGroup>
                                       <SelectLabel>Choose a field to update</SelectLabel>
-                                      {fieldDefinitions?.map((field) => (
+                                      {fieldDefinitions?.filter(f => f.editable).map((field) => (
                                         <SelectItem key={field.value} value={field.value}>
                                           <DataSourceFieldLabel
                                             fieldDefinition={field}

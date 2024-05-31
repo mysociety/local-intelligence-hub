@@ -3,8 +3,9 @@
 import { gql } from "@apollo/client"
 import ColorHash from 'color-hash'
 import { atom, useAtom } from "jotai";
-import { useEffect } from "react";
-import { useMap } from "react-map-gl";
+import { useEffect, useState } from "react";
+import { Layer, LayerProps, useMap } from "react-map-gl";
+import { MapRef } from "react-map-gl/dist/esm/mapbox/create-ref";
 var colorHash = new ColorHash();
 
 export const MAP_REPORT_LAYERS_SUMMARY = gql`
@@ -55,11 +56,21 @@ export const layerColour = (index: any, id?: any) => {
   return colorHash.hex(id || index)
 }
 
+export function layerIdColour (id: string) {
+  return colorHash.hex(id)
+}
+
 export const mapHasLoaded = atom(false)
 export const isDataConfigOpenAtom = atom(false)
 export const isConstituencyPanelOpenAtom = atom(false)
 
-export function useLoadedMap () {
+export type MapLoader = {
+  loadedMap: MapRef<mapboxgl.Map> | null | undefined;
+  loaded: boolean;
+  current?: MapRef<mapboxgl.Map> | undefined;
+}
+
+export function useLoadedMap (): MapLoader {
   const [loaded, setLoaded] = useAtom(mapHasLoaded)
   const map = useMap()
 
@@ -118,4 +129,49 @@ export function useLoadedMap () {
     loadedMap: loaded ? map.default : null,
     loaded
   }
+}
+
+export type MapboxImageSource = {
+  url: () => string
+  name: string
+}
+
+export function useMapIcons (requiredImages: MapboxImageSource[], mapbox: MapLoader) {
+  const [loadedImages, setLoadedImages] = useState<string[]>([])
+  useEffect(function loadIcons() {
+    if (!mapbox.loadedMap) return
+    requiredImages.forEach((requiredImage) => {
+      console.log("Loading", requiredImage.url())
+      // Load an image from an external URL.
+      mapbox.loadedMap!.loadImage(
+        requiredImage.url(),
+        (error, image) => {
+          try {
+            if (error) throw error;
+            if (!image) throw new Error('Marker icon did not load')
+            mapbox.loadedMap!.addImage(requiredImage.name, image);
+            setLoadedImages(loadedImages => [...loadedImages, requiredImage.name])
+          } catch (e) {
+            console.error("Failed to load image", e)
+          }
+        }
+      )
+    })
+  }, [mapbox.loadedMap, setLoadedImages])
+  return loadedImages
+}
+
+/**
+ * Placeholder layer to refer to in `beforeId`.
+ * See https://github.com/visgl/react-map-gl/issues/939#issuecomment-625290200
+ */
+export function PlaceholderLayer (props: Partial<LayerProps>) {
+  return (
+    <Layer
+      {...props}
+      type='background'
+      layout={{ visibility: 'none' }}
+      paint={{}}
+    />
+  )
 }

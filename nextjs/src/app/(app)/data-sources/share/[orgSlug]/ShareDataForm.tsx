@@ -317,6 +317,7 @@ const SHARE_WITH_ORG_PAGE = gql`
         dataType
         fieldDefinitions {
           label
+          editable
         }
         organisationId
         sharingPermissions {

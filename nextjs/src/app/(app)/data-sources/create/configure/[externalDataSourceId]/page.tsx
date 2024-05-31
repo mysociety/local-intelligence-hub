@@ -34,6 +34,7 @@ const GET_UPDATE_CONFIG = gql`
         label
         value
         description
+        editable
       }
       crmType
       geographyColumn
