@@ -100,19 +100,22 @@ class Command(BaseCommand):
                         PersonData.objects.create(
                             person=person, data_type=party_dt, data=ppc["party_name"]
                         )
-                if not pd.isna(ppc["email"]):
+                email = ppc["email"]
+                if not pd.isna(email):
+                    # Is currently importing wrapped in " so remove them
+                    email = email.replace('"', "")
                     try:
                         PersonData.objects.get_or_create(
                             person=person,
                             data_type=email_dt,
-                            defaults={"data": ppc["email"]},
+                            defaults={"data": email},
                         )
                     except PersonData.MultipleObjectsReturned:  # pragma: no cover
                         PersonData.objects.filter(
                             person=person, person__person_type="PPC", data_type=email_dt
                         ).delete()
                         PersonData.objects.create(
-                            person=person, data_type=email_dt, data=ppc["email"]
+                            person=person, data_type=email_dt, data=email
                         )
 
         dataset = DataSet.objects.filter(name="party", options=list())
