@@ -550,7 +550,7 @@ class Area:
                     data_type__data_set__external_data_source__can_display_points_publicly=True,
                     data_type__data_set__external_data_source__can_display_details_publicly=True,
                     point__within=self.polygon,
-                    **layer.get("filter", {})
+                    **layer.get("filter", {}),
                 )
             )
         return data
