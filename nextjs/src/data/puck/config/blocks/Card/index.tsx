@@ -6,6 +6,7 @@ import CirclePattern from "../../../../../../public/hub/circle-pattern.svg";
 import Image from "next/image";
 import ArrowTopRight from "../../../../../../public/hub/arrow-top-right.svg";
 import Link from "next/link";
+import { PuckText } from "../../components/PuckText"
 
 import {
   Dialog,
@@ -89,7 +90,9 @@ export const Card: ComponentConfig<CardProps> = {
           <div className="p-5 bg-white h-full flex flex-col gap-4 justify-between">
             <div className="flex flex-col gap-4">
               <h2 className="lg:text-hub2xl text-hubxl">{title}</h2>
-              <p className="text-jungle-green-neutral line-clamp-6">{description}</p>
+              <p className="text-jungle-green-neutral line-clamp-6">
+                <PuckText text={description} />
+              </p>
             </div>
             <TypeBadge type={type} />
           </div>
