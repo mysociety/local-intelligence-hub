@@ -44,17 +44,19 @@ export function HubMap ({
   const tileset = TILESETS.constituencies2024
 
   useEffect(() => {
-    if (currentConstituency?.fitBounds.length) {
-      mapbox.loadedMap?.fitBounds(currentConstituency.fitBounds, {
-        // TODO: change for small screen
-        padding: FIT_BOUNDS_PADDING
-      })
-    } else if (!localDataLoading) {
-      // Fly to UK bounds
-      mapbox.loadedMap?.fitBounds(UK_BOUNDS, {
-        padding: FIT_BOUNDS_PADDING
-      })
-    }
+    try {
+      if (currentConstituency?.fitBounds.length) {
+        mapbox.loadedMap?.fitBounds(currentConstituency.fitBounds, {
+          // TODO: change for small screen
+          padding: FIT_BOUNDS_PADDING
+        })
+      } else if (!localDataLoading) {
+        // Fly to UK bounds
+        mapbox.loadedMap?.fitBounds(UK_BOUNDS, {
+          padding: FIT_BOUNDS_PADDING
+        })
+      }
+    } catch(e) {}
   }, [currentConstituency, mapbox.loadedMap, localDataLoading])
 
   return (
