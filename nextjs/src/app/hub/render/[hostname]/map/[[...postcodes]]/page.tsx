@@ -63,10 +63,10 @@ export default function Page({ params: { hostname, postcodes } }: { params: Para
                 </div>
                 {!localData.loading && (
                   <aside
-                    className="absolute top-[80px] left-5 right-0 w-0 pointer-events-auto"
-                    style={{ height: "calc(100% - 80px)", width: SIDEBAR_WIDTH }}
+                    className="absolute top-[80px] left-5 right-0 w-0 pointer-events-auto max-h-full overflow-y-hidden shadow-hub-muted"
+                    style={{ height: "calc(100% - 120px)", width: SIDEBAR_WIDTH }}
                   >
-                    <div className="max-w-[100vw] rounded-[20px] bg-white p-6 max-h-full overflow-y-auto">
+                    <div className="max-w-[100vw] rounded-[20px] bg-white max-h-full overflow-y-auto">
                       {!localData.data ? (
                         <SearchPanel
                           onSearch={(postcode) => {
