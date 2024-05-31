@@ -17,7 +17,7 @@ export function SearchPanel({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 p-6">
       <h1 className='text-4xl tracking-tight mb-4 '>
         Local Climate and Nature Hustings
       </h1>

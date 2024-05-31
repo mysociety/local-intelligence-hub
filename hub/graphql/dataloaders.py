@@ -306,6 +306,8 @@ def filterable_dataloader_resolver(
             related_model, filters=filters, prefetch=prefetch, reverse_path=reverse_path
         )
         data = await loader(context=info.context).load(root.id)
-        return data[0] if single else data
+        if single:
+            return data[0] if data else None
+        return data
 
     return resolver
