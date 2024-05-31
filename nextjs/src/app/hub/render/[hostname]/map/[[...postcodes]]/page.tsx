@@ -38,12 +38,12 @@ export default function Page({ params: { hostname, postcodes } }: { params: Para
       pathnameSegments[2] === 'postcode'
     ) ? pathnameSegments[3].replace(/([\s ]*)/mig, "").trim() : ''
 
+  const shouldDisplayMap = useBreakpoint("md")
+
   const localData = useQuery<GetLocalDataQuery, GetLocalDataQueryVariables>(GET_LOCAL_DATA, {
-    variables: { postcode: postcodeFromPathname, hostname },
+    variables: { postcode: postcodeFromPathname, hostname, shouldDisplayMap },
     skip: !postcodeFromPathname
   });
-
-  const shouldDisplayMap = useBreakpoint("md")
 
   return (
     <Root fullScreen={shouldDisplayMap}>
@@ -137,7 +137,7 @@ const GET_HUB_MAP_DATA = gql`
 `
 
 const GET_LOCAL_DATA = gql`
-  query GetLocalData($postcode: String!, $hostname: String!) {
+  query GetLocalData($postcode: String!, $hostname: String!, $shouldDisplayMap: Boolean!) {
     postcodeSearch(postcode: $postcode) {
       postcode
       constituency: constituency2024 {
@@ -145,7 +145,7 @@ const GET_LOCAL_DATA = gql`
         gss
         name
         # For zooming
-        fitBounds
+        fitBounds @include(if: $shouldDisplayMap)
         # List of events
         genericDataForHub(hostname: $hostname) {
           id
