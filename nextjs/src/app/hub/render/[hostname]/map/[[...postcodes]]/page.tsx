@@ -51,39 +51,50 @@ export default function Page({ params: { hostname, postcodes } }: { params: Para
     <Root fullScreen>
       <MapProvider>
         <JotaiProvider>
-          <div className="w-full h-full flex flex-row pointer-events-none">
-            <div className='w-full h-full pointer-events-auto'>
-              <HubMap
-                externalDataSources={hub.data?.hubByHostname?.layers?.map((i: any) => i.id) || []}
-                currentConstituency={localData.data?.postcodeSearch.constituency}  
-              />
-            </div>
-            <aside className="absolute right-0 w-0 pointer-events-auto" style={{
-                top: 155,
-                left: 32,
-            }}>
-              <div className='max-w-[100vw] rounded-[20px] bg-jungle-green-bg text-jungle-green-700 p-6' style={{
-                width: SIDEBAR_WIDTH
-              }}>
-                {!localData.data ? (
-                  <SearchPanel
-                    onSearch={(postcode) => {
-                      window.history.pushState(null, '', `/map/postcode/${postcode}`)
+          <div className="h-dvh flex flex-col">
+            <main className="h-full relative overflow-x-hidden overflow-y-hidden flex-grow">
+              <div className="absolute w-full h-full flex flex-row pointer-events-none">
+                <div className="w-full h-full pointer-events-auto">
+                  <HubMap
+                    externalDataSources={
+                      hub.data?.hubByHostname?.layers?.map((i: any) => i.id) ||
+                      []
+                    }
+                    currentConstituency={
+                      localData.data?.postcodeSearch.constituency
+                    }
+                  />
+                </div>
+                <aside className="absolute top-[80px] left-5 right-0 w-0 pointer-events-auto">
+                  <div
+                    className="max-w-[100vw] rounded-[20px] bg-white  p-6"
+                    style={{
+                      width: SIDEBAR_WIDTH,
                     }}
-                    isLoading={localData.loading}
-                  />
-                ) : (
-                  <ConstituencyView
-                    data={localData.data}
-                  />
-                )}
+                  >
+                    {!localData.data ? (
+                      <SearchPanel
+                        onSearch={(postcode) => {
+                          window.history.pushState(
+                            null,
+                            "",
+                            `/map/postcode/${postcode}`
+                          );
+                        }}
+                        isLoading={localData.loading}
+                      />
+                    ) : (
+                      <ConstituencyView data={localData.data} />
+                    )}
+                  </div>
+                </aside>
               </div>
-            </aside>
+            </main>
           </div>
         </JotaiProvider>
       </MapProvider>
     </Root>
-  )
+  );
 }
 
 const GET_HUB_MAP_DATA = gql`
