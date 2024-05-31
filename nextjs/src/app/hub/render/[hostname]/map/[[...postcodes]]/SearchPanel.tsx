@@ -10,7 +10,7 @@ export function SearchPanel ({
     const [postcode, setPostcode] = useState("")
     const onSubmit = (e: FormEvent) => {
       e.preventDefault()
-      onSearch(postcode)
+      onSearch(postcode.replace(/([\s ]*)/mig, "").trim())
     }
   
     return (

@@ -9,15 +9,20 @@ export function ConstituencyView ({
   data: GetLocalDataQuery
 }) {
   if (!data?.postcodeSearch?.constituency?.name) {
-    return <div>
+    return <>
+      <a className='cursor-pointer' onClick={() => {
+        window.history.pushState(null, '', "/map")
+      }}>
+        &larr; Search another postcode
+      </a>
       <div>Nothing found.</div>
       {/* TODO: something more useful, like other constituencies that *do* have events? */}
-    </div>
+    </>
   }
 
   return (
     <>
-      <a className='pointer-cursor' onClick={() => {
+      <a className='cursor-pointer' onClick={() => {
         window.history.pushState(null, '', "/map")
       }}>
         &larr; Search another postcode

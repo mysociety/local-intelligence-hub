@@ -32,10 +32,6 @@ export function HubMap ({
     {
       url: () => new URL('/markers/tcc-event-marker.png', window.location.href).toString(),
       name: 'tcc-event-marker'
-    },
-    {
-      url: () => new URL('/markers/default.png', window.location.href).toString(),
-      name: 'meep-marker-0'
     }
   ]
 
@@ -46,7 +42,7 @@ export function HubMap ({
   const tileset = TILESETS.constituencies2024
 
   useEffect(() => {
-    if (currentConstituency) {
+    if (currentConstituency?.fitBounds.length) {
       mapbox.loadedMap?.fitBounds(currentConstituency.fitBounds, {
         // TODO: change for small screen
         padding: FIT_BOUNDS_PADDING
@@ -88,8 +84,8 @@ export function HubMap ({
         }}
       >
         {/* Layout order */}
-        <PlaceholderLayer id="PLACEHOLDER_MARKERS" />
         <PlaceholderLayer id="AREA_BOUNDARIES" />
+        <PlaceholderLayer id="PLACEHOLDER_MARKERS" />
         {/* Boundaries */}
         <Source
           id={tileset.mapboxSourceId}
@@ -105,28 +101,46 @@ export function HubMap ({
           type="line"
           paint={{
             "line-color": "green",
-            "line-width": 0.5,
+            "line-width": 1,
             "line-opacity": 0.25,
           }}
         />
         {currentConstituency && (
-          <Layer
-            beforeId="AREA_BOUNDARIES"
-            filter={[
-              "==",
-              ["get", tileset.promoteId],
-              ["literal", currentConstituency?.gss],
-            ]}
-            id={`${tileset.mapboxSourceId}-selected-line`}
-            source={tileset.mapboxSourceId}
-            source-layer={tileset.sourceLayerId}
-            type="line"
-            paint={{
-              "line-color": "green",
-              "line-width": 1.5,
-              "line-opacity": 0.75,
-            }}
-          />
+          <>
+            <Layer
+              beforeId="AREA_BOUNDARIES"
+              filter={[
+                "==",
+                ["get", tileset.promoteId],
+                ["literal", currentConstituency?.gss],
+              ]}
+              id={`${tileset.mapboxSourceId}-fill`}
+              source={tileset.mapboxSourceId}
+              source-layer={tileset.sourceLayerId}
+              type="fill"
+              paint={{
+                "fill-color": "green",
+                "fill-opacity": 0.1,
+              }}
+            />
+            <Layer
+              beforeId="AREA_BOUNDARIES"
+              filter={[
+                "==",
+                ["get", tileset.promoteId],
+                ["literal", currentConstituency?.gss],
+              ]}
+              id={`${tileset.mapboxSourceId}-selected-line`}
+              source={tileset.mapboxSourceId}
+              source-layer={tileset.sourceLayerId}
+              type="line"
+              paint={{
+                "line-color": "green",
+                "line-width": 3,
+                "line-opacity": 0.75,
+              }}
+            />
+          </>
         )}
         {/* Markers */}
         {loadedImages.some(t => t === "tcc-event-marker") && externalDataSources.map(
