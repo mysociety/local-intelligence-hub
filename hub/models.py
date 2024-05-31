@@ -1471,14 +1471,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         ]
 
     @classmethod
-    def _get_import_data(self, id: str, filter = {}):
+    def _get_import_data(self, id: str):
         """
         For use by views to query data without having to instantiate the class / query the database for the CRM first
         """
         logger.debug(f"getting import data where external data source id is {id}")
         return GenericData.objects.filter(
-            data_type__data_set__external_data_source_id=id,
-            **(filter or {})
+            data_type__data_set__external_data_source_id=id
         )
 
     def get_import_data(self):

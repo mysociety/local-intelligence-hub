@@ -42,7 +42,9 @@ class GenericDataVectorLayer(VectorLayer):
         super().__init__(*args, **kwargs)
 
     def get_queryset(self) -> QuerySet:
-        return ExternalDataSource._get_import_data(self.external_data_source_id, self.filter)
+        return ExternalDataSource\
+            ._get_import_data(self.external_data_source_id)\
+            .filter(**self.filter)
 
 
 class ExternalDataSourceTileView(MVTView, DetailView):
