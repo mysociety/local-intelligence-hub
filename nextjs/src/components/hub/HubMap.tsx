@@ -20,11 +20,13 @@ const viewStateAtom = atom<Partial<ViewState>>({
 export function HubMap ({
   mapStyle,
   externalDataSources,
-  currentConstituency
+  currentConstituency,
+  localDataLoading
 }: {
   mapStyle?: string | mapboxgl.Style | ImmutableLike<mapboxgl.Style> | undefined,
   externalDataSources: string[],
-  currentConstituency: GetLocalDataQuery['postcodeSearch']['constituency']
+  currentConstituency: GetLocalDataQuery['postcodeSearch']['constituency'],
+  localDataLoading: boolean
 }) {
   const [viewState, setViewState] = useAtom(viewStateAtom)
 
@@ -47,17 +49,17 @@ export function HubMap ({
         // TODO: change for small screen
         padding: FIT_BOUNDS_PADDING
       })
-    } else {
+    } else if (!localDataLoading) {
       // Fly to UK bounds
       mapbox.loadedMap?.fitBounds(UK_BOUNDS, {
         padding: FIT_BOUNDS_PADDING
       })
     }
-  }, [currentConstituency, mapbox.loadedMap])
+  }, [currentConstituency, mapbox.loadedMap, localDataLoading])
 
   return (
     <>
-      {!externalDataSources.length || loadedImages.length !== requiredImages.length && (
+      {!externalDataSources.length || loadedImages.length !== requiredImages.length || localDataLoading && (
         <div className="absolute w-full h-full inset-0 z-10 pointer-events-none">
           <div className="flex flex-col items-center justify-center w-full h-full">
             <LoadingIcon />

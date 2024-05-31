@@ -4,16 +4,13 @@
 import React from 'react'
 
 import "mapbox-gl/dist/mapbox-gl.css";
-import { gql, useLazyQuery, useQuery } from "@apollo/client";
+import { gql, useQuery } from "@apollo/client";
 import { Provider as JotaiProvider } from "jotai";
 import { MapProvider } from "react-map-gl";
 import { HubMap } from "@/components/hub/HubMap";
-import { useState } from "react";
-import { format, formatRelative } from "date-fns";
 import { ConstituencyView } from "@/components/hub/ConstituencyView";
 import { GetLocalDataQuery, GetLocalDataQueryVariables } from "@/__generated__/graphql";
 import { SIDEBAR_WIDTH } from "@/components/hub/data";
-import { useRouter } from 'next/navigation';
 import { usePathname, useParams } from 'next/navigation' 
 import { SearchPanel } from './SearchPanel';
 import Root from '@/data/puck/config/root';
@@ -25,8 +22,6 @@ type Params = {
 }
 
 export default function Page({ params: { hostname, postcodes } }: { params: Params }) {
-  const router = useRouter()
-
   const hub = useQuery(GET_HUB_MAP_DATA, {
     variables: { hostname },
   });
@@ -51,7 +46,7 @@ export default function Page({ params: { hostname, postcodes } }: { params: Para
     <Root fullScreen>
       <MapProvider>
         <JotaiProvider>
-          <div className="h-dvh flex flex-col">
+          <div className="flex flex-col" style={{ height: "calc(100dvh - 80px" }}>
             <main className="h-full relative overflow-x-hidden overflow-y-hidden flex-grow">
               <div className="absolute w-full h-full flex flex-row pointer-events-none">
                 <div className="w-full h-full pointer-events-auto">
@@ -63,31 +58,32 @@ export default function Page({ params: { hostname, postcodes } }: { params: Para
                     currentConstituency={
                       localData.data?.postcodeSearch.constituency
                     }
+                    localDataLoading={localData.loading}
                   />
                 </div>
-                <aside className="absolute top-[80px] left-5 right-0 w-0 pointer-events-auto">
-                  <div
-                    className="max-w-[100vw] rounded-[20px] bg-white  p-6"
-                    style={{
-                      width: SIDEBAR_WIDTH,
-                    }}
+                {!localData.loading && (
+                  <aside
+                    className="absolute top-[80px] left-5 right-0 w-0 pointer-events-auto"
+                    style={{ height: "calc(100% - 80px)", width: SIDEBAR_WIDTH }}
                   >
-                    {!localData.data ? (
-                      <SearchPanel
-                        onSearch={(postcode) => {
-                          window.history.pushState(
-                            null,
-                            "",
-                            `/map/postcode/${postcode}`
-                          );
-                        }}
-                        isLoading={localData.loading}
-                      />
-                    ) : (
-                      <ConstituencyView data={localData.data} />
-                    )}
-                  </div>
-                </aside>
+                    <div className="max-w-[100vw] rounded-[20px] bg-white p-6 max-h-full overflow-y-auto">
+                      {!localData.data ? (
+                        <SearchPanel
+                          onSearch={(postcode) => {
+                            window.history.pushState(
+                              null,
+                              "",
+                              `/map/postcode/${postcode}`
+                            );
+                          }}
+                          isLoading={localData.loading}
+                        />
+                      ) : (
+                        <ConstituencyView data={localData.data} />
+                      )}
+                    </div>
+                  </aside>
+                )}
               </div>
             </main>
           </div>
@@ -144,6 +140,25 @@ const GET_LOCAL_DATA = gql`
                 dataType
               }
             }
+          }
+        }
+        # PPCs
+        ppcs: people(filters:{personType:"PPC"}) {
+          id
+          name
+          photo {
+            url
+          }
+          party: personDatum(filters:{
+            dataType_Name: "party"
+          }) {
+            name: data
+            shade
+          }
+          email: personDatum(filters:{
+            dataType_Name: "email"
+          }) {
+            data
           }
         }
       }
