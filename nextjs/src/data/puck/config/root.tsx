@@ -17,7 +17,7 @@ export default function Root({ children, editMode }: RootProps) {
   return (
     <>
       <style>{css}</style>
-      <main className="font-publicSans px-8 text-jungle-green-800 min-h-[dv100] min-w-screen h-full w-full max-w-screen-xl mx-auto">
+      <main className="font-publicSans sm:px-8 px-4 text-jungle-green-800 min-h-[dv100] min-w-screen h-full w-full max-w-screen-xl mx-auto">
         <header className="sticky top-0 z-50 ">
           <HubNavbar />
         </header>

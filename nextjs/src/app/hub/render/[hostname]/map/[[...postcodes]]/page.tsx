@@ -61,7 +61,7 @@ export default function Page({ params: { hostname, postcodes } }: { params: Para
                 />
               </div>
               <aside className="absolute top-[80px] left-5 right-0 w-0 pointer-events-auto">
-                <div className='max-w-[100vw] rounded-[20px] bg-jungle-green-bg text-jungle-green-700 p-6' style={{
+                <div className='max-w-[100vw] rounded-[20px] bg-white  p-6' style={{
                   width: SIDEBAR_WIDTH
                 }}>
                   {!localData.data ? (
