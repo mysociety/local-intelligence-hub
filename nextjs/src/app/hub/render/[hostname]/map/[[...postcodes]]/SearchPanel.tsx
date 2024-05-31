@@ -28,7 +28,7 @@ export function SearchPanel ({
           className='bg-jungle-green-600 text-white text-lg font-bold rounded-md w-full p-4 mt-4'
           // TODO: add postcode validation
           disabled={!postcode || isLoading}
-          onClick={() => onSearch(postcode)}
+          onClick={() => onSearch(postcode.replace(/([\s ]*)/mig, "").trim())}
         >
           {isLoading ? 'Loading...' : 'Search'}
         </button>

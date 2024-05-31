@@ -40,7 +40,7 @@ export default function Page({ params: { hostname, postcodes } }: { params: Para
       pathnameSegments &&
       pathnameSegments.length === 4 &&
       pathnameSegments[2] === 'postcode'
-    ) ? pathnameSegments[3] : ''
+    ) ? pathnameSegments[3].replace(/([\s ]*)/mig, "").trim() : ''
 
   const localData = useQuery<GetLocalDataQuery, GetLocalDataQueryVariables>(GET_LOCAL_DATA, {
     variables: { postcode: postcodeFromPathname, hostname },
