@@ -43,7 +43,7 @@ export function HubMap ({
   const tileset = TILESETS.constituencies
 
   useEffect(() => {
-    if (currentConstituency) {
+    if (currentConstituency?.fitBounds.length) {
       mapbox.loadedMap?.fitBounds(currentConstituency.fitBounds, {
         // TODO: change for small screen
         padding: FIT_BOUNDS_PADDING
