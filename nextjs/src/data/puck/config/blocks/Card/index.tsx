@@ -149,7 +149,7 @@ export const Card: ComponentConfig<CardProps> = {
             <div className="z-10">
               <h2 className="lg:text-hub2xl text-hubxl tracking-tight">{title}</h2>
               {description && (
-                <div className="text-white line-clamp-6 mt-2">
+                <div className="text-white line-clamp-6 my-4">
                   <PuckText text={description} />
                 </div>
               )}
