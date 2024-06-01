@@ -223,7 +223,7 @@ export const Card: ComponentConfig<CardProps> = {
               )}
             </div>
           </DialogTrigger>
-          <DialogContent className="p-10 bg-white text-jungle-green-900">
+          <DialogContent className="p-10 bg-white text-jungle-green-900 max-h-[95dvh] overflow-y-auto">
             <DialogHeader className="flex flex-col gap-5">
               <DialogTitle className="text-5xl">{title}</DialogTitle>
               <DialogDescription className=" text-lg">
