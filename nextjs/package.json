@@ -18,6 +18,7 @@
     "@kodingdotninja/use-tailwind-breakpoint": "^1.0.0",
     "@measured/puck": "^0.14.2",
     "@next/bundle-analyzer": "^14.2.3",
+    "@next/third-parties": "^14.2.3",
     "@parcel/watcher": "^2.4.1",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-alert-dialog": "^1.0.5",

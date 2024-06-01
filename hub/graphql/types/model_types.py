@@ -1150,7 +1150,8 @@ class HubHomepage(HubPage):
     organisation: Organisation
     layers: List[MapLayer]
     nav_links: List[HubNavLink]
-    favicon_url: Optional[str]
+    favicon_url: Optional[str] = None
+    google_analytics_tag_id: Optional[str] = None
 
     @strawberry_django.field
     def seo_image_url(self) -> Optional[str]:

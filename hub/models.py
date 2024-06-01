@@ -2895,27 +2895,29 @@ class HubHomepage(Page):
         on_delete=models.SET_NULL,
         related_name="+",
     )
+    google_analytics_tag_id = models.CharField(max_length=100, blank=True, null=True)
 
-    content_panels = Page.content_panels + [
+    data_panels = Page.content_panels + [
         FieldPanel("organisation"),
         FieldPanel("layers", widget=JSONEditorWidget),
     ]
 
-    website_panels = [
+    page_panels = [
         FieldPanel("puck_json_content", widget=JSONEditorWidget),
         FieldPanel("nav_links", widget=JSONEditorWidget),
     ]
 
-    promote_panels = Page.promote_panels + [
+    seo_panels = Page.promote_panels + [
         FieldPanel("favicon_url"),
         FieldPanel("seo_image"),
+        FieldPanel("google_analytics_tag_id")
     ]
 
     edit_handler = TabbedInterface(
         [
-            ObjectList(promote_panels, heading="Hub SEO"),
-            ObjectList(content_panels, heading="Hub data"),
-            ObjectList(website_panels, heading="Homepage contents"),
+            ObjectList(seo_panels, heading="Hub SEO"),
+            ObjectList(data_panels, heading="Hub data"),
+            ObjectList(page_panels, heading="Homepage contents"),
         ]
     )
 

@@ -1,19 +1,36 @@
 import { gql } from "@apollo/client";
-import { Render } from "@measured/puck/rsc";
 import { getClient } from "@/services/apollo-client";
 import { Metadata, ResolvingMetadata } from "next";
-import { GetPageQuery, GetPageQueryVariables } from "@/__generated__/graphql";
-import { conf } from "@/data/puck/config";
+import { GetPageQuery, GetPageQueryVariables, HostAnalyticsQuery, HostAnalyticsQueryVariables } from "@/__generated__/graphql";
 import { GET_PAGE } from "@/app/hub/render/[hostname]/query";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 type Params = {
   hostname: string
   slug: string
 }
 
-export default async function Layout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>
+export default async function Layout({ children, params: { hostname} }: { children: React.ReactNode, params: Params }) {
+  const client = getClient();
+  const page = await client.query<HostAnalyticsQuery, HostAnalyticsQueryVariables>({
+    query: HOST_ANALYTICS,
+    variables: { hostname }
+  })
+  return <>
+    {children}
+    {page.data?.hubByHostname?.googleAnalyticsTagId && (
+      <GoogleAnalytics gaId={page.data?.hubByHostname.googleAnalyticsTagId} />
+    )}
+  </>
 }
+
+const HOST_ANALYTICS = gql`
+  query HostAnalytics($hostname: String!) {
+    hubByHostname(hostname: $hostname) {
+      googleAnalyticsTagId
+    }
+  }
+`
 
 // nextjs metadata function — page title from GetPageQuery
 export async function generateMetadata(
