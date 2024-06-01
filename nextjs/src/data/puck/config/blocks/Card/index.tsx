@@ -167,14 +167,6 @@ export const Card: ComponentConfig<CardProps> = {
       </div>
     );
 
-    if (behaviour === "link" && link) {
-      return (
-        <Link href={link}>
-          {card}
-        </Link>
-      )
-    }
-
     if (behaviour === "dialog" && !!dialogDescription) {
       return (
         <Dialog>
@@ -201,6 +193,10 @@ export const Card: ComponentConfig<CardProps> = {
       );
     }
 
-    return card
+    return link ? (
+      <Link href={link}>
+        {card}
+      </Link>
+    ) : card
   },
 };
