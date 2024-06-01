@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from django.conf import settings
+from django.core import management
 
 from procrastinate.contrib.django import app
-from django.core import management
+
 
 @app.task(queue="external_data_sources")
 async def refresh_one(external_data_source_id: str, member_id: str):
@@ -67,6 +68,7 @@ async def import_all(external_data_source_id: str, request_id: str = None):
     await ExternalDataSource.deferred_import_all(
         external_data_source_id=external_data_source_id, request_id=request_id
     )
+
 
 # cron that calls the `import_2024_ppcs` command every hour
 @app.periodic(cron="0 * * * *")

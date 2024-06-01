@@ -1,3 +1,4 @@
+import logging
 import urllib.request
 from collections import Counter
 
@@ -10,7 +11,6 @@ from tqdm import tqdm
 
 from hub.models import Area, DataSet, DataType, Person, PersonData
 
-import logging
 logger = logging.getLogger(__name__)
 
 party_shades = {
