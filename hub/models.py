@@ -2910,7 +2910,7 @@ class HubHomepage(Page):
     seo_panels = Page.promote_panels + [
         FieldPanel("favicon_url"),
         FieldPanel("seo_image"),
-        FieldPanel("google_analytics_tag_id")
+        FieldPanel("google_analytics_tag_id"),
     ]
 
     edit_handler = TabbedInterface(

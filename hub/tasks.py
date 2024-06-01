@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from django.conf import settings
+from django.core import management
 
 from procrastinate.contrib.django import app
 
 
-@app.task(queue="index")
+@app.task(queue="external_data_sources")
 async def refresh_one(external_data_source_id: str, member_id: str):
     from hub.models import ExternalDataSource
 
@@ -14,7 +15,7 @@ async def refresh_one(external_data_source_id: str, member_id: str):
     )
 
 
-@app.task(queue="index", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
+@app.task(queue="external_data_sources", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
 async def refresh_many(
     external_data_source_id: str, member_ids: list[str], request_id: str = None
 ):
@@ -27,7 +28,7 @@ async def refresh_many(
     )
 
 
-@app.task(queue="index")
+@app.task(queue="external_data_sources")
 async def refresh_all(external_data_source_id: str, request_id: str = None):
     from hub.models import ExternalDataSource
 
@@ -38,7 +39,7 @@ async def refresh_all(external_data_source_id: str, request_id: str = None):
 
 # Refresh webhooks once a day
 @app.periodic(cron="0 3 * * *")
-@app.task(queue="index")
+@app.task(queue="external_data_sources")
 async def refresh_webhooks(external_data_source_id: str, timestamp=None):
     from hub.models import ExternalDataSource
 
@@ -47,7 +48,7 @@ async def refresh_webhooks(external_data_source_id: str, timestamp=None):
     )
 
 
-@app.task(queue="index", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
+@app.task(queue="external_data_sources", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
 async def import_many(
     external_data_source_id: str, member_ids: list[str], request_id: str = None
 ):
@@ -60,10 +61,17 @@ async def import_many(
     )
 
 
-@app.task(queue="index")
+@app.task(queue="external_data_sources")
 async def import_all(external_data_source_id: str, request_id: str = None):
     from hub.models import ExternalDataSource
 
     await ExternalDataSource.deferred_import_all(
         external_data_source_id=external_data_source_id, request_id=request_id
     )
+
+
+# cron that calls the `import_2024_ppcs` command every hour
+@app.periodic(cron="0 * * * *")
+@app.task(queue="built_in_data")
+async def import_2024_ppcs():
+    management.call_command("import_2024_ppcs")
