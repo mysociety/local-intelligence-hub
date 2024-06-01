@@ -4,6 +4,9 @@ import { Metadata, ResolvingMetadata } from "next";
 import { GetPageQuery, GetPageQueryVariables, HostAnalyticsQuery, HostAnalyticsQueryVariables } from "@/__generated__/graphql";
 import { GET_PAGE } from "@/app/hub/render/[hostname]/query";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { CookieConsentComponent } from "@/components/hub/CookieConsent";
+import ConsentRespectingGoogleAnalytics from "@/components/hub/ConsentRespectingGoogleAnalytics";
+import { ConsentRespectingPosthogAnalytics } from "@/components/hub/ConsentRespectingPosthogAnalytics";
 
 type Params = {
   hostname: string
@@ -18,8 +21,12 @@ export default async function Layout({ children, params: { hostname} }: { childr
   })
   return <>
     {children}
+    <CookieConsentComponent />
+    <ConsentRespectingPosthogAnalytics />
     {page.data?.hubByHostname?.googleAnalyticsTagId && (
-      <GoogleAnalytics gaId={page.data?.hubByHostname.googleAnalyticsTagId} />
+      <ConsentRespectingGoogleAnalytics
+        googleAnalyticsTagId={page.data?.hubByHostname.googleAnalyticsTagId}
+      />
     )}
   </>
 }
