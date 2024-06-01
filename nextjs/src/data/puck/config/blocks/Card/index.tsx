@@ -229,12 +229,12 @@ export const Card: ComponentConfig<CardProps> = {
               <DialogDescription className=" text-lg">
                 <PuckText text={dialogDescription} />
               </DialogDescription>
-              <button
+              <Link href={link}
                 className='bg-jungle-green-600 hover:bg-jungle-green-500 text-white text-lg font-bold rounded-md p-4 flex flex-row gap-4 text-center items-center justify-center'
               >
                 {type === "resource" && <Download />}
                 {linkLabel || "Learn more"}
-              </button>
+              </Link>
             </DialogHeader>
           </DialogContent>
         </Dialog>
