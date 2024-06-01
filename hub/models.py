@@ -1952,22 +1952,16 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             else str(external_data_source.id)
         )
 
-        source: ExternalDataSource = ExternalDataSource.objects.get(
-            pk=external_data_source_id
-        )
+        source = ExternalDataSource.objects.get(pk=external_data_source_id)
         default_source_permissions = source.default_data_permissions()
 
-        if user is None or (
-            hasattr(user, "is_authenticated") and not user.is_authenticated
-        ):
+        if user is None or not user.is_authenticated:
             logger.debug("No user provided, returning default permissions")
             return default_source_permissions
 
         # Check for cached permissions on this source
         user_id = user if not hasattr(user, "id") else str(user.id)
-        permission_cache_key = SharingPermission._get_cache_key(
-            external_data_source_id, user_id
-        )
+        permission_cache_key = SharingPermission._get_cache_key(external_data_source_id)
         permissions_dict = cache.get(permission_cache_key)
         if permissions_dict is None:
             permissions_dict = {}
@@ -1989,13 +1983,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             return default_source_permissions
         else:
             # If the user's org owns the source, they can see everything
-            can_display_points = (
-                external_data_source.organisation.members.filter(user=user_id).exists()
-                or default_source_permissions["can_display_points"]
-            )
-            can_display_details = (
-                can_display_points or default_source_permissions["can_display_details"]
-            )
+            can_display_points = external_data_source.organisation.members.filter(
+                user=user_id
+            ).exists()
+            can_display_details = can_display_points
         # Otherwise, check if their org has sharing permissions at any granularity
         if not can_display_points:
             permission = SharingPermission.objects.filter(
@@ -2293,8 +2284,8 @@ class SharingPermission(models.Model):
         unique_together = ["external_data_source", "organisation"]
 
     @classmethod
-    def _get_cache_key(cls, external_data_source_id: str, user_id: str = "") -> str:
-        return f"external_data_source_permissions:{external_data_source_id}:{user_id}"
+    def _get_cache_key(cls, external_data_source_id: str) -> str:
+        return f"external_data_source_permissions:{external_data_source_id}"
 
     def get_cache_key(self) -> str:
         return self._get_cache_key(self.external_data_source_id)
