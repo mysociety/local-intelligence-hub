@@ -199,12 +199,12 @@ export const Card: ComponentConfig<CardProps> = {
               {type === "action" && (
 
 
-                <div className="p-5 bg-jungle-green-600 text-white h-full relative gap-4 flex flex-col align-bottom">
+                <div className="p-5 bg-jungle-green-600 text-white h-full relative gap-2 flex flex-col align-bottom">
                   <Image src={ArrowTopRight} width={30} alt="arrow" />
                   <div className="z-10">
                     <h2 className="lg:text-hub2xl text-hubxl tracking-tight">{title}</h2>
                     {description && (
-                      <div className="text-white line-clamp-6">
+                      <div className="text-white line-clamp-6 my-4">
                         <PuckText text={description} />
                       </div>
                     )}
