@@ -143,6 +143,10 @@
   [class^="_Puck-layout"] {
     height: 100% !important;
   }
+
+  [class^="_PuckLayout-inner"] {
+    height: 100% !important;
+  }
 }
 
 /**/
