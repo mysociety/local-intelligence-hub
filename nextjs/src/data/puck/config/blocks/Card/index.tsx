@@ -129,7 +129,7 @@ export const Card: ComponentConfig<CardProps> = {
     }
   },
   render: ({ title, behaviour, dialogDescription, description, type, link, linkLabel }) => {
-    const content = (
+    const card = (
       <div className="w-full h-full aspect-square overflow-clip rounded-[20px] flex flex-col gap-5 hover:shadow-hover transition-all">
         {type === "resource" && (
           <div className="p-5 bg-white h-full flex flex-col gap-4 justify-between">
@@ -144,18 +144,16 @@ export const Card: ComponentConfig<CardProps> = {
         )}
   
         {type === "action" && (
-          <div className="p-5 bg-jungle-green-600 text-white h-full relative gap-2 flex flex-col align-bottom">
-            <Image src={ArrowTopRight} width={30} alt="arrow" />
-            <div className="z-10">
-              <h2 className="lg:text-hub2xl text-hubxl tracking-tight">{title}</h2>
-              {description && (
-                <div className="text-white line-clamp-6 my-4">
-                  <PuckText text={description} />
-                </div>
-              )}
-              <div className='mt-auto'>
-                <TypeBadge type={type} />
+          <div className="p-5 bg-jungle-green-600 text-white h-full relative flex flex-col gap-4 align-bottom">
+            <Image src={ArrowTopRight} width={30} alt="arrow" className='relative z-10' />
+            <h2 className="lg:text-hub2xl text-hubxl tracking-tight relative z-10">{title}</h2>
+            {description && (
+              <div className="text-white line-clamp-6 relative z-10">
+                <PuckText text={description} />
               </div>
+            )}
+            <div className='mt-auto relative z-10'>
+              <TypeBadge type={type} />
             </div>
             <Image
               className="object-cover rounded-[40px] absolute top-0 left-0"
@@ -172,7 +170,7 @@ export const Card: ComponentConfig<CardProps> = {
     if (behaviour === "link" && link) {
       return (
         <Link href={link}>
-          {content}
+          {card}
         </Link>
       )
     }
@@ -181,47 +179,7 @@ export const Card: ComponentConfig<CardProps> = {
       return (
         <Dialog>
           <DialogTrigger className="w-full h-full text-left">
-            <div className="w-full h-full aspect-square overflow-clip rounded-[20px] flex flex-col gap-5 hover:shadow-hover transition-all">
-              {type === "resource" && (
-                <div className="p-5 bg-white h-full flex flex-col gap-4 justify-between">
-                  <div className=" flex flex-col gap-4" >
-                    <h2 className="lg:text-hub2xl text-hubxl">{title}</h2>
-                    {description && (
-                      <div className="text-jungle-green-neutral line-clamp-6">
-                        <PuckText text={description} />
-                      </div>
-                    )}
-                  </div>
-                  <TypeBadge type={type} />
-                </div>
-              )}
-
-              {type === "action" && (
-
-
-                <div className="p-5 bg-jungle-green-600 text-white h-full relative gap-2 flex flex-col align-bottom">
-                  <Image src={ArrowTopRight} width={30} alt="arrow" />
-                  <div className="z-10">
-                    <h2 className="lg:text-hub2xl text-hubxl tracking-tight">{title}</h2>
-                    {description && (
-                      <div className="text-white line-clamp-6 my-4">
-                        <PuckText text={description} />
-                      </div>
-                    )}
-                    <div>
-                      <div className="uppercase inline-block text-jungle-green-700 bg-jungle-green-100 text-lg font-normal rounded-full px-3">{type}</div>
-                    </div>
-                  </div>
-                  <Image
-                    className="object-cover rounded-[40px] absolute top-0 left-0"
-                    src={CirclePattern}
-                    width={500}
-                    layout="responsive"
-                    alt="background image"
-                  />
-                </div>
-              )}
-            </div>
+            {card}
           </DialogTrigger>
           <DialogContent className="p-10 bg-white text-jungle-green-900 max-h-[95dvh] overflow-y-auto">
             <DialogHeader className="flex flex-col gap-5 text-left">
@@ -229,18 +187,20 @@ export const Card: ComponentConfig<CardProps> = {
               <DialogDescription className=" text-lg">
                 <PuckText text={dialogDescription} />
               </DialogDescription>
-              <Link href={link}
-                className='bg-jungle-green-600 hover:bg-jungle-green-500 text-white text-lg font-bold rounded-md p-4 flex flex-row gap-4 text-center items-center justify-center'
-              >
-                {type === "resource" && <Download />}
-                {linkLabel || "Learn more"}
-              </Link>
+              {!!link && (
+                <Link href={link}
+                  className='bg-jungle-green-600 hover:bg-jungle-green-500 text-white text-lg font-bold rounded-md p-4 flex flex-row gap-4 text-center items-center justify-center'
+                >
+                  {type === "resource" && <Download />}
+                  {linkLabel || "Learn more"}
+                </Link>
+              )}
             </DialogHeader>
           </DialogContent>
         </Dialog>
       );
     }
 
-    return content
+    return card
   },
 };
