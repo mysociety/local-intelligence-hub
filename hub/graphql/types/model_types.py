@@ -1159,15 +1159,14 @@ class HubHomepage(HubPage):
             return None
         return self.seo_image.get_rendition("width-800").full_url
 
-    # TODO: ultimately all this data will need to be public anyway for public viewing
-    # @classmethod
-    # def get_queryset(cls, queryset, info, **kwargs):
-    #     # Only list pages belonging to this user's orgs
-    #     user = get_current_user(info)
-    #     user_orgs = models.Organisation.objects.filter(members__user=user.id)
-    #     return queryset.filter(
-    #         organisation__in=user_orgs,
-    #     )
+    @classmethod
+    def get_queryset(cls, queryset, info, **kwargs):
+        # Only list pages belonging to this user's orgs
+        user = get_current_user(info)
+        user_orgs = models.Organisation.objects.filter(members__user=user.id)
+        return queryset.filter(
+            organisation__in=user_orgs,
+        )
 
 
 @strawberry_django.field()
