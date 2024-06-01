@@ -20,11 +20,13 @@ const viewStateAtom = atom<Partial<ViewState>>({
 export function HubMap ({
   mapStyle,
   externalDataSources,
-  currentConstituency
+  currentConstituency,
+  localDataLoading
 }: {
   mapStyle?: string | mapboxgl.Style | ImmutableLike<mapboxgl.Style> | undefined,
   externalDataSources: string[],
-  currentConstituency: GetLocalDataQuery['postcodeSearch']['constituency']
+  currentConstituency: GetLocalDataQuery['postcodeSearch']['constituency'],
+  localDataLoading: boolean
 }) {
   const [viewState, setViewState] = useAtom(viewStateAtom)
 
@@ -32,10 +34,6 @@ export function HubMap ({
     {
       url: () => new URL('/markers/tcc-event-marker.png', window.location.href).toString(),
       name: 'tcc-event-marker'
-    },
-    {
-      url: () => new URL('/markers/default.png', window.location.href).toString(),
-      name: 'meep-marker-0'
     }
   ]
 
@@ -43,26 +41,27 @@ export function HubMap ({
 
   const loadedImages = useMapIcons(requiredImages, mapbox)
 
-  // TODO: switch to 2024
-  const tileset = TILESETS.constituencies
+  const tileset = TILESETS.constituencies2024
 
   useEffect(() => {
-    if (currentConstituency) {
-      mapbox.loadedMap?.fitBounds(currentConstituency.fitBounds, {
-        // TODO: change for small screen
-        padding: FIT_BOUNDS_PADDING
-      })
-    } else {
-      // Fly to UK bounds
-      mapbox.loadedMap?.fitBounds(UK_BOUNDS, {
-        padding: FIT_BOUNDS_PADDING
-      })
-    }
-  }, [currentConstituency, mapbox.loadedMap])
+    try {
+      if (currentConstituency?.fitBounds.length) {
+        mapbox.loadedMap?.fitBounds(currentConstituency.fitBounds, {
+          // TODO: change for small screen
+          padding: FIT_BOUNDS_PADDING
+        })
+      } else if (!localDataLoading) {
+        // Fly to UK bounds
+        mapbox.loadedMap?.fitBounds(UK_BOUNDS, {
+          padding: FIT_BOUNDS_PADDING
+        })
+      }
+    } catch(e) {}
+  }, [currentConstituency, mapbox.loadedMap, localDataLoading])
 
   return (
     <>
-      {!externalDataSources.length || loadedImages.length !== requiredImages.length && (
+      {!externalDataSources.length || loadedImages.length !== requiredImages.length || localDataLoading && (
         <div className="absolute w-full h-full inset-0 z-10 pointer-events-none">
           <div className="flex flex-col items-center justify-center w-full h-full">
             <LoadingIcon />
@@ -73,7 +72,7 @@ export function HubMap ({
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
         {...viewState}
         onMove={(e) => setViewState(e.viewState)}
-        mapStyle={mapStyle || "mapbox://styles/commonknowledge/clwqeu7rb012301nyh52n3kss/draft"}
+        mapStyle={mapStyle || "mapbox://styles/commonknowledge/clwqeu7rb012301nyh52n3kss"}
         transformRequest={(url, resourceType) => {
           if (
             url.includes(process.env.NEXT_PUBLIC_BACKEND_BASE_URL!) &&
@@ -89,8 +88,8 @@ export function HubMap ({
         }}
       >
         {/* Layout order */}
-        <PlaceholderLayer id="PLACEHOLDER_MARKERS" />
         <PlaceholderLayer id="AREA_BOUNDARIES" />
+        <PlaceholderLayer id="PLACEHOLDER_MARKERS" />
         {/* Boundaries */}
         <Source
           id={tileset.mapboxSourceId}
@@ -106,28 +105,46 @@ export function HubMap ({
           type="line"
           paint={{
             "line-color": "green",
-            "line-width": 0.5,
+            "line-width": 1,
             "line-opacity": 0.25,
           }}
         />
         {currentConstituency && (
-          <Layer
-            beforeId="AREA_BOUNDARIES"
-            filter={[
-              "==",
-              ["get", tileset.promoteId],
-              ["literal", currentConstituency?.gss],
-            ]}
-            id={`${tileset.mapboxSourceId}-selected-line`}
-            source={tileset.mapboxSourceId}
-            source-layer={tileset.sourceLayerId}
-            type="line"
-            paint={{
-              "line-color": "green",
-              "line-width": 1.5,
-              "line-opacity": 0.75,
-            }}
-          />
+          <>
+            <Layer
+              beforeId="AREA_BOUNDARIES"
+              filter={[
+                "==",
+                ["get", tileset.promoteId],
+                ["literal", currentConstituency?.gss],
+              ]}
+              id={`${tileset.mapboxSourceId}-fill`}
+              source={tileset.mapboxSourceId}
+              source-layer={tileset.sourceLayerId}
+              type="fill"
+              paint={{
+                "fill-color": "green",
+                "fill-opacity": 0.1,
+              }}
+            />
+            <Layer
+              beforeId="AREA_BOUNDARIES"
+              filter={[
+                "==",
+                ["get", tileset.promoteId],
+                ["literal", currentConstituency?.gss],
+              ]}
+              id={`${tileset.mapboxSourceId}-selected-line`}
+              source={tileset.mapboxSourceId}
+              source-layer={tileset.sourceLayerId}
+              type="line"
+              paint={{
+                "line-color": "green",
+                "line-width": 3,
+                "line-opacity": 0.75,
+              }}
+            />
+          </>
         )}
         {/* Markers */}
         {loadedImages.some(t => t === "tcc-event-marker") && externalDataSources.map(

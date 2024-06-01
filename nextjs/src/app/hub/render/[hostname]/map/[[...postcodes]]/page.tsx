@@ -4,19 +4,17 @@
 import React from 'react'
 
 import "mapbox-gl/dist/mapbox-gl.css";
-import { gql, useLazyQuery, useQuery } from "@apollo/client";
+import { gql, useQuery } from "@apollo/client";
 import { Provider as JotaiProvider } from "jotai";
 import { MapProvider } from "react-map-gl";
 import { HubMap } from "@/components/hub/HubMap";
-import { useState } from "react";
-import { format, formatRelative } from "date-fns";
 import { ConstituencyView } from "@/components/hub/ConstituencyView";
 import { GetLocalDataQuery, GetLocalDataQueryVariables } from "@/__generated__/graphql";
 import { SIDEBAR_WIDTH } from "@/components/hub/data";
-import { useRouter } from 'next/navigation';
 import { usePathname, useParams } from 'next/navigation' 
 import { SearchPanel } from './SearchPanel';
 import Root from '@/data/puck/config/root';
+import { useBreakpoint } from '@/hooks/css';
 
 
 type Params = {
@@ -25,8 +23,6 @@ type Params = {
 }
 
 export default function Page({ params: { hostname, postcodes } }: { params: Params }) {
-  const router = useRouter()
-
   const hub = useQuery(GET_HUB_MAP_DATA, {
     variables: { hostname },
   });
@@ -40,51 +36,81 @@ export default function Page({ params: { hostname, postcodes } }: { params: Para
       pathnameSegments &&
       pathnameSegments.length === 4 &&
       pathnameSegments[2] === 'postcode'
-    ) ? pathnameSegments[3] : ''
+    ) ? pathnameSegments[3].replace(/([\s ]*)/mig, "").trim() : ''
+
+  const shouldDisplayMap = useBreakpoint("md")
 
   const localData = useQuery<GetLocalDataQuery, GetLocalDataQueryVariables>(GET_LOCAL_DATA, {
-    variables: { postcode: postcodeFromPathname, hostname },
+    variables: { postcode: postcodeFromPathname, hostname, shouldDisplayMap },
     skip: !postcodeFromPathname
   });
 
   return (
-    <Root>
-    <MapProvider>
-      <JotaiProvider>
-        <div className='h-dvh flex flex-col'>
-          <main className="h-full relative overflow-x-hidden overflow-y-hidden flex-grow">
-            <div className="absolute w-full h-full flex flex-row pointer-events-none">
-              <div className='w-full h-full pointer-events-auto'>
-                <HubMap
-                  externalDataSources={hub.data?.hubByHostname?.layers?.map((i: any) => i.id) || []}
-                  currentConstituency={localData.data?.postcodeSearch.constituency}  
-                />
-              </div>
-              <aside className="absolute top-[80px] left-5 right-0 w-0 pointer-events-auto">
-                <div className='max-w-[100vw] rounded-[20px] bg-jungle-green-bg text-jungle-green-700 p-6' style={{
-                  width: SIDEBAR_WIDTH
-                }}>
-                  {!localData.data ? (
-                    <SearchPanel
-                      onSearch={(postcode) => {
-                        window.history.pushState(null, '', `/map/postcode/${postcode}`)
-                      }}
-                      isLoading={localData.loading}
-                    />
-                  ) : (
-                    <ConstituencyView
-                      data={localData.data}
-                    />
-                  )}
+    <Root fullScreen={shouldDisplayMap}>
+      <MapProvider>
+        <JotaiProvider>
+          {shouldDisplayMap ? (
+            <main className="h-full relative overflow-x-hidden overflow-y-hidden flex-grow">
+              <div className="absolute w-full h-full flex flex-row pointer-events-none">
+                <div className="w-full h-full pointer-events-auto">
+                  <HubMap
+                    externalDataSources={
+                      hub.data?.hubByHostname?.layers?.map((i: any) => i.id) ||
+                      []
+                    }
+                    currentConstituency={
+                      localData.data?.postcodeSearch.constituency
+                    }
+                    localDataLoading={localData.loading}
+                  />
                 </div>
-              </aside>
+                {!localData.loading && (
+                  <aside
+                    className="absolute top-0 md:top-[80px] left-0 sm:left-5 right-0 max-w-full pointer-events-auto h-full md:h-[calc(100%-120px)] max-h-full overflow-y-hidden shadow-hub-muted"
+                    style={{ width: SIDEBAR_WIDTH }}
+                  >
+                    <div className="max-w-[100vw] rounded-[20px] bg-white max-h-full overflow-y-auto">
+                      {!localData.data ? (
+                        <SearchPanel
+                          onSearch={(postcode) => {
+                            window.history.pushState(
+                              null,
+                              "",
+                              `/map/postcode/${postcode}`
+                            );
+                          }}
+                          isLoading={localData.loading}
+                        />
+                      ) : (
+                        <ConstituencyView data={localData.data} />
+                      )}
+                    </div>
+                  </aside>
+                )}
+              </div>
+            </main>
+          ) : (
+            <div className='bg-white rounded-[20px] mt-4 mb-16'>
+              {!localData.data ? (
+                <SearchPanel
+                  onSearch={(postcode) => {
+                    window.history.pushState(
+                      null,
+                      "",
+                      `/map/postcode/${postcode}`
+                    );
+                  }}
+                  isLoading={localData.loading}
+                />
+              ) : (
+                <ConstituencyView data={localData.data} />
+              )}
             </div>
-          </main>
-        </div>
-      </JotaiProvider>
-    </MapProvider>
+          )}
+        </JotaiProvider>
+      </MapProvider>
     </Root>
-  )
+  );
 }
 
 const GET_HUB_MAP_DATA = gql`
@@ -109,15 +135,15 @@ const GET_HUB_MAP_DATA = gql`
 `
 
 const GET_LOCAL_DATA = gql`
-  query GetLocalData($postcode: String!, $hostname: String!) {
+  query GetLocalData($postcode: String!, $hostname: String!, $shouldDisplayMap: Boolean!) {
     postcodeSearch(postcode: $postcode) {
       postcode
-      constituency {
+      constituency: constituency2024 {
         id
         gss
         name
         # For zooming
-        fitBounds
+        fitBounds @include(if: $shouldDisplayMap)
         # List of events
         genericDataForHub(hostname: $hostname) {
           id
@@ -134,6 +160,25 @@ const GET_LOCAL_DATA = gql`
                 dataType
               }
             }
+          }
+        }
+        # PPCs
+        ppcs: people(filters:{personType:"PPC"}) {
+          id
+          name
+          photo {
+            url
+          }
+          party: personDatum(filters:{
+            dataType_Name: "party"
+          }) {
+            name: data
+            shade
+          }
+          email: personDatum(filters:{
+            dataType_Name: "email"
+          }) {
+            data
           }
         }
       }

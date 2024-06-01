@@ -96,9 +96,10 @@ export default function LoginForm() {
           )}
         />
         <FormMessage />
-        <Button variant='reverse' type="submit" disabled={loading} className="flex items-center justify-center">
+        <Button variant='reverse' type="submit" disabled={loading || token} className="flex items-center justify-center">
           {(loading || token) ? (<>Loading...</>) : 'Login'}
         </Button>
+        {errorMessage && <small className="text-red-500">{errorMessage}</small>}
         </form>
     </Form>
   );

@@ -389,16 +389,14 @@ def update_sharing_permissions(
 
 
 @strawberry_django.input(models.Page, partial=True)
-class WagtailPageInput:
+class HubPageInput:
     title: Optional[str] = None
     slug: Optional[str] = None
     puck_json_content: Optional[strawberry.scalars.JSON] = None
 
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
-def update_page(
-    info: Info, page_id: str, input: WagtailPageInput
-) -> model_types.WagtailPage:
+def update_page(info: Info, page_id: str, input: HubPageInput) -> model_types.HubPage:
     # TODO: permissions check
     user = get_current_user(info)
     page = models.Page.objects.get(id=page_id).specific
@@ -410,9 +408,7 @@ def update_page(
 
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
-def create_child_page(
-    info: Info, parent_id: str, title: str
-) -> model_types.WagtailPage:
+def create_child_page(info: Info, parent_id: str, title: str) -> model_types.HubPage:
     # TODO: permissions check
     user = get_current_user(info)
     parent = models.Page.objects.get(id=parent_id)

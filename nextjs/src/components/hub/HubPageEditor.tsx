@@ -108,17 +108,17 @@ export default function HubPageEditor({ hubId, pageId }: { hubId: string, pageId
                           // wagtail root
                           ancestor => ancestor.path !== "0001"
                         ).map((ancestor, i, a) => (
-                          <>
-                          <Breadcrumb key={ancestor.id}>
-                            <Link href={`/hub/editor/${ancestor.id}`}>
-                              {ancestor.modelName === "HubHomepage" ? "Home Page" : ancestor.title}</Link>
-                          </Breadcrumb>
-                          {i < a.length - 1 && (
-                            <BreadcrumbSeparator>
-                              <Slash />
-                            </BreadcrumbSeparator>
-                          )}
-                          </>
+                          <Fragment key={ancestor.id}>
+                            <Breadcrumb>
+                              <Link href={`/hub/editor/${ancestor.id}`}>
+                                {ancestor.modelName === "HubHomepage" ? "Home Page" : ancestor.title}</Link>
+                            </Breadcrumb>
+                            {i < a.length - 1 && (
+                              <BreadcrumbSeparator>
+                                <Slash />
+                              </BreadcrumbSeparator>
+                            )}
+                          </Fragment>
                         ))}
                       </BreadcrumbList>
                       <div className='flex flex-row gap-3 justify-between'>
@@ -152,7 +152,7 @@ export default function HubPageEditor({ hubId, pageId }: { hubId: string, pageId
   function publish (data: Data) {
     const p = client.mutate({
       mutation: gql`
-        mutation PublishPage($pageId: String!, $input: WagtailPageInput!) {
+        mutation PublishPage($pageId: String!, $input: HubPageInput!) {
           updatePage(pageId: $pageId, input: $input) {
             id
             # Refresh cache

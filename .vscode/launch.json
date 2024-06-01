@@ -52,6 +52,14 @@
                 "Django background worker",
                 "Generate GraphQL types for client"
             ]
+        },
+        {
+            "name": "Backend",
+            "configurations": [
+                "Django",
+                "Django background worker",
+                "Generate GraphQL types for client"
+            ]
         }
     ]
 }

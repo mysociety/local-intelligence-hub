@@ -41,7 +41,9 @@ class UnauthenticatedPostcodeQueryResponse:
         if postcode_data is None:
             return None
         id = postcode_data.codes.parliamentary_constituency
-        return await models.Area.objects.aget(Q(gss=id) | Q(name=id))
+        return await models.Area.objects.aget(
+            (Q(gss=id) | Q(name=id)) & Q(area_type__code="WMC")
+        )
 
     @strawberry_django.field
     async def constituency_2024(self) -> Optional[model_types.Area]:

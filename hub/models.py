@@ -38,12 +38,14 @@ from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
-from wagtail.admin.panels import FieldPanel
+from wagtail.admin.panels import FieldPanel, ObjectList, TabbedInterface
+from wagtail.images.models import AbstractImage, AbstractRendition, Image
 from wagtail.models import Page
 from wagtail_json_widget.widgets import JSONEditorWidget
 
 import utils as lih_utils
 from hub.analytics import Analytics
+from hub.cache_keys import site_tile_filter_dict
 from hub.enrichment.sources import builtin_mapping_sources
 from hub.fields import EncryptedCharField
 from hub.filters import Filter
@@ -2826,9 +2828,14 @@ class MapReport(Report, Analytics):
     display_options = models.JSONField(default=dict, blank=True)
 
     class MapLayer(TypedDict):
+        id: str
         name: str
         source: str
-        visible: Optional[bool]
+        visible: Optional[bool] = True
+        """
+        filter: ORM filter dict for GenericData objects like { "json__status": "Published" }
+        """
+        filter: Optional[dict] = {}
         custom_marker_text: Optional[str] = None
 
     def get_layers(self) -> list[MapLayer]:
@@ -2850,6 +2857,19 @@ def generate_puck_json_content():
     return {"content": [], "root": {}, "zones": {}}
 
 
+class HubImage(AbstractImage):
+    admin_form_fields = Image.admin_form_fields
+
+
+class HubImageRendition(AbstractRendition):
+    image = models.ForeignKey(
+        HubImage, on_delete=models.CASCADE, related_name="renditions"
+    )
+
+    class Meta:
+        unique_together = (("image", "filter_spec", "focal_point_key"),)
+
+
 class HubHomepage(Page):
     """
     An microsite that incorporates datasets and content pages,
@@ -2867,13 +2887,39 @@ class HubHomepage(Page):
         blank=True, null=False, default=generate_puck_json_content
     )
     nav_links = models.JSONField(blank=True, null=True, default=list)
+    favicon_url = models.URLField(blank=True, null=True)
+    seo_image = models.ForeignKey(
+        "hub.HubImage",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+    )
+    google_analytics_tag_id = models.CharField(max_length=100, blank=True, null=True)
 
-    content_panels = Page.content_panels + [
+    data_panels = Page.content_panels + [
         FieldPanel("organisation"),
         FieldPanel("layers", widget=JSONEditorWidget),
+    ]
+
+    page_panels = [
         FieldPanel("puck_json_content", widget=JSONEditorWidget),
         FieldPanel("nav_links", widget=JSONEditorWidget),
     ]
+
+    seo_panels = Page.promote_panels + [
+        FieldPanel("favicon_url"),
+        FieldPanel("seo_image"),
+        FieldPanel("google_analytics_tag_id")
+    ]
+
+    edit_handler = TabbedInterface(
+        [
+            ObjectList(seo_panels, heading="Hub SEO"),
+            ObjectList(data_panels, heading="Hub data"),
+            ObjectList(page_panels, heading="Homepage contents"),
+        ]
+    )
 
     def get_layers(self) -> list[MapReport.MapLayer]:
         return self.layers
@@ -2884,6 +2930,17 @@ class HubHomepage(Page):
 
     def get_nav_links(self) -> list[HubNavLinks]:
         return self.nav_links
+
+
+# Signal when HubHomepage.layers changes to bust the filter cache
+# used by tilserver
+@receiver(models.signals.post_save, sender=HubHomepage)
+def update_site_filter_cache_on_save(sender, instance: HubHomepage, *args, **kwargs):
+    for layer in instance.get_layers():
+        cache.set(
+            site_tile_filter_dict(instance.get_site().hostname, layer.get("source")),
+            layer.get("filter", {}),
+        )
 
 
 class HubContentPage(Page):
