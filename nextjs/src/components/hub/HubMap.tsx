@@ -72,7 +72,7 @@ export function HubMap ({
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
         {...viewState}
         onMove={(e) => setViewState(e.viewState)}
-        mapStyle={mapStyle || "mapbox://styles/commonknowledge/clwqeu7rb012301nyh52n3kss/draft"}
+        mapStyle={mapStyle || "mapbox://styles/commonknowledge/clwqeu7rb012301nyh52n3kss"}
         transformRequest={(url, resourceType) => {
           if (
             url.includes(process.env.NEXT_PUBLIC_BACKEND_BASE_URL!) &&
