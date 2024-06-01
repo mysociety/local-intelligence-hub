@@ -90,9 +90,9 @@ export const Card: ComponentConfig<CardProps> = {
           <div className="p-5 bg-white h-full flex flex-col gap-4 justify-between">
             <div className="flex flex-col gap-4">
               <h2 className="lg:text-hub2xl text-hubxl">{title}</h2>
-              <p className="text-jungle-green-neutral line-clamp-6">
+              <div className="text-jungle-green-neutral line-clamp-6">
                 <PuckText text={description} />
-              </p>
+              </div>
             </div>
             <TypeBadge type={type} />
           </div>
