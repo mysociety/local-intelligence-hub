@@ -30,8 +30,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery }) {
         >
           &larr; Search another postcode
         </a>
-        <div>Nothing found.</div>
-        {/* TODO: something more useful, like other constituencies that *do* have events? */}
+        <div>This doesn{"'"}t look like a valid postcode.</div>
       </div>
     );
   }
