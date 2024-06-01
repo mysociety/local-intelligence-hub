@@ -1,5 +1,5 @@
 import { ComponentConfig } from "@measured/puck";
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 
@@ -8,6 +8,8 @@ import mapImg from "../../../../../../public/hub/hero-map-search-lg.png"
 
 import { Search } from "lucide-react";
 import { PuckText } from "../../components/PuckText";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export type HeroProps = {
   title: string;
@@ -35,6 +37,8 @@ export const Hero: ComponentConfig<HeroProps> = {
 
   },
   render: ({ title, description, prompt }) => {
+    const router = useRouter()
+    const [postcode, setPostcode] = useState("")
     return (
       <div className=" rounded-[40px] flex flex-col lg:flex-row justify-end overflow-clip lg:gap-[25px] relative mb-[25px]">
         
@@ -69,11 +73,30 @@ export const Hero: ComponentConfig<HeroProps> = {
               </div> */}
               <div className="flex flex-col gap-4">
                 <p className="text-hubH4">{prompt}</p>
-                <div className=" flex items-center relative text-jungle-green-600">
-                  <Search className="absolute ml-2" />
-                  <Input placeholder="Enter postcode or area" className=" border-hub-foreground p-8 focus-visible:ring-0 text-3xl placeholder:text-hub4xl pl-10 placeholder:text-jungle-green-600 bg-jungle-green-100 border-0" />
-                </div>
-                <p className="text-jungle-green-600 text-sm">Powered using <span className="underline">Mapped</span> by Common Knowledge</p>
+                <form onSubmit={(e) => {
+                  e.preventDefault()
+                  router.push(`/map/postcode/${postcode}`);
+                }}>
+                  <div className=" flex items-center relative text-jungle-green-600">
+                    <Search className="absolute ml-2" />
+                    <Input
+                      placeholder="Enter your postcode"
+                      autoComplete="postal-code"
+                      className=" border-hub-foreground p-8 focus-visible:ring-0 text-3xl placeholder:text-hub4xl pl-10 placeholder:text-jungle-green-600 bg-jungle-green-100 border-0"
+                      value={postcode}
+                      onChange={e => setPostcode(e.target.value)}
+                    />
+                    <button
+                      className='bg-jungle-green-600 text-white text-lg font-bold rounded-md p-4 ml-2'
+                      disabled={!postcode}
+                    >
+                      Search
+                    </button>
+                  </div>
+                </form>
+                <p className="text-jungle-green-600 text-sm">
+                  Powered using <Link href="https://prototype.mapped.commonknowledge.coop" className="underline">Mapped</Link> by Common Knowledge
+                </p>
               </div>
             </div>
           </div>
