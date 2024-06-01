@@ -10,6 +10,9 @@ from tqdm import tqdm
 
 from hub.models import Area, DataSet, DataType, Person, PersonData
 
+import logging
+logger = logging.getLogger(__name__)
+
 party_shades = {
     "Alba Party": "#005EB8",
     "Alliance Party of Northern Ireland": "#F6CB2F",
@@ -67,7 +70,7 @@ class Command(BaseCommand):
             if area is None:  # pragma: no cover
                 area = Area.get_by_name(ppc["post_label"], area_type=self.area_type)
                 if area is None:  # pragma: no cover
-                    print(
+                    logger.error(
                         f"Failed to add PPC {ppc['person_name']} as area {ppc['gss']}/{ppc['post_label']} does not exist"
                     )
                     continue
@@ -135,7 +138,7 @@ class Command(BaseCommand):
 
     def import_ppc_image(self, ppc, image_url: str):
         try:
-            print(f"Getting image for {ppc} from {image_url}")
+            logger.debug(f"Getting image for {ppc} from {image_url}")
             file, headers = urllib.request.urlretrieve(image_url)
             if not file:
                 return
@@ -145,4 +148,4 @@ class Command(BaseCommand):
             ppc.photo.save(f"ppc_dc_{ppc.external_id}.{extension}", image)
             ppc.save()
         except Exception as e:
-            print(f"Error getting image for {ppc} from {image_url}: {e}")
+            logger.debug(f"Error getting image for {ppc} from {image_url}: {e}")
