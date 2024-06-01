@@ -50,47 +50,45 @@ export default function Page({ params: { hostname, postcodes } }: { params: Para
       <MapProvider>
         <JotaiProvider>
           {shouldDisplayMap ? (
-            <div className="flex flex-col" style={{ height: "calc(100dvh - 80px" }}>
-              <main className="h-full relative overflow-x-hidden overflow-y-hidden flex-grow">
-                <div className="absolute w-full h-full flex flex-row pointer-events-none">
-                  <div className="w-full h-full pointer-events-auto">
-                    <HubMap
-                      externalDataSources={
-                        hub.data?.hubByHostname?.layers?.map((i: any) => i.id) ||
-                        []
-                      }
-                      currentConstituency={
-                        localData.data?.postcodeSearch.constituency
-                      }
-                      localDataLoading={localData.loading}
-                    />
-                  </div>
-                  {!localData.loading && (
-                    <aside
-                      className="absolute top-0 md:top-[80px] left-0 sm:left-5 right-0 max-w-full pointer-events-auto h-full md:h-[calc(100% - 120px)] max-h-full overflow-y-hidden shadow-hub-muted"
-                      style={{ width: SIDEBAR_WIDTH }}
-                    >
-                      <div className="max-w-[100vw] rounded-[20px] bg-white max-h-full overflow-y-auto">
-                        {!localData.data ? (
-                          <SearchPanel
-                            onSearch={(postcode) => {
-                              window.history.pushState(
-                                null,
-                                "",
-                                `/map/postcode/${postcode}`
-                              );
-                            }}
-                            isLoading={localData.loading}
-                          />
-                        ) : (
-                          <ConstituencyView data={localData.data} />
-                        )}
-                      </div>
-                    </aside>
-                  )}
+            <main className="h-full relative overflow-x-hidden overflow-y-hidden flex-grow">
+              <div className="absolute w-full h-full flex flex-row pointer-events-none">
+                <div className="w-full h-full pointer-events-auto">
+                  <HubMap
+                    externalDataSources={
+                      hub.data?.hubByHostname?.layers?.map((i: any) => i.id) ||
+                      []
+                    }
+                    currentConstituency={
+                      localData.data?.postcodeSearch.constituency
+                    }
+                    localDataLoading={localData.loading}
+                  />
                 </div>
-              </main>
-            </div>
+                {!localData.loading && (
+                  <aside
+                    className="absolute top-0 md:top-[80px] left-0 sm:left-5 right-0 max-w-full pointer-events-auto h-full md:h-[calc(100%-120px)] max-h-full overflow-y-hidden shadow-hub-muted"
+                    style={{ width: SIDEBAR_WIDTH }}
+                  >
+                    <div className="max-w-[100vw] rounded-[20px] bg-white max-h-full overflow-y-auto">
+                      {!localData.data ? (
+                        <SearchPanel
+                          onSearch={(postcode) => {
+                            window.history.pushState(
+                              null,
+                              "",
+                              `/map/postcode/${postcode}`
+                            );
+                          }}
+                          isLoading={localData.loading}
+                        />
+                      ) : (
+                        <ConstituencyView data={localData.data} />
+                      )}
+                    </div>
+                  </aside>
+                )}
+              </div>
+            </main>
           ) : (
             <div className='bg-white rounded-[20px] mt-4 mb-16'>
               {!localData.data ? (
