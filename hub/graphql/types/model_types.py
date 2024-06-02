@@ -31,7 +31,8 @@ from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
-
+import logging
+logger = logging.getLogger(__name__)
 
 # Ideally we'd just import this from the library (procrastinate.jobs.Status) but
 # strawberry doesn't like subclassed Enums for some reason.
@@ -624,7 +625,27 @@ class GenericData(CommonData):
     @strawberry_django.field
     def postcode_data(self) -> Optional[PostcodesIOResult]:
         return benedict(self.postcode_data)
+    
+    @strawberry_django.field
+    def areas(self, info: Info) -> Optional[Area]:
+        if self.point is None:
+            return None
 
+        # TODO: data loader for this
+        return models.Area.objects.filter(
+            polygon__contains=self.point
+        )
+
+    @strawberry_django.field
+    def area(self, area_type: str, info: Info) -> Optional[Area]:
+        if self.point is None:
+            return None
+
+        # TODO: data loader for this
+        return models.Area.objects.filter(
+            polygon__contains=self.point,
+            area_type__code=area_type
+        )
 
 @strawberry.type
 class MapReportMemberFeature(PointFeature):
@@ -800,19 +821,24 @@ class BaseDataSource(Analytics):
         return BatchJobProgress(**progress)
 
 
-@strawberry_django.field(extensions=[IsAuthenticated()])
+@strawberry_django.field
 def imported_data_geojson_point(
     info: Info, generic_data_id: str
 ) -> MapReportMemberFeature | None:
     datum = models.GenericData.objects.prefetch_related(
         "data_type__data_set__external_data_source"
     ).get(pk=generic_data_id)
-    if datum is None or datum.point is None:
+    if datum is None:
+        logger.debug(f"GenericData {generic_data_id} not found")
+        return None
+    if datum.point is None:
+        logger.debug(f"GenericData {generic_data_id} has no point data")
         return None
     external_data_source = datum.data_type.data_set.external_data_source
     user = get_current_user(info)
     permissions = models.ExternalDataSource.user_permissions(user, external_data_source)
     if not permissions.get("can_display_points"):
+        logger.debug(f"User {user} does not have permission to view points")
         return None
     return MapReportMemberFeature.from_geodjango(
         point=datum.point,

@@ -8,15 +8,15 @@ import { Layer, Source } from "react-map-gl"
 
 export function HubPointMarkers ({ externalDataSourceId, index, beforeId }: { externalDataSourceId: string, index: number, beforeId?: string }) {
   const mapbox = useLoadedMap()
-  const [selectedSourceMarker, setSelectedSourceMarker] =  useAtom(selectedHubSourceMarkerAtom)
+  const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(selectedHubSourceMarkerAtom)
 
   useEffect(function selectMarker() {
-    mapbox.loadedMap?.on('mouseover', `${externalDataSourceId}-marker`, () => {
+    mapbox.loadedMap?.on('mouseover', `${externalDataSourceId}-marker`, (event) => {
       const canvas = mapbox.loadedMap?.getCanvas()
       if (!canvas) return
       canvas.style.cursor = 'pointer'
     })
-    mapbox.loadedMap?.on('mouseleave', `${externalDataSourceId}-marker`, () => {
+    mapbox.loadedMap?.on('mouseleave', `${externalDataSourceId}-marker`, (event) => {
       const canvas = mapbox.loadedMap?.getCanvas()
       if (!canvas) return
       canvas.style.cursor = ''
