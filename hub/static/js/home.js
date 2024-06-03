@@ -16,27 +16,28 @@ async function mailingListSignup($form) {
     return response.json()
 }
 
-var setUpCollapsableMailingListForm = function() {
-    var $form = $(this);
-    var selectors = '.js-mailing-list-name, .js-mailing-list-extras';
-    var trigger = '.js-mailing-list-email input#email';
+var setUpCollapsable = function(targets, triggers, triggerEvents, showTest) {
     var instances = [];
+    var $targets = $(targets); // targets can either be a jQuery object or selector(s)
+    var $triggers = $(triggers); // triggers can either be a jQuery object or selector(s)
 
     var updateUI = function() {
-        var emailEntered = $(trigger).val() !== '';
+        var show = showTest($targets, $triggers);
         $.each(instances, function(i, instance){
-            emailEntered ? instance.show() : instance.hide();
+            show ? instance.show() : instance.hide();
         });
     };
 
-    $(selectors, $form).addClass('collapse').each(function(){
-        instances.push(new Collapse(this, { toggle: false }));
+    $targets.addClass('collapse').each(function(){
+        instances.push(new Collapse(this, { toggle: false}));
     });
-    $(trigger, $form).on('keyup change', function(){
+
+    $triggers.on(triggerEvents, function(){
         updateUI();
     });
+
     updateUI();
-};
+}
 
 $(function(){
     if( 'geolocation' in navigator ) {
@@ -122,7 +123,16 @@ $(function(){
         });
     })
 
-    $('.js-collapsable-mailing-list-form').each(setUpCollapsableMailingListForm);
+    $('.js-collapsable-mailing-list-form').each(function(){
+        setUpCollapsable(
+            $(this).find('.js-mailing-list-name, .js-mailing-list-extras'),
+            $(this).find('.js-mailing-list-email input#email'),
+            'keyup change',
+            function($targets, $triggers){
+                return $triggers.eq(0).val() !== '';
+            }
+        );
+    });
 
     $('.js-mailing-list-signup').on('submit', function(e){
         e.preventDefault();
@@ -153,4 +163,24 @@ $(function(){
             }
         });
     })
+
+    $('.form-check + .conditional-fields').each(function(){
+        var $target = $(this); // the .conditional-fields element
+        var inputSetName = $target.prev().find('input').eq(0).attr('name');
+        var $triggers = $('input[name="' + inputSetName + '"]');
+
+        // jQuery can't see custom bootstrap events, so use .addEventListener instead
+        $target[0].addEventListener('shown.bs.collapse', function(){
+            $target.find('input').eq(0).trigger('focus');
+        });
+
+        setUpCollapsable(
+            $target,
+            $triggers,
+            'change',
+            function($target, $triggers){
+                return $target.prev().find('input').eq(0).prop('checked');
+            }
+        );
+    });
 })

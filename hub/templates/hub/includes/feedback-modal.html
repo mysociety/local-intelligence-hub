@@ -1,18 +1,33 @@
+{% load static %}
+
 <aside class="modal feedback-modal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">Hello!</h2>
                 <button type="button" class="close" data-bs-dismiss="modal">Skip</button>
             </div>
             <div class="modal-body">
-                <p>We’re the team building this site, to help people like you take action on climate and nature. We hope you find it useful!</p>
-                <p>While you’re here, <strong>could you help us by selecting all the descriptions that apply to you?</strong></p>
+                <div class="team-avatars">
+                    <div class="team-avatars__person" data-toggle="tooltip" data-placement="bottom" title="Alice">
+                        <img src="{% static 'img/person.svg' %}" width="100" height="100" alt="Alice">
+                    </div>
+                    <div class="team-avatars__person" data-toggle="tooltip" data-placement="bottom" title="Esmee">
+                        <img src="{% static 'img/person.svg' %}" width="100" height="100" alt="Esmee">
+                    </div>
+                    <div class="team-avatars__person" data-toggle="tooltip" data-placement="bottom" title="Struan">
+                        <img src="{% static 'img/person.svg' %}" width="100" height="100" alt="Struan">
+                    </div>
+                    <div class="team-avatars__person" data-toggle="tooltip" data-placement="bottom" title="Zarino">
+                        <img src="{% static 'img/person.svg' %}" width="100" height="100" alt="Zarino">
+                    </div>
+                </div>
+                <p>We’re the team behind this site. We hope you find it useful! One thing we struggle with is knowing who’s using our site.</p>
                 <fieldset class="mb-3" id="feedback-who">
-                    <legend class="visually-hidden">How would you describe yourself? (Select all that apply)</legend>
+                    <legend>Could you do us a massive favour and tell us <strong>what brought you here today?</strong></legend>
                     <div class="form-check">
                         <input class="form-check-input" id="feedback-who-tcc" type="checkbox">
-                        <label class="form-check-label" for="feedback-who-tcc">I’m employed by a Climate Coalition member organisation</label>
+                        <label class="form-check-label" for="feedback-who-tcc">I work for a national climate/nature organisation</label>
                     </div>
                     <div class="form-check">
                         <input class="form-check-input" id="feedback-who-activist" type="checkbox">
@@ -35,18 +50,17 @@
                         <label class="form-check-label" for="feedback-who-none">None of the above</label>
                     </div>
                 </fieldset>
-                <p>Would it be ok if we <strong>send you a short survey in a few days’ time</strong>, asking you about your experience of the site?</p>
                 <fieldset class="mb-3">
-                    <legend class="visually-hidden">Can we email you a survey in a few days’ time?</legend>
+                    <legend>Would it be ok if we <strong>send you a short survey in a few days’ time</strong>, asking you about your experience of the site?</legend>
                     <div class="form-check">
                         <input class="form-check-input" id="feedback-followup-yes" name="feedback-followup" type="radio" value="yes">
                         <label class="mb-0 ml-2" for="feedback-followup-yes">Yes</label>
                     </div>
-                    <div class="conditional-fields d-none">
+                    <div class="conditional-fields collapse">
                         <div class="form-group">
-                            <label for="feedback-email">Your email address</label>
-                            <input aria-describedby="feedback-email-hint" class="form-control" id="feedback-email" name="email" type="email">
-                            <small class="form-text text-muted" id="feedback-email-hint">We’ll use this to send you one survey email.</small>
+                            <label class="form-label" for="feedback-email">Your email address</label>
+                            <input class="form-control" aria-describedby="feedback-email-hint" id="feedback-email" name="email" type="email">
+                            <small class="form-text d-block" id="feedback-email-hint">We’ll use this to send you one survey email.</small>
                         </div>
                     </div>
                     <div class="form-check">
