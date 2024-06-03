@@ -73,5 +73,5 @@ async def import_all(external_data_source_id: str, request_id: str = None):
 # cron that calls the `import_2024_ppcs` command every hour
 @app.periodic(cron="0 * * * *")
 @app.task(queue="built_in_data")
-async def import_2024_ppcs():
+async def import_2024_ppcs(timestamp=None):
     management.call_command("import_2024_ppcs")
