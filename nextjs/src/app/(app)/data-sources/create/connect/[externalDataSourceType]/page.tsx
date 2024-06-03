@@ -73,6 +73,7 @@ const CREATE_DATA_SOURCE = gql`
         name
         crmType
         dataType
+        allowUpdates
       }
     }
   }

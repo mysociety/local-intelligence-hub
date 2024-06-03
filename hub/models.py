@@ -22,6 +22,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 
+import httpx
 import numpy as np
 import pandas as pd
 import pytz
@@ -63,7 +64,6 @@ from utils.log import get_simple_debug_logger
 from utils.nominatim import address_to_geojson
 from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
 from utils.py import batched, ensure_list, get
-import httpx
 
 User = get_user_model()
 
@@ -2870,7 +2870,6 @@ class ActionNetworkSource(ExternalDataSource):
         return created_records
 
 
-
 class TicketTailorSource(ExternalDataSource):
     """
     Ticket Tailor box office
@@ -2917,8 +2916,8 @@ class TicketTailorSource(ExternalDataSource):
         auth = httpx.BasicAuth(username=self.api_key, password="")
         client = httpx.Client(
             auth=auth,
-            base_url='https://api.tickettailor.com',
-            headers={"Accept": "application/json"}
+            base_url="https://api.tickettailor.com",
+            headers={"Accept": "application/json"},
         )
         return client
 
@@ -2992,15 +2991,23 @@ class TicketTailorSource(ExternalDataSource):
         """
         fields = [
             self.FieldDefinition(label="Name", value="name", editable=False),
-            self.FieldDefinition(label="Description", value="description", editable=False),
+            self.FieldDefinition(
+                label="Description", value="description", editable=False
+            ),
             self.FieldDefinition(label="Start time", value="start.iso", editable=False),
             self.FieldDefinition(label="End time", value="end.iso", editable=False),
             self.FieldDefinition(label="Venue", value="venue.name", editable=False),
-            self.FieldDefinition(label="Postal code", value="venue.postal_code", editable=False),
+            self.FieldDefinition(
+                label="Postal code", value="venue.postal_code", editable=False
+            ),
             self.FieldDefinition(label="URL", value="url", editable=False),
-            self.FieldDefinition(label="Thumbnail", value="images.thumbnail", editable=False),
+            self.FieldDefinition(
+                label="Thumbnail", value="images.thumbnail", editable=False
+            ),
             self.FieldDefinition(label="Status", value="status", editable=False),
-            self.FieldDefinition(label="Is online?", value="online_event", editable=False),
+            self.FieldDefinition(
+                label="Is online?", value="online_event", editable=False
+            ),
         ]
         return fields
 

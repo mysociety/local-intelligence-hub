@@ -1,12 +1,6 @@
-from datetime import datetime
-from random import randint
-from typing import List
-
 from django.conf import settings
 from django.db.utils import IntegrityError
 from django.test import TestCase
-
-from asgiref.sync import sync_to_async
 
 from hub import models
 
@@ -46,6 +40,6 @@ class TestTicketTailor(TestReadOnlyDataSource, TestCase):
         self.source = models.TicketTailorSource.objects.create(
             name=name,
             organisation=self.organisation,
-            api_key=settings.TEST_TICKET_TAILOR_API_KEY
+            api_key=settings.TEST_TICKET_TAILOR_API_KEY,
         )
         return self.source

@@ -29,6 +29,8 @@ const TypeBadge = ({ type }: { type: string }) => {
 }
 
 export const EventList: ComponentConfig<EventListProps> = {
+  // TODO: why is this ignore necessary?
+  // @ts-ignore
   resolveFields(data, { fields }) {
     return {
       displayEventTitles: {
@@ -84,7 +86,7 @@ export const EventList: ComponentConfig<EventListProps> = {
         arrayFields: {
           fieldToCheck: {
             type: "select",
-            options: data.props.eventDataSource?.fieldDefinitions?.map(f => ({
+            options: data.props.eventDataSource?.fieldDefinitions?.map((f: FieldDefinition) => ({
               label: f.label || f.value,
               value: f.value,
             })) || [],

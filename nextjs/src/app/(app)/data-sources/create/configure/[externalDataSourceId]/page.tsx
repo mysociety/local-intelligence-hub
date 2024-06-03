@@ -99,7 +99,11 @@ export default function Page({
     });
   }
 
-  if (!source.allowUpdates) {
+  if (externalDataSource.loading) {
+    return <LoadingIcon />
+  }
+
+  if (!externalDataSource.data?.externalDataSource.allowUpdates) {
     return (
       <Button
         variant="outline"
@@ -126,9 +130,7 @@ export default function Page({
           accurate data.
         </p>
       </header>
-      {externalDataSource.loading ? (
-        <LoadingIcon />
-      ) : externalDataSource.data ? (
+      {externalDataSource.data ? (
         <UpdateMappingForm
           crmType={externalDataSource.data?.externalDataSource.crmType}
           initialData={{

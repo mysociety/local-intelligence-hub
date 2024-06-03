@@ -46,7 +46,7 @@ import { useState } from "react";
 
 
 
-const crmSync: { title: string; href: string; description: string }[] = [
+const crmSync: { title: string; href: string | undefined; description: string }[] = [
   ...Object.values(externalDataSourceOptions)
   .filter(d => !!d.marketingPageHref)
   .map(d => ({
@@ -236,7 +236,7 @@ export default function Navbar({ isLoggedIn }: NavbarProps) {
                                <MobileLink
                                key={component.title}
 
-                               href={component.href}
+                               href={component.href || '#'}
                                onOpenChange={setOpen}
                                className="p-4 border border-meepGray-600 rounded-md"
                              >
