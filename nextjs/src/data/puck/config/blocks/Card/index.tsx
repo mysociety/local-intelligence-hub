@@ -59,8 +59,6 @@ const TypeBadge = ({ type }: { type: string }) => {
 }
 
 export const Card: ComponentConfig<CardProps> = {
-  // TODO: why is this ignore necessary?
-  // @ts-ignore
   resolveFields: (data) => {
     const fields: Fields<CardProps> = {
       type: {
@@ -122,10 +120,10 @@ export const Card: ComponentConfig<CardProps> = {
     linkLabel: "Learn more",
     behaviour: "link",
   },
-  resolveData: (data, { changed }) => {
+  resolveData: (data, { lastData }) => {
     return {
       ...data,
-      linkLabel: !changed.type ? data.props.linkLabel : (
+      linkLabel: data.props.type === lastData?.props?.type ? data.props.linkLabel : (
         data.props.type === "resource" ? "Download" : "Learn more"
       )
     }

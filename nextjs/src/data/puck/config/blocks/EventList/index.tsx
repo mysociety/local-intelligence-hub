@@ -29,8 +29,6 @@ const TypeBadge = ({ type }: { type: string }) => {
 }
 
 export const EventList: ComponentConfig<EventListProps> = {
-  // TODO: why is this ignore necessary?
-  // @ts-ignore
   resolveFields(data, { fields }) {
     return {
       displayEventTitles: {
