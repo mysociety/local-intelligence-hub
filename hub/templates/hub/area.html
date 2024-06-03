@@ -18,9 +18,9 @@
             <div>
                 <h1 class="mb-2" id="area_name">{{ area.name }}</h1>
                 {% if area_type == "WMC" %}
-                <p class="mb-0 text-muted">Current parliamentary constituency</p>
+                <p class="mb-0 text-muted">Old parliamentary constituency</p>
                 {% elif area_type == "WMC23" %}
-                <p class="mb-0 text-muted">Future parliamentary constituency</p>
+                <p class="mb-0 text-muted">New parliamentary constituency</p>
                 {% endif %}
             </div>
 
@@ -61,12 +61,12 @@
       {% if area_type == "WMC" and area.overlaps %}
         <div style="max-width: 48rem;" class="mt-4 pt-lg-2">
           {% if overlap_constituencies|length > 1 %}
-            <p class="text-muted">At the next election, this constituency will be divided into <b>{{ overlap_constituencies|length|apnumber }} new constituenc{% if overlap_constituencies|length_is:1 %}y{% else %}ies{% endif %}:</b></p>
+            <p class="text-muted">In June 2024, this constituency was replaced by <b>{{ overlap_constituencies|length|apnumber }} new constituenc{% if overlap_constituencies|length_is:1 %}y{% else %}ies{% endif %}:</b></p>
           {% else %}
             {% if overlap_unchanged %}
-            <p class="text-muted">Looking for data on Prospective Parliamentary Candidates at the next general election?{% with overlap_constituencies|first as cons %} See the <a href="{% url 'area' area_type=cons.new_area.area_type.code name=cons.new_area.name %}">future constituency</a>.{% endwith %}</p>
+            <p class="text-muted">Looking for data on Prospective Parliamentary Candidates at the July general election?{% with overlap_constituencies|first as cons %} See the <a href="{% url 'area' area_type=cons.new_area.area_type.code name=cons.new_area.name %}">new constituency</a>.{% endwith %}</p>
             {% else %}
-            <p class="text-muted">At the next election, this constituency will be replaced with:</p>
+            <p class="text-muted">In June 2024, this constituency was replaced with:</p>
             {% endif %}
           {% endif %}
           {% if not overlap_unchanged %}
@@ -74,7 +74,7 @@
               {% for overlap_constituency in overlap_constituencies %}
                 <div>
                     <h3 class="h5"><a href="{% url 'area' area_type=overlap_constituency.new_area.area_type.code name=overlap_constituency.new_area.name %}" class="text-decoration-none">{{ overlap_constituency.new_area }}</a></h3>
-                    <p class="fs-7 text-muted mb-0">Will cover approximately {{ overlap_constituency.pop_overlap }}% of this constituency’s population, and {{ overlap_constituency.area_overlap }}% of this constituency’s area.</p>
+                    <p class="fs-7 text-muted mb-0">Covers approximately {{ overlap_constituency.pop_overlap }}% of this old constituency’s population, and {{ overlap_constituency.area_overlap }}% of this old constituency’s area.</p>
                 </div>
               {% endfor %}
             </div>
@@ -83,12 +83,12 @@
       {% elif area_type == "WMC23" and area.overlaps %}
         <div style="max-width: 48rem;" class="mt-4 pt-lg-2">
           {% if overlap_constituencies|length > 1 %}
-            <p class="text-muted">This constituency will only exist at the next election, and replaces the previous <b>{{ overlap_constituencies|length|apnumber }} constituenc{% if overlap_constituencies|length_is:1 %}y{% else %}ies{% endif %}:</b></p>
+            <p class="text-muted">This constituency is new at the July general election, and replaces the previous <b>{{ overlap_constituencies|length|apnumber }} constituenc{% if overlap_constituencies|length_is:1 %}y{% else %}ies{% endif %}:</b></p>
           {% else %}
             {% if overlap_unchanged %}
-            <p class="text-muted">Looking for data on this constituency’s current MP? {% with overlap_constituencies|first as cons %} See the <a href="{% url 'area' area_type=cons.old_area.area_type.code name=cons.old_area.name %}">current constituency</a>.{% endwith %}</p>
+            <p class="text-muted">Looking for data on this constituency’s former MP? {% with overlap_constituencies|first as cons %} See the <a href="{% url 'area' area_type=cons.old_area.area_type.code name=cons.old_area.name %}">old constituency</a>.{% endwith %}</p>
             {% else %}
-            <p class="text-muted">This constituency will only exist at the next election, and replaces:</p>
+            <p class="text-muted">This constituency is new at the July general election, and replaces:</p>
             {% endif %}
           {% endif %}
           {% if not overlap_unchanged %}
@@ -96,7 +96,7 @@
               {% for overlap_constituency in overlap_constituencies %}
                 <div>
                     <h3 class="h5"><a href="{% url 'area' area_type=overlap_constituency.old_area.area_type.code name=overlap_constituency.old_area.name %}" class="text-decoration-none">{{ overlap_constituency.old_area }}</a></h3>
-                    <p class="fs-7 text-muted mb-0">Will cover approximately {{ overlap_constituency.pop_overlap }}% of this constituency’s population, and {{ overlap_constituency.area_overlap }}% of this constituency’s area.</p>
+                    <p class="fs-7 text-muted mb-0">Covered approximately {{ overlap_constituency.pop_overlap }}% of this new constituency’s population, and {{ overlap_constituency.area_overlap }}% of this new constituency’s area.</p>
                 </div>
               {% endfor %}
             </div>

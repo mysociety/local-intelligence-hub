@@ -486,22 +486,22 @@ class AreaSearchView(TemplateView):
             context["areas"].sort(key=lambda area: area.name)
             context["areas_by_type"] = [
                 {
-                    "type": "current-constituencies",
+                    "type": "WMC23",
                     "areas": [],
                 },
                 {
-                    "type": "future-constituencies",
+                    "type": "WMC",
                     "areas": [],
                 },
                 {
-                    "type": "local-authorities",
+                    "type": "LA",
                     "areas": [],
                 },
             ]
             for area in context["areas"]:
-                if area.area_type.code == "WMC":
+                if area.area_type.code == "WMC23":
                     context["areas_by_type"][0]["areas"].append(area)
-                elif area.area_type.code == "WMC23":
+                elif area.area_type.code == "WMC":
                     context["areas_by_type"][1]["areas"].append(area)
                 else:
                     context["areas_by_type"][2]["areas"].append(area)

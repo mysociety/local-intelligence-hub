@@ -21,18 +21,18 @@ const app = createApp({
       filters: [], // filters to be applied on next Update
       shader: null, // shader to applied on next Update
       columns: [], // additional columns to be requested on next Update
-      area_type: "WMC", // the area type to fetch
+      area_type: "WMC23", // the area type to fetch
       area_type_changed: false, // so we know to reload the map
       area_types: [{
-        slug: "WMC",
-        label: "Current constituencies",
-        short_label: "constituencies",
-        description: "These are the constituencies currently represented by MPs in UK Parliament."
-      }, {
         slug: "WMC23",
-        label: "Future constituencies",
+        label: "New constituencies",
         short_label: "constituencies",
-        description: "These are the constituencies in which parliamentary candidates will soon be standing for election."
+        description: "These are the constituencies in which parliamentary candidates are currently standing for election."
+      }, {
+        slug: "WMC",
+        label: "Old constituencies",
+        short_label: "constituencies",
+        description: "These are the constituencies that were represented by MPs in UK Parliament until May 2024."
       }, {
         slug: "STC",
         label: "Single Tier councils",

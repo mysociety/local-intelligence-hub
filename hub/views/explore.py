@@ -236,9 +236,7 @@ class ExploreGeometryCachedJSON(ExploreGeometryJSON):
 class ExploreJSON(FilterMixin, TemplateView):
     def render_to_response(self, context, **response_kwargs):
         geom = []
-        mp_name = True
-        if self.area_type().area_type != "Westminster Constituency":
-            mp_name = False
+        mp_name = self.area_type().code == "WMC"
         areas = self.data(as_dict=True, mp_name=mp_name)
         shader_areas = [a["area"] for a in areas.values()]
         shader = self.shader()

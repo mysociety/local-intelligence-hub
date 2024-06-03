@@ -421,15 +421,15 @@ class AreaType(models.Model):
     ]
 
     NAMES_SINGULAR = {
-        "WMC": "current constituency",
-        "WMC23": "future constituency",
+        "WMC": "old constituency",
+        "WMC23": "new constituency",
         "STC": "single tier council",
         "DIS": "district council",
     }
 
     NAMES_PLURAL = {
-        "WMC": "current constituencies",
-        "WMC23": "future constituencies",
+        "WMC": "old constituencies",
+        "WMC23": "new constituencies",
         "STC": "single tier councils",
         "DIS": "district councils",
     }
