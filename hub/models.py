@@ -708,9 +708,6 @@ class GenericData(CommonData):
     title = models.CharField(max_length=1000, blank=True, null=True)
     description = models.TextField(max_length=3000, blank=True, null=True)
     image = models.ImageField(null=True, upload_to="generic_data")
-    start_time = models.DateTimeField(blank=True, null=True)
-    end_time = models.DateTimeField(blank=True, null=True)
-    public_url = models.URLField(max_length=2000, blank=True, null=True)
 
     def remote_url(self):
         return self.data_type.data_set.external_data_source.record_url(self.data)
@@ -1210,6 +1207,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     def record_url_template(self) -> Optional[str]:
         """
         Get the URL template for a record in the remote system.
+        """
+        return None
+
+    def record_url(self, record_id: str) -> Optional[str]:
+        """
+        Get the URL of a record in the remote system.
         """
         return None
 
@@ -2645,6 +2648,7 @@ class ActionNetworkSource(ExternalDataSource):
         address_field="postal_addresses[0].address_lines[0]",
     )
 
+    group_slug = models.CharField(max_length=100)
     api_key = EncryptedCharField(max_length=250)
 
     @classmethod
@@ -2678,6 +2682,21 @@ class ActionNetworkSource(ExternalDataSource):
         """
         id = self.get_record_id(record)
         return self.prefixed_id_to_uuid(id)
+
+    def record_url_template(self) -> Optional[str]:
+        """
+        Get the URL template for a record in the remote system.
+        """
+        return f"https://actionnetwork.org/user_search/group/{self.group_slug}/{{record_uuid}}"
+
+    def record_url(self, record_id: str) -> Optional[str]:
+        """
+        Get the URL of a record in the remote system.
+        """
+        return (
+            "https://actionnetwork.org/user_search/group"
+            f"/{self.group_slug}/{self.prefixed_id_to_uuid(record_id)}"
+        )
 
     def prefixed_id_to_uuid(self, id):
         return id.replace("action_network:", "")
