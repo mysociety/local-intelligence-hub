@@ -1,5 +1,5 @@
 import { CrmType } from "@/__generated__/graphql";
-import { AirtableLogo, ActionNetworkLogo, MailchimpIcon, MailchimpLogo, GoogleSheetsLogo, CiviCRMLogo, NationBuilderLogo, AirtableIcon, ActionNetworkIcon } from "@/components/logos";
+import { AirtableLogo, ActionNetworkLogo, MailchimpIcon, MailchimpLogo, GoogleSheetsLogo, CiviCRMLogo, NationBuilderLogo, AirtableIcon, ActionNetworkIcon, TicketTailorLogo, TicketTailorIcon } from "@/components/logos";
 
 export const externalDataSourceOptions: Record<CrmType, {
   key: CrmType,
@@ -8,7 +8,8 @@ export const externalDataSourceOptions: Record<CrmType, {
   icon?: ({ className }: { className?: string | undefined; }) => any,
   logo: ({ className }: { className?: string | undefined; }) => any,
   screenshot: string,
-  supported: boolean
+  supported: boolean,
+  marketingPageHref?: string
 }> = {
   [CrmType.Airtable]: {
     key: CrmType.Airtable,
@@ -17,7 +18,8 @@ export const externalDataSourceOptions: Record<CrmType, {
     icon: AirtableIcon,
     logo: AirtableLogo,
     screenshot: "/airtable-screenshot.png",
-    supported: true
+    supported: true,
+    marketingPageHref: 'integrations/airtable'
   },
   [CrmType.Actionnetwork]: {
     key: CrmType.Actionnetwork,
@@ -26,7 +28,8 @@ export const externalDataSourceOptions: Record<CrmType, {
     icon: ActionNetworkIcon,
     logo: ActionNetworkLogo,
     screenshot: "/actionNetwork-screenshot.png",
-    supported: true
+    supported: true,
+    marketingPageHref: 'integrations/actionNetwork'
   },
   [CrmType.Mailchimp]: {
     key: CrmType.Mailchimp,
@@ -35,6 +38,16 @@ export const externalDataSourceOptions: Record<CrmType, {
     icon: MailchimpIcon,
     logo: MailchimpLogo,
     screenshot: "/mailchimp-screenshot.png",
+    supported: true,
+    marketingPageHref: 'integrations/mailchimp'
+  },
+  [CrmType.Tickettailor]: {
+    key: CrmType.Tickettailor,
+    modelName: "TicketTailorSource",
+    name: "Ticket Tailor",
+    icon: TicketTailorIcon,
+    logo: TicketTailorLogo,
+    screenshot: "/tickettailor-screenshot.png",
     supported: true
   },
   // googleSheets: {

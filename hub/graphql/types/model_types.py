@@ -750,6 +750,7 @@ class CrmType(Enum):
     airtable = "airtable"
     mailchimp = "mailchimp"
     actionnetwork = "actionnetwork"
+    tickettailor = "tickettailor"
 
 
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
@@ -784,6 +785,7 @@ class BaseDataSource(Analytics):
     has_webhooks: bool = attr_field()
     automated_webhooks: bool = attr_field()
     introspect_fields: bool = attr_field()
+    allow_updates: bool = attr_field()
     default_data_type: Optional[str] = attr_field()
 
     @strawberry_django.field
@@ -918,7 +920,7 @@ class ExternalDataSource(BaseDataSource):
     @strawberry_django.field
     def connection_details(
         self: models.ExternalDataSource, info
-    ) -> Union["AirtableSource", "MailchimpSource", "ActionNetworkSource"]:
+    ) -> Union["AirtableSource", "MailchimpSource", "ActionNetworkSource", "TicketTailorSource"]:
         instance = self.get_real_instance()
         return instance
 
@@ -957,6 +959,11 @@ class MailchimpSource(ExternalDataSource):
 
 @strawberry_django.type(models.ActionNetworkSource)
 class ActionNetworkSource(ExternalDataSource):
+    api_key: str
+
+
+@strawberry_django.type(models.TicketTailorSource)
+class TicketTailorSource(ExternalDataSource):
     api_key: str
 
 

@@ -47,9 +47,11 @@ import { useState } from "react";
 
 
 const crmSync: { title: string; href: string; description: string }[] = [
-  ...Object.values(externalDataSourceOptions).map(d => ({
+  ...Object.values(externalDataSourceOptions)
+  .filter(d => !!d.marketingPageHref)
+  .map(d => ({
     title: d.name,
-    href: `/integrations/${d.key}`,
+    href: d.marketingPageHref,
     description: d.name,
   })),
   {

@@ -67,12 +67,13 @@ export type ApiToken = {
 export type ActionNetworkSource = Analytics & {
   __typename?: 'ActionNetworkSource';
   addressField?: Maybe<Scalars['String']['output']>;
+  allowUpdates: Scalars['Boolean']['output'];
   apiKey: Scalars['String']['output'];
   autoImportEnabled: Scalars['Boolean']['output'];
   autoUpdateEnabled: Scalars['Boolean']['output'];
   autoUpdateWebhookUrl: Scalars['String']['output'];
   automatedWebhooks: Scalars['Boolean']['output'];
-  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSource;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceTicketTailorSource;
   createdAt: Scalars['DateTime']['output'];
   crmType: CrmType;
   dataType: DataSourceType;
@@ -182,6 +183,7 @@ export type ActionNetworkSourceInput = {
 export type AirtableSource = Analytics & {
   __typename?: 'AirtableSource';
   addressField?: Maybe<Scalars['String']['output']>;
+  allowUpdates: Scalars['Boolean']['output'];
   /** Personal access token. Requires the following 4 scopes: data.records:read, data.records:write, schema.bases:read, webhook:manage */
   apiKey: Scalars['String']['output'];
   autoImportEnabled: Scalars['Boolean']['output'];
@@ -189,7 +191,7 @@ export type AirtableSource = Analytics & {
   autoUpdateWebhookUrl: Scalars['String']['output'];
   automatedWebhooks: Scalars['Boolean']['output'];
   baseId: Scalars['String']['output'];
-  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSource;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceTicketTailorSource;
   createdAt: Scalars['DateTime']['output'];
   crmType: CrmType;
   dataType: DataSourceType;
@@ -299,7 +301,7 @@ export type AirtableSourceInput = {
   updateMapping?: InputMaybe<Array<UpdateMappingItemInput>>;
 };
 
-export type AirtableSourceMailchimpSourceActionNetworkSource = ActionNetworkSource | AirtableSource | MailchimpSource;
+export type AirtableSourceMailchimpSourceActionNetworkSourceTicketTailorSource = ActionNetworkSource | AirtableSource | MailchimpSource | TicketTailorSource;
 
 export type Analytics = {
   importedDataCount: Scalars['Int']['output'];
@@ -503,6 +505,7 @@ export type CreateExternalDataSourceInput = {
   actionnetwork?: InputMaybe<ActionNetworkSourceInput>;
   airtable?: InputMaybe<AirtableSourceInput>;
   mailchimp?: InputMaybe<MailChimpSourceInput>;
+  tickettailor?: InputMaybe<TicketTailorSourceInput>;
 };
 
 export type CreateExternalDataSourceOutput = {
@@ -523,7 +526,8 @@ export type CreateOrganisationInput = {
 export enum CrmType {
   Actionnetwork = 'actionnetwork',
   Airtable = 'airtable',
-  Mailchimp = 'mailchimp'
+  Mailchimp = 'mailchimp',
+  Tickettailor = 'tickettailor'
 }
 
 /** DataSet(id, name, description, label, data_type, last_update, source_label, source, source_type, data_url, release_date, is_upload, is_range, featured, order, category, subcategory, table, comparators, options, default_value, is_filterable, is_shadable, is_public, fill_blanks, exclude_countries, unit_type, unit_distribution, external_data_source) */
@@ -728,11 +732,12 @@ export type ElectoralServices = {
 export type ExternalDataSource = Analytics & {
   __typename?: 'ExternalDataSource';
   addressField?: Maybe<Scalars['String']['output']>;
+  allowUpdates: Scalars['Boolean']['output'];
   autoImportEnabled: Scalars['Boolean']['output'];
   autoUpdateEnabled: Scalars['Boolean']['output'];
   autoUpdateWebhookUrl: Scalars['String']['output'];
   automatedWebhooks: Scalars['Boolean']['output'];
-  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSource;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceTicketTailorSource;
   createdAt: Scalars['DateTime']['output'];
   crmType: CrmType;
   dataType: DataSourceType;
@@ -1153,13 +1158,14 @@ export type MailChimpSourceInput = {
 export type MailchimpSource = Analytics & {
   __typename?: 'MailchimpSource';
   addressField?: Maybe<Scalars['String']['output']>;
+  allowUpdates: Scalars['Boolean']['output'];
   /** Mailchimp API key. */
   apiKey: Scalars['String']['output'];
   autoImportEnabled: Scalars['Boolean']['output'];
   autoUpdateEnabled: Scalars['Boolean']['output'];
   autoUpdateWebhookUrl: Scalars['String']['output'];
   automatedWebhooks: Scalars['Boolean']['output'];
-  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSource;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceTicketTailorSource;
   createdAt: Scalars['DateTime']['output'];
   crmType: CrmType;
   dataType: DataSourceType;
@@ -2096,6 +2102,7 @@ export type Report = {
 export type SharedDataSource = Analytics & {
   __typename?: 'SharedDataSource';
   addressField?: Maybe<Scalars['String']['output']>;
+  allowUpdates: Scalars['Boolean']['output'];
   automatedWebhooks: Scalars['Boolean']['output'];
   createdAt: Scalars['DateTime']['output'];
   crmType: CrmType;
@@ -2223,6 +2230,122 @@ export type StrFilterLookup = {
   startsWith?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Ticket Tailor event list */
+export type TicketTailorSource = Analytics & {
+  __typename?: 'TicketTailorSource';
+  addressField?: Maybe<Scalars['String']['output']>;
+  allowUpdates: Scalars['Boolean']['output'];
+  apiKey: Scalars['String']['output'];
+  autoImportEnabled: Scalars['Boolean']['output'];
+  autoUpdateEnabled: Scalars['Boolean']['output'];
+  autoUpdateWebhookUrl: Scalars['String']['output'];
+  automatedWebhooks: Scalars['Boolean']['output'];
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceTicketTailorSource;
+  createdAt: Scalars['DateTime']['output'];
+  crmType: CrmType;
+  dataType: DataSourceType;
+  defaultDataType?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  descriptionField?: Maybe<Scalars['String']['output']>;
+  emailField?: Maybe<Scalars['String']['output']>;
+  endTimeField?: Maybe<Scalars['String']['output']>;
+  fieldDefinitions?: Maybe<Array<FieldDefinition>>;
+  firstNameField?: Maybe<Scalars['String']['output']>;
+  fullNameField?: Maybe<Scalars['String']['output']>;
+  geographyColumn?: Maybe<Scalars['String']['output']>;
+  geographyColumnType: GeographyTypes;
+  hasWebhooks: Scalars['Boolean']['output'];
+  healthcheck: Scalars['Boolean']['output'];
+  id: Scalars['UUID']['output'];
+  imageField?: Maybe<Scalars['String']['output']>;
+  importProgress?: Maybe<BatchJobProgress>;
+  importedDataCount: Scalars['Int']['output'];
+  importedDataCountByConstituency: Array<GroupedDataCount>;
+  importedDataCountByConstituency2024: Array<GroupedDataCount>;
+  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
+  importedDataCountByCouncil: Array<GroupedDataCount>;
+  importedDataCountByRegion: Array<GroupedDataCount>;
+  importedDataCountByWard: Array<GroupedDataCount>;
+  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
+  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
+  introspectFields: Scalars['Boolean']['output'];
+  isImportScheduled: Scalars['Boolean']['output'];
+  isUpdateScheduled: Scalars['Boolean']['output'];
+  jobs: Array<QueueJob>;
+  lastJob?: Maybe<QueueJob>;
+  lastNameField?: Maybe<Scalars['String']['output']>;
+  lastUpdate: Scalars['DateTime']['output'];
+  name: Scalars['String']['output'];
+  organisation: Organisation;
+  organisationId: Scalars['String']['output'];
+  orgsWithAccess: Array<Organisation>;
+  phoneField?: Maybe<Scalars['String']['output']>;
+  postcodeField?: Maybe<Scalars['String']['output']>;
+  predefinedColumnNames: Scalars['Boolean']['output'];
+  publicUrlField?: Maybe<Scalars['String']['output']>;
+  recordUrlTemplate?: Maybe<Scalars['String']['output']>;
+  remoteName?: Maybe<Scalars['String']['output']>;
+  remoteUrl?: Maybe<Scalars['String']['output']>;
+  sharingPermissions: Array<SharingPermission>;
+  startTimeField?: Maybe<Scalars['String']['output']>;
+  titleField?: Maybe<Scalars['String']['output']>;
+  updateMapping?: Maybe<Array<AutoUpdateConfig>>;
+  updateProgress?: Maybe<BatchJobProgress>;
+  webhookHealthcheck: Scalars['Boolean']['output'];
+};
+
+
+/** Ticket Tailor event list */
+export type TicketTailorSourceImportedDataCountByConstituencyBySourceArgs = {
+  gss: Scalars['String']['input'];
+};
+
+
+/** Ticket Tailor event list */
+export type TicketTailorSourceImportedDataCountForConstituencyArgs = {
+  gss: Scalars['String']['input'];
+};
+
+
+/** Ticket Tailor event list */
+export type TicketTailorSourceImportedDataCountForConstituency2024Args = {
+  gss: Scalars['String']['input'];
+};
+
+
+/** Ticket Tailor event list */
+export type TicketTailorSourceOrgsWithAccessArgs = {
+  filters?: InputMaybe<OrganisationFilters>;
+};
+
+/** Ticket Tailor event list */
+export type TicketTailorSourceInput = {
+  addressField?: InputMaybe<Scalars['String']['input']>;
+  apiKey: Scalars['String']['input'];
+  autoImportEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  autoUpdateEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  dataType?: InputMaybe<DataSourceType>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  descriptionField?: InputMaybe<Scalars['String']['input']>;
+  emailField?: InputMaybe<Scalars['String']['input']>;
+  endTimeField?: InputMaybe<Scalars['String']['input']>;
+  firstNameField?: InputMaybe<Scalars['String']['input']>;
+  fullNameField?: InputMaybe<Scalars['String']['input']>;
+  geographyColumn?: InputMaybe<Scalars['String']['input']>;
+  geographyColumnType?: InputMaybe<GeographyTypes>;
+  id?: InputMaybe<Scalars['UUID']['input']>;
+  imageField?: InputMaybe<Scalars['String']['input']>;
+  lastNameField?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  organisation?: InputMaybe<OneToManyInput>;
+  phoneField?: InputMaybe<Scalars['String']['input']>;
+  postcodeField?: InputMaybe<Scalars['String']['input']>;
+  publicUrlField?: InputMaybe<Scalars['String']['input']>;
+  startTimeField?: InputMaybe<Scalars['String']['input']>;
+  titleField?: InputMaybe<Scalars['String']['input']>;
+  updateMapping?: InputMaybe<Array<UpdateMappingItemInput>>;
+};
+
 /**
  *
  * the data that was used to create the token.
@@ -2321,7 +2444,7 @@ export type UserType = {
 export type ListOrganisationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ListOrganisationsQuery = { __typename?: 'Query', myOrganisations: Array<{ __typename?: 'Organisation', id: string, externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, crmType: CrmType, autoUpdateEnabled: boolean, connectionDetails: { __typename?: 'ActionNetworkSource' } | { __typename?: 'AirtableSource', baseId: string, tableId: string } | { __typename?: 'MailchimpSource', apiKey: string, listId: string }, jobs: Array<{ __typename?: 'QueueJob', lastEventAt: any, status: ProcrastinateJobStatus }>, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any, organisation: { __typename?: 'PublicOrganisation', id: string, name: string } }> }>, sharingPermissionsFromOtherOrgs: Array<{ __typename?: 'SharingPermission', id: any, externalDataSource: { __typename?: 'SharedDataSource', id: any, name: string, dataType: DataSourceType, crmType: CrmType, organisation: { __typename?: 'PublicOrganisation', name: string } } }> }> };
+export type ListOrganisationsQuery = { __typename?: 'Query', myOrganisations: Array<{ __typename?: 'Organisation', id: string, externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, crmType: CrmType, autoUpdateEnabled: boolean, connectionDetails: { __typename?: 'ActionNetworkSource' } | { __typename?: 'AirtableSource', baseId: string, tableId: string } | { __typename?: 'MailchimpSource', apiKey: string, listId: string } | { __typename?: 'TicketTailorSource' }, jobs: Array<{ __typename?: 'QueueJob', lastEventAt: any, status: ProcrastinateJobStatus }>, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any, organisation: { __typename?: 'PublicOrganisation', id: string, name: string } }> }>, sharingPermissionsFromOtherOrgs: Array<{ __typename?: 'SharingPermission', id: any, externalDataSource: { __typename?: 'SharedDataSource', id: any, name: string, dataType: DataSourceType, crmType: CrmType, organisation: { __typename?: 'PublicOrganisation', name: string } } }> }> };
 
 export type GetSourceMappingQueryVariables = Exact<{
   ID: Scalars['ID']['input'];
@@ -2347,7 +2470,7 @@ export type CreateSourceMutation = { __typename?: 'Mutation', createExternalData
 export type AllExternalDataSourcesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type AllExternalDataSourcesQuery = { __typename?: 'Query', externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, createdAt: any, dataType: DataSourceType, crmType: CrmType, autoUpdateEnabled: boolean, connectionDetails: { __typename?: 'ActionNetworkSource' } | { __typename?: 'AirtableSource', baseId: string, tableId: string } | { __typename?: 'MailchimpSource', apiKey: string, listId: string } }> };
+export type AllExternalDataSourcesQuery = { __typename?: 'Query', externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, createdAt: any, dataType: DataSourceType, crmType: CrmType, autoUpdateEnabled: boolean, connectionDetails: { __typename?: 'ActionNetworkSource' } | { __typename?: 'AirtableSource', baseId: string, tableId: string } | { __typename?: 'MailchimpSource', apiKey: string, listId: string } | { __typename?: 'TicketTailorSource' } }> };
 
 export type AutoUpdateCreationReviewQueryVariables = Exact<{
   ID: Scalars['ID']['input'];
@@ -2361,7 +2484,7 @@ export type ExternalDataSourceInspectPageQueryVariables = Exact<{
 }>;
 
 
-export type ExternalDataSourceInspectPageQuery = { __typename?: 'Query', externalDataSource: { __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, remoteUrl?: string | null, crmType: CrmType, autoUpdateEnabled: boolean, hasWebhooks: boolean, automatedWebhooks: boolean, autoUpdateWebhookUrl: string, webhookHealthcheck: boolean, geographyColumn?: string | null, geographyColumnType: GeographyTypes, postcodeField?: string | null, firstNameField?: string | null, lastNameField?: string | null, fullNameField?: string | null, emailField?: string | null, phoneField?: string | null, addressField?: string | null, titleField?: string | null, descriptionField?: string | null, imageField?: string | null, startTimeField?: string | null, endTimeField?: string | null, publicUrlField?: string | null, isImportScheduled: boolean, isUpdateScheduled: boolean, importedDataCount: number, organisationId: string, connectionDetails: { __typename?: 'ActionNetworkSource', apiKey: string } | { __typename?: 'AirtableSource', apiKey: string, baseId: string, tableId: string } | { __typename?: 'MailchimpSource', apiKey: string, listId: string }, lastJob?: { __typename?: 'QueueJob', id: string, lastEventAt: any, status: ProcrastinateJobStatus } | null, importProgress?: { __typename?: 'BatchJobProgress', id: string, status: ProcrastinateJobStatus, total: number, succeeded: number, estimatedFinishTime: any } | null, updateProgress?: { __typename?: 'BatchJobProgress', id: string, status: ProcrastinateJobStatus, total: number, succeeded: number, estimatedFinishTime: any } | null, fieldDefinitions?: Array<{ __typename?: 'FieldDefinition', label?: string | null, value: string, description?: string | null, editable: boolean }> | null, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any }> } };
+export type ExternalDataSourceInspectPageQuery = { __typename?: 'Query', externalDataSource: { __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, remoteUrl?: string | null, crmType: CrmType, autoUpdateEnabled: boolean, hasWebhooks: boolean, automatedWebhooks: boolean, autoUpdateWebhookUrl: string, webhookHealthcheck: boolean, geographyColumn?: string | null, geographyColumnType: GeographyTypes, postcodeField?: string | null, firstNameField?: string | null, lastNameField?: string | null, fullNameField?: string | null, emailField?: string | null, phoneField?: string | null, addressField?: string | null, titleField?: string | null, descriptionField?: string | null, imageField?: string | null, startTimeField?: string | null, endTimeField?: string | null, publicUrlField?: string | null, isImportScheduled: boolean, isUpdateScheduled: boolean, importedDataCount: number, organisationId: string, connectionDetails: { __typename?: 'ActionNetworkSource', apiKey: string } | { __typename?: 'AirtableSource', apiKey: string, baseId: string, tableId: string } | { __typename?: 'MailchimpSource', apiKey: string, listId: string } | { __typename?: 'TicketTailorSource' }, lastJob?: { __typename?: 'QueueJob', id: string, lastEventAt: any, status: ProcrastinateJobStatus } | null, importProgress?: { __typename?: 'BatchJobProgress', id: string, status: ProcrastinateJobStatus, total: number, succeeded: number, estimatedFinishTime: any } | null, updateProgress?: { __typename?: 'BatchJobProgress', id: string, status: ProcrastinateJobStatus, total: number, succeeded: number, estimatedFinishTime: any } | null, fieldDefinitions?: Array<{ __typename?: 'FieldDefinition', label?: string | null, value: string, description?: string | null, editable: boolean }> | null, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any }> } };
 
 export type DeleteUpdateConfigMutationVariables = Exact<{
   id: Scalars['String']['input'];
@@ -2836,10 +2959,11 @@ export const PublicUserDocument = {"kind":"Document","definitions":[{"kind":"Ope
       }
       const result: PossibleTypesResultData = {
   "possibleTypes": {
-    "AirtableSourceMailchimpSourceActionNetworkSource": [
+    "AirtableSourceMailchimpSourceActionNetworkSourceTicketTailorSource": [
       "ActionNetworkSource",
       "AirtableSource",
-      "MailchimpSource"
+      "MailchimpSource",
+      "TicketTailorSource"
     ],
     "Analytics": [
       "ActionNetworkSource",
@@ -2847,7 +2971,8 @@ export const PublicUserDocument = {"kind":"Document","definitions":[{"kind":"Ope
       "ExternalDataSource",
       "MailchimpSource",
       "MapReport",
-      "SharedDataSource"
+      "SharedDataSource",
+      "TicketTailorSource"
     ],
     "CommonData": [
       "AreaData",

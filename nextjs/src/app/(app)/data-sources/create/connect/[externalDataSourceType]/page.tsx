@@ -56,6 +56,7 @@ const TEST_DATA_SOURCE = gql`
       predefinedColumnNames
       defaultDataType
       remoteName
+      allowUpdates
     }
   }
 `;
@@ -94,23 +95,7 @@ export default function Page({
 
   const form = useForm<FormInputs>({
     defaultValues: {
-      name: '',
       geographyColumnType: GeographyTypes.Postcode,
-      geographyColumn: externalDataSourceType === "mailchimp"
-      ? 'ADDRESS.zip' :
-      externalDataSourceType === "actionnetwork"
-      ? "postal_addresses[0].postal_code"
-      : '',
-      dataType: context.dataType,
-      airtable: {
-        apiKey: '',
-        baseId: '',
-        tableId: '',
-      },
-      mailchimp: {
-        apiKey: '',
-        listId: ''
-      }
     },
   });
 
@@ -268,7 +253,7 @@ export default function Page({
         success: (d) => {
           const errors = d.errors || d.data?.createExternalDataSource.errors || []
           if (!errors.length && d.data?.createExternalDataSource.result) {
-            if (d.data?.createExternalDataSource.result.dataType === DataSourceType.Member) {
+            if (d.data?.createExternalDataSource.result.dataType === DataSourceType.Member && d.data.createExternalDataSource.result.allowUpdates) {
               router.push(
                 `/data-sources/create/configure/${d.data.createExternalDataSource.result.id}`,
               );
@@ -284,7 +269,7 @@ export default function Page({
         error(e) {
           return {
             title: "Connection failed",
-            description: e.message,
+            description: e.message
           }
         }
       },
@@ -678,6 +663,67 @@ export default function Page({
                       href="https://actionnetwork.org/docs/"
                     >
                       Read more.
+                    </a>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex flex-row gap-x-4">
+              <Button
+                variant="outline"
+                type="reset"
+                onClick={() => {
+                  router.back();
+                }}
+              >
+                Back
+              </Button>
+              <Button type="submit" variant={"reverse"} disabled={testSourceResult.loading}>
+                Test connection
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
+    );
+  }
+
+  if (externalDataSourceType === "tickettailor") {
+    return (
+      <div className="space-y-7">
+        <header>
+          <h1 className="text-hLg">Connecting to your Ticket Tailor box office</h1>
+          <p className="mt-6 text-meepGray-400 max-w-lg">
+            In order to import data from your Ticket Tailor box office, we{"'"}ll need a few
+            details.
+          </p>
+        </header>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(submitTestConnection)}
+            className="space-y-7 max-w-lg"
+          >
+            <div className='text-hSm'>Connection details</div>
+            <FormField
+              control={form.control}
+              name="tickettailor.apiKey"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ticket Tailor API key</FormLabel>
+                  <FormControl>
+                    {/* @ts-ignore */}
+                    <Input placeholder="sk_629...e" {...field} required />
+                  </FormControl>
+                  <FormDescription>
+                    Your API key can be found or generated in the Box Office Settings under API.
+                    <a
+                      className="underline"
+                      target="_blank"
+                      href="https://help.tickettailor.com/en/articles/4593218-how-do-i-connect-to-the-ticket-tailor-api"
+                    >
+                      Guide to finding your API key.
                     </a>
                   </FormDescription>
                   <FormMessage />

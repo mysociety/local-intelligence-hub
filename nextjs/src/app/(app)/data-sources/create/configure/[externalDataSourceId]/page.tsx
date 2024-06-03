@@ -25,6 +25,8 @@ const GET_UPDATE_CONFIG = gql`
     externalDataSource(pk: $ID) {
       id
       autoUpdateEnabled
+      allowUpdates
+      hasWebhooks
       updateMapping {
         destinationColumn
         source
@@ -95,6 +97,20 @@ export default function Page({
         return `Couldn't save`;
       },
     });
+  }
+
+  if (!source.allowUpdates) {
+    return (
+      <Button
+        variant="outline"
+        type="reset"
+        onClick={() => {
+          router.push(`/data-sources/inspect/${externalDataSourceId}`);
+        }}
+      >
+        Done
+      </Button>
+    )
   }
 
   return (

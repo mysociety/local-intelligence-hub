@@ -98,6 +98,9 @@ const GET_UPDATE_CONFIG = gql`
         ... on ActionNetworkSource {
           apiKey
         }
+        ... on TicketTailorSource {
+          apiKey
+        }
       }
       lastJob {
         id
@@ -106,6 +109,7 @@ const GET_UPDATE_CONFIG = gql`
       }
       autoUpdateEnabled
       hasWebhooks
+      allowUpdates
       automatedWebhooks
       autoUpdateWebhookUrl
       webhookHealthcheck
@@ -201,7 +205,7 @@ export default function InspectExternalDataSource({
 
   const source = data?.externalDataSource
   
-  const allowMapping = source?.dataType == DataSourceType.Member
+  const allowMapping = source?.dataType == DataSourceType.Member && source.allowUpdates
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-7">
@@ -312,7 +316,7 @@ export default function InspectExternalDataSource({
           </section>
         </>
       )}
-        {(
+      {source.allowUpdates && (
         <>
           <div className="border-b-4 border-meepGray-700 pt-10" />
           <section className="space-y-4">
@@ -329,31 +333,29 @@ export default function InspectExternalDataSource({
                     crmType={source.crmType}
                     />
                   </p>
-                  {allowMapping && (
-                    <div className='space-y-4'>
-                      {!source.isUpdateScheduled ? (
-                        <TriggerUpdateButton id={source.id} />
-                      ) : (
-                        <>
-                          <Button disabled>
-                            <span className='flex flex-row gap-2 items-center'>
-                              <LoadingIcon size={"18"} />
-                              <span>{
-                                source.updateProgress?.status === ProcrastinateJobStatus.Doing
-                                  ? "Updating..."
-                                  : "Scheduled"
-                              }</span>
-                            </span>
-                          </Button>
-                          {source.updateProgress?.status === ProcrastinateJobStatus.Doing && (
-                            <BatchJobProgressBar batchJobProgress={source.updateProgress} pastTenseVerb="Updated" />
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
+                  <div className='space-y-4'>
+                    {!source.isUpdateScheduled ? (
+                      <TriggerUpdateButton id={source.id} />
+                    ) : (
+                      <>
+                        <Button disabled>
+                          <span className='flex flex-row gap-2 items-center'>
+                            <LoadingIcon size={"18"} />
+                            <span>{
+                              source.updateProgress?.status === ProcrastinateJobStatus.Doing
+                                ? "Updating..."
+                                : "Scheduled"
+                            }</span>
+                          </span>
+                        </Button>
+                        {source.updateProgress?.status === ProcrastinateJobStatus.Doing && (
+                          <BatchJobProgressBar batchJobProgress={source.updateProgress} pastTenseVerb="Updated" />
+                        )}
+                      </>
+                    )}
+                  </div>
                 </section>
-                {allowMapping && (
+                {source.hasWebhooks && (
                   <section className='space-y-4'>
                     <h2 className="text-hSm mb-5">Auto-updates</h2>
                     <p className='text-sm text-meepGray-400'>
@@ -444,6 +446,13 @@ export default function InspectExternalDataSource({
             </div>
           ) : null}
           {source.connectionDetails.__typename === 'ActionNetworkSource' ? (
+            <div className='mt-2'>
+              <code>
+                {source.connectionDetails.apiKey}
+              </code>
+            </div>
+          ) : null}
+          {source.connectionDetails.__typename === 'TicketTailorSource' ? (
             <div className='mt-2'>
               <code>
                 {source.connectionDetails.apiKey}
