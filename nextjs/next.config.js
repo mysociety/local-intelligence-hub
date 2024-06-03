@@ -1,11 +1,18 @@
 module.exports = {
   async headers() {
-    return process.env.NEXT_PUBLIC_ENVIRONMENT === "production" ? [
-      {
-        key: "Strict-Transport-Security",
-        value: "max-age=600; includeSubDomains; preload",
-      },
-    ] : [];
+    return process.env.NEXT_PUBLIC_ENVIRONMENT === "production"
+      ? [
+          {
+            source: "/",
+            headers: [
+              {
+                key: "Strict-Transport-Security",
+                value: "max-age=600; includeSubDomains; preload",
+              },
+            ],
+          },
+        ]
+      : {};
   },
   images: {
     remotePatterns: [
