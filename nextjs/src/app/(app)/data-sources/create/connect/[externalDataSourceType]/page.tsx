@@ -167,7 +167,7 @@ export default function Page({
   useGuessedField('geographyColumn', ["postcode", "postal code", "zip code", "zip"])
   useGuessedField('emailField', ["email"])
   useGuessedField('phoneField', ["mobile", "phone"])
-  useGuessedField('addressField', ["street", "line1", "address", "location"], ['email'])
+  useGuessedField('addressField', ["street", "line1", "address", "location", "venue"], ['email'])
   useGuessedField('fullNameField', ["full name", "name"])
   useGuessedField('firstNameField', ["first name", "given name"])
   useGuessedField('titleField', ["title", "name"])
@@ -175,7 +175,7 @@ export default function Page({
   useGuessedField('imageField', ["image", "photo", "picture", "avatar", "attachment", "attachments", "file", "files", "graphic", "poster", "logo", "icon"])
   useGuessedField('startTimeField', ["start", "start time", "start date", "begin", "beginning", "start_at", "start_time", "start_date", "date", "time", "datetime", "timestamp", "from"])
   useGuessedField('endTimeField', ["end", "end time", "end date", "finish", "finish time", "finish date", "end_at", "end_time", "end_date", "until"])
-  useGuessedField('publicUrlField', ["public url", "public link", "public", "url", "link", "website", "webpage", "web", "page", "site", "address", "href", "uri", "path", "slug", "permalink"])
+  useGuessedField('publicUrlField', ["public url", "public link", "public", "url", "link", "website", "webpage", "web", "page", "site", "href", "uri", "path", "slug", "permalink"])
 
   useEffect(() => {
     if (testSourceResult.data?.testDataSource?.defaultDataType) {
