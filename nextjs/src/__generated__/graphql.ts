@@ -1867,6 +1867,7 @@ export type Query = {
   enrichPostcodes: Array<AuthenticatedPostcodeQueryResponse>;
   externalDataSource: ExternalDataSource;
   externalDataSources: Array<ExternalDataSource>;
+  genericDataByExternalDataSource: Array<GenericData>;
   hubByHostname?: Maybe<HubHomepage>;
   hubHomepage: HubHomepage;
   hubHomepages: Array<HubHomepage>;
@@ -1932,6 +1933,11 @@ export type QueryExternalDataSourceArgs = {
 
 export type QueryExternalDataSourcesArgs = {
   filters?: InputMaybe<ExternalDataSourceFilter>;
+};
+
+
+export type QueryGenericDataByExternalDataSourceArgs = {
+  externalDataSourceId: Scalars['String']['input'];
 };
 
 

@@ -111,6 +111,9 @@ class Query(UserQueries):
             extensions=[IsAuthenticated()],
         )
     )
+    generic_data_by_external_data_source: List[model_types.GenericData] = (
+        public_queries.generic_data_by_external_data_source
+    )
 
     @strawberry.field
     def test_data_source(

@@ -15,8 +15,10 @@ import { VerticalSpace, VerticalSpaceProps } from "./blocks/VerticalSpace";
 import { GridRow, GridRowProps } from "./blocks/GridRow";
 import { SignPost, SignPostProps } from "./blocks/SignPost";
 import { SectionHeader, SectionHeaderProps } from "./blocks/SectionHeader/SectionHeader";
+import { EventList, EventListProps } from "./blocks/EventList";
 
 export type Props = {
+  EventList: EventListProps;
   ButtonGroup: ButtonGroupProps;
   Card: CardProps;
   Columns: ColumnsProps;
@@ -53,9 +55,10 @@ export const conf: UserConfig = {
       components: [
         "Card",
         "Hero",
+        "EventList",
         "EventCard",
         "SignPost",
-        "SectionHeader"
+        "SectionHeader",
       ],
     },
     layout: {
@@ -91,7 +94,7 @@ export const conf: UserConfig = {
     GridRow,
     SignPost,
     SectionHeader,
-
+    EventList,
     RichText: PuckRichText
   },
 };
