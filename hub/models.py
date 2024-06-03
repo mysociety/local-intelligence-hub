@@ -2912,7 +2912,7 @@ class TicketTailorSource(ExternalDataSource):
         return ["api_key"]
 
     @cached_property
-    def client(self, method: str):
+    def client(self):
         # https://developers.tickettailor.com/#ticket-tailor-api
         auth = httpx.BasicAuth(username=self.api_key, password="")
         client = httpx.Client(
@@ -2925,7 +2925,8 @@ class TicketTailorSource(ExternalDataSource):
     def healthcheck(self):
         # https://developers.tickettailor.com/#ticket-tailor-api-ping
         pong = self.client.get("/v1/ping")
-        return pong.json().get("version", None) == "pong"
+        json = pong.json()
+        return json.get("version", "X").startswith("1.")
 
     def field_definitions(self):
         """
@@ -2997,6 +2998,9 @@ class TicketTailorSource(ExternalDataSource):
             self.FieldDefinition(label="Venue", value="venue.name", editable=False),
             self.FieldDefinition(label="Postal code", value="venue.postal_code", editable=False),
             self.FieldDefinition(label="URL", value="url", editable=False),
+            self.FieldDefinition(label="Thumbnail", value="images.thumbnail", editable=False),
+            self.FieldDefinition(label="Status", value="status", editable=False),
+            self.FieldDefinition(label="Is online?", value="online_event", editable=False),
         ]
         return fields
 
