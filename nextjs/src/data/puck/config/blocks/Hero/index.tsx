@@ -10,6 +10,37 @@ import { Search } from "lucide-react";
 import { PuckText } from "../../components/PuckText";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from 'framer-motion';
+
+const words = ["Climate", "People", "Nature"];
+
+const RotatingWords = () => {
+  const [index, setIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setIndex((prev) => (prev + 1) % words.length);
+    }, 4000); // Change word every 2 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <span>
+      <AnimatePresence exitBeforeEnter>
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.5 }}
+         
+        >
+          {words[index]}
+        </motion.div>
+      </AnimatePresence>
+    </span>
+  );
+};
 
 export type HeroProps = {
   title: string;
@@ -61,7 +92,13 @@ function HeroRenderer ({ prompt, description, }:  HeroProps) {
       <div className="z-20 lg:w-1/2 lg:mt-0 lg:py-[20px] lg:pr-[20px] gap-0">
         <div className=" bg-jungle-green-50 lg:rounded-[20px] p-[25px] flex flex-col place-content-center gap-10 justify-between z-10  w-full ">
           <div className="flex flex-col gap-8">
-            <h1 className="text-hub5xl"><span className="italic">The</span> <span className="text-jungle-green-400">Climate</span> Hub</h1>
+            <h1 className="text-hub5xl flex flex-wrap gap-3">
+            <span className="italic">The</span>{" "}
+                <span className="text-jungle-green-400 w-[150px] flex justify-center">
+                  <RotatingWords /> 
+                </span>{" "}
+               <span>Hub</span> 
+              </h1>
             <div className="text-jungle-green-neutral text-xl">
               <PuckText text={description} />
             </div>
