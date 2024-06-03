@@ -9,13 +9,15 @@ import { PuckText } from "../../components/PuckText"
 import { gql, useQuery } from "@apollo/client";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import { makeFrontEndClient } from "@/components/apollo-wrapper";
-import { compareAsc, formatDate, isAfter } from "date-fns";
+import { compareAsc, formatDate, isBefore } from "date-fns";
+import { FieldDefinition } from "@/__generated__/graphql";
 
 export type EventListProps = {
   displayEventTitles: boolean
   displayEventDescriptions: boolean
-  eventDataSource: any
+  eventDataSource?: { name: string, count: number, id: string, fieldDefinitions: FieldDefinition[] }
   noUpcomingEventsMessage: string
+  customFilters: Array<{ fieldToCheck: string, comparison: string, comparisonValue: string }>
 };
 
 const TypeBadge = ({ type }: { type: string }) => {
@@ -27,55 +29,92 @@ const TypeBadge = ({ type }: { type: string }) => {
 }
 
 export const EventList: ComponentConfig<EventListProps> = {
-  fields: {
-    displayEventTitles: {
-      type: "radio",
-      options: [
-        { label: "Show", value: true },
-        { label: "Hide", value: false },
-      ],
-    },
-    displayEventDescriptions: {
-      type: "radio",
-      options: [
-        { label: "Show", value: true },
-        { label: "Hide", value: false },
-      ],
-    },
-    eventDataSource: {
-      type: "external",
-      fetchList: async () => {
-        // Get external data sources for user's org of type EVENT
-        const client = makeFrontEndClient()
-        const { data } = await client.query({
-          query: gql`
-            query GetEventSources {
-              externalDataSources(filters:  {
-                 dataType: EVENT
-              }) {
-                name
-                id
-                eventCount: importedDataCount
-              }
-            }
-          `
-        })
-        return data.externalDataSources.map((source: any) => ({
-          name: source.name,
-          count: source.eventCount,
-          id: source.id,
-        }))
+  resolveFields(data, { fields }) {
+    return {
+      displayEventTitles: {
+        type: "radio",
+        options: [
+          { label: "Show", value: true },
+          { label: "Hide", value: false },
+        ],
       },
-    },
-    noUpcomingEventsMessage: {
-      type: "text",
-    },
+      displayEventDescriptions: {
+        type: "radio",
+        options: [
+          { label: "Show", value: true },
+          { label: "Hide", value: false },
+        ],
+      },
+      eventDataSource: {
+        type: "external",
+        fetchList: async () => {
+          // Get external data sources for user's org of type EVENT
+          const client = makeFrontEndClient()
+          const { data } = await client.query({
+            query: gql`
+              query GetEventSources {
+                externalDataSources(filters:  {
+                    dataType: EVENT
+                }) {
+                  name
+                  id
+                  eventCount: importedDataCount
+                  # For custom filtering
+                  fieldDefinitions {
+                    label
+                    value
+                  }
+                }
+              }
+            `
+          })
+          return data.externalDataSources.map((source: any) => ({
+            name: source.name,
+            count: source.eventCount,
+            id: source.id,
+            fieldDefinitions: source.fieldDefinitions
+          }))
+        },
+      },
+      noUpcomingEventsMessage: {
+        type: "text",
+      },
+      customFilters: {
+        type: "array",
+        arrayFields: {
+          fieldToCheck: {
+            type: "select",
+            options: data.props.eventDataSource?.fieldDefinitions?.map(f => ({
+              label: f.label || f.value,
+              value: f.value,
+            })) || [],
+          },
+          comparison: {
+            type: "select",
+            options: [
+              { label: "Equals", value: "equal" },
+              { label: "Doesn't Equal", value: "notEqual" },
+              { label: "Contains", value: "contains" },
+              { label: "Doesn't Contain", value: "notContains"},
+              { label: "Starts with", value: "startsWith" },
+              { label: "Doesn't Start with", value: "notStartsWith"},
+              { label: "Ends with", value: "endsWith" },
+              { label: "Doesn't End with", value: "notEndsWith"}
+            ],
+          },
+          comparisonValue: {
+            type: "text",
+          },
+        }
+      }
+    }
   },
   defaultProps: {
     displayEventTitles: false,
     displayEventDescriptions: false,
-    eventDataSource: null,
+    eventDataSource: undefined,
     noUpcomingEventsMessage: "There aren't any upcoming events",
+    customFilters: []
   },
   render: (props) => {
     return (
@@ -91,9 +130,10 @@ type EventData = {
     startTime: string,
     endTime?: string,
     publicUrl: string
+    json: Record<string, any>
 }
 
-function RenderEventList ({ eventDataSource, displayEventTitles, displayEventDescriptions, noUpcomingEventsMessage }: EventListProps) {
+function RenderEventList ({ eventDataSource, displayEventTitles, displayEventDescriptions, noUpcomingEventsMessage, customFilters }: EventListProps) {
   const eventData = useQuery<{ genericDataByExternalDataSource: EventData[] }>(gql`
     query GetEventList($sourceId: String!) {
       genericDataByExternalDataSource(externalDataSourceId: $sourceId) {
@@ -103,6 +143,7 @@ function RenderEventList ({ eventDataSource, displayEventTitles, displayEventDes
         startTime
         endTime
         publicUrl
+        json
       }
     }
   `, {
@@ -118,7 +159,33 @@ function RenderEventList ({ eventDataSource, displayEventTitles, displayEventDes
 
   const events = eventData.data?.genericDataByExternalDataSource
     ?.filter(e => {
-      return isAfter(new Date(e.startTime), new Date())
+      if (isBefore(new Date(e.startTime), new Date())) {
+        return false
+      }
+      if (customFilters.length) {
+        return customFilters.every(({ fieldToCheck, comparison, comparisonValue }) => {
+          const value = e.json[fieldToCheck]
+          switch (comparison) {
+            case 'equal':
+              return value === comparisonValue
+            case 'notEqual':
+              return value !== comparisonValue
+            case 'contains':
+              return value?.includes(comparisonValue)
+            case 'notContains':
+              return !value?.includes(comparisonValue)
+            case 'startsWith':
+              return value?.startsWith(comparisonValue)
+            case 'notStartsWith':
+              return !value?.startsWith(comparisonValue)
+            case 'endsWith':
+              return value?.endsWith(comparisonValue)
+            case 'notEndsWith':
+              return !value?.endsWith(comparisonValue)
+          }
+        })
+      }
+      return true
     })
     .sort((a, b) => {
       return compareAsc(new Date(a.startTime), new Date(b.startTime))
