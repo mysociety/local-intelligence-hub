@@ -76,6 +76,8 @@ import { UpdateExternalDataSourceFields } from "@/components/UpdateExternalDataS
 import { ManageSourceSharing } from "./ManageSourceSharing";
 import { BatchJobProgressBar } from "@/components/BatchJobProgress";
 import { format } from "d3-format";
+import pluralize from "pluralize";
+import { externalDataSourceOptions } from "@/lib/data";
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {
@@ -188,7 +190,6 @@ export default function InspectExternalDataSource({
   const router = useRouter();
   const client = useApolloClient();
   
-
   const { loading, error, data, refetch } = useQuery<
     ExternalDataSourceInspectPageQuery,
     ExternalDataSourceInspectPageQueryVariables
@@ -207,12 +208,14 @@ export default function InspectExternalDataSource({
   
   const allowMapping = source?.dataType == DataSourceType.Member && source.allowUpdates
 
+  const crmInfo = source?.crmType ? externalDataSourceOptions[source?.crmType] : undefined
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-7">
       <header className="flex flex-row justify-between gap-8">
         <div className='w-full'>
-          <div className="text-meepGray-400">
-            {dataType === DataSourceType.Member ? "Member list" : "Custom data layer"}
+          <div className="text-meepGray-400 capitalize">
+            {dataType === DataSourceType.Member ? "Member list" : dataType ? pluralize(dataType.toLowerCase()) : "Data source"} &bullet; {crmInfo?.name || crmType}
           </div>
           <h1
             className="text-hLg"
