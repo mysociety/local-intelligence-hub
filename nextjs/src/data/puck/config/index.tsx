@@ -15,6 +15,7 @@ import { VerticalSpace, VerticalSpaceProps } from "./blocks/VerticalSpace";
 import { GridRow, GridRowProps } from "./blocks/GridRow";
 import { SignPost, SignPostProps } from "./blocks/SignPost";
 import { SectionHeader, SectionHeaderProps } from "./blocks/SectionHeader/SectionHeader";
+import { FilterableGrid, FilterableGridProps } from "./blocks/FilterableGrid";
 import { EventList, EventListProps } from "./blocks/EventList";
 
 export type Props = {
@@ -31,6 +32,7 @@ export type Props = {
   VerticalSpace: VerticalSpaceProps;
   EventCard: EventCardProps;
   GridRow: GridRowProps;
+  FilterableGrid: FilterableGridProps;
   SignPost: SignPostProps;
   SectionHeader: SectionHeaderProps;
 };
@@ -63,13 +65,14 @@ export const conf: UserConfig = {
     },
     layout: {
       components: [
+        "FilterableGrid",
         "GridRow",
         "Columns",
         "Flex",
         "VerticalSpace"
       ],
     },
-    typography: {
+    text: {
       components: [
         "Heading",
         "RichText",
@@ -92,6 +95,7 @@ export const conf: UserConfig = {
     VerticalSpace,
     EventCard,
     GridRow,
+    FilterableGrid,
     SignPost,
     SectionHeader,
     EventList,
