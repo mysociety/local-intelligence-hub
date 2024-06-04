@@ -2743,6 +2743,10 @@ class ActionNetworkSource(ExternalDataSource):
                 )
             )
         return fields
+    
+    def get_member_ids_from_webhook(self, webhook_payload: dict) -> list[str]:
+        print(f"payload {webhook_payload}")
+        return []
 
     async def fetch_all(self):
         # TODO: pagination

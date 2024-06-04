@@ -359,13 +359,13 @@ export default function InspectExternalDataSource({
                     <p className='text-sm text-meepGray-400'>
                       Auto-updates are {source.autoUpdateEnabled ? "enabled" : "disabled"} for this data source. Mapped can automatically update this data source based on the mapping you{"'"}ve defined in the Data Mapping section.
                     </p>
-                    {source.lastJob ? (
-                      <div className="text-meepGray-400">
-                        Last sync:{" "}
-                        {formatRelative(source.lastJob.lastEventAt, new Date())} (
-                        {source.lastJob.status})
-                      </div>
-                    ) : null}
+                    {(source.connectionDetails.__typename === "ActionNetworkSource") && (
+                      <p className='text-sm text-meepGray-400 text-red-400'>
+                        Warning: Action Network auto-updates only work for new members, not
+                        changes to existing members{"'"} details. If existing members change,
+                        you must trigger a full update using the button on the left.
+                      </p>
+                    )}
                     {source.automatedWebhooks ? (
                       <>
                         <AutoUpdateSwitch externalDataSource={source} />
@@ -383,11 +383,22 @@ export default function InspectExternalDataSource({
                         )}
                       </>
                     ) : (
-                      <div>
-                        {/* TODO: Add copy etc. */}
-                        Webhook URL for auto-updates: <code>{source.autoUpdateWebhookUrl}</code>
+                      <div className="flex flex-col gap-4">
+                        <p>
+                          Webhook URL for auto-updates:
+                        </p>
+                        <code className="bg-black p-2 rounded">{source.autoUpdateWebhookUrl}</code>
+                        <p>Turn this switch on once you have added the above Webhook URL to your CRM:</p>
+                        <AutoUpdateSwitch externalDataSource={source} />
                       </div>
                     )}
+                    {source.lastJob ? (
+                      <div className="text-meepGray-400">
+                        Last sync:{" "}
+                        {formatRelative(source.lastJob.lastEventAt, new Date())} (
+                        {source.lastJob.status})
+                      </div>
+                    ) : null}
                   </section>
                 )}
               </header>
