@@ -58,6 +58,7 @@ const TEST_DATA_SOURCE = gql`
       defaultDataType
       remoteName
       allowUpdates
+      defaults
     }
   }
 `;
@@ -214,6 +215,14 @@ export default function Page({
       const dataType = testSourceResult.data.testDataSource.defaultDataType as DataSourceType
       context.dataType = dataType
       form.setValue("dataType", dataType)
+      // Default dict
+      const defaultFieldValues = testSourceResult.data.testDataSource.defaults || {}
+      for (const key of defaultFieldValues) {
+        const value = defaultFieldValues[key]
+        if (value !== null && value !== undefined) {
+          form.setValue(key, value)
+        }
+      }
     }
   }, [testSourceResult.data])
 
