@@ -74,7 +74,7 @@ class Organisation(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
-    logo = models.ImageField(null=True, upload_to="organisation")
+    logo = models.ImageField(null=True, blank=True, upload_to="organisation")
 
     def save(self, *args, **kwargs):
         if not self.slug:
