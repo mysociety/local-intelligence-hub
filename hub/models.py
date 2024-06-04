@@ -913,21 +913,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     # Allow sources to define default values for themselves
     # for example opinionated CRMs which are only for people and have defined slots for data
-    defaults = {
-        # Reports
-        "data_type": None,
-        # Geocoding
-        "geography_column": None,
-        "geography_column_type": None,
-        # Imports
-        "postcode_field": None,
-        "first_name_field": None,
-        "last_name_field": None,
-        "full_name_field": None,
-        "email_field": None,
-        "phone_field": None,
-        "address_field": None,
-    }
+    defaults = {}
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     deduplication_hash = models.CharField(max_length=32, unique=True, editable=False)

@@ -34,6 +34,7 @@ import {
   CreateSourceMutation,
   TestDataSourceQuery,
   TestDataSourceQueryVariables,
+  InputMaybe,
 } from "@/__generated__/graphql";
 import { toastPromise } from "@/lib/toast";
 import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
@@ -94,10 +95,35 @@ export default function Page({
     context.setStep(2)
   }, [context])
 
+  const RNN_ORIG = Symbol();
+
+  const defaultValues: CreateExternalDataSourceInput & ExternalDataSourceInput = {
+    name: '',
+    geographyColumnType: GeographyTypes.Postcode,
+    geographyColumn: '',
+    dataType: context.dataType,
+    airtable: {
+      apiKey: '',
+      baseId: '',
+      tableId: '',
+    },
+    mailchimp: {
+      apiKey: '',
+      listId: ''
+    },
+    actionnetwork: {
+      apiKey: '',
+      groupSlug: ''
+    },
+    tickettailor: {
+      apiKey: ''
+    }
+  }
+
   const form = useForm<FormInputs>({
     defaultValues: {
       geographyColumnType: GeographyTypes.Postcode
-    },
+    } as FormInputs,
   });
 
   const dataType = form.watch("dataType") as DataSourceType

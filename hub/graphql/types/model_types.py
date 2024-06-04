@@ -786,6 +786,7 @@ class BaseDataSource(Analytics):
     introspect_fields: bool = attr_field()
     allow_updates: bool = attr_field()
     default_data_type: Optional[str] = attr_field()
+    defaults: JSON = attr_field()
 
     @strawberry_django.field
     def is_import_scheduled(self: models.ExternalDataSource, info: Info) -> bool:

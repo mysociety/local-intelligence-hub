@@ -78,6 +78,7 @@ export type ActionNetworkSource = Analytics & {
   crmType: CrmType;
   dataType: DataSourceType;
   defaultDataType?: Maybe<Scalars['String']['output']>;
+  defaults: Scalars['JSON']['output'];
   description?: Maybe<Scalars['String']['output']>;
   descriptionField?: Maybe<Scalars['String']['output']>;
   emailField?: Maybe<Scalars['String']['output']>;
@@ -198,6 +199,7 @@ export type AirtableSource = Analytics & {
   crmType: CrmType;
   dataType: DataSourceType;
   defaultDataType?: Maybe<Scalars['String']['output']>;
+  defaults: Scalars['JSON']['output'];
   description?: Maybe<Scalars['String']['output']>;
   descriptionField?: Maybe<Scalars['String']['output']>;
   emailField?: Maybe<Scalars['String']['output']>;
@@ -744,6 +746,7 @@ export type ExternalDataSource = Analytics & {
   crmType: CrmType;
   dataType: DataSourceType;
   defaultDataType?: Maybe<Scalars['String']['output']>;
+  defaults: Scalars['JSON']['output'];
   description?: Maybe<Scalars['String']['output']>;
   descriptionField?: Maybe<Scalars['String']['output']>;
   emailField?: Maybe<Scalars['String']['output']>;
@@ -1172,6 +1175,7 @@ export type MailchimpSource = Analytics & {
   crmType: CrmType;
   dataType: DataSourceType;
   defaultDataType?: Maybe<Scalars['String']['output']>;
+  defaults: Scalars['JSON']['output'];
   description?: Maybe<Scalars['String']['output']>;
   descriptionField?: Maybe<Scalars['String']['output']>;
   emailField?: Maybe<Scalars['String']['output']>;
@@ -2110,6 +2114,7 @@ export type SharedDataSource = Analytics & {
   crmType: CrmType;
   dataType: DataSourceType;
   defaultDataType?: Maybe<Scalars['String']['output']>;
+  defaults: Scalars['JSON']['output'];
   description?: Maybe<Scalars['String']['output']>;
   descriptionField?: Maybe<Scalars['String']['output']>;
   emailField?: Maybe<Scalars['String']['output']>;
@@ -2247,6 +2252,7 @@ export type TicketTailorSource = Analytics & {
   crmType: CrmType;
   dataType: DataSourceType;
   defaultDataType?: Maybe<Scalars['String']['output']>;
+  defaults: Scalars['JSON']['output'];
   description?: Maybe<Scalars['String']['output']>;
   descriptionField?: Maybe<Scalars['String']['output']>;
   emailField?: Maybe<Scalars['String']['output']>;
