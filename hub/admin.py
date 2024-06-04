@@ -5,12 +5,12 @@ from hub.models import (
     AreaData,
     DataSet,
     DataType,
+    Membership,
+    Organisation,
     Person,
     PersonData,
     Report,
     UserProperties,
-    Organisation,
-    Membership
 )
 
 
@@ -180,12 +180,9 @@ class ReportAdmin(admin.ModelAdmin):
 
 @admin.register(Organisation)
 class OrganisationAdmin(admin.ModelAdmin):
-    list_display = (
-        "name",
-    )
-    search_fields = (
-        "name",
-    )
+    list_display = ("name",)
+    search_fields = ("name",)
+
 
 # Membership
 @admin.register(Membership)

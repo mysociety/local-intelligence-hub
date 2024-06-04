@@ -83,7 +83,7 @@ class Organisation(models.Model):
 
     def __str__(self):
         return self.name
-    
+
     @classmethod
     def get_or_create_for_user(self, user: any):
         if isinstance(user, (str, int)):
@@ -94,6 +94,7 @@ class Organisation(models.Model):
         org = self.objects.create(name=f"{user.username}'s personal workspace")
         Membership.objects.create(user=user, organisation=org, role="owner")
         return org
+
 
 class Membership(models.Model):
     class Meta:
@@ -2959,14 +2960,14 @@ class HubHomepage(Page):
 
     def get_nav_links(self) -> list[HubNavLinks]:
         return self.nav_links
-    
+
     @classmethod
     def create_for_user(
         cls,
         user,
         hostname,
-        port = 80,
-        org_id = None,
+        port=80,
+        org_id=None,
     ):
         """
         Create a new HubHomepage for a user.
@@ -2985,10 +2986,7 @@ class HubHomepage(Page):
         root_page.add_child(instance=hub)
         hub.save()
         Site.objects.create(
-            hostname=hostname,
-            port=port,
-            site_name=hostname,
-            root_page=hub
+            hostname=hostname, port=port, site_name=hostname, root_page=hub
         )
         return hub
 

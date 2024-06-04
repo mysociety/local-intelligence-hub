@@ -1,8 +1,6 @@
-from typing import Optional
 from django.core.management.base import BaseCommand
 
-from hub.models import DataSet, DataType, HubHomepage, Organisation
-from hub.transformers import DataTypeConverter
+from hub.models import HubHomepage
 
 
 class Command(BaseCommand):
