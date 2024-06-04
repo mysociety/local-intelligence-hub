@@ -50,6 +50,7 @@ env = environ.Env(
     TEST_MAILCHIMP_MEMBERLIST_AUDIENCE_ID=(str, ""),
     TEST_ACTIONNETWORK_MEMBERLIST_API_KEY=(str, ""),
     DJANGO_LOG_LEVEL=(str, "INFO"),
+    DJANGO_HUB_LOG_LEVEL=(str, None),
     POSTHOG_API_KEY=(str, False),
     POSTHOG_HOST=(str, False),
     ENVIRONMENT=(str, "development"),
@@ -106,6 +107,9 @@ TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME = env(
     "TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME"
 )
 TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY = env("TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY")
+DJANGO_LOG_LEVEL = env("DJANGO_LOG_LEVEL")
+DJANGO_HUB_LOG_LEVEL = env("DJANGO_HUB_LOG_LEVEL")
+DJANGO_HUB_LOG_LEVEL = DJANGO_HUB_LOG_LEVEL if DJANGO_HUB_LOG_LEVEL is not None else DJANGO_LOG_LEVEL
 
 # mailing list signup config
 MAILCHIMP_MYSOC_KEY = env("MAILCHIMP_MYSOC_KEY")
@@ -341,8 +345,12 @@ LOGGING = {
         },
         "django": {
             "handlers": ["console"],
-            "level": env("DJANGO_LOG_LEVEL"),
+            "level": DJANGO_LOG_LEVEL,
         },
+        "hub": {
+            "handlers": ["console"],
+            "level": DJANGO_HUB_LOG_LEVEL,
+        }
     },
 }
 if DEBUG:
