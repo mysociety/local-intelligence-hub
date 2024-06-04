@@ -22,7 +22,7 @@ export function SearchPanel({
         Local Climate and Nature Hustings
       </h1>
       <p className='text-lg leading-tight text-jungle-green-neutral'>
-        Explore our map of Husting events happening all over the uk or input your postcode to see what{"’"}s happening near you. We{"’"}ve had over 300+ events so far.
+        Explore our map of Husting events happening all over the UK or input your postcode to see what{"’"}s happening near you.
       </p>
 
       <form onSubmit={onSubmit}>
