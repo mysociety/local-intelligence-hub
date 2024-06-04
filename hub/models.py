@@ -1946,6 +1946,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         external_data_source: Union["ExternalDataSource", str],
     ) -> DataPermissions:
         if external_data_source is None:
+            logger.debug("No source provided, returning default permissions")
             return cls.DataPermissions(
                 can_display_points=False,
                 can_display_details=False,
