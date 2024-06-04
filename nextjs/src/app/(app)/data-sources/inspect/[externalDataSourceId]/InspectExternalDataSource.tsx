@@ -99,6 +99,7 @@ const GET_UPDATE_CONFIG = gql`
         }
         ... on ActionNetworkSource {
           apiKey
+          groupSlug
         }
         ... on TicketTailorSource {
           apiKey

@@ -25,7 +25,6 @@ export const MAP_REPORT_LAYERS_SUMMARY = gql`
         name
         isImportScheduled
         importedDataCount
-        recordUrlTemplate
         crmType
         dataType
         organisation {

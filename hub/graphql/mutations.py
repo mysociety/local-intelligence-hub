@@ -242,6 +242,7 @@ class MailChimpSourceInput(ExternalDataSourceInput):
 @strawberry_django.input(models.ActionNetworkSource, partial=True)
 class ActionNetworkSourceInput(ExternalDataSourceInput):
     api_key: str
+    group_slug: str
 
 
 @strawberry_django.input(models.TicketTailorSource, partial=True)
