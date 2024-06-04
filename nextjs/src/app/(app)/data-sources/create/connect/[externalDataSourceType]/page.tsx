@@ -110,6 +110,10 @@ export default function Page({
       mailchimp: {
         apiKey: '',
         listId: ''
+      },
+      actionnetwork: {
+        apiKey: '',
+        groupSlug: ''
       }
     },
   });
@@ -665,6 +669,25 @@ export default function Page({
             className="space-y-7 max-w-lg"
           >
             <div className='text-hSm'>Connection details</div>
+            <FormField
+              control={form.control}
+              name="actionnetwork.groupSlug"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Action Network Group Slug</FormLabel>
+                  <FormControl>
+                    {/* @ts-ignore */}
+                    <Input placeholder="my-group" {...field} required />
+                  </FormControl>
+                  <FormDescription>
+                    Get your group slug from the group dashboard in Action Network.
+                    The URL will be {'"'}https://actionnetwork.org/groups/your-group-name/manage{'"'},
+                    with your group slug in the place of {'"'}your-group_name{'"'}.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="actionnetwork.apiKey"
