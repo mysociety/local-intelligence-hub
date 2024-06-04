@@ -215,7 +215,9 @@ export default function InspectExternalDataSource({
       <header className="flex flex-row justify-between gap-8">
         <div className='w-full'>
           <div className="text-meepGray-400 capitalize">
-            {dataType === DataSourceType.Member ? "Member list" : dataType ? pluralize(dataType.toLowerCase()) : "Data source"} &bullet; {crmInfo?.name || crmType}
+            {dataType === DataSourceType.Member ? "Member list" : dataType ? pluralize(dataType.toLowerCase()) : "Data source"}
+            <span>&nbsp;&#x2022;&nbsp;</span>
+            {crmInfo?.name || crmType}
           </div>
           <h1
             className="text-hLg"

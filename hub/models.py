@@ -708,7 +708,7 @@ class GenericData(CommonData):
     address = models.CharField(max_length=1000, blank=True, null=True)
     title = models.CharField(max_length=1000, blank=True, null=True)
     description = models.TextField(max_length=3000, blank=True, null=True)
-    image = models.ImageField(null=True, upload_to="generic_data")
+    image = models.ImageField(null=True, max_length=1000, upload_to="generic_data")
     start_time = models.DateTimeField(blank=True, null=True)
     end_time = models.DateTimeField(blank=True, null=True)
     public_url = models.URLField(max_length=2000, blank=True, null=True)
@@ -1450,7 +1450,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         Get a field from a record.
         """
-        return record.get(field, None)
+        return get(record, field, None)
 
     def get_record_dict(self, record: any) -> dict:
         """
@@ -3012,7 +3012,13 @@ class TicketTailorSource(ExternalDataSource):
         return fields
 
     async def fetch_all(self):
-        return self.client.get("/v1/events").json().get("data", [])
+        response = self.client.get("/v1/events").json()
+        data = response.get("data", [])
+        while next := response.get("links", {}).get("next"):
+            response = self.client.get(next).json()
+            more_data = response.get("data", [])
+            data = data + more_data
+        return data
 
     async def fetch_many(self, member_ids: list[str]):
         all = await self.fetch_all()
