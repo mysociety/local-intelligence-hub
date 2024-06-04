@@ -165,6 +165,7 @@ export type ActionNetworkSourceInput = {
   fullNameField?: InputMaybe<Scalars['String']['input']>;
   geographyColumn?: InputMaybe<Scalars['String']['input']>;
   geographyColumnType?: InputMaybe<GeographyTypes>;
+  groupSlug: Scalars['String']['input'];
   id?: InputMaybe<Scalars['UUID']['input']>;
   imageField?: InputMaybe<Scalars['String']['input']>;
   lastNameField?: InputMaybe<Scalars['String']['input']>;
