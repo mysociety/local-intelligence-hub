@@ -957,6 +957,7 @@ class MailchimpSource(ExternalDataSource):
 @strawberry_django.type(models.ActionNetworkSource)
 class ActionNetworkSource(ExternalDataSource):
     api_key: str
+    group_slug: str
 
 
 @strawberry_django.type(models.Report)
