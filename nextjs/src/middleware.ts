@@ -24,6 +24,12 @@ export const middleware: NextMiddleware = (req) => {
     },
   });
 
+  // Don't process Sentry requests
+  // (see next.config.js Sentry tunnelRoute)
+  if (req.nextUrl.pathname === "/monitoring") {
+    return response
+  }
+
   const url = req.nextUrl;
 
   // Get hostname of request (e.g. demo.vercel.pub, demo.localhost:3000)
