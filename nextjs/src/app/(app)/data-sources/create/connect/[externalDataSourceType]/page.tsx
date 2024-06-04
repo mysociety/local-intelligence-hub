@@ -123,7 +123,8 @@ export default function Page({
 
   const form = useForm<FormInputs>({
     defaultValues: {
-      geographyColumnType: GeographyTypes.Postcode
+      geographyColumnType: GeographyTypes.Postcode,
+      ...defaultValues
     } as FormInputs,
   });
 
@@ -416,13 +417,13 @@ export default function Page({
               )}
               {!currentSource?.testDataSource?.predefinedColumnNames && (
                 <div className='grid grid-cols-2 gap-4 w-full'>
-                  <FPreopulatedSelectField name="geographyColumn" label="geography" required />
+                  <FPreopulatedSelectField name="geographyColumn" label={`${form.watch("geographyColumnType")?.toLocaleLowerCase()} field`} required />
                   <FormField
                     control={form.control}
                     name="geographyColumnType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Geography Type</FormLabel>
+                        <FormLabel>Type of location data</FormLabel>
                         <FormControl>
                           {/* @ts-ignore */}
                           <Select onValueChange={field.onChange} defaultValue={field.value} required>
