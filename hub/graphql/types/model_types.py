@@ -1,4 +1,5 @@
 import itertools
+import logging
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Union
@@ -16,7 +17,6 @@ from strawberry import auto
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
-from strawberry_django.permissions import IsAuthenticated
 from wagtail.models import Site
 
 from hub import models
@@ -31,8 +31,9 @@ from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
-import logging
+
 logger = logging.getLogger(__name__)
+
 
 # Ideally we'd just import this from the library (procrastinate.jobs.Status) but
 # strawberry doesn't like subclassed Enums for some reason.
@@ -625,16 +626,14 @@ class GenericData(CommonData):
     @strawberry_django.field
     def postcode_data(self) -> Optional[PostcodesIOResult]:
         return benedict(self.postcode_data)
-    
+
     @strawberry_django.field
     def areas(self, info: Info) -> Optional[Area]:
         if self.point is None:
             return None
 
         # TODO: data loader for this
-        return models.Area.objects.filter(
-            polygon__contains=self.point
-        )
+        return models.Area.objects.filter(polygon__contains=self.point)
 
     @strawberry_django.field
     def area(self, area_type: str, info: Info) -> Optional[Area]:
@@ -643,9 +642,9 @@ class GenericData(CommonData):
 
         # TODO: data loader for this
         return models.Area.objects.filter(
-            polygon__contains=self.point,
-            area_type__code=area_type
+            polygon__contains=self.point, area_type__code=area_type
         )
+
 
 @strawberry.type
 class MapReportMemberFeature(PointFeature):
@@ -958,6 +957,7 @@ class MailchimpSource(ExternalDataSource):
 @strawberry_django.type(models.ActionNetworkSource)
 class ActionNetworkSource(ExternalDataSource):
     api_key: str
+    group_slug: str
 
 
 @strawberry_django.type(models.Report)
