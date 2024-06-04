@@ -1,13 +1,28 @@
 module.exports = {
-    images: {
-      remotePatterns: [
-        {
-          protocol: 'https',
-          hostname: 'www.localintelligencehub.com',
-        },
-      ],
-    },
-  }
+  async headers() {
+    return process.env.NEXT_PUBLIC_ENVIRONMENT === "production"
+      ? [
+          {
+            source: "/",
+            headers: [
+              {
+                key: "Strict-Transport-Security",
+                value: "max-age=600; includeSubDomains; preload",
+              },
+            ],
+          },
+        ]
+      : {};
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "www.localintelligencehub.com",
+      },
+    ],
+  },
+};
 
 // Injected content via Sentry wizard below
 
@@ -23,7 +38,6 @@ module.exports = withSentryConfig(
     silent: true,
     org: process.env.SENTRY_ORG_ID,
     project: process.env.SENTRY_PROJECT_ID,
-    
   },
   {
     // For all available options, see:

@@ -402,8 +402,11 @@ environment = env("ENVIRONMENT")
 
 posthog.disabled = True
 
-# Configure Sentry only if in production
+# Configure Sentry and HSTS headers only if in production
 if environment == "production":
+    SECURE_HSTS_SECONDS = 600
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
     if env("SENTRY_DSN") is not False:
         import sentry_sdk
         from sentry_sdk.integrations.django import DjangoIntegration

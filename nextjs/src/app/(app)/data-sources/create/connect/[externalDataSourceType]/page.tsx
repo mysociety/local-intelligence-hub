@@ -142,11 +142,16 @@ export default function Page({
    * badKeys = ["email"].
    */
   function useGuessedField(
-    field: string,
+    field: keyof FormInputs,
     guessKeys: string[],
     badKeys: string[] = []
   ) {
     useEffect(() => {
+      // @ts-ignore
+      if (!collectFields.includes(field)) {
+        form.setValue(field, null)
+        return
+      }
       const guess = testSourceResult.data?.testDataSource.fieldDefinitions?.find(
         (field: ({ label?: string | null, value: string })) => {
           const isMatch = (fieldName: string|null|undefined, guessKey: string) => {
@@ -180,7 +185,7 @@ export default function Page({
         // @ts-ignore
         form.setValue(field, guess?.value)
       }
-    }, [testSourceResult.data?.testDataSource.fieldDefinitions, form, setGuessed])
+    }, [testSourceResult.data?.testDataSource.fieldDefinitions, form, collectFields, setGuessed])
   }
 
   useGuessedField('geographyColumn', ["postcode", "postal code", "zip code", "zip"])
