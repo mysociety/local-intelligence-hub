@@ -105,7 +105,12 @@ const GET_UPDATE_CONFIG = gql`
           apiKey
         }
       }
-      lastJob {
+      lastImportJob {
+        id
+        lastEventAt
+        status
+      }
+      lastUpdateJob {
         id
         lastEventAt
         status
@@ -268,6 +273,54 @@ export default function InspectExternalDataSource({
           {source.importProgress?.status === ProcrastinateJobStatus.Doing && (
             <BatchJobProgressBar batchJobProgress={source.importProgress} pastTenseVerb="Imported" />
           )}
+          {source.hasWebhooks && (
+            <section className='space-y-4'>
+              <h2 className="text-hSm mb-5">Auto-import</h2>
+              <p className='text-sm text-meepGray-400'>
+                Auto-imports are {source.autoImportEnabled ? "enabled" : "disabled"} for this data source.
+              </p>
+              {(source.connectionDetails.__typename === "ActionNetworkSource") && (
+                <p className='text-sm text-meepGray-400 text-red-400'>
+                  Warning: Action Network auto-updates only work for new members, not
+                  changes to existing members{"'"} details. If existing members change,
+                  you must trigger a full import using the button above.
+                </p>
+              )}
+              {source.automatedWebhooks ? (
+                <>
+                  <AutoUpdateSwitch externalDataSource={source} />
+                  {source.autoImportEnabled && !source.webhookHealthcheck && (
+                    <>
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Webhooks unhealthy</AlertTitle>
+                        <AlertDescription>
+                          The webhook is unhealthy. Please refresh the webhook to fix auto-updates.
+                        </AlertDescription>
+                      </Alert>
+                      <AutoUpdateWebhookRefresh externalDataSourceId={externalDataSourceId} />
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <p>
+                    Webhook URL for auto-imports:
+                  </p>
+                  <code className="bg-black p-2 rounded">{source.autoImportWebhookUrl}</code>
+                  <p>Turn this switch on once you have added the above Webhook URL to your CRM:</p>
+                  <AutoUpdateSwitch externalDataSource={source} />
+                </div>
+              )}
+              {source.lastImportJob ? (
+                <div className="text-meepGray-400">
+                  Last sync:{" "}
+                  {formatRelative(source.lastImportJob.lastEventAt, new Date())} (
+                  {source.lastImportJob.status})
+                </div>
+              ) : null}
+            </section>
+          )}
         </section>
         <section className="space-y-4">
           <header className="flex flex-row justify-between items-center">
@@ -400,11 +453,11 @@ export default function InspectExternalDataSource({
                         <AutoUpdateSwitch externalDataSource={source} />
                       </div>
                     )}
-                    {source.lastJob ? (
+                    {source.lastUpdateJob ? (
                       <div className="text-meepGray-400">
                         Last sync:{" "}
-                        {formatRelative(source.lastJob.lastEventAt, new Date())} (
-                        {source.lastJob.status})
+                        {formatRelative(source.lastUpdateJob.lastEventAt, new Date())} (
+                        {source.lastUpdateJob.status})
                       </div>
                     ) : null}
                   </section>

@@ -911,10 +911,19 @@ class ExternalDataSource(BaseDataSource):
         )
 
     @strawberry_django.field
-    def last_job(self: models.ExternalDataSource, info: Info) -> Optional[QueueJob]:
+    def last_import_job(self: models.ExternalDataSource, info: Info) -> Optional[QueueJob]:
         job = procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
-            args__external_data_source_id=str(self.id)
-        ).first()
+            args__external_data_source_id=str(self.id),
+            task_name__startswith="import_"
+        ).order_by('-scheduled_at').first()
+        return job
+
+    @strawberry_django.field
+    def last_update_job(self: models.ExternalDataSource, info: Info) -> Optional[QueueJob]:
+        job = procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
+            args__external_data_source_id=str(self.id),
+            task_name__startswith="update_"
+        ).order_by('-scheduled_at').first()
         return job
 
     @strawberry_django.field
