@@ -139,7 +139,7 @@ export function UpdateExternalDataSourceFields ({
             </FormItem>
           )}
         />
-        {collectFields?.filter(f => f !== "geographyColumn" && f !== "geographyColumnType")?.map((field) => (
+        {collectFields?.map((field) => (
           <FPreopulatedSelectField key={field} name={field} />
         ))}
         <Button type='submit' className='mt-4'>Save settings</Button>
@@ -157,7 +157,9 @@ export function getFieldsForDataSourceType (type?: DataSourceType): Array<keyof 
   'id' |
   'name' |
   'organisation' |
-  'updateMapping'
+  'updateMapping' |
+  'geographyColumn' |
+  'geographyColumnType'
 )>> {
   switch (type) {
     case DataSourceType.Member:

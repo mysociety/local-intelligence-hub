@@ -133,6 +133,7 @@ export default function Page({
   const collectFields = useMemo(() => {
     return getFieldsForDataSourceType(dataType)
   }, [dataType])
+  const geographyFields = ["geographyColumn", "geographyColumnType"]
 
   const [createSource, createSourceResult] = useMutation<CreateSourceMutation>(CREATE_DATA_SOURCE);
   const [testSource, testSourceResult] = useLazyQuery<TestDataSourceQuery, TestDataSourceQueryVariables>(TEST_DATA_SOURCE);
@@ -159,7 +160,7 @@ export default function Page({
   ) {
     useEffect(() => {
       // @ts-ignore
-      if (!collectFields.includes(field)) {
+      if (!collectFields.includes(field) && !geographyFields.includes("geographyColumn")) {
         form.setValue(field, null)
         return
       }
@@ -448,7 +449,7 @@ export default function Page({
                       </FormItem>
                     )}
                   />
-                  {collectFields?.filter(f => f !== "geographyColumn" && f !== "geographyColumnType")?.map((field) => (
+                  {collectFields.map((field) => (
                     <FPreopulatedSelectField key={field} name={field} />
                   ))}
                 </div>
