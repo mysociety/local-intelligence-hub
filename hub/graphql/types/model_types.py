@@ -1014,7 +1014,10 @@ class MapLayer:
 
     @strawberry_django.field
     def source(self, info: Info) -> SharedDataSource:
-        source_id = self.get("source", None)
+        # Set in MapReport GraphQL type
+        if self.get("cached_source"):
+            return self.get("cached_source")
+        source_id = self.get("source")
         return models.ExternalDataSource.objects.get(id=source_id)
 
 
@@ -1042,8 +1045,19 @@ class SharingPermission:
 
 @strawberry_django.type(models.MapReport)
 class MapReport(Report, Analytics):
-    layers: List[MapLayer]
     display_options: JSON
+
+    @strawberry_django.field
+    def layers(self, info: Info) -> List[MapLayer]:
+        """
+        Filter out layers that refer to missing sources
+        """
+        layers = self.layers
+        for layer in layers:
+            layer["cached_source"] = models.ExternalDataSource.objects.filter(
+                id=layer.get("source")
+            ).first()
+        return [layer for layer in self.layers if layer["cached_source"]]
 
 
 def public_map_report(info: Info, org_slug: str, report_slug: str) -> models.MapReport:
