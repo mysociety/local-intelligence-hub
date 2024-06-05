@@ -963,13 +963,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     can_display_details_publicly = models.BooleanField(default=False)
 
     class GeographyTypes(models.TextChoices):
-        ADDRESS = "address", "Address"
-        POSTCODE = "postcode", "Postcode"
-        WARD = "ward", "Ward"
-        CONSTITUENCY = "parliamentary_constituency", "Constituency"
-        COUNCIL = "admin_district", "Council"
-        CONSTITUENCY_2025 = "parliamentary_constituency_2025", "Constituency (2024)"
-        # TODO: LNG_LAT = "lng_lat", "Longitude and Latitude"
+        ADDRESS = "ADDRESS", "Address"
+        POSTCODE = "POSTCODE", "Postcode"
+        WARD = "WARD", "Ward"
+        CONSTITUENCY = "CONSTITUENCY", "Constituency"
+        COUNCIL = "COUNCIL", "Council"
+        CONSTITUENCY_2025 = "CONSTITUENCY_2025", "Constituency (2024)"
+        # TODO: LNG_LAT = "LNG_LAT", "Longitude and Latitude"
 
     geography_column_type = TextChoicesField(
         choices_enum=GeographyTypes,

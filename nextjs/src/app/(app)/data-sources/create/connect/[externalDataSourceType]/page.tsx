@@ -39,6 +39,7 @@ import {
 import { toastPromise } from "@/lib/toast";
 import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
 import { getFieldsForDataSourceType } from "@/components/UpdateExternalDataSourceFields";
+import { camelCase } from "lodash";
 
 const TEST_DATA_SOURCE = gql`
   query TestDataSource($input: CreateExternalDataSourceInput!) {
@@ -218,10 +219,11 @@ export default function Page({
       form.setValue("dataType", dataType)
       // Default dict
       const defaultFieldValues = testSourceResult.data.testDataSource.defaults || {}
-      for (const key of defaultFieldValues) {
+      for (const key in defaultFieldValues) {
+        const camelCasedKey = camelCase(key) as keyof FormInputs
         const value = defaultFieldValues[key]
         if (value !== null && value !== undefined) {
-          form.setValue(key, value)
+          form.setValue(camelCasedKey, value)
         }
       }
     }
