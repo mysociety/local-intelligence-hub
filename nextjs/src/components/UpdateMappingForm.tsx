@@ -144,7 +144,8 @@ export function UpdateMappingForm({
                               <SelectItem value={GeographyTypes.Postcode}>Postcode</SelectItem>
                               <SelectItem value={GeographyTypes.Ward}>Ward</SelectItem>
                               <SelectItem value={GeographyTypes.Council}>Council</SelectItem>
-                              <SelectItem value={GeographyTypes.Constituency}>Constituency</SelectItem>
+                              <SelectItem value={GeographyTypes.ParliamentaryConstituency}>Constituency</SelectItem>
+                              <SelectItem value={GeographyTypes.ParliamentaryConstituency_2025}>Constituency (2024)</SelectItem>
                             </SelectGroup>
                           </SelectContent>
                         </Select>

@@ -948,9 +948,9 @@ export enum GeoJsonTypes {
 
 export enum GeographyTypes {
   Address = 'ADDRESS',
-  Constituency = 'CONSTITUENCY',
-  Constituency_2025 = 'CONSTITUENCY_2025',
   Council = 'COUNCIL',
+  ParliamentaryConstituency = 'PARLIAMENTARY_CONSTITUENCY',
+  ParliamentaryConstituency_2025 = 'PARLIAMENTARY_CONSTITUENCY_2025',
   Postcode = 'POSTCODE',
   Ward = 'WARD'
 }

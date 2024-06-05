@@ -39,6 +39,7 @@ import {
 import { toastPromise } from "@/lib/toast";
 import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
 import { getFieldsForDataSourceType } from "@/components/UpdateExternalDataSourceFields";
+import { camelCase } from "lodash";
 
 const TEST_DATA_SOURCE = gql`
   query TestDataSource($input: CreateExternalDataSourceInput!) {
@@ -132,6 +133,7 @@ export default function Page({
   const collectFields = useMemo(() => {
     return getFieldsForDataSourceType(dataType)
   }, [dataType])
+  const geographyFields = ["geographyColumn", "geographyColumnType"]
 
   const [createSource, createSourceResult] = useMutation<CreateSourceMutation>(CREATE_DATA_SOURCE);
   const [testSource, testSourceResult] = useLazyQuery<TestDataSourceQuery, TestDataSourceQueryVariables>(TEST_DATA_SOURCE);
@@ -158,7 +160,7 @@ export default function Page({
   ) {
     useEffect(() => {
       // @ts-ignore
-      if (!collectFields.includes(field)) {
+      if (!collectFields.includes(field) && !geographyFields.includes("geographyColumn")) {
         form.setValue(field, null)
         return
       }
@@ -218,10 +220,11 @@ export default function Page({
       form.setValue("dataType", dataType)
       // Default dict
       const defaultFieldValues = testSourceResult.data.testDataSource.defaults || {}
-      for (const key of defaultFieldValues) {
+      for (const key in defaultFieldValues) {
+        const camelCasedKey = camelCase(key) as keyof FormInputs
         const value = defaultFieldValues[key]
         if (value !== null && value !== undefined) {
-          form.setValue(key, value)
+          form.setValue(camelCasedKey, value)
         }
       }
     }
@@ -436,8 +439,8 @@ export default function Page({
                                 <SelectItem value={GeographyTypes.Postcode}>Postcode</SelectItem>
                                 <SelectItem value={GeographyTypes.Ward}>Ward</SelectItem>
                                 <SelectItem value={GeographyTypes.Council}>Council</SelectItem>
-                                <SelectItem value={GeographyTypes.Constituency}>GE2010-2019 Constituency</SelectItem>
-                                <SelectItem value={GeographyTypes.Constituency_2025}>GE2024 Constituency</SelectItem>
+                                <SelectItem value={GeographyTypes.ParliamentaryConstituency}>GE2010-2019 Constituency</SelectItem>
+                                <SelectItem value={GeographyTypes.ParliamentaryConstituency_2025}>GE2024 Constituency</SelectItem>
                               </SelectGroup>
                             </SelectContent>
                           </Select>
@@ -446,7 +449,7 @@ export default function Page({
                       </FormItem>
                     )}
                   />
-                  {collectFields?.filter(f => f !== "geographyColumn" && f !== "geographyColumnType")?.map((field) => (
+                  {collectFields.map((field) => (
                     <FPreopulatedSelectField key={field} name={field} />
                   ))}
                 </div>
