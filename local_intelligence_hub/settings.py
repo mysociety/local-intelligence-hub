@@ -337,23 +337,20 @@ LOGGING = {
         "common": {
             "format": "{levelname} {asctime} {name}.{funcName}:{lineno} # {message}",
             "style": "{",
-            "validate": True
+            "validate": True,
         },
         "procrastinate": {
             "format": "{levelname} {asctime} {name} # {message}",
             "style": "{",
-            "validate": True
+            "validate": True,
         },
     },
     "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "common"
-        },
+        "console": {"class": "logging.StreamHandler", "formatter": "common"},
         "procrastinate": {
             "class": "logging.StreamHandler",
-            "formatter": "procrastinate"
-        }
+            "formatter": "procrastinate",
+        },
     },
     "loggers": {
         "procrastinate": {
