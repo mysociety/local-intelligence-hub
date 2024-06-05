@@ -7,23 +7,23 @@ from procrastinate.contrib.django import app
 
 
 @app.task(queue="external_data_sources")
-async def refresh_one(external_data_source_id: str, member_id: str):
+async def refresh_one(external_data_source_id: str, member):
     from hub.models import ExternalDataSource
 
     await ExternalDataSource.deferred_refresh_one(
-        external_data_source_id=external_data_source_id, member_id=member_id
+        external_data_source_id=external_data_source_id, member=member
     )
 
 
 @app.task(queue="external_data_sources", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
 async def refresh_many(
-    external_data_source_id: str, member_ids: list[str], request_id: str = None
+    external_data_source_id: str, members: list, request_id: str = None
 ):
     from hub.models import ExternalDataSource
 
     await ExternalDataSource.deferred_refresh_many(
         external_data_source_id=external_data_source_id,
-        member_ids=member_ids,
+        members=members,
         request_id=request_id,
     )
 
@@ -50,13 +50,13 @@ async def refresh_webhooks(external_data_source_id: str, timestamp=None):
 
 @app.task(queue="external_data_sources", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
 async def import_many(
-    external_data_source_id: str, member_ids: list[str], request_id: str = None
+    external_data_source_id: str, members: list, request_id: str = None
 ):
     from hub.models import ExternalDataSource
 
     await ExternalDataSource.deferred_import_many(
         external_data_source_id=external_data_source_id,
-        member_ids=member_ids,
+        members=members,
         request_id=request_id,
     )
 

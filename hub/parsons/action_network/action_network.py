@@ -144,6 +144,26 @@ class ActionNetwork(object):
                 if count >= limit:
                     return Table(return_list[0:limit])
 
+    def _get_generator(self, object_name, limit=None, per_page=25, filter=None):
+        # returns a generator of entries for a given object, such as people, tags, or actions
+        # Filter can only be applied to people, petitions, events, forms, fundraising_pages,
+        # event_campaigns, campaigns, advocacy_campaigns, signatures, attendances, submissions,
+        # donations and outreaches.
+        # See Action Network API docs for more info: https://actionnetwork.org/docs/v2/
+        count = 0
+        page = 1
+        while True:
+            response = self._get_page(object_name, page, per_page, filter=filter)
+            page = page + 1
+            response_list = response["_embedded"][list(response["_embedded"])[0]]
+            if not response_list:
+                return
+            for item in response_list:
+                yield item
+                count = count + 1
+                if limit and count >= limit:
+                    return
+
     # Advocacy Campaigns
     def get_advocacy_campaigns(self, limit=None, per_page=25, page=None, filter=None):
         """
@@ -1213,7 +1233,7 @@ class ActionNetwork(object):
         """
         if page:
             return self._get_page("people", page, per_page, filter=filter)
-        return self._get_entry_list("people", limit, per_page, filter=filter)
+        return self._get_generator("people", limit, per_page, filter=filter)
 
     def get_person(self, person_id):
         """

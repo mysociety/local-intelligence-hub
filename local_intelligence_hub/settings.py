@@ -334,26 +334,34 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "shared": {"format": "%(asctime)s %(levelname)-7s %(name)s %(message)s"},
+        "common": {
+            "format": "{levelname} {asctime} {name}.{funcName}:{lineno} # {message}",
+            "style": "{",
+            "validate": True,
+        },
+        "procrastinate": {
+            "format": "{levelname} {asctime} {name} # {message}",
+            "style": "{",
+            "validate": True,
+        },
     },
     "handlers": {
-        "console": {
+        "console": {"class": "logging.StreamHandler", "formatter": "common"},
+        "procrastinate": {
             "class": "logging.StreamHandler",
+            "formatter": "procrastinate",
         },
     },
     "loggers": {
         "procrastinate": {
-            "formatter": "shared",
-            "handlers": ["console"],
+            "handlers": ["procrastinate"],
             "level": "DEBUG",
         },
         "django": {
-            "formatter": "shared",
             "handlers": ["console"],
             "level": DJANGO_LOG_LEVEL,
         },
         "hub": {
-            "formatter": "shared",
             "handlers": ["console"],
             "level": DJANGO_HUB_LOG_LEVEL,
         },
