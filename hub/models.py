@@ -966,9 +966,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         ADDRESS = "ADDRESS", "Address"
         POSTCODE = "POSTCODE", "Postcode"
         WARD = "WARD", "Ward"
-        CONSTITUENCY = "CONSTITUENCY", "Constituency"
-        COUNCIL = "COUNCIL", "Council"
-        CONSTITUENCY_2025 = "CONSTITUENCY_2025", "Constituency (2024)"
+        ADMIN_DISTRICT = "ADMIN_DISTRICT", "Council"
+        PARLIAMENTARY_CONSTITUENCY = "PARLIAMENTARY_CONSTITUENCY", "Constituency"
+        PARLIAMENTARY_CONSTITUENCY_2025 = "PARLIAMENTARY_CONSTITUENCY_2025", "Constituency (2024)"
         # TODO: LNG_LAT = "LNG_LAT", "Longitude and Latitude"
 
     geography_column_type = TextChoicesField(
@@ -1515,8 +1515,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         )
                         return_data.append(None)
                         continue
+                    postcodes_io_key = self.geography_column_type.lower()
                     relevant_member_geography = get(
-                        key["postcode_data"], self.geography_column_type, ""
+                        key["postcode_data"], postcodes_io_key, ""
                     )
                     # Backup check if the geography refers to the GSS codes, not the name
                     if (
@@ -1525,7 +1526,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     ):
                         relevant_member_geography = get(
                             key["postcode_data"]["codes"],
-                            self.geography_column_type,
+                            postcodes_io_key,
                             "",
                         )
                     if (
@@ -1533,7 +1534,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         or relevant_member_geography is None
                     ):
                         logger.debug(
-                            f"returning none for key {key['member_id']} because {relevant_member_geography}"
+                            f"returning none for key {key['member_id']} because relevant_member_geography is blank"
                         )
                         return_data.append(None)
                         continue

@@ -38,7 +38,7 @@ class TestExternalDataSource:
                 table_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME,
                 api_key=settings.TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY,
                 geography_column="council district",
-                geography_column_type=models.AirtableSource.GeographyTypes.COUNCIL,
+                geography_column_type=models.AirtableSource.GeographyTypes.ADMIN_DISTRICT,
             )
         )
 
