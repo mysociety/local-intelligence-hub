@@ -22,6 +22,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 
+import httpx
 import numpy as np
 import pandas as pd
 import pytz
@@ -718,7 +719,7 @@ class GenericData(CommonData):
     address = models.CharField(max_length=1000, blank=True, null=True)
     title = models.CharField(max_length=1000, blank=True, null=True)
     description = models.TextField(max_length=3000, blank=True, null=True)
-    image = models.ImageField(null=True, upload_to="generic_data")
+    image = models.ImageField(null=True, max_length=1000, upload_to="generic_data")
 
     def remote_url(self):
         return self.data_type.data_set.external_data_source.record_url(self.data)
@@ -919,24 +920,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     has_webhooks = False
     automated_webhooks = False
     introspect_fields = False
+    allow_updates = True
 
     # Allow sources to define default values for themselves
     # for example opinionated CRMs which are only for people and have defined slots for data
-    defaults = {
-        # Reports
-        "data_type": None,
-        # Geocoding
-        "geography_column": None,
-        "geography_column_type": None,
-        # Imports
-        "postcode_field": None,
-        "first_name_field": None,
-        "last_name_field": None,
-        "full_name_field": None,
-        "email_field": None,
-        "phone_field": None,
-        "address_field": None,
-    }
+    defaults = {}
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     deduplication_hash = models.CharField(max_length=32, unique=True, editable=False)
@@ -1456,15 +1444,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         Get the ID for a record.
         """
-        raise NotImplementedError("Get ID not implemented for this data source type.")
+        return record.get("id", None)
 
     def get_record_field(self, record: dict, field: str, field_type=None):
         """
         Get a field from a record.
         """
-        raise NotImplementedError(
-            "Get field not implemented for this data source type."
-        )
+        return get(record, field, None)
 
     def get_record_dict(self, record: any) -> dict:
         """
@@ -1711,6 +1697,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         update_kwargs={},
         mapping: list[UpdateMapping] = None,
     ):
+        if not self.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {self}")
+            return
+
         if mapping is None or len(mapping) == 0:
             mapping = self.get_update_mapping()
         if len(mapping) == 0:
@@ -1725,6 +1715,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         update_kwargs={},
         mapping: list[UpdateMapping] = None,
     ):
+        if not self.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {self}")
+            return
+
         if mapping is None or len(mapping) == 0:
             mapping = self.get_update_mapping()
         if len(mapping) == 0:
@@ -1736,6 +1730,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     # UI
 
     def enable_auto_update(self) -> Union[None, int]:
+        if not self.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {self}")
+            return
+
         if self.automated_webhooks:
             self.refresh_webhooks()
             # And schedule a cron to keep doing it
@@ -1746,6 +1744,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         self.save()
 
     def disable_auto_update(self):
+        if not self.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {self}")
+            return
+
         self.auto_update_enabled = False
         self.save()
         if self.automated_webhooks and hasattr(self, "teardown_webhooks"):
@@ -1754,6 +1756,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     # Webhooks
 
     def handle_update_webhook_view(self, body):
+        if not self.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {self}")
+            return HttpResponse(status=200)
+
         if not self.auto_update_enabled:
             return HttpResponse(status=200)
 
@@ -1768,6 +1774,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     @classmethod
     async def deferred_refresh_one(cls, external_data_source_id: str, member_id: str):
+        if not cls.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {cls}")
+            return
+
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
@@ -1777,6 +1787,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     async def deferred_refresh_many(
         cls, external_data_source_id: str, member_ids: list[str], request_id: str = None
     ):
+        if not cls.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {cls}")
+            return
+
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
@@ -1786,6 +1800,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     async def deferred_refresh_all(
         cls, external_data_source_id: str, request_id: str = None
     ):
+        if not cls.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {cls}")
+            return
+
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
@@ -1800,6 +1818,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     @classmethod
     async def deferred_refresh_webhooks(cls, external_data_source_id: str):
+        if not cls.has_webhooks:
+            return
+
         external_data_source: ExternalDataSource = await cls.objects.aget(
             pk=external_data_source_id
         )
@@ -1838,6 +1859,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             )
 
     async def schedule_refresh_one(self, member_id: str) -> int:
+        if not self.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {self}")
+            return
+
         try:
             return await refresh_one.configure(
                 # Dedupe `update_many` jobs for the same config
@@ -1851,6 +1876,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     async def schedule_refresh_many(
         self, member_ids: list[str], request_id: str = None
     ) -> int:
+        if not self.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {self}")
+            return
+
         member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
             return await refresh_many.configure(
@@ -1867,6 +1896,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             pass
 
     async def schedule_refresh_all(self, request_id: str = None) -> int:
+        if not self.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {self}")
+            return
+
         try:
             return await refresh_all.configure(
                 # Dedupe `update_all` jobs for the same config
@@ -2854,6 +2887,164 @@ class ActionNetworkSource(ExternalDataSource):
         return created_records
 
 
+class TicketTailorSource(ExternalDataSource):
+    """
+    Ticket Tailor box office
+    """
+
+    crm_type = "tickettailor"
+
+    class Meta:
+        verbose_name = "Ticket Tailor box office"
+
+    predefined_column_names = True
+    has_webhooks = False
+    automated_webhooks = False
+    introspect_fields = True
+    allow_updates = False
+    default_data_type = ExternalDataSource.DataSourceType.EVENT
+
+    defaults = dict(
+        # Reports
+        data_type=ExternalDataSource.DataSourceType.EVENT,
+        # Geocoding
+        geography_column="venue.postal_code",
+        geography_column_type=ExternalDataSource.GeographyTypes.POSTCODE,
+        # Imports
+        postcode_field="venue.postal_code",
+        title_field="name",
+        description_field="description",
+        image_field="images.thumbnail",
+        start_time_field="start.iso",
+        end_time_field="end.iso",
+        public_url_field="url",
+        address_field="venue.name",
+    )
+
+    api_key = EncryptedCharField(max_length=250)
+
+    @classmethod
+    def get_deduplication_field_names(self) -> list[str]:
+        return ["api_key"]
+
+    @cached_property
+    def client(self):
+        # https://developers.tickettailor.com/#ticket-tailor-api
+        auth = httpx.BasicAuth(username=self.api_key, password="")
+        client = httpx.Client(
+            auth=auth,
+            base_url="https://api.tickettailor.com",
+            headers={"Accept": "application/json"},
+        )
+        return client
+
+    def healthcheck(self):
+        # https://developers.tickettailor.com/#ticket-tailor-api-ping
+        pong = self.client.get("/v1/ping")
+        json = pong.json()
+        return json.get("version", "X").startswith("1.")
+
+    def field_definitions(self):
+        """
+        ActionNetwork activist built-in fields.
+        """
+
+        """
+        » object	string	none
+        » id	string	A unique identifier for the event
+        » chk	string	Used for Ticket Tailor checkout chk value
+        » access_code	string¦null	Code to access a protected event
+        » call_to_action	string	Call to action text used on the event page
+        » created_at	integer	none
+        » currency	string	Information about the currency the event is configured to use
+        » description	string¦null	Description of the event
+        » end	object	none
+        »» date	string	ISO-8601 date for the end of the event
+        »» formatted	string	A formatted date string for the end of the event
+        »» iso	string	ISO-8601 date and time for the end of the event
+        »» time	string	Time of the end of the event
+        »» timezone	string	Timezone offset for the end of the event
+        »» unix	integer	Unix timestamp for for the end of the event
+        » event_series_id	string	Recurring events are grouped by an event_series_id
+        » hidden	string	True, if event is set to hidden
+        » images	object	Images that have been uploaded to this event
+        »» header	string	Image URL of the header image used on your event page
+        »» thumbnail	string	Image URL of the thumbnail used on your event page
+        » name	string	Name of the event
+        » online_event	string	Returns whether or not the event is online
+        » payment_methods	[any]	none
+        »» external_id	string	A unique identifier for the payment method
+        »» id	string	A unique identifier for internal payment methods
+        »» type	string	The type of payment method
+        »» name	string	Name of the payment method
+        »» instructions	string	Instructions for the customer on how to pay. Used for offline payments.
+        » private	string	Returns whether or not the event is private
+        » start	object	none
+        »» date	string	ISO-8601 date for the start of the event
+        »» formatted	string	A formatted date string for the start of the event
+        »» iso	string	ISO-8601 date and time for the start of the event
+        »» time	string	Time of the start of the event
+        »» timezone	string	Timezone offset for the start of the event
+        »» unix	integer	Unix timestamp for the start of the event
+        » status	string	Status of the event
+        » ticket_groups	[any]	none
+        »» id	string	A unique ticket group identifier
+        »» max_per_order	integer	Maximum number of ticket types that this group can sell
+        »» name	string	Name of the ticket types group
+        »» sort_order	integer	Sort index of the group in the UI
+        »» ticket_ids	[any]	Unique identifiers of ticket type ids that belong to this group
+        »»» id	string	none
+        » tickets_available	string¦null	Are there any ticket types available?
+        » timezone	string	TZ format timezone string
+        » total_holds	integer	Total number of holds
+        » total_issued_tickets	integer	Total number of issued tickets
+        » total_orders	integer	Total number of orders
+        » unavailable	string	True, if event is set to unavailable
+        » unavailable_status	string¦null	optional custom status message when event is set to be unavailable
+        » url	string	Event page URL
+        » venue	object	none
+        »» name	string¦null	Name of the venue
+        »» postal_code	string¦null	Postal code of the venue
+        """
+        fields = [
+            self.FieldDefinition(label="Name", value="name", editable=False),
+            self.FieldDefinition(
+                label="Description", value="description", editable=False
+            ),
+            self.FieldDefinition(label="Start time", value="start.iso", editable=False),
+            self.FieldDefinition(label="End time", value="end.iso", editable=False),
+            self.FieldDefinition(label="Venue", value="venue.name", editable=False),
+            self.FieldDefinition(
+                label="Postal code", value="venue.postal_code", editable=False
+            ),
+            self.FieldDefinition(label="URL", value="url", editable=False),
+            self.FieldDefinition(
+                label="Thumbnail", value="images.thumbnail", editable=False
+            ),
+            self.FieldDefinition(label="Status", value="status", editable=False),
+            self.FieldDefinition(
+                label="Is online?", value="online_event", editable=False
+            ),
+        ]
+        return fields
+
+    async def fetch_all(self):
+        response = self.client.get("/v1/events").json()
+        data = response.get("data", [])
+        while next := response.get("links", {}).get("next"):
+            response = self.client.get(next).json()
+            more_data = response.get("data", [])
+            data = data + more_data
+        return data
+
+    async def fetch_many(self, member_ids: list[str]):
+        all = await self.fetch_all()
+        return [record for record in all if record["id"] in member_ids]
+
+    async def fetch_one(self, member_id: str):
+        return self.client.get(f"/v1/events/{member_id}").json()
+
+
 class MapReport(Report, Analytics):
     layers = models.JSONField(default=list, blank=True)
     display_options = models.JSONField(default=dict, blank=True)
@@ -3071,4 +3262,5 @@ source_models: dict[str, Type[ExternalDataSource]] = {
     "airtable": AirtableSource,
     "mailchimp": MailchimpSource,
     "actionnetwork": ActionNetworkSource,
+    "tickettailor": TicketTailorSource,
 }

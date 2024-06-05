@@ -25,6 +25,8 @@ const GET_UPDATE_CONFIG = gql`
     externalDataSource(pk: $ID) {
       id
       autoUpdateEnabled
+      allowUpdates
+      hasWebhooks
       updateMapping {
         destinationColumn
         source
@@ -97,6 +99,24 @@ export default function Page({
     });
   }
 
+  if (externalDataSource.loading) {
+    return <LoadingIcon />
+  }
+
+  if (!externalDataSource.data?.externalDataSource.allowUpdates) {
+    return (
+      <Button
+        variant="outline"
+        type="reset"
+        onClick={() => {
+          router.push(`/data-sources/inspect/${externalDataSourceId}`);
+        }}
+      >
+        Done
+      </Button>
+    )
+  }
+
   return (
     <div className="space-y-7">
       <header>
@@ -110,9 +130,7 @@ export default function Page({
           accurate data.
         </p>
       </header>
-      {externalDataSource.loading ? (
-        <LoadingIcon />
-      ) : externalDataSource.data ? (
+      {externalDataSource.data ? (
         <UpdateMappingForm
           crmType={externalDataSource.data?.externalDataSource.crmType}
           initialData={{

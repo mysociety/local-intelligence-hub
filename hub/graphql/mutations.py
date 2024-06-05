@@ -245,11 +245,17 @@ class ActionNetworkSourceInput(ExternalDataSourceInput):
     group_slug: str
 
 
+@strawberry_django.input(models.TicketTailorSource, partial=True)
+class TicketTailorSourceInput(ExternalDataSourceInput):
+    api_key: str
+
+
 @strawberry.input()
 class CreateExternalDataSourceInput:
     mailchimp: Optional[MailChimpSourceInput] = None
     airtable: Optional[AirtableSourceInput] = None
     actionnetwork: Optional[ActionNetworkSourceInput] = None
+    tickettailor: Optional[TicketTailorSourceInput] = None
 
 
 @strawberry.type
