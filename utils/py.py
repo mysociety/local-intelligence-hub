@@ -32,6 +32,7 @@ def get(d, path, default=None):
     except Exception:
         return default
 
+
 def is_sequence(arg):
     if isinstance(arg, str):
         return False
