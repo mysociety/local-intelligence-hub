@@ -235,7 +235,7 @@ class TestExternalDataSource:
         # Check
         try:
             assert len(records) == 2
-        except Exception:
+        except AssertionError:
             print(f"Incorrect record count: expected 2, found {len(records)}")
             assert False
         # Check the email field instead of postcode, because Mailchimp doesn't set
