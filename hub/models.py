@@ -41,7 +41,7 @@ from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
 from wagtail.admin.panels import FieldPanel, ObjectList, TabbedInterface
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
-from wagtail.models import Page
+from wagtail.models import Page, Site
 from wagtail_json_widget.widgets import JSONEditorWidget
 
 import utils as lih_utils
@@ -75,7 +75,7 @@ class Organisation(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
-    logo = models.ImageField(null=True, upload_to="organisation")
+    logo = models.ImageField(null=True, blank=True, upload_to="organisation")
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -84,6 +84,17 @@ class Organisation(models.Model):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def get_or_create_for_user(self, user: any):
+        if isinstance(user, (str, int)):
+            user = User.objects.get(pk=user)
+        membership = Membership.objects.filter(user=user).first()
+        if membership:
+            return membership.organisation
+        org = self.objects.create(name=f"{user.username}'s personal workspace")
+        Membership.objects.create(user=user, organisation=org, role="owner")
+        return org
 
 
 class Membership(models.Model):
@@ -3141,6 +3152,35 @@ class HubHomepage(Page):
 
     def get_nav_links(self) -> list[HubNavLinks]:
         return self.nav_links
+
+    @classmethod
+    def create_for_user(
+        cls,
+        user,
+        hostname,
+        port=80,
+        org_id=None,
+    ):
+        """
+        Create a new HubHomepage for a user.
+        """
+        if org_id:
+            organisation = Organisation.objects.get(id=org_id)
+        else:
+            organisation = Organisation.get_or_create_for_user(user)
+        hub = HubHomepage(
+            title=hostname,
+            slug=slugify(hostname),
+            organisation=organisation,
+        )
+        # get root
+        root_page = Page.get_first_root_node()
+        root_page.add_child(instance=hub)
+        hub.save()
+        Site.objects.create(
+            hostname=hostname, port=port, site_name=hostname, root_page=hub
+        )
+        return hub
 
 
 # Signal when HubHomepage.layers changes to bust the filter cache
