@@ -44,3 +44,21 @@ class ExternalDataSourceAutoUpdateWebhook(View):
             logger.info("Webhook ignored: Webhook is not enabled.")
             return JsonResponse({"status": "Webhook is not enabled."})
         return external_data_source.handle_update_webhook_view(data)
+    
+
+class ExternalDataSourceAutoImportWebhook(ExternalDataSourceAutoUpdateWebhook):
+    base_path = "webhook/auto_import"
+
+    def handle(self, request, external_data_source_id: str, data: dict):
+        logger.info(f"Webhook received {self.kwargs} {data}")
+        # 1. Match the payload to a ExternalDataSource
+        external_data_source = models.ExternalDataSource.objects.filter(
+            id=external_data_source_id
+        ).first()
+        if not external_data_source:
+            logger.info("Webhook ignored: Data source not found.")
+            return JsonResponse({"status": "Data source not found."})
+        if not external_data_source.auto_import_enabled:
+            logger.info("Webhook ignored: Webhook is not enabled.")
+            return JsonResponse({"status": "Webhook is not enabled."})
+        return external_data_source.handle_import_webhook_view(data)

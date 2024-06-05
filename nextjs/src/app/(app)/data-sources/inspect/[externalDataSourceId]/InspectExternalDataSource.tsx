@@ -314,7 +314,7 @@ export default function InspectExternalDataSource({
               )}
               {source.lastImportJob ? (
                 <div className="text-meepGray-400">
-                  Last sync:{" "}
+                  Last import:{" "}
                   {formatRelative(source.lastImportJob.lastEventAt, new Date())} (
                   {source.lastImportJob.status})
                 </div>

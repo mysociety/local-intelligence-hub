@@ -59,7 +59,7 @@ from hub.tasks import (
     refresh_one,
     refresh_webhooks,
 )
-from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
+from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook, ExternalDataSourceAutoImportWebhook
 from utils.log import get_simple_debug_logger
 from utils.nominatim import address_to_geojson
 from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
@@ -1273,6 +1273,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             settings.BASE_URL,
             reverse("external_data_source_auto_update_webhook", args=[self.id]),
         )
+    
+    def auto_import_webhook_url(self):
+        return urljoin(
+            settings.BASE_URL,
+            reverse("external_data_source_auto_import_webhook", args=[self.id]),
+        )
 
     def get_member_ids_from_webhook(self, payload: dict) -> list[str]:
         """
@@ -2197,7 +2203,7 @@ class AirtableSource(ExternalDataSource):
             ]
         )
 
-    def auto_update_webhook_specification(self):
+    def auto_webhook_specification(self):
         if self.geography_column is None:
             raise ValueError("A geography column is required for auto-updates to work.")
         # DOCS: https://airtable.com/developers/web/api/model/webhooks-specification
@@ -2222,11 +2228,12 @@ class AirtableSource(ExternalDataSource):
 
     def get_webhooks(self):
         list = self.base.webhooks()
+        auto_import_webhook_url = self.auto_import_webhook_url()
         auto_update_webhook_url = self.auto_update_webhook_url()
         return [
             webhook
             for webhook in list
-            if webhook.notification_url == auto_update_webhook_url
+            if webhook.notification_url in [auto_import_webhook_url, auto_update_webhook_url]
         ]
 
     def extra_webhook_healthcheck(self, webhooks):
@@ -2238,18 +2245,22 @@ class AirtableSource(ExternalDataSource):
 
     def teardown_webhooks(self):
         list = self.base.webhooks()
-        url = self.auto_update_webhook_url()
         for webhook in list:
-            if ExternalDataSourceAutoUpdateWebhook.base_path in url:
-                # Update the webhook in case the spec changed,
-                # which will also refresh the 7 day expiration date
+            if (
+                ExternalDataSourceAutoUpdateWebhook.base_path in webhook.notification_url or 
+                ExternalDataSourceAutoImportWebhook.base_path in webhook.notification_url
+            ):
                 webhook.delete()
 
     def setup_webhooks(self):
         self.teardown_webhooks()
+        # Auto-import
+        self.base.add_webhook(
+            self.auto_import_webhook_url(), self.auto_webhook_specification()
+        )
         # Auto-update
         self.base.add_webhook(
-            self.auto_update_webhook_url(), self.auto_update_webhook_specification()
+            self.auto_update_webhook_url(), self.auto_webhook_specification()
         )
 
     def get_member_ids_from_webhook(self, webhook_payload: dict) -> list[str]:
@@ -2483,32 +2494,43 @@ class MailchimpSource(ExternalDataSource):
         return [
             webhook
             for webhook in webhooks
-            if webhook["url"] == self.auto_update_webhook_url()
+            if webhook["url"] in [self.auto_update_webhook_url(), self.auto_import_webhook_url()]
         ]
 
     def setup_webhooks(self):
         self.teardown_webhooks()
         # Update external data webhook
+        config = {
+            "events": {
+                "subscribe": True,
+                "unsubscribe": False,
+                "profile": True,
+                "cleaned": True,
+                "upemail": False,
+                "campaign": False,
+            },
+            "sources": {
+                "user": True,
+                "admin": True,
+                # Presumably this should be False to avoid
+                # an infinite loop (but what if other tools
+                # are updating using the API?)
+                "api": False,
+            },
+        }
         self.client.lists.webhooks.create(
             self.list_id,
             data={
                 "url": self.auto_update_webhook_url(),
-                "events": {
-                    "subscribe": True,
-                    "unsubscribe": False,
-                    "profile": True,
-                    "cleaned": True,
-                    "upemail": False,
-                    "campaign": False,
-                },
-                "sources": {
-                    "user": True,
-                    "admin": True,
-                    # Presumably this should be False to avoid
-                    # an infinite loop (but what if other tools
-                    # are updating using the API?)
-                    "api": False,
-                },
+                **config
+            },
+        )
+        # Import external data webhook
+        self.client.lists.webhooks.create(
+            self.list_id,
+            data={
+                "url": self.auto_import_webhook_url(),
+                **config
             },
         )
 
