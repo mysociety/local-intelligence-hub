@@ -66,9 +66,8 @@ class ExternalDataSourceTileView(MVTView, DetailView):
             return super().get(request, *args, **kwargs)
         except Exception as e:
             logger.warning(f"Could not view location data: {e}")
-            return HttpResponseForbidden(
-                "You don't have permission to view location data for this data source."
-            )
+            logger.exception(e)
+            return HttpResponseForbidden(e)
 
     def get_id(self):
         return self.kwargs.get(self.pk_url_kwarg)
@@ -92,16 +91,16 @@ class ExternalDataSourceTileView(MVTView, DetailView):
         """
         Obey hub-level layer filtering logic.
         """
-        logger.debug("getting filter", hostname, external_data_source_id)
         site = Site.objects.filter(hostname=hostname).first()
         if site is not None:
-            hub: HubHomepage = site.root_page.specific
-            layers = hub.get_layers()
-            logger.debug("filter in layers", layers)
-            if isinstance(layers, list):
-                for layer in layers:
-                    if layer.get("source") == external_data_source_id:
-                        return layer.get("filter", {})
+            hub = site.root_page.specific
+            if isinstance(hub, HubHomepage):
+                layers = hub.get_layers()
+                logger.debug("filter in layers", layers)
+                if isinstance(layers, list):
+                    for layer in layers:
+                        if layer.get("source") == external_data_source_id:
+                            return layer.get("filter", {})
         return {}
 
 

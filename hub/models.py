@@ -40,7 +40,7 @@ from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from strawberry.dataloader import DataLoader
 from wagtail.admin.panels import FieldPanel, ObjectList, TabbedInterface
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
-from wagtail.models import Page
+from wagtail.models import Page, Site
 from wagtail_json_widget.widgets import JSONEditorWidget
 
 import utils as lih_utils
@@ -74,7 +74,7 @@ class Organisation(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
-    logo = models.ImageField(null=True, upload_to="organisation")
+    logo = models.ImageField(null=True, blank=True, upload_to="organisation")
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -83,6 +83,17 @@ class Organisation(models.Model):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def get_or_create_for_user(self, user: any):
+        if isinstance(user, (str, int)):
+            user = User.objects.get(pk=user)
+        membership = Membership.objects.filter(user=user).first()
+        if membership:
+            return membership.organisation
+        org = self.objects.create(name=f"{user.username}'s personal workspace")
+        Membership.objects.create(user=user, organisation=org, role="owner")
+        return org
 
 
 class Membership(models.Model):
@@ -708,9 +719,6 @@ class GenericData(CommonData):
     title = models.CharField(max_length=1000, blank=True, null=True)
     description = models.TextField(max_length=3000, blank=True, null=True)
     image = models.ImageField(null=True, upload_to="generic_data")
-    start_time = models.DateTimeField(blank=True, null=True)
-    end_time = models.DateTimeField(blank=True, null=True)
-    public_url = models.URLField(max_length=2000, blank=True, null=True)
 
     def remote_url(self):
         return self.data_type.data_set.external_data_source.record_url(self.data)
@@ -1210,6 +1218,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     def record_url_template(self) -> Optional[str]:
         """
         Get the URL template for a record in the remote system.
+        """
+        return None
+
+    def record_url(self, record_id: str) -> Optional[str]:
+        """
+        Get the URL of a record in the remote system.
         """
         return None
 
@@ -1943,6 +1957,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         external_data_source: Union["ExternalDataSource", str],
     ) -> DataPermissions:
         if external_data_source is None:
+            logger.debug("No source provided, returning default permissions")
             return cls.DataPermissions(
                 can_display_points=False,
                 can_display_details=False,
@@ -2645,6 +2660,7 @@ class ActionNetworkSource(ExternalDataSource):
         address_field="postal_addresses[0].address_lines[0]",
     )
 
+    group_slug = models.CharField(max_length=100)
     api_key = EncryptedCharField(max_length=250)
 
     @classmethod
@@ -2678,6 +2694,21 @@ class ActionNetworkSource(ExternalDataSource):
         """
         id = self.get_record_id(record)
         return self.prefixed_id_to_uuid(id)
+
+    def record_url_template(self) -> Optional[str]:
+        """
+        Get the URL template for a record in the remote system.
+        """
+        return f"https://actionnetwork.org/user_search/group/{self.group_slug}/{{record_uuid}}"
+
+    def record_url(self, record_id: str) -> Optional[str]:
+        """
+        Get the URL of a record in the remote system.
+        """
+        return (
+            "https://actionnetwork.org/user_search/group"
+            f"/{self.group_slug}/{self.prefixed_id_to_uuid(record_id)}"
+        )
 
     def prefixed_id_to_uuid(self, id):
         return id.replace("action_network:", "")
@@ -2930,6 +2961,35 @@ class HubHomepage(Page):
 
     def get_nav_links(self) -> list[HubNavLinks]:
         return self.nav_links
+
+    @classmethod
+    def create_for_user(
+        cls,
+        user,
+        hostname,
+        port=80,
+        org_id=None,
+    ):
+        """
+        Create a new HubHomepage for a user.
+        """
+        if org_id:
+            organisation = Organisation.objects.get(id=org_id)
+        else:
+            organisation = Organisation.get_or_create_for_user(user)
+        hub = HubHomepage(
+            title=hostname,
+            slug=slugify(hostname),
+            organisation=organisation,
+        )
+        # get root
+        root_page = Page.get_first_root_node()
+        root_page.add_child(instance=hub)
+        hub.save()
+        Site.objects.create(
+            hostname=hostname, port=port, site_name=hostname, root_page=hub
+        )
+        return hub
 
 
 # Signal when HubHomepage.layers changes to bust the filter cache

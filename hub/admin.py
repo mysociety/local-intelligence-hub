@@ -5,6 +5,8 @@ from hub.models import (
     AreaData,
     DataSet,
     DataType,
+    Membership,
+    Organisation,
     Person,
     PersonData,
     Report,
@@ -174,3 +176,24 @@ class PersonAdmin(admin.ModelAdmin):
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
     pass
+
+
+@admin.register(Organisation)
+class OrganisationAdmin(admin.ModelAdmin):
+    list_display = ("name",)
+    search_fields = ("name",)
+
+
+# Membership
+@admin.register(Membership)
+class MembershipAdmin(admin.ModelAdmin):
+    list_display = (
+        "organisation",
+        "user",
+        "role",
+    )
+    search_fields = (
+        "organisation__name",
+        "user__name",
+        "role",
+    )
