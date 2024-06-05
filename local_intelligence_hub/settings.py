@@ -334,7 +334,7 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "procrastinate": {"format": "%(asctime)s %(levelname)-7s %(name)s %(message)s"},
+        "shared": {"format": "%(asctime)s %(levelname)-7s %(name)s %(message)s"},
     },
     "handlers": {
         "console": {
@@ -343,15 +343,17 @@ LOGGING = {
     },
     "loggers": {
         "procrastinate": {
-            "formatter": "procrastinate",
+            "formatter": "shared",
             "handlers": ["console"],
             "level": "DEBUG",
         },
         "django": {
+            "formatter": "shared",
             "handlers": ["console"],
             "level": DJANGO_LOG_LEVEL,
         },
         "hub": {
+            "formatter": "shared",
             "handlers": ["console"],
             "level": DJANGO_HUB_LOG_LEVEL,
         },

@@ -2808,6 +2808,16 @@ class ActionNetworkSource(ExternalDataSource):
             )
         return fields
 
+    def get_member_ids_from_webhook(self, webhook_payload: list[dict]) -> list[str]:
+        member_ids = []
+        for action in webhook_payload:
+            payload = action.get("action_network:action", {})
+            person_href = payload.get("_links", {}).get("osdi:person", {}).get("href")
+            if person_href:
+                id = person_href.split("/")[-1]
+                member_ids.append(self.uuid_to_prefixed_id(id))
+        return member_ids
+
     async def fetch_all(self):
         # TODO: pagination
         list = self.client.get_people()

@@ -1,9 +1,12 @@
 import json
+from logging import getLogger
 
 from django.http import HttpRequest, JsonResponse
 from django.views.generic import View
 
 from hub import models
+
+logger = getLogger(__name__)
 
 
 class ExternalDataSourceAutoUpdateWebhook(View):
@@ -29,13 +32,15 @@ class ExternalDataSourceAutoUpdateWebhook(View):
         return self.handle(request, external_data_source_id, data)
 
     def handle(self, request, external_data_source_id: str, data: dict):
-        print("Webhook received", self.kwargs, data)
+        logger.info(f"Webhook received {self.kwargs} {data}")
         # 1. Match the payload to a ExternalDataSource
         external_data_source = models.ExternalDataSource.objects.filter(
             id=external_data_source_id
         ).first()
         if not external_data_source:
-            return JsonResponse({"status": "You need to set up a webhook first."})
+            logger.info("Webhook ignored: Data source not found.")
+            return JsonResponse({"status": "Data source not found."})
         if not external_data_source.auto_update_enabled:
+            logger.info("Webhook ignored: Webhook is not enabled.")
             return JsonResponse({"status": "Webhook is not enabled."})
         return external_data_source.handle_update_webhook_view(data)
