@@ -2809,9 +2809,7 @@ class ActionNetworkSource(ExternalDataSource):
         return fields
 
     async def fetch_all(self):
-        # TODO: pagination
-        list = self.client.get_people()
-        return list.to_dicts()
+        return self.client.get_people()
 
     async def fetch_many(self, member_ids: list[str]):
         member_ids = [self.uuid_to_prefixed_id(id) for id in list(set(member_ids))]
@@ -2821,7 +2819,7 @@ class ActionNetworkSource(ExternalDataSource):
             osdi_filter_str = " or ".join(
                 [f"identifier eq '{member_id}'" for member_id in batch]
             )
-            members += self.client.get_people(filter=osdi_filter_str).to_dicts()
+            members += list(self.client.get_people(filter=osdi_filter_str))
         return members
 
     async def fetch_one(self, member_id: str):
