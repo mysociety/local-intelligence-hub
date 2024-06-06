@@ -26,17 +26,22 @@ export const FilterableGrid: ComponentConfig<FilterableGridProps> = {
 };
 
 const FilterableGridRenderer = ({ rows }: FilterableGridProps) => {
-    const calculatedRows = 4 * rows
     return (
         <div
-            className={`grid lg:grid-cols-4 sm:grid-cols-2 grid-cols-1 gap-[25px] mb-[25px]`}
+            className={`
+                [&[data-rfd-droppable-id~="filterable-grid-cells"]]:bg-red-100
+                [&[data-rfd-droppable-id~="FilterableGrid-321fac77-691b-49d4-8c90-2aaf16492217:filterable-grid-cells"]]:lg:grid-cols-4
+                [&[data-rfd-droppable-id~="FilterableGrid-321fac77-691b-49d4-8c90-2aaf16492217:filterable-grid-cells"]]:sm:grid-cols-2
+                [&[data-rfd-droppable-id~="FilterableGrid-321fac77-691b-49d4-8c90-2aaf16492217:filterable-grid-cells"]]:grid-cols-1
+                [&[data-rfd-droppable-id~="FilterableGrid-321fac77-691b-49d4-8c90-2aaf16492217:filterable-grid-cells"]]:gap-[25px]
+                [&[data-rfd-droppable-id~="FilterableGrid-321fac77-691b-49d4-8c90-2aaf16492217:filterable-grid-cells"]]:grid-rows-[var(--gridTemplateRows)]
+            `}
             style={{
-                gridTemplateRows: `repeat(${rows}, 1fr)`,
+                // @ts-ignore
+                "--gridTemplateRows": rows
             }}
         >
-            {Array.from({ length: calculatedRows }, (_, i) => (
-                <DropZone key={i} zone={`filterable-grid-cell-${i + 1}`} />
-            ))}
+            <DropZone zone={`filterable-grid-cells`} />
         </div>
     );
 };
