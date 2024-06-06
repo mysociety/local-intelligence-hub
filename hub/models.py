@@ -38,6 +38,7 @@ from pyairtable import Api as AirtableAPI
 from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
+from sentry_sdk import metrics
 from strawberry.dataloader import DataLoader
 from wagtail.admin.panels import FieldPanel, ObjectList, TabbedInterface
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
@@ -1155,13 +1156,16 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             )
             + 1
         )
-        remaining = total - done
+
         time_started = (
             ProcrastinateEvent.objects.filter(job_id=parent_job.id)
             .order_by("at")
             .first()
             .at.replace(tzinfo=pytz.utc)
         )
+
+        remaining = total - done
+
         time_so_far = datetime.now(pytz.utc) - time_started
         duration_per_record = time_so_far / done
         time_remaining = duration_per_record * remaining
@@ -1827,9 +1831,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
         members = await external_data_source.fetch_all()
+        member_count = 0
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
         for batch in batches:
+            member_count += len(batch)
             await external_data_source.schedule_refresh_many(batch, request_id)
+        metrics.distribution(key="update_rows_requested", value=member_count)
 
     @classmethod
     async def deferred_refresh_webhooks(cls, external_data_source_id: str):
@@ -1864,11 +1871,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
         members = await external_data_source.fetch_all()
+        member_count = 0
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
         for batch in batches:
+            member_count += len(batch)
             await external_data_source.schedule_import_many(
                 batch, request_id=request_id
             )
+        metrics.distribution(key="import_rows_requested", value=member_count)
 
     async def schedule_refresh_one(self, member) -> int:
         if not self.allow_updates:
@@ -1961,14 +1971,20 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         except (UniqueViolation, IntegrityError):
             pass
 
-    async def schedule_import_all(self, request_id: str = None) -> int:
+    async def schedule_import_all(
+        self, requested_at: str, request_id: str = None
+    ) -> int:
         try:
             return await import_all.configure(
                 # Dedupe `import_all` jobs for the same config
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"import_all_{str(self.id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
-            ).defer_async(external_data_source_id=str(self.id), request_id=request_id)
+            ).defer_async(
+                external_data_source_id=str(self.id),
+                requested_at=requested_at,
+                request_id=request_id,
+            )
         except (UniqueViolation, IntegrityError):
             pass
 
