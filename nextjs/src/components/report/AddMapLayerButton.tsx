@@ -107,10 +107,10 @@ export function MapLayerSelector ({ value, onChange, filter }: { value?: Source,
 
   const useableSources = useMemo(() => {
     const data: Array<SourceOption> = [
-      ...dataSources.data?.myOrganisations[0]?.externalDataSources.filter(
+      ...dataSources.data?.myOrganisations.flatMap(d => d.externalDataSources).filter(
         d => filter ? filter(d) : true
       ) || [],
-      ...dataSources.data?.myOrganisations[0]?.sharingPermissionsFromOtherOrgs.map(
+      ...dataSources.data?.myOrganisations.flatMap(d => d.sharingPermissionsFromOtherOrgs).map(
         p => p.externalDataSource
       ).filter(
         d => filter ? filter(d) : true
