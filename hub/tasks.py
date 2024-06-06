@@ -122,7 +122,10 @@ async def import_many(
 
 @app.task(queue="external_data_sources")
 @telemetry_task
-async def import_all(external_data_source_id: str, request_id: str = None):
+async def import_all(
+    external_data_source_id: str, requested_at: str = None, request_id: str = None
+):
+    # Todo: track task waiting duration with requested_at ISO date
     from hub.models import ExternalDataSource
 
     await ExternalDataSource.deferred_import_all(
