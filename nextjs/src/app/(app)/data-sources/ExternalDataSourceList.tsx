@@ -72,6 +72,9 @@ export default function ExternalDataSourceList() {
     refetch()
   }, [refetch])
 
+  const allOrgSources = data?.myOrganisations.flatMap(org => org.externalDataSources) || []
+  const allOrgShares = data?.myOrganisations.flatMap(org => org.sharingPermissionsFromOtherOrgs) || []
+
   return (
     <div className="max-w-7xl space-y-7 w-full">
       <PageHeader />
@@ -91,7 +94,7 @@ export default function ExternalDataSourceList() {
         <h2>Error: {error.message}</h2>
       ) : data ? (
         <section className="w-full grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {(data.myOrganisations[0]?.externalDataSources || [])
+          {(allOrgSources || [])
           .filter(d => d.dataType === DataSourceType.Member)
           .map((externalDataSource) => (
             <ExternalDataSourceCard
@@ -104,7 +107,7 @@ export default function ExternalDataSourceList() {
           <ConnectDataSource label="Connect a member list" params={{ dataType: DataSourceType.Member }} />
         </section>
       ) : null}
-      {!!data?.myOrganisations[0]?.sharingPermissionsFromOtherOrgs?.length && (
+      {!!allOrgShares.length && (
         <>
           <div className="border-b border-meepGray-700 pt-10" />
           <header className='flex flex-row justify-end'>
@@ -121,8 +124,7 @@ export default function ExternalDataSourceList() {
             <h2>Error: {error.message}</h2>
           ) : data ? (
             <section className="w-full grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {data.myOrganisations[0].sharingPermissionsFromOtherOrgs
-              .filter(share => share.externalDataSource.dataType === DataSourceType.Member)
+              {allOrgShares.filter(share => share.externalDataSource.dataType === DataSourceType.Member)
               .map((share) => (
                 <ExternalDataSourceCard
                   key={share.externalDataSource.id}
@@ -150,7 +152,7 @@ export default function ExternalDataSourceList() {
         <h2>Error: {error.message}</h2>
       ) : data ? (
         <section className="grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {(data.myOrganisations[0]?.externalDataSources || [])
+          {(allOrgSources || [])
           .filter(d => d.dataType !== DataSourceType.Member)
           .map((externalDataSource) => (
             <ExternalDataSourceCard
