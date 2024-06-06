@@ -85,7 +85,11 @@ const CREATE_DATA_SOURCE = gql`
 `;
 
 
-type FormInputs = CreateExternalDataSourceInput & ExternalDataSourceInput
+type FormInputs = CreateExternalDataSourceInput & ExternalDataSourceInput & {
+  temp?: {
+    airtableBaseUrl?: string
+  }
+}
 
 export default function Page({
   params: { externalDataSourceType },
@@ -231,6 +235,19 @@ export default function Page({
       }
     }
   }, [testSourceResult.data])
+
+
+  const airtableUrl = form.watch("temp.airtableBaseUrl")
+  const baseId = form.watch("airtable.baseId")
+  const tableId = form.watch("airtable.tableId")
+  useEffect(() => {
+    if (airtableUrl) {
+      const url = new URL(airtableUrl)
+      const [_, base, table, ...pathSegments] = url.pathname.split('/')
+      form.setValue("airtable.baseId", base)
+      form.setValue("airtable.tableId", table)
+    }
+  }, [airtableUrl])
 
   async function submitTestConnection(formData: FormInputs) {
     if (!formData[externalDataSourceType]) {
@@ -527,8 +544,13 @@ export default function Page({
                     <Input placeholder="patAB1" {...field} required />
                   </FormControl>
                   <FormDescription>
-                    Make sure your token has read and write permissions for
-                    table data, table schema and webhooks.{" "}
+                    <p>Your token should have access to the base and the following "scopes":</p>
+                    <ul className='list-disc list-inside pl-1'>
+                      <li><code>data.records:read</code></li>
+                      <li><code>data.records:write</code></li>
+                      <li><code>schema.bases:read</code></li>
+                      <li><code>webhook:manage</code></li>
+                    </ul>
                     <a
                       className="underline"
                       target="_blank"
@@ -541,6 +563,25 @@ export default function Page({
                 </FormItem>
               )}
             />
+            {(!baseId && !tableId) && (
+              <FormField
+                control={form.control}
+                name="temp.airtableBaseUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Airtable URL</FormLabel>
+                    <FormControl>
+                      {/* @ts-ignore */}
+                      <Input placeholder="https://airtable.com/app123/tbl123" {...field} required />
+                    </FormControl>
+                    <FormDescription>
+                      The URL for your airtable base.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={form.control}
               name="airtable.baseId"
