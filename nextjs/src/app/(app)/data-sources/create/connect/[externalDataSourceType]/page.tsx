@@ -160,7 +160,7 @@ export default function Page({
   ) {
     useEffect(() => {
       // @ts-ignore
-      if (!collectFields.includes(field) && !geographyFields.includes("geographyColumn")) {
+      if (!collectFields.includes(field)) {
         form.setValue(field, null)
         return
       }
