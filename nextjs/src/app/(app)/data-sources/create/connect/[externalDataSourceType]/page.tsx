@@ -40,6 +40,7 @@ import { toastPromise } from "@/lib/toast";
 import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
 import { getFieldsForDataSourceType } from "@/components/UpdateExternalDataSourceFields";
 import { camelCase } from "lodash";
+import { Building, Calendar, Newspaper, PersonStanding, Pin, User } from "lucide-react";
 import { locationTypeOptions } from "@/data/location";
 
 const TEST_DATA_SOURCE = gql`
@@ -405,11 +406,31 @@ export default function Page({
                           <SelectContent>
                             <SelectGroup>
                               <SelectLabel>Type of data source</SelectLabel>
-                              <SelectItem value={DataSourceType.Member}>A list of members</SelectItem>
-                              <SelectItem value={DataSourceType.Location}>Venues and physical locations</SelectItem>
-                              <SelectItem value={DataSourceType.Event}>Calendar events</SelectItem>
-                              <SelectItem value={DataSourceType.Story}>Articles, stories and reports</SelectItem>
-                              <SelectItem value={DataSourceType.Other}>Other data</SelectItem>
+                              <SelectItem value={DataSourceType.Member}>
+                                <div className='flex flex-row gap-2 items-center'>
+                                  <User className='w-4 text-meepGray-300' /> People
+                                </div>
+                              </SelectItem>
+                              <SelectItem value={DataSourceType.Location}>
+                                <div className='flex flex-row gap-2 items-center'>
+                                  <Building className='w-4 text-meepGray-300' /> Locations
+                                </div>
+                              </SelectItem>
+                              <SelectItem value={DataSourceType.Event}>
+                                <div className='flex flex-row gap-2 items-center'>
+                                  <Calendar className='w-4 text-meepGray-300' /> Events
+                                </div>
+                              </SelectItem>
+                              <SelectItem value={DataSourceType.Story}>
+                                <div className='flex flex-row gap-2 items-center'>
+                                  <Newspaper className='w-4 text-meepGray-300' /> Stories
+                                </div>
+                              </SelectItem>
+                              <SelectItem value={DataSourceType.Other}>
+                                <div className='flex flex-row gap-2 items-center'>
+                                  <Pin className='w-4 text-meepGray-300' /> Other
+                                </div>
+                              </SelectItem>
                             </SelectGroup>
                           </SelectContent>
                         </Select>
@@ -421,7 +442,6 @@ export default function Page({
               )}
               {!currentSource?.testDataSource?.predefinedColumnNames && (
                 <div className='grid grid-cols-2 gap-4 w-full'>
-                  <FPreopulatedSelectField name="geographyColumn" label={`${form.watch("geographyColumnType")?.toLocaleLowerCase()} field`} required />
                   <FormField
                     control={form.control}
                     name="geographyColumnType"
