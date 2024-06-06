@@ -963,6 +963,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     can_display_details_publicly = models.BooleanField(default=False)
 
     class GeographyTypes(models.TextChoices):
+        """
+        The keys and values here are identical (for GraphQL compatibility)
+        and are uppercased versions of the PostcodesIO terms
+        (for ease of mapping).
+        """
+
         ADDRESS = "ADDRESS", "Address"
         POSTCODE = "POSTCODE", "Postcode"
         WARD = "WARD", "Ward"
