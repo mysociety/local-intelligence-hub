@@ -428,11 +428,6 @@ export default function Page({
                                   <User className='w-4 text-meepGray-300' /> People
                                 </div>
                               </SelectItem>
-                              <SelectItem value={DataSourceType.Location}>
-                                <div className='flex flex-row gap-2 items-center'>
-                                  <Building className='w-4 text-meepGray-300' /> Locations
-                                </div>
-                              </SelectItem>
                               <SelectItem value={DataSourceType.Event}>
                                 <div className='flex flex-row gap-2 items-center'>
                                   <Calendar className='w-4 text-meepGray-300' /> Events
@@ -441,6 +436,11 @@ export default function Page({
                               <SelectItem value={DataSourceType.Story}>
                                 <div className='flex flex-row gap-2 items-center'>
                                   <Quote className='w-4 text-meepGray-300' /> Stories
+                                </div>
+                              </SelectItem>
+                              <SelectItem value={DataSourceType.Location}>
+                                <div className='flex flex-row gap-2 items-center'>
+                                  <Building className='w-4 text-meepGray-300' /> Locations
                                 </div>
                               </SelectItem>
                               <SelectItem value={DataSourceType.Other}>
