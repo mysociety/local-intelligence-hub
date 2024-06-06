@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 from django.core.management.base import BaseCommand
 
@@ -25,9 +26,9 @@ class Command(BaseCommand):
         )
         only = options.get("only")
         if not only:
-            await source.schedule_import_all()
-            await source.schedule_refresh_all()
+            await source.schedule_import_all(request_id=uuid.uuid4())
+            await source.schedule_refresh_all(request_id=uuid.uuid4())
         elif only == "import":
-            await source.schedule_import_all()
+            await source.schedule_import_all(request_id=uuid.uuid4())
         else:
-            await source.schedule_refresh_all()
+            await source.schedule_refresh_all(request_id=uuid.uuid4())

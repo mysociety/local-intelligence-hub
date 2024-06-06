@@ -1861,7 +1861,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
         for batch in batches:
             await external_data_source.schedule_import_many(
-                members, request_id=request_id
+                batch, request_id=request_id
             )
 
     async def schedule_refresh_one(self, member) -> int:
