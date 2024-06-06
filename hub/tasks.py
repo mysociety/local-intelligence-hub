@@ -38,18 +38,12 @@ def telemetry_task(func):
             system_cpu_time_used = cpu_end.system - cpu_start.system
             elapsed_time = end_time - start_time
 
-            metrics.distribution(
-                key=user_cpu_time_metric,
-                value=user_cpu_time_used
-            )
-            metrics.distribution(
-                key=system_cpu_time_metric,
-                value=system_cpu_time_used
-            )
+            metrics.distribution(key=user_cpu_time_metric, value=user_cpu_time_used)
+            metrics.distribution(key=system_cpu_time_metric, value=system_cpu_time_used)
             metrics.distribution(
                 key=elapsed_time_metric,
                 value=elapsed_time.total_seconds(),
-                unit="seconds"
+                unit="seconds",
             )
 
             return result
@@ -61,8 +55,7 @@ def telemetry_task(func):
                 counts["failed"] * 100 / counts["total"] if counts["total"] else 0
             )
             metrics.gauge(
-                key=percentage_failed_metric,
-                value=round(percentage_failed, 2)
+                key=percentage_failed_metric, value=round(percentage_failed, 2)
             )
 
     return wrapper

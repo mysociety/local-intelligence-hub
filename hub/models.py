@@ -1836,10 +1836,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         for batch in batches:
             member_count += len(batch)
             await external_data_source.schedule_refresh_many(batch, request_id)
-        metrics.distribution(
-            key="update_rows_requested",
-            value=member_count
-        )
+        metrics.distribution(key="update_rows_requested", value=member_count)
 
     @classmethod
     async def deferred_refresh_webhooks(cls, external_data_source_id: str):
@@ -1881,10 +1878,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             await external_data_source.schedule_import_many(
                 batch, request_id=request_id
             )
-        metrics.distribution(
-            key="import_rows_requested",
-            value=member_count
-        )
+        metrics.distribution(key="import_rows_requested", value=member_count)
 
     async def schedule_refresh_one(self, member) -> int:
         if not self.allow_updates:
