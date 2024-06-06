@@ -139,4 +139,4 @@ def transform_dict_values_recursive(
 
 
 def is_maybe_id(value):
-    return isinstance(value, (str, dict, UUID))
+    return isinstance(value, (str, int, UUID))
