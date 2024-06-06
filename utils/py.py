@@ -1,6 +1,7 @@
 import itertools
 import pprint
 from types import SimpleNamespace
+from uuid import UUID
 
 from benedict import benedict
 
@@ -20,17 +21,17 @@ class DictWithDotNotation(SimpleNamespace):
 
 
 def get(d, path, default=None):
-    if isinstance(d, benedict):
-        val = d[path]
-    else:
-        try:
+    try:
+        if isinstance(d, benedict):
+            val = d[path]
+        else:
             o = benedict()
             for key in d:
                 o[key] = d[key]
             val = o[path]
-        except Exception:
-            return default
-    return val if val is not None else default
+        return val if val is not None else default
+    except Exception:
+        return default
 
 
 def is_sequence(arg):
@@ -135,3 +136,7 @@ def transform_dict_values_recursive(
         ]
     else:
         return transform_value_fn(value)
+
+
+def is_maybe_id(value):
+    return isinstance(value, (str, int, UUID))

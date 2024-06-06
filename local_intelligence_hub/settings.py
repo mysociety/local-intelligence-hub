@@ -49,7 +49,9 @@ env = environ.Env(
     TEST_MAILCHIMP_MEMBERLIST_API_KEY=(str, ""),
     TEST_MAILCHIMP_MEMBERLIST_AUDIENCE_ID=(str, ""),
     TEST_ACTIONNETWORK_MEMBERLIST_API_KEY=(str, ""),
+    TEST_TICKET_TAILOR_API_KEY=(str, ""),
     DJANGO_LOG_LEVEL=(str, "INFO"),
+    DJANGO_HUB_LOG_LEVEL=(str, None),
     POSTHOG_API_KEY=(str, False),
     POSTHOG_HOST=(str, False),
     ENVIRONMENT=(str, "development"),
@@ -104,12 +106,18 @@ TEST_AIRTABLE_MEMBERLIST_TABLE_NAME = env("TEST_AIRTABLE_MEMBERLIST_TABLE_NAME")
 TEST_MAILCHIMP_MEMBERLIST_API_KEY = env("TEST_MAILCHIMP_MEMBERLIST_API_KEY")
 TEST_MAILCHIMP_MEMBERLIST_AUDIENCE_ID = env("TEST_MAILCHIMP_MEMBERLIST_AUDIENCE_ID")
 TEST_ACTIONNETWORK_MEMBERLIST_API_KEY = env("TEST_ACTIONNETWORK_MEMBERLIST_API_KEY")
+TEST_TICKET_TAILOR_API_KEY = env("TEST_TICKET_TAILOR_API_KEY")
 TEST_AIRTABLE_MEMBERLIST_API_KEY = env("TEST_AIRTABLE_MEMBERLIST_API_KEY")
 TEST_AIRTABLE_CUSTOMDATALAYER_BASE_ID = env("TEST_AIRTABLE_CUSTOMDATALAYER_BASE_ID")
 TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME = env(
     "TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME"
 )
 TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY = env("TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY")
+DJANGO_LOG_LEVEL = env("DJANGO_LOG_LEVEL")
+DJANGO_HUB_LOG_LEVEL = env("DJANGO_HUB_LOG_LEVEL")
+DJANGO_HUB_LOG_LEVEL = (
+    DJANGO_HUB_LOG_LEVEL if DJANGO_HUB_LOG_LEVEL is not None else DJANGO_LOG_LEVEL
+)
 
 # mailing list signup config
 MAILCHIMP_MYSOC_KEY = env("MAILCHIMP_MYSOC_KEY")
@@ -330,22 +338,36 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "procrastinate": {"format": "%(asctime)s %(levelname)-7s %(name)s %(message)s"},
+        "common": {
+            "format": "{levelname} {asctime} {name}.{funcName}:{lineno} # {message}",
+            "style": "{",
+            "validate": True,
+        },
+        "procrastinate": {
+            "format": "{levelname} {asctime} {name} # {message}",
+            "style": "{",
+            "validate": True,
+        },
     },
     "handlers": {
-        "console": {
+        "console": {"class": "logging.StreamHandler", "formatter": "common"},
+        "procrastinate": {
             "class": "logging.StreamHandler",
+            "formatter": "procrastinate",
         },
     },
     "loggers": {
         "procrastinate": {
-            "formatter": "procrastinate",
-            "handlers": ["console"],
+            "handlers": ["procrastinate"],
             "level": "DEBUG",
         },
         "django": {
             "handlers": ["console"],
-            "level": env("DJANGO_LOG_LEVEL"),
+            "level": DJANGO_LOG_LEVEL,
+        },
+        "hub": {
+            "handlers": ["console"],
+            "level": DJANGO_HUB_LOG_LEVEL,
         },
     },
 }
@@ -407,8 +429,11 @@ environment = env("ENVIRONMENT")
 
 posthog.disabled = True
 
-# Configure Sentry only if in production
+# Configure Sentry and HSTS headers only if in production
 if environment == "production":
+    SECURE_HSTS_SECONDS = 600
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
     if env("SENTRY_DSN") is not False:
         import sentry_sdk
         from sentry_sdk.integrations.django import DjangoIntegration

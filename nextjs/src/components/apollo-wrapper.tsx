@@ -33,7 +33,7 @@ import { authenticationHeaders } from '@/lib/auth';
  * The "use client" is required. For server components (no use client),
  * see services/apollo-client.ts.
  */
-function makeFrontEndClient() {
+export function makeFrontEndClient() {
   const httpLink = new HttpLink({
     uri: `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/graphql`,
   });

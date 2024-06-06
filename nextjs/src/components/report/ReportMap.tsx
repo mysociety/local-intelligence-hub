@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  AnalyticalAreaType,
   DataSourceType,
   MapReportConstituencyStatsQuery,
   MapReportConstituencyStatsQueryVariables,
@@ -59,6 +60,7 @@ export function ReportMap () {
   const constituencyAnalytics = useQuery<MapReportConstituencyStatsQuery, MapReportConstituencyStatsQueryVariables>(MAP_REPORT_CONSTITUENCY_STATS, {
     variables: {
       reportID: id,
+      analyticalAreaType: displayOptions.analyticalAreaType
     }
   })
 
@@ -71,7 +73,7 @@ export function ReportMap () {
   const mapbox = useLoadedMap()
 
   // TODO: unify this and HubMap's TILESETS
-  const TILESETS: Record<"EERs" | "constituencies" | "wards", {
+  const TILESETS: Record<"EERs" | "constituencies" | "constituencies2024" | "wards", {
     name: string,
     singular: string,
     mapboxSourceId: string,
@@ -113,6 +115,20 @@ export function ReportMap () {
         maxzoom: MAX_CONSTITUENCY_ZOOM,
       }
     },
+    constituencies2024: {
+      name: "GE2024 constituencies",
+      singular: "constituency",
+      mapboxSourceId: "commonknowledge.39dnumdm",
+      sourceLayerId: "constituencies_2024_simplifie-7w220i",
+      promoteId: "PCON24CD",
+      labelId: "PCON24NM",
+      data: constituencyAnalytics.data?.mapReport.importedDataCountByConstituency || [],
+      mapboxSourceProps: {},
+      mapboxLayerProps: {
+        minzoom: MAX_REGION_ZOOM,
+        maxzoom: MAX_CONSTITUENCY_ZOOM,
+      }
+    },
     wards: {
       name: "wards",
       singular: "ward",
@@ -142,6 +158,9 @@ export function ReportMap () {
       count: count
     })
   }
+
+  // Unless someone explicitly sets 2019 constituency, default to 2024 when zooming in
+  const constituencyTileset = displayOptions.analyticalAreaType === AnalyticalAreaType.ParliamentaryConstituency ? TILESETS.constituencies : TILESETS.constituencies2024
 
   useEffect(function setFeatureState() {
     if (!mapbox.loadedMap) return
@@ -184,22 +203,22 @@ export function ReportMap () {
   const [isConstituencyPanelOpen, setIsConstituencyPanelOpen] = useAtom(isConstituencyPanelOpenAtom)
 
   useEffect(function selectConstituency() {
-    mapbox.loadedMap?.on('mouseover', `${TILESETS.constituencies.mapboxSourceId}-fill`, () => {
+    mapbox.loadedMap?.on('mouseover', `${constituencyTileset.mapboxSourceId}-fill`, () => {
       const canvas = mapbox.loadedMap?.getCanvas()
       if (!canvas) return
       canvas.style.cursor = 'pointer'
     })
-    mapbox.loadedMap?.on('mouseleave', `${TILESETS.constituencies.mapboxSourceId}-fill`, () => {
+    mapbox.loadedMap?.on('mouseleave', `${constituencyTileset.mapboxSourceId}-fill`, () => {
       const canvas = mapbox.loadedMap?.getCanvas()
       if (!canvas) return
       canvas.style.cursor = ''
     })
-    mapbox.loadedMap?.on('click', `${TILESETS.constituencies.mapboxSourceId}-fill`, event => {
+    mapbox.loadedMap?.on('click', `${constituencyTileset.mapboxSourceId}-fill`, event => {
       try {
         const feature = event.features?.[0]
         if (feature) {
-          if (feature.source === TILESETS.constituencies.mapboxSourceId) {
-            const id = feature.properties?.[TILESETS.constituencies.promoteId]
+          if (feature.source === constituencyTileset.mapboxSourceId) {
+            const id = feature.properties?.[constituencyTileset.promoteId]
             if (id) {
               setSelectedConstituency(id)
               setIsConstituencyPanelOpen(true)
@@ -211,7 +230,7 @@ export function ReportMap () {
         console.error("Failed to select constituency", e)
       }
     })
-  }, [mapbox.loadedMap])
+  }, [mapbox.loadedMap, displayOptions.analyticalAreaType, constituencyTileset])
 
   const [viewState, setViewState] = useAtom(viewStateAtom)
 
@@ -481,12 +500,12 @@ export function ReportMap () {
                 beforeId={"PLACEHOLDER_SELECTION"}
                 filter={[
                   "in",
-                  ["get", TILESETS.constituencies.promoteId],
+                  ["get", constituencyTileset.promoteId],
                   ["literal", selectedConstituency],
                 ]}
-                id={`${TILESETS.constituencies}-selected-line`}
-                source={TILESETS.constituencies.mapboxSourceId}
-                source-layer={TILESETS.constituencies.sourceLayerId}
+                id={`${constituencyTileset}-selected-line`}
+                source={constituencyTileset.mapboxSourceId}
+                source-layer={constituencyTileset.sourceLayerId}
                 type="line"
                 paint={{
                   "line-color": "white",
@@ -788,10 +807,10 @@ const MAP_REPORT_REGION_STATS = gql`
 `
 
 const MAP_REPORT_CONSTITUENCY_STATS = gql`
-  query MapReportConstituencyStats($reportID: ID!) {
+  query MapReportConstituencyStats($reportID: ID!, $analyticalAreaType: AnalyticalAreaType!) {
     mapReport(pk: $reportID) {
       id
-      importedDataCountByConstituency {
+      importedDataCountByConstituency: importedDataCountByArea(analyticalAreaType: $analyticalAreaType){
         label
         gss
         count

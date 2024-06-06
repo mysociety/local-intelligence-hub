@@ -15,6 +15,7 @@ const config: CodegenConfig = {
       plugins: ["fragment-matcher"],
       presetConfig: {
         gqlTagName: "gql",
+        fragmentMasking: false
       },
       config: {
         apolloClientVersion: 3,

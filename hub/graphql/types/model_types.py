@@ -1,4 +1,5 @@
 import itertools
+import logging
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Union
@@ -16,7 +17,6 @@ from strawberry import auto
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
-from strawberry_django.permissions import IsAuthenticated
 from wagtail.models import Site
 
 from hub import models
@@ -31,6 +31,8 @@ from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
+
+logger = logging.getLogger(__name__)
 
 
 # Ideally we'd just import this from the library (procrastinate.jobs.Status) but
@@ -625,12 +627,46 @@ class GenericData(CommonData):
     def postcode_data(self) -> Optional[PostcodesIOResult]:
         return benedict(self.postcode_data)
 
+    @strawberry_django.field
+    def areas(self, info: Info) -> Optional[Area]:
+        if self.point is None:
+            return None
+
+        # TODO: data loader for this
+        return models.Area.objects.filter(polygon__contains=self.point)
+
+    @strawberry_django.field
+    def area(self, area_type: str, info: Info) -> Optional[Area]:
+        if self.point is None:
+            return None
+
+        # TODO: data loader for this
+        return models.Area.objects.filter(
+            polygon__contains=self.point, area_type__code=area_type
+        )
+
 
 @strawberry.type
 class MapReportMemberFeature(PointFeature):
     # Optional, because of sharing options
     id: Optional[str]
     properties: Optional[GenericData]
+
+
+@strawberry.enum
+class AnalyticalAreaType(Enum):
+    parliamentary_constituency = "parliamentary_constituency"
+    parliamentary_constituency_2025 = "parliamentary_constituency_2025"
+    admin_district = "admin_district"
+    admin_ward = "admin_ward"
+
+
+postcodeIOKeyAreaTypeLookup = {
+    AnalyticalAreaType.parliamentary_constituency: "WMC",
+    AnalyticalAreaType.parliamentary_constituency_2025: "WMC23",
+    AnalyticalAreaType.admin_district: "DIS",
+    AnalyticalAreaType.admin_ward: "WD23",
+}
 
 
 @strawberry.interface
@@ -641,6 +677,27 @@ class Analytics:
     def imported_data_count_by_region(self) -> List[GroupedDataCount]:
         data = self.imported_data_count_by_region()
         return [GroupedDataCount(**datum) for datum in data]
+
+    @strawberry_django.field
+    def imported_data_count_by_area(
+        self, analytical_area_type: AnalyticalAreaType
+    ) -> List[GroupedDataCount]:
+        data = self.imported_data_count_by_area(
+            postcode_io_key=analytical_area_type.value
+        )
+        return [GroupedDataCount(**datum) for datum in data]
+
+    @strawberry_django.field
+    def imported_data_count_for_area(
+        self, info: Info, analytical_area_type: AnalyticalAreaType, gss: str
+    ) -> Optional[GroupedDataCount]:
+        res = self.imported_data_count_by_area(
+            postcode_io_key=analytical_area_type.value, gss=gss
+        )
+        if len(res) == 0:
+            return None
+        area_key = postcodeIOKeyAreaTypeLookup[analytical_area_type]
+        return GroupedDataCount(**res[0], area_type=area_key)
 
     @strawberry_django.field
     def imported_data_count_by_constituency(self) -> List[GroupedDataCount]:
@@ -729,6 +786,7 @@ class CrmType(Enum):
     airtable = "airtable"
     mailchimp = "mailchimp"
     actionnetwork = "actionnetwork"
+    tickettailor = "tickettailor"
 
 
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
@@ -763,7 +821,9 @@ class BaseDataSource(Analytics):
     has_webhooks: bool = attr_field()
     automated_webhooks: bool = attr_field()
     introspect_fields: bool = attr_field()
+    allow_updates: bool = attr_field()
     default_data_type: Optional[str] = attr_field()
+    defaults: JSON = attr_field()
 
     @strawberry_django.field
     def is_import_scheduled(self: models.ExternalDataSource, info: Info) -> bool:
@@ -800,19 +860,24 @@ class BaseDataSource(Analytics):
         return BatchJobProgress(**progress)
 
 
-@strawberry_django.field(extensions=[IsAuthenticated()])
+@strawberry_django.field
 def imported_data_geojson_point(
     info: Info, generic_data_id: str
 ) -> MapReportMemberFeature | None:
     datum = models.GenericData.objects.prefetch_related(
         "data_type__data_set__external_data_source"
     ).get(pk=generic_data_id)
-    if datum is None or datum.point is None:
+    if datum is None:
+        logger.debug(f"GenericData {generic_data_id} not found")
+        return None
+    if datum.point is None:
+        logger.debug(f"GenericData {generic_data_id} has no point data")
         return None
     external_data_source = datum.data_type.data_set.external_data_source
     user = get_current_user(info)
     permissions = models.ExternalDataSource.user_permissions(user, external_data_source)
     if not permissions.get("can_display_points"):
+        logger.debug(f"User {user} does not have permission to view points")
         return None
     return MapReportMemberFeature.from_geodjango(
         point=datum.point,
@@ -892,7 +957,9 @@ class ExternalDataSource(BaseDataSource):
     @strawberry_django.field
     def connection_details(
         self: models.ExternalDataSource, info
-    ) -> Union["AirtableSource", "MailchimpSource", "ActionNetworkSource"]:
+    ) -> Union[
+        "AirtableSource", "MailchimpSource", "ActionNetworkSource", "TicketTailorSource"
+    ]:
         instance = self.get_real_instance()
         return instance
 
@@ -931,6 +998,12 @@ class MailchimpSource(ExternalDataSource):
 
 @strawberry_django.type(models.ActionNetworkSource)
 class ActionNetworkSource(ExternalDataSource):
+    api_key: str
+    group_slug: str
+
+
+@strawberry_django.type(models.TicketTailorSource)
+class TicketTailorSource(ExternalDataSource):
     api_key: str
 
 
@@ -978,7 +1051,10 @@ class MapLayer:
 
     @strawberry_django.field
     def source(self, info: Info) -> SharedDataSource:
-        source_id = self.get("source", None)
+        # Set in MapReport GraphQL type
+        if self.get("cached_source"):
+            return self.get("cached_source")
+        source_id = self.get("source")
         return models.ExternalDataSource.objects.get(id=source_id)
 
 
@@ -1006,8 +1082,19 @@ class SharingPermission:
 
 @strawberry_django.type(models.MapReport)
 class MapReport(Report, Analytics):
-    layers: List[MapLayer]
     display_options: JSON
+
+    @strawberry_django.field
+    def layers(self, info: Info) -> List[MapLayer]:
+        """
+        Filter out layers that refer to missing sources
+        """
+        layers = self.layers
+        for layer in layers:
+            layer["cached_source"] = models.ExternalDataSource.objects.filter(
+                id=layer.get("source")
+            ).first()
+        return [layer for layer in self.layers if layer["cached_source"]]
 
 
 def public_map_report(info: Info, org_slug: str, report_slug: str) -> models.MapReport:
@@ -1150,7 +1237,8 @@ class HubHomepage(HubPage):
     organisation: Organisation
     layers: List[MapLayer]
     nav_links: List[HubNavLink]
-    favicon_url: Optional[str]
+    favicon_url: Optional[str] = None
+    google_analytics_tag_id: Optional[str] = None
 
     @strawberry_django.field
     def seo_image_url(self) -> Optional[str]:
@@ -1158,15 +1246,14 @@ class HubHomepage(HubPage):
             return None
         return self.seo_image.get_rendition("width-800").full_url
 
-    # TODO: ultimately all this data will need to be public anyway for public viewing
-    # @classmethod
-    # def get_queryset(cls, queryset, info, **kwargs):
-    #     # Only list pages belonging to this user's orgs
-    #     user = get_current_user(info)
-    #     user_orgs = models.Organisation.objects.filter(members__user=user.id)
-    #     return queryset.filter(
-    #         organisation__in=user_orgs,
-    #     )
+    @classmethod
+    def get_queryset(cls, queryset, info, **kwargs):
+        # Only list pages belonging to this user's orgs
+        user = get_current_user(info)
+        user_orgs = models.Organisation.objects.filter(members__user=user.id)
+        return queryset.filter(
+            organisation__in=user_orgs,
+        )
 
 
 @strawberry_django.field()

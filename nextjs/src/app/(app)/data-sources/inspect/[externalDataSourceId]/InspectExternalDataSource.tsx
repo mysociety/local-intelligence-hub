@@ -76,6 +76,8 @@ import { UpdateExternalDataSourceFields } from "@/components/UpdateExternalDataS
 import { ManageSourceSharing } from "./ManageSourceSharing";
 import { BatchJobProgressBar } from "@/components/BatchJobProgress";
 import { format } from "d3-format";
+import pluralize from "pluralize";
+import { externalDataSourceOptions } from "@/lib/data";
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {
@@ -97,6 +99,10 @@ const GET_UPDATE_CONFIG = gql`
         }
         ... on ActionNetworkSource {
           apiKey
+          groupSlug
+        }
+        ... on TicketTailorSource {
+          apiKey
         }
       }
       lastJob {
@@ -106,6 +112,7 @@ const GET_UPDATE_CONFIG = gql`
       }
       autoUpdateEnabled
       hasWebhooks
+      allowUpdates
       automatedWebhooks
       autoUpdateWebhookUrl
       webhookHealthcheck
@@ -184,7 +191,6 @@ export default function InspectExternalDataSource({
   const router = useRouter();
   const client = useApolloClient();
   
-
   const { loading, error, data, refetch } = useQuery<
     ExternalDataSourceInspectPageQuery,
     ExternalDataSourceInspectPageQueryVariables
@@ -201,14 +207,18 @@ export default function InspectExternalDataSource({
 
   const source = data?.externalDataSource
   
-  const allowMapping = source?.dataType == DataSourceType.Member
+  const allowMapping = source?.dataType == DataSourceType.Member && source.allowUpdates
+
+  const crmInfo = source?.crmType ? externalDataSourceOptions[source?.crmType] : undefined
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-7">
       <header className="flex flex-row justify-between gap-8">
         <div className='w-full'>
-          <div className="text-meepGray-400">
-            {dataType === DataSourceType.Member ? "Member list" : "Custom data layer"}
+          <div className="text-meepGray-400 capitalize">
+            {dataType === DataSourceType.Member ? "Member list" : dataType ? pluralize(dataType.toLowerCase()) : "Data source"}
+            <span>&nbsp;&#x2022;&nbsp;</span>
+            {crmInfo?.name || crmType}
           </div>
           <h1
             className="text-hLg"
@@ -312,7 +322,7 @@ export default function InspectExternalDataSource({
           </section>
         </>
       )}
-        {(
+      {source.allowUpdates && (
         <>
           <div className="border-b-4 border-meepGray-700 pt-10" />
           <section className="space-y-4">
@@ -329,43 +339,41 @@ export default function InspectExternalDataSource({
                     crmType={source.crmType}
                     />
                   </p>
-                  {allowMapping && (
-                    <div className='space-y-4'>
-                      {!source.isUpdateScheduled ? (
-                        <TriggerUpdateButton id={source.id} />
-                      ) : (
-                        <>
-                          <Button disabled>
-                            <span className='flex flex-row gap-2 items-center'>
-                              <LoadingIcon size={"18"} />
-                              <span>{
-                                source.updateProgress?.status === ProcrastinateJobStatus.Doing
-                                  ? "Updating..."
-                                  : "Scheduled"
-                              }</span>
-                            </span>
-                          </Button>
-                          {source.updateProgress?.status === ProcrastinateJobStatus.Doing && (
-                            <BatchJobProgressBar batchJobProgress={source.updateProgress} pastTenseVerb="Updated" />
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
+                  <div className='space-y-4'>
+                    {!source.isUpdateScheduled ? (
+                      <TriggerUpdateButton id={source.id} />
+                    ) : (
+                      <>
+                        <Button disabled>
+                          <span className='flex flex-row gap-2 items-center'>
+                            <LoadingIcon size={"18"} />
+                            <span>{
+                              source.updateProgress?.status === ProcrastinateJobStatus.Doing
+                                ? "Updating..."
+                                : "Scheduled"
+                            }</span>
+                          </span>
+                        </Button>
+                        {source.updateProgress?.status === ProcrastinateJobStatus.Doing && (
+                          <BatchJobProgressBar batchJobProgress={source.updateProgress} pastTenseVerb="Updated" />
+                        )}
+                      </>
+                    )}
+                  </div>
                 </section>
-                {allowMapping && (
+                {source.hasWebhooks && (
                   <section className='space-y-4'>
                     <h2 className="text-hSm mb-5">Auto-updates</h2>
                     <p className='text-sm text-meepGray-400'>
                       Auto-updates are {source.autoUpdateEnabled ? "enabled" : "disabled"} for this data source. Mapped can automatically update this data source based on the mapping you{"'"}ve defined in the Data Mapping section.
                     </p>
-                    {source.lastJob ? (
-                      <div className="text-meepGray-400">
-                        Last sync:{" "}
-                        {formatRelative(source.lastJob.lastEventAt, new Date())} (
-                        {source.lastJob.status})
-                      </div>
-                    ) : null}
+                    {(source.connectionDetails.__typename === "ActionNetworkSource") && (
+                      <p className='text-sm text-meepGray-400 text-red-400'>
+                        Warning: Action Network auto-updates only work for new members, not
+                        changes to existing members{"'"} details. If existing members change,
+                        you must trigger a full update using the button on the left.
+                      </p>
+                    )}
                     {source.automatedWebhooks ? (
                       <>
                         <AutoUpdateSwitch externalDataSource={source} />
@@ -383,11 +391,22 @@ export default function InspectExternalDataSource({
                         )}
                       </>
                     ) : (
-                      <div>
-                        {/* TODO: Add copy etc. */}
-                        Webhook URL for auto-updates: <code>{source.autoUpdateWebhookUrl}</code>
+                      <div className="flex flex-col gap-4">
+                        <p>
+                          Webhook URL for auto-updates:
+                        </p>
+                        <code className="bg-black p-2 rounded">{source.autoUpdateWebhookUrl}</code>
+                        <p>Turn this switch on once you have added the above Webhook URL to your CRM:</p>
+                        <AutoUpdateSwitch externalDataSource={source} />
                       </div>
                     )}
+                    {source.lastJob ? (
+                      <div className="text-meepGray-400">
+                        Last sync:{" "}
+                        {formatRelative(source.lastJob.lastEventAt, new Date())} (
+                        {source.lastJob.status})
+                      </div>
+                    ) : null}
                   </section>
                 )}
               </header>
@@ -444,6 +463,13 @@ export default function InspectExternalDataSource({
             </div>
           ) : null}
           {source.connectionDetails.__typename === 'ActionNetworkSource' ? (
+            <div className='mt-2'>
+              <code>
+                {source.connectionDetails.apiKey}
+              </code>
+            </div>
+          ) : null}
+          {source.connectionDetails.__typename === 'TicketTailorSource' ? (
             <div className='mt-2'>
               <code>
                 {source.connectionDetails.apiKey}

@@ -34,10 +34,12 @@ import {
   CreateSourceMutation,
   TestDataSourceQuery,
   TestDataSourceQueryVariables,
+  InputMaybe,
 } from "@/__generated__/graphql";
 import { toastPromise } from "@/lib/toast";
 import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
 import { getFieldsForDataSourceType } from "@/components/UpdateExternalDataSourceFields";
+import { camelCase } from "lodash";
 
 const TEST_DATA_SOURCE = gql`
   query TestDataSource($input: CreateExternalDataSourceInput!) {
@@ -56,6 +58,8 @@ const TEST_DATA_SOURCE = gql`
       predefinedColumnNames
       defaultDataType
       remoteName
+      allowUpdates
+      defaults
     }
   }
 `;
@@ -72,6 +76,7 @@ const CREATE_DATA_SOURCE = gql`
         name
         crmType
         dataType
+        allowUpdates
       }
     }
   }
@@ -92,32 +97,43 @@ export default function Page({
     context.setStep(2)
   }, [context])
 
+  const RNN_ORIG = Symbol();
+
+  const defaultValues: CreateExternalDataSourceInput & ExternalDataSourceInput = {
+    name: '',
+    geographyColumnType: GeographyTypes.Postcode,
+    geographyColumn: '',
+    dataType: context.dataType,
+    airtable: {
+      apiKey: '',
+      baseId: '',
+      tableId: '',
+    },
+    mailchimp: {
+      apiKey: '',
+      listId: ''
+    },
+    actionnetwork: {
+      apiKey: '',
+      groupSlug: ''
+    },
+    tickettailor: {
+      apiKey: ''
+    }
+  }
+
   const form = useForm<FormInputs>({
     defaultValues: {
-      name: '',
       geographyColumnType: GeographyTypes.Postcode,
-      geographyColumn: externalDataSourceType === "mailchimp"
-      ? 'ADDRESS.zip' :
-      externalDataSourceType === "actionnetwork"
-      ? "postal_addresses[0].postal_code"
-      : '',
-      dataType: context.dataType,
-      airtable: {
-        apiKey: '',
-        baseId: '',
-        tableId: '',
-      },
-      mailchimp: {
-        apiKey: '',
-        listId: ''
-      }
-    },
+      ...defaultValues
+    } as FormInputs,
   });
 
   const dataType = form.watch("dataType") as DataSourceType
   const collectFields = useMemo(() => {
     return getFieldsForDataSourceType(dataType)
   }, [dataType])
+  const geographyFields = ["geographyColumn", "geographyColumnType"]
 
   const [createSource, createSourceResult] = useMutation<CreateSourceMutation>(CREATE_DATA_SOURCE);
   const [testSource, testSourceResult] = useLazyQuery<TestDataSourceQuery, TestDataSourceQueryVariables>(TEST_DATA_SOURCE);
@@ -138,11 +154,16 @@ export default function Page({
    * badKeys = ["email"].
    */
   function useGuessedField(
-    field: string,
+    field: keyof FormInputs,
     guessKeys: string[],
     badKeys: string[] = []
   ) {
     useEffect(() => {
+      // @ts-ignore
+      if (!collectFields.includes(field) && !geographyFields.includes("geographyColumn")) {
+        form.setValue(field, null)
+        return
+      }
       const guess = testSourceResult.data?.testDataSource.fieldDefinitions?.find(
         (field: ({ label?: string | null, value: string })) => {
           const isMatch = (fieldName: string|null|undefined, guessKey: string) => {
@@ -176,13 +197,13 @@ export default function Page({
         // @ts-ignore
         form.setValue(field, guess?.value)
       }
-    }, [testSourceResult.data?.testDataSource.fieldDefinitions, form, setGuessed])
+    }, [testSourceResult.data?.testDataSource.fieldDefinitions, form, collectFields, setGuessed])
   }
 
   useGuessedField('geographyColumn', ["postcode", "postal code", "zip code", "zip"])
   useGuessedField('emailField', ["email"])
   useGuessedField('phoneField', ["mobile", "phone"])
-  useGuessedField('addressField', ["street", "line1", "address", "location"], ['email'])
+  useGuessedField('addressField', ["street", "line1", "address", "location", "venue"], ['email'])
   useGuessedField('fullNameField', ["full name", "name"])
   useGuessedField('firstNameField', ["first name", "given name"])
   useGuessedField('titleField', ["title", "name"])
@@ -190,13 +211,22 @@ export default function Page({
   useGuessedField('imageField', ["image", "photo", "picture", "avatar", "attachment", "attachments", "file", "files", "graphic", "poster", "logo", "icon"])
   useGuessedField('startTimeField', ["start", "start time", "start date", "begin", "beginning", "start_at", "start_time", "start_date", "date", "time", "datetime", "timestamp", "from"])
   useGuessedField('endTimeField', ["end", "end time", "end date", "finish", "finish time", "finish date", "end_at", "end_time", "end_date", "until"])
-  useGuessedField('publicUrlField', ["public url", "public link", "public", "url", "link", "website", "webpage", "web", "page", "site", "address", "href", "uri", "path", "slug", "permalink"])
+  useGuessedField('publicUrlField', ["public url", "public link", "public", "url", "link", "website", "webpage", "web", "page", "site", "href", "uri", "path", "slug", "permalink"])
 
   useEffect(() => {
     if (testSourceResult.data?.testDataSource?.defaultDataType) {
       const dataType = testSourceResult.data.testDataSource.defaultDataType as DataSourceType
       context.dataType = dataType
       form.setValue("dataType", dataType)
+      // Default dict
+      const defaultFieldValues = testSourceResult.data.testDataSource.defaults || {}
+      for (const key in defaultFieldValues) {
+        const camelCasedKey = camelCase(key) as keyof FormInputs
+        const value = defaultFieldValues[key]
+        if (value !== null && value !== undefined) {
+          form.setValue(camelCasedKey, value)
+        }
+      }
     }
   }, [testSourceResult.data])
 
@@ -268,7 +298,7 @@ export default function Page({
         success: (d) => {
           const errors = d.errors || d.data?.createExternalDataSource.errors || []
           if (!errors.length && d.data?.createExternalDataSource.result) {
-            if (d.data?.createExternalDataSource.result.dataType === DataSourceType.Member) {
+            if (d.data?.createExternalDataSource.result.dataType === DataSourceType.Member && d.data.createExternalDataSource.result.allowUpdates) {
               router.push(
                 `/data-sources/create/configure/${d.data.createExternalDataSource.result.id}`,
               );
@@ -284,7 +314,7 @@ export default function Page({
         error(e) {
           return {
             title: "Connection failed",
-            description: e.message,
+            description: e.message
           }
         }
       },
@@ -390,13 +420,13 @@ export default function Page({
               )}
               {!currentSource?.testDataSource?.predefinedColumnNames && (
                 <div className='grid grid-cols-2 gap-4 w-full'>
-                  <FPreopulatedSelectField name="geographyColumn" label="geography" required />
+                  <FPreopulatedSelectField name="geographyColumn" label={`${form.watch("geographyColumnType")?.toLocaleLowerCase()} field`} required />
                   <FormField
                     control={form.control}
                     name="geographyColumnType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Geography Type</FormLabel>
+                        <FormLabel>Type of location data</FormLabel>
                         <FormControl>
                           {/* @ts-ignore */}
                           <Select onValueChange={field.onChange} defaultValue={field.value} required>
@@ -408,9 +438,9 @@ export default function Page({
                                 <SelectLabel>Geography type</SelectLabel>
                                 <SelectItem value={GeographyTypes.Postcode}>Postcode</SelectItem>
                                 <SelectItem value={GeographyTypes.Ward}>Ward</SelectItem>
-                                <SelectItem value={GeographyTypes.Council}>Council</SelectItem>
-                                <SelectItem value={GeographyTypes.Constituency}>GE2010-2019 Constituency</SelectItem>
-                                <SelectItem value={GeographyTypes.Constituency_2025}>GE2024 Constituency</SelectItem>
+                                <SelectItem value={GeographyTypes.AdminDistrict}>Council</SelectItem>
+                                <SelectItem value={GeographyTypes.ParliamentaryConstituency}>GE2010-2019 Constituency</SelectItem>
+                                <SelectItem value={GeographyTypes.ParliamentaryConstituency_2025}>GE2024 Constituency</SelectItem>
                               </SelectGroup>
                             </SelectContent>
                           </Select>
@@ -419,7 +449,7 @@ export default function Page({
                       </FormItem>
                     )}
                   />
-                  {collectFields?.filter(f => f !== "geographyColumn" && f !== "geographyColumnType")?.map((field) => (
+                  {collectFields.map((field) => (
                     <FPreopulatedSelectField key={field} name={field} />
                   ))}
                 </div>
@@ -662,6 +692,25 @@ export default function Page({
             <div className='text-hSm'>Connection details</div>
             <FormField
               control={form.control}
+              name="actionnetwork.groupSlug"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Action Network Group Slug</FormLabel>
+                  <FormControl>
+                    {/* @ts-ignore */}
+                    <Input placeholder="my-group" {...field} required />
+                  </FormControl>
+                  <FormDescription>
+                    Get your group slug from the group dashboard in Action Network.
+                    The URL will be {'"'}https://actionnetwork.org/groups/your-group-name/manage{'"'},
+                    with your group slug in the place of {'"'}your-group_name{'"'}.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="actionnetwork.apiKey"
               render={({ field }) => (
                 <FormItem>
@@ -678,6 +727,67 @@ export default function Page({
                       href="https://actionnetwork.org/docs/"
                     >
                       Read more.
+                    </a>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex flex-row gap-x-4">
+              <Button
+                variant="outline"
+                type="reset"
+                onClick={() => {
+                  router.back();
+                }}
+              >
+                Back
+              </Button>
+              <Button type="submit" variant={"reverse"} disabled={testSourceResult.loading}>
+                Test connection
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
+    );
+  }
+
+  if (externalDataSourceType === "tickettailor") {
+    return (
+      <div className="space-y-7">
+        <header>
+          <h1 className="text-hLg">Connecting to your Ticket Tailor box office</h1>
+          <p className="mt-6 text-meepGray-400 max-w-lg">
+            In order to import data from your Ticket Tailor box office, we{"'"}ll need a few
+            details.
+          </p>
+        </header>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(submitTestConnection)}
+            className="space-y-7 max-w-lg"
+          >
+            <div className='text-hSm'>Connection details</div>
+            <FormField
+              control={form.control}
+              name="tickettailor.apiKey"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ticket Tailor API key</FormLabel>
+                  <FormControl>
+                    {/* @ts-ignore */}
+                    <Input placeholder="sk_629...e" {...field} required />
+                  </FormControl>
+                  <FormDescription>
+                    Your API key can be found or generated in the Box Office Settings under API.
+                    <a
+                      className="underline"
+                      target="_blank"
+                      href="https://help.tickettailor.com/en/articles/4593218-how-do-i-connect-to-the-ticket-tailor-api"
+                    >
+                      Guide to finding your API key.
                     </a>
                   </FormDescription>
                   <FormMessage />

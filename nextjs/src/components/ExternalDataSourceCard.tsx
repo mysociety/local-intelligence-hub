@@ -76,7 +76,7 @@ export function ExternalDataSourceCard({
           Sharing with {externalDataSource.sharingPermissions.map((p) => p.organisation.name).join(", ")}
         </div>
       )}
-      {withUpdateOptions && externalDataSource.dataType === DataSourceType.Member && externalDataSource.automatedWebhooks && (
+      {withUpdateOptions && externalDataSource.dataType === DataSourceType.Member && (
         <AutoUpdateSwitch externalDataSource={externalDataSource} />
       )}
       {withUpdateOptions && externalDataSource?.jobs?.[0]?.lastEventAt ? (

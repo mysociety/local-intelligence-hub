@@ -12,11 +12,12 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs-rounded";
 import { useState } from "react";
+import { HustingsCTA } from "@/app/hub/render/[hostname]/map/[[...slugs]]/SearchPanel";
 
-export function ConstituencyView({ data }: { data: GetLocalDataQuery }) {
+export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSearch']['constituency'] }) {
   const [tab, setTab] = useState("events");
 
-  if (!data?.postcodeSearch?.constituency?.name) {
+  if (!data?.name) {
     return (
       <div className='p-6'>
         <a
@@ -29,13 +30,12 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery }) {
         >
           &larr; Search another postcode
         </a>
-        <div>Nothing found.</div>
-        {/* TODO: something more useful, like other constituencies that *do* have events? */}
+        <div>This doesn{"'"}t look like a valid postcode.</div>
       </div>
     );
   }
 
-  const events = data?.postcodeSearch?.constituency?.genericDataForHub?.filter(
+  const events = data?.genericDataForHub?.filter(
     (d) =>
       // event type
       d.dataType.dataSet.externalDataSource.dataType === DataSourceType.Event &&
@@ -57,14 +57,14 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery }) {
           &larr; Search another postcode
         </a>
         <h2 className="text-3xl text-green-950 font-bold">
-          {data?.postcodeSearch?.constituency?.name}
+          {data?.name}
         </h2>
       </header>
       <main>
         <Tabs
           value={tab}
           onValueChange={setTab}
-          className="flex flex-col max-h-full overflow-hidden items-start justify-start"
+          className="flex flex-col max-h-full overflow-hidden items-stretch justify-start"
         >
           <TabsList className="p-0 py-4 mb-4 border-none w-full justify-start gap-2">
             {["Events", "Candidates"].map((target) => (
@@ -82,8 +82,8 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery }) {
             {events && events.length ? (
               <>
                 <div className="mb-4">
-                  Help the campaign in {data?.postcodeSearch?.constituency?.name}{" "}
-                  by coming along to one of these upcoming events:
+                  Help the campaign in {data?.name}{" "}
+                  by coming along to one of these upcoming events.
                 </div>
                 <section className="space-y-4">
                   {events
@@ -134,16 +134,26 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery }) {
                       </article>
                     ))}
                 </section>
+                <div className="w-full border-b border-meepGray-200 my-6"></div>
+                <div className="flex flex-col gap-2 text-jungle-green-neutral ">
+                  <HustingsCTA />
+                </div>
               </>
             ) : (
-              <p>
-                No upcoming events in {data?.postcodeSearch?.constituency?.name}.
-              </p>
+              <>
+                <p>
+                  No upcoming events in {data?.name}.
+                </p>
+                <div className="w-full border-b border-meepGray-200 my-6"></div>
+                <div className="flex flex-col gap-2 text-jungle-green-neutral ">
+                  <HustingsCTA />
+                </div>
+              </>
             )}
           </TabsContent>
           <TabsContent className="mt-0" value="candidates">
             <section className="space-y-4">
-              {data?.postcodeSearch?.constituency?.ppcs
+              {data?.ppcs
                 //.sort((a, b) => a.name < b.name ? -1 : 1)
                 .map((person) => (
                   <article

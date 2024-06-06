@@ -38,7 +38,7 @@ class TestExternalDataSource:
                 table_id=settings.TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME,
                 api_key=settings.TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY,
                 geography_column="council district",
-                geography_column_type=models.AirtableSource.GeographyTypes.COUNCIL,
+                geography_column_type=models.AirtableSource.GeographyTypes.ADMIN_DISTRICT,
             )
         )
 
@@ -233,7 +233,11 @@ class TestExternalDataSource:
             [self.source.get_record_id(record) for record in records]
         )
         # Check
-        assert len(records) == 2
+        try:
+            assert len(records) == 2
+        except AssertionError:
+            print(f"Incorrect record count: expected 2, found {len(records)}")
+            assert False
         # Check the email field instead of postcode, because Mailchimp doesn't set
         # the postcode without a full address, which is not present in this test
         for test_record in test_record_data:

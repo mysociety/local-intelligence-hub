@@ -95,17 +95,18 @@ export default function Page({
               </li>
             ) : pageQuery.data?.externalDataSource.autoUpdateWebhookUrl ? (
               <li className="text-meepGray-300 max-w-sm">
-                <p className='align-middle'>
-                  Mapped can auto-update {pageQuery.data?.externalDataSource.crmType} if you configure webhooks.
-                </p>
-                <p>
-                  {/* TODO: instruction copy */}
-                  Copy your Mapped webhook and follow this guide.
-                </p>
-                <p>
-                  {/* TODO: Copy/Paste component */}
-                  <code>{pageQuery.data?.externalDataSource.autoUpdateWebhookUrl}</code>
-                </p>
+                <div className="flex flex-col gap-4">
+                  <p>
+                    Webhook URL for auto-updates:
+                  </p>
+                  <code className="bg-black p-2 rounded">
+                    {pageQuery.data.externalDataSource.autoUpdateWebhookUrl}
+                  </code>
+                  <p>
+                    Turn the below switch on once you have added the above
+                    Webhook URL to your CRM and enabled it.
+                  </p>
+                </div>
               </li>
             ) : null}
             <li className="text-meepGray-300 max-w-sm">Trigger an update to see the data source in action.</li>

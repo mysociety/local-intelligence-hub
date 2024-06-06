@@ -6,6 +6,7 @@ import os
 
 from django.conf import settings
 from django.db.models import Count, Q
+from django.core import management
 
 from procrastinate.contrib.django import app
 from procrastinate.contrib.django.models import ProcrastinateJob
@@ -67,31 +68,31 @@ def telemetry_task(func):
     return wrapper
 
 
-@app.task(queue="index")
+@app.task(queue="external_data_sources")
 @telemetry_task
-async def refresh_one(external_data_source_id: str, member_id: str):
+async def refresh_one(external_data_source_id: str, member):
     from hub.models import ExternalDataSource
 
     await ExternalDataSource.deferred_refresh_one(
-        external_data_source_id=external_data_source_id, member_id=member_id
+        external_data_source_id=external_data_source_id, member=member
     )
 
 
-@app.task(queue="index", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
+@app.task(queue="external_data_sources", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
 @telemetry_task
 async def refresh_many(
-    external_data_source_id: str, member_ids: list[str], request_id: str = None
+    external_data_source_id: str, members: list, request_id: str = None
 ):
     from hub.models import ExternalDataSource
 
     await ExternalDataSource.deferred_refresh_many(
         external_data_source_id=external_data_source_id,
-        member_ids=member_ids,
+        members=members,
         request_id=request_id,
     )
 
 
-@app.task(queue="index")
+@app.task(queue="external_data_sources")
 @telemetry_task
 async def refresh_all(external_data_source_id: str, request_id: str = None):
     from hub.models import ExternalDataSource
@@ -103,7 +104,7 @@ async def refresh_all(external_data_source_id: str, request_id: str = None):
 
 # Refresh webhooks once a day
 @app.periodic(cron="0 3 * * *")
-@app.task(queue="index")
+@app.task(queue="external_data_sources")
 async def refresh_webhooks(external_data_source_id: str, timestamp=None):
     from hub.models import ExternalDataSource
 
@@ -112,27 +113,32 @@ async def refresh_webhooks(external_data_source_id: str, timestamp=None):
     )
 
 
-@app.task(queue="index", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
+@app.task(queue="external_data_sources", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
 @telemetry_task
 async def import_many(
-    external_data_source_id: str, member_ids: list[str], request_id: str = None
+    external_data_source_id: str, members: list, request_id: str = None
 ):
     from hub.models import ExternalDataSource
 
     await ExternalDataSource.deferred_import_many(
         external_data_source_id=external_data_source_id,
-        member_ids=member_ids,
+        members=members,
         request_id=request_id,
     )
 
 
-@app.task(queue="index")
+@app.task(queue="external_data_sources")
 @telemetry_task
-async def import_all(
-    external_data_source_id: str, requested_at: str, request_id: str = None
-):
+async def import_all(external_data_source_id: str, request_id: str = None):
     from hub.models import ExternalDataSource
 
     await ExternalDataSource.deferred_import_all(
         external_data_source_id=external_data_source_id, request_id=request_id
     )
+
+
+# cron that calls the `import_2024_ppcs` command every hour
+@app.periodic(cron="0 * * * *")
+@app.task(queue="built_in_data")
+def import_2024_ppcs(timestamp=None):
+    management.call_command("import_2024_ppcs")

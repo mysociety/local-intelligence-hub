@@ -1,14 +1,17 @@
 "use client"
 
-import { Exact, GetMapReportQuery, MapReportInput } from "@/__generated__/graphql";
+import { AnalyticalAreaType, Exact, GetMapReportQuery, MapReportInput } from "@/__generated__/graphql";
 import { QueryResult } from "@apollo/client";
 import { createContext, useContext, useState } from "react";
 
-export type DisplayOptionsType = {
-  showLastElectionData: boolean,
-  showMPs: boolean,
-  showStreetDetails: boolean,
-};
+export const defaultDisplayOptions = {
+  showLastElectionData: false,
+  showMPs: false,
+  showStreetDetails: false,
+  analyticalAreaType: AnalyticalAreaType.ParliamentaryConstituency_2025
+}
+
+export type DisplayOptionsType = typeof defaultDisplayOptions & {}
 
 export const ReportContext = createContext<{
   id: string,
@@ -23,11 +26,7 @@ export const ReportContext = createContext<{
   updateReport: () => ({} as any),
   deleteReport: () => {},
   refreshReportDataQueries: () => {},
-  displayOptions: {
-    showLastElectionData: false,
-    showMPs: false,
-    showStreetDetails: false,
-  },
+  displayOptions: defaultDisplayOptions,
   setDisplayOptions: () => {},
 });
 

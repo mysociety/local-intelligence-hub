@@ -22,6 +22,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 
+import httpx
 import numpy as np
 import pandas as pd
 import pytz
@@ -41,7 +42,7 @@ from sentry_sdk import metrics
 from strawberry.dataloader import DataLoader
 from wagtail.admin.panels import FieldPanel, ObjectList, TabbedInterface
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
-from wagtail.models import Page
+from wagtail.models import Page, Site
 from wagtail_json_widget.widgets import JSONEditorWidget
 
 import utils as lih_utils
@@ -63,7 +64,7 @@ from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook
 from utils.log import get_simple_debug_logger
 from utils.nominatim import address_to_geojson
 from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
-from utils.py import batched, ensure_list, get
+from utils.py import batched, ensure_list, get, is_maybe_id
 
 User = get_user_model()
 
@@ -75,7 +76,7 @@ class Organisation(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
-    logo = models.ImageField(null=True, upload_to="organisation")
+    logo = models.ImageField(null=True, blank=True, upload_to="organisation")
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -84,6 +85,17 @@ class Organisation(models.Model):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def get_or_create_for_user(self, user: any):
+        if isinstance(user, (str, int)):
+            user = User.objects.get(pk=user)
+        membership = Membership.objects.filter(user=user).first()
+        if membership:
+            return membership.organisation
+        org = self.objects.create(name=f"{user.username}'s personal workspace")
+        Membership.objects.create(user=user, organisation=org, role="owner")
+        return org
 
 
 class Membership(models.Model):
@@ -708,10 +720,7 @@ class GenericData(CommonData):
     address = models.CharField(max_length=1000, blank=True, null=True)
     title = models.CharField(max_length=1000, blank=True, null=True)
     description = models.TextField(max_length=3000, blank=True, null=True)
-    image = models.ImageField(null=True, upload_to="generic_data")
-    start_time = models.DateTimeField(blank=True, null=True)
-    end_time = models.DateTimeField(blank=True, null=True)
-    public_url = models.URLField(max_length=2000, blank=True, null=True)
+    image = models.ImageField(null=True, max_length=1000, upload_to="generic_data")
 
     def remote_url(self):
         return self.data_type.data_set.external_data_source.record_url(self.data)
@@ -912,24 +921,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     has_webhooks = False
     automated_webhooks = False
     introspect_fields = False
+    allow_updates = True
 
     # Allow sources to define default values for themselves
     # for example opinionated CRMs which are only for people and have defined slots for data
-    defaults = {
-        # Reports
-        "data_type": None,
-        # Geocoding
-        "geography_column": None,
-        "geography_column_type": None,
-        # Imports
-        "postcode_field": None,
-        "first_name_field": None,
-        "last_name_field": None,
-        "full_name_field": None,
-        "email_field": None,
-        "phone_field": None,
-        "address_field": None,
-    }
+    defaults = {}
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     deduplication_hash = models.CharField(max_length=32, unique=True, editable=False)
@@ -968,13 +964,22 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     can_display_details_publicly = models.BooleanField(default=False)
 
     class GeographyTypes(models.TextChoices):
-        ADDRESS = "address", "Address"
-        POSTCODE = "postcode", "Postcode"
-        WARD = "ward", "Ward"
-        CONSTITUENCY = "parliamentary_constituency", "Constituency"
-        COUNCIL = "admin_district", "Council"
-        CONSTITUENCY_2025 = "parliamentary_constituency_2025", "Constituency (2024)"
-        # TODO: LNG_LAT = "lng_lat", "Longitude and Latitude"
+        """
+        The keys and values here are identical (for GraphQL compatibility)
+        and are uppercased versions of the PostcodesIO terms
+        (for ease of mapping).
+        """
+
+        ADDRESS = "ADDRESS", "Address"
+        POSTCODE = "POSTCODE", "Postcode"
+        WARD = "WARD", "Ward"
+        ADMIN_DISTRICT = "ADMIN_DISTRICT", "Council"
+        PARLIAMENTARY_CONSTITUENCY = "PARLIAMENTARY_CONSTITUENCY", "Constituency"
+        PARLIAMENTARY_CONSTITUENCY_2025 = (
+            "PARLIAMENTARY_CONSTITUENCY_2025",
+            "Constituency (2024)",
+        )
+        # TODO: LNG_LAT = "LNG_LAT", "Longitude and Latitude"
 
     geography_column_type = TextChoicesField(
         choices_enum=GeographyTypes,
@@ -1136,7 +1141,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         statuses = dict()
 
         for job in jobs:
-            job_count = len(job.args.get("member_ids", []))
+            job_count = len(job.args.get("members", []))
             total += job_count
             if statuses.get(job.status, None) is not None:
                 statuses[job.status] += job_count
@@ -1217,6 +1222,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         return None
 
+    def record_url(self, record_id: str) -> Optional[str]:
+        """
+        Get the URL of a record in the remote system.
+        """
+        return None
+
     def remote_url(self) -> Optional[str]:
         """
         Get the URL of the data source in the remote system.
@@ -1284,11 +1295,19 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             "Get member ID not implemented for this data source type."
         )
 
-    async def import_many(self, member_ids: list[str]):
+    async def import_many(self, members: list):
         """
         Copy data to this database for use in dashboarding features.
         """
-        data = await self.fetch_many(member_ids)
+
+        if not members:
+            logger.error("import_many called with 0 members")
+            return
+
+        if is_maybe_id(members[0]):
+            data = await self.fetch_many(members)
+        else:
+            data = members
 
         # A Local Intelligence Hub record of this data
         data_set, created = await DataSet.objects.aupdate_or_create(
@@ -1446,15 +1465,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         Get the ID for a record.
         """
-        raise NotImplementedError("Get ID not implemented for this data source type.")
+        return record.get("id", None)
 
     def get_record_field(self, record: dict, field: str, field_type=None):
         """
         Get a field from a record.
         """
-        raise NotImplementedError(
-            "Get field not implemented for this data source type."
-        )
+        return get(record, field, None)
 
     def get_record_dict(self, record: any) -> dict:
         """
@@ -1519,8 +1536,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         )
                         return_data.append(None)
                         continue
+                    postcodes_io_key = self.geography_column_type.lower()
                     relevant_member_geography = get(
-                        key["postcode_data"], self.geography_column_type, ""
+                        key["postcode_data"], postcodes_io_key, ""
                     )
                     # Backup check if the geography refers to the GSS codes, not the name
                     if (
@@ -1529,7 +1547,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     ):
                         relevant_member_geography = get(
                             key["postcode_data"]["codes"],
-                            self.geography_column_type,
+                            postcodes_io_key,
                             "",
                         )
                     if (
@@ -1537,7 +1555,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         or relevant_member_geography is None
                     ):
                         logger.debug(
-                            f"returning none for key {key['member_id']} because {relevant_member_geography}"
+                            f"returning none for key {key['member_id']} because relevant_member_geography is blank"
                         )
                         return_data.append(None)
                         continue
@@ -1681,7 +1699,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     async def map_many(
         self,
-        members: list[Union[str, any]],
+        members: list,
         loaders: Loaders,
         mapping: list[UpdateMapping] = None,
     ) -> list[MappedMember]:
@@ -1697,35 +1715,47 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     async def refresh_one(
         self,
-        member_id: Union[str, any],
+        member,
         update_kwargs={},
         mapping: list[UpdateMapping] = None,
     ):
+        if not self.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {self}")
+            return
+
         if mapping is None or len(mapping) == 0:
             mapping = self.get_update_mapping()
         if len(mapping) == 0:
             return
         loaders = await self.get_loaders()
-        mapped_record = await self.map_one(member_id, loaders, mapping=mapping)
+        mapped_record = await self.map_one(member, loaders, mapping=mapping)
         return await self.update_one(mapped_record, **update_kwargs)
 
     async def refresh_many(
         self,
-        member_ids: list[Union[str, any]],
+        members: list,
         update_kwargs={},
         mapping: list[UpdateMapping] = None,
     ):
+        if not self.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {self}")
+            return
+
         if mapping is None or len(mapping) == 0:
             mapping = self.get_update_mapping()
         if len(mapping) == 0:
             return
         loaders = await self.get_loaders()
-        mapped_records = await self.map_many(member_ids, loaders, mapping=mapping)
+        mapped_records = await self.map_many(members, loaders, mapping=mapping)
         return await self.update_many(mapped_records=mapped_records, **update_kwargs)
 
     # UI
 
     def enable_auto_update(self) -> Union[None, int]:
+        if not self.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {self}")
+            return
+
         if self.automated_webhooks:
             self.refresh_webhooks()
             # And schedule a cron to keep doing it
@@ -1736,6 +1766,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         self.save()
 
     def disable_auto_update(self):
+        if not self.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {self}")
+            return
+
         self.auto_update_enabled = False
         self.save()
         if self.automated_webhooks and hasattr(self, "teardown_webhooks"):
@@ -1744,38 +1778,54 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     # Webhooks
 
     def handle_update_webhook_view(self, body):
+        if not self.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {self}")
+            return HttpResponse(status=200)
+
         if not self.auto_update_enabled:
             return HttpResponse(status=200)
 
         member_ids = self.get_member_ids_from_webhook(body)
         if len(member_ids) == 1:
-            async_to_sync(self.schedule_refresh_one)(member_id=member_ids[0])
+            async_to_sync(self.schedule_refresh_one)(member=member_ids[0])
         else:
-            async_to_sync(self.schedule_refresh_many)(member_ids=member_ids)
+            async_to_sync(self.schedule_refresh_many)(members=member_ids)
         return HttpResponse(status=200)
 
     # Scheduling
 
     @classmethod
-    async def deferred_refresh_one(cls, external_data_source_id: str, member_id: str):
+    async def deferred_refresh_one(cls, external_data_source_id: str, member: str):
+        if not cls.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {cls}")
+            return
+
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
-        await external_data_source.refresh_one(member_id=member_id)
+        await external_data_source.refresh_one(member=member)
 
     @classmethod
     async def deferred_refresh_many(
-        cls, external_data_source_id: str, member_ids: list[str], request_id: str = None
+        cls, external_data_source_id: str, members: list, request_id: str = None
     ):
+        if not cls.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {cls}")
+            return
+
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
-        await external_data_source.refresh_many(member_ids=member_ids)
+        await external_data_source.refresh_many(members=members)
 
     @classmethod
     async def deferred_refresh_all(
         cls, external_data_source_id: str, request_id: str = None
     ):
+        if not cls.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {cls}")
+            return
+
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
@@ -1785,10 +1835,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
         for batch in batches:
             member_count += len(batch)
-            member_ids = [
-                external_data_source.get_record_id(member) for member in batch
-            ]
-            await external_data_source.schedule_refresh_many(member_ids, request_id)
+            await external_data_source.schedule_refresh_many(batch, request_id)
         metrics.distribution(
             key="update_rows_requested",
             value=member_count
@@ -1796,6 +1843,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     @classmethod
     async def deferred_refresh_webhooks(cls, external_data_source_id: str):
+        if not cls.has_webhooks:
+            return
+
         external_data_source: ExternalDataSource = await cls.objects.aget(
             pk=external_data_source_id
         )
@@ -1808,12 +1858,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     @classmethod
     async def deferred_import_many(
-        cls, external_data_source_id: str, member_ids: list[str], request_id: str = None
+        cls, external_data_source_id: str, members: list, request_id: str = None
     ):
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
-        await external_data_source.import_many(member_ids=member_ids)
+        await external_data_source.import_many(members=members)
 
     @classmethod
     async def deferred_import_all(
@@ -1828,31 +1878,50 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
         for batch in batches:
             member_count += len(batch)
-            member_ids = [
-                external_data_source.get_record_id(member) for member in batch
-            ]
             await external_data_source.schedule_import_many(
-                member_ids, request_id=request_id
+                batch, request_id=request_id
             )
         metrics.distribution(
             key="import_rows_requested",
             value=member_count
         )
 
-    async def schedule_refresh_one(self, member_id: str) -> int:
+    async def schedule_refresh_one(self, member) -> int:
+        if not self.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {self}")
+            return
+
+        if is_maybe_id(member):
+            member_id = member
+        else:
+            member_id = self.get_record_id(member)
+
         try:
             return await refresh_one.configure(
                 # Dedupe `update_many` jobs for the same config
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"update_one_{str(self.id)}_{str(member_id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
-            ).defer_async(external_data_source_id=str(self.id), member_id=member_id)
+            ).defer_async(external_data_source_id=str(self.id), member=member)
         except (UniqueViolation, IntegrityError):
             pass
 
     async def schedule_refresh_many(
-        self, member_ids: list[str], request_id: str = None
+        self, members: list[str] | list[dict], request_id: str = None
     ) -> int:
+        if not self.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {self}")
+            return
+
+        if not members:
+            logger.error("Updates requested for 0 members")
+            return
+
+        if is_maybe_id(members[0]):
+            member_ids = members
+        else:
+            member_ids = [self.get_record_id(member) for member in members]
+
         member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
             return await refresh_many.configure(
@@ -1863,12 +1932,16 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             ).defer_async(
                 request_id=request_id,
                 external_data_source_id=str(self.id),
-                member_ids=member_ids,
+                members=members,
             )
         except (UniqueViolation, IntegrityError):
             pass
 
     async def schedule_refresh_all(self, request_id: str = None) -> int:
+        if not self.allow_updates:
+            logger.error(f"Updates requested for non-updatable CRM {self}")
+            return
+
         try:
             return await refresh_all.configure(
                 # Dedupe `update_all` jobs for the same config
@@ -1879,9 +1952,16 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         except (UniqueViolation, IntegrityError):
             pass
 
-    async def schedule_import_many(
-        self, member_ids: list[str], request_id: str = None
-    ) -> int:
+    async def schedule_import_many(self, members: list, request_id: str = None) -> int:
+        if not members:
+            logger.error("Import requested for 0 members")
+            return
+
+        if is_maybe_id(members[0]):
+            member_ids = members
+        else:
+            member_ids = [self.get_record_id(member) for member in members]
+
         member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
             return await import_many.configure(
@@ -1891,7 +1971,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
             ).defer_async(
                 external_data_source_id=str(self.id),
-                member_ids=member_ids,
+                members=members,
                 request_id=request_id,
             )
         except (UniqueViolation, IntegrityError):
@@ -1965,6 +2045,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         external_data_source: Union["ExternalDataSource", str],
     ) -> DataPermissions:
         if external_data_source is None:
+            logger.debug("No source provided, returning default permissions")
             return cls.DataPermissions(
                 can_display_points=False,
                 can_display_details=False,
@@ -2236,10 +2317,10 @@ class AirtableSource(ExternalDataSource):
         payloads = webhook.payloads(cursor=webhook_object.cursor)
         for payload in payloads:
             webhook_object.cursor = webhook_object.cursor + 1
-            for table_id, deets in payload.changed_tables_by_id.items():
+            for table_id, details in payload.changed_tables_by_id.items():
                 if table_id == self.table_id:
-                    member_ids += deets.changed_records_by_id.keys()
-                    member_ids += deets.created_records_by_id.keys()
+                    member_ids += details.changed_records_by_id.keys()
+                    member_ids += details.created_records_by_id.keys()
         webhook_object.save()
         member_ids = list(sorted(set(member_ids)))
         logger.debug("Webhook member result", webhook_object.cursor, member_ids)
@@ -2667,6 +2748,7 @@ class ActionNetworkSource(ExternalDataSource):
         address_field="postal_addresses[0].address_lines[0]",
     )
 
+    group_slug = models.CharField(max_length=100)
     api_key = EncryptedCharField(max_length=250)
 
     @classmethod
@@ -2700,6 +2782,21 @@ class ActionNetworkSource(ExternalDataSource):
         """
         id = self.get_record_id(record)
         return self.prefixed_id_to_uuid(id)
+
+    def record_url_template(self) -> Optional[str]:
+        """
+        Get the URL template for a record in the remote system.
+        """
+        return f"https://actionnetwork.org/user_search/group/{self.group_slug}/{{record_uuid}}"
+
+    def record_url(self, record_id: str) -> Optional[str]:
+        """
+        Get the URL of a record in the remote system.
+        """
+        return (
+            "https://actionnetwork.org/user_search/group"
+            f"/{self.group_slug}/{self.prefixed_id_to_uuid(record_id)}"
+        )
 
     def prefixed_id_to_uuid(self, id):
         return id.replace("action_network:", "")
@@ -2766,10 +2863,19 @@ class ActionNetworkSource(ExternalDataSource):
             )
         return fields
 
+    def get_member_ids_from_webhook(self, webhook_payload: list[dict]) -> list[str]:
+        member_ids = []
+        for action in webhook_payload:
+            payload = action.get("action_network:action", {})
+            person_href = payload.get("_links", {}).get("osdi:person", {}).get("href")
+            if person_href:
+                id = person_href.split("/")[-1]
+                member_ids.append(self.uuid_to_prefixed_id(id))
+        return member_ids
+
     async def fetch_all(self):
-        # TODO: pagination
-        list = self.client.get_people()
-        return list.to_dicts()
+        # returns an iterator that *should* work for big lists
+        return self.client.get_people()
 
     async def fetch_many(self, member_ids: list[str]):
         member_ids = [self.uuid_to_prefixed_id(id) for id in list(set(member_ids))]
@@ -2779,7 +2885,7 @@ class ActionNetworkSource(ExternalDataSource):
             osdi_filter_str = " or ".join(
                 [f"identifier eq '{member_id}'" for member_id in batch]
             )
-            members += self.client.get_people(filter=osdi_filter_str).to_dicts()
+            members += list(self.client.get_people(filter=osdi_filter_str))
         return members
 
     async def fetch_one(self, member_id: str):
@@ -2843,6 +2949,164 @@ class ActionNetworkSource(ExternalDataSource):
         for record in records:
             created_records.append(self.create_one(record))
         return created_records
+
+
+class TicketTailorSource(ExternalDataSource):
+    """
+    Ticket Tailor box office
+    """
+
+    crm_type = "tickettailor"
+
+    class Meta:
+        verbose_name = "Ticket Tailor box office"
+
+    predefined_column_names = True
+    has_webhooks = False
+    automated_webhooks = False
+    introspect_fields = True
+    allow_updates = False
+    default_data_type = ExternalDataSource.DataSourceType.EVENT
+
+    defaults = dict(
+        # Reports
+        data_type=ExternalDataSource.DataSourceType.EVENT,
+        # Geocoding
+        geography_column="venue.postal_code",
+        geography_column_type=ExternalDataSource.GeographyTypes.POSTCODE,
+        # Imports
+        postcode_field="venue.postal_code",
+        title_field="name",
+        description_field="description",
+        image_field="images.thumbnail",
+        start_time_field="start.iso",
+        end_time_field="end.iso",
+        public_url_field="url",
+        address_field="venue.name",
+    )
+
+    api_key = EncryptedCharField(max_length=250)
+
+    @classmethod
+    def get_deduplication_field_names(self) -> list[str]:
+        return ["api_key"]
+
+    @cached_property
+    def client(self):
+        # https://developers.tickettailor.com/#ticket-tailor-api
+        auth = httpx.BasicAuth(username=self.api_key, password="")
+        client = httpx.Client(
+            auth=auth,
+            base_url="https://api.tickettailor.com",
+            headers={"Accept": "application/json"},
+        )
+        return client
+
+    def healthcheck(self):
+        # https://developers.tickettailor.com/#ticket-tailor-api-ping
+        pong = self.client.get("/v1/ping")
+        json = pong.json()
+        return json.get("version", "X").startswith("1.")
+
+    def field_definitions(self):
+        """
+        ActionNetwork activist built-in fields.
+        """
+
+        """
+        » object	string	none
+        » id	string	A unique identifier for the event
+        » chk	string	Used for Ticket Tailor checkout chk value
+        » access_code	string¦null	Code to access a protected event
+        » call_to_action	string	Call to action text used on the event page
+        » created_at	integer	none
+        » currency	string	Information about the currency the event is configured to use
+        » description	string¦null	Description of the event
+        » end	object	none
+        »» date	string	ISO-8601 date for the end of the event
+        »» formatted	string	A formatted date string for the end of the event
+        »» iso	string	ISO-8601 date and time for the end of the event
+        »» time	string	Time of the end of the event
+        »» timezone	string	Timezone offset for the end of the event
+        »» unix	integer	Unix timestamp for for the end of the event
+        » event_series_id	string	Recurring events are grouped by an event_series_id
+        » hidden	string	True, if event is set to hidden
+        » images	object	Images that have been uploaded to this event
+        »» header	string	Image URL of the header image used on your event page
+        »» thumbnail	string	Image URL of the thumbnail used on your event page
+        » name	string	Name of the event
+        » online_event	string	Returns whether or not the event is online
+        » payment_methods	[any]	none
+        »» external_id	string	A unique identifier for the payment method
+        »» id	string	A unique identifier for internal payment methods
+        »» type	string	The type of payment method
+        »» name	string	Name of the payment method
+        »» instructions	string	Instructions for the customer on how to pay. Used for offline payments.
+        » private	string	Returns whether or not the event is private
+        » start	object	none
+        »» date	string	ISO-8601 date for the start of the event
+        »» formatted	string	A formatted date string for the start of the event
+        »» iso	string	ISO-8601 date and time for the start of the event
+        »» time	string	Time of the start of the event
+        »» timezone	string	Timezone offset for the start of the event
+        »» unix	integer	Unix timestamp for the start of the event
+        » status	string	Status of the event
+        » ticket_groups	[any]	none
+        »» id	string	A unique ticket group identifier
+        »» max_per_order	integer	Maximum number of ticket types that this group can sell
+        »» name	string	Name of the ticket types group
+        »» sort_order	integer	Sort index of the group in the UI
+        »» ticket_ids	[any]	Unique identifiers of ticket type ids that belong to this group
+        »»» id	string	none
+        » tickets_available	string¦null	Are there any ticket types available?
+        » timezone	string	TZ format timezone string
+        » total_holds	integer	Total number of holds
+        » total_issued_tickets	integer	Total number of issued tickets
+        » total_orders	integer	Total number of orders
+        » unavailable	string	True, if event is set to unavailable
+        » unavailable_status	string¦null	optional custom status message when event is set to be unavailable
+        » url	string	Event page URL
+        » venue	object	none
+        »» name	string¦null	Name of the venue
+        »» postal_code	string¦null	Postal code of the venue
+        """
+        fields = [
+            self.FieldDefinition(label="Name", value="name", editable=False),
+            self.FieldDefinition(
+                label="Description", value="description", editable=False
+            ),
+            self.FieldDefinition(label="Start time", value="start.iso", editable=False),
+            self.FieldDefinition(label="End time", value="end.iso", editable=False),
+            self.FieldDefinition(label="Venue", value="venue.name", editable=False),
+            self.FieldDefinition(
+                label="Postal code", value="venue.postal_code", editable=False
+            ),
+            self.FieldDefinition(label="URL", value="url", editable=False),
+            self.FieldDefinition(
+                label="Thumbnail", value="images.thumbnail", editable=False
+            ),
+            self.FieldDefinition(label="Status", value="status", editable=False),
+            self.FieldDefinition(
+                label="Is online?", value="online_event", editable=False
+            ),
+        ]
+        return fields
+
+    async def fetch_all(self):
+        response = self.client.get("/v1/events").json()
+        data = response.get("data", [])
+        while next := response.get("links", {}).get("next"):
+            response = self.client.get(next).json()
+            more_data = response.get("data", [])
+            data = data + more_data
+        return data
+
+    async def fetch_many(self, member_ids: list[str]):
+        all = await self.fetch_all()
+        return [record for record in all if record["id"] in member_ids]
+
+    async def fetch_one(self, member_id: str):
+        return self.client.get(f"/v1/events/{member_id}").json()
 
 
 class MapReport(Report, Analytics):
@@ -2917,27 +3181,29 @@ class HubHomepage(Page):
         on_delete=models.SET_NULL,
         related_name="+",
     )
+    google_analytics_tag_id = models.CharField(max_length=100, blank=True, null=True)
 
-    content_panels = Page.content_panels + [
+    data_panels = Page.content_panels + [
         FieldPanel("organisation"),
         FieldPanel("layers", widget=JSONEditorWidget),
     ]
 
-    website_panels = [
+    page_panels = [
         FieldPanel("puck_json_content", widget=JSONEditorWidget),
         FieldPanel("nav_links", widget=JSONEditorWidget),
     ]
 
-    promote_panels = Page.promote_panels + [
+    seo_panels = Page.promote_panels + [
         FieldPanel("favicon_url"),
         FieldPanel("seo_image"),
+        FieldPanel("google_analytics_tag_id"),
     ]
 
     edit_handler = TabbedInterface(
         [
-            ObjectList(promote_panels, heading="Hub SEO"),
-            ObjectList(content_panels, heading="Hub data"),
-            ObjectList(website_panels, heading="Homepage contents"),
+            ObjectList(seo_panels, heading="Hub SEO"),
+            ObjectList(data_panels, heading="Hub data"),
+            ObjectList(page_panels, heading="Homepage contents"),
         ]
     )
 
@@ -2950,6 +3216,35 @@ class HubHomepage(Page):
 
     def get_nav_links(self) -> list[HubNavLinks]:
         return self.nav_links
+
+    @classmethod
+    def create_for_user(
+        cls,
+        user,
+        hostname,
+        port=80,
+        org_id=None,
+    ):
+        """
+        Create a new HubHomepage for a user.
+        """
+        if org_id:
+            organisation = Organisation.objects.get(id=org_id)
+        else:
+            organisation = Organisation.get_or_create_for_user(user)
+        hub = HubHomepage(
+            title=hostname,
+            slug=slugify(hostname),
+            organisation=organisation,
+        )
+        # get root
+        root_page = Page.get_first_root_node()
+        root_page.add_child(instance=hub)
+        hub.save()
+        Site.objects.create(
+            hostname=hostname, port=port, site_name=hostname, root_page=hub
+        )
+        return hub
 
 
 # Signal when HubHomepage.layers changes to bust the filter cache
@@ -3031,4 +3326,5 @@ source_models: dict[str, Type[ExternalDataSource]] = {
     "airtable": AirtableSource,
     "mailchimp": MailchimpSource,
     "actionnetwork": ActionNetworkSource,
+    "tickettailor": TicketTailorSource,
 }

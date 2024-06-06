@@ -28,6 +28,35 @@ class Analytics:
             .order_by("-count")
         )
 
+    def imported_data_count_by_area(
+        self,
+        # "parliamentary_constituency",
+        # "parliamentary_constituency_2025",
+        # "admin_district",
+        # "admin_ward",
+        postcode_io_key: str = None,
+        gss: str = None,
+    ) -> QuerySet[RegionCount]:
+        qs = self.get_analytics_queryset()
+        if postcode_io_key is None:
+            return []
+
+        if gss:
+            try:
+                qs = qs.filter(**{f"postcode_data__codes__{postcode_io_key}": gss})
+            except Exception:
+                return []
+
+        return (
+            qs.annotate(
+                label=F(f"postcode_data__{postcode_io_key}"),
+                gss=F(f"postcode_data__codes__{postcode_io_key}"),
+            )
+            .values("label", "gss")
+            .annotate(count=Count("label"))
+            .order_by("-count")
+        )
+
     def imported_data_count_by_constituency(
         self, gss: str = None
     ) -> QuerySet[RegionCount]:

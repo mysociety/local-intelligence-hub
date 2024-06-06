@@ -44,17 +44,19 @@ export function HubMap ({
   const tileset = TILESETS.constituencies2024
 
   useEffect(() => {
-    if (currentConstituency?.fitBounds.length) {
-      mapbox.loadedMap?.fitBounds(currentConstituency.fitBounds, {
-        // TODO: change for small screen
-        padding: FIT_BOUNDS_PADDING
-      })
-    } else if (!localDataLoading) {
-      // Fly to UK bounds
-      mapbox.loadedMap?.fitBounds(UK_BOUNDS, {
-        padding: FIT_BOUNDS_PADDING
-      })
-    }
+    try {
+      if (currentConstituency?.fitBounds.length) {
+        mapbox.loadedMap?.fitBounds(currentConstituency.fitBounds, {
+          // TODO: change for small screen
+          padding: FIT_BOUNDS_PADDING
+        })
+      } else if (!localDataLoading) {
+        // Fly to UK bounds
+        mapbox.loadedMap?.fitBounds(UK_BOUNDS, {
+          padding: FIT_BOUNDS_PADDING
+        })
+      }
+    } catch(e) {}
   }, [currentConstituency, mapbox.loadedMap, localDataLoading])
 
   return (
@@ -70,7 +72,7 @@ export function HubMap ({
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
         {...viewState}
         onMove={(e) => setViewState(e.viewState)}
-        mapStyle={mapStyle || "mapbox://styles/commonknowledge/clwqeu7rb012301nyh52n3kss/draft"}
+        mapStyle={mapStyle || "mapbox://styles/commonknowledge/clwqeu7rb012301nyh52n3kss"}
         transformRequest={(url, resourceType) => {
           if (
             url.includes(process.env.NEXT_PUBLIC_BACKEND_BASE_URL!) &&
