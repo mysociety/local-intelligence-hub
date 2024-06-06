@@ -19,11 +19,13 @@ export function TopConstituencies() {
     populationDensity: "Population Density",
   }
   const [sortBy, setSortBy] = useState<keyof typeof sortOptions>("totalCount")
+  const { displayOptions: { analyticalAreaType } } = useReportContext()
 
   const { id } = useContext(ReportContext)
   const constituencyAnalytics = useQuery<ConstituencyStatsOverviewQuery, ConstituencyStatsOverviewQueryVariables>(CONSTITUENCY_STATS_OVERVIEW, {
     variables: {
-      reportID: id
+      reportID: id,
+      analyticalAreaType
     }
   })
   const [selectedConstituency, setSelectedConstituency] = useAtom(selectedConstituencyAtom)
@@ -157,10 +159,10 @@ export function ConstituencySummaryCard ({ count, constituency }: {
 }
 
 const CONSTITUENCY_STATS_OVERVIEW = gql`
-  query ConstituencyStatsOverview ($reportID: ID!) {
+  query ConstituencyStatsOverview ($reportID: ID!, $analyticalAreaType: AnalyticalAreaType!) {
     mapReport(pk: $reportID) {
       id
-      importedDataCountByConstituency {
+      importedDataCountByConstituency: importedDataCountByArea(analyticalAreaType: $analyticalAreaType) {
         label
         gss
         count

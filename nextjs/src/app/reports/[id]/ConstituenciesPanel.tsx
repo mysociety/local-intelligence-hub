@@ -11,6 +11,7 @@ import {
 import { ConstituencyElectionDeepDive } from "@/components/reportsConstituencyItem";
 import { TopConstituencies } from "@/components/TopConstituencies";
 import { useEffect, useRef, useState } from "react";
+import { useReportContext } from "./context";
 
 export const constituencyPanelTabAtom = atom("list")
 
@@ -20,6 +21,7 @@ export function ConstituenciesPanel () {
     setSelectedConstituency,
   ] = useAtom(selectedConstituencyAtom)
   const [tab, setTab] = useAtom(constituencyPanelTabAtom)
+  const { displayOptions: { analyticalAreaType } } = useReportContext()
 
   const lastCons = useRef(selectedConstituencyId)
   useEffect(() => {
@@ -48,7 +50,7 @@ export function ConstituenciesPanel () {
           </TabsContent>
           {!!selectedConstituencyId && (
             <TabsContent value="selected" className="pb-4">
-              <ConstituencyElectionDeepDive gss={selectedConstituencyId} />
+              <ConstituencyElectionDeepDive gss={selectedConstituencyId} analyticalAreaType={analyticalAreaType} />
             </TabsContent>
           )}
         </div>

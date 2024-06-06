@@ -652,6 +652,19 @@ class MapReportMemberFeature(PointFeature):
     id: Optional[str]
     properties: Optional[GenericData]
 
+@strawberry.enum
+class AnalyticalAreaType(Enum):
+    parliamentary_constituency = "parliamentary_constituency"
+    parliamentary_constituency_2025 = "parliamentary_constituency_2025"
+    admin_district = "admin_district"
+    admin_ward = "admin_ward"
+
+postcodeIOKeyAreaTypeLookup = {
+    AnalyticalAreaType.parliamentary_constituency: "WMC",
+    AnalyticalAreaType.parliamentary_constituency_2025: "WMC23",
+    AnalyticalAreaType.admin_district: "DIS",
+    AnalyticalAreaType.admin_ward: "WD23",
+}
 
 @strawberry.interface
 class Analytics:
@@ -661,6 +674,21 @@ class Analytics:
     def imported_data_count_by_region(self) -> List[GroupedDataCount]:
         data = self.imported_data_count_by_region()
         return [GroupedDataCount(**datum) for datum in data]
+
+    @strawberry_django.field
+    def imported_data_count_by_area(self, analytical_area_type: AnalyticalAreaType) -> List[GroupedDataCount]:
+        data = self.imported_data_count_by_area(postcode_io_key=analytical_area_type.value)
+        return [GroupedDataCount(**datum) for datum in data]
+
+    @strawberry_django.field
+    def imported_data_count_for_area(
+        self, info: Info, analytical_area_type: AnalyticalAreaType, gss: str
+    ) -> Optional[GroupedDataCount]:
+        res = self.imported_data_count_by_area(postcode_io_key=analytical_area_type.value, gss=gss)
+        if len(res) == 0:
+            return None
+        area_key = postcodeIOKeyAreaTypeLookup[analytical_area_type]
+        return GroupedDataCount(**res[0], area_type=area_key)
 
     @strawberry_django.field
     def imported_data_count_by_constituency(self) -> List[GroupedDataCount]:
