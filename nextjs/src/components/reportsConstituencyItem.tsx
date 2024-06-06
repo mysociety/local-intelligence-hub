@@ -55,9 +55,8 @@ export const ConstituencyElectionDeepDive = ({ gss }: { gss: string }) => {
     .filter(l => !!l.source.importedDataCountForConstituency?.count)
 
   return (
-    <div key={data.constituency.id}>
+    <div key={data.constituency.id} className='divide-y space-y-4'>
       <h1 className='font-PPRightGrotesk text-hLgPP'>{data.constituency.name}</h1>
-      <hr className='my-4' />
       {data.constituency.mp && displayOptions.showMPs && (
         <section className='mb-8'>
           <div className='uppercase font-IBMPlexMono text-xs text-meepGray-400 mb-1'>
@@ -407,7 +406,7 @@ const CONSTITUENCY_DATA = gql`
     }
     mapReport(pk: $reportID) {
       id
-      importedDataCountForConstituency(gss: $gss) {
+      importedDataCountForConstituency: importedDataCountForConstituency2024(gss: $gss) {
         gss
         count
       }
@@ -416,7 +415,7 @@ const CONSTITUENCY_DATA = gql`
         name
         source {
           id
-          importedDataCountForConstituency(gss: $gss) {
+          importedDataCountForConstituency: importedDataCountForConstituency2024(gss: $gss) {
             gss
             count
           }

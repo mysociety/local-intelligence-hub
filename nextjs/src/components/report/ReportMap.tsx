@@ -100,12 +100,12 @@ export function ReportMap () {
       }
     },
     constituencies: {
-      name: "GE2019 constituencies",
+      name: "GE2024 constituencies",
       singular: "constituency",
-      mapboxSourceId: "commonknowledge.4xqg91lc",
-      sourceLayerId: "Westminster_Parliamentary_Con-6i1rlq",
-      promoteId: "pcon16cd",
-      labelId: "pcon16nm",
+      mapboxSourceId: "commonknowledge.39dnumdm",
+      sourceLayerId: "constituencies_2024_simplifie-7w220i",
+      promoteId: "PCON24CD",
+      labelId: "PCON24NM",
       data: constituencyAnalytics.data?.mapReport.importedDataCountByConstituency || [],
       mapboxSourceProps: {},
       mapboxLayerProps: {
@@ -791,7 +791,7 @@ const MAP_REPORT_CONSTITUENCY_STATS = gql`
   query MapReportConstituencyStats($reportID: ID!) {
     mapReport(pk: $reportID) {
       id
-      importedDataCountByConstituency {
+      importedDataCountByConstituency: importedDataCountByConstituency2024 {
         label
         gss
         count
