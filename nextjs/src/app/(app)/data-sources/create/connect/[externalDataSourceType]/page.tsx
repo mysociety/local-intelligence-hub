@@ -40,7 +40,7 @@ import { toastPromise } from "@/lib/toast";
 import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
 import { getFieldsForDataSourceType } from "@/components/UpdateExternalDataSourceFields";
 import { camelCase } from "lodash";
-import { Building, Calendar, Newspaper, PersonStanding, Pin, User } from "lucide-react";
+import { Building, Calendar, Newspaper, PersonStanding, Pin, Quote, User } from "lucide-react";
 import { locationTypeOptions } from "@/data/location";
 
 const TEST_DATA_SOURCE = gql`
@@ -440,7 +440,7 @@ export default function Page({
                               </SelectItem>
                               <SelectItem value={DataSourceType.Story}>
                                 <div className='flex flex-row gap-2 items-center'>
-                                  <Newspaper className='w-4 text-meepGray-300' /> Stories
+                                  <Quote className='w-4 text-meepGray-300' /> Stories
                                 </div>
                               </SelectItem>
                               <SelectItem value={DataSourceType.Other}>
