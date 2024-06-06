@@ -21,6 +21,7 @@ import {
 import { DataSourceFieldLabel } from "./DataSourceIcon";
 import { Input } from "@/components/ui/input";
 import { useMemo } from "react";
+import { locationTypeOptions } from "@/data/location";
 
 type FormInputs = ExternalDataSourceInput
 
@@ -80,10 +81,40 @@ export function UpdateExternalDataSourceFields ({
       >
         <FormField
           control={form.control}
+          name="geographyColumnType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Type of location data</FormLabel>
+              <FormControl>
+                {/* @ts-ignore */}
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a geography type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Geography type</SelectLabel>
+                      {locationTypeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="geographyColumn"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Geography Field</FormLabel>
+              <FormLabel>
+                {form.watch("geographyColumnType")?.toLocaleLowerCase()} field
+              </FormLabel>
               <FormControl>
                 {fieldDefinitions?.length ? (
                   // @ts-ignore
@@ -106,35 +137,6 @@ export function UpdateExternalDataSourceFields ({
                   // @ts-ignore
                   <Input {...field} required={required} />
                 )}
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="geographyColumnType"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Geography Type</FormLabel>
-              <FormControl>
-                {/* @ts-ignore */}
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a geography type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Geography type</SelectLabel>
-                      <SelectItem value={GeographyTypes.Postcode}>Postcode</SelectItem>
-                      <SelectItem value={GeographyTypes.Ward}>Ward</SelectItem>
-                      <SelectItem value={GeographyTypes.AdminDistrict}>Council</SelectItem>
-                      <SelectItem value={GeographyTypes.ParliamentaryConstituency}>Constituency</SelectItem>
-                      <SelectItem value={GeographyTypes.ParliamentaryConstituency_2025}>Constituency (2024)</SelectItem>
-                      <SelectItem value={GeographyTypes.Address}>Address</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
               </FormControl>
               <FormMessage />
             </FormItem>

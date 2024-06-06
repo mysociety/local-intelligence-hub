@@ -40,6 +40,7 @@ import { toastPromise } from "@/lib/toast";
 import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
 import { getFieldsForDataSourceType } from "@/components/UpdateExternalDataSourceFields";
 import { camelCase } from "lodash";
+import { locationTypeOptions } from "@/data/location";
 
 const TEST_DATA_SOURCE = gql`
   query TestDataSource($input: CreateExternalDataSourceInput!) {
@@ -436,11 +437,11 @@ export default function Page({
                             <SelectContent>
                               <SelectGroup>
                                 <SelectLabel>Geography type</SelectLabel>
-                                <SelectItem value={GeographyTypes.Postcode}>Postcode</SelectItem>
-                                <SelectItem value={GeographyTypes.Ward}>Ward</SelectItem>
-                                <SelectItem value={GeographyTypes.AdminDistrict}>Council</SelectItem>
-                                <SelectItem value={GeographyTypes.ParliamentaryConstituency}>GE2010-2019 Constituency</SelectItem>
-                                <SelectItem value={GeographyTypes.ParliamentaryConstituency_2025}>GE2024 Constituency</SelectItem>
+                                {locationTypeOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
                               </SelectGroup>
                             </SelectContent>
                           </Select>
@@ -449,6 +450,7 @@ export default function Page({
                       </FormItem>
                     )}
                   />
+                  <FPreopulatedSelectField name="geographyColumn" label={`${form.watch("geographyColumnType")?.toLocaleLowerCase()} field`} required />
                   {collectFields.map((field) => (
                     <FPreopulatedSelectField key={field} name={field} />
                   ))}
