@@ -142,7 +142,7 @@ export const FilterableGrid: ComponentConfig<FilterableGridProps> = {
             props: {
                 categories: data.props.categories?.map((category: any) => ({
                     ...category,
-                    urlSlug: !!category.title ? slugify(category.title) : category.urlSlug
+                    urlSlug: !!category.urlSlug ? slugify(category.urlSlug) : category.urlSlug
                 })),
                 ...data
             }

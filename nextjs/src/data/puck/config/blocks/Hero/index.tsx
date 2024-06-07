@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 
-import heroImg from "../../../../../../public/hub/hero-img.jpg"
+import heroImg from "../../../../../../public/hub/tcc-hero-image-7-jun.jpg"
 import mapImg from "../../../../../../public/hub/hero-map-search-lg.png"
 
 import { Search } from "lucide-react";
@@ -90,19 +90,22 @@ function HeroRenderer ({ prompt, description, }:  HeroProps) {
         </div>
       <div className="z-20 lg:w-1/2 lg:mt-0 lg:py-[20px] lg:pr-[20px] gap-0">
         <div className=" bg-jungle-green-50 lg:rounded-[20px] p-[25px] flex flex-col place-content-center gap-10 justify-between z-10  w-full ">
-          <div className="flex flex-col gap-8">
-            <h1 className="text-hub5xl flex flex-wrap gap-3">
-            <span className="italic">The</span>{" "}
+          <div className="flex flex-col gap-2">
+            <h1 className="text-hub5xl flex flex-wrap gap-3 pb-6">
+              <span className="italic">The</span>{" "}
                 <span className="text-jungle-green-400 w-[150px] flex justify-center">
                   <RotatingWords /> 
                 </span>{" "}
                <span>Hub</span> 
-              </h1>
-            <div className="text-jungle-green-neutral text-xl">
+            </h1>
+            <div className="text-jungle-green-neutral text-2xl">
               <PuckText text={description} />
             </div>
+            <div className="text-jungle-green-neutral text-xl">
+              <PuckText text={prompt} />
+            </div>
           </div>
-          <div className="flex gap-4 border-t border-jungle-green-100 pt-4 ">
+          <div className="flex gap-4">
             <div className='grid grid-flow-col gap-4'>
               <Link href="/map" className='bg-jungle-green-200 rounded-md p-2 leading-tight text-center'>
                 See what's happening near you
