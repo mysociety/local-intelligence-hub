@@ -9,10 +9,10 @@ import ArrowTopRight from "../../../../../../public/hub/arrow-top-right.svg";
 import ukMap from "../../../../../../public/hub/uk-map.svg";
 import tccHeart from "../../../../../../public/hub/tcc-heart-2.svg";
 import hubGridIllustration1 from "../../../../../../public/hub/illystrations/Layer_1.svg";
-import hubGridIllustration2 from "../../../../../../public/hub/illystrations/Layer_5.svg";
 import hubGridIllustration3 from "../../../../../../public/hub/illystrations/Group 16.svg"
 import hubGridIllustration4 from "../../../../../../public/hub/illystrations/Group 14.svg";
 import hubGridIllustration5 from "../../../../../../public/hub/illystrations/Group 15.svg";
+import dragonflyIlly from "../../../../../../public/hub/illystrations/Layer_5.svg";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useParams, useRouter } from "next/navigation";
@@ -165,6 +165,32 @@ export const FilterableGrid: ComponentConfig<FilterableGridProps> = {
     },
 };
 
+function withIllys (_arr: any[]) {
+    const arr = [..._arr]
+    if (arr.length >= 4) {
+        arr.splice(3, 0, {
+            // @ts-ignore
+            type: "illustration",
+            src: hubGridIllustration4
+        })
+    }
+    if (arr.length >= 13) {
+        arr.splice(10, 0, {
+            // @ts-ignore
+            type: "illustration",
+            src: hubGridIllustration3
+        })
+    }
+    if (arr.length >= 15) {
+        arr.splice(14, 0, {
+            // @ts-ignore
+            type: "illustration",
+            src: hubGridIllustration5
+        })
+    }
+    return arr
+}
+
 export const FilterableGridRenderer = ({ categories, items, showAll }: FilterableGridProps & {
     showAll?: boolean
 }) => {
@@ -175,26 +201,14 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
     // Listen for router changes, then produce new items
     const filteredItems = useMemo(() => {
         if (!items) return []
-        if (!tag && !category) return items
+        if (!tag && !category) {
+            return withIllys(items)
+        }
         const filtered = items?.filter(item =>
             (!tag || tag === item.type) &&
             (!category || item.categories?.some(c => c.category === category))
         )
-        if (filtered.length > 4) {
-            filtered.splice(3, 0, {
-                // @ts-ignore
-                type: "illustration",
-                src: hubGridIllustration1
-            })
-        }
-        if (filtered.length > 6) {
-            filtered.splice(3, 0, {
-                // @ts-ignore
-                type: "illustration",
-                src: hubGridIllustration2
-            })
-        }
-        return filtered
+        return withIllys(filtered)
     }, [items, tag, category])
     const categoryData = categories?.find(c => c.urlSlug === category)
 
@@ -225,10 +239,16 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
         <div>
             {/* Categories */}
             {!categoryData && (
-                <section id="get-involved">
-                    <header className='space-y-2 pt-16 mb-10 md:pt-32 md:mb-14'>
-                        <h2 className='text-hub4xl md:text-hub6xl'>Ways to get involved</h2>
-                        <p className='text-jungle-green-neutral text-hub2xl'>Here{"'"}s how you can help centre people, climate and nature this election.</p>
+                <section id="get-involved relative z-[2]">
+                    <header className='space-y-2 pt-16 mb-10 md:pt-32 md:mb-14 relative'>
+                        <Image src={dragonflyIlly} alt="illustration" style={{
+                            position: "absolute",
+                            right: -50,
+                            bottom: -60,
+                            zIndex: 1
+                        }} />
+                        <h2 className='relative z-[2] text-hub4xl md:text-hub6xl'>Ways to get involved</h2>
+                        <p className='relative z-[2] text-jungle-green-neutral text-hub2xl'>Here{"'"}s how you can help centre people, climate and nature this election.</p>
                     </header>
                     <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 lg:gap-4 xl:gap-5'>
                         <PostcodeSearch className='h-full' />
@@ -251,9 +271,16 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
             {!!(categoryData || showAll !== false) ? (
                 <section id="latest">
                     {(!categoryData) ? (
-                        <header className='space-y-2 pt-16 mb-10 md:pt-32 md:mb-14'>
-                            <h2 className='text-hub4xl md:text-hub6xl'>Latest from across the campaign</h2>
-                            <p className='text-jungle-green-neutral text-hub2xl'>
+                        <header className='space-y-2 pt-16 mb-10 md:pt-32 md:mb-14 relative'>
+                            <Image src={hubGridIllustration1} alt="illustration" style={{
+                                position: "absolute",
+                                right: -50,
+                                bottom: -80,
+                                zIndex: 1,
+                                maxHeight: 275
+                            }} />
+                            <h2 className='relative z-[2] text-hub4xl md:text-hub6xl'>Latest from across the campaign</h2>
+                            <p className='relative z-[2] text-jungle-green-neutral text-hub2xl'>
                                 Explore our wall of activity from the hub
                             </p>
                         </header>

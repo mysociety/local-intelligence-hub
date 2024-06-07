@@ -13,7 +13,7 @@ export const About: ComponentConfig<AboutProps> = {
 
 function Render(props: AboutProps) {
     return (
-        <section className='!leading-tight my-24'>
+        <section className='!leading-tight my-24' id='about'>
             <header className='text-jungle-green-neutral uppercase text-sm pt-24 pb-16 text-center'>
                 <h2>About us</h2>
             </header>

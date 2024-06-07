@@ -47,9 +47,10 @@ export type CardProps = {
   behaviour: string;
   dialogDescription?: string;
   description?: string;
-  type: typeof itemTypes[number]["value"];
+  type: typeof itemTypes[number]["value"] | "illustration";
   link?: string;
   linkLabel?: string;
+  src?: any
   // columns: number;
   // rows: number;
 };
@@ -146,8 +147,8 @@ export const Card: ComponentConfig<CardProps> = {
   render: props => <RenderCard {...props} />,
 };
 
-export function RenderCard({ category, title, description, dialogDescription, type, link, linkLabel, behaviour }: CardProps) {
-  const card = (
+export function RenderCard({ src, category, title, description, dialogDescription, type, link, linkLabel, behaviour }: CardProps) {
+  const card = type !== "illustration" ? (
     <div
       className="render-card w-full h-full aspect-square overflow-clip rounded-[20px] flex flex-col gap-5 hover:shadow-hover transition-all"
       // style={{
@@ -211,7 +212,9 @@ export function RenderCard({ category, title, description, dialogDescription, ty
         </div>
       )}
     </div>
-  );
+  ) : (
+    <Image src={src} alt="illustration" className='w-full h-full overflow-visible' />
+  )
 
   if (behaviour === "dialog" && !!dialogDescription) {
     return (
