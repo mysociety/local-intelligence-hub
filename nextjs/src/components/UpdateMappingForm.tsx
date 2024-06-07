@@ -27,6 +27,7 @@ import {
 import { gql, useQuery } from "@apollo/client";
 import { DataSourceFieldLabel } from "./DataSourceIcon";
 import { twMerge } from "tailwind-merge";
+import { locationTypeOptions } from "@/data/location";
 
 const ENRICHMENT_LAYERS = gql`
   query EnrichmentLayers {
@@ -92,60 +93,26 @@ export function UpdateMappingForm({
           <div className='flex flex-row w-full items-end'>
             <div className='max-w-md'>
               <div className='grid grid-cols-2 gap-4 w-full'>
-                {/* Postcode field */}
-                <FormField
-                  control={form.control}
-                  name="geographyColumn"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Geography Field</FormLabel>
-                      <FormControl>
-                        {fieldDefinitions?.length ? (
-                          // @ts-ignore
-                          <Select value={field.value} onValueChange={field.onChange} required>
-                            <SelectTrigger className='pl-1'>
-                              <SelectValue placeholder={`Choose ${data.geographyColumnType || 'geography'} field`} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectLabel>Geography field</SelectLabel>
-                                {fieldDefinitions?.map((field) => (
-                                  <SelectItem key={field.value} value={field.value}>
-                                    <DataSourceFieldLabel fieldDefinition={field} crmType={crmType} />
-                                  </SelectItem>
-                                ))}
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          // @ts-ignore
-                          <Input {...field} required />
-                        )}
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 <FormField
                   control={form.control}
                   name="geographyColumnType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Geography Type</FormLabel>
+                      <FormLabel>Type of location data</FormLabel>
                       <FormControl>
                         {/* @ts-ignore */}
                         <Select onValueChange={field.onChange} value={field.value}>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a geography type" />
+                            <SelectValue placeholder="Select a location type" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectGroup>
-                              <SelectLabel>Geography type</SelectLabel>
-                              <SelectItem value={GeographyTypes.Postcode}>Postcode</SelectItem>
-                              <SelectItem value={GeographyTypes.Ward}>Ward</SelectItem>
-                              <SelectItem value={GeographyTypes.AdminDistrict}>Council</SelectItem>
-                              <SelectItem value={GeographyTypes.ParliamentaryConstituency}>Constituency</SelectItem>
-                              <SelectItem value={GeographyTypes.ParliamentaryConstituency_2025}>Constituency (2024)</SelectItem>
+                              <SelectLabel>Location type</SelectLabel>
+                              {locationTypeOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
                             </SelectGroup>
                           </SelectContent>
                         </Select>
@@ -153,6 +120,43 @@ export function UpdateMappingForm({
                       <FormMessage />
                     </FormItem>
                   )}
+              />
+              <FormField
+                control={form.control}
+                name="geographyColumn"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {form.watch("geographyColumnType")?.toLocaleLowerCase()} field
+                    </FormLabel>
+                    <FormControl>
+                      {fieldDefinitions?.length ? (
+                        // @ts-ignore
+                        <Select value={field.value} onValueChange={field.onChange} required>
+                          <SelectTrigger className='pl-1'>
+                            <SelectValue placeholder={`Choose ${data.geographyColumnType || 'geography'} field`} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectLabel>
+                                {form.watch("geographyColumnType")?.toLocaleLowerCase()} field
+                              </SelectLabel>
+                              {fieldDefinitions?.map((field) => (
+                                <SelectItem key={field.value} value={field.value}>
+                                  <DataSourceFieldLabel fieldDefinition={field} crmType={crmType} />
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        // @ts-ignore
+                        <Input {...field} required />
+                      )}
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
               </div>
             </div>
