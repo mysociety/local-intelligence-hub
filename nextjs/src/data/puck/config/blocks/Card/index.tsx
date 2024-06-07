@@ -135,9 +135,12 @@ export const Card: ComponentConfig<CardProps> = {
   resolveData: (data, { lastData }) => {
     return {
       ...data,
-      linkLabel: data.props.type === lastData?.props?.type ? data.props.linkLabel : (
-        data.props.type === "resource" ? "Download" : "Learn more"
-      )
+      props: {
+        ...data.props,
+        linkLabel: data.props.type === lastData?.props?.type ? data.props.linkLabel : (
+          data.props.type === "resource" ? "Download" : "Learn more"
+        )
+      }
     }
   },
   render: props => <RenderCard {...props} />,

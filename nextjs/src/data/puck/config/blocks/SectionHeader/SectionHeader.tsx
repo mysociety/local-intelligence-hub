@@ -23,11 +23,12 @@ export const SectionHeader: ComponentConfig<SectionHeaderProps> = {
             type: "textarea",
         },
     },
-    resolveData: async ({ props }) => {
+    resolveData: async (data) => {
       return {
+        ...data,
         props: {
-          ...props,
-          slug: slugify(props.title),
+          ...data.props,
+          slug: slugify(data.props.title),
         }
       };
     },

@@ -139,12 +139,13 @@ export const FilterableGrid: ComponentConfig<FilterableGridProps> = {
     },
     resolveData: (data, puck) => {
         return {
+            ...data,
             props: {
+                ...data.props,
                 categories: data.props.categories?.map((category: any) => ({
                     ...category,
                     urlSlug: !!category.urlSlug ? slugify(category.urlSlug) : category.urlSlug
-                })),
-                ...data
+                }))
             }
         }
     },
