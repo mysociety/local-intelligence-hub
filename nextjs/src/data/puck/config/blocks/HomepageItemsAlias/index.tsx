@@ -30,7 +30,7 @@ const HomepageItemsAliasRenderer = () => {
     })
 
     const puckData = data.data?.hubPageByPath?.puckJsonContent as Data<FilterableGridProps>
-    const gridProps = puckData?.content.find((item) => (
+    const gridProps = puckData?.content?.find((item) => (
         // @ts-ignore — Puck types aren't good here.
         item.type === "FilterableGrid"
     ))?.props

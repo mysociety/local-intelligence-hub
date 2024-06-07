@@ -22,6 +22,7 @@ import { HomepageItemsAlias } from "./blocks/HomepageItemsAlias";
 import { GET_PAGE } from "@/app/hub/render/[hostname]/query";
 import { makeFrontEndClient } from "@/components/apollo-wrapper";
 import { GetPageQuery, GetPageQueryVariables } from "@/__generated__/graphql";
+import { About } from "./blocks/About";
 
 export type Props = {
   EventList: EventListProps;
@@ -42,6 +43,7 @@ export type Props = {
   SignPost: SignPostProps;
   SectionHeader: SectionHeaderProps;
   HomepageItemsAlias: any;
+  About: any;
 };
 
 export type UserConfig = Config
@@ -66,7 +68,8 @@ export const conf: UserConfig = {
       components: [
         "Hero",
         "FilterableGrid",
-        "HomepageItemsAlias"
+        "HomepageItemsAlias",
+        "About"
       ],
     },
     pageLayout: {
@@ -109,6 +112,7 @@ export const conf: UserConfig = {
     EventList,
     Image,
     HomepageItemsAlias,
-    RichText: PuckRichText
+    RichText: PuckRichText,
+    About
   },
 };
