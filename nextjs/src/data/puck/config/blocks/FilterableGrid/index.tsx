@@ -44,8 +44,7 @@ export type FilterableGridProps = {
         link: string;
         linkLabel: string;
         timestamp: number;
-    }>,
-    showAll?: boolean;
+    }>
 }
 
 export const FilterableGrid: ComponentConfig<FilterableGridProps> = {
@@ -161,7 +160,9 @@ export const FilterableGrid: ComponentConfig<FilterableGridProps> = {
     },
 };
 
-export const FilterableGridRenderer = ({ categories, items, showAll }: FilterableGridProps) => {
+export const FilterableGridRenderer = ({ categories, items, showAll }: FilterableGridProps & {
+    showAll?: boolean
+}) => {
     const router = useRouter()
     const [tag, setTag] = useQueryState("tag", parseAsStringEnum(itemTypes.map(t => t.value)))
     const [category, setCategory] = useQueryState("category", parseAsStringEnum(categories?.map(c => c.urlSlug)))
