@@ -87,9 +87,9 @@ function HeroRenderer ({ prompt, description, }:  HeroProps) {
         layout="responsive"
       />
       <div className="lg:absolute w-full ">
-        </div>
-      <div className="z-20 lg:w-1/2 lg:mt-0 lg:py-[20px] lg:pr-[20px] gap-0">
-        <div className=" bg-jungle-green-50 lg:rounded-[20px] p-[25px] flex flex-col place-content-center gap-10 justify-between z-10  w-full ">
+      </div>
+      <div className="z-20 lg:w-1/2 lg:mt-0 lg:py-[20px] lg:pr-[20px] gap-0 lg:max-w-[550px]">
+        <div className="bg-jungle-green-50 lg:rounded-[20px] p-[25px] flex flex-col place-content-center gap-10 justify-between z-10  w-full ">
           <div className="flex flex-col gap-2">
             <h1 className="text-hub5xl flex flex-wrap gap-3 pb-6">
               <span className="italic">The</span>{" "}
@@ -105,15 +105,13 @@ function HeroRenderer ({ prompt, description, }:  HeroProps) {
               <PuckText text={prompt} />
             </div>
           </div>
-          <div className="flex gap-4">
-            <div className='grid grid-flow-col gap-4'>
-              <Link href="/map" className='bg-jungle-green-200 rounded-md p-2 leading-tight text-center'>
-                See what{"'"}s happening near you
-              </Link>
-              <Link href="/#about" className='bg-jungle-green-200 rounded-md p-2 leading-tight text-center'>
-                Learn more about the hub
-              </Link>
-            </div>
+          <div className="grid grid-flow-row sm:grid-flow-col gap-4 justify-stretch">
+            <Link href="/map" className='bg-jungle-green-200 rounded-md p-2 leading-tight text-center'>
+              See what{"'"}s happening near you
+            </Link>
+            <Link href="/#about" className='bg-jungle-green-200 rounded-md p-2 leading-tight text-center'>
+              Learn more about the hub
+            </Link>
           </div>
         </div>
       </div>

@@ -7,7 +7,7 @@ import Image from "next/image";
 import CirclePattern from "../../../../../../public/hub/main-circle-pattern.svg"
 import ArrowTopRight from "../../../../../../public/hub/arrow-top-right.svg";
 import ukMap from "../../../../../../public/hub/uk-map.svg";
-import tccHeart from "../../../../../../public/hub/tcc-heart.svg";
+import tccHeart from "../../../../../../public/hub/tcc-heart-2.svg";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useParams, useRouter } from "next/navigation";
@@ -17,6 +17,7 @@ import slugify from 'slug'
 import { useQueryState, parseAsArrayOf, parseAsStringEnum } from 'nuqs'
 import { PuckText } from "../../components/PuckText";
 import { twMerge } from "tailwind-merge";
+import pluralize from "pluralize";
 
 export const itemTypes = [
     { label: "Resource", value: "resource" },
@@ -273,7 +274,7 @@ const FilterableGridRenderer = ({ categories, items }: FilterableGridProps) => {
                                 tag === itemType.value ? 'bg-jungle-green-600 text-white' : 'bg-jungle-green-100 text-jungle-green-600'
                             )}
                         >
-                            {itemType.label}
+                            {pluralize(itemType.label)}
                         </button>
                     ))}
                 </div>
