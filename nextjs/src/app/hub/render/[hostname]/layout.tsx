@@ -73,5 +73,9 @@ export async function generateMetadata(
         }
       ],
     } : undefined,
+    alternates: {
+      // Ignore query params for filtering etc.
+      canonical: "/"
+    }
   }
 }
