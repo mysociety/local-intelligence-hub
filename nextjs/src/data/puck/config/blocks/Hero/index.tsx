@@ -108,7 +108,7 @@ function HeroRenderer ({ prompt, description, }:  HeroProps) {
           <div className="flex gap-4">
             <div className='grid grid-flow-col gap-4'>
               <Link href="/map" className='bg-jungle-green-200 rounded-md p-2 leading-tight text-center'>
-                See what's happening near you
+                See what{"'"}s happening near you
               </Link>
               <Link href="/#about" className='bg-jungle-green-200 rounded-md p-2 leading-tight text-center'>
                 Learn more about the hub
