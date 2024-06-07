@@ -95,7 +95,7 @@ function PageContent ({ params: { hostname, slugs }, shouldDisplayMap, hub }: { 
                     eventData.data?.importedDataGeojsonPoint?.properties?.constituency
                   ) : undefined
                 }
-                localDataLoading={localData.loading}
+                localDataLoading={localData.loading || eventData.loading}
               />
             </div>
             {!localData.loading && (
