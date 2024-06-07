@@ -168,7 +168,7 @@ const FilterableGridRenderer = ({ categories, items }: FilterableGridProps) => {
     const filteredItems = useMemo(() => {
         if (!items) return []
         if (!tags && !category) return items
-        return items.filter(item =>
+        return items?.filter(item =>
             (!tags?.length || tags?.includes(item.type)) &&
             (!category || item.categories.some(c => c.category === category))
         )
@@ -266,7 +266,7 @@ const FilterableGridRenderer = ({ categories, items }: FilterableGridProps) => {
                             key={index}
                             onClick={() => {
                                 // Toggle tag based on click
-                                setTags(t => t?.includes(itemType.value) ? t.filter(tag => tag !== itemType.value) : [...(t || []), itemType.value])
+                                setTags(t => t?.includes(itemType.value) ? t?.filter(tag => tag !== itemType.value) || t : [...(t || []), itemType.value])
                             }}
                             className={twMerge(
                                 "rounded-full px-3 py-1 cursor-pointer uppercase",
