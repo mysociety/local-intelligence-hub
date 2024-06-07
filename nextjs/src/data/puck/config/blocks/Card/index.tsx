@@ -24,6 +24,7 @@ import { Download } from "lucide-react";
 
 import dynamic from "next/dynamic";
 import dynamicIconImports from "lucide-react/dynamicIconImports";
+import { itemTypes } from "../FilterableGrid";
 
 const icons = Object.keys(dynamicIconImports).reduce((acc, iconName) => {
   // @ts-ignore
@@ -66,11 +67,7 @@ export const Card: ComponentConfig<CardProps> = {
     const fields: Fields<CardProps> = {
       type: {
         type: "select",
-        options: [
-          { label: "Resource", value: "resource" },
-          { label: "Action", value: "action" },
-          // { label: "Tweet", value: "tweet" },
-        ],
+        options: itemTypes,
       },
       behaviour: {
         type: "select",

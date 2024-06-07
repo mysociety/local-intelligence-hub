@@ -18,7 +18,7 @@ import { useQueryState, parseAsArrayOf, parseAsStringEnum } from 'nuqs'
 import { PuckText } from "../../components/PuckText";
 import { twMerge } from "tailwind-merge";
 
-const itemTypes = [
+export const itemTypes = [
     { label: "Resource", value: "resource" },
     { label: "Action", value: "action" },
 ] as const
