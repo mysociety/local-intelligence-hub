@@ -24,6 +24,7 @@ const GET_UPDATE_CONFIG = gql`
   query GetSourceMapping($ID: ID!) {
     externalDataSource(pk: $ID) {
       id
+      autoImportEnabled
       autoUpdateEnabled
       allowUpdates
       hasWebhooks

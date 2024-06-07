@@ -152,12 +152,8 @@ class Mutation:
         django_mutations.delete(mutation_types.IDObject, extensions=[IsAuthenticated()])
     )
 
-    enable_webhook: model_types.ExternalDataSource = (
-        mutation_types.enable_webhook
-    )
-    disable_webhook: model_types.ExternalDataSource = (
-        mutation_types.disable_webhook
-    )
+    enable_webhook: model_types.ExternalDataSource = mutation_types.enable_webhook
+    disable_webhook: model_types.ExternalDataSource = mutation_types.disable_webhook
     trigger_update: mutation_types.ExternalDataSourceAction = (
         mutation_types.trigger_update
     )

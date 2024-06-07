@@ -13,6 +13,7 @@ export const UPDATE_EXTERNAL_DATA_SOURCE = gql`
       emailField
       phoneField
       addressField
+      autoImportEnabled
       autoUpdateEnabled
       updateMapping {
         source

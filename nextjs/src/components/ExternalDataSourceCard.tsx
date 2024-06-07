@@ -254,6 +254,7 @@ export const DATA_SOURCE_FRAGMENT = gql`
     dataType
     crmType
     automatedWebhooks
+    autoImportEnabled
     autoUpdateEnabled
     updateMapping {
       source

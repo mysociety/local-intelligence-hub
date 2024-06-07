@@ -948,19 +948,31 @@ class ExternalDataSource(BaseDataSource):
         )
 
     @strawberry_django.field
-    def last_import_job(self: models.ExternalDataSource, info: Info) -> Optional[QueueJob]:
-        job = procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
-            args__external_data_source_id=str(self.id),
-            task_name__startswith="hub.tasks.import_"
-        ).order_by('-scheduled_at').first()
+    def last_import_job(
+        self: models.ExternalDataSource, info: Info
+    ) -> Optional[QueueJob]:
+        job = (
+            procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
+                args__external_data_source_id=str(self.id),
+                task_name__startswith="hub.tasks.import_",
+            )
+            .order_by("-scheduled_at")
+            .first()
+        )
         return job
 
     @strawberry_django.field
-    def last_update_job(self: models.ExternalDataSource, info: Info) -> Optional[QueueJob]:
-        job = procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
-            args__external_data_source_id=str(self.id),
-            task_name__startswith="hub.tasks.refresh_"
-        ).order_by('-scheduled_at').first()
+    def last_update_job(
+        self: models.ExternalDataSource, info: Info
+    ) -> Optional[QueueJob]:
+        job = (
+            procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
+                args__external_data_source_id=str(self.id),
+                task_name__startswith="hub.tasks.refresh_",
+            )
+            .order_by("-scheduled_at")
+            .first()
+        )
         return job
 
     @strawberry_django.field
@@ -975,7 +987,7 @@ class ExternalDataSource(BaseDataSource):
     @strawberry_django.field
     def auto_update_webhook_url(self: models.ExternalDataSource, info) -> str:
         return self.auto_update_webhook_url()
-    
+
     @strawberry_django.field
     def auto_import_webhook_url(self: models.ExternalDataSource, info) -> str:
         return self.auto_import_webhook_url()

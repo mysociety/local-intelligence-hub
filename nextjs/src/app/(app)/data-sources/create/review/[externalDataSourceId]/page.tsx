@@ -22,6 +22,7 @@ const GET_UPDATE_CONFIG = gql`
       geographyColumnType
       dataType
       crmType
+      autoImportEnabled
       autoUpdateEnabled
       updateMapping {
         source

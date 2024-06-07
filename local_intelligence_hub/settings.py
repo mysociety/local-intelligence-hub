@@ -339,12 +339,12 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "common": {
-            "format": "{levelname} {asctime} {name}.{funcName}:{lineno} # {message}",
+            "format": "{levelname} {asctime} {name}.{funcName}:{lineno} # {message:.120}",
             "style": "{",
             "validate": True,
         },
         "procrastinate": {
-            "format": "{levelname} {asctime} {name} # {message}",
+            "format": "{levelname} {asctime} {name} # {message:.120}",
             "style": "{",
             "validate": True,
         },

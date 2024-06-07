@@ -60,7 +60,10 @@ from hub.tasks import (
     refresh_one,
     refresh_webhooks,
 )
-from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook, ExternalDataSourceAutoImportWebhook
+from hub.views.mapped import (
+    ExternalDataSourceAutoImportWebhook,
+    ExternalDataSourceAutoUpdateWebhook,
+)
 from utils.log import get_simple_debug_logger
 from utils.nominatim import address_to_geojson
 from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
@@ -1190,6 +1193,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         return ensure_list(self.update_mapping)
 
     def delete(self, *args, **kwargs):
+        self.disable_auto_import()
         self.disable_auto_update()
         return super().delete(*args, **kwargs)
 
@@ -1267,8 +1271,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         if self.auto_import_enabled:
             expected_webhooks += 1
         webhooks = []
+        print(f"expected webhooks {expected_webhooks}")
         try:
             webhooks = self.get_webhooks()
+            print(f"got webhooks {len(webhooks)}")
         except Exception as e:
             logger.error(f"Could't fetch webhooks: {e}")
             raise ValueError("Couldn't fetch webhooks")
@@ -1286,7 +1292,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             settings.BASE_URL,
             reverse("external_data_source_auto_update_webhook", args=[self.id]),
         )
-    
+
     def auto_import_webhook_url(self):
         return urljoin(
             settings.BASE_URL,
@@ -1758,13 +1764,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     # UI
 
     def enable_auto_import(self) -> Union[None, int]:
+        self.auto_import_enabled = True
         if self.automated_webhooks:
             self.refresh_webhooks()
             # And schedule a cron to keep doing it
             refresh_webhooks.defer(
                 external_data_source_id=str(self.id),
             )
-        self.auto_import_enabled = True
         self.save()
 
     def disable_auto_import(self):
@@ -1778,13 +1784,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             logger.error(f"Updates requested for non-updatable CRM {self}")
             return
 
+        self.auto_update_enabled = True
         if self.automated_webhooks:
             self.refresh_webhooks()
             # And schedule a cron to keep doing it
             refresh_webhooks.defer(
                 external_data_source_id=str(self.id),
             )
-        self.auto_update_enabled = True
         self.save()
 
     def disable_auto_update(self):
@@ -1819,10 +1825,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             return HttpResponse(status=200)
 
         member_ids = self.get_member_ids_from_webhook(body)
-        if len(member_ids) == 1:
-            async_to_sync(self.schedule_import_all)(member_id=member_ids[0])
-        else:
-            async_to_sync(self.schedule_import_many)(member_ids=member_ids)
+        async_to_sync(self.schedule_import_many)(members=member_ids)
         return HttpResponse(status=200)
 
     # Scheduling
@@ -2306,10 +2309,13 @@ class AirtableSource(ExternalDataSource):
         list = self.base.webhooks()
         auto_import_webhook_url = self.auto_import_webhook_url()
         auto_update_webhook_url = self.auto_update_webhook_url()
+        for webhook in list:
+            print(f"got webhook {webhook.notification_url}")
         return [
             webhook
             for webhook in list
-            if webhook.notification_url in [auto_import_webhook_url, auto_update_webhook_url]
+            if webhook.notification_url
+            in [auto_import_webhook_url, auto_update_webhook_url]
         ]
 
     def extra_webhook_healthcheck(self, webhooks):
@@ -2319,25 +2325,39 @@ class AirtableSource(ExternalDataSource):
                 return False
         return True
 
-    def teardown_webhooks(self):
+    def teardown_webhooks(self, all=False):
         list = self.base.webhooks()
         for webhook in list:
+            is_auto_update = (
+                ExternalDataSourceAutoUpdateWebhook.base_path
+                in webhook.notification_url
+            )
+            is_auto_import = (
+                ExternalDataSourceAutoImportWebhook.base_path
+                in webhook.notification_url
+            )
             if (
-                ExternalDataSourceAutoUpdateWebhook.base_path in webhook.notification_url or 
-                ExternalDataSourceAutoImportWebhook.base_path in webhook.notification_url
+                all
+                or (is_auto_update and not self.auto_update_enabled)
+                or (is_auto_import and not self.auto_import_enabled)
             ):
                 webhook.delete()
 
     def setup_webhooks(self):
-        self.teardown_webhooks()
+        self.teardown_webhooks(all=True)
         # Auto-import
-        self.base.add_webhook(
-            self.auto_import_webhook_url(), self.auto_webhook_specification()
-        )
+        print("setting up webhooks")
+        if self.auto_import_enabled:
+            res = self.base.add_webhook(
+                self.auto_import_webhook_url(), self.auto_webhook_specification()
+            )
+            logger.info(f"Set up import webhook for source {self}: {res}")
         # Auto-update
-        self.base.add_webhook(
-            self.auto_update_webhook_url(), self.auto_webhook_specification()
-        )
+        if self.auto_update_enabled:
+            res = self.base.add_webhook(
+                self.auto_update_webhook_url(), self.auto_webhook_specification()
+            )
+            logger.info(f"Set up update webhook for source {self}: {res}")
 
     def get_member_ids_from_webhook(self, webhook_payload: dict) -> list[str]:
         member_ids: list[str] = []
@@ -2565,16 +2585,30 @@ class MailchimpSource(ExternalDataSource):
 
         return value
 
+    def record_url_template(self) -> Optional[str]:
+        """
+        Get the URL template for a record in the remote system.
+        """
+        return "https://admin.mailchimp.com/audience/contact-profile?contact_id={record_id}"
+
+    def record_url(self, record_id: str) -> Optional[str]:
+        """
+        Get the URL of a record in the remote system.
+        """
+        # TODO: figure this out – the record_id does not work
+        return "https://admin.mailchimp.com/audience/"
+
     def get_webhooks(self):
         webhooks = self.client.lists.webhooks.all(self.list_id)["webhooks"]
         return [
             webhook
             for webhook in webhooks
-            if webhook["url"] in [self.auto_update_webhook_url(), self.auto_import_webhook_url()]
+            if webhook["url"]
+            in [self.auto_update_webhook_url(), self.auto_import_webhook_url()]
         ]
 
     def setup_webhooks(self):
-        self.teardown_webhooks()
+        self.teardown_webhooks(all=True)
         # Update external data webhook
         config = {
             "events": {
@@ -2596,24 +2630,29 @@ class MailchimpSource(ExternalDataSource):
         }
         self.client.lists.webhooks.create(
             self.list_id,
-            data={
-                "url": self.auto_update_webhook_url(),
-                **config
-            },
+            data={"url": self.auto_update_webhook_url(), **config},
         )
         # Import external data webhook
         self.client.lists.webhooks.create(
             self.list_id,
-            data={
-                "url": self.auto_import_webhook_url(),
-                **config
-            },
+            data={"url": self.auto_import_webhook_url(), **config},
         )
 
-    def teardown_webhooks(self):
+    def teardown_webhooks(self, all=False):
         webhooks = self.get_webhooks()
         for webhook in webhooks:
-            self.client.lists.webhooks.delete(self.list_id, webhook["id"])
+            is_auto_update = (
+                ExternalDataSourceAutoImportWebhook.base_path in webhook["url"]
+            )
+            is_auto_import = (
+                ExternalDataSourceAutoImportWebhook.base_path in webhook["url"]
+            )
+            if (
+                all
+                or (is_auto_update and not self.auto_update_enabled)
+                or (is_auto_import and not self.auto_import_enabled)
+            ):
+                self.client.lists.webhooks.delete(self.list_id, webhook["id"])
 
     def get_member_ids_from_webhook(self, webhook_payload: dict) -> list[str]:
         # Mailchimp doesn't give the full ID of the member in the Webhook payload?!

@@ -31,6 +31,7 @@ const LIST_UPDATE_CONFIGS = gql`
           }
         }
         crmType
+        autoImportEnabled
         autoUpdateEnabled
         jobs {
           lastEventAt

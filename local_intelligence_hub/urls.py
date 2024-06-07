@@ -30,7 +30,10 @@ from wagtail.documents import urls as wagtaildocs_urls
 from hub.graphql.schema import schema
 from hub.sitemap import hub_sitemap
 from hub.views import accounts, area, core, explore, landingpages, vector_tiles
-from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook, ExternalDataSourceAutoImportWebhook
+from hub.views.mapped import (
+    ExternalDataSourceAutoImportWebhook,
+    ExternalDataSourceAutoUpdateWebhook,
+)
 
 handler404 = core.NotFoundPageView.as_view()
 
@@ -133,7 +136,7 @@ urlpatterns = [
     ),
     path(
         f"{ExternalDataSourceAutoImportWebhook.base_path}/<str:external_data_source_id>",
-        csrf_exempt(ExternalDataSourceAutoUpdateWebhook.as_view()),
+        csrf_exempt(ExternalDataSourceAutoImportWebhook.as_view()),
         name="external_data_source_auto_import_webhook",
     ),
     path(
