@@ -1027,8 +1027,13 @@ class ActionNetworkSource(ExternalDataSource):
 class TicketTailorSource(ExternalDataSource):
     api_key: str
 
+@strawberry_django.filter(models.Report, lookups=True)
+class ReportFilter:
+    organisation: auto
+    created_at: auto
+    last_update: auto
 
-@strawberry_django.type(models.Report)
+@strawberry_django.type(models.Report, filters=ReportFilter)
 class Report:
     id: auto
     organisation_id: str

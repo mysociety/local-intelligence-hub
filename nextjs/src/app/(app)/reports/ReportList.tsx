@@ -19,10 +19,12 @@ import { CreateMapReportMutation, CreateMapReportMutationVariables, ListReportsQ
 import { formatRelative } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { triggerAnalyticsEvent } from "@/app/utils/posthogutils";
+import { useAtomValue } from 'jotai';
+import { currentOrganisationAtom } from '@/data/organisation';
 
 const LIST_REPORTS = gql`
-  query ListReports {
-    reports {
+  query ListReports($currentOrganisationId: ID!) {
+    reports(filters: { organisation: $currentOrganisationId }) { 
       id
       name
       lastUpdate
@@ -31,7 +33,12 @@ const LIST_REPORTS = gql`
 `;
 
 export default function ReportList() {
-  const { loading, error, data, refetch } = useQuery<ListReportsQuery, ListReportsQueryVariables>(LIST_REPORTS);
+  const currentOrganisationId = useAtomValue(currentOrganisationAtom)
+  const { loading, error, data, refetch } = useQuery<ListReportsQuery, ListReportsQueryVariables>(LIST_REPORTS, {
+    variables: {
+      currentOrganisationId
+    }
+  })
 
   useEffect(() => {
     refetch()

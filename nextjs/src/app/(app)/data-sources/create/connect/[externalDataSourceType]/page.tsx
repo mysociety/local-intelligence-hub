@@ -42,6 +42,8 @@ import { getFieldsForDataSourceType } from "@/components/UpdateExternalDataSourc
 import { camelCase } from "lodash";
 import { Building, Calendar, Newspaper, PersonStanding, Pin, Quote, User } from "lucide-react";
 import { locationTypeOptions } from "@/data/location";
+import { useAtom } from "jotai";
+import { currentOrganisationAtom } from "@/data/organisation";
 
 const TEST_DATA_SOURCE = gql`
   query TestDataSource($input: CreateExternalDataSourceInput!) {
@@ -96,6 +98,7 @@ export default function Page({
 }: {
   params: { externalDataSourceType: keyof CreateExternalDataSourceInput };
 }) {
+  const orgId = useAtom(currentOrganisationAtom)
   const router = useRouter();
   const context = useContext(CreateAutoUpdateFormContext);
 
@@ -311,7 +314,8 @@ export default function Page({
     let input: CreateExternalDataSourceInput = {
       [externalDataSourceType]: {
         ...genericCRMData,
-        ...CRMSpecificData
+        ...CRMSpecificData,
+        organisation: orgId
       }
     }
     toastPromise(createSource({ variables: { input }}),

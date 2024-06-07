@@ -94,7 +94,9 @@ export function AddMapLayerButton({ addLayer, filter }: { addLayer(layer: Source
 export function MapLayerSelector ({ value, onChange, filter }: { value?: Source, onChange: (value: Source) => void, filter?: (s: SourceOption) => boolean }) {
   const [open, setOpen] = useState(false)
   const { id, report } = useContext(ReportContext)
-  const dataSources = useQuery<GetMemberListQuery>(MEMBER_LISTS)
+  const dataSources = useQuery<GetMemberListQuery>(MEMBER_LISTS, {
+    variables: { currentOrganisationId: report?.data?.mapReport.organisation.id }
+  })
   const router = useRouter()
   const layers = useFragment<MapReportLayersSummaryFragment>({
     fragment: MAP_REPORT_LAYERS_SUMMARY,
@@ -211,8 +213,8 @@ export function MapLayerSelector ({ value, onChange, filter }: { value?: Source,
 }
 
 const MEMBER_LISTS = gql`
-  query GetMemberList {
-    myOrganisations {
+  query GetMemberList($currentOrganisationId: ID!) {
+    myOrganisations(filters: { id: $currentOrganisationId }) {
       externalDataSources {
         id
         name

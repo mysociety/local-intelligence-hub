@@ -79,6 +79,8 @@ import { BatchJobProgressBar } from "@/components/BatchJobProgress";
 import { format } from "d3-format";
 import pluralize from "pluralize";
 import { externalDataSourceOptions } from "@/lib/data";
+import { useAtom } from "jotai";
+import { currentOrganisationAtom } from "@/data/organisation";
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {
@@ -169,7 +171,10 @@ const GET_UPDATE_CONFIG = gql`
       sharingPermissions {
         id
       }
-      organisationId
+      organisation {
+        id
+        name
+      }
     }
   }
 `;
@@ -208,6 +213,8 @@ export default function InspectExternalDataSource({
     pollInterval: 5000
   });
 
+  const orgId = useAtom(currentOrganisationAtom)
+
   if (!loading && !data?.externalDataSource) {
     return <h2>Couldn{"'"}t find this data source</h2>;
   }
@@ -222,10 +229,8 @@ export default function InspectExternalDataSource({
     <div className="p-6 max-w-4xl mx-auto space-y-7">
       <header className="flex flex-row justify-between gap-8">
         <div className='w-full'>
-          <div className="text-meepGray-400 capitalize">
-            {dataType === DataSourceType.Member ? "Member list" : dataType ? pluralize(dataType.toLowerCase()) : "Data source"}
-            <span>&nbsp;&#x2022;&nbsp;</span>
-            {crmInfo?.name || crmType}
+          <div className="text-meepGray-400">
+            {source?.organisation.name} / 
           </div>
           <h1
             className="text-hLg"
@@ -233,6 +238,11 @@ export default function InspectExternalDataSource({
           >
             {name}
           </h1>
+          <div className="text-meepGray-400 capitalize">
+            {dataType === DataSourceType.Member ? "Member list" : dataType ? pluralize(dataType.toLowerCase()) : "Data source"}
+            <span>&nbsp;&#x2022;&nbsp;</span>
+            {crmInfo?.name || crmType}
+          </div>
           {!!remoteUrl && (
             <a href={remoteUrl} className="text-meepGray-300 underline text-sm">
               Visit URL: {remoteUrl} <ExternalLink />
