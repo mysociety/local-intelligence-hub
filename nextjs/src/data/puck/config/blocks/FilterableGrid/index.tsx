@@ -145,7 +145,7 @@ export const FilterableGrid: ComponentConfig<FilterableGridProps> = {
                 ...data.props,
                 categories: data.props.categories?.map((category: any) => ({
                     ...category,
-                    urlSlug: !!category.urlSlug ? slugify(category.urlSlug) : category.urlSlug
+                    urlSlug: !!category?.urlSlug ? slugify(category.urlSlug) : category?.urlSlug
                 }))
             }
         }
@@ -170,10 +170,10 @@ const FilterableGridRenderer = ({ categories, items }: FilterableGridProps) => {
         if (!tags && !category) return items
         return items?.filter(item =>
             (!tags?.length || tags?.includes(item.type)) &&
-            (!category || item.categories.some(c => c.category === category))
+            (!category || item.categories?.some(c => c.category === category))
         )
     }, [items, tags, category])
-    const categoryData = categories.find(c => c.urlSlug === category)
+    const categoryData = categories?.find(c => c.urlSlug === category)
 
     // Scroll items into full
     useEffect(() => {
