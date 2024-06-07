@@ -28,7 +28,7 @@ export function SearchPanel({
       <form onSubmit={onSubmit}>
         <input
           type="text"
-          placeholder="Enter your postcode"
+          placeholder="Postcode"
           autoComplete="postal-code"
           className='p-4 text-lg w-full rounded-md border placeholder:text-jungle-green-600 focus:ring-jungle-green-600 bg-jungle-green-50 border-jungle-green-100 mt-4 active:border-green-500'
           value={postcode}

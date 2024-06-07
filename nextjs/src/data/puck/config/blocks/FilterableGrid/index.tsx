@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import { ComponentConfig } from "@measured/puck";
 import { DropZone } from "@measured/puck";
@@ -16,6 +16,7 @@ import { RenderCard } from "../Card";
 import slugify from 'slug'
 import { useQueryState, parseAsArrayOf, parseAsStringEnum } from 'nuqs'
 import { PuckText } from "../../components/PuckText";
+import { twMerge } from "tailwind-merge";
 
 const itemTypes = [
     { label: "Resource", value: "resource" },
@@ -160,6 +161,7 @@ const FilterableGridRenderer = ({ categories, items }: FilterableGridProps) => {
     const router = useRouter()
     const [tags, setTags] = useQueryState("tag", parseAsArrayOf(parseAsStringEnum(itemTypes.map(t => t.value))))
     const [category, setCategory] = useQueryState("category", parseAsStringEnum(categories.map(c => c.urlSlug)))
+
     // Listen for router changes, then produce new items
     const filteredItems = useMemo(() => {
         if (!items) return []
@@ -170,6 +172,14 @@ const FilterableGridRenderer = ({ categories, items }: FilterableGridProps) => {
         )
     }, [items, tags, category])
     const categoryData = categories.find(c => c.urlSlug === category)
+
+    // Scroll items into full
+    useEffect(() => {
+        if (category) {
+            document.getElementById("latest")?.scrollIntoView({ behavior: "smooth" })
+        }
+    }, [category])
+
     return (
         // <div
         //     className={`
@@ -189,46 +199,66 @@ const FilterableGridRenderer = ({ categories, items }: FilterableGridProps) => {
         // </div>
         <div>
             {/* Categories */}
-            <section id="get-involved">
-                <header>
-                    <h2>Ways to get involved</h2>
-                    <p>Here{"'"}s how you can help centre people, climate and nature this election.</p>
-                </header>
-                <div className='grid sm:grid-cols-2 lg:grid-cols-3'>
-                    <PostcodeSearch />
-                    {categories.map((category, index) => (
-                        <div key={index} className='overflow-clip rounded-[20px] hover:shadow-hover transition-all' onClick={() => {
-                            setCategory(category.urlSlug)
-                        }}>
-                            <div className="p-5 bg-jungle-green-50 h-full relative gap-2 flex flex-col justify-end">
-                                <div className="z-10 flex flex-col gap-2">
-                                    <Image src={tccHeart} width={30} alt="arrow" />
-                                    <h2 className="lg:text-hub4xl text-hub3xl tracking-tight">{category.title}</h2>
-                                    <PuckText text={category.description} />
+            {!categoryData && (
+                <section id="get-involved">
+                    <header className='space-y-2 pt-16 mb-10 md:pt-32 md:mb-14'>
+                        <h2 className='text-hub4xl md:text-hub6xl'>Ways to get involved</h2>
+                        <p className='text-jungle-green-neutral text-hub2xl'>Here{"'"}s how you can help centre people, climate and nature this election.</p>
+                    </header>
+                    <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 lg:gap-4 xl:gap-5'>
+                        <PostcodeSearch className='h-full' />
+                        <div className='lg:col-span-2 grid lg:grid-cols-2 gap-2 md:gap-3 lg:gap-4 xl:gap-5'>
+                            {categories.map((category, index) => (
+                                <div key={index} className='rounded-[20px] hover:bg-jungle-green-100 transition-all cursor-pointer p-4 space-y-2' onClick={() => {
+                                    setCategory(category.urlSlug)
+                                    document.getElementById("latest")?.scrollIntoView({ behavior: "smooth" })
+                                }}>
+                                    <Image src={tccHeart} width={20} height={20} alt="arrow" />
+                                    <h2 className="text-jungle-green-600 text-hub3xl tracking-tight">{category.title}</h2>
+                                    <PuckText className='text-jungle-green-neutral' text={category.description} />
                                 </div>
-                            </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
-            </section>
+                    </div>
+                </section>
+            )}
             {/* Grid */}
-            <section>
+            <section id="latest">
                 {(!categoryData) ? (
-                    <header>
-                        <h2>Latest from across the campaign</h2>
-                        <p>Explore our wall of activity from the hub</p>
+                    <header className='space-y-2 pt-16 mb-10 md:pt-32 md:mb-14'>
+                        <h2 className='text-hub4xl md:text-hub6xl'>Latest from across the campaign</h2>
+                        <p className='text-jungle-green-neutral text-hub2xl'>
+                            Explore our wall of activity from the hub
+                        </p>
                     </header>
                 ) : (
-                    <header>
-                        <Link href="/#get-involved">
+                    <header className='space-y-2 pt-16 mb-10 md:pt-32 md:mb-14'>
+                        <div onClick={() => {
+                            setCategory(null)
+                            setTimeout(() => {
+                                document.getElementById("get-involved")?.scrollIntoView({ behavior: "smooth" })
+                            }, 500)
+                        }}>
                             &larr; Back to Ways To Get Involved
-                        </Link>
-                        <h2>{categoryData.title}</h2>
-                        <PuckText text={categoryData.description} />
+                        </div>
+                        <h2 className='text-hub4xl md:text-hub6xl'>{categoryData.title}</h2>
+                        <PuckText className='text-jungle-green-neutral text-hub2xl' text={categoryData.description} />
                     </header>
                 )}
-                <div className='flex flex-row gap-4'>
-                    <div>Filter</div>
+                <div className='flex flex-row gap-4 mb-8 items-center'>
+                    <div className='text-meepGray-400 uppercase'>Filter Hub Content:</div>
+                    <button
+                        onClick={() => {
+                            // Toggle tag based on click
+                            setTags(t => [])
+                        }}
+                        className={twMerge(
+                            "rounded-full px-3 py-1 cursor-pointer uppercase",
+                            !tags?.length ? 'bg-jungle-green-600 text-white' : 'bg-jungle-green-100 text-jungle-green-600'
+                        )}
+                    >
+                        all
+                    </button>
                     {itemTypes.map((itemType, index) => (
                         <button
                             key={index}
@@ -236,14 +266,19 @@ const FilterableGridRenderer = ({ categories, items }: FilterableGridProps) => {
                                 // Toggle tag based on click
                                 setTags(t => t?.includes(itemType.value) ? t.filter(tag => tag !== itemType.value) : [...(t || []), itemType.value])
                             }}
-                            className={tags?.includes(itemType.value) ? 'bg-jungle-green-600 text-white' : 'bg-jungle-green-100 text-jungle-green-600'}
+                            className={twMerge(
+                                "rounded-full px-3 py-1 cursor-pointer uppercase",
+                                tags?.includes(itemType.value) ? 'bg-jungle-green-600 text-white' : 'bg-jungle-green-100 text-jungle-green-600'
+                            )}
                         >
                             {itemType.label}
                         </button>
                     ))}
                 </div>
-                <div className='grid sm:grid-cols-2 lg:grid-cols-4'>
+                <div className='border-b border-meepGray-200 my-4' />
+                <div className='grid sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 lg:gap-4 xl:gap-5 mb-8 md:mb-16 lg:mb-20'>
                     {filteredItems
+                        // TODO:
                         // ?.sort((a, b) => compareAsc(a.timestamp, b.timestamp))
                         .map((item, index) => (
                         <RenderCard key={index} {...item} />
@@ -254,11 +289,11 @@ const FilterableGridRenderer = ({ categories, items }: FilterableGridProps) => {
     );
 };
 
-function PostcodeSearch () {
+function PostcodeSearch ({ className }: { className?: string }) {
     const router = useRouter()
     const [postcode, setPostcode] = useState("")
     return (
-        <article className='overflow-clip rounded-[20px] hover:shadow-hover transition-all'>
+        <article className={twMerge('overflow-clip rounded-[20px] hover:shadow-hover transition-all', className)}>
             <div className="p-5 bg-jungle-green-50 h-full relative gap-2 flex flex-col justify-end">
                 <div className="z-10 flex flex-col gap-2">
                     <Image src={ArrowTopRight} width={30} alt="arrow" />
@@ -271,11 +306,11 @@ function PostcodeSearch () {
                         <div className=" flex items-center relative text-jungle-green-600">
                             <Search className="absolute ml-2" />
                             <Input
-                                placeholder="Enter your postcode"
+                                placeholder="postcode"
                                 autoComplete="postal-code"
-                                className=" border-hub-foreground p-8 focus-visible:ring-0 text-3xl placeholder:text-hub4xl pl-10 placeholder:text-jungle-green-600 bg-jungle-green-100 border-0"
+                                className=" border-hub-foreground p-8 focus-visible:ring-0 text-2xl placeholder:text-hub4xl pl-10 placeholder:text-jungle-green-600 bg-jungle-green-100 border-0"
                                 value={postcode}
-                                onChange={e => setPostcode(e.target.value)}
+                                onChange={e => setPostcode(e.target.value.toUpperCase().trim().replaceAll(" ", ""))}
                             />
                             <button
                                 className='bg-jungle-green-600 text-white text-lg font-bold rounded-md p-4 ml-2'

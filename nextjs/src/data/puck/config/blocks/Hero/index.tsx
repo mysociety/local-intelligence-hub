@@ -76,7 +76,6 @@ export const Hero: ComponentConfig<HeroProps> = {
 
 function HeroRenderer ({ prompt, description, }:  HeroProps) {
   const router = useRouter()
-  const [postcode, setPostcode] = useState("")
   return (
     <div className=" rounded-[40px] flex flex-col lg:flex-row justify-end overflow-clip lg:gap-[25px] relative mb-[25px]">
       <Image
@@ -104,11 +103,11 @@ function HeroRenderer ({ prompt, description, }:  HeroProps) {
             </div>
           </div>
           <div className="flex gap-4 border-t border-jungle-green-100 pt-4 ">
-            <div className='grid grid-flow-row gap-4'>
-              <Link href="/map">
+            <div className='grid grid-flow-col gap-4'>
+              <Link href="/map" className='bg-jungle-green-200 rounded-md p-2 leading-tight text-center'>
                 See what's happening near you
               </Link>
-              <Link href="/map">
+              <Link href="/#about" className='bg-jungle-green-200 rounded-md p-2 leading-tight text-center'>
                 Learn more about the hub
               </Link>
             </div>
