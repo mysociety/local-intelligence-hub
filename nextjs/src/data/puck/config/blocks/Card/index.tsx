@@ -41,6 +41,7 @@ const iconOptions = Object.keys(dynamicIconImports).map((iconName) => ({
 }));
 
 export type CardProps = {
+  category?: string
   title: string;
   behaviour: string;
   dialogDescription?: string;
@@ -48,8 +49,8 @@ export type CardProps = {
   type: string;
   link?: string;
   linkLabel?: string;
-  columns: number;
-  rows: number;
+  // columns: number;
+  // rows: number;
 };
 
 const TypeBadge = ({ type }: { type: string }) => {
@@ -101,16 +102,16 @@ export const Card: ComponentConfig<CardProps> = {
         visible: data.props.behaviour === "dialog",
         type: "text",
       },
-      columns: {
-        type: "number",
-        min: 1,
-        max: 2,
-      },
-      rows: {
-        type: "number",
-        min: 1,
-        max: 2,
-      }
+      // columns: {
+      //   type: "number",
+      //   min: 1,
+      //   max: 2,
+      // },
+      // rows: {
+      //   type: "number",
+      //   min: 1,
+      //   max: 2,
+      // }
     }
 
     for (const key of Object.keys(fields)) {
@@ -131,8 +132,8 @@ export const Card: ComponentConfig<CardProps> = {
     link: "www.google.com",
     linkLabel: "Learn more",
     behaviour: "link",
-    columns: 1,
-    rows: 1
+    // columns: 1,
+    // rows: 1
   },
   resolveData: (data, { lastData }) => {
     return {
@@ -145,14 +146,14 @@ export const Card: ComponentConfig<CardProps> = {
   render: props => <RenderCard {...props} />,
 };
 
-function RenderCard({ title, description, dialogDescription, type, link, linkLabel, behaviour, columns, rows }: CardProps) {
+export function RenderCard({ category, title, description, dialogDescription, type, link, linkLabel, behaviour }: CardProps) {
   const card = (
     <div
       className="render-card w-full h-full aspect-square overflow-clip rounded-[20px] flex flex-col gap-5 hover:shadow-hover transition-all"
-      style={{
-        gridColumn: `span ${columns}`,
-        gridRow: `span ${rows}`,
-      }}
+      // style={{
+      //   gridColumn: `span ${columns}`,
+      //   gridRow: `span ${rows}`,
+      // }}
     >
       {type === "resource" && (
         <div className="p-5 bg-white h-full flex flex-col gap-4 justify-between">

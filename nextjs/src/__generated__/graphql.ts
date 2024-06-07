@@ -1019,6 +1019,11 @@ export enum GeoJsonTypes {
   Polygon = 'Polygon'
 }
 
+/**
+ * The keys and values here are identical (for GraphQL compatibility)
+ * and are uppercased versions of the PostcodesIO terms
+ * (for ease of mapping).
+ */
 export enum GeographyTypes {
   Address = 'ADDRESS',
   AdminDistrict = 'ADMIN_DISTRICT',

@@ -14,11 +14,11 @@ import HubResponsivity from "../../template/HubReponsivity";
 import Link from "next/link";
 
 export type SignPostProps = {
-    resourcesSubtitle: string
-    actionsSubtitle: string
-    mapSubtitle: string
-    resourcesSubtitleURL: string
-    actionsSubtitleURL: string
+    actions: Array<{
+        title: string;
+        description: string;
+        link: string;
+    }>
 };
 
 export const SignPost: ComponentConfig<SignPostProps> = {
