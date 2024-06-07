@@ -47,7 +47,7 @@ export type CardProps = {
   behaviour: string;
   dialogDescription?: string;
   description?: string;
-  type: string;
+  type: typeof itemTypes[number]["value"];
   link?: string;
   linkLabel?: string;
   // columns: number;
@@ -168,6 +168,28 @@ export function RenderCard({ category, title, description, dialogDescription, ty
       )}
 
       {type === "action" && (
+        <div className="p-5 bg-jungle-green-600 text-white h-full relative flex flex-col gap-4 align-bottom">
+          <Image src={ArrowTopRight} width={30} alt="arrow" className='relative z-10' />
+          <h2 className="lg:text-hub2xl text-hubxl tracking-tight relative z-10">{title}</h2>
+          {description && (
+            <div className="text-white line-clamp-6 relative z-10">
+              <PuckText text={description} />
+            </div>
+          )}
+          <div className='mt-auto relative z-10'>
+            <TypeBadge type={type} />
+          </div>
+          <Image
+            className="object-cover rounded-[40px] absolute top-0 left-0"
+            src={CirclePattern}
+            width={500}
+            alt="hero image"
+            layout="responsive"
+          />
+        </div>
+      )}
+
+      {type === "event" && (
         <div className="p-5 bg-jungle-green-600 text-white h-full relative flex flex-col gap-4 align-bottom">
           <Image src={ArrowTopRight} width={30} alt="arrow" className='relative z-10' />
           <h2 className="lg:text-hub2xl text-hubxl tracking-tight relative z-10">{title}</h2>
