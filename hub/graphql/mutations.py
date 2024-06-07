@@ -1,6 +1,7 @@
 import logging
 import uuid
 from typing import List, Optional
+from enum import Enum
 
 from django.utils.text import slugify
 
@@ -88,17 +89,29 @@ class OrganisationInputPartial:
     description: Optional[str]
 
 
+@strawberry.enum
+class WebhookType(Enum):
+    Import = "Import"
+    Update = "Update"
+
+
 @strawberry.mutation(extensions=[IsAuthenticated()])
-def enable_auto_update(external_data_source_id: str) -> models.ExternalDataSource:
-    data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
-    data_source.enable_auto_update()
+def enable_webhook(external_data_source_id: str, webhook_type: WebhookType) -> models.ExternalDataSource:
+    data_source: models.ExternalDataSource = models.ExternalDataSource.objects.get(id=external_data_source_id)
+    if webhook_type == WebhookType.Import:
+        data_source.enable_auto_import() 
+    else:
+        data_source.enable_auto_update()
     return data_source
 
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
-def disable_auto_update(external_data_source_id: str) -> models.ExternalDataSource:
-    data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
-    data_source.disable_auto_update()
+def disable_webhook(external_data_source_id: str, webhook_type: WebhookType) -> models.ExternalDataSource:
+    data_source: models.ExternalDataSource = models.ExternalDataSource.objects.get(id=external_data_source_id)
+    if webhook_type == WebhookType.Import:
+        data_source.disable_auto_import() 
+    else:
+        data_source.disable_auto_update()
     return data_source
 
 

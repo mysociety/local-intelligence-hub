@@ -13,9 +13,9 @@ import { formatRelative } from "date-fns";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
-  AutoUpdateSwitch,
-  AutoUpdateWebhookRefresh,
+  EnableWebhooksSwitch,
   TriggerUpdateButton,
+  WebhookRefresh,
 } from "@/components/ExternalDataSourceCard";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import {
@@ -30,6 +30,7 @@ import {
   ProcrastinateJobStatus,
   UpdateExternalDataSourceMutation,
   UpdateExternalDataSourceMutationVariables,
+  WebhookType,
 } from "@/__generated__/graphql";
 import { useRouter } from "next/navigation";
 import {
@@ -62,7 +63,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { UpdateMappingForm } from "@/components/UpdateMappingForm";
-import { UDPATE_EXTERNAL_DATA_SOURCE } from "@/graphql/mutations";
+import { UPDATE_EXTERNAL_DATA_SOURCE } from "@/graphql/mutations";
 import { AlertCircle } from "lucide-react"
 import {
   Alert,
@@ -115,10 +116,12 @@ const GET_UPDATE_CONFIG = gql`
         lastEventAt
         status
       }
+      autoImportEnabled
       autoUpdateEnabled
       hasWebhooks
       allowUpdates
       automatedWebhooks
+      autoImportWebhookUrl
       autoUpdateWebhookUrl
       webhookHealthcheck
       geographyColumn
@@ -288,7 +291,7 @@ export default function InspectExternalDataSource({
               )}
               {source.automatedWebhooks ? (
                 <>
-                  <AutoUpdateSwitch externalDataSource={source} />
+                  <EnableWebhooksSwitch externalDataSource={source} webhookType={WebhookType.Import} />
                   {source.autoImportEnabled && !source.webhookHealthcheck && (
                     <>
                       <Alert variant="destructive">
@@ -298,7 +301,7 @@ export default function InspectExternalDataSource({
                           The webhook is unhealthy. Please refresh the webhook to fix auto-updates.
                         </AlertDescription>
                       </Alert>
-                      <AutoUpdateWebhookRefresh externalDataSourceId={externalDataSourceId} />
+                      <WebhookRefresh externalDataSourceId={externalDataSourceId} />
                     </>
                   )}
                 </>
@@ -309,7 +312,7 @@ export default function InspectExternalDataSource({
                   </p>
                   <code className="bg-black p-2 rounded">{source.autoImportWebhookUrl}</code>
                   <p>Turn this switch on once you have added the above Webhook URL to your CRM:</p>
-                  <AutoUpdateSwitch externalDataSource={source} />
+                  <EnableWebhooksSwitch externalDataSource={source} webhookType={WebhookType.Import} />
                 </div>
               )}
               {source.lastImportJob ? (
@@ -429,7 +432,7 @@ export default function InspectExternalDataSource({
                     )}
                     {source.automatedWebhooks ? (
                       <>
-                        <AutoUpdateSwitch externalDataSource={source} />
+                        <EnableWebhooksSwitch externalDataSource={source}webhookType={WebhookType.Update} />
                         {source.autoUpdateEnabled && !source.webhookHealthcheck && (
                           <>
                             <Alert variant="destructive">
@@ -439,7 +442,7 @@ export default function InspectExternalDataSource({
                                 The webhook is unhealthy. Please refresh the webhook to fix auto-updates.
                               </AlertDescription>
                             </Alert>
-                            <AutoUpdateWebhookRefresh externalDataSourceId={externalDataSourceId} />
+                            <WebhookRefresh externalDataSourceId={externalDataSourceId} />
                           </>
                         )}
                       </>
@@ -450,7 +453,7 @@ export default function InspectExternalDataSource({
                         </p>
                         <code className="bg-black p-2 rounded">{source.autoUpdateWebhookUrl}</code>
                         <p>Turn this switch on once you have added the above Webhook URL to your CRM:</p>
-                        <AutoUpdateSwitch externalDataSource={source} />
+                        <EnableWebhooksSwitch externalDataSource={source} webhookType={WebhookType.Update} />
                       </div>
                     )}
                     {source.lastUpdateJob ? (
@@ -569,7 +572,7 @@ export default function InspectExternalDataSource({
   function updateMutation (data: ExternalDataSourceInput, e?: React.BaseSyntheticEvent<object, any, any> | undefined) {
     e?.preventDefault();
     const update = client.mutate<UpdateExternalDataSourceMutation, UpdateExternalDataSourceMutationVariables>({
-      mutation: UDPATE_EXTERNAL_DATA_SOURCE,
+      mutation: UPDATE_EXTERNAL_DATA_SOURCE,
       variables: {
         input: {
           id: externalDataSourceId,

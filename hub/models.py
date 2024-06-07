@@ -1735,6 +1735,22 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     # UI
 
+    def enable_auto_import(self) -> Union[None, int]:
+        if self.automated_webhooks:
+            self.refresh_webhooks()
+            # And schedule a cron to keep doing it
+            refresh_webhooks.defer(
+                external_data_source_id=str(self.id),
+            )
+        self.auto_import_enabled = True
+        self.save()
+
+    def disable_auto_import(self):
+        self.auto_import_enabled = False
+        self.save()
+        if self.automated_webhooks and hasattr(self, "teardown_webhooks"):
+            self.teardown_webhooks()
+
     def enable_auto_update(self) -> Union[None, int]:
         if not self.allow_updates:
             logger.error(f"Updates requested for non-updatable CRM {self}")
@@ -1774,6 +1790,17 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             async_to_sync(self.schedule_refresh_one)(member_id=member_ids[0])
         else:
             async_to_sync(self.schedule_refresh_many)(member_ids=member_ids)
+        return HttpResponse(status=200)
+
+    def handle_import_webhook_view(self, body):
+        if not self.auto_import_enabled:
+            return HttpResponse(status=200)
+
+        member_ids = self.get_member_ids_from_webhook(body)
+        if len(member_ids) == 1:
+            async_to_sync(self.schedule_import_all)(member_id=member_ids[0])
+        else:
+            async_to_sync(self.schedule_import_many)(member_ids=member_ids)
         return HttpResponse(status=200)
 
     # Scheduling

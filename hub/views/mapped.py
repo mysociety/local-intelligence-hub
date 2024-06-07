@@ -34,7 +34,7 @@ class ExternalDataSourceAutoUpdateWebhook(View):
     def handle(self, request, external_data_source_id: str, data: dict):
         logger.info(f"Webhook received {self.kwargs} {data}")
         # 1. Match the payload to a ExternalDataSource
-        external_data_source = models.ExternalDataSource.objects.filter(
+        external_data_source: models.ExternalDataSource = models.ExternalDataSource.objects.filter(
             id=external_data_source_id
         ).first()
         if not external_data_source:
@@ -52,7 +52,7 @@ class ExternalDataSourceAutoImportWebhook(ExternalDataSourceAutoUpdateWebhook):
     def handle(self, request, external_data_source_id: str, data: dict):
         logger.info(f"Webhook received {self.kwargs} {data}")
         # 1. Match the payload to a ExternalDataSource
-        external_data_source = models.ExternalDataSource.objects.filter(
+        external_data_source: models.ExternalDataSource = models.ExternalDataSource.objects.filter(
             id=external_data_source_id
         ).first()
         if not external_data_source:
