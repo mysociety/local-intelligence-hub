@@ -1,7 +1,7 @@
 
 "use client"
 
-import { GetConstituencyDataQuery, GetConstituencyDataQueryVariables } from "@/__generated__/graphql";
+import { GetConstituencyDataQuery, GetConstituencyDataQueryVariables, AnalyticalAreaType } from "@/__generated__/graphql";
 import {
   Card,
   CardContent,
@@ -38,10 +38,10 @@ type DeepNullable<T> = {
   [K in keyof T]: DeepNullable<T[K]> | null;
 };
 
-export const ConstituencyElectionDeepDive = ({ gss }: { gss: string }) => {
+export const ConstituencyElectionDeepDive = ({ gss, analyticalAreaType = AnalyticalAreaType.ParliamentaryConstituency_2025 }: { gss: string, analyticalAreaType: AnalyticalAreaType }) => {
   const { id, displayOptions } = useContext(ReportContext)
   const { data, loading, error } = useQuery<GetConstituencyDataQuery, GetConstituencyDataQueryVariables>(CONSTITUENCY_DATA, {
-    variables: { gss, reportID: id },
+    variables: { gss, reportID: id, analyticalAreaType },
   })
   
   if (!loading && error) return <div>Error loading constituency {gss}</div>
@@ -55,9 +55,8 @@ export const ConstituencyElectionDeepDive = ({ gss }: { gss: string }) => {
     .filter(l => !!l.source.importedDataCountForConstituency?.count)
 
   return (
-    <div key={data.constituency.id}>
+    <div key={data.constituency.id} className='divide-y space-y-4'>
       <h1 className='font-PPRightGrotesk text-hLgPP'>{data.constituency.name}</h1>
-      <hr className='my-4' />
       {data.constituency.mp && displayOptions.showMPs && (
         <section className='mb-8'>
           <div className='uppercase font-IBMPlexMono text-xs text-meepGray-400 mb-1'>
@@ -369,7 +368,7 @@ export const ConstituencyElectionCard = ({
 
 
 const CONSTITUENCY_DATA = gql`
-  query GetConstituencyData($gss: String!, $reportID: ID!) {
+  query GetConstituencyData($analyticalAreaType: AnalyticalAreaType!, $gss: String!, $reportID: ID!) {
     constituency: area(gss: $gss) {
       id
       name
@@ -407,7 +406,7 @@ const CONSTITUENCY_DATA = gql`
     }
     mapReport(pk: $reportID) {
       id
-      importedDataCountForConstituency(gss: $gss) {
+      importedDataCountForConstituency: importedDataCountForArea(analyticalAreaType: $analyticalAreaType, gss: $gss) {
         gss
         count
       }
@@ -416,7 +415,7 @@ const CONSTITUENCY_DATA = gql`
         name
         source {
           id
-          importedDataCountForConstituency(gss: $gss) {
+          importedDataCountForConstituency: importedDataCountForArea(analyticalAreaType: $analyticalAreaType, gss: $gss) {
             gss
             count
           }

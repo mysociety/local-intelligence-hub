@@ -126,7 +126,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
                           <a
                             href={i.publicUrl}
                             target="_blank"
-                            className="bg-green-200 text-green-900 px-3 py-2 text-center w-full block rounded-md"
+                            className="bg-green-200 text-green-900 px-3 py-2 text-center w-full rounded-md flex flex-row items-center justify-center gap-2"
                           >
                             <Ticket /> More info &amp; register
                           </a>

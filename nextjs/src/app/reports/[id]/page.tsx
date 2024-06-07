@@ -23,7 +23,7 @@ import { Toggle } from "@/components/ui/toggle"
 import DataConfigPanel from "@/components/dataConfig";
 import { FetchResult, gql, useApolloClient, useQuery } from "@apollo/client";
 import { toast } from "sonner";
-import { DeleteMapReportMutation, DeleteMapReportMutationVariables, GetMapReportQuery, GetMapReportQueryVariables, MapReportInput, MapReportLayerAnalyticsQuery, MapReportLayerAnalyticsQueryVariables, UpdateMapReportMutation, UpdateMapReportMutationVariables } from "@/__generated__/graphql";
+import { AnalyticalAreaType, DeleteMapReportMutation, DeleteMapReportMutationVariables, GetMapReportQuery, GetMapReportQueryVariables, MapReportInput, MapReportLayerAnalyticsQuery, MapReportLayerAnalyticsQueryVariables, UpdateMapReportMutation, UpdateMapReportMutationVariables } from "@/__generated__/graphql";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,7 +40,7 @@ import spaceCase from 'to-space-case'
 import { toastPromise } from "@/lib/toast";
 import { MAP_REPORT_LAYER_ANALYTICS, ReportMap, selectedConstituencyAtom } from "@/components/report/ReportMap";
 import { MAP_REPORT_FRAGMENT, isConstituencyPanelOpenAtom, isDataConfigOpenAtom } from "@/lib/map";
-import { DisplayOptionsType, ReportContext } from "./context";
+import { DisplayOptionsType, ReportContext, defaultDisplayOptions } from "./context";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import { contentEditableMutation } from "@/lib/html";
 import { Provider as JotaiProvider, atom, useAtom } from "jotai";
@@ -51,12 +51,6 @@ import { merge } from 'lodash'
 
 type Params = {
   id: string
-}
-
-const defaultDisplayOptions = {
-  showLastElectionData: false,
-  showMPs: false,
-  showStreetDetails: false,
 }
 
 export default function Page({ params: { id } }: { params: Params }) {

@@ -38,6 +38,7 @@ from pyairtable import Api as AirtableAPI
 from pyairtable import Base as AirtableBase
 from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
+from sentry_sdk import metrics
 from strawberry.dataloader import DataLoader
 from wagtail.admin.panels import FieldPanel, ObjectList, TabbedInterface
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
@@ -63,7 +64,7 @@ from hub.views.mapped import ExternalDataSourceAutoUpdateWebhook, ExternalDataSo
 from utils.log import get_simple_debug_logger
 from utils.nominatim import address_to_geojson
 from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
-from utils.py import batched, ensure_list, get
+from utils.py import batched, ensure_list, get, is_maybe_id
 
 User = get_user_model()
 
@@ -963,12 +964,21 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     can_display_details_publicly = models.BooleanField(default=False)
 
     class GeographyTypes(models.TextChoices):
+        """
+        The keys and values here are identical (for GraphQL compatibility)
+        and are uppercased versions of the PostcodesIO terms
+        (for ease of mapping).
+        """
+
         ADDRESS = "ADDRESS", "Address"
         POSTCODE = "POSTCODE", "Postcode"
         WARD = "WARD", "Ward"
-        CONSTITUENCY = "CONSTITUENCY", "Constituency"
-        COUNCIL = "COUNCIL", "Council"
-        CONSTITUENCY_2025 = "CONSTITUENCY_2025", "Constituency (2024)"
+        ADMIN_DISTRICT = "ADMIN_DISTRICT", "Council"
+        PARLIAMENTARY_CONSTITUENCY = "PARLIAMENTARY_CONSTITUENCY", "Constituency"
+        PARLIAMENTARY_CONSTITUENCY_2025 = (
+            "PARLIAMENTARY_CONSTITUENCY_2025",
+            "Constituency (2024)",
+        )
         # TODO: LNG_LAT = "LNG_LAT", "Longitude and Latitude"
 
     geography_column_type = TextChoicesField(
@@ -1131,7 +1141,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         statuses = dict()
 
         for job in jobs:
-            job_count = len(job.args.get("member_ids", []))
+            job_count = len(job.args.get("members", []))
             total += job_count
             if statuses.get(job.status, None) is not None:
                 statuses[job.status] += job_count
@@ -1146,13 +1156,16 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             )
             + 1
         )
-        remaining = total - done
+
         time_started = (
             ProcrastinateEvent.objects.filter(job_id=parent_job.id)
             .order_by("at")
             .first()
             .at.replace(tzinfo=pytz.utc)
         )
+
+        remaining = total - done
+
         time_so_far = datetime.now(pytz.utc) - time_started
         duration_per_record = time_so_far / done
         time_remaining = duration_per_record * remaining
@@ -1288,11 +1301,19 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             "Get member ID not implemented for this data source type."
         )
 
-    async def import_many(self, member_ids: list[str]):
+    async def import_many(self, members: list):
         """
         Copy data to this database for use in dashboarding features.
         """
-        data = await self.fetch_many(member_ids)
+
+        if not members:
+            logger.error("import_many called with 0 members")
+            return
+
+        if is_maybe_id(members[0]):
+            data = await self.fetch_many(members)
+        else:
+            data = members
 
         # A Local Intelligence Hub record of this data
         data_set, created = await DataSet.objects.aupdate_or_create(
@@ -1521,8 +1542,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         )
                         return_data.append(None)
                         continue
+                    postcodes_io_key = self.geography_column_type.lower()
                     relevant_member_geography = get(
-                        key["postcode_data"], self.geography_column_type, ""
+                        key["postcode_data"], postcodes_io_key, ""
                     )
                     # Backup check if the geography refers to the GSS codes, not the name
                     if (
@@ -1531,7 +1553,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     ):
                         relevant_member_geography = get(
                             key["postcode_data"]["codes"],
-                            self.geography_column_type,
+                            postcodes_io_key,
                             "",
                         )
                     if (
@@ -1539,7 +1561,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         or relevant_member_geography is None
                     ):
                         logger.debug(
-                            f"returning none for key {key['member_id']} because {relevant_member_geography}"
+                            f"returning none for key {key['member_id']} because relevant_member_geography is blank"
                         )
                         return_data.append(None)
                         continue
@@ -1683,7 +1705,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     async def map_many(
         self,
-        members: list[Union[str, any]],
+        members: list,
         loaders: Loaders,
         mapping: list[UpdateMapping] = None,
     ) -> list[MappedMember]:
@@ -1699,7 +1721,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     async def refresh_one(
         self,
-        member_id: Union[str, any],
+        member,
         update_kwargs={},
         mapping: list[UpdateMapping] = None,
     ):
@@ -1712,12 +1734,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         if len(mapping) == 0:
             return
         loaders = await self.get_loaders()
-        mapped_record = await self.map_one(member_id, loaders, mapping=mapping)
+        mapped_record = await self.map_one(member, loaders, mapping=mapping)
         return await self.update_one(mapped_record, **update_kwargs)
 
     async def refresh_many(
         self,
-        member_ids: list[Union[str, any]],
+        members: list,
         update_kwargs={},
         mapping: list[UpdateMapping] = None,
     ):
@@ -1730,7 +1752,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         if len(mapping) == 0:
             return
         loaders = await self.get_loaders()
-        mapped_records = await self.map_many(member_ids, loaders, mapping=mapping)
+        mapped_records = await self.map_many(members, loaders, mapping=mapping)
         return await self.update_many(mapped_records=mapped_records, **update_kwargs)
 
     # UI
@@ -1787,9 +1809,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         member_ids = self.get_member_ids_from_webhook(body)
         if len(member_ids) == 1:
-            async_to_sync(self.schedule_refresh_one)(member_id=member_ids[0])
+            async_to_sync(self.schedule_refresh_one)(member=member_ids[0])
         else:
-            async_to_sync(self.schedule_refresh_many)(member_ids=member_ids)
+            async_to_sync(self.schedule_refresh_many)(members=member_ids)
         return HttpResponse(status=200)
 
     def handle_import_webhook_view(self, body):
@@ -1806,7 +1828,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     # Scheduling
 
     @classmethod
-    async def deferred_refresh_one(cls, external_data_source_id: str, member_id: str):
+    async def deferred_refresh_one(cls, external_data_source_id: str, member: str):
         if not cls.allow_updates:
             logger.error(f"Updates requested for non-updatable CRM {cls}")
             return
@@ -1814,11 +1836,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
-        await external_data_source.refresh_one(member_id=member_id)
+        await external_data_source.refresh_one(member=member)
 
     @classmethod
     async def deferred_refresh_many(
-        cls, external_data_source_id: str, member_ids: list[str], request_id: str = None
+        cls, external_data_source_id: str, members: list, request_id: str = None
     ):
         if not cls.allow_updates:
             logger.error(f"Updates requested for non-updatable CRM {cls}")
@@ -1827,7 +1849,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
-        await external_data_source.refresh_many(member_ids=member_ids)
+        await external_data_source.refresh_many(members=members)
 
     @classmethod
     async def deferred_refresh_all(
@@ -1842,12 +1864,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
         members = await external_data_source.fetch_all()
+        member_count = 0
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
         for batch in batches:
-            member_ids = [
-                external_data_source.get_record_id(member) for member in batch
-            ]
-            await external_data_source.schedule_refresh_many(member_ids, request_id)
+            member_count += len(batch)
+            await external_data_source.schedule_refresh_many(batch, request_id)
+        metrics.distribution(key="update_rows_requested", value=member_count)
 
     @classmethod
     async def deferred_refresh_webhooks(cls, external_data_source_id: str):
@@ -1866,12 +1888,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     @classmethod
     async def deferred_import_many(
-        cls, external_data_source_id: str, member_ids: list[str], request_id: str = None
+        cls, external_data_source_id: str, members: list, request_id: str = None
     ):
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
-        await external_data_source.import_many(member_ids=member_ids)
+        await external_data_source.import_many(members=members)
 
     @classmethod
     async def deferred_import_all(
@@ -1882,19 +1904,24 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
         members = await external_data_source.fetch_all()
+        member_count = 0
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
         for batch in batches:
-            member_ids = [
-                external_data_source.get_record_id(member) for member in batch
-            ]
+            member_count += len(batch)
             await external_data_source.schedule_import_many(
-                member_ids, request_id=request_id
+                batch, request_id=request_id
             )
+        metrics.distribution(key="import_rows_requested", value=member_count)
 
-    async def schedule_refresh_one(self, member_id: str) -> int:
+    async def schedule_refresh_one(self, member) -> int:
         if not self.allow_updates:
             logger.error(f"Updates requested for non-updatable CRM {self}")
             return
+
+        if is_maybe_id(member):
+            member_id = member
+        else:
+            member_id = self.get_record_id(member)
 
         try:
             return await refresh_one.configure(
@@ -1902,16 +1929,25 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"update_one_{str(self.id)}_{str(member_id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
-            ).defer_async(external_data_source_id=str(self.id), member_id=member_id)
+            ).defer_async(external_data_source_id=str(self.id), member=member)
         except (UniqueViolation, IntegrityError):
             pass
 
     async def schedule_refresh_many(
-        self, member_ids: list[str], request_id: str = None
+        self, members: list[str] | list[dict], request_id: str = None
     ) -> int:
         if not self.allow_updates:
             logger.error(f"Updates requested for non-updatable CRM {self}")
             return
+
+        if not members:
+            logger.error("Updates requested for 0 members")
+            return
+
+        if is_maybe_id(members[0]):
+            member_ids = members
+        else:
+            member_ids = [self.get_record_id(member) for member in members]
 
         member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
@@ -1923,7 +1959,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             ).defer_async(
                 request_id=request_id,
                 external_data_source_id=str(self.id),
-                member_ids=member_ids,
+                members=members,
             )
         except (UniqueViolation, IntegrityError):
             pass
@@ -1943,9 +1979,16 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         except (UniqueViolation, IntegrityError):
             pass
 
-    async def schedule_import_many(
-        self, member_ids: list[str], request_id: str = None
-    ) -> int:
+    async def schedule_import_many(self, members: list, request_id: str = None) -> int:
+        if not members:
+            logger.error("Import requested for 0 members")
+            return
+
+        if is_maybe_id(members[0]):
+            member_ids = members
+        else:
+            member_ids = [self.get_record_id(member) for member in members]
+
         member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
             return await import_many.configure(
@@ -1955,20 +1998,26 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
             ).defer_async(
                 external_data_source_id=str(self.id),
-                member_ids=member_ids,
+                members=members,
                 request_id=request_id,
             )
         except (UniqueViolation, IntegrityError):
             pass
 
-    async def schedule_import_all(self, request_id: str = None) -> int:
+    async def schedule_import_all(
+        self, requested_at: str, request_id: str = None
+    ) -> int:
         try:
             return await import_all.configure(
                 # Dedupe `import_all` jobs for the same config
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"import_all_{str(self.id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
-            ).defer_async(external_data_source_id=str(self.id), request_id=request_id)
+            ).defer_async(
+                external_data_source_id=str(self.id),
+                requested_at=requested_at,
+                request_id=request_id,
+            )
         except (UniqueViolation, IntegrityError):
             pass
 
@@ -2300,10 +2349,10 @@ class AirtableSource(ExternalDataSource):
         payloads = webhook.payloads(cursor=webhook_object.cursor)
         for payload in payloads:
             webhook_object.cursor = webhook_object.cursor + 1
-            for table_id, deets in payload.changed_tables_by_id.items():
+            for table_id, details in payload.changed_tables_by_id.items():
                 if table_id == self.table_id:
-                    member_ids += deets.changed_records_by_id.keys()
-                    member_ids += deets.created_records_by_id.keys()
+                    member_ids += details.changed_records_by_id.keys()
+                    member_ids += details.created_records_by_id.keys()
         webhook_object.save()
         member_ids = list(sorted(set(member_ids)))
         logger.debug("Webhook member result", webhook_object.cursor, member_ids)
@@ -2868,9 +2917,8 @@ class ActionNetworkSource(ExternalDataSource):
         return member_ids
 
     async def fetch_all(self):
-        # TODO: pagination
-        list = self.client.get_people()
-        return list.to_dicts()
+        # returns an iterator that *should* work for big lists
+        return self.client.get_people()
 
     async def fetch_many(self, member_ids: list[str]):
         member_ids = [self.uuid_to_prefixed_id(id) for id in list(set(member_ids))]
@@ -2880,7 +2928,7 @@ class ActionNetworkSource(ExternalDataSource):
             osdi_filter_str = " or ".join(
                 [f"identifier eq '{member_id}'" for member_id in batch]
             )
-            members += self.client.get_people(filter=osdi_filter_str).to_dicts()
+            members += list(self.client.get_people(filter=osdi_filter_str))
         return members
 
     async def fetch_one(self, member_id: str):

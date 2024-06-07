@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowRight, ClipboardCopy, File, Plus, Shuffle, X } from "lucide-react"
 import { gql, useApolloClient, useFragment, useQuery } from "@apollo/client"
 import { AddMapLayerButton } from "./report/AddMapLayerButton"
-import { DataSourceType, MapReportLayersSummaryFragment } from "@/__generated__/graphql"
+import { AnalyticalAreaType, DataSourceType, MapReportLayersSummaryFragment } from "@/__generated__/graphql"
 import { useContext, useState } from "react"
 import { ReportContext, useReportContext } from "@/app/reports/[id]/context"
 import {
@@ -47,9 +47,10 @@ import {
 } from "@/components/ui/dialog"
 import { uuid } from 'uuidv4';
 import { useAtom } from "jotai"
-import { Input } from "./ui/input"
+import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { CRMSelection } from "./CRMButtonItem"
+import { Select, SelectItem, SelectValue , SelectContent, SelectGroup, SelectTrigger } from "@/components/ui/select";
 
 export default function DataConfigPanel() {
   const router = useRouter()
@@ -251,27 +252,45 @@ export default function DataConfigPanel() {
           </div>
         </div>
         <div className="p-3 pb-4 flex flex-col gap-2 border-t border-meepGray-700 ">
-          <span className="label mb-2 text-labelLg">Toggle enhancement data</span>
-          <div className="text-labelMain"> Mapped data sources</div>
-          {/* // TODO: map through these rather than hard code */}
+          <span className="label mb-2 text-labelLg">Map settings</span>
+          {/* Choose analytical area type */}
           <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
             <Switch
               checked={displayOptions.showStreetDetails}
               onCheckedChange={(showStreetDetails) => { setDisplayOptions({ showStreetDetails }) }}
             />Street details
           </div>
+        </div>
+        <div className="p-3 pb-4 flex flex-col gap-2 border-t border-meepGray-700 ">
+          <span className="label mb-2 text-labelLg">Westminster politics</span>
+          <Select
+            value={displayOptions.analyticalAreaType}
+            onValueChange={(analyticalAreaType: AnalyticalAreaType) => { setDisplayOptions({ analyticalAreaType }) }}
+          >
+            <SelectTrigger>
+              <SelectValue>
+                {displayOptions.analyticalAreaType === AnalyticalAreaType.ParliamentaryConstituency_2025 ? "2024 constituencies" : "Old constituencies"}  
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="z-100">
+              <SelectGroup>
+                <SelectItem value={AnalyticalAreaType.ParliamentaryConstituency_2025}>2024 constituencies</SelectItem>
+                <SelectItem value={AnalyticalAreaType.ParliamentaryConstituency}>Old constituencies</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
           <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
             <Switch
               checked={displayOptions.showMPs}
               onCheckedChange={toggleMps}
-            />Members of Parliament
+            />Current MP
           </div>
           <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
             <Switch
               checked={displayOptions.showLastElectionData}
               onCheckedChange={toggleElectionData}
             />
-            2019 Election
+            Last GE election results
           </div>
         </div>
       </CardContent>
