@@ -213,7 +213,9 @@ export function RenderCard({ src, category, title, description, dialogDescriptio
       )}
     </div>
   ) : (
-    <Image src={src} alt="illustration" className='w-full h-full overflow-visible' />
+    <Image src={src} alt="illustration" className='w-full h-full overflow-visible' style={{
+      objectFit: "contain",
+    }} />
   )
 
   if (behaviour === "dialog" && !!dialogDescription) {
