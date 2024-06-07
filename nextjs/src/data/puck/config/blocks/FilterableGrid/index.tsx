@@ -161,18 +161,18 @@ export const FilterableGrid: ComponentConfig<FilterableGridProps> = {
 
 const FilterableGridRenderer = ({ categories, items }: FilterableGridProps) => {
     const router = useRouter()
-    const [tags, setTags] = useQueryState("tag", parseAsArrayOf(parseAsStringEnum(itemTypes.map(t => t.value))))
+    const [tag, setTag] = useQueryState("tag", parseAsStringEnum(itemTypes.map(t => t.value)))
     const [category, setCategory] = useQueryState("category", parseAsStringEnum(categories.map(c => c.urlSlug)))
 
     // Listen for router changes, then produce new items
     const filteredItems = useMemo(() => {
         if (!items) return []
-        if (!tags && !category) return items
+        if (!tag && !category) return items
         return items?.filter(item =>
-            (!tags?.length || tags?.includes(item.type)) &&
+            (!tag || tag === item.type) &&
             (!category || item.categories?.some(c => c.category === category))
         )
-    }, [items, tags, category])
+    }, [items, tag, category])
     const categoryData = categories?.find(c => c.urlSlug === category)
 
     // Scroll items into full
@@ -252,11 +252,11 @@ const FilterableGridRenderer = ({ categories, items }: FilterableGridProps) => {
                     <button
                         onClick={() => {
                             // Toggle tag based on click
-                            setTags(t => [])
+                            setTag(t => null)
                         }}
                         className={twMerge(
                             "rounded-full px-3 py-1 cursor-pointer uppercase",
-                            !tags?.length ? 'bg-jungle-green-600 text-white' : 'bg-jungle-green-100 text-jungle-green-600'
+                            !tag ? 'bg-jungle-green-600 text-white' : 'bg-jungle-green-100 text-jungle-green-600'
                         )}
                     >
                         all
@@ -266,11 +266,11 @@ const FilterableGridRenderer = ({ categories, items }: FilterableGridProps) => {
                             key={index}
                             onClick={() => {
                                 // Toggle tag based on click
-                                setTags(t => t?.includes(itemType.value) ? t?.filter(tag => tag !== itemType.value) || t : [...(t || []), itemType.value])
+                                setTag(t => t === itemType.value ? null : t)
                             }}
                             className={twMerge(
                                 "rounded-full px-3 py-1 cursor-pointer uppercase",
-                                tags?.includes(itemType.value) ? 'bg-jungle-green-600 text-white' : 'bg-jungle-green-100 text-jungle-green-600'
+                                tag === itemType.value ? 'bg-jungle-green-600 text-white' : 'bg-jungle-green-100 text-jungle-green-600'
                             )}
                         >
                             {itemType.label}
