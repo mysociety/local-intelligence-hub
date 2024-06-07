@@ -312,7 +312,10 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                         >
                             all
                         </button>
-                        {itemTypes.map((itemType, index) => (
+                        {itemTypes.filter(t => {
+                            // items exist for this tag
+                            return items?.some(i => i.type === t.value)
+                        }).map((itemType, index) => (
                             <button
                                 key={index}
                                 onClick={() => {
