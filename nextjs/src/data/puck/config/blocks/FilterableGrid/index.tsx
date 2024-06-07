@@ -44,7 +44,8 @@ export type FilterableGridProps = {
         link: string;
         linkLabel: string;
         timestamp: number;
-    }>
+    }>,
+    showAll?: boolean;
 }
 
 export const FilterableGrid: ComponentConfig<FilterableGridProps> = {
@@ -160,10 +161,10 @@ export const FilterableGrid: ComponentConfig<FilterableGridProps> = {
     },
 };
 
-const FilterableGridRenderer = ({ categories, items }: FilterableGridProps) => {
+export const FilterableGridRenderer = ({ categories, items, showAll }: FilterableGridProps) => {
     const router = useRouter()
     const [tag, setTag] = useQueryState("tag", parseAsStringEnum(itemTypes.map(t => t.value)))
-    const [category, setCategory] = useQueryState("category", parseAsStringEnum(categories.map(c => c.urlSlug)))
+    const [category, setCategory] = useQueryState("category", parseAsStringEnum(categories?.map(c => c.urlSlug)))
 
     // Listen for router changes, then produce new items
     const filteredItems = useMemo(() => {
@@ -211,7 +212,7 @@ const FilterableGridRenderer = ({ categories, items }: FilterableGridProps) => {
                     <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 lg:gap-4 xl:gap-5'>
                         <PostcodeSearch className='h-full' />
                         <div className='lg:col-span-2 grid lg:grid-cols-2 gap-2 md:gap-3 lg:gap-4 xl:gap-5'>
-                            {categories.map((category, index) => (
+                            {categories?.map((category, index) => (
                                 <div key={index} className='rounded-[20px] hover:bg-jungle-green-100 transition-all cursor-pointer p-4 space-y-2' onClick={() => {
                                     setCategory(category.urlSlug)
                                     document.getElementById("latest")?.scrollIntoView({ behavior: "smooth" })
@@ -226,68 +227,72 @@ const FilterableGridRenderer = ({ categories, items }: FilterableGridProps) => {
                 </section>
             )}
             {/* Grid */}
-            <section id="latest">
-                {(!categoryData) ? (
-                    <header className='space-y-2 pt-16 mb-10 md:pt-32 md:mb-14'>
-                        <h2 className='text-hub4xl md:text-hub6xl'>Latest from across the campaign</h2>
-                        <p className='text-jungle-green-neutral text-hub2xl'>
-                            Explore our wall of activity from the hub
-                        </p>
-                    </header>
-                ) : (
-                    <header className='space-y-2 pt-16 mb-10 md:pt-32 md:mb-14'>
-                        <div onClick={() => {
-                            setCategory(null)
-                            setTimeout(() => {
-                                document.getElementById("get-involved")?.scrollIntoView({ behavior: "smooth" })
-                            }, 500)
-                        }}>
-                            &larr; Back to Ways To Get Involved
-                        </div>
-                        <h2 className='text-hub4xl md:text-hub6xl'>{categoryData.title}</h2>
-                        <PuckText className='text-jungle-green-neutral text-hub2xl' text={categoryData.description} />
-                    </header>
-                )}
-                <div className='flex flex-row gap-4 mb-8 items-center'>
-                    <div className='text-meepGray-400 uppercase'>Filter Hub Content:</div>
-                    <button
-                        onClick={() => {
-                            // Toggle tag based on click
-                            setTag(t => null)
-                        }}
-                        className={twMerge(
-                            "rounded-full px-3 py-1 cursor-pointer uppercase",
-                            !tag ? 'bg-jungle-green-600 text-white' : 'bg-jungle-green-100 text-jungle-green-600'
-                        )}
-                    >
-                        all
-                    </button>
-                    {itemTypes.map((itemType, index) => (
+            {!!(categoryData || showAll !== false) ? (
+                <section id="latest">
+                    {(!categoryData) ? (
+                        <header className='space-y-2 pt-16 mb-10 md:pt-32 md:mb-14'>
+                            <h2 className='text-hub4xl md:text-hub6xl'>Latest from across the campaign</h2>
+                            <p className='text-jungle-green-neutral text-hub2xl'>
+                                Explore our wall of activity from the hub
+                            </p>
+                        </header>
+                    ) : (
+                        <header className='space-y-2 pt-16 mb-10 md:pt-32 md:mb-14'>
+                            <div onClick={() => {
+                                setCategory(null)
+                                setTimeout(() => {
+                                    document.getElementById("get-involved")?.scrollIntoView({ behavior: "smooth" })
+                                }, 500)
+                            }}>
+                                &larr; Back to Ways To Get Involved
+                            </div>
+                            <h2 className='text-hub4xl md:text-hub6xl'>{categoryData.title}</h2>
+                            <PuckText className='text-jungle-green-neutral text-hub2xl' text={categoryData.description} />
+                        </header>
+                    )}
+                    <div className='flex flex-row gap-4 mb-8 items-center'>
+                        <div className='text-meepGray-400 uppercase'>Filter Hub Content:</div>
                         <button
-                            key={index}
                             onClick={() => {
                                 // Toggle tag based on click
-                                setTag(t => t === itemType.value ? null : itemType.value)
+                                setTag(t => null)
                             }}
                             className={twMerge(
                                 "rounded-full px-3 py-1 cursor-pointer uppercase",
-                                tag === itemType.value ? 'bg-jungle-green-600 text-white' : 'bg-jungle-green-100 text-jungle-green-600'
+                                !tag ? 'bg-jungle-green-600 text-white' : 'bg-jungle-green-100 text-jungle-green-600'
                             )}
                         >
-                            {pluralize(itemType.label)}
+                            all
                         </button>
-                    ))}
-                </div>
-                <div className='border-b border-meepGray-200 my-4' />
-                <div className='grid sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 lg:gap-4 xl:gap-5 mb-8 md:mb-16 lg:mb-20'>
-                    {filteredItems
-                        // TODO:
-                        // ?.sort((a, b) => compareAsc(a.timestamp, b.timestamp))
-                        .map((item, index) => (
-                        <RenderCard key={index} {...item} />
-                    ))}
-                </div>
-            </section>
+                        {itemTypes.map((itemType, index) => (
+                            <button
+                                key={index}
+                                onClick={() => {
+                                    // Toggle tag based on click
+                                    setTag(t => t === itemType.value ? null : itemType.value)
+                                }}
+                                className={twMerge(
+                                    "rounded-full px-3 py-1 cursor-pointer uppercase",
+                                    tag === itemType.value ? 'bg-jungle-green-600 text-white' : 'bg-jungle-green-100 text-jungle-green-600'
+                                )}
+                            >
+                                {pluralize(itemType.label)}
+                            </button>
+                        ))}
+                    </div>
+                    <div className='border-b border-meepGray-200 my-4' />
+                    <div className='grid sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 lg:gap-4 xl:gap-5 mb-8 md:mb-16 lg:mb-20'>
+                        {filteredItems
+                            // TODO:
+                            // ?.sort((a, b) => compareAsc(a.timestamp, b.timestamp))
+                            .map((item, index) => (
+                            <RenderCard key={index} {...item} />
+                        ))}
+                    </div>
+                </section>
+            ) : (
+                <div className='py-8' />
+            )}
         </div>
     );
 };
