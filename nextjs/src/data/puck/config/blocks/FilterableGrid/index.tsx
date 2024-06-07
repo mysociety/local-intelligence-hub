@@ -266,7 +266,7 @@ const FilterableGridRenderer = ({ categories, items }: FilterableGridProps) => {
                             key={index}
                             onClick={() => {
                                 // Toggle tag based on click
-                                setTag(t => t === itemType.value ? null : t)
+                                setTag(t => t === itemType.value ? null : itemType.value)
                             }}
                             className={twMerge(
                                 "rounded-full px-3 py-1 cursor-pointer uppercase",
