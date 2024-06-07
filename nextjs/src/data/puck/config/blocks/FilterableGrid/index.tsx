@@ -8,6 +8,11 @@ import CirclePattern from "../../../../../../public/hub/main-circle-pattern.svg"
 import ArrowTopRight from "../../../../../../public/hub/arrow-top-right.svg";
 import ukMap from "../../../../../../public/hub/uk-map.svg";
 import tccHeart from "../../../../../../public/hub/tcc-heart-2.svg";
+import hubGridIllustration1 from "../../../../../../public/hub/illystrations/Layer_1.svg";
+import hubGridIllustration2 from "../../../../../../public/hub/illystrations/Layer_5.svg";
+import hubGridIllustration3 from "../../../../../../public/hub/illystrations/Group 16.svg"
+import hubGridIllustration4 from "../../../../../../public/hub/illystrations/Group 14.svg";
+import hubGridIllustration5 from "../../../../../../public/hub/illystrations/Group 15.svg";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useParams, useRouter } from "next/navigation";
@@ -171,10 +176,25 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
     const filteredItems = useMemo(() => {
         if (!items) return []
         if (!tag && !category) return items
-        return items?.filter(item =>
+        const filtered = items?.filter(item =>
             (!tag || tag === item.type) &&
             (!category || item.categories?.some(c => c.category === category))
         )
+        if (filtered.length > 4) {
+            filtered.splice(3, 0, {
+                // @ts-ignore
+                type: "illustration",
+                src: hubGridIllustration1
+            })
+        }
+        if (filtered.length > 6) {
+            filtered.splice(3, 0, {
+                // @ts-ignore
+                type: "illustration",
+                src: hubGridIllustration2
+            })
+        }
+        return filtered
     }, [items, tag, category])
     const categoryData = categories?.find(c => c.urlSlug === category)
 
