@@ -299,7 +299,7 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                                 setTimeout(() => {
                                     document.getElementById("get-involved")?.scrollIntoView({ behavior: "smooth" })
                                 }, 500)
-                            }}>
+                            }} className='cursor-pointer hover:text-jungle-green-600'>
                                 &larr; Back to Ways To Get Involved
                             </div>
                             <h2 className='text-hub4xl md:text-hub6xl'>{categoryData.title}</h2>
