@@ -306,7 +306,7 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                             <PuckText className='text-jungle-green-neutral text-hub2xl' text={categoryData.description} />
                         </header>
                     )}
-                    <div className='flex flex-row gap-4 mb-8 items-center'>
+                    <div className='flex flex-row gap-4 items-center sticky top-[75px] z-20 bg-[#f2f2f2] py-3 border-b border-meepGray-200 mb-4'>
                         <div className='text-meepGray-400 uppercase'>Filter Hub Content:</div>
                         <button
                             onClick={() => {
@@ -314,8 +314,8 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                                 setTag(t => null)
                             }}
                             className={twMerge(
-                                "rounded-full px-3 py-1 cursor-pointer uppercase",
-                                !tag ? 'bg-jungle-green-600 text-white' : 'bg-jungle-green-100 text-jungle-green-600'
+                                "rounded-full px-4 py-1 cursor-pointer uppercase text-sm font-light",
+                                !tag ? 'bg-jungle-green-300 text-jungle-green-600' : 'bg-jungle-green-100 text-jungle-green-600'
                             )}
                         >
                             all
@@ -331,15 +331,14 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                                     setTag(t => t === itemType.value ? null : itemType.value)
                                 }}
                                 className={twMerge(
-                                    "rounded-full px-3 py-1 cursor-pointer uppercase",
-                                    tag === itemType.value ? 'bg-jungle-green-600 text-white' : 'bg-jungle-green-100 text-jungle-green-600'
+                                    "rounded-full px-3 py-1 cursor-pointer uppercase text-sm font-light",
+                                    tag === itemType.value ? 'bg-jungle-green-300 text-jungle-green-600' : 'bg-jungle-green-100 text-jungle-green-600'
                                 )}
                             >
                                 {pluralize(itemType.label)}
                             </button>
                         ))}
                     </div>
-                    <div className='border-b border-meepGray-200 my-4' />
                     <div className='grid sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 lg:gap-4 xl:gap-5 mb-8 md:mb-16 lg:mb-20'>
                         {filteredItems
                             // TODO:
