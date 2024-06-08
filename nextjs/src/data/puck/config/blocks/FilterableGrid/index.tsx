@@ -199,6 +199,13 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
     const [category, setCategory] = useQueryState("category", parseAsStringEnum(categories?.map(c => c.urlSlug)))
 
     // Listen for router changes, then produce new items
+    const categoryItems = useMemo(() => {
+        if (!items) return []
+        return items?.filter(item =>
+            (!category || item.categories?.some(c => c.category === category))
+        )
+    }, [items, category])
+
     const filteredItems = useMemo(() => {
         if (!items) return []
         if (!tag && !category) {
@@ -210,6 +217,7 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
         )
         return withIllys(filtered)
     }, [items, tag, category])
+
     const categoryData = categories?.find(c => c.urlSlug === category)
 
     // Scroll items into full
@@ -314,7 +322,7 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                         </button>
                         {itemTypes.filter(t => {
                             // items exist for this tag
-                            return items?.some(i => i.type === t.value)
+                            return categoryItems?.some(i => i.type === t.value)
                         }).map((itemType, index) => (
                             <button
                                 key={index}
