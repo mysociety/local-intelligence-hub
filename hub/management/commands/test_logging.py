@@ -1,10 +1,12 @@
 import logging
-from utils.log import get_simple_debug_logger
 
 from django.core.management.base import BaseCommand
 
+from utils.log import get_simple_debug_logger
+
 logger = logging.getLogger(__name__)
 debug_logger = get_simple_debug_logger(__name__)
+
 
 class Command(BaseCommand):
     help = "Print some test log statements to test logging config"

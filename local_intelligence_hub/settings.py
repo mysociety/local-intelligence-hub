@@ -339,7 +339,7 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "common": {
-            "format": "{levelname} {asctime} {name}.{funcName}:{lineno} # {message:.120}",
+            "format": "{levelname} {asctime} {name}.{funcName}:{lineno} # {message}",
             "style": "{",
             "validate": True,
         },

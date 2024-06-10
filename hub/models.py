@@ -1791,7 +1791,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     # Webhooks
 
-    def handle_update_webhook_view(self, body):
+    def handle_update_webhook_view(self, member_ids):
         if not self.allow_updates:
             logger.error(f"Updates requested for non-updatable CRM: {self}")
             return False
@@ -1800,19 +1800,17 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             logger.error(f"Updates requested for CRM without webhooks enabled: {self}")
             return False
 
-        member_ids = self.get_member_ids_from_webhook(body)
         if len(member_ids) == 1:
             async_to_sync(self.schedule_refresh_one)(member=member_ids[0])
         else:
             async_to_sync(self.schedule_refresh_many)(members=member_ids)
         return True
 
-    def handle_import_webhook_view(self, body):
+    def handle_import_webhook_view(self, member_ids):
         if not self.auto_import_enabled:
             logger.error(f"Imports requested for CRM without webhooks enabled: {self}")
             return False
 
-        member_ids = self.get_member_ids_from_webhook(body)
         async_to_sync(self.schedule_import_many)(members=member_ids)
         return True
 
