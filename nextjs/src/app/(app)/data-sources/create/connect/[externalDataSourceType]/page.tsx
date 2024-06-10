@@ -40,7 +40,7 @@ import { toastPromise } from "@/lib/toast";
 import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
 import { getFieldsForDataSourceType } from "@/components/UpdateExternalDataSourceFields";
 import { camelCase } from "lodash";
-import { Building, Calendar, Newspaper, PersonStanding, Pin, User } from "lucide-react";
+import { Building, Calendar, Newspaper, PersonStanding, Pin, Quote, User } from "lucide-react";
 import { locationTypeOptions } from "@/data/location";
 
 const TEST_DATA_SOURCE = gql`
@@ -165,8 +165,11 @@ export default function Page({
     badKeys: string[] = []
   ) {
     useEffect(() => {
+      // If this data isn't being collected for this source type, set the source
+      // field for this data to null. This prevents accidentally trying to collect
+      // invalid data (for example start times for data that is not events).
       // @ts-ignore
-      if (!collectFields.includes(field)) {
+      if (!collectFields.includes(field) && !geographyFields.includes(field)) {
         form.setValue(field, null)
         return
       }
@@ -428,11 +431,6 @@ export default function Page({
                                   <User className='w-4 text-meepGray-300' /> People
                                 </div>
                               </SelectItem>
-                              <SelectItem value={DataSourceType.Location}>
-                                <div className='flex flex-row gap-2 items-center'>
-                                  <Building className='w-4 text-meepGray-300' /> Locations
-                                </div>
-                              </SelectItem>
                               <SelectItem value={DataSourceType.Event}>
                                 <div className='flex flex-row gap-2 items-center'>
                                   <Calendar className='w-4 text-meepGray-300' /> Events
@@ -440,7 +438,12 @@ export default function Page({
                               </SelectItem>
                               <SelectItem value={DataSourceType.Story}>
                                 <div className='flex flex-row gap-2 items-center'>
-                                  <Newspaper className='w-4 text-meepGray-300' /> Stories
+                                  <Quote className='w-4 text-meepGray-300' /> Stories
+                                </div>
+                              </SelectItem>
+                              <SelectItem value={DataSourceType.Location}>
+                                <div className='flex flex-row gap-2 items-center'>
+                                  <Building className='w-4 text-meepGray-300' /> Locations
                                 </div>
                               </SelectItem>
                               <SelectItem value={DataSourceType.Other}>
@@ -544,7 +547,7 @@ export default function Page({
                     <Input placeholder="patAB1" {...field} required />
                   </FormControl>
                   <FormDescription>
-                    <p>Your token should have access to the base and the following "scopes":</p>
+                    <p>Your token should have access to the base and the following {'"'}scopes{'"'}:</p>
                     <ul className='list-disc list-inside pl-1'>
                       <li><code>data.records:read</code></li>
                       <li><code>data.records:write</code></li>

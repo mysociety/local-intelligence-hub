@@ -5,7 +5,9 @@ description = ""
 authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
-python = ">3.11,<3.13"
+# TODO: Revert to <3.13 once this issue is fixed (for us the error is in pyairtable):
+# https://stackoverflow.com/questions/78593700/langchain-community-langchain-packages-giving-error-missing-1-required-keywor
+python = ">3.11,<=3.12.3"
 Django = "4.2.11"
 django-bootstrap5 = "^22.1"
 django-environ = "^0.9.0"
@@ -20,7 +22,7 @@ django-jsonform = "^2.15.0"
 lxml = "^4.9.2"
 beautifulsoup4 = "^4.11.1"
 django-polymorphic = "^3.1.0"
-pyairtable = "^2.3.0.post1"
+pyairtable = "^2.3.3"
 psycopg = "^3.1.18"
 strawberry-graphql-django = "^0.32.1"
 strawberry-django-auth = "^0.376.5"

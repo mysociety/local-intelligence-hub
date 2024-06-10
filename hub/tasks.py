@@ -5,8 +5,8 @@ import functools
 import os
 
 from django.conf import settings
-from django.db.models import Count, Q
 from django.core import management
+from django.db.models import Count, Q
 
 from procrastinate.contrib.django import app
 from procrastinate.contrib.django.models import ProcrastinateJob
