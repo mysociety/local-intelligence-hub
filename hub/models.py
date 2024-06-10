@@ -93,7 +93,7 @@ class Organisation(models.Model):
         if membership:
             return membership.organisation
         org = self.objects.create(name=f"{user.username}'s personal workspace")
-        Membership.objects.create(user=user, organisation=org, role="owner")
+        Membership.objects.create(user=user, organisation=org, slug=user.username, role="owner")
         return org
 
 
@@ -112,7 +112,7 @@ class Membership(models.Model):
 
 
 class UserProperties(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="properties")
     organisation_name = models.TextField(null=True, blank=True)
     full_name = models.TextField(null=True, blank=True)
     email_confirmed = models.BooleanField(default=False)
@@ -122,6 +122,12 @@ class UserProperties(models.Model):
 
     def __str__(self):
         return self.user.username
+
+
+# on user create signal, create an org
+@receiver(models.signals.post_save, sender=User)
+def create_user_organisation(sender, instance, created, **kwargs):
+    Organisation.get_or_create_for_user(instance)
 
 
 class TypeMixin:
