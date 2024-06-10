@@ -93,7 +93,9 @@ class Organisation(models.Model):
         if membership:
             return membership.organisation
         org = self.objects.create(name=f"{user.username}'s personal workspace")
-        Membership.objects.create(user=user, organisation=org, slug=user.username, role="owner")
+        Membership.objects.create(
+            user=user, organisation=org, slug=user.username, role="owner"
+        )
         return org
 
 
@@ -112,7 +114,9 @@ class Membership(models.Model):
 
 
 class UserProperties(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="properties")
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="properties"
+    )
     organisation_name = models.TextField(null=True, blank=True)
     full_name = models.TextField(null=True, blank=True)
     email_confirmed = models.BooleanField(default=False)
@@ -1904,7 +1908,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         member_count = 0
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
         for i, batch in enumerate(batches):
-            logger.info(f"Scheduling import batch {i} for source {external_data_source}")
+            logger.info(
+                f"Scheduling import batch {i} for source {external_data_source}"
+            )
             member_count += len(batch)
             await external_data_source.schedule_import_many(
                 batch, request_id=request_id

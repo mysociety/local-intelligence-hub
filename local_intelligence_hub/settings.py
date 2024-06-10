@@ -373,7 +373,7 @@ LOGGING = {
             "handlers": ["truncated"],
             "level": DJANGO_HUB_LOG_LEVEL,
             "propagate": False,
-        }
+        },
     },
 }
 if DEBUG:

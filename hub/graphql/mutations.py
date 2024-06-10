@@ -158,7 +158,8 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
     params = {
         **graphql_type_to_dict(data, delete_null_keys=True),
         **{
-            "organisation": data.organisation or models.Organisation.get_or_create_for_user(user),
+            "organisation": data.organisation
+            or models.Organisation.get_or_create_for_user(user),
             "slug": data.slug or slugify(data.name),
             "name": "Type your report name here",  # Default name for reports
         },
@@ -281,10 +282,14 @@ def create_external_data_source(
             # CreateExternalDataSourceInput expects organisation to be a dict like `{ set: 1 }`
             print(kwargs.get("organisation", None))
             if org := kwargs.get("organisation", None):
-                kwargs["organisation"] = models.Organisation.objects.get(id=org.get("set"))
+                kwargs["organisation"] = models.Organisation.objects.get(
+                    id=org.get("set")
+                )
             else:
                 user = get_current_user(info)
-                kwargs["organisation"] = models.Organisation.get_or_create_for_user(user)
+                kwargs["organisation"] = models.Organisation.get_or_create_for_user(
+                    user
+                )
             print(kwargs["organisation"])
 
             print(f"Creating source of type {crm_type_key}", kwargs)
