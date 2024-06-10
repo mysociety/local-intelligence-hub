@@ -24,11 +24,29 @@ import { PuckText } from "../../components/PuckText";
 import { twMerge } from "tailwind-merge";
 import pluralize from "pluralize";
 
+
+
 export const itemTypes = [
     { label: "Resource", value: "resource" },
     { label: "Action", value: "action" },
     { label: "Event", value: "event" },
 ] as const
+
+export const eventMonths = [
+    { label: "January", value: "Jan" },
+    { label: "February", value: "Feb" },
+    { label: "March", value: "Mar" },
+    { label: "April", value: "Apr" },
+    { label: "May", value: "May" },
+    { label: "June", value: "Jun" },
+    { label: "July", value: "Jul" },
+    { label: "August", value: "Aug" },
+    { label: "September", value: "Sep" },
+    { label: "October", value: "Oct" },
+    { label: "November", value: "Nov" },
+    { label: "December", value: "Dec" },
+] as const
+
 
 // TODO:
 export type FilterableGridProps = {
@@ -49,13 +67,15 @@ export type FilterableGridProps = {
         link: string;
         linkLabel: string;
         timestamp: number;
+        eventMonth: string;
+        eventDay: string
     }>
 }
 
 export const FilterableGrid: ComponentConfig<FilterableGridProps> = {
     label: "FilterableGrid",
     resolveFields: (data, puck) => {
-        return {       
+        return {
             categories: {
                 type: "array",
                 arrayFields: {
@@ -125,6 +145,32 @@ export const FilterableGrid: ComponentConfig<FilterableGridProps> = {
                     },
                     timestamp: {
                         type: "number"
+                    },
+                    eventMonth: {
+                        // @ts-ignore
+                        visible: data.props.type === "event",
+                        type: "select",
+                        options: eventMonths
+                    },
+                    eventDay: {
+                        // @ts-ignore
+                        visible: data.props.type === "event",
+                        type: "text",
+                    },
+                    eventTime: {
+                        // @ts-ignore
+                        visible: data.props.type === "event",
+                        type: "text",
+                    },
+                    eventLocation: {
+                        // @ts-ignore
+                        visible: data.props.type === "event",
+                        type: "text",
+                    },
+                    imageUrl: {
+                        // @ts-ignore
+                        visible: data.props.type === "resource",
+                        type: "text"
                     }
                 },
                 defaultItemProps: {
@@ -137,6 +183,11 @@ export const FilterableGrid: ComponentConfig<FilterableGridProps> = {
                     link: "",
                     linkLabel: "",
                     timestamp: Date.now(),
+                    eventMonth: "",
+                    eventDay: "",
+                    eventTime: "",
+                    eventLocation: "",
+                    imageUrl: ""
                 },
                 getItemSummary(item, index) {
                     return item.title || `Item ${index}`;
@@ -165,7 +216,7 @@ export const FilterableGrid: ComponentConfig<FilterableGridProps> = {
     },
 };
 
-function withIllys (_arr: any[]) {
+function withIllys(_arr: any[]) {
     const arr = [..._arr]
     if (arr.length >= 4) {
         arr.splice(3, 0, {
@@ -259,7 +310,9 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                         <p className='relative z-[2] text-jungle-green-neutral text-hub2xl'>Here{"'"}s how you can help centre people, climate and nature this election.</p>
                     </header>
                     <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 lg:gap-4 xl:gap-5'>
-                        <PostcodeSearch className='h-full' />
+                        <div className="relative">
+                            <PostcodeSearch className="sticky top-24" />
+                        </div>
                         <div className='lg:col-span-2 grid lg:grid-cols-2 gap-2 md:gap-3 lg:gap-4 xl:gap-5'>
                             {categories?.map((category, index) => (
                                 <div key={index} className='rounded-[20px] hover:bg-jungle-green-100 transition-all cursor-pointer p-4 space-y-2' onClick={() => {
@@ -344,8 +397,8 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                             // TODO:
                             // ?.sort((a, b) => compareAsc(a.timestamp, b.timestamp))
                             .map((item, index) => (
-                            <RenderCard key={index} {...item} />
-                        ))}
+                                <RenderCard key={index} {...item} />
+                            ))}
                     </div>
                 </section>
             ) : (
@@ -355,12 +408,12 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
     );
 };
 
-function PostcodeSearch ({ className }: { className?: string }) {
+function PostcodeSearch({ className }: { className?: string }) {
     const router = useRouter()
     const [postcode, setPostcode] = useState("")
     return (
         <article className={twMerge('overflow-clip rounded-[20px] hover:shadow-hover transition-all', className)}>
-            <div className="p-5 bg-jungle-green-50 h-full relative gap-2 flex flex-col justify-end">
+            <div className="p-5 bg-jungle-green-50 pt-60 relative gap-2 flex flex-col justify-end">
                 <div className="z-10 flex flex-col gap-2">
                     <Image src={ArrowTopRight} width={30} alt="arrow" />
                     <h2 className="lg:text-hub4xl text-hub3xl tracking-tight">Near me</h2>
