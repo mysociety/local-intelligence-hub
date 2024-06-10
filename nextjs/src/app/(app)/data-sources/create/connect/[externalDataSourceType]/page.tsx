@@ -165,6 +165,9 @@ export default function Page({
     badKeys: string[] = []
   ) {
     useEffect(() => {
+      // If this data isn't being collected for this source type, set the source
+      // field for this data to null. This prevents accidentally trying to collect
+      // invalid data (for example start times for data that is not events).
       // @ts-ignore
       if (!collectFields.includes(field) && !geographyFields.includes(field)) {
         form.setValue(field, null)
