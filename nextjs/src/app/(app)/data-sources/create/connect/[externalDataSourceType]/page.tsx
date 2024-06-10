@@ -166,7 +166,7 @@ export default function Page({
   ) {
     useEffect(() => {
       // @ts-ignore
-      if (!collectFields.includes(field)) {
+      if (!collectFields.includes(field) && !geographyFields.includes(field)) {
         form.setValue(field, null)
         return
       }
@@ -544,7 +544,7 @@ export default function Page({
                     <Input placeholder="patAB1" {...field} required />
                   </FormControl>
                   <FormDescription>
-                    <p>Your token should have access to the base and the following "scopes":</p>
+                    <p>Your token should have access to the base and the following {'"'}scopes{'"'}:</p>
                     <ul className='list-disc list-inside pl-1'>
                       <li><code>data.records:read</code></li>
                       <li><code>data.records:write</code></li>
