@@ -1,9 +1,9 @@
 import asyncio
-from enum import Enum
 import hashlib
 import itertools
 import uuid
 from datetime import datetime, timezone
+from enum import Enum
 from typing import List, Optional, Type, TypedDict, Union
 from urllib.parse import urljoin
 
@@ -40,8 +40,6 @@ from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from sentry_sdk import metrics
 from strawberry.dataloader import DataLoader
-from utils import mapbox
-from utils import google_maps
 from wagtail.admin.panels import FieldPanel, ObjectList, TabbedInterface
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
 from wagtail.models import Page, Site
@@ -63,19 +61,26 @@ from hub.tasks import (
     refresh_webhooks,
 )
 from hub.views.mapped import ExternalDataSourceWebhook
+from utils import google_maps
 from utils.log import get_simple_debug_logger
-from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo, get_bulk_postcode_geo_from_coords
+from utils.postcodesIO import (
+    PostcodesIOResult,
+    get_bulk_postcode_geo,
+    get_bulk_postcode_geo_from_coords,
+)
 from utils.py import batched, ensure_list, get, is_maybe_id
 
 User = get_user_model()
 
 logger = get_simple_debug_logger(__name__)
 
+
 # enum of geocoders: postcodes_io, mapbox, google
 class Geocoder(Enum):
     POSTCODES_IO = "postcodes_io"
     MAPBOX = "mapbox"
     GOOGLE = "google"
+
 
 class Organisation(models.Model):
     slug = models.SlugField(max_length=100, unique=True)
@@ -723,7 +728,9 @@ class GenericData(CommonData):
     end_time = models.DateTimeField(blank=True, null=True)
     public_url = models.URLField(max_length=2000, blank=True, null=True)
     geocode_data = JSONField(blank=True, null=True)
-    geocoder = models.CharField(max_length=1000, blank=True, null=True, default=Geocoder.POSTCODES_IO.value)
+    geocoder = models.CharField(
+        max_length=1000, blank=True, null=True, default=Geocoder.POSTCODES_IO.value
+    )
     address = models.CharField(max_length=1000, blank=True, null=True)
     title = models.CharField(max_length=1000, blank=True, null=True)
     description = models.TextField(max_length=3000, blank=True, null=True)
@@ -918,6 +925,7 @@ class UpdateMapping(TypedDict):
     # Can be a dot path, for use with benedict
     source_path: str
     destination_column: str
+
 
 def default_countries():
     return ["GB"]
@@ -1419,10 +1427,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 address_data = None
                 postcode_data = None
                 if address is None or (
-                    isinstance(address, str) and (
-                        address.strip() == ""
-                        or address.lower() == "online"
-                    )
+                    isinstance(address, str)
+                    and (address.strip() == "" or address.lower() == "online")
                 ):
                     address_data = None
                 else:
@@ -1451,13 +1457,17 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             # (e.g. for analytical queries that aggregate on region)
                             # even if the address is not postcode-specific (e.g. "London").
                             # this can be gleaned from geocode_data__types, e.g. [ "administrative_area_level_1", "political" ]
-                            postcode_data: PostcodesIOResult = await loaders["postcodesIOFromPoint"].load(point)
+                            postcode_data: PostcodesIOResult = await loaders[
+                                "postcodesIOFromPoint"
+                            ].load(point)
 
                 update_data = {
                     **structured_data,
                     "postcode_data": postcode_data,
                     "geocode_data": address_data,
-                    "geocoder": Geocoder.GOOGLE.value if address_data is not None else None,
+                    "geocoder": (
+                        Geocoder.GOOGLE.value if address_data is not None else None
+                    ),
                     "point": point,
                 }
 

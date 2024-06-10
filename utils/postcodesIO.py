@@ -3,13 +3,13 @@ from typing import List, Optional
 from urllib.parse import unquote
 
 from django.conf import settings
+from django.contrib.gis.geos import Point
 
 import httpx
 import requests
 
 from utils.geo import EERs, create_point
 from utils.py import async_batch_and_aggregate, get, get_path
-from django.contrib.gis.geos import Point
 
 
 @dataclass
@@ -144,6 +144,7 @@ async def get_bulk_postcode_geo(postcodes) -> list[PostcodesIOResult]:
             ).get("code", None)
 
     return results
+
 
 @async_batch_and_aggregate(settings.POSTCODES_IO_BATCH_MAXIMUM)
 async def get_bulk_postcode_geo_from_coords(coordinates: list[Point]):
