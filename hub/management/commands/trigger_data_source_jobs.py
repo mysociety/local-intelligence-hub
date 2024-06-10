@@ -26,7 +26,7 @@ class Command(BaseCommand):
             id=options["id"]
         )
         only = options.get("only")
-        requested_at = datetime.now(timezone.utc)
+        requested_at = datetime.now(timezone.utc).isoformat()
         if not only:
             await source.schedule_import_all(requested_at=requested_at, request_id=str(uuid.uuid4()))
             await source.schedule_refresh_all(request_id=str(uuid.uuid4()))
