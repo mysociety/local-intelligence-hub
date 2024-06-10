@@ -12,7 +12,7 @@ import { Mail } from "lucide-react";
 import { ExternalDataSourceCard } from "@/components/ExternalDataSourceCard";
 import { externalDataSourceOptions } from "@/lib/data";
 import { useAtomValue } from "jotai";
-import { currentOrganisationAtom } from "@/data/organisation";
+import { currentOrganisationIdAtom } from "@/data/organisation";
 
 const LIST_UPDATE_CONFIGS = gql`
   query ListOrganisations($currentOrganisationId: ID!) {
@@ -69,7 +69,7 @@ const LIST_UPDATE_CONFIGS = gql`
 `;
 
 export default function ExternalDataSourceList() {
-  const currentOrganisationId = useAtomValue(currentOrganisationAtom)
+  const currentOrganisationId = useAtomValue(currentOrganisationIdAtom)
   const { loading, error, data, refetch } = useQuery<ListOrganisationsQuery, ListOrganisationsQueryVariables>(LIST_UPDATE_CONFIGS, {
     variables: { currentOrganisationId },
   });

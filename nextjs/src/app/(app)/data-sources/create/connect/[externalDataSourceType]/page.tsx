@@ -42,8 +42,8 @@ import { getFieldsForDataSourceType } from "@/components/UpdateExternalDataSourc
 import { camelCase } from "lodash";
 import { Building, Calendar, Newspaper, PersonStanding, Pin, Quote, User } from "lucide-react";
 import { locationTypeOptions } from "@/data/location";
-import { useAtom } from "jotai";
-import { currentOrganisationAtom } from "@/data/organisation";
+import { useAtom, useAtomValue } from "jotai";
+import { currentOrganisationIdAtom } from "@/data/organisation";
 
 const TEST_DATA_SOURCE = gql`
   query TestDataSource($input: CreateExternalDataSourceInput!) {
@@ -98,7 +98,7 @@ export default function Page({
 }: {
   params: { externalDataSourceType: keyof CreateExternalDataSourceInput };
 }) {
-  const orgId = useAtom(currentOrganisationAtom)
+  const orgId = useAtomValue(currentOrganisationIdAtom)
   const router = useRouter();
   const context = useContext(CreateAutoUpdateFormContext);
 
@@ -246,12 +246,22 @@ export default function Page({
   const airtableUrl = form.watch("temp.airtableBaseUrl")
   const baseId = form.watch("airtable.baseId")
   const tableId = form.watch("airtable.tableId")
+
   useEffect(() => {
     if (airtableUrl) {
-      const url = new URL(airtableUrl)
-      const [_, base, table, ...pathSegments] = url.pathname.split('/')
-      form.setValue("airtable.baseId", base)
-      form.setValue("airtable.tableId", table)
+      try {
+        const url = new URL(airtableUrl)
+        const [_, base, table, ...pathSegments] = url.pathname.split('/')
+        form.setValue("airtable.baseId", base)
+        form.setValue("airtable.tableId", table)
+      } catch (e) {
+        // Invalid URL
+        form.setError("temp.airtableBaseUrl", {
+          type: "validate",
+          message: "Invalid URL"
+        })
+        return
+      }
     }
   }, [airtableUrl])
 
@@ -315,7 +325,7 @@ export default function Page({
       [externalDataSourceType]: {
         ...genericCRMData,
         ...CRMSpecificData,
-        organisation: orgId
+        organisation: { set: orgId }
       }
     }
     toastPromise(createSource({ variables: { input }}),
