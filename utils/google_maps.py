@@ -40,29 +40,24 @@ def google_forward_geocode_payload(query: str | GeocodingQuery, country: str | l
             "region": ",".join(ensure_cctld(country)),
         }
     
-def google_geocode_cache_key(query: str | GeocodingQuery, country: str | list[str] = "GB"):
-    if isinstance(query, GeocodingQuery):
-        hash = hashlib.md5(query.query.encode('utf-8')).hexdigest()
-        return f"google:geocode:{hash}:{query.country}"
-    else:
-        hash = hashlib.md5(query.encode('utf-8')).hexdigest()
-        return f"google:geocode:{hash}:{country}"
+def google_geocode_cache_key(query: GeocodingQuery):
+    hash = hashlib.md5(query.query.encode('utf-8')).hexdigest()
+    return f"google:geocode:{hash}:{query.country}"
 
-def address_to_point(query: str | GeocodingQuery, country: str | list[str] = "GB"):
+def geocode_address(query: GeocodingQuery):
     cached = db_cache.get(google_geocode_cache_key(query), None)
     if cached: 
         return cached
     
-    get_query_args = google_forward_geocode_payload(query, country)
+    get_query_args = google_forward_geocode_payload(query)
 
-    response: GoogleGeocodingResponse = gmaps.geocode(**get_query_args)
+    response: list[GoogleGeocodingResponse] = gmaps.geocode(**get_query_args)
     db_cache.set(google_geocode_cache_key(query), response, None)
-    if response:
-        location = response.results[0].geometry.location
-        return Point(x=location.lng, y=location.lat, srid=4326)
+    if response and len(response) > 0:
+        res: GoogleGeocodingResponse = benedict(response[0])
+        return res
 
-@batch_and_aggregate(100)
-def batch_address_to_point(queries: list[GeocodingQuery]):
+def batch_geocode_address(queries: list[GeocodingQuery]):
     data: list[GoogleGeocodingResponse] = []
 
     for index, query in enumerate(queries):
@@ -71,7 +66,7 @@ def batch_address_to_point(queries: list[GeocodingQuery]):
         if cached: 
             data.append(cached)
         else:
-            new_val = address_to_point(query)
+            new_val = geocode_address(query)
             data.append(new_val)
 
     return data
@@ -80,8 +75,8 @@ def batch_address_to_point(queries: list[GeocodingQuery]):
 
 @dataclass
 class AddressComponent:
-    longname: Optional[str] = None
-    shortname: Optional[str] = None
+    long_name: Optional[str] = None
+    short_name: Optional[str] = None
     types: Optional[List[str]] = None
 
 
@@ -92,29 +87,29 @@ class Location:
 
 
 @dataclass
-class Bounds:
+class Viewport:
     northeast: Optional[Location] = None
     southwest: Optional[Location] = None
 
 
 @dataclass
 class Geometry:
-    bounds: Optional[Bounds] = None
     location: Optional[Location] = None
-    locationtype: Optional[str] = None
-    viewport: Optional[Bounds] = None
+    location_type: Optional[str] = None
+    viewport: Optional[Viewport] = None
 
 
 @dataclass
-class Result:
-    addresscomponents: Optional[List[AddressComponent]] = None
-    formattedaddress: Optional[str] = None
-    geometry: Optional[Geometry] = None
-    placeid: Optional[str] = None
-    types: Optional[List[str]] = None
+class PlusCode:
+    compound_code: Optional[str] = None
+    global_code: Optional[str] = None
 
 
 @dataclass
 class GoogleGeocodingResponse:
-    results: Optional[List[Result]] = None
-    status: Optional[str] = None
+    address_components: Optional[List[AddressComponent]] = None
+    formatted_address: Optional[str] = None
+    geometry: Optional[Geometry] = None
+    place_id: Optional[str] = None
+    plus_code: Optional[PlusCode] = None
+    types: Optional[List[str]] = None

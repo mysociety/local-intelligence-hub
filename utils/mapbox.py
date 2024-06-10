@@ -19,29 +19,18 @@ class GeocodingQuery:
     query: str = None
     country: str | list[str] = "GB"
 
-def mapbox_v6_forward_geocode_payload(query: str | GeocodingQuery, country: str | list[str] = "GB"):
-    if isinstance(query, GeocodingQuery):
-        return {
-            "q": query.query,
-            "limit": 1,
-            "country": ",".join(ensure_list(query.country)),
-        }
-    else:
-        return {
-            "q": query,
-            "limit": 1,
-            "country": ",".join(ensure_list(country)),
-        }
+def mapbox_v6_forward_geocode_payload(query: GeocodingQuery):
+    return {
+        "q": query.query,
+        "limit": 1,
+        "country": ",".join(ensure_list(query.country)),
+    }
     
-def mapbox_geocode_cache_key(query: str | GeocodingQuery, country: str | list[str] = "GB"):
-    if isinstance(query, GeocodingQuery):
-        hash = hashlib.md5(query.query.encode('utf-8')).hexdigest()
-        return f"mapbox:geocode:{hash}:{query.country}"
-    else:
-        hash = hashlib.md5(query.encode('utf-8')).hexdigest()
-        return f"mapbox:geocode:{hash}:{country}"
+def mapbox_geocode_cache_key(query: GeocodingQuery):
+    hash = hashlib.md5(query.query.encode('utf-8')).hexdigest()
+    return f"mapbox:geocode:{hash}:{query.country}"
 
-def address_to_geojson(query: str | GeocodingQuery, country: str | list[str] = "GB"):
+def address_to_geojson(query: str | GeocodingQuery):
     cached = db_cache.get(mapbox_geocode_cache_key(query), None)
     if cached: 
         return cached
@@ -49,7 +38,7 @@ def address_to_geojson(query: str | GeocodingQuery, country: str | list[str] = "
     response = httpx.get(
         "https://api.mapbox.com/search/geocode/v6/forward",
         params={
-            **mapbox_v6_forward_geocode_payload(query, country),
+            **mapbox_v6_forward_geocode_payload(query),
             "access_token": settings.MAPBOX_ACCESS_TOKEN,
         },
     )

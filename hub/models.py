@@ -1,4 +1,5 @@
 import asyncio
+from enum import Enum
 import hashlib
 import itertools
 import uuid
@@ -39,7 +40,8 @@ from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from sentry_sdk import metrics
 from strawberry.dataloader import DataLoader
-from utils.mapbox import GeocodingQuery, GeocodingResult, batch_address_to_geojson
+from utils import mapbox
+from utils import google_maps
 from wagtail.admin.panels import FieldPanel, ObjectList, TabbedInterface
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
 from wagtail.models import Page, Site
@@ -69,6 +71,11 @@ User = get_user_model()
 
 logger = get_simple_debug_logger(__name__)
 
+# enum of geocoders: postcodes_io, mapbox, google
+class Geocoder(Enum):
+    POSTCODES_IO = "postcodes_io"
+    MAPBOX = "mapbox"
+    GOOGLE = "google"
 
 class Organisation(models.Model):
     slug = models.SlugField(max_length=100, unique=True)
@@ -705,7 +712,6 @@ class GenericData(CommonData):
     last_update = models.DateTimeField(auto_now=True)
     point = PointField(srid=4326, blank=True, null=True)
     polygon = MultiPolygonField(srid=4326, blank=True, null=True)
-    postcode_data = JSONField(blank=True, null=True)
     postcode = models.CharField(max_length=1000, blank=True, null=True)
     first_name = models.CharField(max_length=300, blank=True, null=True)
     last_name = models.CharField(max_length=300, blank=True, null=True)
@@ -715,8 +721,8 @@ class GenericData(CommonData):
     start_time = models.DateTimeField(blank=True, null=True)
     end_time = models.DateTimeField(blank=True, null=True)
     public_url = models.URLField(max_length=2000, blank=True, null=True)
-    osm_data = JSONField(blank=True, null=True)
-    mapbox_geocode_data = JSONField(blank=True, null=True)
+    geocode_data = JSONField(blank=True, null=True)
+    geocoder = models.CharField(max_length=1000, blank=True, null=True, default=Geocoder.POSTCODES_IO.value)
     address = models.CharField(max_length=1000, blank=True, null=True)
     title = models.CharField(max_length=1000, blank=True, null=True)
     description = models.TextField(max_length=3000, blank=True, null=True)
@@ -913,6 +919,7 @@ class UpdateMapping(TypedDict):
 
 def default_countries():
     return ["GB"]
+
 
 class ExternalDataSource(PolymorphicModel, Analytics):
     """
@@ -1369,7 +1376,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 )
                 update_data = {
                     **structured_data,
-                    "postcode_data": postcode_data,
+                    "geocode_data": postcode_data,
+                    "geocoder": Geocoder.POSTCODES_IO.value,
                     "point": (
                         Point(
                             postcode_data["longitude"],
@@ -1405,24 +1413,25 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 Used to batch-import data.
                 """
                 structured_data = get_update_data(record)
-                address_data: GeocodingResult = await loaders["mapbox_geocoder"].load(
-                    GeocodingQuery(
+                address_data = google_maps.geocode_address(
+                    google_maps.GeocodingQuery(
                         query=self.get_record_field(record, self.geography_column),
                         country=self.countries,
                     )
                 )
                 update_data = {
                     **structured_data,
-                    "mapbox_geocode_data": address_data,
+                    "geocode_data": address_data,
+                    "geocoder": Geocoder.GOOGLE.value,
                     "point": (
                         Point(
-                            address_data.features[0].geometry.coordinates[0],
-                            address_data.features[0].geometry.coordinates[1],
+                            x=address_data.geometry.location.lng,
+                            y=address_data.geometry.location.lat,
                         )
                         if (
                             address_data is not None
-                            and address_data.features is not None
-                            and len(address_data.features) > 0
+                            and address_data.geometry is not None
+                            and address_data.geometry.location is not None
                         )
                         else None
                     ),
@@ -1626,6 +1635,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         loaders = Loaders(
             postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo),
             mapbox_geocoder=DataLoader(load_fn=batch_address_to_geojson),
+            google_geocoder=DataLoader(load_fn=batch_address_to_geojson),
             fetch_record=DataLoader(load_fn=self.fetch_many_loader, cache=False),
             source_loaders={
                 str(source.id): source.data_loader_factory()
