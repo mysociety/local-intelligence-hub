@@ -1,5 +1,6 @@
 from datetime import datetime
 from random import randint
+from time import sleep
 from typing import List
 
 from django.conf import settings
@@ -45,7 +46,7 @@ class TestExternalDataSource:
         self.source: models.ExternalDataSource = self.create_test_source()
 
         if self.source.automated_webhooks:
-            self.source.teardown_webhooks()
+            self.source.teardown_unused_webhooks(force=True)
 
     def tearDown(self) -> None:
         try:
@@ -56,7 +57,7 @@ class TestExternalDataSource:
             print("Warning: deletion not implemented for source", self.source.crm_type)
             pass
         if self.source.automated_webhooks:
-            self.source.teardown_webhooks()
+            self.source.teardown_unused_webhooks(force=True)
         return super().tearDown()
 
     def create_test_record(self, record: models.ExternalDataSource.CUDRecord):
@@ -108,7 +109,7 @@ class TestExternalDataSource:
     async def test_webhooks(self):
         if not self.source.automated_webhooks:
             return self.skipTest("Webhooks not automated")
-        self.source.teardown_webhooks()
+        self.source.teardown_unused_webhooks(force=True)
         try:
             self.source.webhook_healthcheck()
             self.fail()
@@ -235,9 +236,18 @@ class TestExternalDataSource:
         # Check
         try:
             assert len(records) == 2
-        except AssertionError:
-            print(f"Incorrect record count: expected 2, found {len(records)}")
-            assert False
+        except AssertionError as e:
+            # ActionNetwork is sometimes slow to reflect new members
+            if isinstance(self.source, models.ActionNetworkSource):
+                sleep(5)
+                records = await self.source.fetch_many(
+                    [self.source.get_record_id(record) for record in records]
+                )
+                assert len(records) == 2
+            # Should be an error for other source types
+            else:
+                raise e
+
         # Check the email field instead of postcode, because Mailchimp doesn't set
         # the postcode without a full address, which is not present in this test
         for test_record in test_record_data:

@@ -3,14 +3,15 @@ import logging
 
 def get_simple_debug_logger(name):
     logger = logging.getLogger(name)
-    original_debug = logger.debug
+    original_makeRecord = logger.makeRecord
 
-    def debug_logger(*args, **kwargs):
-        return original_debug(concat(args), **kwargs)
+    def debug_makeRecord(name, level, fn, lno, msg, args, *rest, **kwargs):
+        msg = concat(msg, *(args or []))
+        return original_makeRecord(name, level, fn, lno, msg, {}, *rest, **kwargs)
 
-    setattr(logger, "debug", debug_logger)
+    setattr(logger, "makeRecord", debug_makeRecord)
     return logger
 
 
 def concat(*args):
-    return "".join([str(a) for a in args])
+    return " ".join([str(a) for a in args])

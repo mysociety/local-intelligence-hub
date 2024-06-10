@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 import { UpdateMappingForm } from "@/components/UpdateMappingForm";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
-import { UDPATE_EXTERNAL_DATA_SOURCE } from '@/graphql/mutations';
+import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/graphql/mutations';
 import { triggerAnalyticsEvent } from "@/app/utils/posthogutils"; 
 
 
@@ -24,6 +24,7 @@ const GET_UPDATE_CONFIG = gql`
   query GetSourceMapping($ID: ID!) {
     externalDataSource(pk: $ID) {
       id
+      autoImportEnabled
       autoUpdateEnabled
       allowUpdates
       hasWebhooks
@@ -63,7 +64,7 @@ export default function Page({
     context.setStep(3)
   }, [context])
 
-  const [updateSource, configResult] = useMutation<UpdateExternalDataSourceMutation, UpdateExternalDataSourceMutationVariables>(UDPATE_EXTERNAL_DATA_SOURCE);
+  const [updateSource, configResult] = useMutation<UpdateExternalDataSourceMutation, UpdateExternalDataSourceMutationVariables>(UPDATE_EXTERNAL_DATA_SOURCE);
 
   const externalDataSource = useQuery<GetSourceMappingQuery, GetSourceMappingQueryVariables>(GET_UPDATE_CONFIG, {
     variables: {

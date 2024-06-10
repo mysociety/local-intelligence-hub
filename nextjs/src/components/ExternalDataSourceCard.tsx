@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { DataSourceCardFragment, AutoUpdateWebhookRefreshMutation, AutoUpdateWebhookRefreshMutationVariables, DataSourceType, DisableAutoUpdateMutation, DisableAutoUpdateMutationVariables, EnableAutoUpdateMutation, EnableAutoUpdateMutationVariables, TriggerFullUpdateMutation, TriggerFullUpdateMutationVariables, CrmType } from "@/__generated__/graphql";
+import { DataSourceCardFragment, DataSourceType, TriggerFullUpdateMutation, TriggerFullUpdateMutationVariables, CrmType, WebhookType, EnableWebhookMutation, EnableWebhookMutationVariables, DisableWebhookMutation, DisableWebhookMutationVariables, WebhookRefreshMutation, WebhookRefreshMutationVariables } from "@/__generated__/graphql";
 import { DataSourceIcon } from "./DataSourceIcon";
 
 export function ExternalDataSourceCard({
@@ -35,6 +35,7 @@ export function ExternalDataSourceCard({
     name: string,
     dataType: DataSourceType,
     automatedWebhooks?: boolean,
+    autoImportEnabled?: boolean,
     autoUpdateEnabled?: boolean,
     crmType?: CrmType
     jobs?: DataSourceCardFragment['jobs'],
@@ -76,8 +77,9 @@ export function ExternalDataSourceCard({
           Sharing with {externalDataSource.sharingPermissions.map((p) => p.organisation.name).join(", ")}
         </div>
       )}
+      <EnableWebhooksSwitch externalDataSource={externalDataSource} webhookType={WebhookType.Import} />
       {withUpdateOptions && externalDataSource.dataType === DataSourceType.Member && (
-        <AutoUpdateSwitch externalDataSource={externalDataSource} />
+        <EnableWebhooksSwitch externalDataSource={externalDataSource} webhookType={WebhookType.Update} />
       )}
       {withUpdateOptions && externalDataSource?.jobs?.[0]?.lastEventAt ? (
         <div className="text-sm text-meepGray-400">
@@ -89,27 +91,30 @@ export function ExternalDataSourceCard({
   );
 }
 
-export function AutoUpdateSwitch({
+export function EnableWebhooksSwitch({
   externalDataSource,
+  webhookType
 }: {
-  externalDataSource: any;
+  externalDataSource: any,
+  webhookType: WebhookType
 }) {
   const client = useApolloClient();
+  const checked = webhookType === WebhookType.Import ? externalDataSource.autoImportEnabled : externalDataSource.autoUpdateEnabled
   return (
     <div className="flex flex-row items-center justify-start gap-2 text-label">
       <Switch
-        checked={externalDataSource.autoUpdateEnabled}
+        checked={checked}
         onCheckedChange={(e) =>
-          toggleAutoUpdate(client, e, externalDataSource.id)
+          toggleWebhooksEnabled(client, e, externalDataSource.id, webhookType)
         }
       />
-      <span className={externalDataSource.autoUpdateEnabled ? "text-brandBlue" : ""}>Auto-update</span>
+      <span className={checked ? "text-brandBlue" : ""}>Auto-{webhookType}</span>
     </div>
   );
 }
 
-const AUTO_UPDATE_WEBHOOK_REFRESH = gql`
-  mutation AutoUpdateWebhookRefresh($ID: String!) {
+const WEBHOOK_REFRESH = gql`
+  mutation WebhookRefresh($ID: String!) {
     refreshWebhooks(externalDataSourceId: $ID) {
       id
       hasWebhooks
@@ -119,12 +124,12 @@ const AUTO_UPDATE_WEBHOOK_REFRESH = gql`
   }
 `;
 
-export function AutoUpdateWebhookRefresh({
+export function WebhookRefresh({
   externalDataSourceId,
 }: {
-  externalDataSourceId: string;
+  externalDataSourceId: string,
 }) {
-  const [mutate, mutation] = useMutation<AutoUpdateWebhookRefreshMutation, AutoUpdateWebhookRefreshMutationVariables>(AUTO_UPDATE_WEBHOOK_REFRESH, {
+  const [mutate, mutation] = useMutation<WebhookRefreshMutation, WebhookRefreshMutationVariables>(WEBHOOK_REFRESH, {
     variables: { ID: externalDataSourceId },
   });
 
@@ -203,40 +208,41 @@ export function TriggerUpdateButton({
   }
 }
 
-export function toggleAutoUpdate(
+export function toggleWebhooksEnabled(
   client: ApolloClient<any>,
   checked: boolean,
   id: any,
+  webhookType: WebhookType
 ) {
   if (checked) {
     const mutation = client.mutate<
-      EnableAutoUpdateMutation,
-      EnableAutoUpdateMutationVariables
+      EnableWebhookMutation,
+      EnableWebhookMutationVariables
     >({
-      mutation: ENABLE_AUTO_UPDATE,
-      variables: { ID: id },
+      mutation: ENABLE_WEBHOOKS,
+      variables: { ID: id, webhookType },
     });
     toast.promise(mutation, {
       loading: "Enabling...",
-      success: (d: FetchResult<EnableAutoUpdateMutation>) => {
-        return `Enabled auto-updates for ${d.data?.enableAutoUpdate.name}`;
+      success: (d: FetchResult<EnableWebhookMutation>) => {
+        return `Enabled auto-${webhookType.toLowerCase()} for ${d.data?.enableWebhook.name}`;
       },
-      error: `Couldn't enable auto-updates`,
+      error: `Couldn't enable auto-${webhookType.toLowerCase()}`,
     });
   } else {
     const mutation = client.mutate<
-      DisableAutoUpdateMutation,
-      DisableAutoUpdateMutationVariables
+      DisableWebhookMutation,
+      DisableWebhookMutationVariables
     >({
-      mutation: DISABLE_AUTO_UPDATE,
-      variables: { ID: id },
+      mutation: DISABLE_WEBHOOKS,
+      variables: { ID: id, webhookType },
     });
     toast.promise(mutation, {
       loading: "Disabling...",
-      success: (d: FetchResult<DisableAutoUpdateMutation>) => {
-        return `Disabled auto-updates for ${d.data?.disableAutoUpdate.name}`;
+      success: (d: FetchResult<DisableWebhookMutation>) => {
+        return `Disabled auto-${webhookType.toLowerCase()} for ${d.data?.disableWebhook.name}`;
       },
-      error: `Couldn't disable auto-updates`,
+      error: `Couldn't disable auto-${webhookType.toLowerCase()}`,
     });
   }
 }
@@ -248,6 +254,7 @@ export const DATA_SOURCE_FRAGMENT = gql`
     dataType
     crmType
     automatedWebhooks
+    autoImportEnabled
     autoUpdateEnabled
     updateMapping {
       source
@@ -277,10 +284,11 @@ export const GET_UPDATE_CONFIG_CARD = gql`
   ${DATA_SOURCE_FRAGMENT}
 `;
 
-export const ENABLE_AUTO_UPDATE = gql`
-  mutation EnableAutoUpdate($ID: String!) {
-    enableAutoUpdate(externalDataSourceId: $ID) {
+export const ENABLE_WEBHOOKS = gql`
+  mutation EnableWebhook($ID: String!, $webhookType: WebhookType!) {
+    enableWebhook(externalDataSourceId: $ID, webhookType: $webhookType) {
       id
+      autoImportEnabled
       autoUpdateEnabled
       hasWebhooks
       automatedWebhooks
@@ -290,10 +298,11 @@ export const ENABLE_AUTO_UPDATE = gql`
   }
 `;
 
-export const DISABLE_AUTO_UPDATE = gql`
-  mutation DisableAutoUpdate($ID: String!) {
-    disableAutoUpdate(externalDataSourceId: $ID) {
+export const DISABLE_WEBHOOKS = gql`
+  mutation DisableWebhook($ID: String!, $webhookType: WebhookType!) {
+    disableWebhook(externalDataSourceId: $ID, webhookType: $webhookType) {
       id
+      autoImportEnabled
       autoUpdateEnabled
       hasWebhooks
       automatedWebhooks

@@ -28,6 +28,7 @@ const ALL_EXTERNAL_DATA_SOURCES = gql`
           listId
         }
       }
+      autoImportEnabled
       autoUpdateEnabled
     }
   }

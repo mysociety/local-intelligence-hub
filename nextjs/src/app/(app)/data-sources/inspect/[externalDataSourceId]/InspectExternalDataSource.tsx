@@ -13,9 +13,9 @@ import { formatRelative } from "date-fns";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
-  AutoUpdateSwitch,
-  AutoUpdateWebhookRefresh,
+  EnableWebhooksSwitch,
   TriggerUpdateButton,
+  WebhookRefresh,
 } from "@/components/ExternalDataSourceCard";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import {
@@ -30,6 +30,7 @@ import {
   ProcrastinateJobStatus,
   UpdateExternalDataSourceMutation,
   UpdateExternalDataSourceMutationVariables,
+  WebhookType,
 } from "@/__generated__/graphql";
 import { useRouter } from "next/navigation";
 import {
@@ -62,7 +63,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { UpdateMappingForm } from "@/components/UpdateMappingForm";
-import { UDPATE_EXTERNAL_DATA_SOURCE } from "@/graphql/mutations";
+import { UPDATE_EXTERNAL_DATA_SOURCE } from "@/graphql/mutations";
 import { AlertCircle } from "lucide-react"
 import {
   Alert,
@@ -105,16 +106,22 @@ const GET_UPDATE_CONFIG = gql`
           apiKey
         }
       }
-      lastJob {
+      lastImportJob {
         id
         lastEventAt
         status
       }
+      lastUpdateJob {
+        id
+        lastEventAt
+        status
+      }
+      autoImportEnabled
       autoUpdateEnabled
       hasWebhooks
       allowUpdates
       automatedWebhooks
-      autoUpdateWebhookUrl
+      webhookUrl
       webhookHealthcheck
       geographyColumn
       geographyColumnType
@@ -268,6 +275,54 @@ export default function InspectExternalDataSource({
           {source.importProgress?.status === ProcrastinateJobStatus.Doing && (
             <BatchJobProgressBar batchJobProgress={source.importProgress} pastTenseVerb="Imported" />
           )}
+          {source.hasWebhooks && (
+            <section className='space-y-4'>
+              <h2 className="text-hSm mb-5">Auto-import</h2>
+              <p className='text-sm text-meepGray-400'>
+                Auto-imports are {source.autoImportEnabled ? "enabled" : "disabled"} for this data source.
+              </p>
+              {(source.connectionDetails.__typename === "ActionNetworkSource") && (
+                <p className='text-sm text-meepGray-400 text-red-400'>
+                  Warning: Action Network auto-updates only work for new members, not
+                  changes to existing members{"'"} details. If existing members change,
+                  you must trigger a full import using the button above.
+                </p>
+              )}
+              {source.automatedWebhooks ? (
+                <>
+                  <EnableWebhooksSwitch externalDataSource={source} webhookType={WebhookType.Import} />
+                  {source.autoImportEnabled && !source.webhookHealthcheck && (
+                    <>
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Webhooks unhealthy</AlertTitle>
+                        <AlertDescription>
+                          The webhook is unhealthy. Please refresh the webhook to fix auto-updates.
+                        </AlertDescription>
+                      </Alert>
+                      <WebhookRefresh externalDataSourceId={externalDataSourceId} />
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <p>
+                    Webhook URL for auto-imports:
+                  </p>
+                  <code className="bg-black p-2 rounded">{source.webhookUrl}</code>
+                  <p>Turn this switch on once you have added the above Webhook URL to your CRM:</p>
+                  <EnableWebhooksSwitch externalDataSource={source} webhookType={WebhookType.Import} />
+                </div>
+              )}
+              {source.lastImportJob ? (
+                <div className="text-meepGray-400">
+                  Last import:{" "}
+                  {formatRelative(source.lastImportJob.lastEventAt, new Date())} (
+                  {source.lastImportJob.status})
+                </div>
+              ) : null}
+            </section>
+          )}
         </section>
         <section className="space-y-4">
           <header className="flex flex-row justify-between items-center">
@@ -376,7 +431,7 @@ export default function InspectExternalDataSource({
                     )}
                     {source.automatedWebhooks ? (
                       <>
-                        <AutoUpdateSwitch externalDataSource={source} />
+                        <EnableWebhooksSwitch externalDataSource={source}webhookType={WebhookType.Update} />
                         {source.autoUpdateEnabled && !source.webhookHealthcheck && (
                           <>
                             <Alert variant="destructive">
@@ -386,7 +441,7 @@ export default function InspectExternalDataSource({
                                 The webhook is unhealthy. Please refresh the webhook to fix auto-updates.
                               </AlertDescription>
                             </Alert>
-                            <AutoUpdateWebhookRefresh externalDataSourceId={externalDataSourceId} />
+                            <WebhookRefresh externalDataSourceId={externalDataSourceId} />
                           </>
                         )}
                       </>
@@ -395,16 +450,16 @@ export default function InspectExternalDataSource({
                         <p>
                           Webhook URL for auto-updates:
                         </p>
-                        <code className="bg-black p-2 rounded">{source.autoUpdateWebhookUrl}</code>
+                        <code className="bg-black p-2 rounded">{source.webhookUrl}</code>
                         <p>Turn this switch on once you have added the above Webhook URL to your CRM:</p>
-                        <AutoUpdateSwitch externalDataSource={source} />
+                        <EnableWebhooksSwitch externalDataSource={source} webhookType={WebhookType.Update} />
                       </div>
                     )}
-                    {source.lastJob ? (
+                    {source.lastUpdateJob ? (
                       <div className="text-meepGray-400">
                         Last sync:{" "}
-                        {formatRelative(source.lastJob.lastEventAt, new Date())} (
-                        {source.lastJob.status})
+                        {formatRelative(source.lastUpdateJob.lastEventAt, new Date())} (
+                        {source.lastUpdateJob.status})
                       </div>
                     ) : null}
                   </section>
@@ -516,7 +571,7 @@ export default function InspectExternalDataSource({
   function updateMutation (data: ExternalDataSourceInput, e?: React.BaseSyntheticEvent<object, any, any> | undefined) {
     e?.preventDefault();
     const update = client.mutate<UpdateExternalDataSourceMutation, UpdateExternalDataSourceMutationVariables>({
-      mutation: UDPATE_EXTERNAL_DATA_SOURCE,
+      mutation: UPDATE_EXTERNAL_DATA_SOURCE,
       variables: {
         input: {
           id: externalDataSourceId,
