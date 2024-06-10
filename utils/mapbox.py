@@ -62,6 +62,7 @@ def address_to_geojson(query: str | GeocodingQuery, country: str | list[str] = "
 @batch_and_aggregate(1000)
 def batch_address_to_geojson(queries: list[GeocodingQuery]):
     data: list[GeocodingResult | None] = []
+    uncached_queries = []
 
     for index, query in enumerate(queries):
         # TODO: check db cache
@@ -70,26 +71,27 @@ def batch_address_to_geojson(queries: list[GeocodingQuery]):
             data.append(cached)
         else:
             data.append(None)
+            uncached_queries.append(query)
 
     response = httpx.post(
         "https://api.mapbox.com/search/geocode/v6/batch",
-        json=[mapbox_v6_forward_geocode_payload(query) for query in data if query is None],
+        json=[mapbox_v6_forward_geocode_payload(query) for query in uncached_queries],
         params={"access_token": settings.MAPBOX_ACCESS_TOKEN},
     )
     if response.status_code != httpx.codes.OK:
-        logger.error(f"Failed to batch geocode addresses: {response.text}", extra=dict(response=response, query=queries))
+        logger.error(f"Failed to batch geocode addresses: {response.text}", extra=dict(response=response, query=uncached_queries))
         return None
     new_data: BatchGeocodingResponse = benedict(response.json())
-    results = new_data.batch
+    new_results = new_data.batch
 
     # Now we need to merge the new data with the old data
-    for index, query in enumerate(queries):
+    for index, val in enumerate(data):
         # If the data wasn't cached, we need to merge in the new data.
         # We can do this simply because mapbox's API returns the same data in the same order as it was requested.
-        if data[index] is None:
-            new_data_for_query = results.pop(0)
-            db_cache.set(mapbox_geocode_cache_key(query), new_data_for_query, None)
-            data[index] = new_data_for_query
+        if val is None:
+            new_val = new_results.pop(0)
+            db_cache.set(mapbox_geocode_cache_key(query), new_val, None)
+            data[index] = new_val
     return data
 
 ##### GENERATED CODE #####
