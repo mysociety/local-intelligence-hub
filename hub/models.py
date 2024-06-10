@@ -92,10 +92,8 @@ class Organisation(models.Model):
         membership = Membership.objects.filter(user=user).first()
         if membership:
             return membership.organisation
-        org = self.objects.create(name=f"{user.username}'s personal workspace")
-        Membership.objects.create(
-            user=user, organisation=org, slug=user.username, role="owner"
-        )
+        org = self.objects.create(name=f"{user.username}'s personal workspace", slug=user.username)
+        Membership.objects.create(user=user, organisation=org, role="owner")
         return org
 
 
