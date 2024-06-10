@@ -80,7 +80,7 @@ import { format } from "d3-format";
 import pluralize from "pluralize";
 import { externalDataSourceOptions } from "@/lib/data";
 import { useAtom } from "jotai";
-import { currentOrganisationAtom } from "@/data/organisation";
+import { currentOrganisationIdAtom } from "@/data/organisation";
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {
@@ -213,7 +213,7 @@ export default function InspectExternalDataSource({
     pollInterval: 5000
   });
 
-  const orgId = useAtom(currentOrganisationAtom)
+  const orgId = useAtom(currentOrganisationIdAtom)
 
   if (!loading && !data?.externalDataSource) {
     return <h2>Couldn{"'"}t find this data source</h2>;

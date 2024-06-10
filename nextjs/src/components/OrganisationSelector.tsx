@@ -15,13 +15,13 @@ import {
 import { gql, useQuery } from "@apollo/client"
 import { LoadingIcon } from "./ui/loadingIcon"
 import { GetOrganisationsQuery } from "@/__generated__/graphql"
-import { currentOrganisationAtom } from "@/data/organisation"
+import { currentOrganisationIdAtom } from "@/data/organisation"
 import { useAtom } from "jotai"
 import { ArrowDown, ChevronDown } from "lucide-react"
 
 export function OrganisationSelector() {
   const organisations = useQuery<GetOrganisationsQuery>(GET_ORGANISATIONS)
-  const [currentOrganisation, setOrg] = useAtom(currentOrganisationAtom)
+  const [currentOrganisation, setOrg] = useAtom(currentOrganisationIdAtom)
 
   React.useEffect(() => {
     if ((!currentOrganisation || currentOrganisation === "" || !organisations.data?.myOrganisations.some(o => o.id === currentOrganisation)) && organisations.data?.myOrganisations.length) {

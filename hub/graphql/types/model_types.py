@@ -1249,7 +1249,9 @@ class HubPage:
 
     @strawberry_django.field
     def hub(self) -> "HubHomepage":
-        return self.get_site().root_page.specific
+        page = self.get_site().root_page.specific
+        if isinstance(page, models.HubHomepage):
+            return page
 
 
 @strawberry.type
@@ -1295,10 +1297,11 @@ def hub_page_by_path(
     }
     request.path = path
     site = Site.objects.get(hostname=hostname)
-    if path is None:
-        return site.root_page.specific
-    page = models.Page.find_for_request(request, path)
-    return page.specific if page else None
+    if isinstance(site.root_page.specific, models.HubHomepage):
+        if path is None:
+            return site.root_page.specific
+        page = models.Page.find_for_request(request, path)
+        return page.specific if page else None
 
 
 @strawberry_django.field()

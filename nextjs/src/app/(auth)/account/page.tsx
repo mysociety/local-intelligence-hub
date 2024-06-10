@@ -19,14 +19,6 @@ export default async function Account() {
           {user.email}
         </CardContent>
       </Card>
-      <Card x-chunk="dashboard-04-chunk-2">
-        <CardHeader className='p-4'>
-          <CardTitle>Your organisations</CardTitle>
-        </CardHeader>
-        <CardContent className='px-4'>
-          <YourOrganisations />
-        </CardContent>
-      </Card>
     </div>
   );
 }
