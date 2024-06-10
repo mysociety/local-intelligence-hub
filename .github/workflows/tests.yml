@@ -27,7 +27,9 @@ jobs:
         ports:
           - 5432:5432
     container:
-      image: python:3.12
+      # TODO: Revert to 3.12 once this issue is fixed (for us the error is in pyairtable):
+      # https://stackoverflow.com/questions/78593700/langchain-community-langchain-packages-giving-error-missing-1-required-keywor
+      image: python:3.12.3
       env:
         DATABASE_URL: postgis://postgres:password@postgres:5432/local-intelligence
         CACHE_FILE: /tmp/meep
