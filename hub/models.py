@@ -722,7 +722,9 @@ class GenericData(CommonData):
     image = models.ImageField(null=True, max_length=1000, upload_to="generic_data")
 
     def remote_url(self):
-        return self.data_type.data_set.external_data_source.record_url(self.data, self.json)
+        return self.data_type.data_set.external_data_source.record_url(
+            self.data, self.json
+        )
 
     def __str__(self):
         if self.name:
