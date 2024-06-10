@@ -9,6 +9,7 @@ import requests
 
 from utils.geo import EERs, create_point
 from utils.py import async_batch_and_aggregate, get, get_path
+from django.contrib.gis.geos import Point
 
 
 @dataclass
@@ -129,6 +130,49 @@ async def get_bulk_postcode_geo(postcodes) -> list[PostcodesIOResult]:
             None,
         )
         for postcode in postcodes
+    ]
+
+    # add EER codes
+    for index, result in enumerate(results):
+        if result is not None:
+            results[index]["codes"]["european_electoral_region"] = next(
+                filter(
+                    lambda eer: eer["label"] == result["european_electoral_region"],
+                    EERs,
+                ),
+                {},
+            ).get("code", None)
+
+    return results
+
+@async_batch_and_aggregate(settings.POSTCODES_IO_BATCH_MAXIMUM)
+async def get_bulk_postcode_geo_from_coords(coordinates: list[Point]):
+    coords = [{"longitude": coord.x, "latitude": coord.y} for coord in coordinates]
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{settings.POSTCODES_IO_URL}/postcodes",
+            json={"geolocations": coords},
+        )
+    if response.status_code != httpx.codes.OK:
+        raise Exception(f"Failed to bulk geocode postcodes: {coords}.")
+
+    data = response.json()
+    status = get(data, "status")
+    result: List[ResultElement] = get(data, "result")
+
+    if status != 200 or result is None:
+        raise Exception(f"Failed to bulk geocode postcodes: {coords}.")
+
+    results = [
+        next(
+            (
+                geo.get("result")[0] if geo.get("result") else None
+                for geo in result
+                if geo["query"] == coord
+            ),
+            None,
+        )
+        for coord in coords
     ]
 
     # add EER codes

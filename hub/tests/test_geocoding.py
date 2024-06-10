@@ -2,7 +2,8 @@ import json
 from django.test import TestCase
 from utils.mapbox import GeocodingQuery, batch_address_to_geojson as batch_address_to_geojson_mapbox
 from utils.google_maps import GeocodingQuery, batch_geocode_address as batch_address_to_geojson_google
-from utils.postcodesIO import get_bulk_postcode_geo
+from utils.postcodesIO import get_bulk_postcode_geo, get_bulk_postcode_geo_from_coords
+from django.contrib.gis.geos import Point
 
 
 class TestGeocoding(TestCase):
@@ -15,6 +16,15 @@ class TestGeocoding(TestCase):
         results = await get_bulk_postcode_geo(queries)
         self.assertEqual(len(results), 2)
         self.assertEqual(results[0].postcode, "G1 1AB")
+
+    async def test_get_bulk_postcode_geo_from_coords(self):
+        queries = [
+            Point(-0.127758, 51.507351),
+            Point(-2.2426, 53.4808),
+        ]
+        results = await get_bulk_postcode_geo_from_coords(queries)
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0].postcode, "WC2N 5DU")
 
     def test_bulk_geocoding_addresses_mapbox(self):
         queries = [

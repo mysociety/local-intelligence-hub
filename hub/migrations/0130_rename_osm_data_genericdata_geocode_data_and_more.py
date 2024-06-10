@@ -13,12 +13,8 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RenameField(
             model_name="genericdata",
-            old_name="postcode_data",
+            old_name="osm_data",
             new_name="geocode_data",
-        ),
-        migrations.RemoveField(
-            model_name="genericdata",
-            name="osm_data",
         ),
         migrations.AddField(
             model_name="externaldatasource",

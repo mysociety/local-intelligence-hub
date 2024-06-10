@@ -52,9 +52,9 @@ def geocode_address(query: GeocodingQuery):
     get_query_args = google_forward_geocode_payload(query)
 
     response: list[GoogleGeocodingResponse] = gmaps.geocode(**get_query_args)
-    db_cache.set(google_geocode_cache_key(query), response, None)
     if response and len(response) > 0:
         res: GoogleGeocodingResponse = benedict(response[0])
+        db_cache.set(google_geocode_cache_key(query), res, None)
         return res
 
 def batch_geocode_address(queries: list[GeocodingQuery]):

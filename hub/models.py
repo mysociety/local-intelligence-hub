@@ -64,7 +64,7 @@ from hub.tasks import (
 )
 from hub.views.mapped import ExternalDataSourceWebhook
 from utils.log import get_simple_debug_logger
-from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
+from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo, get_bulk_postcode_geo_from_coords
 from utils.py import batched, ensure_list, get, is_maybe_id
 
 User = get_user_model()
@@ -712,6 +712,7 @@ class GenericData(CommonData):
     last_update = models.DateTimeField(auto_now=True)
     point = PointField(srid=4326, blank=True, null=True)
     polygon = MultiPolygonField(srid=4326, blank=True, null=True)
+    postcode_data = JSONField(blank=True, null=True)
     postcode = models.CharField(max_length=1000, blank=True, null=True)
     first_name = models.CharField(max_length=300, blank=True, null=True)
     last_name = models.CharField(max_length=300, blank=True, null=True)
@@ -898,6 +899,7 @@ def cast_data(sender, instance, *args, **kwargs):
 
 class Loaders(TypedDict):
     postcodesIO: DataLoader
+    postcodesIOFromPoint: DataLoader
     mapbox_geocoder: DataLoader
     fetch_record: DataLoader
     source_loaders: dict[str, DataLoader]
@@ -1376,8 +1378,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 )
                 update_data = {
                     **structured_data,
-                    "geocode_data": postcode_data,
-                    "geocoder": Geocoder.POSTCODES_IO.value,
+                    "postcode_data": postcode_data,
                     "point": (
                         Point(
                             postcode_data["longitude"],
@@ -1414,6 +1415,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 """
                 structured_data = get_update_data(record)
                 address = self.get_record_field(record, self.geography_column)
+                point = None
+                address_data = None
+                postcode_data = None
                 if address is None or (
                     isinstance(address, str) and (
                         address.strip() == ""
@@ -1422,28 +1426,39 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 ):
                     address_data = None
                 else:
-                    address_data = google_maps.geocode_address(
+                    # async-ify the function because it uses sync cache queries
+                    address_data = await sync_to_async(google_maps.geocode_address)(
                         google_maps.GeocodingQuery(
                             query=address,
                             country=self.countries,
                         )
                     )
+                    if address_data is not None:
+                        point = (
+                            Point(
+                                x=address_data.geometry.location.lng,
+                                y=address_data.geometry.location.lat,
+                            )
+                            if (
+                                address_data is not None
+                                and address_data.geometry is not None
+                                and address_data.geometry.location is not None
+                            )
+                            else None
+                        )
+                        if point is not None:
+                            # Capture this so we have standardised Postcodes IO data for all records
+                            # (e.g. for analytical queries that aggregate on region)
+                            # even if the address is not postcode-specific (e.g. "London").
+                            # this can be gleaned from geocode_data__types, e.g. [ "administrative_area_level_1", "political" ]
+                            postcode_data: PostcodesIOResult = await loaders["postcodesIOFromPoint"].load(point)
+
                 update_data = {
                     **structured_data,
+                    "postcode_data": postcode_data,
                     "geocode_data": address_data,
-                    "geocoder": Geocoder.GOOGLE.value,
-                    "point": (
-                        Point(
-                            x=address_data.geometry.location.lng,
-                            y=address_data.geometry.location.lat,
-                        )
-                        if (
-                            address_data is not None
-                            and address_data.geometry is not None
-                            and address_data.geometry.location is not None
-                        )
-                        else None
-                    ),
+                    "geocoder": Geocoder.GOOGLE.value if address_data is not None else None,
+                    "point": point,
                 }
 
                 await GenericData.objects.aupdate_or_create(
@@ -1643,8 +1658,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     async def get_loaders(self) -> Loaders:
         loaders = Loaders(
             postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo),
-            mapbox_geocoder=DataLoader(load_fn=batch_address_to_geojson),
-            google_geocoder=DataLoader(load_fn=batch_address_to_geojson),
+            postcodesIOFromPoint=DataLoader(load_fn=get_bulk_postcode_geo_from_coords),
             fetch_record=DataLoader(load_fn=self.fetch_many_loader, cache=False),
             source_loaders={
                 str(source.id): source.data_loader_factory()
