@@ -722,7 +722,7 @@ class GenericData(CommonData):
     image = models.ImageField(null=True, max_length=1000, upload_to="generic_data")
 
     def remote_url(self):
-        return self.data_type.data_set.external_data_source.record_url(self.data)
+        return self.data_type.data_set.external_data_source.record_url(self.data, self.json)
 
     def __str__(self):
         if self.name:
@@ -1222,7 +1222,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         return None
 
-    def record_url(self, record_id: str) -> Optional[str]:
+    def record_url(self, record_id: str, record_data: dict) -> Optional[str]:
         """
         Get the URL of a record in the remote system.
         """
@@ -1762,8 +1762,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     def disable_auto_import(self):
         self.auto_import_enabled = False
         self.save()
-        if self.automated_webhooks and hasattr(self, "teardown_webhooks"):
-            self.teardown_webhooks()
+        if self.automated_webhooks and hasattr(self, "teardown_unused_webhooks"):
+            self.teardown_unused_webhooks()
 
     def enable_auto_update(self) -> Union[None, int]:
         if not self.allow_updates:
@@ -1786,8 +1786,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         self.auto_update_enabled = False
         self.save()
-        if self.automated_webhooks and hasattr(self, "teardown_webhooks"):
-            self.teardown_webhooks()
+        if self.automated_webhooks and hasattr(self, "teardown_unused_webhooks"):
+            self.teardown_unused_webhooks()
 
     # Webhooks
 
@@ -2215,7 +2215,7 @@ class AirtableSource(ExternalDataSource):
     def record_url_template(self):
         return f"https://airtable.com/{self.base_id}/{self.table_id}/{{record_id}}"
 
-    def record_url(self, record_id: str):
+    def record_url(self, record_id: str, record_data: dict):
         return f"https://airtable.com/{self.base_id}/{self.table_id}/{record_id}"
 
     async def fetch_one(self, member_id):
@@ -2269,19 +2269,11 @@ class AirtableSource(ExternalDataSource):
         )
 
     def auto_webhook_specification(self):
-        if self.geography_column is None:
-            raise ValueError("A geography column is required for auto-updates to work.")
         # DOCS: https://airtable.com/developers/web/api/model/webhooks-specification
         return {
             "options": {
                 "filters": {
                     "recordChangeScope": self.table_id,
-                    "watchDataInFieldIds": [
-                        # Listen for any geography changes
-                        self.table.schema()
-                        .field(self.geography_column)
-                        .id
-                    ],
                     "dataTypes": ["tableData"],
                     "changeTypes": [
                         "add",
@@ -2303,7 +2295,7 @@ class AirtableSource(ExternalDataSource):
                 return False
         return True
 
-    def teardown_webhooks(self, force=False):
+    def teardown_unused_webhooks(self, force=False):
         # Only teardown if forced or if no webhook behavior is enabled
         should_teardown = force or (
             not self.auto_import_enabled and not self.auto_update_enabled
@@ -2316,7 +2308,7 @@ class AirtableSource(ExternalDataSource):
                 webhook.delete()
 
     def setup_webhooks(self):
-        self.teardown_webhooks(force=True)
+        self.teardown_unused_webhooks(force=True)
         # Auto-import
         logger.info(f"Setting up webhooks for source {self}")
         if self.auto_import_enabled or self.auto_update_enabled:
@@ -2557,19 +2549,19 @@ class MailchimpSource(ExternalDataSource):
         """
         return "https://admin.mailchimp.com/audience/contact-profile?contact_id={record_id}"
 
-    def record_url(self, record_id: str) -> Optional[str]:
+    def record_url(self, record_id: str, record_data: dict) -> Optional[str]:
         """
         Get the URL of a record in the remote system.
         """
-        # TODO: figure this out – the record_id does not work
-        return "https://admin.mailchimp.com/audience/"
+
+        return f"https://admin.mailchimp.com/audience/contact-profile?contact_id={record_data['contact_id']}"
 
     def get_webhooks(self):
         webhooks = self.client.lists.webhooks.all(self.list_id)["webhooks"]
         return [webhook for webhook in webhooks if webhook["url"] == self.webhook_url()]
 
     def setup_webhooks(self):
-        self.teardown_webhooks(force=True)
+        self.teardown_unused_webhooks(force=True)
         # Update external data webhook
         config = {
             "events": {
@@ -2594,7 +2586,7 @@ class MailchimpSource(ExternalDataSource):
             data={"url": self.webhook_url(), **config},
         )
 
-    def teardown_webhooks(self, force=False):
+    def teardown_unused_webhooks(self, force=False):
         # Only teardown if forced or if no webhook behavior is enabled
         should_teardown = force or (
             not self.auto_import_enabled and not self.auto_update_enabled
@@ -2823,7 +2815,7 @@ class ActionNetworkSource(ExternalDataSource):
         """
         return f"https://actionnetwork.org/user_search/group/{self.group_slug}/{{record_uuid}}"
 
-    def record_url(self, record_id: str) -> Optional[str]:
+    def record_url(self, record_id: str, record_data: dict) -> Optional[str]:
         """
         Get the URL of a record in the remote system.
         """

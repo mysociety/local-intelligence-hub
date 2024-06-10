@@ -45,7 +45,7 @@ class TestExternalDataSource:
         self.source: models.ExternalDataSource = self.create_test_source()
 
         if self.source.automated_webhooks:
-            self.source.teardown_webhooks()
+            self.source.teardown_unused_webhooks(force=True)
 
     def tearDown(self) -> None:
         try:
@@ -56,7 +56,7 @@ class TestExternalDataSource:
             print("Warning: deletion not implemented for source", self.source.crm_type)
             pass
         if self.source.automated_webhooks:
-            self.source.teardown_webhooks()
+            self.source.teardown_unused_webhooks(force=True)
         return super().tearDown()
 
     def create_test_record(self, record: models.ExternalDataSource.CUDRecord):
@@ -108,7 +108,7 @@ class TestExternalDataSource:
     async def test_webhooks(self):
         if not self.source.automated_webhooks:
             return self.skipTest("Webhooks not automated")
-        self.source.teardown_webhooks()
+        self.source.teardown_unused_webhooks(force=True)
         try:
             self.source.webhook_healthcheck()
             self.fail()
