@@ -69,6 +69,7 @@ env = environ.Env(
     MAILCHIMP_TCC_KEY=(str, ""),
     MAILCHIMP_TCC_SERVER_PREFIX=(str, ""),
     MAILCHIMP_TCC_LIST_ID=(str, ""),
+    NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=(str, ""),
 )
 
 environ.Env.read_env(BASE_DIR / ".env")
@@ -85,6 +86,7 @@ if CRYPTOGRAPHY_SALT is None:
 if ENCRYPTION_SECRET_KEY is None:
     raise ValueError("ENCRYPTION_SECRET_KEY must be set")
 
+MAPBOX_ACCESS_TOKEN = env("MAPBOX_ACCESS_TOKEN")
 ELECTORAL_COMMISSION_API_KEY = env("ELECTORAL_COMMISSION_API_KEY")
 BASE_URL = env("BASE_URL")
 FRONTEND_BASE_URL = env("FRONTEND_BASE_URL")

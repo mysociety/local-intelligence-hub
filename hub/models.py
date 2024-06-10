@@ -39,6 +39,7 @@ from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from sentry_sdk import metrics
 from strawberry.dataloader import DataLoader
+from utils.mapbox import GeocodingQuery, GeocodingResult, batch_address_to_geojson
 from wagtail.admin.panels import FieldPanel, ObjectList, TabbedInterface
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
 from wagtail.models import Page, Site
@@ -61,7 +62,6 @@ from hub.tasks import (
 )
 from hub.views.mapped import ExternalDataSourceWebhook
 from utils.log import get_simple_debug_logger
-from utils.nominatim import address_to_geojson
 from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
 from utils.py import batched, ensure_list, get, is_maybe_id
 
@@ -716,6 +716,7 @@ class GenericData(CommonData):
     end_time = models.DateTimeField(blank=True, null=True)
     public_url = models.URLField(max_length=2000, blank=True, null=True)
     osm_data = JSONField(blank=True, null=True)
+    mapbox_geocode_data = JSONField(blank=True, null=True)
     address = models.CharField(max_length=1000, blank=True, null=True)
     title = models.CharField(max_length=1000, blank=True, null=True)
     description = models.TextField(max_length=3000, blank=True, null=True)
@@ -891,6 +892,7 @@ def cast_data(sender, instance, *args, **kwargs):
 
 class Loaders(TypedDict):
     postcodesIO: DataLoader
+    mapbox_geocoder: DataLoader
     fetch_record: DataLoader
     source_loaders: dict[str, DataLoader]
 
@@ -909,6 +911,8 @@ class UpdateMapping(TypedDict):
     source_path: str
     destination_column: str
 
+def default_countries():
+    return ["GB"]
 
 class ExternalDataSource(PolymorphicModel, Analytics):
     """
@@ -987,6 +991,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         default=GeographyTypes.POSTCODE,
     )
     geography_column = models.CharField(max_length=250, blank=True, null=True)
+    countries = models.JSONField(
+        default=default_countries,
+        blank=True,
+        null=True,
+        help_text="ISO 3166-1 alpha-2 country codes for geocoding addresses.",
+    )
 
     # Useful for explicit querying and interacting with members in the UI
     # TODO: longitude_field = models.CharField(max_length=250, blank=True, null=True)
@@ -1385,23 +1395,35 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             self.geography_column
             and self.geography_column_type == self.GeographyTypes.ADDRESS
         ):
-            for record in data:
+            loaders = await self.get_loaders()
+
+            async def create_import_record(record):
+                """
+                Converts a record fetched from the API into
+                a GenericData record in the MEEP db.
+
+                Used to batch-import data.
+                """
                 structured_data = get_update_data(record)
-                address = self.get_record_field(record, self.geography_column)
-                try:
-                    osm_data = address_to_geojson(address)
-                except Exception:
-                    osm_data = {}
-                logger.warn([address, osm_data])
+                address_data: GeocodingResult = await loaders["mapbox_geocoder"].load(
+                    GeocodingQuery(
+                        query=self.get_record_field(record, self.geography_column),
+                        country=self.countries,
+                    )
+                )
                 update_data = {
                     **structured_data,
-                    "osm_data": osm_data,
+                    "mapbox_geocode_data": address_data,
                     "point": (
                         Point(
-                            osm_data["geometry"]["coordinates"][0],
-                            osm_data["geometry"]["coordinates"][1],
+                            address_data.features[0].geometry.coordinates[0],
+                            address_data.features[0].geometry.coordinates[1],
                         )
-                        if osm_data is not None and "geometry" in osm_data
+                        if (
+                            address_data is not None
+                            and address_data.features is not None
+                            and len(address_data.features) > 0
+                        )
                         else None
                     ),
                 }
@@ -1411,6 +1433,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     data=self.get_record_id(record),
                     defaults=update_data,
                 )
+
+            await asyncio.gather(*[create_import_record(record) for record in data])
         else:
             # To allow us to lean on LIH's geo-analytics features,
             # TODO: Re-implement this data as `AreaData`, linking each datum to an Area/AreaType as per `self.geography_column` and `self.geography_column_type`.
@@ -1601,6 +1625,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     async def get_loaders(self) -> Loaders:
         loaders = Loaders(
             postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo),
+            mapbox_geocoder=DataLoader(load_fn=batch_address_to_geojson),
             fetch_record=DataLoader(load_fn=self.fetch_many_loader, cache=False),
             source_loaders={
                 str(source.id): source.data_loader_factory()

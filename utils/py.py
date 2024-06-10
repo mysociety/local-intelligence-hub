@@ -75,7 +75,29 @@ def batched(iterable, n):
 
 def batch_and_aggregate(arr_limit):
     def decorator(original_fn):
+        def resulting_fn(arr):
+            if len(arr) == 0:
+                return []
+            if len(arr) <= arr_limit:
+                return original_fn(arr)
+            batches = chunk_array(arr, arr_limit)
+            results = []
+            for batch in batches:
+                results += original_fn(batch)
+            return results
+
+        return resulting_fn
+
+    return decorator
+
+
+def async_batch_and_aggregate(arr_limit):
+    def decorator(original_fn):
         async def resulting_fn(arr):
+            if len(arr) == 0:
+                return []
+            if len(arr) <= arr_limit:
+                return await original_fn(arr)
             batches = chunk_array(arr, arr_limit)
             results = []
             for batch in batches:

@@ -8,7 +8,7 @@ import httpx
 import requests
 
 from utils.geo import EERs, create_point
-from utils.py import batch_and_aggregate, get, get_path
+from utils.py import async_batch_and_aggregate, get, get_path
 
 
 @dataclass
@@ -99,8 +99,8 @@ async def get_postcode_geo(postcode: str) -> PostcodesIOResult:
     return result
 
 
-@batch_and_aggregate(settings.POSTCODES_IO_BATCH_MAXIMUM)
-async def get_bulk_postcode_geo(postcodes) -> PostcodesIOBulkResult:
+@async_batch_and_aggregate(settings.POSTCODES_IO_BATCH_MAXIMUM)
+async def get_bulk_postcode_geo(postcodes) -> list[PostcodesIOResult]:
     postcodes = [
         unquote(postcode or "") for postcode in postcodes
     ]  # parse url encoded spaces
@@ -145,7 +145,7 @@ async def get_bulk_postcode_geo(postcodes) -> PostcodesIOBulkResult:
     return results
 
 
-@batch_and_aggregate(25)
+@async_batch_and_aggregate(25)
 async def bulk_coordinate_geo(coordinates):
     for i, coords in enumerate(coordinates):
         coordinates[i]["limit"] = 1
