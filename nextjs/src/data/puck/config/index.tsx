@@ -15,7 +15,14 @@ import { VerticalSpace, VerticalSpaceProps } from "./blocks/VerticalSpace";
 import { GridRow, GridRowProps } from "./blocks/GridRow";
 import { SignPost, SignPostProps } from "./blocks/SignPost";
 import { SectionHeader, SectionHeaderProps } from "./blocks/SectionHeader/SectionHeader";
+import { FilterableGrid, FilterableGridProps } from "./blocks/FilterableGrid";
 import { EventList, EventListProps } from "./blocks/EventList";
+import { Image, ImageProps } from "./blocks/Image";
+import { HomepageItemsAlias } from "./blocks/HomepageItemsAlias";
+import { GET_PAGE } from "@/app/hub/render/[hostname]/query";
+import { makeFrontEndClient } from "@/components/apollo-wrapper";
+import { GetPageQuery, GetPageQueryVariables } from "@/__generated__/graphql";
+import { About } from "./blocks/About";
 
 export type Props = {
   EventList: EventListProps;
@@ -28,11 +35,15 @@ export type Props = {
   Logos: LogosProps;
   Stats: StatsProps;
   Text: TextProps;
+  Image: ImageProps;
   VerticalSpace: VerticalSpaceProps;
   EventCard: EventCardProps;
   GridRow: GridRowProps;
+  FilterableGrid: FilterableGridProps;
   SignPost: SignPostProps;
   SectionHeader: SectionHeaderProps;
+  HomepageItemsAlias: any;
+  About: any;
 };
 
 export type UserConfig = Config
@@ -48,53 +59,60 @@ export const conf: UserConfig = {
     defaultProps: {
       title: "My Page",
     },
-    render: Root,
+    render: (props) => <Root {...props} />,
+    // TODO: fields
+    // fields: {}
   },
   categories: {
-    components: {
+    specialLayout: {
+      components: [
+        "Hero",
+        "FilterableGrid",
+        "HomepageItemsAlias",
+        "About"
+      ],
+    },
+    pageLayout: {
+      components: [
+        "SectionHeader",
+      ]
+    },
+    grid: {
       components: [
         "Card",
-        "Hero",
-        "EventList",
-        "EventCard",
-        "SignPost",
-        "SectionHeader",
+        "GridRow",
       ],
     },
     layout: {
       components: [
-        "GridRow",
         "Columns",
         "Flex",
         "VerticalSpace"
       ],
     },
-    typography: {
+    content: {
       components: [
-        "Heading",
+        "Text",
         "RichText",
-        "PlainText"
+        "Image",
+        "EventList"
       ],
-    },
-    interactive: {
-      title: "Actions",
-      components: ["ButtonGroup"],
-    },
+    }
   },
   components: {
-    ButtonGroup,
     Card,
     Columns,
     Hero,
-    Heading,
     Flex,
     PlainText: Text,
     VerticalSpace,
-    EventCard,
     GridRow,
-    SignPost,
+    FilterableGrid,
     SectionHeader,
     EventList,
-    RichText: PuckRichText
+    Image,
+    HomepageItemsAlias,
+    RichText: PuckRichText,
+    About
   },
 };

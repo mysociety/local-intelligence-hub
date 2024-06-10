@@ -17,6 +17,10 @@ export const GET_HUB_MAP_DATA = gql`
           id
         }
       }
+      navLinks {
+        label
+        link
+      }
     }
   }
 `

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/tabs-rounded";
 import { useState } from "react";
 import { HustingsCTA } from "@/app/hub/render/[hostname]/map/[[...slugs]]/SearchPanel";
+import Link from "next/link";
 
 export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSearch']['constituency'] }) {
   const [tab, setTab] = useState("events");
@@ -147,6 +148,12 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
                 <div className="w-full border-b border-meepGray-200 my-6"></div>
                 <div className="flex flex-col gap-2 text-jungle-green-neutral ">
                   <HustingsCTA />
+                </div>
+                <div className="w-full border-b border-meepGray-200 my-6"></div>
+                <div className="flex flex-col gap-2 text-jungle-green-neutral ">
+                    <h3 className='font-bold'>Other ways to get involved</h3>
+                    <p>There are lots of easy ways you can show your candidates you care about people, climate and nature. Take a look at this page here to find out more.</p>
+                    <Link href="/get-involved" className='text-jungle-green-600 font-bold'>Learn more &rarr;</Link>
                 </div>
               </>
             )}

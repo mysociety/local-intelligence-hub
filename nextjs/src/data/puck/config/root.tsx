@@ -4,18 +4,32 @@ import { BasicLayout } from "./client";
 import HubNavbar from "./template/HubNavbar";
 import HubFooter from "./template/HubFooter";
 import { twMerge } from "tailwind-merge";
+import { GetPageQuery, GetPageQueryVariables, HubNavLink } from "@/__generated__/graphql";
+import { useQuery } from "@apollo/client";
+import { GET_PAGE } from "@/app/hub/render/[hostname]/query";
 
 export type RootProps = {
   children?: ReactNode;
   title?: string;
   fullScreen?: boolean;
+  navLinks?: HubNavLink[];
 } & DefaultRootProps;
 
 export default function Root({
   children,
   editMode,
+  navLinks = [],
   fullScreen = false,
 }: RootProps) {
+  const pageQuery = useQuery<GetPageQuery, GetPageQueryVariables>(GET_PAGE, {
+    variables: {
+      hostname: typeof window !== "undefined" ? window.location.hostname : "",
+    },
+    skip: !!navLinks?.length || typeof window === "undefined",
+  });
+
+  let links = navLinks.length ? navLinks : pageQuery.data?.hubPageByPath?.hub.navLinks || [];
+ 
   return (
     <>
       <style>{css}</style>
@@ -28,7 +42,7 @@ export default function Root({
         )}
       >
         <header className="sticky top-0 z-50 ">
-          <HubNavbar />
+          <HubNavbar navLinks={links} />
         </header>
         <div
           className={twMerge(

@@ -14,6 +14,10 @@ export const GET_PAGE = gql`
         seoTitle
         seoImageUrl
         searchDescription
+        navLinks {
+          link
+          label
+        }
       }
     }
   }

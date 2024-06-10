@@ -40,6 +40,8 @@ import { toastPromise } from "@/lib/toast";
 import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
 import { getFieldsForDataSourceType } from "@/components/UpdateExternalDataSourceFields";
 import { camelCase } from "lodash";
+import { Building, Calendar, Newspaper, PersonStanding, Pin, Quote, User } from "lucide-react";
+import { locationTypeOptions } from "@/data/location";
 
 const TEST_DATA_SOURCE = gql`
   query TestDataSource($input: CreateExternalDataSourceInput!) {
@@ -83,7 +85,11 @@ const CREATE_DATA_SOURCE = gql`
 `;
 
 
-type FormInputs = CreateExternalDataSourceInput & ExternalDataSourceInput
+type FormInputs = CreateExternalDataSourceInput & ExternalDataSourceInput & {
+  temp?: {
+    airtableBaseUrl?: string
+  }
+}
 
 export default function Page({
   params: { externalDataSourceType },
@@ -159,8 +165,11 @@ export default function Page({
     badKeys: string[] = []
   ) {
     useEffect(() => {
+      // If this data isn't being collected for this source type, set the source
+      // field for this data to null. This prevents accidentally trying to collect
+      // invalid data (for example start times for data that is not events).
       // @ts-ignore
-      if (!collectFields.includes(field) && !geographyFields.includes("geographyColumn")) {
+      if (!collectFields.includes(field) && !geographyFields.includes(field)) {
         form.setValue(field, null)
         return
       }
@@ -229,6 +238,19 @@ export default function Page({
       }
     }
   }, [testSourceResult.data])
+
+
+  const airtableUrl = form.watch("temp.airtableBaseUrl")
+  const baseId = form.watch("airtable.baseId")
+  const tableId = form.watch("airtable.tableId")
+  useEffect(() => {
+    if (airtableUrl) {
+      const url = new URL(airtableUrl)
+      const [_, base, table, ...pathSegments] = url.pathname.split('/')
+      form.setValue("airtable.baseId", base)
+      form.setValue("airtable.tableId", table)
+    }
+  }, [airtableUrl])
 
   async function submitTestConnection(formData: FormInputs) {
     if (!formData[externalDataSourceType]) {
@@ -404,11 +426,31 @@ export default function Page({
                           <SelectContent>
                             <SelectGroup>
                               <SelectLabel>Type of data source</SelectLabel>
-                              <SelectItem value={DataSourceType.Member}>A list of members</SelectItem>
-                              <SelectItem value={DataSourceType.Location}>Venues and physical locations</SelectItem>
-                              <SelectItem value={DataSourceType.Event}>Calendar events</SelectItem>
-                              <SelectItem value={DataSourceType.Story}>Articles, stories and reports</SelectItem>
-                              <SelectItem value={DataSourceType.Other}>Other data</SelectItem>
+                              <SelectItem value={DataSourceType.Member}>
+                                <div className='flex flex-row gap-2 items-center'>
+                                  <User className='w-4 text-meepGray-300' /> People
+                                </div>
+                              </SelectItem>
+                              <SelectItem value={DataSourceType.Event}>
+                                <div className='flex flex-row gap-2 items-center'>
+                                  <Calendar className='w-4 text-meepGray-300' /> Events
+                                </div>
+                              </SelectItem>
+                              <SelectItem value={DataSourceType.Story}>
+                                <div className='flex flex-row gap-2 items-center'>
+                                  <Quote className='w-4 text-meepGray-300' /> Stories
+                                </div>
+                              </SelectItem>
+                              <SelectItem value={DataSourceType.Location}>
+                                <div className='flex flex-row gap-2 items-center'>
+                                  <Building className='w-4 text-meepGray-300' /> Locations
+                                </div>
+                              </SelectItem>
+                              <SelectItem value={DataSourceType.Other}>
+                                <div className='flex flex-row gap-2 items-center'>
+                                  <Pin className='w-4 text-meepGray-300' /> Other
+                                </div>
+                              </SelectItem>
                             </SelectGroup>
                           </SelectContent>
                         </Select>
@@ -420,7 +462,6 @@ export default function Page({
               )}
               {!currentSource?.testDataSource?.predefinedColumnNames && (
                 <div className='grid grid-cols-2 gap-4 w-full'>
-                  <FPreopulatedSelectField name="geographyColumn" label={`${form.watch("geographyColumnType")?.toLocaleLowerCase()} field`} required />
                   <FormField
                     control={form.control}
                     name="geographyColumnType"
@@ -436,11 +477,11 @@ export default function Page({
                             <SelectContent>
                               <SelectGroup>
                                 <SelectLabel>Geography type</SelectLabel>
-                                <SelectItem value={GeographyTypes.Postcode}>Postcode</SelectItem>
-                                <SelectItem value={GeographyTypes.Ward}>Ward</SelectItem>
-                                <SelectItem value={GeographyTypes.AdminDistrict}>Council</SelectItem>
-                                <SelectItem value={GeographyTypes.ParliamentaryConstituency}>GE2010-2019 Constituency</SelectItem>
-                                <SelectItem value={GeographyTypes.ParliamentaryConstituency_2025}>GE2024 Constituency</SelectItem>
+                                {locationTypeOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
                               </SelectGroup>
                             </SelectContent>
                           </Select>
@@ -449,6 +490,7 @@ export default function Page({
                       </FormItem>
                     )}
                   />
+                  <FPreopulatedSelectField name="geographyColumn" label={`${form.watch("geographyColumnType")?.toLocaleLowerCase()} field`} required />
                   {collectFields.map((field) => (
                     <FPreopulatedSelectField key={field} name={field} />
                   ))}
@@ -505,8 +547,13 @@ export default function Page({
                     <Input placeholder="patAB1" {...field} required />
                   </FormControl>
                   <FormDescription>
-                    Make sure your token has read and write permissions for
-                    table data, table schema and webhooks.{" "}
+                    <p>Your token should have access to the base and the following {'"'}scopes{'"'}:</p>
+                    <ul className='list-disc list-inside pl-1'>
+                      <li><code>data.records:read</code></li>
+                      <li><code>data.records:write</code></li>
+                      <li><code>schema.bases:read</code></li>
+                      <li><code>webhook:manage</code></li>
+                    </ul>
                     <a
                       className="underline"
                       target="_blank"
@@ -519,6 +566,25 @@ export default function Page({
                 </FormItem>
               )}
             />
+            {(!baseId && !tableId) && (
+              <FormField
+                control={form.control}
+                name="temp.airtableBaseUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Airtable URL</FormLabel>
+                    <FormControl>
+                      {/* @ts-ignore */}
+                      <Input placeholder="https://airtable.com/app123/tbl123" {...field} required />
+                    </FormControl>
+                    <FormDescription>
+                      The URL for your airtable base.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={form.control}
               name="airtable.baseId"

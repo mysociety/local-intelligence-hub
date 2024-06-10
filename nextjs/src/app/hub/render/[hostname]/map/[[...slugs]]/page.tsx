@@ -9,7 +9,7 @@ import { Provider as JotaiProvider, useAtomValue } from "jotai";
 import { MapProvider } from "react-map-gl";
 import { HubMap } from "@/components/hub/HubMap";
 import { ConstituencyView } from "@/components/hub/ConstituencyView";
-import { GetEventDataQuery, GetEventDataQueryVariables, GetLocalDataQuery, GetLocalDataQueryVariables } from "@/__generated__/graphql";
+import { GetEventDataQuery, GetEventDataQueryVariables, GetHubMapDataQuery, GetHubMapDataQueryVariables, GetLocalDataQuery, GetLocalDataQueryVariables } from "@/__generated__/graphql";
 import { SIDEBAR_WIDTH, selectedHubSourceMarkerAtom } from "@/components/hub/data";
 import { usePathname, useParams } from 'next/navigation' 
 import { SearchPanel } from './SearchPanel';
@@ -24,24 +24,24 @@ type Params = {
 }
 
 export default function Page(props: { params: Params }) {
+  const hub = useQuery<GetHubMapDataQuery, GetHubMapDataQueryVariables>(GET_HUB_MAP_DATA, {
+    variables: { hostname: props.params.hostname },
+  });
+
   const shouldDisplayMap = useBreakpoint("md")
 
   return (
-    <Root fullScreen={shouldDisplayMap}>
+    <Root fullScreen={shouldDisplayMap} navLinks={hub.data?.hubByHostname?.navLinks || []}>
       <MapProvider>
         <JotaiProvider>
-          <PageContent {...props} shouldDisplayMap={shouldDisplayMap} />
+          <PageContent {...props} shouldDisplayMap={shouldDisplayMap} hub={hub.data} />
         </JotaiProvider>
       </MapProvider>
     </Root>
   );
 }
 
-function PageContent ({ params: { hostname, slugs }, shouldDisplayMap }: { params: Params, shouldDisplayMap: boolean }) {
-  const hub = useQuery(GET_HUB_MAP_DATA, {
-    variables: { hostname },
-  });
-
+function PageContent ({ params: { hostname, slugs }, shouldDisplayMap, hub }: { params: Params, shouldDisplayMap: boolean, hub?: GetHubMapDataQuery }) {
   // To listen for any soft changes to the pathname
   // and extract a postcode
   // e.g. /map/postcode/E15QJ
@@ -86,7 +86,7 @@ function PageContent ({ params: { hostname, slugs }, shouldDisplayMap }: { param
             <div className="w-full h-full pointer-events-auto">
               <HubMap
                 externalDataSources={
-                  hub.data?.hubByHostname?.layers?.map((i: any) => i.id) ||
+                  hub?.hubByHostname?.layers?.map((i: any) => i.id) ||
                   []
                 }
                 currentConstituency={
@@ -95,12 +95,12 @@ function PageContent ({ params: { hostname, slugs }, shouldDisplayMap }: { param
                     eventData.data?.importedDataGeojsonPoint?.properties?.constituency
                   ) : undefined
                 }
-                localDataLoading={localData.loading}
+                localDataLoading={localData.loading || eventData.loading}
               />
             </div>
             {!localData.loading && (
               <aside
-                className="absolute top-0 md:top-[80px] left-0 sm:left-5 right-0 max-w-full pointer-events-none h-full md:h-[calc(100%-120px)] max-h-full overflow-y-hidden shadow-hub-muted"
+                className="absolute top-5 left-0 sm:left-5 right-0 max-w-full pointer-events-none h-full md:h-full max-h-full overflow-y-hidden shadow-hub-muted"
                 style={{ width: SIDEBAR_WIDTH }}
               >
                 <div className="max-w-[100vw] rounded-[20px] bg-white max-h-full overflow-y-auto  pointer-events-auto">
