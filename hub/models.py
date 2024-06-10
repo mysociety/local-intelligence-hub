@@ -1413,12 +1413,21 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 Used to batch-import data.
                 """
                 structured_data = get_update_data(record)
-                address_data = google_maps.geocode_address(
-                    google_maps.GeocodingQuery(
-                        query=self.get_record_field(record, self.geography_column),
-                        country=self.countries,
+                address = self.get_record_field(record, self.geography_column)
+                if address is None or (
+                    isinstance(address, str) and (
+                        address.strip() == ""
+                        or address.lower() == "online"
                     )
-                )
+                ):
+                    address_data = None
+                else:
+                    address_data = google_maps.geocode_address(
+                        google_maps.GeocodingQuery(
+                            query=address,
+                            country=self.countries,
+                        )
+                    )
                 update_data = {
                     **structured_data,
                     "geocode_data": address_data,
