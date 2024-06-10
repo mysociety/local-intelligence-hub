@@ -985,12 +985,8 @@ class ExternalDataSource(BaseDataSource):
         return instance
 
     @strawberry_django.field
-    def auto_update_webhook_url(self: models.ExternalDataSource, info) -> str:
-        return self.auto_update_webhook_url()
-
-    @strawberry_django.field
-    def auto_import_webhook_url(self: models.ExternalDataSource, info) -> str:
-        return self.auto_import_webhook_url()
+    def webhook_url(self: models.ExternalDataSource, info) -> str:
+        return self.webhook_url()
 
     @strawberry_django.field
     def webhook_healthcheck(self: models.ExternalDataSource, info) -> bool:

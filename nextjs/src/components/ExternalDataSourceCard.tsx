@@ -77,10 +77,10 @@ export function ExternalDataSourceCard({
           Sharing with {externalDataSource.sharingPermissions.map((p) => p.organisation.name).join(", ")}
         </div>
       )}
+      <EnableWebhooksSwitch externalDataSource={externalDataSource} webhookType={WebhookType.Import} />
       {withUpdateOptions && externalDataSource.dataType === DataSourceType.Member && (
         <EnableWebhooksSwitch externalDataSource={externalDataSource} webhookType={WebhookType.Update} />
       )}
-      <EnableWebhooksSwitch externalDataSource={externalDataSource} webhookType={WebhookType.Import} />
       {withUpdateOptions && externalDataSource?.jobs?.[0]?.lastEventAt ? (
         <div className="text-sm text-meepGray-400">
           Last background task <span className='text-meepGray-300'>{externalDataSource.jobs[0].status}</span>{" "}

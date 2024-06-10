@@ -34,7 +34,7 @@ const GET_UPDATE_CONFIG = gql`
         status
       }
       automatedWebhooks
-      autoUpdateWebhookUrl
+      webhookUrl
       ...DataSourceCard
     }
   }
@@ -94,17 +94,17 @@ export default function Page({
                   field changes.
                 </span>
               </li>
-            ) : pageQuery.data?.externalDataSource.autoUpdateWebhookUrl ? (
+            ) : pageQuery.data?.externalDataSource.webhookUrl ? (
               <li className="text-meepGray-300 max-w-sm">
                 <div className="flex flex-col gap-4">
                   <p>
-                    Webhook URL for auto-updates:
+                    Webhook URL for auto-imports and auto-updates:
                   </p>
                   <code className="bg-black p-2 rounded">
-                    {pageQuery.data.externalDataSource.autoUpdateWebhookUrl}
+                    {pageQuery.data.externalDataSource.webhookUrl}
                   </code>
                   <p>
-                    Turn the below switch on once you have added the above
+                    Turn the below switches on once you have added the above
                     Webhook URL to your CRM and enabled it.
                   </p>
                 </div>
