@@ -343,22 +343,22 @@ LOGGING = {
             "style": "{",
             "validate": True,
         },
-        "procrastinate": {
-            "format": "{levelname} {asctime} {name} # {message:.120}",
+        "truncated": {
+            "format": "{levelname} {asctime} {name}.{funcName}:{lineno} # {message:.120}",
             "style": "{",
             "validate": True,
         },
     },
     "handlers": {
         "console": {"class": "logging.StreamHandler", "formatter": "common"},
-        "procrastinate": {
+        "truncated": {
             "class": "logging.StreamHandler",
-            "formatter": "procrastinate",
+            "formatter": "truncated",
         },
     },
     "loggers": {
         "procrastinate": {
-            "handlers": ["procrastinate"],
+            "handlers": ["truncated"],
             "level": "DEBUG",
         },
         "django": {
@@ -369,6 +369,11 @@ LOGGING = {
             "handlers": ["console"],
             "level": DJANGO_HUB_LOG_LEVEL,
         },
+        "hub.parsons": {
+            "handlers": ["truncated"],
+            "level": DJANGO_HUB_LOG_LEVEL,
+            "propagate": False,
+        }
     },
 }
 if DEBUG:
@@ -393,7 +398,7 @@ if DEBUG:
 
 # CK Section
 
-IMPORT_UPDATE_ALL_BATCH_SIZE = 100
+IMPORT_UPDATE_ALL_BATCH_SIZE = 500
 IMPORT_UPDATE_MANY_RETRY_COUNT = 3
 
 
