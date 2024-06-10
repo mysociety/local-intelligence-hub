@@ -56,6 +56,7 @@ class Command(BaseCommand):
         if not self._quiet:
             print("Importing PPCs")
 
+        imported_ids = []
         for _, ppc in tqdm(df.iterrows(), disable=self._quiet, total=df.shape[0]):
             area = Area.get_by_gss(ppc["gss"], area_type=self.area_type)
             if area is None:  # pragma: no cover
@@ -78,6 +79,7 @@ class Command(BaseCommand):
                 )
 
             if person:
+                imported_ids.append(person.external_id)
                 if not pd.isna(ppc["party_name"]):
                     try:
                         PersonData.objects.get_or_create(
@@ -92,6 +94,16 @@ class Command(BaseCommand):
                         PersonData.objects.create(
                             person=person, data_type=party_dt, data=ppc["party_name"]
                         )
+
+        # with merging etc the DC ids sometimes change so delete persons in the DB
+        # that aren't in the list from DC
+        ids = Person.objects.filter(person_type="PPC").values_list(
+            "external_id", flat=True
+        )
+
+        extra_ids = set(ids) - set(imported_ids)
+
+        Person.objects.filter(external_id__in=extra_ids).delete()
 
         dataset = DataSet.objects.filter(name="party", options=list())
         if dataset:
