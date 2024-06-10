@@ -24,7 +24,7 @@ export function OrganisationSelector() {
   const [currentOrganisation, setOrg] = useAtom(currentOrganisationAtom)
 
   React.useEffect(() => {
-    if ((!currentOrganisation || currentOrganisation === "?") && organisations.data?.myOrganisations.length) {
+    if ((!currentOrganisation || currentOrganisation === "" || !organisations.data?.myOrganisations.some(o => o.id === currentOrganisation)) && organisations.data?.myOrganisations.length) {
       setOrg(organisations.data.myOrganisations[0].id)
     }
   }, [currentOrganisation, organisations])
