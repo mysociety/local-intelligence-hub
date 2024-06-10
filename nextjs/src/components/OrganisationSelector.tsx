@@ -32,10 +32,12 @@ export function OrganisationSelector() {
   const selectedOrgData = organisations.data?.myOrganisations.find((org) => org.id === currentOrganisation)
 
   if (organisations.loading || !currentOrganisation || !selectedOrgData) return (
-    <div className='flex flex-row'>
-        <LoadingIcon className='w-4' />
-        Loading organisations
-    </div>
+      <div className='border-x border-meepGray-700 px-6 py-2 flex flex-col items-center justify-center cursor-pointer hover:bg-meepGray-700'>
+          <div className='flex flex-row gap-2 items-center'>
+            <LoadingIcon size={"15"} />
+            <span>Loading organisations</span>
+          </div>
+      </div>
   )
 
   return (
