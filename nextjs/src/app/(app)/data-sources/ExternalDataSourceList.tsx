@@ -130,8 +130,7 @@ export default function ExternalDataSourceList() {
             <h2>Error: {error.message}</h2>
           ) : data ? (
             <section className="w-full grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {allOrgShares.filter(share => share.externalDataSource.dataType === DataSourceType.Member)
-              .map((share) => (
+              {allOrgShares.map((share) => (
                 <ExternalDataSourceCard
                   key={share.externalDataSource.id}
                   externalDataSource={share.externalDataSource}
