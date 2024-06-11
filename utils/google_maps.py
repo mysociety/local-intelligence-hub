@@ -32,19 +32,11 @@ def ensure_cctld(iso3166: str | list[str]):
     return ensure_list(coco.convert(names=ensure_list(iso3166), to="ccTLD"))
 
 
-def google_forward_geocode_payload(
-    query: str | GeocodingQuery, country: str | list[str] = "GB"
-):
-    if isinstance(query, GeocodingQuery):
-        return {
-            "address": query.query,
-            "region": ",".join(ensure_cctld(query.country)),
-        }
-    else:
-        return {
-            "address": query,
-            "region": ",".join(ensure_cctld(country)),
-        }
+def google_forward_geocode_payload(query: GeocodingQuery):
+    return {
+        "address": query.query,
+        "region": ",".join(ensure_cctld(query.country)),
+    }
 
 
 def google_geocode_cache_key(query: GeocodingQuery):
@@ -69,14 +61,9 @@ def geocode_address(query: GeocodingQuery):
 def batch_geocode_address(queries: list[GeocodingQuery]):
     data: list[GoogleGeocodingResponse] = []
 
-    for index, query in enumerate(queries):
-        # TODO: check db cache
-        cached = db_cache.get(google_geocode_cache_key(query), None)
-        if cached:
-            data.append(cached)
-        else:
-            new_val = geocode_address(query)
-            data.append(new_val)
+    for query in queries:
+        new_val = geocode_address(query)
+        data.append(new_val)
 
     return data
 
