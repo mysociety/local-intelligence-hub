@@ -12,6 +12,9 @@ export function BatchJobProgressBar ({ batchJobProgress, pastTenseVerb = 'Comple
   'succeeded' |
   'estimatedFinishTime'
 > }) {
+  if (!batchJobProgress.total) {
+    return
+  }
   return (
     <ErrorBoundary>
       <Progress

@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import itertools
+import math
 import uuid
 from datetime import datetime, timezone
 from enum import Enum
@@ -55,9 +56,11 @@ from hub.parsons.action_network.action_network import ActionNetwork
 from hub.tasks import (
     import_all,
     import_many,
+    import_pages,
     refresh_all,
     refresh_many,
     refresh_one,
+    refresh_pages,
     refresh_webhooks,
 )
 from hub.views.mapped import ExternalDataSourceWebhook
@@ -1168,6 +1171,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
     def get_scheduled_batch_job_progress(self, parent_job: ProcrastinateJob):
+        # TODO: This doesn't work for import/refresh by page. How can it cover this case?
         request_id = parent_job.args.get("request_id")
 
         if request_id is None:
@@ -1331,6 +1335,21 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         raise NotImplementedError(
             "Get member ID not implemented for this data source type."
         )
+
+    async def import_page(self, page: int) -> bool:
+        """
+        Page starts at 1. Returns True if the next page
+        contains further data.
+        """
+        logger.info(f"Importing page {page} for {self}")
+        members, has_more = await self.fetch_page(page)
+        if not members:
+            logger.info(f"No more members by page {page} for {self}")
+            return 0
+        count = len(members)
+        await self.import_many(members)
+        logger.info(f"Imported {count} members from page {page} for {self}")
+        return has_more
 
     async def import_many(self, members: list):
         """
@@ -1512,6 +1531,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         Get many members from the data source.
         """
         raise NotImplementedError("Get many not implemented for this data source type.")
+
+    async def fetch_page(self, page: int, max_page_size=500) -> tuple[list, bool]:
+        """
+        Get a page of members from the data source. Should return a tuple:
+        (members: list, has_more: boolean) to indicate if more data
+        exists in subsequent pages.
+        """
+        raise NotImplementedError("Get page not implemented for this data source type.")
 
     async def fetch_all(self):
         """
@@ -1810,6 +1837,21 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         mapped_record = await self.map_one(member, loaders, mapping=mapping)
         return await self.update_one(mapped_record, **update_kwargs)
 
+    async def refresh_page(self, page: int) -> bool:
+        """
+        Page starts at 1. Returns True if the next page
+        contains further data.
+        """
+        logger.info(f"Refreshing page {page} for {self}")
+        members, has_more = await self.fetch_page(page)
+        if not members:
+            logger.info(f"No more members by page {page} for {self}")
+            return 0
+        count = len(members)
+        await self.refresh_many(members)
+        logger.info(f"Refreshed {count} members from page {page} for {self}")
+        return has_more
+
     async def refresh_many(
         self,
         members: list,
@@ -1909,6 +1951,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         await external_data_source.refresh_one(member=member)
 
     @classmethod
+    async def deferred_refresh_page(
+        cls, external_data_source_id: str, page: int, request_id: str = None
+    ) -> bool:
+        """
+        Returns True if the next page contains further data.
+        """
+        external_data_source: ExternalDataSource = await cls.objects.aget(
+            id=external_data_source_id
+        )
+        return await external_data_source.refresh_page(page=page)
+
+    @classmethod
     async def deferred_refresh_many(
         cls, external_data_source_id: str, members: list, request_id: str = None
     ):
@@ -1964,6 +2018,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             id=external_data_source_id
         )
         await external_data_source.import_many(members=members)
+
+    @classmethod
+    async def deferred_import_page(
+        cls, external_data_source_id: str, page: int, request_id: str = None
+    ) -> bool:
+        """
+        Returns True if the next page contains further data.
+        """
+        external_data_source: ExternalDataSource = await cls.objects.aget(
+            id=external_data_source_id
+        )
+        return await external_data_source.import_page(page=page)
 
     @classmethod
     async def deferred_import_all(
@@ -2090,6 +2156,58 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             ).defer_async(
                 external_data_source_id=str(self.id),
                 requested_at=requested_at,
+                request_id=request_id,
+            )
+        except (UniqueViolation, IntegrityError):
+            pass
+
+    @classmethod
+    async def schedule_import_pages(
+        self,
+        external_data_source_id: str,
+        current_page: int = 1,
+        request_id: str = None,
+    ) -> int:
+        """
+        This is a classmethod for a performance boost - the import pages
+        flow doesn't need to get the actual instance, it just needs
+        the id.
+        """
+        try:
+            return await import_pages.configure(
+                # Dedupe `import_pages` jobs for the same config
+                # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+                queueing_lock=f"import_pages_{external_data_source_id}",
+                schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+            ).defer_async(
+                external_data_source_id=external_data_source_id,
+                current_page=current_page,
+                request_id=request_id,
+            )
+        except (UniqueViolation, IntegrityError):
+            pass
+
+    @classmethod
+    async def schedule_refresh_pages(
+        self,
+        external_data_source_id: str,
+        current_page: int = 1,
+        request_id: str = None,
+    ) -> int:
+        """
+        This is a classmethod for a performance boost - the refresh pages
+        flow doesn't need to get the actual instance, it just needs
+        the id.
+        """
+        try:
+            return await refresh_pages.configure(
+                # Dedupe `refresh_pages` jobs for the same config
+                # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+                queueing_lock=f"refresh_pages_{external_data_source_id}",
+                schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+            ).defer_async(
+                external_data_source_id=external_data_source_id,
+                current_page=current_page,
                 request_id=request_id,
             )
         except (UniqueViolation, IntegrityError):
@@ -2990,9 +3108,62 @@ class ActionNetworkSource(ExternalDataSource):
                 member_ids.append(self.uuid_to_prefixed_id(id))
         return member_ids
 
+    @classmethod
+    async def deferred_import_all(
+        cls, external_data_source_id: str, request_id: str = None
+    ):
+        """
+        Override Action Network import_all behavior to import page-by-page
+        """
+        # TODO: how do we measure number of rows imported with this method?
+        return await cls.schedule_import_pages(
+            external_data_source_id=external_data_source_id, request_id=request_id
+        )
+
+    @classmethod
+    async def deferred_refresh_all(
+        cls, external_data_source_id: str, request_id: str = None
+    ):
+        """
+        Override Action Network refresh_all behavior to import page-by-page
+        """
+        # TODO: how do we measure number of rows imported with this method?
+        return await cls.schedule_refresh_pages(
+            external_data_source_id=external_data_source_id, request_id=request_id
+        )
+
     async def fetch_all(self):
         # returns an iterator that *should* work for big lists
         return self.client.get_people()
+
+    async def fetch_page(self, page: int, max_page_size=500) -> tuple[list, bool]:
+        """
+        Returns a tuple of members and boolean to indicate if more data
+        can be fetched.
+        """
+        has_more = True
+        # Get multiple Action Network pages at a time for better performance
+        an_page_size = 25
+        # Use floor to handle max_page_size not being a multiple of 25
+        # Means that the number of records returned will be slightly smaller
+        # This works with pagination (there is a test!)
+        an_page_count = math.floor(max_page_size / an_page_size)
+
+        page_offset = an_page_count * (page - 1)  # e.g. 40 for page 3
+        initial_page = page_offset + 1  # e.g. 41
+        last_page = page_offset + an_page_count  # e.g. 60
+        pages = range(initial_page, last_page + 1)  # e.g. 41 to 60
+
+        members = []
+        for page in pages:
+            logger.debug(f"Fetching Action Network page {page} for {self}")
+            response = self.client.get_people(page=page) or {}
+            people = response.get("_embedded", {}).get("osdi:people", [])
+            if not people:
+                has_more = False
+                break
+            members = members + people
+        return members, has_more
 
     async def fetch_many(self, member_ids: list[str]):
         member_ids = [self.uuid_to_prefixed_id(id) for id in list(set(member_ids))]

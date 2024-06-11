@@ -85,12 +85,37 @@ async def refresh_many(
     )
 
 
+@app.task(queue="external_data_sources", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
+@telemetry_task
+async def refresh_pages(
+    external_data_source_id: str, current_page: int, request_id: str = None
+):
+    from hub.models import ExternalDataSource
+
+    has_more_data = await ExternalDataSource.deferred_refresh_page(
+        external_data_source_id=external_data_source_id,
+        page=current_page,
+        request_id=request_id,
+    )
+
+    # Create task to refresh next page
+    if has_more_data:
+        return await ExternalDataSource.schedule_import_pages(
+            external_data_source_id=external_data_source_id,
+            current_page=current_page + 1,
+            request_id=request_id,
+        )
+
+
 @app.task(queue="external_data_sources")
 @telemetry_task
 async def refresh_all(external_data_source_id: str, request_id: str = None):
     from hub.models import ExternalDataSource
 
-    await ExternalDataSource.deferred_refresh_all(
+    source = await ExternalDataSource.objects.aget(id=external_data_source_id)
+    SourceClass = source.get_real_instance_class()
+
+    await SourceClass.deferred_refresh_all(
         external_data_source_id=external_data_source_id, request_id=request_id
     )
 
@@ -120,6 +145,28 @@ async def import_many(
     )
 
 
+@app.task(queue="external_data_sources", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
+@telemetry_task
+async def import_pages(
+    external_data_source_id: str, current_page=1, request_id: str = None
+):
+    from hub.models import ExternalDataSource
+
+    has_more_data = await ExternalDataSource.deferred_import_page(
+        external_data_source_id=external_data_source_id,
+        page=current_page,
+        request_id=request_id,
+    )
+
+    # Create task to import next page
+    if has_more_data:
+        return await ExternalDataSource.schedule_import_pages(
+            external_data_source_id=external_data_source_id,
+            current_page=current_page + 1,
+            request_id=request_id,
+        )
+
+
 @app.task(queue="external_data_sources")
 @telemetry_task
 async def import_all(
@@ -128,7 +175,10 @@ async def import_all(
     # Todo: track task waiting duration with requested_at ISO date
     from hub.models import ExternalDataSource
 
-    await ExternalDataSource.deferred_import_all(
+    source = await ExternalDataSource.objects.aget(id=external_data_source_id)
+    SourceClass = source.get_real_instance_class()
+
+    await SourceClass.deferred_import_all(
         external_data_source_id=external_data_source_id, request_id=request_id
     )
 

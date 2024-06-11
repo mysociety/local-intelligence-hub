@@ -347,7 +347,7 @@ LOGGING = {
             "validate": True,
         },
         "truncated": {
-            "format": "{levelname} {asctime} {name}.{funcName}:{lineno} # {message:.120}",
+            "format": "{levelname} {asctime} {name}.{funcName}:{lineno} # {message:.240}",
             "style": "{",
             "validate": True,
         },
@@ -363,6 +363,12 @@ LOGGING = {
         "procrastinate": {
             "handlers": ["truncated"],
             "level": "DEBUG",
+        },
+        # Silence endless waiting for job log
+        "procrastinate.worker": {
+            "handlers": ["truncated"],
+            "level": "INFO",
+            "propagate": False,
         },
         "django": {
             "handlers": ["console"],
