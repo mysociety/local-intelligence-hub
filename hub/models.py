@@ -1898,7 +1898,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         member_count = 0
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
         for i, batch in enumerate(batches):
-            logger.info(f"Scheduling import batch {i} for source {external_data_source}")
+            logger.info(
+                f"Scheduling import batch {i} for source {external_data_source}"
+            )
             member_count += len(batch)
             await external_data_source.schedule_import_many(
                 batch, request_id=request_id
