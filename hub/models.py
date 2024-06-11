@@ -68,7 +68,7 @@ from utils.postcodesIO import (
     get_bulk_postcode_geo,
     get_bulk_postcode_geo_from_coords,
 )
-from utils.py import batched, ensure_list, get, is_maybe_id
+from utils.py import batched, ensure_list, get, is_maybe_id, parse_datetime
 
 User = get_user_model()
 
@@ -1361,9 +1361,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
             for field in self.import_fields:
                 if getattr(self, field, None) is not None:
-                    update_data[field.removesuffix("_field")] = self.get_record_field(
-                        record, getattr(self, field), field
-                    )
+                    value = self.get_record_field(record, getattr(self, field), field)
+                    if field.endswith("_time_field"):
+                        value: datetime = parse_datetime(value)
+                    update_data[field.removesuffix("_field")] = value
 
             return update_data
 
