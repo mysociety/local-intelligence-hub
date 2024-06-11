@@ -3,6 +3,7 @@ import hashlib
 import itertools
 import uuid
 from datetime import datetime, timezone
+from enum import Enum
 from typing import List, Optional, Type, TypedDict, Union
 from urllib.parse import urljoin
 
@@ -60,14 +61,25 @@ from hub.tasks import (
     refresh_webhooks,
 )
 from hub.views.mapped import ExternalDataSourceWebhook
+from utils import google_maps
 from utils.log import get_simple_debug_logger
-from utils.nominatim import address_to_geojson
-from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
-from utils.py import batched, ensure_list, get, is_maybe_id
+from utils.postcodesIO import (
+    PostcodesIOResult,
+    get_bulk_postcode_geo,
+    get_bulk_postcode_geo_from_coords,
+)
+from utils.py import batched, ensure_list, get, is_maybe_id, parse_datetime
 
 User = get_user_model()
 
 logger = get_simple_debug_logger(__name__)
+
+
+# enum of geocoders: postcodes_io, mapbox, google
+class Geocoder(Enum):
+    POSTCODES_IO = "postcodes_io"
+    MAPBOX = "mapbox"
+    GOOGLE = "google"
 
 
 class Organisation(models.Model):
@@ -715,7 +727,10 @@ class GenericData(CommonData):
     start_time = models.DateTimeField(blank=True, null=True)
     end_time = models.DateTimeField(blank=True, null=True)
     public_url = models.URLField(max_length=2000, blank=True, null=True)
-    osm_data = JSONField(blank=True, null=True)
+    geocode_data = JSONField(blank=True, null=True)
+    geocoder = models.CharField(
+        max_length=1000, blank=True, null=True, default=Geocoder.POSTCODES_IO.value
+    )
     address = models.CharField(max_length=1000, blank=True, null=True)
     title = models.CharField(max_length=1000, blank=True, null=True)
     description = models.TextField(max_length=3000, blank=True, null=True)
@@ -891,6 +906,8 @@ def cast_data(sender, instance, *args, **kwargs):
 
 class Loaders(TypedDict):
     postcodesIO: DataLoader
+    postcodesIOFromPoint: DataLoader
+    mapbox_geocoder: DataLoader
     fetch_record: DataLoader
     source_loaders: dict[str, DataLoader]
 
@@ -908,6 +925,10 @@ class UpdateMapping(TypedDict):
     # Can be a dot path, for use with benedict
     source_path: str
     destination_column: str
+
+
+def default_countries():
+    return ["GB"]
 
 
 class ExternalDataSource(PolymorphicModel, Analytics):
@@ -987,6 +1008,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         default=GeographyTypes.POSTCODE,
     )
     geography_column = models.CharField(max_length=250, blank=True, null=True)
+    countries = models.JSONField(
+        default=default_countries,
+        blank=True,
+        null=True,
+        help_text="ISO 3166-1 alpha-2 country codes for geocoding addresses.",
+    )
 
     # Useful for explicit querying and interacting with members in the UI
     # TODO: longitude_field = models.CharField(max_length=250, blank=True, null=True)
@@ -1334,9 +1361,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
             for field in self.import_fields:
                 if getattr(self, field, None) is not None:
-                    update_data[field.removesuffix("_field")] = self.get_record_field(
-                        record, getattr(self, field), field
-                    )
+                    value = self.get_record_field(record, getattr(self, field), field)
+                    if field.endswith("_time_field"):
+                        value: datetime = parse_datetime(value)
+                    update_data[field.removesuffix("_field")] = value
 
             return update_data
 
@@ -1385,25 +1413,63 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             self.geography_column
             and self.geography_column_type == self.GeographyTypes.ADDRESS
         ):
-            for record in data:
+            loaders = await self.get_loaders()
+
+            async def create_import_record(record):
+                """
+                Converts a record fetched from the API into
+                a GenericData record in the MEEP db.
+
+                Used to batch-import data.
+                """
                 structured_data = get_update_data(record)
                 address = self.get_record_field(record, self.geography_column)
-                try:
-                    osm_data = address_to_geojson(address)
-                except Exception:
-                    osm_data = {}
-                logger.warn([address, osm_data])
+                point = None
+                address_data = None
+                postcode_data = None
+                if address is None or (
+                    isinstance(address, str)
+                    and (address.strip() == "" or address.lower() == "online")
+                ):
+                    address_data = None
+                else:
+                    # async-ify the function because it uses sync cache queries
+                    address_data = await sync_to_async(google_maps.geocode_address)(
+                        google_maps.GeocodingQuery(
+                            query=address,
+                            country=self.countries,
+                        )
+                    )
+                    if address_data is not None:
+                        point = (
+                            Point(
+                                x=address_data.geometry.location.lng,
+                                y=address_data.geometry.location.lat,
+                            )
+                            if (
+                                address_data is not None
+                                and address_data.geometry is not None
+                                and address_data.geometry.location is not None
+                            )
+                            else None
+                        )
+                        if point is not None:
+                            # Capture this so we have standardised Postcodes IO data for all records
+                            # (e.g. for analytical queries that aggregate on region)
+                            # even if the address is not postcode-specific (e.g. "London").
+                            # this can be gleaned from geocode_data__types, e.g. [ "administrative_area_level_1", "political" ]
+                            postcode_data: PostcodesIOResult = await loaders[
+                                "postcodesIOFromPoint"
+                            ].load(point)
+
                 update_data = {
                     **structured_data,
-                    "osm_data": osm_data,
-                    "point": (
-                        Point(
-                            osm_data["geometry"]["coordinates"][0],
-                            osm_data["geometry"]["coordinates"][1],
-                        )
-                        if osm_data is not None and "geometry" in osm_data
-                        else None
+                    "postcode_data": postcode_data,
+                    "geocode_data": address_data,
+                    "geocoder": (
+                        Geocoder.GOOGLE.value if address_data is not None else None
                     ),
+                    "point": point,
                 }
 
                 await GenericData.objects.aupdate_or_create(
@@ -1411,6 +1477,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     data=self.get_record_id(record),
                     defaults=update_data,
                 )
+
+            await asyncio.gather(*[create_import_record(record) for record in data])
         else:
             # To allow us to lean on LIH's geo-analytics features,
             # TODO: Re-implement this data as `AreaData`, linking each datum to an Area/AreaType as per `self.geography_column` and `self.geography_column_type`.
@@ -1601,6 +1669,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     async def get_loaders(self) -> Loaders:
         loaders = Loaders(
             postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo),
+            postcodesIOFromPoint=DataLoader(load_fn=get_bulk_postcode_geo_from_coords),
             fetch_record=DataLoader(load_fn=self.fetch_many_loader, cache=False),
             source_loaders={
                 str(source.id): source.data_loader_factory()

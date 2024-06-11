@@ -245,10 +245,12 @@ export default function Page({
   const tableId = form.watch("airtable.tableId")
   useEffect(() => {
     if (airtableUrl) {
-      const url = new URL(airtableUrl)
-      const [_, base, table, ...pathSegments] = url.pathname.split('/')
-      form.setValue("airtable.baseId", base)
-      form.setValue("airtable.tableId", table)
+      try {
+        const url = new URL(airtableUrl)
+        const [_, base, table, ...pathSegments] = url.pathname.split('/')
+        form.setValue("airtable.baseId", base)
+        form.setValue("airtable.tableId", table)
+      } catch (e) {}
     }
   }, [airtableUrl])
 
