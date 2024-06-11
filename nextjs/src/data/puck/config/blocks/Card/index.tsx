@@ -24,7 +24,7 @@ import { Download } from "lucide-react";
 
 import dynamic from "next/dynamic";
 import dynamicIconImports from "lucide-react/dynamicIconImports";
-import { itemTypes } from "../FilterableGrid";
+import { itemTypes } from "../FilterableGrid/cardTypes";
 
 const icons = Object.keys(dynamicIconImports).reduce((acc, iconName) => {
   // @ts-ignore
