@@ -46,16 +46,21 @@ def google_geocode_cache_key(query: GeocodingQuery):
 
 def geocode_address(query: GeocodingQuery):
     cached = db_cache.get(google_geocode_cache_key(query), None)
-    if cached:
-        return cached
+    if cached is not None:
+        if isinstance(cached, dict):
+            queryable: GoogleGeocodingResponse = benedict(cached)
+            return queryable
+        return None
 
     get_query_args = google_forward_geocode_payload(query)
 
     response: list[GoogleGeocodingResponse] = gmaps.geocode(**get_query_args)
     if response and len(response) > 0:
-        res: GoogleGeocodingResponse = benedict(response[0])
+        res = response[0]
         db_cache.set(google_geocode_cache_key(query), res, None)
-        return res
+        if isinstance(res, dict):
+            queryable: GoogleGeocodingResponse = benedict(res)
+            return queryable
 
 
 def batch_geocode_address(queries: list[GeocodingQuery]):
