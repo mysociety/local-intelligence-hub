@@ -2897,8 +2897,14 @@ class ActionNetworkSource(ExternalDataSource):
 
     def get_member_ids_from_webhook(self, webhook_payload: list[dict]) -> list[str]:
         member_ids = []
-        for action in webhook_payload:
-            payload = action.get("action_network:action", {})
+        for item in webhook_payload:
+            payload = {}
+            if "action_network:action" in item:
+                payload = item.get("action_network:action")
+            if "osdi:attendance" in item:
+                payload = item.get("osdi:attendance")
+            if "osdi:submission" in item:
+                payload = item.get("osdi:submission")
             person_href = payload.get("_links", {}).get("osdi:person", {}).get("href")
             if person_href:
                 id = person_href.split("/")[-1]
