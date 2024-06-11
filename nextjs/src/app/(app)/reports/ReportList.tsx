@@ -19,10 +19,12 @@ import { CreateMapReportMutation, CreateMapReportMutationVariables, ListReportsQ
 import { formatRelative } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { triggerAnalyticsEvent } from "@/app/utils/posthogutils";
+import { useAtomValue } from 'jotai';
+import { currentOrganisationIdAtom } from '@/data/organisation';
 
 const LIST_REPORTS = gql`
-  query ListReports {
-    reports {
+  query ListReports($currentOrganisationId: ID!) {
+    reports(filters: { organisation: { pk: $currentOrganisationId }}) { 
       id
       name
       lastUpdate
@@ -31,7 +33,13 @@ const LIST_REPORTS = gql`
 `;
 
 export default function ReportList() {
-  const { loading, error, data, refetch } = useQuery<ListReportsQuery, ListReportsQueryVariables>(LIST_REPORTS);
+  const currentOrganisationId = useAtomValue(currentOrganisationIdAtom)
+  const { loading, error, data, refetch } = useQuery<ListReportsQuery, ListReportsQueryVariables>(LIST_REPORTS, {
+    variables: {
+      currentOrganisationId
+    },
+    skip: !currentOrganisationId
+  })
 
   useEffect(() => {
     refetch()
@@ -101,6 +109,7 @@ export function ReportCard ({ report }: { report: ListReportsQuery['reports'][0]
 export function CreateReportCard () {
   const client = useApolloClient();
   const router = useRouter();
+  const currentOrganisationId = useAtomValue(currentOrganisationIdAtom)
 
   return (
     <Card>
@@ -121,6 +130,7 @@ export function CreateReportCard () {
         variables: {
           data: {
             name: new Date().toISOString(),
+            organisation: { set: currentOrganisationId }
           }
         }
       }),

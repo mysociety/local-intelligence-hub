@@ -40,34 +40,45 @@ export default async function Dashboard({
     query: { dataType: DataSourceType.Member },
   });
 
+  const isNew = allDataSources.length === 0
+
   return (
     <div>
-      <h1 className="md:text-hXlg text-hLg tracking-[-1.47px] font-light font-IBMPlexSans w-[915px] mb-12">
-        Welcome back,{" "}
-        <span className="font-PPRightGrotesk font-bold text-[84.468px] tracking-normal">
-          {user?.username}
-        </span>
-        ! ✊
-      </h1>
       {allDataSources.length === 0 ? (
         <div className="mb-12">
+          <h1 className="md:text-hXlg text-hLg tracking-[-1.47px] font-light font-IBMPlexSans w-[915px] mb-12">
+            Welcome to Mapped,{" "}
+            <span className="font-PPRightGrotesk font-bold text-[84.468px] tracking-normal">
+              {user?.username}
+            </span>
+            ! 👋
+          </h1>
           <GetStarted btnLink={btnLink} />
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-16">
-          <Link
-            href="/reports"
-            className={buttonVariants({ variant: "brand" })}
-          >
-            Your reports
-          </Link>
-          <Link
-            href="/data-sources"
-            className={buttonVariants({ variant: "brand" })}
-          >
-            Your data sources
-          </Link>
-        </div>
+        <>
+          <h1 className="md:text-hXlg text-hLg tracking-[-1.47px] font-light font-IBMPlexSans w-[915px] mb-12">
+            Welcome back,{" "}
+            <span className="font-PPRightGrotesk font-bold text-[84.468px] tracking-normal">
+              {user?.username}
+            </span>
+            ! ✊
+          </h1>
+          <div className="grid grid-cols-2 gap-16">
+            <Link
+              href="/reports"
+              className={buttonVariants({ variant: "brand" })}
+            >
+              Your reports
+            </Link>
+            <Link
+              href="/data-sources"
+              className={buttonVariants({ variant: "brand" })}
+            >
+              Your data sources
+            </Link>
+          </div>
+        </>
       )}
     </div>
   );

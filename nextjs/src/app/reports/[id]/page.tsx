@@ -43,11 +43,12 @@ import { MAP_REPORT_FRAGMENT, isConstituencyPanelOpenAtom, isDataConfigOpenAtom 
 import { DisplayOptionsType, ReportContext, defaultDisplayOptions } from "./context";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import { contentEditableMutation } from "@/lib/html";
-import { Provider as JotaiProvider, atom, useAtom } from "jotai";
+import { Provider as JotaiProvider, atom, useAtom, useAtomValue } from "jotai";
 import { ConstituenciesPanel } from "./ConstituenciesPanel";
 import { MapProvider } from "react-map-gl";
 import { twMerge } from "tailwind-merge";
 import { merge } from 'lodash'
+import { currentOrganisationIdAtom } from "@/data/organisation";
 
 type Params = {
   id: string
@@ -60,6 +61,14 @@ export default function Page({ params: { id } }: { params: Params }) {
   const report = useQuery<GetMapReportQuery, GetMapReportQueryVariables>(GET_MAP_REPORT, {
     variables: { id },
   });
+
+  const orgId = useAtomValue(currentOrganisationIdAtom);
+
+  useEffect(() => {
+    if (orgId && report.data && report.data.mapReport.organisation.id !== orgId) {
+      router.push("/reports");
+    }
+  }, [orgId, report, router])
 
   const displayOptions = merge({}, defaultDisplayOptions, report.data?.mapReport?.displayOptions || {})
 
