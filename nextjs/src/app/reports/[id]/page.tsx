@@ -65,7 +65,7 @@ export default function Page({ params: { id } }: { params: Params }) {
   const orgId = useAtomValue(currentOrganisationIdAtom);
 
   useEffect(() => {
-    if (orgId && report.data?.mapReport?.organisation?.id !== orgId) {
+    if (orgId && report.data && report.data.mapReport.organisation.id !== orgId) {
       router.push("/reports");
     }
   }, [orgId, report, router])

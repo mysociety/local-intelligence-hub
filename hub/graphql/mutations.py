@@ -155,11 +155,15 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
     ).exists()
     user = get_current_user(info)
 
+    if data.organisation:
+        organisation = models.Organisation.objects.get(id=data.organisation.set)
+    else:
+        organisation = models.Organisation.get_or_create_for_user(user)
+
     params = {
         **graphql_type_to_dict(data, delete_null_keys=True),
         **{
-            "organisation": data.organisation
-            or models.Organisation.get_or_create_for_user(user),
+            "organisation": organisation,
             "slug": data.slug or slugify(data.name),
             "name": "Type your report name here",  # Default name for reports
         },
@@ -280,7 +284,6 @@ def create_external_data_source(
         if crm_type_key in input_dict and input_dict[crm_type_key] is not None:
             kwargs = input_dict[crm_type_key]
             # CreateExternalDataSourceInput expects organisation to be a dict like `{ set: 1 }`
-            print(kwargs.get("organisation", None))
             if org := kwargs.get("organisation", None):
                 kwargs["organisation"] = models.Organisation.objects.get(
                     id=org.get("set")
@@ -290,9 +293,8 @@ def create_external_data_source(
                 kwargs["organisation"] = models.Organisation.get_or_create_for_user(
                     user
                 )
-            print(kwargs["organisation"])
 
-            print(f"Creating source of type {crm_type_key}", kwargs)
+            logger.info(f"Creating source of type {crm_type_key}", kwargs)
 
             def creator_fn() -> tuple[models.ExternalDataSource, bool]:  # noqa: F811
                 deduplication_hash = model(**kwargs).get_deduplication_hash()
