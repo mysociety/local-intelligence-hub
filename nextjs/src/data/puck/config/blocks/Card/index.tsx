@@ -167,7 +167,7 @@ export function RenderCard({ src, category, title, description, dialogDescriptio
       {type === "resource" && (
         <div className="p-5 bg-white h-full flex flex-col gap-4 justify-between">
           <div className="text-jungle-green-600 w-full object-scale-down object-left ">
-            {imageUrl ? <img src={imageUrl} alt="resource image" className='rounded-[10px] h-40' /> : <FileHeart />}
+            {imageUrl ? <img src={imageUrl} alt="resource image" className='rounded-[10px] h-40' /> : <FileHeart strokeWidth="1.5" className="h-10 w-10"/>}
 
           </div>
           <div>
@@ -233,10 +233,13 @@ export function RenderCard({ src, category, title, description, dialogDescriptio
       )}
     </div>
   ) : (
-    <Image src={src} alt="illustration" className='w-full h-full overflow-visible' style={{
-      objectFit: "contain",
-    }} />
-  )
+    <div className="relative">
+      <Image src={src} alt="illustration" className='w-full h-full overflow-visible absolute' style={{
+        objectFit: "contain",
+      }} />
+    </div>
+    )
+      
 
   if (behaviour === "dialog" && !!dialogDescription) {
     return (

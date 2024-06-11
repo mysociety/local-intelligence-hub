@@ -35,7 +35,7 @@ export default function Root({
       <style>{css}</style>
       <main
         className={twMerge(
-          "font-publicSans text-jungle-green-800 min-w-screen h-full w-full mx-auto relative",
+          "font-publicSans text-jungle-green-800 min-w-screen h-full w-full mx-auto relative overflow-clip",
           fullScreen
             ? "h-dvh flex flex-col px-2 md:px-4"
             : "max-w-screen-xl min-h-[dv100] px-2 md:px-4 lg:px-6 xl:px-8",
