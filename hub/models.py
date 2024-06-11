@@ -1966,11 +1966,15 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         members = await external_data_source.fetch_all()
         member_count = 0
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
-        for batch in batches:
+        for i, batch in enumerate(batches):
+            logger.info(
+                f"Scheduling import batch {i} for source {external_data_source}"
+            )
             member_count += len(batch)
             await external_data_source.schedule_import_many(
                 batch, request_id=request_id
             )
+            logger.info(f"Scheduled import batch {i} for source {external_data_source}")
         metrics.distribution(key="import_rows_requested", value=member_count)
 
     async def schedule_refresh_one(self, member) -> int:
