@@ -100,7 +100,7 @@ async def refresh_pages(
 
     # Create task to refresh next page
     if has_more_data:
-        return await ExternalDataSource.schedule_import_pages(
+        return await ExternalDataSource.schedule_refresh_pages(
             external_data_source_id=external_data_source_id,
             current_page=current_page + 1,
             request_id=request_id,
