@@ -53,7 +53,12 @@ class ExternalDataSourceWebhook(View):
             return JsonResponse({"status": "Webhook is not enabled."})
         # Get member_ids once here, instead of in the handle_ functions
         member_ids = external_data_source.get_member_ids_from_webhook(data)
-        logger.info(f"Received member ids {member_ids} for {external_data_source}")
+        if member_ids:
+            logger.info(f"Received member ids {member_ids} for {external_data_source}")
+        else:
+            logger.warning(
+                f"Found no member ids in webhook payload for {external_data_source}: {data}"
+            )
         if external_data_source.auto_update_enabled:
             external_data_source.handle_update_webhook_view(member_ids)
         if external_data_source.auto_import_enabled:
