@@ -75,7 +75,7 @@ import { toastPromise } from "@/lib/toast";
 import { contentEditableMutation } from "@/lib/html";
 import { UpdateExternalDataSourceFields } from "@/components/UpdateExternalDataSourceFields";
 import { ManageSourceSharing } from "./ManageSourceSharing";
-import { BatchJobProgressBar } from "@/components/BatchJobProgress";
+import { BatchJobProgressReport } from "@/components/BatchJobProgress";
 import { format } from "d3-format";
 import pluralize from "pluralize";
 import { externalDataSourceOptions } from "@/lib/data";
@@ -143,6 +143,7 @@ const GET_UPDATE_CONFIG = gql`
       isImportScheduled
       importProgress {
         id
+        hasForecast
         status
         total
         succeeded
@@ -151,6 +152,7 @@ const GET_UPDATE_CONFIG = gql`
       isUpdateScheduled
       updateProgress {
         id
+        hasForecast
         status
         total
         succeeded
@@ -283,7 +285,7 @@ export default function InspectExternalDataSource({
             </span>}
           </Button>
           {source.importProgress?.status === ProcrastinateJobStatus.Doing && (
-            <BatchJobProgressBar batchJobProgress={source.importProgress} pastTenseVerb="Imported" />
+            <BatchJobProgressReport batchJobProgress={source.importProgress} pastTenseVerb="Imported" />
           )}
           {source.hasWebhooks && (
             <section className='space-y-4'>
@@ -420,7 +422,7 @@ export default function InspectExternalDataSource({
                           </span>
                         </Button>
                         {source.updateProgress?.status === ProcrastinateJobStatus.Doing && (
-                          <BatchJobProgressBar batchJobProgress={source.updateProgress} pastTenseVerb="Updated" />
+                          <BatchJobProgressReport batchJobProgress={source.updateProgress} pastTenseVerb="Updated" />
                         )}
                       </>
                     )}
@@ -632,6 +634,7 @@ export function importData (client: ApolloClient<any>, externalDataSourceId: str
             isImportScheduled
             importProgress {
               status
+              hasForecast
               id
               total
               succeeded

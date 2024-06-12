@@ -957,6 +957,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     automated_webhooks = False
     introspect_fields = False
     allow_updates = True
+    can_forecast_job_progress = True
 
     # Allow sources to define default values for themselves
     # for example opinionated CRMs which are only for people and have defined slots for data
@@ -1169,6 +1170,21 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         return self.get_scheduled_parent_job(
             dict(task_name__contains="hub.tasks.refresh")
         )
+    
+    class BatchJobProgress(TypedDict):
+        status: str
+        id: str
+        started_at: datetime 
+        total: int = 0
+        succeeded: int = 0
+        doing: int = 0
+        failed: int = 0
+        estimated_seconds_remaining: float = 0
+        estimated_finish_time: Optional[datetime]
+        has_forecast: bool = True
+        seconds_per_record: float = 0
+        done: int = 0
+        remaining: int = 0
 
     def get_scheduled_batch_job_progress(self, parent_job: ProcrastinateJob):
         # TODO: This doesn't work for import/refresh by page. How can it cover this case?
@@ -1176,6 +1192,26 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         if request_id is None:
             return None
+
+        if not self.can_forecast_job_progress:
+            request_completed_signal = self.event_log_queryset().filter(
+                args__request_id=request_id,
+                task_name="hub.tasks.signal_request_complete"
+            ).first()
+            if request_completed_signal is not None:
+                return self.BatchJobProgress(
+                    status="done",
+                    id=request_id,
+                    started_at=parent_job.created_at,
+                    has_forecast=False
+                )
+            else:
+                return self.BatchJobProgress(
+                    status="doing",
+                    id=request_id,
+                    started_at=parent_job.created_at,
+                    has_forecast=False
+                )
 
         jobs = self.event_log_queryset().filter(args__request_id=request_id).all()
 
@@ -1213,7 +1249,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         time_remaining = duration_per_record * remaining
         estimated_finish_time = datetime.now() + time_remaining
 
-        return dict(
+        return self.BatchJobProgress(
             status="todo" if parent_job.status == "todo" else "doing",
             id=request_id,
             started_at=time_started,
@@ -2212,6 +2248,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             )
         except (UniqueViolation, IntegrityError):
             pass
+    
 
     class CUDRecord(TypedDict):
         """
@@ -2960,6 +2997,7 @@ class ActionNetworkSource(ExternalDataSource):
     automated_webhooks = False
     introspect_fields = True
     default_data_type = ExternalDataSource.DataSourceType.MEMBER
+    can_forecast_job_progress = False
 
     defaults = dict(
         # Reports

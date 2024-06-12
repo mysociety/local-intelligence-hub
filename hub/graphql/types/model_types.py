@@ -770,12 +770,13 @@ class BatchJobProgress:
     status: ProcrastinateJobStatus
     id: strawberry.scalars.ID
     started_at: datetime
+    has_forecast: bool = True
     total: int
     succeeded: int
     doing: int
     failed: int
     estimated_seconds_remaining: float
-    estimated_finish_time: datetime
+    estimated_finish_time: Optional[datetime]
     seconds_per_record: float
     done: int
     remaining: int

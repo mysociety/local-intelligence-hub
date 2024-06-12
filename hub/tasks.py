@@ -105,6 +105,15 @@ async def refresh_pages(
             current_page=current_page + 1,
             request_id=request_id,
         )
+    else:
+        return await signal_request_complete.configure(
+            # Dedupe `refresh_pages` jobs for the same config
+            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+            queueing_lock=f"request_complete_{request_id}"
+        ).defer_async(
+            request_id=request_id,
+            external_data_source_id=external_data_source_id,
+        )
 
 
 @app.task(queue="external_data_sources")
@@ -165,6 +174,15 @@ async def import_pages(
             current_page=current_page + 1,
             request_id=request_id,
         )
+    else:
+        return await signal_request_complete.configure(
+            # Dedupe `refresh_pages` jobs for the same config
+            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+            queueing_lock=f"request_complete_{request_id}"
+        ).defer_async(
+            request_id=request_id,
+            external_data_source_id=external_data_source_id,
+        )
 
 
 @app.task(queue="external_data_sources")
@@ -181,6 +199,14 @@ async def import_all(
     await SourceClass.deferred_import_all(
         external_data_source_id=external_data_source_id, request_id=request_id
     )
+
+
+@app.task(queue="external_data_sources")
+async def signal_request_complete(request_id: str, *args, **kwargs):
+    '''
+    Empty task which is used to query the status of the batch tasks.
+    '''
+    pass
 
 
 # cron that calls the `import_2024_ppcs` command every hour
