@@ -203,9 +203,9 @@ async def import_all(
 
 @app.task(queue="external_data_sources")
 async def signal_request_complete(request_id: str, *args, **kwargs):
-    '''
+    """
     Empty task which is used to query the status of the batch tasks.
-    '''
+    """
     pass
 
 

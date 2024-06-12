@@ -1170,11 +1170,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         return self.get_scheduled_parent_job(
             dict(task_name__contains="hub.tasks.refresh")
         )
-    
+
     class BatchJobProgress(TypedDict):
         status: str
         id: str
-        started_at: datetime 
+        started_at: datetime
         total: int = 0
         succeeded: int = 0
         doing: int = 0
@@ -1194,23 +1194,31 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             return None
 
         if not self.can_forecast_job_progress:
-            request_completed_signal = self.event_log_queryset().filter(
-                args__request_id=request_id,
-                task_name="hub.tasks.signal_request_complete"
-            ).first()
+            request_completed_signal = (
+                self.event_log_queryset()
+                .filter(
+                    args__request_id=request_id,
+                    task_name="hub.tasks.signal_request_complete",
+                )
+                .first()
+            )
             if request_completed_signal is not None:
                 return self.BatchJobProgress(
                     status="done",
                     id=request_id,
                     started_at=parent_job.created_at,
-                    has_forecast=False
+                    has_forecast=False,
                 )
             else:
                 return self.BatchJobProgress(
-                    status=parent_job.status if parent_job.status != "succeeded" else "doing",
+                    status=(
+                        parent_job.status
+                        if parent_job.status != "succeeded"
+                        else "doing"
+                    ),
                     id=request_id,
                     started_at=parent_job.created_at,
-                    has_forecast=False
+                    has_forecast=False,
                 )
 
         jobs = self.event_log_queryset().filter(args__request_id=request_id).all()
@@ -1250,7 +1258,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         estimated_finish_time = datetime.now() + time_remaining
 
         return self.BatchJobProgress(
-            status="succeeded" if remaining <= 0 else (parent_job.status if parent_job.status != "succeeded" else "doing"),
+            status=(
+                "succeeded"
+                if remaining <= 0
+                else (
+                    parent_job.status if parent_job.status != "succeeded" else "doing"
+                )
+            ),
             id=request_id,
             started_at=time_started,
             estimated_seconds_remaining=time_remaining,
@@ -2248,7 +2262,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             )
         except (UniqueViolation, IntegrityError):
             pass
-    
 
     class CUDRecord(TypedDict):
         """
