@@ -1193,25 +1193,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         if request_id is None:
             return None
 
+        request_completed_signal = self.event_log_queryset().filter(
+            args__request_id=request_id,
+            task_name="hub.tasks.signal_request_complete"
+        ).first()
+        
         if not self.can_forecast_job_progress:
-            request_completed_signal = self.event_log_queryset().filter(
-                args__request_id=request_id,
-                task_name="hub.tasks.signal_request_complete"
-            ).first()
-            if request_completed_signal is not None:
-                return self.BatchJobProgress(
-                    status="done",
-                    id=request_id,
-                    started_at=parent_job.created_at,
-                    has_forecast=False
-                )
-            else:
-                return self.BatchJobProgress(
-                    status="doing",
-                    id=request_id,
-                    started_at=parent_job.created_at,
-                    has_forecast=False
-                )
+            return self.BatchJobProgress(
+                status=request_completed_signal.status if request_completed_signal is not None else parent_job.status,
+                id=request_id,
+                started_at=parent_job.created_at,
+                has_forecast=False
+            )
 
         jobs = self.event_log_queryset().filter(args__request_id=request_id).all()
 
@@ -1250,7 +1243,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         estimated_finish_time = datetime.now() + time_remaining
 
         return self.BatchJobProgress(
-            status="todo" if parent_job.status == "todo" else "doing",
+            status=request_completed_signal.status if request_completed_signal is not None else parent_job.status,
             id=request_id,
             started_at=time_started,
             estimated_seconds_remaining=time_remaining,
