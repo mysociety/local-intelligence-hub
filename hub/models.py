@@ -2104,6 +2104,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         metrics.distribution(key="import_rows_requested", value=member_count)
 
     async def schedule_refresh_one(self, member) -> int:
+        logger.info(f"Scheduling refresh one for source {self} and member {member}")
         if not self.allow_updates:
             logger.error(f"Updates requested for non-updatable CRM {self}")
             return
@@ -2120,12 +2121,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 queueing_lock=f"update_one_{str(self.id)}_{str(member_id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
             ).defer_async(external_data_source_id=str(self.id), member=member)
-        except (UniqueViolation, IntegrityError):
-            pass
+        except (UniqueViolation, IntegrityError) as e:
+            logger.error(f"Error in schedule_refresh_one: {e}")
 
     async def schedule_refresh_many(
         self, members: list[str] | list[dict], request_id: str = None
     ) -> int:
+        logger.info(f"Scheduling refresh many for source {self} and members {members}")
+
         if not self.allow_updates:
             logger.error(f"Updates requested for non-updatable CRM {self}")
             return
@@ -2151,8 +2154,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 external_data_source_id=str(self.id),
                 members=members,
             )
-        except (UniqueViolation, IntegrityError):
-            pass
+        except (UniqueViolation, IntegrityError) as e:
+            logger.error(f"Error in schedule_refresh_many: {e}")
 
     async def schedule_refresh_all(self, request_id: str = None) -> int:
         if not self.allow_updates:
