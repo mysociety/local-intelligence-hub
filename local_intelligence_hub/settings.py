@@ -69,6 +69,7 @@ env = environ.Env(
     MAILCHIMP_TCC_KEY=(str, ""),
     MAILCHIMP_TCC_SERVER_PREFIX=(str, ""),
     MAILCHIMP_TCC_LIST_ID=(str, ""),
+    NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=(str, ""),
 )
 
 environ.Env.read_env(BASE_DIR / ".env")
@@ -85,6 +86,8 @@ if CRYPTOGRAPHY_SALT is None:
 if ENCRYPTION_SECRET_KEY is None:
     raise ValueError("ENCRYPTION_SECRET_KEY must be set")
 
+MAPBOX_ACCESS_TOKEN = env("MAPBOX_ACCESS_TOKEN")
+GOOGLE_MAPS_API_KEY = env("GOOGLE_MAPS_API_KEY")
 ELECTORAL_COMMISSION_API_KEY = env("ELECTORAL_COMMISSION_API_KEY")
 BASE_URL = env("BASE_URL")
 FRONTEND_BASE_URL = env("FRONTEND_BASE_URL")
@@ -343,23 +346,29 @@ LOGGING = {
             "style": "{",
             "validate": True,
         },
-        "procrastinate": {
-            "format": "{levelname} {asctime} {name} # {message:.120}",
+        "truncated": {
+            "format": "{levelname} {asctime} {name}.{funcName}:{lineno} # {message:.240}",
             "style": "{",
             "validate": True,
         },
     },
     "handlers": {
         "console": {"class": "logging.StreamHandler", "formatter": "common"},
-        "procrastinate": {
+        "truncated": {
             "class": "logging.StreamHandler",
-            "formatter": "procrastinate",
+            "formatter": "truncated",
         },
     },
     "loggers": {
         "procrastinate": {
-            "handlers": ["procrastinate"],
+            "handlers": ["truncated"],
             "level": "DEBUG",
+        },
+        # Silence endless waiting for job log
+        "procrastinate.worker": {
+            "handlers": ["truncated"],
+            "level": "INFO",
+            "propagate": False,
         },
         "django": {
             "handlers": ["console"],
@@ -368,6 +377,11 @@ LOGGING = {
         "hub": {
             "handlers": ["console"],
             "level": DJANGO_HUB_LOG_LEVEL,
+        },
+        "hub.parsons": {
+            "handlers": ["truncated"],
+            "level": DJANGO_HUB_LOG_LEVEL,
+            "propagate": False,
         },
     },
 }
@@ -393,7 +407,7 @@ if DEBUG:
 
 # CK Section
 
-IMPORT_UPDATE_ALL_BATCH_SIZE = 100
+IMPORT_UPDATE_ALL_BATCH_SIZE = 500
 IMPORT_UPDATE_MANY_RETRY_COUNT = 3
 
 

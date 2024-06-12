@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/sheet"
 
 import { useState } from "react";
+import { OrganisationSelector } from "./OrganisationSelector";
 
 
 
@@ -95,6 +96,7 @@ export default function Navbar({ isLoggedIn }: NavbarProps) {
             Hub
           </Link>
           <div className="ml-auto flex items-stretch gap-md ">
+            <OrganisationSelector />
             <Link
               className={`link ${pathname === '/account' ? 'active' : 'flex items-center'}`}
               href="/account"

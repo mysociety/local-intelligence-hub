@@ -23,14 +23,7 @@ import { useQueryState, parseAsArrayOf, parseAsStringEnum } from 'nuqs'
 import { PuckText } from "../../components/PuckText";
 import { twMerge } from "tailwind-merge";
 import pluralize from "pluralize";
-
-
-
-export const itemTypes = [
-    { label: "Resource", value: "resource" },
-    { label: "Action", value: "action" },
-    { label: "Event", value: "event" },
-] as const
+import { itemTypes } from "./cardTypes";
 
 export const eventMonths = [
     { label: "January", value: "Jan" },

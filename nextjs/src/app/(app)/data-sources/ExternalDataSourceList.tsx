@@ -11,10 +11,12 @@ import qs from 'query-string'
 import { Mail } from "lucide-react";
 import { ExternalDataSourceCard } from "@/components/ExternalDataSourceCard";
 import { externalDataSourceOptions } from "@/lib/data";
+import { useAtomValue } from "jotai";
+import { currentOrganisationIdAtom } from "@/data/organisation";
 
 const LIST_UPDATE_CONFIGS = gql`
-  query ListOrganisations {
-    myOrganisations {
+  query ListOrganisations($currentOrganisationId: ID!) {
+    myOrganisations(filters: { id: $currentOrganisationId }) {
       id
       externalDataSources {
         id
@@ -67,7 +69,10 @@ const LIST_UPDATE_CONFIGS = gql`
 `;
 
 export default function ExternalDataSourceList() {
-  const { loading, error, data, refetch } = useQuery<ListOrganisationsQuery, ListOrganisationsQueryVariables>(LIST_UPDATE_CONFIGS);
+  const currentOrganisationId = useAtomValue(currentOrganisationIdAtom)
+  const { loading, error, data, refetch } = useQuery<ListOrganisationsQuery, ListOrganisationsQueryVariables>(LIST_UPDATE_CONFIGS, {
+    variables: { currentOrganisationId },
+  });
 
   useEffect(() => {
     refetch()
@@ -125,8 +130,7 @@ export default function ExternalDataSourceList() {
             <h2>Error: {error.message}</h2>
           ) : data ? (
             <section className="w-full grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {allOrgShares.filter(share => share.externalDataSource.dataType === DataSourceType.Member)
-              .map((share) => (
+              {allOrgShares.map((share) => (
                 <ExternalDataSourceCard
                   key={share.externalDataSource.id}
                   externalDataSource={share.externalDataSource}

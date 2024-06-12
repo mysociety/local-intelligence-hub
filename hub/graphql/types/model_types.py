@@ -770,12 +770,13 @@ class BatchJobProgress:
     status: ProcrastinateJobStatus
     id: strawberry.scalars.ID
     started_at: datetime
+    has_forecast: bool = True
     total: int
     succeeded: int
     doing: int
     failed: int
     estimated_seconds_remaining: float
-    estimated_finish_time: datetime
+    estimated_finish_time: Optional[datetime]
     seconds_per_record: float
     done: int
     remaining: int
@@ -1028,7 +1029,14 @@ class TicketTailorSource(ExternalDataSource):
     api_key: str
 
 
-@strawberry_django.type(models.Report)
+@strawberry_django.filter(models.Report, lookups=True)
+class ReportFilter:
+    organisation: auto
+    created_at: auto
+    last_update: auto
+
+
+@strawberry_django.type(models.Report, filters=ReportFilter)
 class Report:
     id: auto
     organisation_id: str
@@ -1244,7 +1252,9 @@ class HubPage:
 
     @strawberry_django.field
     def hub(self) -> "HubHomepage":
-        return self.get_site().root_page.specific
+        page = self.get_site().root_page.specific
+        if isinstance(page, models.HubHomepage):
+            return page
 
 
 @strawberry.type
@@ -1290,10 +1300,11 @@ def hub_page_by_path(
     }
     request.path = path
     site = Site.objects.get(hostname=hostname)
-    if path is None:
-        return site.root_page.specific
-    page = models.Page.find_for_request(request, path)
-    return page.specific if page else None
+    if isinstance(site.root_page.specific, models.HubHomepage):
+        if path is None:
+            return site.root_page.specific
+        page = models.Page.find_for_request(request, path)
+        return page.specific if page else None
 
 
 @strawberry_django.field()

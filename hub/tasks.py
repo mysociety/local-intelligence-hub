@@ -85,12 +85,46 @@ async def refresh_many(
     )
 
 
+@app.task(queue="external_data_sources", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
+@telemetry_task
+async def refresh_pages(
+    external_data_source_id: str, current_page: int, request_id: str = None
+):
+    from hub.models import ExternalDataSource
+
+    has_more_data = await ExternalDataSource.deferred_refresh_page(
+        external_data_source_id=external_data_source_id,
+        page=current_page,
+        request_id=request_id,
+    )
+
+    # Create task to refresh next page
+    if has_more_data:
+        return await ExternalDataSource.schedule_refresh_pages(
+            external_data_source_id=external_data_source_id,
+            current_page=current_page + 1,
+            request_id=request_id,
+        )
+    else:
+        return await signal_request_complete.configure(
+            # Dedupe `refresh_pages` jobs for the same config
+            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+            queueing_lock=f"request_complete_{request_id}"
+        ).defer_async(
+            request_id=request_id,
+            external_data_source_id=external_data_source_id,
+        )
+
+
 @app.task(queue="external_data_sources")
 @telemetry_task
 async def refresh_all(external_data_source_id: str, request_id: str = None):
     from hub.models import ExternalDataSource
 
-    await ExternalDataSource.deferred_refresh_all(
+    source = await ExternalDataSource.objects.aget(id=external_data_source_id)
+    SourceClass = source.get_real_instance_class()
+
+    await SourceClass.deferred_refresh_all(
         external_data_source_id=external_data_source_id, request_id=request_id
     )
 
@@ -120,6 +154,37 @@ async def import_many(
     )
 
 
+@app.task(queue="external_data_sources", retry=settings.IMPORT_UPDATE_MANY_RETRY_COUNT)
+@telemetry_task
+async def import_pages(
+    external_data_source_id: str, current_page=1, request_id: str = None
+):
+    from hub.models import ExternalDataSource
+
+    has_more_data = await ExternalDataSource.deferred_import_page(
+        external_data_source_id=external_data_source_id,
+        page=current_page,
+        request_id=request_id,
+    )
+
+    # Create task to import next page
+    if has_more_data:
+        return await ExternalDataSource.schedule_import_pages(
+            external_data_source_id=external_data_source_id,
+            current_page=current_page + 1,
+            request_id=request_id,
+        )
+    else:
+        return await signal_request_complete.configure(
+            # Dedupe `refresh_pages` jobs for the same config
+            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+            queueing_lock=f"request_complete_{request_id}"
+        ).defer_async(
+            request_id=request_id,
+            external_data_source_id=external_data_source_id,
+        )
+
+
 @app.task(queue="external_data_sources")
 @telemetry_task
 async def import_all(
@@ -128,9 +193,20 @@ async def import_all(
     # Todo: track task waiting duration with requested_at ISO date
     from hub.models import ExternalDataSource
 
-    await ExternalDataSource.deferred_import_all(
+    source = await ExternalDataSource.objects.aget(id=external_data_source_id)
+    SourceClass = source.get_real_instance_class()
+
+    await SourceClass.deferred_import_all(
         external_data_source_id=external_data_source_id, request_id=request_id
     )
+
+
+@app.task(queue="external_data_sources")
+async def signal_request_complete(request_id: str, *args, **kwargs):
+    """
+    Empty task which is used to query the status of the batch tasks.
+    """
+    pass
 
 
 # cron that calls the `import_2024_ppcs` command every hour

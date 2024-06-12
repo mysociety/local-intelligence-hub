@@ -15,7 +15,7 @@ jobs:
         with:
           options: "--check --diff"
           src: "."
-          version: "24.3.0"
+          version: "24.4.2"
       - name: Run isort
         uses: isort/isort-action@master
       - name: Run flake8

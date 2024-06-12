@@ -1,7 +1,10 @@
+import datetime
 import itertools
 import pprint
 from types import SimpleNamespace
 from uuid import UUID
+
+from django.utils import dateparse
 
 from benedict import benedict
 
@@ -75,7 +78,29 @@ def batched(iterable, n):
 
 def batch_and_aggregate(arr_limit):
     def decorator(original_fn):
+        def resulting_fn(arr):
+            if len(arr) == 0:
+                return []
+            if len(arr) <= arr_limit:
+                return original_fn(arr)
+            batches = chunk_array(arr, arr_limit)
+            results = []
+            for batch in batches:
+                results += original_fn(batch)
+            return results
+
+        return resulting_fn
+
+    return decorator
+
+
+def async_batch_and_aggregate(arr_limit):
+    def decorator(original_fn):
         async def resulting_fn(arr):
+            if len(arr) == 0:
+                return []
+            if len(arr) <= arr_limit:
+                return await original_fn(arr)
             batches = chunk_array(arr, arr_limit)
             results = []
             for batch in batches:
@@ -140,3 +165,42 @@ def transform_dict_values_recursive(
 
 def is_maybe_id(value):
     return isinstance(value, (str, int, UUID))
+
+
+def parse_datetime(value):
+    """
+    Taken from Django DateTimeField.to_python
+    """
+
+    def parse(value) -> datetime.datetime | None:
+        if value is None:
+            return value
+        if isinstance(value, datetime.datetime):
+            return value
+        if isinstance(value, datetime.date):
+            return datetime.datetime(value.year, value.month, value.day)
+        try:
+            parsed = dateparse.parse_datetime(value)
+            if parsed is not None:
+                return parsed
+        except ValueError:
+            logger.debug(f"Warning: invalid datetime {value}")
+
+        try:
+            parsed = dateparse.parse_date(value)
+            if parsed is not None:
+                return datetime.datetime(parsed.year, parsed.month, parsed.day)
+        except ValueError:
+            logger.debug(f"Warning: invalid date {value}")
+
+        return None
+
+    dt = parse(value)
+    if not dt:
+        return dt
+
+    if not dt.tzinfo:
+        logger.warning("Warning: setting timezone to UTC for naive datetime")
+        dt = dt.replace(tzinfo=datetime.timezone.utc)
+
+    return dt
