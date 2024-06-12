@@ -1250,7 +1250,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         estimated_finish_time = datetime.now() + time_remaining
 
         return self.BatchJobProgress(
-            status="done" if remaining <= 0 else (parent_job.status if parent_job.status != "succeeded" else "doing"),
+            status="succeeded" if remaining <= 0 else (parent_job.status if parent_job.status != "succeeded" else "doing"),
             id=request_id,
             started_at=time_started,
             estimated_seconds_remaining=time_remaining,
