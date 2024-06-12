@@ -771,15 +771,15 @@ class BatchJobProgress:
     id: strawberry.scalars.ID
     started_at: datetime
     has_forecast: bool = True
-    total: int
-    succeeded: int
-    doing: int
-    failed: int
-    estimated_seconds_remaining: float
-    estimated_finish_time: Optional[datetime]
-    seconds_per_record: float
-    done: int
-    remaining: int
+    total: Optional[int] = None
+    succeeded: Optional[int] = None
+    doing: Optional[int] = None
+    failed: Optional[int] = None
+    estimated_seconds_remaining: Optional[float] = None
+    estimated_finish_time: Optional[datetime] = None
+    seconds_per_record: Optional[float] = None
+    done: Optional[int] = None
+    remaining: Optional[int] = None
 
 
 @strawberry.enum

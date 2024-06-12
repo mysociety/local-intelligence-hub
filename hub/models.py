@@ -1206,7 +1206,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 return self.BatchJobProgress(
                     status="done",
                     id=request_id,
-                    started_at=parent_job.created_at,
+                    started_at=parent_job.scheduled_at,
                     has_forecast=False,
                 )
             else:
@@ -1217,7 +1217,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         else "doing"
                     ),
                     id=request_id,
-                    started_at=parent_job.created_at,
+                    started_at=parent_job.scheduled_at,
                     has_forecast=False,
                 )
 
