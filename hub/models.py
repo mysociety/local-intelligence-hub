@@ -3149,19 +3149,24 @@ class ActionNetworkSource(ExternalDataSource):
     def get_member_ids_from_webhook(self, webhook_payload: list[dict]) -> list[str]:
         member_ids = []
         for item in webhook_payload:
-            payload = {}
-            if "action_network:action" in item:
-                payload = item.get("action_network:action")
-            if "osdi:attendance" in item:
-                payload = item.get("osdi:attendance")
-            if "osdi:submission" in item:
-                payload = item.get("osdi:submission")
-            if "osdi:donation" in item:
-                payload = item.get("osdi:donation")
-            person_href = payload.get("_links", {}).get("osdi:person", {}).get("href")
-            if person_href:
-                id = person_href.split("/")[-1]
-                member_ids.append(self.uuid_to_prefixed_id(id))
+            payloads = []
+            payload_keys = [
+                "action_network:action",
+                "osdi:attendance",
+                "osdi:submission",
+                "osdi:donation",
+                "osdi:outreach",
+            ]
+            for key in payload_keys:
+                if item.get(key):
+                    payloads.append(item.get(key))
+            for payload in payloads:
+                person_href = (
+                    payload.get("_links", {}).get("osdi:person", {}).get("href")
+                )
+                if person_href:
+                    id = person_href.split("/")[-1]
+                    member_ids.append(self.uuid_to_prefixed_id(id))
         return member_ids
 
     @classmethod
