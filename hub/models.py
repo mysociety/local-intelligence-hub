@@ -1207,7 +1207,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 )
             else:
                 return self.BatchJobProgress(
-                    status="doing",
+                    status=parent_job.status if parent_job.status != "succeeded" else "doing",
                     id=request_id,
                     started_at=parent_job.created_at,
                     has_forecast=False
@@ -1250,7 +1250,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         estimated_finish_time = datetime.now() + time_remaining
 
         return self.BatchJobProgress(
-            status="todo" if parent_job.status == "todo" else "doing",
+            status=parent_job.status if parent_job.status != "succeeded" else "doing",
             id=request_id,
             started_at=time_started,
             estimated_seconds_remaining=time_remaining,
