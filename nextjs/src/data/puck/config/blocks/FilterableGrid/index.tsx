@@ -24,6 +24,7 @@ import { PuckText } from "../../components/PuckText";
 import { twMerge } from "tailwind-merge";
 import pluralize from "pluralize";
 import { itemTypes } from "./cardTypes";
+import { ErrorBoundary } from "@sentry/nextjs";
 
 // TODO:
 export type FilterableGridProps = {
@@ -339,8 +340,11 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                             // TODO:
                             // ?.sort((a, b) => compareAsc(a.timestamp, b.timestamp))
                             .map((item, index) => (
-                            <RenderCard key={index} {...item} />
-                        ))}
+                                <ErrorBoundary key={index}>
+                                    <RenderCard key={index} {...item} />
+                                </ErrorBoundary>
+                            ))
+                        }
                     </div>
                 </section>
             ) : (

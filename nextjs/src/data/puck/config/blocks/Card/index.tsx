@@ -25,6 +25,7 @@ import { Download } from "lucide-react";
 import dynamic from "next/dynamic";
 import dynamicIconImports from "lucide-react/dynamicIconImports";
 import { itemTypes } from "../FilterableGrid/cardTypes";
+import { ErrorBoundary } from "@sentry/nextjs";
 
 const icons = Object.keys(dynamicIconImports).reduce((acc, iconName) => {
   // @ts-ignore
@@ -144,7 +145,7 @@ export const Card: ComponentConfig<CardProps> = {
       }
     }
   },
-  render: props => <RenderCard {...props} />,
+  render: props => <ErrorBoundary><RenderCard {...props} /></ErrorBoundary>,
 };
 
 export function RenderCard({ src, category, title, description, dialogDescription, type, link, linkLabel, behaviour }: CardProps) {
