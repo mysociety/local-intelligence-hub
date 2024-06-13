@@ -177,7 +177,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
              {!!postcode && (
                 <IframeResizer
                   src={queryString.stringifyUrl({
-                    url: 'https://mp-letter.onldspk.cc/ge2024-candidates/frame/write',
+                    url: 'https://peopleclimatenature.onldspk.cc/ge2024-candidates/frame/write',
                     query: {
                       body: "VqQTqd",
                       pc: postcode
