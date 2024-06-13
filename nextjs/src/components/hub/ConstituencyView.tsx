@@ -14,6 +14,8 @@ import {
 import { useState } from "react";
 import { HustingsCTA } from "@/app/hub/render/[hostname]/map/[[...slugs]]/SearchPanel";
 import Link from "next/link";
+import IframeResizer from "iframe-resizer-react";
+import queryString from "query-string";
 
 export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSearch']['constituency'] }) {
   const [tab, setTab] = useState("events");
@@ -44,6 +46,8 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
       isAfter(new Date(d.startTime), new Date())
   );
 
+  const postcode = data?.samplePostcode?.postcode?.trim().replace(/([\s ]*)/mig, "");
+
   return (
     <div className='flex flex-col overflow-y-hidden p-6'>
       <header className="mb-4">
@@ -68,13 +72,22 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
           className="flex flex-col max-h-full overflow-hidden items-stretch justify-start"
         >
           <TabsList className="p-0 py-4 mb-4 border-none w-full justify-start gap-2">
-            {["Events", "Candidates"].map((target) => (
+            {[
+              {
+                label: "Campaign events",
+                key: "events"
+              }, 
+              {
+                label: "Message your candidates 💬",
+                key: "candidates"
+              }
+            ].map((target) => (
               <TabsTrigger
-                key={target}
-                value={target.toLowerCase()}
+                key={target.key}
+                value={target.key}
                 className="rounded text-jungle-green-600 bg-none hover:bg-jungle-green-50 data-[state=active]:bg-jungle-green-50 data-[state=active]:text-jungle-green-600 data-[state=active]:shadow-none"
               >
-                {target}
+                {target.label}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -160,7 +173,19 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
           </TabsContent>
           <TabsContent className="mt-0" value="candidates">
             <section className="space-y-4">
-              {data?.ppcs
+             {!!postcode && (
+                <IframeResizer
+                  src={queryString.stringifyUrl({
+                    url: 'https://mp-letter.onldspk.cc/ge2024-candidates/frame/write',
+                    query: {
+                      body: "VqQTqd",
+                      pc: postcode
+                    }
+                  })}
+                  width={'100%'}
+                />
+             )}
+              {/* {data?.ppcs
                 //.sort((a, b) => a.name < b.name ? -1 : 1)
                 .map((person) => (
                   <article
@@ -204,7 +229,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
                       </span>
                     )}
                   </article>
-                ))}
+                ))} */}
             </section>
           </TabsContent>
         </Tabs>

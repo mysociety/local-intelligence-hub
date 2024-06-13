@@ -7,8 +7,10 @@ from typing import List, Optional, Union
 from django.db.models import Q
 from django.http import HttpRequest
 
+from hub.graphql.context import HubDataLoaderContext
 import procrastinate.contrib.django.models
 import strawberry
+from strawberry.dataloader import DataLoader
 import strawberry_django
 import strawberry_django_dataloaders.factories
 import strawberry_django_dataloaders.fields
@@ -17,6 +19,7 @@ from strawberry import auto
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
+from utils.postcodesIO import get_bulk_postcode_geo_from_coords
 from wagtail.models import Site
 
 from hub import models
@@ -448,7 +451,6 @@ class ConstituencyElectionStats:
             ),
         )
 
-
 @strawberry_django.type(models.Area, filters=AreaFilter)
 class Area:
     id: auto
@@ -557,6 +559,9 @@ class Area:
             )
         return data
 
+    @strawberry_django.field
+    async def sample_postcode(self, info: Info[HubDataLoaderContext]) -> Optional[PostcodesIOResult]:
+        return await info.context.area_coordinate_loader.load(self.point)
 
 @strawberry.type
 class GroupedDataCount:
