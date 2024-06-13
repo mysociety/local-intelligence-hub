@@ -31,27 +31,27 @@ const config = {
       },
       fontSize: {
         hub6xl: ['3.625rem', {
-          lineHeight: '100%',
+          lineHeight: '110%',
           letterSpacing: '-0.145rem',
         }],
         hub5xl: ['2.86rem', {
-          lineHeight: '100%',
+          lineHeight: '110%',
           letterSpacing: '-0.11rem',
         }],
         hub4xl: ['2.44rem', {
-          lineHeight: '100%',
+          lineHeight: '110%',
           letterSpacing: '-0.1rem',
         }],
         hub3xl: ['1.75rem', {
-          lineHeight: '100%',
+          lineHeight: '110%',
           letterSpacing: '-0.04rem',
         }],
         hub2xl: ['1.5rem', {
-          lineHeight: '100%',
+          lineHeight: '110%',
           letterSpacing: '-0.015rem',
         }],
         hubxl: ['1.25rem', {
-          lineHeight: '100%',
+          lineHeight: '110%',
           letterSpacing: '0rem',
         }],
 
