@@ -174,7 +174,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
           </TabsContent>
           <TabsContent className="mt-0" value="candidates">
             <section className="space-y-4">
-             {!!postcode && (
+              {/* {!!postcode && data?.ppcs.some(person => !!person.email?.data) ? ( */}
                 <IframeResizer
                   src={queryString.stringifyUrl({
                     url: 'https://peopleclimatenature.onldspk.cc/ge2024-candidates/frame/write',
@@ -185,9 +185,10 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
                   })}
                   width={'100%'}
                 />
-             )}
-              {/* {data?.ppcs
-                //.sort((a, b) => a.name < b.name ? -1 : 1)
+             {/* ) : (
+              <>
+              {data?.ppcs
+                .sort((a, b) => a.name.localeCompare(b.name))
                 .map((person) => (
                   <article
                     key={person.id}
@@ -230,7 +231,9 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
                       </span>
                     )}
                   </article>
-                ))} */}
+                ))}
+              </>
+             )} */}
             </section>
           </TabsContent>
         </Tabs>
