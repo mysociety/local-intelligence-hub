@@ -699,6 +699,11 @@ class Person(models.Model):
         area = self.area
         return f"/area/{area.area_type.code}/{area.name}"
 
+    def party(self):
+        return PersonData.objects.get(
+            person=self, data_type=DataType.objects.get(name="party")
+        ).value()
+
     class Meta:
         unique_together = ("external_id", "id_type")
         indexes = [models.Index(fields=["external_id", "id_type"])]
