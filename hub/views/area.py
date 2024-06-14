@@ -217,15 +217,7 @@ class AreaView(BaseAreaView):
         context["slug"] = slugify(self.object.name)
 
         if context["area_type"] == "WMC23":
-            context["PPCs"] = [
-                {
-                    "person": p,
-                    "party": PersonData.objects.get(
-                        person=p, data_type=DataType.objects.get(name="party")
-                    ).value(),
-                }
-                for p in Person.objects.filter(area=self.object, person_type="PPC")
-            ]
+            context["PPCs"] = Person.objects.filter(area=self.object, person_type="PPC")
         try:
             context["mp"] = {
                 "person": Person.objects.get(

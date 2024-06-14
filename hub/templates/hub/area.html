@@ -176,8 +176,8 @@
                             </div>
                             <div class="flex-grow-1 ms-3">
                                 <h3 class="h4 mb-0 text-primary" id="mp_name">{{ mp.person.name }}</h3>
-                            {% if mp.party %}
-                                <p class="mb-0 text-muted">{{ mp.party }}</p>
+                            {% if mp.person.party %}
+                                <p class="mb-0 text-muted">{{ mp.person.party }}</p>
                             {% endif %}
                             </div>
                         </div>
@@ -364,17 +364,17 @@
             <h2 class="text-primary">Prospective Parliamentary Candidates</h2>
             <p style="max-width: 37em;" class="mb-4">These are the candidates standing for election in this constituency on 4th June.</p>
             <div class="area-data-grid">
-            {% for row in PPCs %}
+            {% for person in PPCs %}
               <div class="card dataset-card area-data--sm area-data--featured">
                   <div class="card-body">
                       <div class="d-flex align-items-center">
                           <div class="flex-shrink-0">
-                              {% include 'hub/includes/person-photo.html' with person=row.person %}
+                              {% include 'hub/includes/person-photo.html' with person=person %}
                           </div>
                           <div class="flex-grow-1 ms-3">
-                              <h3 class="h4 mb-0 text-primary">{{ row.person }}</h3>
-                          {% if row.party %}
-                              <p class="mb-0 text-muted">{{ row.party }}</p>
+                              <h3 class="h4 mb-0 text-primary">{{ person.name }}</h3>
+                          {% if person.party %}
+                              <p class="mb-0 text-muted">{{ person.party }}</p>
                           {% endif %}
                           </div>
                       </div>
