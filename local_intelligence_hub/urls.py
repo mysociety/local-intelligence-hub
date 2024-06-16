@@ -26,8 +26,8 @@ from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
-from hub.graphql.schema import schema
 from hub.graphql.context import CustomSchemaView
+from hub.graphql.schema import schema
 from hub.sitemap import hub_sitemap
 from hub.views import accounts, area, core, explore, landingpages, vector_tiles
 from hub.views.mapped import ExternalDataSourceWebhook

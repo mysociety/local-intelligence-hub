@@ -7,23 +7,22 @@ from typing import List, Optional, Union
 from django.db.models import Q
 from django.http import HttpRequest
 
-from hub.graphql.context import HubDataLoaderContext
 import procrastinate.contrib.django.models
 import strawberry
-from strawberry.dataloader import DataLoader
 import strawberry_django
 import strawberry_django_dataloaders.factories
 import strawberry_django_dataloaders.fields
 from benedict import benedict
 from strawberry import auto
+from strawberry.dataloader import DataLoader
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
-from utils.postcodesIO import get_bulk_postcode_geo_from_coords
 from wagtail.models import Site
 
 from hub import models
 from hub.enrichment.sources import builtin_mapping_sources
+from hub.graphql.context import HubDataLoaderContext
 from hub.graphql.dataloaders import (
     FieldDataLoaderFactory,
     FieldReturningListDataLoaderFactory,
@@ -34,6 +33,7 @@ from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
+from utils.postcodesIO import get_bulk_postcode_geo_from_coords
 
 logger = logging.getLogger(__name__)
 
@@ -451,6 +451,7 @@ class ConstituencyElectionStats:
             ),
         )
 
+
 @strawberry_django.type(models.Area, filters=AreaFilter)
 class Area:
     id: auto
@@ -560,8 +561,11 @@ class Area:
         return data
 
     @strawberry_django.field
-    async def sample_postcode(self, info: Info[HubDataLoaderContext]) -> Optional[PostcodesIOResult]:
+    async def sample_postcode(
+        self, info: Info[HubDataLoaderContext]
+    ) -> Optional[PostcodesIOResult]:
         return await info.context.area_coordinate_loader.load(self.point)
+
 
 @strawberry.type
 class GroupedDataCount:
@@ -638,7 +642,8 @@ class GenericData(CommonData):
             return None
 
         # TODO: data loader for this
-        return models.Area.objects.filter(polygon__contains=self.point)
+        # Convert to list to make deeper async resolvers work
+        return list(models.Area.objects.filter(polygon__contains=self.point))
 
     @strawberry_django.field
     def area(self, area_type: str, info: Info) -> Optional[Area]:
@@ -648,7 +653,7 @@ class GenericData(CommonData):
         # TODO: data loader for this
         return models.Area.objects.filter(
             polygon__contains=self.point, area_type__code=area_type
-        )
+        ).first()
 
 
 @strawberry.type
