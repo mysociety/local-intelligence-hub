@@ -122,12 +122,25 @@ class Query(UserQueries):
         input: mutation_types.CreateExternalDataSourceInput,
     ) -> model_types.ExternalDataSource:
         for crm_type_key, model in models.source_models.items():
-            input_dict = graphql_type_to_dict(input)
+            # Custom handler for Google Sheets as more OAuth logic is required to get an access token
+            if crm_type_key == "editablegooglesheets":
+                input_dict = graphql_type_to_dict(input, delete_null_keys=True)
+                return models.EditableGoogleSheetsSource.from_oauth_redirect_success(
+                    **input_dict[crm_type_key]
+                )
+
+            input_dict = graphql_type_to_dict(input, delete_null_keys=True)
             if crm_type_key in input_dict and input_dict[crm_type_key] is not None:
                 return model(**input_dict[crm_type_key])
         raise ValueError("Unsupported data source type")
 
     list_api_tokens = public_queries.list_api_tokens
+
+    @strawberry.field
+    def google_sheets_auth_url(
+        self, info: strawberry.types.Info, redirect_url: str
+    ) -> str:
+        return models.EditableGoogleSheetsSource.authorization_url(redirect_url)
 
 
 @strawberry.type

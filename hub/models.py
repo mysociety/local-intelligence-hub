@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import itertools
+import json
 import math
 import uuid
 from datetime import datetime, timezone
@@ -23,6 +24,9 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 
+import google_auth_oauthlib.flow
+import googleapiclient
+import googleapiclient.discovery
 import httpx
 import numpy as np
 import pandas as pd
@@ -31,6 +35,7 @@ from asgiref.sync import async_to_sync, sync_to_async
 from benedict import benedict
 from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
+from google.oauth2.credentials import Credentials
 from mailchimp3 import MailChimp
 from polymorphic.models import PolymorphicModel
 from procrastinate.contrib.django.models import ProcrastinateEvent, ProcrastinateJob
@@ -50,7 +55,7 @@ import utils as lih_utils
 from hub.analytics import Analytics
 from hub.cache_keys import site_tile_filter_dict
 from hub.enrichment.sources import builtin_mapping_sources
-from hub.fields import EncryptedCharField
+from hub.fields import EncryptedCharField, EncryptedTextField
 from hub.filters import Filter
 from hub.parsons.action_network.action_network import ActionNetwork
 from hub.tasks import (
@@ -64,7 +69,7 @@ from hub.tasks import (
     refresh_webhooks,
 )
 from hub.views.mapped import ExternalDataSourceWebhook
-from utils import google_maps
+from utils import google_maps, google_sheets
 from utils.log import get_simple_debug_logger
 from utils.postcodesIO import (
     PostcodesIOResult,
@@ -1327,7 +1332,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         return None
 
-    def setup_webhooks(self):
+    def setup_webhooks(self, refresh=True):
         """
         Set up a webhook.
         """
@@ -1376,6 +1381,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         return urljoin(
             settings.BASE_URL,
             reverse("external_data_source_webhook", args=[self.id]),
+        )
+
+    def webhook_create_url(self):
+        return urljoin(
+            settings.BASE_URL,
+            reverse("external_data_source_create_webhook", args=[self.id]),
         )
 
     def get_member_ids_from_webhook(self, payload: dict) -> list[str]:
@@ -2054,6 +2065,22 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 external_data_source.refresh_webhooks()
 
     @classmethod
+    async def deferred_setup_webhooks(cls, external_data_source_id: str, refresh=True):
+        if not cls.has_webhooks:
+            return
+
+        external_data_source: ExternalDataSource = await cls.objects.aget(
+            pk=external_data_source_id
+        )
+
+        if (
+            external_data_source.auto_update_enabled
+            or external_data_source.auto_import_enabled
+        ):
+            if external_data_source.automated_webhooks:
+                external_data_source.setup_webhooks(refresh=refresh)
+
+    @classmethod
     async def deferred_import_many(
         cls, external_data_source_id: str, members: list, request_id: str = None
     ):
@@ -2556,7 +2583,7 @@ class AirtableSource(ExternalDataSource):
             if ExternalDataSourceWebhook.base_path in webhook.notification_url:
                 webhook.delete()
 
-    def setup_webhooks(self):
+    def setup_webhooks(self, refresh=True):
         self.teardown_unused_webhooks(force=True)
         # Auto-import
         logger.info(f"Setting up webhooks for source {self}")
@@ -2809,7 +2836,7 @@ class MailchimpSource(ExternalDataSource):
         webhooks = self.client.lists.webhooks.all(self.list_id)["webhooks"]
         return [webhook for webhook in webhooks if webhook["url"] == self.webhook_url()]
 
-    def setup_webhooks(self):
+    def setup_webhooks(self, refresh=True):
         self.teardown_unused_webhooks(force=True)
         # Update external data webhook
         config = {
@@ -3303,6 +3330,480 @@ class ActionNetworkSource(ExternalDataSource):
         )
 
 
+class EditableGoogleSheetsSource(ExternalDataSource):
+    """
+    An editable Google Sheet
+    """
+
+    crm_type = "editablegooglesheets"
+    oauth_credentials = EncryptedTextField(
+        null=True,
+        blank=True,
+    )
+
+    spreadsheet_id = models.CharField(max_length=250)
+    sheet_name = models.CharField(max_length=100)
+
+    id_field = models.CharField(max_length=100)
+
+    has_webhooks = True
+    automated_webhooks = True
+    introspect_fields = True
+    default_data_type = None
+
+    SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+
+    class Meta:
+        verbose_name = "Editable google sheet"
+
+    @classmethod
+    def oauth_flow(cls):
+        return google_auth_oauthlib.flow.Flow.from_client_config(
+            client_config=settings.GOOGLE_SHEETS_CLIENT_CONFIG, scopes=cls.SCOPES
+        )
+
+    @classmethod
+    def from_oauth_redirect_success(cls, redirect_success_url: str, **kwargs):
+        """
+        Create an instance of the class, converting the redirect_success_url
+        into oauth credentials with the Google API.
+        """
+        flow = cls.oauth_flow()
+        flow.redirect_uri = redirect_success_url.split("?")[0]
+        token = flow.fetch_token(authorization_response=redirect_success_url)
+        oauth_credentials = json.dumps(
+            {
+                "access_token": token["access_token"],
+                "refresh_token": token["refresh_token"],
+                "client_id": flow.client_config["client_id"],
+                "client_secret": flow.client_config["client_secret"],
+                "scopes": token["scope"],
+            }
+        )
+        return cls(oauth_credentials=oauth_credentials, **kwargs)
+
+    @classmethod
+    def get_deduplication_field_names(cls) -> list[str]:
+        return ["spreadsheet_id", "sheet_name"]
+
+    @classmethod
+    def authorization_url(cls, redirect_url: str) -> str:
+        flow = cls.oauth_flow()
+        flow.redirect_uri = redirect_url
+        authorization_url, state = flow.authorization_url(
+            access_type="offline", include_granted_scopes="true", prompt="consent"
+        )
+        return authorization_url
+
+    @cached_property
+    def api(self):
+        credentials = Credentials.from_authorized_user_info(
+            json.loads(self.oauth_credentials)
+        )
+        return googleapiclient.discovery.build("sheets", "v4", credentials=credentials)
+
+    @cached_property
+    def spreadsheets(self) -> googleapiclient.discovery.Resource:
+        return self.api.spreadsheets()
+
+    @cached_property
+    def spreadsheet(self):
+        return self.spreadsheets.get(spreadsheetId=self.spreadsheet_id).execute()
+
+    @property
+    def sheet(self):
+        return self.get_sheet(sheet_name=self.sheet_name)
+
+    @property
+    def lookup_sheet(self):
+        return self.get_sheet(sheet_name="MAPPED_LOOKUP_SHEET")
+
+    @property
+    def webhook_sheet(self):
+        return self.get_sheet(sheet_name="MAPPED_WEBHOOK_SHEET")
+
+    @cached_property
+    def headers(self) -> list[str]:
+        result = (
+            self.spreadsheets.values()
+            .get(spreadsheetId=self.spreadsheet_id, range=f"{self.sheet_name}!1:1")
+            .execute()
+        )
+        return result["values"][0]
+
+    def get_sheet(self, sheet_name: str):
+        return next(
+            (
+                sheet
+                for sheet in self.spreadsheet["sheets"]
+                if sheet["properties"]["title"] == sheet_name
+            ),
+            None,
+        )
+
+    def remote_url(self) -> str:
+        sheet = self.sheet
+        return f"{self.spreadsheet['spreadsheetUrl']}?gid=${sheet['properties']['sheetId']}"
+
+    def healthcheck(self):
+        if self.headers:
+            return True
+        return False
+
+    def field_definitions(self):
+        header_row = self.headers
+        return [
+            self.FieldDefinition(label=column, value=column) for column in header_row
+        ]
+
+    def record_url_template(self):
+        return self.remote_url()
+
+    def record_url(self, record_id: str, record_data: dict):
+        return self.remote_url()
+
+    async def fetch_one(self, member_id):
+        rows = await self.fetch_many([member_id])
+        return rows[0] if rows else None
+
+    async def fetch_many(self, id_list: list[str]):
+        row_numbers = self.fetch_row_numbers_for_ids(id_list)
+        if not row_numbers:
+            return []
+        return self.get_rows(row_numbers)
+
+    async def fetch_all(self):
+        return self.get_data()
+
+    def get_data(self) -> list[dict]:
+        result = (
+            self.spreadsheets.values()
+            .get(spreadsheetId=self.spreadsheet_id, range=self.sheet_name)
+            .execute()
+        )
+        data = result["values"]
+        headers = data[0]
+        return [dict(zip(headers, row)) for row in data[1:]]
+
+    def get_rows(self, row_numbers: list[int]) -> list[dict]:
+        last_column = google_sheets.column_index_to_letters(len(self.headers) - 1)
+        ranges = [
+            f"{self.sheet_name}!A{row_number}:{last_column}{row_number}"
+            for row_number in row_numbers
+            if row_number
+        ]
+        result = (
+            self.spreadsheets.values()
+            .batchGet(spreadsheetId=self.spreadsheet_id, ranges=ranges)
+            .execute()
+        )
+        rows = []
+        for value_range in result["valueRanges"]:
+            rows = rows + value_range["values"]
+
+        records = [dict(zip(self.headers, row)) for row in rows]
+        logger.debug(
+            f"Google Sheet source {self} got rows {records} for row numbers {row_numbers}"
+        )
+        return records
+
+    def fetch_row_numbers_for_ids(self, id_list: list[str]):
+        """
+        No API to search for rows with a column matching a value.
+        Instead, create a formula on a lookup sheet, and read
+        the value of that formula (!)
+
+        Returns a list of the same length as the input, using
+        None if the ID is not found.
+        """
+        if not self.lookup_sheet:
+            self.create_sheet("MAPPED_LOOKUP_SHEET")
+
+        id_column_index = self.headers.index(self.id_field)
+        id_column = google_sheets.column_index_to_letters(id_column_index)
+
+        result = (
+            self.spreadsheets.values()
+            .update(
+                spreadsheetId=self.spreadsheet_id,
+                range="MAPPED_LOOKUP_SHEET!A1",
+                valueInputOption="USER_ENTERED",
+                includeValuesInResponse=True,
+                body={
+                    "values": [
+                        [
+                            f'=MATCH("{id}", {self.sheet_name}!{id_column}:{id_column}, 0)'
+                        ]
+                        for id in id_list
+                    ],
+                },
+            )
+            .execute()
+        )
+        row_numbers = []
+        for row in result["updatedData"]["values"]:
+            try:
+                row_number = int(row[0])
+            except ValueError:
+                row_number = None
+            row_numbers.append(row_number)
+        if len(row_numbers) != len(id_list):
+            raise ValueError(
+                f"Could not get row numbers for Google Sheets source {self} and ids {id_list}: "
+                "returned list did not match input list"
+            )
+        return row_numbers
+
+    def create_sheet(self, sheet_name: str):
+        self.spreadsheets.batchUpdate(
+            spreadsheetId=self.spreadsheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": sheet_name}}}]},
+        ).execute()
+        # Clear spreadsheet metadata after adding a sheet
+        del self.spreadsheet
+
+    def get_record_id(self, record: dict):
+        return record[self.id_field]
+
+    def get_record_dict(self, record: dict) -> dict:
+        return record
+
+    async def update_one(self, mapped_record, **kwargs):
+        return await self.update_many([mapped_record])
+
+    async def update_many(self, mapped_records, **kwargs):
+        record_ids = [record["member"][self.id_field] for record in mapped_records]
+        row_numbers = self.fetch_row_numbers_for_ids(record_ids)
+        logger.debug(
+            f"Google Sheets source {self} updating rows {row_numbers} for records {record_ids}"
+        )
+        value_ranges = []
+        for i, mapped_record in enumerate(mapped_records):
+            row_number = row_numbers[i]
+            for i, header in enumerate(self.headers):
+                if header not in mapped_record["update_fields"]:
+                    continue
+                column = google_sheets.column_index_to_letters(i)
+                value = mapped_record["update_fields"][header]
+                value_ranges.append(
+                    {
+                        "range": f"{self.sheet_name}!{column}{row_number}",
+                        "values": [[value]],
+                    }
+                )
+
+        logger.debug(
+            f"Google Sheets source {self} updating google sheet {value_ranges}"
+        )
+        self.spreadsheets.values().batchUpdate(
+            spreadsheetId=self.spreadsheet_id,
+            body={"valueInputOption": "USER_ENTERED", "data": value_ranges},
+        ).execute()
+
+    def webhook_healthcheck(self):
+        message = self.check_webhook_errors()
+        if not message:
+            return True
+        raise ValueError(f"Webhook healthcheck: {message}")
+
+    def check_webhook_errors(self):
+        if not self.webhook_sheet:
+            return "Not enough webhooks - no webhook sheet"
+        webhook_sheet_data = (
+            self.spreadsheets.values()
+            .get(
+                spreadsheetId=self.spreadsheet_id,
+                range="MAPPED_WEBHOOK_SHEET",
+                valueRenderOption="FORMULA",
+            )
+            .execute()
+        )
+        values = webhook_sheet_data["values"]
+        if not values or len(values) < 2:
+            return "Not enough webhooks - not enough rows"
+        row_1 = values[0] or [""]
+        cell_a1 = row_1[0]
+        if not "=COUNTIF" in cell_a1:
+            return "No row count in cell A1"
+        row_2 = values[1] or ["", ""]
+        cell_a2 = row_2[0]
+        if not self.webhook_create_url() in cell_a2:
+            return "No webhook to webhooks/create in cell A2"
+        cell_b2 = row_2[1]
+        if not self.webhook_url() in cell_b2:
+            return "No webhook to webhooks/auto_update cell B2"
+        return None
+
+    def teardown_unused_webhooks(self, force=False):
+        # Only teardown if forced or if no webhook behavior is enabled
+        should_teardown = force or (
+            not self.auto_import_enabled and not self.auto_update_enabled
+        )
+        if not should_teardown:
+            return
+        sheet = self.get_sheet("MAPPED_WEBHOOK_SHEET")
+        if not sheet:
+            return
+
+        logger.info(f"Deleting webhook sheet for source {self}")
+        self.spreadsheets.batchUpdate(
+            spreadsheetId=self.spreadsheet_id,
+            body={
+                "requests": [
+                    {"deleteSheet": {"sheetId": sheet["properties"]["sheetId"]}}
+                ]
+            },
+        ).execute()
+        # Clear spreadsheet metadata after removing a sheet
+        del self.spreadsheet
+
+    def enable_auto_import(self) -> Union[None, int]:
+        """
+        Override to prevent refreshing webhooks every time,
+        an expensive operation for Google Sheets
+        """
+        self.auto_import_enabled = True
+        self.setup_webhooks(refresh=False)
+        self.save()
+
+    def enable_auto_update(self) -> Union[None, int]:
+        """
+        Override to prevent refreshing webhooks every time,
+        an expensive operation for Google Sheets
+        """
+        self.auto_update_enabled = True
+        self.setup_webhooks(refresh=False)
+        self.save()
+
+    def setup_webhooks(self, refresh=True):
+        self.teardown_unused_webhooks(force=refresh)
+        # Auto-import
+        logger.info(f"Setting up webhooks for source {self}")
+        if not self.auto_import_enabled and not self.auto_update_enabled:
+            return
+
+        webhook_url = self.webhook_url()
+        webhook_create_url = self.webhook_create_url()
+
+        id_column_index = self.headers.index(self.id_field)
+        id_column = google_sheets.column_index_to_letters(id_column_index)
+
+        if not self.webhook_sheet:
+            self.create_sheet("MAPPED_WEBHOOK_SHEET")
+
+        # Set up webhook that fires when rows are added / removed
+        # It will call this function to set up webhooks for the new rows
+        logger.info(f"Creating add/remove webhook for source {self}")
+        self.spreadsheets.values().update(
+            spreadsheetId=self.spreadsheet_id,
+            range="MAPPED_WEBHOOK_SHEET!A1",
+            valueInputOption="USER_ENTERED",
+            body={
+                "values": [
+                    [f'=COUNTIF({self.sheet_name}!{id_column}2:{id_column}, "<>")'],
+                    [f'=IMPORTDATA(CONCATENATE("{webhook_create_url}?count=", A1))'],
+                ],
+            },
+        ).execute()
+
+        total_rows = self.sheet["properties"]["gridProperties"]["rowCount"]
+        end_row = max(total_rows, 3)  # ensure at least one webhook created
+        row_numbers = range(2, end_row)
+
+        logger.info(f"Creating {total_rows} update webhooks for source {self}")
+
+        # Only watch columns that aren't managed by Mapped
+        columns_to_watch = []  # e.g. ['A', 'B', 'D']
+        mapped_headers = [
+            mapping["destination_column"] for mapping in self.get_update_mapping()
+        ]
+        for i, header in enumerate(self.headers):
+            if header not in mapped_headers:
+                columns_to_watch.append(google_sheets.column_index_to_letters(i))
+
+        def get_watch_statement(row_number: int):
+            """
+            Return a Google Sheets expression that will change when data being watched
+            changes.
+            """
+            cells = [
+                f"{self.sheet_name}!{column}{row_number}" for column in columns_to_watch
+            ]
+            return f'JOIN(",", {', '.join(cells)})'
+
+        # Set up a webhook for each row of the data that fires when any column
+        # is filled / cleared
+        self.spreadsheets.values().update(
+            spreadsheetId=self.spreadsheet_id,
+            range="MAPPED_WEBHOOK_SHEET!B2",
+            valueInputOption="USER_ENTERED",
+            body={
+                "values": [
+                    [
+                        (
+                            f"=IMPORTDATA(CONCATENATE("
+                            f'"{webhook_url}?id=", '
+                            f"ENCODEURL({self.sheet_name}!{id_column}{n}), "
+                            '"&record=", '
+                            f"ENCODEURL({get_watch_statement(n)})"
+                            "))"
+                        )
+                    ]
+                    for n in row_numbers
+                ]
+            },
+        ).execute()
+
+        logger.info(f"Set up webhook for source {self}")
+
+    def get_member_ids_from_webhook(self, webhook_payload: dict) -> list[str]:
+        id = webhook_payload.get("id")
+        return [id] if id else []
+
+    def delete_one(self, record_id):
+        sheet_id = self.sheet["properties"]["sheetId"]
+        row_numbers = self.fetch_row_numbers_for_ids([record_id])
+        if not row_numbers[0]:
+            return
+        row_index = row_numbers[0] - 1
+        return self.spreadsheets.batchUpdate(
+            spreadsheetId=self.spreadsheet_id,
+            body={
+                "requests": [
+                    {
+                        "deleteDimension": {
+                            "range": {
+                                "sheetId": sheet_id,
+                                "dimension": "ROWS",
+                                "startIndex": row_index,
+                                "endIndex": row_index + 1,
+                            }
+                        }
+                    }
+                ]
+            },
+        ).execute()
+
+    def create_one(self, record) -> dict:
+        return self.create_many([record])[0]
+
+    def create_many(self, records):
+        rows = []
+        for record in records:
+            row = [
+                record.get(header) or record["data"].get(header, "")
+                for header in self.headers
+            ]
+            rows.append(row)
+        self.spreadsheets.values().append(
+            spreadsheetId=self.spreadsheet_id,
+            range=self.sheet_name,
+            body={"values": rows},
+            valueInputOption="USER_ENTERED",
+        ).execute()
+        return [dict(zip(self.headers, row)) for row in rows]
+
+
 class TicketTailorSource(ExternalDataSource):
     """
     Ticket Tailor box office
@@ -3694,5 +4195,6 @@ source_models: dict[str, Type[ExternalDataSource]] = {
     "airtable": AirtableSource,
     "mailchimp": MailchimpSource,
     "actionnetwork": ActionNetworkSource,
+    "editablegooglesheets": EditableGoogleSheetsSource,
     "tickettailor": TicketTailorSource,
 }

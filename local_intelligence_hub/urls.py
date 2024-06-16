@@ -30,7 +30,7 @@ from hub.graphql.context import CustomSchemaView
 from hub.graphql.schema import schema
 from hub.sitemap import hub_sitemap
 from hub.views import accounts, area, core, explore, landingpages, vector_tiles
-from hub.views.mapped import ExternalDataSourceWebhook
+from hub.views.mapped import ExternalDataSourceCreateWebhook, ExternalDataSourceWebhook
 
 handler404 = core.NotFoundPageView.as_view()
 
@@ -130,6 +130,11 @@ urlpatterns = [
         f"{ExternalDataSourceWebhook.base_path}/<str:external_data_source_id>",
         csrf_exempt(ExternalDataSourceWebhook.as_view()),
         name="external_data_source_webhook",
+    ),
+    path(
+        "webhook/create/<str:external_data_source_id>",
+        csrf_exempt(ExternalDataSourceCreateWebhook.as_view()),
+        name="external_data_source_create_webhook",
     ),
     path(
         "tiles/external-data-source/<str:pk>/<int:z>/<int:x>/<int:y>",

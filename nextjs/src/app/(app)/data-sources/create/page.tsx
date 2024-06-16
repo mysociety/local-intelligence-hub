@@ -6,33 +6,7 @@ import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CreateAutoUpdateFormContext } from "./NewExternalDataSourceWrapper";
 import { externalDataSourceOptions } from "@/lib/data";
-import { gql, useQuery } from "@apollo/client";
-import { AllExternalDataSourcesQuery, DataSourceType } from "@/__generated__/graphql";
-import { formatRelative } from "date-fns";
 
-const ALL_EXTERNAL_DATA_SOURCES = gql`
-  query AllExternalDataSources {
-    externalDataSources {
-      id
-      name
-      createdAt
-      dataType
-      crmType
-      connectionDetails {
-        ... on AirtableSource {
-          baseId
-          tableId
-        }
-        ... on MailchimpSource {
-          apiKey
-          listId
-        }
-      }
-      autoImportEnabled
-      autoUpdateEnabled
-    }
-  }
-`;
 
 export default function Page() {
   const router = useRouter();

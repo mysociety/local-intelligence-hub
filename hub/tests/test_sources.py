@@ -636,3 +636,67 @@ class TestActionNetworkSource(TestExternalDataSource, TestCase):
             paged_records += records
             page += 1
         assert len(all_records) == len(paged_records)
+
+
+class TestEditableGoogleSheetsSource(TestExternalDataSource, TestCase):
+    def create_test_source(self, name="My test Google member list"):
+        self.source: models.EditableGoogleSheetsSource = (
+            models.EditableGoogleSheetsSource.objects.create(
+                name=name,
+                data_type=models.EditableGoogleSheetsSource.DataSourceType.MEMBER,
+                organisation=self.organisation,
+                oauth_credentials=settings.TEST_GOOGLE_SHEETS_CREDENTIALS,
+                spreadsheet_id=settings.TEST_GOOGLE_SHEETS_SPREADSHEET_ID,
+                sheet_name=settings.TEST_GOOGLE_SHEETS_SHEET_NAME,
+                geography_column="postcode",
+                id_field="email",
+                email_field="email",
+                geography_column_type=models.EditableGoogleSheetsSource.GeographyTypes.POSTCODE,
+                auto_update_enabled=True,
+                update_mapping=[
+                    {
+                        "source": "postcodes.io",
+                        "source_path": "parliamentary_constituency_2025",
+                        "destination_column": self.constituency_field,
+                    },
+                    {
+                        "source": str(self.custom_data_layer.id),
+                        "source_path": "mayoral region",
+                        "destination_column": self.mayoral_field,
+                    },
+                ],
+            )
+        )
+        return self.source
+
+    async def test_fetch_all(self):
+        now = str(datetime.now().timestamp())
+        test_record_data = [
+            models.ExternalDataSource.CUDRecord(
+                postcode=now + "11111", email=now + "11111@gmail.com", data={}
+            ),
+            models.ExternalDataSource.CUDRecord(
+                postcode=now + "22222", email=now + "22222@gmail.com", data={}
+            ),
+        ]
+        self.create_many_test_records(test_record_data)
+
+        # Test this functionality
+        records = await self.source.fetch_all()
+
+        # Check
+        # Assumes there were 4 records in the test data source before this test ran
+        assert len(records) == 6
+
+        # Check the email field instead of postcode, because Mailchimp doesn't set
+        # the postcode without a full address, which is not present in this test
+        for test_record in test_record_data:
+            record = next(
+                filter(
+                    lambda r: self.source.get_record_field(r, self.source.email_field)
+                    == test_record["email"],
+                    records,
+                ),
+                None,
+            )
+            self.assertIsNotNone(record)

@@ -94,9 +94,9 @@ export function MailchimpLogo({ className }: { className?: string }) {
 
   );
 }
-export function GoogleSheetsLogo({ className }: { className?: string }) {
+export function GoogleSheetsIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 139 191" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg className={twMerge('w-full', className)}  viewBox="0 0 139 191" fill="none" xmlns="http://www.w3.org/2000/svg">
       <mask id="mask0_2118_18665" maskUnits="userSpaceOnUse" x="2" y="3" width="135" height="185">
         <path d="M86.2843 3.18848H14.9523C8.02886 3.18848 2.36426 8.85308 2.36426 15.7765V175.225C2.36426 182.148 8.02886 187.813 14.9523 187.813H124.048C130.972 187.813 136.636 182.148 136.636 175.225V53.5405L86.2843 3.18848Z" fill="white" />
       </mask>

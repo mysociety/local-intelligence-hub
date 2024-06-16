@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import functools
+import logging
 import os
 
 from django.conf import settings
@@ -11,6 +12,8 @@ from django.db.models import Count, Q
 from procrastinate.contrib.django import app
 from procrastinate.contrib.django.models import ProcrastinateJob
 from sentry_sdk import metrics
+
+logger = logging.getLogger(__name__)
 
 
 def telemetry_task(func):
@@ -135,8 +138,25 @@ async def refresh_all(external_data_source_id: str, request_id: str = None):
 async def refresh_webhooks(external_data_source_id: str, timestamp=None):
     from hub.models import ExternalDataSource
 
-    await ExternalDataSource.deferred_refresh_webhooks(
+    source = await ExternalDataSource.objects.aget(id=external_data_source_id)
+    SourceClass = source.get_real_instance_class()
+
+    await SourceClass.deferred_refresh_webhooks(
         external_data_source_id=external_data_source_id
+    )
+
+
+@app.task(queue="external_data_sources")
+async def setup_webhooks(external_data_source_id: str, refresh: bool = True):
+    from hub.models import ExternalDataSource
+
+    logger.info("Setting up webhooks")
+
+    source = await ExternalDataSource.objects.aget(id=external_data_source_id)
+    SourceClass = source.get_real_instance_class()
+
+    await SourceClass.deferred_setup_webhooks(
+        external_data_source_id=external_data_source_id, refresh=refresh
     )
 
 

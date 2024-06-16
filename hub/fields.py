@@ -31,6 +31,28 @@ class EncryptedCharField(models.CharField):
         return Fernet(base64.b64encode(settings.ENCRYPTION_SECRET_KEY.encode()[:32]))
 
 
+class EncryptedTextField(models.TextField):
+    def from_db_value(
+        self,
+        value: str | None,
+        expression: EncryptedTextField,
+        connection: BaseDatabaseWrapper,
+    ) -> str | None:
+        if value is None:
+            return None
+        if value == "":
+            return ""
+        return self._get_fernet().decrypt(value.encode()).decode()
+
+    def get_prep_value(self, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return self._get_fernet().encrypt(value.encode()).decode()
+
+    def _get_fernet(self) -> Fernet:
+        return Fernet(base64.b64encode(settings.ENCRYPTION_SECRET_KEY.encode()[:32]))
+
+
 class EncryptedBinaryField(models.BinaryField):
     def from_db_value(
         self,

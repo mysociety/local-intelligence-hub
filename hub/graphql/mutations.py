@@ -261,12 +261,22 @@ class TicketTailorSourceInput(ExternalDataSourceInput):
     api_key: str
 
 
+@strawberry_django.input(models.EditableGoogleSheetsSource, partial=True)
+class EditableGoogleSheetsSourceInput(ExternalDataSourceInput):
+    oauth_credentials: Optional[str]
+    redirect_success_url: Optional[str]
+    spreadsheet_id: str
+    sheet_name: str
+    id_field: Optional[str]
+
+
 @strawberry.input()
 class CreateExternalDataSourceInput:
     mailchimp: Optional[MailChimpSourceInput] = None
     airtable: Optional[AirtableSourceInput] = None
     actionnetwork: Optional[ActionNetworkSourceInput] = None
     tickettailor: Optional[TicketTailorSourceInput] = None
+    editablegooglesheets: Optional[EditableGoogleSheetsSourceInput] = None
 
 
 @strawberry.type

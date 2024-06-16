@@ -56,6 +56,9 @@ petl = "^1.7.15"
 procrastinate = {extras = ["django"], version = "^2.3.0"}
 googlemaps = "^4.10.0"
 country-converter = "^1.2"
+google-api-python-client = "^2.133.0"
+google-auth-httplib2 = "^0.2.0"
+google-auth-oauthlib = "^1.2.0"
 
 [tool.poetry.dev-dependencies]
 django-debug-toolbar = "^4.3"
