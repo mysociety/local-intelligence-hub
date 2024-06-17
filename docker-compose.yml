@@ -3,7 +3,6 @@ version: '3.9'
 services:
   db:
     image: postgres:13
-    restart: always
     volumes:
       - .:/app
       - pgdata:/var/lib/postgresql/data
@@ -43,7 +42,6 @@ services:
     working_dir: /app
   mailhog:
     image: mailhog/mailhog:v1.0.1
-    restart: always
     ports:
       - 1025:1025
       - 8025:8025
