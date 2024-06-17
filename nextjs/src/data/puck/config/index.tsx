@@ -19,10 +19,9 @@ import { FilterableGrid, FilterableGridProps } from "./blocks/FilterableGrid";
 import { EventList, EventListProps } from "./blocks/EventList";
 import { Image, ImageProps } from "./blocks/Image";
 import { HomepageItemsAlias } from "./blocks/HomepageItemsAlias";
-import { GET_PAGE } from "@/app/hub/render/[hostname]/query";
-import { makeFrontEndClient } from "@/components/apollo-wrapper";
-import { GetPageQuery, GetPageQueryVariables } from "@/__generated__/graphql";
 import { About } from "./blocks/About";
+import { HTMLEmbed, HTMLEmbedProps } from "./blocks/HTMLEmbed";
+import { Iframe, IframeProps } from "./blocks/Iframe";
 
 export type Props = {
   EventList: EventListProps;
@@ -44,6 +43,8 @@ export type Props = {
   SectionHeader: SectionHeaderProps;
   HomepageItemsAlias: any;
   About: any;
+  HTMLEmbed: HTMLEmbedProps;
+  Iframe: IframeProps
 };
 
 export type UserConfig = Config
@@ -94,8 +95,10 @@ export const conf: UserConfig = {
       components: [
         "Text",
         "RichText",
-        "Image",
-        "EventList"
+        "HTMLEmbed",
+        "Iframe",
+        // "Image",
+        // "EventList"
       ],
     }
   },
@@ -113,6 +116,8 @@ export const conf: UserConfig = {
     Image,
     HomepageItemsAlias,
     RichText: PuckRichText,
-    About
+    About,
+    HTMLEmbed,
+    Iframe
   },
 };
