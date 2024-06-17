@@ -39,7 +39,7 @@ class UserPropertiesAdmin(admin.ModelAdmin):
     def user_is_active(self, obj):
         return obj.user.is_active
 
-class MyUserAdmin(UserAdmin):
+class HubUserAdmin(UserAdmin):
     model = User
 
     list_display = [
@@ -58,17 +58,22 @@ class MyUserAdmin(UserAdmin):
         "is_superuser",
     ]
 
-    @admin.display
+    ordering = [
+        "memberships__organisation__name",
+        "username"
+    ]
+
+    @admin.display(ordering="memberships__organisation__name")
     def organisation(self, obj):
         return " / ".join(sorted(list(obj.memberships.all().values_list("organisation__name", flat=True))))
     
-    @admin.display
+    @admin.display(ordering="properties__last_seen")
     def last_seen(self, obj):
         return obj.properties.last_seen
     
 
 admin.site.unregister(User)
-admin.site.register(User, MyUserAdmin)
+admin.site.register(User, HubUserAdmin)
 
 class DataSetDataTypeInline(admin.StackedInline):
     model = DataType
