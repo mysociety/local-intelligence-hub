@@ -1239,7 +1239,7 @@ class HubPage:
             try:
                 if "root" in json and "props" in json["root"]:
                     for field in models.puck_wagtail_root_fields:
-                        json['root']['props'][field] = getattr(specific, field)
+                        json["root"]["props"][field] = getattr(specific, field)
             except Exception as e:
                 logger.error(f"Error adding root fields to puck json: {e}")
             return json

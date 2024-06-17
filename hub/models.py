@@ -3502,7 +3502,7 @@ class MapReport(Report, Analytics):
 
 
 def generate_puck_json_content():
-    return {"content": [], "root": { "props": {} }, "zones": {}}
+    return {"content": [], "root": {"props": {}}, "zones": {}}
 
 
 class HubImage(AbstractImage):
@@ -3523,6 +3523,7 @@ puck_wagtail_root_fields = [
     "slug",
     "search_description",
 ]
+
 
 class HubHomepage(Page):
     """

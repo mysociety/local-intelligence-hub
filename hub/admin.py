@@ -11,16 +11,18 @@ from hub.models import (
     Person,
     PersonData,
     Report,
+    User,
     UserProperties,
-    User
 )
 
 
 class MembershipInline(admin.TabularInline):
     model = Membership
 
+
 class OrganisationInline(admin.TabularInline):
     model = Organisation
+
 
 @admin.register(UserProperties)
 class UserPropertiesAdmin(admin.ModelAdmin):
@@ -38,12 +40,13 @@ class UserPropertiesAdmin(admin.ModelAdmin):
         "email_confirmed",
         "account_confirmed",
         "user_is_active",
-        "last_seen"
+        "last_seen",
     ]
 
     @admin.display(description="Is Active")
     def user_is_active(self, obj):
         return obj.user.is_active
+
 
 class HubUserAdmin(UserAdmin):
     model = User
@@ -54,28 +57,35 @@ class HubUserAdmin(UserAdmin):
         "organisation",
         "email",
         "last_seen",
-        "is_superuser"
+        "is_superuser",
     ]
 
-    search_fields = ["username", "first_name", "last_name", "memberships__organisation__name"]
+    search_fields = [
+        "username",
+        "first_name",
+        "last_name",
+        "memberships__organisation__name",
+    ]
 
     list_filter = [
         "memberships__organisation",
         "is_superuser",
     ]
 
-    ordering = [
-        "username"
-    ]
+    ordering = ["username"]
 
     @admin.display(ordering="memberships__organisation__name")
     def organisation(self, obj):
-        return " / ".join(sorted(list(obj.memberships.all().values_list("organisation__name", flat=True))))
-    
+        return " / ".join(
+            sorted(
+                list(obj.memberships.all().values_list("organisation__name", flat=True))
+            )
+        )
+
     @admin.display(ordering="properties__last_seen")
     def last_seen(self, obj):
         return obj.properties.last_seen
-    
+
     inlines = [
         MembershipInline,
     ]
@@ -83,6 +93,7 @@ class HubUserAdmin(UserAdmin):
 
 admin.site.unregister(User)
 admin.site.register(User, HubUserAdmin)
+
 
 class DataSetDataTypeInline(admin.StackedInline):
     model = DataType
@@ -232,6 +243,7 @@ class OrganisationAdmin(admin.ModelAdmin):
     inline = [
         MembershipInline,
     ]
+
 
 # Membership
 @admin.register(Membership)
