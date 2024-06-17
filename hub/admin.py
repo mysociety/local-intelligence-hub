@@ -59,7 +59,6 @@ class HubUserAdmin(UserAdmin):
     ]
 
     ordering = [
-        "memberships__organisation__name",
         "username"
     ]
 
