@@ -704,7 +704,6 @@ export type EditableGoogleSheetsSource = Analytics & {
   __typename?: 'EditableGoogleSheetsSource';
   addressField?: Maybe<Scalars['String']['output']>;
   allowUpdates: Scalars['Boolean']['output'];
-  authorizationUrl: Scalars['Boolean']['output'];
   autoImportEnabled: Scalars['Boolean']['output'];
   autoUpdateEnabled: Scalars['Boolean']['output'];
   automatedWebhooks: Scalars['Boolean']['output'];
@@ -768,12 +767,6 @@ export type EditableGoogleSheetsSource = Analytics & {
   updateProgress?: Maybe<BatchJobProgress>;
   webhookHealthcheck: Scalars['Boolean']['output'];
   webhookUrl: Scalars['String']['output'];
-};
-
-
-/** An editable Google Sheet */
-export type EditableGoogleSheetsSourceAuthorizationUrlArgs = {
-  redirectUrl: Scalars['String']['input'];
 };
 
 

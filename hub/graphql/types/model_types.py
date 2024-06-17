@@ -1047,16 +1047,6 @@ class EditableGoogleSheetsSource(ExternalDataSource):
     spreadsheet_id: str
     sheet_name: str
 
-    @strawberry_django.field
-    def authorization_url(
-        self: models.EditableGoogleSheetsSource, info, redirect_url: str
-    ) -> bool:
-        try:
-            return self.authorization_url(redirect_url)
-        except Exception:
-            # TODO: Return the error message to the UI.
-            return False
-
 
 @strawberry_django.type(models.TicketTailorSource)
 class TicketTailorSource(ExternalDataSource):
