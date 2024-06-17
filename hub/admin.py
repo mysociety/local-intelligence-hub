@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 
 from hub.models import (
     Area,
@@ -11,6 +12,7 @@ from hub.models import (
     PersonData,
     Report,
     UserProperties,
+    User
 )
 
 
@@ -30,13 +32,39 @@ class UserPropertiesAdmin(admin.ModelAdmin):
         "email_confirmed",
         "account_confirmed",
         "user_is_active",
-        "last_seen",
+        "last_seen"
     ]
 
     @admin.display(description="Is Active")
     def user_is_active(self, obj):
         return obj.user.is_active
 
+class MyUserAdmin(UserAdmin):
+    model = User
+
+    list_display = [
+        "username",
+        "get_full_name",
+        "orgs",
+        "email",
+        "last_seen",
+    ]
+
+    # @admin.display
+    # def name(self, obj):
+    #     return obj.get_full_name()
+
+    @admin.display
+    def orgs(self, obj):
+        return "".join(list(obj.memberships.all().values_list("organisation__name", flat=True)))
+    
+    @admin.display
+    def last_seen(self, obj):
+        return obj.properties.last_seen
+    
+
+admin.site.unregister(User)
+admin.site.register(User, MyUserAdmin)
 
 class DataSetDataTypeInline(admin.StackedInline):
     model = DataType
