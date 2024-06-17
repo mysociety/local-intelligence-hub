@@ -45,18 +45,22 @@ class MyUserAdmin(UserAdmin):
     list_display = [
         "username",
         "get_full_name",
-        "orgs",
+        "organisation",
         "email",
         "last_seen",
+        "is_superuser"
     ]
 
-    # @admin.display
-    # def name(self, obj):
-    #     return obj.get_full_name()
+    search_fields = ["username", "first_name", "last_name", "memberships__organisation__name"]
+
+    list_filter = [
+        "memberships__organisation",
+        "is_superuser",
+    ]
 
     @admin.display
-    def orgs(self, obj):
-        return " / ".join(list(obj.memberships.all().values_list("organisation__name", flat=True)))
+    def organisation(self, obj):
+        return " / ".join(sorted(list(obj.memberships.all().values_list("organisation__name", flat=True))))
     
     @admin.display
     def last_seen(self, obj):
