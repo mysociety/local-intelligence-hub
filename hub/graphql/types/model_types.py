@@ -1236,8 +1236,12 @@ class HubPage:
         specific = self.specific
         if hasattr(specific, "puck_json_content"):
             json = specific.puck_json_content
-            for field in models.puck_wagtail_root_fields:
-                json['root']['props'][field] = getattr(specific, field)
+            try:
+                if "root" in json and "props" in json["root"]:
+                    for field in models.puck_wagtail_root_fields:
+                        json['root']['props'][field] = getattr(specific, field)
+            except Exception as e:
+                logger.error(f"Error adding root fields to puck json: {e}")
             return json
         return {}
 
