@@ -3502,7 +3502,7 @@ class MapReport(Report, Analytics):
 
 
 def generate_puck_json_content():
-    return {"content": [], "root": {}, "zones": {}}
+    return {"content": [], "root": { "props": {} }, "zones": {}}
 
 
 class HubImage(AbstractImage):
