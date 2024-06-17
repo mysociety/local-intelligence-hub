@@ -3149,6 +3149,7 @@ class ActionNetworkSource(ExternalDataSource):
                 "osdi:submission",
                 "osdi:donation",
                 "osdi:outreach",
+                "osdi:signature",
             ]
             for key in payload_keys:
                 if item.get(key):
