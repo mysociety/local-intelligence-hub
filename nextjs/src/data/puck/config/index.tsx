@@ -57,12 +57,18 @@ export type UserConfig = Config
 // We avoid the name config as next gets confused
 export const conf: UserConfig = {
   root: {
-    defaultProps: {
-      title: "My Page",
-    },
     render: (props) => <Root {...props} />,
-    // TODO: fields
-    // fields: {}
+    fields: {
+      title: {
+        type: "text",
+      },
+      slug: {
+        type: "text",
+      },
+      seoDescription: {
+        type: "text",
+      }
+    },
   },
   categories: {
     specialLayout: {

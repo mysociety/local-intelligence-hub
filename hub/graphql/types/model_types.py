@@ -1235,7 +1235,10 @@ class HubPage:
     def puck_json_content(self) -> JSON:
         specific = self.specific
         if hasattr(specific, "puck_json_content"):
-            return specific.puck_json_content
+            json = specific.puck_json_content
+            for field in models.puck_wagtail_root_fields:
+                json['root']['props'][field] = getattr(specific, field)
+            return json
         return {}
 
     @strawberry_django.field

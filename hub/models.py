@@ -3518,6 +3518,12 @@ class HubImageRendition(AbstractRendition):
         unique_together = (("image", "filter_spec", "focal_point_key"),)
 
 
+puck_wagtail_root_fields = [
+    "title",
+    "slug",
+    "search_description",
+]
+
 class HubHomepage(Page):
     """
     An microsite that incorporates datasets and content pages,
