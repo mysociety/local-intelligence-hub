@@ -34,6 +34,8 @@ jobs:
         DATABASE_URL: postgis://postgres:password@postgres:5432/local-intelligence
         CACHE_FILE: /tmp/meep
         POETRY_VIRTUALENVS_CREATE: "false"
+        GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+        MAPBOX_ACCESS_TOKEN: ${{ secrets.MAPBOX_ACCESS_TOKEN }}
         MAPIT_URL: https://mapit.mysociety.org/
         MAPIT_API_KEY: "not_a_key"
         ELECTORAL_COMMISSION_API_KEY: ${{ secrets.ELECTORAL_COMMISSION_API_KEY }}

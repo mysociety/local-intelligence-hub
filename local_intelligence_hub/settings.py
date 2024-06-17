@@ -69,6 +69,7 @@ env = environ.Env(
     MAILCHIMP_TCC_KEY=(str, ""),
     MAILCHIMP_TCC_SERVER_PREFIX=(str, ""),
     MAILCHIMP_TCC_LIST_ID=(str, ""),
+    NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=(str, ""),
 )
 
 environ.Env.read_env(BASE_DIR / ".env")
@@ -85,6 +86,8 @@ if CRYPTOGRAPHY_SALT is None:
 if ENCRYPTION_SECRET_KEY is None:
     raise ValueError("ENCRYPTION_SECRET_KEY must be set")
 
+MAPBOX_ACCESS_TOKEN = env("MAPBOX_ACCESS_TOKEN")
+GOOGLE_MAPS_API_KEY = env("GOOGLE_MAPS_API_KEY")
 ELECTORAL_COMMISSION_API_KEY = env("ELECTORAL_COMMISSION_API_KEY")
 BASE_URL = env("BASE_URL")
 FRONTEND_BASE_URL = env("FRONTEND_BASE_URL")
@@ -199,7 +202,7 @@ MIDDLEWARE = [
     "hub.middleware.django_jwt_middleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # "hub.middleware.record_last_seen_middleware",
+    "hub.middleware.record_last_seen_middleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 
@@ -344,7 +347,7 @@ LOGGING = {
             "validate": True,
         },
         "truncated": {
-            "format": "{levelname} {asctime} {name}.{funcName}:{lineno} # {message:.120}",
+            "format": "{levelname} {asctime} {name}.{funcName}:{lineno} # {message:.240}",
             "style": "{",
             "validate": True,
         },
@@ -360,6 +363,12 @@ LOGGING = {
         "procrastinate": {
             "handlers": ["truncated"],
             "level": "DEBUG",
+        },
+        # Silence endless waiting for job log
+        "procrastinate.worker": {
+            "handlers": ["truncated"],
+            "level": "INFO",
+            "propagate": False,
         },
         "django": {
             "handlers": ["console"],

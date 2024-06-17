@@ -75,10 +75,12 @@ import { toastPromise } from "@/lib/toast";
 import { contentEditableMutation } from "@/lib/html";
 import { UpdateExternalDataSourceFields } from "@/components/UpdateExternalDataSourceFields";
 import { ManageSourceSharing } from "./ManageSourceSharing";
-import { BatchJobProgressBar } from "@/components/BatchJobProgress";
+import { BatchJobProgressReport } from "@/components/BatchJobProgress";
 import { format } from "d3-format";
 import pluralize from "pluralize";
 import { externalDataSourceOptions } from "@/lib/data";
+import { useAtom } from "jotai";
+import { currentOrganisationIdAtom } from "@/data/organisation";
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {
@@ -141,6 +143,7 @@ const GET_UPDATE_CONFIG = gql`
       isImportScheduled
       importProgress {
         id
+        hasForecast
         status
         total
         succeeded
@@ -149,6 +152,7 @@ const GET_UPDATE_CONFIG = gql`
       isUpdateScheduled
       updateProgress {
         id
+        hasForecast
         status
         total
         succeeded
@@ -169,7 +173,10 @@ const GET_UPDATE_CONFIG = gql`
       sharingPermissions {
         id
       }
-      organisationId
+      organisation {
+        id
+        name
+      }
     }
   }
 `;
@@ -208,6 +215,8 @@ export default function InspectExternalDataSource({
     pollInterval: 5000
   });
 
+  const orgId = useAtom(currentOrganisationIdAtom)
+
   if (!loading && !data?.externalDataSource) {
     return <h2>Couldn{"'"}t find this data source</h2>;
   }
@@ -222,10 +231,8 @@ export default function InspectExternalDataSource({
     <div className="p-6 max-w-4xl mx-auto space-y-7">
       <header className="flex flex-row justify-between gap-8">
         <div className='w-full'>
-          <div className="text-meepGray-400 capitalize">
-            {dataType === DataSourceType.Member ? "Member list" : dataType ? pluralize(dataType.toLowerCase()) : "Data source"}
-            <span>&nbsp;&#x2022;&nbsp;</span>
-            {crmInfo?.name || crmType}
+          <div className="text-meepGray-400">
+            {source?.organisation.name} / 
           </div>
           <h1
             className="text-hLg"
@@ -233,6 +240,11 @@ export default function InspectExternalDataSource({
           >
             {name}
           </h1>
+          <div className="text-meepGray-400 capitalize">
+            {dataType === DataSourceType.Member ? "Member list" : dataType ? pluralize(dataType.toLowerCase()) : "Data source"}
+            <span>&nbsp;&#x2022;&nbsp;</span>
+            {crmInfo?.name || crmType}
+          </div>
           {!!remoteUrl && (
             <a href={remoteUrl} className="text-meepGray-300 underline text-sm">
               Visit URL: {remoteUrl} <ExternalLink />
@@ -273,7 +285,7 @@ export default function InspectExternalDataSource({
             </span>}
           </Button>
           {source.importProgress?.status === ProcrastinateJobStatus.Doing && (
-            <BatchJobProgressBar batchJobProgress={source.importProgress} pastTenseVerb="Imported" />
+            <BatchJobProgressReport batchJobProgress={source.importProgress} pastTenseVerb="Imported" />
           )}
           {source.hasWebhooks && (
             <section className='space-y-4'>
@@ -410,7 +422,7 @@ export default function InspectExternalDataSource({
                           </span>
                         </Button>
                         {source.updateProgress?.status === ProcrastinateJobStatus.Doing && (
-                          <BatchJobProgressBar batchJobProgress={source.updateProgress} pastTenseVerb="Updated" />
+                          <BatchJobProgressReport batchJobProgress={source.updateProgress} pastTenseVerb="Updated" />
                         )}
                       </>
                     )}
@@ -622,6 +634,7 @@ export function importData (client: ApolloClient<any>, externalDataSourceId: str
             isImportScheduled
             importProgress {
               status
+              hasForecast
               id
               total
               succeeded

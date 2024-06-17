@@ -153,12 +153,17 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
     existing_reports = model_types.Report.get_queryset(
         models.Report.objects.get_queryset(), info
     ).exists()
+    user = get_current_user(info)
+
+    if data.organisation:
+        organisation = models.Organisation.objects.get(id=data.organisation.set)
+    else:
+        organisation = models.Organisation.get_or_create_for_user(user)
 
     params = {
         **graphql_type_to_dict(data, delete_null_keys=True),
         **{
-            "organisation": data.organisation
-            or get_or_create_organisation_for_user(info),
+            "organisation": organisation,
             "slug": data.slug or slugify(data.name),
             "name": "Type your report name here",  # Default name for reports
         },
@@ -189,26 +194,6 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
         ]
         map_report.save()
     return map_report
-
-
-def get_or_create_organisation_for_user(info: Info, org=None):
-    if org:
-        return org
-    user = get_current_user(info)
-    if org is None or isinstance(org, strawberry.unset.UnsetType):
-        membership = user.memberships.first()
-        if membership is not None:
-            print("Assigning the user's default organisation")
-            organisation = membership.organisation
-        else:
-            print("Making an organisation for this user")
-            organisation = models.Organisation.objects.create(
-                name=f"{user.username}'s organisation", slug=f"{user.username}-org"
-            )
-            models.Membership.objects.create(
-                user=user, organisation=organisation, role="owner"
-            )
-    return organisation
 
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
@@ -298,10 +283,18 @@ def create_external_data_source(
     for crm_type_key, model in models.source_models.items():
         if crm_type_key in input_dict and input_dict[crm_type_key] is not None:
             kwargs = input_dict[crm_type_key]
-            kwargs["organisation"] = kwargs.get(
-                "organisation", None
-            ) or get_or_create_organisation_for_user(info)
-            print(f"Creating source of type {crm_type_key}", kwargs)
+            # CreateExternalDataSourceInput expects organisation to be a dict like `{ set: 1 }`
+            if org := kwargs.get("organisation", None):
+                kwargs["organisation"] = models.Organisation.objects.get(
+                    id=org.get("set")
+                )
+            else:
+                user = get_current_user(info)
+                kwargs["organisation"] = models.Organisation.get_or_create_for_user(
+                    user
+                )
+
+            logger.info(f"Creating source of type {crm_type_key}", kwargs)
 
             def creator_fn() -> tuple[models.ExternalDataSource, bool]:  # noqa: F811
                 deduplication_hash = model(**kwargs).get_deduplication_hash()
@@ -436,6 +429,14 @@ def update_page(info: Info, page_id: str, input: HubPageInput) -> model_types.Hu
     for attr, value in vars(input).items():
         if value is not strawberry.UNSET and value is not None:
             setattr(page, attr, value)
+    try:
+        if "root" in input.puck_json_content and "props" in input.puck_json_content["root"]:
+            metadata = input.puck_json_content["root"]["props"]
+            for field in models.puck_wagtail_root_fields:
+                if metadata.get(field):
+                    setattr(page, field, metadata[field])
+    except Exception as e:
+        logger.error(f"Error updating page: {e}")
     page.save_revision(user=user, log_action=True).publish()
     return page
 

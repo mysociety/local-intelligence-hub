@@ -54,6 +54,8 @@ requests-oauthlib = "^2.0.0"
 requests = "^2.31.0"
 petl = "^1.7.15"
 procrastinate = {extras = ["django"], version = "^2.3.0"}
+googlemaps = "^4.10.0"
+country-converter = "^1.2"
 
 [tool.poetry.dev-dependencies]
 django-debug-toolbar = "^4.3"

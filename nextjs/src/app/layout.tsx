@@ -1,18 +1,15 @@
 import "./globals.css";
 import { ApolloWrapper } from "@/components/apollo-wrapper";
+import NextTopLoader from 'nextjs-toploader';
 import { PHProvider } from './providers'
 import dynamic from 'next/dynamic'
 import { Metadata } from 'next'
 import { openGraphImage } from './shared-metadata'
 import { Suspense } from "react";
-import { useAuth } from "@/hooks/auth";
-
 
 const PostHogPageView = dynamic(() => import('./PostHogPageView'), {
   ssr: false,
 })
-
-
 
 export default async function RootLayout({
   children,
@@ -27,6 +24,7 @@ export default async function RootLayout({
             <Suspense>
               <PostHogPageView />
             </Suspense>
+            <NextTopLoader />
             {children}
           </body>
         </PHProvider>

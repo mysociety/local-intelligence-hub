@@ -23,14 +23,8 @@ import { useQueryState, parseAsArrayOf, parseAsStringEnum } from 'nuqs'
 import { PuckText } from "../../components/PuckText";
 import { twMerge } from "tailwind-merge";
 import pluralize from "pluralize";
-
-
-
-export const itemTypes = [
-    { label: "Resource", value: "resource" },
-    { label: "Action", value: "action" },
-    { label: "Event", value: "event" },
-] as const
+import { itemTypes } from "./cardTypes";
+import { ErrorBoundary } from "@sentry/nextjs";
 
 export const eventMonths = [
     { label: "January", value: "Jan" },
@@ -139,37 +133,25 @@ export const FilterableGrid: ComponentConfig<FilterableGridProps> = {
                         type: "text",
                     },
                     linkLabel: {
-                        // @ts-ignore
-                        // visible: data.props.behaviour === "dialog",
                         type: "text",
                     },
                     timestamp: {
                         type: "number"
                     },
                     eventMonth: {
-                        // @ts-ignore
-                        visible: data.props.type === "event",
                         type: "select",
                         options: eventMonths
                     },
                     eventDay: {
-                        // @ts-ignore
-                        visible: data.props.type === "event",
                         type: "text",
                     },
                     eventTime: {
-                        // @ts-ignore
-                        visible: data.props.type === "event",
                         type: "text",
                     },
                     eventLocation: {
-                        // @ts-ignore
-                        visible: data.props.type === "event",
                         type: "text",
                     },
                     imageUrl: {
-                        // @ts-ignore
-                        visible: data.props.type === "resource",
                         type: "text"
                     }
                 },
@@ -315,12 +297,12 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                         </div>
                         <div className='lg:col-span-2 grid lg:grid-cols-2 gap-2 md:gap-3 lg:gap-4 xl:gap-5'>
                             {categories?.map((category, index) => (
-                                <div key={index} className='rounded-[20px] hover:bg-jungle-green-100 transition-all cursor-pointer p-4 space-y-2' onClick={() => {
+                                <div key={index} className='rounded-[20px] hover:bg-jungle-green-100 transition-all cursor-pointer p-4 space-y-1' onClick={() => {
                                     setCategory(category.urlSlug)
                                     document.getElementById("latest")?.scrollIntoView({ behavior: "smooth" })
                                 }}>
-                                    <Image src={tccHeart} width={20} height={20} alt="arrow" />
-                                    <h2 className="text-jungle-green-600 text-hub3xl tracking-tight">{category.title}</h2>
+                                    <Image src={tccHeart} width={20} height={20} alt="arrow" className="mb-5"/>
+                                    <h2 className="text-jungle-green-600 text-hub2xl tracking-tight">{category.title}</h2>
                                     <PuckText className='text-jungle-green-neutral' text={category.description} />
                                 </div>
                             ))}
@@ -397,8 +379,11 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                             // TODO:
                             // ?.sort((a, b) => compareAsc(a.timestamp, b.timestamp))
                             .map((item, index) => (
-                                <RenderCard key={index} {...item} />
-                            ))}
+                                <ErrorBoundary key={index}>
+                                    <RenderCard key={index} {...item} />
+                                </ErrorBoundary>
+                            ))
+                        }
                     </div>
                 </section>
             ) : (
@@ -415,7 +400,7 @@ function PostcodeSearch({ className }: { className?: string }) {
         <article className={twMerge('overflow-clip rounded-[20px] hover:shadow-hover transition-all', className)}>
             <div className="p-5 bg-jungle-green-50 pt-60 relative gap-2 flex flex-col justify-end">
                 <div className="z-10 flex flex-col gap-2">
-                    <Image src={ArrowTopRight} width={30} alt="arrow" />
+                    {/* <Image src={ArrowTopRight} width={30} alt="arrow" /> */}
                     <h2 className="lg:text-hub4xl text-hub3xl tracking-tight">Near me</h2>
                     <p className="text-hubH5 ">Find out what’s happening in your local constituency</p>
                     <form onSubmit={(e) => {

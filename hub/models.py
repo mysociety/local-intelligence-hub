@@ -1,8 +1,10 @@
 import asyncio
 import hashlib
 import itertools
+import math
 import uuid
 from datetime import datetime, timezone
+from enum import Enum
 from typing import List, Optional, Type, TypedDict, Union
 from urllib.parse import urljoin
 
@@ -54,20 +56,33 @@ from hub.parsons.action_network.action_network import ActionNetwork
 from hub.tasks import (
     import_all,
     import_many,
+    import_pages,
     refresh_all,
     refresh_many,
     refresh_one,
+    refresh_pages,
     refresh_webhooks,
 )
 from hub.views.mapped import ExternalDataSourceWebhook
+from utils import google_maps
 from utils.log import get_simple_debug_logger
-from utils.nominatim import address_to_geojson
-from utils.postcodesIO import PostcodesIOResult, get_bulk_postcode_geo
-from utils.py import batched, ensure_list, get, is_maybe_id
+from utils.postcodesIO import (
+    PostcodesIOResult,
+    get_bulk_postcode_geo,
+    get_bulk_postcode_geo_from_coords,
+)
+from utils.py import batched, ensure_list, get, is_maybe_id, parse_datetime
 
 User = get_user_model()
 
 logger = get_simple_debug_logger(__name__)
+
+
+# enum of geocoders: postcodes_io, mapbox, google
+class Geocoder(Enum):
+    POSTCODES_IO = "postcodes_io"
+    MAPBOX = "mapbox"
+    GOOGLE = "google"
 
 
 class Organisation(models.Model):
@@ -92,7 +107,9 @@ class Organisation(models.Model):
         membership = Membership.objects.filter(user=user).first()
         if membership:
             return membership.organisation
-        org = self.objects.create(name=f"{user.username}'s personal workspace")
+        org = self.objects.create(
+            name=f"{user.username}'s personal workspace", slug=user.username
+        )
         Membership.objects.create(user=user, organisation=org, role="owner")
         return org
 
@@ -105,14 +122,16 @@ class Membership(models.Model):
     organisation = models.ForeignKey(
         Organisation, on_delete=models.CASCADE, related_name="members"
     )
-    role = models.CharField(max_length=250)
+    role = models.CharField(max_length=250, default="owner")
 
     def __str__(self):
         return f"{self.user}: {self.role} in {self.organisation}"
 
 
 class UserProperties(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="properties"
+    )
     organisation_name = models.TextField(null=True, blank=True)
     full_name = models.TextField(null=True, blank=True)
     email_confirmed = models.BooleanField(default=False)
@@ -122,6 +141,12 @@ class UserProperties(models.Model):
 
     def __str__(self):
         return self.user.username
+
+
+# on user create signal, create an org
+@receiver(models.signals.post_save, sender=User)
+def create_user_organisation(sender, instance, created, **kwargs):
+    Organisation.get_or_create_for_user(instance)
 
 
 class TypeMixin:
@@ -715,7 +740,10 @@ class GenericData(CommonData):
     start_time = models.DateTimeField(blank=True, null=True)
     end_time = models.DateTimeField(blank=True, null=True)
     public_url = models.URLField(max_length=2000, blank=True, null=True)
-    osm_data = JSONField(blank=True, null=True)
+    geocode_data = JSONField(blank=True, null=True)
+    geocoder = models.CharField(
+        max_length=1000, blank=True, null=True, default=Geocoder.POSTCODES_IO.value
+    )
     address = models.CharField(max_length=1000, blank=True, null=True)
     title = models.CharField(max_length=1000, blank=True, null=True)
     description = models.TextField(max_length=3000, blank=True, null=True)
@@ -891,6 +919,8 @@ def cast_data(sender, instance, *args, **kwargs):
 
 class Loaders(TypedDict):
     postcodesIO: DataLoader
+    postcodesIOFromPoint: DataLoader
+    mapbox_geocoder: DataLoader
     fetch_record: DataLoader
     source_loaders: dict[str, DataLoader]
 
@@ -910,6 +940,10 @@ class UpdateMapping(TypedDict):
     destination_column: str
 
 
+def default_countries():
+    return ["GB"]
+
+
 class ExternalDataSource(PolymorphicModel, Analytics):
     """
     A third-party data source that can be read and optionally written back to.
@@ -923,6 +957,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     automated_webhooks = False
     introspect_fields = False
     allow_updates = True
+    can_forecast_job_progress = True
 
     # Allow sources to define default values for themselves
     # for example opinionated CRMs which are only for people and have defined slots for data
@@ -987,6 +1022,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         default=GeographyTypes.POSTCODE,
     )
     geography_column = models.CharField(max_length=250, blank=True, null=True)
+    countries = models.JSONField(
+        default=default_countries,
+        blank=True,
+        null=True,
+        help_text="ISO 3166-1 alpha-2 country codes for geocoding addresses.",
+    )
 
     # Useful for explicit querying and interacting with members in the UI
     # TODO: longitude_field = models.CharField(max_length=250, blank=True, null=True)
@@ -1130,11 +1171,55 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             dict(task_name__contains="hub.tasks.refresh")
         )
 
+    class BatchJobProgress(TypedDict):
+        status: str
+        id: str
+        started_at: datetime
+        total: int = 0
+        succeeded: int = 0
+        doing: int = 0
+        failed: int = 0
+        estimated_seconds_remaining: float = 0
+        estimated_finish_time: Optional[datetime]
+        has_forecast: bool = True
+        seconds_per_record: float = 0
+        done: int = 0
+        remaining: int = 0
+
     def get_scheduled_batch_job_progress(self, parent_job: ProcrastinateJob):
+        # TODO: This doesn't work for import/refresh by page. How can it cover this case?
         request_id = parent_job.args.get("request_id")
 
         if request_id is None:
             return None
+
+        if not self.can_forecast_job_progress:
+            request_completed_signal = (
+                self.event_log_queryset()
+                .filter(
+                    args__request_id=request_id,
+                    task_name="hub.tasks.signal_request_complete",
+                )
+                .first()
+            )
+            if request_completed_signal is not None:
+                return self.BatchJobProgress(
+                    status="done",
+                    id=request_id,
+                    started_at=parent_job.scheduled_at,
+                    has_forecast=False,
+                )
+            else:
+                return self.BatchJobProgress(
+                    status=(
+                        parent_job.status
+                        if parent_job.status != "succeeded"
+                        else "doing"
+                    ),
+                    id=request_id,
+                    started_at=parent_job.scheduled_at,
+                    has_forecast=False,
+                )
 
         jobs = self.event_log_queryset().filter(args__request_id=request_id).all()
 
@@ -1172,8 +1257,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         time_remaining = duration_per_record * remaining
         estimated_finish_time = datetime.now() + time_remaining
 
-        return dict(
-            status="todo" if parent_job.status == "todo" else "doing",
+        return self.BatchJobProgress(
+            status=(
+                "succeeded"
+                if remaining <= 0
+                else (
+                    parent_job.status if parent_job.status != "succeeded" else "doing"
+                )
+            ),
             id=request_id,
             started_at=time_started,
             estimated_seconds_remaining=time_remaining,
@@ -1295,6 +1386,21 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             "Get member ID not implemented for this data source type."
         )
 
+    async def import_page(self, page: int) -> bool:
+        """
+        Page starts at 1. Returns True if the next page
+        contains further data.
+        """
+        logger.info(f"Importing page {page} for {self}")
+        members, has_more = await self.fetch_page(page)
+        if not members:
+            logger.info(f"No more members by page {page} for {self}")
+            return 0
+        count = len(members)
+        await self.import_many(members)
+        logger.info(f"Imported {count} members from page {page} for {self}")
+        return has_more
+
     async def import_many(self, members: list):
         """
         Copy data to this database for use in dashboarding features.
@@ -1334,9 +1440,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
             for field in self.import_fields:
                 if getattr(self, field, None) is not None:
-                    update_data[field.removesuffix("_field")] = self.get_record_field(
-                        record, getattr(self, field), field
-                    )
+                    value = self.get_record_field(record, getattr(self, field), field)
+                    if field.endswith("_time_field"):
+                        value: datetime = parse_datetime(value)
+                    update_data[field.removesuffix("_field")] = value
 
             return update_data
 
@@ -1385,25 +1492,63 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             self.geography_column
             and self.geography_column_type == self.GeographyTypes.ADDRESS
         ):
-            for record in data:
+            loaders = await self.get_loaders()
+
+            async def create_import_record(record):
+                """
+                Converts a record fetched from the API into
+                a GenericData record in the MEEP db.
+
+                Used to batch-import data.
+                """
                 structured_data = get_update_data(record)
                 address = self.get_record_field(record, self.geography_column)
-                try:
-                    osm_data = address_to_geojson(address)
-                except Exception:
-                    osm_data = {}
-                logger.warn([address, osm_data])
+                point = None
+                address_data = None
+                postcode_data = None
+                if address is None or (
+                    isinstance(address, str)
+                    and (address.strip() == "" or address.lower() == "online")
+                ):
+                    address_data = None
+                else:
+                    # async-ify the function because it uses sync cache queries
+                    address_data = await sync_to_async(google_maps.geocode_address)(
+                        google_maps.GeocodingQuery(
+                            query=address,
+                            country=self.countries,
+                        )
+                    )
+                    if address_data is not None:
+                        point = (
+                            Point(
+                                x=address_data.geometry.location.lng,
+                                y=address_data.geometry.location.lat,
+                            )
+                            if (
+                                address_data is not None
+                                and address_data.geometry is not None
+                                and address_data.geometry.location is not None
+                            )
+                            else None
+                        )
+                        if point is not None:
+                            # Capture this so we have standardised Postcodes IO data for all records
+                            # (e.g. for analytical queries that aggregate on region)
+                            # even if the address is not postcode-specific (e.g. "London").
+                            # this can be gleaned from geocode_data__types, e.g. [ "administrative_area_level_1", "political" ]
+                            postcode_data: PostcodesIOResult = await loaders[
+                                "postcodesIOFromPoint"
+                            ].load(point)
+
                 update_data = {
                     **structured_data,
-                    "osm_data": osm_data,
-                    "point": (
-                        Point(
-                            osm_data["geometry"]["coordinates"][0],
-                            osm_data["geometry"]["coordinates"][1],
-                        )
-                        if osm_data is not None and "geometry" in osm_data
-                        else None
+                    "postcode_data": postcode_data,
+                    "geocode_data": address_data,
+                    "geocoder": (
+                        Geocoder.GOOGLE.value if address_data is not None else None
                     ),
+                    "point": point,
                 }
 
                 await GenericData.objects.aupdate_or_create(
@@ -1411,6 +1556,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     data=self.get_record_id(record),
                     defaults=update_data,
                 )
+
+            await asyncio.gather(*[create_import_record(record) for record in data])
         else:
             # To allow us to lean on LIH's geo-analytics features,
             # TODO: Re-implement this data as `AreaData`, linking each datum to an Area/AreaType as per `self.geography_column` and `self.geography_column_type`.
@@ -1434,6 +1581,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         Get many members from the data source.
         """
         raise NotImplementedError("Get many not implemented for this data source type.")
+
+    async def fetch_page(self, page: int, max_page_size=500) -> tuple[list, bool]:
+        """
+        Get a page of members from the data source. Should return a tuple:
+        (members: list, has_more: boolean) to indicate if more data
+        exists in subsequent pages.
+        """
+        raise NotImplementedError("Get page not implemented for this data source type.")
 
     async def fetch_all(self):
         """
@@ -1492,18 +1647,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             for key in keys
         ]
 
-    @classmethod
-    def _get_import_data(self, id: str):
-        """
-        For use by views to query data without having to instantiate the class / query the database for the CRM first
-        """
-        logger.debug(f"getting import data where external data source id is {id}")
-        return GenericData.objects.filter(
-            data_type__data_set__external_data_source_id=id
-        )
-
     def get_import_data(self):
-        return self._get_import_data(self.id)
+        logger.debug(f"getting import data where external data source id is {self.id}")
+        return GenericData.objects.filter(
+            data_type__data_set__external_data_source_id=self.id
+        )
 
     def get_analytics_queryset(self):
         return self.get_import_data()
@@ -1601,6 +1749,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     async def get_loaders(self) -> Loaders:
         loaders = Loaders(
             postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo),
+            postcodesIOFromPoint=DataLoader(load_fn=get_bulk_postcode_geo_from_coords),
             fetch_record=DataLoader(load_fn=self.fetch_many_loader, cache=False),
             source_loaders={
                 str(source.id): source.data_loader_factory()
@@ -1731,6 +1880,21 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         mapped_record = await self.map_one(member, loaders, mapping=mapping)
         return await self.update_one(mapped_record, **update_kwargs)
 
+    async def refresh_page(self, page: int) -> bool:
+        """
+        Page starts at 1. Returns True if the next page
+        contains further data.
+        """
+        logger.info(f"Refreshing page {page} for {self}")
+        members, has_more = await self.fetch_page(page)
+        if not members:
+            logger.info(f"No more members by page {page} for {self}")
+            return 0
+        count = len(members)
+        await self.refresh_many(members)
+        logger.info(f"Refreshed {count} members from page {page} for {self}")
+        return has_more
+
     async def refresh_many(
         self,
         members: list,
@@ -1830,6 +1994,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         await external_data_source.refresh_one(member=member)
 
     @classmethod
+    async def deferred_refresh_page(
+        cls, external_data_source_id: str, page: int, request_id: str = None
+    ) -> bool:
+        """
+        Returns True if the next page contains further data.
+        """
+        external_data_source: ExternalDataSource = await cls.objects.aget(
+            id=external_data_source_id
+        )
+        return await external_data_source.refresh_page(page=page)
+
+    @classmethod
     async def deferred_refresh_many(
         cls, external_data_source_id: str, members: list, request_id: str = None
     ):
@@ -1887,6 +2063,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         await external_data_source.import_many(members=members)
 
     @classmethod
+    async def deferred_import_page(
+        cls, external_data_source_id: str, page: int, request_id: str = None
+    ) -> bool:
+        """
+        Returns True if the next page contains further data.
+        """
+        external_data_source: ExternalDataSource = await cls.objects.aget(
+            id=external_data_source_id
+        )
+        return await external_data_source.import_page(page=page)
+
+    @classmethod
     async def deferred_import_all(
         cls, external_data_source_id: str, request_id: str = None
     ):
@@ -1909,6 +2097,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         metrics.distribution(key="import_rows_requested", value=member_count)
 
     async def schedule_refresh_one(self, member) -> int:
+        logger.info(f"Scheduling refresh one for source {self} and member {member}")
         if not self.allow_updates:
             logger.error(f"Updates requested for non-updatable CRM {self}")
             return
@@ -1925,12 +2114,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 queueing_lock=f"update_one_{str(self.id)}_{str(member_id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
             ).defer_async(external_data_source_id=str(self.id), member=member)
-        except (UniqueViolation, IntegrityError):
-            pass
+        except (UniqueViolation, IntegrityError) as e:
+            logger.error(f"Error in schedule_refresh_one: {e}")
 
     async def schedule_refresh_many(
         self, members: list[str] | list[dict], request_id: str = None
     ) -> int:
+        logger.info(f"Scheduling refresh many for source {self} and members {members}")
+
         if not self.allow_updates:
             logger.error(f"Updates requested for non-updatable CRM {self}")
             return
@@ -1956,8 +2147,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 external_data_source_id=str(self.id),
                 members=members,
             )
-        except (UniqueViolation, IntegrityError):
-            pass
+        except (UniqueViolation, IntegrityError) as e:
+            logger.error(f"Error in schedule_refresh_many: {e}")
 
     async def schedule_refresh_all(self, request_id: str = None) -> int:
         if not self.allow_updates:
@@ -2011,6 +2202,58 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             ).defer_async(
                 external_data_source_id=str(self.id),
                 requested_at=requested_at,
+                request_id=request_id,
+            )
+        except (UniqueViolation, IntegrityError):
+            pass
+
+    @classmethod
+    async def schedule_import_pages(
+        self,
+        external_data_source_id: str,
+        current_page: int = 1,
+        request_id: str = None,
+    ) -> int:
+        """
+        This is a classmethod for a performance boost - the import pages
+        flow doesn't need to get the actual instance, it just needs
+        the id.
+        """
+        try:
+            return await import_pages.configure(
+                # Dedupe `import_pages` jobs for the same config
+                # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+                queueing_lock=f"import_pages_{external_data_source_id}",
+                schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+            ).defer_async(
+                external_data_source_id=external_data_source_id,
+                current_page=current_page,
+                request_id=request_id,
+            )
+        except (UniqueViolation, IntegrityError):
+            pass
+
+    @classmethod
+    async def schedule_refresh_pages(
+        self,
+        external_data_source_id: str,
+        current_page: int = 1,
+        request_id: str = None,
+    ) -> int:
+        """
+        This is a classmethod for a performance boost - the refresh pages
+        flow doesn't need to get the actual instance, it just needs
+        the id.
+        """
+        try:
+            return await refresh_pages.configure(
+                # Dedupe `refresh_pages` jobs for the same config
+                # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+                queueing_lock=f"refresh_pages_{external_data_source_id}",
+                schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+            ).defer_async(
+                external_data_source_id=external_data_source_id,
+                current_page=current_page,
                 request_id=request_id,
             )
         except (UniqueViolation, IntegrityError):
@@ -2763,6 +3006,7 @@ class ActionNetworkSource(ExternalDataSource):
     automated_webhooks = False
     introspect_fields = True
     default_data_type = ExternalDataSource.DataSourceType.MEMBER
+    can_forecast_job_progress = False
 
     defaults = dict(
         # Reports
@@ -2897,17 +3141,83 @@ class ActionNetworkSource(ExternalDataSource):
 
     def get_member_ids_from_webhook(self, webhook_payload: list[dict]) -> list[str]:
         member_ids = []
-        for action in webhook_payload:
-            payload = action.get("action_network:action", {})
-            person_href = payload.get("_links", {}).get("osdi:person", {}).get("href")
-            if person_href:
-                id = person_href.split("/")[-1]
-                member_ids.append(self.uuid_to_prefixed_id(id))
+        for item in webhook_payload:
+            payloads = []
+            payload_keys = [
+                "action_network:action",
+                "osdi:attendance",
+                "osdi:submission",
+                "osdi:donation",
+                "osdi:outreach",
+            ]
+            for key in payload_keys:
+                if item.get(key):
+                    payloads.append(item.get(key))
+            for payload in payloads:
+                person_href = (
+                    payload.get("_links", {}).get("osdi:person", {}).get("href")
+                )
+                if person_href:
+                    id = person_href.split("/")[-1]
+                    member_ids.append(self.uuid_to_prefixed_id(id))
         return member_ids
+
+    @classmethod
+    async def deferred_import_all(
+        cls, external_data_source_id: str, request_id: str = None
+    ):
+        """
+        Override Action Network import_all behavior to import page-by-page
+        """
+        # TODO: how do we measure number of rows imported with this method?
+        return await cls.schedule_import_pages(
+            external_data_source_id=external_data_source_id, request_id=request_id
+        )
+
+    @classmethod
+    async def deferred_refresh_all(
+        cls, external_data_source_id: str, request_id: str = None
+    ):
+        """
+        Override Action Network refresh_all behavior to import page-by-page
+        """
+        # TODO: how do we measure number of rows imported with this method?
+        return await cls.schedule_refresh_pages(
+            external_data_source_id=external_data_source_id, request_id=request_id
+        )
 
     async def fetch_all(self):
         # returns an iterator that *should* work for big lists
         return self.client.get_people()
+
+    async def fetch_page(self, page: int, max_page_size=500) -> tuple[list, bool]:
+        """
+        Returns a tuple of members and boolean to indicate if more data
+        can be fetched.
+        """
+        has_more = True
+        # Get multiple Action Network pages at a time for better performance
+        an_page_size = 25
+        # Use floor to handle max_page_size not being a multiple of 25
+        # Means that the number of records returned will be slightly smaller
+        # This works with pagination (there is a test!)
+        an_page_count = math.floor(max_page_size / an_page_size)
+
+        page_offset = an_page_count * (page - 1)  # e.g. 40 for page 3
+        initial_page = page_offset + 1  # e.g. 41
+        last_page = page_offset + an_page_count  # e.g. 60
+        pages = range(initial_page, last_page + 1)  # e.g. 41 to 60
+
+        members = []
+        for page in pages:
+            logger.debug(f"Fetching Action Network page {page} for {self}")
+            response = self.client.get_people(page=page) or {}
+            people = response.get("_embedded", {}).get("osdi:people", [])
+            if not people:
+                has_more = False
+                break
+            members = members + people
+        return members, has_more
 
     async def fetch_many(self, member_ids: list[str]):
         member_ids = [self.uuid_to_prefixed_id(id) for id in list(set(member_ids))]
@@ -2981,6 +3291,16 @@ class ActionNetworkSource(ExternalDataSource):
         for record in records:
             created_records.append(self.create_one(record))
         return created_records
+
+    def get_import_data(self):
+        logger.debug(f"getting import data where action network source id is {self.id}")
+        return GenericData.objects.filter(
+            models.Q(data_type__data_set__external_data_source_id=self.id)
+            & (
+                models.Q(json__email_addresses__0__status="subscribed")
+                | models.Q(json__phone_numbers__0__status="subscribed")
+            )
+        )
 
 
 class TicketTailorSource(ExternalDataSource):
@@ -3164,7 +3484,17 @@ class MapReport(Report, Analytics):
             layer["source"] for layer in self.get_layers() if layer.get("visible", True)
         ]
         return GenericData.objects.filter(
-            data_type__data_set__external_data_source_id__in=visible_layer_ids
+            models.Q(data_type__data_set__external_data_source_id__in=visible_layer_ids)
+            & (
+                (
+                    models.Q(data__startswith="action_network")
+                    & (
+                        models.Q(json__email_addresses__0__status="subscribed")
+                        | models.Q(json__phone_numbers__0__status="subscribed")
+                    )
+                )
+                | (~models.Q(data__startswith="action_network"))
+            )
         )
 
     def get_analytics_queryset(self):
@@ -3172,7 +3502,7 @@ class MapReport(Report, Analytics):
 
 
 def generate_puck_json_content():
-    return {"content": [], "root": {}, "zones": {}}
+    return {"content": [], "root": { "props": {} }, "zones": {}}
 
 
 class HubImage(AbstractImage):
@@ -3187,6 +3517,12 @@ class HubImageRendition(AbstractRendition):
     class Meta:
         unique_together = (("image", "filter_spec", "focal_point_key"),)
 
+
+puck_wagtail_root_fields = [
+    "title",
+    "slug",
+    "search_description",
+]
 
 class HubHomepage(Page):
     """

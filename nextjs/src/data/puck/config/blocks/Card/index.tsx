@@ -24,7 +24,8 @@ import { Download, FileHeart } from "lucide-react";
 
 import dynamic from "next/dynamic";
 import dynamicIconImports from "lucide-react/dynamicIconImports";
-import { itemTypes } from "../FilterableGrid";
+import { itemTypes } from "../FilterableGrid/cardTypes";
+import { ErrorBoundary } from "@sentry/nextjs";
 
 const icons = Object.keys(dynamicIconImports).reduce((acc, iconName) => {
   // @ts-ignore
@@ -152,7 +153,7 @@ export const Card: ComponentConfig<CardProps> = {
       }
     }
   },
-  render: props => <RenderCard {...props} />,
+  render: props => <ErrorBoundary><RenderCard {...props} /></ErrorBoundary>,
 };
 
 export function RenderCard({ src, category, title, description, dialogDescription, type, link, linkLabel, behaviour, eventMonth, eventDay, eventTime, eventLocation, imageUrl }: CardProps) {
@@ -167,7 +168,7 @@ export function RenderCard({ src, category, title, description, dialogDescriptio
       {type === "resource" && (
         <div className="p-5 bg-white h-full flex flex-col gap-4 justify-between">
           <div className="text-jungle-green-600 w-full object-scale-down object-left ">
-            {imageUrl ? <img src={imageUrl} alt="resource image" className='rounded-[10px] h-40' /> : <FileHeart />}
+            {imageUrl ? <img src={imageUrl} alt="resource image" className='rounded-[10px] h-40' /> : <FileHeart strokeWidth="1.5" className="h-10 w-10"/>}
 
           </div>
           <div>
@@ -233,10 +234,13 @@ export function RenderCard({ src, category, title, description, dialogDescriptio
       )}
     </div>
   ) : (
-    <Image src={src} alt="illustration" className='w-full h-full overflow-visible' style={{
-      objectFit: "contain",
-    }} />
-  )
+    <div className="relative">
+      <Image src={src} alt="illustration" className='w-full h-full overflow-visible absolute' style={{
+        objectFit: "contain",
+      }} />
+    </div>
+    )
+      
 
   if (behaviour === "dialog" && !!dialogDescription) {
     return (

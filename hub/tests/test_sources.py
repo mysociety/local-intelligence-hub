@@ -1,6 +1,6 @@
+from asyncio import sleep
 from datetime import datetime
 from random import randint
-from time import sleep
 from typing import List
 
 from django.conf import settings
@@ -229,20 +229,20 @@ class TestExternalDataSource:
             ),
         ]
         records = self.create_many_test_records(test_record_data)
+        record_ids = [self.source.get_record_id(record) for record in records]
+        assert len(record_ids) == 2
+
         # Test this functionality
-        records = await self.source.fetch_many(
-            [self.source.get_record_id(record) for record in records]
-        )
+        records = await self.source.fetch_many(record_ids)
+
         # Check
         try:
             assert len(records) == 2
         except AssertionError as e:
             # ActionNetwork is sometimes slow to reflect new members
             if isinstance(self.source, models.ActionNetworkSource):
-                sleep(5)
-                records = await self.source.fetch_many(
-                    [self.source.get_record_id(record) for record in records]
-                )
+                await sleep(5)
+                records = await self.source.fetch_many(record_ids)
                 assert len(records) == 2
             # Should be an error for other source types
             else:
@@ -585,3 +585,54 @@ class TestActionNetworkSource(TestExternalDataSource, TestCase):
             ],
         )
         return self.source
+
+    async def test_fetch_page(self):
+        """
+        Ensure that fetching page-by-page gives the same count as fetching all.
+        """
+        # Add some test data
+        self.create_many_test_records(
+            [
+                models.ExternalDataSource.CUDRecord(
+                    postcode="E5 0AA",
+                    email=f"E{randint(0, 1000)}AA@gmail.com",
+                    data=(
+                        {
+                            "addr1": "Millfields Rd",
+                            "city": "London",
+                            "state": "London",
+                            "country": "GB",
+                        }
+                        if isinstance(self.source, models.MailchimpSource)
+                        else {}
+                    ),
+                ),
+                models.ExternalDataSource.CUDRecord(
+                    postcode="E10 6EF",
+                    email=f"E{randint(0, 1000)}EF@gmail.com",
+                    data=(
+                        {
+                            "addr1": "123 Colchester Rd",
+                            "city": "London",
+                            "state": "London",
+                            "country": "GB",
+                        }
+                        if isinstance(self.source, models.MailchimpSource)
+                        else {}
+                    ),
+                ),
+            ]
+        )
+
+        all_records = await self.source.fetch_all()
+        all_records = list(all_records)
+        paged_records = []
+        page = 1
+        while True:
+            # page_size 26 to check non-multiples of 25 still work
+            records, has_more = await self.source.fetch_page(page, max_page_size=26)
+            if not has_more:
+                break
+            paged_records += records
+            page += 1
+        assert len(all_records) == len(paged_records)
