@@ -1,8 +1,7 @@
 import logging
-from typing import Any, Coroutine, List, Optional
+from typing import List, Optional
 
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
-from django.http import HttpResponse
 
 import strawberry
 import strawberry_django
@@ -21,7 +20,6 @@ from hub.graphql import mutations as mutation_types
 from hub.graphql.extensions.analytics import APIAnalyticsExtension
 from hub.graphql.types import model_types, public_queries
 from hub.graphql.utils import graphql_type_to_dict
-from utils.postcodesIO import get_bulk_postcode_geo_from_coords
 
 logger = logging.getLogger(__name__)
 
