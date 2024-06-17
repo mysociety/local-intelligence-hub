@@ -14,7 +14,6 @@ import strawberry_django_dataloaders.factories
 import strawberry_django_dataloaders.fields
 from benedict import benedict
 from strawberry import auto
-from strawberry.dataloader import DataLoader
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
@@ -33,7 +32,6 @@ from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
-from utils.postcodesIO import get_bulk_postcode_geo_from_coords
 
 logger = logging.getLogger(__name__)
 
