@@ -3623,7 +3623,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
             return "Not enough webhooks - not enough rows"
         row_1 = values[0] or [""]
         cell_a1 = row_1[0]
-        if not "=COUNTIF" in cell_a1:
+        if "=COUNTIF" not in cell_a1:
             return "No row count in cell A1"
         row_2 = values[1] or ["", ""]
         cell_a2 = row_2[0]
@@ -4024,6 +4024,7 @@ puck_wagtail_root_fields = [
     "slug",
     "search_description",
 ]
+
 
 class HubHomepage(Page):
     """

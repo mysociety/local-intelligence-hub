@@ -3,13 +3,10 @@ import json
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-import google.oauth2.credentials
 import google_auth_oauthlib.flow
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-SAMPLE_SPREADSHEET_ID = "1MEDFli9uakvmf_wGghJZtZg2AvF2xybGtiaG7OX1mmg"
-SAMPLE_RANGE_NAME = "Sheet1"
 
 CREDENTIALS_FILE = settings.BASE_DIR / "google_credentials.json"
 

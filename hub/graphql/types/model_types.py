@@ -12,7 +12,6 @@ import strawberry
 import strawberry_django
 import strawberry_django_dataloaders.factories
 import strawberry_django_dataloaders.fields
-from asgiref.sync import async_to_sync, sync_to_async
 from benedict import benedict
 from strawberry import auto
 from strawberry.scalars import JSON
@@ -1253,7 +1252,7 @@ class HubPage:
         if hasattr(specific, "puck_json_content"):
             json = specific.puck_json_content
             for field in models.puck_wagtail_root_fields:
-                json['root']['props'][field] = getattr(specific, field)
+                json["root"]["props"][field] = getattr(specific, field)
             return json
         return {}
 
