@@ -56,7 +56,7 @@ class MyUserAdmin(UserAdmin):
 
     @admin.display
     def orgs(self, obj):
-        return "".join(list(obj.memberships.all().values_list("organisation__name", flat=True)))
+        return " / ".join(list(obj.memberships.all().values_list("organisation__name", flat=True)))
     
     @admin.display
     def last_seen(self, obj):
