@@ -18,13 +18,14 @@ import {
 } from "@/components/ui/dialog"
 
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, FileHeart } from "lucide-react";
 
 
 
 import dynamic from "next/dynamic";
 import dynamicIconImports from "lucide-react/dynamicIconImports";
 import { itemTypes } from "../FilterableGrid/cardTypes";
+import { ErrorBoundary } from "@sentry/nextjs";
 
 const icons = Object.keys(dynamicIconImports).reduce((acc, iconName) => {
   // @ts-ignore
@@ -51,6 +52,11 @@ export type CardProps = {
   link?: string;
   linkLabel?: string;
   src?: any
+  eventMonth?: string;
+  eventDay?: string;
+  eventTime?: string;
+  eventLocation?: string;
+  imageUrl?: string;
   // columns: number;
   // rows: number;
 };
@@ -58,10 +64,13 @@ export type CardProps = {
 const TypeBadge = ({ type }: { type: string }) => {
   return (
     <div>
-      <div className=" uppercase inline-block text-jungle-green-700 bg-jungle-green-100 font-normal rounded-full py-1 px-3">{type}</div>
+      <div className="uppercase text-sm inline-block text-jungle-green-700 bg-jungle-green-100 font-normal rounded-full py-1 px-3">{type}</div>
     </div>
   );
 }
+
+
+
 
 export const Card: ComponentConfig<CardProps> = {
   resolveFields: (data) => {
@@ -119,7 +128,7 @@ export const Card: ComponentConfig<CardProps> = {
         delete fields[key]
       }
     }
-    
+
     return fields
   },
   defaultProps: {
@@ -144,22 +153,26 @@ export const Card: ComponentConfig<CardProps> = {
       }
     }
   },
-  render: props => <RenderCard {...props} />,
+  render: props => <ErrorBoundary><RenderCard {...props} /></ErrorBoundary>,
 };
 
-export function RenderCard({ src, category, title, description, dialogDescription, type, link, linkLabel, behaviour }: CardProps) {
+export function RenderCard({ src, category, title, description, dialogDescription, type, link, linkLabel, behaviour, eventMonth, eventDay, eventTime, eventLocation, imageUrl }: CardProps) {
   const card = type !== "illustration" ? (
     <div
       className="render-card w-full h-full aspect-square overflow-clip rounded-[20px] flex flex-col gap-5 hover:shadow-hover transition-all"
-      // style={{
-      //   gridColumn: `span ${columns}`,
-      //   gridRow: `span ${rows}`,
-      // }}
+    // style={{
+    //   gridColumn: `span ${columns}`,
+    //   gridRow: `span ${rows}`,
+    // }}
     >
       {type === "resource" && (
         <div className="p-5 bg-white h-full flex flex-col gap-4 justify-between">
-          <div className="flex flex-col gap-4">
-            <h2 className="lg:text-hub2xl text-hubxl">{title}</h2>
+          <div className="text-jungle-green-600 w-full object-scale-down object-left ">
+            {imageUrl ? <img src={imageUrl} alt="resource image" className='rounded-[10px] h-40' /> : <FileHeart strokeWidth="1.5" className="h-10 w-10"/>}
+
+          </div>
+          <div>
+            <h2 className="lg:text-hub2xl text-hubxl mb-3">{title}</h2>
             {description && <div className="text-jungle-green-neutral line-clamp-6">
               <PuckText text={description} />
             </div>}
@@ -169,19 +182,21 @@ export function RenderCard({ src, category, title, description, dialogDescriptio
       )}
 
       {type === "action" && (
-        <div className="p-5 bg-jungle-green-600 text-white h-full relative flex flex-col gap-4 align-bottom">
+        <div className="p-5 bg-jungle-green-600 text-white h-full relative flex flex-col gap-4 justify-between">
           <Image src={ArrowTopRight} width={30} alt="arrow" className='relative z-10' />
-          <h2 className="lg:text-hub2xl text-hubxl tracking-tight relative z-10">{title}</h2>
-          {description && (
-            <div className="text-white line-clamp-6 relative z-10">
-              <PuckText text={description} />
-            </div>
-          )}
-          <div className='mt-auto relative z-10'>
+          <div>
+            <h2 className="lg:text-hub2xl text-hubxl tracking-tight relative z-10 mb-3">{title}</h2>
+            {description && (
+              <div className="text-white line-clamp-6 relative z-10">
+                <PuckText text={description} />
+              </div>
+            )}
+          </div>
+          <div className='relative z-10'>
             <TypeBadge type={type} />
           </div>
           <Image
-            className="object-cover rounded-[40px] absolute top-0 left-0"
+            className="object-cover rounded-[40px] absolute top-0 left-0 opacity-50"
             src={CirclePattern}
             width={500}
             alt="hero image"
@@ -191,32 +206,41 @@ export function RenderCard({ src, category, title, description, dialogDescriptio
       )}
 
       {type === "event" && (
-        <div className="p-5 bg-jungle-green-600 text-white h-full relative flex flex-col gap-4 align-bottom">
-          <Image src={ArrowTopRight} width={30} alt="arrow" className='relative z-10' />
-          <h2 className="lg:text-hub2xl text-hubxl tracking-tight relative z-10">{title}</h2>
-          {description && (
-            <div className="text-white line-clamp-6 relative z-10">
-              <PuckText text={description} />
+        <div className="p-5 bg-jungle-green-50 text-jungle-green-800 h-full relative flex flex-col gap-4 justify-between">
+          <div className="flex justify-between align-middle text-jungle-green-600">
+            <div className=" flex flex-col items-center">
+              {eventMonth}
+              <p className="text-4xl">{eventDay}</p>
+
             </div>
-          )}
-          <div className='mt-auto relative z-10'>
+            <div className="text-right">
+              <p>{eventTime}</p>
+              <p>{eventLocation}</p>
+            </div>
+          </div>
+          <div>
+            <h2 className="lg:text-hub2xl text-hubxl tracking-tight relative z-10 mb-3">{title}</h2>
+            {description && (
+              <div className="line-clamp-6 relative z-10">
+                <PuckText text={description} />
+              </div>
+            )}
+          </div>
+          <div className='relative z-10'>
             <TypeBadge type={type} />
           </div>
-          <Image
-            className="object-cover rounded-[40px] absolute top-0 left-0"
-            src={CirclePattern}
-            width={500}
-            alt="hero image"
-            layout="responsive"
-          />
+
         </div>
       )}
     </div>
   ) : (
-    <Image src={src} alt="illustration" className='w-full h-full overflow-visible' style={{
-      objectFit: "contain",
-    }} />
-  )
+    <div className="relative">
+      <Image src={src} alt="illustration" className='w-full h-full overflow-visible absolute' style={{
+        objectFit: "contain",
+      }} />
+    </div>
+    )
+      
 
   if (behaviour === "dialog" && !!dialogDescription) {
     return (

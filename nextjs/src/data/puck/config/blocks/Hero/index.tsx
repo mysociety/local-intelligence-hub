@@ -82,7 +82,7 @@ function HeroRenderer ({ prompt, description, }:  HeroProps) {
       <Image
         className="lg:rounded-[40px] lg:absolute h-full w-full"
         src={heroImg}
-        width={500}
+        width={1200}
         height={1000}
         alt="hero image"
         layout="responsive"
