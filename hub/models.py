@@ -122,7 +122,7 @@ class Membership(models.Model):
     organisation = models.ForeignKey(
         Organisation, on_delete=models.CASCADE, related_name="members"
     )
-    role = models.CharField(max_length=250)
+    role = models.CharField(max_length=250, default="owner")
 
     def __str__(self):
         return f"{self.user}: {self.role} in {self.organisation}"

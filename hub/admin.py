@@ -16,6 +16,12 @@ from hub.models import (
 )
 
 
+class MembershipInline(admin.TabularInline):
+    model = Membership
+
+class OrganisationInline(admin.TabularInline):
+    model = Organisation
+
 @admin.register(UserProperties)
 class UserPropertiesAdmin(admin.ModelAdmin):
     search_fields = ["user__username", "full_name", "organisation_name"]
@@ -70,6 +76,10 @@ class HubUserAdmin(UserAdmin):
     def last_seen(self, obj):
         return obj.properties.last_seen
     
+    inlines = [
+        MembershipInline,
+    ]
+
 
 admin.site.unregister(User)
 admin.site.register(User, HubUserAdmin)
@@ -219,6 +229,9 @@ class OrganisationAdmin(admin.ModelAdmin):
     list_display = ("name",)
     search_fields = ("name",)
 
+    inline = [
+        MembershipInline,
+    ]
 
 # Membership
 @admin.register(Membership)
@@ -233,3 +246,7 @@ class MembershipAdmin(admin.ModelAdmin):
         "user__name",
         "role",
     )
+
+    inline = [
+        OrganisationInline,
+    ]
