@@ -43,7 +43,10 @@ class Command(BaseCommand):
                     select_committees_json.extend(response_json)
             else:
                 self.stdout.write(f"Request failed for MP with ID: {str(mp)}")
-
+        if len(select_committees_json) == 0:
+            # if say, there's an election
+            self.stdout.write("No current Select Committee memberships found")
+            return None
         df = pd.DataFrame.from_records(select_committees_json)[["committees", "id"]]
         df = df.explode("committees")
         df["committee_name"] = df.committees.str["name"]
