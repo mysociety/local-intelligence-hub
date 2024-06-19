@@ -81,13 +81,15 @@ class Command(BaseCommand):
         self._quiet = quiet
         self.delete_data()
         df = self.get_last_election_df()
-        self.data_types = self.create_data_types()
-        self.import_results(df)
+        if df:
+            self.data_types = self.create_data_types()
+            self.import_results(df)
 
     def get_area_type(self):
         return AreaType.objects.get(code=self.area_type)
 
     def get_general_election_data(self):
+
         df = pd.read_csv(
             self.general_election_source_file,
             usecols=[
@@ -191,6 +193,8 @@ class Command(BaseCommand):
         return df
 
     def get_last_election_df(self):
+        if self.general_election_source_file.exists() is False:
+            return None
         df = self.get_general_election_data()
         be_df = self.get_by_elections_data()
         # Remove the election results from the general election df, where there has been a by-election since

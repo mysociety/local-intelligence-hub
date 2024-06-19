@@ -29,8 +29,13 @@ class Command(BaseCommand):
 
     def handle(self, quiet=False, *args, **options):
         self._quiet = quiet
-        self.data_types = self.create_data_types()
         df = self.get_df()
+
+        if df is None:
+            if not self.data_file.exists():
+                self.stderr.write(f"Data file {self.data_file} does not exist")
+            return
+        self.data_types = self.create_data_types()
         self.import_results(df)
 
     def get_person_from_name(self, name):
@@ -43,6 +48,11 @@ class Command(BaseCommand):
             return None
 
     def get_df(self):
+
+        if not self.data_file.exists():
+            self.stderr.write(f"Data file {self.data_file} does not exist")
+            return None
+
         df = pd.read_excel(self.data_file, header=1, sheet_name="MPs standing down")
         df = df.dropna(subset=["Name"])
         df.Name = df.Name.str.strip()

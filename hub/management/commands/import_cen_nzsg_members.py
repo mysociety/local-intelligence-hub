@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from django.core.management.base import BaseCommand
 
 import pandas as pd
@@ -14,7 +16,12 @@ class Command(BaseCommand):
         self.import_results()
 
     def get_df(self):
-        df = pd.read_csv("data/cen_nzsg_members.csv", true_values=["CEN", "NZSG"])
+
+        file_loc = Path("data", "cen_nzsg_members.csv")
+        if not file_loc.exists():
+            return None
+
+        df = pd.read_csv(file_loc, true_values=["CEN", "NZSG"])
         df.columns = ["mp_name", "cen", "nzsg"]
 
         return df
@@ -69,6 +76,8 @@ class Command(BaseCommand):
     def get_results(self):
         mps = Person.objects.filter(person_type="MP")
         df = self.get_df()
+        if df is None:
+            return {}
         results = {}
         print("Name matching MPs")
         for index, row in df.iterrows():
