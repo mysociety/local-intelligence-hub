@@ -1,4 +1,6 @@
 version: "1"
+previewsEnabled: true
+previewsExpireAfterDays: 3
 databases:
 - name: meep-database
   databaseName: meep_database
