@@ -1,4 +1,5 @@
 from time import sleep
+from typing import Optional
 
 from django.core.management.base import BaseCommand
 
@@ -180,11 +181,20 @@ class BaseAreaImportCommand(BaseCommand):
                     data_type, delete_old=True, quiet=self._quiet
                 )
 
+    def get_df(self) -> Optional[pd.DataFrame]:
+        raise NotImplementedError()
+
+    def process_data(self, df: pd.DataFrame):
+        raise NotImplementedError()
+
     def handle(self, quiet=False, *args, **kwargs):
         self._quiet = quiet
+        df = self.get_df()
+        if not df:
+            return
         self.add_data_sets()
         self.delete_data()
-        self.process_data()
+        self.process_data(df)
         self.update_averages()
         self.update_max_min()
         self.convert_to_new_con()
@@ -233,11 +243,18 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
                 print(f"issue with {cons}: {e}")
                 break
 
+    def get_dataframe(self) -> Optional[pd.DataFrame]:
+        raise NotImplementedError()
+
     def handle(self, quiet=False, skip_new_areatype_conversion=False, *args, **options):
         self._quiet = quiet
         if not hasattr(self, "do_not_convert"):
             self.do_not_convert = skip_new_areatype_conversion
         df = self.get_dataframe()
+        if df is None:
+            if not self._quiet:
+                self.stdout.write(f"missing data for {self.message} ({self.area_type})")
+            return
         self.add_data_sets(df)
         self.delete_data()
         self.process_data(df)
@@ -294,8 +311,7 @@ class BaseLatLongImportCommand(BaseAreaImportCommand):
 class BaseConstituencyGroupListImportCommand(BaseAreaImportCommand):
     do_not_convert = True
 
-    def process_data(self):
-        df = self.get_df()
+    def process_data(self, df: pd.DataFrame):
 
         if not self._quiet:
             self.stdout.write(f"{self.message} ({self.area_type})")
@@ -337,9 +353,14 @@ class BaseConstituencyGroupListImportCommand(BaseAreaImportCommand):
 
     def handle(self, quiet=False, *args, **kwargs):
         self._quiet = quiet
+        df = self.get_df()
+        if df is None:
+            if not self._quiet:
+                self.stdout.write(f"missing data for {self.message} ({self.area_type})")
+            return
         self.add_data_sets()
         self.delete_data()
-        self.process_data()
+        self.process_data(df)
         self.update_averages()
         self.update_max_min()
 
@@ -351,6 +372,10 @@ class BaseConstituencyCountImportCommand(BaseAreaImportCommand):
         self.data_type = list(self.data_types.values())[0]
 
     def get_dataframe(self):
+
+        if not self.data_file.exists():
+            return None
+
         df = pd.read_csv(self.data_file)
         df = df.astype({self.get_cons_col(): "str"})
         return df
@@ -384,6 +409,10 @@ class BaseConstituencyCountImportCommand(BaseAreaImportCommand):
     def handle(self, quiet=False, *args, **options):
         self._quiet = quiet
         df = self.get_dataframe()
+        if not df:
+            if not self._quiet:
+                self.stdout.write(f"missing data for {self.message} ({self.area_type})")
+            return
         self.add_data_sets(df)
         self.set_data_type()
         self.delete_data()
