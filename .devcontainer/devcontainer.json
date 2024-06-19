@@ -1,13 +1,14 @@
 
 {
 	"name": "local-intelligence-hub",
-
+	"secrets": {"MAPIT_API_KEY": {
+		"description": "API key for the MapIt API - optional for small numbers of queries"
+	}},
 	"dockerComposeFile": ["../docker-compose.yml"],
 	"service": "web",
 	"workspaceFolder": "/app",
 	"overrideCommand": true,
-
-	"extensions": [
+	"customizations": {"vscode":{"extensions": [
 		"ms-vscode.test-adapter-converter",
 		"bungcip.better-toml",
 		"ms-python.python",
@@ -16,5 +17,5 @@
 		"ms-azuretools.vscode-docker",
 		"github.vscode-pull-request-github",
 		"mhutchie.git-graph"
-	]
+	]}}	
 }
