@@ -10,10 +10,6 @@
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
     "black-formatter.path": ["${workspaceFolder}", "script", "black"],
-    "flake8.path": ["${workspaceFolder}", "script", "flake8"],
-    "flake8.args": [
-        "--exclude \".venv\" ."
-    ],
 
     "files.exclude": {
         "**/.git": true,
