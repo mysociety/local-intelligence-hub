@@ -23,7 +23,7 @@ class Command(BaseCommand):
         self._quiet = quiet
         self.import_results()
 
-    def get_results(self):
+    def get_df(self):
         if not self._quiet:
             self.stdout.write("Fetching all current Select Committee memberships")
 
@@ -75,7 +75,7 @@ class Command(BaseCommand):
 
         return select_committee_membership
 
-    def add_results(self, results, data_type):
+    def add_results(self, results: pd.DataFrame, data_type):
         if not self._quiet:
             self.stdout.write("Adding Select Committee Membership")
         for index, result in tqdm(results.iterrows(), disable=self._quiet):
@@ -87,5 +87,6 @@ class Command(BaseCommand):
 
     def import_results(self):
         data_type = self.create_data_types()
-        results = self.get_results()
-        self.add_results(results, data_type)
+        df = self.get_df()
+        if df:
+            self.add_results(df, data_type)

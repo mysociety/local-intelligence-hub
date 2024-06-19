@@ -15,6 +15,10 @@ class Command(BaseCommand):
         self._quiet = quiet
         self.data_types = self.create_data_types()
         df = self.get_df()
+        if df is None:
+            if not self._quiet:
+                self.stdout.write(f"Data file {self.data_file} not found")
+            return
         self.import_results(df)
 
     def get_person_from_id(self, id):
@@ -25,6 +29,8 @@ class Command(BaseCommand):
             return None
 
     def get_df(self):
+        if not self.data_file.exists():
+            return None
         df = pd.read_csv(self.data_file)
         df["mp"] = df.id_parlid.apply(lambda parlid: self.get_person_from_id(parlid))
         return df[["mp", "letter"]]

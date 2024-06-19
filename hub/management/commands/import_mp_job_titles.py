@@ -1,5 +1,6 @@
 import re
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 import pandas as pd
@@ -21,6 +22,7 @@ CONSTITUENCY_CORRECTIONS_DICT = {
 
 class Command(BaseCommand):
     help = "Import MP Job titles"
+    data_file = settings.BASE_DIR / "data" / "mp_job_titles.csv"
 
     def handle(self, quiet=False, *args, **options):
         self._quiet = quiet
@@ -30,6 +32,11 @@ class Command(BaseCommand):
         return AreaType.objects.get(code="WMC")
 
     def get_df(self):
+
+        if not self.data_file.exists():
+            self.stderr.write(f"Data file {self.data_file} does not exist")
+            return None
+
         df = pd.read_csv(
             "data/mp_job_titles.csv",
             usecols=["Constituency", "Short Title"],
@@ -71,9 +78,8 @@ class Command(BaseCommand):
 
         return mp_job_titles
 
-    def get_results(self):
+    def get_results(self, df: pd.DataFrame):
         mps = Person.objects.filter(person_type="MP")
-        df = self.get_df()
         results = {}
         if not self._quiet:
             print("Matching MPs with titles")
@@ -103,6 +109,12 @@ class Command(BaseCommand):
         PersonData.objects.filter(data_type=data_type).exclude(pk__in=mp_list).delete()
 
     def import_results(self):
+
+        df = self.get_df()
+
+        if df is None:
+            return
+
         data_type = self.create_data_type()
-        results = self.get_results()
+        results = self.get_results(df)
         self.add_results(results, data_type)

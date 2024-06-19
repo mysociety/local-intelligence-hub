@@ -1,4 +1,5 @@
 from datetime import date
+from pathlib import Path
 
 from django.core.management.base import BaseCommand
 
@@ -29,6 +30,7 @@ class Command(BaseCommand):
         package_name="mp_appg_membership_data",
         version_name="latest",
         file_name="appg_officers.csv",
+        done_survey=True,
     )
 
     def handle(self, quiet=False, *args, **options):
@@ -52,7 +54,14 @@ class Command(BaseCommand):
         return df
 
     def get_climate_appgs(self):
-        with open("data/climate_APPGs.txt", "r") as fh:
+
+        climate_appgs_list = Path("data", "climate_APPGs.txt")
+
+        if not climate_appgs_list.exists():
+            print("Climate APPGs list not found")
+            return []
+
+        with climate_appgs_list.open("r") as fh:
             climate_appgs = [line.replace("\n", "") for line in fh.readlines()]
         return climate_appgs
 
@@ -62,6 +71,7 @@ class Command(BaseCommand):
             package_name="mp_appg_membership_data",
             version_name="latest",
             file_name="appg_officers.csv",
+            done_survey=True,
         )
         # Limit the df to only the APPGs relating to climate
         # (Currently, this is done by reading from a list produced
