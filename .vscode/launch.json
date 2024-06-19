@@ -3,7 +3,7 @@
     "configurations": [     
         {
             "name": "Run debug server",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "justMyCode": false,
             "program": "${workspaceFolder}/manage.py",
