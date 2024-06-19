@@ -118,7 +118,7 @@ export default function Page({
   }, [context])
 
   const RNN_ORIG = Symbol();
-  const urlParams = new URLSearchParams(window.location.search);
+  const urlParams = new URLSearchParams(window ? window.location.search : "");
 
   const defaultValues: CreateExternalDataSourceInput & ExternalDataSourceInput = {
     name: '',

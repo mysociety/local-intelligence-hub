@@ -3398,6 +3398,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
         )
         return authorization_url
 
+    @property
     def api(self):
         # Don't cache this property, as the credentials only last 1 hour
         # so will need to be refreshed often.
@@ -3420,6 +3421,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
             self.save()
         return googleapiclient.discovery.build("sheets", "v4", credentials=credentials)
 
+    @property
     def spreadsheets(self) -> googleapiclient.discovery.Resource:
         return self.api.spreadsheets()
 
@@ -3748,7 +3750,8 @@ class EditableGoogleSheetsSource(ExternalDataSource):
             cells = [
                 f"{self.sheet_name}!{column}{row_number}" for column in columns_to_watch
             ]
-            return f'JOIN(",", {', '.join(cells)})'
+            cells_param = ", ".join(cells)
+            return f'JOIN(",", {cells_param})'
 
         # Set up a webhook for each row of the data that fires when any column
         # is filled / cleared
