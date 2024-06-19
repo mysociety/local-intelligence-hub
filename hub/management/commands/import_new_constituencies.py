@@ -4,6 +4,8 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db.utils import IntegrityError
 
+import geopandas as gpd
+import requests
 from mysoc_dataset import get_dataset_df
 from tqdm import tqdm
 
@@ -13,14 +15,6 @@ from utils.constituency_mapping import get_overlap_df
 
 class Command(BaseCommand):
     help = "Import basic area information for new constituencies"
-
-    """
-    This uses the geopackage from
-      https://pages.mysociety.org/2025-constituencies/datasets/parliament_con_2025/latest
-    and then run
-      ogr2ogr -f GeoJSON new_constituencies.json parl_constituencies_2025.gpkg -simplify 0.001
-    to generate a GeoJSON file to import.
-    """
     data_file = settings.BASE_DIR / "data" / "new_constituencies.json"
 
     def add_arguments(self, parser):
@@ -28,10 +22,33 @@ class Command(BaseCommand):
             "-q", "--quiet", action="store_true", help="Silence progress bars."
         )
 
+    def download_constituencies(self):
+
+        source_file = "https://pages.mysociety.org/2025-constituencies/data/parliament_con_2025/latest/parl_constituencies_2025.parquet"
+        parquet_path = settings.BASE_DIR / "data" / "parl_constituencies_2025.parquet"
+
+        response = requests.get(source_file)
+        with open(parquet_path, "wb") as f:
+            f.write(response.content)
+
+        gdf = gpd.read_parquet(parquet_path)
+
+        # Simplify the geometries
+        gdf["geometry"] = gdf["geometry"].simplify(
+            tolerance=0.001, preserve_topology=True
+        )
+
+        # Save to GeoJSON for import
+        gdf.to_file(self.data_file, driver="GeoJSON")
+
     def handle(self, quiet: bool = False, *args, **options):
         if not quiet:
             print("Importing Areas")
-        with open(self.data_file) as f:
+
+        if not self.data_file.exists():
+            self.download_constituencies()
+
+        with self.data_file.open() as f:
             cons = json.load(f)
 
         area_type, created = AreaType.objects.get_or_create(
@@ -66,6 +83,7 @@ class Command(BaseCommand):
                 package_name="parliament_con_2025",
                 version_name="latest",
                 file_name="parl_constituencies_2025.csv",
+                done_survey=True,
             )
             .set_index("short_code")["gss_code"]
             .to_dict()
