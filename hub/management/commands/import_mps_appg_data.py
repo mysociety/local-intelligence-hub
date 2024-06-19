@@ -42,9 +42,11 @@ class Command(BaseCommand):
         twfy_ids = PersonData.objects.filter(data_type__data_set__name="twfyid")
         df.twfy_id = df.twfy_id.str[25:].astype(int)
         df["mp"] = df.twfy_id.dropna().apply(
-            lambda x: twfy_ids.filter(data=x).first().person
-            if twfy_ids.filter(data=x)
-            else None
+            lambda x: (
+                twfy_ids.filter(data=x).first().person
+                if twfy_ids.filter(data=x)
+                else None
+            )
         )
         df = df.dropna(subset="mp")
         return df

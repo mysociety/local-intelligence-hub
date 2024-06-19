@@ -105,9 +105,9 @@ class Command(BaseConstituencyGroupListImportCommand):
         # Build a constituency lookup from TWFY data, and apply it to the constituency column, so that the names are all in a form that LIH recognises
         constituency_lookup = self.build_constituency_name_lookup()
         df.constituency = df.constituency.apply(
-            lambda x: constituency_lookup.get(x.replace(",", ""), x)
-            if not pd.isna(x)
-            else ""
+            lambda x: (
+                constituency_lookup.get(x.replace(",", ""), x) if not pd.isna(x) else ""
+            )
         )
         return df
 
