@@ -70,6 +70,10 @@ class Command(MultipleAreaTypesMixin, BaseConstituencyGroupListImportCommand):
     count_data_type = "rspb_reserves_count"
 
     def get_df(self):
+
+        if self.data_file.exists() is False:
+            return None
+
         return pd.read_csv(self.data_file)
 
     def get_group_json(self, row):

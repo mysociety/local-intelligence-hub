@@ -76,6 +76,10 @@ class Command(MultipleAreaTypesMixin, BaseConstituencyGroupListImportCommand):
     }
 
     def get_df(self):
+
+        if self.data_file.exists() is False:
+            return None
+
         return pd.read_csv(
             self.data_file,
             names=["group_name", "trust", "url", "postcode", "gss", *self.area_types],

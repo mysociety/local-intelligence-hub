@@ -66,6 +66,10 @@ class Command(BaseConstituencyGroupListImportCommand):
     count_data_type = "tcc_open_letter_signatories_count"
 
     def get_df(self):
+
+        if self.data_file.exists() is False:
+            return None
+
         df = pd.read_csv(self.data_file, names=["group_name", "constituency"])
         df = df.dropna(subset=["constituency"])
         df["constituency"] = df["constituency"].str.strip()

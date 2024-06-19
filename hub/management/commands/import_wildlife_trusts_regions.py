@@ -39,6 +39,10 @@ class Command(BaseConstituencyGroupListImportCommand):
     group_data_type = "wildlife_trusts_regions"
 
     def get_df(self):
+
+        if not self.data_file.exists():
+            return None
+
         return pd.read_csv(self.data_file, usecols=["Trust", "PCON19NM"]).rename(
             columns={"PCON19NM": "constituency"}
         )
