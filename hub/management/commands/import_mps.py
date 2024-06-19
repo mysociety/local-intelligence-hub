@@ -131,7 +131,8 @@ class Command(BaseCommand):
           ?person wdt:P31 wd:Q5 . ?person p:P39 ?ps .
           ?ps ps:P39 ?term . ?term wdt:P279 wd:Q16707842 .
           ?ps pq:P580 ?start . ?ps pq:P4100 ?party . ?ps pq:P768 ?seat .
-          FILTER NOT EXISTS { ?ps pq:P582 ?end } .
+          # During election
+          # FILTER NOT EXISTS { ?ps pq:P582 ?end } .
           ?seat wdt:P836 ?gss_code .
           OPTIONAL { ?person wdt:P2002 ?twfyid } .
           OPTIONAL { ?person wdt:P2002 ?twitter } .
