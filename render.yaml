@@ -18,7 +18,7 @@ services:
   - key: BACKEND_HOST
     fromService:
       name: meep-intelligence-hub-backend
-      type: worker
+      type: web
       property: host
   - key: FRONTEND_HOST
     fromService:
@@ -62,7 +62,7 @@ services:
   - key: BACKEND_HOST
     fromService:
       name: meep-intelligence-hub-backend
-      type: worker
+      type: web
       property: host
   - key: FRONTEND_HOST
     fromService:
