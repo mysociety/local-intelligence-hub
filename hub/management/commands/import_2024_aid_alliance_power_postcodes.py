@@ -89,6 +89,10 @@ class Command(MultipleAreaTypesMixin, BaseConstituencyGroupListImportCommand):
         return None
 
     def get_df(self):
+
+        if self.data_file.exists() is False:
+            return None
+
         df = pd.read_csv(self.data_file)
         df.columns = [
             "WMC",

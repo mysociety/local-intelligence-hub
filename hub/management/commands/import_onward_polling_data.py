@@ -88,6 +88,10 @@ class Command(BaseImportFromDataFrameCommand):
         return names_lookup_dict
 
     def get_dataframe(self):
+
+        if not self.data_file.exists():
+            return None
+
         converters_dict = {
             col: lambda x: int(x[:-1])
             for col in ["Q02_Support", "Q02_Neutral", "Q02_Oppose", "Q07_High"]
