@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timezone
 from enum import Enum
 from typing import List, Optional, Type, TypedDict, Union
-from urllib.parse import urljoin, urlencode
+from urllib.parse import urlencode, urljoin
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -25,7 +25,6 @@ from django.utils.functional import cached_property
 from django.utils.text import slugify
 
 import google_auth_oauthlib.flow
-from google.auth.transport.requests import Request as GoogleRequest
 import googleapiclient
 import googleapiclient.discovery
 import httpx
@@ -36,6 +35,7 @@ from asgiref.sync import async_to_sync, sync_to_async
 from benedict import benedict
 from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
+from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2.credentials import Credentials as GoogleCredentials
 from mailchimp3 import MailChimp
 from polymorphic.models import PolymorphicModel
@@ -3177,6 +3177,7 @@ class ActionNetworkSource(ExternalDataSource):
                 "osdi:submission",
                 "osdi:donation",
                 "osdi:outreach",
+                "osdi:signature",
             ]
             for key in payload_keys:
                 if item.get(key):
@@ -3379,7 +3380,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
                 "client_id": flow.client_config["client_id"],
                 "client_secret": flow.client_config["client_secret"],
                 "scopes": token["scope"],
-                "expiry": datetime.fromtimestamp(token["expires_at"]).isoformat()
+                "expiry": datetime.fromtimestamp(token["expires_at"]).isoformat(),
             }
         )
         return cls(oauth_credentials=oauth_credentials, **kwargs)
@@ -3405,6 +3406,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
         )
         if credentials and credentials.expired and credentials.refresh_token:
             logger.info(f"Refreshing Google token for source {self}")
+            credentials.refresh(GoogleRequest())
             self.oauth_credentials = json.dumps(
                 {
                     "access_token": credentials.token,
@@ -3412,7 +3414,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
                     "client_id": credentials.client_id,
                     "client_secret": credentials.client_secret,
                     "scopes": credentials.scopes,
-                    "expiry": credentials.expiry.isoformat()
+                    "expiry": credentials.expiry.isoformat(),
                 }
             )
             self.save()
@@ -3458,8 +3460,8 @@ class EditableGoogleSheetsSource(ExternalDataSource):
 
     def remote_url(self) -> str:
         sheet = self.sheet
-        url = self.spreadsheet['spreadsheetUrl']
-        params = {'gid': sheet['properties']['sheetId']}
+        url = self.spreadsheet["spreadsheetUrl"]
+        params = {"gid": sheet["properties"]["sheetId"]}
         return f"{url}?{urlencode(params)}"
 
     def healthcheck(self):
@@ -4020,7 +4022,7 @@ class MapReport(Report, Analytics):
 
 
 def generate_puck_json_content():
-    return {"content": [], "root": {}, "zones": {}}
+    return {"content": [], "root": {"props": {}}, "zones": {}}
 
 
 class HubImage(AbstractImage):

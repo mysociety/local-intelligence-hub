@@ -28,7 +28,9 @@ class Command(BaseCommand):
             client_config=CREDENTIALS, scopes=SCOPES
         )
 
-        flow.redirect_uri = "https://localhost:3000/data-sources/create/connect/editablegooglesheets"
+        flow.redirect_uri = (
+            "https://localhost:3000/data-sources/create/connect/editablegooglesheets"
+        )
 
         authorization_response = options.get("auth_success_url")
         if authorization_response:
@@ -39,7 +41,7 @@ class Command(BaseCommand):
                 "client_id": flow.client_config["client_id"],
                 "client_secret": flow.client_config["client_secret"],
                 "scopes": token["scope"],
-                "expiry": datetime.fromtimestamp(token["expires_at"]).isoformat()
+                "expiry": datetime.fromtimestamp(token["expires_at"]).isoformat(),
             }
             print(f"Token: {json.dumps(complete_token)}")
             return

@@ -30,7 +30,7 @@ export const Iframe: ComponentConfig<IframeProps> = {
   render: ({ url, width, className }) => {
     return (
       <IframeResizer
-        className={twMerge(className)}
+        className={twMerge("rounded-[20px] transition-all", className)}
         src={url}
         style={{ width: width || "100%" }}
       />
