@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timezone
 from enum import Enum
 from typing import List, Optional, Type, TypedDict, Union
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlencode
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -25,6 +25,7 @@ from django.utils.functional import cached_property
 from django.utils.text import slugify
 
 import google_auth_oauthlib.flow
+from google.auth.transport.requests import Request as GoogleRequest
 import googleapiclient
 import googleapiclient.discovery
 import httpx
@@ -35,7 +36,7 @@ from asgiref.sync import async_to_sync, sync_to_async
 from benedict import benedict
 from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
-from google.oauth2.credentials import Credentials
+from google.oauth2.credentials import Credentials as GoogleCredentials
 from mailchimp3 import MailChimp
 from polymorphic.models import PolymorphicModel
 from procrastinate.contrib.django.models import ProcrastinateEvent, ProcrastinateJob
@@ -3378,6 +3379,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
                 "client_id": flow.client_config["client_id"],
                 "client_secret": flow.client_config["client_secret"],
                 "scopes": token["scope"],
+                "expiry": datetime.fromtimestamp(token["expires_at"]).isoformat()
             }
         )
         return cls(oauth_credentials=oauth_credentials, **kwargs)
@@ -3395,14 +3397,27 @@ class EditableGoogleSheetsSource(ExternalDataSource):
         )
         return authorization_url
 
-    @cached_property
     def api(self):
-        credentials = Credentials.from_authorized_user_info(
+        # Don't cache this property, as the credentials only last 1 hour
+        # so will need to be refreshed often.
+        credentials = GoogleCredentials.from_authorized_user_info(
             json.loads(self.oauth_credentials)
         )
+        if credentials and credentials.expired and credentials.refresh_token:
+            logger.info(f"Refreshing Google token for source {self}")
+            self.oauth_credentials = json.dumps(
+                {
+                    "access_token": credentials.token,
+                    "refresh_token": credentials.refresh_token,
+                    "client_id": credentials.client_id,
+                    "client_secret": credentials.client_secret,
+                    "scopes": credentials.scopes,
+                    "expiry": credentials.expiry.isoformat()
+                }
+            )
+            self.save()
         return googleapiclient.discovery.build("sheets", "v4", credentials=credentials)
 
-    @cached_property
     def spreadsheets(self) -> googleapiclient.discovery.Resource:
         return self.api.spreadsheets()
 
@@ -3443,7 +3458,9 @@ class EditableGoogleSheetsSource(ExternalDataSource):
 
     def remote_url(self) -> str:
         sheet = self.sheet
-        return f"{self.spreadsheet['spreadsheetUrl']}?gid=${sheet['properties']['sheetId']}"
+        url = self.spreadsheet['spreadsheetUrl']
+        params = {'gid': sheet['properties']['sheetId']}
+        return f"{url}?{urlencode(params)}"
 
     def healthcheck(self):
         if self.headers:
