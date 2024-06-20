@@ -35,7 +35,7 @@ const HomepageItemsAliasRenderer = () => {
         item.type === "FilterableGrid"
     ))?.props
 
-    if (!data) return <LoadingIcon />
+    if (!data.data) return <LoadingIcon />
 
     if (!gridProps) return <div>Something went wrong.</div>
 
