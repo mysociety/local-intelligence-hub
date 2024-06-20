@@ -29,6 +29,7 @@ import pandas as pd
 import pytz
 from asgiref.sync import async_to_sync, sync_to_async
 from benedict import benedict
+from codemirror2.widgets import CodeMirrorEditor
 from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
 from mailchimp3 import MailChimp
@@ -44,6 +45,8 @@ from strawberry.dataloader import DataLoader
 from wagtail.admin.panels import FieldPanel, ObjectList, TabbedInterface
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
 from wagtail.models import Page, Site
+from wagtail_color_panel.fields import ColorField
+from wagtail_color_panel.edit_handlers import NativeColorPanel
 from wagtail_json_widget.widgets import JSONEditorWidget
 
 import utils as lih_utils
@@ -3556,15 +3559,21 @@ class HubHomepage(Page):
         related_name="+",
     )
     google_analytics_tag_id = models.CharField(max_length=100, blank=True, null=True)
+    custom_css = models.TextField(blank=True, null=True)
+    primary_colour = ColorField(blank=True, null=True)
+    secondary_colour = ColorField(blank=True, null=True)
 
-    data_panels = Page.content_panels + [
-        FieldPanel("organisation"),
-        FieldPanel("layers", widget=JSONEditorWidget),
-    ]
-
-    page_panels = [
+    page_panels = Page.content_panels + [
         FieldPanel("puck_json_content", widget=JSONEditorWidget),
         FieldPanel("nav_links", widget=JSONEditorWidget),
+        NativeColorPanel("primary_colour"),
+        NativeColorPanel("secondary_colour"),
+        FieldPanel("custom_css", widget=CodeMirrorEditor(options={'mode': 'css'})),
+    ]
+
+    data_panels = [
+        FieldPanel("organisation"),
+        FieldPanel("layers", widget=JSONEditorWidget),
     ]
 
     seo_panels = Page.promote_panels + [

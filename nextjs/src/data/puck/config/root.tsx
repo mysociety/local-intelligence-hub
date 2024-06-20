@@ -1,3 +1,5 @@
+"use client"
+
 import { DefaultRootProps } from "@measured/puck";
 import { ReactNode } from "react";
 import { BasicLayout } from "./client";
@@ -8,6 +10,7 @@ import { GetPageQuery, GetPageQueryVariables, HubNavLink } from "@/__generated__
 import { useQuery } from "@apollo/client";
 import { GET_PAGE } from "@/app/hub/render/[hostname]/query";
 import { useHubRenderContext } from "@/components/hub/HubRenderContext";
+import { getColors } from "theme-colors";
 
 export type RootProps = {
   children?: ReactNode;
@@ -22,25 +25,37 @@ export default function Root({
   navLinks = [],
   fullScreen = false,
 }: RootProps) {
+  const hub = useHubRenderContext()
+  const hostname = typeof window !== "undefined" ? window.location.hostname : hub.hostname
   const pageQuery = useQuery<GetPageQuery, GetPageQueryVariables>(GET_PAGE, {
     variables: {
-      hostname: typeof window !== "undefined" ? window.location.hostname : "",
+      hostname,
     },
     skip: !!navLinks?.length || typeof window === "undefined",
   });
 
   let links = navLinks.length ? navLinks : pageQuery.data?.hubPageByPath?.hub.navLinks || [];
- 
-  const hub = useHubRenderContext()
   
-  if (hub.hostname === "peopleclimatenature.org") {
+  const primaryColours = getColors(pageQuery.data?.hubPageByPath?.hub.primaryColour || hub.hubData?.primaryColour || "#0f8c6c");
+  const secondaryColours = getColors(pageQuery.data?.hubPageByPath?.hub.secondaryColour || hub.hubData?.secondaryColour || "#0f8c6c");
+  
+  if (hostname === "peopleclimatenature.org") {
     return (
       <>
-        <style>{`
-          html, body {
+        <style key="generated-colors">
+          {`
+            :root {
+              ${Object.entries(primaryColours).map(([key, value]) => `--primary-${key}: ${value};`).join("\n")}
+              ${Object.entries(secondaryColours).map(([key, value]) => `--secondary-${key}: ${value};`).join("\n")}
+            }
+          `}
+        </style>
+        <style key="hardcodedCss">
+          {`
             background: #f2f2f2;
-          }
-        `}</style>
+        `}
+        </style>
+        <style key="customCss">{hub.hubData?.customCss || ""}</style>
         <main
           className={twMerge(
             "font-publicSans text-jungle-green-800 min-w-screen h-full w-full mx-auto relative overflow-clip",
@@ -67,12 +82,23 @@ export default function Root({
   } else {
     return (
       <>
-        <style>{`
+        <style key="generated-colors">
+          {`
+            :root {
+              ${Object.entries(primaryColours).map(([key, value]) => `--primary-${key}: ${value};`).join("\n")}
+              ${Object.entries(secondaryColours).map(([key, value]) => `--secondary-${key}: ${value};`).join("\n")}
+            }
+          `}
+        </style>
+        <style key="hardcodedCss">
+          {`
           html, body {
-            background: #f2f2f2;
-            color: black;
+            background: hsl(var(--background));
+            color: hsl(var(--text));
           }
-        `}</style>
+        `}
+        </style>
+        <style key="customCss">{hub.hubData?.customCss || ""}</style>
         <main
           className={twMerge(
             "min-w-screen h-full w-full mx-auto relative overflow-clip",

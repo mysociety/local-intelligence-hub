@@ -11,6 +11,7 @@ import { GetLocalDataQuery } from "@/__generated__/graphql";
 import { useEffect } from "react";
 import { SIDEBAR_WIDTH } from "./data";
 import { BACKEND_URL } from "@/env";
+import { useHubRenderContext } from "./HubRenderContext";
 
 const viewStateAtom = atom<Partial<ViewState>>({
   longitude: -2.296605,
@@ -29,6 +30,7 @@ export function HubMap ({
   currentConstituency: GetLocalDataQuery['postcodeSearch']['constituency'],
   localDataLoading: boolean
 }) {
+  const hub = useHubRenderContext()
   const [viewState, setViewState] = useAtom(viewStateAtom)
 
   const requiredImages = [
@@ -105,7 +107,7 @@ export function HubMap ({
           source-layer={tileset.sourceLayerId}
           type="line"
           paint={{
-            "line-color": "green",
+            "line-color": hub.primaryColours["500"],
             "line-width": 1,
             "line-opacity": 0.25,
           }}
@@ -124,7 +126,7 @@ export function HubMap ({
               source-layer={tileset.sourceLayerId}
               type="fill"
               paint={{
-                "fill-color": "green",
+                "fill-color": hub.primaryColours["500"],
                 "fill-opacity": 0.1,
               }}
             />
@@ -140,7 +142,7 @@ export function HubMap ({
               source-layer={tileset.sourceLayerId}
               type="line"
               paint={{
-                "line-color": "green",
+                "line-color": hub.primaryColours["500"],
                 "line-width": 3,
                 "line-opacity": 0.75,
               }}

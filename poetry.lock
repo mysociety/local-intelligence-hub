@@ -691,6 +691,16 @@ django = ">=3.2"
 typing_extensions = ">=4.0.0"
 
 [[package]]
+name = "django-codemirror2"
+version = "0.2"
+description = "Django widgets for replacing textareas with CodeMirror2, an in-browser code editor"
+optional = false
+python-versions = "*"
+files = [
+    {file = "django-codemirror2-0.2.tar.gz", hash = "sha256:5ab23891d410206ee36e1b8f834b17ff2eab7a5b82238b22eaa82e26c92c5ea5"},
+]
+
+[[package]]
 name = "django-compressor"
 version = "4.4"
 description = "('Compresses linked and inline JavaScript or CSS into single cached files.',)"
@@ -3118,6 +3128,23 @@ docs = ["Sphinx (>=1.5.2)", "myst-parser (==2.0.0)", "pyenchant (>=3.1.1,<4)", "
 testing = ["Jinja2 (>=3.0,<3.2)", "azure-mgmt-cdn (>=12.0,<13.0)", "azure-mgmt-frontdoor (>=1.0,<1.1)", "boto3 (>=1.28,<2)", "coverage (>=3.7.0)", "curlylint (==0.13.1)", "django-pattern-library (>=0.7)", "djhtml (==3.0.6)", "doc8 (==0.8.1)", "factory-boy (>=3.2)", "freezegun (>=0.3.8)", "polib (>=1.1,<2.0)", "python-dateutil (>=2.7)", "pytz (>=2014.7)", "ruff (==0.1.5)", "semgrep (==1.40.0)", "tblib (>=2.0,<3.0)"]
 
 [[package]]
+name = "wagtail-color-panel"
+version = "1.5.0"
+description = ""
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "wagtail-color-panel-1.5.0.tar.gz", hash = "sha256:93823850e6afbcd364d9e02e2feb952fcebaeda03fa45053a47546a067eb852d"},
+    {file = "wagtail_color_panel-1.5.0-py3-none-any.whl", hash = "sha256:fb737756a97fd3dbfa364fea27c4392ce84e91bc65681e593a41844811cce158"},
+]
+
+[package.dependencies]
+wagtail = ">=4.1"
+
+[package.extras]
+test = ["pytest", "pytest-django", "wagtail-factories"]
+
+[[package]]
 name = "wagtail-json-widget"
 version = "0.0.8"
 description = "JSONEditor for Wagtail CMS"
@@ -3187,4 +3214,4 @@ wand = ["Wand (>=0.6,<1.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">3.11,<=3.12.3"
-content-hash = "237d329627a390727c2a8cbc69dcf94d4cc7c984f7c4233835e00c7ec8028aa2"
+content-hash = "5df4140aed027c869e17f1a7e71da8569cd9e0ba5fd52b5f7841205c77df0b0b"

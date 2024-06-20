@@ -1285,6 +1285,9 @@ class HubHomepage(HubPage):
     nav_links: List[HubNavLink]
     favicon_url: Optional[str] = None
     google_analytics_tag_id: Optional[str] = None
+    custom_css: Optional[str] = None
+    primary_colour: Optional[str] = None
+    secondary_colour: Optional[str] = None
 
     @strawberry_django.field
     def seo_image_url(self) -> Optional[str]:

@@ -87,7 +87,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
               <TabsTrigger
                 key={target.key}
                 value={target.key}
-                className="rounded text-jungle-green-600 bg-none hover:bg-jungle-green-50 data-[state=active]:bg-jungle-green-50 data-[state=active]:text-jungle-green-600 data-[state=active]:shadow-none"
+                className="rounded text-hub-primary-600 bg-none hover:bg-hub-primary-50 data-[state=active]:bg-hub-primary-50 data-[state=active]:text-hub-primary-600 data-[state=active]:shadow-none"
               >
                 {target.label}
               </TabsTrigger>
@@ -154,7 +154,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
                     ))}
                 </section>
                 <div className="w-full border-b border-meepGray-200 my-6"></div>
-                <div className="flex flex-col gap-2 text-jungle-green-neutral ">
+                <div className="flex flex-col gap-2 text-hub-primary-neutral ">
                   <HustingsCTA />
                 </div>
               </div>
@@ -164,15 +164,15 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
                   <p>
                     No upcoming events in {data?.name}.
                   </p>
-                  <div className="flex flex-col gap-2 text-jungle-green-neutral mt-4">
+                  <div className="flex flex-col gap-2 text-hub-primary-neutral mt-4">
                     <HustingsCTA />
                   </div>
                 </div>
                 <div className="w-full border-b border-meepGray-200 my-6"></div>
-                <div className="flex flex-col gap-2 text-jungle-green-neutral pt-0 p-6">
+                <div className="flex flex-col gap-2 text-hub-primary-neutral pt-0 p-6">
                     <h3 className='font-bold'>Other ways to get involved</h3>
                     <p>There are lots of easy ways you can show your candidates you care about people, climate and nature. Take a look at this page here to find out more.</p>
-                    <Link href="/get-involved" className='text-jungle-green-600 font-bold'>Learn more &rarr;</Link>
+                    <Link href="/get-involved" className='text-hub-primary-600 font-bold'>Learn more &rarr;</Link>
                 </div>
               </>
             )}

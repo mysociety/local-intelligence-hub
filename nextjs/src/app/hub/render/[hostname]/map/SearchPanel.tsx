@@ -56,7 +56,7 @@ export function SearchPanel({
     // Unbranded
     return (
       <div className="flex flex-col gap-4 p-6">
-        <h1 className='text-4xl tracking-tight mb-4 text-[#0C71C3]'>
+        <h1 className='text-4xl tracking-tight mb-4 text-hub-primary-500'>
           Upcoming events
         </h1>
         <p className='text-lg leading-tight text-jungle-green-neutral'>
@@ -67,12 +67,12 @@ export function SearchPanel({
             type="text"
             placeholder="postcode"
             autoComplete="postal-code"
-            className='p-4 text-lg w-full rounded-md border focus:ring-[#ff6b22] active:border-[#ff6b22] text-black'
+            className='p-4 text-lg w-full rounded-md border focus:ring-hub-secondary-500 active:border-hub-secondary-500 text-black'
             value={postcode}
             onChange={e => setPostcode(e.target.value.toUpperCase().trim())}
           />
           <button
-            className='bg-[#ff6b22] text-white text-lg font-bold rounded-md w-full p-4 mt-4'
+            className='bg-hub-secondary-500 text-white text-lg font-bold rounded-md w-full p-4 mt-4'
             // TODO: add postcode validation
             disabled={!postcode || isLoading}
           >
