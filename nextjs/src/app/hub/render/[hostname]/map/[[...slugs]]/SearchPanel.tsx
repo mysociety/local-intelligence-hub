@@ -1,3 +1,4 @@
+import { useHubRenderContext } from "@/components/hub/HubRenderContext"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import Link from "next/link"
@@ -13,40 +14,74 @@ export function SearchPanel({
   const [postcode, setPostcode] = useState("")
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
-    onSearch(postcode.replace(/([\s ]*)/mig, "").trim())
+    const sanitisedPostcode = postcode.replace(/([\s ]*)/mig, "").trim()
+    onSearch(sanitisedPostcode)
   }
 
-  return (
-    <div className="flex flex-col gap-4 p-6">
-      <h1 className='text-4xl tracking-tight mb-4 '>
-        Local Climate and Nature Hustings
-      </h1>
-      <p className='text-lg leading-tight text-jungle-green-neutral'>
-        Explore our map of Husting events happening all over the UK or input your postcode to see what{"’"}s happening near you.
-      </p>
+  const hub = useHubRenderContext()
 
-      <form onSubmit={onSubmit}>
-        <input
-          type="text"
-          placeholder="postcode"
-          autoComplete="postal-code"
-          className='p-4 text-lg w-full rounded-md border placeholder:text-jungle-green-600 focus:ring-jungle-green-600 bg-jungle-green-50 border-jungle-green-100 mt-4 active:border-green-500'
-          value={postcode}
-          onChange={e => setPostcode(e.target.value.toUpperCase().trim())}
-        />
-        <button
-          className='bg-jungle-green-600 text-white text-lg font-bold rounded-md w-full p-4 mt-4'
-          // TODO: add postcode validation
-          disabled={!postcode || isLoading}
-        >
-          {isLoading ? 'Loading...' : 'Search'}
-        </button>
-      </form>
-      <div className="flex flex-col gap-2 border-t border-jungle-green-bg pt-4 text-jungle-green-neutral ">
-        <HustingsCTA />
+  if (hub.hostname === 'peopleclimatenature.org') {
+    return (
+      <div className="flex flex-col gap-4 p-6">
+        <h1 className='text-4xl tracking-tight mb-4 '>
+          Local Climate and Nature Hustings
+        </h1>
+        <p className='text-lg leading-tight text-jungle-green-neutral'>
+          Explore our map of Husting events happening all over the UK or input your postcode to see what{"’"}s happening near you.
+        </p>
+
+        <form onSubmit={onSubmit}>
+          <input
+            type="text"
+            placeholder="postcode"
+            autoComplete="postal-code"
+            className='p-4 text-lg w-full rounded-md border placeholder:text-jungle-green-600 focus:ring-jungle-green-600 bg-jungle-green-50 border-jungle-green-100 mt-4 active:border-green-500'
+            value={postcode}
+            onChange={e => setPostcode(e.target.value.toUpperCase().trim())}
+          />
+          <button
+            className='bg-jungle-green-600 text-white text-lg font-bold rounded-md w-full p-4 mt-4'
+            // TODO: add postcode validation
+            disabled={!postcode || isLoading}
+          >
+            {isLoading ? 'Loading...' : 'Search'}
+          </button>
+        </form>
+        <div className="flex flex-col gap-2 border-t border-jungle-green-bg pt-4 text-jungle-green-neutral ">
+          <HustingsCTA />
+        </div>
       </div>
-    </div>
-  )
+    )
+  } else {
+    // Unbranded
+    return (
+      <div className="flex flex-col gap-4 p-6">
+        <h1 className='text-4xl tracking-tight mb-4 text-[#0C71C3]'>
+          Upcoming events
+        </h1>
+        <p className='text-lg leading-tight text-jungle-green-neutral'>
+          Explore our map of upcoming events happening all over the UK or search your postcode to see what{"’"}s happening near you.
+        </p>
+        <form onSubmit={onSubmit}>
+          <input
+            type="text"
+            placeholder="postcode"
+            autoComplete="postal-code"
+            className='p-4 text-lg w-full rounded-md border focus:ring-[#ff6b22] active:border-[#ff6b22] text-black'
+            value={postcode}
+            onChange={e => setPostcode(e.target.value.toUpperCase().trim())}
+          />
+          <button
+            className='bg-[#ff6b22] text-white text-lg font-bold rounded-md w-full p-4 mt-4'
+            // TODO: add postcode validation
+            disabled={!postcode || isLoading}
+          >
+            {isLoading ? 'Loading...' : 'Search'}
+          </button>
+        </form>
+      </div>
+    )
+  }
 }
 
 export function HustingsCTA () {

@@ -16,9 +16,11 @@ import { HustingsCTA } from "@/app/hub/render/[hostname]/map/[[...slugs]]/Search
 import Link from "next/link";
 import IframeResizer from "iframe-resizer-react";
 import queryString from "query-string";
+import { useHubRenderContext } from "./HubRenderContext";
 
 export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSearch']['constituency'] }) {
   const [tab, setTab] = useState("events");
+  const hubContext = useHubRenderContext()
 
   if (!data?.name) {
     return (
@@ -28,7 +30,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
           className="block mb-2"
           onClick={(e) => {
             e.preventDefault();
-            window.history.pushState(null, "", "/map");
+            hubContext.navigate("/map");
           }}
         >
           &larr; Search another postcode
@@ -56,7 +58,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
           className="block mb-4"
           onClick={(e) => {
             e.preventDefault();
-            window.history.pushState(null, "", "/map");
+            hubContext.navigate("/map");
           }}
         >
           &larr; Search another postcode

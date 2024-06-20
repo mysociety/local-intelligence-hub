@@ -19,12 +19,12 @@ export default async function Page({ params: { hostname, slug } }: { params: Par
 
   const puckJsonContent = page.data?.hubPageByPath?.puckJsonContent
 
-  // TODO: display 404 in this case
-  if (!puckJsonContent) {
-    return redirect('/')
-  }
+  // // TODO: display 404 in this case
+  // if (!puckJsonContent) {
+  //   return redirect('/')
+  // }
 
   return (
-    <RenderPuck page={page.data.hubPageByPath?.puckJsonContent} />
+    <RenderPuck hostname={hostname} page={page.data.hubPageByPath?.puckJsonContent} />
   )
 }

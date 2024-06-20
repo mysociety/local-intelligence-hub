@@ -16,6 +16,7 @@ import { SearchPanel } from './SearchPanel';
 import Root from '@/data/puck/config/root';
 import { useBreakpoint } from '@/hooks/css';
 import { GET_EVENT_DATA, GET_HUB_MAP_DATA, GET_LOCAL_DATA } from './queries';
+import { HubRenderContextProvider, useHubRenderContext } from '@/components/hub/HubRenderContext';
 
 
 type Params = {
@@ -31,51 +32,29 @@ export default function Page(props: { params: Params }) {
   const shouldDisplayMap = useBreakpoint("md")
 
   return (
-    <Root fullScreen={shouldDisplayMap} navLinks={hub.data?.hubByHostname?.navLinks || []}>
-      <MapProvider>
-        <JotaiProvider>
-          <PageContent {...props} shouldDisplayMap={shouldDisplayMap} hub={hub.data} />
-        </JotaiProvider>
-      </MapProvider>
-    </Root>
+    <JotaiProvider>
+      <HubRenderContextProvider hostname={props.params.hostname}>
+        <Root fullScreen={shouldDisplayMap} navLinks={hub.data?.hubByHostname?.navLinks || []}>
+          <MapProvider>
+            <PageContent {...props} shouldDisplayMap={shouldDisplayMap} hub={hub.data} />
+          </MapProvider>
+        </Root>
+      </HubRenderContextProvider>
+    </JotaiProvider>
   );
 }
 
 function PageContent ({ params: { hostname, slugs }, shouldDisplayMap, hub }: { params: Params, shouldDisplayMap: boolean, hub?: GetHubMapDataQuery }) {
-  // To listen for any soft changes to the pathname
-  // and extract a postcode
-  // e.g. /map/postcode/E15QJ
-  const pathname = usePathname()
-  const pathnameSegments = pathname.split("/")
-  const postcodeFromPathname = (
-      pathnameSegments &&
-      pathnameSegments.length === 4 &&
-      pathnameSegments[2] === 'postcode'
-    ) ? pathnameSegments[3].replace(/([\s ]*)/mig, "").trim() : ''
-    
-  const selectedMarkerState = useAtomValue(selectedHubSourceMarkerAtom)
-  useEffect(() => {
-    if (selectedMarkerState?.properties?.id) {
-      window.history.pushState(null, "", `/map/event/${selectedMarkerState.properties.id}`)
-    }
-  }, [selectedMarkerState])
-
-  const eventIdFromPathname = (
-    pathnameSegments &&
-    pathnameSegments.length === 4 &&
-    pathnameSegments[2] === 'event'
-  ) ? pathnameSegments[3] : ''
-
-  const shouldZoomOut = pathnameSegments.length == 1 && pathnameSegments[0] == '/map'
+  const hubContext = useHubRenderContext()
 
   const localData = useQuery<GetLocalDataQuery, GetLocalDataQueryVariables>(GET_LOCAL_DATA, {
-    variables: { postcode: postcodeFromPathname, hostname },
-    skip: !postcodeFromPathname
+    variables: { postcode: hubContext.postcode, hostname },
+    skip: !hubContext.postcode
   });
 
   const eventData = useQuery<GetEventDataQuery, GetEventDataQueryVariables>(GET_EVENT_DATA, {
-    variables: { eventId: eventIdFromPathname, hostname },
-    skip: !eventIdFromPathname
+    variables: { eventId: hubContext.selectedEventId, hostname },
+    skip: !hubContext.selectedEventId
   });
 
   return (
@@ -90,7 +69,7 @@ function PageContent ({ params: { hostname, slugs }, shouldDisplayMap, hub }: { 
                   []
                 }
                 currentConstituency={
-                  !shouldZoomOut ? (
+                  !hubContext.shouldZoomOut ? (
                     localData.data?.postcodeSearch.constituency ||
                     eventData.data?.importedDataGeojsonPoint?.properties?.constituency
                   ) : undefined
@@ -104,17 +83,12 @@ function PageContent ({ params: { hostname, slugs }, shouldDisplayMap, hub }: { 
                 style={{ width: SIDEBAR_WIDTH }}
               >
                 <div className="max-w-[100vw] rounded-[20px] bg-white max-h-full overflow-y-auto  pointer-events-auto">
-                  {eventIdFromPathname && eventData.data ? (
+                  <pre>{JSON.stringify(hubContext, null, 2)}</pre>
+                  {hubContext.selectedEventId && eventData.data ? (
                     <ConstituencyView data={eventData.data?.importedDataGeojsonPoint?.properties?.constituency} />
                   ) : !localData.data ? (
                     <SearchPanel
-                      onSearch={(postcode) => {
-                        window.history.pushState(
-                          null,
-                          "",
-                          `/map/postcode/${postcode}`
-                        );
-                      }}
+                      onSearch={(postcode) => hubContext.navigate(`/map/postcode/${postcode}`)}
                       isLoading={localData.loading}
                     />
                   ) : (
@@ -129,13 +103,7 @@ function PageContent ({ params: { hostname, slugs }, shouldDisplayMap, hub }: { 
         <div className='bg-white rounded-[20px] mt-4 mb-16'>
           {!localData.data ? (
             <SearchPanel
-              onSearch={(postcode) => {
-                window.history.pushState(
-                  null,
-                  "",
-                  `/map/postcode/${postcode}`
-                );
-              }}
+              onSearch={(postcode) => hubContext.navigate(`/map/postcode/${postcode}`)}
               isLoading={localData.loading}
             />
           ) : (

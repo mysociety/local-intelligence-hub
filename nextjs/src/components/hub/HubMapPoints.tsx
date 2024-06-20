@@ -25,6 +25,7 @@ export function HubPointMarkers ({ externalDataSourceId, index, beforeId }: { ex
     mapbox.loadedMap?.on('click', `${externalDataSourceId}-marker`, event => {
       const feature = event.features?.[0]
       if (feature?.properties?.id) {
+        console.log('selected', feature.properties.id)
         setSelectedSourceMarker(feature)
       }
     })
