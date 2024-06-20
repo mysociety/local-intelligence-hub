@@ -6,9 +6,11 @@ import { selectedHubSourceMarkerAtom } from "@/components/hub/data"
 import { useEffect } from "react"
 import { Layer, Source } from "react-map-gl"
 import { BACKEND_URL } from "@/env"
+import { useHubRenderContext } from "./HubRenderContext"
 
 export function HubPointMarkers ({ externalDataSourceId, index, beforeId }: { externalDataSourceId: string, index: number, beforeId?: string }) {
   const mapbox = useLoadedMap()
+  const context = useHubRenderContext()
   const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(selectedHubSourceMarkerAtom)
 
   useEffect(function selectMarker() {
@@ -25,8 +27,8 @@ export function HubPointMarkers ({ externalDataSourceId, index, beforeId }: { ex
     mapbox.loadedMap?.on('click', `${externalDataSourceId}-marker`, event => {
       const feature = event.features?.[0]
       if (feature?.properties?.id) {
-        console.log('selected', feature.properties.id)
         setSelectedSourceMarker(feature)
+        context.goToEventId(feature.properties.id)
       }
     })
   }, [mapbox.loadedMap, externalDataSourceId])

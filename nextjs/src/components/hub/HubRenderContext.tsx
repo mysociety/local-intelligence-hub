@@ -2,82 +2,66 @@ import { useAtomValue } from "jotai";
 import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect } from "react";
 import { selectedHubSourceMarkerAtom } from "./data";
+import { UseQueryStateReturn, parseAsInteger, parseAsString, useQueryState } from "nuqs";
 
 export const HubRenderContext = createContext<{
     hostname: string,
-    paths: string[],
     shouldZoomOut: boolean,
-    postcode: string,
-    selectedEventId: string,
-    isMultitenancyMode: boolean
+    isMultitenancyMode: Boolean
+    postcode: string | null,
+    setPostcode: UseQueryStateReturn<string, undefined>[1],
+    eventId: number | null,
+    setEventId: UseQueryStateReturn<number, undefined>[1]
 }>({
     hostname: "",
-    paths: ["/"],
-    shouldZoomOut: true,
-    postcode: "",
-    selectedEventId: "",
-    isMultitenancyMode: false
+    shouldZoomOut: false,
+    isMultitenancyMode: true,
+    postcode: null,
+    eventId: null,
+    // @ts-ignore
+    setPostcode: (...args: any[]) => {},
+    // @ts-ignore
+    setEventId: (...args: any[]) => {}
 })
-
-function navigate(path: string, hostname: string, isMultitenancyMode: boolean = true) {
-    const cleanedPath = path.trim().split("/").filter(Boolean).join("/")
-    const calculatedPath = isMultitenancyMode ? `/${cleanedPath}` : `/hub/render/${hostname}/${cleanedPath}`
-    window.history.pushState(null, "", calculatedPath)
-}
 
 export const useHubRenderContext = () => {
     const ctx = useContext(HubRenderContext)
+    function reset () {
+      ctx.setPostcode(null)
+      ctx.setEventId(null)
+    }
+    function goToEventId (eventId: number) {
+      reset()
+      ctx.setEventId(eventId)
+    }
+    function goToPostcode (postcode: string) {
+      reset()
+      ctx.setPostcode(postcode)
+    }
     return {
       ...ctx,
-      navigate(path: string) {
-        return navigate(path, ctx.hostname, ctx.isMultitenancyMode)
-      }
+      goToEventId,
+      goToPostcode,
+      reset
     }
 }
 
 export const HubRenderContextProvider = ({ hostname, children }: { hostname: string, children: any }) => {
-      // To listen for any soft changes to the pathname
-  // and extract a postcode
-  // e.g. /map/postcode/E15QJ
   const pathname = usePathname()
-
-  // If we are in multitenancy mode, pathnames will be at the root
-  // otherwise they will be at hub/render
-  const isMultitenancyMode = !pathname.includes("hub/render")
-  const offset = isMultitenancyMode ? 0 : 2
-
-  const pathnameSegments = pathname.split("/").filter(Boolean).slice(offset, pathname.length)
-  
-  const postcodeFromPathname = (
-      pathnameSegments &&
-      pathnameSegments.length === 3 &&
-      pathnameSegments[1] === 'postcode'
-    ) ? pathnameSegments[2].replace(/([\s ]*)/mig, "").trim() : ''
-    
-  const selectedMarkerState = useAtomValue(selectedHubSourceMarkerAtom)
-  useEffect(() => {
-    if (selectedMarkerState?.properties?.id) {
-      navigate(`/map/event/${selectedMarkerState.properties.id}`, hostname, isMultitenancyMode)
-    }
-  }, [selectedMarkerState, isMultitenancyMode, pathname])
-
-  const eventIdFromPathname = (
-    pathnameSegments &&
-    pathnameSegments.length === 3 &&
-    pathnameSegments[1] === 'event'
-  ) ? pathnameSegments[2] : ''
-
-  const shouldZoomOut = pathnameSegments.length == 1 && pathnameSegments[0] == '/map'
+  const isMultitenancyMode = pathname.includes("hub/render")
+  const [postcode, setPostcode] = useQueryState("postcode", parseAsString)
+  const [eventId, setEventId] = useQueryState("event", parseAsInteger)
+  const shouldZoomOut = !postcode && !eventId
 
   return (
     <HubRenderContext.Provider value={{
       hostname,
-      paths: pathnameSegments,
       shouldZoomOut,
-      postcode: postcodeFromPathname,
-      selectedEventId: eventIdFromPathname,
       isMultitenancyMode,
-      selectedMarkerState
+      postcode,
+      setPostcode,
+      eventId,
+      setEventId
     }}>
       {children}
     </HubRenderContext.Provider>

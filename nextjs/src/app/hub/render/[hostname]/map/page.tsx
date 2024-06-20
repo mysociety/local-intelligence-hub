@@ -21,7 +21,6 @@ import { HubRenderContextProvider, useHubRenderContext } from '@/components/hub/
 
 type Params = {
   hostname: string
-  slugs?: string[]
 }
 
 export default function Page(props: { params: Params }) {
@@ -44,17 +43,17 @@ export default function Page(props: { params: Params }) {
   );
 }
 
-function PageContent ({ params: { hostname, slugs }, shouldDisplayMap, hub }: { params: Params, shouldDisplayMap: boolean, hub?: GetHubMapDataQuery }) {
+function PageContent ({ params: { hostname }, shouldDisplayMap, hub }: { params: Params, shouldDisplayMap: boolean, hub?: GetHubMapDataQuery }) {
   const hubContext = useHubRenderContext()
 
   const localData = useQuery<GetLocalDataQuery, GetLocalDataQueryVariables>(GET_LOCAL_DATA, {
-    variables: { postcode: hubContext.postcode, hostname },
+    variables: { postcode: hubContext.postcode!, hostname },
     skip: !hubContext.postcode
   });
 
   const eventData = useQuery<GetEventDataQuery, GetEventDataQueryVariables>(GET_EVENT_DATA, {
-    variables: { eventId: hubContext.selectedEventId, hostname },
-    skip: !hubContext.selectedEventId
+    variables: { eventId: hubContext.eventId?.toString()!, hostname },
+    skip: !hubContext.eventId
   });
 
   return (
@@ -83,12 +82,11 @@ function PageContent ({ params: { hostname, slugs }, shouldDisplayMap, hub }: { 
                 style={{ width: SIDEBAR_WIDTH }}
               >
                 <div className="max-w-[100vw] rounded-[20px] bg-white max-h-full overflow-y-auto  pointer-events-auto">
-                  <pre>{JSON.stringify(hubContext, null, 2)}</pre>
-                  {hubContext.selectedEventId && eventData.data ? (
+                  {hubContext.eventId && eventData.data ? (
                     <ConstituencyView data={eventData.data?.importedDataGeojsonPoint?.properties?.constituency} />
                   ) : !localData.data ? (
                     <SearchPanel
-                      onSearch={(postcode) => hubContext.navigate(`/map/postcode/${postcode}`)}
+                      onSearch={(postcode) => hubContext.goToPostcode(postcode)}
                       isLoading={localData.loading}
                     />
                   ) : (
@@ -103,7 +101,7 @@ function PageContent ({ params: { hostname, slugs }, shouldDisplayMap, hub }: { 
         <div className='bg-white rounded-[20px] mt-4 mb-16'>
           {!localData.data ? (
             <SearchPanel
-              onSearch={(postcode) => hubContext.navigate(`/map/postcode/${postcode}`)}
+              onSearch={(postcode) => hubContext.goToPostcode(postcode)}
               isLoading={localData.loading}
             />
           ) : (

@@ -12,7 +12,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs-rounded";
 import { useState } from "react";
-import { HustingsCTA } from "@/app/hub/render/[hostname]/map/[[...slugs]]/SearchPanel";
+import { HustingsCTA } from "@/app/hub/render/[hostname]/map/SearchPanel";
 import Link from "next/link";
 import IframeResizer from "iframe-resizer-react";
 import queryString from "query-string";
@@ -30,7 +30,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
           className="block mb-2"
           onClick={(e) => {
             e.preventDefault();
-            hubContext.navigate("/map");
+            hubContext.reset()
           }}
         >
           &larr; Search another postcode
@@ -58,7 +58,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
           className="block mb-4"
           onClick={(e) => {
             e.preventDefault();
-            hubContext.navigate("/map");
+            hubContext.reset()
           }}
         >
           &larr; Search another postcode
