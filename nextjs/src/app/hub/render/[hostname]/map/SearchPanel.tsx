@@ -35,7 +35,7 @@ export function SearchPanel({
             type="text"
             placeholder="postcode"
             autoComplete="postal-code"
-            className='p-4 text-lg w-full rounded-md border placeholder:text-hub-primary-600 focus:ring-hub-primary-600 bg-hub-primary-50 border-hub-primary-100 mt-4 active:border-green-500'
+            className='p-4 text-lg w-full rounded-md border placeholder:text-hub-primary-600 focus:ring-hub-primary-600 bg-hub-primary-50 border-hub-primary-100 mt-4 active:border-hub-primary-500'
             value={postcode}
             onChange={e => setPostcode(e.target.value.toUpperCase().trim())}
           />
