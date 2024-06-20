@@ -13,6 +13,7 @@ export const GET_HUB_MAP_DATA = gql`
         id
         name
         visible
+        iconImage
         source {
           id
         }

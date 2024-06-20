@@ -3477,6 +3477,7 @@ class MapReport(Report, Analytics):
         id: str
         name: str
         source: str
+        icon_image: Optional[str] = None
         visible: Optional[bool] = True
         """
         filter: ORM filter dict for GenericData objects like { "json__status": "Published" }

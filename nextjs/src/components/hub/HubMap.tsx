@@ -7,7 +7,7 @@ import { ImmutableLike } from "react-map-gl/dist/esm/types";
 import { PlaceholderLayer, useLoadedMap, useMapIcons } from "@/lib/map";
 import { HubPointMarkers } from "./HubMapPoints";
 import { LoadingIcon } from "../ui/loadingIcon";
-import { GetLocalDataQuery } from "@/__generated__/graphql";
+import { GetHubMapDataQuery, GetLocalDataQuery } from "@/__generated__/graphql";
 import { useEffect } from "react";
 import { SIDEBAR_WIDTH } from "./data";
 import { BACKEND_URL } from "@/env";
@@ -21,12 +21,12 @@ const viewStateAtom = atom<Partial<ViewState>>({
 
 export function HubMap ({
   mapStyle,
-  externalDataSources,
+  layers,
   currentConstituency,
   localDataLoading
 }: {
   mapStyle?: string | mapboxgl.Style | ImmutableLike<mapboxgl.Style> | undefined,
-  externalDataSources: string[],
+  layers: GetHubMapDataQuery['hubByHostname']['layers'],
   currentConstituency: GetLocalDataQuery['postcodeSearch']['constituency'],
   localDataLoading: boolean
 }) {
@@ -64,7 +64,7 @@ export function HubMap ({
 
   return (
     <>
-      {!externalDataSources.length || loadedImages.length !== requiredImages.length || localDataLoading && (
+      {!layers?.length || loadedImages.length !== requiredImages.length || localDataLoading && (
         <div className="absolute w-full h-full inset-0 z-10 pointer-events-none">
           <div className="flex flex-col items-center justify-center w-full h-full">
             <LoadingIcon />
@@ -75,7 +75,7 @@ export function HubMap ({
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
         {...viewState}
         onMove={(e) => setViewState(e.viewState)}
-        mapStyle={mapStyle || "mapbox://styles/commonknowledge/clwqeu7rb012301nyh52n3kss"}
+        mapStyle={mapStyle || "mapbox://styles/commonknowledge/clwqeu7rb012301nyh52n3kss/draft"}
         transformRequest={(url, resourceType) => {
           if (
             url.includes(BACKEND_URL) &&
@@ -150,13 +150,13 @@ export function HubMap ({
           </>
         )}
         {/* Markers */}
-        {loadedImages.some(t => t === "tcc-event-marker") && externalDataSources.map(
-          (externalDataSourceId, index) => (
+        {loadedImages.some(t => t === "tcc-event-marker") && layers?.map(
+          (layer, index) => (
             <HubPointMarkers
               beforeId="PLACEHOLDER_MARKERS"
-              key={externalDataSourceId}
-              externalDataSourceId={externalDataSourceId}
+              key={layer.source.id}
               index={index}
+              layer={layer}
             />
           )
         )}
