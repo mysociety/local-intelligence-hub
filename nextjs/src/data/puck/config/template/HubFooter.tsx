@@ -12,7 +12,7 @@ export default function HubFooter() {
   const hubContext = useHubRenderContext()
   if (hubContext.hostname === 'peopleclimatenature.org') {
     return (
-      <div className="mb-[20px] w-full h-full bg-white rounded-[20px] text-jungle-green-neutral p-8 space-y-10">
+      <div className="mb-[20px] w-full h-full bg-white rounded-[20px] text-hub-primary-neutral p-8 space-y-10">
         <div className="flex md:flex-row flex-col items-start justify-between md:items-center gap-10">
           <div className="flex md:flex-row flex-col gap-5">
             <Image src={logo} width={180} height={100} alt="logo" />
@@ -49,7 +49,7 @@ export default function HubFooter() {
     )
   } else {
     return (
-      <div className="mb-[20px] w-full h-full bg-white rounded-[20px] text-jungle-green-neutral p-8 space-y-10">
+      <div className="mb-[20px] w-full h-full bg-white rounded-[20px] text-hub-primary-neutral p-8 space-y-10">
         <div className="flex md:flex-row flex-col gap-10 text-sm md:text-right border-t border-neutral-100 pt-5 justify-around">
           <p>
             <span className='underline' onClick={() => { CookieConsent.showPreferences() }}>Manage cookie consent</span>

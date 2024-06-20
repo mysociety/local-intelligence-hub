@@ -265,7 +265,7 @@ const config = {
         }
       },
       boxShadow: {
-        'hover': '0px 0px 30px 0px var(--Jungle-Green-300, #76DFBB)',
+        'hover': '0px 0px 30px 0px var(--hub-primary-300, #76DFBB)',
       },
       spacing: {
         xs: '10px',

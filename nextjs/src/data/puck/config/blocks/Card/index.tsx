@@ -64,7 +64,7 @@ export type CardProps = {
 const TypeBadge = ({ type }: { type: string }) => {
   return (
     <div>
-      <div className="uppercase text-sm inline-block text-jungle-green-700 bg-jungle-green-100 font-normal rounded-full py-1 px-3">{type}</div>
+      <div className="uppercase text-sm inline-block text-hub-primary-700 bg-hub-primary-100 font-normal rounded-full py-1 px-3">{type}</div>
     </div>
   );
 }
@@ -167,13 +167,13 @@ export function RenderCard({ src, category, title, description, dialogDescriptio
     >
       {type === "resource" && (
         <div className="p-5 bg-white h-full flex flex-col gap-4 justify-between">
-          <div className="text-jungle-green-600 w-full object-scale-down object-left ">
+          <div className="text-hub-primary-600 w-full object-scale-down object-left ">
             {imageUrl ? <img src={imageUrl} alt="resource image" className='rounded-[10px] h-40' /> : <FileHeart strokeWidth="1.5" className="h-10 w-10"/>}
 
           </div>
           <div>
             <h2 className="lg:text-hub2xl text-hubxl mb-3">{title}</h2>
-            {description && <div className="text-jungle-green-neutral line-clamp-6">
+            {description && <div className="text-hub-primary-neutral line-clamp-6">
               <PuckText text={description} />
             </div>}
           </div>
@@ -182,7 +182,7 @@ export function RenderCard({ src, category, title, description, dialogDescriptio
       )}
 
       {type === "action" && (
-        <div className="p-5 bg-jungle-green-600 text-white h-full relative flex flex-col gap-4 justify-between">
+        <div className="p-5 bg-hub-primary-600 text-white h-full relative flex flex-col gap-4 justify-between">
           <Image src={ArrowTopRight} width={30} alt="arrow" className='relative z-10' />
           <div>
             <h2 className="lg:text-hub2xl text-hubxl tracking-tight relative z-10 mb-3">{title}</h2>
@@ -206,8 +206,8 @@ export function RenderCard({ src, category, title, description, dialogDescriptio
       )}
 
       {type === "event" && (
-        <div className="p-5 bg-jungle-green-50 text-jungle-green-800 h-full relative flex flex-col gap-4 justify-between">
-          <div className="flex justify-between align-middle text-jungle-green-600">
+        <div className="p-5 bg-hub-primary-50 text-hub-primary-800 h-full relative flex flex-col gap-4 justify-between">
+          <div className="flex justify-between align-middle text-hub-primary-600">
             <div className=" flex flex-col items-center">
               {eventMonth}
               <p className="text-4xl">{eventDay}</p>
@@ -248,7 +248,7 @@ export function RenderCard({ src, category, title, description, dialogDescriptio
         <DialogTrigger className="w-full h-full text-left">
           {card}
         </DialogTrigger>
-        <DialogContent className="p-10 bg-white text-jungle-green-900 max-h-[100dvh] md:max-h-[95dvh] overflow-y-auto">
+        <DialogContent className="p-10 bg-white text-hub-primary-900 max-h-[100dvh] md:max-h-[95dvh] overflow-y-auto">
           <DialogHeader className="flex flex-col gap-5 text-left">
             <DialogTitle className="text-5xl">{title}</DialogTitle>
             <DialogDescription className=" text-lg">
@@ -256,7 +256,7 @@ export function RenderCard({ src, category, title, description, dialogDescriptio
             </DialogDescription>
             {!!link && (
               <Link href={link}
-                className='bg-jungle-green-600 hover:bg-jungle-green-500 text-white text-lg font-bold rounded-md p-4 flex flex-row gap-4 text-center items-center justify-center'
+                className='bg-hub-primary-600 hover:bg-hub-primary-500 text-white text-lg font-bold rounded-md p-4 flex flex-row gap-4 text-center items-center justify-center'
               >
                 {type === "resource" && <Download />}
                 {linkLabel || "Learn more"}
