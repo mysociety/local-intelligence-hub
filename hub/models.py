@@ -3629,11 +3629,13 @@ class HubHomepage(Page):
 # used by tilserver
 @receiver(models.signals.post_save, sender=HubHomepage)
 def update_site_filter_cache_on_save(sender, instance: HubHomepage, *args, **kwargs):
-    for layer in instance.get_layers():
-        cache.set(
-            site_tile_filter_dict(instance.get_site().hostname, layer.get("source")),
-            layer.get("filter", {}),
-        )
+    site = instance.get_site()
+    if site:
+        for layer in instance.get_layers():
+            cache.set(
+                site_tile_filter_dict(site.hostname, layer.get("source")),
+                layer.get("filter", {}),
+            )
 
 
 class HubContentPage(Page):
