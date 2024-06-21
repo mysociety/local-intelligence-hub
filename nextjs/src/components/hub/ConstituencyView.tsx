@@ -112,16 +112,16 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
           <div className="w-full border-b border-meepGray-200"></div>
           <TabsContent className="mt-0" value="events">
             {!!upcomingEvents?.length ? (
-              <div className='px-6 py-6'>
-                <div className="mb-4">
+              <section className='px-6 py-6'>
+                <header className="mb-4">
                   Help the campaign in {data?.name}{" "}
                   by coming along to one of these upcoming events.
-                </div>
-                <section className="space-y-4">
+                </header>
+                <main className="space-y-4">
                   {upcomingEvents.map((e) => (
                     <EventCard key={e.id} event={e} />
                   ))}
-                </section>
+                </main>
                 {hubContext.hostname === 'peopleclimatenature.org' && (
                   <>
                     <div className="w-full border-b border-meepGray-200 my-6"></div>
@@ -130,7 +130,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
                     </div>
                   </>
                 )}
-              </div>
+              </section>
             ) : (
               <>
                 <div className='p-6 pb-0'>
@@ -156,13 +156,15 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
                 {!!pastEvents.length && (
                   <>
                     <div className="w-full border-b border-meepGray-200 my-6"></div>
-                    <div className="mb-4">
-                      Past events in {data?.name}{" "}.
-                    </div>
-                    <section className="space-y-4">
-                      {pastEvents.map((e) => (
-                        <EventCard key={e.id} event={e} />
-                      ))}
+                    <section className='px-6 my-6'>
+                      <header className="mb-4">
+                        Past events in {data?.name}{" "}.
+                      </header>
+                      <main className="space-y-4">
+                        {pastEvents.map((e) => (
+                          <EventCard key={e.id} event={e} />
+                        ))}
+                      </main>
                     </section>
                   </>
                 )}

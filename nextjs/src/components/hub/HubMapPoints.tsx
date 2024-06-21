@@ -32,6 +32,7 @@ export function HubPointMarkers ({ layer, index, beforeId }: {
     mapbox.loadedMap?.on('click', `${layer.source.id}-marker`, event => {
       const feature = event.features?.[0]
       if (feature?.properties?.id) {
+        console.log(feature)
         setSelectedSourceMarker(feature)
         context.goToEventId(feature.properties.id)
       }
