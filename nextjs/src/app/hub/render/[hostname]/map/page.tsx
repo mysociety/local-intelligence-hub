@@ -33,7 +33,7 @@ export default function Page(props: { params: Params }) {
   return (
     <JotaiProvider>
       <HubRenderContextProvider hostname={props.params.hostname}>
-        <Root fullScreen={shouldDisplayMap} navLinks={hub.data?.hubByHostname?.navLinks || []}>
+        <Root renderCSS={false} fullScreen={shouldDisplayMap} navLinks={hub.data?.hubByHostname?.navLinks || []}>
           <MapProvider>
             <PageContent {...props} shouldDisplayMap={shouldDisplayMap} hub={hub.data} />
           </MapProvider>
