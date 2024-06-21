@@ -26,7 +26,7 @@ export function HubMap ({
   localDataLoading
 }: {
   mapStyle?: string | mapboxgl.Style | ImmutableLike<mapboxgl.Style> | undefined,
-  layers: GetHubMapDataQuery['hubByHostname']['layers'],
+  layers?: NonNullable<GetHubMapDataQuery['hubByHostname']>['layers'],
   currentConstituency: GetLocalDataQuery['postcodeSearch']['constituency'],
   localDataLoading: boolean
 }) {

@@ -12,7 +12,7 @@ export function HubPointMarkers ({ layer, index, beforeId }: { layer: {
   source: {
     id: string
   },
-  iconImage?: string
+  iconImage?: string | null
 }, index: number, beforeId?: string }) {
   const mapbox = useLoadedMap()
   const context = useHubRenderContext()
