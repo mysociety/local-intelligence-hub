@@ -1,5 +1,7 @@
 # Local Intelligence Hub
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/mysociety/local-intelligence-hub?devcontainer_path=.devcontainer%2Fauto-quick-setup%2Fdevcontainer.json)
+
 A Beta version of a tool to help The Climate Coalition with better access
 to data needed to enable local and national action on climate.
 
