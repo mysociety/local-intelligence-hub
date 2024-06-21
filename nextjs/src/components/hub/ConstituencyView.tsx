@@ -3,7 +3,7 @@ import {
   GetLocalDataQuery,
   Person,
 } from "@/__generated__/graphql";
-import { formatDate, formatRelative, isAfter } from "date-fns";
+import { formatDate, formatRelative, isAfter, isBefore } from "date-fns";
 import { Ticket } from "lucide-react";
 import {
   Tabs,
@@ -18,6 +18,7 @@ import IframeResizer from "iframe-resizer-react";
 import queryString from "query-string";
 import { useHubRenderContext } from "./HubRenderContext";
 import { BACKEND_URL } from "@/env";
+import { EventCard } from "./EventCard";
 
 export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSearch']['constituency'] }) {
   const [tab, setTab] = useState("events");
@@ -44,9 +45,23 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
   const events = data?.genericDataForHub?.filter(
     (d) =>
       // event type
-      d.dataType.dataSet.externalDataSource.dataType === DataSourceType.Event &&
-      // future events
-      isAfter(new Date(d.startTime), new Date())
+      d.dataType.dataSet.externalDataSource.dataType === DataSourceType.Event
+  )
+  .sort((a, b) =>
+    // most recent first
+    isAfter(new Date(a.startTime), new Date(b.startTime))
+      ? 1
+      : -1
+  )
+
+  const upcomingEvents = events?.filter((e) =>
+    // future events
+    isAfter(new Date(e.startTime), new Date())
+  );
+
+  const pastEvents = events?.filter((e) =>
+    // future events
+    isBefore(new Date(e.startTime), new Date())
   );
 
   const postcode = data?.samplePostcode?.postcode?.trim().replace(/([\s ]*)/mig, "");
@@ -96,65 +111,16 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
           </TabsList>
           <div className="w-full border-b border-meepGray-200"></div>
           <TabsContent className="mt-0" value="events">
-            {events && events.length ? (
+            {!!upcomingEvents?.length ? (
               <div className='px-6 py-6'>
                 <div className="mb-4">
                   Help the campaign in {data?.name}{" "}
                   by coming along to one of these upcoming events.
                 </div>
                 <section className="space-y-4">
-                  {events
-                    .sort((a, b) =>
-                      // most recent first
-                      isAfter(new Date(a.startTime), new Date(b.startTime))
-                        ? 1
-                        : -1
-                    )
-                    .map((i: any) => (
-                      <article
-                        key={i.id}
-                        className="border-2 border-meepGray-200 rounded-md overflow-hidden p-4 flex flex-col gap-2"
-                      >
-                        <header>
-                          <div className="text-meepGray-500">
-                            {formatRelative(new Date(i.startTime), new Date())}
-                          </div>
-                          <h3 className="font-bold text-lg">{i.title}</h3>
-                        </header>
-                        <main className="space-y-4">
-                          <section>
-                            <div className="text-meepGray-500 text-sm">Date/Time</div>
-                            <div>{formatDate(i.startTime, "EE do MMM hh:mm")}</div>
-                          </section>
-                          <section>
-                            <div className="text-meepGray-500 text-sm">Address</div>
-                            <div>
-                              {i.address} {i.postcode}
-                            </div>
-                          </section>
-                          {!!i.description && (
-                            <section>
-                              <div className="text-meepGray-500 text-sm">Description</div>
-                              <div className='space-y-1'>
-                                {/* @ts-ignore */}
-                                {i.description?.split("\n\n").map((paragraph, index) => (
-                                  <p key={index}>{paragraph}</p>
-                                ))}
-                              </div>
-                            </section>
-                          )}
-                          {i.publicUrl && (
-                            <a
-                              href={i.publicUrl}
-                              target="_blank"
-                              className="bg-hub-primary-200 text-hub-primary-900 px-3 py-2 text-center w-full rounded-md flex flex-row items-center justify-center gap-2"
-                            >
-                              <Ticket /> More info &amp; register
-                            </a>
-                          )}
-                        </main>
-                      </article>
-                    ))}
+                  {upcomingEvents.map((e) => (
+                    <EventCard key={e.id} event={e} />
+                  ))}
                 </section>
                 {hubContext.hostname === 'peopleclimatenature.org' && (
                   <>
@@ -185,6 +151,19 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
                         <p>There are lots of easy ways you can show your candidates you care about people, climate and nature. Take a look at this page here to find out more.</p>
                         <Link href="/get-involved" className='text-hub-primary-600 font-bold'>Learn more &rarr;</Link>
                     </div>
+                  </>
+                )}
+                {!!pastEvents.length && (
+                  <>
+                    <div className="w-full border-b border-meepGray-200 my-6"></div>
+                    <div className="mb-4">
+                      Past events in {data?.name}{" "}.
+                    </div>
+                    <section className="space-y-4">
+                      {pastEvents.map((e) => (
+                        <EventCard key={e.id} event={e} />
+                      ))}
+                    </section>
                   </>
                 )}
               </>
