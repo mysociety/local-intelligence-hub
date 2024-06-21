@@ -33,8 +33,7 @@ export function EventCard ({ event }: {
                 <section>
                     <div className="text-meepGray-500 text-sm">Description</div>
                     <div className='space-y-1'>
-                    {/* @ts-ignore */}
-                    {i.description?.split("\n\n").map((paragraph, index) => (
+                    {event.description?.split("\n\n").map((paragraph, index) => (
                         <p key={index}>{paragraph}</p>
                     ))}
                     </div>
