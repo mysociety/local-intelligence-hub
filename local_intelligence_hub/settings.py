@@ -29,15 +29,22 @@ env = environ.Env(
     MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET=(bool, True),
     MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET=(bool, True),
     EMAIL_BACKEND=(str, "django.core.mail.backends.console.EmailBackend"),
+    #
     BASE_URL=(str, False),
     FRONTEND_BASE_URL=(str, False),
+    ALLOWED_HOSTS=(list, []),
+    CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3000"]),
+    # Required for Render blueprints
+    PROD_BASE_URL=(str, False),
+    PROD_FRONTEND_BASE_URL=(str, False),
+    PROD_ALLOWED_HOSTS=(list, []),
+    PROD_CORS_ALLOWED_ORIGINS=(list, []),
+    #
     FRONTEND_SITE_TITLE=(str, False),
     SCHEDULED_UPDATE_SECONDS_DELAY=(int, 3),
     DEBUG=(bool, False),
     HIDE_DEBUG_TOOLBAR=(bool, True),
     LOG_QUERIES=(bool, False),
-    ALLOWED_HOSTS=(list, []),
-    CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3000"]),
     GOOGLE_ANALYTICS=(str, ""),
     GOOGLE_SITE_VERIFICATION=(str, ""),
     TEST_AIRTABLE_MEMBERLIST_BASE_ID=(str, ""),
@@ -80,6 +87,8 @@ env = environ.Env(
 
 environ.Env.read_env(BASE_DIR / ".env")
 
+environment = env("ENVIRONMENT")
+
 # Should be alphanumeric
 CRYPTOGRAPHY_KEY = env("CRYPTOGRAPHY_KEY")
 CRYPTOGRAPHY_SALT = env("CRYPTOGRAPHY_SALT")
@@ -97,12 +106,12 @@ GOOGLE_MAPS_API_KEY = env("GOOGLE_MAPS_API_KEY")
 ELECTORAL_COMMISSION_API_KEY = env("ELECTORAL_COMMISSION_API_KEY")
 
 # Urls
-FRONTEND_BASE_URL = env("FRONTEND_BASE_URL")
-BACKEND_URL = env("BASE_URL")
+FRONTEND_BASE_URL = env("FRONTEND_BASE_URL") if environment != "production" else env("FRONTEND_BASE_URL")
+BACKEND_URL = env("BASE_URL") if environment != "production" else env("PROD_BASE_URL")
 BASE_URL = BACKEND_URL
 # Network security
-ALLOWED_HOSTS = env("ALLOWED_HOSTS")
-CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
+ALLOWED_HOSTS = env("ALLOWED_HOSTS") if environment != "production" else env("PROD_ALLOWED_HOSTS")
+CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS") if environment != "production" else env("PROD_CORS_ALLOWED_ORIGINS")
 if FRONTEND_BASE_URL and FRONTEND_BASE_URL not in CORS_ALLOWED_ORIGINS:
     CORS_ALLOWED_ORIGINS.append(FRONTEND_BASE_URL)
 
@@ -463,8 +472,6 @@ STRAWBERRY_DJANGO = {
 
 SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")
 SENTRY_TRACE_SAMPLE_RATE = env("SENTRY_TRACE_SAMPLE_RATE")
-
-environment = env("ENVIRONMENT")
 
 posthog.disabled = True
 
