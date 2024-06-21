@@ -43,7 +43,7 @@ export function HubPointMarkers ({ layer, index, beforeId }: {
       <Source
         id={layer.source.id}
         type="vector"
-        url={new URL(`/tiles/external-data-source/${layer.source.id}/tiles.json`, BACKEND_URL).toString()}
+        url={new URL(`/tiles/external-data-source/${context.hostname}/${layer.source.id}/tiles.json`, BACKEND_URL).toString()}
       >
         {/* {index <= 1 ? ( */}
           <Layer

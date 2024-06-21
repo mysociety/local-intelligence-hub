@@ -1,7 +1,6 @@
 import logging
 
 from django.db.models.query import QuerySet
-from django.http import HttpResponseForbidden, HttpResponseServerError
 from django.urls import reverse
 from django.views.generic import DetailView
 
@@ -10,10 +9,7 @@ from vectortiles import VectorLayer
 from vectortiles.views import MVTView, TileJSONView
 from wagtail.models import Site
 
-from hub.cache_keys import site_tile_filter_dict
 from hub.models import ExternalDataSource, GenericData, HubHomepage
-from utils.cached_fn import cached_fn
-from utils.url import get_hostname_from_url
 
 logger = logging.getLogger(__name__)
 
@@ -45,10 +41,15 @@ class GenericDataVectorLayer(VectorLayer):
         return source.get_import_data().filter(**self.filter)
 
     def get_tile_fields(self):
-        default = ("id", "start_time__ispast", "start_time__isfuture", )
+        default = (
+            "id",
+            "start_time__ispast",
+            "start_time__isfuture",
+        )
         if self.permissions.get("can_display_details", False):
             default += ("json",)
         return default
+
 
 class ExternalDataSourceTileView(MVTView, DetailView):
     model = ExternalDataSource
@@ -56,6 +57,9 @@ class ExternalDataSourceTileView(MVTView, DetailView):
 
     def get_id(self):
         return self.kwargs.get(self.pk_url_kwarg)
+
+    def get_hostname(self):
+        return self.kwargs.get("hostname", None)
 
     def get_layer_class_kwargs(self, *args, **kwargs):
         external_data_source_id = self.get_id()
@@ -66,30 +70,29 @@ class ExternalDataSourceTileView(MVTView, DetailView):
             raise ValueError(
                 "You don't have permission to view location data for this data source."
             )
+        hostname = self.get_hostname()
         return {
             "external_data_source_id": external_data_source_id,
-            "filter": self.get_site_filter(
-                get_hostname_from_url(self.request.headers.get("Referer")),
-                external_data_source_id,
+            "filter": (
+                self.get_site_filter(hostname, external_data_source_id)
+                if hostname
+                else {}
             ),
-            "permissions": dict(permissions)
+            "permissions": dict(permissions),
         }
 
-    @cached_fn(
-        key=lambda a, hostname, id: site_tile_filter_dict(hostname, id),
-        timeout_seconds=100000,
-        cache_type="default",
-    )
     def get_site_filter(self, hostname: str, external_data_source_id: str):
         """
         Obey hub-level layer filtering logic.
         """
         site = Site.objects.filter(hostname=hostname).first()
+        logger.debug(f"Querying filter for {hostname}: {external_data_source_id}")
         if site is not None:
             hub = site.root_page.specific
+            logger.debug(f"Hub: {hub}")
             if isinstance(hub, HubHomepage):
                 layers = hub.get_layers()
-                logger.debug("filter in layers", layers)
+                logger.debug(f"filter in layers: {layers}")
                 if isinstance(layers, list):
                     for layer in layers:
                         if layer.get("source") == external_data_source_id:
@@ -116,6 +119,9 @@ class ExternalDataSourcePointTileJSONView(TileJSONView, DetailView):
     def get_id(self):
         return self.kwargs.get(self.pk_url_kwarg)
 
+    def get_hostname(self):
+        return self.kwargs.get("hostname", None)
+
     def get_object(self):
         return ExternalDataSource.objects.get(pk=self.get_id())
 
@@ -126,11 +132,23 @@ class ExternalDataSourcePointTileJSONView(TileJSONView, DetailView):
         return 30
 
     def get_tile_url(self):
+        """Base MVTView Url used to generates urls in TileJSON in a.tiles.xxxx/{z}/{x}/{y} format"""
         id = self.get_id()
-        """ Base MVTView Url used to generates urls in TileJSON in a.tiles.xxxx/{z}/{x}/{y} format """
-        return str(
-            reverse("external_data_source_point_tile", args=(id, 0, 0, 0))
-        ).replace("/0/0/0", "/{z}/{x}/{y}")
+        hostname = self.get_hostname()
+        if hostname:
+            return str(
+                reverse(
+                    "external_data_source_point_tile",
+                    args=(hostname, id, 0, 0, 0),
+                )
+            ).replace("/0/0/0", "/{z}/{x}/{y}")
+        else:
+            return str(
+                reverse(
+                    "external_data_source_point_tile",
+                    args=(id, 0, 0, 0),
+                )
+            ).replace("/0/0/0", "/{z}/{x}/{y}")
 
     def get_layer_class_kwargs(self, *args, **kwargs):
         return {"external_data_source_id": self.get_id()}

@@ -141,6 +141,16 @@ urlpatterns = [
         vector_tiles.ExternalDataSourcePointTileJSONView.as_view(),
         name="external_data_source_point_tilejson",
     ),
+    path(
+        "tiles/external-data-source/<str:hostname>/<str:pk>/<int:z>/<int:x>/<int:y>",
+        vector_tiles.ExternalDataSourceTileView.as_view(),
+        name="external_data_source_point_tile",
+    ),
+    path(
+        "tiles/external-data-source/<str:hostname>/<str:pk>/tiles.json",
+        vector_tiles.ExternalDataSourcePointTileJSONView.as_view(),
+        name="external_data_source_point_tilejson",
+    ),
     path("cms/", include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
     # For multi-tenancy wagtail page router logic
