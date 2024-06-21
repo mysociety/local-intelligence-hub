@@ -404,7 +404,6 @@ class BaseConstituencyGroupListImportCommand(BaseAreaImportCommand):
     do_not_convert = True
 
     def process_data(self, df: pd.DataFrame):
-
         if not self._quiet:
             self.stdout.write(f"{self.message} ({self.area_type})")
 
@@ -464,7 +463,6 @@ class BaseConstituencyCountImportCommand(BaseAreaImportCommand):
         self.data_type = list(self.data_types.values())[0]
 
     def get_dataframe(self):
-
         if not self.data_file.exists():
             return None
 

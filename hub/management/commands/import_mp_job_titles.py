@@ -21,7 +21,6 @@ class Command(BaseCommand):
         return AreaType.objects.get(code="WMC23")
 
     def get_df(self):
-
         if not self.data_file.exists():
             self.stderr.write(f"Data file {self.data_file} does not exist")
             return None
@@ -86,7 +85,6 @@ class Command(BaseCommand):
         PersonData.objects.filter(data_type=data_type).exclude(pk__in=mp_list).delete()
 
     def import_results(self):
-
         df = self.get_df()
 
         if df is None or df.empty:

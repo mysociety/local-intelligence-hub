@@ -77,7 +77,6 @@ class Command(BaseCommand):
         return AreaType.objects.get(code=self.area_type)
 
     def get_general_election_data(self):
-
         df = pd.read_csv(
             self.general_election_source_file,
         )

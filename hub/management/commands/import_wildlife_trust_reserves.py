@@ -76,7 +76,6 @@ class Command(MultipleAreaTypesMixin, BaseConstituencyGroupListImportCommand):
     }
 
     def get_df(self):
-
         if self.data_file.exists() is False:
             return None
 

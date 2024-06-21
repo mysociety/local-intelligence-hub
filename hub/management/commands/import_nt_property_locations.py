@@ -81,7 +81,6 @@ class Command(MultipleAreaTypesMixin, BaseAreaImportCommand):
         return pd.read_csv(self.data_file)
 
     def process_data(self, df: pd.DataFrame):
-
         # df.group_name = df.group_name.apply(
         # lambda x: x.split(" | ")[0] if type(x) == str else x
         # )

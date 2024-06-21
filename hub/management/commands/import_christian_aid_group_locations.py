@@ -58,7 +58,6 @@ class Command(BaseConstituencyGroupListImportCommand):
     count_data_type = "constituency_christian_aid_group_count"
 
     def get_df(self):
-
         if self.data_file.exists() is False:
             return None
 
