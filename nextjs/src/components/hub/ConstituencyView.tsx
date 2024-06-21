@@ -158,7 +158,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
                     <div className="w-full border-b border-meepGray-200 my-6"></div>
                     <section className='px-6 my-6'>
                       <header className="mb-4">
-                        Past events in {data?.name}{" "}.
+                        Past events in {data?.name}.
                       </header>
                       <main className="space-y-4">
                         {pastEvents.map((e) => (
