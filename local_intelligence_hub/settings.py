@@ -106,12 +106,22 @@ GOOGLE_MAPS_API_KEY = env("GOOGLE_MAPS_API_KEY")
 ELECTORAL_COMMISSION_API_KEY = env("ELECTORAL_COMMISSION_API_KEY")
 
 # Urls
-FRONTEND_BASE_URL = env("FRONTEND_BASE_URL") if environment != "production" else env("FRONTEND_BASE_URL")
+FRONTEND_BASE_URL = (
+    env("FRONTEND_BASE_URL")
+    if environment != "production"
+    else env("FRONTEND_BASE_URL")
+)
 BACKEND_URL = env("BASE_URL") if environment != "production" else env("PROD_BASE_URL")
 BASE_URL = BACKEND_URL
 # Network security
-ALLOWED_HOSTS = env("ALLOWED_HOSTS") if environment != "production" else env("PROD_ALLOWED_HOSTS")
-CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS") if environment != "production" else env("PROD_CORS_ALLOWED_ORIGINS")
+ALLOWED_HOSTS = (
+    env("ALLOWED_HOSTS") if environment != "production" else env("PROD_ALLOWED_HOSTS")
+)
+CORS_ALLOWED_ORIGINS = (
+    env("CORS_ALLOWED_ORIGINS")
+    if environment != "production"
+    else env("PROD_CORS_ALLOWED_ORIGINS")
+)
 if FRONTEND_BASE_URL and FRONTEND_BASE_URL not in CORS_ALLOWED_ORIGINS:
     CORS_ALLOWED_ORIGINS.append(FRONTEND_BASE_URL)
 
@@ -223,7 +233,7 @@ INSTALLED_APPS = [
     "taggit",
     "wagtail_json_widget",
     "codemirror2",
-    "wagtail_color_panel"
+    "wagtail_color_panel",
 ]
 
 MIDDLEWARE = [
@@ -271,9 +281,7 @@ WSGI_APPLICATION = "local_intelligence_hub.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-DATABASES = {
-    "default": env.db(engine="django.contrib.gis.db.backends.postgis")
-}
+DATABASES = {"default": env.db(engine="django.contrib.gis.db.backends.postgis")}
 
 
 # Password validation

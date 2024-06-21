@@ -45,8 +45,8 @@ from strawberry.dataloader import DataLoader
 from wagtail.admin.panels import FieldPanel, ObjectList, TabbedInterface
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
 from wagtail.models import Page, Site
-from wagtail_color_panel.fields import ColorField
 from wagtail_color_panel.edit_handlers import NativeColorPanel
+from wagtail_color_panel.fields import ColorField
 from wagtail_json_widget.widgets import JSONEditorWidget
 
 import utils as lih_utils
@@ -2360,8 +2360,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 user=user_id
             ).exists()
             if is_owner:
-                permissions['can_display_points'] = True
-                permissions['can_display_details'] = True
+                permissions["can_display_points"] = True
+                permissions["can_display_details"] = True
         # Otherwise, check if their org has sharing permissions at any granularity
         if not is_owner:
             permission = SharingPermission.objects.filter(
@@ -2370,9 +2370,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             ).first()
             if permission is not None:
                 if permission.visibility_record_coordinates:
-                    permissions['can_display_points'] = True
+                    permissions["can_display_points"] = True
                     if permission.visibility_record_details:
-                        permissions['can_display_details'] = True
+                        permissions["can_display_details"] = True
 
         permissions_dict[user_id] = permissions
 
@@ -2386,9 +2386,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         perms = permissions_dict[user_id]
 
-        logger.debug(
-            f"Calculated new user permissions for user {user}: {perms}"
-        )
+        logger.debug(f"Calculated new user permissions for user {user}: {perms}")
         return perms
 
     def filter(self, filter: dict) -> dict:
@@ -3569,7 +3567,7 @@ class HubHomepage(Page):
         FieldPanel("nav_links", widget=JSONEditorWidget),
         NativeColorPanel("primary_colour"),
         NativeColorPanel("secondary_colour"),
-        FieldPanel("custom_css", widget=CodeMirrorEditor(options={'mode': 'css'})),
+        FieldPanel("custom_css", widget=CodeMirrorEditor(options={"mode": "css"})),
     ]
 
     data_panels = [
