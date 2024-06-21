@@ -2,11 +2,13 @@ import { GetLocalDataQuery } from "@/__generated__/graphql";
 import { formatDate, formatRelative, isAfter } from "date-fns";
 import { Ticket } from "lucide-react";
 import { useMemo } from "react";
+import { useHubRenderContext } from "./HubRenderContext";
 
 export function EventCard ({ event }: {
     event: NonNullable<GetLocalDataQuery['postcodeSearch']['constituency']>['genericDataForHub'][number]
 }) {
     const isFuture = useMemo(() => isAfter(new Date(event.startTime), new Date()), [event.startTime])
+    const ctx = useHubRenderContext()
 
     return (
         <article
@@ -42,7 +44,7 @@ export function EventCard ({ event }: {
                 {event.publicUrl && (
                 <a
                     href={event.publicUrl}
-                    target="_blank"
+                    target={ctx.isMultitenancyMode ? "_blank" : "_top"}
                     className="bg-hub-primary-200 text-hub-primary-900 px-3 py-2 text-center w-full rounded-md flex flex-row items-center justify-center gap-2"
                 >
                     {isFuture && <Ticket />} More info {isFuture && <span>&amp; register</span>}
