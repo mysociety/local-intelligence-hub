@@ -26,11 +26,6 @@ class GenericDataVectorLayer(VectorLayer):
 
     id = "generic_data"
     vector_tile_layer_name = id
-
-    tile_fields = ("id", "start_time__ispast", "start_time__isfuture",)
-    layer_fields = tile_fields
-    vector_tile_fields = layer_fields
-
     external_data_source_id: str
     filter: dict = {}
 
@@ -39,6 +34,7 @@ class GenericDataVectorLayer(VectorLayer):
         if self.external_data_source_id is None:
             raise ValueError("external_data_source is required")
         self.filter = kwargs.pop("filter", {})
+        self.permissions = kwargs.pop("permissions", {})
         super().__init__(*args, **kwargs)
 
     def get_queryset(self) -> QuerySet:
@@ -48,40 +44,35 @@ class GenericDataVectorLayer(VectorLayer):
         source = source.get_real_instance()
         return source.get_import_data().filter(**self.filter)
 
+    def get_tile_fields(self):
+        default = ("id", "start_time__ispast", "start_time__isfuture", )
+        if self.permissions.get("can_display_details", False):
+            default += ("json",)
+        return default
 
 class ExternalDataSourceTileView(MVTView, DetailView):
     model = ExternalDataSource
     layer_classes = [GenericDataVectorLayer]
-
-    def get(self, request, *args, **kwargs):
-        try:
-            user_or_error: UserOrError = get_user_or_error(request)
-            user = user_or_error.user if user_or_error.user else None
-            permissions = ExternalDataSource.user_permissions(user, self.get_id())
-            logger.debug(
-                f"Got user permissions for {self.get_id()}, user {user}: {permissions}"
-            )
-            if not permissions.get("can_display_points", False):
-                return HttpResponseForbidden(
-                    "You don't have permission to view location data for this data source."
-                )
-            return super().get(request, *args, **kwargs)
-        except Exception as e:
-            logger.warning(f"Could not view location data: {e}")
-            logger.exception(e)
-            return HttpResponseServerError(e)
 
     def get_id(self):
         return self.kwargs.get(self.pk_url_kwarg)
 
     def get_layer_class_kwargs(self, *args, **kwargs):
         external_data_source_id = self.get_id()
+        user_or_error: UserOrError = get_user_or_error(self.request)
+        user = user_or_error.user if user_or_error.user else None
+        permissions = ExternalDataSource.user_permissions(user, self.get_id())
+        if not permissions.get("can_display_points", False):
+            raise ValueError(
+                "You don't have permission to view location data for this data source."
+            )
         return {
             "external_data_source_id": external_data_source_id,
             "filter": self.get_site_filter(
                 get_hostname_from_url(self.request.headers.get("Referer")),
                 external_data_source_id,
             ),
+            "permissions": dict(permissions)
         }
 
     @cached_fn(
