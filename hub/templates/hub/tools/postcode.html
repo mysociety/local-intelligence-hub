@@ -1,0 +1,169 @@
+{% extends "hub/base.html" %}
+
+{% block content %}
+
+<style>
+.textbox {
+    width: 100%;
+    height: 300px;
+}
+</style>
+<div class="py-4 py-lg-5">
+    <div class="container">
+        <div class="readable">
+
+        <h1>Postcode to Constituency Tool</h1>
+
+        <p>This tool converts a column of GB postcodes into a column of new (2024) constituencies.</p>
+
+        <p>Paste a column from Excel or Google Sheets into the left-hand box, and constituencies will appear in the right-hand box.</p>
+
+        <p>Copy these back to your spreadsheet, and you're done. For more complex approaches, use <a href="https://mapit.mysociety.org">MapIt</a>.</p>
+
+        <p>This all happens on your own computer, the postcodes are not sent to our server.</p>
+
+
+
+        <div class="form-group" style="padding-bottom:20px">
+            <div class="row">
+                <div class="col">
+                    <textarea id="postcodes" class="form-control textbox" placeholder="Enter postcodes"></textarea>
+                </div>
+                <div class="col">
+                    <textarea id="constituencies" class="form-control textbox" readonly></textarea>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="row">
+            <div class="col">
+            <div class="form-group">
+                <label for="output_type"><strong>Output Type</strong></label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" id="parlcon_2024_name" name="output_type" value="parlcon_2024_name" checked>
+                    <label class="form-check-label" for="parlcon_2024_name">Constituency name</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" id="mysoc_id" name="output_type" value="mysoc_id">
+                    <label class="form-check-label" for="mysoc_id">mySociety ID</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" id="parlcon_2024_gss_code" name="output_type" value="parlcon_2024_gss_code">
+                    <label class="form-check-label" for="parlcon_2024_gss_code">GSS code</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" id="parlcon_2024_three_code" name="output_type" value="parlcon_2024_three_code">
+                    <label class="form-check-label" for="parlcon_2024_three_code">Three code</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" id="parlcon_2024_name_cy" name="output_type" value="parlcon_2024_name_cy">
+                    <label class="form-check-label" for="parlcon_2024_name_cy">Constituency name (Welsh)</label>
+                </div>
+
+
+            </div>
+                        </div>
+            <div class="col">
+            <button id="copyButton" class="btn btn-primary">Copy Constituencies to clipboard</button>
+            </div>
+        </div>
+
+        <h2>More information</h2>
+
+        <ul>
+        <li>This tool is making our postcode lookup file accessible in a browser - this <a href="https://pages.mysociety.org/2025-constituencies/">is available to download</a>. </li>
+        <li>This tool does not work for postcodes in Northern Ireland due to licensing issues - <a href="https://mapit.mysociety.org/">Mapit</a> and its <a href="https://mapit.mysociety.org/bulk/">spreadsheet converter</a> can be used for Northern Ireland postcodes.  </li>
+        <li>Postcode lookups are not accurate for all addresses - on (rare) occasions different addresses in the same postcode are in different constituencies</li>
+        <li>This lookup may be inaccurate for postcodes created in the last year. </li>
+
+
+
+        </div>
+
+    </div>
+</div>
+    <script src="/static/js/mini_lookup.js" type="text/javascript"></script>
+    <script>
+        fetch("/static/lookup_data/pcon_2024.json")
+            .then(response => response.json())
+            .then(data => {
+                lookup = PostcodeRangeLookup.fromDict(data);
+            })
+            .catch(error => {
+                console.error("Error loading postcode lookup data:", error);
+            });
+
+        fetch("/static/lookup_data/pcon_2024_lookup.json")
+            .then(response => response.json())
+            .then(data => {
+                field_lookup = data
+            })
+            .catch(error => {
+                console.error("Error loading postcode lookup data:", error);
+            });
+
+        function log_count(numPostcodes) {
+            // if trackEvent is defined, log the number of postcodes processed
+            if (typeof trackEvent === "function") {
+                    trackEvent("postcode_tool", {"count": numPostcodes});
+            }
+        }
+
+        function process() {
+            var output_type = document.querySelector('input[name="output_type"]:checked').value;
+
+            var postcodes = document.getElementById("postcodes").value.split("\n");
+            var constituencies = postcodes.map(postcode => lookup.getValue(postcode));
+
+            // if output_type is not mySoc ID, convert the constituency ids to the desired output
+            if (output_type !== "mysoc_id") {
+                constituencies = constituencies.map(constituency => {
+                    if (constituency === null) {
+                        return null;
+                    }
+                    return field_lookup[constituency][output_type];
+                });
+            }
+
+            // if the top row of constituencies is blank
+            // there is more than one row (suggesting the original top row was a header)
+            // make the top row a pcon_2024 header
+            if (constituencies[0] === null && constituencies.length > 1) {
+                constituencies[0] = "pcon_2024";
+            }
+
+            document.getElementById("constituencies").value = constituencies.join("\n");
+
+            log_count(postcodes.length);
+        }
+
+
+        document.getElementById("postcodes").addEventListener("input", process);
+        document.getElementsByName("output_type").forEach(function (element) {
+            element.addEventListener("input", process);
+        });
+
+        document.getElementById("copyButton").addEventListener("click", function () {
+            var constituenciesText = document.getElementById("constituencies").value;
+            navigator.clipboard.writeText(constituenciesText)
+                .then(() => {
+                    console.log("Constituencies copied to clipboard");
+                })
+                .catch(error => {
+                    console.error("Error copying constituencies to clipboard:", error);
+                });
+            // change the copyButton class to btn-success and its text to 'Copied to clipboard'
+            // for two seconds before reverting to the original class and text
+            document.getElementById("copyButton").classList.remove("btn-primary");
+            document.getElementById("copyButton").classList.add("btn-success");
+            document.getElementById("copyButton").textContent = "Copied to clipboard";
+            setTimeout(function () {
+                document.getElementById("copyButton").classList.remove("btn-success");
+                document.getElementById("copyButton").classList.add("btn-primary");
+                document.getElementById("copyButton").textContent = "Copy Constituencies to clipboard";
+            }, 500);
+        });
+    </script>
+
+{% endblock %}

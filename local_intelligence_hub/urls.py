@@ -22,7 +22,7 @@ from django.urls import include, path, re_path
 from django.views.generic.base import RedirectView
 
 from hub.sitemap import hub_sitemap
-from hub.views import accounts, area, core, explore, landingpages
+from hub.views import accounts, area, core, explore, landingpages, tools
 
 handler404 = core.NotFoundPageView.as_view()
 
@@ -57,6 +57,7 @@ urlpatterns = [
         area.UnFavouriteDataSetView.as_view(),
         name="unfavourite_dataset",
     ),
+    path("tools/postcode", tools.PostcodeView.as_view(), name="postcode_converter"),
     path("sources/", core.SourcesView.as_view(), name="sources"),
     path(
         "future-constituencies/",
