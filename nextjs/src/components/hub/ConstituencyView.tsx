@@ -113,7 +113,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
           <TabsContent className="mt-0" value="events">
             {!!upcomingEvents?.length ? (
               <>
-                <section className='my-6'>
+                <section className='px-6 my-6'>
                   <header className="mb-4">
                     Help the campaign in {data?.name}{" "}
                     by coming along to one of these upcoming events.
@@ -135,7 +135,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
               </>
             ) : (
               <>
-                <section className='px-6 pb-0'>
+                <section className='px-6 pb-0 my-6'>
                   <p className='mb-4'>
                     No upcoming events in {data?.name}.
                   </p>
