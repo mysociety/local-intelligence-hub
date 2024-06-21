@@ -7,6 +7,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { CookieConsentComponent } from "@/components/hub/CookieConsent";
 import ConsentRespectingGoogleAnalytics from "@/components/hub/ConsentRespectingGoogleAnalytics";
 import { ConsentRespectingPosthogAnalytics } from "@/components/hub/ConsentRespectingPosthogAnalytics";
+import { HubRenderContext } from "@/components/hub/HubRenderContext";
 
 type Params = {
   hostname: string

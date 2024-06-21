@@ -19,7 +19,8 @@ import { CreateChildPageMutation, CreateChildPageMutationVariables, GetHubPagesQ
 import { toastPromise } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import { ChevronDownIcon, Slash } from "lucide-react";
-import { conf } from "@/data/puck/config";
+import { getPuckConfigForHostname } from "@/data/puck/ui";
+import { HubRenderContextProvider } from "@/components/hub/HubRenderContext";
 
 export default function HubPageEditor({ hubId, pageId }: { hubId: string, pageId: string }) {
   const router = useRouter()
@@ -34,6 +35,12 @@ export default function HubPageEditor({ hubId, pageId }: { hubId: string, pageId
       pageId
     }
   })
+
+  const config = useMemo(() => {
+    if (hubData.data?.hubHomepage.hostname) {
+      return getPuckConfigForHostname(hubData.data?.hubHomepage.hostname)
+    }
+  }, [hubData.data?.hubHomepage.hostname])
   
   // unique b64 key that updates each time we add / remove components
   const dbDataKey = useMemo(() => {
@@ -43,7 +50,7 @@ export default function HubPageEditor({ hubId, pageId }: { hubId: string, pageId
     ).toString("base64");
   }, [pageData]);
 
-  if (!pageData?.data?.hubPage?.puckJsonContent) {
+  if (!hubData.data || !pageData?.data?.hubPage?.puckJsonContent || !config) {
     return (
       <div className="text-center py-16 w-full flex flex-row justify-center items-center">
         <LoadingIcon className='mx-auto inline-block' />
@@ -60,104 +67,106 @@ export default function HubPageEditor({ hubId, pageId }: { hubId: string, pageId
   }
 
   return (
-    <Puck
-      // To force refresh data after deferred initialisation
-      key={dbDataKey}
-      config={conf}
-      // Initial data
-      data={puckJsonContent}
-      onPublish={publish}
-      overrides={{
-        header: ({ actions, children }) => (
-          <header className='flex flex-row gap-4 justify-between p-4 w-full col-span-3 text-black' style={{
-            background: 'var(--puck-color-white)',
-            borderBottom: '1px solid var(--puck-color-grey-09)'
-          }}>
-            <Dialog>
-              <DialogTrigger>
-                <div className='border border-gray-200 font-bold hover:bg-meepGray-100 rounded-md p-2 flex flex-row gap-2 items-center'>
-                  <BreadcrumbList className='text-lg'>
-                    {pageData.data?.hubPage?.ancestors.filter(
-                      // wagtail root
-                      ancestor => ancestor.path !== "0001"
-                    ).map((ancestor, i, a) => (
-                      <Fragment key={ancestor.id}>
-                        <Breadcrumb>
-                          {ancestor.modelName === "HubHomepage" ? "Home Page" : ancestor.title}
-                        </Breadcrumb>
-                        {i < a.length - 1 && (
-                          <BreadcrumbSeparator>
-                            <Slash />
-                          </BreadcrumbSeparator>
-                        )}
-                      </Fragment>
-                    ))}
-                  </BreadcrumbList>
-                  <ChevronDownIcon />
-                </div>
-              </DialogTrigger>
-              <DialogContent className="block max-w-full w-[80vw] h-[80vh] overflow-hidden">
-                <DialogHeader className='mb-5'>
-                  <DialogTitle>Select a page to edit</DialogTitle>
-                </DialogHeader>
-                <div className='overflow-y-auto divide-y'>
-                  {hubData.data?.hubHomepage?.descendants.map(page => {
-                    const ancestors = page.ancestors.filter(
-                      // wagtail root
-                      ancestor => ancestor.path !== "0001"
-                    )
+    <HubRenderContextProvider hostname={hubData.data.hubHomepage.hostname}>
+      <Puck
+        // To force refresh data after deferred initialisation
+        key={dbDataKey}
+        config={config}
+        // Initial data
+        data={puckJsonContent}
+        onPublish={publish}
+        overrides={{
+          header: ({ actions, children }) => (
+            <header className='flex flex-row gap-4 justify-between p-4 w-full col-span-3 text-black' style={{
+              background: 'var(--puck-color-white)',
+              borderBottom: '1px solid var(--puck-color-grey-09)'
+            }}>
+              <Dialog>
+                <DialogTrigger>
+                  <div className='border border-gray-200 font-bold hover:bg-meepGray-100 rounded-md p-2 flex flex-row gap-2 items-center'>
+                    <BreadcrumbList className='text-lg'>
+                      {pageData.data?.hubPage?.ancestors.filter(
+                        // wagtail root
+                        ancestor => ancestor.path !== "0001"
+                      ).map((ancestor, i, a) => (
+                        <Fragment key={ancestor.id}>
+                          <Breadcrumb>
+                            {ancestor.modelName === "HubHomepage" ? "Home Page" : ancestor.title}
+                          </Breadcrumb>
+                          {i < a.length - 1 && (
+                            <BreadcrumbSeparator>
+                              <Slash />
+                            </BreadcrumbSeparator>
+                          )}
+                        </Fragment>
+                      ))}
+                    </BreadcrumbList>
+                    <ChevronDownIcon />
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="block max-w-full w-[80vw] h-[80vh] overflow-hidden">
+                  <DialogHeader className='mb-5'>
+                    <DialogTitle>Select a page to edit</DialogTitle>
+                  </DialogHeader>
+                  <div className='overflow-y-auto divide-y'>
+                    {hubData.data?.hubHomepage?.descendants.map(page => {
+                      const ancestors = page.ancestors.filter(
+                        // wagtail root
+                        ancestor => ancestor.path !== "0001"
+                      )
 
-                    const isHomePage = page.modelName === "HubHomepage"
-                    const isTopLevelPage = ancestors.length === 1
-                    
-                    return (
-                      <div key={page.id} className="w-full items-start py-4 space-y-2">
-                        <BreadcrumbList>
-                          {ancestors.map((ancestor, i, a) => (
-                            <Fragment key={ancestor.id}>
-                              <Breadcrumb>
-                                <Link href={`/hub/editor/${ancestor.id}`}>
-                                  {ancestor.modelName === "HubHomepage" ? "Home Page" : ancestor.title}</Link>
-                              </Breadcrumb>
-                              {i < a.length - 1 && (
-                                <BreadcrumbSeparator>
-                                  <Slash />
-                                </BreadcrumbSeparator>
-                              )}
-                            </Fragment>
-                          ))}
-                        </BreadcrumbList>
-                        <div className='flex flex-row gap-3 justify-between'>
-                          {isTopLevelPage && (
-                            // Due to limitations with NextJS routing,
-                            // we don't currently support multi-level nesting
-                            <Button size='sm' variant='outline' onClick={() => addChildPage(page.id, `Page created at ${(new Date().toISOString())}`)}>Add child page</Button>
-                          )}
-                          {/* TODO: add "are you sure checker" */}
-                          {!isHomePage && (
-                            <Button size='sm' variant="destructive" onClick={() => deletePage(page.id)}>Delete</Button>
-                          )}
+                      const isHomePage = page.modelName === "HubHomepage"
+                      const isTopLevelPage = ancestors.length === 1
+                      
+                      return (
+                        <div key={page.id} className="w-full items-start py-4 space-y-2">
+                          <BreadcrumbList>
+                            {ancestors.map((ancestor, i, a) => (
+                              <Fragment key={ancestor.id}>
+                                <Breadcrumb>
+                                  <Link href={`/hub/editor/${ancestor.id}`}>
+                                    {ancestor.modelName === "HubHomepage" ? "Home Page" : ancestor.title}</Link>
+                                </Breadcrumb>
+                                {i < a.length - 1 && (
+                                  <BreadcrumbSeparator>
+                                    <Slash />
+                                  </BreadcrumbSeparator>
+                                )}
+                              </Fragment>
+                            ))}
+                          </BreadcrumbList>
+                          <div className='flex flex-row gap-3 justify-between'>
+                            {isTopLevelPage && (
+                              // Due to limitations with NextJS routing,
+                              // we don't currently support multi-level nesting
+                              <Button size='sm' variant='outline' onClick={() => addChildPage(page.id, `Page created at ${(new Date().toISOString())}`)}>Add child page</Button>
+                            )}
+                            {/* TODO: add "are you sure checker" */}
+                            {!isHomePage && (
+                              <Button size='sm' variant="destructive" onClick={() => deletePage(page.id)}>Delete</Button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </DialogContent>
-            </Dialog>
-            <div className='flex flex-row gap-4 items-center justify-center'>
-              {!!pageData.data?.hubPage.liveUrl && (
-                <Link target="_blank" href={pageData.data?.hubPage.liveUrl}>
-                  <PuckButton variant="secondary">
-                    Visit page
-                  </PuckButton>
-                </Link>
-              )}
-              {actions}
-            </div>
-          </header>
-        )
-      }}
-    />
+                      )
+                    })}
+                  </div>
+                </DialogContent>
+              </Dialog>
+              <div className='flex flex-row gap-4 items-center justify-center'>
+                {!!pageData.data?.hubPage.liveUrl && (
+                  <Link target="_blank" href={pageData.data?.hubPage.liveUrl}>
+                    <PuckButton variant="secondary">
+                      Visit page
+                    </PuckButton>
+                  </Link>
+                )}
+                {actions}
+              </div>
+            </header>
+          )
+        }}
+      />
+    </HubRenderContextProvider>
   )
 
   function publish (data: Data) {
@@ -246,6 +255,7 @@ export default function HubPageEditor({ hubId, pageId }: { hubId: string, pageId
 const GET_HUB_PAGES = gql`
   query GetHubPages($hubId: ID!) {
     hubHomepage(pk: $hubId) {
+      hostname
       descendants(inclusive: true) {
         id
         title

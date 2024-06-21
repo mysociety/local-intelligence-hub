@@ -56,6 +56,8 @@ petl = "^1.7.15"
 procrastinate = {extras = ["django"], version = "^2.3.0"}
 googlemaps = "^4.10.0"
 country-converter = "^1.2"
+django-codemirror2 = "^0.2"
+wagtail-color-panel = "^1.5.0"
 
 [tool.poetry.dev-dependencies]
 django-debug-toolbar = "^4.3"

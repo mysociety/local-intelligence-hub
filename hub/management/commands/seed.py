@@ -1,8 +1,10 @@
 from django.conf import settings
 from django.core.management.base import BaseCommand
+
 from asgiref.sync import async_to_sync
 
-from hub.models import HubHomepage, User, Organisation, AirtableSource, MapReport
+from hub.models import AirtableSource, HubHomepage, MapReport, Organisation, User
+
 
 class Command(BaseCommand):
     def handle(self, *args, **kwargs):
@@ -10,7 +12,7 @@ class Command(BaseCommand):
         user = User.objects.create_user(
             settings.DJANGO_SUPERUSER_USERNAME,
             settings.DJANGO_SUPERUSER_EMAIL,
-            settings.DJANGO_SUPERUSER_PASSWORD
+            settings.DJANGO_SUPERUSER_PASSWORD,
         )
         org = Organisation.get_or_create_for_user(user)
 
@@ -34,15 +36,15 @@ class Command(BaseCommand):
             update_mapping=[],
         )
 
-        async_to_sync(AirtableSource.deferred_import_all)(external_data_source_id=source.id)
+        async_to_sync(AirtableSource.deferred_import_all)(
+            external_data_source_id=source.id
+        )
 
         # Create a hub for the org
         hub = HubHomepage.create_for_user(user=1, hostname="testdomain.org", org=org)
         hub.layers = [
             MapReport.MapLayer(
-                id=str(source.id),
-                name="Test data",
-                source=str(source.id)
+                id=str(source.id), name="Test data", source=str(source.id)
             ),
             # TODO: add some event source
         ]

@@ -41,7 +41,7 @@ export const SectionHeader: ComponentConfig<SectionHeaderProps> = {
         return (
             <HubResponsivity>
 
-                <div className="col-span-2 aspect-[2/1] rounded-[20px]  p-5 border border-jungle-green-200 flex flex-col gap-2 justify-end transition-all">
+                <div className="col-span-2 aspect-[2/1] rounded-[20px]  p-5 border border-hub-primary-200 flex flex-col gap-2 justify-end transition-all">
                     <h2 className="lg:text-hub4xl text-hub3xl" id={slug || slugify(title)}>{title}</h2>
                     <div className="text-xl">
                       <PuckText text={description} />

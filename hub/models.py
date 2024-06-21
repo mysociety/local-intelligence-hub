@@ -29,6 +29,7 @@ import pandas as pd
 import pytz
 from asgiref.sync import async_to_sync, sync_to_async
 from benedict import benedict
+from codemirror2.widgets import CodeMirrorEditor
 from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
 from mailchimp3 import MailChimp
@@ -44,6 +45,8 @@ from strawberry.dataloader import DataLoader
 from wagtail.admin.panels import FieldPanel, ObjectList, TabbedInterface
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
 from wagtail.models import Page, Site
+from wagtail_color_panel.edit_handlers import NativeColorPanel
+from wagtail_color_panel.fields import ColorField
 from wagtail_json_widget.widgets import JSONEditorWidget
 
 import utils as lih_utils
@@ -2357,8 +2360,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 user=user_id
             ).exists()
             if is_owner:
-                permissions['can_display_points'] = True
-                permissions['can_display_details'] = True
+                permissions["can_display_points"] = True
+                permissions["can_display_details"] = True
         # Otherwise, check if their org has sharing permissions at any granularity
         if not is_owner:
             permission = SharingPermission.objects.filter(
@@ -2367,9 +2370,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             ).first()
             if permission is not None:
                 if permission.visibility_record_coordinates:
-                    permissions['can_display_points'] = True
+                    permissions["can_display_points"] = True
                     if permission.visibility_record_details:
-                        permissions['can_display_details'] = True
+                        permissions["can_display_details"] = True
 
         permissions_dict[user_id] = permissions
 
@@ -2383,9 +2386,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         perms = permissions_dict[user_id]
 
-        logger.debug(
-            f"Calculated new user permissions for user {user}: {perms}"
-        )
+        logger.debug(f"Calculated new user permissions for user {user}: {perms}")
         return perms
 
     def filter(self, filter: dict) -> dict:
@@ -3474,6 +3475,7 @@ class MapReport(Report, Analytics):
         id: str
         name: str
         source: str
+        icon_image: Optional[str] = None
         visible: Optional[bool] = True
         """
         filter: ORM filter dict for GenericData objects like { "json__status": "Published" }
@@ -3556,15 +3558,21 @@ class HubHomepage(Page):
         related_name="+",
     )
     google_analytics_tag_id = models.CharField(max_length=100, blank=True, null=True)
+    custom_css = models.TextField(blank=True, null=True)
+    primary_colour = ColorField(blank=True, null=True)
+    secondary_colour = ColorField(blank=True, null=True)
 
-    data_panels = Page.content_panels + [
-        FieldPanel("organisation"),
-        FieldPanel("layers", widget=JSONEditorWidget),
-    ]
-
-    page_panels = [
+    page_panels = Page.content_panels + [
         FieldPanel("puck_json_content", widget=JSONEditorWidget),
         FieldPanel("nav_links", widget=JSONEditorWidget),
+        NativeColorPanel("primary_colour"),
+        NativeColorPanel("secondary_colour"),
+        FieldPanel("custom_css", widget=CodeMirrorEditor(options={"mode": "css"})),
+    ]
+
+    data_panels = [
+        FieldPanel("organisation"),
+        FieldPanel("layers", widget=JSONEditorWidget),
     ]
 
     seo_panels = Page.promote_panels + [

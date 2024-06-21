@@ -23,7 +23,7 @@ export type EventListProps = {
 const TypeBadge = ({ type }: { type: string }) => {
   return (
     <div>
-      <div className=" uppercase inline-block text-jungle-green-700 bg-jungle-green-100 font-normal rounded-full py-1 px-3">{type}</div>
+      <div className=" uppercase inline-block text-hub-primary-700 bg-hub-primary-100 font-normal rounded-full py-1 px-3">{type}</div>
     </div>
   );
 }
@@ -218,7 +218,7 @@ function EventCard ({ event, displayEventTitles, displayEventDescriptions }: {
 }) {
   const content = (
     <div className="w-full h-full aspect-square overflow-clip rounded-[20px] flex flex-col gap-5 hover:shadow-hover transition-all">
-      <div className="p-5 bg-jungle-green-600 text-white h-full relative flex flex-col gap-4 align-bottom">
+      <div className="p-5 bg-hub-primary-600 text-white h-full relative flex flex-col gap-4 align-bottom">
         <Image src={ArrowTopRight} width={30} alt="arrow" className='relative z-10' />
         <h2 className="lg:text-hub2xl text-hubxl tracking-tight relative z-10">
           {displayEventTitles

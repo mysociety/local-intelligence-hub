@@ -6,49 +6,57 @@ import { selectedHubSourceMarkerAtom } from "@/components/hub/data"
 import { useEffect } from "react"
 import { Layer, Source } from "react-map-gl"
 import { BACKEND_URL } from "@/env"
+import { useHubRenderContext } from "./HubRenderContext"
 
-export function HubPointMarkers ({ externalDataSourceId, index, beforeId }: { externalDataSourceId: string, index: number, beforeId?: string }) {
+export function HubPointMarkers ({ layer, index, beforeId }: { layer: {
+  source: {
+    id: string
+  },
+  iconImage?: string | null
+}, index: number, beforeId?: string }) {
   const mapbox = useLoadedMap()
+  const context = useHubRenderContext()
   const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(selectedHubSourceMarkerAtom)
 
   useEffect(function selectMarker() {
-    mapbox.loadedMap?.on('mouseover', `${externalDataSourceId}-marker`, (event) => {
+    mapbox.loadedMap?.on('mouseover', `${layer.source.id}-marker`, (event) => {
       const canvas = mapbox.loadedMap?.getCanvas()
       if (!canvas) return
       canvas.style.cursor = 'pointer'
     })
-    mapbox.loadedMap?.on('mouseleave', `${externalDataSourceId}-marker`, (event) => {
+    mapbox.loadedMap?.on('mouseleave', `${layer.source.id}-marker`, (event) => {
       const canvas = mapbox.loadedMap?.getCanvas()
       if (!canvas) return
       canvas.style.cursor = ''
     })
-    mapbox.loadedMap?.on('click', `${externalDataSourceId}-marker`, event => {
+    mapbox.loadedMap?.on('click', `${layer.source.id}-marker`, event => {
       const feature = event.features?.[0]
       if (feature?.properties?.id) {
         setSelectedSourceMarker(feature)
+        context.goToEventId(feature.properties.id)
       }
     })
-  }, [mapbox.loadedMap, externalDataSourceId])
+  }, [mapbox.loadedMap, layer.source.id])
   
   return (
     <>
       <Source
-        id={externalDataSourceId}
+        id={layer.source.id}
         type="vector"
-        url={new URL(`/tiles/external-data-source/${externalDataSourceId}/tiles.json`, BACKEND_URL).toString()}
+        url={new URL(`/tiles/external-data-source/${layer.source.id}/tiles.json`, BACKEND_URL).toString()}
       >
         {/* {index <= 1 ? ( */}
           <Layer
             beforeId={beforeId}
-            id={`${externalDataSourceId}-marker`}
-            source={externalDataSourceId}
+            id={`${layer.source.id}-marker`}
+            source={layer.source.id}
             source-layer={"generic_data"}
             type="symbol"
             layout={{
-              "icon-image": `tcc-event-marker`,
+              "icon-image": layer.iconImage ? layer.iconImage : `tcc-event-marker`,
               "icon-allow-overlap": true,
               "icon-ignore-placement": true,
-              "icon-size": 0.75,
+              "icon-size": layer.iconImage ? 1.25 : 0.75,
               "icon-anchor": "bottom"
             }}
             // {...(

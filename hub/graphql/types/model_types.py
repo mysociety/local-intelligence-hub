@@ -1067,6 +1067,7 @@ class MapLayer:
     name: str = dict_key_field()
     visible: Optional[bool] = dict_key_field()
     custom_marker_text: Optional[str] = dict_key_field()
+    icon_image: Optional[str] = dict_key_field()
 
     @strawberry_django.field
     def is_shared_source(self, info: Info) -> bool:
@@ -1285,6 +1286,9 @@ class HubHomepage(HubPage):
     nav_links: List[HubNavLink]
     favicon_url: Optional[str] = None
     google_analytics_tag_id: Optional[str] = None
+    custom_css: Optional[str] = None
+    primary_colour: Optional[str] = None
+    secondary_colour: Optional[str] = None
 
     @strawberry_django.field
     def seo_image_url(self) -> Optional[str]:
