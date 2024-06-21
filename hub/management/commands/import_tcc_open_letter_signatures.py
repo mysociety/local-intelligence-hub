@@ -66,7 +66,6 @@ class Command(BaseConstituencyGroupListImportCommand):
     count_data_type = "tcc_open_letter_signatories_count"
 
     def get_df(self):
-
         if self.data_file.exists() is False:
             return None
 

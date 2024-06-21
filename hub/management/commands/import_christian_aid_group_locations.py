@@ -89,7 +89,6 @@ class Command(BaseConstituencyGroupListImportCommand):
         return names_lookup_dict
 
     def get_df(self):
-
         if self.data_file.exists() is False:
             return None
 

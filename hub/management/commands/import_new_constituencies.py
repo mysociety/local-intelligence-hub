@@ -23,7 +23,6 @@ class Command(BaseCommand):
         )
 
     def download_constituencies(self):
-
         source_file = "https://pages.mysociety.org/2025-constituencies/data/parliament_con_2025/latest/parl_constituencies_2025.parquet"
         parquet_path = settings.BASE_DIR / "data" / "parl_constituencies_2025.parquet"
 

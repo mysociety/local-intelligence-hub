@@ -62,7 +62,7 @@ class Command(BaseCommand):
             "pollutant": "NOx",
             "metric": "Annual mean",
             "header_label": "nox2021",
-            "comments": "µg m\u207B\u00B3 (NO\u2093 as NO\u2082)",
+            "comments": "µg m\u207b\u00b3 (NO\u2093 as NO\u2082)",
             "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mapnox2021.csv",
         },
         "so_2": {
@@ -75,7 +75,7 @@ class Command(BaseCommand):
             "pollutant": "Ozone",
             "metric": "DGT120",
             "header_label": "dgt12021",
-            "comments": "number of days on which the daily max 8-hr concentration is greater than 120 µg m\u207B\u00B3",
+            "comments": "number of days on which the daily max 8-hr concentration is greater than 120 µg m\u207b\u00b3",
             "csv_link": "https://uk-air.defra.gov.uk/datastore/pcm/mapdgt12021.csv",
         },
         "benzene": {
@@ -155,7 +155,6 @@ class Command(BaseCommand):
         AreaData.objects.filter(data_type__in=self.data_types).delete()
 
     def get_dataframe(self):
-
         if not self.gridcode_lookup_file.exists():
             return None
 
