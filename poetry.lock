@@ -858,7 +858,7 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "d55465452f145b51116ee271d490d7e39096686f1ead2de7ceb8e143fa799c32"
+content-hash = "41ece93f8b4e11f454166b9a2dfea79c46ec99e832f19f303b160e1c85cf338f"
 
 [metadata.files]
 appdirs = [

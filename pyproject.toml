@@ -25,6 +25,7 @@ beautifulsoup4 = "^4.11.1"
 mailchimp-marketing = {git = "https://github.com/mailchimp/mailchimp-marketing-python.git"}
 geopandas = "^0.14.4"
 pyarrow = "^16.1.0"
+numpy = "1.26.4"
 
 [tool.poetry.dev-dependencies]
 django-debug-toolbar = "^3.7.0"
