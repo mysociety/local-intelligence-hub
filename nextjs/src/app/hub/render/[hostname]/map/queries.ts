@@ -17,6 +17,8 @@ export const GET_HUB_MAP_DATA = gql`
         source {
           id
         }
+        mapboxPaint
+        mapboxLayout
       }
       navLinks {
         label

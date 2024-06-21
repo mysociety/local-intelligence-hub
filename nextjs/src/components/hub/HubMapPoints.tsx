@@ -7,13 +7,13 @@ import { useEffect } from "react"
 import { Layer, Source } from "react-map-gl"
 import { BACKEND_URL } from "@/env"
 import { useHubRenderContext } from "./HubRenderContext"
+import { GetHubMapDataQuery } from "@/__generated__/graphql"
 
-export function HubPointMarkers ({ layer, index, beforeId }: { layer: {
-  source: {
-    id: string
-  },
-  iconImage?: string | null
-}, index: number, beforeId?: string }) {
+export function HubPointMarkers ({ layer, index, beforeId }: {
+  layer: NonNullable<GetHubMapDataQuery['hubByHostname']>['layers'][number],
+  index: number,
+  beforeId?: string
+}) {
   const mapbox = useLoadedMap()
   const context = useHubRenderContext()
   const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(selectedHubSourceMarkerAtom)
@@ -57,8 +57,10 @@ export function HubPointMarkers ({ layer, index, beforeId }: { layer: {
               "icon-allow-overlap": true,
               "icon-ignore-placement": true,
               "icon-size": layer.iconImage ? 1.25 : 0.75,
-              "icon-anchor": "bottom"
+              "icon-anchor": "bottom",
+              ...(layer.mapboxLayout || {})
             }}
+            paint={layer.mapboxPaint || {}}
             // {...(
             //   selectedSourceMarker?.properties?.id
             //   ? { filter: ["!=", selectedSourceMarker?.properties?.id, ["get", "id"]] }

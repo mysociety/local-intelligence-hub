@@ -27,7 +27,7 @@ class GenericDataVectorLayer(VectorLayer):
     id = "generic_data"
     vector_tile_layer_name = id
 
-    tile_fields = ("id",)
+    tile_fields = ("id", "start_time__ispast", "start_time__isfuture",)
     layer_fields = tile_fields
     vector_tile_fields = layer_fields
 
