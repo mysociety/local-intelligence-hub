@@ -25,7 +25,7 @@ services:
       name: meep-intelligence-hub-backend
       type: web
       envVarKey: RENDER_EXTERNAL_URL
-  - key: FRONTEND_URL
+  - key: FRONTEND_BASE_URL
     fromService:
       name: meep-intelligence-hub-frontend
       type: web
@@ -82,7 +82,7 @@ services:
       name: meep-intelligence-hub-backend
       type: web
       envVarKey: RENDER_EXTERNAL_URL
-  - key: FRONTEND_URL
+  - key: FRONTEND_BASE_URL
     fromService:
       name: meep-intelligence-hub-frontend
       type: web
