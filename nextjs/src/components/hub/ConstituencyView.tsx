@@ -121,24 +121,27 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
                           </div>
                           <h3 className="font-bold text-lg">{i.title}</h3>
                         </header>
-                        <div className="space-y-4">
-                          <div>
+                        <main className="space-y-4">
+                          <section>
                             <div className="text-meepGray-500 text-sm">Date/Time</div>
-                            <div>{formatDate(i.startTime, "EE do MMM")}</div>
-                          </div>
-                          <div>
+                            <div>{formatDate(i.startTime, "EE do MMM hh:mm")}</div>
+                          </section>
+                          <section>
                             <div className="text-meepGray-500 text-sm">Address</div>
                             <div>
                               {i.address} {i.postcode}
                             </div>
-                          </div>
+                          </section>
                           {!!i.description && (
-                            <div className='space-y-2'>
-                              {/* @ts-ignore */}
-                              {i.description?.split("\n\n").map((paragraph, index) => (
-                                <p key={index}>{paragraph}</p>
-                              ))}
-                            </div>
+                            <section>
+                              <div className="text-meepGray-500 text-sm">Description</div>
+                              <div className='space-y-1'>
+                                {/* @ts-ignore */}
+                                {i.description?.split("\n\n").map((paragraph, index) => (
+                                  <p key={index}>{paragraph}</p>
+                                ))}
+                              </div>
+                            </section>
                           )}
                           {i.publicUrl && (
                             <a
@@ -149,7 +152,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
                               <Ticket /> More info &amp; register
                             </a>
                           )}
-                        </div>
+                        </main>
                       </article>
                     ))}
                 </section>
