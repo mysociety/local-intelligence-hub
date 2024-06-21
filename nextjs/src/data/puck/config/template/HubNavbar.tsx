@@ -31,7 +31,7 @@ function NavItems({ navLinks }: { navLinks: HubNavLink[] }) {
 export default function HubNavbar({ navLinks }: { navLinks: HubNavLink[] }) {
     return (
         <>
-            <div className='flex py-2 gap-5 sticky top-0  sm:h-[80px] z-50 justify-between items-center bg-hub-primary-bg'>
+            <div className='flex py-2 gap-5 sticky top-0  sm:h-[80px] z-50 justify-between items-center bg-hub-background'>
                 <div className='z-20'>
                     <Link href="/">
                         <Image src={logo} width={227} height={100} alt="logo" className='w-40' />
@@ -43,7 +43,7 @@ export default function HubNavbar({ navLinks }: { navLinks: HubNavLink[] }) {
                 <div className='sm:hidden flex items-center'>   
                 <Sheet>
                     <SheetTrigger className='text-lg px-4 py-2 bg-hub-primary-100 rounded'>Menu</SheetTrigger>
-                    <SheetContent className='bg-hub-primary-bg text-hub-primary-800'>
+                    <SheetContent className='bg-hub-background text-hub-primary-800'>
                         <SheetHeader>
                             <SheetTitle className='text-hub-primary-600'>Menu</SheetTitle>
                             <SheetDescription className='flex flex-col text-2xl'>

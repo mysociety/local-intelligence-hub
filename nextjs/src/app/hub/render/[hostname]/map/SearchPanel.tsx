@@ -47,7 +47,7 @@ export function SearchPanel({
             {isLoading ? 'Loading...' : 'Search'}
           </button>
         </form>
-        <div className="flex flex-col gap-2 border-t border-hub-primary-bg pt-4 text-hub-primary-neutral ">
+        <div className="flex flex-col gap-2 border-t border-hub-background pt-4 text-hub-primary-neutral ">
           <HustingsCTA />
         </div>
       </div>

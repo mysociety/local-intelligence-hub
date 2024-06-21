@@ -341,7 +341,7 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                             <PuckText className='text-hub-primary-neutral text-hub2xl' text={categoryData.description} />
                         </header>
                     )}
-                    <div className='flex flex-row gap-4 items-center sticky top-[75px] z-20 bg-[#f2f2f2] py-3 border-b border-meepGray-200 mb-4'>
+                    <div className='flex flex-row gap-4 items-center sticky top-[75px] z-20 bg-hub-background py-3 border-b border-meepGray-200 mb-4'>
                         <div className='text-meepGray-400 uppercase'>Filter Hub Content:</div>
                         <button
                             onClick={() => {

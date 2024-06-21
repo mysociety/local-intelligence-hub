@@ -53,7 +53,7 @@ export default function Root({
         <style key="hardcodedCss">
           {`
             html, body {
-              background: #f2f2f2;
+              background: var(--background, #f2f2f2);
             }
           `}
         </style>
@@ -95,7 +95,7 @@ export default function Root({
         <style key="hardcodedCss">
           {`
           html, body {
-            background: hsl(var(--background));
+            background: var(--background, #f2f2f2);
             color: hsl(var(--text));
           }
         `}
