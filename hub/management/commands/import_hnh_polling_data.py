@@ -347,12 +347,10 @@ class Command(BaseImportFromDataFrameCommand):
             self.stdout.write(message)
 
     def extract_and_save_data(self):
-
         self.log(self.message)
 
         area_type = self.get_area_type()
         for file in self.files:
-
             file_loc = settings.BASE_DIR / "data" / file["source_filename"]
 
             if not file_loc.exists():
@@ -435,7 +433,6 @@ class Command(BaseImportFromDataFrameCommand):
     def update_averages(self):
         self.log("Calculating averages for DataTypes:")
         for file in self.files:
-
             file_loc = settings.BASE_DIR / "data" / file["source_filename"]
 
             if not file_loc.exists():
@@ -469,7 +466,6 @@ class Command(BaseImportFromDataFrameCommand):
     def update_max_min(self):
         self.log("Calculating min/max values for DataTypes:")
         for file in self.files:
-
             file_loc = settings.BASE_DIR / "data" / file["source_filename"]
 
             if not file_loc.exists():

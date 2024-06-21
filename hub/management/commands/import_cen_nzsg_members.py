@@ -16,7 +16,6 @@ class Command(BaseCommand):
         self.import_results()
 
     def get_df(self):
-
         file_loc = Path("data", "cen_nzsg_members.csv")
         if not file_loc.exists():
             return None

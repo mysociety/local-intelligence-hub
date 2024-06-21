@@ -54,7 +54,6 @@ class Command(BaseCommand):
         return df
 
     def get_climate_appgs(self):
-
         climate_appgs_list = Path("data", "climate_APPGs.txt")
 
         if not climate_appgs_list.exists():

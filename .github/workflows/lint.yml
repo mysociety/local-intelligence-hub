@@ -10,14 +10,12 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: black Lint
-        uses: psf/black@stable
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          options: "--check --diff"
-          src: "."
-          version: "24.3.0"
-      - name: isort Lint
-        uses: isort/isort-action@master
-      - name: flake8 Lint
-        uses: py-actions/flake8@v2
+          python-version: '3.9' 
+      - name: run ruff linter and formatter
+        run: |
+          pip install ruff==0.4.9
+          ruff check .
+          ruff format . --check
