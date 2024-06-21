@@ -112,16 +112,18 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
           <div className="w-full border-b border-meepGray-200"></div>
           <TabsContent className="mt-0" value="events">
             {!!upcomingEvents?.length ? (
-              <section className='px-6 py-6'>
-                <header className="mb-4">
-                  Help the campaign in {data?.name}{" "}
-                  by coming along to one of these upcoming events.
-                </header>
-                <main className="space-y-4">
-                  {upcomingEvents.map((e) => (
-                    <EventCard key={e.id} event={e} />
-                  ))}
-                </main>
+              <>
+                <section className='my-6'>
+                  <header className="mb-4">
+                    Help the campaign in {data?.name}{" "}
+                    by coming along to one of these upcoming events.
+                  </header>
+                  <main className="space-y-4">
+                    {upcomingEvents.map((e) => (
+                      <EventCard key={e.id} event={e} />
+                    ))}
+                  </main>
+                </section>
                 {hubContext.hostname === 'peopleclimatenature.org' && (
                   <>
                     <div className="w-full border-b border-meepGray-200 my-6"></div>
@@ -130,10 +132,10 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
                     </div>
                   </>
                 )}
-              </section>
+              </>
             ) : (
               <>
-                <section className='p-6 pb-0'>
+                <section className='px-6 pb-0'>
                   <p className='mb-4'>
                     No upcoming events in {data?.name}.
                   </p>
@@ -148,7 +150,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
             {hubContext.hostname === 'peopleclimatenature.org' && (
               <>
                 <div className="w-full border-b border-meepGray-200 my-6"></div>
-                <div className="flex flex-col gap-2 text-hub-primary-neutral pt-0 p-6">
+                <div className="flex flex-col gap-2 text-hub-primary-neutral px-6">
                     <h3 className='font-bold'>Other ways to get involved</h3>
                     <p>There are lots of easy ways you can show your candidates you care about people, climate and nature. Take a look at this page here to find out more.</p>
                     <Link href="/get-involved" className='text-hub-primary-600 font-bold'>Learn more &rarr;</Link>
