@@ -52,8 +52,10 @@ export default function Root({
         </style>
         <style key="hardcodedCss">
           {`
-            background: #f2f2f2;
-        `}
+            html, body {
+              background: #f2f2f2;
+            }
+          `}
         </style>
         <style key="customCss">{hub.hubData?.customCss || ""}</style>
         <main
