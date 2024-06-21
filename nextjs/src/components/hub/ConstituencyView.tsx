@@ -121,7 +121,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
                           </div>
                           <h3 className="font-bold text-lg">{i.title}</h3>
                         </header>
-                        <div className="grid grid-cols-2">
+                        <div className="space-y-4">
                           <div>
                             <div className="text-meepGray-500 text-sm">Date/Time</div>
                             <div>{formatDate(i.startTime, "EE do MMM")}</div>
@@ -132,24 +132,24 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
                               {i.address} {i.postcode}
                             </div>
                           </div>
+                          {!!i.description && (
+                            <div className='space-y-2'>
+                              {/* @ts-ignore */}
+                              {i.description?.split("\n\n").map((paragraph, index) => (
+                                <p key={index}>{paragraph}</p>
+                              ))}
+                            </div>
+                          )}
+                          {i.publicUrl && (
+                            <a
+                              href={i.publicUrl}
+                              target="_blank"
+                              className="bg-hub-primary-200 text-hub-primary-900 px-3 py-2 text-center w-full rounded-md flex flex-row items-center justify-center gap-2"
+                            >
+                              <Ticket /> More info &amp; register
+                            </a>
+                          )}
                         </div>
-                        {!!i.description && (
-                          <div>
-                            {/* @ts-ignore */}
-                            {i.description?.split("\n\n").map((paragraph, index) => (
-                              <p key={index}>{paragraph}</p>
-                            ))}
-                          </div>
-                        )}
-                        {i.publicUrl && (
-                          <a
-                            href={i.publicUrl}
-                            target="_blank"
-                            className="bg-hub-primary-200 text-hub-primary-900 px-3 py-2 text-center w-full rounded-md flex flex-row items-center justify-center gap-2"
-                          >
-                            <Ticket /> More info &amp; register
-                          </a>
-                        )}
                       </article>
                     ))}
                 </section>
