@@ -405,7 +405,7 @@ function PostcodeSearch({ className }: { className?: string }) {
                     <p className="text-hubH5 ">Find out what’s happening in your local constituency</p>
                     <form onSubmit={(e) => {
                         e.preventDefault()
-                        router.push(`/map/postcode/${postcode}`);
+                        router.push(`/map?postcode=${postcode}`);
                     }}>
                         <div className=" flex items-center relative text-hub-primary-600">
                             <Search className="absolute ml-2" />
