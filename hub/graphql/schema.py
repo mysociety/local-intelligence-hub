@@ -146,7 +146,7 @@ class Query(UserQueries):
 @strawberry.type
 class Mutation:
     token_auth = auth_mutations.ObtainJSONWebToken.field
-    register = auth_mutations.Register.field
+    # register = auth_mutations.Register.field
     verify_account = auth_mutations.VerifyAccount.field
     resend_activation_email = auth_mutations.ResendActivationEmail.field
     request_password_reset = auth_mutations.SendPasswordResetEmail.field
