@@ -14,7 +14,8 @@ export function PreopulatedSelectField<FormInputs extends object = any>({
   control,
   crmType,
   guess,
-  required = false
+  required = false,
+  helpText = ""
 }: {
   name: FieldPath<FormInputs>,
   label?: string,
@@ -24,6 +25,7 @@ export function PreopulatedSelectField<FormInputs extends object = any>({
   control: Control<FormInputs>
   crmType: CrmType
   guess?: string | null
+  helpText?: string
 }) {
   const humanisedFieldName = label || `${toSpaceCase(name.replace(/(field)$/ig, ''))} field`
   return (
@@ -67,6 +69,11 @@ export function PreopulatedSelectField<FormInputs extends object = any>({
                 <Input {...field} required={required} />
               )}
             </FormControl>
+            {helpText && (
+              <FormDescription>
+                {helpText}
+              </FormDescription>
+            )}
             {!!guess && guess === field.value && (
               <FormDescription className='text-yellow-500 italic'>
                 Guessed based on available fields

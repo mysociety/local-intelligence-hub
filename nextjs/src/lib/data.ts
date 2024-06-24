@@ -1,5 +1,5 @@
 import { CrmType } from "@/__generated__/graphql";
-import { AirtableLogo, ActionNetworkLogo, MailchimpIcon, MailchimpLogo, GoogleSheetsLogo, CiviCRMLogo, NationBuilderLogo, AirtableIcon, ActionNetworkIcon, TicketTailorLogo, TicketTailorIcon } from "@/components/logos";
+import { AirtableLogo, ActionNetworkLogo, MailchimpIcon, MailchimpLogo, GoogleSheetsIcon, GoogleSheetsLogo, CiviCRMLogo, NationBuilderLogo, AirtableIcon, ActionNetworkIcon, TicketTailorLogo, TicketTailorIcon } from "@/components/logos";
 
 export const externalDataSourceOptions: Record<CrmType, {
   key: CrmType,
@@ -41,6 +41,16 @@ export const externalDataSourceOptions: Record<CrmType, {
     supported: true,
     marketingPageHref: 'integrations/mailchimp'
   },
+  [CrmType.Editablegooglesheets]: {
+    key: CrmType.Editablegooglesheets,
+    modelName: "editableGoogleSheetsSource",
+    name: "Google Sheets",
+    icon: GoogleSheetsIcon,
+    logo: GoogleSheetsLogo,
+    screenshot: "/googleSheets-screenshot.png",
+    supported: true,
+    marketingPageHref: 'integrations/google-sheets'
+  },
   [CrmType.Tickettailor]: {
     key: CrmType.Tickettailor,
     modelName: "TicketTailorSource",
@@ -50,14 +60,6 @@ export const externalDataSourceOptions: Record<CrmType, {
     screenshot: "/tickettailor-screenshot.png",
     supported: true
   },
-  // googleSheets: {
-  //   key: "google-sheets",
-  //   modelName: "googleSheetsSource",
-  //   name: "Google Sheets",
-  //   logo: GoogleSheetsLogo,
-  //   screenshot: "/googleSheets-screenshot.png",
-  //   supported: false
-  // },
   // civiCRM: {
   //   key: "civi-crm",
   //   modelName: "civiCRMSource",

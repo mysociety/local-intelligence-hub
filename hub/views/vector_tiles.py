@@ -1,5 +1,6 @@
 import logging
 
+from django.core.exceptions import PermissionDenied
 from django.db.models.query import QuerySet
 from django.urls import reverse
 from django.views.generic import DetailView
@@ -67,7 +68,7 @@ class ExternalDataSourceTileView(MVTView, DetailView):
         user = user_or_error.user if user_or_error.user else None
         permissions = ExternalDataSource.user_permissions(user, self.get_id())
         if not permissions.get("can_display_points", False):
-            raise ValueError(
+            raise PermissionDenied(
                 "You don't have permission to view location data for this data source."
             )
         hostname = self.get_hostname()

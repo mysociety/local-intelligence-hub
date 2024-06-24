@@ -72,7 +72,7 @@ export type ActionNetworkSource = Analytics & {
   autoImportEnabled: Scalars['Boolean']['output'];
   autoUpdateEnabled: Scalars['Boolean']['output'];
   automatedWebhooks: Scalars['Boolean']['output'];
-  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceTicketTailorSource;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSource;
   createdAt: Scalars['DateTime']['output'];
   crmType: CrmType;
   dataType: DataSourceType;
@@ -113,6 +113,7 @@ export type ActionNetworkSource = Analytics & {
   lastUpdate: Scalars['DateTime']['output'];
   lastUpdateJob?: Maybe<QueueJob>;
   name: Scalars['String']['output'];
+  oauthCredentials?: Maybe<Scalars['String']['output']>;
   organisation: Organisation;
   organisationId: Scalars['String']['output'];
   orgsWithAccess: Array<Organisation>;
@@ -209,7 +210,7 @@ export type AirtableSource = Analytics & {
   autoUpdateEnabled: Scalars['Boolean']['output'];
   automatedWebhooks: Scalars['Boolean']['output'];
   baseId: Scalars['String']['output'];
-  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceTicketTailorSource;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSource;
   createdAt: Scalars['DateTime']['output'];
   crmType: CrmType;
   dataType: DataSourceType;
@@ -249,6 +250,7 @@ export type AirtableSource = Analytics & {
   lastUpdate: Scalars['DateTime']['output'];
   lastUpdateJob?: Maybe<QueueJob>;
   name: Scalars['String']['output'];
+  oauthCredentials?: Maybe<Scalars['String']['output']>;
   organisation: Organisation;
   organisationId: Scalars['String']['output'];
   orgsWithAccess: Array<Organisation>;
@@ -337,7 +339,7 @@ export type AirtableSourceInput = {
   updateMapping?: InputMaybe<Array<UpdateMappingItemInput>>;
 };
 
-export type AirtableSourceMailchimpSourceActionNetworkSourceTicketTailorSource = ActionNetworkSource | AirtableSource | MailchimpSource | TicketTailorSource;
+export type AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSource = ActionNetworkSource | AirtableSource | EditableGoogleSheetsSource | MailchimpSource | TicketTailorSource;
 
 export enum AnalyticalAreaType {
   AdminDistrict = 'admin_district',
@@ -562,6 +564,7 @@ export type ConstituencyElectionStats = {
 export type CreateExternalDataSourceInput = {
   actionnetwork?: InputMaybe<ActionNetworkSourceInput>;
   airtable?: InputMaybe<AirtableSourceInput>;
+  editablegooglesheets?: InputMaybe<EditableGoogleSheetsSourceInput>;
   mailchimp?: InputMaybe<MailChimpSourceInput>;
   tickettailor?: InputMaybe<TicketTailorSourceInput>;
 };
@@ -584,6 +587,7 @@ export type CreateOrganisationInput = {
 export enum CrmType {
   Actionnetwork = 'actionnetwork',
   Airtable = 'airtable',
+  Editablegooglesheets = 'editablegooglesheets',
   Mailchimp = 'mailchimp',
   Tickettailor = 'tickettailor'
 }
@@ -695,6 +699,145 @@ export type DjangoModelType = {
   pk: Scalars['ID']['output'];
 };
 
+/** An editable Google Sheet */
+export type EditableGoogleSheetsSource = Analytics & {
+  __typename?: 'EditableGoogleSheetsSource';
+  addressField?: Maybe<Scalars['String']['output']>;
+  allowUpdates: Scalars['Boolean']['output'];
+  autoImportEnabled: Scalars['Boolean']['output'];
+  autoUpdateEnabled: Scalars['Boolean']['output'];
+  automatedWebhooks: Scalars['Boolean']['output'];
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSource;
+  createdAt: Scalars['DateTime']['output'];
+  crmType: CrmType;
+  dataType: DataSourceType;
+  defaultDataType?: Maybe<Scalars['String']['output']>;
+  defaults: Scalars['JSON']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  descriptionField?: Maybe<Scalars['String']['output']>;
+  emailField?: Maybe<Scalars['String']['output']>;
+  endTimeField?: Maybe<Scalars['String']['output']>;
+  fieldDefinitions?: Maybe<Array<FieldDefinition>>;
+  firstNameField?: Maybe<Scalars['String']['output']>;
+  fullNameField?: Maybe<Scalars['String']['output']>;
+  geographyColumn?: Maybe<Scalars['String']['output']>;
+  geographyColumnType: GeographyTypes;
+  hasWebhooks: Scalars['Boolean']['output'];
+  healthcheck: Scalars['Boolean']['output'];
+  id: Scalars['UUID']['output'];
+  imageField?: Maybe<Scalars['String']['output']>;
+  importProgress?: Maybe<BatchJobProgress>;
+  importedDataCount: Scalars['Int']['output'];
+  importedDataCountByArea: Array<GroupedDataCount>;
+  importedDataCountByConstituency: Array<GroupedDataCount>;
+  importedDataCountByConstituency2024: Array<GroupedDataCount>;
+  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
+  importedDataCountByCouncil: Array<GroupedDataCount>;
+  importedDataCountByRegion: Array<GroupedDataCount>;
+  importedDataCountByWard: Array<GroupedDataCount>;
+  importedDataCountForArea?: Maybe<GroupedDataCount>;
+  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
+  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
+  introspectFields: Scalars['Boolean']['output'];
+  isImportScheduled: Scalars['Boolean']['output'];
+  isUpdateScheduled: Scalars['Boolean']['output'];
+  jobs: Array<QueueJob>;
+  lastImportJob?: Maybe<QueueJob>;
+  lastNameField?: Maybe<Scalars['String']['output']>;
+  lastUpdate: Scalars['DateTime']['output'];
+  lastUpdateJob?: Maybe<QueueJob>;
+  name: Scalars['String']['output'];
+  oauthCredentials?: Maybe<Scalars['String']['output']>;
+  organisation: Organisation;
+  organisationId: Scalars['String']['output'];
+  orgsWithAccess: Array<Organisation>;
+  phoneField?: Maybe<Scalars['String']['output']>;
+  postcodeField?: Maybe<Scalars['String']['output']>;
+  predefinedColumnNames: Scalars['Boolean']['output'];
+  publicUrlField?: Maybe<Scalars['String']['output']>;
+  recordUrlTemplate?: Maybe<Scalars['String']['output']>;
+  remoteName?: Maybe<Scalars['String']['output']>;
+  remoteUrl?: Maybe<Scalars['String']['output']>;
+  sharingPermissions: Array<SharingPermission>;
+  sheetName: Scalars['String']['output'];
+  spreadsheetId: Scalars['String']['output'];
+  startTimeField?: Maybe<Scalars['String']['output']>;
+  titleField?: Maybe<Scalars['String']['output']>;
+  updateMapping?: Maybe<Array<AutoUpdateConfig>>;
+  updateProgress?: Maybe<BatchJobProgress>;
+  webhookHealthcheck: Scalars['Boolean']['output'];
+  webhookUrl: Scalars['String']['output'];
+};
+
+
+/** An editable Google Sheet */
+export type EditableGoogleSheetsSourceImportedDataCountByAreaArgs = {
+  analyticalAreaType: AnalyticalAreaType;
+};
+
+
+/** An editable Google Sheet */
+export type EditableGoogleSheetsSourceImportedDataCountByConstituencyBySourceArgs = {
+  gss: Scalars['String']['input'];
+};
+
+
+/** An editable Google Sheet */
+export type EditableGoogleSheetsSourceImportedDataCountForAreaArgs = {
+  analyticalAreaType: AnalyticalAreaType;
+  gss: Scalars['String']['input'];
+};
+
+
+/** An editable Google Sheet */
+export type EditableGoogleSheetsSourceImportedDataCountForConstituencyArgs = {
+  gss: Scalars['String']['input'];
+};
+
+
+/** An editable Google Sheet */
+export type EditableGoogleSheetsSourceImportedDataCountForConstituency2024Args = {
+  gss: Scalars['String']['input'];
+};
+
+
+/** An editable Google Sheet */
+export type EditableGoogleSheetsSourceOrgsWithAccessArgs = {
+  filters?: InputMaybe<OrganisationFilters>;
+};
+
+/** An editable Google Sheet */
+export type EditableGoogleSheetsSourceInput = {
+  addressField?: InputMaybe<Scalars['String']['input']>;
+  autoImportEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  autoUpdateEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  dataType?: InputMaybe<DataSourceType>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  descriptionField?: InputMaybe<Scalars['String']['input']>;
+  emailField?: InputMaybe<Scalars['String']['input']>;
+  endTimeField?: InputMaybe<Scalars['String']['input']>;
+  firstNameField?: InputMaybe<Scalars['String']['input']>;
+  fullNameField?: InputMaybe<Scalars['String']['input']>;
+  geographyColumn?: InputMaybe<Scalars['String']['input']>;
+  geographyColumnType?: InputMaybe<GeographyTypes>;
+  id?: InputMaybe<Scalars['UUID']['input']>;
+  idField?: InputMaybe<Scalars['String']['input']>;
+  imageField?: InputMaybe<Scalars['String']['input']>;
+  lastNameField?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  oauthCredentials?: InputMaybe<Scalars['String']['input']>;
+  organisation?: InputMaybe<OneToManyInput>;
+  phoneField?: InputMaybe<Scalars['String']['input']>;
+  postcodeField?: InputMaybe<Scalars['String']['input']>;
+  publicUrlField?: InputMaybe<Scalars['String']['input']>;
+  redirectSuccessUrl?: InputMaybe<Scalars['String']['input']>;
+  sheetName: Scalars['String']['input'];
+  spreadsheetId: Scalars['String']['input'];
+  startTimeField?: InputMaybe<Scalars['String']['input']>;
+  titleField?: InputMaybe<Scalars['String']['input']>;
+  updateMapping?: InputMaybe<Array<UpdateMappingItemInput>>;
+};
+
 export type ElectionDate = {
   __typename?: 'ElectionDate';
   advanceVotingStation?: Maybe<Scalars['Void']['output']>;
@@ -798,7 +941,7 @@ export type ExternalDataSource = Analytics & {
   autoImportEnabled: Scalars['Boolean']['output'];
   autoUpdateEnabled: Scalars['Boolean']['output'];
   automatedWebhooks: Scalars['Boolean']['output'];
-  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceTicketTailorSource;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSource;
   createdAt: Scalars['DateTime']['output'];
   crmType: CrmType;
   dataType: DataSourceType;
@@ -838,6 +981,7 @@ export type ExternalDataSource = Analytics & {
   lastUpdate: Scalars['DateTime']['output'];
   lastUpdateJob?: Maybe<QueueJob>;
   name: Scalars['String']['output'];
+  oauthCredentials?: Maybe<Scalars['String']['output']>;
   organisation: Organisation;
   organisationId: Scalars['String']['output'];
   orgsWithAccess: Array<Organisation>;
@@ -1259,7 +1403,7 @@ export type MailchimpSource = Analytics & {
   autoImportEnabled: Scalars['Boolean']['output'];
   autoUpdateEnabled: Scalars['Boolean']['output'];
   automatedWebhooks: Scalars['Boolean']['output'];
-  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceTicketTailorSource;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSource;
   createdAt: Scalars['DateTime']['output'];
   crmType: CrmType;
   dataType: DataSourceType;
@@ -1301,6 +1445,7 @@ export type MailchimpSource = Analytics & {
   /** The unique identifier for the Mailchimp list. */
   listId: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  oauthCredentials?: Maybe<Scalars['String']['output']>;
   organisation: Organisation;
   organisationId: Scalars['String']['output'];
   orgsWithAccess: Array<Organisation>;
@@ -2006,6 +2151,7 @@ export type Query = {
   externalDataSource: ExternalDataSource;
   externalDataSources: Array<ExternalDataSource>;
   genericDataByExternalDataSource: Array<GenericData>;
+  googleSheetsAuthUrl: Scalars['String']['output'];
   hubByHostname?: Maybe<HubHomepage>;
   hubHomepage: HubHomepage;
   hubHomepages: Array<HubHomepage>;
@@ -2076,6 +2222,11 @@ export type QueryExternalDataSourcesArgs = {
 
 export type QueryGenericDataByExternalDataSourceArgs = {
   externalDataSourceId: Scalars['String']['input'];
+};
+
+
+export type QueryGoogleSheetsAuthUrlArgs = {
+  redirectUrl: Scalars['String']['input'];
 };
 
 
@@ -2410,7 +2561,7 @@ export type TicketTailorSource = Analytics & {
   autoImportEnabled: Scalars['Boolean']['output'];
   autoUpdateEnabled: Scalars['Boolean']['output'];
   automatedWebhooks: Scalars['Boolean']['output'];
-  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceTicketTailorSource;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSource;
   createdAt: Scalars['DateTime']['output'];
   crmType: CrmType;
   dataType: DataSourceType;
@@ -2450,6 +2601,7 @@ export type TicketTailorSource = Analytics & {
   lastUpdate: Scalars['DateTime']['output'];
   lastUpdateJob?: Maybe<QueueJob>;
   name: Scalars['String']['output'];
+  oauthCredentials?: Maybe<Scalars['String']['output']>;
   organisation: Organisation;
   organisationId: Scalars['String']['output'];
   orgsWithAccess: Array<Organisation>;
@@ -2639,7 +2791,7 @@ export type ListOrganisationsQueryVariables = Exact<{
 }>;
 
 
-export type ListOrganisationsQuery = { __typename?: 'Query', myOrganisations: Array<{ __typename?: 'Organisation', id: string, externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, crmType: CrmType, autoImportEnabled: boolean, autoUpdateEnabled: boolean, connectionDetails: { __typename?: 'ActionNetworkSource' } | { __typename?: 'AirtableSource', baseId: string, tableId: string } | { __typename?: 'MailchimpSource', apiKey: string, listId: string } | { __typename?: 'TicketTailorSource' }, jobs: Array<{ __typename?: 'QueueJob', lastEventAt: any, status: ProcrastinateJobStatus }>, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any, organisation: { __typename?: 'PublicOrganisation', id: string, name: string } }> }>, sharingPermissionsFromOtherOrgs: Array<{ __typename?: 'SharingPermission', id: any, externalDataSource: { __typename?: 'SharedDataSource', id: any, name: string, dataType: DataSourceType, crmType: CrmType, organisation: { __typename?: 'PublicOrganisation', name: string } } }> }> };
+export type ListOrganisationsQuery = { __typename?: 'Query', myOrganisations: Array<{ __typename?: 'Organisation', id: string, externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, crmType: CrmType, autoImportEnabled: boolean, autoUpdateEnabled: boolean, connectionDetails: { __typename?: 'ActionNetworkSource' } | { __typename?: 'AirtableSource', baseId: string, tableId: string } | { __typename?: 'EditableGoogleSheetsSource' } | { __typename?: 'MailchimpSource', apiKey: string, listId: string } | { __typename?: 'TicketTailorSource' }, jobs: Array<{ __typename?: 'QueueJob', lastEventAt: any, status: ProcrastinateJobStatus }>, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any, organisation: { __typename?: 'PublicOrganisation', id: string, name: string } }> }>, sharingPermissionsFromOtherOrgs: Array<{ __typename?: 'SharingPermission', id: any, externalDataSource: { __typename?: 'SharedDataSource', id: any, name: string, dataType: DataSourceType, crmType: CrmType, organisation: { __typename?: 'PublicOrganisation', name: string } } }> }> };
 
 export type GetSourceMappingQueryVariables = Exact<{
   ID: Scalars['ID']['input'];
@@ -2653,7 +2805,14 @@ export type TestDataSourceQueryVariables = Exact<{
 }>;
 
 
-export type TestDataSourceQuery = { __typename?: 'Query', testDataSource: { __typename: 'ExternalDataSource', crmType: CrmType, geographyColumn?: string | null, geographyColumnType: GeographyTypes, healthcheck: boolean, predefinedColumnNames: boolean, defaultDataType?: string | null, remoteName?: string | null, allowUpdates: boolean, defaults: any, fieldDefinitions?: Array<{ __typename?: 'FieldDefinition', label?: string | null, value: string, description?: string | null, editable: boolean }> | null } };
+export type TestDataSourceQuery = { __typename?: 'Query', testDataSource: { __typename: 'ExternalDataSource', crmType: CrmType, geographyColumn?: string | null, geographyColumnType: GeographyTypes, healthcheck: boolean, predefinedColumnNames: boolean, defaultDataType?: string | null, remoteName?: string | null, allowUpdates: boolean, defaults: any, oauthCredentials?: string | null, fieldDefinitions?: Array<{ __typename?: 'FieldDefinition', label?: string | null, value: string, description?: string | null, editable: boolean }> | null } };
+
+export type GoogleSheetsAuthUrlQueryVariables = Exact<{
+  redirectUrl: Scalars['String']['input'];
+}>;
+
+
+export type GoogleSheetsAuthUrlQuery = { __typename?: 'Query', googleSheetsAuthUrl: string };
 
 export type CreateSourceMutationVariables = Exact<{
   input: CreateExternalDataSourceInput;
@@ -2661,11 +2820,6 @@ export type CreateSourceMutationVariables = Exact<{
 
 
 export type CreateSourceMutation = { __typename?: 'Mutation', createExternalDataSource: { __typename?: 'CreateExternalDataSourceOutput', code: number, errors: Array<{ __typename?: 'MutationError', message: string }>, result?: { __typename?: 'ExternalDataSource', id: any, name: string, crmType: CrmType, dataType: DataSourceType, allowUpdates: boolean } | null } };
-
-export type AllExternalDataSourcesQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type AllExternalDataSourcesQuery = { __typename?: 'Query', externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, createdAt: any, dataType: DataSourceType, crmType: CrmType, autoImportEnabled: boolean, autoUpdateEnabled: boolean, connectionDetails: { __typename?: 'ActionNetworkSource' } | { __typename?: 'AirtableSource', baseId: string, tableId: string } | { __typename?: 'MailchimpSource', apiKey: string, listId: string } | { __typename?: 'TicketTailorSource' } }> };
 
 export type AutoUpdateCreationReviewQueryVariables = Exact<{
   ID: Scalars['ID']['input'];
@@ -2679,7 +2833,7 @@ export type ExternalDataSourceInspectPageQueryVariables = Exact<{
 }>;
 
 
-export type ExternalDataSourceInspectPageQuery = { __typename?: 'Query', externalDataSource: { __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, remoteUrl?: string | null, crmType: CrmType, autoImportEnabled: boolean, autoUpdateEnabled: boolean, hasWebhooks: boolean, allowUpdates: boolean, automatedWebhooks: boolean, webhookUrl: string, webhookHealthcheck: boolean, geographyColumn?: string | null, geographyColumnType: GeographyTypes, postcodeField?: string | null, firstNameField?: string | null, lastNameField?: string | null, fullNameField?: string | null, emailField?: string | null, phoneField?: string | null, addressField?: string | null, titleField?: string | null, descriptionField?: string | null, imageField?: string | null, startTimeField?: string | null, endTimeField?: string | null, publicUrlField?: string | null, isImportScheduled: boolean, isUpdateScheduled: boolean, importedDataCount: number, connectionDetails: { __typename?: 'ActionNetworkSource', apiKey: string, groupSlug: string } | { __typename?: 'AirtableSource', apiKey: string, baseId: string, tableId: string } | { __typename?: 'MailchimpSource', apiKey: string, listId: string } | { __typename?: 'TicketTailorSource', apiKey: string }, lastImportJob?: { __typename?: 'QueueJob', id: string, lastEventAt: any, status: ProcrastinateJobStatus } | null, lastUpdateJob?: { __typename?: 'QueueJob', id: string, lastEventAt: any, status: ProcrastinateJobStatus } | null, importProgress?: { __typename?: 'BatchJobProgress', id: string, hasForecast: boolean, status: ProcrastinateJobStatus, total?: number | null, succeeded?: number | null, estimatedFinishTime?: any | null } | null, updateProgress?: { __typename?: 'BatchJobProgress', id: string, hasForecast: boolean, status: ProcrastinateJobStatus, total?: number | null, succeeded?: number | null, estimatedFinishTime?: any | null } | null, fieldDefinitions?: Array<{ __typename?: 'FieldDefinition', label?: string | null, value: string, description?: string | null, editable: boolean }> | null, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any }>, organisation: { __typename?: 'Organisation', id: string, name: string } } };
+export type ExternalDataSourceInspectPageQuery = { __typename?: 'Query', externalDataSource: { __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, remoteUrl?: string | null, crmType: CrmType, autoImportEnabled: boolean, autoUpdateEnabled: boolean, hasWebhooks: boolean, allowUpdates: boolean, automatedWebhooks: boolean, webhookUrl: string, webhookHealthcheck: boolean, geographyColumn?: string | null, geographyColumnType: GeographyTypes, postcodeField?: string | null, firstNameField?: string | null, lastNameField?: string | null, fullNameField?: string | null, emailField?: string | null, phoneField?: string | null, addressField?: string | null, titleField?: string | null, descriptionField?: string | null, imageField?: string | null, startTimeField?: string | null, endTimeField?: string | null, publicUrlField?: string | null, isImportScheduled: boolean, isUpdateScheduled: boolean, importedDataCount: number, connectionDetails: { __typename?: 'ActionNetworkSource', apiKey: string, groupSlug: string } | { __typename?: 'AirtableSource', apiKey: string, baseId: string, tableId: string } | { __typename?: 'EditableGoogleSheetsSource' } | { __typename?: 'MailchimpSource', apiKey: string, listId: string } | { __typename?: 'TicketTailorSource', apiKey: string }, lastImportJob?: { __typename?: 'QueueJob', id: string, lastEventAt: any, status: ProcrastinateJobStatus } | null, lastUpdateJob?: { __typename?: 'QueueJob', id: string, lastEventAt: any, status: ProcrastinateJobStatus } | null, importProgress?: { __typename?: 'BatchJobProgress', id: string, hasForecast: boolean, status: ProcrastinateJobStatus, total?: number | null, succeeded?: number | null, estimatedFinishTime?: any | null } | null, updateProgress?: { __typename?: 'BatchJobProgress', id: string, hasForecast: boolean, status: ProcrastinateJobStatus, total?: number | null, succeeded?: number | null, estimatedFinishTime?: any | null } | null, fieldDefinitions?: Array<{ __typename?: 'FieldDefinition', label?: string | null, value: string, description?: string | null, editable: boolean }> | null, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any }>, organisation: { __typename?: 'Organisation', id: string, name: string } } };
 
 export type DeleteUpdateConfigMutationVariables = Exact<{
   id: Scalars['String']['input'];
@@ -3128,9 +3282,9 @@ export const MapReportLayersSummaryFragmentDoc = {"kind":"Document","definitions
 export const MapReportPageFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"MapReportPage"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"MapReport"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"MapReportLayersSummary"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"MapReportLayersSummary"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"MapReport"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"layers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"sharingPermission"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"visibilityRecordDetails"}},{"kind":"Field","name":{"kind":"Name","value":"visibilityRecordCoordinates"}},{"kind":"Field","name":{"kind":"Name","value":"organisation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"source"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"isImportScheduled"}},{"kind":"Field","name":{"kind":"Name","value":"importedDataCount"}},{"kind":"Field","name":{"kind":"Name","value":"crmType"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}},{"kind":"Field","name":{"kind":"Name","value":"organisation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]}}]} as unknown as DocumentNode<MapReportPageFragment, unknown>;
 export const ListOrganisationsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ListOrganisations"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"currentOrganisationId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"myOrganisations"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"currentOrganisationId"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"externalDataSources"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AirtableSource"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"baseId"}},{"kind":"Field","name":{"kind":"Name","value":"tableId"}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"MailchimpSource"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"apiKey"}},{"kind":"Field","name":{"kind":"Name","value":"listId"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"crmType"}},{"kind":"Field","name":{"kind":"Name","value":"autoImportEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"autoUpdateEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"jobs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"lastEventAt"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}},{"kind":"Field","name":{"kind":"Name","value":"updateMapping"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"sourcePath"}},{"kind":"Field","name":{"kind":"Name","value":"destinationColumn"}}]}},{"kind":"Field","name":{"kind":"Name","value":"sharingPermissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"organisation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"sharingPermissionsFromOtherOrgs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}},{"kind":"Field","name":{"kind":"Name","value":"crmType"}},{"kind":"Field","name":{"kind":"Name","value":"organisation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<ListOrganisationsQuery, ListOrganisationsQueryVariables>;
 export const GetSourceMappingDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetSourceMapping"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"autoImportEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"autoUpdateEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"allowUpdates"}},{"kind":"Field","name":{"kind":"Name","value":"hasWebhooks"}},{"kind":"Field","name":{"kind":"Name","value":"updateMapping"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"destinationColumn"}},{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"sourcePath"}}]}},{"kind":"Field","name":{"kind":"Name","value":"fieldDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"editable"}}]}},{"kind":"Field","name":{"kind":"Name","value":"crmType"}},{"kind":"Field","name":{"kind":"Name","value":"geographyColumn"}},{"kind":"Field","name":{"kind":"Name","value":"geographyColumnType"}},{"kind":"Field","name":{"kind":"Name","value":"postcodeField"}},{"kind":"Field","name":{"kind":"Name","value":"firstNameField"}},{"kind":"Field","name":{"kind":"Name","value":"lastNameField"}},{"kind":"Field","name":{"kind":"Name","value":"emailField"}},{"kind":"Field","name":{"kind":"Name","value":"phoneField"}},{"kind":"Field","name":{"kind":"Name","value":"addressField"}}]}}]}}]} as unknown as DocumentNode<GetSourceMappingQuery, GetSourceMappingQueryVariables>;
-export const TestDataSourceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"TestDataSource"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateExternalDataSourceInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"testDataSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"Field","name":{"kind":"Name","value":"crmType"}},{"kind":"Field","name":{"kind":"Name","value":"fieldDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"editable"}}]}},{"kind":"Field","name":{"kind":"Name","value":"geographyColumn"}},{"kind":"Field","name":{"kind":"Name","value":"geographyColumnType"}},{"kind":"Field","name":{"kind":"Name","value":"healthcheck"}},{"kind":"Field","name":{"kind":"Name","value":"predefinedColumnNames"}},{"kind":"Field","name":{"kind":"Name","value":"defaultDataType"}},{"kind":"Field","name":{"kind":"Name","value":"remoteName"}},{"kind":"Field","name":{"kind":"Name","value":"allowUpdates"}},{"kind":"Field","name":{"kind":"Name","value":"defaults"}}]}}]}}]} as unknown as DocumentNode<TestDataSourceQuery, TestDataSourceQueryVariables>;
+export const TestDataSourceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"TestDataSource"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateExternalDataSourceInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"testDataSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"Field","name":{"kind":"Name","value":"crmType"}},{"kind":"Field","name":{"kind":"Name","value":"fieldDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"editable"}}]}},{"kind":"Field","name":{"kind":"Name","value":"geographyColumn"}},{"kind":"Field","name":{"kind":"Name","value":"geographyColumnType"}},{"kind":"Field","name":{"kind":"Name","value":"healthcheck"}},{"kind":"Field","name":{"kind":"Name","value":"predefinedColumnNames"}},{"kind":"Field","name":{"kind":"Name","value":"defaultDataType"}},{"kind":"Field","name":{"kind":"Name","value":"remoteName"}},{"kind":"Field","name":{"kind":"Name","value":"allowUpdates"}},{"kind":"Field","name":{"kind":"Name","value":"defaults"}},{"kind":"Field","name":{"kind":"Name","value":"oauthCredentials"}}]}}]}}]} as unknown as DocumentNode<TestDataSourceQuery, TestDataSourceQueryVariables>;
+export const GoogleSheetsAuthUrlDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GoogleSheetsAuthUrl"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"redirectUrl"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"googleSheetsAuthUrl"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"redirectUrl"},"value":{"kind":"Variable","name":{"kind":"Name","value":"redirectUrl"}}}]}]}}]} as unknown as DocumentNode<GoogleSheetsAuthUrlQuery, GoogleSheetsAuthUrlQueryVariables>;
 export const CreateSourceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateSource"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateExternalDataSourceInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createExternalDataSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"errors"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}},{"kind":"Field","name":{"kind":"Name","value":"result"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"crmType"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}},{"kind":"Field","name":{"kind":"Name","value":"allowUpdates"}}]}}]}}]}}]} as unknown as DocumentNode<CreateSourceMutation, CreateSourceMutationVariables>;
-export const AllExternalDataSourcesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AllExternalDataSources"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSources"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}},{"kind":"Field","name":{"kind":"Name","value":"crmType"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AirtableSource"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"baseId"}},{"kind":"Field","name":{"kind":"Name","value":"tableId"}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"MailchimpSource"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"apiKey"}},{"kind":"Field","name":{"kind":"Name","value":"listId"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"autoImportEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"autoUpdateEnabled"}}]}}]}}]} as unknown as DocumentNode<AllExternalDataSourcesQuery, AllExternalDataSourcesQueryVariables>;
 export const AutoUpdateCreationReviewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AutoUpdateCreationReview"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"geographyColumn"}},{"kind":"Field","name":{"kind":"Name","value":"geographyColumnType"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}},{"kind":"Field","name":{"kind":"Name","value":"crmType"}},{"kind":"Field","name":{"kind":"Name","value":"autoImportEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"autoUpdateEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"updateMapping"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"sourcePath"}},{"kind":"Field","name":{"kind":"Name","value":"destinationColumn"}}]}},{"kind":"Field","name":{"kind":"Name","value":"jobs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"lastEventAt"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}},{"kind":"Field","name":{"kind":"Name","value":"automatedWebhooks"}},{"kind":"Field","name":{"kind":"Name","value":"webhookUrl"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"DataSourceCard"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"DataSourceCard"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ExternalDataSource"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}},{"kind":"Field","name":{"kind":"Name","value":"crmType"}},{"kind":"Field","name":{"kind":"Name","value":"automatedWebhooks"}},{"kind":"Field","name":{"kind":"Name","value":"autoImportEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"autoUpdateEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"updateMapping"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"sourcePath"}},{"kind":"Field","name":{"kind":"Name","value":"destinationColumn"}}]}},{"kind":"Field","name":{"kind":"Name","value":"jobs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"lastEventAt"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}},{"kind":"Field","name":{"kind":"Name","value":"sharingPermissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"organisation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<AutoUpdateCreationReviewQuery, AutoUpdateCreationReviewQueryVariables>;
 export const ExternalDataSourceInspectPageDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ExternalDataSourceInspectPage"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}},{"kind":"Field","name":{"kind":"Name","value":"remoteUrl"}},{"kind":"Field","name":{"kind":"Name","value":"crmType"}},{"kind":"Field","name":{"kind":"Name","value":"connectionDetails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AirtableSource"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"apiKey"}},{"kind":"Field","name":{"kind":"Name","value":"baseId"}},{"kind":"Field","name":{"kind":"Name","value":"tableId"}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"MailchimpSource"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"apiKey"}},{"kind":"Field","name":{"kind":"Name","value":"listId"}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ActionNetworkSource"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"apiKey"}},{"kind":"Field","name":{"kind":"Name","value":"groupSlug"}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"TicketTailorSource"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"apiKey"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"lastImportJob"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"lastEventAt"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}},{"kind":"Field","name":{"kind":"Name","value":"lastUpdateJob"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"lastEventAt"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}},{"kind":"Field","name":{"kind":"Name","value":"autoImportEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"autoUpdateEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"hasWebhooks"}},{"kind":"Field","name":{"kind":"Name","value":"allowUpdates"}},{"kind":"Field","name":{"kind":"Name","value":"automatedWebhooks"}},{"kind":"Field","name":{"kind":"Name","value":"webhookUrl"}},{"kind":"Field","name":{"kind":"Name","value":"webhookHealthcheck"}},{"kind":"Field","name":{"kind":"Name","value":"geographyColumn"}},{"kind":"Field","name":{"kind":"Name","value":"geographyColumnType"}},{"kind":"Field","name":{"kind":"Name","value":"postcodeField"}},{"kind":"Field","name":{"kind":"Name","value":"firstNameField"}},{"kind":"Field","name":{"kind":"Name","value":"lastNameField"}},{"kind":"Field","name":{"kind":"Name","value":"fullNameField"}},{"kind":"Field","name":{"kind":"Name","value":"emailField"}},{"kind":"Field","name":{"kind":"Name","value":"phoneField"}},{"kind":"Field","name":{"kind":"Name","value":"addressField"}},{"kind":"Field","name":{"kind":"Name","value":"titleField"}},{"kind":"Field","name":{"kind":"Name","value":"descriptionField"}},{"kind":"Field","name":{"kind":"Name","value":"imageField"}},{"kind":"Field","name":{"kind":"Name","value":"startTimeField"}},{"kind":"Field","name":{"kind":"Name","value":"endTimeField"}},{"kind":"Field","name":{"kind":"Name","value":"publicUrlField"}},{"kind":"Field","name":{"kind":"Name","value":"isImportScheduled"}},{"kind":"Field","name":{"kind":"Name","value":"importProgress"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"hasForecast"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"total"}},{"kind":"Field","name":{"kind":"Name","value":"succeeded"}},{"kind":"Field","name":{"kind":"Name","value":"estimatedFinishTime"}}]}},{"kind":"Field","name":{"kind":"Name","value":"isUpdateScheduled"}},{"kind":"Field","name":{"kind":"Name","value":"updateProgress"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"hasForecast"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"total"}},{"kind":"Field","name":{"kind":"Name","value":"succeeded"}},{"kind":"Field","name":{"kind":"Name","value":"estimatedFinishTime"}}]}},{"kind":"Field","name":{"kind":"Name","value":"importedDataCount"}},{"kind":"Field","name":{"kind":"Name","value":"fieldDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"editable"}}]}},{"kind":"Field","name":{"kind":"Name","value":"updateMapping"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"sourcePath"}},{"kind":"Field","name":{"kind":"Name","value":"destinationColumn"}}]}},{"kind":"Field","name":{"kind":"Name","value":"sharingPermissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"organisation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<ExternalDataSourceInspectPageQuery, ExternalDataSourceInspectPageQueryVariables>;
 export const DeleteUpdateConfigDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteUpdateConfig"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteExternalDataSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<DeleteUpdateConfigMutation, DeleteUpdateConfigMutationVariables>;
@@ -3203,15 +3357,17 @@ export const PublicUserDocument = {"kind":"Document","definitions":[{"kind":"Ope
       }
       const result: PossibleTypesResultData = {
   "possibleTypes": {
-    "AirtableSourceMailchimpSourceActionNetworkSourceTicketTailorSource": [
+    "AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSource": [
       "ActionNetworkSource",
       "AirtableSource",
+      "EditableGoogleSheetsSource",
       "MailchimpSource",
       "TicketTailorSource"
     ],
     "Analytics": [
       "ActionNetworkSource",
       "AirtableSource",
+      "EditableGoogleSheetsSource",
       "ExternalDataSource",
       "MailchimpSource",
       "MapReport",

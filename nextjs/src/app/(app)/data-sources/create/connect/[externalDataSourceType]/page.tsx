@@ -34,15 +34,19 @@ import {
   CreateSourceMutation,
   TestDataSourceQuery,
   TestDataSourceQueryVariables,
-  InputMaybe,
+  GoogleSheetsAuthUrlQuery,
+  GoogleSheetsAuthUrlQueryVariables,
+  CrmType,
+  EditableGoogleSheetsSourceInput,
+  EditableGoogleSheetsSource,
 } from "@/__generated__/graphql";
 import { toastPromise } from "@/lib/toast";
 import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
 import { getFieldsForDataSourceType } from "@/components/UpdateExternalDataSourceFields";
 import { camelCase } from "lodash";
-import { Building, Calendar, Newspaper, PersonStanding, Pin, Quote, User } from "lucide-react";
+import { Building, Calendar, Pin, Quote, User } from "lucide-react";
 import { locationTypeOptions } from "@/data/location";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtomValue } from "jotai";
 import { currentOrganisationIdAtom } from "@/data/organisation";
 
 const TEST_DATA_SOURCE = gql`
@@ -64,7 +68,14 @@ const TEST_DATA_SOURCE = gql`
       remoteName
       allowUpdates
       defaults
+      oauthCredentials
     }
+  }
+`;
+
+const GOOGLE_SHEETS_AUTH_URL = gql`
+  query GoogleSheetsAuthUrl($redirectUrl: String!) {
+    googleSheetsAuthUrl(redirectUrl: $redirectUrl)
   }
 `;
 
@@ -107,6 +118,7 @@ export default function Page({
   }, [context])
 
   const RNN_ORIG = Symbol();
+  const urlParams = new URLSearchParams(window ? window.location.search : "");
 
   const defaultValues: CreateExternalDataSourceInput & ExternalDataSourceInput = {
     name: '',
@@ -126,6 +138,11 @@ export default function Page({
       apiKey: '',
       groupSlug: ''
     },
+    editablegooglesheets: {
+      redirectSuccessUrl: urlParams.get("state") && urlParams.get("code") ? window.location.href : '',
+      spreadsheetId: '',
+      sheetName: '',
+    },
     tickettailor: {
       apiKey: ''
     }
@@ -133,7 +150,6 @@ export default function Page({
 
   const form = useForm<FormInputs>({
     defaultValues: {
-      geographyColumnType: GeographyTypes.Postcode,
       ...defaultValues
     } as FormInputs,
   });
@@ -146,6 +162,9 @@ export default function Page({
 
   const [createSource, createSourceResult] = useMutation<CreateSourceMutation>(CREATE_DATA_SOURCE);
   const [testSource, testSourceResult] = useLazyQuery<TestDataSourceQuery, TestDataSourceQueryVariables>(TEST_DATA_SOURCE);
+  const [googleSheetsAuthUrl, googleSheetsAuthUrlResult] = 
+    useLazyQuery<GoogleSheetsAuthUrlQuery, GoogleSheetsAuthUrlQueryVariables>(GOOGLE_SHEETS_AUTH_URL);
+  const [googleSheetsError, setGoogleSheetsError] = useState("")
 
   const currentSource = testSourceResult.data;
 
@@ -264,7 +283,7 @@ export default function Page({
       }
     }
   }, [airtableUrl])
-
+  
   async function submitTestConnection(formData: FormInputs) {
     if (!formData[externalDataSourceType]) {
       throw Error("Need some CRM connection details to proceed!")
@@ -306,18 +325,29 @@ export default function Page({
 
   async function submitCreateSource(formData: FormInputs) {
     if (!formData[externalDataSourceType]) {
-      throw Error("Need some CRM connection details to proceed!")
+      throw Error("Need some CRM connection details to proceed!");
     }
     // To avoid mutation of the form data
-    const genericCRMData = Object.assign({}, formData)
-    const CRMSpecificData = formData[externalDataSourceType]
+    const genericCRMData = Object.assign({}, formData);
+    let CRMSpecificData = formData[externalDataSourceType];
+
+    // TODO: can this be less messy?
+    if (externalDataSourceType === CrmType.Editablegooglesheets) {
+      // Remove the redirectSuccessUrl from the variables and replace it
+      // with the credentials returned when the connection was tested.
+      // Cannot reuse the oauth parameters in the URL to get new
+      // credentials on the back-end, as they are one-use only.
+      CRMSpecificData = CRMSpecificData as EditableGoogleSheetsSourceInput;
+      delete CRMSpecificData["redirectSuccessUrl"];
+      CRMSpecificData["oauthCredentials"] = testSourceResult.data?.testDataSource.oauthCredentials
+    }
 
     // Remove specific CRM data from the generic data
     // TODO: make this less fragile. Currently it assumes any nested
     // object is specific to a CRM.
     for (const key of Object.keys(formData)) {
       if (typeof formData[key as keyof FormInputs] === "object") {
-        delete genericCRMData[key as keyof FormInputs]
+        delete genericCRMData[key as keyof FormInputs];
       }
     }
 
@@ -325,36 +355,41 @@ export default function Page({
       [externalDataSourceType]: {
         ...genericCRMData,
         ...CRMSpecificData,
-        organisation: { set: orgId }
-      }
-    }
-    toastPromise(createSource({ variables: { input }}),
-      {
-        loading: "Saving connection...",
-        success: (d) => {
-          const errors = d.errors || d.data?.createExternalDataSource.errors || []
-          if (!errors.length && d.data?.createExternalDataSource.result) {
-            if (d.data?.createExternalDataSource.result.dataType === DataSourceType.Member && d.data.createExternalDataSource.result.allowUpdates) {
-              router.push(
-                `/data-sources/create/configure/${d.data.createExternalDataSource.result.id}`,
-              );
-            } else {
-              router.push(
-                `/data-sources/inspect/${d.data.createExternalDataSource.result.id}`,
-              );
-            }
-            return "Connection successful";
-          }
-          throw new Error(errors.map(e => e.message).join(', ') || "Unknown error")
-        },
-        error(e) {
-          return {
-            title: "Connection failed",
-            description: e.message
-          }
-        }
+        organisation: { set: orgId },
       },
-    )
+    };
+    toastPromise(createSource({ variables: { input } }), {
+      loading: "Saving connection...",
+      success: (d) => {
+        const errors =
+          d.errors || d.data?.createExternalDataSource.errors || [];
+        if (!errors.length && d.data?.createExternalDataSource.result) {
+          if (
+            d.data?.createExternalDataSource.result.dataType ===
+              DataSourceType.Member &&
+            d.data.createExternalDataSource.result.allowUpdates
+          ) {
+            router.push(
+              `/data-sources/create/configure/${d.data.createExternalDataSource.result.id}`
+            );
+          } else {
+            router.push(
+              `/data-sources/inspect/${d.data.createExternalDataSource.result.id}`
+            );
+          }
+          return "Connection successful";
+        }
+        throw new Error(
+          errors.map((e) => e.message).join(", ") || "Unknown error"
+        );
+      },
+      error(e) {
+        return {
+          title: "Connection failed",
+          description: e.message,
+        };
+      },
+    });
   }
 
   if (createSourceResult.loading || createSourceResult.data?.createExternalDataSource.result) {
@@ -373,12 +408,14 @@ export default function Page({
     name,
     label,
     placeholder,
-    required = false
+    required = false,
+    helpText = ""
   }: {
     name: FieldPath<FormInputs>,
     label?: string,
     placeholder?: string
     required?: boolean
+    helpText?: string
   }) {
     return (
       <PreopulatedSelectField
@@ -390,6 +427,7 @@ export default function Page({
         crmType={testSourceResult.data?.testDataSource.crmType!}
         guess={guessed[name]}
         required={required}
+        helpText={helpText}
       />
     )
   }
@@ -505,6 +543,17 @@ export default function Page({
                     )}
                   />
                   <FPreopulatedSelectField name="geographyColumn" label={`${form.watch("geographyColumnType")?.toLocaleLowerCase()} field`} required />
+                  {testSourceResult.data?.testDataSource.crmType === CrmType.Editablegooglesheets && (
+                  <FPreopulatedSelectField 
+                    name="editablegooglesheets.idField" 
+                    label="Unique field" 
+                    required
+                    helpText={`
+                      Choose a column in your data that should always contain a unique value
+                      (e.g. email address for members, creation timestamp for events, etc.)
+                    `}
+                  />
+                  )}
                   {collectFields.map((field) => (
                     <FPreopulatedSelectField key={field} name={field} />
                   ))}
@@ -830,6 +879,153 @@ export default function Page({
             </div>
           </form>
         </Form>
+      </div>
+    );
+  }
+
+  if (externalDataSourceType === "editablegooglesheets") {
+    const redirectSuccessUrl = form.watch("editablegooglesheets.redirectSuccessUrl");
+    return (
+      <div className="space-y-7">
+        {!redirectSuccessUrl ? (
+          <>
+            <header>
+              <h1 className="text-hLg">
+                Connecting to your Google Sheets spreadsheet
+              </h1>
+              <p className="mt-6 text-meepGray-400 max-w-lg">
+                Click the button below to grant Mapped permission to access your
+                spreadsheet.
+              </p>
+            </header>
+            <div className="flex flex-row gap-x-4">
+              <Button
+                variant="outline"
+                type="reset"
+                onClick={() => {
+                  // Can't use router.back() as this could take the user
+                  // back to the Google OAuth screen
+                  router.push("/data-sources")
+                }}
+              >
+                Back
+              </Button>
+              <Button
+                type="button"
+                variant={"reverse"}
+                disabled={googleSheetsAuthUrlResult.loading}
+                onClick={() => {
+                  setGoogleSheetsError("");
+                  googleSheetsAuthUrl({
+                    variables: { redirectUrl: window.location.href },
+                  })
+                    .then(({ data }) => {
+                      if (!data?.googleSheetsAuthUrl) {
+                        throw Error("Missing data");
+                      }
+                      window.location.href = data.googleSheetsAuthUrl;
+                    })
+                    .catch((e) => {
+                      console.error("Error: ", e);
+                      setGoogleSheetsError(
+                        "Could not get Google authorization URL, please try again."
+                      );
+                    });
+                }}
+              >
+                Authorize
+              </Button>
+            </div>
+            {googleSheetsError && (
+              <small className="text-red-500">{googleSheetsError}</small>
+            )}
+          </>
+        ) : (
+          <>
+            <header>
+              <h1 className="text-hLg">
+                Connecting to your Google Sheets spreadsheet
+              </h1>
+              <p className="mt-6 text-meepGray-400 max-w-lg">
+                Now we just need a few details to know which spreadsheet to
+                import and update.
+              </p>
+            </header>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(submitTestConnection)}
+                className="space-y-7 max-w-lg"
+              >
+                <FormField
+                  control={form.control}
+                  name="editablegooglesheets.spreadsheetId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Spreadsheet ID</FormLabel>
+                      <FormControl>
+                        {/* @ts-ignore */}
+                        <Input
+                          placeholder="1MEDFli9uakvmf_wGghJZtZg2AvF2xybGtiaG7OX1mmg"
+                          {...field}
+                          required
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Get your spreadsheet ID from its URL in the address bar
+                        of the browser. The URL will be
+                        <code className="block bg-black p-2 rounded my-2">
+                          https://docs.google.com/spreadsheets/d/spreadsheet-id/edit?gid=0#gid=0e
+                        </code>
+                        with your ID in the place of {'"'}spreadsheet-id{'"'}.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="editablegooglesheets.sheetName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sheet Name</FormLabel>
+                      <FormControl>
+                        {/* @ts-ignore */}
+                        <Input placeholder="Sheet1" {...field} required />
+                      </FormControl>
+                      <FormDescription>
+                        The name of the sheet with data you want
+                        imported/updated. This is {'"'}Sheet1{'"'} by default.
+                        You can find it on the tabs at the bottom of your
+                        spreadsheet.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex flex-row gap-x-4">
+                  <Button
+                    variant="outline"
+                    type="reset"
+                    onClick={() => {
+                      // Can't use router.back() as this could take the user
+                      // back to the Google OAuth screen
+                      router.push("/data-sources")
+                    }}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant={"reverse"}
+                    disabled={testSourceResult.loading}
+                  >
+                    Test connection
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </>
+        )}
       </div>
     );
   }

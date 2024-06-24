@@ -796,6 +796,7 @@ class CrmType(Enum):
     mailchimp = "mailchimp"
     actionnetwork = "actionnetwork"
     tickettailor = "tickettailor"
+    editablegooglesheets = "editablegooglesheets"
 
 
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
@@ -874,7 +875,7 @@ def imported_data_geojson_point(
     info: Info, generic_data_id: str
 ) -> MapReportMemberFeature | None:
     datum = models.GenericData.objects.prefetch_related(
-        "data_type__data_set__external_data_source"
+        "data_type__data_set__external_data_source",
     ).get(pk=generic_data_id)
     if datum is None:
         logger.debug(f"GenericData {generic_data_id} not found")
@@ -985,13 +986,21 @@ class ExternalDataSource(BaseDataSource):
         return job
 
     @strawberry_django.field
-    def connection_details(
-        self: models.ExternalDataSource, info
-    ) -> Union[
-        "AirtableSource", "MailchimpSource", "ActionNetworkSource", "TicketTailorSource"
+    def connection_details(self: models.ExternalDataSource, info) -> Union[
+        "AirtableSource",
+        "MailchimpSource",
+        "ActionNetworkSource",
+        "EditableGoogleSheetsSource",
+        "TicketTailorSource",
     ]:
         instance = self.get_real_instance()
         return instance
+
+    @strawberry_django.field
+    def oauth_credentials(self: models.ExternalDataSource, info) -> Optional[str]:
+        if isinstance(self, models.EditableGoogleSheetsSource):
+            return self.oauth_credentials
+        return None
 
     @strawberry_django.field
     def webhook_url(self: models.ExternalDataSource, info) -> str:
@@ -1030,6 +1039,12 @@ class MailchimpSource(ExternalDataSource):
 class ActionNetworkSource(ExternalDataSource):
     api_key: str
     group_slug: str
+
+
+@strawberry_django.type(models.EditableGoogleSheetsSource)
+class EditableGoogleSheetsSource(ExternalDataSource):
+    spreadsheet_id: str
+    sheet_name: str
 
 
 @strawberry_django.type(models.TicketTailorSource)
