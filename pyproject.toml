@@ -61,6 +61,7 @@ google-auth-httplib2 = "^0.2.0"
 google-auth-oauthlib = "^1.2.0"
 django-codemirror2 = "^0.2"
 wagtail-color-panel = "^1.5.0"
+dateparser = "^1.2.0"
 
 [tool.poetry.dev-dependencies]
 django-debug-toolbar = "^4.3"

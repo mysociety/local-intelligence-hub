@@ -6,6 +6,7 @@ from uuid import UUID
 
 from django.utils import dateparse
 
+import dateparser
 from benedict import benedict
 
 from utils.log import get_simple_debug_logger
@@ -181,6 +182,9 @@ def parse_datetime(value):
             return datetime.datetime(value.year, value.month, value.day)
         try:
             parsed = dateparse.parse_datetime(value)
+            if parsed is not None:
+                return parsed
+            parsed = dateparser.parse(value)
             if parsed is not None:
                 return parsed
         except ValueError:
