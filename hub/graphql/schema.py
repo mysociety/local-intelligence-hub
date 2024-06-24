@@ -18,6 +18,7 @@ from strawberry_django.permissions import IsAuthenticated
 from hub import models
 from hub.graphql import mutations as mutation_types
 from hub.graphql.extensions.analytics import APIAnalyticsExtension
+from hub.graphql.extensions.api_blacklist import APIBlacklistGuard
 from hub.graphql.types import model_types, public_queries
 from hub.graphql.utils import graphql_type_to_dict
 
@@ -246,8 +247,9 @@ schema = CustomErrorLoggingSchema(
     query=Query,
     mutation=Mutation,
     extensions=[
-        DjangoOptimizerExtension,  # not required, but highly recommended
+        APIBlacklistGuard,
         APIAnalyticsExtension,
+        DjangoOptimizerExtension,  # not required, but highly recommended
         QueryDepthLimiter(max_depth=10),
     ],
 )

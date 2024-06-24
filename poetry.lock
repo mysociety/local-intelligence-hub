@@ -2633,20 +2633,6 @@ files = [
 ]
 
 [[package]]
-name = "python-multipart"
-version = "0.0.9"
-description = "A streaming multipart parser for Python"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "python_multipart-0.0.9-py3-none-any.whl", hash = "sha256:97ca7b8ea7b05f977dc3849c3ba99d51689822fab725c3703af7c866a0c2b215"},
-    {file = "python_multipart-0.0.9.tar.gz", hash = "sha256:03f54688c663f1b7977105f021043b0793151e4cb1c1a9d4a11fc13d622c4026"},
-]
-
-[package.extras]
-dev = ["atomicwrites (==1.4.1)", "attrs (==23.2.0)", "coverage (==7.4.1)", "hatch", "invoke (==2.2.0)", "more-itertools (==10.2.0)", "pbr (==6.0.0)", "pluggy (==1.4.0)", "py (==1.11.0)", "pytest (==8.0.0)", "pytest-cov (==4.1.0)", "pytest-timeout (==2.2.0)", "pyyaml (==6.0.1)", "ruff (==0.2.1)"]
-
-[[package]]
 name = "python-slugify"
 version = "8.0.4"
 description = "A Python slugify application that also handles Unicode"
@@ -3257,23 +3243,6 @@ dev = ["build", "hatch"]
 doc = ["sphinx"]
 
 [[package]]
-name = "starlette"
-version = "0.37.2"
-description = "The little ASGI library that shines."
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "starlette-0.37.2-py3-none-any.whl", hash = "sha256:6fe59f29268538e5d0d182f2791a479a0c64638e6935d1c6989e63fb2699c6ee"},
-    {file = "starlette-0.37.2.tar.gz", hash = "sha256:9af890290133b79fc3db55474ade20f6220a364a0402e0b556e7cd5e1e093823"},
-]
-
-[package.dependencies]
-anyio = ">=3.4.0,<5"
-
-[package.extras]
-full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.7)", "pyyaml"]
-
-[[package]]
 name = "strawberry-django-auth"
 version = "0.376.11"
 description = "Graphql authentication system with Strawberry for Django."
@@ -3310,20 +3279,18 @@ strawberry-graphql-django = ">=0.9"
 
 [[package]]
 name = "strawberry-graphql"
-version = "0.226.2"
+version = "0.235.0"
 description = "A library for creating GraphQL APIs"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "strawberry_graphql-0.226.2-py3-none-any.whl", hash = "sha256:e22556ee82f2fccc37518c86f7018d78f81890baaf06a881bbfa07eca2a6a37f"},
-    {file = "strawberry_graphql-0.226.2.tar.gz", hash = "sha256:11f8da50838b405fcc4d31453d0184a0703f94b2c7d03b4abf50c39678353c95"},
+    {file = "strawberry_graphql-0.235.0-py3-none-any.whl", hash = "sha256:68b6e5af8c2b0c071e80a7ce5162028568f152410821a8733ef03d2bc5cca95a"},
+    {file = "strawberry_graphql-0.235.0.tar.gz", hash = "sha256:86d32bd535bbc8e4c2a0c00aa467119652946d57c6648b53ce36574299bff4b1"},
 ]
 
 [package.dependencies]
 graphql-core = ">=3.2.0,<3.3.0"
 python-dateutil = ">=2.7.0,<3.0.0"
-python-multipart = {version = ">=0.0.7", optional = true, markers = "extra == \"asgi\" or extra == \"debug-server\" or extra == \"fastapi\""}
-starlette = {version = ">=0.18.0", optional = true, markers = "extra == \"asgi\" or extra == \"debug-server\""}
 typing-extensions = ">=4.5.0"
 
 [package.extras]
@@ -3331,7 +3298,7 @@ aiohttp = ["aiohttp (>=3.7.4.post0,<4.0.0)"]
 asgi = ["python-multipart (>=0.0.7)", "starlette (>=0.18.0)"]
 chalice = ["chalice (>=1.22,<2.0)"]
 channels = ["asgiref (>=3.2,<4.0)", "channels (>=3.0.5)"]
-cli = ["libcst (>=0.4.7)", "pygments (>=2.3,<3.0)", "rich (>=12.0.0)", "typer (>=0.7.0)"]
+cli = ["graphlib_backport", "libcst (>=0.4.7)", "pygments (>=2.3,<3.0)", "rich (>=12.0.0)", "typer (>=0.7.0)"]
 debug = ["libcst (>=0.4.7)", "rich (>=12.0.0)"]
 debug-server = ["libcst (>=0.4.7)", "pygments (>=2.3,<3.0)", "python-multipart (>=0.0.7)", "rich (>=12.0.0)", "starlette (>=0.18.0)", "typer (>=0.7.0)", "uvicorn (>=0.11.6)"]
 django = ["Django (>=3.2)", "asgiref (>=3.2,<4.0)"]
@@ -3651,4 +3618,4 @@ wand = ["Wand (>=0.6,<1.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">3.11,<=3.12.3"
-content-hash = "c44c7d105eada38c77d5526c1596180fc291a78eedefb98201f8d0713539ef9c"
+content-hash = "86897d0ff33018daaf9707273b3ed5e5ab27dc3a46b9546eb71322d73007f8c6"
