@@ -57,7 +57,7 @@ export const useHubRenderContext = () => {
 
 export const HubRenderContextProvider = ({ hostname, children }: { hostname: string, children: any }) => {
   const pathname = usePathname()
-  const isMultitenancyMode = pathname.includes("hub/render")
+  const isMultitenancyMode = !pathname.includes("hub/render")
   const [postcode, setPostcode] = useQueryState("postcode", parseAsString)
   const [eventId, setEventId] = useQueryState("event", parseAsInteger)
   const shouldZoomOut = !postcode && !eventId
