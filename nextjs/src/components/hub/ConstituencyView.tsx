@@ -127,7 +127,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
                 {hubContext.hostname === 'peopleclimatenature.org' && (
                   <>
                     <div className="w-full border-b border-meepGray-200 my-6"></div>
-                    <div className="flex flex-col gap-2 text-hub-primary-neutral ">
+                    <div className="flex flex-col gap-2 text-hub-primary-neutral px-6 my-6">
                       <HustingsCTA />
                     </div>
                   </>
@@ -150,7 +150,7 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
             {hubContext.hostname === 'peopleclimatenature.org' && (
               <>
                 <div className="w-full border-b border-meepGray-200 my-6"></div>
-                <div className="flex flex-col gap-2 text-hub-primary-neutral px-6">
+                <div className="flex flex-col gap-2 text-hub-primary-neutral px-6 my-6">
                     <h3 className='font-bold'>Other ways to get involved</h3>
                     <p>There are lots of easy ways you can show your candidates you care about people, climate and nature. Take a look at this page here to find out more.</p>
                     <Link href="/get-involved" className='text-hub-primary-600 font-bold'>Learn more &rarr;</Link>
