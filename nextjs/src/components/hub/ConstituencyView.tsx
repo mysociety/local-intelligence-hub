@@ -44,9 +44,10 @@ export function ConstituencyView({ data }: { data: GetLocalDataQuery['postcodeSe
 
   const events = data?.genericDataForHub?.filter(
     (d) =>
-      // event type
-      d.dataType.dataSet.externalDataSource.dataType === DataSourceType.Event
+      d.dataType.dataSet.externalDataSource.dataType === DataSourceType.Event &&
+      !!d.startTime
   )
+
   .sort((a, b) =>
     // most recent first
     isAfter(new Date(a.startTime), new Date(b.startTime))
