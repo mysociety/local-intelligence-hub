@@ -32,6 +32,7 @@ env = environ.Env(
     MAILCHIMP_TCC_KEY=(str, ""),
     MAILCHIMP_TCC_SERVER_PREFIX=(str, ""),
     MAILCHIMP_TCC_LIST_ID=(str, ""),
+    PARTY_CONTROL_URL=(str, ""),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -57,6 +58,9 @@ MAILCHIMP_MYSOC_CLIMATE_INTEREST = env("MAILCHIMP_MYSOC_CLIMATE_INTEREST")
 MAILCHIMP_TCC_KEY = env("MAILCHIMP_TCC_KEY")
 MAILCHIMP_TCC_SERVER_PREFIX = env("MAILCHIMP_TCC_SERVER_PREFIX")
 MAILCHIMP_TCC_LIST_ID = env("MAILCHIMP_TCC_LIST_ID")
+
+# import config
+PARTY_CONTROL_URL = env("PARTY_CONTROL_URL")
 
 # make sure CSRF checking still works behind load balancers
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

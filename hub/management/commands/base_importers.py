@@ -17,6 +17,24 @@ from utils.mapit import (
     RateLimitException,
 )
 
+party_shades = {
+    "Alba Party": "#005EB8",
+    "Alliance Party of Northern Ireland": "#F6CB2F",
+    "Conservative Party": "#0087DC",
+    "Democratic Unionist Party": "#D46A4C",
+    "Green Party": "#6AB023",
+    "Labour Co-operative": "#E4003B",
+    "Labour Party": "#E4003B",
+    "Liberal Democrats": "#FAA61A",
+    "Plaid Cymru": "#005B54",
+    "Scottish National Party": "#FDF38E",
+    "Sinn Féin": "#326760",
+    "Social Democratic and Labour Party": "#2AA82C",
+    "Reclaim": "#101122",
+    "No overall control": "#EEE",
+    "Independents": "#DCDCDC",
+}
+
 
 class MultipleAreaTypesMixin:
     def handle(self, *args, **options):
