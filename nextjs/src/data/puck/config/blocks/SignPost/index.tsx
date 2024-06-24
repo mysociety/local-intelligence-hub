@@ -71,12 +71,12 @@ export const SignPost: ComponentConfig<SignPostProps> = {
                     </div>
                 </Link>
                 <Link href={actionsSubtitleURL} className=" col-span-1  w-full h-full md:aspect-square aspect-video overflow-clip rounded-[20px] hover:shadow-hover transition-all">
-                    <div className="p-5 bg-jungle-green-600 text-white h-full relative gap-2 flex flex-col justify-end">
+                    <div className="p-5 bg-hub-primary-600 text-white h-full relative gap-2 flex flex-col justify-end">
                         <div className="z-10 flex flex-col gap-2">
 
                             <Image src={ArrowTopRight} width={30} alt="arrow" />
                             <h2 className="lg:text-hub4xl text-hub3xl tracking-tight">Actions</h2>
-                            <p className="text-hubH5 text-jungle-green-100">{resourcesSubtitle}</p>
+                            <p className="text-hubH5 text-hub-primary-100">{resourcesSubtitle}</p>
                         </div>
 
                         <Image
@@ -89,7 +89,7 @@ export const SignPost: ComponentConfig<SignPostProps> = {
                     </div>
                 </Link>
                 <Link href="/map" className=" md:col-span-2 w-full h-full md:aspect-auto aspect-video overflow-clip rounded-[20px] hover:shadow-hover transition-all">
-                    <div className="p-5 bg-jungle-green-50 h-full relative gap-2 flex flex-col justify-end">
+                    <div className="p-5 bg-hub-primary-50 h-full relative gap-2 flex flex-col justify-end">
                         <div className="z-10 flex flex-col gap-2">
                             <Image src={ArrowTopRight} width={30} alt="arrow" />
                             <h2 className="lg:text-hub4xl text-hub3xl tracking-tight">Event Map</h2>

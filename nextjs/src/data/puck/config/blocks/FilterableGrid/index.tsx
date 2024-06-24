@@ -289,7 +289,7 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                             zIndex: 1
                         }} />
                         <h2 className='relative z-[2] text-hub4xl md:text-hub6xl'>Ways to get involved</h2>
-                        <p className='relative z-[2] text-jungle-green-neutral text-hub2xl'>Here{"'"}s how you can help centre people, climate and nature this election.</p>
+                        <p className='relative z-[2] text-hub-primary-neutral text-hub2xl'>Here{"'"}s how you can help centre people, climate and nature this election.</p>
                     </header>
                     <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 lg:gap-4 xl:gap-5'>
                         <div className="relative">
@@ -297,13 +297,13 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                         </div>
                         <div className='lg:col-span-2 grid lg:grid-cols-2 gap-2 md:gap-3 lg:gap-4 xl:gap-5'>
                             {categories?.map((category, index) => (
-                                <div key={index} className='rounded-[20px] hover:bg-jungle-green-100 transition-all cursor-pointer p-4 space-y-1' onClick={() => {
+                                <div key={index} className='rounded-[20px] hover:bg-hub-primary-100 transition-all cursor-pointer p-4 space-y-1' onClick={() => {
                                     setCategory(category.urlSlug)
                                     document.getElementById("latest")?.scrollIntoView({ behavior: "smooth" })
                                 }}>
                                     <Image src={tccHeart} width={20} height={20} alt="arrow" className="mb-5"/>
-                                    <h2 className="text-jungle-green-600 text-hub2xl tracking-tight">{category.title}</h2>
-                                    <PuckText className='text-jungle-green-neutral' text={category.description} />
+                                    <h2 className="text-hub-primary-600 text-hub2xl tracking-tight">{category.title}</h2>
+                                    <PuckText className='text-hub-primary-neutral' text={category.description} />
                                 </div>
                             ))}
                         </div>
@@ -323,7 +323,7 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                                 maxHeight: 275
                             }} />
                             <h2 className='relative z-[2] text-hub4xl md:text-hub6xl'>Latest from across the campaign</h2>
-                            <p className='relative z-[2] text-jungle-green-neutral text-hub2xl'>
+                            <p className='relative z-[2] text-hub-primary-neutral text-hub2xl'>
                                 Explore our wall of activity from the hub
                             </p>
                         </header>
@@ -334,14 +334,14 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                                 setTimeout(() => {
                                     document.getElementById("get-involved")?.scrollIntoView({ behavior: "smooth" })
                                 }, 500)
-                            }} className='cursor-pointer hover:text-jungle-green-600'>
+                            }} className='cursor-pointer hover:text-hub-primary-600'>
                                 &larr; Back to Ways To Get Involved
                             </div>
                             <h2 className='text-hub4xl md:text-hub6xl'>{categoryData.title}</h2>
-                            <PuckText className='text-jungle-green-neutral text-hub2xl' text={categoryData.description} />
+                            <PuckText className='text-hub-primary-neutral text-hub2xl' text={categoryData.description} />
                         </header>
                     )}
-                    <div className='flex flex-row gap-4 items-center sticky top-[75px] z-20 bg-[#f2f2f2] py-3 border-b border-meepGray-200 mb-4'>
+                    <div className='flex flex-row gap-4 items-center sticky top-[75px] z-20 bg-hub-background py-3 border-b border-meepGray-200 mb-4'>
                         <div className='text-meepGray-400 uppercase'>Filter Hub Content:</div>
                         <button
                             onClick={() => {
@@ -350,7 +350,7 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                             }}
                             className={twMerge(
                                 "rounded-full px-4 py-1 cursor-pointer uppercase text-sm font-light",
-                                !tag ? 'bg-jungle-green-300 text-jungle-green-600' : 'bg-jungle-green-100 text-jungle-green-600'
+                                !tag ? 'bg-hub-primary-300 text-hub-primary-600' : 'bg-hub-primary-100 text-hub-primary-600'
                             )}
                         >
                             all
@@ -367,7 +367,7 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                                 }}
                                 className={twMerge(
                                     "rounded-full px-3 py-1 cursor-pointer uppercase text-sm font-light",
-                                    tag === itemType.value ? 'bg-jungle-green-300 text-jungle-green-600' : 'bg-jungle-green-100 text-jungle-green-600'
+                                    tag === itemType.value ? 'bg-hub-primary-300 text-hub-primary-600' : 'bg-hub-primary-100 text-hub-primary-600'
                                 )}
                             >
                                 {pluralize(itemType.label)}
@@ -398,7 +398,7 @@ function PostcodeSearch({ className }: { className?: string }) {
     const [postcode, setPostcode] = useState("")
     return (
         <article className={twMerge('overflow-clip rounded-[20px] hover:shadow-hover transition-all', className)}>
-            <div className="p-5 bg-jungle-green-50 pt-60 relative gap-2 flex flex-col justify-end">
+            <div className="p-5 bg-hub-primary-50 pt-60 relative gap-2 flex flex-col justify-end">
                 <div className="z-10 flex flex-col gap-2">
                     {/* <Image src={ArrowTopRight} width={30} alt="arrow" /> */}
                     <h2 className="lg:text-hub4xl text-hub3xl tracking-tight">Near me</h2>
@@ -407,24 +407,24 @@ function PostcodeSearch({ className }: { className?: string }) {
                         e.preventDefault()
                         router.push(`/map/postcode/${postcode}`);
                     }}>
-                        <div className=" flex items-center relative text-jungle-green-600">
+                        <div className=" flex items-center relative text-hub-primary-600">
                             <Search className="absolute ml-2" />
                             <Input
                                 placeholder="postcode"
                                 autoComplete="postal-code"
-                                className=" border-hub-foreground p-8 focus-visible:ring-0 text-2xl placeholder:text-hub4xl pl-10 placeholder:text-jungle-green-600 bg-jungle-green-100 border-0"
+                                className=" border-hub-foreground p-8 focus-visible:ring-0 text-2xl placeholder:text-hub4xl pl-10 placeholder:text-hub-primary-600 bg-hub-primary-100 border-0"
                                 value={postcode}
                                 onChange={e => setPostcode(e.target.value.toUpperCase().trim().replaceAll(" ", ""))}
                             />
                             <button
-                                className='bg-jungle-green-600 text-white text-lg font-bold rounded-md p-4 ml-2'
+                                className='bg-hub-primary-600 text-white text-lg font-bold rounded-md p-4 ml-2'
                                 disabled={!postcode}
                             >
                                 Search
                             </button>
                         </div>
                     </form>
-                    <p className="text-jungle-green-600 text-sm">
+                    <p className="text-hub-primary-600 text-sm">
                         Powered using <Link href="https://prototype.mapped.commonknowledge.coop" className="underline">Mapped</Link> by Common Knowledge
                     </p>
                 </div>

@@ -77,8 +77,8 @@ export default function Page({ params: { id } }: { params: Params }) {
   };
 
   return (
-    <MapProvider>
-      <JotaiProvider key={id}>
+    <JotaiProvider key={id}>
+      <MapProvider>
         <ReportContext.Provider value={{ 
           id,
           report,
@@ -90,8 +90,8 @@ export default function Page({ params: { id } }: { params: Params }) {
         }}>
           <ReportPage />
         </ReportContext.Provider>
-      </JotaiProvider>
-    </MapProvider>
+      </MapProvider>
+    </JotaiProvider>
   )
 
   function refreshReportDataQueries () {

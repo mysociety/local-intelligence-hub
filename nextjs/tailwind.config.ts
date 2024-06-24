@@ -27,7 +27,6 @@ const config = {
         'IBMPlexMono': ["IBMPlexMono", 'sans-serif'],
         'PPRightGrotesk': ['PPRightGrotesk, sans-serif'],
         'publicSans': ['publicSans, sans-serif'],
-
       },
       fontSize: {
         hub6xl: ['3.625rem', {
@@ -200,47 +199,73 @@ const config = {
           '950': '#052923',
           'neutral': '#6D6D6D',
           'bg': '#f2f2f2',
-
         },
-
         hub: {
           border: "#d4f7e7",
           input: "#76dfbb",
           ring: "#1aa680",
-          background: "hsl(var(--background))",
+          background: "var(--background)",
           foreground: "#0b493d",
           primary: {
-            DEFAULT: "hsl(var(--primary))",
-            foreground: "hsl(var(--primary-foreground))",
+            DEFAULT: "var(--primary)",
+            foreground: "var(--primary-foreground)",
+            // Generated in JS and then embeded into DOM for later reference
+            '50': "var(--primary-50)",
+            '100': "var(--primary-100)",
+            '200': "var(--primary-200)",
+            '300': "var(--primary-300)",
+            '400': "var(--primary-400)",
+            '500': "var(--primary-500)",
+            '600': "var(--primary-600)",
+            '700': "var(--primary-700)",
+            '800': "var(--primary-800)",
+            '900': "var(--primary-900)",
+            '950': "var(--primary-950)",
           },
           secondary: {
-            DEFAULT: "hsl(var(--secondary))",
-            foreground: "hsl(var(--secondary-foreground))",
+            DEFAULT: "var(--secondary)",
+            foreground: "var(--secondary-foreground)",
+            // Generated in JS and then embeded into DOM for later reference
+            '50': "var(--secondary-50)",
+            '100': "var(--secondary-100)",
+            '200': "var(--secondary-200)",
+            '300': "var(--secondary-300)",
+            '400': "var(--secondary-400)",
+            '500': "var(--secondary-500)",
+            '600': "var(--secondary-600)",
+            '700': "var(--secondary-700)",
+            '800': "var(--secondary-800)",
+            '900': "var(--secondary-900)",
+            '950': "var(--secondary-950)",
+          },
+          text: {
+            DEFAULT: "var(--text)",
+            foreground: "var(--primary-foreground)",
           },
           destructive: {
-            DEFAULT: "hsl(var(--destructive))",
-            foreground: "hsl(var(--destructive-foreground))",
+            DEFAULT: "var(--destructive)",
+            foreground: "var(--destructive-foreground)",
           },
           muted: {
-            DEFAULT: "#76dfbb",
-            foreground: "#0f8c6c",
+            DEFAULT: "var(--muted)",
+            foreground: "var(--muted-foreground)",
           },
           accent: {
-            DEFAULT: "hsl(var(--accent))",
-            foreground: "hsl(var(--accent-foreground))",
+            DEFAULT: "var(--accent)",
+            foreground: "var(--accent-foreground)",
           },
           popover: {
-            DEFAULT: "hsl(var(--popover))",
-            foreground: "hsl(var(--popover-foreground))",
+            DEFAULT: "var(--popover)",
+            foreground: "var(--popover-foreground)",
           },
           card: {
-            DEFAULT: "hsl(var(--card))",
-            foreground: "hsl(var(--card-foreground))",
+            DEFAULT: "var(--card)",
+            foreground: "var(--card-foreground)",
           },
         }
       },
       boxShadow: {
-        'hover': '0px 0px 30px 0px var(--Jungle-Green-300, #76DFBB)',
+        'hover': '0px 0px 30px 0px var(--hub-primary-300, #76DFBB)',
       },
       spacing: {
         xs: '10px',

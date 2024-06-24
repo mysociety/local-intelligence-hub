@@ -30,15 +30,22 @@ env = environ.Env(
     MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET=(bool, True),
     MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET=(bool, True),
     EMAIL_BACKEND=(str, "django.core.mail.backends.console.EmailBackend"),
+    #
     BASE_URL=(str, False),
     FRONTEND_BASE_URL=(str, False),
+    ALLOWED_HOSTS=(list, []),
+    CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3000", "https://localhost:3000"]),
+    # Required for Render blueprints
+    PROD_BASE_URL=(str, False),
+    PROD_FRONTEND_BASE_URL=(str, False),
+    PROD_ALLOWED_HOSTS=(list, []),
+    PROD_CORS_ALLOWED_ORIGINS=(list, []),
+    #
     FRONTEND_SITE_TITLE=(str, False),
     SCHEDULED_UPDATE_SECONDS_DELAY=(int, 3),
     DEBUG=(bool, False),
     HIDE_DEBUG_TOOLBAR=(bool, True),
     LOG_QUERIES=(bool, False),
-    ALLOWED_HOSTS=(list, []),
-    CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3000", "https://localhost:3000"]),
     GOOGLE_ANALYTICS=(str, ""),
     GOOGLE_SITE_VERIFICATION=(str, ""),
     GOOGLE_SHEETS_CLIENT_CONFIG=(str, "{}"),
@@ -51,10 +58,16 @@ env = environ.Env(
     TEST_MAILCHIMP_MEMBERLIST_API_KEY=(str, ""),
     TEST_MAILCHIMP_MEMBERLIST_AUDIENCE_ID=(str, ""),
     TEST_ACTIONNETWORK_MEMBERLIST_API_KEY=(str, ""),
+    SEED_AIRTABLE_MEMBERLIST_API_KEY=(str, ""),
+    SEED_AIRTABLE_MEMBERLIST_BASE_ID=(str, ""),
+    SEED_AIRTABLE_MEMBERLIST_TABLE_NAME=(str, ""),
     TEST_TICKET_TAILOR_API_KEY=(str, ""),
     TEST_GOOGLE_SHEETS_CREDENTIALS=(str, ""),
     TEST_GOOGLE_SHEETS_SPREADSHEET_ID=(str, ""),
     TEST_GOOGLE_SHEETS_SHEET_NAME=(str, ""),
+    DJANGO_SUPERUSER_USERNAME=(str, ""),
+    DJANGO_SUPERUSER_PASSWORD=(str, ""),
+    DJANGO_SUPERUSER_EMAIL=(str, ""),
     DJANGO_LOG_LEVEL=(str, "INFO"),
     DJANGO_HUB_LOG_LEVEL=(str, None),
     POSTHOG_API_KEY=(str, False),
@@ -79,6 +92,8 @@ env = environ.Env(
 
 environ.Env.read_env(BASE_DIR / ".env")
 
+environment = env("ENVIRONMENT")
+
 # Should be alphanumeric
 CRYPTOGRAPHY_KEY = env("CRYPTOGRAPHY_KEY")
 CRYPTOGRAPHY_SALT = env("CRYPTOGRAPHY_SALT")
@@ -94,16 +109,33 @@ if ENCRYPTION_SECRET_KEY is None:
 MAPBOX_ACCESS_TOKEN = env("MAPBOX_ACCESS_TOKEN")
 GOOGLE_MAPS_API_KEY = env("GOOGLE_MAPS_API_KEY")
 ELECTORAL_COMMISSION_API_KEY = env("ELECTORAL_COMMISSION_API_KEY")
-BASE_URL = env("BASE_URL")
-FRONTEND_BASE_URL = env("FRONTEND_BASE_URL")
+
+# Urls
+FRONTEND_BASE_URL = (
+    env("FRONTEND_BASE_URL")
+    if environment != "production"
+    else env("FRONTEND_BASE_URL")
+)
+BACKEND_URL = env("BASE_URL") if environment != "production" else env("PROD_BASE_URL")
+BASE_URL = BACKEND_URL
+# Network security
+ALLOWED_HOSTS = (
+    env("ALLOWED_HOSTS") if environment != "production" else env("PROD_ALLOWED_HOSTS")
+)
+CORS_ALLOWED_ORIGINS = (
+    env("CORS_ALLOWED_ORIGINS")
+    if environment != "production"
+    else env("PROD_CORS_ALLOWED_ORIGINS")
+)
+if FRONTEND_BASE_URL and FRONTEND_BASE_URL not in CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS.append(FRONTEND_BASE_URL)
+
 FRONTEND_SITE_TITLE = env("FRONTEND_SITE_TITLE")
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 EMAIL_BACKEND = env("EMAIL_BACKEND")
 HIDE_DEBUG_TOOLBAR = env("HIDE_DEBUG_TOOLBAR")
 LOG_QUERIES = env("LOG_QUERIES")
-ALLOWED_HOSTS = env("ALLOWED_HOSTS")
-CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
 CACHE_FILE = env("CACHE_FILE")
 MAPIT_URL = env("MAPIT_URL")
 MAPIT_API_KEY = env("MAPIT_API_KEY")
@@ -125,6 +157,16 @@ TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME = env(
     "TEST_AIRTABLE_CUSTOMDATALAYER_TABLE_NAME"
 )
 TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY = env("TEST_AIRTABLE_CUSTOMDATALAYER_API_KEY")
+
+# Seed data
+SEED_AIRTABLE_MEMBERLIST_API_KEY = env("SEED_AIRTABLE_MEMBERLIST_API_KEY")
+SEED_AIRTABLE_MEMBERLIST_BASE_ID = env("SEED_AIRTABLE_MEMBERLIST_BASE_ID")
+SEED_AIRTABLE_MEMBERLIST_TABLE_NAME = env("SEED_AIRTABLE_MEMBERLIST_TABLE_NAME")
+DJANGO_SUPERUSER_USERNAME = env("DJANGO_SUPERUSER_USERNAME")
+DJANGO_SUPERUSER_PASSWORD = env("DJANGO_SUPERUSER_PASSWORD")
+DJANGO_SUPERUSER_EMAIL = env("DJANGO_SUPERUSER_EMAIL")
+
+#
 DJANGO_LOG_LEVEL = env("DJANGO_LOG_LEVEL")
 DJANGO_HUB_LOG_LEVEL = env("DJANGO_HUB_LOG_LEVEL")
 DJANGO_HUB_LOG_LEVEL = (
@@ -199,6 +241,8 @@ INSTALLED_APPS = [
     "modelcluster",
     "taggit",
     "wagtail_json_widget",
+    "codemirror2",
+    "wagtail_color_panel",
 ]
 
 MIDDLEWARE = [
@@ -246,9 +290,7 @@ WSGI_APPLICATION = "local_intelligence_hub.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-DATABASES = {
-    "default": {"ENGINE": "django.contrib.gis.db.backends.postgis", **env.db()}
-}
+DATABASES = {"default": env.db(engine="django.contrib.gis.db.backends.postgis")}
 
 
 # Password validation
@@ -447,8 +489,6 @@ STRAWBERRY_DJANGO = {
 
 SCHEDULED_UPDATE_SECONDS_DELAY = env("SCHEDULED_UPDATE_SECONDS_DELAY")
 SENTRY_TRACE_SAMPLE_RATE = env("SENTRY_TRACE_SAMPLE_RATE")
-
-environment = env("ENVIRONMENT")
 
 posthog.disabled = True
 

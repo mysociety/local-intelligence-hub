@@ -9,6 +9,12 @@ class HubConfig(AppConfig):
     name = "hub"
 
     def ready(self):
+        # Makes sure all signal handlers are connected
+        # pyright: ignore[reportUnusedImport]
+        from hub import handlers  # noqa: F401
+        # pyright: ignore[reportUnusedImport]
+        from hub import custom_lookups  # noqa: F401
+
         try:
             from hub.models import refresh_tokens_cache
 

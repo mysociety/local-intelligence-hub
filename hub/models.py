@@ -33,6 +33,7 @@ import pandas as pd
 import pytz
 from asgiref.sync import async_to_sync, sync_to_async
 from benedict import benedict
+from codemirror2.widgets import CodeMirrorEditor
 from django_choices_field import TextChoicesField
 from django_jsonform.models.fields import JSONField
 from google.auth.transport.requests import Request as GoogleRequest
@@ -50,6 +51,8 @@ from strawberry.dataloader import DataLoader
 from wagtail.admin.panels import FieldPanel, ObjectList, TabbedInterface
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
 from wagtail.models import Page, Site
+from wagtail_color_panel.edit_handlers import NativeColorPanel
+from wagtail_color_panel.fields import ColorField
 from wagtail_json_widget.widgets import JSONEditorWidget
 
 import utils as lih_utils
@@ -2351,11 +2354,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
         source = ExternalDataSource.objects.get(pk=external_data_source_id)
-        default_source_permissions = source.default_data_permissions()
+        permissions: cls.DataPermissions = source.default_data_permissions()
 
         if user is None or not user.is_authenticated:
             logger.debug("No user provided, returning default permissions")
-            return default_source_permissions
+            return permissions
 
         # Check for cached permissions on this source
         user_id = user if not hasattr(user, "id") else str(user.id)
@@ -2378,29 +2381,28 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     can_display_details=False,
                 )
         if user_id is None or external_data_source.organisation is None:
-            return default_source_permissions
+            return permissions
         else:
             # If the user's org owns the source, they can see everything
-            can_display_points = external_data_source.organisation.members.filter(
+            is_owner = external_data_source.organisation.members.filter(
                 user=user_id
             ).exists()
-            can_display_details = can_display_points
+            if is_owner:
+                permissions["can_display_points"] = True
+                permissions["can_display_details"] = True
         # Otherwise, check if their org has sharing permissions at any granularity
-        if not can_display_points:
+        if not is_owner:
             permission = SharingPermission.objects.filter(
                 external_data_source=external_data_source,
                 organisation__members__user=user_id,
             ).first()
             if permission is not None:
                 if permission.visibility_record_coordinates:
-                    can_display_points = True
+                    permissions["can_display_points"] = True
                     if permission.visibility_record_details:
-                        can_display_details = True
+                        permissions["can_display_details"] = True
 
-        permissions_dict[user_id] = cls.DataPermissions(
-            can_display_points=can_display_points,
-            can_display_details=can_display_details,
-        )
+        permissions_dict[user_id] = permissions
 
         cache.set(
             permission_cache_key,
@@ -2410,7 +2412,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             timeout=60 * 60,
         )
 
-        return permissions_dict[user_id]
+        perms = permissions_dict[user_id]
+
+        logger.debug(f"Calculated new user permissions for user {user}: {perms}")
+        return perms
 
     def filter(self, filter: dict) -> dict:
         """
@@ -3992,6 +3997,9 @@ class MapReport(Report, Analytics):
         id: str
         name: str
         source: str
+        icon_image: Optional[str] = None
+        mapbox_paint: Optional[dict] = {}
+        mapbox_layout: Optional[dict] = {}
         visible: Optional[bool] = True
         """
         filter: ORM filter dict for GenericData objects like { "json__status": "Published" }
@@ -4057,7 +4065,7 @@ class HubHomepage(Page):
     subpage_types = ["hub.HubContentPage"]
 
     organisation = models.ForeignKey(
-        Organisation, on_delete=models.PROTECT, related_name="hubs"
+        Organisation, on_delete=models.CASCADE, related_name="hubs"
     )
 
     layers = models.JSONField(blank=True, null=True, default=list)
@@ -4074,15 +4082,21 @@ class HubHomepage(Page):
         related_name="+",
     )
     google_analytics_tag_id = models.CharField(max_length=100, blank=True, null=True)
+    custom_css = models.TextField(blank=True, null=True)
+    primary_colour = ColorField(blank=True, null=True)
+    secondary_colour = ColorField(blank=True, null=True)
 
-    data_panels = Page.content_panels + [
-        FieldPanel("organisation"),
-        FieldPanel("layers", widget=JSONEditorWidget),
-    ]
-
-    page_panels = [
+    page_panels = Page.content_panels + [
         FieldPanel("puck_json_content", widget=JSONEditorWidget),
         FieldPanel("nav_links", widget=JSONEditorWidget),
+        NativeColorPanel("primary_colour"),
+        NativeColorPanel("secondary_colour"),
+        FieldPanel("custom_css", widget=CodeMirrorEditor(options={"mode": "css"})),
+    ]
+
+    data_panels = [
+        FieldPanel("organisation"),
+        FieldPanel("layers", widget=JSONEditorWidget),
     ]
 
     seo_panels = Page.promote_panels + [
@@ -4115,25 +4129,29 @@ class HubHomepage(Page):
         user,
         hostname,
         port=80,
-        org_id=None,
+        org=None,
     ):
         """
         Create a new HubHomepage for a user.
         """
-        if org_id:
-            organisation = Organisation.objects.get(id=org_id)
+        if org:
+            if not isinstance(org, Organisation):
+                org = Organisation.objects.get(id=org)
         else:
-            organisation = Organisation.get_or_create_for_user(user)
+            org = Organisation.get_or_create_for_user(user)
+        if site := Site.objects.filter(hostname=hostname, port=port).first():
+            return site.root_page.specific
+
         hub = HubHomepage(
             title=hostname,
             slug=slugify(hostname),
-            organisation=organisation,
+            organisation=org,
         )
         # get root
         root_page = Page.get_first_root_node()
         root_page.add_child(instance=hub)
         hub.save()
-        Site.objects.create(
+        Site.objects.get_or_create(
             hostname=hostname, port=port, site_name=hostname, root_page=hub
         )
         return hub
@@ -4143,11 +4161,13 @@ class HubHomepage(Page):
 # used by tilserver
 @receiver(models.signals.post_save, sender=HubHomepage)
 def update_site_filter_cache_on_save(sender, instance: HubHomepage, *args, **kwargs):
-    for layer in instance.get_layers():
-        cache.set(
-            site_tile_filter_dict(instance.get_site().hostname, layer.get("source")),
-            layer.get("filter", {}),
-        )
+    site = instance.get_site()
+    if site:
+        for layer in instance.get_layers():
+            cache.set(
+                site_tile_filter_dict(site.hostname, layer.get("source")),
+                layer.get("filter", {}),
+            )
 
 
 class HubContentPage(Page):

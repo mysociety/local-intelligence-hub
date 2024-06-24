@@ -16,7 +16,7 @@ export default async function Page({ params: { hostname, slug } }: { params: Par
   })
 
   return (
-    <RenderPuck page={page.data?.hubPageByPath?.puckJsonContent} />
+    <RenderPuck hostname={hostname} page={page.data?.hubPageByPath?.puckJsonContent} />
   )
 }
 

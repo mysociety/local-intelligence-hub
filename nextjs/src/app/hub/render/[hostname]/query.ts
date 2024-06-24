@@ -14,6 +14,9 @@ export const GET_PAGE = gql`
         seoTitle
         seoImageUrl
         searchDescription
+        primaryColour
+        secondaryColour
+        customCss
         navLinks {
           link
           label

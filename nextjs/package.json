@@ -91,6 +91,7 @@
     "sonner": "^1.4.3",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
+    "theme-colors": "^0.1.0",
     "to-space-case": "^1.0.0",
     "update": "^0.7.4",
     "uuidv4": "^6.2.13",

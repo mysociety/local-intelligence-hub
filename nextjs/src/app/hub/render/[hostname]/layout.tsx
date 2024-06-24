@@ -7,6 +7,8 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { CookieConsentComponent } from "@/components/hub/CookieConsent";
 import ConsentRespectingGoogleAnalytics from "@/components/hub/ConsentRespectingGoogleAnalytics";
 import { ConsentRespectingPosthogAnalytics } from "@/components/hub/ConsentRespectingPosthogAnalytics";
+import { HubRenderContext } from "@/components/hub/HubRenderContext";
+import { RootCSS } from "@/data/puck/config/root";
 
 type Params = {
   hostname: string
@@ -15,26 +17,34 @@ type Params = {
 
 export default async function Layout({ children, params: { hostname} }: { children: React.ReactNode, params: Params }) {
   const client = getClient();
-  const page = await client.query<HostAnalyticsQuery, HostAnalyticsQueryVariables>({
-    query: HOST_ANALYTICS,
+  const hubQuery = await client.query<HostAnalyticsQuery, HostAnalyticsQueryVariables>({
+    query: SSR_HUB_DATA,
     variables: { hostname }
   })
   return <>
+    <RootCSS
+      primaryColour={hubQuery.data.hubByHostname?.primaryColour || "#555"}
+      secondaryColour={hubQuery.data.hubByHostname?.secondaryColour || "#555"}
+      customCss={hubQuery.data.hubByHostname?.customCss || ""}
+    />
     {children}
     <CookieConsentComponent />
     <ConsentRespectingPosthogAnalytics />
-    {page.data?.hubByHostname?.googleAnalyticsTagId && (
+    {hubQuery.data.hubByHostname?.googleAnalyticsTagId && (
       <ConsentRespectingGoogleAnalytics
-        googleAnalyticsTagId={page.data?.hubByHostname.googleAnalyticsTagId}
+        googleAnalyticsTagId={hubQuery.data.hubByHostname?.googleAnalyticsTagId}
       />
     )}
   </>
 }
 
-const HOST_ANALYTICS = gql`
+const SSR_HUB_DATA = gql`
   query HostAnalytics($hostname: String!) {
     hubByHostname(hostname: $hostname) {
       googleAnalyticsTagId
+      primaryColour
+      secondaryColour
+      customCss
     }
   }
 `

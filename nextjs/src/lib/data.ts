@@ -1,5 +1,5 @@
 import { CrmType } from "@/__generated__/graphql";
-import { AirtableLogo, ActionNetworkLogo, MailchimpIcon, MailchimpLogo, GoogleSheetsIcon, CiviCRMLogo, NationBuilderLogo, AirtableIcon, ActionNetworkIcon, TicketTailorLogo, TicketTailorIcon } from "@/components/logos";
+import { AirtableLogo, ActionNetworkLogo, MailchimpIcon, MailchimpLogo, GoogleSheetsIcon, GoogleSheetsLogo, CiviCRMLogo, NationBuilderLogo, AirtableIcon, ActionNetworkIcon, TicketTailorLogo, TicketTailorIcon } from "@/components/logos";
 
 export const externalDataSourceOptions: Record<CrmType, {
   key: CrmType,
@@ -46,7 +46,7 @@ export const externalDataSourceOptions: Record<CrmType, {
     modelName: "editableGoogleSheetsSource",
     name: "Google Sheets",
     icon: GoogleSheetsIcon,
-    logo: GoogleSheetsIcon,
+    logo: GoogleSheetsLogo,
     screenshot: "/googleSheets-screenshot.png",
     supported: true,
     marketingPageHref: 'integrations/google-sheets'
