@@ -85,6 +85,9 @@
 </div>
     <script src="/static/js/mini_lookup.js" type="text/javascript"></script>
     <script>
+
+        const copyButton = document.getElementById("copyButton");
+
         fetch("/static/lookup_data/pcon_2024.json")
             .then(response => response.json())
             .then(data => {
@@ -116,6 +119,10 @@
             var postcodes = document.getElementById("postcodes").value.split("\n");
             var constituencies = postcodes.map(postcode => lookup.getValue(postcode));
 
+            copyButton.classList.remove("btn-success");
+            copyButton.classList.add("btn-primary");
+            copyButton.textContent = "Copy Constituencies to clipboard";
+
             // if output_type is not mySoc ID, convert the constituency ids to the desired output
             if (output_type !== "mysoc_id") {
                 constituencies = constituencies.map(constituency => {
@@ -144,25 +151,17 @@
             element.addEventListener("input", process);
         });
 
-        document.getElementById("copyButton").addEventListener("click", function () {
+        copyButton.addEventListener("click", function () {
             var constituenciesText = document.getElementById("constituencies").value;
             navigator.clipboard.writeText(constituenciesText)
                 .then(() => {
-                    console.log("Constituencies copied to clipboard");
+                    copyButton.classList.remove("btn-primary");
+                    copyButton.classList.add("btn-success");
+                    copyButton.textContent = "Copied to clipboard";  
                 })
                 .catch(error => {
                     console.error("Error copying constituencies to clipboard:", error);
                 });
-            // change the copyButton class to btn-success and its text to 'Copied to clipboard'
-            // for two seconds before reverting to the original class and text
-            document.getElementById("copyButton").classList.remove("btn-primary");
-            document.getElementById("copyButton").classList.add("btn-success");
-            document.getElementById("copyButton").textContent = "Copied to clipboard";
-            setTimeout(function () {
-                document.getElementById("copyButton").classList.remove("btn-success");
-                document.getElementById("copyButton").classList.add("btn-primary");
-                document.getElementById("copyButton").textContent = "Copy Constituencies to clipboard";
-            }, 500);
         });
     </script>
 
