@@ -130,7 +130,7 @@
         function log_count(numPostcodes) {
             // if trackEvent is defined, log the number of postcodes processed
             if (typeof trackEvent === "function") {
-                    trackEvent("postcode_tool", {"count": numPostcodes});
+                    trackEvent("postcode_tool", {"postcode_count": numPostcodes});
             }
         }
 
