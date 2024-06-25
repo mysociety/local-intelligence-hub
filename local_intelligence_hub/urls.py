@@ -57,7 +57,7 @@ urlpatterns = [
         area.UnFavouriteDataSetView.as_view(),
         name="unfavourite_dataset",
     ),
-    path("tools/postcode", tools.PostcodeView.as_view(), name="postcode_converter"),
+    path("tools/postcode/", tools.PostcodeView.as_view(), name="postcode_converter"),
     path("sources/", core.SourcesView.as_view(), name="sources"),
     path(
         "future-constituencies/",
