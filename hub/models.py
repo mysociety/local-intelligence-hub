@@ -1300,29 +1300,35 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     # to be implemented by subclasses
 
     def capture_event(self, event: str, data: dict):
-        posthog.group_identify('external_data_source', str(self.id), {
-            'name': self.name,
-            'data_type': self.data_type,
-            'crm_type': self.crm_type if hasattr(self, 'crm_type') else str(self.__class__),
-            'point_geography_type': self.geography_column_type,
-            'organisation_id': self.organisation.pk,
-            'organisation_name': self.organisation.name,
-            'organisation_slug': self.organisation.slug,
-            'created_at': self.created_at
-        })
+        posthog.group_identify(
+            "external_data_source",
+            str(self.id),
+            {
+                "name": self.name,
+                "data_type": self.data_type,
+                "crm_type": (
+                    self.crm_type if hasattr(self, "crm_type") else str(self.__class__)
+                ),
+                "point_geography_type": self.geography_column_type,
+                "organisation_id": self.organisation.pk,
+                "organisation_name": self.organisation.name,
+                "organisation_slug": self.organisation.slug,
+                "created_at": self.created_at,
+            },
+        )
 
         posthog.capture(
             "commonknowledge-server-worker",
             event,
             groups={
-                'organisation': self.organisation.pk,
-                'external_data_source': str(self.id)
+                "organisation": self.organisation.pk,
+                "external_data_source": str(self.id),
             },
             external_data_source_id=str(self.id),
             external_data_source_name=self.name,
             organsiation_id=self.organisation.pk,
             organisation_name=self.organisation.name,
-            **data
+            **data,
         )
 
     def healthcheck(self):
