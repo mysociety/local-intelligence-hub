@@ -30,6 +30,7 @@ import googleapiclient.discovery
 import httpx
 import numpy as np
 import pandas as pd
+import posthog
 import pytz
 from asgiref.sync import async_to_sync, sync_to_async
 from benedict import benedict
@@ -1298,6 +1299,32 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     # CRM methods
     # to be implemented by subclasses
 
+    def capture_event(self, event: str, data: dict):
+        posthog.group_identify('external_data_source', str(self.id), {
+            'name': self.name,
+            'data_type': self.data_type,
+            'crm_type': self.crm_type if hasattr(self, 'crm_type') else str(self.__class__),
+            'point_geography_type': self.geography_column_type,
+            'organisation_id': self.organisation.pk,
+            'organisation_name': self.organisation.name,
+            'organisation_slug': self.organisation.slug,
+            'created_at': self.created_at
+        })
+
+        posthog.capture(
+            "commonknowledge-server-worker",
+            event,
+            groups={
+                'organisation': self.organisation.pk,
+                'external_data_source': str(self.id)
+            },
+            external_data_source_id=str(self.id),
+            external_data_source_name=self.name,
+            organsiation_id=self.organisation.pk,
+            organisation_name=self.organisation.name,
+            **data
+        )
+
     def healthcheck(self):
         """
         Check the connection to the API.
@@ -2535,11 +2562,13 @@ class AirtableSource(ExternalDataSource):
         return record["fields"]
 
     async def update_one(self, mapped_record, **kwargs):
+        self.capture_event("data update", count=1)
         return self.table.update(
             self.get_record_id(mapped_record["member"]), mapped_record["update_fields"]
         )
 
     async def update_many(self, mapped_records, **kwargs):
+        self.capture_event("data update", count=len(mapped_records))
         return self.table.batch_update(
             [
                 {
@@ -2559,7 +2588,7 @@ class AirtableSource(ExternalDataSource):
                     "dataTypes": ["tableData"],
                     "changeTypes": [
                         "add",
-                        "update",
+                        "data update",
                     ],
                 }
             }
@@ -2964,6 +2993,7 @@ class MailchimpSource(ExternalDataSource):
                 logger.error(f"Error updating Mailchimp record {subscriber_hash}: {e}")
 
     async def update_one(self, mapped_record, **kwargs):
+        self.capture_event("data update", count=1)
         subscriber_hash = self.get_record_id(mapped_record["member"])
         # Have to get the existing member to update the merge fields (the API does not patch the object)
         # TODO: save all the merge fields in our database so we don't have to do this?
@@ -3282,6 +3312,7 @@ class ActionNetworkSource(ExternalDataSource):
     async def update_one(
         self, mapped_record, action_network_background_processing=True, **kwargs
     ):
+        self.capture_event("data update", count=1)
         if len(mapped_record.get("update_fields", {})) == 0:
             return
         try:
@@ -3595,9 +3626,11 @@ class EditableGoogleSheetsSource(ExternalDataSource):
         return record
 
     async def update_one(self, mapped_record, **kwargs):
+        self.capture_event("data update", count=1)
         return await self.update_many([mapped_record])
 
     async def update_many(self, mapped_records, **kwargs):
+        self.capture_event("data update", count=len(mapped_records))
         record_ids = [record["member"][self.id_field] for record in mapped_records]
         row_numbers = self.fetch_row_numbers_for_ids(record_ids)
         logger.debug(
