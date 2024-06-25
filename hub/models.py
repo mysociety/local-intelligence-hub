@@ -2594,7 +2594,7 @@ class AirtableSource(ExternalDataSource):
                     "dataTypes": ["tableData"],
                     "changeTypes": [
                         "add",
-                        "data update",
+                        "update",
                     ],
                 }
             }
