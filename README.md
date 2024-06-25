@@ -82,3 +82,7 @@ The first time you run `script/test`, it will ask whether you want the tests to 
 You can run the linting and formatting suite from inside or outside the docker container:
 
     script/lint
+
+## Licencing
+
+`pcon.json` and `pcon_2024.json` are created from https://pages.mysociety.org/2025-constituencies/ - and are Creative Commons licenced. 
