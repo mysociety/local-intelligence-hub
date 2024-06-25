@@ -18,7 +18,7 @@
 
         <p>Paste a column from Excel or Google Sheets into the left-hand box, and constituencies will appear in the right-hand box.</p>
 
-        <p>Copy these back to your spreadsheet, and you're done. For more complex approaches, use <a href="https://mapit.mysociety.org">MapIt</a>.</p>
+        <p>Copy these back to your spreadsheet, and you're done. For more complex approaches, use <a href="https://mapit.mysociety.org">MapIt</a>, or <a href="https://pages.mysociety.org/2025-constituencies/">download the source data</a>.</p>
 
         <p>This all happens on your own computer, the postcodes are not sent to our server.</p>
 
@@ -74,7 +74,7 @@
         <ul>
         <li>This tool is making our postcode lookup file accessible in a browser - this <a href="https://pages.mysociety.org/2025-constituencies/">is available to download</a>. </li>
         <li>This tool does not work for postcodes in Northern Ireland due to licensing issues - <a href="https://mapit.mysociety.org/">Mapit</a> and its <a href="https://mapit.mysociety.org/bulk/">spreadsheet converter</a> can be used for Northern Ireland postcodes.  </li>
-        <li>Postcode lookups are not accurate for all addresses - on (rare) occasions different addresses in the same postcode are in different constituencies</li>
+        <li>Postcode lookups are not accurate for all addresses - on (rare) occasions different addresses in the same postcode are in different constituencies.</li>
         <li>This lookup may be inaccurate for postcodes created in the last year. </li>
 
 
@@ -83,6 +83,27 @@
 
     </div>
 </div>
+<aside class="py-4 py-lg-5 bg-yellow-100 border-top d-print-none">
+    <div class="container">
+        <div class="row">
+          {% if not user.is_authenticated %}
+            <div class="col-lg-5 me-lg-auto">
+                <div class="d-flex align-items-center">
+                    {% include 'hub/includes/icons/tcc-heart.html' with width="3em" height="3em" classes="me-3 me-lg-4 flex-shrink-0 flex-grow-0" %}
+                    <div>
+                        <h2 class="h4">Climate Coalition member?</h2>
+                        <p class="mb-0"><a href="{% url 'login' %}">Sign in</a> or <a href="{% url 'signup' %}">request an account</a> to access exclusive members-only MRP and local movement data.</p>
+                    </div>
+                </div>
+            </div>
+          {% endif %}
+            <div class="col-lg-6">
+                {% include 'hub/includes/mailing-list-form.html' with classes="js-collapsable-mailing-list-form" %}
+            </div>
+        </div>
+    </div>
+</aside>
+
     <script src="/static/js/mini_lookup.js" type="text/javascript"></script>
     <script>
 
