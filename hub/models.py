@@ -1299,7 +1299,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     # CRM methods
     # to be implemented by subclasses
 
-    async def capture_event(self, event: str, data: dict):
+    def capture_event(self, event: str, data: dict):
         posthog.group_identify(
             "external_data_source",
             str(self.id),
@@ -2570,13 +2570,13 @@ class AirtableSource(ExternalDataSource):
         return record["fields"]
 
     async def update_one(self, mapped_record, **kwargs):
-        await self.capture_event("data update", data=dict(count=1))
+        await sync_to_async(self.capture_event)("data update", data=dict(count=1))
         return self.table.update(
             self.get_record_id(mapped_record["member"]), mapped_record["update_fields"]
         )
 
     async def update_many(self, mapped_records, **kwargs):
-        await self.capture_event("data update", data=dict(count=len(mapped_records)))
+        await sync_to_async(self.capture_event)("data update", data=dict(count=len(mapped_records)))
         return self.table.batch_update(
             [
                 {
@@ -3001,7 +3001,7 @@ class MailchimpSource(ExternalDataSource):
                 logger.error(f"Error updating Mailchimp record {subscriber_hash}: {e}")
 
     async def update_one(self, mapped_record, **kwargs):
-        await self.capture_event("data update", data=dict(count=1))
+        await sync_to_async(self.capture_event)("data update", data=dict(count=1))
         subscriber_hash = self.get_record_id(mapped_record["member"])
         # Have to get the existing member to update the merge fields (the API does not patch the object)
         # TODO: save all the merge fields in our database so we don't have to do this?
@@ -3320,7 +3320,7 @@ class ActionNetworkSource(ExternalDataSource):
     async def update_one(
         self, mapped_record, action_network_background_processing=True, **kwargs
     ):
-        await self.capture_event("data update", data=dict(count=1))
+        await sync_to_async(self.capture_event)("data update", data=dict(count=1))
         if len(mapped_record.get("update_fields", {})) == 0:
             return
         try:
@@ -3634,11 +3634,11 @@ class EditableGoogleSheetsSource(ExternalDataSource):
         return record
 
     async def update_one(self, mapped_record, **kwargs):
-        await self.capture_event("data update", data=dict(count=1))
+        await sync_to_async(self.capture_event)("data update", data=dict(count=1))
         return await self.update_many([mapped_record])
 
     async def update_many(self, mapped_records, **kwargs):
-        await self.capture_event("data update", data=dict(count=len(mapped_records)))
+        await sync_to_async(self.capture_event)("data update", data=dict(count=len(mapped_records)))
         record_ids = [record["member"][self.id_field] for record in mapped_records]
         row_numbers = self.fetch_row_numbers_for_ids(record_ids)
         logger.debug(
