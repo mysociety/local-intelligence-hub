@@ -17,9 +17,9 @@ class Command(BaseCommand):
 
     """
     This uses the geopackage from
-      https://pages.mysociety.org/2025-constituencies/datasets/parliament_con_2024/latest
+      https://pages.mysociety.org/2025-constituencies/datasets/parliament_con_2025/latest
     and then run
-      ogr2ogr -f GeoJSON new_constituencies.json parl_constituencies_2024.gpkg -simplify 0.001
+      ogr2ogr -f GeoJSON new_constituencies.json parl_constituencies_2025.gpkg -simplify 0.001
     to generate a GeoJSON file to import.
     """
     data_file = settings.BASE_DIR / "data" / "new_constituencies.json"
@@ -71,9 +71,9 @@ class Command(BaseCommand):
         constituency_lookup = (
             get_dataset_df(
                 repo_name="2025-constituencies",
-                package_name="parliament_con_2024",
+                package_name="parliament_con_2025",
                 version_name="latest",
-                file_name="parl_constituencies_2024.csv",
+                file_name="parl_constituencies_2025.csv",
             )
             .set_index("short_code")["gss_code"]
             .to_dict()
