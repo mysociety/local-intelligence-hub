@@ -1303,7 +1303,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         posthog.group_identify(
             "external_data_source",
             str(self.id),
-            {
+            properties={
                 "name": self.name,
                 "data_type": self.data_type,
                 "crm_type": (
@@ -1324,11 +1324,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 "organisation": self.organisation.pk,
                 "external_data_source": str(self.id),
             },
-            external_data_source_id=str(self.id),
-            external_data_source_name=self.name,
-            organsiation_id=self.organisation.pk,
-            organisation_name=self.organisation.name,
-            **(data or {})
+            properties=dict(
+                external_data_source_id=str(self.id),
+                external_data_source_name=self.name,
+                organsiation_id=self.organisation.pk,
+                organisation_name=self.organisation.name,
+                **(data or {})
+            )
         )
 
     def healthcheck(self):

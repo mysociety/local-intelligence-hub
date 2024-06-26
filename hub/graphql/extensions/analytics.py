@@ -36,6 +36,6 @@ class APIAnalyticsExtension(SchemaExtension):
 
                 if not posthog.disabled:
                     posthog.identify(user.id, {"email": user.email})
-                    posthog.capture(user.id, "API request", payload)
+                    posthog.capture(user.id, "API request", properties=payload)
         except Exception as e:
             pass
