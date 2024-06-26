@@ -14,7 +14,7 @@ class PostcodesIOCodes:
     admin_ward: str
     parish: Optional[str]
     parliamentary_constituency: str
-    parliamentary_constituency_2025: str
+    parliamentary_constituency_2024: str
     ccg: str
     ccg_id: str
     ced: str
@@ -43,7 +43,7 @@ class PostcodesIOResult:
     incode: str
     outcode: str
     parliamentary_constituency: str
-    parliamentary_constituency_2025: str
+    parliamentary_constituency_2024: str
     admin_district: str
     parish: str
     date_of_introduction: int

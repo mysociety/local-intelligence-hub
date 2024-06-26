@@ -31,7 +31,7 @@ class Analytics:
     def imported_data_count_by_area(
         self,
         # "parliamentary_constituency",
-        # "parliamentary_constituency_2025",
+        # "parliamentary_constituency_2024",
         # "admin_district",
         # "admin_ward",
         postcode_io_key: str = None,
@@ -108,15 +108,15 @@ class Analytics:
         if gss:
             try:
                 qs = qs.filter(
-                    postcode_data__codes__parliamentary_constituency_2025=gss
+                    postcode_data__codes__parliamentary_constituency_2024=gss
                 )
             except Exception:
                 return []
 
         return (
             qs.annotate(
-                label=F("postcode_data__parliamentary_constituency_2025"),
-                gss=F("postcode_data__codes__parliamentary_constituency_2025"),
+                label=F("postcode_data__parliamentary_constituency_2024"),
+                gss=F("postcode_data__codes__parliamentary_constituency_2024"),
             )
             .values("label", "gss")
             .annotate(count=Count("label"))

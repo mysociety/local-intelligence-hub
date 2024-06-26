@@ -385,7 +385,7 @@ EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD", False)
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", False)
 DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL", "webmaster@localhost")
 
-POSTCODES_IO_URL = "https://postcodes.commonknowledge.coop"
+POSTCODES_IO_URL = "https://postcodes.io"
 POSTCODES_IO_BATCH_MAXIMUM = 100
 
 LOGGING = {

@@ -10,7 +10,7 @@ builtin_mapping_sources = {
         "description_url": "https://postcodes.io/docs#Data",
         "source_paths": [
             {
-                "value": "parliamentary_constituency_2025",
+                "value": "parliamentary_constituency_2024",
                 "label": "GE2024 Westminster Parliamentary Constituency",
                 "description": "The Westminster Parliamentary Constituency code for each postcode.",
             },
@@ -179,8 +179,8 @@ builtin_mapping_sources = {
                 "description": "See description of parliamentary_constituency field.",
             },
             {
-                "value": "codes.parliamentary_constituency_2025",
-                "description": "See description of parliamentary_constituency_2025 field.",
+                "value": "codes.parliamentary_constituency_2024",
+                "description": "See description of parliamentary_constituency_2024 field.",
             },
             {
                 "value": "codes.ward",

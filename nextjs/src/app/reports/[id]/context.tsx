@@ -8,7 +8,7 @@ export const defaultDisplayOptions = {
   showLastElectionData: false,
   showMPs: false,
   showStreetDetails: false,
-  analyticalAreaType: AnalyticalAreaType.ParliamentaryConstituency_2025
+  analyticalAreaType: AnalyticalAreaType.ParliamentaryConstituency_2024
 }
 
 export type DisplayOptionsType = typeof defaultDisplayOptions & {}

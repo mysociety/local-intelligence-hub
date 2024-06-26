@@ -345,7 +345,7 @@ export enum AnalyticalAreaType {
   AdminDistrict = 'admin_district',
   AdminWard = 'admin_ward',
   ParliamentaryConstituency = 'parliamentary_constituency',
-  ParliamentaryConstituency_2025 = 'parliamentary_constituency_2025'
+  ParliamentaryConstituency_2024 = 'parliamentary_constituency_2024'
 }
 
 export type Analytics = {
@@ -1181,7 +1181,7 @@ export enum GeographyTypes {
   Address = 'ADDRESS',
   AdminDistrict = 'ADMIN_DISTRICT',
   ParliamentaryConstituency = 'PARLIAMENTARY_CONSTITUENCY',
-  ParliamentaryConstituency_2025 = 'PARLIAMENTARY_CONSTITUENCY_2025',
+  ParliamentaryConstituency_2024 = 'PARLIAMENTARY_CONSTITUENCY_2024',
   Postcode = 'POSTCODE',
   Ward = 'WARD'
 }

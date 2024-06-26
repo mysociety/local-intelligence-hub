@@ -10,9 +10,9 @@ class DataTypeConverter:
     def fetch_parl25_gss_map(self):
         df = get_dataset_df(
             repo_name="2025-constituencies",
-            package_name="parliament_con_2025",
+            package_name="parliament_con_2024",
             version_name="latest",
-            file_name="parl_constituencies_2025.csv",
+            file_name="parl_constituencies_2024.csv",
             done_survey=True,
         )
         return df.set_index("short_code").gss_code.to_dict()
