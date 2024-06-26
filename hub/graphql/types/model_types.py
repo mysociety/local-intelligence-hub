@@ -917,7 +917,7 @@ class SharedDataSource(BaseDataSource):
         )
 
 
-@strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter, pagination=True)
+@strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
 class ExternalDataSource(BaseDataSource):
     organisation: Organisation = (
         strawberry_django_dataloaders.fields.auto_dataloader_field()
@@ -939,14 +939,17 @@ class ExternalDataSource(BaseDataSource):
     ) -> List["SharingPermission"]:
         return models.SharingPermission.objects.filter(external_data_source=self.id)
 
-    jobs: List[QueueJob] = strawberry_django.field(
-        resolver=lambda self: procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
+    @strawberry_django.field()
+    def jobs(
+        self,
+        filters: Optional[QueueFilter] = None,
+        pagination: Optional[strawberry_django.pagination.OffsetPaginationInput] = None
+    ) -> list[QueueJob]:
+        # filters and pagination are applied at the type level (see QueueFilter def)
+        # however they are still required as declared arguments here.
+        return procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
             args__external_data_source_id=str(self.id)
-        )
-        .prefetch_related("procrastinateevent_set")
-        .order_by("-id"),
-        filters=QueueFilter
-    )
+        ).prefetch_related("procrastinateevent_set").order_by("-id")
 
     @classmethod
     def get_queryset(cls, queryset, info, **kwargs):

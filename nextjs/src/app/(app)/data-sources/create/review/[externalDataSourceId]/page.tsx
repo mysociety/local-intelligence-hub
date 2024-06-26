@@ -29,7 +29,7 @@ const GET_UPDATE_CONFIG = gql`
         sourcePath
         destinationColumn
       }
-      jobs {
+      jobs(pagination: { limit: 10 }) {
         lastEventAt
         status
       }
