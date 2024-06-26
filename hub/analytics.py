@@ -30,10 +30,6 @@ class Analytics:
 
     def imported_data_count_by_area(
         self,
-        # "parliamentary_constituency",
-        # "parliamentary_constituency_2024",
-        # "admin_district",
-        # "admin_ward",
         postcode_io_key: str = None,
         gss: str = None,
     ) -> QuerySet[RegionCount]:
