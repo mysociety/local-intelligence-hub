@@ -1329,8 +1329,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 external_data_source_name=self.name,
                 organsiation_id=self.organisation.pk,
                 organisation_name=self.organisation.name,
-                **(data or {})
-            )
+                **(data or {}),
+            ),
         )
 
     def healthcheck(self):
@@ -2576,7 +2576,9 @@ class AirtableSource(ExternalDataSource):
         )
 
     async def update_many(self, mapped_records, **kwargs):
-        await sync_to_async(self.capture_event)("data update", data=dict(count=len(mapped_records)))
+        await sync_to_async(self.capture_event)(
+            "data update", data=dict(count=len(mapped_records))
+        )
         return self.table.batch_update(
             [
                 {
@@ -3638,7 +3640,9 @@ class EditableGoogleSheetsSource(ExternalDataSource):
         return await self.update_many([mapped_record])
 
     async def update_many(self, mapped_records, **kwargs):
-        await sync_to_async(self.capture_event)("data update", data=dict(count=len(mapped_records)))
+        await sync_to_async(self.capture_event)(
+            "data update", data=dict(count=len(mapped_records))
+        )
         record_ids = [record["member"][self.id_field] for record in mapped_records]
         row_numbers = self.fetch_row_numbers_for_ids(record_ids)
         logger.debug(

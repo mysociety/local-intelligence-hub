@@ -1,6 +1,5 @@
 from django.http import HttpRequest
 
-import strawberry
 from gqlauth.core.utils import app_settings
 from strawberry.exceptions import StrawberryGraphQLError
 from strawberry.extensions import SchemaExtension

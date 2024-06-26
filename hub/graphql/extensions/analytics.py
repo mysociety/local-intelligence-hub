@@ -1,15 +1,5 @@
-from django.http import HttpRequest
-
 import posthog
-import strawberry
-from asgiref.sync import sync_to_async
-from gqlauth.core.middlewares import get_user_or_error
-from gqlauth.core.utils import app_settings
-from graphql import ExecutionResult as GraphQLExecutionResult
-from graphql import OperationType
-from graphql.error import GraphQLError
 from strawberry.extensions import SchemaExtension
-from strawberry_django.auth.utils import get_current_user
 
 
 class APIAnalyticsExtension(SchemaExtension):
@@ -37,5 +27,5 @@ class APIAnalyticsExtension(SchemaExtension):
                 if not posthog.disabled:
                     posthog.identify(user.id, {"email": user.email})
                     posthog.capture(user.id, "API request", properties=payload)
-        except Exception as e:
+        except:
             pass
