@@ -917,7 +917,7 @@ class SharedDataSource(BaseDataSource):
         )
 
 
-@strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
+@strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter, pagination=True)
 class ExternalDataSource(BaseDataSource):
     organisation: Organisation = (
         strawberry_django_dataloaders.fields.auto_dataloader_field()
@@ -945,8 +945,7 @@ class ExternalDataSource(BaseDataSource):
         )
         .prefetch_related("procrastinateevent_set")
         .order_by("-id"),
-        filters=QueueFilter,
-        pagination=True,
+        filters=QueueFilter
     )
 
     @classmethod
