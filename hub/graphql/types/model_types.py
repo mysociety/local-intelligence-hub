@@ -943,13 +943,17 @@ class ExternalDataSource(BaseDataSource):
     def jobs(
         self,
         filters: Optional[QueueFilter] = None,
-        pagination: Optional[strawberry_django.pagination.OffsetPaginationInput] = None
+        pagination: Optional[strawberry_django.pagination.OffsetPaginationInput] = None,
     ) -> list[QueueJob]:
         # filters and pagination are applied at the type level (see QueueFilter def)
         # however they are still required as declared arguments here.
-        return procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
-            args__external_data_source_id=str(self.id)
-        ).prefetch_related("procrastinateevent_set").order_by("-id")
+        return (
+            procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
+                args__external_data_source_id=str(self.id)
+            )
+            .prefetch_related("procrastinateevent_set")
+            .order_by("-id")
+        )
 
     @classmethod
     def get_queryset(cls, queryset, info, **kwargs):
