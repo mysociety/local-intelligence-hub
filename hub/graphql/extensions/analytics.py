@@ -32,4 +32,4 @@ class APIAnalyticsExtension(SchemaExtension):
                     posthog.identify(user.id, {"email": user.email})
                     posthog.capture(user.id, "API request", properties=payload)
         except Exception as e:
-            logger.error(f"APIAnalyticsExtension error: {e}")
+            logger.error(f"API Analytics Extension error: {e}")

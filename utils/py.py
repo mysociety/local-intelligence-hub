@@ -184,7 +184,7 @@ def parse_datetime(value):
             parsed = dateparse.parse_datetime(value)
             if parsed is not None:
                 return parsed
-            parsed = dateparser.parse(value)
+            parsed = dateparser.parse(value, locales=["en-GB"])
             if parsed is not None:
                 return parsed
         except ValueError:
