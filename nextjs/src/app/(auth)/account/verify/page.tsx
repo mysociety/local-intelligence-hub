@@ -18,7 +18,7 @@ export default function Verify() {
 
     useEffect(() => {
         clearJwt(); // Clear existing JWT in case user was logged in as someone else
-        const urlParams = new URLSearchParams(window ? window.location.search : "");
+        const urlParams = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search)
         const token = urlParams.get('token');
         doVerify({ variables: { token } })
     }, [doVerify])

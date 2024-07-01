@@ -118,7 +118,6 @@ export default function Page({
   }, [context])
 
   const RNN_ORIG = Symbol();
-  const urlParams = new URLSearchParams(window ? window.location.search : "");
 
   const defaultValues: CreateExternalDataSourceInput & ExternalDataSourceInput = {
     name: '',
@@ -139,7 +138,7 @@ export default function Page({
       groupSlug: ''
     },
     editablegooglesheets: {
-      redirectSuccessUrl: urlParams.get("state") && urlParams.get("code") ? window.location.href : '',
+      redirectSuccessUrl: '',
       spreadsheetId: '',
       sheetName: '',
     },
@@ -153,6 +152,13 @@ export default function Page({
       ...defaultValues
     } as FormInputs,
   });
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search)
+    if (urlParams.get("state") && urlParams.get("code")) {
+      form.setValue('editablegooglesheets.redirectSuccessUrl', window.location.href)
+    }
+  }, [form])
 
   const dataType = form.watch("dataType") as DataSourceType
   const collectFields = useMemo(() => {
