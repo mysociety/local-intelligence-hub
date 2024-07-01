@@ -114,7 +114,7 @@ ELECTORAL_COMMISSION_API_KEY = env("ELECTORAL_COMMISSION_API_KEY")
 FRONTEND_BASE_URL = (
     env("FRONTEND_BASE_URL")
     if environment != "production"
-    else env("FRONTEND_BASE_URL")
+    else env("PROD_FRONTEND_BASE_URL")
 )
 BACKEND_URL = env("BASE_URL") if environment != "production" else env("PROD_BASE_URL")
 BASE_URL = BACKEND_URL

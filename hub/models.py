@@ -3510,7 +3510,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
         sheet = self.sheet
         url = self.spreadsheet["spreadsheetUrl"]
         params = {"gid": sheet["properties"]["sheetId"]}
-        return f"{url}?{urlencode(params)}"
+        return f"{url}#{urlencode(params)}"
 
     def healthcheck(self):
         if self.headers:
