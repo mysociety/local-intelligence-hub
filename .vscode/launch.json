@@ -13,12 +13,6 @@
             "django": true
         },
         {
-            "name": "Start backend containers",
-            "type": "node-terminal",
-            "command": "docker compose up",
-            "request": "launch"
-        },
-        {
             "name": "NextJS",
             "type": "node-terminal",
             "command": "cd nextjs && npm install && npm run dev",

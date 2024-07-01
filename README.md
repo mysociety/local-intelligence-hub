@@ -41,11 +41,12 @@ Docker-compose will automatically install dependencies and start the development
 
 This will setup the docker containers and provide a Bash prompt into the containers. 
 
-The same config files means this repo also works in codespaces.
+You will need to run these further initial steps:
 
-And you can run the development web server at <https://localhost:8000>, inside the container, with:
+1. `script/server --development`
+2. When complete, press Ctrl+C to stop the server (this allows you to start the server in debug mode instead).
 
-    script/server
+You should now be able to run the `App` run group.
 
 ### Data import
 

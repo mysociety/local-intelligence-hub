@@ -3771,7 +3771,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
             valueInputOption="USER_ENTERED",
             body={
                 "values": [
-                    [f'=COUNTIF({self.sheet_name}!{id_column}2:{id_column}, "<>")'],
+                    [f"=COUNTIF('{self.sheet_name}'!{id_column}2:{id_column}, \"<>\")"],
                     [f'=IMPORTDATA(CONCATENATE("{webhook_create_url}?count=", A1))'],
                 ],
             },
@@ -3798,7 +3798,8 @@ class EditableGoogleSheetsSource(ExternalDataSource):
             changes.
             """
             cells = [
-                f"{self.sheet_name}!{column}{row_number}" for column in columns_to_watch
+                f"'{self.sheet_name}'!{column}{row_number}"
+                for column in columns_to_watch
             ]
             cells_param = ", ".join(cells)
             return f'JOIN(",", {cells_param})'
@@ -3815,7 +3816,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
                         (
                             f"=IMPORTDATA(CONCATENATE("
                             f'"{webhook_url}?id=", '
-                            f"ENCODEURL({self.sheet_name}!{id_column}{n}), "
+                            f"ENCODEURL('{self.sheet_name}'!{id_column}{n}), "
                             '"&record=", '
                             f"ENCODEURL({get_watch_statement(n)})"
                             "))"
