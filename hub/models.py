@@ -3491,7 +3491,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
     def headers(self) -> list[str]:
         result = (
             self.spreadsheets.values()
-            .get(spreadsheetId=self.spreadsheet_id, range=f"{self.sheet_name}!1:1")
+            .get(spreadsheetId=self.spreadsheet_id, range=f"'{self.sheet_name}'!1:1")
             .execute()
         )
         return result["values"][0]
@@ -3555,7 +3555,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
     def get_rows(self, row_numbers: list[int]) -> list[dict]:
         last_column = google_sheets.column_index_to_letters(len(self.headers) - 1)
         ranges = [
-            f"{self.sheet_name}!A{row_number}:{last_column}{row_number}"
+            f"'{self.sheet_name}'!A{row_number}:{last_column}{row_number}"
             for row_number in row_numbers
             if row_number
         ]
@@ -3599,7 +3599,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
                 body={
                     "values": [
                         [
-                            f'=MATCH("{id}", {self.sheet_name}!{id_column}:{id_column}, 0)'
+                            f"=MATCH(\"{id}\", '{self.sheet_name}'!{id_column}:{id_column}, 0)"
                         ]
                         for id in id_list
                     ],
@@ -3658,7 +3658,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
                 value = mapped_record["update_fields"][header]
                 value_ranges.append(
                     {
-                        "range": f"{self.sheet_name}!{column}{row_number}",
+                        "range": f"'{self.sheet_name}'!{column}{row_number}",
                         "values": [[value]],
                     }
                 )
