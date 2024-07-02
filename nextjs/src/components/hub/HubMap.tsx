@@ -76,19 +76,6 @@ export function HubMap ({
         {...viewState}
         onMove={(e) => setViewState(e.viewState)}
         mapStyle={mapStyle || "mapbox://styles/commonknowledge/clwqeu7rb012301nyh52n3kss/draft"}
-        transformRequest={(url, resourceType) => {
-          if (
-            url.includes(BACKEND_URL) &&
-            !url.includes("tiles.json")
-          ) {
-            return {
-              url,
-              headers: authenticationHeaders(),
-              method: "GET",
-            };
-          }
-          return { url };
-        }}
       >
         {/* Layout order */}
         <PlaceholderLayer id="AREA_BOUNDARIES" />

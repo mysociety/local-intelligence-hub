@@ -9,7 +9,7 @@
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
     "python.analysis.extraPaths": [
-        ".venv/lib/python3.12/site-packages"
+        ".venv/lib/python3.11/site-packages"
     ],
     "black-formatter.path": ["${workspaceFolder}", "script", "black"],
     "flake8.path": ["${workspaceFolder}", "script", "flake8"],
