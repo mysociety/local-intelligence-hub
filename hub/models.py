@@ -3464,7 +3464,9 @@ class EditableGoogleSheetsSource(ExternalDataSource):
                     "expiry": credentials.expiry.isoformat(),
                 }
             )
-            self.save()
+            # Can't save here as this property is used in async contexts
+            # Instead, save() is called after fetch_many and update_many
+            # TODO: Make this not a hack!
         return googleapiclient.discovery.build("sheets", "v4", credentials=credentials)
 
     @property
@@ -3535,6 +3537,9 @@ class EditableGoogleSheetsSource(ExternalDataSource):
 
     async def fetch_many(self, id_list: list[str]):
         row_numbers = self.fetch_row_numbers_for_ids(id_list)
+        # Save the instance here as credentials may have been refreshed
+        # Can't do it in `def api` because of async complexity
+        await self.asave()
         if not row_numbers:
             return []
         return self.get_rows(row_numbers)
@@ -3670,6 +3675,9 @@ class EditableGoogleSheetsSource(ExternalDataSource):
             spreadsheetId=self.spreadsheet_id,
             body={"valueInputOption": "USER_ENTERED", "data": value_ranges},
         ).execute()
+        # Save the instance here as credentials may have been refreshed
+        # Can't do it in `def api` because of async complexity
+        await self.asave()
 
     def webhook_healthcheck(self):
         message = self.check_webhook_errors()
