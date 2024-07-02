@@ -107,7 +107,7 @@ class Command(BaseCommand):
                 "source_label": "Data from UK Parliament.",
                 "table": "person__persondata",
                 "comparators": DataSet.year_comparators(),
-                "default_value": 2019,
+                "default_value": 2024,
             },
         )
         last_elected, created = DataType.objects.update_or_create(
@@ -127,7 +127,7 @@ class Command(BaseCommand):
                 "source_label": "Data from UK Parliament.",
                 "table": "person__persondata",
                 "comparators": DataSet.year_comparators(),
-                "default_value": 2019,
+                "default_value": 2024,
             },
         )
         first_elected, created = DataType.objects.update_or_create(
