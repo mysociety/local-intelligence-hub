@@ -4,6 +4,8 @@ from django.conf import settings
 from django.db import connection
 from django.db.utils import OperationalError
 from django.http import JsonResponse
+from django.shortcuts import render
+from django.views import View
 from django.views.generic import FormView, TemplateView
 
 import mailchimp_marketing as MailChimp
@@ -281,3 +283,14 @@ class StatusView(TemplateView):
                 },
                 status=500,
             )
+
+
+class PostcodeView(View):
+    def get(self, request):
+
+        context = {
+            "page_title": "Postcode to Constituency Tool",
+            "meta_description": "Add the new 2024 constituencies to your postcode data.",
+        }
+
+        return render(request, "hub/tools/postcode.html", context)
