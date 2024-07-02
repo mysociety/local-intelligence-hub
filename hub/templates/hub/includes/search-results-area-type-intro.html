@@ -1,18 +1,10 @@
-{% if type == "WMC" %}
+{% if type == "WMC23" %}
   {% if areas|length == 1 %}
-    <h2 class="h4 text-primary">Old constituency</h2>
-    <p class="text-muted">This was the constituency represented by an MP in UK Parliament until May 2024.</p>
+    <h2 class="h4 text-primary">Westminster constituency</h2>
+    <p class="text-muted">This is the constituency represented by an MP in the UK Parliament.</p>
   {% else %}
-    <h2 class="h4 text-primary">Old constituencies</h2>
-    <p class="text-muted">These constituencies are the areas which MPs represented in UK Parliament until May 2024.</p>
-  {% endif %}
-{% elif type == "WMC23" %}
-  {% if areas|length == 1 %}
-    <h2 class="h4 text-primary">New constituency</h2>
-    <p class="text-muted">This is the constituency in which parliamentary candidates are currently standing for election.</p>
-  {% else %}
-    <h2 class="h4 text-primary">New constituencies</h2>
-    <p class="text-muted">These are the constituencies in which parliamentary candidates are currently standing for election.</p>
+    <h2 class="h4 text-primary">Westminster constituencies</h2>
+    <p class="text-muted">These constituencies are the areas represented by MPs in the UK Parliament.</p>
   {% endif %}
 {% elif type == "LA" %}
   {% if areas|length == 1 %}

@@ -406,7 +406,7 @@ class AreaSearchView(TemplateView):
             elif kwargs.get("pc"):
                 gss_codes = mapit.postcode_point_to_gss_codes(kwargs["pc"])
 
-            areas = Area.objects.filter(gss__in=gss_codes)
+            areas = Area.objects.filter(gss__in=gss_codes, area_type__code="WMC23")
             areas = list(areas)
         except (
             NotFoundException,
@@ -445,7 +445,9 @@ class AreaSearchView(TemplateView):
                 "Please enter a postcode, or the name of a constituency, MP, or local authority"
             )
         else:
-            areas_raw = Area.objects.filter(name__icontains=search)
+            areas_raw = Area.objects.filter(
+                name__icontains=search, area_type__code="WMC23"
+            )
             people_raw = Person.objects.filter(name__icontains=search)
 
             context["areas"] = list(areas_raw)
@@ -485,10 +487,6 @@ class AreaSearchView(TemplateView):
                     "areas": [],
                 },
                 {
-                    "type": "WMC",
-                    "areas": [],
-                },
-                {
                     "type": "LA",
                     "areas": [],
                 },
@@ -496,10 +494,8 @@ class AreaSearchView(TemplateView):
             for area in context["areas"]:
                 if area.area_type.code == "WMC23":
                     context["areas_by_type"][0]["areas"].append(area)
-                elif area.area_type.code == "WMC":
+                elif area.area_type.code != "WMC":
                     context["areas_by_type"][1]["areas"].append(area)
-                else:
-                    context["areas_by_type"][2]["areas"].append(area)
 
         return context
 

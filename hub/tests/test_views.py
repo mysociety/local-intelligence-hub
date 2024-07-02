@@ -296,7 +296,7 @@ class TestAreaPage(TestCase):
 
 
 class TestAreaSearchPage(TestCase):
-    fixtures = ["areas.json", "mps.json"]
+    fixtures = ["areas.json", "areas_23.json", "mps_23.json"]
 
     def setUp(self):
         u = User.objects.create(username="user@example.com")
@@ -309,7 +309,7 @@ class TestAreaSearchPage(TestCase):
         url = reverse("area_search")
         response = self.client.get(url, {"search": "SE17 3HE"}, follow=True)
 
-        self.assertRedirects(response, "/area/WMC/South%20Borsetshire")
+        self.assertRedirects(response, "/area/WMC23/South%20Borsetshire")
         self.assertTemplateUsed(response, "hub/area.html")
 
         context = response.context
@@ -339,7 +339,7 @@ class TestAreaSearchPage(TestCase):
         url = reverse("area_search")
         response = self.client.get(url, {"lat": "0.11", "lon": "0.12"}, follow=True)
 
-        self.assertRedirects(response, "/area/WMC/South%20Borsetshire")
+        self.assertRedirects(response, "/area/WMC23/South%20Borsetshire")
         self.assertTemplateUsed(response, "hub/area.html")
 
         context = response.context
@@ -349,7 +349,7 @@ class TestAreaSearchPage(TestCase):
         url = reverse("area_search")
         response = self.client.get(url, {"search": "South Borsetshire"}, follow=True)
 
-        self.assertRedirects(response, "/area/WMC/South%20Borsetshire")
+        self.assertRedirects(response, "/area/WMC23/South%20Borsetshire")
         self.assertTemplateUsed(response, "hub/area.html")
 
         context = response.context
@@ -359,12 +359,12 @@ class TestAreaSearchPage(TestCase):
         url = reverse("area_search")
         response = self.client.get(url, {"search": " South Borsetshire"}, follow=True)
 
-        self.assertRedirects(response, "/area/WMC/South%20Borsetshire")
+        self.assertRedirects(response, "/area/WMC23/South%20Borsetshire")
         self.assertTemplateUsed(response, "hub/area.html")
 
         response = self.client.get(url, {"search": "South Borsetshire "}, follow=True)
 
-        self.assertRedirects(response, "/area/WMC/South%20Borsetshire")
+        self.assertRedirects(response, "/area/WMC23/South%20Borsetshire")
         self.assertTemplateUsed(response, "hub/area.html")
 
         context = response.context
@@ -374,7 +374,7 @@ class TestAreaSearchPage(TestCase):
         url = reverse("area_search")
         response = self.client.get(url, {"search": "James Madeupname"}, follow=True)
 
-        self.assertRedirects(response, "/area/WMC/South%20Borsetshire")
+        self.assertRedirects(response, "/area/WMC23/South%20Borsetshire")
         self.assertTemplateUsed(response, "hub/area.html")
 
         context = response.context
@@ -399,7 +399,7 @@ class TestAreaSearchPage(TestCase):
         self.assertTemplateUsed(response, "hub/area_search.html")
 
         context = response.context
-        self.assertEqual(len(context["areas"]), 3)
+        self.assertEqual(len(context["areas"]), 2)
 
 
 class testUserFavouriteViews(TestCase):
