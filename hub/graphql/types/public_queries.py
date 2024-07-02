@@ -61,9 +61,7 @@ class UnauthenticatedPostcodeQueryResponse:
         self, address_slug: Optional[str] = None
     ) -> Optional[ElectoralCommissionPostcodeLookup]:
         if address_slug:
-            a = await electoral_commision_address_lookup(address_slug)
-            print(f"got awaited {a}")
-            return a
+            return await electoral_commision_address_lookup(address_slug)
         return await electoral_commision_postcode_lookup(self.postcode)
 
 
