@@ -26,7 +26,7 @@ class ImportMPsTestCase(TestCase):
         if self.media_root.exists():
             shutil.rmtree(self.media_root)
 
-    fixtures = ["areas.json"]
+    fixtures = ["areas.json", "areas_23.json"]
 
     @patch("hub.management.commands.import_mps.requests")
     @patch("hub.management.commands.import_mps.urllib.request.urlretrieve")
@@ -112,7 +112,7 @@ class ImportMPsTestCaseQuiet(ImportMPsTestCase):
 
 
 class ImportMPElectionResultsTestCase(TestCase):
-    fixtures = ["areas.json", "mps.json"]
+    fixtures = ["areas.json", "areas_23.json", "mps.json"]
 
     @patch("hub.management.commands.import_mps_election_results.requests")
     def test_import(self, request_mock):

@@ -45,7 +45,7 @@ MP_IMPORT_COMMANDS = [
 class Command(BaseCommand):
     help = "Import UK Members of Parliament"
 
-    area_type = "WMC"
+    area_type = "WMC23"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -97,7 +97,7 @@ class Command(BaseCommand):
         return id_df
 
     def get_area_map(self):
-        areas = Area.objects.filter(area_type__code="WMC").all()
+        areas = Area.objects.filter(area_type__code=self.area_type).all()
         area_gss_lookup = {}
         for area in areas:
             area_gss_lookup[area.name] = area.gss
@@ -115,8 +115,7 @@ class Command(BaseCommand):
           ?person wdt:P31 wd:Q5 . ?person p:P39 ?ps .
           ?ps ps:P39 ?term . ?term wdt:P279 wd:Q16707842 .
           ?ps pq:P580 ?start . ?ps pq:P4100 ?party . ?ps pq:P768 ?seat .
-          # During election
-          # FILTER NOT EXISTS { ?ps pq:P582 ?end } .
+          FILTER NOT EXISTS { ?ps pq:P582 ?end } .
           ?seat wdt:P836 ?gss_code .
           OPTIONAL { ?person wdt:P2002 ?twfyid } .
           OPTIONAL { ?person wdt:P2002 ?twitter } .
