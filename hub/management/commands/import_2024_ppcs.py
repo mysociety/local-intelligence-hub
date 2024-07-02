@@ -21,8 +21,10 @@ class Command(BaseCommand):
         )
 
     def handle(self, quiet: bool = False, *args, **options):
+        self.stderr.write("No longer in use after 2024 election date")
+        return
         self._quiet = quiet
-        self.import_ppcs()
+        # self.import_ppcs()
 
     def get_ppc_data(self):
         csv = "https://candidates.democracyclub.org.uk/data/export_csv/?election_date=&ballot_paper_id=&election_id=parl.2024-07-04&party_id=&cancelled=&extra_fields=gss&format=csv"
