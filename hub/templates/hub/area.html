@@ -123,7 +123,7 @@
           {% endif %}
             {% if is_westminster_cons %}
               <li class="nav-item">
-                  <a class="nav-link" href="#mp">{% if area_type == "WMC23" %}PPCs{% else %}MP{% endif %}</a>
+                  <a class="nav-link" href="#mp">MP</a>
               </li>
             {% endif %}
             <li class="nav-item">
@@ -149,7 +149,6 @@
 
         {% if is_westminster_cons %}
         <section class="mb-5 mb-lg-6 area-section" id="mp">
-            {% if area_type == "WMC" %}
             {% if no_mp %}
               <h2 class="text-primary">This constituency has no MP right now</h2>
               <p style="max-width: 37em;" class="mb-4">
@@ -361,31 +360,6 @@
                     {% include "hub/includes/icons/chevron-right.html" %}
                 </a>
             </div>
-            {% elif area_type == "WMC23" %}
-            <h2 class="text-primary">Prospective Parliamentary Candidates</h2>
-            <p style="max-width: 37em;" class="mb-4">These are the candidates standing for election in this constituency on 4th June.</p>
-            <div class="area-data-grid">
-            {% for person in PPCs %}
-              <div class="card dataset-card area-data--sm area-data--featured">
-                  <div class="card-body">
-                      <div class="d-flex align-items-center">
-                          <div class="flex-shrink-0">
-                              {% include 'hub/includes/person-photo.html' with person=person %}
-                          </div>
-                          <div class="flex-grow-1 ms-3">
-                              <h3 class="h4 mb-0 text-primary">{{ person.name }}</h3>
-                          {% if person.party %}
-                              <p class="mb-0 text-muted">{{ person.party }}</p>
-                          {% endif %}
-                          </div>
-                      </div>
-                  </div>
-                  <div class="card-footer">
-                      <p class="card-text"><a href="https://whocanivotefor.co.uk/ppcs/">Data from Democracy Club.</a></p>
-                  </div>
-              </div>
-            {% endfor %}
-            {% endif %}
         </section>
         {% endif %}
 
