@@ -18,6 +18,7 @@ from strawberry_django.permissions import IsAuthenticated
 
 from hub import models
 from hub.enrichment.sources.electoral_commission_postcode_lookup import (
+    electoral_commision_address_lookup,
     electoral_commision_postcode_lookup,
 )
 from hub.graphql.types import model_types
@@ -55,13 +56,19 @@ class UnauthenticatedPostcodeQueryResponse:
             (Q(gss=id) | Q(name=id)) & Q(area_type__code="WMC23")
         )
 
+    @strawberry_django.field
+    async def electoral_commission(
+        self, address_slug: Optional[str] = None
+    ) -> Optional[ElectoralCommissionPostcodeLookup]:
+        if address_slug:
+            a = await electoral_commision_address_lookup(address_slug)
+            print(f"got awaited {a}")
+            return a
+        return await electoral_commision_postcode_lookup(self.postcode)
+
 
 @strawberry.type
 class AuthenticatedPostcodeQueryResponse(UnauthenticatedPostcodeQueryResponse):
-    @strawberry_django.field
-    async def electoral_commission(self) -> Optional[ElectoralCommissionPostcodeLookup]:
-        return await electoral_commision_postcode_lookup(self.postcode)
-
     @strawberry_django.field
     async def custom_source_data(
         self, source: str, source_path: str, info: Info

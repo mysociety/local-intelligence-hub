@@ -87,7 +87,9 @@ function PageContent ({ params: { hostname }, shouldDisplayMap, hub }: { params:
                       isLoading={localData.loading}
                     />
                   ) : (
-                    <ConstituencyView data={localData.data?.postcodeSearch.constituency} />
+                    <ConstituencyView data={localData.data?.postcodeSearch.constituency}
+                    electoralCommission={localData.data?.postcodeSearch.electoralCommission}
+                    />
                   )}
                 </div>
               </aside>
