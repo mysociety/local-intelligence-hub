@@ -15,7 +15,7 @@ from .base_importers import (
 
 party_map = {
     "CON": "Conservative Party",
-    "LAB": "Labout Party",
+    "LAB": "Labour Party",
     "LD": "Liberal Democrats",
     "PC": "Plaid Cymru",
     "SNP": "Scottish National Party",
