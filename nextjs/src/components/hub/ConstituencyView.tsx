@@ -45,6 +45,8 @@ export function ConstituencyView({
     electoralCommission?.dates[0]?.pollingStation.station?.properties
   )
 
+  const pollingAddresses = electoralCommission?.addresses || []
+
   if (!data?.name) {
     return (
       <div className="p-6">
@@ -209,7 +211,7 @@ export function ConstituencyView({
             )}
           </TabsContent>
           <TabsContent className="mt-0" value="polling-station">
-            {electoralCommission?.addresses ? (
+            {pollingAddresses.length ? (
               <section className="px-6 pb-0 my-6">
                 <p className="mb-4">Select one of these addresses:</p>
                 <select
@@ -221,29 +223,14 @@ export function ConstituencyView({
                   onChange={(e) => setAddressSlug(e.target.value)}
                 >
                   <option value="">Choose an address</option>
-                  {electoralCommission.addresses.map((a: any) => (
+                  {pollingAddresses.map((a: any) => (
                     <option key={a.slug} value={a.slug}>
                       {a.address}
                     </option>
                   ))}
                 </select>
               </section>
-            ) : (
-              <section className="px-6 pb-0 my-6">
-                <p>
-                  No polling station found for your postcode - your council may
-                  not have shared its data yet. You can also try&nbsp;
-                  <a
-                    className="text-hub-primary-600 font-bold"
-                    href="https://wheredoivote.co.uk/"
-                    target="_blank"
-                  >
-                    wheredoivote.co.uk
-                  </a>
-                  .
-                </p>
-              </section>
-            )}
+            ) : null}
             {pollingStation ? (
               <section className="px-6 pb-0 my-6">
                 <div className="border-2 border-meepGray-200 rounded-md overflow-hidden p-4 flex flex-col">
@@ -259,7 +246,9 @@ export function ConstituencyView({
                   </a>
                 </div>
               </section>
-            ) : addressQuery.data ? (
+            ) : null}
+            {/* Display "No polling station" message if none found and address chosen or no addresses to choose */}
+            {!pollingStation && (addressQuery.data || !pollingAddresses.length) ? (
               <section className="px-6 pb-0 my-6">
                 <p>
                   No polling station found for this address - your council may

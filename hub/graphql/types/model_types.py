@@ -21,6 +21,10 @@ from wagtail.models import Site
 
 from hub import models
 from hub.enrichment.sources import builtin_mapping_sources
+from hub.enrichment.sources.electoral_commission_postcode_lookup import (
+    electoral_commision_address_lookup,
+    electoral_commision_postcode_lookup,
+)
 from hub.graphql.context import HubDataLoaderContext
 from hub.graphql.dataloaders import (
     FieldDataLoaderFactory,
@@ -28,6 +32,7 @@ from hub.graphql.dataloaders import (
     ReverseFKWithFiltersDataLoaderFactory,
     filterable_dataloader_resolver,
 )
+from hub.graphql.types.electoral_commission import ElectoralCommissionPostcodeLookup
 from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
@@ -659,6 +664,17 @@ class MapReportMemberFeature(PointFeature):
     # Optional, because of sharing options
     id: Optional[str]
     properties: Optional[GenericData]
+
+    # TODO: move this somewhere more rational
+    @strawberry_django.field
+    async def electoral_commission(
+        self, address_slug: Optional[str] = None
+    ) -> Optional[ElectoralCommissionPostcodeLookup]:
+        if address_slug:
+            return await electoral_commision_address_lookup(address_slug)
+        if self.properties:
+            return await electoral_commision_postcode_lookup(self.properties.postcode)
+        return None
 
 
 @strawberry.enum
