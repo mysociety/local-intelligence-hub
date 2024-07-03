@@ -50,12 +50,14 @@ export function HubMap ({
     try {
       if (currentConstituency?.fitBounds.length) {
         mapbox.loadedMap?.fitBounds(currentConstituency.fitBounds, {
+          duration: 0, // don't fly, improve performance
           // TODO: change for small screen
           padding: FIT_BOUNDS_PADDING
         })
       } else if (!localDataLoading) {
         // Fly to UK bounds
         mapbox.loadedMap?.fitBounds(UK_BOUNDS, {
+          duration: 0, // don't fly, improve performance
           padding: FIT_BOUNDS_PADDING
         })
       }
