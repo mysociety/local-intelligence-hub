@@ -613,6 +613,16 @@ export function ReportMap () {
                       <footer className="pb-2 px-2 font-IBMPlexMono text-xs">
                         {pollingAddresses.length ? (
                           <>
+                            {selectedPointData?.importedDataGeojsonPoint?.properties?.address && (
+                              <div className="mb-4">
+                                <div className="text-meepGray-400">ADDRESS</div>
+                                <span>
+                                  {
+                                    selectedPointData.importedDataGeojsonPoint.properties.address
+                                  }
+                                </span>
+                              </div>
+                            )}
                             <p className="mb-4">
                               Select one of these addresses:
                             </p>
@@ -832,6 +842,7 @@ query MapReportLayerGeoJSONPoint($genericDataId: String!) {
       postcodeData {
         postcode
       }
+      address
       json
       remoteUrl
       dataType {
