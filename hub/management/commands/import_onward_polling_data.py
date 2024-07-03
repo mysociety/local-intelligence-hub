@@ -88,7 +88,6 @@ class Command(BaseImportFromDataFrameCommand):
         return names_lookup_dict
 
     def get_dataframe(self):
-
         if not self.data_file.exists():
             return None
 

@@ -70,7 +70,6 @@ class Command(MultipleAreaTypesMixin, BaseConstituencyGroupListImportCommand):
     count_data_type = "rspb_reserves_count"
 
     def get_df(self):
-
         if self.data_file.exists() is False:
             return None
 

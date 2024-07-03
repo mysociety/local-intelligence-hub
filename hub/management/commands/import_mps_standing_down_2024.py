@@ -48,7 +48,6 @@ class Command(BaseCommand):
             return None
 
     def get_df(self):
-
         if not self.data_file.exists():
             self.stderr.write(f"Data file {self.data_file} does not exist")
             return None
