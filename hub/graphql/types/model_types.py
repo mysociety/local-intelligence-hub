@@ -672,7 +672,7 @@ class MapReportMemberFeature(PointFeature):
     ) -> Optional[ElectoralCommissionPostcodeLookup]:
         if address_slug:
             return await electoral_commision_address_lookup(address_slug)
-        if self.properties:
+        if self.properties and self.properties.postcode:
             return await electoral_commision_postcode_lookup(self.properties.postcode)
         return None
 
