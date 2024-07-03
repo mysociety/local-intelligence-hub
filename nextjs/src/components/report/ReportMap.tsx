@@ -3,6 +3,8 @@
 import {
   AnalyticalAreaType,
   DataSourceType,
+  GetElectoralCommissionDataQuery,
+  GetElectoralCommissionDataQueryVariables,
   MapReportConstituencyStatsQuery,
   MapReportConstituencyStatsQueryVariables,
   MapReportLayerAnalyticsQuery,
@@ -29,6 +31,7 @@ import { layerColour, useLoadedMap, isConstituencyPanelOpenAtom, MAP_REPORT_LAYE
 import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel";
 import { authenticationHeaders } from "@/lib/auth";
 import { BACKEND_URL } from "@/env";
+import { GET_ELECTORAL_COMMISSION_DATA } from "@/app/hub/render/[hostname]/map/queries";
 
 const MAX_REGION_ZOOM = 8
 export const MAX_CONSTITUENCY_ZOOM = 10
@@ -253,6 +256,26 @@ export function ReportMap () {
   ]
   const loading = loadingLayers.some((query) => query.execution.loading)
 
+  const [addressSlug, setAddressSlug] = useState("");
+
+  // TODO: Remove this query after the election
+  const addressQuery = useQuery<
+    GetElectoralCommissionDataQuery,
+    GetElectoralCommissionDataQueryVariables
+  >(GET_ELECTORAL_COMMISSION_DATA, {
+    variables: {
+      postcode: selectedPointData?.importedDataGeojsonPoint?.properties?.postcodeData?.postcode!,
+      addressSlug
+    },
+    skip: !addressSlug || !selectedPointData?.importedDataGeojsonPoint?.properties?.postcodeData?.postcode,
+  });
+
+  const pollingStation = (
+    addressQuery.data?.postcodeSearch.electoralCommission?.dates[0]?.pollingStation.station?.properties ||
+    selectedPointData?.importedDataGeojsonPoint?.electoralCommission?.dates[0]?.pollingStation.station?.properties
+  )
+  const pollingAddresses =  selectedPointData?.importedDataGeojsonPoint?.electoralCommission?.addresses || []
+
   return (
     <>
       {loading && (
@@ -280,10 +303,7 @@ export function ReportMap () {
         }
         onClick={() => setSelectedSourceMarker(null)}
         transformRequest={(url, resourceType) => {
-          if (
-            url.includes(BACKEND_URL) &&
-            !url.includes("tiles.json")
-          ) {
+          if (url.includes(BACKEND_URL) && !url.includes("tiles.json")) {
             return {
               url,
               headers: authenticationHeaders(),
@@ -589,6 +609,66 @@ export function ReportMap () {
                           }
                         </footer>
                       )}
+                      {/* TODO: Remove this <footer> after the election */}
+                      <footer className="pb-2 px-2 font-IBMPlexMono text-xs">
+                        {pollingAddresses.length ? (
+                          <>
+                            <p className="mb-4">
+                              Select one of these addresses:
+                            </p>
+                            <select
+                              disabled={selectedPointLoading}
+                              className={`max-w-full p-4 w-full rounded-md border
+                                focus:ring-secondary-500 active:border-secondary-500 text-black
+                                ${selectedPointLoading ? "bg-gray-100" : ""}
+                              `}
+                              onChange={(e) => setAddressSlug(e.target.value)}
+                            >
+                              <option value="">Choose an address</option>
+                              {pollingAddresses.map(
+                                (a: any) => (
+                                  <option key={a.slug} value={a.slug}>
+                                    {a.address}
+                                  </option>
+                                )
+                              )}
+                            </select>
+                          </>
+                        ) : null}
+                        {pollingStation ? (
+                          <div className="mt-3">
+                            <h3 className="font-bold text-lg mb-2">
+                              Polling station:
+                            </h3>
+                            <p>{pollingStation.address}</p>
+                            <p className="mb-4">{pollingStation.postcode}</p>
+                            <a
+                              target="_blank"
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pollingStation.address + ", " + pollingStation.postcode + ", UK")}`}
+                              className="bg-meepGray-200 px-3 py-2 text-center w-full block rounded-md"
+                            >
+                              Directions
+                            </a>
+                          </div>
+                        ) : null}
+                        {!pollingStation &&
+                        (!pollingAddresses.length ||
+                          addressQuery.data) ? (
+                          <p className="my-3">
+                            No polling station found for this address - the
+                            council may not have shared its data yet. You can
+                            also try&nbsp;
+                            <a
+                              className="font-bold"
+                              href="https://wheredoivote.co.uk/"
+                              target="_blank"
+                            >
+                              wheredoivote.co.uk
+                            </a>
+                            .
+                          </p>
+                        ) : null}
+                      </footer>
                       <footer className="flex-divide-x bg-meepGray-200 text-meepGray-500 flex flex-row justify-around w-full py-1 px-2 text-center">
                         {!!selectedPointData?.importedDataGeojsonPoint
                           ?.properties?.phone && (
@@ -733,7 +813,7 @@ function ExternalDataSourcePointMarkers ({ externalDataSourceId, index }: { exte
   )
 }
 
-
+// TODO: Remove electoralCommission from here after the election
 const MAP_REPORT_LAYER_POINT = gql`
 query MapReportLayerGeoJSONPoint($genericDataId: String!) {
   importedDataGeojsonPoint(genericDataId: $genericDataId) {
@@ -758,6 +838,19 @@ query MapReportLayerGeoJSONPoint($genericDataId: String!) {
         dataSet {
           externalDataSource {
             name
+          }
+        }
+      }
+    }
+    electoralCommission {
+      addresses
+      dates {
+        pollingStation {
+          station {
+            properties {
+              address
+              postcode
+            }
           }
         }
       }
