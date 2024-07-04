@@ -14,7 +14,7 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-from hub.models import Area, DataSet, DataType, Person, PersonData
+from hub.models import Area, AreaType, DataSet, DataType, Person, PersonData
 
 from .base_importers import party_shades
 
@@ -110,7 +110,7 @@ class Command(BaseCommand):
             "User-Agent": "Local Intelligence Hub beta",
         }
         query = """
-        SELECT DISTINCT ?person ?personLabel ?twfyid ?partyLabel ?seatLabel ?gss_code ?twitter ?facebook ?wikipedia WHERE
+        SELECT DISTINCT ?person ?personLabel ?twfyid ?partyLabel ?seatLabel ?twitter ?facebook ?wikipedia WHERE
         {
           ?person wdt:P31 wd:Q5 . ?person p:P39 ?ps .
           ?ps ps:P39 ?term . ?term wdt:P279 wd:Q16707842 .
@@ -189,6 +189,7 @@ class Command(BaseCommand):
         data_types = {}
         if not self._quiet:
             print("Importing type names")
+        area_type = AreaType.objects.get(code=self.area_type)
         for data_type, props in tqdm(type_names.items(), disable=self._quiet):
             defaults = {
                 "data_type": "profile_id",
@@ -196,7 +197,7 @@ class Command(BaseCommand):
                 "release_date": str(date.today()),
                 "source": sources[props["source"]]["source"],
                 "source_label": sources[props["source"]]["source_label"],
-                "table": "person__persondata",
+                "table": "people__persondata",
                 "is_filterable": False,
             }
             if data_type == "party":
@@ -205,6 +206,7 @@ class Command(BaseCommand):
             ds, created = DataSet.objects.update_or_create(
                 name=data_type, defaults=defaults
             )
+            ds.areas_available.add(area_type)
             dt, created = DataType.objects.get_or_create(
                 data_set=ds,
                 name=data_type,
@@ -220,8 +222,7 @@ class Command(BaseCommand):
             area = Area.get_by_name(mp["Constituency"], area_type=self.area_type)
             if area is None:  # pragma: no cover
                 print(
-                    "Failed to add MP {} as area {} does not exist" % mp["personLabel"],
-                    mp["gss_code"],
+                    f"Failed to add MP {mp['personLabel']} as area {mp['gss_code']} does not exist"
                 )
                 continue
 
@@ -238,9 +239,9 @@ class Command(BaseCommand):
                         id_type="twfyid",
                         defaults={
                             "name": name,
-                            "area": area,
                         },
                     )
+                    person.areas.add(area, through_defaults={"person_type": "MP"})
                 except DataError as e:
                     print(f"Failed to create/update mp {name}: {e}")
                     continue
@@ -304,7 +305,9 @@ class Command(BaseCommand):
             print("Importing MP Images")
         for mp in tqdm(
             PersonData.objects.filter(
-                data_type__name="parlid", person__person_type="MP"
+                data_type__name="parlid",
+                person__personarea__person_type="MP",
+                person__personarea__area__area_type__code="WMC23",
             )
             .select_related("person")
             .all(),
@@ -322,10 +325,10 @@ class Command(BaseCommand):
 
     def check_for_duplicate_mps(self):
         duplicates = (
-            Person.objects.filter(person_type="MP")
+            Person.objects.filter(personarea__person_type="MP")
             .distinct()
-            .values("area_id")
-            .annotate(area_count=Count("area_id"))
+            .values("personarea__area_id")
+            .annotate(area_count=Count("personarea__area_id"))
             .filter(area_count__gt=1)
         )
         if duplicates.count() > 0:
@@ -337,9 +340,9 @@ class Command(BaseCommand):
 
             # Remove all duplicate MPs
             for area in duplicates:
-                duplicate_mps = Person.objects.filter(area=area["area_id"]).values_list(
-                    "external_id", flat=True
-                )
+                duplicate_mps = Person.objects.filter(
+                    areas=area["personarea__area_id"]
+                ).values_list("external_id", flat=True)
                 mps_to_delete = list(duplicate_mps)
                 try:
                     least_recent_mp = (

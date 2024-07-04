@@ -85,7 +85,7 @@ class ImportMPsTestCase(TestCase):
         with self.settings(MEDIA_ROOT=self.media_root):
             call_command("import_mps", quiet=self.quiet_parameter)
 
-        mps = Person.objects.all()
+        mps = Person.objects.order_by("-name").all()
         self.assertEqual(mps.count(), 2)
 
         first = mps[0]
@@ -168,7 +168,7 @@ class DuplicateMPsTestCase(TestCase):
 
         # Count the number of People objects associated
         # with area 2, and ensure it is one
-        self.assertEqual(Person.objects.filter(area__id=2).count(), 1)
+        self.assertEqual(Person.objects.filter(areas=2).count(), 1)
 
     @patch("hub.management.commands.import_mps.call_command")
     def test_correct_mp_left(self, mock_call_command):
@@ -179,7 +179,7 @@ class DuplicateMPsTestCase(TestCase):
         # Check the MP returned is the most recently
         # elected MP (as of last elections)
         self.assertEqual(
-            Person.objects.get(area__id=2),
+            Person.objects.get(areas=2),
             Person.objects.get(name="Juliet Replacement"),
         )
 
