@@ -271,7 +271,7 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
 
     TABLE_CHOICES = [
         ("areadata", "AreaData"),
-        ("person__persondata", "PersonData"),
+        ("people__persondata", "PersonData"),
     ]
 
     UNIT_TYPE_CHOICES = [
@@ -696,12 +696,21 @@ class AreaData(CommonData):
     area = models.ForeignKey(Area, on_delete=models.CASCADE)
 
 
+class PersonArea(models.Model):
+    area = models.ForeignKey(Area, on_delete=models.CASCADE)
+    person = models.ForeignKey("Person", on_delete=models.CASCADE)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    person_type = models.CharField(max_length=10)
+
+
 class Person(models.Model):
     person_type = models.CharField(max_length=10)
     external_id = models.CharField(db_index=True, max_length=20)
     id_type = models.CharField(max_length=30)
     name = models.CharField(max_length=200)
-    area = models.ForeignKey(Area, on_delete=models.CASCADE)
+    old_area = models.ForeignKey(Area, null=True, blank=True, on_delete=models.CASCADE)
+    areas = models.ManyToManyField(Area, through=PersonArea, related_name="people")
     photo = models.ImageField(null=True, upload_to="person")
     start_date = models.DateField(null=True)
     end_date = models.DateField(null=True)

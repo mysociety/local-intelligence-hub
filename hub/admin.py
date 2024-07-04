@@ -161,10 +161,9 @@ class PersonAdmin(admin.ModelAdmin):
     list_display = (
         "__str__",
         "person_type",
-        "area",
     )
     search_fields = (
         "name",
-        "area__name",
+        "areas__name",
     )
     list_filter = ("person_type",)
