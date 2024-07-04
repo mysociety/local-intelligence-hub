@@ -4,6 +4,16 @@ import posthog from 'posthog-js'
 import { PostHogProvider } from 'posthog-js/react'
 import { useEffect } from 'react'
 
+// Utility function to initialize a new PostHog instance
+const initializePosthog = (apiKey: string, apiHost: string, options: object) => {
+  console.log(`Initializing PostHog with API Key: ${apiKey} and API Host: ${apiHost}`);
+  const instance = posthog.init(apiKey, {
+    api_host: apiHost,
+    ...options,
+  });
+  return instance;
+};
+
 export function PHProvider({
   children,
 }: {
@@ -11,16 +21,30 @@ export function PHProvider({
 }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Only capture events if we are in production environment
+      console.log('The environment is:', process.env.NEXT_PUBLIC_ENVIRONMENT);
       if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'production') {
-        console.debug("Initialising Posthog")
-        posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
-          api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
-          capture_pageview: false // Disable automatic pageview capture, as we capture manually
-        })
+        const specificDomain = 'peopleclimatenature.org';
+        if (window.location.hostname === specificDomain) {
+
+          // If domain matches initialize the secondary PostHog instance for The Climate Coalition
+          const secondaryInstance = initializePosthog(
+            process.env.NEXT_PUBLIC_POSTHOG_KEY_SECONDARY!,
+            process.env.NEXT_PUBLIC_POSTHOG_HOST!,
+            // Auto collect events for TCC
+            { capture_pageview: true, autocapture: true }
+          );
+        } else {
+
+          // Initialize the main PostHog instance
+          const mainInstance = initializePosthog(
+            process.env.NEXT_PUBLIC_POSTHOG_KEY_MAIN!,
+            process.env.NEXT_PUBLIC_POSTHOG_HOST!,
+            { capture_pageview: false, autocapture: false }
+          );
+        }
       }
     }
-  }, [])
+  }, []);
 
-  return <PostHogProvider client={posthog}>{children}</PostHogProvider>
+  return <PostHogProvider client={posthog}>{children}</PostHogProvider>;
 }
