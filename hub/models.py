@@ -229,16 +229,16 @@ class ShaderMixin:
             return data, min_max["min"], min_max["max"]
         else:
             min_max = PersonData.objects.filter(
-                person__area__in=area, **self.shader_filter
+                person__areas__in=area, **self.shader_filter
             ).aggregate(
                 max=models.Max(self.value_col),
                 min=models.Min(self.value_col),
             )
 
             data = (
-                PersonData.objects.filter(person__area__in=area, **self.shader_filter)
-                .select_related("person__area", "data_type")
-                .annotate(gss=models.F("person__area__gss"))
+                PersonData.objects.filter(person__areas__in=area, **self.shader_filter)
+                .select_related("data_type")
+                .annotate(gss=models.F("person__areas__gss"))
             )
             return data, min_max["min"], min_max["max"]
 
@@ -650,7 +650,7 @@ class Area(models.Model):
         if dataset.table == "areadata":
             scope = area.areadata_set
         else:
-            person = area.person_set.first()
+            person = area.people.first()
             scope = person.persondata_set if person else None
 
         if scope is None:
@@ -717,10 +717,6 @@ class Person(models.Model):
 
     def __str__(self):
         return self.name
-
-    def get_absolute_url(self):
-        area = self.area
-        return f"/area/{area.area_type.code}/{area.name}"
 
     def party(self):
         return PersonData.objects.get(

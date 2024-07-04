@@ -178,6 +178,7 @@ class FilterMixin:
         area_ids = self.query().values_list("pk", flat=True)
         cols = self.filters().copy()
         cols.extend(self.columns(mp_name=mp_name))
+        area_type = self.area_type()
 
         """
         shortcut if no filters/columns were requested: just return a single
@@ -185,7 +186,6 @@ class FilterMixin:
         """
         if not cols or len(cols) == 0:
             areas = Area.objects
-            area_type = self.area_type()
             if area_type is not None:
                 areas = areas.filter(area_type=area_type)
             for area in areas.order_by("name"):
@@ -204,10 +204,13 @@ class FilterMixin:
             if col["name"] == "mp_name":
                 has_mp = []
                 for row in Person.objects.filter(
-                    person_type="MP", area_id__in=area_ids, end_date__isnull=True
-                ).select_related("area"):
-                    has_mp.append(row.area_id)
-                    area_data[row.area.name]["MP Name"].append(row.name)
+                    personarea__person_type="MP",
+                    areas__in=area_ids,
+                    personarea__end_date__isnull=True,
+                ):
+                    has_mp.extend([a.id for a in row.areas.filter(area_type=area_type)])
+                    for area in row.areas.filter(area_type=area_type):
+                        area_data[area.name]["MP Name"].append(row.name)
 
                 if len(has_mp) < len(area_ids):
                     missing_areas = set(area_ids).difference(has_mp)
@@ -242,15 +245,17 @@ class FilterMixin:
             else:
                 for row in (
                     PersonData.objects.filter(
-                        person__area_id__in=area_ids, data_type__name=col["name"]
+                        person__personarea__area_id__in=area_ids,
+                        data_type__name=col["name"],
                     )
                     .order_by(col["value_col"])
-                    .select_related("person__area", "data_type")
+                    .select_related("data_type")
                 ):
                     value = row.value()
                     if as_dict:
                         value = self.format_value(row.data_type.data_type, row.value())
-                    area_data[row.person.area.name][col["label"]].append(str(value))
+                    for area in row.person.areas.filter(area_type=area_type):
+                        area_data[area.name][col["label"]].append(str(value))
 
         if as_dict:
             for area in Area.objects.filter(id__in=area_ids):

@@ -135,8 +135,8 @@ class ExploreDatasetsJSON(TemplateView):
                 "category": "mp",
                 "name": "mp_name",
                 "title": "MP Name",
-                "source_label": "Data from Wikipedia.",
-                "areas_available": ["WMC"],
+                "source_label": "Data from mySociety.",
+                "areas_available": ["WMC", "WMC23"],
             }
         )
 
@@ -287,6 +287,7 @@ class ExploreCSV(FilterMixin, TemplateView):
     def render_to_response(self, context, **response_kwargs):
         response = HttpResponse(content_type="text/csv")
         writer = csv.writer(response)
-        for row in self.data():
+        d = self.data()
+        for row in d:  # self.data():
             writer.writerow(row)
         return response

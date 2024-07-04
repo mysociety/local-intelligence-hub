@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from hub.models import DataSet, UserDataSets
+from hub.models import Area, DataSet, Person, PersonArea, UserDataSets
 
 
 class Test404Page(TestCase):
@@ -191,7 +191,13 @@ class TestExploreFilteringPage(TestCase):
 
 
 class TestAreaPage(TestCase):
-    fixtures = ["areas.json", "mps.json", "elections.json", "area_data.json"]
+    fixtures = [
+        "areas.json",
+        "areas_23.json",
+        "mps.json",
+        "elections.json",
+        "area_data.json",
+    ]
 
     def setUp(self):
         self.u = User.objects.create(username="user@example.com")
@@ -293,6 +299,59 @@ class TestAreaPage(TestCase):
 
         opinion = context["categories"]["opinion"]
         self.assertEqual(len(opinion), 0)
+
+    def test_area_page_mp_with_multiple_areas(self):
+        p = Person.objects.get(name="James Madeupname")
+        a = Area.objects.get(name="South Borsetshire", area_type__code="WMC23")
+        ap = PersonArea(area=a, person=p, person_type="MP")
+        ap.save()
+
+        DataSet.objects.update(featured=True)
+        url = reverse("area", args=("WMC", "South Borsetshire"))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "hub/area.html")
+
+        context = response.context
+        self.assertEqual(context["page_title"], "South Borsetshire")
+        self.assertEqual(context["area"].name, "South Borsetshire")
+
+        mp = context["mp"]
+        self.assertEqual(mp["person"].name, "James Madeupname")
+
+        url = reverse("area", args=("WMC", "South Borsetshire"))
+        response = self.client.get(url)
+        context = response.context
+        self.assertEqual(context["page_title"], "South Borsetshire")
+        self.assertEqual(context["area"].name, "South Borsetshire")
+
+        mp = context["mp"]
+        self.assertEqual(mp["person"].name, "James Madeupname")
+
+    def test_area_page_multiple_mps(self):
+        p = Person(
+            name="Francis Notaperson",
+            person_type="MP",
+            external_id="99",
+            id_type="twfy_id",
+        )
+        p.save()
+        a = Area.objects.get(name="South Borsetshire", area_type__code="WMC")
+        ap = PersonArea(area=a, person=p, person_type="MP", end_date="2023-01-01")
+        ap.save()
+
+        DataSet.objects.update(featured=True)
+        url = reverse("area", args=("WMC", "South Borsetshire"))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "hub/area.html")
+
+        context = response.context
+        self.assertEqual(context["page_title"], "South Borsetshire")
+        self.assertEqual(context["area"].name, "South Borsetshire")
+
+        mp = context["mp"]
+        self.assertEqual(mp["person"].name, "James Madeupname")
 
 
 class TestAreaSearchPage(TestCase):

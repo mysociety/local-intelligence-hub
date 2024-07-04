@@ -217,11 +217,15 @@ class AreaView(BaseAreaView):
         context["slug"] = slugify(self.object.name)
 
         if context["area_type"] == "WMC23":
-            context["PPCs"] = Person.objects.filter(area=self.object, person_type="PPC")
+            context["PPCs"] = Person.objects.filter(
+                areas=self.object, person_type="PPC"
+            )
         try:
             context["mp"] = {
                 "person": Person.objects.get(
-                    area=self.object, person_type="MP", end_date__isnull=True
+                    areas=self.object,
+                    personarea__person_type="MP",
+                    personarea__end_date__isnull=True,
                 )
             }
 
@@ -284,7 +288,9 @@ class AreaView(BaseAreaView):
             context["no_mp"] = True
             context["mp"] = {
                 "person": Person.objects.filter(
-                    area=self.object, person_type="MP", end_date__isnull=False
+                    areas=self.object,
+                    personarea__person_type="MP",
+                    personarea__end_date__isnull=False,
                 )
                 .order_by("-end_date")
                 .first()
@@ -452,7 +458,8 @@ class AreaSearchView(TemplateView):
 
             context["areas"] = list(areas_raw)
             for person in people_raw:
-                context["areas"].append(person.area)
+                # XXX
+                context["areas"].extend([a for a in person.areas.all()])
 
             if len(context["areas"]) == 0:
                 context["error"] = (
@@ -467,14 +474,17 @@ class AreaSearchView(TemplateView):
             for area in context["areas"]:
                 try:
                     area.mp = Person.objects.get(
-                        area=area, end_date__isnull=True, person_type="MP"
+                        areas=area,
+                        end_date__isnull=True,
+                        personarea__person_type="MP",
+                        personarea__end_date__isnull=True,
                     )
                 except Person.DoesNotExist:
                     pass
 
                 try:
                     area.ppcs = Person.objects.filter(
-                        area=area, end_date__isnull=True, person_type="PPC"
+                        areas=area, end_date__isnull=True, person_type="PPC"
                     )
                 except Person.DoesNotExist:
                     pass
