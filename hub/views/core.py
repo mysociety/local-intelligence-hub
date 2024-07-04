@@ -111,6 +111,11 @@ class ContactView(TitleMixin, TemplateView):
     template_name = "hub/contact.html"
 
 
+class ToolsView(TitleMixin, TemplateView):
+    page_title = ""
+    template_name = "hub/tools.html"
+
+
 class MailChimpSuccessView(TitleMixin, TemplateView):
     page_title = "Contact us"
     template_name = "hub/sign_up_success.html"
