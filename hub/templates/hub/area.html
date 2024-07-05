@@ -309,6 +309,7 @@
                 </div>
               {% endif %}
 
+              {% if area_type == "WMC" %}
                 <div class="card dataset-card area-data--sm {% comment %} TODO: dataset-card--favourite? {% endcomment %} area-data--featured">
                     <div class="card-header">
                         <h3 class="h5">{{ mp.mp_last_elected|date:"Y"}} majority</h3>
@@ -337,6 +338,7 @@
                         <p class="card-text"><a href="https://members-api.parliament.uk/api/Members/{{ mp.parlid }}/LatestElectionResult">Data from UK Parliament.</a></p>
                     </div>
                 </div>
+              {% endif %}
 
               {% if no_mp and mp.person %}
                 <div class="card dataset-card area-data--sm area-data--featured">
