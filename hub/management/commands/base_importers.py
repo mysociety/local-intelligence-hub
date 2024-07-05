@@ -31,6 +31,7 @@ party_shades = {
     "Sinn Féin": "#326760",
     "Social Democratic and Labour Party": "#2AA82C",
     "Reclaim": "#101122",
+    "Reform UK": "#3DBBE2",
     "No overall control": "#EEE",
     "Independents": "#DCDCDC",
 }

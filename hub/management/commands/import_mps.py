@@ -282,12 +282,13 @@ class Command(BaseCommand):
                             data=mp["Party"],
                         )
 
-        dataset = DataSet.objects.filter(name="party", options=list())
+        dataset = DataSet.objects.filter(name="party")
         if dataset:
             parties = list()
             all_parties = list(
                 PersonData.objects.filter(
-                    data_type__data_set__name="party"
+                    person__personarea__person_type="MP",
+                    data_type__data_set__name="party",
                 ).values_list("data")
             )
 
