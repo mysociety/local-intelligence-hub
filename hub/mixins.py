@@ -245,6 +245,8 @@ class FilterMixin:
             else:
                 for row in (
                     PersonData.objects.filter(
+                        # TODO this is a temporary thing while we come up with a better solution
+                        person__personarea__person_type="MP",
                         person__personarea__area_id__in=area_ids,
                         data_type__name=col["name"],
                     )
