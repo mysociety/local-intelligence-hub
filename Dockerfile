@@ -9,7 +9,7 @@ ENV INSIDE_DOCKER=1 \
     POETRY_VIRTUALENVS_CREATE=false \
     PYSETUP_PATH="/opt/pysetup"
 RUN apt-get update && apt-get install -y \
-    binutils gdal-bin libproj-dev git npm \
+    binutils libgdal-dev gdal-bin libproj-dev git npm \
     && rm -rf /var/lib/apt/lists/*
 RUN curl -sSL https://install.python-poetry.org | python -
 ENV PATH="/root/.local/bin:$PATH"
