@@ -73,7 +73,7 @@ class Command(BaseCommand):
                 "release_date": "April 2024",
                 "source": "https://commonslibrary.parliament.uk/research-briefings/cbp-9808/",
                 "data_url": "https://researchbriefings.files.parliament.uk/documents/CBP-9808/CBP-9808.xlsx",
-                "table": "person__persondata",
+                "table": "people__persondata",
                 "options": options,
                 "subcategory": "",
                 "comparators": DataSet.comparators_default(),

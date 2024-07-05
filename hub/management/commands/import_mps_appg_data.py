@@ -96,7 +96,7 @@ class Command(BaseCommand):
                 "label": "MP APPG memberships",
                 "source_label": "Data from UK Parliament.",
                 "source": "https://parliament.uk/",
-                "table": "person__persondata",
+                "table": "people__persondata",
                 "options": options,
                 "is_shadable": False,
                 "comparators": DataSet.in_comparators(),

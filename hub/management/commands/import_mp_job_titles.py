@@ -63,7 +63,7 @@ class Command(BaseCommand):
                 "label": "MP positions (job titles)",
                 "source_label": "Data from Green Alliance.",
                 "source": "https://green-alliance.org.uk/",
-                "table": "person__persondata",
+                "table": "people__persondata",
                 "comparators": DataSet.string_comparators(),
             },
         )
