@@ -1,7 +1,5 @@
 import {
   DataSourceType,
-  GetElectoralCommissionDataQuery,
-  GetElectoralCommissionDataQueryVariables,
   GetLocalDataQuery,
 } from "@/__generated__/graphql";
 import { isAfter, isBefore } from "date-fns";
@@ -19,33 +17,14 @@ import queryString from "query-string";
 import { useHubRenderContext } from "./HubRenderContext";
 import { BACKEND_URL } from "@/env";
 import { EventCard } from "./EventCard";
-import { GET_ELECTORAL_COMMISSION_DATA } from "@/app/hub/render/[hostname]/map/queries";
-import { useQuery } from "@apollo/client";
 
 export function ConstituencyView({
-  data,
-  electoralCommission
+  data
 }: {
   data: GetLocalDataQuery["postcodeSearch"]["constituency"];
-  electoralCommission?: GetLocalDataQuery["postcodeSearch"]["electoralCommission"]
 }) {
   const [tab, setTab] = useState("events");
   const hubContext = useHubRenderContext();
-  const [addressSlug, setAddressSlug] = useState("");
-  const addressQuery = useQuery<
-    GetElectoralCommissionDataQuery,
-    GetElectoralCommissionDataQueryVariables
-  >(GET_ELECTORAL_COMMISSION_DATA, {
-    variables: { postcode: hubContext.postcode!, addressSlug },
-    skip: !addressSlug,
-  });
-
-  const pollingStation = (
-    addressQuery.data?.postcodeSearch.electoralCommission?.dates[0]?.pollingStation.station?.properties ||
-    electoralCommission?.dates[0]?.pollingStation.station?.properties
-  )
-
-  const pollingAddresses = electoralCommission?.addresses || []
 
   if (!data?.name) {
     return (
@@ -119,10 +98,6 @@ export function ConstituencyView({
               {
                 label: "Calendar",
                 key: "events",
-              },
-              {
-                label: "Polling Station",
-                key: "polling-station",
               },
               {
                 label:
@@ -209,61 +184,6 @@ export function ConstituencyView({
                 </section>
               </>
             )}
-          </TabsContent>
-          <TabsContent className="mt-0" value="polling-station">
-            {pollingAddresses.length ? (
-              <section className="px-6 pb-0 my-6">
-                <p className="mb-4">Select one of these addresses:</p>
-                <select
-                  disabled={addressQuery.loading}
-                  className={`max-w-full p-4 w-full rounded-md border
-                    focus:ring-hub-secondary-500 active:border-hub-secondary-500 text-black
-                    ${addressQuery.loading ? "bg-gray-100" : ""}
-                  `}
-                  onChange={(e) => setAddressSlug(e.target.value)}
-                >
-                  <option value="">Choose an address</option>
-                  {pollingAddresses.map((a: any) => (
-                    <option key={a.slug} value={a.slug}>
-                      {a.address}
-                    </option>
-                  ))}
-                </select>
-              </section>
-            ) : null}
-            {pollingStation ? (
-              <section className="px-6 pb-0 my-6">
-                <div className="border-2 border-meepGray-200 rounded-md overflow-hidden p-4 flex flex-col">
-                  <h3 className="font-bold text-lg mb-2">Your polling station:</h3>
-                  <p>{pollingStation.address}</p>
-                  <p className="mb-4">{pollingStation.postcode}</p>
-                  <a
-                    target="_blank"
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pollingStation.address + ", " + pollingStation.postcode + ", UK")}`}
-                    className="bg-hub-primary-200 text-hub-primary-900 px-3 py-2 text-center w-full block rounded-md"
-                  >
-                    Directions
-                  </a>
-                </div>
-              </section>
-            ) : null}
-            {/* Display "No polling station" message if none found and address chosen or no addresses to choose */}
-            {!pollingStation && (addressQuery.data || !pollingAddresses.length) ? (
-              <section className="px-6 pb-0 my-6">
-                <p>
-                  No polling station found for this address - your council may
-                  not have shared its data yet. You can also try&nbsp;
-                  <a
-                    className="text-hub-primary-600 font-bold"
-                    href="https://wheredoivote.co.uk/"
-                    target="_blank"
-                  >
-                    wheredoivote.co.uk
-                  </a>
-                  .
-                </p>
-              </section>
-            ) : null}
           </TabsContent>
           <TabsContent className="mt-0" value="candidates">
             <section className="space-y-4">

@@ -86,19 +86,6 @@ export const GET_LOCAL_DATA = gql`
   query GetLocalData($postcode: String!, $hostname: String!) {
     postcodeSearch(postcode: $postcode) {
       postcode
-      electoralCommission {
-        addresses
-        dates {
-          pollingStation {
-            station {
-              properties {
-                address
-                postcode
-              }
-            }
-          }
-        }
-      }
       constituency: constituency2024 {
         ...ConstituencyViewFragment
         # List of events
@@ -110,26 +97,6 @@ export const GET_LOCAL_DATA = gql`
   }
   ${CONSTITUENCY_VIEW_FRAGMENT}
   ${EVENT_FRAGMENT}
-`
-
-export const GET_ELECTORAL_COMMISSION_DATA = gql`
-  query GetElectoralCommissionData($postcode: String!, $addressSlug: String!) {
-    postcodeSearch(postcode: $postcode) {
-      postcode
-      electoralCommission(addressSlug: $addressSlug) {
-        dates {
-          pollingStation {
-            station {
-              properties {
-                address
-                postcode
-              }
-            }
-          }
-        }
-      }
-    }
-  }
 `
 
 export const GET_EVENT_DATA = gql`
