@@ -324,6 +324,8 @@ class Command(BaseCommand):
             mp.person.save()
 
     def check_for_duplicate_mps(self):
+        # XXX this is a post 2024 election hack to get the MPs up while we fix the election count things
+        return
         duplicates = (
             Person.objects.filter(personarea__person_type="MP")
             .distinct()

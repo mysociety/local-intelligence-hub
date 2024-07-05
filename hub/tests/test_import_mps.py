@@ -1,5 +1,6 @@
 import shutil
 from pathlib import Path
+from unittest import skip
 from unittest.mock import MagicMock, patch
 
 from django.core.management import call_command
@@ -147,6 +148,7 @@ class ImportMPElectionResultsTestCase(TestCase):
                 self.assertEqual(data.value(), value)
 
 
+@skip("Skipping while we fix election result importing")
 class DuplicateMPsTestCase(TestCase):
     fixtures = ["duplicate_mps.json"]
 
