@@ -228,25 +228,19 @@ class ShaderMixin:
             )
             return data, min_max["min"], min_max["max"]
         else:
-            min_max = PersonData.objects.filter(
-                # TODO this is a temporary fix
-                person__personarea__person_type="MP",
+            pd = PersonData.objects.filter(
                 person__areas__in=area,
                 **self.shader_filter,
-            ).aggregate(
+            )
+            if self.person_type is not None:
+                pd = pd.filter(person__personarea__person_type=self.person_type)
+            min_max = pd.aggregate(
                 max=models.Max(self.value_col),
                 min=models.Min(self.value_col),
             )
 
-            data = (
-                PersonData.objects.filter(
-                    # TODO this is a temporary fix
-                    person__personarea__person_type="MP",
-                    person__areas__in=area,
-                    **self.shader_filter,
-                )
-                .select_related("data_type")
-                .annotate(gss=models.F("person__areas__gss"))
+            data = pd.select_related("data_type").annotate(
+                gss=models.F("person__areas__gss")
             )
             return data, min_max["min"], min_max["max"]
 
