@@ -346,28 +346,34 @@ class TestAreaSearchPage(TestCase):
 
     def test_area_name_lookup(self):
         url = reverse("area_search")
-        response = self.client.get(url, {"search": "South Borsetshire"}, follow=True)
+        response = self.client.get(
+            url, {"search": "New South Borsetshire"}, follow=True
+        )
 
-        self.assertRedirects(response, "/area/WMC/South%20Borsetshire")
+        self.assertRedirects(response, "/area/WMC23/New%20South%20Borsetshire")
         self.assertTemplateUsed(response, "hub/area.html")
 
         context = response.context
-        self.assertEqual(context["area"].name, "South Borsetshire")
+        self.assertEqual(context["area"].name, "New South Borsetshire")
 
     def test_search_with_spaces(self):
         url = reverse("area_search")
-        response = self.client.get(url, {"search": " South Borsetshire"}, follow=True)
+        response = self.client.get(
+            url, {"search": " New South Borsetshire"}, follow=True
+        )
 
-        self.assertRedirects(response, "/area/WMC/South%20Borsetshire")
+        self.assertRedirects(response, "/area/WMC23/New%20South%20Borsetshire")
         self.assertTemplateUsed(response, "hub/area.html")
 
-        response = self.client.get(url, {"search": "South Borsetshire "}, follow=True)
+        response = self.client.get(
+            url, {"search": "New South Borsetshire "}, follow=True
+        )
 
-        self.assertRedirects(response, "/area/WMC/South%20Borsetshire")
+        self.assertRedirects(response, "/area/WMC23/New%20South%20Borsetshire")
         self.assertTemplateUsed(response, "hub/area.html")
 
         context = response.context
-        self.assertEqual(context["area"].name, "South Borsetshire")
+        self.assertEqual(context["area"].name, "New South Borsetshire")
 
     def test_mp_name_lookup(self):
         url = reverse("area_search")
@@ -398,7 +404,7 @@ class TestAreaSearchPage(TestCase):
         self.assertTemplateUsed(response, "hub/area_search.html")
 
         context = response.context
-        self.assertEqual(len(context["areas"]), 3)
+        self.assertEqual(len(context["areas"]), 6)
 
 
 class testUserFavouriteViews(TestCase):
