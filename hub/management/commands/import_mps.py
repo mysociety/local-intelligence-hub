@@ -233,9 +233,10 @@ class Command(BaseCommand):
         for _, mp in tqdm(data.iterrows(), disable=self._quiet, total=data.shape[0]):
             area = Area.get_by_name(mp["Constituency"], area_type=self.area_type)
             if area is None:  # pragma: no cover
+                mp_dict = mp.to_dict()
                 print(
-                    "Failed to add MP {} as area {} does not exist" % mp["personLabel"],
-                    mp["gss_code"],
+                    f"Failed to add MP {mp_dict.get('personLabel')} as area "
+                    f"{mp_dict.get('Constituency')} / {mp_dict.get('gss_code')} does not exist"
                 )
                 continue
 
