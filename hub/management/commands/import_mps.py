@@ -61,7 +61,7 @@ MP_IMPORT_COMMANDS = [
 class Command(BaseCommand):
     help = "Import UK Members of Parliament"
 
-    area_type = "WMC"
+    area_type = "WMC23"
 
     def add_arguments(self, parser):
         parser.add_argument(

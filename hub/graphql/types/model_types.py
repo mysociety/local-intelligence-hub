@@ -709,7 +709,8 @@ class Analytics:
         data = self.imported_data_count_by_area(
             postcode_io_key=analytical_area_type.value
         )
-        return [GroupedDataCount(**datum) for datum in data]
+        area_key = postcodeIOKeyAreaTypeLookup[analytical_area_type]
+        return [GroupedDataCount(**datum, area_type=area_key) for datum in data]
 
     @strawberry_django.field
     def imported_data_count_for_area(
@@ -1181,8 +1182,12 @@ def public_map_report(info: Info, org_slug: str, report_slug: str) -> models.Map
 
 
 @strawberry_django.field()
-def area_by_gss(gss: str) -> models.Area:
-    return models.Area.objects.get(gss=gss)
+def area_by_gss(gss: str, analytical_area_type: AnalyticalAreaType) -> models.Area:
+    qs = models.Area.objects.all()
+    if analytical_area_type:
+        area_key = postcodeIOKeyAreaTypeLookup[analytical_area_type]
+        qs = qs.filter(area_type__code=area_key)
+    return qs.get(gss=gss)
 
 
 @strawberry_django.field()
