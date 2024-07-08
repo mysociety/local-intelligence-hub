@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-from hub.models import DataSet, DataType, PersonData
+from hub.models import AreaType, DataSet, DataType, PersonData
 
 COMMITTEE_REQUEST_URL = "https://committees-api.parliament.uk/api/Committees"
 
@@ -70,6 +70,10 @@ class Command(BaseCommand):
                 "comparators": DataSet.in_comparators(),
             },
         )
+
+        for at in AreaType.objects.get(code__in=["WMC", "WMC23"]):
+            select_committee_membership_ds.areas_available.add(at)
+
         select_committee_membership, created = DataType.objects.update_or_create(
             data_set=select_committee_membership_ds,
             name="select_committee_membership",

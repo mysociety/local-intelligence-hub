@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 import pandas as pd
 from tqdm import tqdm
 
-from hub.models import DataSet, DataType, PersonData
+from hub.models import AreaType, DataSet, DataType, PersonData
 
 
 class Command(BaseCommand):
@@ -53,6 +53,10 @@ class Command(BaseCommand):
                 "comparators": DataSet.comparators_default(),
             },
         )
+
+        for at in AreaType.objects.get(code__in=["WMC", "WMC23"]):
+            ds.areas_available.add(at)
+
         data_type, created = DataType.objects.update_or_create(
             data_set=ds,
             name="net_zero_target",
@@ -74,6 +78,10 @@ class Command(BaseCommand):
                 "comparators": DataSet.comparators_default(),
             },
         )
+
+        for at in AreaType.objects.get(code__in=["WMC", "WMC23"]):
+            ds.areas_available.add(at)
+
         data_type, created = DataType.objects.update_or_create(
             data_set=ds,
             name="onshore_wind_energy",

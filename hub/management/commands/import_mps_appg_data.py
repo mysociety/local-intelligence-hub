@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 from mysoc_dataset import get_dataset_df, get_dataset_url
 from tqdm import tqdm
 
-from hub.models import DataSet, DataType, Person, PersonData
+from hub.models import AreaType, DataSet, DataType, Person, PersonData
 
 party_lookup = {
     "Conservative": "Conservative Party",
@@ -102,6 +102,9 @@ class Command(BaseCommand):
                 "comparators": DataSet.in_comparators(),
             },
         )
+
+        for at in AreaType.objects.get(code__in=["WMC", "WMC23"]):
+            appg_membership_ds.areas_available.add(at)
 
         appg_membership, created = DataType.objects.update_or_create(
             data_set=appg_membership_ds,

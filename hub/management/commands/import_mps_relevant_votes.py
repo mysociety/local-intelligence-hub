@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 import requests
 from tqdm import tqdm
 
-from hub.models import DataSet, DataType, Person, PersonData
+from hub.models import AreaType, DataSet, DataType, Person, PersonData
 
 
 class Command(BaseCommand):
@@ -197,6 +197,10 @@ class Command(BaseCommand):
                     "comparators": DataSet.in_comparators(),
                 },
             )
+
+            for at in AreaType.objects.get(code__in=["WMC", "WMC23"]):
+                ds.areas_available.add(at)
+
             data_type, created = DataType.objects.update_or_create(
                 data_set=ds,
                 name=vote_machine_name,
@@ -221,6 +225,10 @@ class Command(BaseCommand):
                         "comparators": DataSet.comparators_default(),
                     },
                 )
+
+                for at in AreaType.objects.get(code__in=["WMC", "WMC23"]):
+                    ds.areas_available.add(at)
+
                 data_type, created = DataType.objects.update_or_create(
                     data_set=ds,
                     name=edm_machine_name,

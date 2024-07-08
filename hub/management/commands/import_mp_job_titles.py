@@ -29,7 +29,7 @@ class Command(BaseCommand):
         self.import_results()
 
     def get_area_type(self):
-        return AreaType.objects.get(code="WMC")
+        return AreaType.objects.get(code="WMC23")
 
     def get_df(self):
 
