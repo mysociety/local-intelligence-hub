@@ -122,7 +122,7 @@ export function ConstituencyView({
               {hubContext.hostname === "peopleclimatenature.org" ? (
                 <IframeResizer
                   src={queryString.stringifyUrl({
-                    url: "https://peopleclimatenature.onldspk.cc/2024-mps/frame",
+                    url: "https://peopleclimatenature.onldspk.cc/2024-mps/frame/write",
                     query: {
                       body: "VqQTqd",
                       pc: postcode,
