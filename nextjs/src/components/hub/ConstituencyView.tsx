@@ -117,6 +117,71 @@ export function ConstituencyView({
             ))}
           </TabsList>
           <div className="w-full border-b border-meepGray-200"></div>
+          <TabsContent className="mt-0" value="candidates">
+            <section className="space-y-4">
+              {hubContext.hostname === "peopleclimatenature.org" ? (
+                <IframeResizer
+                  src={queryString.stringifyUrl({
+                    url: "https://peopleclimatenature.onldspk.cc/2024-mps/frame",
+                    query: {
+                      body: "VqQTqd",
+                      pc: postcode,
+                    },
+                  })}
+                  width={"100%"}
+                />
+              ) : (
+                <div className="space-y-3 my-4">
+                  {data?.ppcs
+                    .slice()
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((person) => (
+                      <article
+                        key={person.id}
+                        className="border-2 border-meepGray-200 rounded-md overflow-hidden p-4 flex flex-col gap-2 mx-4"
+                      >
+                        <header>
+                          <div className="flex items-center">
+                            {person.photo && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={new URL(
+                                  person.photo.url,
+                                  BACKEND_URL
+                                ).toString()}
+                                alt={person.name}
+                                width={41}
+                                height={41}
+                                className="rounded-full mr-4"
+                              />
+                            )}
+                            <h3 className="font-bold text-lg">{person.name}</h3>
+                            {person.party && (
+                              <span className="border-l border-x-meepGray-400 pl-2 ml-auto">
+                                {person.party.name}
+                              </span>
+                            )}
+                          </div>
+                        </header>
+                        {person.email ? (
+                          <a
+                            href={`mailto:${person.email.data?.replace(/["']/gim, "")}`}
+                            target="_blank"
+                            className="bg-hub-primary-200 text-hub-primary-900 px-3 py-2 text-center w-full block rounded-md"
+                          >
+                            Email Candidate
+                          </a>
+                        ) : (
+                          <span className="bg-meepGray-200 text-hub-primary-900 px-3 py-2 text-center w-full block rounded-md">
+                            No Email Address Yet
+                          </span>
+                        )}
+                      </article>
+                    ))}
+                </div>
+              )}
+            </section>
+          </TabsContent>
           <TabsContent className="mt-0" value="events">
             {!!upcomingEvents?.length ? (
               <>
@@ -185,71 +250,7 @@ export function ConstituencyView({
               </>
             )}
           </TabsContent>
-          <TabsContent className="mt-0" value="candidates">
-            <section className="space-y-4">
-              {hubContext.hostname === "peopleclimatenature.org" ? (
-                <IframeResizer
-                  src={queryString.stringifyUrl({
-                    url: "https://peopleclimatenature.onldspk.cc/2024-mps/frame",
-                    query: {
-                      body: "VqQTqd",
-                      pc: postcode,
-                    },
-                  })}
-                  width={"100%"}
-                />
-              ) : (
-                <div className="space-y-3 my-4">
-                  {data?.ppcs
-                    .slice()
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((person) => (
-                      <article
-                        key={person.id}
-                        className="border-2 border-meepGray-200 rounded-md overflow-hidden p-4 flex flex-col gap-2 mx-4"
-                      >
-                        <header>
-                          <div className="flex items-center">
-                            {person.photo && (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={new URL(
-                                  person.photo.url,
-                                  BACKEND_URL
-                                ).toString()}
-                                alt={person.name}
-                                width={41}
-                                height={41}
-                                className="rounded-full mr-4"
-                              />
-                            )}
-                            <h3 className="font-bold text-lg">{person.name}</h3>
-                            {person.party && (
-                              <span className="border-l border-x-meepGray-400 pl-2 ml-auto">
-                                {person.party.name}
-                              </span>
-                            )}
-                          </div>
-                        </header>
-                        {person.email ? (
-                          <a
-                            href={`mailto:${person.email.data?.replace(/["']/gim, "")}`}
-                            target="_blank"
-                            className="bg-hub-primary-200 text-hub-primary-900 px-3 py-2 text-center w-full block rounded-md"
-                          >
-                            Email Candidate
-                          </a>
-                        ) : (
-                          <span className="bg-meepGray-200 text-hub-primary-900 px-3 py-2 text-center w-full block rounded-md">
-                            No Email Address Yet
-                          </span>
-                        )}
-                      </article>
-                    ))}
-                </div>
-              )}
-            </section>
-          </TabsContent>
+    
         </Tabs>
       </main>
     </div>
