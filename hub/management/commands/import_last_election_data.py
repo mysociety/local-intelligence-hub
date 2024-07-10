@@ -235,6 +235,7 @@ class Command(BaseCommand):
         second_party, created = DataType.objects.update_or_create(
             data_set=second_party_ds,
             name="second_party",
+            area_type=self.get_area_type(),
             defaults={"data_type": "text"},
         )
 
@@ -258,6 +259,7 @@ class Command(BaseCommand):
         last_election, created = DataType.objects.update_or_create(
             data_set=last_election_ds,
             name="last_election",
+            area_type=self.get_area_type(),
             defaults={"data_type": "json"},
         )
 

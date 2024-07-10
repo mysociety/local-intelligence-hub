@@ -60,7 +60,7 @@ class ImportMPsTestCase(TestCase):
                     26,
                     27,
                 ],
-                "Constituency": ["South Borsetshire", "Borsetshire West"],
+                "Constituency": ["New South Borsetshire", "New Borsetshire West"],
                 "Party": ["Borsetshire Independence", "Borsetshire Unionist"],
                 "First name": ["James", "Angela"],
                 "Last name": ["Madeupname", "Madeupname"],
