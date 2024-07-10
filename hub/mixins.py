@@ -1,6 +1,8 @@
 from collections import defaultdict
 from functools import cache
 
+from django.db.models import Q
+
 from hub.models import Area, AreaData, AreaType, DataSet, DataType, Person, PersonData
 
 
@@ -197,6 +199,14 @@ class FilterMixin:
             return data
 
         """
+        Mostly person data is area agnostic but the odd thing, e.g. majority is area
+        type specific so only get data that is for the area type or does not have an
+        area type.
+        """
+        person_area_type_filter = Q(data_type__area_type=area_type) | Q(
+            data_type__area_type__isnull=True
+        )
+        """
         first for each column we want gather the data and store it against the
         area
         """
@@ -247,6 +257,7 @@ class FilterMixin:
                     person__personarea__area_id__in=area_ids,
                     data_type__name=col["name"],
                 )
+                pd = pd.filter(person_area_type_filter)
                 if dataset.person_type is not None:
                     pd = pd.filter(
                         person__personarea__person_type="MP",

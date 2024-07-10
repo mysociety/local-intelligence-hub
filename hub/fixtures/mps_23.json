@@ -20,6 +20,16 @@
     }
   },
   {
+    "model": "hub.person",
+    "pk": 3,
+    "fields": {
+      "name": "Andrew Madeupname",
+      "external_id": "3",
+      "person_type": "MP",
+      "id_type": "parlid"
+    }
+  },
+  {
     "model": "hub.personarea",
     "pk": 1,
     "fields": {
@@ -38,13 +48,43 @@
     }
   },
   {
+    "model": "hub.personarea",
+    "pk": 3,
+    "fields": {
+      "person": 1,
+      "area": 1,
+      "person_type": "MP"
+    }
+  },
+  {
+    "model": "hub.personarea",
+    "pk": 4,
+    "fields": {
+      "person": 2,
+      "area": 2,
+      "person_type": "MP"
+    }
+  },
+  {
+    "model": "hub.personarea",
+    "pk": 5,
+    "fields": {
+      "person": 3,
+      "area": 6,
+      "person_type": "MP"
+    }
+  },
+  {
     "model": "hub.dataset",
     "pk": 1,
     "fields": {
+      "table": "people__persondata",
       "name": "parlid",
+      "label": "ParlId",
       "data_type": "profileid",
       "last_update": "2022-10-10T13:20:30+00:00",
-      "source": "https://wikipedia.org"
+      "source": "https://wikipedia.org",
+      "areas_available": [1,2]
     }
   },
   {

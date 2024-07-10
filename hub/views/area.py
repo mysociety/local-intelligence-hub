@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import Http404, HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.text import slugify
@@ -233,6 +233,12 @@ class AreaView(BaseAreaView):
             data = PersonData.objects.filter(
                 person=context["mp"]["person"]
             ).select_related("data_type")
+
+            area_type_q = Q(data_type__area_type=area_type) | Q(
+                data_type__area_type__isnull=True
+            )
+
+            data = data.filter(area_type_q)
             if is_non_member:
                 data = data.exclude(data_type__data_set__is_public=False)
             for item in data.all():
