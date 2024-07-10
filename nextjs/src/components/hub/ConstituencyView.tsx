@@ -102,7 +102,7 @@ export function ConstituencyView({
               {
                 label:
                   hubContext.hostname === "peopleclimatenature.org"
-                    ? "Message your candidates 💬"
+                    ? "Message your MP 💬"
                     : "Candidates",
                 key: "candidates",
               },
@@ -158,7 +158,7 @@ export function ConstituencyView({
                 <div className="flex flex-col gap-2 text-hub-primary-neutral px-6 my-6">
                   <h3 className="font-bold">Other ways to get involved</h3>
                   <p>
-                    There are lots of easy ways you can show your candidates you
+                    There are lots of easy ways you can show your MP you
                     care about people, climate and nature. Take a look at this
                     page here to find out more.
                   </p>
@@ -190,7 +190,7 @@ export function ConstituencyView({
               {hubContext.hostname === "peopleclimatenature.org" ? (
                 <IframeResizer
                   src={queryString.stringifyUrl({
-                    url: "https://peopleclimatenature.onldspk.cc/ge2024-candidates/frame/write",
+                    url: "https://peopleclimatenature.onldspk.cc/2024-mps/frame",
                     query: {
                       body: "VqQTqd",
                       pc: postcode,
