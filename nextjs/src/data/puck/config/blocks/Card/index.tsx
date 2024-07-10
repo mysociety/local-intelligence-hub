@@ -26,6 +26,7 @@ import dynamic from "next/dynamic";
 import dynamicIconImports from "lucide-react/dynamicIconImports";
 import { itemTypes } from "../FilterableGrid/cardTypes";
 import { ErrorBoundary } from "@sentry/nextjs";
+import posthog from 'posthog-js';
 
 const icons = Object.keys(dynamicIconImports).reduce((acc, iconName) => {
   // @ts-ignore
@@ -156,7 +157,29 @@ export const Card: ComponentConfig<CardProps> = {
   render: props => <ErrorBoundary><RenderCard {...props} /></ErrorBoundary>,
 };
 
-export function RenderCard({ src, category, title, description, dialogDescription, type, link, linkLabel, behaviour, eventMonth, eventDay, eventTime, eventLocation, imageUrl }: CardProps) {
+export function RenderCard({
+  src,
+  category,
+  title,
+  description,
+  dialogDescription,
+  type,
+  link,
+  linkLabel,
+  behaviour,
+  eventMonth,
+  eventDay,
+  eventTime,
+  eventLocation,
+  imageUrl,
+}: CardProps) {
+  const handleDownloadClick = () => {
+    if (type === "resource") {
+      posthog.capture("file_download", {
+        file_name: title,
+      });
+    }
+  };
   const card = type !== "illustration" ? (
     <div
       className="render-card w-full h-full aspect-square overflow-clip rounded-[20px] flex flex-col gap-5 hover:shadow-hover transition-all"
@@ -168,7 +191,7 @@ export function RenderCard({ src, category, title, description, dialogDescriptio
       {type === "resource" && (
         <div className="p-5 bg-white h-full flex flex-col gap-4 justify-between">
           <div className="text-hub-primary-600 w-full object-scale-down object-left ">
-            {imageUrl ? <img src={imageUrl} alt="resource image" className='rounded-[10px] h-40' /> : <FileHeart strokeWidth="1.5" className="h-10 w-10"/>}
+            {imageUrl ? <img src={imageUrl} alt="resource image" className='rounded-[10px] h-40' /> : <FileHeart strokeWidth="1.5" className="h-10 w-10" />}
 
           </div>
           <div>
@@ -239,8 +262,8 @@ export function RenderCard({ src, category, title, description, dialogDescriptio
         objectFit: "contain",
       }} />
     </div>
-    )
-      
+  )
+
 
   if (behaviour === "dialog" && !!dialogDescription) {
     return (
@@ -255,12 +278,15 @@ export function RenderCard({ src, category, title, description, dialogDescriptio
               <PuckText text={dialogDescription} />
             </DialogDescription>
             {!!link && (
-              <Link href={link}
-                className='bg-hub-primary-600 hover:bg-hub-primary-500 text-white text-lg font-bold rounded-md p-4 flex flex-row gap-4 text-center items-center justify-center'
+              <Link
+                href={link}
+                onClick={handleDownloadClick}
+                className="bg-hub-primary-600 hover:bg-hub-primary-500 text-white text-lg font-bold rounded-md p-4 flex flex-row gap-4 text-center items-center justify-center"
               >
                 {type === "resource" && <Download />}
                 {linkLabel || "Learn more"}
               </Link>
+
             )}
           </DialogHeader>
         </DialogContent>
