@@ -23,7 +23,7 @@ export function ConstituencyView({
 }: {
   data: GetLocalDataQuery["postcodeSearch"]["constituency"];
 }) {
-  const [tab, setTab] = useState("events");
+  const [tab, setTab] = useState("candidates");
   const hubContext = useHubRenderContext();
 
   if (!data?.name) {
