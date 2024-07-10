@@ -48,7 +48,7 @@ export function ConstituencyView({
     ?.filter(
       (d) =>
         d.dataType.dataSet.externalDataSource.dataType ===
-          DataSourceType.Event && !!d.startTime
+        DataSourceType.Event && !!d.startTime
     )
 
     .sort((a, b) =>
@@ -96,16 +96,17 @@ export function ConstituencyView({
           <TabsList className="px-6 py-4 mb-4 border-none w-full justify-start gap-2">
             {[
               {
-                label: "Calendar",
-                key: "events",
-              },
-              {
                 label:
                   hubContext.hostname === "peopleclimatenature.org"
                     ? "Message your MP 💬"
                     : "Candidates",
                 key: "candidates",
               },
+              {
+                label: "Calendar",
+                key: "events",
+              },
+
             ].map((target) => (
               <TabsTrigger
                 key={target.key}
@@ -250,7 +251,7 @@ export function ConstituencyView({
               </>
             )}
           </TabsContent>
-    
+
         </Tabs>
       </main>
     </div>
