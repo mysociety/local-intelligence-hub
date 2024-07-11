@@ -459,7 +459,9 @@ class AreaSearchView(TemplateView):
             context["areas"] = list(areas_raw)
             for person in people_raw:
                 # XXX
-                context["areas"].extend([a for a in person.areas.all()])
+                context["areas"].extend(
+                    [a for a in person.areas.filter(personarea__person_type="MP")]
+                )
 
             if len(context["areas"]) == 0:
                 context["error"] = (
