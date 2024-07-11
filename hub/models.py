@@ -381,6 +381,7 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
     unit_distribution = models.TextField(null=True, choices=UNIT_DISTRIBUTION_CHOICES)
     areas_available = models.ManyToManyField("AreaType")
     person_type = models.CharField(max_length=10, null=True, blank=True)
+    visible = models.BooleanField(default=True)
 
     def __str__(self):
         if self.label:
