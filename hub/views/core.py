@@ -61,7 +61,7 @@ class SourcesView(TitleMixin, TemplateView):
             },
         }
 
-        for dataset in DataSet.objects.all().order_by("label"):
+        for dataset in DataSet.objects.filter(visible=True).order_by("label"):
             # MP datasets are associated with a Person not an Area,
             # so need to default them to WMC.
             areas_available = dataset.areas_available.all() or [
@@ -276,7 +276,7 @@ class StatusView(TemplateView):
                 {
                     "database": "ok",
                     "areas": Area.objects.count(),
-                    "datasets": DataSet.objects.count(),
+                    "datasets": DataSet.objects.filter(visible=True).count(),
                 }
             )
         except OperationalError:

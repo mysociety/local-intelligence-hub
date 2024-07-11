@@ -60,7 +60,7 @@ class ExploreDatasetsJSON(TemplateView):
         is_non_member = self.request.user.is_anonymous
 
         datasets = []
-        for d in DataSet.objects.all():
+        for d in DataSet.objects.filter(visible=True):
             try:
                 options = list(map(itemgetter("title"), d.options))
             # catch bad options and ignore them for now

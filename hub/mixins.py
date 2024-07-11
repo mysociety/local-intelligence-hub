@@ -42,7 +42,9 @@ class FilterMixin:
                 value = value.split(",")
 
             try:
-                dataset = DataSet.objects.get(name=name, areas_available=area_type)
+                dataset = DataSet.objects.get(
+                    name=name, areas_available=area_type, visible=True
+                )
                 if is_non_member and not dataset.is_public:
                     continue
                 filters.append(
@@ -57,7 +59,9 @@ class FilterMixin:
                 )
             except DataSet.DoesNotExist:  # pragma: nocover
                 try:
-                    datatype = DataType.objects.get(name=name, area_type=area_type)
+                    datatype = DataType.objects.get(
+                        name=name, area_type=area_type, data_set__visible=True
+                    )
                     filters.append(
                         {
                             "dataset": datatype.data_set,
@@ -92,7 +96,9 @@ class FilterMixin:
                 continue
 
             try:
-                dataset = DataSet.objects.get(name=col, areas_available=area_type)
+                dataset = DataSet.objects.get(
+                    name=col, areas_available=area_type, visible=True
+                )
                 if is_non_member and not dataset.is_public:
                     continue
                 columns.append(
@@ -106,7 +112,9 @@ class FilterMixin:
                 )
             except DataSet.DoesNotExist:
                 try:
-                    datatype = DataType.objects.get(name=col, area_type=area_type)
+                    datatype = DataType.objects.get(
+                        name=col, area_type=area_type, data_set__visible=True
+                    )
                     columns.append(
                         {
                             "dataset": datatype.data_set,
@@ -289,9 +297,13 @@ class FilterMixin:
         name = self.request.GET.get("shader")
         area_type = self.area_type()
         try:
-            return DataSet.objects.get(name=name, areas_available=area_type)
+            return DataSet.objects.get(
+                name=name, areas_available=area_type, visible=True
+            )
         except DataSet.DoesNotExist:
             try:
-                return DataType.objects.get(name=name, area_type=area_type)
+                return DataType.objects.get(
+                    name=name, area_type=area_type, data_set__visible=True
+                )
             except DataType.DoesNotExist:
                 return None

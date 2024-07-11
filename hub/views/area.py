@@ -231,7 +231,7 @@ class AreaView(BaseAreaView):
 
             context["no_mp"] = False
             data = PersonData.objects.filter(
-                person=context["mp"]["person"]
+                data_type__data_set__visible=True, person=context["mp"]["person"]
             ).select_related("data_type")
 
             area_type_q = Q(data_type__area_type=area_type) | Q(
@@ -326,7 +326,7 @@ class AreaView(BaseAreaView):
         favs = self.get_user_favourite_datasets()
         auto_converted = self.get_auto_convered_datasets()
         data_sets = DataSet.objects.order_by("order", "label").filter(
-            areas_available=self.object.area_type
+            areas_available=self.object.area_type, visible=True
         )
 
         if is_non_member:

@@ -158,6 +158,23 @@ class TestExploreDatasetsPage(TestCase):
             output_csv,
         )
 
+    def test_explore_view_extra_column_not_visible(self):
+        ds = DataSet.objects.get(name="constituency_polling_data")
+        ds.visible = False
+        ds.save()
+
+        output_csv = str.encode(
+            "Constituency Name,APPG membership\r\nSouth Borsetshire,MadeUpAPPG; MadeUpAPPG2\r\n"
+        )
+
+        url = f"{reverse('explore_csv')}?mp_appg_membership__exact=MadeUpAPPG&columns=wind_support"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.content,
+            output_csv,
+        )
+
 
 class TestExploreFilteringPage(TestCase):
     fixtures = [
@@ -420,6 +437,25 @@ class TestAreaPage(TestCase):
 
         mp = context["mp"]
         self.assertEqual(mp["person"].name, "James Madeupname")
+
+    def test_area_page_hidden_datasets(self):
+        DataSet.objects.update(featured=True)
+        for name in ["constituency_fuel_poverty", "mp_election_majority"]:
+            ds = DataSet.objects.get(name=name)
+            ds.visible = False
+            ds.save()
+
+        url = reverse("area", args=("WMC", "South Borsetshire"))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        context = response.context
+        mp = context["mp"]
+        self.assertEqual(len(mp.keys()), 8)
+        self.assertIsNone(mp.get("mp_election_majority"))
+
+        places = context["categories"]["place"]
+        self.assertEqual(len(places), 1)
 
 
 class TestAreaSearchPage(TestCase):
