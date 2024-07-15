@@ -6,7 +6,6 @@ import { useEffect } from 'react'
 
 // Utility function to initialize a new PostHog instance
 const initializePosthog = (apiKey: string, apiHost: string, options: object) => {
-  console.log(`Initializing PostHog with API Key: ${apiKey} and API Host: ${apiHost}`);
   const instance = posthog.init(apiKey, {
     api_host: apiHost,
     ...options,
@@ -21,7 +20,6 @@ export function PHProvider({
 }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      console.log('The environment is:', process.env.NEXT_PUBLIC_ENVIRONMENT);
       if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'production') {
         const specificDomain = 'peopleclimatenature.org';
         if (window.location.hostname === specificDomain) {
