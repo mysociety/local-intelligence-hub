@@ -50,7 +50,6 @@ export function ConstituencyView({
         d.dataType.dataSet.externalDataSource.dataType ===
         DataSourceType.Event && !!d.startTime
     )
-
     .sort((a, b) =>
       // most recent first
       isAfter(new Date(a.startTime), new Date(b.startTime)) ? 1 : -1
@@ -66,9 +65,11 @@ export function ConstituencyView({
     isBefore(new Date(e.startTime), new Date())
   );
 
+  console.log('Raw postcode:', data?.samplePostcode?.postcode);
   const postcode = data?.samplePostcode?.postcode
     ?.trim()
     .replace(/([\s ]*)/gim, "");
+  console.log('Processed postcode:', postcode);
 
   return (
     <div className="flex flex-col overflow-y-hidden">
@@ -106,7 +107,6 @@ export function ConstituencyView({
                 label: "Calendar",
                 key: "events",
               },
-
             ].map((target) => (
               <TabsTrigger
                 key={target.key}
@@ -251,7 +251,6 @@ export function ConstituencyView({
               </>
             )}
           </TabsContent>
-
         </Tabs>
       </main>
     </div>
