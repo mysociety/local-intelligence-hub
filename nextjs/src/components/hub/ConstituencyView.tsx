@@ -25,6 +25,7 @@ export function ConstituencyView({
 }) {
   const [tab, setTab] = useState("candidates");
   const hubContext = useHubRenderContext();
+  console.log('constituency data', data)
 
   if (!data?.name) {
     return (
@@ -65,11 +66,10 @@ export function ConstituencyView({
     isBefore(new Date(e.startTime), new Date())
   );
 
-  console.log('Raw postcode:', data?.samplePostcode?.postcode);
+
   const postcode = data?.samplePostcode?.postcode
     ?.trim()
     .replace(/([\s ]*)/gim, "");
-  console.log('Processed postcode:', postcode);
 
   return (
     <div className="flex flex-col overflow-y-hidden">
