@@ -1,7 +1,6 @@
-// page.js
 "use client";
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useQuery } from "@apollo/client";
@@ -28,14 +27,17 @@ export default function Page(props: { params: Params }) {
     variables: { hostname: props.params.hostname },
   });
 
-  const shouldDisplayMap = useBreakpoint("md")
+  const shouldDisplayMap = useBreakpoint("md");
+
+  const [postcode, setPostcode] = useState("");
+  console.log(postcode)
 
   return (
     <JotaiProvider>
       <HubRenderContextProvider hostname={props.params.hostname}>
         <Root renderCSS={false} fullScreen={shouldDisplayMap} navLinks={hub.data?.hubByHostname?.navLinks || []}>
           <MapProvider>
-            <PageContent {...props} shouldDisplayMap={shouldDisplayMap} hub={hub.data} />
+            <PageContent {...props} shouldDisplayMap={shouldDisplayMap} hub={hub.data} postcode={postcode} setPostcode={setPostcode} />
           </MapProvider>
         </Root>
       </HubRenderContextProvider>
@@ -43,8 +45,8 @@ export default function Page(props: { params: Params }) {
   );
 }
 
-function PageContent ({ params: { hostname }, shouldDisplayMap, hub }: { params: Params, shouldDisplayMap: boolean, hub?: GetHubMapDataQuery }) {
-  const hubContext = useHubRenderContext()
+function PageContent ({ params: { hostname }, shouldDisplayMap, hub, postcode, setPostcode }: { params: Params, shouldDisplayMap: boolean, hub?: GetHubMapDataQuery, postcode: string, setPostcode: React.Dispatch<React.SetStateAction<string>> }) {
+  const hubContext = useHubRenderContext();
 
   const localData = useQuery<GetLocalDataQuery, GetLocalDataQueryVariables>(GET_LOCAL_DATA, {
     variables: { postcode: hubContext.postcode!, hostname },
@@ -80,14 +82,16 @@ function PageContent ({ params: { hostname }, shouldDisplayMap, hub }: { params:
               >
                 <div className="max-w-[100vw] rounded-[20px] bg-white max-h-full overflow-y-auto  pointer-events-auto">
                   {hubContext.eventId && eventData.data ? (
-                    <ConstituencyView data={eventData.data?.importedDataGeojsonPoint?.properties?.constituency} />
+                    <ConstituencyView data={eventData.data?.importedDataGeojsonPoint?.properties?.constituency} postcode={postcode} />
                   ) : !localData.data ? (
                     <SearchPanel
                       onSearch={(postcode) => hubContext.goToPostcode(postcode)}
                       isLoading={localData.loading}
+                      postcode={postcode}
+                      setPostcode={setPostcode}
                     />
                   ) : (
-                    <ConstituencyView data={localData.data?.postcodeSearch.constituency} />
+                    <ConstituencyView data={localData.data?.postcodeSearch.constituency} postcode={postcode} />
                   )}
                 </div>
               </aside>
@@ -100,9 +104,11 @@ function PageContent ({ params: { hostname }, shouldDisplayMap, hub }: { params:
             <SearchPanel
               onSearch={(postcode) => hubContext.goToPostcode(postcode)}
               isLoading={localData.loading}
+              postcode={postcode}
+              setPostcode={setPostcode}
             />
           ) : (
-            <ConstituencyView data={localData.data.postcodeSearch.constituency} />
+            <ConstituencyView data={localData.data.postcodeSearch.constituency} postcode={postcode} />
           )}
         </div>
       )}
