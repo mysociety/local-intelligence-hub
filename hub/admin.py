@@ -50,9 +50,17 @@ class DataSetAdmin(admin.ModelAdmin):
         "order",
         "featured",
         "is_public",
+        "visible",
     )
-    list_editable = ("order", "featured", "is_public")
-    list_filter = ("category", "featured", "areas_available", "is_public", "data_type")
+    list_editable = ("order", "featured", "is_public", "visible")
+    list_filter = (
+        "category",
+        "featured",
+        "areas_available",
+        "is_public",
+        "visible",
+        "data_type",
+    )
     ordering = ("category", "order", "label")
     search_fields = ["name", "label", "description", "source", "source_label"]
 
