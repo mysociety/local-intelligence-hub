@@ -1,10 +1,12 @@
 import Modal from 'bootstrap/js/dist/modal'
-import { createApp } from 'vue/dist/vue.esm-bundler.js'
+import { createApp, toRaw } from 'vue/dist/vue.esm-bundler.js'
 import { Map } from 'leaflet/src/map'
 import { TileLayer } from 'leaflet/src/layer/tile'
 import { GeoJSON } from 'leaflet/src/layer'
+import { Icon } from 'leaflet/src/layer/marker'
 import { Zoom } from 'leaflet/src/control'
 import { Attribution } from 'leaflet/src/control'
+import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
 import trackEvent from './analytics.esm.js'
 
 const app = createApp({
@@ -381,7 +383,7 @@ const app = createApp({
         // because the map element should be visible by then.
         var _this = this
         setTimeout(function(){
-          _this.map.invalidateSize()
+          toRaw(_this.map).invalidateSize()
         }, 100)
       }
     },
@@ -410,6 +412,7 @@ const app = createApp({
       });
     },
     setUpMap() {
+      var _this = this;
       this.loading = true
       this.map = new Map(this.$refs.map).setView([54.0934, -2.8948], 7)
 
@@ -419,12 +422,35 @@ const app = createApp({
           maxZoom: 19,
           attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }
-      ).addTo(this.map)
+      ).addTo(toRaw(this.map))
+
+      const searchControl = new GeoSearchControl({
+        provider: new OpenStreetMapProvider({
+          params: {
+            email: 'localintelligencehub@theclimatecoalition.org',
+            countrycodes: 'gb', // limit results to UK
+            addressdetails: 1
+          }
+        }),
+        resultFormat: function(args){
+          // no need to include UK in the labels
+          return args.result.label.replace(', United Kingdom', '');
+        },
+        style: 'button',
+        updateMap: false // we handle our own pan/zoom
+      });
+      toRaw(this.map).addControl(searchControl);
+      toRaw(this.map).on('geosearch/showlocation', function(args){
+        toRaw(_this.map).fitBounds(args.location.bounds, {
+          maxZoom: 10,
+          padding: [100, 100]
+        });
+      });
 
       return this.setUpMapAreas()
     },
     removeMapAreas() {
-      this.map.removeLayer(window.geojson)
+      toRaw(this.map).removeLayer(window.geojson)
       return this.setUpMapAreas()
     },
     setUpMapAreas() {
@@ -458,7 +484,7 @@ const app = createApp({
                 },
               })
             }
-          }).addTo(this.map)
+          }).addTo(toRaw(this.map))
 
           this.key = null
           this.legend = null
