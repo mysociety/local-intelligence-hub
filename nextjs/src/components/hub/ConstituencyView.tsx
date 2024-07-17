@@ -19,13 +19,15 @@ import { BACKEND_URL } from "@/env";
 import { EventCard } from "./EventCard";
 
 export function ConstituencyView({
-  data
+  data,
+  postcode
 }: {
-  data: GetLocalDataQuery["postcodeSearch"]["constituency"];
+  data: GetLocalDataQuery["postcodeSearch"]["constituency"],
+  postcode: string
 }) {
   const [tab, setTab] = useState("candidates");
   const hubContext = useHubRenderContext();
-  
+
   if (!data?.name) {
     return (
       <div className="p-6">
@@ -64,11 +66,6 @@ export function ConstituencyView({
     // future events
     isBefore(new Date(e.startTime), new Date())
   );
-
-
-  const postcode = data?.samplePostcode?.postcode
-    ?.trim()
-    .replace(/([\s ]*)/gim, "");
 
   return (
     <div className="flex flex-col overflow-y-hidden">

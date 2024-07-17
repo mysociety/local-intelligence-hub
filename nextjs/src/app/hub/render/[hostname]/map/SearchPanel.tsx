@@ -6,12 +6,15 @@ import { FormEvent, useState } from "react"
 
 export function SearchPanel({
   onSearch,
-  isLoading
+  isLoading,
+  postcode,
+  setPostcode
 }: {
   onSearch: (postcode: string) => void,
-  isLoading: boolean
+  isLoading: boolean,
+  postcode: string,
+  setPostcode: React.Dispatch<React.SetStateAction<string>>
 }) {
-  const [postcode, setPostcode] = useState("")
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
     const sanitisedPostcode = postcode.replace(/([\s ]*)/mig, "").trim()
@@ -67,12 +70,12 @@ export function SearchPanel({
             type="text"
             placeholder="postcode"
             autoComplete="postal-code"
-            className='p-4 text-lg w-full rounded-md border focus:ring-hub-secondary-500 active:border-hub-secondary-500 text-black'
+            className='p-4 text-lg w-full rounded-md border placeholder:text-hub-primary-600 focus:ring-hub-primary-600 bg-hub-primary-50 border-hub-primary-100 mt-4 active:border-hub-primary-500'
             value={postcode}
             onChange={e => setPostcode(e.target.value.toUpperCase().trim())}
           />
           <button
-            className='bg-hub-secondary-500 text-white text-lg font-bold rounded-md w-full p-4 mt-4'
+            className='bg-hub-primary-600 text-white text-lg font-bold rounded-md w-full p-4 mt-4'
             // TODO: add postcode validation
             disabled={!postcode || isLoading}
           >
@@ -84,7 +87,7 @@ export function SearchPanel({
   }
 }
 
-export function HustingsCTA () {
+export function HustingsCTA() {
   return (
     <>
       <p>
@@ -92,7 +95,7 @@ export function HustingsCTA () {
       </p>
       <Link href="https://docs.google.com/forms/d/e/1FAIpQLSeQ6L2fko9q1xNvEYt0ZNbIIPDNAq6cs93Pn2Vx8ARtMf6FIg/viewform" target="_blank" className="">
         <Button className="bg-white border border-hub-primary-600 text-hub-primary-600 gap-2 hover:bg-hub-primary-50">
-          <Plus/>
+          <Plus />
           Add Event
         </Button>
       </Link>
