@@ -1,13 +1,10 @@
 import Modal from 'bootstrap/js/dist/modal'
 import { createApp, toRaw } from 'vue/dist/vue.esm-bundler.js'
-import { Map } from 'leaflet/src/map'
-import { TileLayer } from 'leaflet/src/layer/tile'
-import { GeoJSON } from 'leaflet/src/layer'
-import { Icon } from 'leaflet/src/layer/marker'
-import { Zoom } from 'leaflet/src/control'
-import { Attribution } from 'leaflet/src/control'
+import * as L from 'leaflet';
 import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
 import trackEvent from './analytics.esm.js'
+
+L.Icon.Default.imagePath = '/static/leaflet/images/';
 
 const app = createApp({
   delimiters: ['${', '}'],
@@ -414,9 +411,9 @@ const app = createApp({
     setUpMap() {
       var _this = this;
       this.loading = true
-      this.map = new Map(this.$refs.map).setView([54.0934, -2.8948], 7)
+      this.map = new L.Map(this.$refs.map).setView([54.0934, -2.8948], 7)
 
-      var tiles = new TileLayer(
+      var tiles = new L.TileLayer(
         'https://tile.thunderforest.com/atlas/{z}/{x}/{y}.png?apikey=7ac28b44c7414ced98cd4388437c718d',
         {
           maxZoom: 19,
@@ -458,7 +455,7 @@ const app = createApp({
       return fetch(this.geomUrl())
         .then(response => response.json())
         .then(data => {
-          window.geojson = new GeoJSON(data, {
+          window.geojson = new L.GeoJSON(data, {
             style: (feature) => {
               return {
                 fillColor: feature.properties.color,
