@@ -7,6 +7,17 @@
 {% block script %}
     <script type="module" src="{% static 'js/home-out-esm.js' %}"></script>
     <script type="module" src="{% static 'js/explore-out-esm.js' %}"></script>
+    <style type="text/css">
+        {% comment %}
+            L.Icon.Default uses this style to work out the path to our images.
+            We define it here, rather than in our Sass pipeline, to bypass
+            django-compressor’s URL hashing, which is incompatible with the
+            regular expression used in Leaflet.Icon.Default._stripUrl.
+        {% endcomment %}
+        .leaflet-default-icon-path {
+            background-image: url("{% static 'leaflet/images/marker-icon.png' %}") !important;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
