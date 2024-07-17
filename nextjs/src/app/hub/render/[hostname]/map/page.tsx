@@ -30,7 +30,6 @@ export default function Page(props: { params: Params }) {
   const shouldDisplayMap = useBreakpoint("md");
 
   const [postcode, setPostcode] = useState("");
-  console.log(postcode)
 
   return (
     <JotaiProvider>
