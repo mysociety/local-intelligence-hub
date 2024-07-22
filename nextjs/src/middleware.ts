@@ -35,7 +35,8 @@ export const middleware: NextMiddleware = (req) => {
   const isMainApp =
     hostname === "localhost" ||
     hostname === "127.0.0.1" ||
-    hostname === FRONTEND_HOSTNAME;
+    hostname === FRONTEND_HOSTNAME ||
+    hostname === "prototype.mapped.commonknowledge.coop"
 
   // Skip Sentry requests on alternative hosts (they fail with 403 errors)
   if (req.nextUrl.pathname === "/monitoring" && !isMainApp) {
