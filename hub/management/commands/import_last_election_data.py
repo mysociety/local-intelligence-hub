@@ -3,6 +3,7 @@ from datetime import date
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.utils.text import slugify
 
 import numpy as np
 import pandas as pd
@@ -12,20 +13,23 @@ from tqdm import tqdm
 
 from hub.models import Area, AreaData, AreaType, DataSet, DataType
 
+from .base_importers import party_shades
+
 
 class Command(BaseCommand):
     help = "Import data from the last election"
     source_url = "https://commonslibrary.parliament.uk/tag/elections-data/"
 
+    # https://researchbriefings.files.parliament.uk/documents/CBP-10009/HoC-GE2024-results-by-constituency.csv
     # https://commonslibrary.parliament.uk/research-briefings/cbp-8749/
     # https://researchbriefings.files.parliament.uk/documents/CBP-8749/HoC-GE2019-results-by-constituency-csv.csv
     general_election_source_file = (
-        settings.BASE_DIR / "data" / "2019_general_election.csv"
+        settings.BASE_DIR / "data" / "2024_general_election.csv"
     )
 
     by_election_api_url = "https://lda.data.parliament.uk/electionresults.json?_sort=-election.date&_pageSize=40"
 
-    area_type = "WMC"
+    area_type = "WMC23"
 
     party_translate_down_dict = {
         "Conservative": "con",
@@ -37,7 +41,7 @@ class Command(BaseCommand):
         "Conservative Party": "con",
         "Labour Party": "lab",
         "Green Party": "green",
-        "Reform UK": "brexit",
+        "Reform UK": "ruk",
         "SNP": "snp",
     }
 
@@ -45,13 +49,14 @@ class Command(BaseCommand):
         "lab": "Labour Party",
         "snp": "Scottish National Party",
         "ld": "Liberal Democrats",
-        "ind": "independent politician",
+        "ind": "Independents",
         "alliance": "Alliance Party of Northern Ireland",
         "sdlp": "Social Democratic and Labour Party",
         "pc": "Plaid Cymru",
         "sf": "Sinn Féin",
         "spk": "Speaker of the House of Commons",
         "brexit": "Reform UK",
+        "ruk": "Reform UK",
         "other": "Other",
         "dup": "Democratic Unionist Party",
         "uup": "Ulster Unionist Party",
@@ -60,28 +65,11 @@ class Command(BaseCommand):
         "pbpa": "People Before Profit Alliance",
     }
 
-    party_options = [
-        {"title": "Alba Party", "shader": "#005EB8"},
-        {"title": "Alliance Party of Northern Ireland", "shader": "#F6CB2F"},
-        {"title": "Conservative Party", "shader": "#0087DC"},
-        {"title": "Democratic Unionist Party", "shader": "#D46A4C"},
-        {"title": "Green Party", "shader": "#6AB023"},
-        {"title": "Labour Co-operative", "shader": "#E4003B"},
-        {"title": "Labour Party", "shader": "#E4003B"},
-        {"title": "Liberal Democrats", "shader": "#FAA61A"},
-        {"title": "Plaid Cymru", "shader": "#005B54"},
-        {"title": "Scottish National Party", "shader": "#FDF38E"},
-        {"title": "Sinn Féin", "shader": "#326760"},
-        {"title": "Social Democratic and Labour Party", "shader": "#2AA82C"},
-        {"title": "Speaker of the House of Commons", "shader": "#DCDCDC"},
-        {"title": "independent politician", "shader": "#DCDCDC"},
-    ]
-
     def handle(self, quiet=False, *args, **options):
         self._quiet = quiet
         self.delete_data()
         df = self.get_last_election_df()
-        if df:
+        if df.empty is not True:
             self.data_types = self.create_data_types()
             self.import_results(df)
 
@@ -92,30 +80,33 @@ class Command(BaseCommand):
 
         df = pd.read_csv(
             self.general_election_source_file,
-            usecols=[
-                "ons_id",
-                "first_party",
-                "second_party",
-                "con",
-                "lab",
-                "ld",
-                "brexit",
-                "green",
-                "snp",
-                "pc",
-                "dup",
-                "sf",
-                "sdlp",
-                "uup",
-                "alliance",
-                "other",
-                "other_winner",
-            ],
         )
-        df["date"] = "2019-12-12"
-        df["spk"] = df.other_winner
-        df.other = df.other - df.spk
-        df = df.drop(columns="other_winner")
+        df.columns = df.columns.str.lower()
+        df.columns = [slugify(col).replace("-", "_") for col in df.columns]
+        df["date"] = "2024-04-04"
+        df["spk"] = df.of_which_other_winner
+        df["other"] = df.all_other_candidates - df.spk
+        df = df.drop(
+            columns=[
+                "of_which_other_winner",
+                "ons_region_id",
+                "constituency_name",
+                "county_name",
+                "region_name",
+                "country_name",
+                "constituency_type",
+                "declaration_time",
+                "member_first_name",
+                "member_surname",
+                "member_gender",
+                "result",
+                "electorate",
+                "valid_votes",
+                "invalid_votes",
+                "majority",
+                "all_other_candidates",
+            ]
+        )
         df = df.set_index("ons_id")
         return df
 
@@ -129,7 +120,7 @@ class Command(BaseCommand):
             election_ids = []
             for election in elections["result"]["items"]:
                 desc = election["election"]["label"]["_value"]
-                if desc == "2019 General Election":
+                if desc == "2024 General Election" or desc == "02-May-2024 By-election":
                     break
                 election_id = election["_about"]
                 election_id = election_id.replace(
@@ -225,7 +216,10 @@ class Command(BaseCommand):
                 "source_label": "Data from UK Parliament.",
                 "source": "https://parliament.uk/",
                 "table": "areadata",
-                "options": self.party_options,
+                "options": [
+                    {"title": party, "shader": shade}
+                    for party, shade in party_shades.items()
+                ],
                 "is_filterable": True,
                 "comparators": DataSet.in_comparators(),
             },
