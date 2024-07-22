@@ -39,7 +39,7 @@ type DeepNullable<T> = {
   [K in keyof T]: DeepNullable<T[K]> | null;
 };
 
-export const ConstituencyElectionDeepDive = ({ gss, analyticalAreaType = AnalyticalAreaType.ParliamentaryConstituency_2025 }: { gss: string, analyticalAreaType: AnalyticalAreaType }) => {
+export const ConstituencyElectionDeepDive = ({ gss, analyticalAreaType = AnalyticalAreaType.ParliamentaryConstituency_2024 }: { gss: string, analyticalAreaType: AnalyticalAreaType }) => {
   const { id, displayOptions } = useContext(ReportContext)
   const { data, loading, error } = useQuery<GetConstituencyDataQuery, GetConstituencyDataQueryVariables>(CONSTITUENCY_DATA, {
     variables: { gss, reportID: id, analyticalAreaType },

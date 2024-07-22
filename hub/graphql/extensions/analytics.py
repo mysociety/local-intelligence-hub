@@ -1,8 +1,9 @@
 import logging
 
+from django.contrib.auth.models import AnonymousUser
+
 import posthog
 from strawberry.extensions import SchemaExtension
-from django.contrib.auth.models import AnonymousUser
 
 logger = logging.getLogger(__name__)
 

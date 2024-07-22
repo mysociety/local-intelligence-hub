@@ -483,7 +483,7 @@ class TestAirtableSource(TestExternalDataSource, TestCase):
             update_mapping=[
                 {
                     "source": "postcodes.io",
-                    "source_path": "parliamentary_constituency_2025",
+                    "source_path": "parliamentary_constituency_2024",
                     "destination_column": self.constituency_field,
                 },
                 {
@@ -543,7 +543,7 @@ class TestMailchimpSource(TestExternalDataSource, TestCase):
             update_mapping=[
                 {
                     "source": "postcodes.io",
-                    "source_path": "parliamentary_constituency_2025",
+                    "source_path": "parliamentary_constituency_2024",
                     # 10 characters and uppercase for Mailchimp custom fields
                     "destination_column": self.constituency_field[:10].upper(),
                 },
@@ -574,7 +574,7 @@ class TestActionNetworkSource(TestExternalDataSource, TestCase):
             update_mapping=[
                 {
                     "source": "postcodes.io",
-                    "source_path": "parliamentary_constituency_2025",
+                    "source_path": "parliamentary_constituency_2024",
                     "destination_column": self.constituency_field,
                 },
                 {
@@ -656,7 +656,7 @@ class TestEditableGoogleSheetsSource(TestExternalDataSource, TestCase):
                 update_mapping=[
                     {
                         "source": "postcodes.io",
-                        "source_path": "parliamentary_constituency_2025",
+                        "source_path": "parliamentary_constituency_2024",
                         "destination_column": self.constituency_field,
                     },
                     {

@@ -22,7 +22,7 @@ export const locationTypeOptions = [
         label: "Constituency",
     },
     {
-        value: GeographyTypes.ParliamentaryConstituency_2025,
+        value: GeographyTypes.ParliamentaryConstituency_2024,
         label: "Constituency (2024)",
     }
 ]

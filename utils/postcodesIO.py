@@ -19,7 +19,7 @@ class Codes:
     admin_ward: str
     parish: str
     parliamentary_constituency: str
-    parliamentary_constituency_2025: str
+    parliamentary_constituency_2024: str
     ccg: str
     ccg_id: str
     ced: str
@@ -48,7 +48,7 @@ class PostcodesIOResult:
     incode: str
     outcode: str
     parliamentary_constituency: str
-    parliamentary_constituency_2025: str
+    parliamentary_constituency_2024: str
     admin_district: str
     parish: str
     date_of_introduction: int
@@ -79,6 +79,19 @@ class PostcodesIOBulkResult:
     result: List[ResultElement]
 
 
+def ensure_parliamentary_constituency_2024_present(
+    result: PostcodesIOResult | None,
+) -> PostcodesIOResult | None:
+    """
+    Ensure compatible with our data if Postcodes.IO remove their _2024 column
+    """
+    if not result:
+        return None
+    if "parliamentary_constituency_2024" not in result:
+        result["parliamentary_constituency_2024"] = result["parliamentary_constituency"]
+    return result
+
+
 async def get_postcode_geo(postcode: str) -> PostcodesIOResult:
     postcode = unquote(postcode)  # parse url encoded spaces
     async with httpx.AsyncClient(
@@ -90,6 +103,7 @@ async def get_postcode_geo(postcode: str) -> PostcodesIOResult:
     data = response.json()
     status = get(data, "status")
     result: PostcodesIOResult = get(data, "result")
+    ensure_parliamentary_constituency_2024_present(result)
 
     if status != 200 or result is None:
         raise Exception(f"Failed to geocode postcode: {postcode}.")
@@ -136,9 +150,10 @@ async def get_bulk_postcode_geo(postcodes) -> list[PostcodesIOResult]:
         for postcode in postcodes
     ]
 
-    # add EER codes
+    # add EER codes and ensure _2024 column is present if Postcodes.IO have removed it
     for index, result in enumerate(results):
         if result is not None:
+            results[index] = ensure_parliamentary_constituency_2024_present(result)
             results[index]["codes"]["european_electoral_region"] = next(
                 filter(
                     lambda eer: eer["label"] == result["european_electoral_region"],
@@ -183,9 +198,10 @@ async def get_bulk_postcode_geo_from_coords(coordinates: list[Point]):
         for coord in coords
     ]
 
-    # add EER codes
+    # add EER codes and ensure _2024 column is present if Postcodes.IO have removed it
     for index, result in enumerate(results):
         if result is not None:
+            results[index] = ensure_parliamentary_constituency_2024_present(result)
             results[index]["codes"]["european_electoral_region"] = next(
                 filter(
                     lambda eer: eer["label"] == result["european_electoral_region"],
@@ -212,6 +228,8 @@ async def bulk_coordinate_geo(coordinates):
     if status != 200 or result is None:
         raise Exception(f"Failed to bulk geocode coordinates: {payload}")
 
+    result = ensure_parliamentary_constituency_2024_present(result)
+
     return result
 
 
@@ -228,7 +246,9 @@ def coordinates_geo(latitude: float, longitude: float):
             f"Failed to get postcode for coordinates: lon={longitude}&lat={latitude}."
         )
 
-    return result[0]
+    result = ensure_parliamentary_constituency_2024_present(result[0])
+
+    return result
 
 
 def point_from_geo(geo):

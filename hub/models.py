@@ -1021,8 +1021,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         WARD = "WARD", "Ward"
         ADMIN_DISTRICT = "ADMIN_DISTRICT", "Council"
         PARLIAMENTARY_CONSTITUENCY = "PARLIAMENTARY_CONSTITUENCY", "Constituency"
-        PARLIAMENTARY_CONSTITUENCY_2025 = (
-            "PARLIAMENTARY_CONSTITUENCY_2025",
+        PARLIAMENTARY_CONSTITUENCY_2024 = (
+            "PARLIAMENTARY_CONSTITUENCY_2024",
             "Constituency (2024)",
         )
         # TODO: LNG_LAT = "LNG_LAT", "Longitude and Latitude"

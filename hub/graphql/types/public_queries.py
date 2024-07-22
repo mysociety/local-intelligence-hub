@@ -51,7 +51,7 @@ class UnauthenticatedPostcodeQueryResponse:
         postcode_data = await self.loaders["postcodesIO"].load(self.postcode)
         if postcode_data is None:
             return None
-        id = postcode_data.codes.parliamentary_constituency_2025
+        id = postcode_data.codes.parliamentary_constituency_2024
         return await models.Area.objects.aget(
             (Q(gss=id) | Q(name=id)) & Q(area_type__code="WMC23")
         )

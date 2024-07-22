@@ -269,12 +269,12 @@ export default function DataConfigPanel() {
           >
             <SelectTrigger>
               <SelectValue>
-                {displayOptions.analyticalAreaType === AnalyticalAreaType.ParliamentaryConstituency_2025 ? "2024 constituencies" : "Old constituencies"}  
+                {displayOptions.analyticalAreaType === AnalyticalAreaType.ParliamentaryConstituency_2024 ? "2024 constituencies" : "Old constituencies"}  
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="z-100">
               <SelectGroup>
-                <SelectItem value={AnalyticalAreaType.ParliamentaryConstituency_2025}>2024 constituencies</SelectItem>
+                <SelectItem value={AnalyticalAreaType.ParliamentaryConstituency_2024}>2024 constituencies</SelectItem>
                 <SelectItem value={AnalyticalAreaType.ParliamentaryConstituency}>Old constituencies</SelectItem>
               </SelectGroup>
             </SelectContent>

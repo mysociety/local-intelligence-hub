@@ -680,14 +680,14 @@ class MapReportMemberFeature(PointFeature):
 @strawberry.enum
 class AnalyticalAreaType(Enum):
     parliamentary_constituency = "parliamentary_constituency"
-    parliamentary_constituency_2025 = "parliamentary_constituency_2025"
+    parliamentary_constituency_2024 = "parliamentary_constituency_2024"
     admin_district = "admin_district"
     admin_ward = "admin_ward"
 
 
 postcodeIOKeyAreaTypeLookup = {
     AnalyticalAreaType.parliamentary_constituency: "WMC",
-    AnalyticalAreaType.parliamentary_constituency_2025: "WMC23",
+    AnalyticalAreaType.parliamentary_constituency_2024: "WMC23",
     AnalyticalAreaType.admin_district: "DIS",
     AnalyticalAreaType.admin_ward: "WD23",
 }
