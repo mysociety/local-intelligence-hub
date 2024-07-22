@@ -78,7 +78,10 @@ class PostcodesIOBulkResult:
     status: int
     result: List[ResultElement]
 
-def ensure_parliamentary_constituency_2024_present(result: PostcodesIOResult | None) -> PostcodesIOResult | None:
+
+def ensure_parliamentary_constituency_2024_present(
+    result: PostcodesIOResult | None,
+) -> PostcodesIOResult | None:
     """
     Ensure compatible with our data if Postcodes.IO remove their _2024 column
     """
@@ -87,6 +90,7 @@ def ensure_parliamentary_constituency_2024_present(result: PostcodesIOResult | N
     if "parliamentary_constituency_2024" not in result:
         result["parliamentary_constituency_2024"] = result["parliamentary_constituency"]
     return result
+
 
 async def get_postcode_geo(postcode: str) -> PostcodesIOResult:
     postcode = unquote(postcode)  # parse url encoded spaces

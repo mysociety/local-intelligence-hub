@@ -21,3 +21,6 @@ build/**/*
 profile.json
 
 profile.html
+
+# Database dumps
+meep*.psql
