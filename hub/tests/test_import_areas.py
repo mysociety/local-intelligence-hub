@@ -52,7 +52,7 @@ class ImportAreasTestCase(TestCase):
         self.assertEqual(first.gss, "E10000001")
         self.assertEqual(
             first.geometry,
-            '{"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [[1, 2], [2, 1]]}, "properties": {"PCON13CD": "E10000001", "name": "South Borsetshire", "type": "WMC"}}',
+            '{"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [[1, 2], [2, 1]]}, "properties": {"PCON13CD": "E10000001", "name": "South Borsetshire", "type": "WMC23"}}',
         )
 
 

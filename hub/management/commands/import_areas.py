@@ -14,10 +14,10 @@ class Command(BaseCommand):
     boundary_types = [
         {
             "mapit_type": ["WMC"],
-            "name": "2010 Parliamentary Constituency",
-            "code": "WMC",
+            "name": "2023 Parliamentary Constituency",
+            "code": "WMC23",
             "area_type": "Westminster Constituency",
-            "description": "Westminster Parliamentary Constituency boundaries, as created in 2010",
+            "description": "Westminster Parliamentary Constituency boundaries, as created in 2023",
         },
         {
             "mapit_type": ["LBO", "UTA", "COI", "LGD", "CTY", "MTD"],
@@ -70,11 +70,13 @@ class Command(BaseCommand):
                     print(f"could not find mapit area for {area['name']}")
                     geom = None
 
-                a, created = Area.objects.get_or_create(
-                    mapit_id=area["id"],
-                    gss=area["codes"]["gss"],
+                a, created = Area.objects.update_or_create(
                     name=area["name"],
                     area_type=area_type,
+                    defaults={
+                        "mapit_id": area["id"],
+                        "gss": area["codes"]["gss"],
+                    },
                 )
 
                 a.geometry = geom
