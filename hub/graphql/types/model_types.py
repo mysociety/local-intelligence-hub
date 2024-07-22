@@ -21,6 +21,10 @@ from wagtail.models import Site
 
 from hub import models
 from hub.enrichment.sources import builtin_mapping_sources
+from hub.enrichment.sources.electoral_commission_postcode_lookup import (
+    electoral_commision_address_lookup,
+    electoral_commision_postcode_lookup,
+)
 from hub.graphql.context import HubDataLoaderContext
 from hub.graphql.dataloaders import (
     FieldDataLoaderFactory,
@@ -28,6 +32,7 @@ from hub.graphql.dataloaders import (
     ReverseFKWithFiltersDataLoaderFactory,
     filterable_dataloader_resolver,
 )
+from hub.graphql.types.electoral_commission import ElectoralCommissionPostcodeLookup
 from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
@@ -660,6 +665,17 @@ class MapReportMemberFeature(PointFeature):
     id: Optional[str]
     properties: Optional[GenericData]
 
+    # TODO: move this somewhere more rational
+    @strawberry_django.field
+    async def electoral_commission(
+        self, address_slug: Optional[str] = None
+    ) -> Optional[ElectoralCommissionPostcodeLookup]:
+        if address_slug:
+            return await electoral_commision_address_lookup(address_slug)
+        if self.properties and self.properties.postcode:
+            return await electoral_commision_postcode_lookup(self.properties.postcode)
+        return None
+
 
 @strawberry.enum
 class AnalyticalAreaType(Enum):
@@ -693,7 +709,8 @@ class Analytics:
         data = self.imported_data_count_by_area(
             postcode_io_key=analytical_area_type.value
         )
-        return [GroupedDataCount(**datum) for datum in data]
+        area_key = postcodeIOKeyAreaTypeLookup[analytical_area_type]
+        return [GroupedDataCount(**datum, area_type=area_key) for datum in data]
 
     @strawberry_django.field
     def imported_data_count_for_area(
@@ -939,15 +956,21 @@ class ExternalDataSource(BaseDataSource):
     ) -> List["SharingPermission"]:
         return models.SharingPermission.objects.filter(external_data_source=self.id)
 
-    jobs: List[QueueJob] = strawberry_django.field(
-        resolver=lambda self: procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
-            args__external_data_source_id=str(self.id)
+    @strawberry_django.field()
+    def jobs(
+        self,
+        filters: Optional[QueueFilter] = None,
+        pagination: Optional[strawberry_django.pagination.OffsetPaginationInput] = None,
+    ) -> list[QueueJob]:
+        # filters and pagination are applied at the type level (see QueueFilter def)
+        # however they are still required as declared arguments here.
+        return (
+            procrastinate.contrib.django.models.ProcrastinateJob.objects.filter(
+                args__external_data_source_id=str(self.id)
+            )
+            .prefetch_related("procrastinateevent_set")
+            .order_by("-id")
         )
-        .prefetch_related("procrastinateevent_set")
-        .order_by("-id"),
-        filters=QueueFilter,
-        pagination=True,
-    )
 
     @classmethod
     def get_queryset(cls, queryset, info, **kwargs):
@@ -1159,8 +1182,12 @@ def public_map_report(info: Info, org_slug: str, report_slug: str) -> models.Map
 
 
 @strawberry_django.field()
-def area_by_gss(gss: str) -> models.Area:
-    return models.Area.objects.get(gss=gss)
+def area_by_gss(gss: str, analytical_area_type: AnalyticalAreaType) -> models.Area:
+    qs = models.Area.objects.all()
+    if analytical_area_type:
+        area_key = postcodeIOKeyAreaTypeLookup[analytical_area_type]
+        qs = qs.filter(area_type__code=area_key)
+    return qs.get(gss=gss)
 
 
 @strawberry_django.field()

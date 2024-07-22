@@ -75,7 +75,7 @@ class PollingStation:
     polling_station_known: bool
     custom_finder: None
     report_problem_url: str
-    station: ElectoralCommissionStation
+    station: Optional[ElectoralCommissionStation]
 
 
 @strawberry.type

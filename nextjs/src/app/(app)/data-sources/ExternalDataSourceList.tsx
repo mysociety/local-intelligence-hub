@@ -35,7 +35,7 @@ const LIST_UPDATE_CONFIGS = gql`
         crmType
         autoImportEnabled
         autoUpdateEnabled
-        jobs {
+        jobs(pagination: { limit: 10 }) {
           lastEventAt
           status
         }

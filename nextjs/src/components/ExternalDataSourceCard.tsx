@@ -261,7 +261,7 @@ export const DATA_SOURCE_FRAGMENT = gql`
       sourcePath
       destinationColumn
     }
-    jobs {
+    jobs(pagination: { limit: 10 }) {
       lastEventAt
       status
     }
@@ -341,7 +341,7 @@ export const TRIGGER_FULL_UPDATE = gql`
     triggerUpdate(externalDataSourceId: $externalDataSourceId) {
       id
       externalDataSource {
-        jobs {
+        jobs(pagination: { limit: 10 }) {
           status
           id
           taskName

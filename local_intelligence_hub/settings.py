@@ -114,7 +114,7 @@ ELECTORAL_COMMISSION_API_KEY = env("ELECTORAL_COMMISSION_API_KEY")
 FRONTEND_BASE_URL = (
     env("FRONTEND_BASE_URL")
     if environment != "production"
-    else env("FRONTEND_BASE_URL")
+    else env("PROD_FRONTEND_BASE_URL")
 )
 BACKEND_URL = env("BASE_URL") if environment != "production" else env("PROD_BASE_URL")
 BASE_URL = BACKEND_URL
@@ -457,6 +457,8 @@ if DEBUG:
         INSTALLED_APPS += ("debug_toolbar",)
 
 # CK Section
+
+ASYNC_CLIENT_TIMEOUT_SECONDS = 30
 
 IMPORT_UPDATE_ALL_BATCH_SIZE = 500
 IMPORT_UPDATE_MANY_RETRY_COUNT = 3

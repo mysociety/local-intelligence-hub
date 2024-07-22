@@ -9,6 +9,9 @@ export function EventCard ({ event }: {
 }) {
     const isFuture = useMemo(() => isAfter(new Date(event.startTime), new Date()), [event.startTime])
     const ctx = useHubRenderContext()
+    // The timezone must be removed, because it is not correct
+    // (it is always UTC, so ends with Z or +00:00, but it is typically in Europe/London time)
+    const startTimeWithoutTimezone = event.startTime?.split('+')[0].replace('Z', '');
 
     return (
         <article
@@ -16,14 +19,14 @@ export function EventCard ({ event }: {
         >
             <header>
                 <div className="text-meepGray-500">
-                {formatRelative(new Date(event.startTime), new Date())}
+                {formatRelative(new Date(startTimeWithoutTimezone), new Date())}
                 </div>
                 <h3 className="font-bold text-lg">{event.title}</h3>
             </header>
             <main className="space-y-3">
                 <section>
                 <div className="text-meepGray-500 text-sm">Date/Time</div>
-                <div>{formatDate(event.startTime, "EE do MMM hh:mm")}</div>
+                <div>{formatDate(startTimeWithoutTimezone, "EE do MMM HH:mm")}</div>
                 </section>
                 <section>
                 <div className="text-meepGray-500 text-sm">Address</div>

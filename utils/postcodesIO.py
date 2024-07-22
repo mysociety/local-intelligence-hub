@@ -81,7 +81,9 @@ class PostcodesIOBulkResult:
 
 async def get_postcode_geo(postcode: str) -> PostcodesIOResult:
     postcode = unquote(postcode)  # parse url encoded spaces
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(
+        timeout=httpx.Timeout(settings.ASYNC_CLIENT_TIMEOUT_SECONDS)
+    ) as client:
         response = await client.get(f"{settings.POSTCODES_IO_URL}/postcodes/{postcode}")
     if response.status_code != httpx.codes.OK:
         raise Exception(f"Failed to geocode postcode: {postcode}.")
@@ -105,7 +107,9 @@ async def get_bulk_postcode_geo(postcodes) -> list[PostcodesIOResult]:
     postcodes = [
         unquote(postcode or "") for postcode in postcodes
     ]  # parse url encoded spaces
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(
+        timeout=httpx.Timeout(settings.ASYNC_CLIENT_TIMEOUT_SECONDS)
+    ) as client:
         response = await client.post(
             f"{settings.POSTCODES_IO_URL}/postcodes",
             json={"postcodes": postcodes},
@@ -149,10 +153,13 @@ async def get_bulk_postcode_geo(postcodes) -> list[PostcodesIOResult]:
 @async_batch_and_aggregate(settings.POSTCODES_IO_BATCH_MAXIMUM)
 async def get_bulk_postcode_geo_from_coords(coordinates: list[Point]):
     coords = [{"longitude": coord.x, "latitude": coord.y} for coord in coordinates]
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(
+        timeout=httpx.Timeout(settings.ASYNC_CLIENT_TIMEOUT_SECONDS)
+    ) as client:
         response = await client.post(
             f"{settings.POSTCODES_IO_URL}/postcodes",
             json={"geolocations": coords},
+            timeout=10,
         )
     if response.status_code != httpx.codes.OK:
         raise Exception(f"Failed to bulk geocode postcodes: {coords}.")

@@ -50,12 +50,14 @@ export function HubMap ({
     try {
       if (currentConstituency?.fitBounds.length) {
         mapbox.loadedMap?.fitBounds(currentConstituency.fitBounds, {
+          duration: 0, // don't fly, improve performance
           // TODO: change for small screen
           padding: FIT_BOUNDS_PADDING
         })
       } else if (!localDataLoading) {
         // Fly to UK bounds
         mapbox.loadedMap?.fitBounds(UK_BOUNDS, {
+          duration: 0, // don't fly, improve performance
           padding: FIT_BOUNDS_PADDING
         })
       }
@@ -76,19 +78,6 @@ export function HubMap ({
         {...viewState}
         onMove={(e) => setViewState(e.viewState)}
         mapStyle={mapStyle || "mapbox://styles/commonknowledge/clwqeu7rb012301nyh52n3kss/draft"}
-        transformRequest={(url, resourceType) => {
-          if (
-            url.includes(BACKEND_URL) &&
-            !url.includes("tiles.json")
-          ) {
-            return {
-              url,
-              headers: authenticationHeaders(),
-              method: "GET",
-            };
-          }
-          return { url };
-        }}
       >
         {/* Layout order */}
         <PlaceholderLayer id="AREA_BOUNDARIES" />

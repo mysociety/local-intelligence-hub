@@ -280,10 +280,7 @@ export function ReportMap () {
         }
         onClick={() => setSelectedSourceMarker(null)}
         transformRequest={(url, resourceType) => {
-          if (
-            url.includes(BACKEND_URL) &&
-            !url.includes("tiles.json")
-          ) {
+          if (url.includes(BACKEND_URL) && !url.includes("tiles.json")) {
             return {
               url,
               headers: authenticationHeaders(),
@@ -733,7 +730,6 @@ function ExternalDataSourcePointMarkers ({ externalDataSourceId, index }: { exte
   )
 }
 
-
 const MAP_REPORT_LAYER_POINT = gql`
 query MapReportLayerGeoJSONPoint($genericDataId: String!) {
   importedDataGeojsonPoint(genericDataId: $genericDataId) {
@@ -752,6 +748,7 @@ query MapReportLayerGeoJSONPoint($genericDataId: String!) {
       postcodeData {
         postcode
       }
+      address
       json
       remoteUrl
       dataType {

@@ -3464,7 +3464,9 @@ class EditableGoogleSheetsSource(ExternalDataSource):
                     "expiry": credentials.expiry.isoformat(),
                 }
             )
-            self.save()
+            # Can't save here as this property is used in async contexts
+            # Instead, save() is called after fetch_many and update_many
+            # TODO: Make this not a hack!
         return googleapiclient.discovery.build("sheets", "v4", credentials=credentials)
 
     @property
@@ -3491,7 +3493,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
     def headers(self) -> list[str]:
         result = (
             self.spreadsheets.values()
-            .get(spreadsheetId=self.spreadsheet_id, range=f"{self.sheet_name}!1:1")
+            .get(spreadsheetId=self.spreadsheet_id, range=f"'{self.sheet_name}'!1:1")
             .execute()
         )
         return result["values"][0]
@@ -3510,7 +3512,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
         sheet = self.sheet
         url = self.spreadsheet["spreadsheetUrl"]
         params = {"gid": sheet["properties"]["sheetId"]}
-        return f"{url}?{urlencode(params)}"
+        return f"{url}#{urlencode(params)}"
 
     def healthcheck(self):
         if self.headers:
@@ -3535,6 +3537,9 @@ class EditableGoogleSheetsSource(ExternalDataSource):
 
     async def fetch_many(self, id_list: list[str]):
         row_numbers = self.fetch_row_numbers_for_ids(id_list)
+        # Save the instance here as credentials may have been refreshed
+        # Can't do it in `def api` because of async complexity
+        await self.asave()
         if not row_numbers:
             return []
         return self.get_rows(row_numbers)
@@ -3555,7 +3560,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
     def get_rows(self, row_numbers: list[int]) -> list[dict]:
         last_column = google_sheets.column_index_to_letters(len(self.headers) - 1)
         ranges = [
-            f"{self.sheet_name}!A{row_number}:{last_column}{row_number}"
+            f"'{self.sheet_name}'!A{row_number}:{last_column}{row_number}"
             for row_number in row_numbers
             if row_number
         ]
@@ -3599,7 +3604,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
                 body={
                     "values": [
                         [
-                            f'=MATCH("{id}", {self.sheet_name}!{id_column}:{id_column}, 0)'
+                            f"=MATCH(\"{id}\", '{self.sheet_name}'!{id_column}:{id_column}, 0)"
                         ]
                         for id in id_list
                     ],
@@ -3658,7 +3663,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
                 value = mapped_record["update_fields"][header]
                 value_ranges.append(
                     {
-                        "range": f"{self.sheet_name}!{column}{row_number}",
+                        "range": f"'{self.sheet_name}'!{column}{row_number}",
                         "values": [[value]],
                     }
                 )
@@ -3670,6 +3675,9 @@ class EditableGoogleSheetsSource(ExternalDataSource):
             spreadsheetId=self.spreadsheet_id,
             body={"valueInputOption": "USER_ENTERED", "data": value_ranges},
         ).execute()
+        # Save the instance here as credentials may have been refreshed
+        # Can't do it in `def api` because of async complexity
+        await self.asave()
 
     def webhook_healthcheck(self):
         message = self.check_webhook_errors()
@@ -3771,7 +3779,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
             valueInputOption="USER_ENTERED",
             body={
                 "values": [
-                    [f'=COUNTIF({self.sheet_name}!{id_column}2:{id_column}, "<>")'],
+                    [f"=COUNTIF('{self.sheet_name}'!{id_column}2:{id_column}, \"<>\")"],
                     [f'=IMPORTDATA(CONCATENATE("{webhook_create_url}?count=", A1))'],
                 ],
             },
@@ -3798,7 +3806,8 @@ class EditableGoogleSheetsSource(ExternalDataSource):
             changes.
             """
             cells = [
-                f"{self.sheet_name}!{column}{row_number}" for column in columns_to_watch
+                f"'{self.sheet_name}'!{column}{row_number}"
+                for column in columns_to_watch
             ]
             cells_param = ", ".join(cells)
             return f'JOIN(",", {cells_param})'
@@ -3815,7 +3824,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
                         (
                             f"=IMPORTDATA(CONCATENATE("
                             f'"{webhook_url}?id=", '
-                            f"ENCODEURL({self.sheet_name}!{id_column}{n}), "
+                            f"ENCODEURL('{self.sheet_name}'!{id_column}{n}), "
                             '"&record=", '
                             f"ENCODEURL({get_watch_statement(n)})"
                             "))"

@@ -370,7 +370,7 @@ export const ConstituencyElectionCard = ({
 
 const CONSTITUENCY_DATA = gql`
   query GetConstituencyData($analyticalAreaType: AnalyticalAreaType!, $gss: String!, $reportID: ID!) {
-    constituency: area(gss: $gss) {
+    constituency: area(gss: $gss, analyticalAreaType: $analyticalAreaType) {
       id
       name
       mp: person(filters:{personType:"MP"}) {

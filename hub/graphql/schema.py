@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 import strawberry
 import strawberry_django
 from gqlauth.core.middlewares import JwtSchema
+from gqlauth.core.types_ import GQLAuthError
 from gqlauth.user import arg_mutations as auth_mutations
 from gqlauth.user.queries import UserQueries
 from graphql import GraphQLError
@@ -208,6 +209,7 @@ class Mutation:
 
 class CustomErrorLoggingSchema(JwtSchema):
     errors_to_ignore: List[type[Exception]] = [
+        GQLAuthError,
         PermissionDenied,
         ObjectDoesNotExist,
     ]
