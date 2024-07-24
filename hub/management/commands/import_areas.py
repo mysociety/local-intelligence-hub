@@ -45,10 +45,12 @@ class Command(BaseCommand):
         for b_type in self.boundary_types:
             areas = mapit_client.areas_of_type(b_type["mapit_type"])
             area_type, created = AreaType.objects.get_or_create(
-                name=b_type["name"],
                 code=b_type["code"],
                 area_type=b_type["area_type"],
-                description=b_type["description"],
+                defaults={
+                    "name": b_type["name"],
+                    "description": b_type["description"],
+                },
             )
 
             if not quiet:
