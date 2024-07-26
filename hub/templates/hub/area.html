@@ -223,6 +223,11 @@
                     <div class="card-header">
                         <h3 class="h5">Positions and memberships</h3>
                     </div>
+                    <div class="card-body text-muted">
+                        <p>We’re currently working on collecting updated data on MP positions and memberships.</p>
+                        <p>You can <a href="#signup">sign up to be notified when we add it</a>.</p>
+                    </div>
+                  {% comment %}
                     <div class="card-body">
                       {% if mp.job_titles %}
                         <h4 class="visually-hidden">Positions</h4>
@@ -268,6 +273,7 @@
                     <div class="card-footer">
                         <p class="card-text">Data from <a href="https://www.parliament.uk/about/mps-and-lords/members/">UK Parliament</a>{% if mp.job_titles %} and <a href="https://green-alliance.org.uk/">Green Alliance</a>{% endif %}.</p>
                     </div>
+                  {% endcomment %}
                 </div>
 
                 <div class="card dataset-card area-data--md area-data--featured">
@@ -650,7 +656,7 @@
     </div>
 </div>
 
-<aside class="py-4 py-lg-5 bg-yellow-100 border-top d-print-none">
+<aside class="py-4 py-lg-5 bg-yellow-100 border-top d-print-none" id="signup">
     <div class="container">
         <div class="row">
           {% if not user.is_authenticated %}
