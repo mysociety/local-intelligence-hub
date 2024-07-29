@@ -261,15 +261,15 @@ class FilterMixin:
                         value = self.format_value(row.data_type.data_type, row.value())
                     area_data[row.area.name][col["label"]].append(str(value))
             else:
-                pd = PersonData.objects.filter(
-                    person__personarea__area_id__in=area_ids,
-                    data_type__name=col["name"],
-                )
-                pd = pd.filter(person_area_type_filter)
+                filter = {
+                    "person__personarea__area_id__in": area_ids,
+                    "data_type__name": col["name"],
+                }
                 if dataset.person_type is not None:
-                    pd = pd.filter(
-                        person__personarea__person_type="MP",
-                    )
+                    filter["person__personarea__person_type"] = "MP"
+                pd = PersonData.objects.filter(**filter)
+                pd = pd.filter(person_area_type_filter)
+
                 for row in pd.order_by(col["value_col"]).select_related("data_type"):
                     value = row.value()
                     if as_dict:
