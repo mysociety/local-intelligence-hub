@@ -28,7 +28,7 @@ export default function Root({
   renderCSS = true,
 }: RootProps) {
   const hub = useHubRenderContext()
-  const hostname = typeof window !== "undefined" ? window.location.hostname : hub.hostname
+  const hostname = hub.hostname
   const pageQuery = useQuery<GetPageQuery, GetPageQueryVariables>(GET_PAGE, {
     variables: {
       hostname,
