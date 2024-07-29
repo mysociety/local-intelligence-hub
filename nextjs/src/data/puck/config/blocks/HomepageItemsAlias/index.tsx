@@ -5,6 +5,7 @@ import { FilterableGridProps, FilterableGridRenderer } from "../FilterableGrid";
 import { gql, useQuery } from "@apollo/client";
 import { LoadingIcon } from "@/components/ui/loadingIcon";
 import { GetHubHomepageJsonQuery, GetHubHomepageJsonQueryVariables } from "@/__generated__/graphql";
+import { useHubRenderContext } from "@/components/hub/HubRenderContext";
 
 // TODO:
 export type HomepageItemsAliasProps = {}
@@ -22,11 +23,13 @@ export const HomepageItemsAlias: ComponentConfig<HomepageItemsAliasProps> = {
 };
 
 const HomepageItemsAliasRenderer = () => {
+    const hubContext = useHubRenderContext()
+
     const data = useQuery<GetHubHomepageJsonQuery, GetHubHomepageJsonQueryVariables>(GET_HUB_HOMEPAGE_JSON, {
         variables: {
-            hostname: typeof window !== 'undefined' ? window.location.hostname : ''
+            hostname: hubContext.hostname
         },
-        skip: typeof window === 'undefined'
+        skip: !hubContext.hostname
     })
 
     const puckData = data.data?.hubPageByPath?.puckJsonContent as Data<FilterableGridProps>
