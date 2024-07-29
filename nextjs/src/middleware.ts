@@ -32,6 +32,12 @@ export const middleware: NextMiddleware = (req) => {
     hostname = `${hostname.split("---")[0]}.${FRONTEND_HOSTNAME}`;
   }
 
+    // Redirect from old url to new one
+    if (hostname === "prototype.mapped.commonknowledge.coop") {
+      return NextResponse.redirect("https://mapped.tools/");
+    }
+  
+
   const isMainApp =
     hostname === "localhost" ||
     hostname === "127.0.0.1" ||
