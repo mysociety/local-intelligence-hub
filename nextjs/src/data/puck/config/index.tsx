@@ -100,7 +100,6 @@ export const conf: UserConfig = {
     },
     content: {
       components: [
-        "Text",
         "RichText",
         "HTMLEmbed",
         "Iframe",
