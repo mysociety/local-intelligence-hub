@@ -29,7 +29,7 @@ export default async function Page({ params: { pageId } }: { params: { pageId?: 
   } else {
     // Check it exists
     try {
-      await client.query<VerifyPageQuery, VerifyPageQueryVariables>({
+      const pageHub = await client.query<VerifyPageQuery, VerifyPageQueryVariables>({
         query: gql`
           query VerifyPage($pageId: ID!) {
             hubHomepages {
@@ -37,6 +37,9 @@ export default async function Page({ params: { pageId } }: { params: { pageId?: 
             }
             hubPage(pk: $pageId) {
               id
+              hub {
+                id
+              }
             }
           }
         `,
@@ -44,13 +47,13 @@ export default async function Page({ params: { pageId } }: { params: { pageId?: 
           pageId: pId
         }
       })
+
+      return (
+        <HubPageEditor hubId={pageHub.data.hubPage.hub.id} pageId={pId} />
+      )
     } catch (e) {
       return redirect(`/hub/editor/${hub.id}`);
     }
-
-    return (
-      <HubPageEditor hubId={hub.id} pageId={pId || hub?.id} />
-    )
   }
 }
 

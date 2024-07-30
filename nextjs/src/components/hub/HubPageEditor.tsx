@@ -187,7 +187,10 @@ export default function HubPageEditor({ hubId, pageId }: { hubId: string, pageId
         input: {
           puckJsonContent: data
         }
-      }
+      },
+      refetchQueries: [
+        "GetHubHomepageJson"
+      ]
     })
 
     toastPromise(p, {
