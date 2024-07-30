@@ -1,5 +1,4 @@
 import { Config } from "@measured/puck";
-import { PuckRichText } from "@tohuhono/puck-rich-text"
 import Root, { RootProps } from "./root";
 import { ButtonGroup, ButtonGroupProps } from "./blocks/ButtonGroup";
 import { Card, CardProps } from "./blocks/Card";
@@ -21,6 +20,7 @@ import { Image, ImageProps } from "./blocks/Image";
 import { HomepageItemsAlias } from "./blocks/HomepageItemsAlias";
 import { About } from "./blocks/About";
 import { HTMLEmbed, HTMLEmbedProps } from "./blocks/HTMLEmbed";
+import { RichText, RichTextProps } from "./blocks/RichText";
 import { Iframe, IframeProps } from "./blocks/Iframe";
 
 export type Props = {
@@ -44,7 +44,8 @@ export type Props = {
   HomepageItemsAlias: any;
   About: any;
   HTMLEmbed: HTMLEmbedProps;
-  Iframe: IframeProps
+  Iframe: IframeProps;
+  RichText: RichTextProps
 };
 
 export type UserConfig = Config
@@ -121,7 +122,7 @@ export const conf: UserConfig = {
     EventList,
     Image,
     HomepageItemsAlias,
-    RichText: PuckRichText,
+    RichText,
     About,
     HTMLEmbed,
     Iframe
