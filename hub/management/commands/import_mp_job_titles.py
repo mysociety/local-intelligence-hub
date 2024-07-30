@@ -6,23 +6,12 @@ from django.core.management.base import BaseCommand
 import pandas as pd
 from tqdm import tqdm
 
-from hub.models import Area, AreaType, DataSet, DataType, Person, PersonData
-
-CONSTITUENCY_CORRECTIONS_DICT = {
-    "Beverly and Holderness": "Beverley and Holderness",
-    "Brighton Pavilion": "Brighton, Pavilion",
-    "Enfield Southgate": "Enfield, Southgate",
-    "Lewisham Deptford": "Lewisham, Deptford",
-    "Ealing Southall": "Ealing, Southall",
-    "Brighton Kemptown": "Brighton, Kemptown",
-    "Richmond": "Richmond (Yorks)",
-    "Na h-Eileanan an Lar": "Na h-Eileanan an Iar",
-}
+from hub.models import AreaType, DataSet, DataType, Person, PersonData
 
 
 class Command(BaseCommand):
     help = "Import MP Job titles"
-    data_file = settings.BASE_DIR / "data" / "mp_job_titles.csv"
+    data_file = settings.BASE_DIR / "data" / "mp_positions_jul_2024.csv"
 
     def handle(self, quiet=False, *args, **options):
         self._quiet = quiet
@@ -38,18 +27,8 @@ class Command(BaseCommand):
             return None
 
         df = pd.read_csv(
-            "data/mp_job_titles.csv",
-            usecols=["Constituency", "Short Title"],
-        )
-        df.columns = ["Title", "Constituency"]
-        df = df.query(
-            "not(Title.str.contains('^ ?(?:(?:MP|Member of Parliament) for .*|Member of .*Select Committee|Backbencher|Sadly died).*$'))"
-        ).copy()
-
-        # Clean the constituency data:
-        df.Constituency = df.Constituency.str.strip()
-        df.Constituency = df.Constituency.apply(
-            lambda x: CONSTITUENCY_CORRECTIONS_DICT.get(x, x)
+            self.data_file,
+            usecols=["mp", "position"],
         )
         return df
 
@@ -59,10 +38,10 @@ class Command(BaseCommand):
             defaults={
                 "data_type": "text",
                 "description": "Positions such as cabinet and shadow minister roles, spokespeople, and whips.",
-                "release_date": "January 2024",
+                "release_date": "July 2024",
                 "label": "MP positions (job titles)",
-                "source_label": "Data from Green Alliance.",
-                "source": "https://green-alliance.org.uk/",
+                "source_label": "Data compiled by mySociety from Gov.uk and Parliament.",
+                "source": "https://www.mysociety.org",
                 "table": "people__persondata",
                 "comparators": DataSet.string_comparators(),
             },
@@ -79,19 +58,17 @@ class Command(BaseCommand):
         return mp_job_titles
 
     def get_results(self, df: pd.DataFrame):
-        mps = Person.objects.filter(person_type="MP")
         results = {}
         if not self._quiet:
             print("Matching MPs with titles")
-        area_type = self.get_area_type()
         for index, row in df.iterrows():
+            if pd.isna(row.mp):
+                continue
             try:
-                area = Area.objects.get(
-                    name__iexact=row.Constituency, area_type=area_type
-                )
-                results[mps.get(area=area)] = row.Title
-            except Area.DoesNotExist:
-                print(f"Constituency: {row.Constituency} not found.")
+                person = Person.objects.get(name=row.mp, person_type="MP")
+                results[person] = row.position
+            except Person.DoesNotExist:
+                print(f"MP: {row.mp} not found.")
         return results
 
     def add_results(self, results, data_type):
