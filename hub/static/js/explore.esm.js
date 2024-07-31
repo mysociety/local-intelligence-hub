@@ -438,6 +438,9 @@ const app = createApp({
       });
       toRaw(this.map).addControl(searchControl);
       toRaw(this.map).on('geosearch/showlocation', function(args){
+        trackEvent('explore_location_search', {
+          'search_term': args.location.label
+        });
         toRaw(_this.map).fitBounds(args.location.bounds, {
           maxZoom: 10,
           padding: [100, 100]
