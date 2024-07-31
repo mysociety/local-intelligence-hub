@@ -26,6 +26,8 @@ export default function HubFooter() {
               <p><a className='underline' href="/">Home</a></p>
               <p><a className='underline' href="/get-involved">Get Involved</a></p>
               <p><a className='underline' href="/map">Near Me</a></p>
+              <p><a className='underline' href="/resources">Resources</a></p>
+              <p><a className='underline' href="/email-your-mp">Email your MP</a></p>
             </div>
           </div>
         </div>
