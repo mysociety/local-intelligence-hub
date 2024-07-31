@@ -41,7 +41,7 @@ export default function HubPageEditor({ hubId, pageId }: { hubId: string, pageId
       return getPuckConfigForHostname(hubData.data?.hubHomepage.hostname)
     }
   }, [hubData.data?.hubHomepage.hostname])
-  
+
   // unique b64 key that updates each time we add / remove components
   const dbDataKey = useMemo(() => {
     if (!pageData?.data?.hubPage?.puckJsonContent) return null
@@ -117,7 +117,7 @@ export default function HubPageEditor({ hubId, pageId }: { hubId: string, pageId
 
                       const isHomePage = page.modelName === "HubHomepage"
                       const isTopLevelPage = ancestors.length === 1
-                      
+
                       return (
                         <div key={page.id} className="w-full items-start py-4 space-y-2">
                           <BreadcrumbList>
@@ -152,16 +152,26 @@ export default function HubPageEditor({ hubId, pageId }: { hubId: string, pageId
                   </div>
                 </DialogContent>
               </Dialog>
+
               <div className='flex flex-row gap-4 items-center justify-center'>
                 {!!pageData.data?.hubPage.liveUrl && (
-                  <Link target="_blank" href={pageData.data?.hubPage.liveUrl}>
-                    <PuckButton variant="secondary">
-                      Visit page
-                    </PuckButton>
-                  </Link>
+                  <>
+                    <Link target="_blank" href={pageData.data?.hubPage.liveUrl}>
+                      <PuckButton variant="secondary">
+                        Visit page
+                      </PuckButton>
+                    </Link>
+                    <Link target="_blank" href={`https://api.mapped.commonknowledge.coop/cms/pages/${pageData.data?.hubPage.id}/history`}>
+                      <PuckButton variant="secondary">
+                        View version history
+                      </PuckButton>
+                    </Link></>
                 )}
+
+
                 {actions}
               </div>
+
             </header>
           )
         }}
@@ -169,7 +179,7 @@ export default function HubPageEditor({ hubId, pageId }: { hubId: string, pageId
     </HubRenderContextProvider>
   )
 
-  function publish (data: Data) {
+  function publish(data: Data) {
     const p = client.mutate({
       mutation: gql`
         mutation PublishPage($pageId: String!, $input: HubPageInput!) {
@@ -199,8 +209,8 @@ export default function HubPageEditor({ hubId, pageId }: { hubId: string, pageId
       error: "Failed to publish page changes"
     })
   }
-  
-  async function addChildPage (parentId: string, title: string) {
+
+  async function addChildPage(parentId: string, title: string) {
     const p = client.mutate<CreateChildPageMutation, CreateChildPageMutationVariables>({
       mutation: gql`
         mutation CreateChildPage($parentId: String!, $title: String!) {
