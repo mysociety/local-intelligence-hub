@@ -478,6 +478,22 @@ class TestAreaSearchPage(TestCase):
         context = response.context
         self.assertEqual(context["area"].name, "New South Borsetshire")
 
+    @patch("utils.mapit.MapIt.postcode_point_to_gss_codes")
+    def test_postcode_lookup_multiple_areas(self, mapit_areas):
+        mapit_areas.return_value = ["E10000005", "E10000101", "E10000002"]
+
+        url = reverse("area_search")
+        response = self.client.get(url, {"search": "SE17 3HE"}, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "hub/area_search.html")
+
+        context = response.context
+        self.assertEqual(len(context["areas"]), 2)
+        self.assertContains(response, "New South Borsetshire")
+        self.assertContains(response, "Borsetshire East District Council")
+        self.assertNotContains(response, "Borsetshire West")
+
     @patch("utils.mapit.session.get")
     def test_bad_postcode(self, mapit_get):
         mock_response = MagicMock()
@@ -562,7 +578,10 @@ class TestAreaSearchPage(TestCase):
         self.assertTemplateUsed(response, "hub/area_search.html")
 
         context = response.context
-        self.assertEqual(len(context["areas"]), 3)
+        self.assertEqual(len(context["areas"]), 5)
+        self.assertContains(response, "Borsetshire East Council")
+        self.assertContains(response, "Borsetshire East District Council")
+        self.assertNotContains(response, "/WMC/Borsetshire East")
 
 
 class testUserFavouriteViews(TestCase):
