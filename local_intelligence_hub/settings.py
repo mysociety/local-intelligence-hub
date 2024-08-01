@@ -33,6 +33,7 @@ env = environ.Env(
     MAILCHIMP_TCC_SERVER_PREFIX=(str, ""),
     MAILCHIMP_TCC_LIST_ID=(str, ""),
     PARTY_CONTROL_URL=(str, ""),
+    AREA_SEARCH_AREA_CODES=(list, ["DIS", "STC", "WMC23"]),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -61,6 +62,9 @@ MAILCHIMP_TCC_LIST_ID = env("MAILCHIMP_TCC_LIST_ID")
 
 # import config
 PARTY_CONTROL_URL = env("PARTY_CONTROL_URL")
+
+# search page valid areas
+AREA_SEARCH_AREA_CODES = env("AREA_SEARCH_AREA_CODES")
 
 # make sure CSRF checking still works behind load balancers
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

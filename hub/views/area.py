@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from django.conf import settings
 from django.db.models import Count, Q
 from django.http import Http404, HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -418,7 +419,9 @@ class AreaSearchView(TemplateView):
             elif kwargs.get("pc"):
                 gss_codes = mapit.postcode_point_to_gss_codes(kwargs["pc"])
 
-            areas = Area.objects.filter(gss__in=gss_codes, area_type__code="WMC23")
+            areas = Area.objects.filter(
+                gss__in=gss_codes, area_type__code__in=settings.AREA_SEARCH_AREA_CODES
+            )
             areas = list(areas)
         except (
             NotFoundException,
@@ -458,7 +461,8 @@ class AreaSearchView(TemplateView):
             )
         else:
             areas_raw = Area.objects.filter(
-                name__icontains=search, area_type__code="WMC23"
+                name__icontains=search,
+                area_type__code__in=settings.AREA_SEARCH_AREA_CODES,
             )
             people_raw = Person.objects.filter(name__icontains=search)
 
