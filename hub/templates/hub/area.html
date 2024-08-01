@@ -223,6 +223,7 @@
                     <div class="card-header">
                         <h3 class="h5">Positions and memberships</h3>
                     </div>
+                    {% if mp.job_titles or mp.cen_member or mp.nzsg_member or mp.select_committee_memberships or mp.appg_memberships %}
                     <div class="card-body">
                       {% if mp.job_titles %}
                         <h4 class="visually-hidden">Positions</h4>
@@ -265,6 +266,7 @@
                         </ul>
                       {% endif %}
                     </div>
+                    {% endif %}
                     <div class="card-body text-muted">
                         <p>We’re currently working on collecting updated data on MP memberships.</p>
                         <p>You can <a href="#signup">sign up to be notified when we add it</a>.</p>
