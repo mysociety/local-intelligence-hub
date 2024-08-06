@@ -289,7 +289,7 @@ export const FilterableGridRenderer = ({ categories, items, showAll }: Filterabl
                             zIndex: 1
                         }} />
                         <h2 className='relative z-[2] text-hub4xl md:text-hub6xl'>Ways to get involved</h2>
-                        <p className='relative z-[2] text-hub-primary-neutral text-hub2xl'>Here{"'"}s how you can help centre people, climate and nature this election.</p>
+                        <p className='relative z-[2] text-hub-primary-neutral text-hub2xl'>Here{"'"}s how you can help centre people, climate and nature in your local area.</p>
                     </header>
                     <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 lg:gap-4 xl:gap-5'>
                         <div className="relative">
