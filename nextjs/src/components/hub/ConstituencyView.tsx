@@ -179,8 +179,8 @@ export function ConstituencyView({
               )}
             </section>
           </TabsContent>
-          <TabsContent className="mt-0 px-6" value="events">
-            <h2 className="text-3xl text-hub-primary-950 font-bold mb-2"> Save the date! Prepare to meet your MP on Saturday 12 October.</h2>
+          <TabsContent className="mt-0 px-6 py-4" value="events">
+            <h2 className="text-3xl text-hub-primary-950 font-bold mb-4"> Save the date! Prepare to meet your MP on Saturday 12 October.</h2>
             <p>Access free training and resources now to build your confidence, meet your MP, tell your story and get a commitment to action! </p>
             <a href="/resources">Resources | United for People, Climate & Nature (peopleclimatenature.org)</a>
           </TabsContent>
