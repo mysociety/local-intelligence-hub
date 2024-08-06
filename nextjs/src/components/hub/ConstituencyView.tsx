@@ -180,72 +180,9 @@ export function ConstituencyView({
             </section>
           </TabsContent>
           <TabsContent className="mt-0" value="events">
-            {!!upcomingEvents?.length ? (
-              <>
-                <section className="px-6 my-6">
-                  <header className="mb-4">
-                    Help the campaign in {data?.name} by coming along to one of
-                    these upcoming events.
-                  </header>
-                  <main className="space-y-4">
-                    {upcomingEvents.map((e) => (
-                      <EventCard key={e.id} event={e} />
-                    ))}
-                  </main>
-                </section>
-                {hubContext.hostname === "peopleclimatenature.org" && (
-                  <>
-                    <div className="w-full border-b border-meepGray-200 my-6"></div>
-                    <div className="flex flex-col gap-2 text-hub-primary-neutral px-6 my-6">
-                      <HustingsCTA />
-                    </div>
-                  </>
-                )}
-              </>
-            ) : (
-              <>
-                <section className="px-6 pb-0 my-6">
-                  <p className="mb-4">No upcoming events in {data?.name}.</p>
-                  {hubContext.hostname === "peopleclimatenature.org" && (
-                    <div className="flex flex-col gap-2 text-hub-primary-neutral mt-4">
-                      <HustingsCTA />
-                    </div>
-                  )}
-                </section>
-              </>
-            )}
-            {hubContext.hostname === "peopleclimatenature.org" && (
-              <>
-                <div className="w-full border-b border-meepGray-200 my-6"></div>
-                <div className="flex flex-col gap-2 text-hub-primary-neutral px-6 my-6">
-                  <h3 className="font-bold">Other ways to get involved</h3>
-                  <p>
-                    There are lots of easy ways you can show your MP you
-                    care about people, climate and nature. Take a look at this
-                    page here to find out more.
-                  </p>
-                  <Link
-                    href="/get-involved"
-                    className="text-hub-primary-600 font-bold"
-                  >
-                    Learn more &rarr;
-                  </Link>
-                </div>
-              </>
-            )}
-            {!!pastEvents.length && (
-              <>
-                <div className="w-full border-b border-meepGray-200 my-6"></div>
-                <section className="px-6 my-6">
-                  <header className="mb-4">Past events in {data?.name}.</header>
-                  <main className="space-y-4">
-                    {pastEvents.map((e) => (
-                      <EventCard key={e.id} event={e} />
-                    ))}
-                  </main>
-                </section>
-              </>
-            )}
+            <h2 className="text-3xl text-hub-primary-950 font-bold"> Save the date! Prepare to meet your MP on Saturday 12 October.</h2>
+            <p>Access free training and resources now to build your confidence, meet your MP, tell your story and get a commitment to action! </p>
+            <a href="/resources">Resources | United for People, Climate & Nature (peopleclimatenature.org)</a>
           </TabsContent>
         </Tabs>
       </main>
