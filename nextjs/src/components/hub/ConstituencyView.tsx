@@ -27,7 +27,6 @@ export function ConstituencyView({
 }) {
   const [tab, setTab] = useState("candidates");
   const hubContext = useHubRenderContext();
-  console.log('postcode', postcode)
 
   if (!data?.name) {
     return (
