@@ -968,6 +968,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     introspect_fields = False
     allow_updates = True
     can_forecast_job_progress = True
+    crm_type: str
 
     # Allow sources to define default values for themselves
     # for example opinionated CRMs which are only for people and have defined slots for data
@@ -1300,15 +1301,16 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     # to be implemented by subclasses
 
     def capture_event(self, event: str, data: dict):
+        crm_type = (
+            self.crm_type if hasattr(self, "crm_type") else str(self.__class__)
+        )
         posthog.group_identify(
             "external_data_source",
             str(self.id),
             properties={
                 "name": self.name,
                 "data_type": self.data_type,
-                "crm_type": (
-                    self.crm_type if hasattr(self, "crm_type") else str(self.__class__)
-                ),
+                "crm_type": crm_type,
                 "point_geography_type": self.geography_column_type,
                 "organisation_id": self.organisation.pk,
                 "organisation_name": self.organisation.name,
@@ -1327,6 +1329,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             properties=dict(
                 external_data_source_id=str(self.id),
                 external_data_source_name=self.name,
+                external_data_source_crm_type=crm_type,
+                external_data_source_data_type=self.data_type,
+                external_data_source_point_geography_type=self.geography_column_type,
                 organsiation_id=self.organisation.pk,
                 organisation_name=self.organisation.name,
                 **(data or {}),
