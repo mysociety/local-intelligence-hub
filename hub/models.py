@@ -3321,7 +3321,6 @@ class ActionNetworkSource(ExternalDataSource):
         for record in mapped_records:
             if len(record.get("update_fields", {})) > 0:
                 updated_records.append(await self.update_one(record, **kwargs))
-            updated_records.append(await self.update_one(record, **kwargs))
         return updated_records
 
     async def update_one(
