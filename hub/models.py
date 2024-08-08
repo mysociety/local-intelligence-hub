@@ -96,6 +96,8 @@ class Geocoder(Enum):
 
 
 class Organisation(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_update = models.DateTimeField(auto_now=True)
     slug = models.SlugField(max_length=100, unique=True)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
@@ -737,6 +739,7 @@ class CommonData(models.Model):
 
 
 class GenericData(CommonData):
+    created_at = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(auto_now=True)
     point = PointField(srid=4326, blank=True, null=True)
     polygon = MultiPolygonField(srid=4326, blank=True, null=True)
