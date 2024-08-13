@@ -8,7 +8,7 @@ inputs:
     description: 'shell to run command on inside docker'
     default: 'bash --noprofile --norc -eo pipefail'
   app: 
-    description: 'docker-compose app to run command in'
+    description: 'docker compose app to run command in'
     required: true
     default: 'web'
   use_dev_image:
@@ -19,7 +19,7 @@ runs:
   using: "composite"
 
   steps:
-    - name: Build image from docker-compose
+    - name: Build image from docker compose
       if: ${{ inputs.use_dev_image == 'false' }}
       uses: ./.github/actions/cached-build
       with:
@@ -35,7 +35,7 @@ runs:
             composeFiles="-f docker-compose.yml"
         fi
         shellCommands='$@'
-        echo "docker-compose $composeFiles run --volume /home/runner:/home/runner/ ${{ inputs.app }} ${{ inputs.shell }} $shellCommands" > ${{ github.action_path }}/docker_command.sh
+        echo "docker compose $composeFiles run --volume /home/runner:/home/runner/ ${{ inputs.app }} ${{ inputs.shell }} $shellCommands" > ${{ github.action_path }}/docker_command.sh
         echo "${{ github.action_path }}" >> $GITHUB_PATH
       env:
         USE_DEV_IMAGE: ${{ inputs.use_dev_image}}
