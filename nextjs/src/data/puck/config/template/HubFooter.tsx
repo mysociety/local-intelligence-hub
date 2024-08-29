@@ -23,9 +23,9 @@ export default function HubFooter() {
           <div className=" flex flex-col gap-5 items-end" >
             <p className="hidden md:block  text-sm justify-between uppercase">Navigation</p>
             <div className='flex flex-col  md:text-right gap-1'>
-              <p><a className='underline' href="/">Home</a></p>
+              <p><a className='underline' href="/">Latest</a></p>
               <p><a className='underline' href="/get-involved">Get Involved</a></p>
-              <p><a className='underline' href="/map">Near Me</a></p>
+              <p><a className='underline' href="/resources">Resources</a></p>
             </div>
           </div>
         </div>
