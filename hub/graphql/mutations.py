@@ -232,6 +232,7 @@ class ExternalDataSourceInput:
     start_time_field: auto
     end_time_field: auto
     public_url_field: auto
+    can_display_point_field: auto
     auto_update_enabled: auto
     update_mapping: Optional[List[UpdateMappingItemInput]]
     auto_import_enabled: auto
@@ -472,4 +473,28 @@ def delete_page(info: Info, page_id: str) -> bool:
     page = models.Page.objects.get(id=page_id)
     page.unpublish(user=user, log_action=True)
     page.delete()
+    return True
+
+
+@strawberry_django.mutation()
+async def add_member(
+    info: Info,
+    external_data_source_id: str,
+    email: str,
+    postcode: str,
+    custom_fields: strawberry.scalars.JSON,
+    tags: list[str],
+) -> bool:
+    source: models.ExternalDataSource = await models.ExternalDataSource.objects.filter(
+        id=external_data_source_id
+    ).afirst()
+    if not source:
+        logger.warning(f"Could not find external data source {external_data_source_id}")
+        return False
+    record = source.CUDRecord(
+        email=email, postcode=postcode, data=custom_fields, tags=tags
+    )
+    member = source.create_one(record)
+    member_id = source.get_record_id(member)
+    await source.import_many([member_id])
     return True

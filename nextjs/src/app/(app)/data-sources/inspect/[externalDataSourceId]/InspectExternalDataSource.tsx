@@ -140,6 +140,7 @@ const GET_UPDATE_CONFIG = gql`
       startTimeField
       endTimeField
       publicUrlField
+      canDisplayPointField
       isImportScheduled
       importProgress {
         id
@@ -365,6 +366,7 @@ export default function InspectExternalDataSource({
               startTimeField: source.startTimeField,
               endTimeField: source.endTimeField,
               publicUrlField: source.publicUrlField,
+              canDisplayPointField: source.canDisplayPointField
             }}
             dataType={source.dataType}
             onSubmit={updateMutation}

@@ -1,6 +1,6 @@
 services:
   db:
-    image: kartoza/postgis:13
+    image: kartoza/postgis:latest
     restart: always
     volumes:
       - .:/app

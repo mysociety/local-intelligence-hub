@@ -188,19 +188,27 @@ export function RenderCard({
     //   gridRow: `span ${rows}`,
     // }}
     >
-      {type === "resource" && (
-        <div className="p-5 bg-white h-full flex flex-col gap-4 justify-between">
-          <div className="text-hub-primary-600 w-full object-scale-down object-left ">
-            {imageUrl ? <img src={imageUrl} alt="resource image" className='rounded-[10px] h-40' /> : <FileHeart strokeWidth="1.5" className="h-10 w-10" />}
-
-          </div>
+      {(type === "resource" || type === "training") && (
+        <div className="p-5 bg-white h-full flex flex-col gap-4">
+          <TypeBadge type={type} />
           <div>
             <h2 className="lg:text-hub2xl text-hubxl mb-3">{title}</h2>
             {description && <div className="text-hub-primary-neutral line-clamp-6">
               <PuckText text={description} />
             </div>}
           </div>
-          <TypeBadge type={type} />
+          {link ? (
+            <Link
+              href={link}
+              onClick={handleDownloadClick}
+              className={
+                "mt-auto bg-hub-primary-600 hover:bg-hub-primary-700 focus:bg-hub-primary-700 " + 
+                "text-white text-lg font-bold rounded-md p-4 flex flex-row gap-4 text-center items-center justify-center no-underline"
+              }
+            >
+              {linkLabel || "Learn more"}
+            </Link>
+          ): null}
         </div>
       )}
 
@@ -294,7 +302,7 @@ export function RenderCard({
     );
   }
 
-  return link ? (
+  return link && type !== "resource" && type !== "training" ? (
     <Link href={link}>
       {card}
     </Link>

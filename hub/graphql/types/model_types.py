@@ -840,6 +840,7 @@ class BaseDataSource(Analytics):
     start_time_field: auto
     end_time_field: auto
     public_url_field: auto
+    can_display_point_field: auto
     record_url_template: Optional[str] = fn_field()
     organisation_id: str = strawberry_django.field(
         resolver=lambda self: self.organisation_id
@@ -1103,6 +1104,7 @@ class Report:
 class MapLayer:
     id: str = dict_key_field()
     name: str = dict_key_field()
+    type: str = dict_key_field("events")
     visible: Optional[bool] = dict_key_field()
     custom_marker_text: Optional[str] = dict_key_field()
     icon_image: Optional[str] = dict_key_field()

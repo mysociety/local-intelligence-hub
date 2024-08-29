@@ -22,6 +22,7 @@ import { About } from "./blocks/About";
 import { HTMLEmbed, HTMLEmbedProps } from "./blocks/HTMLEmbed";
 import { RichText, RichTextProps } from "./blocks/RichText";
 import { Iframe, IframeProps } from "./blocks/Iframe";
+import { MemberForm, MemberFormProps } from "./blocks/MemberForm";
 
 export type Props = {
   EventList: EventListProps;
@@ -45,7 +46,8 @@ export type Props = {
   About: any;
   HTMLEmbed: HTMLEmbedProps;
   Iframe: IframeProps;
-  RichText: RichTextProps
+  RichText: RichTextProps;
+  MemberFrom: MemberFormProps
 };
 
 export type UserConfig = Config
@@ -124,6 +126,7 @@ export const conf: UserConfig = {
     RichText,
     About,
     HTMLEmbed,
-    Iframe
+    Iframe,
+    MemberForm
   },
 };

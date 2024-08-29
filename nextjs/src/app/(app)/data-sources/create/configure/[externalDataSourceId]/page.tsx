@@ -48,6 +48,7 @@ const GET_UPDATE_CONFIG = gql`
       emailField
       phoneField
       addressField
+      canDisplayPointField
     }
   }
 `;

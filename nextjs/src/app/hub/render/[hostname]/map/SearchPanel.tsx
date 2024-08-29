@@ -23,36 +23,40 @@ export function SearchPanel({
 
   const hub = useHubRenderContext()
 
-  if (hub.hostname === 'peopleclimatenature.org') {
+  if (hub.isPeopleClimateNature) {
+    const disabled = !postcode || isLoading
     return (
-      <div className="flex flex-col gap-4 p-6">
-        <h1 className='text-4xl tracking-tight mb-4 '>
-          Local Climate and Nature Hustings
+      <div className="flex flex-col gap-6 p-6">
+        <h1 className='text-4xl tracking-tight '>
+          Pledge to take part in Common Grounds
         </h1>
-        <p className='text-lg leading-tight text-hub-primary-neutral'>
-          Explore our map of Husting events happening all over the UK or input your postcode to see what{"’"}s happening near you.
+        <p className='text-lg leading-tight text-hub-primary-neutral text-meepGray-500'>
+          We are inviting as many people and communities as possible across the UK to meet with their MP in their local area.
         </p>
-
+        <p className='text-lg leading-tight text-hub-primary-neutral text-meepGray-500'>
+          Through personal stories and discussions about the issues that matters most, we aim to inspire MPs to champion nature and climate issues alongside us.
+        </p>
+        <p className='text-lg leading-tight text-hub-primary-neutral text-meepGray-500'>
+          Enter your postcode to find your MP and pledge to meet with them on 12 October.
+        </p>
         <form onSubmit={onSubmit}>
+          <label htmlFor="postcode" className="text-meepGray-500">Your postcode</label>
           <input
+            id="postcode"
             type="text"
-            placeholder="postcode"
             autoComplete="postal-code"
-            className='p-4 text-lg w-full rounded-md border placeholder:text-hub-primary-600 focus:ring-hub-primary-600 bg-hub-primary-50 border-hub-primary-100 mt-4 active:border-hub-primary-500'
+            className='mt-2 p-4 text-lg w-full rounded-md border focus:ring-hub-primary-600 border-hub-primary-100 active:border-hub-primary-500'
             value={postcode}
-            onChange={e => setPostcode(e.target.value.toUpperCase().trim())}
+            onChange={e => setPostcode(e.target.value.toUpperCase())}
           />
           <button
-            className='bg-hub-primary-600 text-white text-lg font-bold rounded-md w-full p-4 mt-4'
+            className={`bg-hub-primary-600 text-white text-lg font-bold rounded-md w-full p-4 mt-4 ${!disabled ? 'hover:bg-hub-primary-700 focus:bg-hub-primary-700' : ''}`}
             // TODO: add postcode validation
-            disabled={!postcode || isLoading}
+            disabled={disabled}
           >
             {isLoading ? 'Loading...' : 'Search'}
           </button>
         </form>
-        <div className="flex flex-col gap-2 border-t border-hub-background pt-4 text-hub-primary-neutral ">
-          <HustingsCTA />
-        </div>
       </div>
     )
   } else {

@@ -3,12 +3,9 @@ from django.conf import settings
 import httpx
 from benedict import benedict
 
+from utils import standardise_postcode
 from utils.cached_fn import async_cached_fn
 from utils.py import transform_dict_values_recursive
-
-
-def standardise_postcode(postcode: str):
-    return postcode.replace(" ", "")
 
 
 def create_key(postcode: str):

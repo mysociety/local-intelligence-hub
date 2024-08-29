@@ -14,6 +14,12 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: publicSansVariable;
+  src:
+    url('../fonts/hub/PublicSans-Regular-Variable.ttf');
+  font-style: normal;
+}
 
 @font-face {
   font-family: "PPRightGrotesk";

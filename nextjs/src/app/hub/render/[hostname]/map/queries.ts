@@ -12,6 +12,7 @@ export const GET_HUB_MAP_DATA = gql`
       layers {
         id
         name
+        type
         visible
         iconImage
         source {
@@ -59,6 +60,24 @@ export const CONSTITUENCY_VIEW_FRAGMENT = gql`
     # For loudspeek
     samplePostcode {
       postcode
+    }
+    mp: person(filters:{personType:"MP"}) {
+      id
+      name
+      photo {
+        url
+      }
+      party: personDatum(filters:{
+        dataType_Name: "party"
+      }) {
+        name: data
+        shade
+      }
+      email: personDatum(filters:{
+        dataType_Name: "email"
+      }) {
+        data
+      }
     }
     # PPCs
     ppcs: people(filters:{personType:"PPC"}) {

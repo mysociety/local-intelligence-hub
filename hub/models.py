@@ -761,6 +761,7 @@ class GenericData(CommonData):
     title = models.CharField(max_length=1000, blank=True, null=True)
     description = models.TextField(max_length=3000, blank=True, null=True)
     image = models.ImageField(null=True, max_length=1000, upload_to="generic_data")
+    can_display_point = models.BooleanField(default=True)
 
     def remote_url(self):
         return self.data_type.data_set.external_data_source.record_url(
@@ -1059,6 +1060,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     start_time_field = models.CharField(max_length=250, blank=True, null=True)
     end_time_field = models.CharField(max_length=250, blank=True, null=True)
     public_url_field = models.CharField(max_length=250, blank=True, null=True)
+    can_display_point_field = models.CharField(max_length=250, blank=True, null=True)
 
     import_fields = [
         "postcode_field",
@@ -1074,6 +1076,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         "start_time_field",
         "end_time_field",
         "public_url_field",
+        "can_display_point_field",
     ]
 
     @classmethod
@@ -1304,42 +1307,45 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     # to be implemented by subclasses
 
     def capture_event(self, event: str, data: dict):
-        crm_type = (
-            self.crm_type if hasattr(self, "crm_type") else str(self.__class__)
-        )
-        posthog.group_identify(
-            "external_data_source",
-            str(self.id),
-            properties={
-                "name": self.name,
-                "data_type": self.data_type,
-                "crm_type": crm_type,
-                "point_geography_type": self.geography_column_type,
-                "organisation_id": self.organisation.pk,
-                "organisation_name": self.organisation.name,
-                "organisation_slug": self.organisation.slug,
-                "created_at": self.created_at,
-            },
-        )
+        try:
+            crm_type = (
+                self.crm_type if hasattr(self, "crm_type") else str(self.__class__)
+            )
+            posthog.group_identify(
+                "external_data_source",
+                str(self.id),
+                properties={
+                    "name": self.name,
+                    "data_type": self.data_type,
+                    "crm_type": crm_type,
+                    "point_geography_type": self.geography_column_type,
+                    "organisation_id": self.organisation.pk,
+                    "organisation_name": self.organisation.name,
+                    "organisation_slug": self.organisation.slug,
+                    "created_at": self.created_at,
+                },
+            )
 
-        posthog.capture(
-            "commonknowledge-server-worker",
-            event,
-            groups={
-                "organisation": self.organisation.pk,
-                "external_data_source": str(self.id),
-            },
-            properties=dict(
-                external_data_source_id=str(self.id),
-                external_data_source_name=self.name,
-                external_data_source_crm_type=crm_type,
-                external_data_source_data_type=self.data_type,
-                external_data_source_point_geography_type=self.geography_column_type,
-                organsiation_id=self.organisation.pk,
-                organisation_name=self.organisation.name,
-                **(data or {}),
-            ),
-        )
+            posthog.capture(
+                "commonknowledge-server-worker",
+                event,
+                groups={
+                    "organisation": self.organisation.pk,
+                    "external_data_source": str(self.id),
+                },
+                properties=dict(
+                    external_data_source_id=str(self.id),
+                    external_data_source_name=self.name,
+                    external_data_source_crm_type=crm_type,
+                    external_data_source_data_type=self.data_type,
+                    external_data_source_point_geography_type=self.geography_column_type,
+                    organsiation_id=self.organisation.pk,
+                    organisation_name=self.organisation.name,
+                    **(data or {}),
+                ),
+            )
+        except Exception as e:
+            logger.error(f"Could not capture posthog event: {e}")
 
     def healthcheck(self):
         """
@@ -1501,6 +1507,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     value = self.get_record_field(record, getattr(self, field), field)
                     if field.endswith("_time_field"):
                         value: datetime = parse_datetime(value)
+                    if field == "can_display_point_field":
+                        value = bool(value)  # cast None value to False
                     update_data[field.removesuffix("_field")] = value
 
             return update_data
@@ -1845,7 +1853,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         id = self.get_record_id(member)
         update_fields = {}
         try:
-            logger.debug(f"mapping member {id}")
+            logger.debug(f"mapping member {id} {mapping}")
             postcode_data = None
             if self.geography_column_type == self.GeographyTypes.POSTCODE:
                 # Get postcode from member
@@ -2341,6 +2349,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         email = str
         postcode = str
         data = dict
+        tags = list[str]
 
     def delete_one(self, record_id: str):
         """
@@ -3030,27 +3039,51 @@ class MailchimpSource(ExternalDataSource):
         return self.client.lists.members.delete(self.list_id, record_id)
 
     def create_one(self, record: ExternalDataSource.CUDRecord):
-        record = self.client.lists.members.create(
-            self.list_id,
-            data=dict(
-                status="subscribed",
-                email_address=record["email"],
-                merge_fields={
-                    "ADDRESS": (
-                        {
-                            "addr1": record["data"].get("addr1"),
-                            "city": record["data"].get("city"),
-                            "state": record["data"].get("state"),
-                            "country": record["data"].get("country"),
-                            "zip": record["postcode"],
-                        }
-                        if record["data"].get("addr1")
-                        else ""
-                    )
-                },
-            ),
+        merge_fields = {
+            key: str(value) for key, value in record["data"].items() if key.isupper()
+        }
+        subscriber_hash = hashlib.md5(record["email"].encode()).hexdigest()
+        data = dict(
+            status="subscribed",
+            email_address=record["email"],
+            merge_fields={
+                **merge_fields,
+                "ADDRESS": (
+                    {
+                        "addr1": record["data"].get("addr1"),
+                        "city": record["data"].get("city"),
+                        "state": record["data"].get("state"),
+                        "country": record["data"].get("country"),
+                        "zip": record["postcode"],
+                    }
+                    if record["data"].get("addr1")
+                    else ""
+                ),
+            },
         )
-        return record
+
+        mailchimp_record = False
+        try:
+            mailchimp_record = self.client.lists.members.get(
+                self.list_id, subscriber_hash
+            )
+        except Exception as e:
+            logger.debug(f"Could not get mailchimp member {record['email']}: {e}")
+
+        if not mailchimp_record:
+            mailchimp_record = self.client.lists.members.create(self.list_id, data=data)
+        else:
+            self.client.lists.members.update(self.list_id, subscriber_hash, data=data)
+
+        tags = record.get("tags", [])
+        if tags:
+            self.client.lists.members.tags.update(
+                self.list_id,
+                subscriber_hash,
+                data={"tags": [{"name": tag, "status": "active"} for tag in tags]},
+            )
+
+        return mailchimp_record
 
     def create_many(self, records):
         created_records = []
@@ -3332,21 +3365,17 @@ class ActionNetworkSource(ExternalDataSource):
         await sync_to_async(self.capture_event)("data update", data=dict(count=1))
         if len(mapped_record.get("update_fields", {})) == 0:
             return
-        try:
-            id = self.get_record_uuid(mapped_record["member"])
-            # TODO: also add standard UK geo data
-            # Use benedict so that keys like `postal_addresses[0].postal_code`
-            # are unpacked into {'postal_addresses': [{'postal_code': 0}]}
-            update_fields = benedict()
-            for key, value in mapped_record["update_fields"].items():
-                update_fields[key] = value
-            logger.debug("Updating AN record", id, update_fields)
-            return self.client.update_person(
-                id, action_network_background_processing, **update_fields
-            )
-        except Exception as e:
-            print("Errored record for update_one", id, mapped_record["update_fields"])
-            raise e
+        id = self.get_record_uuid(mapped_record["member"])
+        # TODO: also add standard UK geo data
+        # Use benedict so that keys like `postal_addresses[0].postal_code`
+        # are unpacked into {'postal_addresses': [{'postal_code': 0}]}
+        update_fields = benedict()
+        for key, value in mapped_record["update_fields"].items():
+            update_fields[key] = value
+        logger.debug("Updating AN record", id, update_fields)
+        return self.client.update_person(
+            id, action_network_background_processing, **update_fields
+        )
 
     def delete_one(self, record_id):
         raise NotImplementedError(
