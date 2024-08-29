@@ -164,7 +164,7 @@ export function ConstituencyView({
                     </p>
                     <a 
                       className="bg-hub-primary-600 text-hub-primary-50 p-4 text-center w-full block rounded-md hover:bg-hub-primary-700 focus:bg-hub-primary-700"
-                      href="/pledge">Pledge to take part</a>
+                      href={`/pledge?postcode=${encodeURIComponent(postcode)}`}>Pledge to take part</a>
                   </div>
                 </div>
               ) : (

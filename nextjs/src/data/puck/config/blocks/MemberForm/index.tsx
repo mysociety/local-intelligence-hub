@@ -125,7 +125,9 @@ const MemberFormComponent = ({
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [postcode, setPostcode] = useState("");
+  const [postcode, setPostcode] = useState(
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("postcode") || ""
+  );
   const [isGroup, setIsGroup] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [groupURL, setGroupURL] = useState("");
@@ -260,6 +262,10 @@ const MemberFormComponent = ({
             onChange={(e) => setPostcode(e.target.value)}
             required
           />
+          <p className="text-hub-primary-700">
+            We{"'"}re only collecting postcodes to map your pledge to the right constituency.
+            We won't share or display your postcode.
+          </p>
         </div>
         <div className="flex align-items-center gap-2">
           <input

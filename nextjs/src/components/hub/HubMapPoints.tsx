@@ -87,7 +87,7 @@ export function HubPointMarkers({
                 ["linear"],
                 ["zoom"],
                 10,
-                20,
+                30,
                 15,
                 60,
               ],
@@ -102,7 +102,7 @@ export function HubPointMarkers({
             layout={{
               'text-field': ['get', 'sum'],
               'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-              'text-size': 12
+              'text-size': 24
             }}
           />
           <Layer
@@ -118,7 +118,7 @@ export function HubPointMarkers({
                 ["linear"],
                 ["zoom"],
                 10,
-                20,
+                30,
                 15,
                 60,
               ],
@@ -133,7 +133,7 @@ export function HubPointMarkers({
             layout={{
               'text-field': ['get', 'count'],
               'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-              'text-size': 12
+              'text-size': 24
             }}
           />
           <Layer

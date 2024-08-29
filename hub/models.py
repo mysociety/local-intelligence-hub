@@ -1076,7 +1076,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         "start_time_field",
         "end_time_field",
         "public_url_field",
-        "can_display_point_field"
+        "can_display_point_field",
     ]
 
     @classmethod
@@ -3064,9 +3064,11 @@ class MailchimpSource(ExternalDataSource):
 
         mailchimp_record = False
         try:
-            mailchimp_record = self.client.lists.members.get(self.list_id, subscriber_hash)
+            mailchimp_record = self.client.lists.members.get(
+                self.list_id, subscriber_hash
+            )
         except Exception as e:
-            logger.debug(f"Could not get mailchimp member {record['email']}")
+            logger.debug(f"Could not get mailchimp member {record['email']}: {e}")
 
         if not mailchimp_record:
             mailchimp_record = self.client.lists.members.create(self.list_id, data=data)
@@ -3075,11 +3077,11 @@ class MailchimpSource(ExternalDataSource):
 
         tags = record.get("tags", [])
         if tags:
-            self.client.lists.members.tags.update(self.list_id, subscriber_hash, data={
-                'tags': [
-                    {"name": tag, "status": "active"} for tag in tags
-                ]
-            })
+            self.client.lists.members.tags.update(
+                self.list_id,
+                subscriber_hash,
+                data={"tags": [{"name": tag, "status": "active"} for tag in tags]},
+            )
 
         return mailchimp_record
 

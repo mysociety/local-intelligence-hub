@@ -483,7 +483,7 @@ async def add_member(
     email: str,
     postcode: str,
     custom_fields: strawberry.scalars.JSON,
-    tags: list[str]
+    tags: list[str],
 ) -> bool:
     source: models.ExternalDataSource = await models.ExternalDataSource.objects.filter(
         id=external_data_source_id
@@ -491,7 +491,9 @@ async def add_member(
     if not source:
         logger.warning(f"Could not find external data source {external_data_source_id}")
         return False
-    record = source.CUDRecord(email=email, postcode=postcode, data=custom_fields, tags=tags)
+    record = source.CUDRecord(
+        email=email, postcode=postcode, data=custom_fields, tags=tags
+    )
     member = source.create_one(record)
     member_id = source.get_record_id(member)
     await source.import_many([member_id])

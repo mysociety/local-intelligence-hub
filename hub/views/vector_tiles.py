@@ -1,13 +1,13 @@
 import logging
 
 from django.core.exceptions import PermissionDenied
-from django.db.models import CharField, OuterRef, Subquery
-from django.db.models import Value as V, F, Count
+from django.db.models import CharField, Count, F, OuterRef, Subquery
+from django.db.models import Value as V
 from django.db.models.functions import Cast, Concat
 from django.db.models.query import QuerySet
+from django.http import JsonResponse
 from django.urls import reverse
 from django.views.generic import DetailView
-from django.http import JsonResponse
 
 from gqlauth.core.middlewares import UserOrError, get_user_or_error
 from vectortiles import VectorLayer
@@ -205,9 +205,13 @@ class ExternalDataSourcePointGeoJSONView(DetailView):
                 "features": [
                     {
                         "type": "Feature",
-                        "geometry": {"type": "Point", "coordinates": [area['point'].x, area['point'].y]},
-                        "properties": {"count": area['count']},
-                    } for area in qs
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [area["point"].x, area["point"].y],
+                        },
+                        "properties": {"count": area["count"]},
+                    }
+                    for area in qs
                 ],
             }
         )
