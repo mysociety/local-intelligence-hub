@@ -216,7 +216,7 @@ export function RenderCard({
         <div className="p-5 bg-hub-primary-600 text-white h-full relative flex flex-col gap-4">
           <Image src={ArrowTopRight} width={30} alt="arrow" className='relative z-10' />
           <div className="mt-auto">
-            <h2 className="lg:text-hub4xl text-hubxl tracking-tight relative z-10 mb-3 no-underline">{title}</h2>
+            <h2 className="lg:text-hub4xl text-hubxl tracking-tight relative z-10 mb-3">{title}</h2>
             {description && (
               <div className="text-white line-clamp-6 relative z-10">
                 <PuckText text={description} />
@@ -303,7 +303,7 @@ export function RenderCard({
   }
 
   return link && type !== "resource" && type !== "training" ? (
-    <Link href={link}>
+    <Link href={link} className={type === "action" ? "no-underline" : ""}>
       {card}
     </Link>
   ) : card
