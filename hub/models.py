@@ -3365,21 +3365,17 @@ class ActionNetworkSource(ExternalDataSource):
         await sync_to_async(self.capture_event)("data update", data=dict(count=1))
         if len(mapped_record.get("update_fields", {})) == 0:
             return
-        try:
-            id = self.get_record_uuid(mapped_record["member"])
-            # TODO: also add standard UK geo data
-            # Use benedict so that keys like `postal_addresses[0].postal_code`
-            # are unpacked into {'postal_addresses': [{'postal_code': 0}]}
-            update_fields = benedict()
-            for key, value in mapped_record["update_fields"].items():
-                update_fields[key] = value
-            logger.debug("Updating AN record", id, update_fields)
-            return self.client.update_person(
-                id, action_network_background_processing, **update_fields
-            )
-        except Exception as e:
-            print("Errored record for update_one", id, mapped_record["update_fields"])
-            raise e
+        id = self.get_record_uuid(mapped_record["member"])
+        # TODO: also add standard UK geo data
+        # Use benedict so that keys like `postal_addresses[0].postal_code`
+        # are unpacked into {'postal_addresses': [{'postal_code': 0}]}
+        update_fields = benedict()
+        for key, value in mapped_record["update_fields"].items():
+            update_fields[key] = value
+        logger.debug("Updating AN record", id, update_fields)
+        return self.client.update_person(
+            id, action_network_background_processing, **update_fields
+        )
 
     def delete_one(self, record_id):
         raise NotImplementedError(
