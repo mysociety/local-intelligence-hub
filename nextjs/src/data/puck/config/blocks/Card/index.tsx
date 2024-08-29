@@ -182,7 +182,7 @@ export function RenderCard({
   };
   const card = type !== "illustration" ? (
     <div
-      className="render-card w-full h-full aspect-square overflow-clip rounded-[20px] flex flex-col gap-5 hover:shadow-hover transition-all"
+      className="render-card w-full h-full rounded-[20px] flex flex-col gap-5 hover:shadow-hover transition-all"
     // style={{
     //   gridColumn: `span ${columns}`,
     //   gridRow: `span ${rows}`,
