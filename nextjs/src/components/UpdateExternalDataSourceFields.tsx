@@ -173,6 +173,7 @@ export function getFieldsForDataSourceType (type?: DataSourceType): Array<keyof 
         "fullNameField",
         "firstNameField",
         "lastNameField",
+        "canDisplayPointField"
       ]
     case DataSourceType.Location:
       return [

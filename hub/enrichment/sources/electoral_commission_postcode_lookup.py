@@ -5,10 +5,7 @@ from benedict import benedict
 
 from utils.cached_fn import async_cached_fn
 from utils.py import transform_dict_values_recursive
-
-
-def standardise_postcode(postcode: str):
-    return postcode.replace(" ", "")
+from utils import standardise_postcode
 
 
 def create_key(postcode: str):

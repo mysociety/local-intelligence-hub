@@ -206,6 +206,8 @@ class Mutation:
     delete_page: bool = mutation_types.delete_page
     update_page: model_types.HubPage = mutation_types.update_page
 
+    add_member: bool = mutation_types.add_member
+
 
 class CustomErrorLoggingSchema(JwtSchema):
     errors_to_ignore: List[type[Exception]] = [

@@ -10,7 +10,7 @@ import { useHubRenderContext } from '@/components/hub/HubRenderContext';
 
 export default function HubFooter() {
   const hubContext = useHubRenderContext()
-  if (hubContext.hostname === 'peopleclimatenature.org') {
+  if (hubContext.isPeopleClimateNature) {
     return (
       <div className="mb-[20px] w-full h-full bg-white rounded-[20px] text-hub-primary-neutral p-8 space-y-10">
         <div className="flex md:flex-row flex-col items-start justify-between md:items-center gap-10">

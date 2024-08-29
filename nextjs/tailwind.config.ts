@@ -27,6 +27,7 @@ const config = {
         'IBMPlexMono': ["IBMPlexMono", 'sans-serif'],
         'PPRightGrotesk': ['PPRightGrotesk, sans-serif'],
         'publicSans': ['publicSans, sans-serif'],
+        'publicSansVariable': ['publicSansVariable, sans-serif'],
       },
       fontSize: {
         hub6xl: ['3.625rem', {
@@ -266,6 +267,7 @@ const config = {
       },
       boxShadow: {
         'hover': '0px 0px 30px 0px var(--hub-primary-300, #76DFBB)',
+        'hub': '2px 2px 20px 0px var(--Jungle-Green-200, #ACEED4)',
       },
       spacing: {
         xs: '10px',

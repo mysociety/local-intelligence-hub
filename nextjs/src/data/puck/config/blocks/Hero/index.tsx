@@ -114,11 +114,8 @@ function HeroRenderer ({ prompt, description, }:  HeroProps) {
               </div>
             </div>
             <div className="grid grid-flow-row sm:grid-flow-col gap-4 justify-stretch">
-              <Link href="/resources" className='bg-hub-primary-200 rounded-md p-2 leading-tight text-center'>
-                See what{"'"}s happening near you
-              </Link>
-              <Link href="/#about" className='bg-hub-primary-200 rounded-md p-2 leading-tight text-center'>
-                Learn more about the hub
+              <Link href="/map" className='bg-hub-primary-600 text-white text-lg rounded-md p-2 no-underline text-center hover:bg-hub-primary-700 focus:bg-hub-primary-700'>
+                Pledge to take part
               </Link>
             </div>
           </div>

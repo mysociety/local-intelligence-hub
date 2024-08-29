@@ -47,6 +47,7 @@ export const useHubRenderContext = () => {
     const secondaryColours = useMemo(() => getColors(ctx.hubData?.secondaryColour || "#0f8c6c"), [ctx.hubData])
     return {
       ...ctx,
+      isPeopleClimateNature: ctx.hostname === "peopleclimatenature.org" || ctx.hostname === "hub.localhost",
       goToEventId,
       goToPostcode,
       reset,

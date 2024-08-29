@@ -94,8 +94,8 @@ export function ConstituencyView({
             {[
               {
                 label:
-                  hubContext.hostname === "peopleclimatenature.org"
-                    ? "Message your MP 💬"
+                  hubContext.isPeopleClimateNature
+                    ? "Meet your MP"
                     : "Candidates",
                 key: "candidates",
               },
@@ -114,19 +114,59 @@ export function ConstituencyView({
             ))}
           </TabsList>
           <div className="w-full border-b border-meepGray-200"></div>
-          <TabsContent className="mt-0" value="candidates">
+          <TabsContent className="mt-0 p-2" value="candidates">
             <section className="space-y-4">
-              {hubContext.hostname === "peopleclimatenature.org" ? (
-                <IframeResizer
-                  src={queryString.stringifyUrl({
-                    url: "https://peopleclimatenature.onldspk.cc/2024-mps/frame/write",
-                    query: {
-                      body: "VqQTqd",
-                      pc: postcode,
-                    },
-                  })}
-                  width={"100%"}
-                />
+              {hubContext.isPeopleClimateNature ? (
+                <div className="my-4">
+                  {data.mp ? (
+                    <article
+                      className="flex flex-col gap-2 mx-4"
+                    >
+                      <header>
+                        <h2 className="text-2xl mb-4">Find Common Grounds with</h2>
+                        <div className="flex items-center bg-hub-primary-50 p-4 rounded-md mb-4">
+                          {data.mp.photo && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={new URL(
+                                data.mp.photo.url,
+                                BACKEND_URL
+                              ).toString()}
+                              alt={data.mp.name}
+                              width={41}
+                              height={41}
+                              className="rounded-full mr-4"
+                            />
+                          )}
+                          <div>
+                            <h3 className="font-bold text-lg">{data.mp.name}</h3>
+                            {data.mp.party && (
+                              <span>
+                                {data.mp.party.name}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <h2 className="text-2xl mb-4">On October 12th.</h2>
+                      </header>
+                    </article>
+                  ) : (
+                    <article
+                      className="border-2 border-meepGray-200 rounded-md overflow-hidden p-4 flex flex-col gap-2 mx-4"
+                    >
+                      <p>Could not find your MP.</p>
+                    </article>
+                  )}
+                  <div className="px-4">
+                    <p className="mb-4">
+                      Sign up to meet with your local MP. Through personal stories and discussions about the issues
+                      that matter most, we aim to inspire MPs to take meaningful action.
+                    </p>
+                    <a 
+                      className="bg-hub-primary-600 text-hub-primary-50 p-4 text-center w-full block rounded-md hover:bg-hub-primary-700 focus:bg-hub-primary-700"
+                      href="/pledge">Pledge to take part</a>
+                  </div>
+                </div>
               ) : (
                 <div className="space-y-3 my-4">
                   {data?.ppcs

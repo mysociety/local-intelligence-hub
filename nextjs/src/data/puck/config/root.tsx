@@ -38,7 +38,7 @@ export default function Root({
 
   let links = navLinks.length ? navLinks : pageQuery.data?.hubPageByPath?.hub.navLinks || []
   
-  if (hostname === "peopleclimatenature.org") {
+  if (hub.isPeopleClimateNature) {
     return (
       <>
         {renderCSS && (

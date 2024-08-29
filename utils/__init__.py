@@ -1,6 +1,10 @@
 import re
 
 
+def standardise_postcode(postcode: str):
+    return postcode.replace(" ", "")
+
+
 def is_valid_postcode(postcode):
     pc = postcode.upper().replace(" ", "")
 
