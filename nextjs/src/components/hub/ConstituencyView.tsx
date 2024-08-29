@@ -163,7 +163,7 @@ export function ConstituencyView({
                       that matter most, we aim to inspire MPs to take meaningful action.
                     </p>
                     <a 
-                      className="bg-hub-primary-600 text-hub-primary-50 p-4 text-center w-full block rounded-md hover:bg-hub-primary-700 focus:bg-hub-primary-700"
+                      className="bg-hub-primary-600 text-hub-primary-50 p-4 text-lg text-center w-full block rounded-md hover:bg-hub-primary-700 focus:bg-hub-primary-700"
                       href={`/pledge?postcode=${encodeURIComponent(postcode)}`}>Pledge to take part</a>
                   </div>
                 </div>
