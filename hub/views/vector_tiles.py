@@ -212,6 +212,7 @@ class ExternalDataSourcePointGeoJSONView(DetailView):
                         "properties": {"count": area["count"]},
                     }
                     for area in qs
+                    if area["point"]
                 ],
             }
         )
