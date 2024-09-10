@@ -130,6 +130,7 @@ class Command(BaseCommand):
         last_elected, created = DataType.objects.update_or_create(
             data_set=last_elected_ds,
             name="mp_last_elected",
+            area_type=area_type,
             defaults={"label": "Date MP last elected", "data_type": "date"},
         )
 
@@ -151,6 +152,7 @@ class Command(BaseCommand):
         first_elected, created = DataType.objects.update_or_create(
             data_set=first_elected_ds,
             name="mp_first_elected",
+            area_type=area_type,
             defaults={"label": "Date MP first elected", "data_type": "date"},
         )
 
