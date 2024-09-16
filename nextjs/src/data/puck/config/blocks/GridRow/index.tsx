@@ -46,7 +46,7 @@ export const GridRow: ComponentConfig<GridRowProps> = {
                     </div>
                 )}
                 {columns === "2-columns" && (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '25px', marginBottom: '25px' }} >
+                    <div className="grid sm:grid-cols-2 gap-2 md:gap-3 lg:gap-4 xl:gap-5 mb-8 md:mb-16 lg:mb-20" >
                         <DropZone zone="Col-1" />
                         <DropZone zone="Col-2" />
                     </div>
