@@ -131,6 +131,7 @@ class BaseAreaImportCommand(BaseCommand):
 
     def _fill_empty_entries(self):
         for data_type in self.data_types.values():
+            datum_example = AreaData.objects.filter(data_type=data_type).first()
             if (
                 data_type.data_type
                 in [
@@ -140,8 +141,8 @@ class BaseAreaImportCommand(BaseCommand):
                 ]
                 and data_type.data_set.table == "areadata"
                 and data_type.data_set.fill_blanks
+                and datum_example is not None
             ):
-                datum_example = AreaData.objects.filter(data_type=data_type).first()
                 if datum_example.float:
                     key = "float"
                 elif datum_example.int:
@@ -428,7 +429,7 @@ class BaseConstituencyCountImportCommand(BaseAreaImportCommand):
     def handle(self, quiet=False, *args, **options):
         self._quiet = quiet
         df = self.get_dataframe()
-        if not df:
+        if df.empty:
             if not self._quiet:
                 self.stdout.write(f"missing data for {self.message} ({self.area_type})")
             return
