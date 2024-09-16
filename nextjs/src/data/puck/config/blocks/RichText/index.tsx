@@ -1,15 +1,7 @@
 import React from 'react';
 import { ComponentConfig } from "@measured/puck";
-import ReactQuill, { Quill } from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
 import './customRichTextStyles.css';
-
-const Parchment = Quill.import('parchment');
-const SizeClass = new Parchment.Attributor.Class('size', 'size', {
-    scope: Parchment.Scope.INLINE,
-    whitelist: ['small', 'medium', 'large', 'huge']
-});
-Quill.register(SizeClass, true);
+import dynamic from "next/dynamic";
 
 export type RichTextProps = {
     width: string
@@ -43,14 +35,15 @@ export const RichText: ComponentConfig<RichTextProps> = {
         },
         content: {
             type: "custom",
-            render: ({ onChange, value }) => (
-                <ReactQuill
+            render: ({ onChange, value }) => {
+                const ReactQuill = dynamic(import('./ReactQuill'), { ssr: false });
+                return <ReactQuill
                     value={value}
                     onChange={(e: string) => onChange(e)}
                     modules={modules}
                     formats={formats}
                 />
-            ),
+            },
         }
     },
     defaultProps: {

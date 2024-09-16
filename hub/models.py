@@ -753,6 +753,7 @@ class GenericData(CommonData):
     start_time = models.DateTimeField(blank=True, null=True)
     end_time = models.DateTimeField(blank=True, null=True)
     public_url = models.URLField(max_length=2000, blank=True, null=True)
+    social_url = models.URLField(max_length=2000, blank=True, null=True)
     geocode_data = JSONField(blank=True, null=True)
     geocoder = models.CharField(
         max_length=1000, blank=True, null=True, default=Geocoder.POSTCODES_IO.value
@@ -996,6 +997,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     class DataSourceType(models.TextChoices):
         MEMBER = "MEMBER", "Members or supporters"
+        GROUP = "GROUP", "Group or organisation"
         REGION = "REGION", "Areas or regions"
         EVENT = "EVENT", "Events"
         LOCATION = "LOCATION", "Locations"
@@ -1060,6 +1062,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     start_time_field = models.CharField(max_length=250, blank=True, null=True)
     end_time_field = models.CharField(max_length=250, blank=True, null=True)
     public_url_field = models.CharField(max_length=250, blank=True, null=True)
+    social_url_field = models.CharField(max_length=250, blank=True, null=True)
     can_display_point_field = models.CharField(max_length=250, blank=True, null=True)
 
     import_fields = [
@@ -1076,6 +1079,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         "start_time_field",
         "end_time_field",
         "public_url_field",
+        "social_url_field",
         "can_display_point_field",
     ]
 
@@ -2523,10 +2527,10 @@ class AirtableSource(ExternalDataSource):
         return f"https://airtable.com/{self.base_id}/{self.table_id}?blocks=hide"
 
     def healthcheck(self):
-        record = self.table.first()
-        if record:
-            return True
-        return False
+        # This throws an exception if the config is bad, so no need to check
+        # if the response contains a record or not. This permits empty tables.
+        self.table.first()
+        return True
 
     def field_definitions(self):
         return [
@@ -2678,13 +2682,14 @@ class AirtableSource(ExternalDataSource):
         return self.table.delete(record_id)
 
     def create_one(self, record):
-        record = self.table.create(
-            {
-                **record["data"],
-                self.postcode_field: record["postcode"],
-                self.email_field: record["email"],
-            }
-        )
+        data = {
+            **record["data"],
+        }
+        if self.postcode_field:
+            data[self.postcode_field] = record["postcode"]
+        if self.email_field:
+            data[self.email_field] = record["email"]
+        record = self.table.create(data)
         return record
 
     def create_many(self, records):

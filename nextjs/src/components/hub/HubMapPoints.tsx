@@ -4,7 +4,7 @@ import { layerColour, useLoadedMap } from "@/lib/map";
 import { useAtom } from "jotai";
 import { selectedHubSourceMarkerAtom } from "@/components/hub/data";
 import { useEffect } from "react";
-import { Layer, Source } from "react-map-gl";
+import { Layer, Point, Popup, Source } from "react-map-gl";
 import { BACKEND_URL } from "@/env";
 import { useHubRenderContext } from "./HubRenderContext";
 import { GetHubMapDataQuery } from "@/__generated__/graphql";
@@ -44,18 +44,24 @@ export function HubPointMarkers({
           canvas.style.cursor = "";
         }
       );
-      if (layer.type === "events") {
+      if (layer.type === "events" || layer.type === "groups") {
         mapbox.loadedMap?.on("click", `${layer.source.id}-marker`, (event) => {
           const feature = event.features?.[0];
           if (feature?.properties?.id) {
-            setSelectedSourceMarker(feature);
-            context.goToEventId(feature.properties.id);
+            if (layer.type === "events") {
+              context.goToEventId(feature.properties.id);
+            } else {
+              setSelectedSourceMarker(feature);
+            }
           }
         });
       }
     },
     [mapbox.loadedMap, layer.source.id]
   );
+
+  // @ts-ignore
+  const coordinates = selectedSourceMarker?.geometry.coordinates
 
   return (
     <>
@@ -71,7 +77,7 @@ export function HubPointMarkers({
           clusterMaxZoom={100}
           clusterRadius={50}
           clusterProperties={{
-            sum: ["+", ["get", "count"]]
+            sum: ["+", ["get", "count"]],
           }}
         >
           <Layer
@@ -79,7 +85,7 @@ export function HubPointMarkers({
             beforeId={beforeId}
             type="circle"
             source={layer.source.id}
-            filter={['has', 'sum']}
+            filter={["has", "sum"]}
             paint={{
               "circle-color": "rgba(24, 164, 127, 0.80)",
               "circle-radius": [
@@ -98,11 +104,11 @@ export function HubPointMarkers({
             beforeId={beforeId}
             type="symbol"
             source={layer.source.id}
-            filter={['has', 'sum']}
+            filter={["has", "sum"]}
             layout={{
-              'text-field': ['get', 'sum'],
-              'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-              'text-size': 24
+              "text-field": ["get", "sum"],
+              "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+              "text-size": 24,
             }}
           />
           <Layer
@@ -110,7 +116,7 @@ export function HubPointMarkers({
             beforeId={beforeId}
             type="circle"
             source={layer.source.id}
-            filter={['all', ['!', ['has', 'sum']], ['>', ['get', 'count'], 1]]}
+            filter={["all", ["!", ["has", "sum"]], [">", ["get", "count"], 1]]}
             paint={{
               "circle-color": "rgba(24, 164, 127, 0.80)",
               "circle-radius": [
@@ -129,11 +135,11 @@ export function HubPointMarkers({
             beforeId={beforeId}
             type="symbol"
             source={layer.source.id}
-            filter={['all', ['!', ['has', 'sum']], ['>', ['get', 'count'], 1]]}
+            filter={["all", ["!", ["has", "sum"]], [">", ["get", "count"], 1]]}
             layout={{
-              'text-field': ['get', 'count'],
-              'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-              'text-size': 24
+              "text-field": ["get", "count"],
+              "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+              "text-size": 24,
             }}
           />
           <Layer
@@ -141,14 +147,14 @@ export function HubPointMarkers({
             id={`${layer.source.id}-marker`}
             source={layer.source.id}
             type="symbol"
-            filter={['all', ['!', ['has', 'sum']], ['==', ['get', 'count'], 1]]}
+            filter={["all", ["!", ["has", "sum"]], ["==", ["get", "count"], 1]]}
             layout={{
               "icon-image": layer.iconImage
                 ? layer.iconImage
                 : `tcc-event-marker`,
               "icon-allow-overlap": true,
               "icon-ignore-placement": true,
-              "icon-size": layer.iconImage ? 1.25 : 0.75,
+              "icon-size": 0.75,
               "icon-anchor": "bottom",
               ...(layer.mapboxLayout || {}),
             }}
@@ -164,7 +170,6 @@ export function HubPointMarkers({
             BACKEND_URL
           ).toString()}
         >
-          {/* {index <= 1 ? ( */}
           <Layer
             beforeId={beforeId}
             id={`${layer.source.id}-marker`}
@@ -177,53 +182,28 @@ export function HubPointMarkers({
                 : `tcc-event-marker`,
               "icon-allow-overlap": true,
               "icon-ignore-placement": true,
-              "icon-size": layer.iconImage ? 1.25 : 0.75,
+              "icon-size": 0.75,
               "icon-anchor": "bottom",
               ...(layer.mapboxLayout || {}),
             }}
             paint={layer.mapboxPaint || {}}
-            // {...(
-            //   selectedSourceMarker?.properties?.id
-            //   ? { filter: ["!=", selectedSourceMarker?.properties?.id, ["get", "id"]] }
-            //   : {}
-            // )}
           />
-          {/* ) : (
-            // In case extra layers are added.
-            <Layer
-              beforeId={beforeId}
-              id={`${externalDataSourceId}-marker`}
-              source={externalDataSourceId}
-              source-layer={"generic_data"}
-              type="circle"
-              paint={{
-                "circle-radius": 5,
-                "circle-color": layerColour(index, externalDataSourceId),
-              }}
-              {...(
-                selectedSourceMarker?.properties?.id
-                ? { filter: ["!=", selectedSourceMarker?.properties?.id, ["get", "id"]] }
-                : {}
-              )}
-            />
-          )}
-          {!!selectedSourceMarker?.properties?.id && (
-            <Layer
-              beforeId={beforeId}
-              id={`${externalDataSourceId}-marker-selected`}
-              source={externalDataSourceId}
-              source-layer={"generic_data"}
-              type="symbol"
-              layout={{
-                "icon-image": "meep-marker-selected",
-                "icon-size": 0.75,
-                "icon-anchor": "bottom",
-                "icon-allow-overlap": true,
-                "icon-ignore-placement": true
-              }}
-              filter={["==", selectedSourceMarker.properties.id, ["get", "id"]]}
-            />
-          )} */}
+          {selectedSourceMarker ? (
+            <Popup
+              longitude={coordinates[0]}
+              latitude={coordinates[1]}
+              offset={[0, -15] as [number,number]}
+              onClose={() => setSelectedSourceMarker(null)}
+            >
+              <h2 className="text-lg">{selectedSourceMarker.properties?.title}</h2>
+              <p>
+                <a href={selectedSourceMarker.properties?.public_url} target="_blank">Visit website</a>
+              </p>
+              <p>
+                <a href={selectedSourceMarker.properties?.social_url} target="_blank">Get in touch</a>
+              </p>
+            </Popup>
+          ) : null}
         </Source>
       )}
     </>

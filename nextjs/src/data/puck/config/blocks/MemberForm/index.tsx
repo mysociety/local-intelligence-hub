@@ -41,13 +41,20 @@ const DataSourceSelect = ({
   const memberLists =
     data?.myOrganisations
       .flatMap((o) => o.externalDataSources)
-      .filter((source) => source.dataType === DataSourceType.Member) || [];
+      .filter((source) => source.dataType === DataSourceType.Member || source.dataType === DataSourceType.Group) || [];
   if (!memberLists.length) {
     return (
       <span>
         No member lists, add one <Link href="/data-sources">here</Link>.
       </span>
     );
+  }
+  const onChangeSelect = (selectIndex: number, selectValue: string) => {
+    if (!value) {
+      value = []
+    }
+    value[selectIndex] = selectValue
+    return onChange(value)
   }
   return (
     <>
@@ -56,9 +63,7 @@ const DataSourceSelect = ({
         <select
           className="border p-2"
           value={value ? value[0] : ""}
-          onChange={(e) => {
-            onChange([e.target.value, value ? value[1] : ""]);
-          }}
+          onChange={(e) => onChangeSelect(0, e.target.value)}
           required
         >
           <option value="">Select Data Source</option>
@@ -74,9 +79,23 @@ const DataSourceSelect = ({
         <select
           className="border p-2"
           value={value ? value[1] : ""}
-          onChange={(e) => {
-            onChange([value ? value[0] : "", e.target.value]);
-          }}
+          onChange={(e) => onChangeSelect(1, e.target.value)}
+        >
+          <option value="">Select Data Source</option>
+          {memberLists.map((source) => (
+            <option key={source.id} value={source.id}>
+              {source.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="mb-3">
+        <label>Groups List</label>
+        <select
+          className="border p-2"
+          value={value ? value[2] : ""}
+          onChange={(e) => onChangeSelect(2, e.target.value)}
+          required
         >
           <option value="">Select Data Source</option>
           {memberLists.map((source) => (
@@ -131,6 +150,7 @@ const MemberFormComponent = ({
   const [isGroup, setIsGroup] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [groupURL, setGroupURL] = useState("");
+  const [groupSocial, setGroupSocial] = useState("");
   const [heardFromOrganisationName, setHeardFromOrganisationName] =
     useState("");
   const [communicationConsent, setCommunicationConsent] = useState(false);
@@ -156,51 +176,61 @@ const MemberFormComponent = ({
       POSTCODE: postcode,
       GROUP_NAME: groupName,
       GROUP_URL: groupURL,
+      GROUP_SOCIAL: groupSocial,
       HEARD_FROM: heardFromOrganisationName,
       MAP_CONSENT: mapConsent,
     }
 
     // Add the member to the main members list [0]
-    const { data } = await addMemberMutation({
-      variables: {
-        externalDataSourceId: externalDataSourceIds[0],
-        email,
-        postcode,
-        customFields,
-        tags: []
-      },
-    });
-    if (!data?.addMember) {
-      success = false
-    }
-
-    // If extra consent given, add to extra list [1]
-    if (communicationConsent) {
+    const [membersList, communicationMembersList, groupList] = externalDataSourceIds;
+    const allMembersList = groupName ? groupList : membersList
+    try {
       const { data } = await addMemberMutation({
         variables: {
-          externalDataSourceId: externalDataSourceIds[1],
+          externalDataSourceId: allMembersList,
           email,
           postcode,
-          customFields: {
-            ...customFields,
-          },
-          tags: ["MP-pledge-24"]
+          customFields,
+          tags: []
         },
       });
       if (!data?.addMember) {
         success = false
       }
-    }
 
-    if (success) {
-      router.push("/" + successRedirect)
-      return
-    } else {
+      // If extra consent given, add to extra list [1]
+      if (communicationConsent) {
+        const { data } = await addMemberMutation({
+          variables: {
+            externalDataSourceId: communicationMembersList,
+            email,
+            postcode,
+            customFields: {
+              ...customFields,
+            },
+            tags: ["MP-pledge-24"]
+          },
+        });
+        if (!data?.addMember) {
+          success = false
+        }
+      }
+
+      if (success) {
+        router.push("/" + successRedirect)
+        return
+      } else {
+        setError("Unknown error, please try again later");
+      }
+    } catch (e) {
       setError("Unknown error, please try again later");
     }
 
     setLoading(false)
   };
+
+  const groupSocialValid = groupSocial.startsWith('https://') || groupSocial.includes('@')
+  const formInvalid = Boolean(groupSocial && !groupSocialValid);
 
   const inputClassName = "p-2 rounded-sm border border-meepGray-200";
 
@@ -295,7 +325,7 @@ const MemberFormComponent = ({
             </div>
             <div className="flex flex-col space-y-2">
               <label className="" htmlFor="group-site">
-                (Optional) Group website / social media
+                (Optional) Group website
               </label>
               <input
                 id="group-site"
@@ -304,6 +334,21 @@ const MemberFormComponent = ({
                 value={groupURL}
                 onChange={(e) => setGroupURL(e.target.value)}
               />
+            </div>
+            <div className="flex flex-col space-y-2">
+              <label className="" htmlFor="group-social">
+                (Optional) Please share the best way others can connect with your group (Facebook page, group email, etc.)
+              </label>
+              <input
+                id="group-social"
+                type="url"
+                className={inputClassName}
+                value={groupSocial}
+                onChange={(e) => setGroupSocial(e.target.value)}
+              />
+              {groupSocial && !groupSocialValid ? (
+                <small className="text-red-500">Must be a URL (e.g. https://facebook.com/my-group) or an email address.</small>
+              ) : null}
             </div>
           </>
         ) : null}
@@ -346,10 +391,10 @@ const MemberFormComponent = ({
           </label>
         </div>
         <button
-          disabled={loading}
+          disabled={loading || formInvalid}
           className={`${!loading ? "bg-hub-primary-600" : "bg-meepGray-300"} text-white text-lg rounded-md p-2`}
         >
-          Pledge
+          {loading ? 'Pledging...' : 'Pledge'}
         </button>
         {error ? <span className="text-red-500">{error}</span> : null}
       </div>

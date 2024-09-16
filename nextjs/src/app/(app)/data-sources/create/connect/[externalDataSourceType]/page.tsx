@@ -44,7 +44,7 @@ import { toastPromise } from "@/lib/toast";
 import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
 import { getFieldsForDataSourceType } from "@/components/UpdateExternalDataSourceFields";
 import { camelCase } from "lodash";
-import { Building, Calendar, Pin, Quote, User } from "lucide-react";
+import { Building, Calendar, Pin, Quote, User, Users } from "lucide-react";
 import { locationTypeOptions } from "@/data/location";
 import { useAtomValue } from "jotai";
 import { currentOrganisationIdAtom } from "@/data/organisation";
@@ -249,6 +249,7 @@ export default function Page({
   useGuessedField('startTimeField', ["start", "start time", "start date", "begin", "beginning", "start_at", "start_time", "start_date", "date", "time", "datetime", "timestamp", "from"])
   useGuessedField('endTimeField', ["end", "end time", "end date", "finish", "finish time", "finish date", "end_at", "end_time", "end_date", "until"])
   useGuessedField('publicUrlField', ["public url", "public link", "public", "url", "link", "website", "webpage", "web", "page", "site", "href", "uri", "path", "slug", "permalink"])
+  useGuessedField('socialUrlField', ["social url", "social link", "social", "facebook", "instagram"])
 
   useEffect(() => {
     if (testSourceResult.data?.testDataSource?.defaultDataType) {
@@ -320,7 +321,7 @@ export default function Page({
     }), {
       loading: "Testing connection...",
       success: (d: FetchResult<TestDataSourceQuery>) => {
-        if (!d.errors && d.data?.testDataSource) {
+        if (!d.errors && d.data?.testDataSource && d.data.testDataSource.healthcheck) {
           return "Connection is healthy";
         }
         throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
@@ -487,6 +488,11 @@ export default function Page({
                               <SelectItem value={DataSourceType.Member}>
                                 <div className='flex flex-row gap-2 items-center'>
                                   <User className='w-4 text-meepGray-300' /> People
+                                </div>
+                              </SelectItem>
+                              <SelectItem value={DataSourceType.Group}>
+                                <div className='flex flex-row gap-2 items-center'>
+                                  <Users className='w-4 text-meepGray-300' /> Group
                                 </div>
                               </SelectItem>
                               <SelectItem value={DataSourceType.Event}>

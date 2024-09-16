@@ -840,6 +840,7 @@ class BaseDataSource(Analytics):
     start_time_field: auto
     end_time_field: auto
     public_url_field: auto
+    social_url_field: auto
     can_display_point_field: auto
     record_url_template: Optional[str] = fn_field()
     organisation_id: str = strawberry_django.field(

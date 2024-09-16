@@ -175,6 +175,16 @@ export function getFieldsForDataSourceType (type?: DataSourceType): Array<keyof 
         "lastNameField",
         "canDisplayPointField"
       ]
+    case DataSourceType.Group:
+      return [
+        "emailField",
+        "phoneField",
+        "addressField",
+        "titleField",
+        "publicUrlField",
+        "socialUrlField",
+        "canDisplayPointField"
+      ]
     case DataSourceType.Location:
       return [
         "titleField",

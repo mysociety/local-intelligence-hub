@@ -140,6 +140,7 @@ const GET_UPDATE_CONFIG = gql`
       startTimeField
       endTimeField
       publicUrlField
+      socialUrlField
       canDisplayPointField
       isImportScheduled
       importProgress {
@@ -366,6 +367,7 @@ export default function InspectExternalDataSource({
               startTimeField: source.startTimeField,
               endTimeField: source.endTimeField,
               publicUrlField: source.publicUrlField,
+              socialUrlField: source.socialUrlField,
               canDisplayPointField: source.canDisplayPointField
             }}
             dataType={source.dataType}
