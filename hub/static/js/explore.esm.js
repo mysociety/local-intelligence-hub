@@ -62,9 +62,15 @@ const app = createApp({
   },
   computed: {
     datasetModal() {
+      if (this.datasetModal) {
+        return this.datasetModal
+      }
       return new Modal(this.$refs.datasetModal)
     },
     areaTypeModal() {
+      if (this.areaTypeModal) {
+        return this.areaTypeModal
+      }
       return new Modal(this.$refs.areaTypeModal)
     },
     selectableDatasets() {
