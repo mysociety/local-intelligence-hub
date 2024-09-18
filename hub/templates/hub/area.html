@@ -313,6 +313,42 @@
                         </p>
                    </div>
                 </div>
+
+                {% if mp.wrans %}
+                <div class="card dataset-card area-data--md area-data--featured">
+                    <div class="card-header">
+                        <h3 class="h5">Written Answers</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Department</th>
+                                    <th scope="col">Topic</th>
+                                    <th scope="col">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                              {% for wran in mp.wrans %}
+                                <tr>
+                                    <td>{{ wran.department }}</td>
+                                    <td>{{ wran.area }}</td>
+                                    <td><a href="{{ wran.link }}">{{ wran.date }}</a></td>
+                                </tr>
+                              {% endfor %}
+                            </tbody>
+                        </table>
+                   </div>
+                   <div class="card-footer">
+                       <p class="card-text">
+                          Data from TheyWorkForYou. Recent Written Answers to questions submitted by the MP to departments relevant to climate and nature.
+                        {% if mp.twfyid %}
+                          <a href="https://www.theyworkforyou.com/mp/{{ mp.twfyid }}">See this MP’s full record on TheyWorkForYou.</a>
+                        {% endif %}
+                        </p>
+                   </div>
+                </div>
+                {% endif %}
               {% endif %}
 
                 <div class="card dataset-card area-data--sm {% comment %} TODO: dataset-card--favourite? {% endcomment %} area-data--featured">

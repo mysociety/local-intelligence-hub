@@ -290,6 +290,9 @@ class AreaView(BaseAreaView):
                 }
                 for item in support
             ]
+            wrans = data.filter(data_type__name="mp_wrans")
+            if wrans.count() > 0:
+                context["mp"]["wrans"] = wrans.first().value()
 
         except Person.DoesNotExist:
             context["no_mp"] = True
