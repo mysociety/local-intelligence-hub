@@ -130,7 +130,7 @@ class Command(BaseCommand):
         data = self.get_existing_data()
 
         for mp_id, questions in tqdm(wrans.items(), disable=self._quiet):
-            mp = Person.objects.get(external_id=mp_id)
+            mp = Person.objects.get(external_id=mp_id, person_type="MP")
             q_to_add = []
             if data.get(mp_id):
                 questions.extend(data[mp_id])
