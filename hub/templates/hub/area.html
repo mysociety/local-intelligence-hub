@@ -22,7 +22,46 @@
                 <p class="mb-0 text-muted">Old parliamentary constituency</p>
                 <p class="text-danger">This constituency no longer exists. Please select one of the replacement constituencies below</p>
                 {% elif area_type == "WMC23" %}
-                <p class="mb-0 text-muted">New parliamentary constituency</p>
+                <!-- Button trigger modal -->
+                <button type="button" class="btn btn-primary d-inline-block btn-sm p-1" data-bs-toggle="modal" data-bs-target="#exampleModal" aria-label="Open area map">
+                  {% include 'hub/includes/icons/map.html' with width="1.5rem" height="1.5rem" %}
+                </button>
+
+                <!-- Modal -->
+                <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Demographic context</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        <div class="row">
+                          <div class="col-md-4">
+                            <h3 class="h6">Country of the UK</h3>
+                            <p>Scotland</p>
+                          </div>
+                          <div class="col-md-4">
+                            <h3 class="h6">Urbanisation</h3>
+                            <p>Urban</p>
+                          </div>
+                          <div class="col-md-4">
+                            <h3 class="h6">Population</h3>
+                            <p>123,852</p>
+                          </div>
+                        </div>
+                        <img src="/static/img/map-placeholder.png" alt="James Madeupname" style="object-fit:cover; box-shadow: var(--bs-card-box-shadow);" class="rounded border" width="100%" height="auto">
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p class="mb-0 text-muted d-inline-block lh-0">New parliamentary constituency</p>
+                <a type="button" class="d-inline-block text-decoration-none" data-bs-toggle="modal" data-bs-target="#exampleModal" aria-label="Open area map">
+                  (Show map)
+                </a>
                 {% endif %}
             </div>
 
@@ -542,6 +581,172 @@
             </div>
         </section>
         {% endif %}
+
+        <section class="mb-5 mb-lg-6 area-section" id="place">
+          <div class="d-flex flex-row justify-content-between align-items-center mb-3">
+            <h2 class="text-primary mb-0">Place</h2>
+            <a href="#map" class="btn btn-primary btn-sm d-md-none">
+              {% include 'hub/includes/icons/map.html' with width="1.5rem" height="1.5rem" %}
+              Go to map
+            </a>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="area-data-grid two-col-grid">
+    
+                
+                  
+                  <div class="card dataset-card area-data--sm  ">
+                  
+                      <div class="card-header">
+                          <h3 class="h5">Country of the UK</h3>
+                        
+                      </div>
+                      <div class="card-body">
+                        
+                          <p class="card-text mb-0 display-6 lh-1 text-primary">Scotland</p>
+                        
+                      </div>
+                      <div class="card-footer">
+                        <p class="card-text">
+                          
+                            <a href="https://mapit.mysociety.org/">Data from mySociety.</a>
+                            
+                          
+                          
+                          
+                            Updated 2024-04-24.
+                          
+                          
+                        </p>
+    
+                      </div>
+                  </div>
+                
+                  
+                  <div class="card dataset-card area-data--sm  ">
+                  
+                      <div class="card-header">
+                          <h3 class="h5">Estimated child poverty</h3>
+                        
+                      </div>
+                      <div class="card-body">
+                        
+                          <p class="card-text mb-0 display-6 lh-1 text-primary">17.0%</p>
+                          
+                          <p class="card-text mt-2 text-muted">29.3% national average</p>
+                          
+                          
+                        
+                      </div>
+                      <div class="card-footer">
+                        <p class="card-text">
+                          
+                            <a href="https://endchildpoverty.org.uk/child-poverty-2024/">Data from End Child Poverty, based on data from DWP/HMRC.</a>
+                            
+                          
+                            <a href="/future-constituencies/">This dataset has been automatically converted from 2010 parliamentary constituencies.</a>
+                          
+                          
+                            Percentage of children living in households with a net income (after housing costs) below 60% of the national median.
+                          
+                          
+                            Updated June 2024.
+                          
+                          
+                        </p>
+    
+                      </div>
+                  </div>
+                
+                  
+                  <div class="card dataset-card area-data--sm   area-data--featured">
+                  
+                      <div class="card-header">
+                          <h3 class="h5">Index of Multiple Deprivation (IMD)</h3>
+                        
+                      </div>
+                      <div class="card-body">
+                        
+                          
+                            <p class="card-text mb-0 display-6 lh-1 text-primary">4</p>
+                          
+                          
+                            
+                              <p class="card-text mt-2 text-muted">2.8 national average</p>
+                            
+                          
+                          
+                        
+                      </div>
+                      <div class="card-footer">
+                        <p class="card-text">
+                          
+                            <a href="https://mysociety.github.io/composite_uk_imd/">Data from ONS (England and Wales), NRS (Scotland), and NISRA (Northern Ireland), collated and standardised by mySociety.</a>
+                            
+                          
+                            <a href="/future-constituencies/">This dataset has been automatically converted from 2010 parliamentary constituencies.</a>
+                          
+                          
+                            Deciles of deprivation, from 1 (most deprived) to 10 (least deprived). This uses a composite measure of deprivation (including income, employment, education, skills, health, crime, and housing) standardised across the countries of the UK.
+                          
+                          
+                          
+                        </p>
+    
+                      </div>
+                  </div>
+                
+                  
+                  <div class="card dataset-card area-data--sm  ">
+                  
+                      <div class="card-header">
+                          <h3 class="h5">Number of onshore windfarms</h3>
+                        
+                      </div>
+                      <div class="card-body">
+                        
+                          
+                            <p class="card-text mb-0 display-6 lh-1 text-primary">0</p>
+                          
+                          
+                            
+                              <p class="card-text mt-2 text-muted">0.7 national average</p>
+                            
+                          
+                          
+                        
+                      </div>
+                      <div class="card-footer">
+                        <p class="card-text">
+                          
+                            <a href="https://en.wikipedia.org/wiki/List_of_onshore_wind_farms_in_the_United_Kingdom">Data from Wikipedia.</a>
+                            
+                          
+                          
+                          
+                            Updated 2024-04-24.
+                          
+                          
+                        </p>
+    
+                      </div>
+                  </div>
+                
+              </div>
+            </div>
+            <div id="map" class="col-md-6 mt-3 mt-md-0">
+              <img src="/static/img/map-placeholder.png" alt="James Madeupname" style="object-fit:cover; box-shadow: var(--bs-card-box-shadow);" class="rounded border" width="100%" height="auto">
+            </div>
+          </div>
+
+          <div class="area-data-more">
+              <a href="#place">
+                  More place data
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16" class="" role="presentation" fill="currentColor">&lt;<path d="M11.793 7.041a1.332 1.332 0 0 1 0 1.862l-5.665 5.656a1.32 1.32 0 0 1-.983.441 1.322 1.322 0 0 1-1.316-1.315c0-.378.163-.738.447-.988L9 7.972 4.276 3.247a1.317 1.317 0 0 1-.386-.931C3.89 1.594 4.485 1 5.207 1c.349 0 .684.139.93.386l5.656 5.655z"></path></svg>
+              </a>
+          </div>
+      </section>
 
 
         <section class="mb-5 mb-lg-6 area-section" id="movement">

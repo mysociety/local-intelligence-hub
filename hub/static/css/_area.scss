@@ -77,6 +77,17 @@
     @include media-breakpoint-up('lg') {
         grid-template-columns: repeat(3, 1fr);
     }
+
+    &.two-col-grid {
+        @include media-breakpoint-up('md') {
+            grid-template-columns: repeat(1, 1fr);
+            grid-gap: $grid-gutter-width;
+        }
+    
+        @include media-breakpoint-up('lg') {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
 }
 
 .area-data--sm {
