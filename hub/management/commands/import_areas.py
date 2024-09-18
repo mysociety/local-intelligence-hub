@@ -41,9 +41,13 @@ class Command(BaseCommand):
         )
 
     def handle(self, quiet: bool = False, *args, **options):
+        quiet = True
         mapit_client = mapit.MapIt()
         for b_type in self.boundary_types:
             areas = mapit_client.areas_of_type(b_type["mapit_type"])
+            print(
+                f"fetched mapit areas with type {b_type['mapit_type']}, our type {b_type['code']}"
+            )
             area_type, created = AreaType.objects.get_or_create(
                 code=b_type["code"],
                 area_type=b_type["area_type"],
@@ -56,6 +60,7 @@ class Command(BaseCommand):
             if not quiet:
                 print(f"Importing {b_type['name']} Areas")
             for area in tqdm(areas, disable=quiet):
+                print(f"looking at {area['name']}, mapit type {area['type']}")
                 try:
                     geom = mapit_client.area_geometry(area["id"])
                     geom = {
@@ -72,14 +77,26 @@ class Command(BaseCommand):
                     print(f"could not find mapit area for {area['name']}")
                     geom = None
 
-                a, created = Area.objects.update_or_create(
-                    name=area["name"],
-                    area_type=area_type,
-                    defaults={
-                        "mapit_id": area["id"],
-                        "gss": area["codes"]["gss"],
-                    },
+                print(
+                    f"creating area for {area['name']} with GSS {area['codes']['gss']}, mapit_id {area['id']}"
                 )
+                try:
+                    a, created = Area.objects.update_or_create(
+                        name=area["name"],
+                        area_type=area_type,
+                        defaults={
+                            "mapit_id": area["id"],
+                            "gss": area["codes"]["gss"],
+                        },
+                    )
+                except Area.MultipleObjectsReturned:
+                    print(
+                        f"\033[31area {area['name']} already exists, giving up\033[0m"
+                    )
+                    exit()
 
                 a.geometry = geom
                 a.save()
+                print("--")
+
+            print("\n\033[31m######################\033[0m\n")
