@@ -1,4 +1,7 @@
 .dataset-card {
+    // This prevents some odd overflow horizontal behaviour when there are graphs present on mobile.
+    overflow: hidden;
+
     .js-favourite-this-dataset {
         display: block;
     }
