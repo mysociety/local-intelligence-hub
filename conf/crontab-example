@@ -1,0 +1,8 @@
+# crontab Example:
+# Timed tasks for LIH. Example file.
+
+PATH=/usr/local/bin:/usr/bin:/bin
+MAILTO=cron-lih@mysociety.org
+
+# daily update for MP wrans
+5 10 * * * lih /data/vhost/lih/local-intelligence-hub/script/manage import_mp_wrans --quie
