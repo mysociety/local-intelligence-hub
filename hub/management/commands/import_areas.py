@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from tqdm import tqdm
 
 from hub.models import Area, AreaType
-from utils import mapit
+from utils.mapit import MapIt
 
 
 class Command(BaseCommand):
@@ -58,7 +58,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, quiet: bool = False, diagnostics: bool = False, *args, **options):
-        mapit_client = mapit.MapIt()
+        mapit_client = MapIt()
         for b_type in self.boundary_types:
             areas = mapit_client.areas_of_type(b_type["mapit_type"], generation=b_type["mapit_generation"])
             if diagnostics:
