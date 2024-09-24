@@ -54,7 +54,7 @@ class Command(BaseCommand):
             },
         )
 
-        for at in AreaType.objects.get(code__in=["WMC", "WMC23"]):
+        for at in AreaType.objects.filter(code__in=["WMC", "WMC23"]):
             ds.areas_available.add(at)
 
         data_type, created = DataType.objects.update_or_create(
@@ -79,7 +79,7 @@ class Command(BaseCommand):
             },
         )
 
-        for at in AreaType.objects.get(code__in=["WMC", "WMC23"]):
+        for at in AreaType.objects.filter(code__in=["WMC", "WMC23"]):
             ds.areas_available.add(at)
 
         data_type, created = DataType.objects.update_or_create(
