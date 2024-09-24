@@ -14,6 +14,15 @@ class Command(BaseCommand):
     boundary_types = [
         {
             "mapit_type": ["WMC"],
+            "mapit_generation": 54,
+            "name": "2010 Parliamentary Constituency",
+            "code": "WMC",
+            "area_type": "Westminster Constituency",
+            "description": "Westminster Parliamentary Constituency boundaries, as created in 2010",
+        },
+        {
+            "mapit_type": ["WMC"],
+            "mapit_generation": None,
             "name": "2023 Parliamentary Constituency",
             "code": "WMC23",
             "area_type": "Westminster Constituency",
@@ -21,6 +30,7 @@ class Command(BaseCommand):
         },
         {
             "mapit_type": ["LBO", "UTA", "COI", "LGD", "CTY", "MTD"],
+            "mapit_generation": None,
             "name": "Single Tier Councils",
             "code": "STC",
             "area_type": "Single Tier Council",
@@ -28,6 +38,7 @@ class Command(BaseCommand):
         },
         {
             "mapit_type": ["DIS", "NMD"],
+            "mapit_generation": None,
             "name": "District Councils",
             "code": "DIS",
             "area_type": "District Council",
@@ -49,10 +60,10 @@ class Command(BaseCommand):
     def handle(self, quiet: bool = False, diagnostics: bool = False, *args, **options):
         mapit_client = mapit.MapIt()
         for b_type in self.boundary_types:
-            areas = mapit_client.areas_of_type(b_type["mapit_type"])
+            areas = mapit_client.areas_of_type(b_type["mapit_type"], generation=b_type["mapit_generation"])
             if diagnostics:
                 print(
-                    f"fetched mapit areas with type {b_type['mapit_type']}, our type {b_type['code']}"
+                    f"fetched mapit areas with type {b_type['mapit_type']}, generation {b_type['mapit_generation']}, our type {b_type['code']}"
                 )
             area_type, created = AreaType.objects.get_or_create(
                 code=b_type["code"],
