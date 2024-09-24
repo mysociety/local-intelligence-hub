@@ -3,7 +3,7 @@ from datetime import date
 import pandas as pd
 
 from hub.models import DataSet
-from utils import mapit
+from utils.mapit import MapIt
 
 from .base_importers import BaseImportFromDataFrameCommand, MultipleAreaTypesMixin
 
@@ -101,7 +101,7 @@ class Command(MultipleAreaTypesMixin, BaseImportFromDataFrameCommand):
     }
 
     def get_dataframe(self):
-        mapit_client = mapit.MapIt()
+        mapit_client = MapIt()
         areas = mapit_client.areas_of_type(
             self.mapit_types[self.area_type]["mapit_type"],
             generation=self.mapit_types[self.area_type]["mapit_generation"],
