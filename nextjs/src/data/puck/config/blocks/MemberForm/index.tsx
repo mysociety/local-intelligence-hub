@@ -50,9 +50,13 @@ const DataSourceSelect = ({
     );
   }
   const onChangeSelect = (selectIndex: number, selectValue: string) => {
-    if (!value) {
-      value = []
-    }
+    // Ensure value has 3 elements
+    value = ["", "", ""].map((v, i) => {
+      if (value && value[i]) {
+        return value[i]
+      }
+      return v
+    })
     value[selectIndex] = selectValue
     return onChange(value)
   }
