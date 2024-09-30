@@ -190,6 +190,7 @@ export function HubPointMarkers({
           />
           {selectedSourceMarker ? (
             <Popup
+              key={selectedSourceMarker.properties?.id}
               longitude={coordinates[0]}
               latitude={coordinates[1]}
               offset={[0, -15] as [number,number]}

@@ -285,3 +285,9 @@
   bottom: 0;
   transform: rotate(45deg);
 }
+
+/* Mapbox */
+.mapboxgl-popup-close-button {
+  /* Improve built-in popup close button spacing */
+  padding-right: 0.25rem;
+}
