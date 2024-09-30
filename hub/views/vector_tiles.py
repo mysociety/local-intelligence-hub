@@ -49,6 +49,8 @@ class GenericDataVectorLayer(VectorLayer):
     def get_tile_fields(self):
         if self.type == "members":
             return ("count",)
+        if self.type == "groups":
+            return ("id", "title", "public_url", "social_url")
         default = (
             "id",
             "start_time__ispast",

@@ -101,7 +101,7 @@ export default function ExternalDataSourceList() {
       ) : data ? (
         <section className="w-full grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {(allOrgSources || [])
-          .filter(d => d.dataType === DataSourceType.Member)
+          .filter(d => [DataSourceType.Member, DataSourceType.Group].includes(d.dataType))
           .map((externalDataSource) => (
             <ExternalDataSourceCard
               key={externalDataSource.id}
@@ -158,7 +158,7 @@ export default function ExternalDataSourceList() {
       ) : data ? (
         <section className="grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {(allOrgSources || [])
-          .filter(d => d.dataType !== DataSourceType.Member)
+          .filter(d => ![DataSourceType.Member, DataSourceType.Group].includes(d.dataType))
           .map((externalDataSource) => (
             <ExternalDataSourceCard
               key={externalDataSource.id}
