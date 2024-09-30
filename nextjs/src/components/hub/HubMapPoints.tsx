@@ -61,7 +61,7 @@ export function HubPointMarkers({
   );
 
   // @ts-ignore
-  const coordinates = selectedSourceMarker?.geometry.coordinates
+  const coordinates = selectedSourceMarker?.geometry.coordinates;
 
   return (
     <>
@@ -193,16 +193,32 @@ export function HubPointMarkers({
               key={selectedSourceMarker.properties?.id}
               longitude={coordinates[0]}
               latitude={coordinates[1]}
-              offset={[0, -15] as [number,number]}
+              offset={[0, -15] as [number, number]}
               onClose={() => setSelectedSourceMarker(null)}
             >
-              <h2 className="text-lg">{selectedSourceMarker.properties?.title}</h2>
-              <p>
-                <a href={selectedSourceMarker.properties?.public_url} target="_blank">Visit website</a>
-              </p>
-              <p>
-                <a href={selectedSourceMarker.properties?.social_url} target="_blank">Get in touch</a>
-              </p>
+              <h2 className="text-lg">
+                {selectedSourceMarker.properties?.title}
+              </h2>
+              {selectedSourceMarker.properties?.public_url ? (
+                <p>
+                  <a
+                    href={selectedSourceMarker.properties.public_url}
+                    target="_blank"
+                  >
+                    Visit website
+                  </a>
+                </p>
+              ) : null}
+              {selectedSourceMarker.properties?.social_url ? (
+                <p>
+                  <a
+                    href={selectedSourceMarker.properties.social_url}
+                    target="_blank"
+                  >
+                    Get in touch
+                  </a>
+                </p>
+              ) : null}
             </Popup>
           ) : null}
         </Source>
