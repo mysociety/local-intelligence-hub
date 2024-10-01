@@ -61,7 +61,7 @@ export default function Root({
           </header>
           <div
             className={twMerge(
-              "rounded-2xl",
+              "rounded-t-2xl md:rounded-2xl",
               fullScreen && "h-full flex-grow mb-2 md:mb-4 overflow-hidden",
             )}
           >

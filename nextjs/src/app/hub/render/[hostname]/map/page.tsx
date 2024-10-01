@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react'
+import React, { ReactNode, useEffect, useState } from 'react'
 
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useQuery } from "@apollo/client";
@@ -16,6 +16,7 @@ import Root from '@/data/puck/config/root';
 import { useBreakpoint } from '@/hooks/css';
 import { GET_EVENT_DATA, GET_HUB_MAP_DATA, GET_LOCAL_DATA } from './queries';
 import { HubRenderContextProvider, useHubRenderContext } from '@/components/hub/HubRenderContext';
+import { twMerge } from 'tailwind-merge';
 
 
 type Params = {
@@ -27,16 +28,16 @@ export default function Page(props: { params: Params }) {
     variables: { hostname: props.params.hostname },
   });
 
-  const shouldDisplayMap = useBreakpoint("md");
+  const isDesktop = useBreakpoint("md");
 
   const [postcode, setPostcode] = useState("");
 
   return (
     <JotaiProvider>
       <HubRenderContextProvider hostname={props.params.hostname}>
-        <Root renderCSS={false} fullScreen={shouldDisplayMap} navLinks={hub.data?.hubByHostname?.navLinks || []}>
+        <Root renderCSS={false} fullScreen={true} navLinks={hub.data?.hubByHostname?.navLinks || []}>
           <MapProvider>
-            <PageContent {...props} shouldDisplayMap={shouldDisplayMap} hub={hub.data} postcode={postcode} setPostcode={setPostcode} />
+            <PageContent {...props} isDesktop={isDesktop} hub={hub.data} postcode={postcode} setPostcode={setPostcode} />
           </MapProvider>
         </Root>
       </HubRenderContextProvider>
@@ -44,7 +45,7 @@ export default function Page(props: { params: Params }) {
   );
 }
 
-function PageContent ({ params: { hostname }, shouldDisplayMap, hub, postcode, setPostcode }: { params: Params, shouldDisplayMap: boolean, hub?: GetHubMapDataQuery, postcode: string, setPostcode: React.Dispatch<React.SetStateAction<string>> }) {
+function PageContent ({ params: { hostname }, isDesktop, hub, postcode, setPostcode }: { params: Params, isDesktop: boolean, hub?: GetHubMapDataQuery, postcode: string, setPostcode: React.Dispatch<React.SetStateAction<string>> }) {
   const hubContext = useHubRenderContext();
 
   const localData = useQuery<GetLocalDataQuery, GetLocalDataQueryVariables>(GET_LOCAL_DATA, {
@@ -56,61 +57,59 @@ function PageContent ({ params: { hostname }, shouldDisplayMap, hub, postcode, s
     variables: { eventId: hubContext.eventId?.toString()!, hostname },
     skip: !hubContext.eventId
   });
-
+  
   return (
-    <>
-      {shouldDisplayMap ? (
-        <main className="h-full relative overflow-x-hidden overflow-y-hidden flex-grow">
-          <div className="absolute w-full h-full flex flex-row pointer-events-none">
-            <div className="w-full h-full pointer-events-auto">
-              <HubMap
-                layers={hub?.hubByHostname?.layers}
-                currentConstituency={
-                  !hubContext.shouldZoomOut ? (
-                    localData.data?.postcodeSearch.constituency ||
-                    eventData.data?.importedDataGeojsonPoint?.properties?.constituency
-                  ) : undefined
-                }
-                localDataLoading={localData.loading || eventData.loading}
-              />
-            </div>
-            {!localData.loading && (
-              <aside
-                className="absolute top-5 left-0 sm:left-5 right-0 max-w-full pointer-events-none h-full md:h-[calc(100%-40px)] max-h-full overflow-y-hidden shadow-hub-muted"
-                style={{ width: SIDEBAR_WIDTH }}
-              >
-                <div className="max-w-[100vw] rounded-[20px] bg-white max-h-full overflow-y-auto  pointer-events-auto">
-                  {hubContext.eventId && eventData.data ? (
-                    <ConstituencyView data={eventData.data?.importedDataGeojsonPoint?.properties?.constituency} postcode={postcode} />
-                  ) : !localData.data ? (
-                    <SearchPanel
-                      onSearch={(postcode) => hubContext.goToPostcode(postcode)}
-                      isLoading={localData.loading}
-                      postcode={postcode}
-                      setPostcode={setPostcode}
-                    />
-                  ) : (
-                    <ConstituencyView data={localData.data?.postcodeSearch.constituency} postcode={postcode} />
-                  )}
-                </div>
-              </aside>
-            )}
-          </div>
-        </main>
-      ) : (
-        <div className='bg-white rounded-[20px] mt-4 mb-16'>
-          {!localData.data ? (
-            <SearchPanel
-              onSearch={(postcode) => hubContext.goToPostcode(postcode)}
-              isLoading={localData.loading}
-              postcode={postcode}
-              setPostcode={setPostcode}
-            />
-          ) : (
-            <ConstituencyView data={localData.data.postcodeSearch.constituency} postcode={postcode} />
-          )}
+    <main className="h-full relative overflow-x-hidden flex-grow md:overflow-y-hidden">
+      <div className="absolute h-full w-full flex pointer-events-none flex-col md:flex-row">
+        <div className="h-full w-full pointer-events-auto flex-shrink-0">
+          <HubMap
+            layers={hub?.hubByHostname?.layers}
+            currentConstituency={
+              !hubContext.shouldZoomOut
+                ? localData.data?.postcodeSearch.constituency ||
+                  eventData.data?.importedDataGeojsonPoint?.properties
+                    ?.constituency
+                : undefined
+            }
+            localDataLoading={localData.loading || eventData.loading}
+          />
         </div>
-      )}
-    </>
-  )
+        {!localData.loading && (
+          <aside
+            className="pointer-events-none shadow-hub-muted -mt-[7rem] z-10 md:mt-0 md:absolute md:top-5 md:left-5 md:right-0 md:max-w-full md:h-full md:h-[calc(100%-40px)] md:max-h-full md:overflow-y-hidden"
+            style={isDesktop ? { width: SIDEBAR_WIDTH } : {}}
+          >
+            <div className="max-w-[100vw] rounded-[20px] bg-white max-h-full overflow-y-auto  pointer-events-auto">
+              {!isDesktop && (
+                <div className='text-center mt-2 -mb-4'>
+                  <span className="inline-block w-[4rem] h-2 bg-meepGray-300 rounded-full"/>
+                </div>
+              )}
+              {hubContext.eventId && eventData.data ? (
+                <ConstituencyView
+                  data={
+                    eventData.data?.importedDataGeojsonPoint?.properties
+                      ?.constituency
+                  }
+                  postcode={postcode}
+                />
+              ) : !localData.data ? (
+                <SearchPanel
+                  onSearch={(postcode) => hubContext.goToPostcode(postcode)}
+                  isLoading={localData.loading}
+                  postcode={postcode}
+                  setPostcode={setPostcode}
+                />
+              ) : (
+                <ConstituencyView
+                  data={localData.data?.postcodeSearch.constituency}
+                  postcode={postcode}
+                />
+              )}
+            </div>
+          </aside>
+        )}
+      </div>
+    </main>
+  );
 }

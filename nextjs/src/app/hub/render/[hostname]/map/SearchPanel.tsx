@@ -27,9 +27,15 @@ export function SearchPanel({
     const disabled = !postcode || isLoading
     return (
       <div className="flex flex-col gap-6 p-6">
-        <h1 className='text-4xl tracking-tight '>
-          Pledge to take part in Common Grounds
-        </h1>
+        <div className="flex gap-4">
+          <div className="md:hidden flex flex-col bg-meepGray-100 py-1 px-4 text-center rounded">
+            <span>OCT</span>
+            <span className="text-2xl">12</span>
+          </div>
+          <h1 className='text-2xl md:text-4xl tracking-tight '>
+            Pledge to take part in Common Grounds
+          </h1>
+        </div>
         <p className='text-lg leading-tight text-hub-primary-neutral text-meepGray-500'>
           We are inviting as many people and communities as possible across the UK to meet with their MP in their local area.
         </p>
@@ -63,7 +69,7 @@ export function SearchPanel({
     // Unbranded
     return (
       <div className="flex flex-col gap-4 p-6">
-        <h1 className='text-4xl tracking-tight mb-4 text-hub-primary-500'>
+        <h1 className='text-2xl md:text-4xl tracking-tight mb-4 text-hub-primary-500'>
           Upcoming events
         </h1>
         <p className='text-lg leading-tight text-hub-primary-neutral'>
