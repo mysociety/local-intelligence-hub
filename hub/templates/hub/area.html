@@ -223,16 +223,16 @@
                     <div class="card-header">
                         <h3 class="h5">Positions and memberships</h3>
                     </div>
-                    {% if mp.job_titles or mp.cen_member or mp.nzsg_member or mp.select_committee_memberships or mp.appg_memberships %}
+                  {% if mp.job_titles or mp.cen_member or mp.nzsg_member or mp.select_committee_memberships or mp.appg_memberships %}
                     <div class="card-body">
                       {% if mp.job_titles %}
                         <h4 class="visually-hidden">Positions</h4>
                         <ul class="mb-3 mt-n2 list-unstyled lh-sm">
-                      {% with mp.job_titles|splitlines as positions %}
-                      {% for position in positions %}
-                          <li class="mt-2">{{ position }}</li>
-                      {% endfor %}
-                      {% endwith %}
+                          {% with mp.job_titles|splitlines as positions %}
+                          {% for position in positions %}
+                            <li class="mt-2">{{ position }}</li>
+                          {% endfor %}
+                          {% endwith %}
                         </ul>
                       {% endif %}
                       {% if mp.mp_standing_down_2024 == 'Standing Down' %}
@@ -266,14 +266,19 @@
                         </ul>
                       {% endif %}
                     </div>
-                    {% endif %}
-                    <div class="card-body text-muted">
-                        <p>We’re currently working on collecting updated data on MP memberships.</p>
-                        <p>You can <a href="#signup">sign up to be notified when we add it</a>.</p>
-                    </div>
                     <div class="card-footer">
                         <p class="card-text">Data from <a href="https://www.parliament.uk/about/mps-and-lords/members/">UK Parliament</a>{% if mp.job_titles %} and <a href="http://www.mysociety.org">mySociety</a>{% endif %}.</p>
                     </div>
+                    <div class="card-footer bg-yellow-100 fs-7 py-3">
+                        <p class="mb-2">We’re currently working on collecting updated data on MP memberships.</p>
+                        <p class="mb-0">You can <a href="#signup">sign up to be notified when we add it</a>.</p>
+                    </div>
+                  {% else %}
+                    <div class="card-body text-muted fs-7">
+                        <p class="mb-2">We’re currently working on collecting updated data on MP memberships.</p>
+                        <p class="mb-0">You can <a href="#signup">sign up to be notified when we add it</a>.</p>
+                    </div>
+                  {% endif %}
                 </div>
 
                 <div class="card dataset-card area-data--md area-data--featured">
