@@ -80,7 +80,7 @@ export function ConstituencyView({
         >
           &larr; Search another postcode
         </a>
-        <h2 className="text-3xl text-hub-primary-950 font-bold">
+        <h2 className="text-2xl md:text-3xl text-hub-primary-950 font-bold">
           {data?.name}
         </h2>
       </header>

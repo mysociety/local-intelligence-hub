@@ -36,13 +36,13 @@ export function SearchPanel({
             Pledge to take part in Common Grounds
           </h1>
         </div>
-        <p className='text-lg leading-tight text-hub-primary-neutral text-meepGray-500'>
+        <p className='text-[17px] md:text-lg leading-tight text-hub-primary-neutral text-meepGray-500'>
           We are inviting as many people and communities as possible across the UK to meet with their MP in their local area.
         </p>
-        <p className='text-lg leading-tight text-hub-primary-neutral text-meepGray-500'>
+        <p className='text-[17px] md:text-lg leading-tight text-hub-primary-neutral text-meepGray-500'>
           Through personal stories and discussions about the issues that matters most, we aim to inspire MPs to champion nature and climate issues alongside us.
         </p>
-        <p className='text-lg leading-tight text-hub-primary-neutral text-meepGray-500'>
+        <p className='text-[17px] md:text-lg leading-tight text-hub-primary-neutral text-meepGray-500'>
           Enter your postcode to find your MP and pledge to meet with them on 12 October.
         </p>
         <form onSubmit={onSubmit}>
