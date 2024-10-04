@@ -103,7 +103,7 @@ class Command(BaseCommand):
             },
         )
 
-        for at in AreaType.objects.get(code__in=["WMC", "WMC23"]):
+        for at in AreaType.objects.filter(code__in=["WMC", "WMC23"]):
             appg_membership_ds.areas_available.add(at)
 
         appg_membership, created = DataType.objects.update_or_create(

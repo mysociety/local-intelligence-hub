@@ -60,7 +60,7 @@ class Command(BaseCommand):
             },
         )
 
-        for at in AreaType.objects.get(code__in=["WMC", "WMC23"]):
+        for at in AreaType.objects.filter(code__in=["WMC", "WMC23"]):
             nzsg_ds.areas_available.add(at)
             cen_ds.areas_available.add(at)
 

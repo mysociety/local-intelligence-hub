@@ -219,7 +219,12 @@ class Command(BaseCommand):
         if not self._quiet:
             print("Importing MPs")
         for _, mp in tqdm(data.iterrows(), disable=self._quiet, total=data.shape[0]):
-            area = Area.get_by_name(mp["Constituency"], area_type=self.area_type)
+            try:
+                area = Area.get_by_name(mp["Constituency"], area_type=self.area_type)
+            except Area.MultipleObjectsReturned:
+                print(
+                    f"Found multiple areas for {mp['personLabel']} - {mp['Constituency']}"
+                )
             if area is None:  # pragma: no cover
                 print(
                     f"Failed to add MP {mp['personLabel']} as area {mp['gss_code']} does not exist"
