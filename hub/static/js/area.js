@@ -1,10 +1,12 @@
 import $ from 'jquery/dist/jquery.slim'
 import { Chart, BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip } from 'chart.js'
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import trackEvent from './analytics.esm.js'
 import setUpCollapsable from './collapsable.esm.js'
 import Dropdown from 'bootstrap/js/dist/dropdown'
 
-Chart.register( BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip);
+
+Chart.register( BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip, ChartDataLabels);
 
 Chart.defaults.font.family = '"Public Sans", sans-serif'
 Chart.defaults.font.size = 12
@@ -156,7 +158,7 @@ var makeChart = function() {
     var $table = $(this)
     var chartType = $table.data('chart-type') || 'bar'
     var chartWidth = $table.data('chart-width') || 600
-    var rowHeight = $table.data('row-height') || 40
+    var rowHeight = $table.data('row-height') || 80
     var legendHeight = 60
     var labelHeight = 60
     var $div = $('<div>').attr({'class': 'chartwrapper'})
@@ -179,6 +181,12 @@ var makeChart = function() {
         },
         options: {
             indexAxis: primaryAxis,
+            layout: {
+                padding: {
+                    // Some extra padding for the data labels.
+                    right: 30
+                }
+            },
             scales: {
                 [crossAxis]: {
                     ticks: {
@@ -211,7 +219,16 @@ var makeChart = function() {
                             return context.dataset.label + ': ' + (context.raw / 100).toLocaleString('en-GB', { style: 'percent' });
                         }
                     }
-                }
+                },
+                datalabels: {
+                    formatter: function(value) {
+                        return value + '%'; // Adds percentage to the data label
+                    },
+                    color: '#6c757d',
+                    anchor: 'end',
+                    align: 'end',
+                    offset: 5,
+                },
             }
         }
     }
