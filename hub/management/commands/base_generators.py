@@ -166,7 +166,7 @@ class BaseLatLonGeneratorCommand(BaseCommand):
             "-i", "--ignore", action="store_true", help="Ignore existing data file"
         )
 
-    def _setup(self):
+    def _setup(self, *args, **kwargs):
         pass
 
     def handle(self, quiet=False, ignore=False, *args, **options):
