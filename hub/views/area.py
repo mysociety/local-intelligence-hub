@@ -131,7 +131,9 @@ class BaseAreaView(TitleMixin, DetailView):
         }
         if data_set.is_range:
             data["is_range"] = True
-            data_range = base_qs.select_related("data_type").order_by("data_type__name")
+            data_range = base_qs.select_related("data_type").order_by(
+                "data_type__order", "data_type__name"
+            )
 
             d = data_range.all()
             if len(d) == 0:
