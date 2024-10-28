@@ -251,7 +251,7 @@ export function ReportMap () {
     { execution: constituencyAnalytics, label: "Constituency stats" },
     { execution: wardAnalytics, label: "Ward stats" }
   ]
-  const loading = loadingLayers.some((query) => query.execution.loading)
+  const loading = loadingLayers.some((query) => query.execution.loading) || !mapbox.loaded
 
   return (
     <>

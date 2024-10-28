@@ -48,7 +48,6 @@
     "@types/js-cookie": "^3.0.6",
     "@types/lodash": "^4.17.0",
     "@types/pluralize": "^0.0.33",
-    "@types/uuidv4": "^5.0.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "cmdk": "^0.2.1",
@@ -95,7 +94,7 @@
     "theme-colors": "^0.1.0",
     "to-space-case": "^1.0.0",
     "update": "^0.7.4",
-    "uuidv4": "^6.2.13",
+    "uuid": "^11.0.1",
     "vanilla-cookieconsent": "^3.0.1",
     "zod": "^3.22.4"
   },

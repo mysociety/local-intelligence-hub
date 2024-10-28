@@ -99,7 +99,6 @@ export default function Page({ params: { id } }: { params: Params }) {
       client.refetchQueries({
         include: [
           "GetMapReport",
-          "MapReportPage",
           "MapReportLayerAnalytics",
           "GetConstituencyData",
           "MapReportRegionStats",

@@ -16,7 +16,7 @@ export default function MarketingHome() {
           <p className="text-base max-w-prose mb-9">Take your organising to the next level with our free to use tools that enhance your existing membership lists with geographic and political data. </p>
           <Link href="/signup" className={buttonVariants({ variant: "brand" })}>Get started</Link>
         </div>
-        <Image className="hidden md:block absolute -top-20 right-0 -z-10" src={"/hero-bg.svg"} alt="constiteuncy map" width={800} height={700} />
+        <Image className="hidden md:block absolute -top-20 right-0 -z-10 w-auto" src={"/hero-bg.svg"} alt="constiteuncy map" width={800} height={700} priority={true} />
       </div>
       <ProductFeaturesList />
       <GetStarted />

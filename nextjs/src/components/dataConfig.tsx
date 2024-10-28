@@ -45,7 +45,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { uuid } from 'uuidv4';
+import { v4 } from 'uuid';
 import { useAtom } from "jotai"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
@@ -175,7 +175,7 @@ export default function DataConfigPanel() {
             .map((layer, index) => layer?.source && (
             <div key={layer?.source?.id || index} className="flex gap-2 items-center">
               <Popover>
-                <PopoverTrigger>
+                <PopoverTrigger asChild>
                   <Button className="border-l-4 bg-none p-3 text-sm flex flex-row items-center gap-2 text-left justify-start overflow-hidden text-nowrap text-ellipsis h-14" style={{
                     borderColor: layerIdColour(layer?.source?.id)
                   }} 
@@ -350,7 +350,7 @@ export default function DataConfigPanel() {
     const newLayer = {
       name: source.name!,
       source: source.id,
-      id: uuid(),
+      id: v4(),
     }
     if (!oldLayers) return
     if (oldLayers.find(l => l.source === source.id)) return
