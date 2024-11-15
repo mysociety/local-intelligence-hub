@@ -2,99 +2,59 @@
 
 A fork of MySociety's Local Intelligence Hub to be used as a backend for Common Knowledge's MEEP.
 
-## Development install
+## Developer Setup
 
-You will need [Docker](https://docs.docker.com/desktop/) installed.
+### Requirements
 
-To run the front-end, you will need [Node Version Manager (nvm)](https://github.com/nvm-sh/nvm) installed.
+1. [Docker desktop](https://www.docker.com/products/docker-desktop/)
+2. [VSCode](https://code.visualstudio.com/) with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension installed
+3. (Optional) [BitWarden CLI](https://bitwarden.com/help/cli/)
 
-Clone the repository:
+### Instructions
 
-    git clone git@github.com:commonknowledge/meep-intelligence-hub.git
-    cd local-intelligence-hub
+1. Create your `.env` file. There are two methods: one using BitWarden web, and one using the BitWarden CLI.
 
-Create and edit a .env file using `.env-example` file and then
-update `SECRET_KEY` and `MAPIT_API_KEY`. You can get the latter from https://mapit.mysociety.org/account/signup/
+Using BitWarden web:
+- Download the ".env" attachment from the "Mapped Development .env" item in BitWarden, and place it in this folder.
 
-For the front-end, create and edit a .env file using `nextjs/.env.example` (save it as `nextjs/.env`).
+With the BitWarden CLI:
+- Run the following commands:
 
-Follow the below steps to start up the back-end. After data import, there is an extra step for MEEP
-where the created user needs to be verified in the back-end - see the "Logging In" section.
+```bash
+bw login
+bw get attachment .env --itemid 064abbb1-e41b-4632-be90-b2270105d4d1
+```
 
-Start up the front end with: `cd nextjs; npm run dev`.
+2. Open the project folder in VSCode. You should receive a notification in the bottom left to open the project in
+   a Dev Container. If not, press `Cmd+Shift+P` to open the command palette, and type "reopen in container" to find
+   the "Dev Containers: Reopen in Container" option.
 
-### Running Docker manually (recommended)
+3. Wait for the Dev Containers to set up. This should take 5-10 minutes.
 
-Start the Docker environment:
+4. In the "Run and Debug" section of the VSCode left-hand navigation, run the "App" configuration to start the Mapped
+   application.
 
-    docker-compose up
+5. Visit http://localhost:3000 in your browser to access Mapped.
 
-Docker-compose will automatically install dependencies and start the development web server at <https://localhost:8000> when the container is started.
+### Feature Showcase
 
-(If Python complains about missing libraries, chances are the Python requirements have changed since your Docker image was last built. You can rebuild it with, eg: `docker-compose build web`.)
+1. Log in to the Mapped front end.
+2. You should have 3 data sources: "Seed Member List", "Seed Custom Data", and "Seed Events".
+3. This data source should have a mapping that populates the Constituency and Element fields in the AirTable.
+4. You should have a map report called "Test map report". Constituencies and MPs should be displayed.
+5. There should be a hub at [http://hub.localhost:3000](http://hub.localhost:3000).
+6. The hub should have some minimal content on the homepage, and a working pledge map.
+7. You should be able to edit the hub through the Mapped dashboard (i.e. [http://localhost:3000/hub/editor](http://localhost:3000/hub/editor)).
 
-### Running Docker via Visual Studio Code (VS Code)
-
-1. Install the Remote-Container extension.
-2. In the VS Code Command pallette run `Remote-Containers: Install devcontainer CLI`
-3. Then in the repo directory, run `devcontainer open`
-
-This will setup the docker containers and provide a Bash prompt into the containers. 
-
-You will need to run these further initial steps:
-
-1. `script/server --development`
-2. When complete, press Ctrl+C to stop the server (this allows you to start the server in debug mode instead).
-
-You should now be able to run the `App` run group.
-
-### Data import
-
-If you’re running Docker manually (recommended) you will need to enter a Bash shell inside the container, in order to run any of the data import commands:
-
-    docker-compose exec web bash
-
-If you’re running Docker via Visual Studio Code, instead, you’ll want to run the commands via the built-in terminal.
-
-You will likely want to create a Django superuser, by running this inside the container:
-
-    script/createsuperuser
-
-The superuser will be created with the details specified in the `DJANGO_SUPERUSER_*` environment variables. [Read more about how Docker handles environment variables](https://docs.docker.com/compose/envvars-precedence/).
-
-You will also want to import data. `import_last_election_data` requires you have the 2019 election results ([download here](https://researchbriefings.files.parliament.uk/documents/CBP-8749/HoC-GE2019-results-by-constituency.csv)), saved as `data/2019_general_election.csv`.
-
-For convenience, there is a script that will automatically run all the `import_*` commands from `hub/management/commands`, one after the other, which you can run from inside the container:
-
-    script/import-all-data
-
-You could alternatively run commands individually (again, from inside the container), eg:
-
-    ./manage.py import_areas
-    ./manage.py import_mps
-
-### Logging In
-
-The superuser will not initially work on the front-end as it is not verified, which is required by the GraphQL Auth library
-we are using. To fix this, simply go to the back-end and update the User Status for it, ensuring "Verified" is checked.
+You should also be able to log in to the [Django](http://127.0.0.1/admin) and [Wagtail](http://127.0.0.1/cms) admin systems.
 
 ### Running the tests
 
-First start the Docker environment:
-
-    docker-compose up
-
-Then run the tests from inside or outside the docker container:
-
-    script/test
-
-The first time you run `script/test`, it will ask whether you want the tests to run natively or inside the docker container. Type `docker` to run them inside the docker container. Your preference will be saved to `.env` for future runs.
+In the dev container terminal, run `python manage.py test`
 
 ### Linting and formatting code
 
-You can run the linting and formatting suite from inside or outside the docker container:
-
-    script/lint
+In the dev container terminal, run `black . && isort . && flake8`
 
 ## GraphQL docs
 
@@ -114,7 +74,6 @@ mutation Mutation {e
   }
 }
 ```
-
 
 ## Useful Commands
 If you are pulling a branch and the back-end isn't running, you probably need to run these commands:

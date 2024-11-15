@@ -22,7 +22,6 @@ class Command(BaseCommand):
         download_url = "https://open-geography-portalx-ons.hub.arcgis.com/api/download/v1/items/932f769148bb4753989e55b6703b7add/geojson?layers=0"
 
         data = requests.get(download_url).json()
-        print(f"data {data}")
         areas = data["features"]
 
         area_type, created = AreaType.objects.get_or_create(
