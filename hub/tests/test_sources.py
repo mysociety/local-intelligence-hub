@@ -2,6 +2,7 @@ from asyncio import sleep
 from datetime import datetime
 from random import randint
 from typing import List
+from unittest import skip
 
 from django.conf import settings
 from django.db.utils import IntegrityError
@@ -638,6 +639,9 @@ class TestActionNetworkSource(TestExternalDataSource, TestCase):
         assert len(all_records) == len(paged_records)
 
 
+@skip(
+    reason="Google Sheets can't be automatically tested as the refresh token expires after 7 days - need to use a published app"
+)
 class TestEditableGoogleSheetsSource(TestExternalDataSource, TestCase):
     def create_test_source(self, name="My test Google member list"):
         self.source: models.EditableGoogleSheetsSource = (
