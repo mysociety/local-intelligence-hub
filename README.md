@@ -77,6 +77,10 @@ Then run the tests from inside or outside the docker container:
 
 The first time you run `script/test`, it will ask whether you want the tests to run natively or inside the docker container. Type `docker` to run them inside the docker container. Your preference will be saved to `.env` for future runs.
 
+By default, `script/test` runs all the tests. If you want to run a single TestCase, you can, eg:
+
+    script/test hub.tests.test_import_areas.ImportAreasTestCase
+
 ### Linting and formatting code
 
 You can run the linting and formatting suite from inside or outside the docker container:
