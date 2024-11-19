@@ -3,6 +3,7 @@
 import { gql } from "@apollo/client"
 import ColorHash from 'color-hash'
 import { atom, useAtom } from "jotai";
+import { MapboxGeoJSONFeature } from "mapbox-gl";
 import { useEffect, useState } from "react";
 import { Layer, LayerProps, useMap } from "react-map-gl";
 import { MapRef } from "react-map-gl/dist/esm/mapbox/create-ref";
@@ -62,6 +63,9 @@ export function layerIdColour (id: string) {
 export const mapHasLoaded = atom(false)
 export const isDataConfigOpenAtom = atom(false)
 export const isConstituencyPanelOpenAtom = atom(false)
+export const selectedSourceMarkerAtom = atom<MapboxGeoJSONFeature | null>(null)
+export const constituencyPanelTabAtom = atom("list")
+export const selectedConstituencyAtom = atom<string | null>(null)
 
 export type MapLoader = {
   loadedMap: MapRef<mapboxgl.Map> | null | undefined;

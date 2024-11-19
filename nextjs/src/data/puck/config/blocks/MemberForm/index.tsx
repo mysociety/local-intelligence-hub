@@ -45,7 +45,7 @@ const DataSourceSelect = ({
   if (!memberLists.length) {
     return (
       <span>
-        No member lists, add one <Link href="/data-sources">here</Link>.
+        No membership lists, add one <Link href="/data-sources">here</Link>.
       </span>
     );
   }

@@ -150,7 +150,7 @@ export function SharingForm ({ initialData, fromOrgId, toOrgId }: {
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className='grid grid-cols-1 p-2 gap-2'>
           {dataSources.fields.sort((a, b) => {
-            // sort member lists first (a.dataType === DataSourceType.Member )
+            // sort membership lists first (a.dataType === DataSourceType.Member )
             if (a.dataType === DataSourceType.Member && b.dataType !== DataSourceType.Member) {
               return -1
             }

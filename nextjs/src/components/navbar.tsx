@@ -87,7 +87,7 @@ export default function Navbar({ isLoggedIn }: NavbarProps) {
             className={`link ${pathname === '/data-layers' ? 'active' : 'flex items-center'}`}
             href="/data-sources"
           >
-            Data
+            Data Sources
           </Link>
           <Link
             className={`link ${pathname.includes('/hub/editor') ? 'active' : 'flex items-center'}`}
@@ -154,7 +154,7 @@ export default function Navbar({ isLoggedIn }: NavbarProps) {
                             Unlock new insights for your campaign
                           </ListItem>
                           <ListItem href="/features/crm-sync" title="Sync with your CRM">
-                            Sync your member list seamlessly
+                            Sync your membership list seamlessly
                           </ListItem>
                         </ul>
                       </NavigationMenuContent>

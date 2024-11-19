@@ -86,7 +86,7 @@ export function SourcePathSelector({
           <DialogHeader className='col-span-4'>
             <DialogTitle>Data sources</DialogTitle>
             <DialogDescription>
-              Pick a data source and a field to import to your member list.
+              Pick a data source and a field to import to your membership list.
             </DialogDescription>
           </DialogHeader>
           <div className='overflow-y-auto'>

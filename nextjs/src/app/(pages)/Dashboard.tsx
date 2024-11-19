@@ -69,7 +69,7 @@ export default async function Dashboard({
               href="/reports"
               className={buttonVariants({ variant: "brand" })}
             >
-              Your reports
+              Your maps
             </Link>
             <Link
               href="/data-sources"

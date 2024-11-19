@@ -150,7 +150,7 @@ export function WebhookRefresh({
 
 export function TriggerUpdateButton({
   id,
-  label = "Update all data now",
+  label = "Enrich all data now",
   ...buttonProps
 }: {
   id: string;

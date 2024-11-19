@@ -28,7 +28,7 @@ export default function DataEnrichment() {
       
         b2Screenshot="/features-screenshots/colloborative.png"
         b2Heading="Share Memeber Lists"
-        b2Description="Share your member lists between organisations and pool together your members and collaborate on strategy"
+        b2Description="Share your membership lists between organisations and pool together your members and collaborate on strategy"
         
           />
   
