@@ -4,6 +4,7 @@
         {
             "name": "Django",
             "type": "debugpy",
+            "python": "${workspaceFolder}/.venv/bin/python",
             "request": "launch",
             "justMyCode": false,
             "program": "${workspaceFolder}/manage.py",
@@ -21,6 +22,7 @@
         {
           "name": "Django background worker",
           "type": "debugpy",
+          "python": "${workspaceFolder}/.venv/bin/python",
           "request": "launch",
           "program": "${workspaceFolder}/manage.py",
           "args": [

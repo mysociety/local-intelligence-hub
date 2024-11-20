@@ -31,10 +31,13 @@ bw get attachment .env --itemid 064abbb1-e41b-4632-be90-b2270105d4d1
 
 3. Wait for the Dev Containers to set up. This should take 5-10 minutes.
 
-4. In the "Run and Debug" section of the VSCode left-hand navigation, run the "App" configuration to start the Mapped
+4. Make sure the Python Debugger extension is installed by opening the "Extensions" panel on the left hand side and
+   searching for "ms-python.debugpy".
+
+5. In the "Run and Debug" section of the VSCode left-hand navigation, run the "App" configuration to start the Mapped
    application.
 
-5. Visit http://localhost:3000 in your browser to access Mapped.
+6. Visit http://localhost:3000 in your browser to access Mapped.
 
 ### Feature Showcase
 
