@@ -28,10 +28,12 @@ import { gql, useQuery } from "@apollo/client";
 import { DataSourceFieldLabel } from "./DataSourceIcon";
 import { twMerge } from "tailwind-merge";
 import { locationTypeOptions } from "@/data/location";
+import { currentOrganisationIdAtom } from "@/data/organisation";
+import { useAtomValue } from "jotai";
 
 const ENRICHMENT_LAYERS = gql`
-  query EnrichmentLayers {
-    mappingSources {
+  query EnrichmentLayers($organisationPk: String!) {
+    mappingSources(organisationPk: $organisationPk) {
       slug
       name
       author
@@ -76,6 +78,7 @@ export function UpdateMappingForm({
     defaultValues: initialData,
   });
   const data = form.watch();
+  const orgId = useAtomValue(currentOrganisationIdAtom);
 
   const { fields, append, prepend, remove, swap, move, insert } = useFieldArray(
     {
@@ -84,7 +87,9 @@ export function UpdateMappingForm({
     },
   );
 
-  const enrichmentLayers = useQuery<EnrichmentLayersQuery>(ENRICHMENT_LAYERS)
+  const enrichmentLayers = useQuery<EnrichmentLayersQuery>(ENRICHMENT_LAYERS, {
+    variables: { organisationPk: orgId },
+  })
 
   return (
     <FormProvider {...form}>
