@@ -156,9 +156,15 @@ export function SourcePathSelector({
       <div className='grid gap-12'>
         {/* Full list of sources and fields */}
         {!filteredSources?.filteredList?.length && (
-          <div className='text-meepGray-300 text-lg p-12 text-center'>
-            No data found for {"'"}{searchTerm}{"'"}
-          </div>
+          searchTerm ? (
+            <div className='text-meepGray-300 text-lg p-12 text-center'>
+              No data found for {"'"}{searchTerm}{"'"}
+            </div>
+          ) : (
+            <div className='text-meepGray-300 text-lg p-12 text-center'>
+              Loading data sources...
+            </div>
+          )
         )}
         {filteredSources?.filteredList?.map((source, i, arr) => (
           <div key={source.slug} id={`${scrollElId}-${source.slug}`}>
