@@ -1,42 +1,50 @@
-
 {
-	"name": "local-intelligence-hub",
-	"dockerComposeFile": ["../docker-compose.yml"],
-	"service": "web",
-	"workspaceFolder": "/app",
-	"overrideCommand": true,
-  "forwardPorts": [8000, 5432],
+  "name": "local-intelligence-hub",
+  "dockerComposeFile": [
+    "../docker-compose.yml"
+  ],
+  "service": "web",
+  "workspaceFolder": "/app",
+  "overrideCommand": true,
+  "forwardPorts": [
+    8000,
+    5432
+  ],
   "postCreateCommand": "./script/ck_setup.sh",
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash",
-    "sqltools.connections": [
-      {
-        "name": "Container database",
-        "driver": "PostgreSQL",
-        "previewLimit": 50,
-        "server": "db",
-        "port": 5432,
-        "database": "local-intelligence",
-        "username": "postgres",
-        "password": "password"
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.test-adapter-converter",
+        "tamasfe.even-better-toml",
+        "ms-python.python",
+        "ms-python.debugpy",
+        "ms-python.vscode-pylance",
+        "batisteo.vscode-django",
+        "ms-azuretools.vscode-docker",
+        "github.vscode-pull-request-github",
+        "mhutchie.git-graph",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg",
+        "GraphQL.vscode-graphql",
+        "GraphQL.vscode-graphql-syntax",
+        "bradlc.vscode-tailwindcss",
+        "apollographql.vscode-apollo"
+      ],
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash",
+        "sqltools.connections": [
+          {
+            "name": "Container database",
+            "driver": "PostgreSQL",
+            "previewLimit": 50,
+            "server": "db",
+            "port": 5432,
+            "database": "local-intelligence",
+            "username": "postgres",
+            "password": "password"
+          }
+        ]
       }
-    ],
-    "extensions": [
-      "ms-vscode.test-adapter-converter",
-      "tamasfe.even-better-toml",
-      "ms-python.python",
-      "ms-python.debugpy",
-      "ms-python.vscode-pylance",
-      "batisteo.vscode-django",
-      "ms-azuretools.vscode-docker",
-      "github.vscode-pull-request-github",
-      "mhutchie.git-graph",
-      "mtxr.sqltools",
-      "mtxr.sqltools-driver-pg",
-      "GraphQL.vscode-graphql",
-      "GraphQL.vscode-graphql-syntax",
-      "bradlc.vscode-tailwindcss",
-      "apollographql.vscode-apollo"
-    ]
+    }
   }
 }
