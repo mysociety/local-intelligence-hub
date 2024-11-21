@@ -46,8 +46,16 @@ const ENRICHMENT_LAYERS = gql`
       }
       # For custom data sources, get some useful data
       externalDataSource {
+        id
+        name
+        dataType
         crmType
+        organisation {
+          id
+          name
+        }
       }
+      builtin
     }
   }
 `;

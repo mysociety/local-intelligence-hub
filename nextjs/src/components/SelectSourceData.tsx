@@ -18,6 +18,9 @@ import { ExternalLink } from "lucide-react";
 import useFuse from "@/hooks/filter";
 import { Input } from "./ui/input";
 import { LoadingIcon } from "./ui/loadingIcon";
+import { CRMSelection } from "./CRMButtonItem";
+import { useAtomValue } from "jotai";
+import { currentOrganisationIdAtom } from "@/data/organisation";
 
 type Source = EnrichmentLayersQuery['mappingSources'][0]
 
@@ -111,6 +114,7 @@ export function SourcePathSelector({
   );
 
   function SourceList () {
+    const orgId = useAtomValue(currentOrganisationIdAtom)
     return (
       <div className='flex flex-col gap-3'>
         {/* List of sources - click to scroll to the source's fields */}
@@ -124,12 +128,22 @@ export function SourcePathSelector({
                 });
               }}
               className='flex flex-row cursor-pointer items-center gap-2 text-xs text-meepGray-300'>
-                <div className='w-4 flex-shrink-0 flex-grow-0 overflow-hidden'>
-                  <DataSourceIcon
-                    crmType={source.externalDataSource?.crmType}
+                {source.externalDataSource?.crmType ? (
+                  <CRMSelection
+                    source={{
+                      // We don't need to waste DB queries fetching an unused count
+                      // but CRMSelection expects it and making it optional is a pain
+                      importedDataCount: 0,
+                      ...source.externalDataSource
+                    }}
+                    displayCount={false}
+                    isShared={source.externalDataSource?.organisation.id !== orgId}
                   />
-                </div>
-                {source.name || source.slug}
+                ) : (
+                  <div>
+                    {source.name || source.slug}
+                  </div>
+                )}
               </div>
           </div>
         ))}
