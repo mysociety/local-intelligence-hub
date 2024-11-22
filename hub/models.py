@@ -125,9 +125,13 @@ class Organisation(models.Model):
         Membership.objects.create(user=user, organisation=org, role="owner")
         return org
 
-    def get_external_data_sources(self, include_shared: bool = False, sharing_permission_filters: Union[dict, None] = None):
+    def get_external_data_sources(
+        self,
+        include_shared: bool = False,
+        sharing_permission_filters: Union[dict, None] = None,
+    ):
         if not include_shared:
-            return ExternalDataSource.objects.filter(organisation__members__user=user.id)
+            return ExternalDataSource.objects.filter(organisation=self)
         else:
             sharing_permission_filters = sharing_permission_filters or {}
             return ExternalDataSource.objects.filter(
@@ -138,7 +142,7 @@ class Organisation(models.Model):
                     id__in=SharingPermission.objects.filter(
                         organisation=self,
                         external_data_source__isnull=False,
-                        **sharing_permission_filters
+                        **sharing_permission_filters,
                     ).values_list("external_data_source_id", flat=True)
                 )
             )
@@ -1845,13 +1849,15 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     # Allow enrichment via sources shared with this data source's organisation
                     include_shared=True,
                     sharing_permission_filters={
-                      "visibility_record_coordinates": True,
-                      "visibility_record_details": True,
-                    }
-                  ).filter(
-                      geography_column__isnull=False,
-                      geography_column_type__isnull=False,
-                  ).all()
+                        "visibility_record_coordinates": True,
+                        "visibility_record_details": True,
+                    },
+                )
+                .filter(
+                    geography_column__isnull=False,
+                    geography_column_type__isnull=False,
+                )
+                .all()
             },
         )
 

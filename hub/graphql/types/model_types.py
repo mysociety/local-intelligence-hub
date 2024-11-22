@@ -1226,11 +1226,10 @@ def mapping_sources(info: Info, organisation_pk: str) -> List[MappingSourcePath]
     external_data_sources = organisation.get_external_data_sources(
         include_shared=True,
         sharing_permission_filters={
-          "visibility_record_coordinates": True,
-          "visibility_record_details": True,
-        }
-      )\
-      .exclude(data_type=models.ExternalDataSource.DataSourceType.MEMBER)
+            "visibility_record_coordinates": True,
+            "visibility_record_details": True,
+        },
+    ).exclude(data_type=models.ExternalDataSource.DataSourceType.MEMBER)
 
     return [
         MappingSource(
