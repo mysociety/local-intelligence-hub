@@ -25,12 +25,12 @@ class Command(BaseCommand):
     # https://commonslibrary.parliament.uk/research-briefings/cbp-8749/
     # https://researchbriefings.files.parliament.uk/documents/CBP-8749/HoC-GE2019-results-by-constituency.csv
     general_election_source_file = (
-        settings.BASE_DIR / "data" / "2019_general_election.csv"
+        settings.BASE_DIR / "data" / "2024_general_election.csv"
     )
 
     by_election_api_url = "https://lda.data.parliament.uk/electionresults.json?_sort=-election.date&_pageSize=40"
 
-    area_type = "WMC"
+    area_type = "WMC23"
 
     party_translate_down_dict = {
         "Conservative": "con",
@@ -88,9 +88,13 @@ class Command(BaseCommand):
 
     def handle(self, quiet=False, *args, **options):
         self._quiet = quiet
+        print("Deleting existing data")
         self.delete_data()
+        print("Getting last election dataframe")
         df = self.get_last_election_df()
+        print("Creating data types")
         self.data_types = self.create_data_types()
+        print("Importing data")
         self.import_results(df)
 
     def get_area_type(self):
@@ -129,12 +133,7 @@ class Command(BaseCommand):
         df = pd.read_csv(self.general_election_source_file).set_flags(
             allows_duplicate_labels=False
         )
-        df["date"] = "2019-12-12"
-        # convert to pythonic snake_case
-        # df.columns = (df.columns
-        #   .str.replace('\s', '_', regex=True)
-        #   .str.lower()
-        # )
+        df["date"] = "2024-07-04"
         party_keys = [
             col
             for col in df.columns
@@ -162,7 +161,7 @@ class Command(BaseCommand):
             election_ids = []
             for election in elections["result"]["items"]:
                 desc = election["election"]["label"]["_value"]
-                if desc == "2019 General Election":
+                if desc == "2024 General Election" or desc == "02-May-2024 By-election":
                     break
                 election_id = election["_about"]
                 election_id = election_id.replace(
@@ -188,6 +187,10 @@ class Command(BaseCommand):
                     valid_votes = election_data["turnout"]
                     result_of_election = election_data["resultOfElection"]
                     a = Area.get_by_name(cons)
+
+                    if not a:
+                        print(f"Could not get area for by-election constituency {cons}")
+                        continue
 
                     result = {
                         "date": election_date.date().isoformat(),
@@ -231,11 +234,14 @@ class Command(BaseCommand):
         return df
 
     def get_last_election_df(self):
+        print("Getting general election data")
         df = self.get_general_election_data()
+        print("Getting by elections data")
         be_df = self.get_by_elections_data()
         # Remove the election results from the general election df, where there has been a by-election since
+        shared_area_gss = be_df.index.intersection(df.index)
         cols = df.columns.to_list()[1:]
-        df.loc[be_df.index, cols] = np.nan
+        df.loc[shared_area_gss, cols] = np.nan
         # Patch in the by-election results where null values have been found
         df = df.combine_first(be_df)
         df = df.fillna(0)
@@ -314,7 +320,7 @@ class Command(BaseCommand):
             print("Adding 'last election' data to database")
         for gss, dataset in tqdm(df.iterrows(), disable=self._quiet):
             try:
-                area = Area.get_by_gss(gss, area_type=self.area_type)
+                area = Area.objects.get(gss=gss, area_type__code=self.area_type)
                 party_keys = [
                     col
                     for col in dataset.keys()
