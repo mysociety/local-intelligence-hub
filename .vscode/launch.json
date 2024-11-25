@@ -11,13 +11,21 @@
             "args": [
                 "runserver"
             ],
-            "django": true
+            "django": true,
+            "presentation": {
+                "group": "power users",
+                "order": 1
+            }
         },
         {
             "name": "NextJS",
             "type": "node-terminal",
             "command": "cd nextjs && npm install && npm run dev",
-            "request": "launch"
+            "request": "launch",
+            "presentation": {
+                "group": "power users",
+                "order": 1
+            }
         },
         {
           "name": "Django background worker",
@@ -29,25 +37,37 @@
             "procrastinate", "worker"
           ],
           "justMyCode": true,
-          "django": true
+          "django": true,
+          "presentation": {
+            "group": "power users",
+            "order": 1
+        }
         },
         {
           // Node 
           "name": "Generate GraphQL types for client",
           "type": "node-terminal",
           "command": "cd nextjs && npm run graphql:watch",
-          "request": "launch"
+          "request": "launch",
+          "presentation": {
+            "group": "power users",
+            "order": 1
+        }
         }
     ],
     "compounds": [
         {
-            "name": "App",
+            "name": "Run Mapped!",
             "configurations": [
                 "NextJS",
                 "Django",
                 "Django background worker",
                 "Generate GraphQL types for client"
-            ]
+            ],
+            "presentation": {
+                "group": "0",
+                "order": 0
+            }
         },
         {
             "name": "Backend",
@@ -55,7 +75,11 @@
                 "Django",
                 "Django background worker",
                 "Generate GraphQL types for client"
-            ]
+            ],
+            "presentation": {
+                "group": "power users",
+                "order": 1
+            }
         }
     ]
 }

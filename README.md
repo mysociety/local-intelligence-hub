@@ -34,7 +34,7 @@ bw get attachment .env --itemid 064abbb1-e41b-4632-be90-b2270105d4d1
 4. Make sure the Python Debugger extension is installed by opening the "Extensions" panel on the left hand side and
    searching for "ms-python.debugpy".
 
-5. In the "Run and Debug" section of the VSCode left-hand navigation, run the "App" configuration to start the Mapped
+5. In the "Run and Debug" section of the VSCode left-hand navigation, run the "Run Mapped!" configuration to start the Mapped
    application.
 
 6. Visit http://localhost:3000 in your browser to access Mapped.
