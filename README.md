@@ -1,13 +1,17 @@
-# Mapped ([mapped.tools](https://mapped.tools))
-
-## Developer Setup
+# Developer Setup
 
 ### Requirements
+‼️ You need to install ALL of the required software below before continuing!
+
 1. Any device running MacOS: i.e. a MacBook Pro / MacBook Air / Mac Mini / Mac Studio / iMac. The setup instructions below may also work on Linux, but they aren't tested on that platform.
 2. [Git](https://git-scm.com/downloads/mac)
 3. [Docker desktop](https://www.docker.com/products/docker-desktop/)
 4. [VSCode](https://code.visualstudio.com/) with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension installed
 5. [BitWarden CLI](https://bitwarden.com/help/cli/)
+
+
+***
+
 
 ### Instructions
 
@@ -24,10 +28,14 @@ bin/download_env_files.sh
 
 3. Wait for the Dev Containers to set up. This will take less than 10 minutes.
 
-4. In the "Run and Debug" section of the VSCode left-hand navigation, run the "Run Mapped!" configuration to start the Mapped
+4. In the "Run and Debug" section of the VSCode left-hand navigation, click the "Run Mapped!" configuration to start the Mapped
    application.
 
 5. Visit http://localhost:3000 in your browser to access Mapped.
+
+
+***
+
 
 ### Feature Showcase
 
@@ -42,6 +50,10 @@ bin/download_env_files.sh
 You can also log in to the [Django](http://127.0.0.1:8000/admin) and [Wagtail](http://127.0.0.1:8000/cms) admin systems. The
 username and password are `admin` and `password`.
 
-# Detailed documentation
+
+***
+
+
+### Detailed documentation
 Wiki coming soon...
-In the meantime, you can find some more documentation and troubleshooting instructions [here](./CONTRIBUTING.md).
+In the meantime, you can find some more documentation and troubleshooting instructions [here](CONTRIBUTING.md).
