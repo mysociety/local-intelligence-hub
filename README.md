@@ -41,7 +41,7 @@ bw get attachment .env --itemid 064abbb1-e41b-4632-be90-b2270105d4d1
 
 ### Feature Showcase
 
-1. Log in to the Mapped front end. The username and password are `admin` and `password`.
+1. Log in to the Mapped [front end](http://localhost:3000/login). The username and password are `admin` and `password`.
 2. You should have 3 data sources: "Seed Member List", "Seed Custom Data", and "Seed Events".
 3. This data source should have a mapping that populates the Constituency and Element fields in the AirTable.
 4. You should have a map report called "Test map report". Constituencies and MPs should be displayed.
