@@ -43,7 +43,7 @@ bw get attachment .env --itemid 064abbb1-e41b-4632-be90-b2270105d4d1
 
 1. Log in to the Mapped [front end](localhost:3000/login). The username and password are `admin` and `password`.
 2. There are 3 available data sources: "Seed Member List", "Seed Custom Data", and "Seed Events".
-3. This data source has a mapping that populates the Constituency and Element fields in the AirTable.
+3. The "Seed Member List" data source has a mapping that populates the Constituency and Element fields in the AirTable.
 4. There is a map report called "Test map report" displaying constituencies and MPs.
 5. The hub is available at [hub.localhost:3000](http://hub.localhost:3000).
 6. The hub has some minimal content on the homepage, and a working pledge map.
@@ -54,11 +54,11 @@ username and password are `admin` and `password`.
 
 ### Running the tests
 
-In the dev container terminal, run `python manage.py test`
+In the dev container terminal, run `./bin/test.sh`
 
 ### Linting and formatting code
 
-In the dev container terminal, run `black . && isort . && flake8`
+In the dev container terminal, run `./bin/lint.sh`
 
 ## GraphQL docs
 

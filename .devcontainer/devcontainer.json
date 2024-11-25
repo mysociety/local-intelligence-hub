@@ -10,7 +10,7 @@
     8000,
     5432
   ],
-  "postCreateCommand": "./script/ck_setup.sh",
+  "postCreateCommand": "./bin/ck_setup.sh",
   "customizations": {
     "vscode": {
       "extensions": [
