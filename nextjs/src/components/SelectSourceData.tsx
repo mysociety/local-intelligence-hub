@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dialog"
 import { SourcePath } from "@/lib/data";
 import { AutoUpdateConfig, EnrichmentLayersQuery } from "@/__generated__/graphql";
-import { CommandSeparator } from "cmdk";
 import { DataSourceFieldLabel, DataSourceIcon } from "./DataSourceIcon";
 import { twMerge } from "tailwind-merge";
 import { ExternalLink } from "lucide-react";
@@ -23,11 +22,13 @@ type Source = EnrichmentLayersQuery['mappingSources'][0]
 
 export function SourcePathSelector({
   sources,
+  loading,
   value,
   setValue,
   focusOnMount = false,
 }: {
   sources: Array<Source>;
+  loading: Boolean;
   value: Pick<AutoUpdateConfig, 'source' | 'sourcePath'>;
   setValue: (source: AutoUpdateConfig['source'], sourcePath: AutoUpdateConfig['sourcePath']) => void;
   focusOnMount?: boolean;
@@ -89,22 +90,28 @@ export function SourcePathSelector({
               Pick a data source and a field to import to your member list.
             </DialogDescription>
           </DialogHeader>
-          <div className='overflow-y-auto'>
-            <div className='mb-6'>
-              <Input
-                type="text"
-                placeholder="Search sources"
-                className="w-full p-2 rounded-md border border-meepGray-600 bg-meepGray-800 text-meepGray-300"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                autoFocus
-              />
-            </div>
-            {sources ? <SourceList /> : <LoadingIcon />}
-          </div>
-          <div id={scrollElId} className='col-span-3 overflow-y-auto'>
-            <SourceListDetails />
-          </div>
+          {loading ? (
+            <p>Loading...</p>
+          ) : (
+            <>
+              <div className='overflow-y-auto'>
+                <div className='mb-6'>
+                  <Input
+                    type="text"
+                    placeholder="Search sources"
+                    className="w-full p-2 rounded-md border border-meepGray-600 bg-meepGray-800 text-meepGray-300"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                {sources ? <SourceList /> : <LoadingIcon />}
+              </div>
+              <div id={scrollElId} className='col-span-3 overflow-y-auto'>
+                <SourceListDetails />
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>
