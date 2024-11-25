@@ -12,18 +12,18 @@ A fork of MySociety's Local Intelligence Hub to be used as a backend for Common 
 
 ### Instructions
 
-1. Create your `.env` file. There are two methods: one using BitWarden web, and one using the BitWarden CLI.
+1. Create your `.env` file. There are two methods: one using the BitWarden CLI, and one using BitWarden web.
+
+With the BitWarden CLI:
+- Run the following command:
+
+```bash
+./bin/download_env_files.sh
+```
 
 Using BitWarden web:
 - Download the ".env" attachment from the "Mapped Development .env" item in BitWarden, and place it in this folder.
-
-With the BitWarden CLI:
-- Run the following commands:
-
-```bash
-bw login
-bw get attachment .env --itemid 064abbb1-e41b-4632-be90-b2270105d4d1
-```
+- Download the "nextjs.env" attachment from the same BitWarden item, and place it in the `nextjs` folder. Rename it to `.env`.
 
 2. Open the project folder in VSCode. You will receive a notification in the bottom left to open the project in
    a Dev Container. If not, press `Cmd+Shift+P` to open the command palette, and type "reopen in container" to find
