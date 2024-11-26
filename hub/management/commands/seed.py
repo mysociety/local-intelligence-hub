@@ -6,7 +6,14 @@ from django.core.management.base import BaseCommand
 
 from asgiref.sync import async_to_sync
 
-from hub.models import AirtableSource, HubHomepage, HubContentPage, MapReport, Organisation, User
+from hub.models import (
+    AirtableSource,
+    HubContentPage,
+    HubHomepage,
+    MapReport,
+    Organisation,
+    User,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -174,114 +181,115 @@ class Command(BaseCommand):
             hub = HubHomepage.create_for_user(
                 user=user, hostname="hub.localhost", org=org
             )
-            hub.puck_json_content = {
-                "root": {
-                    "props": {
-                        "slug": "testdomainorg",
-                        "title": "testdomain.org",
-                        "search_description": "",
-                    }
-                },
-                "zones": {
-                    "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3:Col-1": [
-                        {
-                            "type": "Card",
-                            "props": {
-                                "id": "Card-c1249b7e-5de6-42a5-aa7d-115cb433d1cd",
-                                "link": "/map",
-                                "type": "action",
-                                "title": "View the map",
-                                "behaviour": "link",
-                                "linkLabel": "Learn more",
-                                "description": "It's right here!",
-                                "dialogDescription": "",
-                            },
-                        }
-                    ],
-                    "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3:Col-2": [],
-                    "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3:Col-3": [],
-                    "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3:Col-4": [],
-                },
-                "content": [
-                    {
-                        "type": "Hero",
-                        "props": {
-                            "id": "Hero-71f52de9-e01f-485d-bd51-fd0c5da123d6",
-                            "title": "Heading",
-                            "prompt": "Something",
-                            "description": "Description",
-                        },
-                    },
-                    {
-                        "type": "GridRow",
-                        "props": {
-                            "id": "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3",
-                            "columns": "4-columns",
-                        },
-                    },
-                ],
-            }
-            hub.layers = [
-                MapReport.MapLayer(
-                    id=str(pledges_source.id),
-                    name="Pledges",
-                    source=str(pledges_source.id),
-                ),
-            ]
-            hub.save()
 
+        hub.puck_json_content = {
+            "root": {
+                "props": {
+                    "slug": "testdomainorg",
+                    "title": "testdomain.org",
+                    "search_description": "",
+                }
+            },
+            "zones": {
+                "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3:Col-1": [
+                    {
+                        "type": "Card",
+                        "props": {
+                            "id": "Card-c1249b7e-5de6-42a5-aa7d-115cb433d1cd",
+                            "link": "/map",
+                            "type": "action",
+                            "title": "View the map",
+                            "behaviour": "link",
+                            "linkLabel": "Learn more",
+                            "description": "It's right here!",
+                            "dialogDescription": "",
+                        },
+                    }
+                ],
+                "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3:Col-2": [],
+                "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3:Col-3": [],
+                "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3:Col-4": [],
+            },
+            "content": [
+                {
+                    "type": "Hero",
+                    "props": {
+                        "id": "Hero-71f52de9-e01f-485d-bd51-fd0c5da123d6",
+                        "title": "Heading",
+                        "prompt": "Something",
+                        "description": "Description",
+                    },
+                },
+                {
+                    "type": "GridRow",
+                    "props": {
+                        "id": "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3",
+                        "columns": "4-columns",
+                    },
+                },
+            ],
+        }
+        hub.layers = [
+            MapReport.MapLayer(
+                id=str(pledges_source.id),
+                name="Pledges",
+                source=str(pledges_source.id),
+            ),
+        ]
+        hub.save()
+
+        pledge_page = HubContentPage.objects.filter(slug="pledge").first()
+
+        if not pledge_page:
             pledge_page = HubContentPage(
                 title="Pledge",
                 slug="pledge",
-                puck_json_content={
-                    "root": {
-                        "props": {
-                            "slug": "pledge",
-                            "title": "Pledge",
-                            "search_description": ""
-                        }
-                    },
-                    "zones": {
-                        "GridRow-49680e46-8ed0-4618-821f-8d957a90b78a:Col-1": [
-                            {
-                                "type": "RichText",
-                                "props": {
-                                    "id": "RichText-fa76e080-45e7-48d5-a7a2-22538c8007e3",
-                                    "width": "standard",
-                                    "content": "<p><span class=\"size-huge\">Lorem Ipsum</span></p><p><span class=\"size-small\">Dolor sit amet.</span><span class=\"size-medium\"><span class=\"ql-cursor\">﻿</span></span></p>"
-                                }
-                            }
-                        ],
-                        "GridRow-49680e46-8ed0-4618-821f-8d957a90b78a:Col-2": [
-                            {
-                                "type": "MemberForm",
-                                "props": {
-                                    "id": "MemberForm-0c026a70-336b-46c8-98b4-413a0f4824e5",
-                                    "successRedirect": "",
-                                    "externalDataSourceIds": [
-                                        # Usually these would be 3 separate data sources
-                                        # Climate Coalition used a MailChimp source for Communication consent
-                                        # and AirTables for All pledges and Group pledges
-                                        str(pledges_source.id),  # All pledges list
-                                        str(pledges_source.id),  # Communication consent list
-                                        str(pledges_source.id),  # Group pledges list
-                                    ]
-                                }
-                            }
-                        ]
-                    },
-                    "content": [
-                        {
-                            "type": "GridRow",
-                            "props": {
-                                "id": "GridRow-49680e46-8ed0-4618-821f-8d957a90b78a",
-                                "columns": "2-columns"
-                            }
-                        }
-                    ]
-                }
             )
             hub.add_child(instance=pledge_page)
-            pledge_page.save()
+
+        pledge_page.puck_json_content = {
+            "root": {
+                "props": {"slug": "pledge", "title": "Pledge", "search_description": ""}
+            },
+            "zones": {
+                "GridRow-49680e46-8ed0-4618-821f-8d957a90b78a:Col-1": [
+                    {
+                        "type": "RichText",
+                        "props": {
+                            "id": "RichText-fa76e080-45e7-48d5-a7a2-22538c8007e3",
+                            "width": "standard",
+                            "content": '<p><span class="size-huge">Lorem Ipsum</span></p><p><span class="size-small">Dolor sit amet.</span><span class="size-medium"><span class="ql-cursor">﻿</span></span></p>',
+                        },
+                    }
+                ],
+                "GridRow-49680e46-8ed0-4618-821f-8d957a90b78a:Col-2": [
+                    {
+                        "type": "MemberForm",
+                        "props": {
+                            "id": "MemberForm-0c026a70-336b-46c8-98b4-413a0f4824e5",
+                            "successRedirect": "",
+                            "externalDataSourceIds": [
+                                # Usually these would be 3 separate data sources
+                                # Climate Coalition used a MailChimp source for Communication consent
+                                # and AirTables for All pledges and Group pledges
+                                str(pledges_source.id),  # All pledges list
+                                str(pledges_source.id),  # Communication consent list
+                                str(pledges_source.id),  # Group pledges list
+                            ],
+                        },
+                    }
+                ],
+            },
+            "content": [
+                {
+                    "type": "GridRow",
+                    "props": {
+                        "id": "GridRow-49680e46-8ed0-4618-821f-8d957a90b78a",
+                        "columns": "2-columns",
+                    },
+                }
+            ],
+        }
+        pledge_page.save()
 
         logger.info("Created a hub at http://hub.localhost:3000")
