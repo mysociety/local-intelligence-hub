@@ -4,6 +4,7 @@ from typing import Optional
 from django.core.management.base import BaseCommand
 
 import pandas as pd
+import requests
 from tqdm import tqdm
 
 from hub.models import Area, AreaData, AreaType, DataSet, DataType
@@ -36,6 +37,16 @@ party_shades = {
     "Independents": "#DCDCDC",
 }
 
+TWFY_CONSTITUENCIES_DATA_URL = (
+    "https://raw.githubusercontent.com/mysociety/parlparse/master/members/people.json"
+)
+HARD_CODED_CONSTITUENCY_LOOKUP = {
+    "Cotswolds The": "The Cotswolds",
+    "Basildon South and East Thurrock": "South Basildon and East Thurrock",
+    "Na h-Eileanan An Iar (Western Isles)": "Na h-Eileanan an Iar",
+    "Ynys M¶n": "Ynys Môn",
+}
+
 
 class MultipleAreaTypesMixin:
     def handle(self, *args, **options):
@@ -63,6 +74,42 @@ class BaseAreaImportCommand(BaseCommand):
             action="store_true",
             help="do not auto convert to new constituency data",
         )
+
+    def add_to_dict(self, df):
+        names = df.area.tolist()
+        # Add a version of the main name, without any commas
+        names.append(names[0].replace(",", ""))
+        # The first name listed is the ideal form
+        name = names.pop(0)
+        return {alt_name.replace(",", ""): name for alt_name in names}
+
+    def build_constituency_name_lookup(self, old_cons=False):
+        # Grab the TWFY data, and ignore any constituencies that no longer exist
+        # We're only interested in the names, so keep them, and explode the column.
+        # Then group by (arbitrary) index, and build the dictionary from these groups
+
+        cons_filter = "end_date.isna()"
+        if old_cons:
+            cons_filter = "end_date == '2024-07-03'"
+
+        response = requests.get(TWFY_CONSTITUENCIES_DATA_URL)
+        df = pd.DataFrame.from_records(response.json()["posts"])
+        df = df.query(cons_filter)["area"].reset_index()
+        df = (
+            df["area"]
+            .map(lambda a: [a["name"]] + [o for o in a.get("other_names", [])])
+            .reset_index()
+        )
+        df = df.explode("area", ignore_index=True)
+
+        # Start with hard-coded lookup
+        names_lookup_dict = HARD_CODED_CONSTITUENCY_LOOKUP.copy()
+        for i, names_df in df.groupby("index"):
+            new_dict = self.add_to_dict(names_df)
+            if new_dict:
+                names_lookup_dict.update(new_dict)
+
+        return names_lookup_dict
 
     def get_label(self, config):
         return config["defaults"]["label"]
