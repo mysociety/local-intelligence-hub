@@ -43,7 +43,9 @@ class Command(BaseCommand):
         df = self.get_dataframe()
         if df is None:
             if not self._quiet:
-                self.stdout.write(f"Data file {self.data_file} not found")
+                self.stdout.write(
+                    f"Data file {self.data_file} not found or contains no data"
+                )
             return
         self.data_types = self.create_data_types(df)
         self.delete_data()
@@ -101,6 +103,8 @@ class Command(BaseCommand):
         if self.data_file.exists() is False:
             return None
         df = pd.read_csv(self.data_file)
+        if df.empty:
+            return None
         totals = (
             df.dropna()[["gss", "prob_4band"]]
             .groupby("gss")
@@ -117,4 +121,6 @@ class Command(BaseCommand):
         )
         df["percentage"] = df.value / df.total * 100
         df = df.pivot(columns="prob_4band", values="percentage", index="gss").fillna(0)
+        if df.empty:
+            return None
         return df

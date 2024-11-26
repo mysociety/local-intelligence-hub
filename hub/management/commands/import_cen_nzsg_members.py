@@ -80,7 +80,7 @@ class Command(BaseCommand):
     def get_results(self):
         mps = Person.objects.filter(person_type="MP")
         df = self.get_df()
-        if df is None:
+        if df is None or df.empty:
             return {}
         results = {}
         print("Name matching MPs")

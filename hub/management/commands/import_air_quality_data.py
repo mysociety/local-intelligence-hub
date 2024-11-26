@@ -94,7 +94,7 @@ class Command(BaseCommand):
     def handle(self, quiet=False, *args, **options):
         self._quiet = quiet
         df = self.get_dataframe()
-        if not df:
+        if df is None:
             self.stdout.write(
                 "Failed to import air quality data. Please ensure that the gridcode_lookup file is available."
             )
@@ -192,4 +192,6 @@ class Command(BaseCommand):
 
         # Prepare the df for useful importing
         df = df.drop(columns=["gridcode"]).groupby("gss").mean()
+        if df.empty:
+            return None
         return df

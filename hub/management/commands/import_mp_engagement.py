@@ -15,9 +15,11 @@ class Command(BaseCommand):
         self._quiet = quiet
         self.data_types = self.create_data_types()
         df = self.get_df()
-        if df is None:
+        if df is None or df.empty:
             if not self._quiet:
-                self.stdout.write(f"Data file {self.data_file} not found")
+                self.stdout.write(
+                    f"Data file {self.data_file} not found or contains no data"
+                )
             return
         self.import_results(df)
 
