@@ -15,13 +15,10 @@ class Command(BaseCommand):
     ]
     skip_imports = [
         "import_2024_ppcs",  # no longer relevant post-election
-        "import_air_quality_data",  # ValueError because it checks for truthiness of a Pandas dataframe?
         "import_christian_aid_group_locations",  # JSONDecodeError because parlparse JSON file not found
         "import_mps_appg_data",  # hasn't been updated for Autumn 2024 APPGs
         "import_mps_relevant_votes",  # hasn't been updated for a while (and we import EDMs separately now)
         "import_mps_standing_down_2024",  # no longer relevant post-election
-        "import_mps_select_committee_membership",  # ValueError because it checks for truthiness of a Pandas dataframe?
-        "import_nt_property_locations",  # ValueError because it checks for truthiness of a Pandas dataframe?
         "import_onward_polling_data",  # JSONDecodeError because parlparse JSON file not found
     ]
 

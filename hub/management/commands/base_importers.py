@@ -210,7 +210,7 @@ class BaseAreaImportCommand(BaseCommand):
     def handle(self, quiet=False, *args, **kwargs):
         self._quiet = quiet
         df = self.get_df()
-        if not df:
+        if df is None or df.empty:
             return
         self.add_data_sets()
         self.delete_data()
@@ -271,7 +271,7 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
         if not hasattr(self, "do_not_convert"):
             self.do_not_convert = skip_new_areatype_conversion
         df = self.get_dataframe()
-        if df is None:
+        if df is None or df.empty:
             if not self._quiet:
                 self.stdout.write(f"missing data for {self.message} ({self.area_type})")
             return
@@ -374,7 +374,7 @@ class BaseConstituencyGroupListImportCommand(BaseAreaImportCommand):
     def handle(self, quiet=False, *args, **kwargs):
         self._quiet = quiet
         df = self.get_df()
-        if df is None:
+        if df is None or df.empty:
             if not self._quiet:
                 self.stdout.write(f"missing data for {self.message} ({self.area_type})")
             return
@@ -429,7 +429,7 @@ class BaseConstituencyCountImportCommand(BaseAreaImportCommand):
     def handle(self, quiet=False, *args, **options):
         self._quiet = quiet
         df = self.get_dataframe()
-        if df.empty:
+        if df is None or df.empty:
             if not self._quiet:
                 self.stdout.write(f"missing data for {self.message} ({self.area_type})")
             return

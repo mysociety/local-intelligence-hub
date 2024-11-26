@@ -95,5 +95,5 @@ class Command(BaseCommand):
     def import_results(self):
         data_type = self.create_data_types()
         df = self.get_df()
-        if df:
+        if not df.empty:
             self.add_results(df, data_type)

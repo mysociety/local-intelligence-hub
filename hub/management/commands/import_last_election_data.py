@@ -69,7 +69,7 @@ class Command(BaseCommand):
         self._quiet = quiet
         self.delete_data()
         df = self.get_last_election_df()
-        if df.empty is not True:
+        if df is not None:
             self.data_types = self.create_data_types()
             self.import_results(df)
 
@@ -202,6 +202,8 @@ class Command(BaseCommand):
         df = df.rename(
             columns=lambda party: self.party_translate_up_dict.get(party.lower(), party)
         )
+        if df.empty:
+            return None
         return df
 
     def create_data_types(self):
