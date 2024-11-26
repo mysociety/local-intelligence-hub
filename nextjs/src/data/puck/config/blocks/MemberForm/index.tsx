@@ -185,7 +185,7 @@ const MemberFormComponent = ({
       MAP_CONSENT: mapConsent,
     }
 
-    // Add the member to the main members list [0]
+    // Add the member to the main members list
     const [membersList, communicationMembersList, groupList] = externalDataSourceIds;
     const allMembersList = groupName ? groupList : membersList
     try {
@@ -202,8 +202,8 @@ const MemberFormComponent = ({
         success = false
       }
 
-      // If extra consent given, add to extra list [1]
-      if (communicationConsent) {
+      // If extra consent given, add to extra list
+      if (communicationConsent && allMembersList !== communicationMembersList) {
         const { data } = await addMemberMutation({
           variables: {
             externalDataSourceId: communicationMembersList,
