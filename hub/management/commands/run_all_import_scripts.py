@@ -15,11 +15,9 @@ class Command(BaseCommand):
     ]
     skip_imports = [
         "import_2024_ppcs",  # no longer relevant post-election
-        "import_christian_aid_group_locations",  # JSONDecodeError because parlparse JSON file not found
         "import_mps_appg_data",  # hasn't been updated for Autumn 2024 APPGs
         "import_mps_relevant_votes",  # hasn't been updated for a while (and we import EDMs separately now)
         "import_mps_standing_down_2024",  # no longer relevant post-election
-        "import_onward_polling_data",  # JSONDecodeError because parlparse JSON file not found
     ]
 
     def get_scripts(self, *args, **options):
