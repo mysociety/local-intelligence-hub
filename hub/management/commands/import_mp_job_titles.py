@@ -89,7 +89,7 @@ class Command(BaseCommand):
 
         df = self.get_df()
 
-        if df is None:
+        if df is None or df.empty:
             return
 
         data_type = self.create_data_type()
