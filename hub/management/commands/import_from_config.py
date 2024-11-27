@@ -77,6 +77,9 @@ class Command(BaseImportFromDataFrameCommand):
         for col in self.defaults_cols:
             defaults[col] = row[col]
 
+        if pd.isna(defaults["exclude_countries"]):
+            defaults["exclude_countries"] = []
+
         if row["is_range"]:
             defaults["is_range"] = True
             defaults["data_set_name"] = row["data_set_name"]
