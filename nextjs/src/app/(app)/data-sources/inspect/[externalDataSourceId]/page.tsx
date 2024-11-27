@@ -1,4 +1,4 @@
-import { useRequireAuth } from "@/hooks/auth";
+import { requireAuth } from "@/lib/server-auth";
 import InspectExternalDataSource from "./InspectExternalDataSource";
 import { Metadata } from 'next'
 import { getClient } from "@/services/apollo-client";
@@ -14,7 +14,7 @@ export default async function Page({
 }: {
   params: Params;
 }) {
-  await useRequireAuth();
+  await requireAuth();
   const data = await getClient().query<ExternalDataSourceNameQuery, ExternalDataSourceNameQueryVariables>({
     query: EXTERNAL_DATA_SOURCE_NAME,
     variables: {

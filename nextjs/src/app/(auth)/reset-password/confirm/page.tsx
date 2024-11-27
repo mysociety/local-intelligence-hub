@@ -1,11 +1,11 @@
 import { Suspense } from "react";
-import { useRequireNoAuth } from "@/hooks/auth";
+import { requireNoAuth } from "@/lib/server-auth";
 import NewPasswordForm from "./new-password-form";
 import { Metadata } from "next";
 
 
 export default async function Reset() {
-  await useRequireNoAuth();
+  await requireNoAuth();
 
   return (
     <div className='m-8 md:ml-36 max-w-xs space-y-4 rounded border border-meepGray-600 bg-meepGray-800 p-8'>

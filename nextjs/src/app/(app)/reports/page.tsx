@@ -1,9 +1,9 @@
-import { useRequireAuth } from "@/hooks/auth";
+import { requireAuth } from "@/lib/server-auth";
 import { Metadata } from "next";
 import ReportList from "./ReportList";
 
 export default async function Page() {
-  await useRequireAuth();
+  await requireAuth();
 
   return (
     <div className="max-w-7xl space-y-7 w-full">

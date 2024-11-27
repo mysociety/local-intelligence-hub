@@ -3,7 +3,7 @@ import { AreaPattern } from "@/components/areaPattern";
 import Footer from "@/components/footer";
 import Navbar from "@/components/navbar";
 import PreFooter from "@/components/pre-footer";
-import { useAuth } from "@/hooks/auth";
+import { loadUser } from "@/lib/server-auth";
 import { Toaster } from "sonner";
 import FeedbackBanner from "@/components/marketing/FeedbackBanner";
 
@@ -12,7 +12,7 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await useAuth();
+  const user = await loadUser();
   const isLoggedIn = Boolean(user);
 
   return (

@@ -1,4 +1,4 @@
-import { useRequireAuth } from "@/hooks/auth";
+import { requireAuth } from "@/lib/server-auth";
 import { Metadata } from 'next'
 import { getClient } from "@/services/apollo-client";
 import { gql } from "@apollo/client";
@@ -15,7 +15,7 @@ export default async function Page({
 }: {
   params: Params;
 }) {
-  await useRequireAuth();
+  await requireAuth();
   const query = await getClient().query({
     query: SHARE_WITH_ORG_PAGE,
     variables: {
