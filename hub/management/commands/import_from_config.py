@@ -48,6 +48,8 @@ class Command(BaseImportFromDataFrameCommand):
         self.data_file = settings.BASE_DIR / "data" / row["data_file"]
         self.file_type = row["file_type"]
         self.area_type = row["area_type"]
+        self.header_row = row["header_row"]
+        self.sheet = row["sheet"]
 
         if row["uses_gss"] == "TRUE":
             self.uses_gss = True
@@ -65,7 +67,12 @@ class Command(BaseImportFromDataFrameCommand):
         if self.file_type == "csv":
             df = pd.read_csv(self.data_file)
         elif self.file_type == "excel":
-            df = pd.read_excel(self.data_file)
+            kwargs = {}
+            if not pd.isna(self.sheet):
+                kwargs["sheet_name"] = self.sheet
+            if not pd.isna(self.header_row):
+                kwargs["header"] = int(self.header_row)
+            df = pd.read_excel(self.data_file, **kwargs)
         else:
             self.stderr.write(f"Unknown file type: {self.file_type}")
             return None
