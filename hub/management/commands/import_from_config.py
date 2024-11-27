@@ -36,12 +36,17 @@ class Command(BaseImportFromDataFrameCommand):
             "--import_name", action="store", required=True, help="Name of import to run"
         )
 
-    def setup(self, import_name):
+    def get_configs(self, import_name):
         df = pd.read_csv(self.config_file)
 
-        df.loc[df["name"] == import_name]
-        row = df.iloc[0]
+        df = df.loc[df["name"] == import_name]
+        confs = []
+        for _, conf in df.iterrows():
+            confs.append(conf)
 
+        return confs
+
+    def setup(self, import_name, row):
         self.message = f"Importing {row['label']}"
         self.cons_row = row["constituency_col"]
         self.cons_col = row["constituency_col"]
@@ -72,6 +77,11 @@ class Command(BaseImportFromDataFrameCommand):
         for col in self.defaults_cols:
             defaults[col] = row[col]
 
+        if row["is_range"]:
+            defaults["is_range"] = True
+            defaults["data_set_name"] = row["data_set_name"]
+            defaults["data_set_label"] = row["data_set_label"]
+
         self.data_sets = {import_name: {"defaults": defaults, "col": row["data_col"]}}
 
     def get_dataframe(self):
@@ -100,6 +110,9 @@ class Command(BaseImportFromDataFrameCommand):
         *args,
         **options,
     ):
-        self.setup(import_name)
 
-        super().handle(quiet, skip_new_areatype_conversion, *args, **options)
+        configs = self.get_configs(import_name)
+        for conf in configs:
+            self.setup(import_name, conf)
+
+            super().handle(quiet, skip_new_areatype_conversion, *args, **options)
