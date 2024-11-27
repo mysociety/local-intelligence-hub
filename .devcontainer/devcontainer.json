@@ -28,7 +28,8 @@
         "GraphQL.vscode-graphql",
         "GraphQL.vscode-graphql-syntax",
         "bradlc.vscode-tailwindcss",
-        "apollographql.vscode-apollo"
+        "apollographql.vscode-apollo",
+        "esbenp.prettier-vscode"
       ],
       "settings": {
         "terminal.integrated.shell.linux": "/bin/bash",
