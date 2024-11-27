@@ -2,6 +2,8 @@ from django.conf import settings
 
 import pandas as pd
 
+from hub.models import DataSet
+
 from .base_importers import BaseImportFromDataFrameCommand
 
 
@@ -73,6 +75,19 @@ class Command(BaseImportFromDataFrameCommand):
             self.skip_delete = False
 
         defaults = {}
+
+        comparators = row.get("comparators", None)
+        if comparators:
+            name = f"{comparators}_comparators"
+            if hasattr(DataSet, name):
+                c = getattr(DataSet, name)
+                comparators = c()
+            else:
+                comparators = DataSet.comparators_default()
+        else:
+            comparators = DataSet.comparators_default()
+
+        defaults["comparators"] = comparators
 
         for col in self.defaults_cols:
             defaults[col] = row[col]
