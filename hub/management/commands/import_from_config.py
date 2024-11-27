@@ -62,6 +62,11 @@ class Command(BaseImportFromDataFrameCommand):
         except ValueError:
             pass
 
+        if row["do_not_delete"]:
+            self.skip_delete = True
+        else:
+            self.skip_delete = False
+
         defaults = {}
 
         for col in self.defaults_cols:
