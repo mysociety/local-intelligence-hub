@@ -36,6 +36,12 @@ party_shades = {
     "Independents": "#DCDCDC",
 }
 
+# common constituency name mismatches
+CONS_MAP = {
+    "Ynys Mon": "Ynys Môn",
+    "Montgomeryshire and Glyndwr": "Montgomeryshire and Glyndŵr",
+}
+
 
 class MultipleAreaTypesMixin:
     def handle(self, *args, **options):
@@ -51,6 +57,7 @@ class BaseAreaImportCommand(BaseCommand):
     def __init__(self):
         super().__init__()
 
+        self.cons_map = CONS_MAP
         self.data_types = {}
 
     def add_arguments(self, parser):
@@ -240,13 +247,17 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
             self.stdout.write(self.message)
 
         for index, row in tqdm(df.iterrows(), disable=self._quiet, total=df.shape[0]):
-            cons = row[self.cons_row]
+            if type(self.cons_row) == int:
+                cons = row.iloc[self.cons_row]
+            else:
+                cons = row[self.cons_row]
 
             if not pd.isna(cons):
                 if self.uses_gss:
                     area = Area.get_by_gss(cons, area_type=self.area_type)
                 else:
                     cons = cons.replace(" & ", " and ")
+                    cons = self.cons_map.get(cons, cons)
                     area = Area.get_by_name(cons, area_type=self.area_type)
 
             if area is None:

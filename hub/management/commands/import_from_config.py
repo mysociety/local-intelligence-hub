@@ -51,10 +51,16 @@ class Command(BaseImportFromDataFrameCommand):
         self.header_row = row["header_row"]
         self.sheet = row["sheet"]
 
-        if row["uses_gss"] == "TRUE":
+        if row["uses_gss"]:
             self.uses_gss = True
         else:
             self.uses_gss = False
+
+        try:
+            self.cons_col = int(self.cons_col)
+            self.cons_row = int(self.cons_row)
+        except ValueError:
+            pass
 
         defaults = {}
 
@@ -77,7 +83,8 @@ class Command(BaseImportFromDataFrameCommand):
             self.stderr.write(f"Unknown file type: {self.file_type}")
             return None
 
-        df = df.astype({self.get_cons_col(): "str"})
+        if type(self.get_cons_col()) != int:
+            df = df.astype({self.get_cons_col(): "str"})
         return df
 
     def handle(
