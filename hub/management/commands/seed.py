@@ -113,6 +113,8 @@ class Command(BaseCommand):
                 "last_name_field": "LNAME",
                 "auto_update_enabled": False,
                 "auto_import_enabled": False,
+                "can_display_points_publicly": True,
+                "can_display_details_publicly": True,
                 "update_mapping": [],
             },
         )

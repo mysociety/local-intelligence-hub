@@ -47,7 +47,7 @@
           // Node 
           "name": "Generate GraphQL types for client",
           "type": "node-terminal",
-          "command": "cd nextjs && npm run graphql:watch",
+          "command": "./bin/graphql_codegen.sh",
           "request": "launch",
           "presentation": {
             "group": "power users",
