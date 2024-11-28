@@ -1,63 +1,101 @@
-"use client";
+'use client'
 
-import React, { ReactNode, useEffect, useState } from 'react'
+import React, { useState } from 'react'
 
-import "mapbox-gl/dist/mapbox-gl.css";
-import { useQuery } from "@apollo/client";
-import { Provider as JotaiProvider, useAtomValue } from "jotai";
-import { MapProvider } from "react-map-gl";
-import { HubMap } from "@/components/hub/HubMap";
-import { ConstituencyView } from "@/components/hub/ConstituencyView";
-import { GetEventDataQuery, GetEventDataQueryVariables, GetHubMapDataQuery, GetHubMapDataQueryVariables, GetLocalDataQuery, GetLocalDataQueryVariables } from "@/__generated__/graphql";
-import { SIDEBAR_WIDTH, selectedHubSourceMarkerAtom } from "@/components/hub/data";
-import { usePathname, useParams } from 'next/navigation' 
-import { SearchPanel } from './SearchPanel';
-import Root from '@/data/puck/config/root';
-import { useBreakpoint } from '@/hooks/css';
-import { GET_EVENT_DATA, GET_HUB_MAP_DATA, GET_LOCAL_DATA } from './queries';
-import { HubRenderContextProvider, useHubRenderContext } from '@/components/hub/HubRenderContext';
-import { twMerge } from 'tailwind-merge';
-
+import {
+  GetEventDataQuery,
+  GetEventDataQueryVariables,
+  GetHubMapDataQuery,
+  GetHubMapDataQueryVariables,
+  GetLocalDataQuery,
+  GetLocalDataQueryVariables,
+} from '@/__generated__/graphql'
+import { ConstituencyView } from '@/components/hub/ConstituencyView'
+import { SIDEBAR_WIDTH } from '@/components/hub/data'
+import { HubMap } from '@/components/hub/HubMap'
+import {
+  HubRenderContextProvider,
+  useHubRenderContext,
+} from '@/components/hub/HubRenderContext'
+import Root from '@/data/puck/config/root'
+import { useBreakpoint } from '@/hooks/css'
+import { useQuery } from '@apollo/client'
+import { Provider as JotaiProvider } from 'jotai'
+import 'mapbox-gl/dist/mapbox-gl.css'
+import { MapProvider } from 'react-map-gl'
+import { GET_EVENT_DATA, GET_HUB_MAP_DATA, GET_LOCAL_DATA } from './queries'
+import { SearchPanel } from './SearchPanel'
 
 type Params = {
   hostname: string
 }
 
 export default function Page(props: { params: Params }) {
-  const hub = useQuery<GetHubMapDataQuery, GetHubMapDataQueryVariables>(GET_HUB_MAP_DATA, {
-    variables: { hostname: props.params.hostname },
-  });
+  const hub = useQuery<GetHubMapDataQuery, GetHubMapDataQueryVariables>(
+    GET_HUB_MAP_DATA,
+    {
+      variables: { hostname: props.params.hostname },
+    }
+  )
 
-  const isDesktop = useBreakpoint("md");
+  const isDesktop = useBreakpoint('md')
 
-  const [postcode, setPostcode] = useState("");
+  const [postcode, setPostcode] = useState('')
 
   return (
     <JotaiProvider>
       <HubRenderContextProvider hostname={props.params.hostname}>
-        <Root renderCSS={false} fullScreen={true} navLinks={hub.data?.hubByHostname?.navLinks || []}>
+        <Root
+          renderCSS={false}
+          fullScreen={true}
+          navLinks={hub.data?.hubByHostname?.navLinks || []}
+        >
           <MapProvider>
-            <PageContent {...props} isDesktop={isDesktop} hub={hub.data} postcode={postcode} setPostcode={setPostcode} />
+            <PageContent
+              {...props}
+              isDesktop={isDesktop}
+              hub={hub.data}
+              postcode={postcode}
+              setPostcode={setPostcode}
+            />
           </MapProvider>
         </Root>
       </HubRenderContextProvider>
     </JotaiProvider>
-  );
+  )
 }
 
-function PageContent ({ params: { hostname }, isDesktop, hub, postcode, setPostcode }: { params: Params, isDesktop: boolean, hub?: GetHubMapDataQuery, postcode: string, setPostcode: React.Dispatch<React.SetStateAction<string>> }) {
-  const hubContext = useHubRenderContext();
+function PageContent({
+  params: { hostname },
+  isDesktop,
+  hub,
+  postcode,
+  setPostcode,
+}: {
+  params: Params
+  isDesktop: boolean
+  hub?: GetHubMapDataQuery
+  postcode: string
+  setPostcode: React.Dispatch<React.SetStateAction<string>>
+}) {
+  const hubContext = useHubRenderContext()
 
-  const localData = useQuery<GetLocalDataQuery, GetLocalDataQueryVariables>(GET_LOCAL_DATA, {
-    variables: { postcode: hubContext.postcode!, hostname },
-    skip: !hubContext.postcode
-  });
+  const localData = useQuery<GetLocalDataQuery, GetLocalDataQueryVariables>(
+    GET_LOCAL_DATA,
+    {
+      variables: { postcode: hubContext.postcode!, hostname },
+      skip: !hubContext.postcode,
+    }
+  )
 
-  const eventData = useQuery<GetEventDataQuery, GetEventDataQueryVariables>(GET_EVENT_DATA, {
-    variables: { eventId: hubContext.eventId?.toString()!, hostname },
-    skip: !hubContext.eventId
-  });
-  
+  const eventData = useQuery<GetEventDataQuery, GetEventDataQueryVariables>(
+    GET_EVENT_DATA,
+    {
+      variables: { eventId: hubContext.eventId?.toString()!, hostname },
+      skip: !hubContext.eventId,
+    }
+  )
+
   return (
     <main className="h-full relative overflow-x-hidden flex-grow md:overflow-y-hidden">
       <div className="absolute h-full w-full flex pointer-events-none flex-col md:flex-row">
@@ -81,8 +119,8 @@ function PageContent ({ params: { hostname }, isDesktop, hub, postcode, setPostc
           >
             <div className="max-w-[100vw] rounded-[20px] bg-white max-h-full overflow-y-auto  pointer-events-auto">
               {!isDesktop && (
-                <div className='text-center mt-2 -mb-4'>
-                  <span className="inline-block w-[4rem] h-2 bg-meepGray-300 rounded-full"/>
+                <div className="text-center mt-2 -mb-4">
+                  <span className="inline-block w-[4rem] h-2 bg-meepGray-300 rounded-full" />
                 </div>
               )}
               {hubContext.eventId && eventData.data ? (
@@ -111,5 +149,5 @@ function PageContent ({ params: { hostname }, isDesktop, hub, postcode, setPostc
         )}
       </div>
     </main>
-  );
+  )
 }

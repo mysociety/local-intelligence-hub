@@ -1,35 +1,43 @@
-module.exports = {
+/** @type {import("next").NextConfig} */
+const nextConfig = {
   async headers() {
-    return process.env.NEXT_PUBLIC_ENVIRONMENT === "production"
+    return process.env.NEXT_PUBLIC_ENVIRONMENT === 'production'
       ? [
           {
-            source: "/",
+            source: '/',
             headers: [
               {
-                key: "Strict-Transport-Security",
-                value: "max-age=600; includeSubDomains; preload",
+                key: 'Strict-Transport-Security',
+                value: 'max-age=600; includeSubDomains; preload',
               },
             ],
           },
         ]
-      : [];
+      : []
   },
   images: {
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "www.localintelligencehub.com",
+        protocol: 'https',
+        hostname: 'www.localintelligencehub.com',
       },
     ],
   },
-};
+  experimental: {
+    turbo: {
+      // This is a default option, include it to squash
+      // "turbopack is not configured" warning.
+      useSwcCss: false,
+    },
+  },
+}
 
 // Injected content via Sentry wizard below
 
-const { withSentryConfig } = require("@sentry/nextjs");
+const { withSentryConfig } = require('@sentry/nextjs')
 
 module.exports = withSentryConfig(
-  module.exports,
+  nextConfig,
   {
     // For all available options, see:
     // https://github.com/getsentry/sentry-webpack-plugin#options
@@ -52,7 +60,7 @@ module.exports = withSentryConfig(
     // Routes browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers. (increases server load)
     // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
     // side errors will fail.
-    tunnelRoute: "/monitoring",
+    tunnelRoute: '/monitoring',
 
     // Hides source maps from generated client bundles
     hideSourceMaps: true,
@@ -66,4 +74,4 @@ module.exports = withSentryConfig(
     // https://vercel.com/docs/cron-jobs
     automaticVercelMonitors: true,
   }
-);
+)

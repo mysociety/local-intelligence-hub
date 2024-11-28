@@ -1,12 +1,13 @@
-"use client"
+'use client'
 
-import { gql } from "@apollo/client"
+import { gql } from '@apollo/client'
 import ColorHash from 'color-hash'
-import { atom, useAtom } from "jotai";
-import { useEffect, useState } from "react";
-import { Layer, LayerProps, useMap } from "react-map-gl";
-import { MapRef } from "react-map-gl/dist/esm/mapbox/create-ref";
-var colorHash = new ColorHash();
+import { atom, useAtom } from 'jotai'
+import { MapboxGeoJSONFeature } from 'mapbox-gl'
+import { useEffect, useState } from 'react'
+import { Layer, LayerProps, useMap } from 'react-map-gl'
+import { MapRef } from 'react-map-gl/dist/esm/mapbox/create-ref'
+var colorHash = new ColorHash()
 
 export const MAP_REPORT_LAYERS_SUMMARY = gql`
   fragment MapReportLayersSummary on MapReport {
@@ -39,37 +40,46 @@ export const MAP_REPORT_FRAGMENT = gql`
   fragment MapReportPage on MapReport {
     id
     name
-    ... MapReportLayersSummary
+    ...MapReportLayersSummary
   }
   ${MAP_REPORT_LAYERS_SUMMARY}
 `
 
-const arr = [
-  "hsl(222, 69%, 65%)",
-  "hsl(305, 50%, 48%)",
-]
+const arr = ['hsl(222, 69%, 65%)', 'hsl(305, 50%, 48%)']
 export const layerColour = (index: any, id?: any) => {
-  if (typeof index === 'number' && Number.isInteger(index) && index < arr.length) {
+  if (
+    typeof index === 'number' &&
+    Number.isInteger(index) &&
+    index < arr.length
+  ) {
     return arr[index]
   }
   return colorHash.hex(id || index)
 }
 
-export function layerIdColour (id: string) {
+export function layerIdColour(id: string) {
   return colorHash.hex(id)
 }
 
 export const mapHasLoaded = atom(false)
 export const isDataConfigOpenAtom = atom(false)
 export const isConstituencyPanelOpenAtom = atom(false)
+export const selectedSourceMarkerAtom = atom<MapboxGeoJSONFeature | null>(null)
+export const constituencyPanelTabAtom = atom('list')
+export const selectedConstituencyAtom = atom<string | null>(null)
 
+// The @ts-ignore lines here are because the mapboxgl.Map
+// type and the react-map-gl MapInstance types have
+// slight (erroneous) inconsistencies.
 export type MapLoader = {
-  loadedMap: MapRef<mapboxgl.Map> | null | undefined;
-  loaded: boolean;
-  current?: MapRef<mapboxgl.Map> | undefined;
+  // @ts-ignore
+  loadedMap: MapRef<mapboxgl.Map> | null | undefined
+  loaded: boolean
+  // @ts-ignore
+  current?: MapRef<mapboxgl.Map> | undefined
 }
 
-export function useLoadedMap (): MapLoader {
+export function useLoadedMap(): MapLoader {
   const [loaded, setLoaded] = useAtom(mapHasLoaded)
   const map = useMap()
 
@@ -126,7 +136,7 @@ export function useLoadedMap (): MapLoader {
   return {
     ...map,
     loadedMap: loaded ? map.default : null,
-    loaded
+    loaded,
   }
 }
 
@@ -135,28 +145,34 @@ export type MapboxImageSource = {
   name: string
 }
 
-export function useMapIcons (requiredImages: MapboxImageSource[], mapbox: MapLoader) {
+export function useMapIcons(
+  requiredImages: MapboxImageSource[],
+  mapbox: MapLoader
+) {
   const [loadedImages, setLoadedImages] = useState<string[]>([])
-  useEffect(function loadIcons() {
-    if (!mapbox.loadedMap) return
-    requiredImages.forEach((requiredImage) => {
-      console.log("Loading", requiredImage.url())
-      // Load an image from an external URL.
-      mapbox.loadedMap!.loadImage(
-        requiredImage.url(),
-        (error, image) => {
+  useEffect(
+    function loadIcons() {
+      if (!mapbox.loadedMap) return
+      requiredImages.forEach((requiredImage) => {
+        console.log('Loading', requiredImage.url())
+        // Load an image from an external URL.
+        mapbox.loadedMap!.loadImage(requiredImage.url(), (error, image) => {
           try {
-            if (error) throw error;
+            if (error) throw error
             if (!image) throw new Error('Marker icon did not load')
-            mapbox.loadedMap!.addImage(requiredImage.name, image);
-            setLoadedImages(loadedImages => [...loadedImages, requiredImage.name])
+            mapbox.loadedMap!.addImage(requiredImage.name, image)
+            setLoadedImages((loadedImages) => [
+              ...loadedImages,
+              requiredImage.name,
+            ])
           } catch (e) {
-            console.error("Failed to load image", e)
+            console.error('Failed to load image', e)
           }
-        }
-      )
-    })
-  }, [mapbox.loadedMap, setLoadedImages])
+        })
+      })
+    },
+    [mapbox.loadedMap, setLoadedImages]
+  )
   return loadedImages
 }
 
@@ -164,11 +180,13 @@ export function useMapIcons (requiredImages: MapboxImageSource[], mapbox: MapLoa
  * Placeholder layer to refer to in `beforeId`.
  * See https://github.com/visgl/react-map-gl/issues/939#issuecomment-625290200
  */
-export function PlaceholderLayer (props: Partial<LayerProps>) {
+export function PlaceholderLayer(
+  props: Partial<Omit<LayerProps, 'filter' | 'source' | 'source-layer'>>
+) {
   return (
     <Layer
       {...props}
-      type='background'
+      type="background"
       layout={{ visibility: 'none' }}
       paint={{}}
     />

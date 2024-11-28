@@ -1,28 +1,27 @@
-import React from "react";
-import { ComponentConfig } from "@measured/puck";
-import { Section } from "@/data/puck/config/components/Section";
+import { Section } from '@/data/puck/config/components/Section'
+import { ComponentConfig } from '@measured/puck'
 
 export type FlexProps = {
-  items: { minItemWidth?: number }[];
-  minItemWidth: number;
-};
+  items: { minItemWidth?: number }[]
+  minItemWidth: number
+}
 
 export const Flex: ComponentConfig<FlexProps> = {
   fields: {
     items: {
-      type: "array",
+      type: 'array',
       arrayFields: {
         minItemWidth: {
-          label: "Minimum Item Width",
-          type: "number",
+          label: 'Minimum Item Width',
+          type: 'number',
           min: 0,
         },
       },
       getItemSummary: (_, id) => `Item ${(id || 0) + 1}`,
     },
     minItemWidth: {
-      label: "Minimum Item Width",
-      type: "number",
+      label: 'Minimum Item Width',
+      type: 'number',
       min: 0,
     },
   },
@@ -30,7 +29,7 @@ export const Flex: ComponentConfig<FlexProps> = {
     items: [{}, {}],
     minItemWidth: 356,
   },
-  render: ({ items, minItemWidth, puck: { renderDropZone} }) => {
+  render: ({ items, minItemWidth, puck: { renderDropZone } }) => {
     return (
       <Section>
         <div>
@@ -39,11 +38,11 @@ export const Flex: ComponentConfig<FlexProps> = {
               key={idx}
               style={{ minWidth: item.minItemWidth || minItemWidth }}
             >
-              {renderDropZone({zone: `item-${idx}` })}
+              {renderDropZone({ zone: `item-${idx}` })}
             </div>
           ))}
         </div>
       </Section>
-    );
+    )
   },
-};
+}

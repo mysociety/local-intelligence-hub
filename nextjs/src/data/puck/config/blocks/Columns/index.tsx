@@ -1,39 +1,38 @@
-import React from "react";
-import { ComponentConfig } from "@measured/puck";
-import { Section } from "@/data/puck/config/components/Section";
+import { Section } from '@/data/puck/config/components/Section'
+import { ComponentConfig } from '@measured/puck'
 
 export type ColumnsProps = {
-  distribution: "auto" | "manual";
+  distribution: 'auto' | 'manual'
   columns: {
-    span?: number;
-  }[];
-};
+    span?: number
+  }[]
+}
 
 export const Columns: ComponentConfig<ColumnsProps> = {
   fields: {
     distribution: {
-      type: "radio",
+      type: 'radio',
       options: [
         {
-          value: "auto",
-          label: "Auto",
+          value: 'auto',
+          label: 'Auto',
         },
         {
-          value: "manual",
-          label: "Manual",
+          value: 'manual',
+          label: 'Manual',
         },
       ],
     },
     columns: {
-      type: "array",
+      type: 'array',
       getItemSummary: (col, id) =>
         `Column ${(id || 0) + 1}, span ${
-          col.span ? Math.max(Math.min(col.span, 12), 1) : "auto"
+          col.span ? Math.max(Math.min(col.span, 12), 1) : 'auto'
         }`,
       arrayFields: {
         span: {
-          label: "Span (1-12)",
-          type: "number",
+          label: 'Span (1-12)',
+          type: 'number',
           min: 0,
           max: 12,
         },
@@ -41,7 +40,7 @@ export const Columns: ComponentConfig<ColumnsProps> = {
     },
   },
   defaultProps: {
-    distribution: "auto",
+    distribution: 'auto',
     columns: [{}, {}],
   },
   render: ({ columns, distribution, puck: { renderDropZone } }) => {
@@ -50,8 +49,8 @@ export const Columns: ComponentConfig<ColumnsProps> = {
         <div
           style={{
             gridTemplateColumns:
-              distribution === "manual"
-                ? "repeat(12, 1fr)"
+              distribution === 'manual'
+                ? 'repeat(12, 1fr)'
                 : `repeat(${columns.length}, 1fr)`,
           }}
         >
@@ -59,22 +58,22 @@ export const Columns: ComponentConfig<ColumnsProps> = {
             <div
               key={idx}
               style={{
-                display: "flex",
-                flexDirection: "column",
+                display: 'flex',
+                flexDirection: 'column',
                 gridColumn:
-                  span && distribution === "manual"
+                  span && distribution === 'manual'
                     ? `span ${Math.max(Math.min(span, 12), 1)}`
-                    : "",
+                    : '',
               }}
             >
               {renderDropZone({
                 zone: `column-${idx}`,
-                disallow: ["Hero", "Logos", "Stats"],
+                disallow: ['Hero', 'Logos', 'Stats'],
               })}
             </div>
           ))}
         </div>
       </Section>
-    );
+    )
   },
-};
+}

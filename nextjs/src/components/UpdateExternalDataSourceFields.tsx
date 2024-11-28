@@ -1,14 +1,17 @@
-import { FieldPath, FormProvider, useForm } from "react-hook-form";
-import { Button } from "./ui/button";
-import { CrmType, DataSourceType, ExternalDataSourceInput, FieldDefinition, GeographyTypes } from "@/__generated__/graphql";
-import { PreopulatedSelectField } from "./ExternalDataSourceFields";
+import {
+  CrmType,
+  DataSourceType,
+  ExternalDataSourceInput,
+  FieldDefinition,
+} from '@/__generated__/graphql'
 import {
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -17,42 +20,44 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { DataSourceFieldLabel } from "./DataSourceIcon";
-import { Input } from "@/components/ui/input";
-import { useMemo } from "react";
-import { locationTypeOptions } from "@/data/location";
+} from '@/components/ui/select'
+import { locationTypeOptions } from '@/data/location'
+import { useMemo } from 'react'
+import { FieldPath, FormProvider, useForm } from 'react-hook-form'
+import { DataSourceFieldLabel } from './DataSourceIcon'
+import { PreopulatedSelectField } from './ExternalDataSourceFields'
+import { Button } from './ui/button'
 
 type FormInputs = ExternalDataSourceInput
 
-export function UpdateExternalDataSourceFields ({
+export function UpdateExternalDataSourceFields({
   initialData,
   crmType,
   fieldDefinitions,
   onSubmit,
-  dataType
+  dataType,
 }: {
   onSubmit: (
     data: ExternalDataSourceInput,
     e?: React.BaseSyntheticEvent<object, any, any> | undefined
-  ) => void;
-  crmType: CrmType;
-  initialData?: ExternalDataSourceInput;
-  fieldDefinitions?: FieldDefinition[] | null;
-  dataType: DataSourceType;
+  ) => void
+  crmType: CrmType
+  initialData?: ExternalDataSourceInput
+  fieldDefinitions?: FieldDefinition[] | null
+  dataType: DataSourceType
 }) {
   const form = useForm<FormInputs>({
-    defaultValues: initialData
-  });
+    defaultValues: initialData,
+  })
 
-  function FPreopulatedSelectField ({
+  function FPreopulatedSelectField({
     name,
     label,
     placeholder,
-    required = false
+    required = false,
   }: {
-    name: FieldPath<FormInputs>,
-    label?: string,
+    name: FieldPath<FormInputs>
+    label?: string
     placeholder?: string
     required?: boolean
   }) {
@@ -113,21 +118,30 @@ export function UpdateExternalDataSourceFields ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                {form.watch("geographyColumnType")?.toLocaleLowerCase()} field
+                {form.watch('geographyColumnType')?.toLocaleLowerCase()} field
               </FormLabel>
               <FormControl>
                 {fieldDefinitions?.length ? (
-                  // @ts-ignore
-                  <Select value={field.value} onValueChange={field.onChange} required>
-                    <SelectTrigger className='pl-1'>
-                      <SelectValue placeholder={`Choose ${form.watch('geographyColumnType') || 'geography'} field`} />
+                  <Select
+                    // @ts-ignore
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    required
+                  >
+                    <SelectTrigger className="pl-1">
+                      <SelectValue
+                        placeholder={`Choose ${form.watch('geographyColumnType') || 'geography'} field`}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
                         <SelectLabel>Geography field</SelectLabel>
                         {fieldDefinitions?.map((field) => (
                           <SelectItem key={field.value} value={field.value}>
-                            <DataSourceFieldLabel fieldDefinition={field} crmType={crmType} />
+                            <DataSourceFieldLabel
+                              fieldDefinition={field}
+                              crmType={crmType}
+                            />
                           </SelectItem>
                         ))}
                       </SelectGroup>
@@ -145,82 +159,83 @@ export function UpdateExternalDataSourceFields ({
         {collectFields?.map((field) => (
           <FPreopulatedSelectField key={field} name={field} />
         ))}
-        <Button type='submit' className='mt-4'>Save settings</Button>
+        <Button type="submit" className="mt-4">
+          Save settings
+        </Button>
       </form>
     </FormProvider>
   )
 }
 
-
-export function getFieldsForDataSourceType (type?: DataSourceType): Array<keyof Omit<ExternalDataSourceInput, (
-  'autoImportEnabled' |
-  'autoUpdateEnabled' |
-  'dataType' |
-  'description' |
-  'id' |
-  'name' |
-  'organisation' |
-  'updateMapping' |
-  'geographyColumn' |
-  'geographyColumnType'
-)>> {
+export function getFieldsForDataSourceType(
+  type?: DataSourceType
+): Array<
+  keyof Omit<
+    ExternalDataSourceInput,
+    | 'autoImportEnabled'
+    | 'autoUpdateEnabled'
+    | 'dataType'
+    | 'description'
+    | 'id'
+    | 'name'
+    | 'organisation'
+    | 'updateMapping'
+    | 'geographyColumn'
+    | 'geographyColumnType'
+  >
+> {
   switch (type) {
     case DataSourceType.Member:
       return [
-        "emailField",
-        "phoneField",
-        "addressField",
-        "fullNameField",
-        "firstNameField",
-        "lastNameField",
-        "canDisplayPointField"
+        'emailField',
+        'phoneField',
+        'addressField',
+        'fullNameField',
+        'firstNameField',
+        'lastNameField',
+        'canDisplayPointField',
       ]
     case DataSourceType.Group:
       return [
-        "emailField",
-        "phoneField",
-        "addressField",
-        "titleField",
-        "publicUrlField",
-        "socialUrlField",
-        "canDisplayPointField"
+        'emailField',
+        'phoneField',
+        'addressField',
+        'titleField',
+        'publicUrlField',
+        'socialUrlField',
+        'canDisplayPointField',
       ]
     case DataSourceType.Location:
       return [
-        "titleField",
-        "descriptionField",
-        "addressField",
-        "imageField",
-        "publicUrlField",
-        "emailField",
-        "phoneField",
+        'titleField',
+        'descriptionField',
+        'addressField',
+        'imageField',
+        'publicUrlField',
+        'emailField',
+        'phoneField',
       ]
     case DataSourceType.Event:
       return [
-        "titleField",
-        "descriptionField",
-        "addressField",
-        "imageField",
-        "publicUrlField",
-        "startTimeField",
-        "endTimeField",
-        "emailField",
-        "phoneField",
+        'titleField',
+        'descriptionField',
+        'addressField',
+        'imageField',
+        'publicUrlField',
+        'startTimeField',
+        'endTimeField',
+        'emailField',
+        'phoneField',
       ]
     case DataSourceType.Story:
-      return [
-        "titleField",
-        "descriptionField",
-        "imageField",
-        "publicUrlField",
-      ]
+      return ['titleField', 'descriptionField', 'imageField', 'publicUrlField']
     default:
       return [
-        "titleField",
-        "descriptionField",
-        "addressField",
-        "imageField",
-        "publicUrlField",
+        'titleField',
+        'descriptionField',
+        'addressField',
+        'imageField',
+        'publicUrlField',
       ]
   }
 }

@@ -6,9 +6,9 @@ concurrency:
   
 on:
   pull_request:
-
+    
 jobs:
-  tests:
+  test:
     runs-on: ubuntu-latest
     environment: testing
     services:

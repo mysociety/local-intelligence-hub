@@ -22,7 +22,6 @@ class Command(BaseCommand):
         download_url = "https://open-geography-portalx-ons.hub.arcgis.com/api/download/v1/items/932f769148bb4753989e55b6703b7add/geojson?layers=0"
 
         data = requests.get(download_url).json()
-        print(f"data {data}")
         areas = data["features"]
 
         area_type, created = AreaType.objects.get_or_create(
@@ -41,12 +40,11 @@ class Command(BaseCommand):
                 name=area["properties"]["eer18nm"],
                 area_type=area_type,
             )
-
             geom_str = json.dumps(area)
             geom = GEOSGeometry(json.dumps(area["geometry"]))
             if isinstance(geom, Polygon):
                 geom = MultiPolygon([geom])
-            geom.srid = 4326
+            geom.srid = 27700
             a.geometry = geom_str
             a.polygon = geom
             a.point = a.polygon.centroid

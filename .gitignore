@@ -24,3 +24,6 @@ profile.html
 
 # Database dumps
 meep*.psql
+
+# Project setup marker
+.ck_setup_complete

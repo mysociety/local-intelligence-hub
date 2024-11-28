@@ -1,4 +1,4 @@
-FROM python:3.12
+FROM python:3.12.3
 ENV INSIDE_DOCKER=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -21,4 +21,4 @@ COPY poetry.lock pyproject.toml ./
 # WORKDIR /app
 # COPY . .
 #RUN ./manage.py collectstatic --no-input
-RUN echo "source .venv/bin/activate" >> "/root/.bashrc"
+RUN echo "source .venv/bin/activate 2>/dev/null" >> "/root/.bashrc"

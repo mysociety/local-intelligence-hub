@@ -61,13 +61,13 @@ class TestPublicAPI(TestCase):
         )
         models.Area.objects.update_or_create(
             mapit_id="66055",
-            gss="E14000831",
-            name="Newcastle upon Tyne Central",
+            gss="E14001377",
+            name="Newcastle upon Tyne Central and West",
             area_type=area_type,
         )
         models.Area.objects.update_or_create(
             name="City of Durham",
-            gss="E14000641",
+            gss="E14001173",
             mapit_id="66021",
             area_type=area_type,
         )
@@ -148,10 +148,10 @@ class TestPublicAPI(TestCase):
                 "mayoralRegion": "North East Mayoral Combined Authority",
                 "councilDistrict": "Newcastle upon Tyne",
                 "postcodesIO": {
-                    "parliamentaryConstituency": "Newcastle upon Tyne Central"
+                    "parliamentaryConstituency": "Newcastle upon Tyne Central and West"
                 },
                 "constituency": {
-                    "name": "Newcastle upon Tyne Central",
+                    "name": "Newcastle upon Tyne Central and West",
                     # TODO: import/mock political data and test this
                     # "lastElection": {
                     #   "date": "2019-12-12"
@@ -223,10 +223,10 @@ class TestPublicAPI(TestCase):
                     "mayoralRegion": "North East Mayoral Combined Authority",
                     "councilDistrict": "Newcastle upon Tyne",
                     "postcodesIO": {
-                        "parliamentaryConstituency": "Newcastle upon Tyne Central"
+                        "parliamentaryConstituency": "Newcastle upon Tyne Central and West"
                     },
                     "constituency": {
-                        "name": "Newcastle upon Tyne Central",
+                        "name": "Newcastle upon Tyne Central and West",
                         # TODO: import/mock political data and test this
                         # "lastElection": {
                         #   "date": "2019-12-12"

@@ -3,10 +3,10 @@ name: Build nextjs app
 concurrency: 
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-  
+   
 on:
   pull_request:
-
+    
 jobs:
   build:
     runs-on: ubuntu-latest

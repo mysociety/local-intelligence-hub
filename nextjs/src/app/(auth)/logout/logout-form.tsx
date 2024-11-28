@@ -1,13 +1,13 @@
-"use client";
+'use client'
 
-import { logout } from "../../../actions/auth";
-import { MouseEvent } from "react";
+import { MouseEvent } from 'react'
+import { logout } from '../../../actions/auth'
 
 export default function LogoutForm() {
   const handleLogout = (e: MouseEvent) => {
-    e.preventDefault();
-    logout();
-  };
+    e.preventDefault()
+    logout()
+  }
 
   return (
     <>
@@ -20,5 +20,5 @@ export default function LogoutForm() {
         Logout
       </button>
     </>
-  );
+  )
 }

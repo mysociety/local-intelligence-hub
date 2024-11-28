@@ -1,24 +1,21 @@
-"use client";
+'use client'
 
-import { gql, useMutation } from "@apollo/client";
-import { login } from "../../../actions/auth";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod";
-import { Button } from "@/components/ui/button"
- 
+import { Button } from '@/components/ui/button'
+import { gql, useMutation } from '@apollo/client'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { SubmitHandler, useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { login } from '../../../actions/auth'
+
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input";
-
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 
 const LOGIN_MUTATION = gql`
   mutation Login($username: String!, $password: String!) {
@@ -33,42 +30,50 @@ const LOGIN_MUTATION = gql`
       }
     }
   }
-`;
+`
 
 export default function LoginForm() {
   const form = useForm({
-    resolver: zodResolver(z.object({
-      username: z.string(),
-      password: z.string(),
-    })),
+    defaultValues: {
+      username: '',
+      password: '',
+    },
+    resolver: zodResolver(
+      z.object({
+        username: z.string(),
+        password: z.string(),
+      })
+    ),
   })
 
   const [doLogin, { data, loading, error: gqlError }] =
-    useMutation(LOGIN_MUTATION);
+    useMutation(LOGIN_MUTATION)
 
-
-  const token = data?.tokenAuth?.token?.token;
-  const authError = data?.tokenAuth?.errors;
+  const token = data?.tokenAuth?.token?.token
+  const authError = data?.tokenAuth?.errors
   if (token) {
-    login(token, data?.tokenAuth?.token?.payload?.exp);
+    login(token, data?.tokenAuth?.token?.payload?.exp)
   }
 
-  let errorMessage = "";
+  let errorMessage = ''
   if (gqlError) {
-    errorMessage = "Login request failed";
+    errorMessage = 'Login request failed'
   }
   if (authError) {
-    errorMessage = "Bad credentials or user not verified";
+    errorMessage = 'Bad credentials or user not verified'
   }
 
   const handleSubmit: SubmitHandler<any> = async (values: any, e) => {
     e?.preventDefault()
-    doLogin({ variables: values });
-  };
+    doLogin({ variables: values })
+  }
 
   return (
     <Form {...form}>
-      <form className="pb-4 flex flex-col space-y-5" onSubmit={form.handleSubmit(handleSubmit)}>
+      <form
+        className="pb-4 flex flex-col space-y-5"
+        onSubmit={form.handleSubmit(handleSubmit)}
+      >
         <FormField
           control={form.control}
           name="username"
@@ -76,7 +81,11 @@ export default function LoginForm() {
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="username" {...field} />
+                <Input
+                  placeholder="username"
+                  {...field}
+                  autoComplete="username"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -89,18 +98,28 @@ export default function LoginForm() {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input type='password' placeholder="password" {...field} />
+                <Input
+                  type="password"
+                  placeholder="password"
+                  {...field}
+                  autoComplete="current-password"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <FormMessage />
-        <Button variant='reverse' type="submit" disabled={loading || token} className="flex items-center justify-center">
-          {(loading || token) ? (<>Loading...</>) : 'Login'}
+        <Button
+          variant="reverse"
+          type="submit"
+          disabled={loading || token}
+          className="flex items-center justify-center"
+        >
+          {loading || token ? <>Loading...</> : 'Login'}
         </Button>
         {errorMessage && <small className="text-red-500">{errorMessage}</small>}
-        </form>
+      </form>
     </Form>
-  );
+  )
 }

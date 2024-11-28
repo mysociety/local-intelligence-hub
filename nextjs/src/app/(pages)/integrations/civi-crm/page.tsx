@@ -1,4 +1,4 @@
-import IntegrationsCRMOption from "@/components/marketing/IntegrationsCRMOption";
+import IntegrationsCRMOption from '@/components/marketing/IntegrationsCRMOption'
 
 export default function CRMSyncCiviCRM() {
   return (
@@ -15,5 +15,5 @@ export default function CRMSyncCiviCRM() {
         b3Description="Upload a spreadsheet with a column of postcodes to get extra geographic data added on that can help you with your organising efforts."
       />
     </>
-  );
+  )
 }

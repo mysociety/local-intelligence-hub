@@ -1,29 +1,17 @@
 // page.js
-"use client";
+'use client'
 
-import { useContext, useEffect, useRef, useState } from "react";
-import "mapbox-gl/dist/mapbox-gl.css";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { BarChart3, Layers, MoreVertical, RefreshCcw, Trash } from "lucide-react"
-import { Toggle } from "@/components/ui/toggle"
-import DataConfigPanel from "@/components/dataConfig";
-import { FetchResult, gql, useApolloClient, useQuery } from "@apollo/client";
-import { toast } from "sonner";
-import { AnalyticalAreaType, DeleteMapReportMutation, DeleteMapReportMutationVariables, GetMapReportQuery, GetMapReportQueryVariables, MapReportInput, MapReportLayerAnalyticsQuery, MapReportLayerAnalyticsQueryVariables, UpdateMapReportMutation, UpdateMapReportMutationVariables } from "@/__generated__/graphql";
+  DeleteMapReportMutation,
+  DeleteMapReportMutationVariables,
+  GetMapReportQuery,
+  GetMapReportQueryVariables,
+  MapReportInput,
+  UpdateMapReportMutation,
+  UpdateMapReportMutationVariables,
+} from '@/__generated__/graphql'
+import DataConfigPanel from '@/components/dataConfig'
+import { ReportMap } from '@/components/report/ReportMap'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,100 +21,146 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-import spaceCase from 'to-space-case'
-import { toastPromise } from "@/lib/toast";
-import { MAP_REPORT_LAYER_ANALYTICS, ReportMap, selectedConstituencyAtom } from "@/components/report/ReportMap";
-import { MAP_REPORT_FRAGMENT, isConstituencyPanelOpenAtom, isDataConfigOpenAtom } from "@/lib/map";
-import { DisplayOptionsType, ReportContext, defaultDisplayOptions } from "./context";
-import { LoadingIcon } from "@/components/ui/loadingIcon";
-import { contentEditableMutation } from "@/lib/html";
-import { Provider as JotaiProvider, atom, useAtom, useAtomValue } from "jotai";
-import { ConstituenciesPanel } from "./ConstituenciesPanel";
-import { MapProvider } from "react-map-gl";
-import { twMerge } from "tailwind-merge";
+} from '@/components/ui/alert-dialog'
+import { buttonVariants } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { currentOrganisationIdAtom } from '@/data/organisation'
+import { contentEditableMutation } from '@/lib/html'
+import {
+  MAP_REPORT_FRAGMENT,
+  isConstituencyPanelOpenAtom,
+  isDataConfigOpenAtom,
+  selectedConstituencyAtom,
+} from '@/lib/map'
+import { toastPromise } from '@/lib/toast'
+import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
+import { Provider as JotaiProvider, useAtom, useAtomValue } from 'jotai'
 import { merge } from 'lodash'
-import { currentOrganisationIdAtom } from "@/data/organisation";
+import {
+  BarChart3,
+  Layers,
+  MoreVertical,
+  RefreshCcw,
+  Trash,
+} from 'lucide-react'
+import 'mapbox-gl/dist/mapbox-gl.css'
+import { useRouter } from 'next/navigation'
+import { useContext, useEffect, useState } from 'react'
+import { MapProvider } from 'react-map-gl'
+import { toast } from 'sonner'
+import { twMerge } from 'tailwind-merge'
+import spaceCase from 'to-space-case'
+import { ConstituenciesPanel } from './ConstituenciesPanel'
+import {
+  DisplayOptionsType,
+  ReportContext,
+  defaultDisplayOptions,
+} from './context'
 
 type Params = {
   id: string
 }
 
 export default function Page({ params: { id } }: { params: Params }) {
-  const client = useApolloClient();
-  const router = useRouter();
-  
-  const report = useQuery<GetMapReportQuery, GetMapReportQueryVariables>(GET_MAP_REPORT, {
-    variables: { id },
-  });
+  const client = useApolloClient()
+  const router = useRouter()
 
-  const orgId = useAtomValue(currentOrganisationIdAtom);
+  const report = useQuery<GetMapReportQuery, GetMapReportQueryVariables>(
+    GET_MAP_REPORT,
+    {
+      variables: { id },
+    }
+  )
+
+  const orgId = useAtomValue(currentOrganisationIdAtom)
 
   useEffect(() => {
-    if (orgId && report.data && report.data.mapReport.organisation.id !== orgId) {
-      router.push("/reports");
+    if (
+      orgId &&
+      report.data &&
+      report.data.mapReport.organisation.id !== orgId
+    ) {
+      router.push('/reports')
     }
   }, [orgId, report, router])
 
-  const displayOptions = merge({}, defaultDisplayOptions, report.data?.mapReport?.displayOptions || {})
+  const displayOptions = merge(
+    {},
+    defaultDisplayOptions,
+    report.data?.mapReport?.displayOptions || {}
+  )
 
   const updateDisplayOptions = (options: Partial<DisplayOptionsType>) => {
     updateMutation({ displayOptions: { ...displayOptions, ...options } })
-  };
+  }
 
   return (
     <JotaiProvider key={id}>
       <MapProvider>
-        <ReportContext.Provider value={{ 
-          id,
-          report,
-          updateReport: updateMutation,
-          deleteReport: del,
-          refreshReportDataQueries,
-          displayOptions,
-          setDisplayOptions: updateDisplayOptions
-        }}>
+        <ReportContext.Provider
+          value={{
+            id,
+            report,
+            updateReport: updateMutation,
+            deleteReport: del,
+            refreshReportDataQueries,
+            displayOptions,
+            setDisplayOptions: updateDisplayOptions,
+          }}
+        >
           <ReportPage />
         </ReportContext.Provider>
       </MapProvider>
     </JotaiProvider>
   )
 
-  function refreshReportDataQueries () {
+  function refreshReportDataQueries() {
     toastPromise(
       client.refetchQueries({
         include: [
-          "GetMapReport",
-          "MapReportPage",
-          "MapReportLayerAnalytics",
-          "GetConstituencyData",
-          "MapReportRegionStats",
-          "MapReportConstituencyStats",
-          "MapReportWardStats"
+          'GetMapReport',
+          'MapReportLayerAnalytics',
+          'GetConstituencyData',
+          'MapReportRegionStats',
+          'MapReportConstituencyStats',
+          'MapReportWardStats',
         ],
       }),
       {
-        loading: "Refreshing report data...",
-        success: "Report data updated",
+        loading: 'Refreshing report data...',
+        success: 'Report data updated',
         error: `Couldn't refresh report data`,
       }
     )
   }
 
-  function updateMutation (input: MapReportInput) {
-    const update = client.mutate<UpdateMapReportMutation, UpdateMapReportMutationVariables>({
+  function updateMutation(input: MapReportInput) {
+    const update = client.mutate<
+      UpdateMapReportMutation,
+      UpdateMapReportMutationVariables
+    >({
       mutation: UPDATE_MAP_REPORT,
       variables: {
         input: {
           id,
-          ...input
-        }
-      }
+          ...input,
+        },
+      },
     })
     toastPromise(update, {
-      loading: "Saving...",
+      loading: 'Saving...',
       success: (d) => {
         if (!d.errors && d.data) {
           if ('layers' in input) {
@@ -135,46 +169,54 @@ export default function Page({ params: { id } }: { params: Params }) {
             refreshReportDataQueries()
           }
           return {
-            title: "Report saved",
-            description: `Updated ${Object.keys(input).map(spaceCase).join(", ")}`
+            title: 'Report saved',
+            description: `Updated ${Object.keys(input).map(spaceCase).join(', ')}`,
           }
         } else {
           throw new Error("Couldn't save report")
         }
       },
       error: `Couldn't save report`,
-    });
+    })
   }
 
-  function del () {
-    const deleteMutation = client.mutate<DeleteMapReportMutation, DeleteMapReportMutationVariables>({
+  function del() {
+    const deleteMutation = client.mutate<
+      DeleteMapReportMutation,
+      DeleteMapReportMutationVariables
+    >({
       mutation: DELETE_MAP_REPORT,
       variables: {
-        id: { id }
-      }
+        id: { id },
+      },
     })
     toast.promise(deleteMutation, {
-      loading: "Deleting...",
+      loading: 'Deleting...',
       success: (d: FetchResult) => {
         if (!d.errors && d.data) {
-          router.push("/reports");
-          return "Deleted report";
+          router.push('/reports')
+          return 'Deleted report'
         }
       },
       error: `Couldn't delete report`,
-    });
+    })
   }
 }
 
 function ReportPage() {
-  const { report, updateReport, deleteReport, refreshReportDataQueries } = useContext(ReportContext);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [isDataConfigOpen, setDataConfigOpen] = useAtom(isDataConfigOpenAtom);
-  const toggleDataConfig = () => setDataConfigOpen(b => !b);
-  const [isConstituencyPanelOpen, setConstituencyPanelOpen] = useAtom(isConstituencyPanelOpenAtom);
-  const [selectedConstituency, setSelectedConstituency] = useAtom(selectedConstituencyAtom);
+  const { report, updateReport, deleteReport, refreshReportDataQueries } =
+    useContext(ReportContext)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [isDataConfigOpen, setDataConfigOpen] = useAtom(isDataConfigOpenAtom)
+  const toggleDataConfig = () => setDataConfigOpen((b) => !b)
+  const [isConstituencyPanelOpen, setConstituencyPanelOpen] = useAtom(
+    isConstituencyPanelOpenAtom
+  )
+  const [selectedConstituency, setSelectedConstituency] = useAtom(
+    selectedConstituencyAtom
+  )
   const toggleConsData = () => {
-    setConstituencyPanelOpen(b => {
+    setConstituencyPanelOpen((b) => {
       if (b) {
         setSelectedConstituency(null)
       }
@@ -213,22 +255,22 @@ function ReportPage() {
   const toggles = [
     {
       icon: Layers,
-      label: "Map layers",
+      label: 'Map layers',
       enabled: isDataConfigOpen,
-      toggle: toggleDataConfig
+      toggle: toggleDataConfig,
     },
     {
       icon: BarChart3,
-      label: "Constituency data",
+      label: 'Constituency data',
       enabled: isConstituencyPanelOpen,
-      toggle: toggleConsData
-    }
+      toggle: toggleConsData,
+    },
   ]
 
   return (
     <>
       <div className="absolute w-full h-full flex flex-row pointer-events-none">
-        <div className='w-full h-full pointer-events-auto'>
+        <div className="w-full h-full pointer-events-auto">
           <ReportMap />
         </div>
         {/* Layer card */}
@@ -245,23 +287,30 @@ function ReportPage() {
                     <CardTitle
                       id="nickname"
                       className="text-hMd grow font-IBMPlexSansMedium"
-                      {...contentEditableMutation(updateReport, "name", "Untitled Report")}
+                      {...contentEditableMutation(
+                        updateReport,
+                        'name',
+                        'Untitled Report'
+                      )}
                     >
                       {report?.data?.mapReport.name}
                     </CardTitle>
                     <DropdownMenu>
                       <DropdownMenuTrigger>
-                        <MoreVertical className='w-3' />
+                        <MoreVertical className="w-3" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent side="right" align="start">
                         {report?.data?.mapReport && (
                           <DropdownMenuItem onClick={refreshReportDataQueries}>
-                            <RefreshCcw className='w-4 mr-2' />
+                            <RefreshCcw className="w-4 mr-2" />
                             Refresh
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => setDeleteOpen(true)} className='text-red-400'>
-                          <Trash className='w-4 mr-2' />
+                        <DropdownMenuItem
+                          onClick={() => setDeleteOpen(true)}
+                          className="text-red-400"
+                        >
+                          <Trash className="w-4 mr-2" />
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -269,32 +318,35 @@ function ReportPage() {
                   </>
                 )}
               </CardHeader>
-            {report?.data?.mapReport && (
-              <CardContent className='mt-4 grid grid-cols-1 gap-2'>
-                {toggles.map(({ icon: Icon, label, enabled, toggle }) => (
-                  <div
-                    key={label}
-                    className='hover:bg-meepGray-100 px-0 flex flex-row gap-2 items-center overflow-hidden text-nowrap text-ellipsis cursor-pointer'
-                    onClick={toggle}>
-                    <div className={twMerge(
-                      'relative rounded inline-block h-9 w-9',
-                      enabled ? "bg-meepGray-800" : "bg-meepGray-100"
-                    )}>
-                      <Icon className={twMerge(
-                        "w-4 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2", 
-                        enabled && "text-white"
-                      )} />
+              {report?.data?.mapReport && (
+                <CardContent className="mt-4 grid grid-cols-1 gap-2">
+                  {toggles.map(({ icon: Icon, label, enabled, toggle }) => (
+                    <div
+                      key={label}
+                      className="hover:bg-meepGray-100 px-0 flex flex-row gap-2 items-center overflow-hidden text-nowrap text-ellipsis cursor-pointer"
+                      onClick={toggle}
+                    >
+                      <div
+                        className={twMerge(
+                          'relative rounded inline-block h-9 w-9',
+                          enabled ? 'bg-meepGray-800' : 'bg-meepGray-100'
+                        )}
+                      >
+                        <Icon
+                          className={twMerge(
+                            'w-4 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
+                            enabled && 'text-white'
+                          )}
+                        />
+                      </div>
+                      {label}
                     </div>
-                    {label}
-                  </div>
-                ))}
-              </CardContent>
-            )}
+                  ))}
+                </CardContent>
+              )}
             </Card>
             {/* Data config card */}
-            {report?.data?.mapReport && isDataConfigOpen && (
-              <DataConfigPanel />
-            )}
+            {report?.data?.mapReport && isDataConfigOpen && <DataConfigPanel />}
           </div>
         </aside>
         {report?.data?.mapReport && isConstituencyPanelOpen && (
@@ -308,21 +360,21 @@ function ReportPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription className="text-base">
-              This action cannot be undone. This will permanently delete
-              this report.
+              This action cannot be undone. This will permanently delete this
+              report.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
-              className={buttonVariants({ variant: "outline" })}
+              className={buttonVariants({ variant: 'outline' })}
             >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                deleteReport();
+                deleteReport()
               }}
-              className={buttonVariants({ variant: "destructive" })}
+              className={buttonVariants({ variant: 'destructive' })}
             >
               Confirm delete
             </AlertDialogAction>
@@ -330,7 +382,7 @@ function ReportPage() {
         </AlertDialogContent>
       </AlertDialog>
     </>
-  );
+  )
 }
 
 const GET_MAP_REPORT = gql`
@@ -345,7 +397,7 @@ const GET_MAP_REPORT = gql`
         slug
         name
       }
-      ... MapReportPage
+      ...MapReportPage
     }
   }
   ${MAP_REPORT_FRAGMENT}

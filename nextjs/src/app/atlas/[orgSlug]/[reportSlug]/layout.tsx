@@ -1,7 +1,10 @@
-import { GetPublicMapReportQuery, GetPublicMapReportQueryVariables } from "@/__generated__/graphql";
-import { Metadata } from "next";
-import { getClient } from "@/services/apollo-client";
-import { gql } from "@apollo/client";
+import {
+  GetPublicMapReportQuery,
+  GetPublicMapReportQueryVariables,
+} from '@/__generated__/graphql'
+import { getClient } from '@/services/apollo-client'
+import { gql } from '@apollo/client'
+import { Metadata } from 'next'
 
 type Params = {
   orgSlug: string
@@ -11,21 +14,28 @@ type Params = {
 export default async function Layout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
-    <div className='h-dvh flex flex-col'>
+    <div className="h-dvh flex flex-col">
       <main className="h-full relative overflow-x-hidden overflow-y-hidden flex-grow">
         {children}
       </main>
     </div>
-  );
+  )
 }
 
-export async function generateMetadata({ params: { orgSlug, reportSlug } }: { params: Params }): Promise<Metadata> {
+export async function generateMetadata({
+  params: { orgSlug, reportSlug },
+}: {
+  params: Params
+}): Promise<Metadata> {
   try {
-    const client = getClient();
-    const query = await client.query<GetPublicMapReportQuery, GetPublicMapReportQueryVariables>({
+    const client = getClient()
+    const query = await client.query<
+      GetPublicMapReportQuery,
+      GetPublicMapReportQueryVariables
+    >({
       query: GET_MAP_REPORT_NAME,
       variables: { orgSlug, reportSlug },
     })
@@ -36,7 +46,7 @@ export async function generateMetadata({ params: { orgSlug, reportSlug } }: { pa
   } catch (e) {
     console.error("Couldn't generate layout", e)
     return {
-      title: "Public map",
+      title: 'Public map',
     }
   }
 }

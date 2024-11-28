@@ -1,31 +1,34 @@
-import React from "react";
-import { ComponentConfig } from "@measured/puck";
+import { ComponentConfig } from '@measured/puck'
 
 export type ImageProps = {
   url: string
   width?: string
   height?: string
-};
+}
 
 export const Image: ComponentConfig<ImageProps> = {
-  label: "Image",
+  label: 'Image',
   fields: {
     url: {
-      type: "text",
+      type: 'text',
     },
     width: {
-      type: "text",
+      type: 'text',
     },
     height: {
-      type: "text",
+      type: 'text',
     },
   },
   render: ({ url, width, height }) => {
     return (
-      <img className='object-fill w-full' style={{
-        width: width,
-        height: height,
-      }} src={url} />
-    );
+      <img
+        className="object-fill w-full"
+        style={{
+          width: width,
+          height: height,
+        }}
+        src={url}
+      />
+    )
   },
-};
+}

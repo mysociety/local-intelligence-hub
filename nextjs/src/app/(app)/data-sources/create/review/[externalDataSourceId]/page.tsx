@@ -1,17 +1,21 @@
-"use client";
+'use client'
 
-import { Button } from "@/components/ui/button";
-import { useContext, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { CreateAutoUpdateFormContext } from "../../NewExternalDataSourceWrapper";
-import { gql, useQuery } from "@apollo/client";
 import {
   AutoUpdateCreationReviewQuery,
   AutoUpdateCreationReviewQueryVariables,
-} from "@/__generated__/graphql";
-import { ExternalDataSourceCard, DATA_SOURCE_FRAGMENT, TriggerUpdateButton } from "@/components/ExternalDataSourceCard";
-import { LoadingIcon } from "@/components/ui/loadingIcon";
-import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
+} from '@/__generated__/graphql'
+import { DataSourceFieldLabel } from '@/components/DataSourceIcon'
+import {
+  DATA_SOURCE_FRAGMENT,
+  ExternalDataSourceCard,
+  TriggerUpdateButton,
+} from '@/components/ExternalDataSourceCard'
+import { Button } from '@/components/ui/button'
+import { LoadingIcon } from '@/components/ui/loadingIcon'
+import { gql, useQuery } from '@apollo/client'
+import { useRouter } from 'next/navigation'
+import { useContext, useEffect } from 'react'
+import { CreateAutoUpdateFormContext } from '../../NewExternalDataSourceWrapper'
 
 const GET_UPDATE_CONFIG = gql`
   query AutoUpdateCreationReview($ID: ID!) {
@@ -39,15 +43,15 @@ const GET_UPDATE_CONFIG = gql`
     }
   }
   ${DATA_SOURCE_FRAGMENT}
-`;
+`
 
 export default function Page({
   params: { externalDataSourceId },
 }: {
-  params: { externalDataSourceId: string };
+  params: { externalDataSourceId: string }
 }) {
-  const router = useRouter();
-  const context = useContext(CreateAutoUpdateFormContext);
+  const router = useRouter()
+  const context = useContext(CreateAutoUpdateFormContext)
 
   useEffect(() => {
     context.setStep(4)
@@ -60,7 +64,7 @@ export default function Page({
     variables: {
       ID: externalDataSourceId,
     },
-  });
+  })
 
   if (pageQuery.error) {
     return (
@@ -68,7 +72,7 @@ export default function Page({
         <h1>Error</h1>
         <p>{pageQuery.error.message}</p>
       </div>
-    );
+    )
   }
 
   return (
@@ -82,24 +86,21 @@ export default function Page({
           <ul className="list-disc list-outside pl-4 space-y-3 mt-3">
             {pageQuery.data?.externalDataSource.automatedWebhooks ? (
               <li className="text-meepGray-300 max-w-sm">
-                <span className='align-middle'>
-                  Active auto-update webhooks to start updating your data source when the 
+                <span className="align-middle">
+                  Active auto-update webhooks to start updating your data source
+                  when the
                 </span>
                 <DataSourceFieldLabel
-                  className='align-middle'
+                  className="align-middle"
                   label={pageQuery.data?.externalDataSource.geographyColumn}
                   crmType={pageQuery.data?.externalDataSource.crmType}
                 />
-                <span className='align-middle'>
-                  field changes.
-                </span>
+                <span className="align-middle">field changes.</span>
               </li>
             ) : pageQuery.data?.externalDataSource.webhookUrl ? (
               <li className="text-meepGray-300 max-w-sm">
                 <div className="flex flex-col gap-4">
-                  <p>
-                    Webhook URL for auto-imports and auto-updates:
-                  </p>
+                  <p>Webhook URL for auto-imports and auto-updates:</p>
                   <code className="bg-black p-2 rounded">
                     {pageQuery.data.externalDataSource.webhookUrl}
                   </code>
@@ -110,7 +111,9 @@ export default function Page({
                 </div>
               </li>
             ) : null}
-            <li className="text-meepGray-300 max-w-sm">Trigger an update to see the data source in action.</li>
+            <li className="text-meepGray-300 max-w-sm">
+              Trigger an update to see the data source in action.
+            </li>
           </ul>
         </header>
       ) : (
@@ -133,19 +136,22 @@ export default function Page({
             />
           </div>
           <div>
-            <TriggerUpdateButton id={externalDataSourceId} className='w-full' variant='reverse' />
+            <TriggerUpdateButton
+              id={externalDataSourceId}
+              className="w-full"
+              variant="reverse"
+            />
           </div>
         </>
       )}
       <Button
-        variant={"outline"}
+        variant={'outline'}
         onClick={() => {
-          router.push(`/data-sources`);
+          router.push(`/data-sources`)
         }}
       >
         View all data sources
       </Button>
     </div>
-  );
+  )
 }
-
