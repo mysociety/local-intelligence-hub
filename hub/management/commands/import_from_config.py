@@ -1,3 +1,5 @@
+import json
+
 from django.conf import settings
 
 import pandas as pd
@@ -10,7 +12,7 @@ from .base_importers import BaseImportFromDataFrameCommand
 class Command(BaseImportFromDataFrameCommand):
     help = "Import based on config"
 
-    config_file = settings.BASE_DIR / "conf" / "imports.csv"
+    json_config_file = settings.BASE_DIR / "conf" / "imports.json"
 
     defaults_cols = [
         "label",
@@ -39,12 +41,13 @@ class Command(BaseImportFromDataFrameCommand):
         )
 
     def get_configs(self, import_name):
-        df = pd.read_csv(self.config_file)
-
-        df = df.loc[df["name"] == import_name]
         confs = []
-        for _, conf in df.iterrows():
-            confs.append(conf)
+
+        with open(self.json_config_file) as config:
+            c = json.load(config)
+            for conf in c:
+                if conf["name"] == import_name:
+                    confs.append(conf)
 
         return confs
 
@@ -90,7 +93,10 @@ class Command(BaseImportFromDataFrameCommand):
         defaults["comparators"] = comparators
 
         for col in self.defaults_cols:
-            defaults[col] = row[col]
+            val = row[col]
+            if val is None:
+                val = ""
+            defaults[col] = val
 
         if pd.isna(defaults["exclude_countries"]):
             defaults["exclude_countries"] = []
