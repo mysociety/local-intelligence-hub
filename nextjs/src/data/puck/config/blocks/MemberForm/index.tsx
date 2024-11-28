@@ -1,57 +1,61 @@
-import React, { FormEvent, useState } from "react";
-import { ComponentConfig, FieldLabel } from "@measured/puck";
-import { gql, useMutation, useQuery } from "@apollo/client";
 import {
   AddMemberMutation,
   AddMemberMutationVariables,
   DataSourceType,
   HubListDataSourcesQuery,
   HubListDataSourcesQueryVariables,
-} from "@/__generated__/graphql";
-import { useAtomValue } from "jotai";
-import { currentOrganisationIdAtom } from "@/data/organisation";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+} from '@/__generated__/graphql'
+import { currentOrganisationIdAtom } from '@/data/organisation'
+import { gql, useMutation, useQuery } from '@apollo/client'
+import { ComponentConfig, FieldLabel } from '@measured/puck'
+import { useAtomValue } from 'jotai'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { FormEvent, useState } from 'react'
 
 export type MemberFormProps = {
-  successRedirect: string;
-  externalDataSourceIds: string[];
-};
+  successRedirect: string
+  externalDataSourceIds: string[]
+}
 
 const DataSourceSelect = ({
   value,
   onChange,
 }: {
-  value: string[] | undefined;
-  onChange: (value: string[]) => void;
+  value: string[] | undefined
+  onChange: (value: string[]) => void
 }) => {
-  const currentOrganisationId = useAtomValue(currentOrganisationIdAtom);
+  const currentOrganisationId = useAtomValue(currentOrganisationIdAtom)
   const { loading, error, data } = useQuery<
     HubListDataSourcesQuery,
     HubListDataSourcesQueryVariables
   >(HUB_LIST_DATA_SOURCES, {
     variables: { currentOrganisationId },
-  });
+  })
   if (loading) {
-    return <span>Loading...</span>;
+    return <span>Loading...</span>
   }
   if (error) {
-    return <span>{String(error)}</span>;
+    return <span>{String(error)}</span>
   }
   const memberLists =
     data?.myOrganisations
       .flatMap((o) => o.externalDataSources)
-      .filter((source) => source.dataType === DataSourceType.Member || source.dataType === DataSourceType.Group) || [];
+      .filter(
+        (source) =>
+          source.dataType === DataSourceType.Member ||
+          source.dataType === DataSourceType.Group
+      ) || []
   if (!memberLists.length) {
     return (
       <span>
-        No member lists, add one <Link href="/data-sources">here</Link>.
+        No membership lists, add one <Link href="/data-sources">here</Link>.
       </span>
-    );
+    )
   }
   const onChangeSelect = (selectIndex: number, selectValue: string) => {
     // Ensure value has 3 elements
-    value = ["", "", ""].map((v, i) => {
+    value = ['', '', ''].map((v, i) => {
       if (value && value[i]) {
         return value[i]
       }
@@ -66,7 +70,7 @@ const DataSourceSelect = ({
         <label>All Members List</label>
         <select
           className="border p-2"
-          value={value ? value[0] : ""}
+          value={value ? value[0] : ''}
           onChange={(e) => onChangeSelect(0, e.target.value)}
           required
         >
@@ -82,7 +86,7 @@ const DataSourceSelect = ({
         <label>Communication Consent Members List</label>
         <select
           className="border p-2"
-          value={value ? value[1] : ""}
+          value={value ? value[1] : ''}
           onChange={(e) => onChangeSelect(1, e.target.value)}
         >
           <option value="">Select Data Source</option>
@@ -97,7 +101,7 @@ const DataSourceSelect = ({
         <label>Groups List</label>
         <select
           className="border p-2"
-          value={value ? value[2] : ""}
+          value={value ? value[2] : ''}
           onChange={(e) => onChangeSelect(2, e.target.value)}
           required
         >
@@ -110,18 +114,18 @@ const DataSourceSelect = ({
         </select>
       </div>
     </>
-  );
-};
+  )
+}
 
 export const MemberForm: ComponentConfig<MemberFormProps> = {
-  label: "MemberForm",
+  label: 'MemberForm',
   fields: {
     successRedirect: {
-      type: "text",
-      label: "Success page slug"
+      type: 'text',
+      label: 'Success page slug',
     },
     externalDataSourceIds: {
-      type: "custom",
+      type: 'custom',
       render: ({ onChange, value }) => (
         <FieldLabel label="Data Source">
           <DataSourceSelect value={value} onChange={onChange} />
@@ -132,45 +136,49 @@ export const MemberForm: ComponentConfig<MemberFormProps> = {
   // TODO: make the form fields configurable
   render: ({ successRedirect, externalDataSourceIds }) => {
     return (
-      <MemberFormComponent successRedirect={successRedirect} externalDataSourceIds={externalDataSourceIds} />
-    );
+      <MemberFormComponent
+        successRedirect={successRedirect}
+        externalDataSourceIds={externalDataSourceIds}
+      />
+    )
   },
-};
+}
 
 const MemberFormComponent = ({
   successRedirect,
   externalDataSourceIds,
 }: {
-  successRedirect: string;
-  externalDataSourceIds: string[];
+  successRedirect: string
+  externalDataSourceIds: string[]
 }) => {
-  const router = useRouter();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
+  const router = useRouter()
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [email, setEmail] = useState('')
   const [postcode, setPostcode] = useState(
-    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("postcode") || ""
-  );
-  const [isGroup, setIsGroup] = useState(false);
-  const [groupName, setGroupName] = useState("");
-  const [groupURL, setGroupURL] = useState("");
-  const [groupSocial, setGroupSocial] = useState("");
-  const [heardFromOrganisationName, setHeardFromOrganisationName] =
-    useState("");
-  const [communicationConsent, setCommunicationConsent] = useState(false);
-  const [mapConsent, setMapConsent] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+    (typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('postcode')) ||
+      ''
+  )
+  const [isGroup, setIsGroup] = useState(false)
+  const [groupName, setGroupName] = useState('')
+  const [groupURL, setGroupURL] = useState('')
+  const [groupSocial, setGroupSocial] = useState('')
+  const [heardFromOrganisationName, setHeardFromOrganisationName] = useState('')
+  const [communicationConsent, setCommunicationConsent] = useState(false)
+  const [mapConsent, setMapConsent] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const [addMemberMutation] = useMutation<
     AddMemberMutation,
     AddMemberMutationVariables
-  >(ADD_MEMBER);
+  >(ADD_MEMBER)
 
   const onSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+    e.preventDefault()
+    setError('')
+    setLoading(true)
 
     let success = true
 
@@ -185,8 +193,9 @@ const MemberFormComponent = ({
       MAP_CONSENT: mapConsent,
     }
 
-    // Add the member to the main members list [0]
-    const [membersList, communicationMembersList, groupList] = externalDataSourceIds;
+    // Add the member to the main members list
+    const [membersList, communicationMembersList, groupList] =
+      externalDataSourceIds
     const allMembersList = groupName ? groupList : membersList
     try {
       const { data } = await addMemberMutation({
@@ -195,15 +204,15 @@ const MemberFormComponent = ({
           email,
           postcode,
           customFields,
-          tags: []
+          tags: [],
         },
-      });
+      })
       if (!data?.addMember) {
         success = false
       }
 
-      // If extra consent given, add to extra list [1]
-      if (communicationConsent) {
+      // If extra consent given, add to extra list
+      if (communicationConsent && allMembersList !== communicationMembersList) {
         const { data } = await addMemberMutation({
           variables: {
             externalDataSourceId: communicationMembersList,
@@ -212,31 +221,32 @@ const MemberFormComponent = ({
             customFields: {
               ...customFields,
             },
-            tags: ["MP-pledge-24"]
+            tags: ['MP-pledge-24'],
           },
-        });
+        })
         if (!data?.addMember) {
           success = false
         }
       }
 
       if (success) {
-        router.push("/" + successRedirect)
+        router.push('/' + successRedirect)
         return
       } else {
-        setError("Unknown error, please try again later");
+        setError('Unknown error, please try again later')
       }
     } catch (e) {
-      setError("Unknown error, please try again later");
+      setError('Unknown error, please try again later')
     }
 
     setLoading(false)
-  };
+  }
 
-  const groupSocialValid = groupSocial.startsWith('https://') || groupSocial.includes('@')
-  const formInvalid = Boolean(groupSocial && !groupSocialValid);
+  const groupSocialValid =
+    groupSocial.startsWith('https://') || groupSocial.includes('@')
+  const formInvalid = Boolean(groupSocial && !groupSocialValid)
 
-  const inputClassName = "p-2 rounded-sm border border-meepGray-200";
+  const inputClassName = 'p-2 rounded-sm border border-meepGray-200'
 
   return (
     <form onSubmit={onSubmit}>
@@ -297,8 +307,8 @@ const MemberFormComponent = ({
             required
           />
           <p className="text-hub-primary-700">
-            We{"'"}re only collecting postcodes to map your pledge to the right constituency.
-            We won't share or display your postcode.
+            We{"'"}re only collecting postcodes to map your pledge to the right
+            constituency. We won't share or display your postcode.
           </p>
         </div>
         <div className="flex align-items-center gap-2">
@@ -341,7 +351,8 @@ const MemberFormComponent = ({
             </div>
             <div className="flex flex-col space-y-2">
               <label className="" htmlFor="group-social">
-                (Optional) Please share the best way others can connect with your group (Facebook page, group email, etc.)
+                (Optional) Please share the best way others can connect with
+                your group (Facebook page, group email, etc.)
               </label>
               <input
                 id="group-social"
@@ -351,7 +362,10 @@ const MemberFormComponent = ({
                 onChange={(e) => setGroupSocial(e.target.value)}
               />
               {groupSocial && !groupSocialValid ? (
-                <small className="text-red-500">Must be a URL (e.g. https://facebook.com/my-group) or an email address.</small>
+                <small className="text-red-500">
+                  Must be a URL (e.g. https://facebook.com/my-group) or an email
+                  address.
+                </small>
               ) : null}
             </div>
           </>
@@ -396,15 +410,15 @@ const MemberFormComponent = ({
         </div>
         <button
           disabled={loading || formInvalid}
-          className={`${!loading ? "bg-hub-primary-600" : "bg-meepGray-300"} text-white text-lg rounded-md p-2`}
+          className={`${!loading ? 'bg-hub-primary-600' : 'bg-meepGray-300'} text-white text-lg rounded-md p-2`}
         >
           {loading ? 'Pledging...' : 'Pledge'}
         </button>
         {error ? <span className="text-red-500">{error}</span> : null}
       </div>
     </form>
-  );
-};
+  )
+}
 
 const HUB_LIST_DATA_SOURCES = gql(`
   query HubListDataSources($currentOrganisationId: ID!) {
@@ -417,10 +431,10 @@ const HUB_LIST_DATA_SOURCES = gql(`
       }
     }
   }
-`);
+`)
 
 const ADD_MEMBER = gql(`
   mutation AddMember($externalDataSourceId: String!, $email: String!, $postcode: String!, $customFields: JSON!, $tags: [String!]!) {
     addMember(externalDataSourceId: $externalDataSourceId, email: $email, postcode: $postcode, customFields: $customFields, tags: $tags)
   }
-`);
+`)

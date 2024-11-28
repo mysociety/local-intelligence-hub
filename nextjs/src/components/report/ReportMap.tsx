@@ -1,8 +1,7 @@
-"use client"
+'use client'
 
 import {
   AnalyticalAreaType,
-  DataSourceType,
   MapReportConstituencyStatsQuery,
   MapReportConstituencyStatsQueryVariables,
   MapReportLayerAnalyticsQuery,
@@ -13,22 +12,29 @@ import {
   MapReportRegionStatsQueryVariables,
   MapReportWardStatsQuery,
   MapReportWardStatsQueryVariables,
-} from "@/__generated__/graphql";
-import { Fragment, useContext, useEffect, useState } from "react";
-import Map, { Layer, Source, LayerProps, Popup, ViewState, MapboxGeoJSONFeature } from "react-map-gl";
-import { gql, useFragment, useQuery } from "@apollo/client";
-import { ReportContext } from "@/app/reports/[id]/context";
-import { LoadingIcon } from "@/components/ui/loadingIcon";
+} from '@/__generated__/graphql'
+import { ReportContext } from '@/app/reports/[id]/context'
+import { LoadingIcon } from '@/components/ui/loadingIcon'
+import { BACKEND_URL } from '@/env'
+import { authenticationHeaders } from '@/lib/auth'
+import {
+  PlaceholderLayer,
+  constituencyPanelTabAtom,
+  isConstituencyPanelOpenAtom,
+  layerColour,
+  selectedConstituencyAtom,
+  selectedSourceMarkerAtom,
+  useLoadedMap,
+  useMapIcons,
+} from '@/lib/map'
+import { gql, useQuery } from '@apollo/client'
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { interpolateInferno } from 'd3-scale-chromatic'
-import { Point } from "geojson"
-import { atom, useAtom } from "jotai";
-import { ErrorBoundary } from "next/dist/client/components/error-boundary";
-import { z } from "zod";
-import { layerColour, useLoadedMap, isConstituencyPanelOpenAtom, MAP_REPORT_LAYERS_SUMMARY, layerIdColour, useMapIcons, PlaceholderLayer } from "@/lib/map";
-import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel";
-import { authenticationHeaders } from "@/lib/auth";
-import { BACKEND_URL } from "@/env";
+import { Point } from 'geojson'
+import { atom, useAtom } from 'jotai'
+import { ErrorBoundary } from 'next/dist/client/components/error-boundary'
+import { Fragment, useContext, useEffect } from 'react'
+import Map, { Layer, LayerProps, Popup, Source, ViewState } from 'react-map-gl'
 
 const MAX_REGION_ZOOM = 8
 export const MAX_CONSTITUENCY_ZOOM = 10
@@ -37,201 +43,269 @@ const MIN_MEMBERS_ZOOM = 12
 const viewStateAtom = atom<Partial<ViewState>>({
   longitude: -2.296605,
   latitude: 53.593349,
-  zoom: 6
+  zoom: 6,
 })
 
-const selectedSourceMarkerAtom = atom<MapboxGeoJSONFeature | null>(null)
-
-export const selectedConstituencyAtom = atom<string | null>(null)
-
-export function ReportMap () {
+export function ReportMap() {
   const { id, displayOptions } = useContext(ReportContext)
-  const analytics = useQuery<MapReportLayerAnalyticsQuery, MapReportLayerAnalyticsQueryVariables>(MAP_REPORT_LAYER_ANALYTICS, {
+  const analytics = useQuery<
+    MapReportLayerAnalyticsQuery,
+    MapReportLayerAnalyticsQueryVariables
+  >(MAP_REPORT_LAYER_ANALYTICS, {
     variables: {
       reportID: id,
-    }
+    },
   })
 
-  const regionAnalytics = useQuery<MapReportRegionStatsQuery, MapReportRegionStatsQueryVariables>(MAP_REPORT_REGION_STATS, {
+  const regionAnalytics = useQuery<
+    MapReportRegionStatsQuery,
+    MapReportRegionStatsQueryVariables
+  >(MAP_REPORT_REGION_STATS, {
     variables: {
       reportID: id,
-    }
+    },
   })
 
-  const constituencyAnalytics = useQuery<MapReportConstituencyStatsQuery, MapReportConstituencyStatsQueryVariables>(MAP_REPORT_CONSTITUENCY_STATS, {
+  const constituencyAnalytics = useQuery<
+    MapReportConstituencyStatsQuery,
+    MapReportConstituencyStatsQueryVariables
+  >(MAP_REPORT_CONSTITUENCY_STATS, {
     variables: {
       reportID: id,
-      analyticalAreaType: displayOptions.analyticalAreaType
-    }
+      analyticalAreaType: displayOptions.analyticalAreaType,
+    },
   })
 
-  const wardAnalytics = useQuery<MapReportWardStatsQuery, MapReportWardStatsQueryVariables>(MAP_REPORT_WARD_STATS, {
+  const wardAnalytics = useQuery<
+    MapReportWardStatsQuery,
+    MapReportWardStatsQueryVariables
+  >(MAP_REPORT_WARD_STATS, {
     variables: {
       reportID: id,
-    }
+    },
   })
 
   const mapbox = useLoadedMap()
 
   // TODO: unify this and HubMap's TILESETS
-  const TILESETS: Record<"EERs" | "constituencies" | "constituencies2024" | "wards", {
-    name: string,
-    singular: string,
-    mapboxSourceId: string,
-    sourceLayerId?: string,
-    promoteId: string,
-    labelId: string,
-    mapboxSourceProps?: { maxzoom?: number },
-    mapboxLayerProps?: Omit<LayerProps, 'type' | 'url' | 'id' | 'paint' | 'layout'>,
-    data: MapReportRegionStatsQuery['mapReport']['importedDataCountByRegion'],
-    downloadUrl?: string
-  }> = {
+  const TILESETS: Record<
+    'EERs' | 'constituencies' | 'constituencies2024' | 'wards',
+    {
+      name: string
+      singular: string
+      mapboxSourceId: string
+      sourceLayerId?: string
+      promoteId: string
+      labelId: string
+      mapboxSourceProps?: { maxzoom?: number }
+      mapboxLayerProps?: Omit<
+        LayerProps,
+        'type' | 'url' | 'id' | 'paint' | 'layout'
+      >
+      data: MapReportRegionStatsQuery['mapReport']['importedDataCountByRegion']
+      downloadUrl?: string
+    }
+  > = {
     EERs: {
-      name: "regions",
-      singular: "region",
-      mapboxSourceId: "commonknowledge.awsfhx20",
-      downloadUrl: "https://ckan.publishing.service.gov.uk/dataset/european-electoral-regions-december-2018-boundaries-uk-buc1/resource/b268c97f-2507-4477-9149-0a0c5d2bfbca",
-      sourceLayerId: "European_Electoral_Regions_De-bxyqod",
-      promoteId: "eer18cd",
-      labelId: "eer18nm",
+      name: 'regions',
+      singular: 'region',
+      mapboxSourceId: 'commonknowledge.awsfhx20',
+      downloadUrl:
+        'https://ckan.publishing.service.gov.uk/dataset/european-electoral-regions-december-2018-boundaries-uk-buc1/resource/b268c97f-2507-4477-9149-0a0c5d2bfbca',
+      sourceLayerId: 'European_Electoral_Regions_De-bxyqod',
+      promoteId: 'eer18cd',
+      labelId: 'eer18nm',
       data: regionAnalytics.data?.mapReport.importedDataCountByRegion || [],
       mapboxSourceProps: {
-      //   maxzoom: MAX_REGION_ZOOM
+        //   maxzoom: MAX_REGION_ZOOM
       },
       mapboxLayerProps: {
-        maxzoom: MAX_REGION_ZOOM
-      }
+        maxzoom: MAX_REGION_ZOOM,
+      },
     },
     constituencies: {
-      name: "GE2019 constituencies",
-      singular: "constituency",
-      mapboxSourceId: "commonknowledge.4xqg91lc",
-      sourceLayerId: "Westminster_Parliamentary_Con-6i1rlq",
-      promoteId: "pcon16cd",
-      labelId: "pcon16nm",
-      data: constituencyAnalytics.data?.mapReport.importedDataCountByConstituency || [],
+      name: 'GE2019 constituencies',
+      singular: 'constituency',
+      mapboxSourceId: 'commonknowledge.4xqg91lc',
+      sourceLayerId: 'Westminster_Parliamentary_Con-6i1rlq',
+      promoteId: 'pcon16cd',
+      labelId: 'pcon16nm',
+      data:
+        constituencyAnalytics.data?.mapReport.importedDataCountByConstituency ||
+        [],
       mapboxSourceProps: {},
       mapboxLayerProps: {
         minzoom: MAX_REGION_ZOOM,
         maxzoom: MAX_CONSTITUENCY_ZOOM,
-      }
+      },
     },
     constituencies2024: {
-      name: "GE2024 constituencies",
-      singular: "constituency",
-      mapboxSourceId: "commonknowledge.39dnumdm",
-      sourceLayerId: "constituencies_2024_simplifie-7w220i",
-      promoteId: "PCON24CD",
-      labelId: "PCON24NM",
-      data: constituencyAnalytics.data?.mapReport.importedDataCountByConstituency || [],
+      name: 'GE2024 constituencies',
+      singular: 'constituency',
+      mapboxSourceId: 'commonknowledge.39dnumdm',
+      sourceLayerId: 'constituencies_2024_simplifie-7w220i',
+      promoteId: 'PCON24CD',
+      labelId: 'PCON24NM',
+      data:
+        constituencyAnalytics.data?.mapReport.importedDataCountByConstituency ||
+        [],
       mapboxSourceProps: {},
       mapboxLayerProps: {
         minzoom: MAX_REGION_ZOOM,
         maxzoom: MAX_CONSTITUENCY_ZOOM,
-      }
+      },
     },
     wards: {
-      name: "wards",
-      singular: "ward",
-      mapboxSourceId: "commonknowledge.0rzbo365",
-      sourceLayerId: "Wards_Dec_2023_UK_Boundaries_-7wzb6g",
-      promoteId: "WD23CD",
-      labelId: "WD23NM",
+      name: 'wards',
+      singular: 'ward',
+      mapboxSourceId: 'commonknowledge.0rzbo365',
+      sourceLayerId: 'Wards_Dec_2023_UK_Boundaries_-7wzb6g',
+      promoteId: 'WD23CD',
+      labelId: 'WD23NM',
       data: wardAnalytics.data?.mapReport.importedDataCountByWard || [],
       mapboxSourceProps: {},
       mapboxLayerProps: {
         minzoom: MAX_CONSTITUENCY_ZOOM,
-      }
-    }
+      },
+    },
   }
 
   function addChloroplethDataToMapbox(
     gss: string,
     count: number,
     mapboxSourceId: string,
-    sourceLayerId: string,
+    sourceLayerId: string
   ) {
-    mapbox.loadedMap?.setFeatureState({
-      source: mapboxSourceId,
-      sourceLayer: sourceLayerId,
-      id: gss,
-    }, {
-      count: count
-    })
+    mapbox.loadedMap?.setFeatureState(
+      {
+        source: mapboxSourceId,
+        sourceLayer: sourceLayerId,
+        id: gss,
+      },
+      {
+        count: count,
+      }
+    )
   }
 
   // Unless someone explicitly sets 2019 constituency, default to 2024 when zooming in
-  const constituencyTileset = displayOptions.analyticalAreaType === AnalyticalAreaType.ParliamentaryConstituency ? TILESETS.constituencies : TILESETS.constituencies2024
+  const constituencyTileset =
+    displayOptions.analyticalAreaType ===
+    AnalyticalAreaType.ParliamentaryConstituency
+      ? TILESETS.constituencies
+      : TILESETS.constituencies2024
 
-  useEffect(function setFeatureState() {
-    if (!mapbox.loadedMap) return
-    Object.values(TILESETS)?.forEach((tileset) => {
-      tileset.data?.forEach((area) => {
-        if (area?.gss && area?.count && tileset.sourceLayerId) {
-          try {
-            addChloroplethDataToMapbox(area.gss, area.count, tileset.mapboxSourceId, tileset.sourceLayerId)
-          } catch {
-            mapbox.loadedMap?.on('load', () => {
-              addChloroplethDataToMapbox(area.gss!, area.count, tileset.mapboxSourceId, tileset.sourceLayerId!) 
-            })
+  useEffect(
+    function setFeatureState() {
+      if (!mapbox.loadedMap) return
+      Object.values(TILESETS)?.forEach((tileset) => {
+        tileset.data?.forEach((area) => {
+          if (area?.gss && area?.count && tileset.sourceLayerId) {
+            try {
+              addChloroplethDataToMapbox(
+                area.gss,
+                area.count,
+                tileset.mapboxSourceId,
+                tileset.sourceLayerId
+              )
+            } catch {
+              mapbox.loadedMap?.on('load', () => {
+                addChloroplethDataToMapbox(
+                  area.gss!,
+                  area.count,
+                  tileset.mapboxSourceId,
+                  tileset.sourceLayerId!
+                )
+              })
+            }
           }
-        }
+        })
       })
-    })
-  }, [regionAnalytics, constituencyAnalytics, wardAnalytics, TILESETS, mapbox.loadedMap])
+    },
+    [
+      regionAnalytics,
+      constituencyAnalytics,
+      wardAnalytics,
+      TILESETS,
+      mapbox.loadedMap,
+    ]
+  )
 
   const requiredImages = [
     {
-      url: () => new URL('/markers/default.png', window.location.href).toString(),
-      name: 'meep-marker-0'
+      url: () =>
+        new URL('/markers/default.png', window.location.href).toString(),
+      name: 'meep-marker-0',
     },
     {
-      url: () => new URL('/markers/default-2.png', window.location.href).toString(),
-      name: 'meep-marker-1'
+      url: () =>
+        new URL('/markers/default-2.png', window.location.href).toString(),
+      name: 'meep-marker-1',
     },
     {
-      url: () => new URL('/markers/selected.png', window.location.href).toString(),
-      name: 'meep-marker-selected'
+      url: () =>
+        new URL('/markers/selected.png', window.location.href).toString(),
+      name: 'meep-marker-selected',
     },
   ]
 
   const loadedImages = useMapIcons(requiredImages, mapbox)
 
-  const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(selectedSourceMarkerAtom)
-  const [selectedConstituency, setSelectedConstituency] = useAtom(selectedConstituencyAtom)
+  const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(
+    selectedSourceMarkerAtom
+  )
+  const [selectedConstituency, setSelectedConstituency] = useAtom(
+    selectedConstituencyAtom
+  )
   const [tab, setTab] = useAtom(constituencyPanelTabAtom)
-  // const isConstituencyPanelOpenAtom
-  const [isConstituencyPanelOpen, setIsConstituencyPanelOpen] = useAtom(isConstituencyPanelOpenAtom)
+  const [isConstituencyPanelOpen, setIsConstituencyPanelOpen] = useAtom(
+    isConstituencyPanelOpenAtom
+  )
 
-  useEffect(function selectConstituency() {
-    mapbox.loadedMap?.on('mouseover', `${constituencyTileset.mapboxSourceId}-fill`, () => {
-      const canvas = mapbox.loadedMap?.getCanvas()
-      if (!canvas) return
-      canvas.style.cursor = 'pointer'
-    })
-    mapbox.loadedMap?.on('mouseleave', `${constituencyTileset.mapboxSourceId}-fill`, () => {
-      const canvas = mapbox.loadedMap?.getCanvas()
-      if (!canvas) return
-      canvas.style.cursor = ''
-    })
-    mapbox.loadedMap?.on('click', `${constituencyTileset.mapboxSourceId}-fill`, event => {
-      try {
-        const feature = event.features?.[0]
-        if (feature) {
-          if (feature.source === constituencyTileset.mapboxSourceId) {
-            const id = feature.properties?.[constituencyTileset.promoteId]
-            if (id) {
-              setSelectedConstituency(id)
-              setIsConstituencyPanelOpen(true)
-              setTab("selected")
+  useEffect(
+    function selectConstituency() {
+      mapbox.loadedMap?.on(
+        'mouseover',
+        `${constituencyTileset.mapboxSourceId}-fill`,
+        () => {
+          const canvas = mapbox.loadedMap?.getCanvas()
+          if (!canvas) return
+          canvas.style.cursor = 'pointer'
+        }
+      )
+      mapbox.loadedMap?.on(
+        'mouseleave',
+        `${constituencyTileset.mapboxSourceId}-fill`,
+        () => {
+          const canvas = mapbox.loadedMap?.getCanvas()
+          if (!canvas) return
+          canvas.style.cursor = ''
+        }
+      )
+      mapbox.loadedMap?.on(
+        'click',
+        `${constituencyTileset.mapboxSourceId}-fill`,
+        (event) => {
+          try {
+            const feature = event.features?.[0]
+            if (feature) {
+              if (feature.source === constituencyTileset.mapboxSourceId) {
+                const id = feature.properties?.[constituencyTileset.promoteId]
+                if (id) {
+                  setSelectedConstituency(id)
+                  setIsConstituencyPanelOpen(true)
+                  setTab('selected')
+                }
+              }
             }
+          } catch (e) {
+            console.error('Failed to select constituency', e)
           }
         }
-      } catch (e) {
-        console.error("Failed to select constituency", e)
-      }
-    })
-  }, [mapbox.loadedMap, displayOptions.analyticalAreaType, constituencyTileset])
+      )
+    },
+    [mapbox.loadedMap, displayOptions.analyticalAreaType, constituencyTileset]
+  )
 
   const [viewState, setViewState] = useAtom(viewStateAtom)
 
@@ -243,15 +317,16 @@ export function ReportMap () {
     variables: {
       genericDataId: String(selectedSourceMarker?.properties?.id),
     },
-  });
+  })
 
   const loadingLayers = [
-    { execution: analytics, label: "Report layers" },
-    { execution: regionAnalytics, label: "Regional stats" },
-    { execution: constituencyAnalytics, label: "Constituency stats" },
-    { execution: wardAnalytics, label: "Ward stats" }
+    { execution: analytics, label: 'Report layers' },
+    { execution: regionAnalytics, label: 'Regional stats' },
+    { execution: constituencyAnalytics, label: 'Constituency stats' },
+    { execution: wardAnalytics, label: 'Ward stats' },
   ]
-  const loading = loadingLayers.some((query) => query.execution.loading)
+  const loading =
+    loadingLayers.some((query) => query.execution.loading) || !mapbox.loaded
 
   return (
     <>
@@ -275,19 +350,19 @@ export function ReportMap () {
         onMove={(e) => setViewState(e.viewState)}
         mapStyle={
           displayOptions.showStreetDetails
-            ? "mapbox://styles/commonknowledge/clubx087l014y01mj1bv63yg8"
-            : "mapbox://styles/commonknowledge/clty3prwh004601pr4nqn7l9s"
+            ? 'mapbox://styles/commonknowledge/clubx087l014y01mj1bv63yg8'
+            : 'mapbox://styles/commonknowledge/clty3prwh004601pr4nqn7l9s'
         }
         onClick={() => setSelectedSourceMarker(null)}
         transformRequest={(url, resourceType) => {
-          if (url.includes(BACKEND_URL) && !url.includes("tiles.json")) {
+          if (url.includes(BACKEND_URL) && !url.includes('tiles.json')) {
             return {
               url,
               headers: authenticationHeaders(),
-              method: "GET",
-            };
+              method: 'GET',
+            }
           }
-          return { url };
+          return { url }
         }}
       >
         {mapbox.loaded && (
@@ -297,12 +372,12 @@ export function ReportMap () {
                 tileset.data.reduce(
                   (min, p) => (p?.count! < min ? p?.count! : min),
                   tileset.data?.[0]?.count!
-                ) || 0;
+                ) || 0
               let max =
                 tileset.data.reduce(
                   (max, p) => (p?.count! > max ? p?.count! : max),
                   tileset.data?.[0]?.count!
-                ) || 1;
+                ) || 1
 
               // Ensure min and max are different to fix interpolation errors
               if (min === max) {
@@ -315,40 +390,36 @@ export function ReportMap () {
 
               // Uses 0-1 for easy interpolation
               // go from 0-100% and return real numbers
-              const legendScale = scaleLinear()
-                .domain([0, 1])
-                .range([min, max]);
+              const legendScale = scaleLinear().domain([0, 1]).range([min, max])
 
               // Map real numbers to colours
               const colourScale = scaleSequential()
                 .domain([min, max])
-                .interpolator(interpolateInferno);
+                .interpolator(interpolateInferno)
 
               // Text scale
-              const textScale = scaleLinear()
-                .domain([min, max])
-                .range([1, 1.5]);
+              const textScale = scaleLinear().domain([min, max]).range([1, 1.5])
 
               const inDataFilter = [
-                "in",
-                ["get", tileset.promoteId],
-                ["literal", tileset.data.map((d) => d.gss)],
-              ];
+                'in',
+                ['get', tileset.promoteId],
+                ['literal', tileset.data.map((d) => d.gss || '')],
+              ]
 
-              let steps = Math.min(max, 30); // Max 30 steps
-              steps = Math.max(steps, 3); // Min 3 steps (for valid Mapbox fill-color rule)
+              let steps = Math.min(max, 30) // Max 30 steps
+              steps = Math.max(steps, 3) // Min 3 steps (for valid Mapbox fill-color rule)
               const colourStops = new Array(steps)
                 .fill(0)
                 .map((_, i) => i / steps)
                 .map((n) => {
                   return [legendScale(n), colourScale(legendScale(n))]
                 })
-                .flat();
+                .flat()
 
-              const SOURCE_FILL = `${tileset.name}_SOURCE_FILL`;
-              const SOURCE_STROKE = `${tileset.name}_SOURCE_STROKE`;
-              const SOURCE_LABEL = `${tileset.name}_SOURCE_LABEL`;
-              const SOURCE_POINTS = `${tileset.name}_SOURCE_POINTS`;
+              const SOURCE_FILL = `${tileset.name}_SOURCE_FILL`
+              const SOURCE_STROKE = `${tileset.name}_SOURCE_STROKE`
+              const SOURCE_LABEL = `${tileset.name}_SOURCE_LABEL`
+              const SOURCE_POINTS = `${tileset.name}_SOURCE_POINTS`
 
               return (
                 <Fragment key={tileset.mapboxSourceId}>
@@ -373,16 +444,16 @@ export function ReportMap () {
                     {...(tileset.data ? { filter: inDataFilter } : {})}
                     paint={{
                       // Shade the map by the count of imported data
-                      "fill-color": [
-                        "interpolate",
-                        ["linear"],
-                        ["to-number", ["feature-state", "count"], 0],
+                      'fill-color': [
+                        'interpolate',
+                        ['linear'],
+                        ['to-number', ['feature-state', 'count'], 0],
                         ...colourStops,
                       ],
-                      "fill-opacity": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
+                      'fill-opacity': [
+                        'interpolate',
+                        ['linear'],
+                        ['zoom'],
                         MAX_REGION_ZOOM,
                         0.5,
                         MAX_CONSTITUENCY_ZOOM,
@@ -400,9 +471,9 @@ export function ReportMap () {
                     source-layer={tileset.sourceLayerId}
                     type="line"
                     paint={{
-                      "line-color": "white",
-                      "line-width": 1.5,
-                      "line-opacity": 0.5,
+                      'line-color': 'white',
+                      'line-width': 1.5,
+                      'line-opacity': 0.5,
                     }}
                     {...(tileset.mapboxLayerProps || {})}
                   />
@@ -410,18 +481,18 @@ export function ReportMap () {
                     id={`${tileset.mapboxSourceId}-db-point`}
                     type="geojson"
                     data={{
-                      type: "FeatureCollection",
+                      type: 'FeatureCollection',
                       features: tileset.data
                         .filter((d) => d.gssArea?.point?.geometry)
                         .map((d) => ({
-                          type: "Feature",
+                          type: 'Feature',
                           geometry: d.gssArea?.point
                             ?.geometry! as GeoJSON.Point,
                           properties: {
                             count: d.count,
                             label: d.label,
                           },
-                        }))
+                        })),
                     }}
                   />
                   <Layer
@@ -430,30 +501,30 @@ export function ReportMap () {
                     source={`${tileset.mapboxSourceId}-db-point`}
                     type="symbol"
                     layout={{
-                      "symbol-spacing": 1000,
-                      "text-field": ["get", "count"],
-                      "text-size": [
-                        "interpolate",
-                        ["linear"],
-                        ["get", "count"],
+                      'symbol-spacing': 1000,
+                      'text-field': ['get', 'count'],
+                      'text-size': [
+                        'interpolate',
+                        ['linear'],
+                        ['get', 'count'],
                         min,
                         textScale(min) * 17,
                         max,
                         textScale(max) * 17,
                       ],
-                      "symbol-placement": "point",
-                      "text-offset": [0, -0.5],
-                      "text-allow-overlap": true,
-                      "text-ignore-placement": true,
-                      "text-font": [
-                        "DIN Offc Pro Medium",
-                        "Arial Unicode MS Bold",
+                      'symbol-placement': 'point',
+                      'text-offset': [0, -0.5],
+                      'text-allow-overlap': true,
+                      'text-ignore-placement': true,
+                      'text-font': [
+                        'DIN Offc Pro Medium',
+                        'Arial Unicode MS Bold',
                       ],
                     }}
                     paint={{
-                      "text-color": "white",
-                      "text-halo-color": "black",
-                      "text-halo-width": 0.3,
+                      'text-color': 'white',
+                      'text-halo-color': 'black',
+                      'text-halo-width': 0.3,
                     }}
                     {...(tileset.mapboxLayerProps || {})}
                   />
@@ -463,56 +534,56 @@ export function ReportMap () {
                     source={`${tileset.mapboxSourceId}-db-point`}
                     type="symbol"
                     layout={{
-                      "symbol-spacing": 1000,
-                      "text-field": ["get", "label"],
-                      "text-size": [
-                        "interpolate",
-                        ["linear"],
-                        ["get", "count"],
+                      'symbol-spacing': 1000,
+                      'text-field': ['get', 'label'],
+                      'text-size': [
+                        'interpolate',
+                        ['linear'],
+                        ['get', 'count'],
                         min,
                         textScale(min) * 9,
                         max,
                         textScale(max) * 9,
                       ],
-                      "text-font": [
-                        "DIN Offc Pro Medium",
-                        "Arial Unicode MS Bold",
+                      'text-font': [
+                        'DIN Offc Pro Medium',
+                        'Arial Unicode MS Bold',
                       ],
-                      "symbol-placement": "point",
-                      "text-offset": [0, 0.6],
+                      'symbol-placement': 'point',
+                      'text-offset': [0, 0.6],
                     }}
                     paint={{
-                      "text-color": "white",
-                      "text-opacity": 0.9,
-                      "text-halo-color": "black",
-                      "text-halo-width": 0.3,
+                      'text-color': 'white',
+                      'text-opacity': 0.9,
+                      'text-halo-color': 'black',
+                      'text-halo-width': 0.3,
                     }}
                     {...(tileset.mapboxLayerProps || {})}
                   />
                 </Fragment>
-              );
+              )
             })}
-            <PlaceholderLayer id={"PLACEHOLDER_SELECTION"} />
+            <PlaceholderLayer id={'PLACEHOLDER_SELECTION'} />
             {!!selectedConstituency && (
               <Layer
-                beforeId={"PLACEHOLDER_SELECTION"}
+                beforeId={'PLACEHOLDER_SELECTION'}
                 filter={[
-                  "in",
-                  ["get", constituencyTileset.promoteId],
-                  ["literal", selectedConstituency],
+                  'in',
+                  ['get', constituencyTileset.promoteId],
+                  ['literal', selectedConstituency],
                 ]}
                 id={`${constituencyTileset}-selected-line`}
                 source={constituencyTileset.mapboxSourceId}
                 source-layer={constituencyTileset.sourceLayerId}
                 type="line"
                 paint={{
-                  "line-color": "white",
-                  "line-width": 4,
-                  "line-opacity": 1,
+                  'line-color': 'white',
+                  'line-width': 4,
+                  'line-opacity': 1,
                 }}
               />
             )}
-            <PlaceholderLayer id={"PLACEHOLDER_MARKERS"} />
+            <PlaceholderLayer id={'PLACEHOLDER_MARKERS'} />
             {/* Wait for all icons to load */}
             {analytics.data?.mapReport.layers.map((layer, index) => {
               return (
@@ -521,12 +592,12 @@ export function ReportMap () {
                   index={index}
                   externalDataSourceId={layer?.source?.id}
                 />
-              );
+              )
             })}
             {!!selectedSourceMarker?.properties?.id && (
               <ErrorBoundary errorComponent={() => <></>}>
                 <Popup
-              key={selectedSourceMarker.properties.id}
+                  key={selectedSourceMarker.properties.id}
                   longitude={
                     (selectedSourceMarker.geometry as Point)
                       ?.coordinates?.[0] || 0
@@ -542,13 +613,13 @@ export function ReportMap () {
                   anchor="bottom"
                   offset={[0, -35] as any}
                 >
-              {selectedPointLoading ? (
-                <div className="font-IBMPlexMono p-2 space-y-1 bg-white">
-                  <div className="-space-y-1">
-                    <div className="text-meepGray-400">LOADING</div>
-                  </div>
-                </div>
-              ) : (
+                  {selectedPointLoading ? (
+                    <div className="font-IBMPlexMono p-2 space-y-1 bg-white">
+                      <div className="-space-y-1">
+                        <div className="text-meepGray-400">LOADING</div>
+                      </div>
+                    </div>
+                  ) : (
                     <>
                       <div className="font-IBMPlexMono p-2 space-y-1 bg-white">
                         {!!selectedPointData?.importedDataGeojsonPoint
@@ -578,7 +649,7 @@ export function ReportMap () {
                       </div>
                       {(analytics.data?.mapReport.layers.length || 0) > 1 && (
                         <footer className="pb-2 px-2 text-meepGray-400 font-IBMPlexMono text-xs">
-                          From{" "}
+                          From{' '}
                           {
                             selectedPointData?.importedDataGeojsonPoint
                               ?.properties?.dataType.dataSet.externalDataSource
@@ -625,104 +696,138 @@ export function ReportMap () {
                         )}
                       </footer>
                     </>
-              )}
-              </Popup>
-            </ErrorBoundary>
+                  )}
+                </Popup>
+              </ErrorBoundary>
             )}
           </>
         )}
       </Map>
     </>
-  );
+  )
 }
 
-function ExternalDataSourcePointMarkers ({ externalDataSourceId, index }: { externalDataSourceId: string, index: number }) {
+function ExternalDataSourcePointMarkers({
+  externalDataSourceId,
+  index,
+}: {
+  externalDataSourceId: string
+  index: number
+}) {
   const mapbox = useLoadedMap()
-  const [selectedSourceMarker, setSelectedSourceMarker] =  useAtom(selectedSourceMarkerAtom)
+  const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(
+    selectedSourceMarkerAtom
+  )
 
-  useEffect(function selectMarker() {
-    mapbox.loadedMap?.on('mouseover', `${externalDataSourceId}-marker`, () => {
-      const canvas = mapbox.loadedMap?.getCanvas()
-      if (!canvas) return
-      canvas.style.cursor = 'pointer'
-    })
-    mapbox.loadedMap?.on('mouseleave', `${externalDataSourceId}-marker`, () => {
-      const canvas = mapbox.loadedMap?.getCanvas()
-      if (!canvas) return
-      canvas.style.cursor = ''
-    })
-    mapbox.loadedMap?.on('click', `${externalDataSourceId}-marker`, event => {
-      const feature = event.features?.[0]
-      if (feature?.properties?.id) {
-        setSelectedSourceMarker(feature)
-      }
-    })
-  }, [mapbox.loadedMap, externalDataSourceId])
-  
+  useEffect(
+    function selectMarker() {
+      mapbox.loadedMap?.on(
+        'mouseover',
+        `${externalDataSourceId}-marker`,
+        () => {
+          const canvas = mapbox.loadedMap?.getCanvas()
+          if (!canvas) return
+          canvas.style.cursor = 'pointer'
+        }
+      )
+      mapbox.loadedMap?.on(
+        'mouseleave',
+        `${externalDataSourceId}-marker`,
+        () => {
+          const canvas = mapbox.loadedMap?.getCanvas()
+          if (!canvas) return
+          canvas.style.cursor = ''
+        }
+      )
+      mapbox.loadedMap?.on(
+        'click',
+        `${externalDataSourceId}-marker`,
+        (event) => {
+          const feature = event.features?.[0]
+          if (feature?.properties?.id) {
+            setSelectedSourceMarker(feature)
+          }
+        }
+      )
+    },
+    [mapbox.loadedMap, externalDataSourceId]
+  )
+
   return (
     <>
       <Source
         id={externalDataSourceId}
         type="vector"
-        url={new URL(`/tiles/external-data-source/${externalDataSourceId}/tiles.json`, BACKEND_URL).toString()}
+        url={new URL(
+          `/tiles/external-data-source/${externalDataSourceId}/tiles.json`,
+          BACKEND_URL
+        ).toString()}
         minzoom={MIN_MEMBERS_ZOOM}
       >
         {index <= 1 ? (
           <Layer
-            beforeId={"PLACEHOLDER_MARKERS"}
+            beforeId={'PLACEHOLDER_MARKERS'}
             id={`${externalDataSourceId}-marker`}
             source={externalDataSourceId}
-            source-layer={"generic_data"}
+            source-layer={'generic_data'}
             type="symbol"
             layout={{
-              "icon-image": `meep-marker-${index}`,
-              "icon-allow-overlap": true,
-              "icon-ignore-placement": true,
-              "icon-size": 0.75,
-              "icon-anchor": "bottom"
+              'icon-image': `meep-marker-${index}`,
+              'icon-allow-overlap': true,
+              'icon-ignore-placement': true,
+              'icon-size': 0.75,
+              'icon-anchor': 'bottom',
             }}
             minzoom={MIN_MEMBERS_ZOOM}
-            {...(
-              selectedSourceMarker?.properties?.id
-              ? { filter: ["!=", selectedSourceMarker?.properties?.id, ["get", "id"]] }
-              : {}
-            )}
+            {...(selectedSourceMarker?.properties?.id
+              ? {
+                  filter: [
+                    '!=',
+                    selectedSourceMarker?.properties?.id,
+                    ['get', 'id'],
+                  ],
+                }
+              : {})}
           />
         ) : (
           <Layer
-            beforeId={"PLACEHOLDER_MARKERS"}
+            beforeId={'PLACEHOLDER_MARKERS'}
             id={`${externalDataSourceId}-marker`}
             source={externalDataSourceId}
-            source-layer={"generic_data"}
+            source-layer={'generic_data'}
             type="circle"
             paint={{
-              "circle-radius": 5,
-              "circle-color": layerColour(index, externalDataSourceId),
+              'circle-radius': 5,
+              'circle-color': layerColour(index, externalDataSourceId),
             }}
             minzoom={MIN_MEMBERS_ZOOM}
-            {...(
-              selectedSourceMarker?.properties?.id
-              ? { filter: ["!=", selectedSourceMarker?.properties?.id, ["get", "id"]] }
-              : {}
-            )}
+            {...(selectedSourceMarker?.properties?.id
+              ? {
+                  filter: [
+                    '!=',
+                    selectedSourceMarker?.properties?.id,
+                    ['get', 'id'],
+                  ],
+                }
+              : {})}
           />
         )}
         {!!selectedSourceMarker?.properties?.id && (
           <Layer
-            beforeId={"PLACEHOLDER_MARKERS"}
+            beforeId={'PLACEHOLDER_MARKERS'}
             id={`${externalDataSourceId}-marker-selected`}
             source={externalDataSourceId}
-            source-layer={"generic_data"}
+            source-layer={'generic_data'}
             type="symbol"
             layout={{
-              "icon-image": "meep-marker-selected",
-              "icon-size": 0.75,
-              "icon-anchor": "bottom",
-              "icon-allow-overlap": true,
-              "icon-ignore-placement": true
+              'icon-image': 'meep-marker-selected',
+              'icon-size': 0.75,
+              'icon-anchor': 'bottom',
+              'icon-allow-overlap': true,
+              'icon-ignore-placement': true,
             }}
             minzoom={MIN_MEMBERS_ZOOM}
-            filter={["==", selectedSourceMarker.properties.id, ["get", "id"]]}
+            filter={['==', selectedSourceMarker.properties.id, ['get', 'id']]}
           />
         )}
       </Source>
@@ -731,36 +836,36 @@ function ExternalDataSourcePointMarkers ({ externalDataSourceId, index }: { exte
 }
 
 const MAP_REPORT_LAYER_POINT = gql`
-query MapReportLayerGeoJSONPoint($genericDataId: String!) {
-  importedDataGeojsonPoint(genericDataId: $genericDataId) {
-    id
-    type
-    geometry {
-      type
-      coordinates
-    }
-    properties {
+  query MapReportLayerGeoJSONPoint($genericDataId: String!) {
+    importedDataGeojsonPoint(genericDataId: $genericDataId) {
       id
-      lastUpdate
-      name
-      phone
-      email
-      postcodeData {
-        postcode
+      type
+      geometry {
+        type
+        coordinates
       }
-      address
-      json
-      remoteUrl
-      dataType {
-        dataSet {
-          externalDataSource {
-            name
+      properties {
+        id
+        lastUpdate
+        name
+        phone
+        email
+        postcodeData {
+          postcode
+        }
+        address
+        json
+        remoteUrl
+        dataType {
+          dataSet {
+            externalDataSource {
+              name
+            }
           }
         }
       }
     }
   }
-}
 `
 
 export const MAP_REPORT_LAYER_ANALYTICS = gql`
@@ -805,10 +910,15 @@ const MAP_REPORT_REGION_STATS = gql`
 `
 
 const MAP_REPORT_CONSTITUENCY_STATS = gql`
-  query MapReportConstituencyStats($reportID: ID!, $analyticalAreaType: AnalyticalAreaType!) {
+  query MapReportConstituencyStats(
+    $reportID: ID!
+    $analyticalAreaType: AnalyticalAreaType!
+  ) {
     mapReport(pk: $reportID) {
       id
-      importedDataCountByConstituency: importedDataCountByArea(analyticalAreaType: $analyticalAreaType){
+      importedDataCountByConstituency: importedDataCountByArea(
+        analyticalAreaType: $analyticalAreaType
+      ) {
         label
         gss
         count

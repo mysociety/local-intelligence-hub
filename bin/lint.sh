@@ -7,6 +7,7 @@ echo 'Linting Mapped...';
 echo '';
 echo '------------------------------------';
 black . && isort . && flake8
+cd nextjs && npm run lint-fix
 
 echo '';
 echo '------------------------------------';

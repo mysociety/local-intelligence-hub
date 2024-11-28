@@ -1,13 +1,13 @@
-import { useRequireAuth } from "@/hooks/auth";
-import ExternalDataSourceList from "./ExternalDataSourceList";
-import { Metadata } from "next";
+import { requireAuth } from '@/lib/server-auth'
+import { Metadata } from 'next'
+import ExternalDataSourceList from './ExternalDataSourceList'
 
 export default async function Page() {
-  await useRequireAuth();
+  await requireAuth()
 
-  return <ExternalDataSourceList />;
+  return <ExternalDataSourceList />
 }
 
 export const metadata: Metadata = {
-  title: "Your Data Sources",
-};
+  title: 'Your Data Sources',
+}

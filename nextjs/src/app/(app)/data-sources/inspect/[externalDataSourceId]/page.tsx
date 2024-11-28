@@ -1,9 +1,12 @@
-import { useRequireAuth } from "@/hooks/auth";
-import InspectExternalDataSource from "./InspectExternalDataSource";
+import {
+  ExternalDataSourceNameQuery,
+  ExternalDataSourceNameQueryVariables,
+} from '@/__generated__/graphql'
+import { requireAuth } from '@/lib/server-auth'
+import { getClient } from '@/services/apollo-client'
+import { gql } from '@apollo/client'
 import { Metadata } from 'next'
-import { getClient } from "@/services/apollo-client";
-import { gql } from "@apollo/client";
-import { ExternalDataSourceNameQuery, ExternalDataSourceNameQueryVariables } from "@/__generated__/graphql";
+import InspectExternalDataSource from './InspectExternalDataSource'
 
 type Params = {
   externalDataSourceId: string
@@ -12,22 +15,25 @@ type Params = {
 export default async function Page({
   params: { externalDataSourceId },
 }: {
-  params: Params;
+  params: Params
 }) {
-  await useRequireAuth();
-  const data = await getClient().query<ExternalDataSourceNameQuery, ExternalDataSourceNameQueryVariables>({
+  await requireAuth()
+  const data = await getClient().query<
+    ExternalDataSourceNameQuery,
+    ExternalDataSourceNameQueryVariables
+  >({
     query: EXTERNAL_DATA_SOURCE_NAME,
     variables: {
       externalDataSourceId,
-    }
-  });
+    },
+  })
 
   return (
     <InspectExternalDataSource
       externalDataSourceId={externalDataSourceId}
       {...data.data.externalDataSource}
     />
-  );
+  )
 }
 
 const EXTERNAL_DATA_SOURCE_NAME = gql`
@@ -40,16 +46,23 @@ const EXTERNAL_DATA_SOURCE_NAME = gql`
       remoteUrl
     }
   }
-`;
+`
 
-export async function generateMetadata({ params: { externalDataSourceId } }: { params: Params }): Promise<Metadata> {
+export async function generateMetadata({
+  params: { externalDataSourceId },
+}: {
+  params: Params
+}): Promise<Metadata> {
   try {
-    const client = getClient();
-    const query = await client.query<ExternalDataSourceNameQuery, ExternalDataSourceNameQueryVariables>({
+    const client = getClient()
+    const query = await client.query<
+      ExternalDataSourceNameQuery,
+      ExternalDataSourceNameQueryVariables
+    >({
       query: EXTERNAL_DATA_SOURCE_NAME,
       variables: {
         externalDataSourceId,
-      }
+      },
     })
 
     return {
@@ -57,7 +70,7 @@ export async function generateMetadata({ params: { externalDataSourceId } }: { p
     }
   } catch (e) {
     return {
-      title: "Data Source",
+      title: 'Data Source',
     }
   }
 }

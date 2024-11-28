@@ -1,11 +1,20 @@
-"use client";
+'use client'
 
-import { Button } from "@/components/ui/button";
-import { useContext, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { FetchResult, gql, useLazyQuery, useMutation } from "@apollo/client";
-import { CreateAutoUpdateFormContext } from "../../NewExternalDataSourceWrapper";
-import { FieldPath, FormProvider, useForm } from "react-hook-form";
+import {
+  CreateExternalDataSourceInput,
+  CreateSourceMutation,
+  CrmType,
+  DataSourceType,
+  EditableGoogleSheetsSourceInput,
+  ExternalDataSourceInput,
+  GeographyTypes,
+  GoogleSheetsAuthUrlQuery,
+  GoogleSheetsAuthUrlQueryVariables,
+  TestDataSourceQuery,
+  TestDataSourceQueryVariables,
+} from '@/__generated__/graphql'
+import { PreopulatedSelectField } from '@/components/ExternalDataSourceFields'
+import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
@@ -14,7 +23,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { LoadingIcon } from '@/components/ui/loadingIcon'
 import {
   Select,
   SelectContent,
@@ -23,31 +34,19 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Input } from "@/components/ui/input";
-import { LoadingIcon } from "@/components/ui/loadingIcon";
-import {
-  CreateExternalDataSourceInput,
-  DataSourceType,
-  ExternalDataSourceInput,
-  GeographyTypes,
-  CreateSourceMutation,
-  TestDataSourceQuery,
-  TestDataSourceQueryVariables,
-  GoogleSheetsAuthUrlQuery,
-  GoogleSheetsAuthUrlQueryVariables,
-  CrmType,
-  EditableGoogleSheetsSourceInput,
-  EditableGoogleSheetsSource,
-} from "@/__generated__/graphql";
-import { toastPromise } from "@/lib/toast";
-import { PreopulatedSelectField } from "@/components/ExternalDataSourceFields";
-import { getFieldsForDataSourceType } from "@/components/UpdateExternalDataSourceFields";
-import { camelCase } from "lodash";
-import { Building, Calendar, Pin, Quote, User, Users } from "lucide-react";
-import { locationTypeOptions } from "@/data/location";
-import { useAtomValue } from "jotai";
-import { currentOrganisationIdAtom } from "@/data/organisation";
+} from '@/components/ui/select'
+import { getFieldsForDataSourceType } from '@/components/UpdateExternalDataSourceFields'
+import { locationTypeOptions } from '@/data/location'
+import { currentOrganisationIdAtom } from '@/data/organisation'
+import { toastPromise } from '@/lib/toast'
+import { FetchResult, gql, useLazyQuery, useMutation } from '@apollo/client'
+import { useAtomValue } from 'jotai'
+import { camelCase } from 'lodash'
+import { Building, Calendar, Pin, Quote, User, Users } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useContext, useEffect, useMemo, useState } from 'react'
+import { FieldPath, FormProvider, useForm } from 'react-hook-form'
+import { CreateAutoUpdateFormContext } from '../../NewExternalDataSourceWrapper'
 
 const TEST_DATA_SOURCE = gql`
   query TestDataSource($input: CreateExternalDataSourceInput!) {
@@ -60,7 +59,7 @@ const TEST_DATA_SOURCE = gql`
         description
         editable
       }
-      geographyColumn,
+      geographyColumn
       geographyColumnType
       healthcheck
       predefinedColumnNames
@@ -71,17 +70,17 @@ const TEST_DATA_SOURCE = gql`
       oauthCredentials
     }
   }
-`;
+`
 
 const GOOGLE_SHEETS_AUTH_URL = gql`
   query GoogleSheetsAuthUrl($redirectUrl: String!) {
     googleSheetsAuthUrl(redirectUrl: $redirectUrl)
   }
-`;
+`
 
 const CREATE_DATA_SOURCE = gql`
-  mutation CreateSource ($input: CreateExternalDataSourceInput!) {
-    createExternalDataSource (input: $input) {
+  mutation CreateSource($input: CreateExternalDataSourceInput!) {
+    createExternalDataSource(input: $input) {
       code
       errors {
         message
@@ -95,95 +94,107 @@ const CREATE_DATA_SOURCE = gql`
       }
     }
   }
-`;
+`
 
-
-type FormInputs = CreateExternalDataSourceInput & ExternalDataSourceInput & {
-  temp?: {
-    airtableBaseUrl?: string
+type FormInputs = CreateExternalDataSourceInput &
+  ExternalDataSourceInput & {
+    temp?: {
+      airtableBaseUrl?: string
+    }
   }
-}
 
 export default function Page({
   params: { externalDataSourceType },
 }: {
-  params: { externalDataSourceType: keyof CreateExternalDataSourceInput };
+  params: { externalDataSourceType: keyof CreateExternalDataSourceInput }
 }) {
   const orgId = useAtomValue(currentOrganisationIdAtom)
-  const router = useRouter();
-  const context = useContext(CreateAutoUpdateFormContext);
+  const router = useRouter()
+  const context = useContext(CreateAutoUpdateFormContext)
 
   useEffect(() => {
     context.setStep(2)
   }, [context])
 
-  const RNN_ORIG = Symbol();
+  const RNN_ORIG = Symbol()
 
-  const defaultValues: CreateExternalDataSourceInput & ExternalDataSourceInput = {
-    name: '',
-    geographyColumnType: GeographyTypes.Postcode,
-    geographyColumn: '',
-    dataType: context.dataType,
-    airtable: {
-      apiKey: '',
-      baseId: '',
-      tableId: '',
-    },
-    mailchimp: {
-      apiKey: '',
-      listId: ''
-    },
-    actionnetwork: {
-      apiKey: '',
-      groupSlug: ''
-    },
-    editablegooglesheets: {
-      redirectSuccessUrl: '',
-      spreadsheetId: '',
-      sheetName: '',
-    },
-    tickettailor: {
-      apiKey: ''
+  const defaultValues: CreateExternalDataSourceInput & ExternalDataSourceInput =
+    {
+      name: '',
+      geographyColumnType: GeographyTypes.Postcode,
+      geographyColumn: '',
+      dataType: context.dataType,
+      airtable: {
+        apiKey: '',
+        baseId: '',
+        tableId: '',
+      },
+      mailchimp: {
+        apiKey: '',
+        listId: '',
+      },
+      actionnetwork: {
+        apiKey: '',
+        groupSlug: '',
+      },
+      editablegooglesheets: {
+        redirectSuccessUrl: '',
+        spreadsheetId: '',
+        sheetName: '',
+      },
+      tickettailor: {
+        apiKey: '',
+      },
     }
-  }
 
   const form = useForm<FormInputs>({
     defaultValues: {
-      ...defaultValues
+      ...defaultValues,
     } as FormInputs,
-  });
+  })
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search)
-    if (urlParams.get("state") && urlParams.get("code")) {
-      form.setValue('editablegooglesheets.redirectSuccessUrl', window.location.href)
+    const urlParams = new URLSearchParams(
+      typeof window === 'undefined' ? '' : window.location.search
+    )
+    if (urlParams.get('state') && urlParams.get('code')) {
+      form.setValue(
+        'editablegooglesheets.redirectSuccessUrl',
+        window.location.href
+      )
     }
   }, [form])
 
-  const dataType = form.watch("dataType") as DataSourceType
+  const dataType = form.watch('dataType') as DataSourceType
   const collectFields = useMemo(() => {
     return getFieldsForDataSourceType(dataType)
   }, [dataType])
-  const geographyFields = ["geographyColumn", "geographyColumnType"]
+  const geographyFields = ['geographyColumn', 'geographyColumnType']
 
-  const [createSource, createSourceResult] = useMutation<CreateSourceMutation>(CREATE_DATA_SOURCE);
-  const [testSource, testSourceResult] = useLazyQuery<TestDataSourceQuery, TestDataSourceQueryVariables>(TEST_DATA_SOURCE);
-  const [googleSheetsAuthUrl, googleSheetsAuthUrlResult] = 
-    useLazyQuery<GoogleSheetsAuthUrlQuery, GoogleSheetsAuthUrlQueryVariables>(GOOGLE_SHEETS_AUTH_URL);
-  const [googleSheetsError, setGoogleSheetsError] = useState("")
+  const [createSource, createSourceResult] =
+    useMutation<CreateSourceMutation>(CREATE_DATA_SOURCE)
+  const [testSource, testSourceResult] = useLazyQuery<
+    TestDataSourceQuery,
+    TestDataSourceQueryVariables
+  >(TEST_DATA_SOURCE)
+  const [googleSheetsAuthUrl, googleSheetsAuthUrlResult] = useLazyQuery<
+    GoogleSheetsAuthUrlQuery,
+    GoogleSheetsAuthUrlQueryVariables
+  >(GOOGLE_SHEETS_AUTH_URL)
+  const [googleSheetsError, setGoogleSheetsError] = useState('')
 
-  const currentSource = testSourceResult.data;
+  const currentSource = testSourceResult.data
 
   const [guessed, setGuessed] = useState<
     Partial<Record<FieldPath<FormInputs>, string | undefined | null>>
-  >({});
+  >({})
 
   /**
    * For a field that maps a data source property (e.g. address_field) to
    * a field on the remote data source (e.g. "Address Line 1"), try to guess the
-   * remote field based on a list of likely options, while preventing bad matches 
+   * remote field based on a list of likely options, while preventing bad matches
    * (e.g. "Email address" for "Address").
-   * 
+   *
    * In this example, field = "addressField", guessKeys = ["address", "line1", ...],
    * badKeys = ["email"].
    */
@@ -201,63 +212,155 @@ export default function Page({
         form.setValue(field, null)
         return
       }
-      const guess = testSourceResult.data?.testDataSource.fieldDefinitions?.find(
-        (field: ({ label?: string | null, value: string })) => {
-          const isMatch = (fieldName: string|null|undefined, guessKey: string) => {
-            if (!fieldName) {
-              return false;
-            }
-            const match = fieldName.toLowerCase().replaceAll(' ', '').includes(guessKey.replaceAll(' ', ''))
-            if (!match) {
-              return false
-            }
-            for (const badKey of badKeys) {
-              const badMatch = fieldName.toLowerCase().replaceAll(' ', '').includes(badKey.replaceAll(' ', ''))
-              if (badMatch) {
+      const guess =
+        testSourceResult.data?.testDataSource.fieldDefinitions?.find(
+          (field: { label?: string | null; value: string }) => {
+            const isMatch = (
+              fieldName: string | null | undefined,
+              guessKey: string
+            ) => {
+              if (!fieldName) {
                 return false
               }
-            }
-            return true
-          }
-          for (const guessKey of guessKeys) {
-            if (
-              isMatch(field.label, guessKey) ||
-              isMatch(field.value, guessKey)
-            ) {
+              const match = fieldName
+                .toLowerCase()
+                .replaceAll(' ', '')
+                .includes(guessKey.replaceAll(' ', ''))
+              if (!match) {
+                return false
+              }
+              for (const badKey of badKeys) {
+                const badMatch = fieldName
+                  .toLowerCase()
+                  .replaceAll(' ', '')
+                  .includes(badKey.replaceAll(' ', ''))
+                if (badMatch) {
+                  return false
+                }
+              }
               return true
             }
+            for (const guessKey of guessKeys) {
+              if (
+                isMatch(field.label, guessKey) ||
+                isMatch(field.value, guessKey)
+              ) {
+                return true
+              }
+            }
           }
-        }
-      )
+        )
       if (guess?.value) {
-        setGuessed(guesses => ({ ...guesses, [field]: guess?.value }))
+        setGuessed((guesses) => ({ ...guesses, [field]: guess?.value }))
         // @ts-ignore
         form.setValue(field, guess?.value)
       }
-    }, [testSourceResult.data?.testDataSource.fieldDefinitions, form, collectFields, setGuessed])
+    }, [
+      testSourceResult.data?.testDataSource.fieldDefinitions,
+      form,
+      collectFields,
+      setGuessed,
+    ])
   }
 
-  useGuessedField('geographyColumn', ["postcode", "postal code", "zip code", "zip"])
-  useGuessedField('emailField', ["email"])
-  useGuessedField('phoneField', ["mobile", "phone"])
-  useGuessedField('addressField', ["street", "line1", "address", "location", "venue"], ['email'])
-  useGuessedField('fullNameField', ["full name", "name"])
-  useGuessedField('firstNameField', ["first name", "given name"])
-  useGuessedField('titleField', ["title", "name"])
-  useGuessedField('descriptionField', ["description", "body", "comments", "notes", "about"])
-  useGuessedField('imageField', ["image", "photo", "picture", "avatar", "attachment", "attachments", "file", "files", "graphic", "poster", "logo", "icon"])
-  useGuessedField('startTimeField', ["start", "start time", "start date", "begin", "beginning", "start_at", "start_time", "start_date", "date", "time", "datetime", "timestamp", "from"])
-  useGuessedField('endTimeField', ["end", "end time", "end date", "finish", "finish time", "finish date", "end_at", "end_time", "end_date", "until"])
-  useGuessedField('publicUrlField', ["public url", "public link", "public", "url", "link", "website", "webpage", "web", "page", "site", "href", "uri", "path", "slug", "permalink"])
-  useGuessedField('socialUrlField', ["social url", "social link", "social", "facebook", "instagram"])
+  useGuessedField('geographyColumn', [
+    'postcode',
+    'postal code',
+    'zip code',
+    'zip',
+  ])
+  useGuessedField('emailField', ['email'])
+  useGuessedField('phoneField', ['mobile', 'phone'])
+  useGuessedField(
+    'addressField',
+    ['street', 'line1', 'address', 'location', 'venue'],
+    ['email']
+  )
+  useGuessedField('fullNameField', ['full name', 'name'])
+  useGuessedField('firstNameField', ['first name', 'given name'])
+  useGuessedField('titleField', ['title', 'name'])
+  useGuessedField('descriptionField', [
+    'description',
+    'body',
+    'comments',
+    'notes',
+    'about',
+  ])
+  useGuessedField('imageField', [
+    'image',
+    'photo',
+    'picture',
+    'avatar',
+    'attachment',
+    'attachments',
+    'file',
+    'files',
+    'graphic',
+    'poster',
+    'logo',
+    'icon',
+  ])
+  useGuessedField('startTimeField', [
+    'start',
+    'start time',
+    'start date',
+    'begin',
+    'beginning',
+    'start_at',
+    'start_time',
+    'start_date',
+    'date',
+    'time',
+    'datetime',
+    'timestamp',
+    'from',
+  ])
+  useGuessedField('endTimeField', [
+    'end',
+    'end time',
+    'end date',
+    'finish',
+    'finish time',
+    'finish date',
+    'end_at',
+    'end_time',
+    'end_date',
+    'until',
+  ])
+  useGuessedField('publicUrlField', [
+    'public url',
+    'public link',
+    'public',
+    'url',
+    'link',
+    'website',
+    'webpage',
+    'web',
+    'page',
+    'site',
+    'href',
+    'uri',
+    'path',
+    'slug',
+    'permalink',
+  ])
+  useGuessedField('socialUrlField', [
+    'social url',
+    'social link',
+    'social',
+    'facebook',
+    'instagram',
+  ])
 
   useEffect(() => {
     if (testSourceResult.data?.testDataSource?.defaultDataType) {
-      const dataType = testSourceResult.data.testDataSource.defaultDataType as DataSourceType
+      const dataType = testSourceResult.data.testDataSource
+        .defaultDataType as DataSourceType
       context.dataType = dataType
-      form.setValue("dataType", dataType)
+      form.setValue('dataType', dataType)
       // Default dict
-      const defaultFieldValues = testSourceResult.data.testDataSource.defaults || {}
+      const defaultFieldValues =
+        testSourceResult.data.testDataSource.defaults || {}
       for (const key in defaultFieldValues) {
         const camelCasedKey = camelCase(key) as keyof FormInputs
         const value = defaultFieldValues[key]
@@ -268,32 +371,31 @@ export default function Page({
     }
   }, [testSourceResult.data])
 
-
-  const airtableUrl = form.watch("temp.airtableBaseUrl")
-  const baseId = form.watch("airtable.baseId")
-  const tableId = form.watch("airtable.tableId")
+  const airtableUrl = form.watch('temp.airtableBaseUrl')
+  const baseId = form.watch('airtable.baseId')
+  const tableId = form.watch('airtable.tableId')
 
   useEffect(() => {
     if (airtableUrl) {
       try {
         const url = new URL(airtableUrl)
         const [_, base, table, ...pathSegments] = url.pathname.split('/')
-        form.setValue("airtable.baseId", base)
-        form.setValue("airtable.tableId", table)
+        form.setValue('airtable.baseId', base)
+        form.setValue('airtable.tableId', table)
       } catch (e) {
         // Invalid URL
-        form.setError("temp.airtableBaseUrl", {
-          type: "validate",
-          message: "Invalid URL"
+        form.setError('temp.airtableBaseUrl', {
+          type: 'validate',
+          message: 'Invalid URL',
         })
         return
       }
     }
   }, [airtableUrl])
-  
+
   async function submitTestConnection(formData: FormInputs) {
     if (!formData[externalDataSourceType]) {
-      throw Error("Need some CRM connection details to proceed!")
+      throw Error('Need some CRM connection details to proceed!')
     }
 
     // To avoid mutation of the form data
@@ -304,7 +406,7 @@ export default function Page({
     // TODO: make this less fragile. Currently it assumes any nested
     // object is specific to a CRM.
     for (const key of Object.keys(formData)) {
-      if (typeof formData[key as keyof FormInputs] === "object") {
+      if (typeof formData[key as keyof FormInputs] === 'object') {
         delete genericCRMData[key as keyof FormInputs]
       }
     }
@@ -312,31 +414,40 @@ export default function Page({
     const input: TestDataSourceQueryVariables['input'] = {
       [externalDataSourceType]: {
         ...genericCRMData,
-        ...CRMSpecificData
-      }
-    }
-    
-    toastPromise(testSource({
-      variables: { input }
-    }), {
-      loading: "Testing connection...",
-      success: (d: FetchResult<TestDataSourceQuery>) => {
-        if (!d.errors && d.data?.testDataSource && d.data.testDataSource.healthcheck) {
-          return "Connection is healthy";
-        }
-        throw new Error(d.errors?.map(e => e.message).join(', ') || "Unknown error")
+        ...CRMSpecificData,
       },
-      error: "Connection failed",
-    });
+    }
+
+    toastPromise(
+      testSource({
+        variables: { input },
+      }),
+      {
+        loading: 'Testing connection...',
+        success: (d: FetchResult<TestDataSourceQuery>) => {
+          if (
+            !d.errors &&
+            d.data?.testDataSource &&
+            d.data.testDataSource.healthcheck
+          ) {
+            return 'Connection is healthy'
+          }
+          throw new Error(
+            d.errors?.map((e) => e.message).join(', ') || 'Unknown error'
+          )
+        },
+        error: 'Connection failed',
+      }
+    )
   }
 
   async function submitCreateSource(formData: FormInputs) {
     if (!formData[externalDataSourceType]) {
-      throw Error("Need some CRM connection details to proceed!");
+      throw Error('Need some CRM connection details to proceed!')
     }
     // To avoid mutation of the form data
-    const genericCRMData = Object.assign({}, formData);
-    let CRMSpecificData = formData[externalDataSourceType];
+    const genericCRMData = Object.assign({}, formData)
+    let CRMSpecificData = formData[externalDataSourceType]
 
     // TODO: can this be less messy?
     if (externalDataSourceType === CrmType.Editablegooglesheets) {
@@ -344,17 +455,18 @@ export default function Page({
       // with the credentials returned when the connection was tested.
       // Cannot reuse the oauth parameters in the URL to get new
       // credentials on the back-end, as they are one-use only.
-      CRMSpecificData = CRMSpecificData as EditableGoogleSheetsSourceInput;
-      delete CRMSpecificData["redirectSuccessUrl"];
-      CRMSpecificData["oauthCredentials"] = testSourceResult.data?.testDataSource.oauthCredentials
+      CRMSpecificData = CRMSpecificData as EditableGoogleSheetsSourceInput
+      delete CRMSpecificData['redirectSuccessUrl']
+      CRMSpecificData['oauthCredentials'] =
+        testSourceResult.data?.testDataSource.oauthCredentials
     }
 
     // Remove specific CRM data from the generic data
     // TODO: make this less fragile. Currently it assumes any nested
     // object is specific to a CRM.
     for (const key of Object.keys(formData)) {
-      if (typeof formData[key as keyof FormInputs] === "object") {
-        delete genericCRMData[key as keyof FormInputs];
+      if (typeof formData[key as keyof FormInputs] === 'object') {
+        delete genericCRMData[key as keyof FormInputs]
       }
     }
 
@@ -364,12 +476,11 @@ export default function Page({
         ...CRMSpecificData,
         organisation: { set: orgId },
       },
-    };
+    }
     toastPromise(createSource({ variables: { input } }), {
-      loading: "Saving connection...",
+      loading: 'Saving connection...',
       success: (d) => {
-        const errors =
-          d.errors || d.data?.createExternalDataSource.errors || [];
+        const errors = d.errors || d.data?.createExternalDataSource.errors || []
         if (!errors.length && d.data?.createExternalDataSource.result) {
           if (
             d.data?.createExternalDataSource.result.dataType ===
@@ -378,28 +489,31 @@ export default function Page({
           ) {
             router.push(
               `/data-sources/create/configure/${d.data.createExternalDataSource.result.id}`
-            );
+            )
           } else {
             router.push(
               `/data-sources/inspect/${d.data.createExternalDataSource.result.id}`
-            );
+            )
           }
-          return "Connection successful";
+          return 'Connection successful'
         }
         throw new Error(
-          errors.map((e) => e.message).join(", ") || "Unknown error"
-        );
+          errors.map((e) => e.message).join(', ') || 'Unknown error'
+        )
       },
       error(e) {
         return {
-          title: "Connection failed",
+          title: 'Connection failed',
           description: e.message,
-        };
+        }
       },
-    });
+    })
   }
 
-  if (createSourceResult.loading || createSourceResult.data?.createExternalDataSource.result) {
+  if (
+    createSourceResult.loading ||
+    createSourceResult.data?.createExternalDataSource.result
+  ) {
     return (
       <div className="space-y-6">
         <h1 className="text-hLg">Saving connection...</h1>
@@ -408,18 +522,18 @@ export default function Page({
         </p>
         <LoadingIcon />
       </div>
-    );
+    )
   }
 
-  function FPreopulatedSelectField ({
+  function FPreopulatedSelectField({
     name,
     label,
     placeholder,
     required = false,
-    helpText = ""
+    helpText = '',
   }: {
-    name: FieldPath<FormInputs>,
-    label?: string,
+    name: FieldPath<FormInputs>
+    label?: string
     placeholder?: string
     required?: boolean
     helpText?: string
@@ -429,7 +543,9 @@ export default function Page({
         name={name}
         label={label}
         placeholder={placeholder}
-        fieldDefinitions={testSourceResult.data?.testDataSource.fieldDefinitions}
+        fieldDefinitions={
+          testSourceResult.data?.testDataSource.fieldDefinitions
+        }
         control={form.control}
         crmType={testSourceResult.data?.testDataSource.crmType!}
         guess={guessed[name]}
@@ -460,7 +576,11 @@ export default function Page({
                     <FormLabel>Nickname</FormLabel>
                     <FormControl>
                       {/* @ts-ignore */}
-                      <Input placeholder="My members list" {...field} required />
+                      <Input
+                        placeholder="My members list"
+                        {...field}
+                        required
+                      />
                     </FormControl>
                     <FormDescription>
                       This will be visible to your team.
@@ -477,8 +597,12 @@ export default function Page({
                     <FormItem>
                       <FormLabel>Data type</FormLabel>
                       <FormControl>
-                        {/* @ts-ignore */}
-                        <Select onValueChange={field.onChange} defaultValue={field.value} required>
+                        <Select
+                          onValueChange={field.onChange}
+                          /* @ts-ignore */
+                          defaultValue={field.value}
+                          required
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="What kind of data is this?" />
                           </SelectTrigger>
@@ -486,33 +610,39 @@ export default function Page({
                             <SelectGroup>
                               <SelectLabel>Type of data source</SelectLabel>
                               <SelectItem value={DataSourceType.Member}>
-                                <div className='flex flex-row gap-2 items-center'>
-                                  <User className='w-4 text-meepGray-300' /> People
+                                <div className="flex flex-row gap-2 items-center">
+                                  <User className="w-4 text-meepGray-300" />{' '}
+                                  People
                                 </div>
                               </SelectItem>
                               <SelectItem value={DataSourceType.Group}>
-                                <div className='flex flex-row gap-2 items-center'>
-                                  <Users className='w-4 text-meepGray-300' /> Group
+                                <div className="flex flex-row gap-2 items-center">
+                                  <Users className="w-4 text-meepGray-300" />{' '}
+                                  Group
                                 </div>
                               </SelectItem>
                               <SelectItem value={DataSourceType.Event}>
-                                <div className='flex flex-row gap-2 items-center'>
-                                  <Calendar className='w-4 text-meepGray-300' /> Events
+                                <div className="flex flex-row gap-2 items-center">
+                                  <Calendar className="w-4 text-meepGray-300" />{' '}
+                                  Events
                                 </div>
                               </SelectItem>
                               <SelectItem value={DataSourceType.Story}>
-                                <div className='flex flex-row gap-2 items-center'>
-                                  <Quote className='w-4 text-meepGray-300' /> Stories
+                                <div className="flex flex-row gap-2 items-center">
+                                  <Quote className="w-4 text-meepGray-300" />{' '}
+                                  Stories
                                 </div>
                               </SelectItem>
                               <SelectItem value={DataSourceType.Location}>
-                                <div className='flex flex-row gap-2 items-center'>
-                                  <Building className='w-4 text-meepGray-300' /> Locations
+                                <div className="flex flex-row gap-2 items-center">
+                                  <Building className="w-4 text-meepGray-300" />{' '}
+                                  Locations
                                 </div>
                               </SelectItem>
                               <SelectItem value={DataSourceType.Other}>
-                                <div className='flex flex-row gap-2 items-center'>
-                                  <Pin className='w-4 text-meepGray-300' /> Other
+                                <div className="flex flex-row gap-2 items-center">
+                                  <Pin className="w-4 text-meepGray-300" />{' '}
+                                  Other
                                 </div>
                               </SelectItem>
                             </SelectGroup>
@@ -525,7 +655,7 @@ export default function Page({
                 />
               )}
               {!currentSource?.testDataSource?.predefinedColumnNames && (
-                <div className='grid grid-cols-2 gap-4 w-full'>
+                <div className="grid grid-cols-2 gap-4 w-full">
                   <FormField
                     control={form.control}
                     name="geographyColumnType"
@@ -533,8 +663,12 @@ export default function Page({
                       <FormItem>
                         <FormLabel>Type of location data</FormLabel>
                         <FormControl>
-                          {/* @ts-ignore */}
-                          <Select onValueChange={field.onChange} defaultValue={field.value} required>
+                          <Select
+                            onValueChange={field.onChange}
+                            /* @ts-ignore */
+                            defaultValue={field.value}
+                            required
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder="Select a geography type" />
                             </SelectTrigger>
@@ -542,7 +676,10 @@ export default function Page({
                               <SelectGroup>
                                 <SelectLabel>Geography type</SelectLabel>
                                 {locationTypeOptions.map((option) => (
-                                  <SelectItem key={option.value} value={option.value}>
+                                  <SelectItem
+                                    key={option.value}
+                                    value={option.value}
+                                  >
                                     {option.label}
                                   </SelectItem>
                                 ))}
@@ -554,24 +691,33 @@ export default function Page({
                       </FormItem>
                     )}
                   />
-                  <FPreopulatedSelectField name="geographyColumn" label={`${form.watch("geographyColumnType")?.toLocaleLowerCase()} field`} required />
-                  {testSourceResult.data?.testDataSource.crmType === CrmType.Editablegooglesheets && (
-                  <FPreopulatedSelectField 
-                    name="editablegooglesheets.idField" 
-                    label="Unique field" 
+                  <FPreopulatedSelectField
+                    name="geographyColumn"
+                    label={`${form.watch('geographyColumnType')?.toLocaleLowerCase()} field`}
                     required
-                    helpText={`
+                  />
+                  {testSourceResult.data?.testDataSource.crmType ===
+                    CrmType.Editablegooglesheets && (
+                    <FPreopulatedSelectField
+                      name="editablegooglesheets.idField"
+                      label="Unique field"
+                      required
+                      helpText={`
                       Choose a column in your data that should always contain a unique value
                       (e.g. email address for members, creation timestamp for events, etc.)
                     `}
-                  />
+                    />
                   )}
                   {collectFields.map((field) => (
                     <FPreopulatedSelectField key={field} name={field} />
                   ))}
                 </div>
               )}
-              <Button type='submit' variant="reverse" disabled={createSourceResult.loading}>
+              <Button
+                type="submit"
+                variant="reverse"
+                disabled={createSourceResult.loading}
+              >
                 Save connection
               </Button>
             </form>
@@ -591,10 +737,10 @@ export default function Page({
         </p>
         <LoadingIcon />
       </div>
-    );
+    )
   }
 
-  if (externalDataSourceType === "airtable") {
+  if (externalDataSourceType === 'airtable') {
     return (
       <div className="space-y-7">
         <header>
@@ -610,7 +756,7 @@ export default function Page({
             onSubmit={form.handleSubmit(submitTestConnection)}
             className="space-y-7 max-w-lg"
           >
-            <div className='text-hSm'>Connection details</div>
+            <div className="text-hSm">Connection details</div>
             <FormField
               control={form.control}
               name="airtable.apiKey"
@@ -621,13 +767,24 @@ export default function Page({
                     {/* @ts-ignore */}
                     <Input placeholder="patAB1" {...field} required />
                   </FormControl>
-                  <FormDescription>
-                    <p>Your token should have access to the base and the following {'"'}scopes{'"'}:</p>
-                    <ul className='list-disc list-inside pl-1'>
-                      <li><code>data.records:read</code></li>
-                      <li><code>data.records:write</code></li>
-                      <li><code>schema.bases:read</code></li>
-                      <li><code>webhook:manage</code></li>
+                  <div className="text-sm text-meepGray-400">
+                    <span>
+                      Your token should have access to the base and the
+                      following {'"'}scopes{'"'}:
+                    </span>
+                    <ul className="list-disc list-inside pl-1">
+                      <li>
+                        <code>data.records:read</code>
+                      </li>
+                      <li>
+                        <code>data.records:write</code>
+                      </li>
+                      <li>
+                        <code>schema.bases:read</code>
+                      </li>
+                      <li>
+                        <code>webhook:manage</code>
+                      </li>
                     </ul>
                     <a
                       className="underline"
@@ -636,12 +793,12 @@ export default function Page({
                     >
                       Learn how to find your personal access token.
                     </a>
-                  </FormDescription>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            {(!baseId && !tableId) && (
+            {!baseId && !tableId && (
               <FormField
                 control={form.control}
                 name="temp.airtableBaseUrl"
@@ -650,7 +807,11 @@ export default function Page({
                     <FormLabel>Airtable URL</FormLabel>
                     <FormControl>
                       {/* @ts-ignore */}
-                      <Input placeholder="https://airtable.com/app123/tbl123" {...field} required />
+                      <Input
+                        placeholder="https://airtable.com/app123/tbl123"
+                        {...field}
+                        required
+                      />
                     </FormControl>
                     <FormDescription>
                       The URL for your airtable base.
@@ -671,7 +832,7 @@ export default function Page({
                     <Input placeholder="app1234" {...field} required />
                   </FormControl>
                   <FormDescription>
-                    The unique identifier for your base.{" "}
+                    The unique identifier for your base.{' '}
                     <a
                       className="underline"
                       target="_blank"
@@ -695,7 +856,7 @@ export default function Page({
                     <Input placeholder="tbl1234" {...field} required />
                   </FormControl>
                   <FormDescription>
-                    The unique identifier for your table.{" "}
+                    The unique identifier for your table.{' '}
                     <a
                       className="underline"
                       target="_blank"
@@ -713,30 +874,31 @@ export default function Page({
                 variant="outline"
                 type="reset"
                 onClick={() => {
-                  router.back();
+                  router.back()
                 }}
               >
                 Back
               </Button>
-              <Button type="submit" variant={"reverse"}>
+              <Button type="submit" variant={'reverse'}>
                 Test connection
               </Button>
             </div>
           </form>
         </Form>
       </div>
-    );
+    )
   }
 
-  if (externalDataSourceType === "mailchimp") {
+  if (externalDataSourceType === 'mailchimp') {
     return (
       <div className="space-y-7">
         <header>
           <h1 className="text-hLg">Connecting to your Mailchimp audience</h1>
           <p className="mt-6 text-meepGray-400 max-w-lg">
-            In order to send data across to your Mailchimp audience, we{"'"}ll need a few
-            details that gives us permission to make updates to your audience, as
-            well as tell us which audience to update in the first place.
+            In order to send data across to your Mailchimp audience, we{"'"}ll
+            need a few details that gives us permission to make updates to your
+            audience, as well as tell us which audience to update in the first
+            place.
           </p>
         </header>
         <Form {...form}>
@@ -744,7 +906,7 @@ export default function Page({
             onSubmit={form.handleSubmit(submitTestConnection)}
             className="space-y-7 max-w-lg"
           >
-            <div className='text-hSm'>Connection details</div>
+            <div className="text-hSm">Connection details</div>
             <FormField
               control={form.control}
               name="mailchimp.apiKey"
@@ -756,7 +918,7 @@ export default function Page({
                     <Input placeholder="X...-usXX" {...field} required />
                   </FormControl>
                   <FormDescription>
-                    {" "}
+                    {' '}
                     <a
                       className="underline"
                       target="_blank"
@@ -781,7 +943,7 @@ export default function Page({
                     <Input placeholder="XXXXXXXXXX" {...field} required />
                   </FormControl>
                   <FormDescription>
-                    The unique identifier for your audience.{" "}
+                    The unique identifier for your audience.{' '}
                     <a
                       className="underline"
                       target="_blank"
@@ -800,29 +962,36 @@ export default function Page({
                 variant="outline"
                 type="reset"
                 onClick={() => {
-                  router.back();
+                  router.back()
                 }}
               >
                 Back
               </Button>
-              <Button type="submit" variant={"reverse"} disabled={testSourceResult.loading}>
+              <Button
+                type="submit"
+                variant={'reverse'}
+                disabled={testSourceResult.loading}
+              >
                 Test connection
               </Button>
             </div>
           </form>
         </Form>
       </div>
-    );
+    )
   }
 
-  if (externalDataSourceType === "actionnetwork") {
+  if (externalDataSourceType === 'actionnetwork') {
     return (
       <div className="space-y-7">
         <header>
-          <h1 className="text-hLg">Connecting to your Action Network instance</h1>
+          <h1 className="text-hLg">
+            Connecting to your Action Network instance
+          </h1>
           <p className="mt-6 text-meepGray-400 max-w-lg">
-            In order to send data across to your Action Network instance, we{"'"}ll need a few
-            details that gives us permission to make updates to your members.
+            In order to send data across to your Action Network instance, we
+            {"'"}ll need a few details that gives us permission to make updates
+            to your members.
           </p>
         </header>
         <Form {...form}>
@@ -830,7 +999,7 @@ export default function Page({
             onSubmit={form.handleSubmit(submitTestConnection)}
             className="space-y-7 max-w-lg"
           >
-            <div className='text-hSm'>Connection details</div>
+            <div className="text-hSm">Connection details</div>
             <FormField
               control={form.control}
               name="actionnetwork.groupSlug"
@@ -842,9 +1011,12 @@ export default function Page({
                     <Input placeholder="my-group" {...field} required />
                   </FormControl>
                   <FormDescription>
-                    Get your group slug from the group dashboard in Action Network.
-                    The URL will be {'"'}https://actionnetwork.org/groups/your-group-name/manage{'"'},
-                    with your group slug in the place of {'"'}your-group_name{'"'}.
+                    {`
+                    Get your group slug from the group dashboard in Action
+                    Network. The URL will be
+                    https://actionnetwork.org/groups/"your-group-name"/manage, 
+                    with your group slug in the place of "your-group_name".
+                    `}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -861,7 +1033,9 @@ export default function Page({
                     <Input placeholder="52b...bce" {...field} required />
                   </FormControl>
                   <FormDescription>
-                    Your API keys and sync features can be managed from the {'"'}API & Sync{'"'} link available in the {'"'}Start Organizing{'"'} menu.
+                    Your API keys and sync features can be managed from the{' '}
+                    {'"'}API & Sync{'"'} link available in the {'"'}Start
+                    Organizing{'"'} menu.
                     <a
                       className="underline"
                       target="_blank"
@@ -880,23 +1054,29 @@ export default function Page({
                 variant="outline"
                 type="reset"
                 onClick={() => {
-                  router.back();
+                  router.back()
                 }}
               >
                 Back
               </Button>
-              <Button type="submit" variant={"reverse"} disabled={testSourceResult.loading}>
+              <Button
+                type="submit"
+                variant={'reverse'}
+                disabled={testSourceResult.loading}
+              >
                 Test connection
               </Button>
             </div>
           </form>
         </Form>
       </div>
-    );
+    )
   }
 
-  if (externalDataSourceType === "editablegooglesheets") {
-    const redirectSuccessUrl = form.watch("editablegooglesheets.redirectSuccessUrl");
+  if (externalDataSourceType === 'editablegooglesheets') {
+    const redirectSuccessUrl = form.watch(
+      'editablegooglesheets.redirectSuccessUrl'
+    )
     return (
       <div className="space-y-7">
         {!redirectSuccessUrl ? (
@@ -917,32 +1097,32 @@ export default function Page({
                 onClick={() => {
                   // Can't use router.back() as this could take the user
                   // back to the Google OAuth screen
-                  router.push("/data-sources")
+                  router.push('/data-sources')
                 }}
               >
                 Back
               </Button>
               <Button
                 type="button"
-                variant={"reverse"}
+                variant={'reverse'}
                 disabled={googleSheetsAuthUrlResult.loading}
                 onClick={() => {
-                  setGoogleSheetsError("");
+                  setGoogleSheetsError('')
                   googleSheetsAuthUrl({
                     variables: { redirectUrl: window.location.href },
                   })
                     .then(({ data }) => {
                       if (!data?.googleSheetsAuthUrl) {
-                        throw Error("Missing data");
+                        throw Error('Missing data')
                       }
-                      window.location.href = data.googleSheetsAuthUrl;
+                      window.location.href = data.googleSheetsAuthUrl
                     })
                     .catch((e) => {
-                      console.error("Error: ", e);
+                      console.error('Error: ', e)
                       setGoogleSheetsError(
-                        "Could not get Google authorization URL, please try again."
-                      );
-                    });
+                        'Could not get Google authorization URL, please try again.'
+                      )
+                    })
                 }}
               >
                 Authorize
@@ -1021,14 +1201,14 @@ export default function Page({
                     onClick={() => {
                       // Can't use router.back() as this could take the user
                       // back to the Google OAuth screen
-                      router.push("/data-sources")
+                      router.push('/data-sources')
                     }}
                   >
                     Back
                   </Button>
                   <Button
                     type="submit"
-                    variant={"reverse"}
+                    variant={'reverse'}
                     disabled={testSourceResult.loading}
                   >
                     Test connection
@@ -1039,17 +1219,19 @@ export default function Page({
           </>
         )}
       </div>
-    );
+    )
   }
 
-  if (externalDataSourceType === "tickettailor") {
+  if (externalDataSourceType === 'tickettailor') {
     return (
       <div className="space-y-7">
         <header>
-          <h1 className="text-hLg">Connecting to your Ticket Tailor box office</h1>
+          <h1 className="text-hLg">
+            Connecting to your Ticket Tailor box office
+          </h1>
           <p className="mt-6 text-meepGray-400 max-w-lg">
-            In order to import data from your Ticket Tailor box office, we{"'"}ll need a few
-            details.
+            In order to import data from your Ticket Tailor box office, we{"'"}
+            ll need a few details.
           </p>
         </header>
         <Form {...form}>
@@ -1057,7 +1239,7 @@ export default function Page({
             onSubmit={form.handleSubmit(submitTestConnection)}
             className="space-y-7 max-w-lg"
           >
-            <div className='text-hSm'>Connection details</div>
+            <div className="text-hSm">Connection details</div>
             <FormField
               control={form.control}
               name="tickettailor.apiKey"
@@ -1069,7 +1251,8 @@ export default function Page({
                     <Input placeholder="sk_629...e" {...field} required />
                   </FormControl>
                   <FormDescription>
-                    Your API key can be found or generated in the Box Office Settings under API.
+                    Your API key can be found or generated in the Box Office
+                    Settings under API.
                     <a
                       className="underline"
                       target="_blank"
@@ -1088,20 +1271,24 @@ export default function Page({
                 variant="outline"
                 type="reset"
                 onClick={() => {
-                  router.back();
+                  router.back()
                 }}
               >
                 Back
               </Button>
-              <Button type="submit" variant={"reverse"} disabled={testSourceResult.loading}>
+              <Button
+                type="submit"
+                variant={'reverse'}
+                disabled={testSourceResult.loading}
+              >
                 Test connection
               </Button>
             </div>
           </form>
         </Form>
       </div>
-    );
+    )
   }
 
-  return null;
+  return null
 }

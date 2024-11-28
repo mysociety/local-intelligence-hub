@@ -9,6 +9,14 @@ In the dev container terminal, run `./bin/lint.sh`
 
 # GraphQL docs
 
+## Getting the Apollo GraphQL extension to work
+
+1. Install the Apollo GraphQL extension: `apollographql.vscode-apollo`
+2. Ensure the Django backend is running, by starting the "Run Mapped!" or "Django" launch configuration.
+3. Wait for the Django backend to start. There will be a notification in the bottom-left of VSCode that
+says "Your application running on port 8000 is available".
+4. Press `Cmd+Shift+P` to open the command palette, then find the `Apollo: Reload schema` command.
+
 ## Inserting foreign key references via `{ set: ID! }`
 
 E.g. when adding a source to an org

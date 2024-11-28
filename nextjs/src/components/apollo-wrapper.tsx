@@ -1,14 +1,14 @@
-"use client";
+'use client'
 
-import { ApolloLink, HttpLink } from "@apollo/client";
-import { setContext } from "@apollo/client/link/context";
+import { GRAPHQL_URL } from '@/env'
+import { authenticationHeaders } from '@/lib/auth'
+import { ApolloLink, HttpLink } from '@apollo/client'
+import { setContext } from '@apollo/client/link/context'
 import {
   ApolloNextAppProvider,
-  NextSSRInMemoryCache,
   NextSSRApolloClient,
-} from "@apollo/experimental-nextjs-app-support/ssr";
-import { authenticationHeaders } from '@/lib/auth';
-import { GRAPHQL_URL } from "@/env";
+  NextSSRInMemoryCache,
+} from '@apollo/experimental-nextjs-app-support/ssr'
 
 /**
  * Creates an apollo client that can be used in client components.
@@ -37,7 +37,7 @@ import { GRAPHQL_URL } from "@/env";
 export function makeFrontEndClient() {
   const httpLink = new HttpLink({
     uri: GRAPHQL_URL,
-  });
+  })
 
   const authLink = setContext((_, { headers }) => {
     const config = {
@@ -45,14 +45,14 @@ export function makeFrontEndClient() {
         ...headers,
         ...authenticationHeaders(),
       },
-    };
-    return config;
-  });
+    }
+    return config
+  })
 
   return new NextSSRApolloClient({
     cache: new NextSSRInMemoryCache(),
     link: ApolloLink.from([authLink, httpLink]),
-  });
+  })
 }
 
 export function ApolloWrapper({ children }: React.PropsWithChildren) {
@@ -60,5 +60,5 @@ export function ApolloWrapper({ children }: React.PropsWithChildren) {
     <ApolloNextAppProvider makeClient={makeFrontEndClient}>
       {children}
     </ApolloNextAppProvider>
-  );
+  )
 }

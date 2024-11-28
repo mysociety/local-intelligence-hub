@@ -1,10 +1,6 @@
-"use client";
+'use client'
 
-import { gql, useMutation } from "@apollo/client";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod";
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
@@ -12,8 +8,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
 
 // Disabled until we open Mapped to the public
 // const REGISTER_MUTATION = gql`
@@ -41,7 +40,7 @@ export default function RegisterForm() {
               ),
               {
                 message:
-                  "Your password must include at least one uppercase letter, one lowercase letter, one number and one special character, and be at least 8 characters long.",
+                  'Your password must include at least one uppercase letter, one lowercase letter, one number and one special character, and be at least 8 characters long.',
               }
             ),
           // Make sure password2 == password1
@@ -49,10 +48,10 @@ export default function RegisterForm() {
         })
         .refine((data) => data.password1 === data.password2, {
           message: "Passwords don't match",
-          path: ["password2"],
+          path: ['password2'],
         })
     ),
-  });
+  })
 
   // const [doRegister, { data, loading, error: gqlError }] = useMutation(REGISTER_MUTATION);
   const [doRegister, { data, loading, error: gqlError }] = [
@@ -64,31 +63,31 @@ export default function RegisterForm() {
       loading: false,
       error: null,
     },
-  ];
+  ]
 
   // TODO: remove these @ts-ignores when the REGISTER_MUTATION is enabled
 
   // @ts-ignore
-  const authError = data?.register?.errors;
+  const authError = data?.register?.errors
   // @ts-ignore
-  const success = data?.register?.success;
+  const success = data?.register?.success
 
-  const errors = [];
+  const errors = []
   if (gqlError) {
-    errors.push("Register request failed");
+    errors.push('Register request failed')
   }
   if (authError) {
     for (const field of Object.keys(authError)) {
-      const fieldErrors = authError[field];
+      const fieldErrors = authError[field]
       for (const error of fieldErrors) {
-        errors.push(error.message);
+        errors.push(error.message)
       }
     }
   }
 
   const handleSubmit = async (values: any) => {
-    doRegister({ variables: values });
-  };
+    doRegister({ variables: values })
+  }
 
   if (success) {
     return (
@@ -100,7 +99,7 @@ export default function RegisterForm() {
         </p>
         <p>Once you click that link, you can log in and start using Mapped!</p>
       </>
-    );
+    )
   }
 
   return (
@@ -167,5 +166,5 @@ export default function RegisterForm() {
         </Button>
       </form>
     </Form>
-  );
+  )
 }

@@ -5,56 +5,49 @@
 /* @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap'); */
 
-
-
 @font-face {
   font-family: publicSans;
-  src:
-    url('../fonts/hub/PublicSans-Regular.ttf');
+  src: url('../fonts/hub/PublicSans-Regular.ttf');
   font-style: normal;
 }
 
 @font-face {
   font-family: publicSansVariable;
-  src:
-    url('../fonts/hub/PublicSans-Regular-Variable.ttf');
+  src: url('../fonts/hub/PublicSans-Regular-Variable.ttf');
   font-style: normal;
 }
 
 @font-face {
-  font-family: "PPRightGrotesk";
+  font-family: 'PPRightGrotesk';
   src:
-    url("../fonts/PPRightGrotesk/PPRightGrotesk-CompactBlack.woff2")
-      format("woff2"),
-    url("../fonts/PPRightGrotesk/PPRightGrotesk-CompactBlack.woff")
-      format("woff");
+    url('../fonts/PPRightGrotesk/PPRightGrotesk-CompactBlack.woff2')
+      format('woff2'),
+    url('../fonts/PPRightGrotesk/PPRightGrotesk-CompactBlack.woff')
+      format('woff');
   font-style: normal;
 }
-
 
 @font-face {
   font-family: IBMPlexSansReg;
-  src: url("../fonts/IBMPlexSans/IBMPlexSans-Regular.ttf");
+  src: url('../fonts/IBMPlexSans/IBMPlexSans-Regular.ttf');
 }
 @font-face {
   font-family: IBMPlexSansMedium;
-  src: url("../fonts/IBMPlexSans/IBMPlexSans-Medium.ttf");
+  src: url('../fonts/IBMPlexSans/IBMPlexSans-Medium.ttf');
 }
 @font-face {
   font-family: IBMPlexSansSemiBold;
-  src: url("../fonts/IBMPlexSans/IBMPlexSans-SemiBold.ttf");
+  src: url('../fonts/IBMPlexSans/IBMPlexSans-SemiBold.ttf');
 }
 @font-face {
   font-family: IBMPlexSansCondensed;
-  src: url("../fonts/IBMPlexSans/IBMPlexSansCondensed-Regular.ttf");
+  src: url('../fonts/IBMPlexSans/IBMPlexSansCondensed-Regular.ttf');
 }
 
 @font-face {
   font-family: IBMPlexMono;
-  src: url("../fonts/IBMPlexMono/IBMPlexMono-Regular.ttf");
+  src: url('../fonts/IBMPlexMono/IBMPlexMono-Regular.ttf');
 }
-
-
 
 @layer base {
   :root {
@@ -82,7 +75,7 @@
     --secondary: 210 40% 96.1%;
     --secondary-foreground: var(--meep-gray-600);
     --muted: 210 40% 96.1%;
-    --muted-foreground:  222, 14%, 64%;
+    --muted-foreground: 222, 14%, 64%;
     --accent: var(--meep-gray-600);
     --accent-foreground: var(--meep-gray-200);
     --border: 0, 0%, 100%, 0.32;
@@ -142,21 +135,20 @@
     height: 100% !important;
   }
 
-  [class^="_PuckCanvas-root"] {
+  [class^='_PuckCanvas-root'] {
     opacity: 1 !important;
   }
 
-  [class^="_Puck-layout"] {
+  [class^='_Puck-layout'] {
     height: 100% !important;
   }
 
-  [class^="_PuckLayout-inner"] {
+  [class^='_PuckLayout-inner'] {
     height: 100% !important;
   }
 }
 
 /**/
-
 
 .react-grid-layout {
   position: relative;
@@ -204,14 +196,14 @@
   user-select: none;
 }
 
-.react-grid-item>.react-resizable-handle {
+.react-grid-item > .react-resizable-handle {
   position: absolute;
   width: 20px;
   height: 20px;
 }
 
-.react-grid-item>.react-resizable-handle::after {
-  content: "";
+.react-grid-item > .react-resizable-handle::after {
+  content: '';
   position: absolute;
   right: 3px;
   bottom: 3px;
@@ -221,67 +213,67 @@
   border-bottom: 2px solid rgba(0, 0, 0, 0.4);
 }
 
-.react-resizable-hide>.react-resizable-handle {
+.react-resizable-hide > .react-resizable-handle {
   display: none;
 }
 
-.react-grid-item>.react-resizable-handle.react-resizable-handle-sw {
+.react-grid-item > .react-resizable-handle.react-resizable-handle-sw {
   bottom: 0;
   left: 0;
   cursor: sw-resize;
   transform: rotate(90deg);
 }
 
-.react-grid-item>.react-resizable-handle.react-resizable-handle-se {
+.react-grid-item > .react-resizable-handle.react-resizable-handle-se {
   bottom: 0;
   right: 0;
   cursor: se-resize;
 }
 
-.react-grid-item>.react-resizable-handle.react-resizable-handle-nw {
+.react-grid-item > .react-resizable-handle.react-resizable-handle-nw {
   top: 0;
   left: 0;
   cursor: nw-resize;
   transform: rotate(180deg);
 }
 
-.react-grid-item>.react-resizable-handle.react-resizable-handle-ne {
+.react-grid-item > .react-resizable-handle.react-resizable-handle-ne {
   top: 0;
   right: 0;
   cursor: ne-resize;
   transform: rotate(270deg);
 }
 
-.react-grid-item>.react-resizable-handle.react-resizable-handle-w,
-.react-grid-item>.react-resizable-handle.react-resizable-handle-e {
+.react-grid-item > .react-resizable-handle.react-resizable-handle-w,
+.react-grid-item > .react-resizable-handle.react-resizable-handle-e {
   top: 50%;
   margin-top: -10px;
   cursor: ew-resize;
 }
 
-.react-grid-item>.react-resizable-handle.react-resizable-handle-w {
+.react-grid-item > .react-resizable-handle.react-resizable-handle-w {
   left: 0;
   transform: rotate(135deg);
 }
 
-.react-grid-item>.react-resizable-handle.react-resizable-handle-e {
+.react-grid-item > .react-resizable-handle.react-resizable-handle-e {
   right: 0;
   transform: rotate(315deg);
 }
 
-.react-grid-item>.react-resizable-handle.react-resizable-handle-n,
-.react-grid-item>.react-resizable-handle.react-resizable-handle-s {
+.react-grid-item > .react-resizable-handle.react-resizable-handle-n,
+.react-grid-item > .react-resizable-handle.react-resizable-handle-s {
   left: 50%;
   margin-left: -10px;
   cursor: ns-resize;
 }
 
-.react-grid-item>.react-resizable-handle.react-resizable-handle-n {
+.react-grid-item > .react-resizable-handle.react-resizable-handle-n {
   top: 0;
   transform: rotate(225deg);
 }
 
-.react-grid-item>.react-resizable-handle.react-resizable-handle-s {
+.react-grid-item > .react-resizable-handle.react-resizable-handle-s {
   bottom: 0;
   transform: rotate(45deg);
 }

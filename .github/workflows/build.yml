@@ -3,16 +3,16 @@ name: Build nextjs app
 concurrency: 
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-  
+   
 on:
   pull_request:
-
+    
 jobs:
   build:
     runs-on: ubuntu-latest
     environment: testing
     container:
-      image: node:20
+      image: node:22
     steps:
       - name: Checkout repo content
         uses: actions/checkout@v3

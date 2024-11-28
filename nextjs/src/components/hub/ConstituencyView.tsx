@@ -1,32 +1,24 @@
-import {
-  DataSourceType,
-  GetLocalDataQuery,
-} from "@/__generated__/graphql";
-import { isAfter, isBefore } from "date-fns";
+import { DataSourceType, GetLocalDataQuery } from '@/__generated__/graphql'
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs-rounded";
-import { useState } from "react";
-import { HustingsCTA } from "@/app/hub/render/[hostname]/map/SearchPanel";
-import Link from "next/link";
-import IframeResizer from "iframe-resizer-react";
-import queryString from "query-string";
-import { useHubRenderContext } from "./HubRenderContext";
-import { BACKEND_URL } from "@/env";
-import { EventCard } from "./EventCard";
+} from '@/components/ui/tabs-rounded'
+import { BACKEND_URL } from '@/env'
+import { isAfter, isBefore } from 'date-fns'
+import { useState } from 'react'
+import { useHubRenderContext } from './HubRenderContext'
 
 export function ConstituencyView({
   data,
-  postcode
+  postcode,
 }: {
-  data: GetLocalDataQuery["postcodeSearch"]["constituency"],
+  data: GetLocalDataQuery['postcodeSearch']['constituency']
   postcode: string
 }) {
-  const [tab, setTab] = useState("candidates");
-  const hubContext = useHubRenderContext();
+  const [tab, setTab] = useState('candidates')
+  const hubContext = useHubRenderContext()
 
   if (!data?.name) {
     return (
@@ -35,37 +27,37 @@ export function ConstituencyView({
           href="#"
           className="block mb-2"
           onClick={(e) => {
-            e.preventDefault();
-            hubContext.reset();
+            e.preventDefault()
+            hubContext.reset()
           }}
         >
           &larr; Search another postcode
         </a>
         <div>This doesn{"'"}t look like a valid postcode.</div>
       </div>
-    );
+    )
   }
 
   const events = data?.genericDataForHub
     ?.filter(
       (d) =>
         d.dataType.dataSet.externalDataSource.dataType ===
-        DataSourceType.Event && !!d.startTime
+          DataSourceType.Event && !!d.startTime
     )
     .sort((a, b) =>
       // most recent first
       isAfter(new Date(a.startTime), new Date(b.startTime)) ? 1 : -1
-    );
+    )
 
   const upcomingEvents = events?.filter((e) =>
     // future events
     isAfter(new Date(e.startTime), new Date())
-  );
+  )
 
   const pastEvents = events?.filter((e) =>
     // future events
     isBefore(new Date(e.startTime), new Date())
-  );
+  )
 
   return (
     <div className="flex flex-col overflow-y-hidden">
@@ -74,8 +66,8 @@ export function ConstituencyView({
           href="#"
           className="block mb-4"
           onClick={(e) => {
-            e.preventDefault();
-            hubContext.reset();
+            e.preventDefault()
+            hubContext.reset()
           }}
         >
           &larr; Search another postcode
@@ -93,15 +85,14 @@ export function ConstituencyView({
           <TabsList className="px-6 py-4 mb-4 border-none w-full justify-start gap-2">
             {[
               {
-                label:
-                  hubContext.isPeopleClimateNature
-                    ? "Meet your MP"
-                    : "Candidates",
-                key: "candidates",
+                label: hubContext.isPeopleClimateNature
+                  ? 'Meet your MP'
+                  : 'Candidates',
+                key: 'candidates',
               },
               {
-                label: "Calendar",
-                key: "events",
+                label: 'Calendar',
+                key: 'events',
               },
             ].map((target) => (
               <TabsTrigger
@@ -119,11 +110,11 @@ export function ConstituencyView({
               {hubContext.isPeopleClimateNature ? (
                 <div className="my-4">
                   {data.mp ? (
-                    <article
-                      className="flex flex-col gap-2 mx-4"
-                    >
+                    <article className="flex flex-col gap-2 mx-4">
                       <header>
-                        <h2 className="text-2xl mb-4">Find Common Grounds with</h2>
+                        <h2 className="text-2xl mb-4">
+                          Find Common Grounds with
+                        </h2>
                         <div className="flex items-center bg-hub-primary-50 p-4 rounded-md mb-4">
                           {data.mp.photo && (
                             // eslint-disable-next-line @next/next/no-img-element
@@ -139,32 +130,32 @@ export function ConstituencyView({
                             />
                           )}
                           <div>
-                            <h3 className="font-bold text-lg">{data.mp.name}</h3>
-                            {data.mp.party && (
-                              <span>
-                                {data.mp.party.name}
-                              </span>
-                            )}
+                            <h3 className="font-bold text-lg">
+                              {data.mp.name}
+                            </h3>
+                            {data.mp.party && <span>{data.mp.party.name}</span>}
                           </div>
                         </div>
                         <h2 className="text-2xl mb-4">On October 12th.</h2>
                       </header>
                     </article>
                   ) : (
-                    <article
-                      className="border-2 border-meepGray-200 rounded-md overflow-hidden p-4 flex flex-col gap-2 mx-4"
-                    >
+                    <article className="border-2 border-meepGray-200 rounded-md overflow-hidden p-4 flex flex-col gap-2 mx-4">
                       <p>Could not find your MP.</p>
                     </article>
                   )}
                   <div className="px-4">
                     <p className="mb-4">
-                      Sign up to meet with your local MP. Through personal stories and discussions about the issues
-                      that matter most, we aim to inspire MPs to take meaningful action.
+                      Sign up to meet with your local MP. Through personal
+                      stories and discussions about the issues that matter most,
+                      we aim to inspire MPs to take meaningful action.
                     </p>
-                    <a 
+                    <a
                       className="bg-hub-primary-600 text-hub-primary-50 p-4 text-lg text-center w-full block rounded-md hover:bg-hub-primary-700 focus:bg-hub-primary-700"
-                      href={`/pledge?postcode=${encodeURIComponent(postcode)}`}>Pledge to take part</a>
+                      href={`/pledge?postcode=${encodeURIComponent(postcode)}`}
+                    >
+                      Pledge to take part
+                    </a>
                   </div>
                 </div>
               ) : (
@@ -202,7 +193,7 @@ export function ConstituencyView({
                         </header>
                         {person.email ? (
                           <a
-                            href={`mailto:${person.email.data?.replace(/["']/gim, "")}`}
+                            href={`mailto:${person.email.data?.replace(/["']/gim, '')}`}
                             target="_blank"
                             className="bg-hub-primary-200 text-hub-primary-900 px-3 py-2 text-center w-full block rounded-md"
                           >
@@ -220,12 +211,21 @@ export function ConstituencyView({
             </section>
           </TabsContent>
           <TabsContent className="mt-0 px-6 py-4" value="events">
-            <h3 className="text-2xl text-hub-primary-950 font-bold mb-4"> Save the date! Prepare to meet your MP on Saturday 12 October.</h3>
-            <p>Access free training and resources now to build your confidence, meet your MP, tell your story and get a commitment to action! </p>
-            <a href="/resources">Resources | United for People, Climate & Nature (peopleclimatenature.org)</a>
+            <h3 className="text-2xl text-hub-primary-950 font-bold mb-4">
+              {' '}
+              Save the date! Prepare to meet your MP on Saturday 12 October.
+            </h3>
+            <p>
+              Access free training and resources now to build your confidence,
+              meet your MP, tell your story and get a commitment to action!{' '}
+            </p>
+            <a href="/resources">
+              Resources | United for People, Climate & Nature
+              (peopleclimatenature.org)
+            </a>
           </TabsContent>
         </Tabs>
       </main>
     </div>
-  );
+  )
 }

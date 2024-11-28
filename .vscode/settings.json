@@ -1,5 +1,6 @@
 {
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    "python.terminal.activateEnvironment": false, // the Docker container already activates the environment
     "editor.formatOnSave": false,
     "[python]": {
         "editor.formatOnSave": true,
@@ -9,21 +10,17 @@
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
     "python.analysis.extraPaths": [
-        ".venv/lib/python3.11/site-packages"
+        ".venv/lib/python3.12/site-packages"
     ],
-    "black-formatter.path": ["${workspaceFolder}", "script", "black"],
-    "flake8.path": ["${workspaceFolder}", "script", "flake8"],
-    "flake8.args": [
-        "--exclude \".venv\" ."
-    ],
-
     "files.exclude": {
         "**/.git": true,
         "**/.svn": true,
         "**/.hg": true,
         "**/CVS": true,
         "**/.DS_Store": true,
-        "**/*.pyc": {"when": "$(basename).py"}, 
+        "**/*.pyc": {
+            "when": "$(basename).py"
+        },
         "**/__pycache__": true
     },
     "files.associations": {
@@ -32,5 +29,41 @@
         "**/templates/**/*": "django-txt",
         "**/requirements{/**,*}.{txt,in}": "pip-requirements"
     },
-    "tailwindCSS.experimental.configFile": "nextjs/tailwind.config.ts"
+    "tailwindCSS.experimental.configFile": "nextjs/tailwind.config.ts",
+    "[javascriptreact]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescript]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[html]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[css]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[scss]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[markdown]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
 }

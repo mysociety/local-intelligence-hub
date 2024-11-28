@@ -1,16 +1,18 @@
 'use client'
 
-import React, { useMemo } from 'react'
-import { Data, Render } from "@measured/puck";
-import { getPuckConfigForHostname } from '@/data/puck/ui';
-import { HubRenderContextProvider } from '@/components/hub/HubRenderContext';
+import { HubRenderContextProvider } from '@/components/hub/HubRenderContext'
+import { getPuckConfigForHostname } from '@/data/puck/ui'
+import { Data, Render } from '@measured/puck'
+import { useMemo } from 'react'
 
-
-export default function RenderPuck({ hostname, page }: {
-    page: Data;
-    hostname: string;
+export default function RenderPuck({
+  hostname,
+  page,
+}: {
+  page: Data
+  hostname: string
 }) {
-  const conf = useMemo(() => getPuckConfigForHostname(hostname), [hostname]);
+  const conf = useMemo(() => getPuckConfigForHostname(hostname), [hostname])
 
   return (
     <HubRenderContextProvider hostname={hostname}>

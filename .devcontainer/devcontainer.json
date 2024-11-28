@@ -10,7 +10,11 @@
     8000,
     5432
   ],
+  "mounts": [
+    "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind,consistency=cached"
+  ],
   "postCreateCommand": "./bin/ck_setup.sh",
+  "postAttachCommand": "./bin/ensure_ck_setup.sh",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -28,7 +32,7 @@
         "GraphQL.vscode-graphql",
         "GraphQL.vscode-graphql-syntax",
         "bradlc.vscode-tailwindcss",
-        "apollographql.vscode-apollo"
+        "esbenp.prettier-vscode"
       ],
       "settings": {
         "terminal.integrated.shell.linux": "/bin/bash",

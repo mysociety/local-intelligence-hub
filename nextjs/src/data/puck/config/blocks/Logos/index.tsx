@@ -1,56 +1,55 @@
 /* eslint-disable @next/next/no-img-element */
-import React from "react";
-import { ComponentConfig } from "@measured/puck";
-import { Section } from "@/data/puck/config/components/Section";
+import { Section } from '@/data/puck/config/components/Section'
+import { ComponentConfig } from '@measured/puck'
 
 export type LogosProps = {
   logos: {
-    alt: string;
-    imageUrl: string;
-  }[];
-};
+    alt: string
+    imageUrl: string
+  }[]
+}
 
 export const Logos: ComponentConfig<LogosProps> = {
   fields: {
     logos: {
-      type: "array",
+      type: 'array',
       getItemSummary: (item, i) => item.alt || `Feature #${i}`,
       defaultItemProps: {
-        alt: "",
-        imageUrl: "",
+        alt: '',
+        imageUrl: '',
       },
       arrayFields: {
-        alt: { type: "text" },
-        imageUrl: { type: "text" },
+        alt: { type: 'text' },
+        imageUrl: { type: 'text' },
       },
     },
   },
   defaultProps: {
     logos: [
       {
-        alt: "google",
+        alt: 'google',
         imageUrl:
-          "https://logolook.net/wp-content/uploads/2021/06/Google-Logo.png",
+          'https://logolook.net/wp-content/uploads/2021/06/Google-Logo.png',
       },
       {
-        alt: "google",
+        alt: 'google',
         imageUrl:
-          "https://logolook.net/wp-content/uploads/2021/06/Google-Logo.png",
+          'https://logolook.net/wp-content/uploads/2021/06/Google-Logo.png',
       },
       {
-        alt: "google",
+        alt: 'google',
         imageUrl:
-          "https://logolook.net/wp-content/uploads/2021/06/Google-Logo.png",
+          'https://logolook.net/wp-content/uploads/2021/06/Google-Logo.png',
       },
       {
-        alt: "google",
+        alt: 'google',
         imageUrl:
-          "https://logolook.net/wp-content/uploads/2021/06/Google-Logo.png",
+          'https://logolook.net/wp-content/uploads/2021/06/Google-Logo.png',
       },
       {
-        alt: "google",
+        alt: 'google',
         imageUrl:
-          "https://logolook.net/wp-content/uploads/2021/06/Google-Logo.png",
+          'https://logolook.net/wp-content/uploads/2021/06/Google-Logo.png',
       },
     ],
   },
@@ -60,15 +59,11 @@ export const Logos: ComponentConfig<LogosProps> = {
         <div>
           {logos.map((item, i) => (
             <div key={i}>
-              <img
-                alt={item.alt}
-                src={item.imageUrl}
-                height={64}
-              ></img>
+              <img alt={item.alt} src={item.imageUrl} height={64}></img>
             </div>
           ))}
         </div>
       </Section>
-    );
+    )
   },
-};
+}

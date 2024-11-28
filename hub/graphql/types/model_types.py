@@ -1220,11 +1220,15 @@ class MappingSource:
     external_data_source: Optional[SharedDataSource] = None
 
 
-def mapping_sources(info: Info) -> List[MappingSourcePath]:
-    user = get_current_user(info)
+def mapping_sources(info: Info, organisation_pk: str) -> List[MappingSourcePath]:
+    organisation = models.Organisation.objects.get(pk=organisation_pk)
 
-    external_data_sources = models.ExternalDataSource.objects.filter(
-        organisation__members__user=user.id,
+    external_data_sources = organisation.get_external_data_sources(
+        include_shared=True,
+        sharing_permission_filters={
+            "visibility_record_coordinates": True,
+            "visibility_record_details": True,
+        },
     ).exclude(data_type=models.ExternalDataSource.DataSourceType.MEMBER)
 
     return [

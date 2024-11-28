@@ -79,7 +79,7 @@ const FileUploadField = ({
 };
 
 export const Image: ComponentConfig<ImageProps> = {
-  label: "Image",
+  label: 'Image',
   fields: {
     url: {
       type: "custom",

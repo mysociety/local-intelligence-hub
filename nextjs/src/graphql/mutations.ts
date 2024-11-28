@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client'
 
 export const UPDATE_EXTERNAL_DATA_SOURCE = gql`
   mutation UpdateExternalDataSource($input: ExternalDataSourceInput!) {
@@ -23,4 +23,4 @@ export const UPDATE_EXTERNAL_DATA_SOURCE = gql`
       }
     }
   }
-`;
+`

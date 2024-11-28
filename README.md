@@ -22,16 +22,19 @@ cd mapped
 bin/download_env_files.sh
 ```
 
-2. If you haven't already done so, open the project folder in VSCode (File menu -> Open folder). You will receive a notification like this:
+2. If you haven't already done so, open the project folder in VSCode (File menu -> Open folder). **Ignore any errors from VSCode at this point.**
+You will receive a notification like this:
 ![alt text](docs/devcontainer_popup.png) Click "reopen in container". If that doesn't happen, press `Cmd+Shift+P` to open the command palette, and type "reopen in container" to find
    the "Dev Containers: Reopen in Container" option.
 
-3. Wait for the Dev Containers to set up. This will take less than 10 minutes.
+3. There will be an error from the Apollo GraphQL extension that can be ignored (the extension does not work until Mapped is running).
 
-4. In the "Run and Debug" section of the VSCode left-hand navigation, click the "Run Mapped!" configuration to start the Mapped
+4. Wait for the Dev Containers to set up. This will take less than 10 minutes.
+
+5. In the "Run and Debug" section of the VSCode left-hand navigation, click the "Run Mapped!" configuration to start the Mapped
    application.
 
-5. Visit http://localhost:3000 in your browser to access Mapped.
+6. Visit http://localhost:3000 in your browser to access Mapped.
 
 
 ***

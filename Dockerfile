@@ -10,8 +10,9 @@ ENV INSIDE_DOCKER=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=true \
     PYSETUP_PATH="/opt/pysetup" \
     SHELL=/bin/bash
+RUN curl -sL https://deb.nodesource.com/setup_22.x | bash
 RUN apt-get update && apt-get install -y \
-    binutils gdal-bin libproj-dev git npm python3-dev \
+    binutils gdal-bin libproj-dev git nodejs python3-dev \
     && rm -rf /var/lib/apt/lists/*
 RUN curl -sSL https://install.python-poetry.org | python -
 ENV PATH="/root/.local/bin:$PATH"
@@ -21,4 +22,4 @@ COPY poetry.lock pyproject.toml ./
 # WORKDIR /app
 # COPY . .
 #RUN ./manage.py collectstatic --no-input
-RUN echo "source .venv/bin/activate" >> "/root/.bashrc"
+RUN echo "source .venv/bin/activate 2>/dev/null" >> "/root/.bashrc"
