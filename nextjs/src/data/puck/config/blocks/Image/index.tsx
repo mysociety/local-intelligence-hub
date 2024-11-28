@@ -106,7 +106,7 @@ export const Image: ComponentConfig<ImageProps> = {
     return (
       <figure>
         <img
-          className="object-fill w-full"
+          className="object-fill w-full rounded-2xl mb-4"
           style={{
             width: width || "auto",
             height: height || "auto",
