@@ -7,10 +7,10 @@ concurrency:
 on:
   workflow_run:
     workflows: [Lint]
-    types:
-      - completed
+    types: [completed]
+    
 jobs:
-  tests:
+  on-success:
     runs-on: ubuntu-latest
     environment: testing
     services:

@@ -7,11 +7,10 @@ concurrency:
 on:
   workflow_run:
     workflows: [Run project tests]
-    types:
-      - completed
-
+    types: [completed]
+    
 jobs:
-  build:
+  on-success:
     runs-on: ubuntu-latest
     environment: testing
     container:
