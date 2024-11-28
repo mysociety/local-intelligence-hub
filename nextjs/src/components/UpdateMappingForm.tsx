@@ -103,9 +103,9 @@ export function UpdateMappingForm({
                     <FormItem>
                       <FormLabel>Type of location data</FormLabel>
                       <FormControl>
-                        {/* @ts-ignore */}
                         <Select
                           onValueChange={field.onChange}
+                          /* @ts-ignore */
                           value={field.value}
                         >
                           <SelectTrigger>
@@ -141,8 +141,8 @@ export function UpdateMappingForm({
                       </FormLabel>
                       <FormControl>
                         {fieldDefinitions?.length ? (
-                          // @ts-ignore
                           <Select
+                            // @ts-ignore
                             value={field.value}
                             onValueChange={field.onChange}
                             required

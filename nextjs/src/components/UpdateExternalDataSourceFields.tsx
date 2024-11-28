@@ -122,8 +122,8 @@ export function UpdateExternalDataSourceFields({
               </FormLabel>
               <FormControl>
                 {fieldDefinitions?.length ? (
-                  // @ts-ignore
                   <Select
+                    // @ts-ignore
                     value={field.value}
                     onValueChange={field.onChange}
                     required

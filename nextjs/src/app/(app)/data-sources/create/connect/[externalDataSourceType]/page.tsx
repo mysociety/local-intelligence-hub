@@ -597,9 +597,9 @@ export default function Page({
                     <FormItem>
                       <FormLabel>Data type</FormLabel>
                       <FormControl>
-                        {/* @ts-ignore */}
                         <Select
                           onValueChange={field.onChange}
+                          /* @ts-ignore */
                           defaultValue={field.value}
                           required
                         >
@@ -663,9 +663,9 @@ export default function Page({
                       <FormItem>
                         <FormLabel>Type of location data</FormLabel>
                         <FormControl>
-                          {/* @ts-ignore */}
                           <Select
                             onValueChange={field.onChange}
+                            /* @ts-ignore */
                             defaultValue={field.value}
                             required
                           >
@@ -1013,9 +1013,8 @@ export default function Page({
                   <FormDescription>
                     Get your group slug from the group dashboard in Action
                     Network. The URL will be {'"'}
-                    https://actionnetwork.org/groups/your-group-name/manage{
-                      '"'
-                    }, with your group slug in the place of {'"'}your-group_name
+                    https://actionnetwork.org/groups/your-group-name/manage{'"'}
+                    , with your group slug in the place of {'"'}your-group_name
                     {'"'}.
                   </FormDescription>
                   <FormMessage />

@@ -1,7 +1,6 @@
 'use client'
 import Script from 'next/script'
 import { useEffect } from 'react'
-// @ts-ignore
 import * as CookieConsent from 'vanilla-cookieconsent'
 
 export default function ConsentRespectingGoogleAnalytics({
@@ -10,14 +9,15 @@ export default function ConsentRespectingGoogleAnalytics({
   googleAnalyticsTagId: string
 }) {
   useEffect(() => {
+    // @ts-ignore
     window.dataLayer = window.dataLayer || []
     function gtag(...args: any[]) {
+      // @ts-ignore
       window.dataLayer?.push(arguments)
     }
     gtag('js', new Date())
     gtag('config', googleAnalyticsTagId)
 
-    // @ts-ignore
     gtag?.('consent', 'default', {
       ad_storage: 'denied',
       ad_user_data: 'denied',
