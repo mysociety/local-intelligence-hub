@@ -255,7 +255,7 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
             self.stdout.write(self.message)
 
         for index, row in tqdm(df.iterrows(), disable=self._quiet, total=df.shape[0]):
-            if type(self.cons_row) == int:
+            if type(self.cons_row) is int:
                 cons = row.iloc[self.cons_row]
             else:
                 cons = row[self.cons_row]
