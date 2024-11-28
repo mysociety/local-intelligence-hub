@@ -73,6 +73,8 @@ echo '------------------------------------';
 cd nextjs
 npm i
 
+touch /app/.ck_setup_complete
+
 echo '';
 echo '------------------------------------';
 echo '';

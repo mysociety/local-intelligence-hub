@@ -11,6 +11,7 @@
     5432
   ],
   "postCreateCommand": "./bin/ck_setup.sh",
+  "postAttachCommand": "./bin/ensure_ck_setup.sh",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -28,7 +29,6 @@
         "GraphQL.vscode-graphql",
         "GraphQL.vscode-graphql-syntax",
         "bradlc.vscode-tailwindcss",
-        "apollographql.vscode-apollo",
         "esbenp.prettier-vscode"
       ],
       "settings": {
