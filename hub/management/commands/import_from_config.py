@@ -67,8 +67,9 @@ class Command(BaseImportFromDataFrameCommand):
         self.data_file = settings.BASE_DIR / "data" / row["data_file"]
         self.file_type = row["file_type"]
         self.area_type = row["area_type"]
-        self.header_row = row["header_row"]
-        self.sheet = row["sheet"]
+        self.header_row = row.get("header_row")
+        self.sheet = row.get("sheet")
+        self.data_types = {}
 
         if row["uses_gss"]:
             self.uses_gss = True
@@ -81,7 +82,7 @@ class Command(BaseImportFromDataFrameCommand):
         except ValueError:
             pass
 
-        if row["do_not_delete"]:
+        if row.get("do_not_delete"):
             self.skip_delete = True
         else:
             self.skip_delete = False
@@ -107,7 +108,7 @@ class Command(BaseImportFromDataFrameCommand):
                 val = ""
             defaults[col] = val
 
-        if pd.isna(defaults["exclude_countries"]):
+        if defaults["exclude_countries"] is None:
             defaults["exclude_countries"] = []
 
         if row["is_range"]:
@@ -124,9 +125,9 @@ class Command(BaseImportFromDataFrameCommand):
             df = pd.read_csv(self.data_file)
         elif self.file_type == "excel":
             kwargs = {}
-            if not pd.isna(self.sheet):
+            if self.sheet:
                 kwargs["sheet_name"] = self.sheet
-            if not pd.isna(self.header_row):
+            if self.header_row:
                 kwargs["header"] = int(self.header_row)
             df = pd.read_excel(self.data_file, **kwargs)
         else:
