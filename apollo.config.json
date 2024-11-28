@@ -1,0 +1,9 @@
+{
+  "client": {
+    "service": {
+      "name": "mapped",
+      "url": "http://127.0.0.1:8000/graphql"
+    },
+    "includes": ["nextjs/src/**/*.ts", "nextjs/src/**/*.tsx"]
+  }
+}

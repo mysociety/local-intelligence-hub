@@ -16,13 +16,6 @@ class Command(BaseCommand):
     boundary_types = [
         {
             "mapit_type": ["WMC"],
-            "name": "2010 Parliamentary Constituency",
-            "code": "WMC",
-            "area_type": "Westminster Constituency",
-            "description": "Westminster Parliamentary Constituency boundaries, as created in 2010",
-        },
-        {
-            "mapit_type": ["WMCF"],
             "name": "2023 Parliamentary Constituency",
             "code": "WMC23",
             "area_type": "Westminster Constituency",

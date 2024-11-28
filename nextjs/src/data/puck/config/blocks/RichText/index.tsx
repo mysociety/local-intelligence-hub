@@ -23,6 +23,8 @@ const formats = [
     'list', 'bullet', 'link'
 ];
 
+const ReactQuill = dynamic(() => import('./ReactQuill'), { ssr: false });
+
 export const RichText: ComponentConfig<RichTextProps> = {
     label: "RichText",
     fields: {
@@ -36,7 +38,6 @@ export const RichText: ComponentConfig<RichTextProps> = {
         content: {
             type: "custom",
             render: ({ onChange, value }) => {
-                const ReactQuill = dynamic(import('./ReactQuill'), { ssr: false });
                 return <ReactQuill
                     value={value}
                     onChange={(e: string) => onChange(e)}

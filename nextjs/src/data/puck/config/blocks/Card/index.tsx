@@ -231,7 +231,6 @@ export function RenderCard({
             src={CirclePattern}
             width={500}
             alt="hero image"
-            layout="responsive"
           />
         </div>
       )}

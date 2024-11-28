@@ -124,7 +124,7 @@ export function CreateReportCard () {
   )
 
   function create() {
-    const tid = toast.promise(
+    toast.promise(
       client.mutate<CreateMapReportMutation, CreateMapReportMutationVariables>({
         mutation: CREATE_MAP_REPORT,
         variables: {
@@ -143,15 +143,13 @@ export function CreateReportCard () {
             return 'Report created!'
           } else if (d.data?.createMapReport?.__typename === 'OperationInfo' ) {
             toast.error('Failed to create report', {
-              id: tid,
               description: d.data.createMapReport.messages.map(m => m.message).join(', ')
             })
-            triggerAnalyticsEvent("Map report creatio failed", {
+            triggerAnalyticsEvent("Map report creation failed", {
               errorMessages: d.data.createMapReport.messages.map(m => m.message).join(', ')
             });
           } else {
             toast.error('Failed to create report', {
-              id: tid,
               description: d.errors?.map(e => e.message).join(', ')
             })
             triggerAnalyticsEvent("Report creation failed", {

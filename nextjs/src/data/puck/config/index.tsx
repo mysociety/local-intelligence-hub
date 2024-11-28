@@ -1,4 +1,4 @@
-import { Config } from "@measured/puck";
+import { Config, ComponentConfig } from "@measured/puck";
 import Root, { RootProps } from "./root";
 import { ButtonGroup, ButtonGroupProps } from "./blocks/ButtonGroup";
 import { Card, CardProps } from "./blocks/Card";
@@ -110,23 +110,26 @@ export const conf: UserConfig = {
       ],
     }
   },
+  // TODO: figure out why this cast to ComponentConfig<any>
+  // is necessary, and components cannot be e.g.
+  // ComponentConfig<CardProps>
   components: {
-    Card,
-    Columns,
-    Hero,
-    Flex,
-    PlainText: Text,
-    VerticalSpace,
-    GridRow,
-    FilterableGrid,
-    SectionHeader,
-    EventList,
-    Image,
-    HomepageItemsAlias,
-    RichText,
-    About,
-    HTMLEmbed,
-    Iframe,
-    MemberForm
+    Card: Card as ComponentConfig<any>,
+    Columns: Columns as ComponentConfig<any>,
+    Hero: Hero as ComponentConfig<any>,
+    Flex: Flex as ComponentConfig<any>,
+    PlainText: Text as ComponentConfig<any>,
+    VerticalSpace: VerticalSpace as ComponentConfig<any>,
+    GridRow: GridRow as ComponentConfig<any>,
+    FilterableGrid: FilterableGrid as ComponentConfig<any>,
+    SectionHeader: SectionHeader as ComponentConfig<any>,
+    EventList: EventList as ComponentConfig<any>,
+    Image: Image as ComponentConfig<any>,
+    HomepageItemsAlias: HomepageItemsAlias as ComponentConfig<any>,
+    RichText: RichText as ComponentConfig<any>,
+    About: About as ComponentConfig<any>,
+    HTMLEmbed: HTMLEmbed as ComponentConfig<any>,
+    Iframe: Iframe as ComponentConfig<any>,
+    MemberForm: MemberForm as ComponentConfig<any>,
   },
 };

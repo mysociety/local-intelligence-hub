@@ -80,12 +80,11 @@ function HeroRenderer ({ prompt, description, }:  HeroProps) {
   return (
     <div className=" rounded-[40px] flex flex-col lg:flex-row justify-end overflow-clip lg:gap-[25px] relative mb-[25px]">
       <Image
-        className="lg:rounded-[40px] lg:absolute h-full w-full"
+        className="lg:rounded-[40px] lg:absolute h-full w-full object-cover"
         src={heroImg}
         width={1200}
         height={1000}
         alt="hero image"
-        layout="responsive"
       />
       <div className="lg:absolute w-full ">
       </div>
@@ -113,11 +112,11 @@ function HeroRenderer ({ prompt, description, }:  HeroProps) {
                 <PuckText text={prompt} />
               </div>
             </div>
-            <div className="grid grid-flow-row sm:grid-flow-col gap-4 justify-stretch">
+            {/* <div className="grid grid-flow-row sm:grid-flow-col gap-4 justify-stretch">
               <Link href="/map" className='bg-hub-primary-600 text-white text-lg rounded-md p-2 no-underline text-center hover:bg-hub-primary-700 focus:bg-hub-primary-700'>
                 Pledge to take part
               </Link>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

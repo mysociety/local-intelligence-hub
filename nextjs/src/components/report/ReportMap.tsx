@@ -332,7 +332,7 @@ export function ReportMap () {
               const inDataFilter = [
                 "in",
                 ["get", tileset.promoteId],
-                ["literal", tileset.data.map((d) => d.gss)],
+                ["literal", tileset.data.map((d) => d.gss || '')],
               ];
 
               let steps = Math.min(max, 30); // Max 30 steps
