@@ -1843,32 +1843,35 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo),
             postcodesIOFromPoint=DataLoader(load_fn=get_bulk_postcode_geo_from_coords),
             fetch_record=DataLoader(load_fn=self.fetch_many_loader, cache=False),
-            source_loaders=await self.get_source_loaders()
+            source_loaders=await self.get_source_loaders(),
         )
 
         return loaders
-    
+
     async def get_source_loaders(self) -> dict[str, Self]:
         # If this isn't preloaded, it is a sync function to use self.organisation
-        org: Organisation = await sync_to_async(getattr)(self, 'organisation')
-        sources = org.get_external_data_sources(
-            # Allow enrichment via sources shared with this data source's organisation
-            include_shared=True,
-            sharing_permission_filters={
-                "visibility_record_coordinates": True,
-                "visibility_record_details": True,
-            },
-        ).filter(
-            geography_column__isnull=False,
-            geography_column_type__isnull=False,
-        ).all()
+        org: Organisation = await sync_to_async(getattr)(self, "organisation")
+        sources = (
+            org.get_external_data_sources(
+                # Allow enrichment via sources shared with this data source's organisation
+                include_shared=True,
+                sharing_permission_filters={
+                    "visibility_record_coordinates": True,
+                    "visibility_record_details": True,
+                },
+            )
+            .filter(
+                geography_column__isnull=False,
+                geography_column_type__isnull=False,
+            )
+            .all()
+        )
 
         loaders = {}
         async for source in sources:
             loaders[str(source.id)] = source.data_loader_factory()
-        
-        return loaders
 
+        return loaders
 
     async def map_one(
         self,
