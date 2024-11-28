@@ -4160,7 +4160,7 @@ class HubHomepage(Page):
     subpage_types = ["hub.HubContentPage"]
 
     organisation = models.ForeignKey(
-        Organisation, on_delete=models.CASCADE, related_name="hubs"
+        Organisation, on_delete=models.PROTECT, related_name="hubs"
     )
 
     layers = models.JSONField(blank=True, null=True, default=list)

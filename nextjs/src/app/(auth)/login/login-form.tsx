@@ -37,6 +37,10 @@ const LOGIN_MUTATION = gql`
 
 export default function LoginForm() {
   const form = useForm({
+    defaultValues: {
+      username: '',
+      password: ''
+    },
     resolver: zodResolver(z.object({
       username: z.string(),
       password: z.string(),
@@ -76,7 +80,7 @@ export default function LoginForm() {
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="username" {...field} />
+                <Input placeholder="username" {...field} autoComplete="username" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -89,7 +93,7 @@ export default function LoginForm() {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input type='password' placeholder="password" {...field} />
+                <Input type='password' placeholder="password" {...field} autoComplete="current-password" />
               </FormControl>
               <FormMessage />
             </FormItem>

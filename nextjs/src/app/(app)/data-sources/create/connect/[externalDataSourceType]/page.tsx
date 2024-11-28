@@ -621,8 +621,8 @@ export default function Page({
                     {/* @ts-ignore */}
                     <Input placeholder="patAB1" {...field} required />
                   </FormControl>
-                  <FormDescription>
-                    <p>Your token should have access to the base and the following {'"'}scopes{'"'}:</p>
+                  <div className="text-sm text-meepGray-400">
+                    <span>Your token should have access to the base and the following {'"'}scopes{'"'}:</span>
                     <ul className='list-disc list-inside pl-1'>
                       <li><code>data.records:read</code></li>
                       <li><code>data.records:write</code></li>
@@ -636,7 +636,7 @@ export default function Page({
                     >
                       Learn how to find your personal access token.
                     </a>
-                  </FormDescription>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}

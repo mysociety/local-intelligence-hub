@@ -98,7 +98,7 @@
     "theme-colors": "^0.1.0",
     "to-space-case": "^1.0.0",
     "update": "^0.7.4",
-    "uuidv4": "^6.2.13",
+    "uuid": "^11.0.3",
     "vanilla-cookieconsent": "^3.0.1",
     "zod": "^3.22.4"
   },
@@ -124,7 +124,6 @@
     "@types/react-dom": "^18",
     "@types/slug": "^5.0.8",
     "@types/to-space-case": "^1.0.2",
-    "@types/uuidv4": "^5.0.0",
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
     "eslint-config-next": "14.1.0",

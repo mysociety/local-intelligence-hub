@@ -142,12 +142,12 @@ export function GoogleSheetsIcon({ className }: { className?: string }) {
       <path d="M86.2843 3.18848H14.9523C8.02886 3.18848 2.36426 8.85308 2.36426 15.7765V175.225C2.36426 182.148 8.02886 187.813 14.9523 187.813H124.048C130.972 187.813 136.636 182.148 136.636 175.225V53.5405L86.2843 3.18848Z" fill="url(#paint1_radial_2118_18665)" />
       <defs>
         <linearGradient id="paint0_linear_2118_18665" x1="2423.72" y1="450.483" x2="2423.72" y2="4716.46" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#263238" stop-opacity="0.2" />
-          <stop offset="1" stop-color="#263238" stop-opacity="0.02" />
+          <stop stopColor="#263238" stopOpacity="0.2" />
+          <stop offset="1" stopColor="#263238" stopOpacity="0.02" />
         </linearGradient>
         <radialGradient id="paint1_radial_2118_18665" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(427.745 368.087) scale(21651.2 21651.2)">
-          <stop stop-color="white" stop-opacity="0.1" />
-          <stop offset="1" stop-color="white" stop-opacity="0" />
+          <stop stopColor="white" stopOpacity="0.1" />
+          <stop offset="1" stopColor="white" stopOpacity="0" />
         </radialGradient>
       </defs>
     </svg>

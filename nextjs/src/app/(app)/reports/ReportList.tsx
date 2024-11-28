@@ -90,7 +90,7 @@ export function ReportCard ({ report }: { report: ListReportsQuery['reports'][0]
       <Card>
         <CardHeader>
           <CardContent>
-            <Image src="/reports_page_card_image.png" alt="Description of the image" width={300} height={300} />
+            <Image src="/reports_page_card_image.png" alt="Description of the image" width={300} height={300} className='w-auto' />
           </CardContent>
           <CardTitle className="mb-1 px-5 pt-4">
             {report.name}
