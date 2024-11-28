@@ -9,11 +9,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { currentOrganisationIdAtom } from '@/data/organisation'
 import useFuse from '@/hooks/filter'
 import { SourcePath } from '@/lib/data'
+import { useAtomValue } from 'jotai'
 import { ExternalLink } from 'lucide-react'
 import * as React from 'react'
 import { twMerge } from 'tailwind-merge'
+import { CRMSelection } from './CRMButtonItem'
 import { DataSourceFieldLabel, DataSourceIcon } from './DataSourceIcon'
 import { Input } from './ui/input'
 import { LoadingIcon } from './ui/loadingIcon'
@@ -127,6 +130,7 @@ export function SourcePathSelector({
   )
 
   function SourceList() {
+    const orgId = useAtomValue(currentOrganisationIdAtom)
     return (
       <div className="flex flex-col gap-3">
         {/* List of sources - click to scroll to the source's fields */}
@@ -143,11 +147,24 @@ export function SourcePathSelector({
               }}
               className="flex flex-row cursor-pointer items-center gap-2 text-xs text-meepGray-300"
             >
-              <div className="w-4 flex-shrink-0 flex-grow-0 overflow-hidden">
-                <DataSourceIcon crmType={source.externalDataSource?.crmType} />
-              </div>
-              {source.name || source.slug}
+              {source.externalDataSource?.crmType ? (
+                <CRMSelection
+                  source={{
+                    // We don't need to waste DB queries fetching an unused count
+                    // but CRMSelection expects it and making it optional is a pain
+                    importedDataCount: 0,
+                    ...source.externalDataSource,
+                  }}
+                  displayCount={false}
+                  isShared={
+                    source.externalDataSource?.organisation.id !== orgId
+                  }
+                />
+              ) : (
+                <div>{source.name || source.slug}</div>
+              )}
             </div>
+            {source.name || source.slug}
           </div>
         ))}
       </div>
@@ -158,13 +175,18 @@ export function SourcePathSelector({
     return (
       <div className="grid gap-12">
         {/* Full list of sources and fields */}
-        {!filteredSources?.filteredList?.length && (
-          <div className="text-meepGray-300 text-lg p-12 text-center">
-            No data found for {"'"}
-            {searchTerm}
-            {"'"}
-          </div>
-        )}
+        {!filteredSources?.filteredList?.length &&
+          (searchTerm ? (
+            <div className="text-meepGray-300 text-lg p-12 text-center">
+              No data found for {"'"}
+              {searchTerm}
+              {"'"}
+            </div>
+          ) : (
+            <div className="text-meepGray-300 text-lg p-12 text-center">
+              Loading data sources...
+            </div>
+          ))}
         {filteredSources?.filteredList?.map((source, i, arr) => (
           <div key={source.slug} id={`${scrollElId}-${source.slug}`}>
             <header className="mb-6">

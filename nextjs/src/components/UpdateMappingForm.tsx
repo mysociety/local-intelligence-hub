@@ -26,15 +26,17 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { locationTypeOptions } from '@/data/location'
+import { currentOrganisationIdAtom } from '@/data/organisation'
 import { gql, useQuery } from '@apollo/client'
+import { useAtomValue } from 'jotai'
 import { ArrowRight, Plus, RefreshCcw, X } from 'lucide-react'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
 import { twMerge } from 'tailwind-merge'
 import { DataSourceFieldLabel } from './DataSourceIcon'
 
 const ENRICHMENT_LAYERS = gql`
-  query EnrichmentLayers {
-    mappingSources {
+  query EnrichmentLayers($organisationPk: String!) {
+    mappingSources(organisationPk: $organisationPk) {
       slug
       name
       author
@@ -47,8 +49,16 @@ const ENRICHMENT_LAYERS = gql`
       }
       # For custom data sources, get some useful data
       externalDataSource {
+        id
+        name
+        dataType
         crmType
+        organisation {
+          id
+          name
+        }
       }
+      builtin
     }
   }
 `
@@ -79,6 +89,7 @@ export function UpdateMappingForm({
     defaultValues: initialData,
   })
   const data = form.watch()
+  const orgId = useAtomValue(currentOrganisationIdAtom)
 
   const { fields, append, prepend, remove, swap, move, insert } = useFieldArray(
     {
@@ -87,7 +98,9 @@ export function UpdateMappingForm({
     }
   )
 
-  const enrichmentLayers = useQuery<EnrichmentLayersQuery>(ENRICHMENT_LAYERS)
+  const enrichmentLayers = useQuery<EnrichmentLayersQuery>(ENRICHMENT_LAYERS, {
+    variables: { organisationPk: orgId },
+  })
 
   return (
     <FormProvider {...form}>

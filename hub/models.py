@@ -6,7 +6,7 @@ import math
 import uuid
 from datetime import datetime, timezone
 from enum import Enum
-from typing import List, Optional, Type, TypedDict, Union
+from typing import List, Optional, Self, Type, TypedDict, Union
 from urllib.parse import urlencode, urljoin
 
 from django.conf import settings
@@ -16,7 +16,7 @@ from django.contrib.gis.db.models import MultiPolygonField, PointField
 from django.contrib.gis.geos import Point
 from django.core.cache import cache
 from django.db import models
-from django.db.models import Avg, IntegerField, Max, Min
+from django.db.models import Avg, IntegerField, Max, Min, Q
 from django.db.models.functions import Cast, Coalesce
 from django.db.utils import IntegrityError
 from django.dispatch import receiver
@@ -124,6 +124,28 @@ class Organisation(models.Model):
         )
         Membership.objects.create(user=user, organisation=org, role="owner")
         return org
+
+    def get_external_data_sources(
+        self,
+        include_shared: bool = False,
+        sharing_permission_filters: Union[dict, None] = None,
+    ):
+        if not include_shared:
+            return ExternalDataSource.objects.filter(organisation=self)
+        else:
+            sharing_permission_filters = sharing_permission_filters or {}
+            return ExternalDataSource.objects.filter(
+                # allow querying your orgs' data sources
+                Q(organisation=self)
+                # and also data sources shared with your orgs
+                | Q(
+                    id__in=SharingPermission.objects.filter(
+                        organisation=self,
+                        external_data_source__isnull=False,
+                        **sharing_permission_filters,
+                    ).values_list("external_data_source_id", flat=True)
+                )
+            )
 
 
 class Membership(models.Model):
@@ -1821,15 +1843,33 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo),
             postcodesIOFromPoint=DataLoader(load_fn=get_bulk_postcode_geo_from_coords),
             fetch_record=DataLoader(load_fn=self.fetch_many_loader, cache=False),
-            source_loaders={
-                str(source.id): source.data_loader_factory()
-                async for source in ExternalDataSource.objects.filter(
-                    organisation=self.organisation_id,
-                    geography_column__isnull=False,
-                    geography_column_type__isnull=False,
-                ).all()
-            },
+            source_loaders=await self.get_source_loaders(),
         )
+
+        return loaders
+
+    async def get_source_loaders(self) -> dict[str, Self]:
+        # If this isn't preloaded, it is a sync function to use self.organisation
+        org: Organisation = await sync_to_async(getattr)(self, "organisation")
+        sources = (
+            org.get_external_data_sources(
+                # Allow enrichment via sources shared with this data source's organisation
+                include_shared=True,
+                sharing_permission_filters={
+                    "visibility_record_coordinates": True,
+                    "visibility_record_details": True,
+                },
+            )
+            .filter(
+                geography_column__isnull=False,
+                geography_column_type__isnull=False,
+            )
+            .all()
+        )
+
+        loaders = {}
+        async for source in sources:
+            loaders[str(source.id)] = source.data_loader_factory()
 
         return loaders
 

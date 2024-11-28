@@ -22,16 +22,18 @@ function dataTypeRecordLabel(dataType: DataSourceType) {
 export function CRMSelection({
   source,
   isShared,
+  displayCount = true,
 }: {
   isShared?: boolean
   source: SourceOption
+  displayCount?: boolean
 }) {
   return (
     <div className="flex flex-row items-center gap-2 text-left">
       <DataSourceIcon crmType={source.crmType} className="w-5" />
       <div>
         <div>{source.name}</div>
-        {!!source?.importedDataCount && (
+        {!!source?.importedDataCount && displayCount && (
           <div className="text-meepGray-400 group-hover:text-meepGray-800 text-xs">
             {format(',')(source?.importedDataCount)}{' '}
             {pluralize(
