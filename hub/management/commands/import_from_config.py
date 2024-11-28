@@ -47,7 +47,14 @@ class Command(BaseImportFromDataFrameCommand):
             c = json.load(config)
             for conf in c:
                 if conf["name"] == import_name:
-                    confs.append(conf)
+                    if conf.get("data_types"):
+                        conf["data_set_name"] = conf["name"]
+                        conf["data_set_label"] = conf["label"]
+                        for dt in conf["data_types"]:
+                            dt_conf = {**conf, **dt}
+                            confs.append(dt_conf)
+                    else:
+                        confs.append(conf)
 
         return confs
 
