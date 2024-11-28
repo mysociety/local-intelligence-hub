@@ -137,6 +137,9 @@ class BaseAreaImportCommand(BaseCommand):
             )
             data_set.areas_available.add(self.get_area_type())
 
+            type_defaults = {}
+            if config["defaults"].get("order"):
+                type_defaults["order"] = config["defaults"]["order"]
             data_type, created = DataType.objects.update_or_create(
                 data_set=data_set,
                 name=name,
@@ -144,6 +147,7 @@ class BaseAreaImportCommand(BaseCommand):
                 defaults={
                     "data_type": config["defaults"]["data_type"],
                     "label": label,
+                    **type_defaults,
                 },
             )
 

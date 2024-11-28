@@ -112,6 +112,8 @@ class Command(BaseImportFromDataFrameCommand):
             defaults["is_range"] = True
             defaults["data_set_name"] = row["data_set_name"]
             defaults["data_set_label"] = row["data_set_label"]
+            if row.get("order"):
+                defaults["order"] = row["order"]
 
         self.data_sets = {import_name: {"defaults": defaults, "col": row["data_col"]}}
 
