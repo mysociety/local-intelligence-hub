@@ -22,7 +22,8 @@ cd mapped
 bin/download_env_files.sh
 ```
 
-2. If you haven't already done so, open the project folder in VSCode (File menu -> Open folder). You will receive a notification like this:
+2. If you haven't already done so, open the project folder in VSCode (File menu -> Open folder). **Ignore any errors from VSCode at this point.**
+You will receive a notification like this:
 ![alt text](docs/devcontainer_popup.png) Click "reopen in container". If that doesn't happen, press `Cmd+Shift+P` to open the command palette, and type "reopen in container" to find
    the "Dev Containers: Reopen in Container" option.
 
