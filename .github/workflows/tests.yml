@@ -5,8 +5,10 @@ concurrency:
   cancel-in-progress: true
   
 on:
-  pull_request:
-
+  workflow_run:
+    workflows: [Lint]
+    types:
+      - completed
 jobs:
   tests:
     runs-on: ubuntu-latest
