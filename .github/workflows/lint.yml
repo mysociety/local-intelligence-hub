@@ -6,10 +6,10 @@ on:
   pull_request:
 
 jobs:
-  lint:
+  lint-python:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Run black
         uses: psf/black@stable
         with:
@@ -20,3 +20,18 @@ jobs:
         uses: isort/isort-action@master
       - name: Run flake8
         uses: py-actions/flake8@v2
+
+  lint-nextjs:
+    defaults:
+      run:
+        working-directory: ./nextjs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run linters
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm install
+      - run: npm run lint

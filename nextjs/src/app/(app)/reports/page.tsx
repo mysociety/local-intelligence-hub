@@ -1,9 +1,9 @@
-import { requireAuth } from "@/lib/server-auth";
-import { Metadata } from "next";
-import ReportList from "./ReportList";
+import { requireAuth } from '@/lib/server-auth'
+import { Metadata } from 'next'
+import ReportList from './ReportList'
 
 export default async function Page() {
-  await requireAuth();
+  await requireAuth()
 
   return (
     <div className="max-w-7xl space-y-7 w-full">
@@ -21,14 +21,15 @@ function PageHeader() {
       <div>
         <h1 className="text-hLg mb-7">Maps</h1>
         <p className="text-meepGray-400 w-[400px]">
-          Make sense of your data with map reports. Create, edit, and share them with your team, your members and the public.
+          Make sense of your data with map reports. Create, edit, and share them
+          with your team, your members and the public.
         </p>
       </div>
       <img src="/reports_page_screenshot.png" alt="Reports page screenshot" />
     </header>
-  );
+  )
 }
 
 export const metadata: Metadata = {
-  title: "Your maps",
-};
+  title: 'Your maps',
+}

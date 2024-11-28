@@ -1,12 +1,6 @@
-"use client";
+'use client'
 
-import { OperationVariables, gql, useMutation } from "@apollo/client";
-import { useForm } from "react-hook-form";
-import { useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
@@ -14,8 +8,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { OperationVariables, gql, useMutation } from '@apollo/client'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
 
 const PERFORM_PASSWORD_RESET_MUTATION = gql`
   mutation PerformPasswordReset(
@@ -32,11 +32,11 @@ const PERFORM_PASSWORD_RESET_MUTATION = gql`
       success
     }
   }
-`;
+`
 
 export default function NewPasswordForm() {
-  const searchParams = useSearchParams();
-  const token = searchParams?.get("token");
+  const searchParams = useSearchParams()
+  const token = searchParams?.get('token')
 
   const passwordSchema = z
     .object({
@@ -49,43 +49,43 @@ export default function NewPasswordForm() {
           ),
           {
             message:
-              "Your password must include at least one uppercase letter, one lowercase letter, one number and one special character, and be at least 8 characters long.",
+              'Your password must include at least one uppercase letter, one lowercase letter, one number and one special character, and be at least 8 characters long.',
           }
         ),
       password2: z
         .string()
-        .min(8, { message: "Password must be at least 8 characters long." }),
+        .min(8, { message: 'Password must be at least 8 characters long.' }),
     })
     .refine((data) => data.password1 === data.password2, {
-      message: "Passwords must match.",
-      path: ["password2"],
-    });
+      message: 'Passwords must match.',
+      path: ['password2'],
+    })
 
   const form = useForm({
     resolver: zodResolver(passwordSchema),
     defaultValues: {
-      password1: "",
-      password2: "",
+      password1: '',
+      password2: '',
     },
-  });
+  })
 
-  const [messageType, setMessageType] = useState("");
+  const [messageType, setMessageType] = useState('')
 
   const handleCompleted = (data: {
-    performPasswordReset: { success: any };
+    performPasswordReset: { success: any }
   }) => {
-    const success = data?.performPasswordReset?.success;
+    const success = data?.performPasswordReset?.success
     if (success) {
-      form.reset();
-      setMessageType("success");
+      form.reset()
+      setMessageType('success')
     } else {
-      setMessageType("error");
+      setMessageType('error')
     }
-  };
+  }
 
   const handleError = () => {
-    setMessageType("error");
-  };
+    setMessageType('error')
+  }
 
   const [performPasswordReset, { loading }] = useMutation(
     PERFORM_PASSWORD_RESET_MUTATION,
@@ -93,11 +93,11 @@ export default function NewPasswordForm() {
       onCompleted: handleCompleted,
       onError: handleError,
     }
-  );
+  )
 
   const handleSubmit = async (values: OperationVariables | undefined) => {
-    await performPasswordReset({ variables: { ...values, token } });
-  };
+    await performPasswordReset({ variables: { ...values, token } })
+  }
 
   return (
     <Form {...form}>
@@ -120,7 +120,7 @@ export default function NewPasswordForm() {
               </FormControl>
               {form.formState.errors.password1 && (
                 <p className="text-destructive">
-                  {String(form.formState.errors.password1?.message || "")}
+                  {String(form.formState.errors.password1?.message || '')}
                 </p>
               )}
             </FormItem>
@@ -141,20 +141,20 @@ export default function NewPasswordForm() {
               </FormControl>
               {form.formState.errors.password2 && (
                 <p className="text-destructive">
-                  {String(form.formState.errors.password2?.message || "")}
+                  {String(form.formState.errors.password2?.message || '')}
                 </p>
               )}
             </FormItem>
           )}
         />
 
-        {messageType === "success" ? (
+        {messageType === 'success' ? (
           <FormMessage className="text-meepGray-100">
             <span>Password reset successfully! You can now</span>
             <a href="/login"> login</a>
             <span>.</span>
           </FormMessage>
-        ) : messageType === "error" ? (
+        ) : messageType === 'error' ? (
           <FormMessage>
             <span>
               Could not reset your password. Please try again, or request a new
@@ -168,5 +168,5 @@ export default function NewPasswordForm() {
         )}
       </form>
     </Form>
-  );
+  )
 }

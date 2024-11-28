@@ -1,58 +1,57 @@
 /* eslint-disable @next/next/no-img-element */
-import React from "react";
-import { ComponentConfig } from "@measured/puck";
-import { Section } from "@/data/puck/config/components/Section";
-import dynamic from "next/dynamic";
-import dynamicIconImports from "lucide-react/dynamicIconImports";
+import { Section } from '@/data/puck/config/components/Section'
+import { ComponentConfig } from '@measured/puck'
+import dynamicIconImports from 'lucide-react/dynamicIconImports'
+import dynamic from 'next/dynamic'
 
 const icons = Object.keys(dynamicIconImports).reduce((acc, iconName) => {
   // @ts-ignore
-  const El = dynamic(dynamicIconImports[iconName]);
+  const El = dynamic(dynamicIconImports[iconName])
 
   return {
     ...acc,
     [iconName]: <El />,
-  };
-}, {});
+  }
+}, {})
 
 const iconOptions = Object.keys(dynamicIconImports).map((iconName) => ({
   label: iconName,
   value: iconName,
-}));
+}))
 
 export type StatsProps = {
   items: {
-    title: string;
-    description: string;
-  }[];
-};
+    title: string
+    description: string
+  }[]
+}
 
 export const Stats: ComponentConfig<StatsProps> = {
   fields: {
     items: {
-      type: "array",
+      type: 'array',
       getItemSummary: (item, i) => item.title || `Feature #${i}`,
       defaultItemProps: {
-        title: "Title",
-        description: "Description",
+        title: 'Title',
+        description: 'Description',
       },
       arrayFields: {
-        title: { type: "text" },
-        description: { type: "text" },
+        title: { type: 'text' },
+        description: { type: 'text' },
       },
     },
   },
   defaultProps: {
     items: [
       {
-        title: "Stat",
-        description: "1,000",
+        title: 'Stat',
+        description: '1,000',
       },
     ],
   },
   render: ({ items }) => {
     return (
-      <Section maxWidth={"916px"}>
+      <Section maxWidth={'916px'}>
         <div>
           {items.map((item, i) => (
             <div key={i}>
@@ -62,6 +61,6 @@ export const Stats: ComponentConfig<StatsProps> = {
           ))}
         </div>
       </Section>
-    );
+    )
   },
-};
+}

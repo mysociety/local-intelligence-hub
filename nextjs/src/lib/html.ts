@@ -1,13 +1,13 @@
-import { FocusEvent, KeyboardEvent } from "react"
+import { FocusEvent, KeyboardEvent } from 'react'
 
 export function contentEditableMutation<
   MutationFunction extends (args: any) => any,
   MutationInput extends Parameters<MutationFunction>[0],
-  MutationKey extends keyof MutationInput
+  MutationKey extends keyof MutationInput,
 >(
   updateMutation: MutationFunction,
   updateVariableKey: MutationKey,
-  defaultValue: string = "Untitled"
+  defaultValue: string = 'Untitled'
 ) {
   return {
     contentEditable: true,
@@ -19,10 +19,10 @@ export function contentEditableMutation<
       updateMutation({ [updateVariableKey]: el.textContent })
     },
     onKeyDown: (e: KeyboardEvent<HTMLElement>) => {
-      if (e.key === "Enter") {
+      if (e.key === 'Enter') {
         e.preventDefault()
         e.currentTarget.blur()
       }
-    }
+    },
   }
 }

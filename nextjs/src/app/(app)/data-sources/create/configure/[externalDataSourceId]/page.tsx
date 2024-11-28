@@ -1,24 +1,22 @@
-"use client";
+'use client'
 
-import { Button } from "@/components/ui/button";
-import { useContext, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { CreateAutoUpdateFormContext } from "../../NewExternalDataSourceWrapper";
-import { FetchResult, gql, useMutation, useQuery } from "@apollo/client";
 import {
   ExternalDataSourceInput,
   GetSourceMappingQuery,
   GetSourceMappingQueryVariables,
-  MutationUpdateExternalDataSourceArgs,
   UpdateExternalDataSourceMutation,
   UpdateExternalDataSourceMutationVariables,
-} from "@/__generated__/graphql";
-import { toast } from "sonner";
-import { UpdateMappingForm } from "@/components/UpdateMappingForm";
-import { LoadingIcon } from "@/components/ui/loadingIcon";
-import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/graphql/mutations';
-import { triggerAnalyticsEvent } from "@/app/utils/posthogutils"; 
-
+} from '@/__generated__/graphql'
+import { triggerAnalyticsEvent } from '@/app/utils/posthogutils'
+import { UpdateMappingForm } from '@/components/UpdateMappingForm'
+import { Button } from '@/components/ui/button'
+import { LoadingIcon } from '@/components/ui/loadingIcon'
+import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/graphql/mutations'
+import { FetchResult, gql, useMutation, useQuery } from '@apollo/client'
+import { useRouter } from 'next/navigation'
+import { useContext, useEffect } from 'react'
+import { toast } from 'sonner'
+import { CreateAutoUpdateFormContext } from '../../NewExternalDataSourceWrapper'
 
 const GET_UPDATE_CONFIG = gql`
   query GetSourceMapping($ID: ID!) {
@@ -51,54 +49,63 @@ const GET_UPDATE_CONFIG = gql`
       canDisplayPointField
     }
   }
-`;
+`
 
 export default function Page({
   params: { externalDataSourceId },
 }: {
-  params: { externalDataSourceId: string };
+  params: { externalDataSourceId: string }
 }) {
-  const router = useRouter();
-  const context = useContext(CreateAutoUpdateFormContext);
+  const router = useRouter()
+  const context = useContext(CreateAutoUpdateFormContext)
 
   useEffect(() => {
     context.setStep(3)
   }, [context])
 
-  const [updateSource, configResult] = useMutation<UpdateExternalDataSourceMutation, UpdateExternalDataSourceMutationVariables>(UPDATE_EXTERNAL_DATA_SOURCE);
+  const [updateSource, configResult] = useMutation<
+    UpdateExternalDataSourceMutation,
+    UpdateExternalDataSourceMutationVariables
+  >(UPDATE_EXTERNAL_DATA_SOURCE)
 
-  const externalDataSource = useQuery<GetSourceMappingQuery, GetSourceMappingQueryVariables>(GET_UPDATE_CONFIG, {
+  const externalDataSource = useQuery<
+    GetSourceMappingQuery,
+    GetSourceMappingQueryVariables
+  >(GET_UPDATE_CONFIG, {
     variables: {
       ID: externalDataSourceId,
     },
-  });
+  })
 
-  function submit(input: ExternalDataSourceInput, e?: React.BaseSyntheticEvent<object, any, any> | undefined) {
-    e?.preventDefault();
+  function submit(
+    input: ExternalDataSourceInput,
+    e?: React.BaseSyntheticEvent<object, any, any> | undefined
+  ) {
+    e?.preventDefault()
     const create = updateSource({
       variables: { input: { id: externalDataSourceId, ...input } },
-    });
+    })
     toast.promise(create, {
-      loading: "Saving...",
+      loading: 'Saving...',
       success: (d: FetchResult<UpdateExternalDataSourceMutation>) => {
         if (!d.errors && d.data) {
           router.push(
-            `/data-sources/create/review/${d.data.updateExternalDataSource.id}`,
-          );
-        };
-        triggerAnalyticsEvent("Data source created successfully", {
+            `/data-sources/create/review/${d.data.updateExternalDataSource.id}`
+          )
+        }
+        triggerAnalyticsEvent('Data source created successfully', {
           datasource: d.data?.updateExternalDataSource.__typename,
           remoteName: d.data?.updateExternalDataSource.name,
-        });
-        return "Saved";
+        })
+        return 'Saved'
       },
       error: (e: any) => {
-        triggerAnalyticsEvent("Data source creation failed", {
-          message: e.message, 
-        });
-        return `Couldn't save`;
+        triggerAnalyticsEvent('Data source creation failed', {
+          message: e.message,
+        })
+        return `Couldn't save`
       },
-    });
+    })
   }
 
   if (externalDataSource.loading) {
@@ -111,7 +118,7 @@ export default function Page({
         variant="outline"
         type="reset"
         onClick={() => {
-          router.push(`/data-sources/inspect/${externalDataSourceId}`);
+          router.push(`/data-sources/inspect/${externalDataSourceId}`)
         }}
       >
         Done
@@ -136,16 +143,23 @@ export default function Page({
         <UpdateMappingForm
           crmType={externalDataSource.data?.externalDataSource.crmType}
           initialData={{
-            geographyColumn: externalDataSource.data?.externalDataSource.geographyColumn,
-            geographyColumnType: externalDataSource.data?.externalDataSource.geographyColumnType,
+            geographyColumn:
+              externalDataSource.data?.externalDataSource.geographyColumn,
+            geographyColumnType:
+              externalDataSource.data?.externalDataSource.geographyColumnType,
             // Trim out the __typenames
-            updateMapping: externalDataSource.data?.externalDataSource.updateMapping?.map((m) => ({
-              source: m.source,
-              sourcePath: m.sourcePath,
-              destinationColumn: m.destinationColumn,
-            })),
+            updateMapping:
+              externalDataSource.data?.externalDataSource.updateMapping?.map(
+                (m) => ({
+                  source: m.source,
+                  sourcePath: m.sourcePath,
+                  destinationColumn: m.destinationColumn,
+                })
+              ),
           }}
-          fieldDefinitions={externalDataSource.data?.externalDataSource.fieldDefinitions}
+          fieldDefinitions={
+            externalDataSource.data?.externalDataSource.fieldDefinitions
+          }
           onSubmit={submit}
           saveButtonLabel="Continue"
         >
@@ -153,7 +167,7 @@ export default function Page({
             variant="outline"
             type="reset"
             onClick={() => {
-              router.back();
+              router.back()
             }}
           >
             Back
@@ -162,7 +176,7 @@ export default function Page({
             variant="outline"
             type="reset"
             onClick={() => {
-              router.push(`/data-sources/inspect/${externalDataSourceId}`);
+              router.push(`/data-sources/inspect/${externalDataSourceId}`)
             }}
           >
             Skip data updates
@@ -170,5 +184,5 @@ export default function Page({
         </UpdateMappingForm>
       ) : null}
     </div>
-  );
+  )
 }

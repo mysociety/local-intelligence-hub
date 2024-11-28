@@ -1,15 +1,17 @@
-import { formatRelative } from "date-fns";
-import Link from "next/link";
-import { Switch } from "@/components/ui/switch";
 import {
-  ApolloClient,
-  FetchResult,
-  gql,
-  useApolloClient,
-  useMutation,
-} from "@apollo/client";
-import { toast } from "sonner";
-import { Button, ButtonProps, buttonVariants } from "./ui/button";
+  CrmType,
+  DataSourceCardFragment,
+  DataSourceType,
+  DisableWebhookMutation,
+  DisableWebhookMutationVariables,
+  EnableWebhookMutation,
+  EnableWebhookMutationVariables,
+  TriggerFullUpdateMutation,
+  TriggerFullUpdateMutationVariables,
+  WebhookRefreshMutation,
+  WebhookRefreshMutationVariables,
+  WebhookType,
+} from '@/__generated__/graphql'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,9 +22,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { DataSourceCardFragment, DataSourceType, TriggerFullUpdateMutation, TriggerFullUpdateMutationVariables, CrmType, WebhookType, EnableWebhookMutation, EnableWebhookMutationVariables, DisableWebhookMutation, DisableWebhookMutationVariables, WebhookRefreshMutation, WebhookRefreshMutationVariables } from "@/__generated__/graphql";
-import { DataSourceIcon } from "./DataSourceIcon";
+} from '@/components/ui/alert-dialog'
+import { Switch } from '@/components/ui/switch'
+import {
+  ApolloClient,
+  FetchResult,
+  gql,
+  useApolloClient,
+  useMutation,
+} from '@apollo/client'
+import { formatRelative } from 'date-fns'
+import Link from 'next/link'
+import { toast } from 'sonner'
+import { DataSourceIcon } from './DataSourceIcon'
+import { Button, ButtonProps, buttonVariants } from './ui/button'
 
 export function ExternalDataSourceCard({
   externalDataSource,
@@ -31,17 +44,17 @@ export function ExternalDataSourceCard({
   withLink = false,
 }: {
   externalDataSource: {
-    id: any,
-    name: string,
-    dataType: DataSourceType,
-    automatedWebhooks?: boolean,
-    autoImportEnabled?: boolean,
-    autoUpdateEnabled?: boolean,
+    id: any
+    name: string
+    dataType: DataSourceType
+    automatedWebhooks?: boolean
+    autoImportEnabled?: boolean
+    autoUpdateEnabled?: boolean
     crmType?: CrmType
-    jobs?: DataSourceCardFragment['jobs'],
+    jobs?: DataSourceCardFragment['jobs']
     organisation?: {
       name: string
-    },
+    }
     sharingPermissions?: Array<{
       organisation: {
         name: string
@@ -55,10 +68,12 @@ export function ExternalDataSourceCard({
   return (
     <article className="rounded-xl border border-meepGray-600 px-6 py-5 space-y-3">
       <header className="flex flex-row justify-between items-start">
-        <div className='space-y-3'>
+        <div className="space-y-3">
           <DataSourceIcon crmType={externalDataSource.crmType} />
           <h3 className="text-hSm">
-            {externalDataSource.name || externalDataSource.crmType || "Un-named data source"}
+            {externalDataSource.name ||
+              externalDataSource.crmType ||
+              'Un-named data source'}
           </h3>
         </div>
         {withLink && (
@@ -68,38 +83,54 @@ export function ExternalDataSourceCard({
         )}
       </header>
       {!!shared && !!externalDataSource.organisation && (
-        <div className='text-sm text-meepGray-400'>
+        <div className="text-sm text-meepGray-400">
           Shared by {externalDataSource.organisation.name}
         </div>
       )}
       {!!externalDataSource.sharingPermissions?.length && (
-        <div className='text-sm text-pink-400 font-bold'>
-          Sharing with {externalDataSource.sharingPermissions.map((p) => p.organisation.name).join(", ")}
+        <div className="text-sm text-pink-400 font-bold">
+          Sharing with{' '}
+          {externalDataSource.sharingPermissions
+            .map((p) => p.organisation.name)
+            .join(', ')}
         </div>
       )}
-      <EnableWebhooksSwitch externalDataSource={externalDataSource} webhookType={WebhookType.Import} />
-      {withUpdateOptions && externalDataSource.dataType === DataSourceType.Member && (
-        <EnableWebhooksSwitch externalDataSource={externalDataSource} webhookType={WebhookType.Update} />
-      )}
+      <EnableWebhooksSwitch
+        externalDataSource={externalDataSource}
+        webhookType={WebhookType.Import}
+      />
+      {withUpdateOptions &&
+        externalDataSource.dataType === DataSourceType.Member && (
+          <EnableWebhooksSwitch
+            externalDataSource={externalDataSource}
+            webhookType={WebhookType.Update}
+          />
+        )}
       {withUpdateOptions && externalDataSource?.jobs?.[0]?.lastEventAt ? (
         <div className="text-sm text-meepGray-400">
-          Last background task <span className='text-meepGray-300'>{externalDataSource.jobs[0].status}</span>{" "}
+          Last background task{' '}
+          <span className="text-meepGray-300">
+            {externalDataSource.jobs[0].status}
+          </span>{' '}
           {formatRelative(externalDataSource.jobs[0].lastEventAt, new Date())}
         </div>
       ) : null}
     </article>
-  );
+  )
 }
 
 export function EnableWebhooksSwitch({
   externalDataSource,
-  webhookType
+  webhookType,
 }: {
-  externalDataSource: any,
+  externalDataSource: any
   webhookType: WebhookType
 }) {
-  const client = useApolloClient();
-  const checked = webhookType === WebhookType.Import ? externalDataSource.autoImportEnabled : externalDataSource.autoUpdateEnabled
+  const client = useApolloClient()
+  const checked =
+    webhookType === WebhookType.Import
+      ? externalDataSource.autoImportEnabled
+      : externalDataSource.autoUpdateEnabled
   return (
     <div className="flex flex-row items-center justify-start gap-2 text-label">
       <Switch
@@ -108,9 +139,11 @@ export function EnableWebhooksSwitch({
           toggleWebhooksEnabled(client, e, externalDataSource.id, webhookType)
         }
       />
-      <span className={checked ? "text-brandBlue" : ""}>Auto-{webhookType}</span>
+      <span className={checked ? 'text-brandBlue' : ''}>
+        Auto-{webhookType}
+      </span>
     </div>
-  );
+  )
 }
 
 const WEBHOOK_REFRESH = gql`
@@ -122,41 +155,44 @@ const WEBHOOK_REFRESH = gql`
       webhookHealthcheck
     }
   }
-`;
+`
 
 export function WebhookRefresh({
   externalDataSourceId,
 }: {
-  externalDataSourceId: string,
+  externalDataSourceId: string
 }) {
-  const [mutate, mutation] = useMutation<WebhookRefreshMutation, WebhookRefreshMutationVariables>(WEBHOOK_REFRESH, {
+  const [mutate, mutation] = useMutation<
+    WebhookRefreshMutation,
+    WebhookRefreshMutationVariables
+  >(WEBHOOK_REFRESH, {
     variables: { ID: externalDataSourceId },
-  });
+  })
 
   return (
     <Button onClick={() => trigger()} disabled={mutation.loading}>
       Refresh webhooks
     </Button>
-  );
+  )
 
   function trigger() {
     toast.promise(mutate(), {
-      loading: "Refreshing...",
-      success: "Refreshed webhooks",
+      loading: 'Refreshing...',
+      success: 'Refreshed webhooks',
       error: "Couldn't refresh webhooks",
-    });
+    })
   }
 }
 
 export function TriggerUpdateButton({
   id,
-  label = "Enrich all data now",
+  label = 'Enrich all data now',
   ...buttonProps
 }: {
-  id: string;
-  label?: string;
+  id: string
+  label?: string
 } & ButtonProps) {
-  const client = useApolloClient();
+  const client = useApolloClient()
 
   return (
     <AlertDialog>
@@ -174,21 +210,21 @@ export function TriggerUpdateButton({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className={buttonVariants({ variant: "outline" })}>
+          <AlertDialogCancel className={buttonVariants({ variant: 'outline' })}>
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={() => {
-              trigger();
+              trigger()
             }}
-            className={buttonVariants({ variant: "reverse" })}
+            className={buttonVariants({ variant: 'reverse' })}
           >
             Trigger update
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  );
+  )
 
   function trigger() {
     const mutation = client.mutate<
@@ -197,14 +233,14 @@ export function TriggerUpdateButton({
     >({
       mutation: TRIGGER_FULL_UPDATE,
       variables: { externalDataSourceId: id },
-    });
+    })
     toast.promise(mutation, {
-      loading: "Triggering...",
+      loading: 'Triggering...',
       success: (d: FetchResult<TriggerFullUpdateMutation>) => {
-        return `Triggered sync for ${d.data?.triggerUpdate.externalDataSource.name}`;
+        return `Triggered sync for ${d.data?.triggerUpdate.externalDataSource.name}`
       },
       error: `Couldn't trigger sync`,
-    });
+    })
   }
 }
 
@@ -221,14 +257,14 @@ export function toggleWebhooksEnabled(
     >({
       mutation: ENABLE_WEBHOOKS,
       variables: { ID: id, webhookType },
-    });
+    })
     toast.promise(mutation, {
-      loading: "Enabling...",
+      loading: 'Enabling...',
       success: (d: FetchResult<EnableWebhookMutation>) => {
-        return `Enabled auto-${webhookType.toLowerCase()} for ${d.data?.enableWebhook.name}`;
+        return `Enabled auto-${webhookType.toLowerCase()} for ${d.data?.enableWebhook.name}`
       },
       error: `Couldn't enable auto-${webhookType.toLowerCase()}`,
-    });
+    })
   } else {
     const mutation = client.mutate<
       DisableWebhookMutation,
@@ -236,14 +272,14 @@ export function toggleWebhooksEnabled(
     >({
       mutation: DISABLE_WEBHOOKS,
       variables: { ID: id, webhookType },
-    });
+    })
     toast.promise(mutation, {
-      loading: "Disabling...",
+      loading: 'Disabling...',
       success: (d: FetchResult<DisableWebhookMutation>) => {
-        return `Disabled auto-${webhookType.toLowerCase()} for ${d.data?.disableWebhook.name}`;
+        return `Disabled auto-${webhookType.toLowerCase()} for ${d.data?.disableWebhook.name}`
       },
       error: `Couldn't disable auto-${webhookType.toLowerCase()}`,
-    });
+    })
   }
 }
 
@@ -273,7 +309,7 @@ export const DATA_SOURCE_FRAGMENT = gql`
       }
     }
   }
-`;
+`
 
 export const GET_UPDATE_CONFIG_CARD = gql`
   query ExternalDataSourceExternalDataSourceCard($ID: ID!) {
@@ -282,7 +318,7 @@ export const GET_UPDATE_CONFIG_CARD = gql`
     }
   }
   ${DATA_SOURCE_FRAGMENT}
-`;
+`
 
 export const ENABLE_WEBHOOKS = gql`
   mutation EnableWebhook($ID: String!, $webhookType: WebhookType!) {
@@ -296,7 +332,7 @@ export const ENABLE_WEBHOOKS = gql`
       name
     }
   }
-`;
+`
 
 export const DISABLE_WEBHOOKS = gql`
   mutation DisableWebhook($ID: String!, $webhookType: WebhookType!) {
@@ -310,7 +346,7 @@ export const DISABLE_WEBHOOKS = gql`
       name
     }
   }
-`;
+`
 
 export function CogIcon() {
   return (
@@ -333,7 +369,7 @@ export function CogIcon() {
         d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
       />
     </svg>
-  );
+  )
 }
 
 export const TRIGGER_FULL_UPDATE = gql`
@@ -354,4 +390,4 @@ export const TRIGGER_FULL_UPDATE = gql`
       }
     }
   }
-`;
+`

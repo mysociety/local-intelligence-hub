@@ -7,7 +7,8 @@
     "https": "next dev --turbo --experimental-https",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "next lint && prettier --check . && tsc --noEmit",
+    "lint-fix": "next lint --fix && prettier --write . && tsc --noEmit",
     "graphql:compile": "graphql-codegen",
     "graphql:watch": "graphql-codegen -w",
     "prettier": "prettier --write --ignore-path .gitignore ."

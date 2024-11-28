@@ -1,24 +1,27 @@
-"use client"
+'use client'
 
-import { DefaultRootProps } from "@measured/puck";
-import { ReactNode } from "react";
-import { BasicLayout } from "./client";
-import HubNavbar from "./template/HubNavbar";
-import HubFooter from "./template/HubFooter";
-import { twMerge } from "tailwind-merge";
-import { GetPageQuery, GetPageQueryVariables, HubNavLink } from "@/__generated__/graphql";
-import { useQuery } from "@apollo/client";
-import { GET_PAGE } from "@/app/hub/render/[hostname]/query";
-import { useHubRenderContext } from "@/components/hub/HubRenderContext";
-import { getColors } from "theme-colors";
+import {
+  GetPageQuery,
+  GetPageQueryVariables,
+  HubNavLink,
+} from '@/__generated__/graphql'
+import { GET_PAGE } from '@/app/hub/render/[hostname]/query'
+import { useHubRenderContext } from '@/components/hub/HubRenderContext'
+import { useQuery } from '@apollo/client'
+import { DefaultRootProps } from '@measured/puck'
+import { ReactNode } from 'react'
+import { twMerge } from 'tailwind-merge'
+import { getColors } from 'theme-colors'
+import HubFooter from './template/HubFooter'
+import HubNavbar from './template/HubNavbar'
 
 export type RootProps = {
-  children?: ReactNode;
-  title?: string;
-  fullScreen?: boolean;
-  navLinks?: HubNavLink[];
-  renderCSS?: boolean;
-} & DefaultRootProps;
+  children?: ReactNode
+  title?: string
+  fullScreen?: boolean
+  navLinks?: HubNavLink[]
+  renderCSS?: boolean
+} & DefaultRootProps
 
 export default function Root({
   children,
@@ -33,27 +36,37 @@ export default function Root({
     variables: {
       hostname,
     },
-    skip: !!navLinks?.length || typeof window === "undefined",
-  });
+    skip: !!navLinks?.length || typeof window === 'undefined',
+  })
 
-  let links = navLinks.length ? navLinks : pageQuery.data?.hubPageByPath?.hub.navLinks || []
-  
+  let links = navLinks.length
+    ? navLinks
+    : pageQuery.data?.hubPageByPath?.hub.navLinks || []
+
   if (hub.isPeopleClimateNature) {
     return (
       <>
         {renderCSS && (
           <RootCSS
-            primaryColour={pageQuery.data?.hubPageByPath?.hub.primaryColour || hub.hubData?.primaryColour || "#0f8c6c"}
-            secondaryColour={pageQuery.data?.hubPageByPath?.hub.secondaryColour || hub.hubData?.secondaryColour || "#0f8c6c"}
-            customCss={hub.hubData?.customCss || ""}
+            primaryColour={
+              pageQuery.data?.hubPageByPath?.hub.primaryColour ||
+              hub.hubData?.primaryColour ||
+              '#0f8c6c'
+            }
+            secondaryColour={
+              pageQuery.data?.hubPageByPath?.hub.secondaryColour ||
+              hub.hubData?.secondaryColour ||
+              '#0f8c6c'
+            }
+            customCss={hub.hubData?.customCss || ''}
           />
         )}
         <main
           className={twMerge(
-            "font-publicSans text-hub-primary-800 min-w-screen h-full w-full mx-auto relative overflow-clip",
+            'font-publicSans text-hub-primary-800 min-w-screen h-full w-full mx-auto relative overflow-clip',
             fullScreen
-              ? "h-dvh flex flex-col px-2 md:px-4"
-              : "max-w-screen-xl min-h-[dv100] px-2 md:px-4 lg:px-6 xl:px-8",
+              ? 'h-dvh flex flex-col px-2 md:px-4'
+              : 'max-w-screen-xl min-h-[dv100] px-2 md:px-4 lg:px-6 xl:px-8'
           )}
         >
           <header className="sticky top-0 z-50 ">
@@ -61,8 +74,8 @@ export default function Root({
           </header>
           <div
             className={twMerge(
-              "rounded-t-2xl md:rounded-2xl",
-              fullScreen && "h-full flex-grow mb-2 md:mb-4 overflow-hidden",
+              'rounded-t-2xl md:rounded-2xl',
+              fullScreen && 'h-full flex-grow mb-2 md:mb-4 overflow-hidden'
             )}
           >
             {children}
@@ -76,22 +89,28 @@ export default function Root({
       <>
         {renderCSS && (
           <RootCSS
-            primaryColour={pageQuery.data?.hubPageByPath?.hub.primaryColour || hub.hubData?.primaryColour || "#0f8c6c"}
-            secondaryColour={pageQuery.data?.hubPageByPath?.hub.secondaryColour || hub.hubData?.secondaryColour || "#0f8c6c"}
-            customCss={hub.hubData?.customCss || ""}
+            primaryColour={
+              pageQuery.data?.hubPageByPath?.hub.primaryColour ||
+              hub.hubData?.primaryColour ||
+              '#0f8c6c'
+            }
+            secondaryColour={
+              pageQuery.data?.hubPageByPath?.hub.secondaryColour ||
+              hub.hubData?.secondaryColour ||
+              '#0f8c6c'
+            }
+            customCss={hub.hubData?.customCss || ''}
           />
         )}
         <main
           className={twMerge(
-            "min-w-screen h-full w-full mx-auto relative overflow-clip",
-            fullScreen
-              ? "h-dvh flex flex-col"
-              : "min-h-[dv100]",
+            'min-w-screen h-full w-full mx-auto relative overflow-clip',
+            fullScreen ? 'h-dvh flex flex-col' : 'min-h-[dv100]'
           )}
         >
           <div
             className={twMerge(
-              fullScreen && "h-full flex-grow overflow-hidden",
+              fullScreen && 'h-full flex-grow overflow-hidden'
             )}
           >
             {children}
@@ -108,20 +127,24 @@ export function RootCSS({
   secondaryColour,
   customCss,
 }: {
-  primaryColour: string;
-  secondaryColour: string;
-  customCss: string;
+  primaryColour: string
+  secondaryColour: string
+  customCss: string
 }) {
-  const primaryColours = getColors(primaryColour || "#555555");
-  const secondaryColours = getColors(secondaryColour || "#555555");
+  const primaryColours = getColors(primaryColour || '#555555')
+  const secondaryColours = getColors(secondaryColour || '#555555')
 
   return (
     <>
       <style key="generated-colors">
         {`
           :root {
-            ${Object.entries(primaryColours).map(([key, value]) => `--primary-${key}: ${value};`).join("\n")}
-            ${Object.entries(secondaryColours).map(([key, value]) => `--secondary-${key}: ${value};`).join("\n")}
+            ${Object.entries(primaryColours)
+              .map(([key, value]) => `--primary-${key}: ${value};`)
+              .join('\n')}
+            ${Object.entries(secondaryColours)
+              .map(([key, value]) => `--secondary-${key}: ${value};`)
+              .join('\n')}
           }
         `}
       </style>
@@ -133,7 +156,7 @@ export function RootCSS({
           }
         `}
       </style>
-      <style key="customCss">{customCss || ""}</style>
+      <style key="customCss">{customCss || ''}</style>
     </>
-  );
+  )
 }

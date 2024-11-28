@@ -1,18 +1,18 @@
 'use client'
 
-import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
-import { usePostHog } from 'posthog-js/react';
-import { gql, useQuery } from "@apollo/client";
-import { useAtomValue } from "jotai";
-import { currentOrganisationIdAtom } from "@/data/organisation";
-import { MyOrgsQuery, UserDataQuery } from "@/__generated__/graphql";
-import * as Sentry from "@sentry/nextjs";
+import { MyOrgsQuery, UserDataQuery } from '@/__generated__/graphql'
+import { currentOrganisationIdAtom } from '@/data/organisation'
+import { gql, useQuery } from '@apollo/client'
+import * as Sentry from '@sentry/nextjs'
+import { useAtomValue } from 'jotai'
+import { usePathname, useSearchParams } from 'next/navigation'
+import { usePostHog } from 'posthog-js/react'
+import { useEffect } from 'react'
 
-export default function PostHogPageView() : null {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const posthog = usePostHog();
+export default function PostHogPageView(): null {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const posthog = usePostHog()
   // Track pageviews
   useEffect(() => {
     if (pathname && posthog) {
@@ -20,12 +20,9 @@ export default function PostHogPageView() : null {
       if (searchParams.toString()) {
         url = url + `?${searchParams.toString()}`
       }
-      posthog.capture(
-        '$pageview',
-        {
-          '$current_url': url,
-        }
-      )
+      posthog.capture('$pageview', {
+        $current_url: url,
+      })
     }
   }, [pathname, searchParams, posthog])
 
@@ -58,9 +55,11 @@ export default function PostHogPageView() : null {
 
   useEffect(() => {
     if (myOrgs.data && currentOrgId) {
-      const org = myOrgs.data.myOrganisations.find((org) => org.id === currentOrgId)
+      const org = myOrgs.data.myOrganisations.find(
+        (org) => org.id === currentOrgId
+      )
       if (org) {
-        posthog.group("organisation", org.id, {
+        posthog.group('organisation', org.id, {
           name: org.name,
           slug: org.slug,
         })
@@ -72,7 +71,7 @@ export default function PostHogPageView() : null {
       }
     }
   }, [myOrgs.data, currentOrgId, posthog])
-  
+
   return null
 }
 
