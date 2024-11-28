@@ -1,20 +1,20 @@
-'use client';
+'use client'
 
-import {useEffect, useState} from "react";
+import { useEffect } from 'react'
 
-import "vanilla-cookieconsent/dist/cookieconsent.css";
+import 'vanilla-cookieconsent/dist/cookieconsent.css'
 // @ts-ignore
-import * as CookieConsent from "vanilla-cookieconsent";
+import * as CookieConsent from 'vanilla-cookieconsent'
 
-declare const window: Window & { dataLayer: Record<string, unknown>[]; };
+declare const window: Window & { dataLayer: Record<string, unknown>[] }
 
 const updateCookieConsent = () => {
-  CookieConsent.showPreferences();
-};
+  CookieConsent.showPreferences()
+}
 
 const resetCookieConsent = () => {
-  CookieConsent.reset(true);
-};
+  CookieConsent.reset(true)
+}
 
 const CookieConsentComponent = () => {
   useEffect(() => {
@@ -30,13 +30,13 @@ const CookieConsentComponent = () => {
           layout: 'cloud inline',
           position: 'bottom center',
           equalWeightButtons: true,
-          flipButtons: false
+          flipButtons: false,
         },
       },
       categories: {
         necessary: {
           enabled: true,
-          readOnly: true
+          readOnly: true,
         },
         functional: {},
         analytics: {},
@@ -49,7 +49,8 @@ const CookieConsentComponent = () => {
           en: {
             consentModal: {
               title: 'We use cookies',
-              description: 'Hello, this website uses essential cookies to ensure its proper functioning and tracking cookies to understand how you interact with it. The latter is only set after permission.',
+              description:
+                'Hello, this website uses essential cookies to ensure its proper functioning and tracking cookies to understand how you interact with it. The latter is only set after permission.',
               acceptAllBtn: 'Accept all',
               acceptNecessaryBtn: 'Reject all',
               showPreferencesBtn: 'Manage Individual preferences',
@@ -68,8 +69,9 @@ const CookieConsentComponent = () => {
                 },
                 {
                   title: 'Necessary',
-                  description: 'Necessary cookies are required to enable the basic features of this site, such as providing secure log-in or adjusting your consent preferences. These cookies do not store any personally identifiable data.',
-                  linkedCategory: 'necessary'
+                  description:
+                    'Necessary cookies are required to enable the basic features of this site, such as providing secure log-in or adjusting your consent preferences. These cookies do not store any personally identifiable data.',
+                  linkedCategory: 'necessary',
                 },
                 // {
                 //   title: 'Functional',
@@ -78,7 +80,8 @@ const CookieConsentComponent = () => {
                 // },
                 {
                   title: 'Analytics',
-                  description: 'Analytical cookies are used to understand how visitors interact with the website. These cookies help provide information on metrics such as the number of visitors, bounce rate, traffic source, etc.',
+                  description:
+                    'Analytical cookies are used to understand how visitors interact with the website. These cookies help provide information on metrics such as the number of visitors, bounce rate, traffic source, etc.',
                   linkedCategory: 'analytics',
                 },
                 // {
@@ -94,17 +97,18 @@ const CookieConsentComponent = () => {
                 {
                   title: 'More information',
                   // description: 'For any queries in relation to our policy on cookies and your choices, please <a href="/contact">contact us</a>.',
-                  description: 'For any queries in relation to our policy on cookies and your choices, please contact us.'
-                }
-              ]
-            }
-          }
-        }
-      }
-    });
-  }, []);
+                  description:
+                    'For any queries in relation to our policy on cookies and your choices, please contact us.',
+                },
+              ],
+            },
+          },
+        },
+      },
+    })
+  }, [])
 
   return null
 }
 
-export { updateCookieConsent, resetCookieConsent, CookieConsentComponent }
+export { CookieConsentComponent, resetCookieConsent, updateCookieConsent }

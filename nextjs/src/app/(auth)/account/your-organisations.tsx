@@ -1,7 +1,7 @@
-"use client";
+'use client'
 
-import { gql } from "@apollo/client";
-import { useQuery } from "@apollo/experimental-nextjs-app-support/ssr";
+import { gql } from '@apollo/client'
+import { useQuery } from '@apollo/experimental-nextjs-app-support/ssr'
 
 const YOUR_ORGANISATIONS = gql`
   query Example {
@@ -13,25 +13,23 @@ const YOUR_ORGANISATIONS = gql`
 `
 
 export default function YourOrganisations() {
-  const { data, error, loading } = useQuery(YOUR_ORGANISATIONS);
+  const { data, error, loading } = useQuery(YOUR_ORGANISATIONS)
 
   if (error) {
-    return <p className="text-red-500">Error: {String(error)}</p>;
+    return <p className="text-red-500">Error: {String(error)}</p>
   }
 
   if (loading) {
-    return <p>Loading...</p>;
+    return <p>Loading...</p>
   }
 
-    const orgs = data?.organisations || [];
+  const orgs = data?.organisations || []
 
-    return (
-      <div>
-        {orgs.map((a: { id: string, name: string }) => (
-          <div key={a.id}>
-            {a.name}
-          </div>
-        ))}
-      </div>
-    )
+  return (
+    <div>
+      {orgs.map((a: { id: string; name: string }) => (
+        <div key={a.id}>{a.name}</div>
+      ))}
+    </div>
+  )
 }

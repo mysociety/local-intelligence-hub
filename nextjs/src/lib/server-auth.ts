@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
-import { gql } from "@apollo/client";
-import { getClient } from "@/services/apollo-client";
-import { PublicUserQuery } from "@/__generated__/graphql";
+import { PublicUserQuery } from '@/__generated__/graphql'
+import { getClient } from '@/services/apollo-client'
+import { gql } from '@apollo/client'
+import { redirect } from 'next/navigation'
 
 const USER_QUERY = gql`
   query PublicUser {
@@ -11,7 +11,7 @@ const USER_QUERY = gql`
       email
     }
   }
-`;
+`
 
 /**
  * Async functions that use the server-side GraphQL client.
@@ -19,34 +19,34 @@ const USER_QUERY = gql`
  */
 
 export const loadUser = async () => {
-  const client = getClient();
+  const client = getClient()
 
-  let data = null;
+  let data = null
   try {
-    const response = await client.query<PublicUserQuery>({ query: USER_QUERY });
-    data = response.data;
+    const response = await client.query<PublicUserQuery>({ query: USER_QUERY })
+    data = response.data
   } catch (e: any) {
-    console.error(e.message);
+    console.error(e.message)
   }
-  return data?.publicUser;
-};
+  return data?.publicUser
+}
 
 export const requireAuth = async () => {
-  const user = await loadUser();
+  const user = await loadUser()
 
   if (!user) {
-    redirect("/login");
+    redirect('/login')
   }
 
-  return user;
-};
+  return user
+}
 
 export const requireNoAuth = async () => {
-  const user = await loadUser();
+  const user = await loadUser()
 
   if (user) {
-    redirect("/");
+    redirect('/')
   }
 
-  return user;
+  return user
 }

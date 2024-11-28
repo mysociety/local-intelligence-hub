@@ -1,44 +1,51 @@
-"use client"
+'use client'
 
-import Image from 'next/image';
-import { Skeleton } from "@/components/ui/skeleton";
-import Link from "next/link";
+import {
+  CreateMapReportMutation,
+  CreateMapReportMutationVariables,
+  ListReportsQuery,
+  ListReportsQueryVariables,
+} from '@/__generated__/graphql'
+import { triggerAnalyticsEvent } from '@/app/utils/posthogutils'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Button, buttonVariants } from "@/components/ui/button"
-import { Metadata } from 'next';
-import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client';
-import { useEffect } from 'react';
-import { toast } from 'sonner';
-import { CreateMapReportMutation, CreateMapReportMutationVariables, ListReportsQuery, ListReportsQueryVariables } from '@/__generated__/graphql';
-import { formatRelative } from 'date-fns';
-import { useRouter } from 'next/navigation';
-import { triggerAnalyticsEvent } from "@/app/utils/posthogutils";
-import { useAtomValue } from 'jotai';
-import { currentOrganisationIdAtom } from '@/data/organisation';
+} from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { currentOrganisationIdAtom } from '@/data/organisation'
+import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
+import { formatRelative } from 'date-fns'
+import { useAtomValue } from 'jotai'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+import { toast } from 'sonner'
 
 const LIST_REPORTS = gql`
   query ListReports($currentOrganisationId: ID!) {
-    reports(filters: { organisation: { pk: $currentOrganisationId }}) { 
+    reports(filters: { organisation: { pk: $currentOrganisationId } }) {
       id
       name
       lastUpdate
     }
   }
-`;
+`
 
 export default function ReportList() {
   const currentOrganisationId = useAtomValue(currentOrganisationIdAtom)
-  const { loading, error, data, refetch } = useQuery<ListReportsQuery, ListReportsQueryVariables>(LIST_REPORTS, {
+  const { loading, error, data, refetch } = useQuery<
+    ListReportsQuery,
+    ListReportsQueryVariables
+  >(LIST_REPORTS, {
     variables: {
-      currentOrganisationId
+      currentOrganisationId,
     },
-    skip: !currentOrganisationId
+    skip: !currentOrganisationId,
   })
 
   useEffect(() => {
@@ -59,44 +66,55 @@ export default function ReportList() {
         <h2>Error: {error.message}</h2>
       ) : data ? (
         <section className="w-full grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {data.reports?.slice().sort(
-            // Most recently edited
-            (a, b) => b.lastUpdate && a.lastUpdate ? new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime() : 0
-          ).map((report) => (
-            <ReportCard
-              key={report.id}
-              report={report}
-            />
-          ))}
+          {data.reports
+            ?.slice()
+            .sort(
+              // Most recently edited
+              (a, b) =>
+                b.lastUpdate && a.lastUpdate
+                  ? new Date(b.lastUpdate).getTime() -
+                    new Date(a.lastUpdate).getTime()
+                  : 0
+            )
+            .map((report) => <ReportCard key={report.id} report={report} />)}
           <CreateReportCard />
         </section>
       ) : null}
     </div>
-  );
+  )
 }
 
-export function PlaceholderReportCard () {
+export function PlaceholderReportCard() {
   return (
     <Card className="rounded-xl border border-meepGray-700 px-6 py-5 space-y-3">
       <Skeleton className="h-4 w-full max-w-[100px]" />
       <Skeleton className="h-10 w-full" />
     </Card>
-  );
+  )
 }
 
-export function ReportCard ({ report }: { report: ListReportsQuery['reports'][0] }) {
+export function ReportCard({
+  report,
+}: {
+  report: ListReportsQuery['reports'][0]
+}) {
   return (
     <Link href={`/reports/${report.id}`}>
       <Card>
         <CardHeader>
           <CardContent>
-            <Image src="/reports_page_card_image.png" alt="Description of the image" width={300} height={300} className='w-auto' />
+            <Image
+              src="/reports_page_card_image.png"
+              alt="Description of the image"
+              width={300}
+              height={300}
+              className="w-auto"
+            />
           </CardContent>
-          <CardTitle className="mb-1 px-5 pt-4">
-            {report.name}
-          </CardTitle>
+          <CardTitle className="mb-1 px-5 pt-4">{report.name}</CardTitle>
           <CardDescription className="text-sm text-meepGray-400 px-5 pb-5">
-            Last edited <span className='text-meepGray-300'>
+            Last edited{' '}
+            <span className="text-meepGray-300">
               {formatRelative(report.lastUpdate, new Date())}
             </span>
           </CardDescription>
@@ -106,9 +124,9 @@ export function ReportCard ({ report }: { report: ListReportsQuery['reports'][0]
   )
 }
 
-export function CreateReportCard () {
-  const client = useApolloClient();
-  const router = useRouter();
+export function CreateReportCard() {
+  const client = useApolloClient()
+  const router = useRouter()
   const currentOrganisationId = useAtomValue(currentOrganisationIdAtom)
 
   return (
@@ -117,7 +135,9 @@ export function CreateReportCard () {
         <Skeleton className="h-4 w-full max-w-[100px]" />
         <Skeleton className="h-10 w-full" />
         <div className="!m-0 absolute inset-0 top-1/2 -translate-y-1/2 flex items-center justify-center">
-          <Button onClick={create} variant="reverse">Create new report</Button>
+          <Button onClick={create} variant="reverse">
+            Create new report
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -130,31 +150,38 @@ export function CreateReportCard () {
         variables: {
           data: {
             name: new Date().toISOString(),
-            organisation: { set: currentOrganisationId }
-          }
-        }
+            organisation: { set: currentOrganisationId },
+          },
+        },
       }),
       {
         loading: 'Creating report...',
         success: (d: FetchResult<CreateMapReportMutation>) => {
-          if (!d.errors && d.data?.createMapReport?.__typename === 'MapReport') {
+          if (
+            !d.errors &&
+            d.data?.createMapReport?.__typename === 'MapReport'
+          ) {
             router.push(`/reports/${d.data.createMapReport.id}`)
-            triggerAnalyticsEvent("Map report created succesfully", {});
+            triggerAnalyticsEvent('Map report created succesfully', {})
             return 'Report created!'
-          } else if (d.data?.createMapReport?.__typename === 'OperationInfo' ) {
+          } else if (d.data?.createMapReport?.__typename === 'OperationInfo') {
             toast.error('Failed to create report', {
-              description: d.data.createMapReport.messages.map(m => m.message).join(', ')
+              description: d.data.createMapReport.messages
+                .map((m) => m.message)
+                .join(', '),
             })
-            triggerAnalyticsEvent("Map report creation failed", {
-              errorMessages: d.data.createMapReport.messages.map(m => m.message).join(', ')
-            });
+            triggerAnalyticsEvent('Map report creation failed', {
+              errorMessages: d.data.createMapReport.messages
+                .map((m) => m.message)
+                .join(', '),
+            })
           } else {
             toast.error('Failed to create report', {
-              description: d.errors?.map(e => e.message).join(', ')
+              description: d.errors?.map((e) => e.message).join(', '),
             })
-            triggerAnalyticsEvent("Report creation failed", {
-              errorMessages: d.errors?.map(e => e.message).join(', ')
-            });
+            triggerAnalyticsEvent('Report creation failed', {
+              errorMessages: d.errors?.map((e) => e.message).join(', '),
+            })
           }
         },
         error: 'Failed to create report',
@@ -164,16 +191,16 @@ export function CreateReportCard () {
 }
 
 const CREATE_MAP_REPORT = gql`
-mutation CreateMapReport($data: MapReportInput!) {
-  createMapReport(data: $data) {
-    ... on MapReport {
-      id
-    }
-    ... on OperationInfo {
-      messages {
-        message
+  mutation CreateMapReport($data: MapReportInput!) {
+    createMapReport(data: $data) {
+      ... on MapReport {
+        id
+      }
+      ... on OperationInfo {
+        messages {
+          message
+        }
       }
     }
   }
-}
 `

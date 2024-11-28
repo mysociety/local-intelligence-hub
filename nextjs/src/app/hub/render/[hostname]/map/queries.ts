@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client"
+import { gql } from '@apollo/client'
 
 export const GET_HUB_MAP_DATA = gql`
   query GetHubMapData($hostname: String!) {
@@ -28,7 +28,6 @@ export const GET_HUB_MAP_DATA = gql`
     }
   }
 `
-
 
 export const EVENT_FRAGMENT = gql`
   fragment EventFragment on GenericData {
@@ -61,40 +60,32 @@ export const CONSTITUENCY_VIEW_FRAGMENT = gql`
     samplePostcode {
       postcode
     }
-    mp: person(filters:{personType:"MP"}) {
+    mp: person(filters: { personType: "MP" }) {
       id
       name
       photo {
         url
       }
-      party: personDatum(filters:{
-        dataType_Name: "party"
-      }) {
+      party: personDatum(filters: { dataType_Name: "party" }) {
         name: data
         shade
       }
-      email: personDatum(filters:{
-        dataType_Name: "email"
-      }) {
+      email: personDatum(filters: { dataType_Name: "email" }) {
         data
       }
     }
     # PPCs
-    ppcs: people(filters:{personType:"PPC"}) {
+    ppcs: people(filters: { personType: "PPC" }) {
       id
       name
       photo {
         url
       }
-      party: personDatum(filters:{
-        dataType_Name: "party"
-      }) {
+      party: personDatum(filters: { dataType_Name: "party" }) {
         name: data
         shade
       }
-      email: personDatum(filters:{
-        dataType_Name: "email"
-      }) {
+      email: personDatum(filters: { dataType_Name: "email" }) {
         data
       }
     }
@@ -122,9 +113,9 @@ export const GET_EVENT_DATA = gql`
   query GetEventData($eventId: String!, $hostname: String!) {
     importedDataGeojsonPoint(genericDataId: $eventId) {
       properties {
-        ... EventFragment
+        ...EventFragment
         constituency: area(areaType: "WMC23") {
-          ... ConstituencyViewFragment
+          ...ConstituencyViewFragment
           # List of events
           genericDataForHub(hostname: $hostname) {
             ...EventFragment

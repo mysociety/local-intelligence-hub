@@ -1,70 +1,69 @@
 /* eslint-disable @next/next/no-img-element */
-import React from "react";
-import { ComponentConfig } from "@measured/puck";
-import { Section } from "@/data/puck/config/components/Section";
-import dynamic from "next/dynamic";
-import dynamicIconImports from "lucide-react/dynamicIconImports";
+import { Section } from '@/data/puck/config/components/Section'
+import { ComponentConfig } from '@measured/puck'
+import dynamicIconImports from 'lucide-react/dynamicIconImports'
+import dynamic from 'next/dynamic'
 
 const icons = Object.keys(dynamicIconImports).reduce((acc, iconName) => {
   // @ts-ignore
-  const El = dynamic(dynamicIconImports[iconName]);
+  const El = dynamic(dynamicIconImports[iconName])
 
   return {
     ...acc,
     [iconName]: <El />,
-  };
-}, {});
+  }
+}, {})
 
 const iconOptions = Object.keys(dynamicIconImports).map((iconName) => ({
   label: iconName,
   value: iconName,
-}));
+}))
 
 export type FeatureListProps = {
   items: {
-    title: string;
-    description: string;
-    icon?: "feather";
-  }[];
-  mode: "flat" | "card";
-};
+    title: string
+    description: string
+    icon?: 'feather'
+  }[]
+  mode: 'flat' | 'card'
+}
 
 export const FeatureList: ComponentConfig<FeatureListProps> = {
   fields: {
     items: {
-      type: "array",
+      type: 'array',
       getItemSummary: (item, i) => item.title || `Feature #${i}`,
       defaultItemProps: {
-        title: "Title",
-        description: "Description",
-        icon: "feather",
+        title: 'Title',
+        description: 'Description',
+        icon: 'feather',
       },
       arrayFields: {
-        title: { type: "text" },
-        description: { type: "textarea" },
+        title: { type: 'text' },
+        description: { type: 'textarea' },
         icon: {
-          type: "select",
+          type: 'select',
           options: iconOptions,
         },
       },
     },
     mode: {
-      type: "radio",
+      type: 'radio',
       options: [
-        { label: "flat", value: "flat" },
-        { label: "card", value: "card" },
+        { label: 'flat', value: 'flat' },
+        { label: 'card', value: 'card' },
       ],
     },
   },
   defaultProps: {
     items: [
       {
-        title: "Feature",
-        description: "Description",
-        icon: "feather",
+        title: 'Feature',
+        description: 'Description',
+        icon: 'feather',
       },
     ],
-    mode: "flat",
+    mode: 'flat',
   },
   render: ({ items, mode }) => {
     return (
@@ -75,13 +74,11 @@ export const FeatureList: ComponentConfig<FeatureListProps> = {
               {/* @ts-ignore */}
               <div>{icons[item.icon]}</div>
               <div>{item.title}</div>
-              <div>
-                {item.description}
-              </div>
+              <div>{item.description}</div>
             </div>
           ))}
         </div>
       </Section>
-    );
+    )
   },
-};
+}

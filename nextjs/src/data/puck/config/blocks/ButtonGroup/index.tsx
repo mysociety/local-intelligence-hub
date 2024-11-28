@@ -1,48 +1,47 @@
 /* eslint-disable @next/next/no-img-element */
-import React from "react";
 
-import { Button } from "@/components/ui/button";
-import { Section } from "@/data/puck/config/components/Section";
-import { ComponentConfig } from "@measured/puck";
+import { Button } from '@/components/ui/button'
+import { Section } from '@/data/puck/config/components/Section'
+import { ComponentConfig } from '@measured/puck'
 
 export type ButtonGroupProps = {
-  align?: string;
-  buttons: { label: string; href: string; variant: "default" | "secondary" }[];
-};
+  align?: string
+  buttons: { label: string; href: string; variant: 'default' | 'secondary' }[]
+}
 
 export const ButtonGroup: ComponentConfig<ButtonGroupProps> = {
-  label: "Button Group",
+  label: 'Button Group',
   fields: {
     buttons: {
-      type: "array",
-      getItemSummary: (item) => item.label || "Button",
+      type: 'array',
+      getItemSummary: (item) => item.label || 'Button',
       arrayFields: {
-        label: { type: "text" },
-        href: { type: "text" },
+        label: { type: 'text' },
+        href: { type: 'text' },
         variant: {
-          type: "radio",
+          type: 'radio',
           options: [
-            { label: "primary", value: "default" },
-            { label: "secondary", value: "secondary" },
+            { label: 'primary', value: 'default' },
+            { label: 'secondary', value: 'secondary' },
           ],
         },
       },
       defaultItemProps: {
-        label: "Button",
-        href: "#",
-        variant: "default",
+        label: 'Button',
+        href: '#',
+        variant: 'default',
       },
     },
     align: {
-      type: "radio",
+      type: 'radio',
       options: [
-        { label: "left", value: "left" },
-        { label: "center", value: "center" },
+        { label: 'left', value: 'left' },
+        { label: 'center', value: 'center' },
       ],
     },
   },
   defaultProps: {
-    buttons: [{ label: "Learn more", href: "#", variant: "default" }],
+    buttons: [{ label: 'Learn more', href: '#', variant: 'default' }],
   },
   render: ({ align, buttons }) => {
     return (
@@ -61,6 +60,6 @@ export const ButtonGroup: ComponentConfig<ButtonGroupProps> = {
           ))}
         </div>
       </Section>
-    );
+    )
   },
-};
+}

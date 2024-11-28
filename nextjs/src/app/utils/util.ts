@@ -1,1 +1,1 @@
-export const isClient = (): boolean => typeof window !== "undefined";
+export const isClient = (): boolean => typeof window !== 'undefined'

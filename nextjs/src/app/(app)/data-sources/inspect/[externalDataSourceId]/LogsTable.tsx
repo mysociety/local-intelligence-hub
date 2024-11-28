@@ -1,24 +1,24 @@
 import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getSortedRowModel,
-  SortingState,
-} from "@tanstack/react-table";
-import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { useState } from "react";
+} from '@/components/ui/table'
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  SortingState,
+  useReactTable,
+} from '@tanstack/react-table'
+import { useState } from 'react'
 
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
+  columns: ColumnDef<TData, TValue>[]
+  data: TData[]
 }
 
 export default function LogsTable<TData, TValue>({
@@ -26,9 +26,9 @@ export default function LogsTable<TData, TValue>({
   data,
   sortingState = [],
 }: DataTableProps<TData, TValue> & {
-  sortingState?: SortingState;
+  sortingState?: SortingState
 }) {
-  const [sorting, setSorting] = useState<SortingState>(sortingState);
+  const [sorting, setSorting] = useState<SortingState>(sortingState)
 
   const table = useReactTable({
     data,
@@ -39,7 +39,7 @@ export default function LogsTable<TData, TValue>({
     state: {
       sorting,
     },
-  });
+  })
 
   return (
     <div className="rounded-md border border-meepGray-400">
@@ -54,10 +54,10 @@ export default function LogsTable<TData, TValue>({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext(),
+                          header.getContext()
                         )}
                   </TableHead>
-                );
+                )
               })}
             </TableRow>
           ))}
@@ -67,7 +67,7 @@ export default function LogsTable<TData, TValue>({
             table.getRowModel().rows.map((row) => (
               <TableRow
                 key={row.id}
-                data-state={row.getIsSelected() && "selected"}
+                data-state={row.getIsSelected() && 'selected'}
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
@@ -86,5 +86,5 @@ export default function LogsTable<TData, TValue>({
         </TableBody>
       </Table>
     </div>
-  );
+  )
 }

@@ -1,42 +1,47 @@
-"use client"
+'use client'
 
-import { AnalyticalAreaType, Exact, GetMapReportQuery, MapReportInput } from "@/__generated__/graphql";
-import { QueryResult } from "@apollo/client";
-import { createContext, useContext, useState } from "react";
+import {
+  AnalyticalAreaType,
+  Exact,
+  GetMapReportQuery,
+  MapReportInput,
+} from '@/__generated__/graphql'
+import { QueryResult } from '@apollo/client'
+import { createContext, useContext } from 'react'
 
 export const defaultDisplayOptions = {
   showLastElectionData: false,
   showMPs: false,
   showStreetDetails: false,
-  analyticalAreaType: AnalyticalAreaType.ParliamentaryConstituency_2024
+  analyticalAreaType: AnalyticalAreaType.ParliamentaryConstituency_2024,
 }
 
 export type DisplayOptionsType = typeof defaultDisplayOptions & {}
 
 export const ReportContext = createContext<{
-  id: string,
-  updateReport: (data: MapReportInput) => void,
-  deleteReport: () => void,
-  report?: QueryResult<GetMapReportQuery, Exact<{ id: string; }>>,
-  refreshReportDataQueries: () => void,
-  displayOptions: DisplayOptionsType,
-  setDisplayOptions: (options: Partial<DisplayOptionsType>) => void,
+  id: string
+  updateReport: (data: MapReportInput) => void
+  deleteReport: () => void
+  report?: QueryResult<GetMapReportQuery, Exact<{ id: string }>>
+  refreshReportDataQueries: () => void
+  displayOptions: DisplayOptionsType
+  setDisplayOptions: (options: Partial<DisplayOptionsType>) => void
 }>({
   id: '?',
-  updateReport: () => ({} as any),
+  updateReport: () => ({}) as any,
   deleteReport: () => {},
   refreshReportDataQueries: () => {},
   displayOptions: defaultDisplayOptions,
   setDisplayOptions: () => {},
-});
+})
 
 export const useReportContext = () => {
-  const context = useContext(ReportContext);
-  const { displayOptions, setDisplayOptions } = context;
+  const context = useContext(ReportContext)
+  const { displayOptions, setDisplayOptions } = context
 
   const updateDisplayOptions = (options: Partial<DisplayOptionsType>) => {
-    setDisplayOptions({ ...displayOptions, ...options });
-  };
+    setDisplayOptions({ ...displayOptions, ...options })
+  }
 
-  return { ...context, updateDisplayOptions };
-};
+  return { ...context, updateDisplayOptions }
+}

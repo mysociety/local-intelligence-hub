@@ -1,17 +1,17 @@
-import { ApolloLink, HttpLink, gql } from "@apollo/client";
-import { setContext } from "@apollo/client/link/context";
+import { GRAPHQL_URL } from '@/env'
+import { ApolloLink, HttpLink } from '@apollo/client'
+import { setContext } from '@apollo/client/link/context'
+import { registerApolloClient } from '@apollo/experimental-nextjs-app-support/rsc'
 import {
-  NextSSRInMemoryCache,
   NextSSRApolloClient,
-} from "@apollo/experimental-nextjs-app-support/ssr";
-import { registerApolloClient } from "@apollo/experimental-nextjs-app-support/rsc";
-import { cookies } from "next/headers";
-import { GRAPHQL_URL } from "@/env";
+  NextSSRInMemoryCache,
+} from '@apollo/experimental-nextjs-app-support/ssr'
+import { cookies } from 'next/headers'
 
 const getJwt = (): string | undefined => {
-  const cookieStore = cookies();
-  return cookieStore.get("jwt")?.value;
-};
+  const cookieStore = cookies()
+  return cookieStore.get('jwt')?.value
+}
 
 /**
  * Creates an apollo client that can be used in server-side components.
@@ -42,25 +42,25 @@ const getJwt = (): string | undefined => {
 const makeBackEndClient = (token: string = '') => {
   const httpLink = new HttpLink({
     uri: GRAPHQL_URL,
-  });
+  })
 
   const authLink = setContext((_, { headers }) => {
     const config = {
       headers: {
         ...headers,
-        authorization: token ? `JWT ${token}` : "",
+        authorization: token ? `JWT ${token}` : '',
       },
-    };
-    return config;
-  });
+    }
+    return config
+  })
 
   return new NextSSRApolloClient({
     cache: new NextSSRInMemoryCache(),
     link: ApolloLink.from([authLink, httpLink]),
-  });
-};
+  })
+}
 
 export const { getClient } = registerApolloClient(() => {
-  const token = getJwt();
-  return makeBackEndClient(token);
-});
+  const token = getJwt()
+  return makeBackEndClient(token)
+})
