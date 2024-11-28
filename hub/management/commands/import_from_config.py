@@ -52,6 +52,7 @@ class Command(BaseImportFromDataFrameCommand):
                         conf["data_set_label"] = conf["label"]
                         for dt in conf["data_types"]:
                             dt_conf = {**conf, **dt}
+                            del dt_conf["data_types"]
                             confs.append(dt_conf)
                     else:
                         confs.append(conf)
@@ -146,6 +147,6 @@ class Command(BaseImportFromDataFrameCommand):
 
         configs = self.get_configs(import_name)
         for conf in configs:
-            self.setup(import_name, conf)
+            self.setup(conf["name"], conf)
 
             super().handle(quiet, skip_new_areatype_conversion, *args, **options)
