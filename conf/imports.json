@@ -1,0 +1,446 @@
+[
+  {
+    "name":"constituency_age_distribution",
+    "label":"Constituency age distribution",
+    "description":"Distribution of the ages of the constituents of each constituency.",
+    "data_type":"integer",
+    "is_range":true,
+    "category":"place",
+    "subcategory":null,
+    "release_date":"May 2024",
+    "source_label":"Data from ONS (England and Wales), NRS (Scotland), and NISRA (Northern Ireland), collated by House of Commons Library.",
+    "source":"https://commonslibrary.parliament.uk/constituency-boundary-review-data-for-new-constituencies/",
+    "source_type":"xlxs",
+    "data_url":"",
+    "table":"areadata",
+    "default_value":10,
+    "comparators":"numerical",
+    "exclude_countries":null,
+    "unit_type":"percentage",
+    "unit_distribution":null,
+    "fill_blanks":false,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":false,
+    "data_file":"2025_parliament_demographics.xlsx",
+    "uses_gss":false,
+    "do_not_delete":true,
+    "file_type":"excel",
+    "area_type":"WMC23",
+    "data_types": [
+      {
+        "name":"ages_0_15",
+        "label":"Ages 0 - 15",
+        "order": 1,
+        "sheet":"EW_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Aged 15 years and under"
+      },
+      {
+        "name":"ages_0_15",
+        "label":"Ages 0 - 15",
+        "order": 1,
+        "sheet":"NI_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Aged 15 years and under"
+      },
+      {
+        "name":"ages_0_15",
+        "label":"Ages 0 - 15",
+        "order": 1,
+        "sheet":"Scotland_table",
+        "header_row":5,
+        "constituency_col":"0",
+        "data_col":"Aged 15 years and under"
+      },
+      {
+        "name":"ages_16_24",
+        "label":"Ages 16 - 24",
+        "order": 2,
+        "sheet":"EW_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Aged 16 to 24 years"
+      },
+      {
+        "name":"ages_16_24",
+        "label":"Ages 16 - 24",
+        "order": 2,
+        "sheet":"NI_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Aged 16 to 24 years"
+      },
+      {
+        "name":"ages_16_24",
+        "label":"Ages 16 - 24",
+        "order": 2,
+        "sheet":"Scotland_table",
+        "header_row":5,
+        "constituency_col":"0",
+        "data_col":"Aged 16 to 24 years"
+      },
+      {
+        "name":"ages_25_34",
+        "label":"Ages 25 - 34",
+        "order": 3,
+        "sheet":"EW_table",
+        "header_row":5.25,
+        "constituency_col":"New constituency name",
+        "data_col":"Aged 25 to 34 years"
+      },
+      {
+        "name":"ages_25_34",
+        "label":"Ages 25 - 34",
+        "order": 3,
+        "sheet":"NI_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Aged 25 to 34 years"
+      },
+      {
+        "name":"ages_25_34",
+        "label":"Ages 25 - 34",
+        "order": 3,
+        "sheet":"Scotland_table",
+        "header_row":5,
+        "constituency_col":"0",
+        "data_col":"Aged 25 to 34 years"
+      },
+      {
+        "name":"ages_35_49",
+        "label":"Ages 35 - 49",
+        "order": 4,
+        "sheet":"EW_table",
+        "header_row":5.35,
+        "constituency_col":"New constituency name",
+        "data_col":"Aged 35 to 49 years"
+      },
+      {
+        "name":"ages_35_49",
+        "label":"Ages 35 - 49",
+        "order": 4,
+        "sheet":"NI_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Aged 35 to 49 years"
+      },
+      {
+        "name":"ages_35_49",
+        "label":"Ages 35 - 49",
+        "order": 4,
+        "sheet":"Scotland_table",
+        "header_row":5,
+        "constituency_col":"0",
+        "data_col":"Aged 35 to 49 years"
+      },
+      {
+        "name":"ages_50_64",
+        "label":"Ages 50 - 64",
+        "order": 5,
+        "sheet":"EW_table",
+        "header_row":5.50,
+        "constituency_col":"New constituency name",
+        "data_col":"Aged 50 to 64 years"
+      },
+      {
+        "name":"ages_50_64",
+        "label":"Ages 50 - 64",
+        "order": 5,
+        "sheet":"NI_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Aged 50 to 64 years"
+      },
+      {
+        "name":"ages_50_64",
+        "label":"Ages 50 - 64",
+        "order": 5,
+        "sheet":"Scotland_table",
+        "header_row":5,
+        "constituency_col":"0",
+        "data_col":"Aged 50 to 64 years"
+      },
+      {
+        "name":"ages_65_up",
+        "label":"Ages 65 and over",
+        "order": 6,
+        "sheet":"EW_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Aged 65 years and over"
+      },
+      {
+        "name":"ages_65_up",
+        "label":"Ages 65 and over",
+        "order": 6,
+        "sheet":"NI_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Aged 65 years and over"
+      },
+      {
+        "name":"ages_65_up",
+        "label":"Ages 65 and over",
+        "order": 6,
+        "sheet":"Scotland_table",
+        "header_row":5,
+        "constituency_col":"0",
+        "data_col":"Aged 65 years and over"
+      }
+    ]
+  },
+  {
+    "name":"constituency_housing_tenure",
+    "label":"Housing Tenure",
+    "description":"",
+    "data_type":"float",
+    "is_range":true,
+    "category":"place",
+    "subcategory":null,
+    "release_date":"May 2024",
+    "source_label":"Data from ONS (England and Wales) and NISRA (Northern Ireland), collated by House of Commons Library.",
+    "source":"https://commonslibrary.parliament.uk/constituency-boundary-review-data-for-new-constituencies/",
+    "source_type":"xlxs",
+    "data_url":null,
+    "table":"areadata",
+    "default_value":10,
+    "comparators":"numerical",
+    "exclude_countries":["Scotland"],
+    "unit_type":"percentage",
+    "unit_distribution":"people_in_area",
+    "fill_blanks":false,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"2025_parliament_demographics.xlsx",
+    "uses_gss":false,
+    "do_not_delete":true,
+    "file_type":"excel",
+    "area_type":"WMC23",
+    "data_types": [
+      {
+        "name":"housing_tenure_outright",
+        "label":"Owned outright",
+        "sheet":"EW_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Owned outright"
+      },
+      {
+        "name":"housing_tenure_outright",
+        "label":"Owned outright",
+        "sheet":"NI_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Owned outright"
+      },
+      {
+        "name":"housing_tenure_mortgage",
+        "label":"Owned with a mortgage",
+        "sheet":"NI_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Owned with a mortgage or loan"
+      },
+      {
+        "name":"housing_tenure_mortgage",
+        "label":"Owned with a mortgage",
+        "sheet":"EW_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Owned with a mortgage or loan"
+      },
+      {
+        "name":"housing_tenure_private_rented",
+        "label":"Private rented",
+        "sheet":"NI_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Private rented"
+      },
+      {
+        "name":"housing_tenure_private_rented",
+        "label":"Private rented",
+        "sheet":"EW_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Private rented"
+      },
+      {
+        "name":"housing_tenure_social_rented",
+        "label":"Social rented",
+        "sheet":"NI_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Social rented"
+      },
+      {
+        "name":"housing_tenure_social_rented",
+        "label":"Social rented",
+        "sheet":"EW_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Social rented"
+      },
+      {
+        "name":"housing_tenure_other",
+        "label":"Other tenure",
+        "sheet":"NI_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Other tenure"
+      },
+      {
+        "name":"housing_tenure_other",
+        "label":"Other tenure",
+        "sheet":"EW_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Other tenure"
+      }
+    ]
+  },
+  {
+    "name":"cons_population",
+    "label":"Constituency Population",
+    "description":null,
+    "data_type":"integer",
+    "is_range":false,
+    "category":"place",
+    "subcategory":null,
+    "release_date":"May 2024",
+    "source_label":"Data from ONS (England and Wales), NRS (Scotland), and NISRA (Northern Ireland), collated by House of Commons Library.",
+    "source":"https://commonslibrary.parliament.uk/constituency-boundary-review-data-for-new-constituencies/",
+    "source_type":"xlxs",
+    "data_url":null,
+    "table":"areadata",
+    "default_value":10,
+    "comparators":"numerical",
+    "exclude_countries":null,
+    "unit_type":"integer",
+    "unit_distribution":"people_in_area",
+    "fill_blanks":false,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"2025_parliament_demographics.xlsx",
+    "uses_gss":false,
+    "do_not_delete":true,
+    "file_type":"excel",
+    "area_type":"WMC23",
+    "data_types": [
+      {
+        "sheet":"EW_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Total population"
+      },
+      {
+        "sheet":"NI_table",
+        "header_row":5,
+        "constituency_col":"New constituency name",
+        "data_col":"Total population"
+      },
+      {
+        "sheet":"Scotland_table",
+        "header_row":5,
+        "constituency_col":"0",
+        "data_col":"Total population"
+      }
+    ]
+  },
+  {
+    "name":"constituency_commute_method",
+    "label":"Travel to work method",
+    "description":"",
+    "data_type":"integer",
+    "is_range":true,
+    "category":"place",
+    "subcategory":null,
+    "release_date":"May 2024",
+    "source_label":"Data from ONS.",
+    "source":"https://www.ons.gov.uk/filters/f7dcc756-f4bc-4dcb-9302-2f6def224390/dimensions",
+    "source_type":"csv",
+    "data_url":null,
+    "table":"areadata",
+    "default_value":10,
+    "comparators":"numerical",
+    "exclude_countries":["Scotland", "Northern Ireland"],
+    "unit_type":"percentage",
+    "unit_distribution":"people_in_area",
+    "fill_blanks":false,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"2024_travel_to_work_method_pivoted.csv",
+    "uses_gss":true,
+    "file_type":"csv",
+    "area_type":"WMC23",
+    "constituency_col":"Post-2019 Westminster Parliamentary constituencies Code",
+    "data_types": [
+      {
+        "name":"constituency_commute_method_bus",
+        "label":"Bus, minibus or coach",
+        "data_col":"Bus, minibus or coach"
+      },
+      {
+        "name":"constituency_commute_method_drive",
+        "label":"Driving a car or van",
+        "data_col":"Driving a car or van"
+      },
+      {
+        "name":"constituency_commute_method_motorcycle",
+        "label":"Motorcycle, scooter or moped",
+        "data_col":"Motorcycle, scooter or moped"
+      },
+      {
+        "name":"constituency_commute_method_not_employed",
+        "label":"Not in employment or aged 15 years and under",
+        "data_col":"Not in employment or aged 15 years and under"
+      },
+      {
+        "name":"constituency_commute_method_foot",
+        "label":"On foot",
+        "data_col":"On foot"
+      },
+      {
+        "name":"constituency_commute_method_passenger",
+        "label":"Passenger in a car or van",
+        "data_col":"Passenger in a car or van"
+      },
+      {
+        "name":"constituency_commute_method_other",
+        "label":"Other method of travel to work",
+        "data_col":"Other method of travel to work"
+      },
+      {
+        "name":"constituency_commute_method_bicycle",
+        "label":"Bicycle",
+        "data_col":"Bicycle"
+      },
+      {
+        "name":"constituency_commute_method_train",
+        "label":"Train",
+        "data_col":"Train"
+      },
+      {
+        "name":"constituency_commute_method_taxi",
+        "label":"Taxi",
+        "data_col":"Taxi"
+      },
+      {
+        "name":"constituency_commute_method_metro",
+        "label":"Underground, metro, light rail, tram",
+        "data_col":"Underground, metro, light rail, tram"
+      },
+      {
+        "name":"constituency_commute_method_home",
+        "label":"Work mainly at or from home",
+        "data_col":"Work mainly at or from home"
+      }
+    ]
+  }
+]
