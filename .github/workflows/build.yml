@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: testing
     container:
-      image: node:20
+      image: node:22
     steps:
       - name: Checkout repo content
         uses: actions/checkout@v3
