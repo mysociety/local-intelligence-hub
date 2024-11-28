@@ -39,13 +39,12 @@ const getJwt = (): string | undefined => {
  * This will not work if "use client" is present. For client components,
  * use the useQuery() hook (see components/apollo-wrapper.tsx).
  */
-const makeBackEndClient = () => {
+const makeBackEndClient = (token: string = '') => {
   const httpLink = new HttpLink({
     uri: GRAPHQL_URL,
   });
 
   const authLink = setContext((_, { headers }) => {
-    const token = getJwt();
     const config = {
       headers: {
         ...headers,
@@ -62,5 +61,6 @@ const makeBackEndClient = () => {
 };
 
 export const { getClient } = registerApolloClient(() => {
-  return makeBackEndClient();
+  const token = getJwt();
+  return makeBackEndClient(token);
 });

@@ -1,5 +1,5 @@
 import Navbar from "@/components/navbar";
-import { useAuth } from "@/hooks/auth";
+import { loadUser } from "@/lib/server-auth";
 import { Toaster } from "sonner";
 import { GetMapReportNameQuery, GetMapReportNameQueryVariables } from "@/__generated__/graphql";
 import { Metadata } from "next";
@@ -15,7 +15,7 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await useAuth();
+  const user = await loadUser();
   const isLoggedIn = Boolean(user);
 
   return (

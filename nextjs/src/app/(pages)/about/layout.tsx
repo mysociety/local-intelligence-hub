@@ -1,10 +1,4 @@
 
-import { useAuth } from "@/hooks/auth";
-import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
-
-
-
 export default async function FeaturesLayout({
     children,
 }: Readonly<{

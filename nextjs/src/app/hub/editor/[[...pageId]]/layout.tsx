@@ -1,5 +1,5 @@
 import Navbar from "@/components/navbar";
-import { useRequireAuth } from "@/hooks/auth";
+import { requireAuth } from "@/lib/server-auth";
 import { Toaster } from "sonner";
 
 export default async function Layout({
@@ -7,7 +7,7 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  await useRequireAuth();
+  await requireAuth();
 
   return (
     <div className='h-dvh flex flex-col'>

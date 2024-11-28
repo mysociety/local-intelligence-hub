@@ -1,11 +1,11 @@
 import { Metadata } from "next";
-import { useRequireAuth } from "../../../hooks/auth";
+import { requireAuth } from "@/lib/server-auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import YourOrganisations from "./your-organisations";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function Account() {
-  const user = await useRequireAuth();
+  const user = await requireAuth();
 
   return (
     <div className='grid grid-cols-1 gap-6'>

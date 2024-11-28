@@ -6,7 +6,14 @@ from django.core.management.base import BaseCommand
 
 from asgiref.sync import async_to_sync
 
-from hub.models import AirtableSource, HubHomepage, MapReport, Organisation, User
+from hub.models import (
+    AirtableSource,
+    HubContentPage,
+    HubHomepage,
+    MapReport,
+    Organisation,
+    User,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +96,33 @@ class Command(BaseCommand):
         async_to_sync(members_source.refresh_many)(members)
         logger.info(f"Updated {len(members)} members in AirTable")
 
+        # Import pledge list
+        pledges_source: AirtableSource
+        pledges_source, _ = AirtableSource.objects.update_or_create(
+            base_id=settings.SEED_AIRTABLE_PLEDGELIST_BASE_ID,
+            table_id=settings.SEED_AIRTABLE_PLEDGELIST_TABLE_NAME,
+            defaults={
+                "api_key": settings.SEED_AIRTABLE_PLEDGELIST_API_KEY,
+                "name": "Pledge List",
+                "data_type": AirtableSource.DataSourceType.MEMBER,
+                "organisation": org,
+                "geography_column_type": AirtableSource.GeographyTypes.POSTCODE,
+                "geography_column": "POSTCODE",
+                "postcode_field": "POSTCODE",
+                "first_name_field": "FNAME",
+                "last_name_field": "LNAME",
+                "auto_update_enabled": False,
+                "auto_import_enabled": False,
+                "can_display_points_publicly": True,
+                "can_display_details_publicly": True,
+                "update_mapping": [],
+            },
+        )
+        logger.info(f"Created an AirTable data source: {pledges_source}")
+        pledges = list(async_to_sync(pledges_source.fetch_all)())
+        async_to_sync(pledges_source.import_many)(pledges)
+        logger.info(f"Imported {len(pledges)} pledges from AirTable")
+
         # Import event list
         events_source: AirtableSource
         events_source, _ = AirtableSource.objects.get_or_create(
@@ -113,7 +147,7 @@ class Command(BaseCommand):
         logger.info(f"Created an AirTable data source: {events_source}")
         events = list(async_to_sync(events_source.fetch_all)())
         async_to_sync(events_source.import_many)(events)
-        logger.info(f"Imported {len(events)} members from AirTable")
+        logger.info(f"Imported {len(events)} events from AirTable")
 
         # Create a Map Report for the data source
         map_report, _ = MapReport.objects.get_or_create(
@@ -149,61 +183,115 @@ class Command(BaseCommand):
             hub = HubHomepage.create_for_user(
                 user=user, hostname="hub.localhost", org=org
             )
-            hub.puck_json_content = {
-                "root": {
-                    "props": {
-                        "slug": "testdomainorg",
-                        "title": "testdomain.org",
-                        "search_description": "",
+
+        hub.puck_json_content = {
+            "root": {
+                "props": {
+                    "slug": "testdomainorg",
+                    "title": "testdomain.org",
+                    "search_description": "",
+                }
+            },
+            "zones": {
+                "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3:Col-1": [
+                    {
+                        "type": "Card",
+                        "props": {
+                            "id": "Card-c1249b7e-5de6-42a5-aa7d-115cb433d1cd",
+                            "link": "/map",
+                            "type": "action",
+                            "title": "View the map",
+                            "behaviour": "link",
+                            "linkLabel": "Learn more",
+                            "description": "It's right here!",
+                            "dialogDescription": "",
+                        },
                     }
-                },
-                "zones": {
-                    "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3:Col-1": [
-                        {
-                            "type": "Card",
-                            "props": {
-                                "id": "Card-c1249b7e-5de6-42a5-aa7d-115cb433d1cd",
-                                "link": "/map",
-                                "type": "action",
-                                "title": "View the map",
-                                "behaviour": "link",
-                                "linkLabel": "Learn more",
-                                "description": "It's right here!",
-                                "dialogDescription": "",
-                            },
-                        }
-                    ],
-                    "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3:Col-2": [],
-                    "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3:Col-3": [],
-                    "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3:Col-4": [],
-                },
-                "content": [
-                    {
-                        "type": "Hero",
-                        "props": {
-                            "id": "Hero-71f52de9-e01f-485d-bd51-fd0c5da123d6",
-                            "title": "Heading",
-                            "prompt": "Something",
-                            "description": "Description",
-                        },
-                    },
-                    {
-                        "type": "GridRow",
-                        "props": {
-                            "id": "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3",
-                            "columns": "4-columns",
-                        },
-                    },
                 ],
-            }
-            hub.layers = [
-                MapReport.MapLayer(
-                    id=str(events_source.id),
-                    name="Seed events",
-                    source=str(events_source.id),
-                ),
-                # TODO: add some event source
-            ]
-            hub.save()
+                "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3:Col-2": [],
+                "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3:Col-3": [],
+                "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3:Col-4": [],
+            },
+            "content": [
+                {
+                    "type": "Hero",
+                    "props": {
+                        "id": "Hero-71f52de9-e01f-485d-bd51-fd0c5da123d6",
+                        "title": "Heading",
+                        "prompt": "Something",
+                        "description": "Description",
+                    },
+                },
+                {
+                    "type": "GridRow",
+                    "props": {
+                        "id": "GridRow-c5896794-5c2d-427f-ba8a-8ad726b4f7c3",
+                        "columns": "4-columns",
+                    },
+                },
+            ],
+        }
+        hub.layers = [
+            MapReport.MapLayer(
+                id=str(pledges_source.id),
+                name="Pledges",
+                source=str(pledges_source.id),
+            ),
+        ]
+        hub.save()
+
+        pledge_page = HubContentPage.objects.filter(slug="pledge").first()
+
+        if not pledge_page:
+            pledge_page = HubContentPage(
+                title="Pledge",
+                slug="pledge",
+            )
+            hub.add_child(instance=pledge_page)
+
+        pledge_page.puck_json_content = {
+            "root": {
+                "props": {"slug": "pledge", "title": "Pledge", "search_description": ""}
+            },
+            "zones": {
+                "GridRow-49680e46-8ed0-4618-821f-8d957a90b78a:Col-1": [
+                    {
+                        "type": "RichText",
+                        "props": {
+                            "id": "RichText-fa76e080-45e7-48d5-a7a2-22538c8007e3",
+                            "width": "standard",
+                            "content": '<p><span class="size-huge">Lorem Ipsum</span></p><p><span class="size-small">Dolor sit amet.</span><span class="size-medium"><span class="ql-cursor">﻿</span></span></p>',
+                        },
+                    }
+                ],
+                "GridRow-49680e46-8ed0-4618-821f-8d957a90b78a:Col-2": [
+                    {
+                        "type": "MemberForm",
+                        "props": {
+                            "id": "MemberForm-0c026a70-336b-46c8-98b4-413a0f4824e5",
+                            "successRedirect": "",
+                            "externalDataSourceIds": [
+                                # Usually these would be 3 separate data sources
+                                # Climate Coalition used a MailChimp source for Communication consent
+                                # and AirTables for All pledges and Group pledges
+                                str(pledges_source.id),  # All pledges list
+                                str(pledges_source.id),  # Communication consent list
+                                str(pledges_source.id),  # Group pledges list
+                            ],
+                        },
+                    }
+                ],
+            },
+            "content": [
+                {
+                    "type": "GridRow",
+                    "props": {
+                        "id": "GridRow-49680e46-8ed0-4618-821f-8d957a90b78a",
+                        "columns": "2-columns",
+                    },
+                }
+            ],
+        }
+        pledge_page.save()
 
         logger.info("Created a hub at http://hub.localhost:3000")

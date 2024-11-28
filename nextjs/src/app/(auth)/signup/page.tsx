@@ -1,12 +1,12 @@
 import WaitlistForm from "@/components/WaitListSignUp";
-import { useRequireNoAuth } from "@/hooks/auth";
+import { requireNoAuth } from "@/lib/server-auth";
 import RegisterForm from "./register-form";
 import { Metadata } from "next";
 
 // This has been split into a two components to separate the client-side (RegisterForm)
-// and the server side (this component), which allows using useRequireNoAuth() here
+// and the server side (this component), which allows using requireNoAuth() here
 export default async function Login() {
-  await useRequireNoAuth();
+  await requireNoAuth();
 
   return (
     <div className='m-8 text-center'>

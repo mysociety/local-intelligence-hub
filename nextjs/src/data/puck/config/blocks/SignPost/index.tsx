@@ -84,7 +84,6 @@ export const SignPost: ComponentConfig<SignPostProps> = {
                             src={CirclePattern}
                             width={500}
                             alt="hero image"
-                            layout="responsive"
                           />
                     </div>
                 </Link>
