@@ -86,15 +86,25 @@ export default function ExternalDataSourceList() {
       <PageHeader />
       <div className="border-b border-meepGray-700 pt-10" />
       <header className='flex flex-row justify-end'>
-        <h2 className="text-hSm mr-auto">Your team’s membership lists</h2>
+        <h2 className="text-hMd mr-auto">Membership data sources</h2>
       </header>
+      <p className="text-meepGray-400">
+        Add your membership lists here. You will then be able to:
+      </p>
+      <ul className="list-disc list-inside pl-1 text-meepGray-400">
+        <li className="mb-1">Enrich your membership lists with geographical data;</li>
+        <li className="mb-1">
+          Visualise and explore your membership using our&nbsp;
+          <Link className="underline" href="/reports">map report</Link> features.
+        </li>
+      </ul>
       {loading ? (
         <section className="w-full grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           <article className="rounded-xl border border-meepGray-700 px-6 py-5 space-y-3">
             <Skeleton className="h-4 w-full max-w-[100px]" />
             <Skeleton className="h-10 w-full" />
           </article>
-          <ConnectDataSource label="Connect a member list" params={{ dataType: DataSourceType.Member }} />
+          <ConnectDataSource label="Connect a membership list" params={{ dataType: DataSourceType.Member }} />
         </section>
       ) : error ? (
         <h2>Error: {error.message}</h2>
@@ -110,7 +120,7 @@ export default function ExternalDataSourceList() {
               withUpdateOptions
             />
           ))}
-          <ConnectDataSource label="Connect a member list" params={{ dataType: DataSourceType.Member }} />
+          <ConnectDataSource label="Connect a membership list" params={{ dataType: DataSourceType.Member }} />
         </section>
       ) : null}
       {!!allOrgShares.length && (
@@ -143,15 +153,22 @@ export default function ExternalDataSourceList() {
       )}
       <div className="border-b border-meepGray-700 pt-16" />
       <header className='flex flex-row justify-end'>
-        <h2 className="text-hSm mr-auto">Custom data layers</h2>
+        <h2 className="text-hMd mr-auto">Other data sources</h2>
       </header>
+      <p className="text-meepGray-400">
+        Add non-membership data sources here. These can be used to:
+      </p>
+      <ul className="list-disc list-inside pl-1 text-meepGray-400">
+        <li className="mb-1">Enrich your membership lists with custom geographical data;</li>
+        <li className="mb-1">Display custom points on a public Hub map, e.g. upcoming events.</li>
+      </ul>
       {loading ? (
         <section className="grid gap-7 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           <article className="rounded-xl border border-meepGray-700 px-6 py-5 space-y-3">
             <Skeleton className="h-4 w-full max-w-[100px]" />
             <Skeleton className="h-10 w-full" />
           </article>
-          <ConnectDataSource label="Connect a custom data layer" params={{ dataType: DataSourceType.Other }} />
+          <ConnectDataSource label="Connect a data source" params={{ dataType: DataSourceType.Other }} />
         </section>
       ) : error ? (
         <h2>Error: {error.message}</h2>
@@ -166,7 +183,7 @@ export default function ExternalDataSourceList() {
               withLink
             />
           ))}
-          <ConnectDataSource label="Connect a custom data layer" params={{ dataType: DataSourceType.Other }} />
+          <ConnectDataSource label="Connect a data source" params={{ dataType: DataSourceType.Other }} />
         </section>
       ) : null}
     </div>

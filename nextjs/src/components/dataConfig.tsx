@@ -29,7 +29,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import Link from "next/link"
-import { importData } from "@/app/(app)/data-sources/inspect/[externalDataSourceId]/InspectExternalDataSource"
+import importData from "@/app/(app)/data-sources/inspect/[externalDataSourceId]/importData"
 import { LoadingIcon } from "./ui/loadingIcon"
 import { useRouter } from "next/navigation"
 import { MAP_REPORT_LAYERS_SUMMARY, isDataConfigOpenAtom, layerColour, layerIdColour } from "@/lib/map"
@@ -86,7 +86,7 @@ export default function DataConfigPanel() {
       </CardHeader>
       <CardContent>
         <div className="p-3 flex flex-col gap-2 border-t border-meepGray-700 ">
-          <span className="text-sm mb-2">Your member lists</span>
+          <span className="text-sm mb-2">Your membership lists</span>
           {layers.data.layers
             ?.filter(d => d?.source?.dataType === DataSourceType.Member)
             .map((layer, index) => layer?.source && (

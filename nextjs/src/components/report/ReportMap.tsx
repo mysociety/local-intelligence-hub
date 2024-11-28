@@ -25,8 +25,7 @@ import { Point } from "geojson"
 import { atom, useAtom } from "jotai";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import { z } from "zod";
-import { layerColour, useLoadedMap, isConstituencyPanelOpenAtom, MAP_REPORT_LAYERS_SUMMARY, layerIdColour, useMapIcons, PlaceholderLayer } from "@/lib/map";
-import { constituencyPanelTabAtom } from "@/app/reports/[id]/ConstituenciesPanel";
+import { layerColour, useLoadedMap, isConstituencyPanelOpenAtom, MAP_REPORT_LAYERS_SUMMARY, layerIdColour, useMapIcons, PlaceholderLayer, constituencyPanelTabAtom, selectedSourceMarkerAtom, selectedConstituencyAtom } from "@/lib/map";
 import { authenticationHeaders } from "@/lib/auth";
 import { BACKEND_URL } from "@/env";
 
@@ -40,9 +39,6 @@ const viewStateAtom = atom<Partial<ViewState>>({
   zoom: 6
 })
 
-const selectedSourceMarkerAtom = atom<MapboxGeoJSONFeature | null>(null)
-
-export const selectedConstituencyAtom = atom<string | null>(null)
 
 export function ReportMap () {
   const { id, displayOptions } = useContext(ReportContext)
@@ -200,7 +196,6 @@ export function ReportMap () {
   const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(selectedSourceMarkerAtom)
   const [selectedConstituency, setSelectedConstituency] = useAtom(selectedConstituencyAtom)
   const [tab, setTab] = useAtom(constituencyPanelTabAtom)
-  // const isConstituencyPanelOpenAtom
   const [isConstituencyPanelOpen, setIsConstituencyPanelOpen] = useAtom(isConstituencyPanelOpenAtom)
 
   useEffect(function selectConstituency() {

@@ -2,11 +2,9 @@
 
 import {
   FetchResult,
-  MutationResult,
   gql,
   useQuery,
   useApolloClient,
-  ApolloClient,
 } from "@apollo/client";
 import { AirtableLogo } from "@/components/logos";
 import { formatRelative } from "date-fns";
@@ -25,30 +23,12 @@ import {
   ExternalDataSourceInput,
   ExternalDataSourceInspectPageQuery,
   ExternalDataSourceInspectPageQueryVariables,
-  ImportDataMutation,
-  ImportDataMutationVariables,
   ProcrastinateJobStatus,
   UpdateExternalDataSourceMutation,
   UpdateExternalDataSourceMutationVariables,
   WebhookType,
 } from "@/__generated__/graphql";
 import { useRouter } from "next/navigation";
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getSortedRowModel,
-  SortingState,
-} from "@tanstack/react-table";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { ArrowUpDown, ExternalLink, RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -71,7 +51,6 @@ import {
   AlertTitle,
 } from "@/components/ui/alert"
 import { DataSourceFieldLabel } from "@/components/DataSourceIcon";
-import { toastPromise } from "@/lib/toast";
 import { contentEditableMutation } from "@/lib/html";
 import { UpdateExternalDataSourceFields } from "@/components/UpdateExternalDataSourceFields";
 import { ManageSourceSharing } from "./ManageSourceSharing";
@@ -81,6 +60,7 @@ import pluralize from "pluralize";
 import { externalDataSourceOptions } from "@/lib/data";
 import { useAtom } from "jotai";
 import { currentOrganisationIdAtom } from "@/data/organisation";
+import importData from "./importData";
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {
@@ -243,7 +223,7 @@ export default function InspectExternalDataSource({
             {name}
           </h1>
           <div className="text-meepGray-400 capitalize">
-            {dataType === DataSourceType.Member ? "Member list" : dataType ? pluralize(dataType.toLowerCase()) : "Data source"}
+            {dataType === DataSourceType.Member ? "Membership list" : dataType ? pluralize(dataType.toLowerCase()) : "Data source"}
             <span>&nbsp;&#x2022;&nbsp;</span>
             {crmInfo?.name || crmType}
           </div>
@@ -271,10 +251,11 @@ export default function InspectExternalDataSource({
         <>
         <div className='grid md:grid-cols-2 gap-4 items-start'>
           <section className='space-y-4 max-w-sm'>
-            <div>Imported records</div>
+            <h2 className="text-hMd">Imported records</h2>
             <div className='text-hXlg'>{format(",")(source.importedDataCount || 0)}</div>
-          <p className='text-sm text-meepGray-400'>
-            Import data from this source into Mapped for use in auto-updates and reports.
+          <p className='text-meepGray-400'>
+            Import data from this source into Mapped for use in reports
+            {dataType !== DataSourceType.Member ? ', and to enrich membership lists' : ''}.
           </p>
           <Button disabled={source.isImportScheduled} onClick={() => importData(client, externalDataSourceId)}>
             {!source.isImportScheduled ? "Import all data" : <span className='flex flex-row gap-2 items-center'>
@@ -399,10 +380,10 @@ export default function InspectExternalDataSource({
           <section className="space-y-4">
             <header className="grid md:grid-cols-2 gap-4 items-start">
               <section className="space-y-4">
-                <h2 className="text-hSm mb-5">Data updates</h2>
-                <p className='text-sm text-meepGray-400'>
+                <h2 className="text-hMd mb-5">Enrich your original data</h2>
+                <p className='text-meepGray-400'>
                   <span className='align-middle'>
-                    Pull third party data into your data source{"'"}s original location, based on the record{"'"}s 
+                    Pull Mapped data into your original {crmInfo?.name || 'data source'}, based on the record{"'"}s 
                   </span>
                   <DataSourceFieldLabel
                     className='align-middle'
@@ -420,13 +401,13 @@ export default function InspectExternalDataSource({
                             <LoadingIcon size={"18"} />
                             <span>{
                               source.updateProgress?.status === ProcrastinateJobStatus.Doing
-                                ? "Updating..."
+                                ? "Enriching..."
                                 : "Scheduled"
                             }</span>
                           </span>
                         </Button>
                         {source.updateProgress?.status === ProcrastinateJobStatus.Doing && (
-                          <BatchJobProgressReport batchJobProgress={source.updateProgress} pastTenseVerb="Updated" />
+                          <BatchJobProgressReport batchJobProgress={source.updateProgress} pastTenseVerb="Done" />
                         )}
                       </>
                     )}
@@ -481,10 +462,11 @@ export default function InspectExternalDataSource({
                   </section>
                 )}
               </header>
-              <div className="border-b border-meepGray-700 pt-10" />
-              <h2 className="text-hSm !mt-8 my-5">Configure data mapping</h2>
+              <h2 className="text-hSm !mt-8 my-5">Configure data enrichment</h2>
+              <p className="mt-1 text-meepGray-400 text-sm">
+                Use the 'Enrich' button above to re-run the enrichment process after changing this configuration.
+              </p>
               <UpdateMappingForm
-                saveButtonLabel="Update"
                 allowMapping={allowMapping}
                 crmType={source.crmType}
                 fieldDefinitions={source.fieldDefinitions}
@@ -625,119 +607,4 @@ export default function InspectExternalDataSource({
       error: `Couldn't delete ${source?.name}`,
     });
   }
-}
-
-export function importData (client: ApolloClient<any>, externalDataSourceId: string) {
-  const importJob = client.mutate<ImportDataMutation, ImportDataMutationVariables>({
-    mutation: gql`
-      mutation ImportData($id: String!) {
-        importAll(externalDataSourceId: $id) {
-          id
-          externalDataSource {
-            importedDataCount
-            isImportScheduled
-            importProgress {
-              status
-              hasForecast
-              id
-              total
-              succeeded
-              failed
-              estimatedFinishTime
-            }
-          }
-        }
-      }
-    `,
-    variables: {
-      id: externalDataSourceId
-    }
-  })
-  toastPromise(importJob, {
-    loading: "Scheduling data import...",
-    success: (d: FetchResult) => {
-      if (!d.errors) {
-        return {
-          title: "Import is processing",
-          description: "This may take a few minutes. You can check the logs for progress."
-        }
-      } else {
-        throw new Error("Couldn't schedule data import")
-      }
-    },
-    error: `Couldn't schedule data import`,
-  });
-}
-
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
-}
-
-export function LogsTable<TData, TValue>({
-  columns,
-  data,
-  sortingState = [],
-}: DataTableProps<TData, TValue> & {
-  sortingState?: SortingState;
-}) {
-  const [sorting, setSorting] = useState<SortingState>(sortingState);
-
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    state: {
-      sorting,
-    },
-  });
-
-  return (
-    <div className="rounded-md border border-meepGray-400">
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                return (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && "selected"}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
-  );
 }

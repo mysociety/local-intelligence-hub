@@ -1,4 +1,3 @@
-import { selectedConstituencyAtom } from "@/components/report/ReportMap"
 import { atom, useAtom } from "jotai"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -12,8 +11,7 @@ import { ConstituencyElectionDeepDive } from "@/components/reportsConstituencyIt
 import { TopConstituencies } from "@/components/TopConstituencies";
 import { useEffect, useRef, useState } from "react";
 import { useReportContext } from "./context";
-
-export const constituencyPanelTabAtom = atom("list")
+import { constituencyPanelTabAtom, selectedConstituencyAtom } from "@/lib/map";
 
 export function ConstituenciesPanel () {
   const [
