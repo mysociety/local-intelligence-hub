@@ -40,12 +40,11 @@ class Command(BaseCommand):
                 name=area["properties"]["eer18nm"],
                 area_type=area_type,
             )
-
             geom_str = json.dumps(area)
             geom = GEOSGeometry(json.dumps(area["geometry"]))
             if isinstance(geom, Polygon):
                 geom = MultiPolygon([geom])
-            geom.srid = 4326
+            geom.srid = 27700
             a.geometry = geom_str
             a.polygon = geom
             a.point = a.polygon.centroid
