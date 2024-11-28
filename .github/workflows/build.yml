@@ -5,12 +5,10 @@ concurrency:
   cancel-in-progress: true
    
 on:
-  workflow_run:
-    workflows: [Run project tests]
-    types: [completed]
+  pull_request:
     
 jobs:
-  on-success:
+  build:
     runs-on: ubuntu-latest
     environment: testing
     container:
