@@ -1,4 +1,4 @@
-import { useRequireAuth } from "@/hooks/auth";
+import { requireAuth } from "@/lib/server-auth";
 
 import NewExternalDataSourceWrapper from "./NewExternalDataSourceWrapper";
 import { Metadata } from "next";
@@ -8,7 +8,7 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  await useRequireAuth();
+  await requireAuth();
 
   return (
     <NewExternalDataSourceWrapper>{children}</NewExternalDataSourceWrapper>

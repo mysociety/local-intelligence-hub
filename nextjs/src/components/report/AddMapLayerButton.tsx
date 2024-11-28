@@ -145,7 +145,7 @@ export function MapLayerSelector ({ value, onChange, filter }: { value?: Source,
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="p-0">
+      <PopoverContent className="p-0" style={{pointerEvents: 'auto'}}>
         <Command className='w-full'>
           <CommandInput placeholder="Search your data sources..." />
           <CommandEmpty onClick={() => {

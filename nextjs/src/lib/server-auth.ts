@@ -13,7 +13,12 @@ const USER_QUERY = gql`
   }
 `;
 
-export const useAuth = async () => {
+/**
+ * Async functions that use the server-side GraphQL client.
+ * Cannot be imported into client components.
+ */
+
+export const loadUser = async () => {
   const client = getClient();
 
   let data = null;
@@ -26,8 +31,8 @@ export const useAuth = async () => {
   return data?.publicUser;
 };
 
-export const useRequireAuth = async () => {
-  const user = await useAuth();
+export const requireAuth = async () => {
+  const user = await loadUser();
 
   if (!user) {
     redirect("/login");
@@ -36,8 +41,8 @@ export const useRequireAuth = async () => {
   return user;
 };
 
-export const useRequireNoAuth = async () => {
-  const user = await useAuth();
+export const requireNoAuth = async () => {
+  const user = await loadUser();
 
   if (user) {
     redirect("/");

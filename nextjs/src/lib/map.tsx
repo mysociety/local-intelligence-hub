@@ -67,9 +67,14 @@ export const selectedSourceMarkerAtom = atom<MapboxGeoJSONFeature | null>(null)
 export const constituencyPanelTabAtom = atom("list")
 export const selectedConstituencyAtom = atom<string | null>(null)
 
+// The @ts-ignore lines here are because the mapboxgl.Map
+// type and the react-map-gl MapInstance types have
+// slight (erroneous) inconsistencies.
 export type MapLoader = {
+  // @ts-ignore
   loadedMap: MapRef<mapboxgl.Map> | null | undefined;
   loaded: boolean;
+  // @ts-ignore
   current?: MapRef<mapboxgl.Map> | undefined;
 }
 
@@ -168,7 +173,7 @@ export function useMapIcons (requiredImages: MapboxImageSource[], mapbox: MapLoa
  * Placeholder layer to refer to in `beforeId`.
  * See https://github.com/visgl/react-map-gl/issues/939#issuecomment-625290200
  */
-export function PlaceholderLayer (props: Partial<LayerProps>) {
+export function PlaceholderLayer (props: Partial<Omit<LayerProps, "filter" | "source" | "source-layer">>) {
   return (
     <Layer
       {...props}

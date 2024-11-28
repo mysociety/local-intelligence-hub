@@ -1,5 +1,3 @@
-"use server"
-
 import { getClient } from "@/services/apollo-client";
 import { GetPageQuery, GetPageQueryVariables } from "@/__generated__/graphql";
 import RenderPuck from "./RenderPuck";

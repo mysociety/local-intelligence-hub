@@ -1,4 +1,5 @@
-module.exports = {
+/** @type {import("next").NextConfig} */
+const nextConfig = {
   async headers() {
     return process.env.NEXT_PUBLIC_ENVIRONMENT === "production"
       ? [
@@ -22,6 +23,13 @@ module.exports = {
       },
     ],
   },
+  experimental: {
+    turbo: {
+      // This is a default option, include it to squash
+      // "turbopack is not configured" warning.
+      useSwcCss: false
+    },
+  },
 };
 
 // Injected content via Sentry wizard below
@@ -29,7 +37,7 @@ module.exports = {
 const { withSentryConfig } = require("@sentry/nextjs");
 
 module.exports = withSentryConfig(
-  module.exports,
+  nextConfig,
   {
     // For all available options, see:
     // https://github.com/getsentry/sentry-webpack-plugin#options

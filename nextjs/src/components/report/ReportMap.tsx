@@ -246,7 +246,7 @@ export function ReportMap () {
     { execution: constituencyAnalytics, label: "Constituency stats" },
     { execution: wardAnalytics, label: "Ward stats" }
   ]
-  const loading = loadingLayers.some((query) => query.execution.loading)
+  const loading = loadingLayers.some((query) => query.execution.loading) || !mapbox.loaded
 
   return (
     <>
@@ -327,7 +327,7 @@ export function ReportMap () {
               const inDataFilter = [
                 "in",
                 ["get", tileset.promoteId],
-                ["literal", tileset.data.map((d) => d.gss)],
+                ["literal", tileset.data.map((d) => d.gss || '')],
               ];
 
               let steps = Math.min(max, 30); // Max 30 steps

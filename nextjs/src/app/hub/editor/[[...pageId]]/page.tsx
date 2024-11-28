@@ -1,4 +1,4 @@
-import { useRequireAuth } from "@/hooks/auth";
+import { requireAuth } from "@/lib/server-auth";
 import { Metadata } from "next";
 import { getClient } from "@/services/apollo-client";
 import { gql } from "@apollo/client";
@@ -7,7 +7,7 @@ import HubPageEditor from "@/components/hub/HubPageEditor";
 import { GetEditableHubsQuery, GetEditableHubsQueryVariables, VerifyPageQuery, VerifyPageQueryVariables } from "@/__generated__/graphql";
 
 export default async function Page({ params: { pageId } }: { params: { pageId?: string[] } }) {
-  await useRequireAuth();
+  await requireAuth();
   const client = getClient();
   const pId = pageId && pageId.length > 0 ? pageId[pageId.length - 1] : null
   const hubLandingPage = await client.query<GetEditableHubsQuery, GetEditableHubsQueryVariables>({

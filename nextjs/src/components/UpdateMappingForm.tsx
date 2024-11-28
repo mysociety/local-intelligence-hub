@@ -183,6 +183,7 @@ export function UpdateMappingForm({
                           </Button>
                           <SourcePathSelector
                             focusOnMount={form.watch(`updateMapping.${index}.source`) === "?"}
+                            loading={enrichmentLayers.loading}
                             sources={enrichmentLayers.data?.mappingSources || []}
                             value={{
                               source: form.watch(`updateMapping.${index}.source`),

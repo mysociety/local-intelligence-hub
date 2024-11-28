@@ -4,8 +4,6 @@ import { ComponentConfig } from "@measured/puck";
 import { DropZone } from "@measured/puck";
 import Link from "next/link";
 import Image from "next/image";
-import CirclePattern from "../../../../../../public/hub/main-circle-pattern.svg"
-import ArrowTopRight from "../../../../../../public/hub/arrow-top-right.svg";
 import ukMap from "../../../../../../public/hub/uk-map.svg";
 import tccHeart from "../../../../../../public/hub/tcc-heart-2.svg";
 import hubGridIllustration1 from "../../../../../../public/hub/illystrations/Layer_1.svg";
