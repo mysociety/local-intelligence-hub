@@ -27,10 +27,11 @@ class Command(BaseImportFromDataFrameCommand):
         "table",
         "default_value",
         "exclude_countries",
-        # "comparators",
         "unit_type",
         "unit_distribution",
         "fill_blanks",
+        "is_public",
+        "is_filterable",
     ]
 
     def add_arguments(self, parser):
