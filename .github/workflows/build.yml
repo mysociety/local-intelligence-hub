@@ -6,7 +6,8 @@ concurrency:
    
 on:
   workflow_run:
-    workflows: ["Lint"]
+  
+    workflows: ["Lint","Run project tests"]
     types:
       - completed
 
