@@ -24,6 +24,7 @@ const FileUploadField = ({
   readOnly?: boolean
 }) => {
   const [uploading, setUploading] = useState(false)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -56,26 +57,34 @@ const FileUploadField = ({
     }
   }
 
+  const handleRemoveImage = () => {
+    onChange('')
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
   return (
     <div>
       {!readOnly && (
-        <input
-          type="file"
-          id={id}
-          name={name}
-          accept="image/*"
-          onChange={handleFileUpload}
-          disabled={uploading}
-        />
+        <>
+          <input
+            type="file"
+            id={id}
+            name={name}
+            accept="image/*"
+            onChange={handleFileUpload}
+            disabled={uploading}
+            ref={fileInputRef}
+          />
+          {value && (
+            <button type="button" onClick={handleRemoveImage} style={{}}>
+              Remove Image
+            </button>
+          )}
+        </>
       )}
       {uploading && <p>Uploading...</p>}
-      {value && (
-        <div>
-          <a href={value} target="_blank" rel="noopener noreferrer">
-            {value}
-          </a>
-        </div>
-      )}
     </div>
   )
 }
@@ -145,21 +154,38 @@ export const Image: ComponentConfig<ImageProps> = {
   },
   render: ({ url, width, height, alt, caption }) => {
     const widthStyle =
-      width && width.value ? `${width.value}${width.unit}` : 'auto'
+      width && width.value ? `${width.value}${width.unit}` : '100%'
     const heightStyle =
-      height && height.value ? `${height.value}${height.unit}` : 'auto'
+      height && height.value ? `${height.value}${height.unit}` : '200px'
+
+    const containerStyle = {
+      width: widthStyle,
+      height: heightStyle,
+      backgroundColor: url ? 'transparent' : '#d3d3d3',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: '8px',
+      overflow: 'hidden',
+    }
 
     return (
       <figure>
-        <img
-          className="object-fill w-full rounded-2xl mb-4"
-          style={{
-            width: widthStyle,
-            height: heightStyle,
-          }}
-          src={url}
-          alt={alt || 'Image'}
-        />
+        <div style={containerStyle}>
+          {url ? (
+            <img
+              src={url}
+              alt={alt || 'Image'}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+              }}
+            />
+          ) : (
+            <span style={{ color: '#888', fontSize: '14px' }}>No Image</span>
+          )}
+        </div>
         {caption && <figcaption>{caption}</figcaption>}
       </figure>
     )
