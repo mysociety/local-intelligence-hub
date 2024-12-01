@@ -7,9 +7,9 @@ import { useEffect } from 'react'
 import Map, { Layer, LngLatLike, Source, ViewState } from 'react-map-gl'
 import { ImmutableLike } from 'react-map-gl/dist/esm/types'
 import { LoadingIcon } from '../ui/loadingIcon'
-import { SIDEBAR_WIDTH } from './data'
 import { HubPointMarkers } from './HubMapPoints'
 import { useHubRenderContext } from './HubRenderContext'
+import { SIDEBAR_WIDTH } from './data'
 
 const viewStateAtom = atom<Partial<ViewState>>({
   longitude: -2.296605,

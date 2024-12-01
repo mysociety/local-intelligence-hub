@@ -11,20 +11,20 @@ import {
   GetLocalDataQueryVariables,
 } from '@/__generated__/graphql'
 import { ConstituencyView } from '@/components/hub/ConstituencyView'
-import { SIDEBAR_WIDTH } from '@/components/hub/data'
 import { HubMap } from '@/components/hub/HubMap'
 import {
   HubRenderContextProvider,
   useHubRenderContext,
 } from '@/components/hub/HubRenderContext'
+import { SIDEBAR_WIDTH } from '@/components/hub/data'
 import Root from '@/data/puck/config/root'
 import { useBreakpoint } from '@/hooks/css'
 import { useQuery } from '@apollo/client'
 import { Provider as JotaiProvider } from 'jotai'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { MapProvider } from 'react-map-gl'
-import { GET_EVENT_DATA, GET_HUB_MAP_DATA, GET_LOCAL_DATA } from './queries'
 import { SearchPanel } from './SearchPanel'
+import { GET_EVENT_DATA, GET_HUB_MAP_DATA, GET_LOCAL_DATA } from './queries'
 
 type Params = {
   hostname: string

@@ -8,10 +8,10 @@ import {
 } from '@/components/ui/table'
 import {
   ColumnDef,
+  SortingState,
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
-  SortingState,
   useReactTable,
 } from '@tanstack/react-table'
 import { useState } from 'react'

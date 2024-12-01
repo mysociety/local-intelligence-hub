@@ -1,8 +1,6 @@
-import {
-  CiviPowerFundLogo,
-  CommonKnowledgeLogo,
-  JRRTLogo,
-} from '@/components/logos'
+import { CiviPowerFundLogo } from '@/components/logos/CiviPowerFundLogo'
+import { CommonKnowledgeLogo } from '@/components/logos/CommonKnowledgeLogo'
+import { JRRTLogo } from '@/components/logos/JRRTLogo'
 import CurrentNextGenTech from '@/components/marketing/CurrentNextGenTech'
 import GetStarted from '@/components/marketing/GetStarted'
 import MarketingPageHeader from '@/components/marketing/MarkertingPageHeader'

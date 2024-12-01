@@ -14,6 +14,7 @@ import {
   TestDataSourceQueryVariables,
 } from '@/__generated__/graphql'
 import { PreopulatedSelectField } from '@/components/ExternalDataSourceFields'
+import { getFieldsForDataSourceType } from '@/components/UpdateExternalDataSourceFields'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -35,7 +36,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { getFieldsForDataSourceType } from '@/components/UpdateExternalDataSourceFields'
 import { locationTypeOptions } from '@/data/location'
 import { currentOrganisationIdAtom } from '@/data/organisation'
 import { toastPromise } from '@/lib/toast'

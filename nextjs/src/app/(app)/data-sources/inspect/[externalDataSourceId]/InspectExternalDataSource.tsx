@@ -19,7 +19,9 @@ import {
   TriggerUpdateButton,
   WebhookRefresh,
 } from '@/components/ExternalDataSourceCard'
-import { AirtableLogo } from '@/components/logos'
+import { UpdateExternalDataSourceFields } from '@/components/UpdateExternalDataSourceFields'
+import { UpdateMappingForm } from '@/components/UpdateMappingForm'
+import { AirtableLogo } from '@/components/logos/AirtableLogo'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   AlertDialog,
@@ -34,8 +36,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
-import { UpdateExternalDataSourceFields } from '@/components/UpdateExternalDataSourceFields'
-import { UpdateMappingForm } from '@/components/UpdateMappingForm'
 import { currentOrganisationIdAtom } from '@/data/organisation'
 import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/graphql/mutations'
 import { externalDataSourceOptions } from '@/lib/data'
@@ -48,8 +48,8 @@ import { AlertCircle, ExternalLink } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import pluralize from 'pluralize'
 import { toast } from 'sonner'
-import importData from './importData'
 import { ManageSourceSharing } from './ManageSourceSharing'
+import importData from './importData'
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {

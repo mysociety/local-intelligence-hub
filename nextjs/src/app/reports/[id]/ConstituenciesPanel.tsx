@@ -1,5 +1,5 @@
-import { ConstituencyElectionDeepDive } from '@/components/reportsConstituencyItem'
 import { TopConstituencies } from '@/components/TopConstituencies'
+import { ConstituencyElectionDeepDive } from '@/components/reportsConstituencyItem'
 import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { constituencyPanelTabAtom, selectedConstituencyAtom } from '@/lib/map'

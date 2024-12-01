@@ -3,7 +3,7 @@ import Footer from '@/components/footer'
 import FeedbackBanner from '@/components/marketing/FeedbackBanner'
 import SignUp from '@/components/marketing/SignUp'
 import Navbar from '@/components/navbar'
-import PreFooter from '@/components/pre-footer'
+import PreFooter from '@/components/PreFooter'
 import { loadUser } from '@/lib/server-auth'
 import { Toaster } from 'sonner'
 

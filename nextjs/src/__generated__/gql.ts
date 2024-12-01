@@ -41,8 +41,6 @@ const documents = {
     "\n  mutation PerformPasswordReset(\n    $token: String!\n    $password1: String!\n    $password2: String!\n  ) {\n    performPasswordReset(\n      token: $token\n      newPassword1: $password1\n      newPassword2: $password2\n    ) {\n      errors\n      success\n    }\n  }\n": types.PerformPasswordResetDocument,
     "\n  mutation ResetPassword($email: String!) {\n    requestPasswordReset(email: $email) {\n      errors\n      success\n    }\n  }\n": types.ResetPasswordDocument,
     "\n  query ListExternalDataSources {\n    myOrganisations {\n      id\n      externalDataSources {\n        id\n      }\n    }\n  }\n": types.ListExternalDataSourcesDocument,
-    "\n  query MyOrgs {\n    myOrganisations {\n      id\n      name\n      slug\n    }\n  }\n": types.MyOrgsDocument,
-    "\n  query UserData {\n    me {\n      id\n      email\n      username\n    }\n    publicUser {\n      firstName\n      lastName\n    }\n  }\n": types.UserDataDocument,
     "\n  query GetPublicMapReport($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n    }\n  }\n": types.GetPublicMapReportDocument,
     "\n  query GetPublicMapReportForLayout($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n      displayOptions\n      organisation {\n        id\n        slug\n        name\n      }\n      layers {\n        id\n        name\n      }\n    }\n  }\n": types.GetPublicMapReportForLayoutDocument,
     "\n      query GetEditableHubs {\n        hubHomepages {\n          id\n        }\n      }\n    ": types.GetEditableHubsDocument,
@@ -65,6 +63,8 @@ const documents = {
     "\n  mutation DisableWebhook($ID: String!, $webhookType: WebhookType!) {\n    disableWebhook(externalDataSourceId: $ID, webhookType: $webhookType) {\n      id\n      autoImportEnabled\n      autoUpdateEnabled\n      hasWebhooks\n      automatedWebhooks\n      webhookHealthcheck\n      name\n    }\n  }\n": types.DisableWebhookDocument,
     "\n  mutation TriggerFullUpdate($externalDataSourceId: String!) {\n    triggerUpdate(externalDataSourceId: $externalDataSourceId) {\n      id\n      externalDataSource {\n        jobs(pagination: { limit: 10 }) {\n          status\n          id\n          taskName\n          args\n          lastEventAt\n        }\n        id\n        name\n        crmType\n      }\n    }\n  }\n": types.TriggerFullUpdateDocument,
     "\n  query GetOrganisations {\n    myOrganisations {\n      id\n      name\n    }\n  }\n": types.GetOrganisationsDocument,
+    "\n  query MyOrgs {\n    myOrganisations {\n      id\n      name\n      slug\n    }\n  }\n": types.MyOrgsDocument,
+    "\n  query UserData {\n    me {\n      id\n      email\n      username\n    }\n    publicUser {\n      firstName\n      lastName\n    }\n  }\n": types.UserDataDocument,
     "\n  query ConstituencyStatsOverview(\n    $reportID: ID!\n    $analyticalAreaType: AnalyticalAreaType!\n  ) {\n    mapReport(pk: $reportID) {\n      id\n      importedDataCountByConstituency: importedDataCountByArea(\n        analyticalAreaType: $analyticalAreaType\n      ) {\n        label\n        gss\n        count\n        gssArea {\n          id\n          name\n          fitBounds\n          mp: person(filters: { personType: \"MP\" }) {\n            id\n            name\n            photo {\n              url\n            }\n            party: personDatum(filters: { dataType_Name: \"party\" }) {\n              name: data\n            }\n          }\n          lastElection {\n            stats {\n              date\n              majority\n              electorate\n              firstPartyResult {\n                party\n                shade\n                votes\n              }\n              secondPartyResult {\n                party\n                shade\n                votes\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n": types.ConstituencyStatsOverviewDocument,
     "\n  query EnrichmentLayers($organisationPk: String!) {\n    mappingSources(organisationPk: $organisationPk) {\n      slug\n      name\n      author\n      description\n      descriptionUrl\n      sourcePaths {\n        label\n        value\n        description\n      }\n      # For custom data sources, get some useful data\n      externalDataSource {\n        id\n        name\n        dataType\n        crmType\n        organisation {\n          id\n          name\n        }\n      }\n      builtin\n    }\n  }\n": types.EnrichmentLayersDocument,
     "\n        mutation PublishPage($pageId: String!, $input: HubPageInput!) {\n          updatePage(pageId: $pageId, input: $input) {\n            id\n            # Refresh cache\n            title\n            slug\n            puckJsonContent\n          }\n        }\n      ": types.PublishPageDocument,
@@ -216,14 +216,6 @@ export function gql(source: "\n  query ListExternalDataSources {\n    myOrganisa
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  query MyOrgs {\n    myOrganisations {\n      id\n      name\n      slug\n    }\n  }\n"): (typeof documents)["\n  query MyOrgs {\n    myOrganisations {\n      id\n      name\n      slug\n    }\n  }\n"];
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(source: "\n  query UserData {\n    me {\n      id\n      email\n      username\n    }\n    publicUser {\n      firstName\n      lastName\n    }\n  }\n"): (typeof documents)["\n  query UserData {\n    me {\n      id\n      email\n      username\n    }\n    publicUser {\n      firstName\n      lastName\n    }\n  }\n"];
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
 export function gql(source: "\n  query GetPublicMapReport($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  query GetPublicMapReport($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -309,6 +301,14 @@ export function gql(source: "\n  mutation TriggerFullUpdate($externalDataSourceI
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  query GetOrganisations {\n    myOrganisations {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  query GetOrganisations {\n    myOrganisations {\n      id\n      name\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query MyOrgs {\n    myOrganisations {\n      id\n      name\n      slug\n    }\n  }\n"): (typeof documents)["\n  query MyOrgs {\n    myOrganisations {\n      id\n      name\n      slug\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query UserData {\n    me {\n      id\n      email\n      username\n    }\n    publicUser {\n      firstName\n      lastName\n    }\n  }\n"): (typeof documents)["\n  query UserData {\n    me {\n      id\n      email\n      username\n    }\n    publicUser {\n      firstName\n      lastName\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
