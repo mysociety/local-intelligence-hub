@@ -29,6 +29,7 @@ import { ExternalDataSourcePointMarkers } from './ExternalDataSourcePointMarkers
 import { getTilesets } from './getTilesets'
 import { MAP_REPORT_LAYER_POINT } from './gql_queries'
 import useAnalytics from './useAnalytics'
+import useChoropleths from './useChoropleths'
 
 export const MAX_REGION_ZOOM = 8
 export const MAX_CONSTITUENCY_ZOOM = 10
@@ -43,9 +44,13 @@ const viewStateAtom = atom<Partial<ViewState>>({
 export function ReportMap() {
   const mapbox = useLoadedMap()
 
-  // Get the report ID and display options from the context
+  /* Get the report context */
   const { id, displayOptions } = useContext(ReportContext)
-  // Get the analytics data for the report
+
+  /* Add chloropleth data to the mapbox source */
+  useChoropleths(id, displayOptions.analyticalAreaType)
+
+  /* Get the analytics data for the report */
   const { analytics, regionAnalytics, wardAnalytics, constituencyAnalytics } =
     useAnalytics(id, displayOptions.analyticalAreaType)
 
@@ -56,67 +61,12 @@ export function ReportMap() {
     wardAnalytics,
   })
 
-  /* Add chloropleth data to the mapbox source */
-  function addChloroplethDataToMapbox(
-    gss: string,
-    count: number,
-    mapboxSourceId: string,
-    sourceLayerId: string
-  ) {
-    mapbox.loadedMap?.setFeatureState(
-      {
-        source: mapboxSourceId,
-        sourceLayer: sourceLayerId,
-        id: gss,
-      },
-      {
-        count: count,
-      }
-    )
-  }
-
   // Unless someone explicitly sets 2019 constituency, default to 2024 when zooming in
   const constituencyTileset =
     displayOptions.analyticalAreaType ===
     AnalyticalAreaType.ParliamentaryConstituency
       ? tilesets.constituencies
       : tilesets.constituencies2024
-
-  useEffect(
-    function setFeatureState() {
-      if (!mapbox.loadedMap) return
-      Object.values(tilesets)?.forEach((tileset) => {
-        tileset.data?.forEach((area) => {
-          if (area?.gss && area?.count && tileset.sourceLayerId) {
-            try {
-              addChloroplethDataToMapbox(
-                area.gss,
-                area.count,
-                tileset.mapboxSourceId,
-                tileset.sourceLayerId
-              )
-            } catch {
-              mapbox.loadedMap?.on('load', () => {
-                addChloroplethDataToMapbox(
-                  area.gss!,
-                  area.count,
-                  tileset.mapboxSourceId,
-                  tileset.sourceLayerId!
-                )
-              })
-            }
-          }
-        })
-      })
-    },
-    [
-      regionAnalytics,
-      constituencyAnalytics,
-      wardAnalytics,
-      tilesets,
-      mapbox.loadedMap,
-    ]
-  )
 
   const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(
     selectedSourceMarkerAtom
