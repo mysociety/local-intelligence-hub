@@ -7,6 +7,8 @@ import {
 } from '@/__generated__/graphql'
 import importData from '@/app/(logged-in)/data-sources/inspect/[externalDataSourceId]/importData'
 import { ReportContext, useReportContext } from '@/app/reports/[id]/context'
+import { CRMSelection } from '@/components/CRMButtonItem'
+import { AddMapLayerButton } from '@/components/report/AddMapLayerButton'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -21,6 +23,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { LoadingIcon } from '@/components/ui/loadingIcon'
 import {
   Popover,
   PopoverContent,
@@ -45,9 +48,6 @@ import { useRouter } from 'next/navigation'
 import { useContext } from 'react'
 import { toast } from 'sonner'
 import { v4 } from 'uuid'
-import { CRMSelection } from './CRMButtonItem'
-import { AddMapLayerButton } from './report/AddMapLayerButton'
-import { LoadingIcon } from './ui/loadingIcon'
 
 export default function DataConfigPanel() {
   const router = useRouter()

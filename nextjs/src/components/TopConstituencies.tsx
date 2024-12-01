@@ -13,7 +13,7 @@ import { getYear } from 'date-fns'
 import { useAtom } from 'jotai'
 import { useContext, useState } from 'react'
 import { twMerge } from 'tailwind-merge'
-import { MAX_CONSTITUENCY_ZOOM } from './report/ReportMap'
+import { MAX_CONSTITUENCY_ZOOM } from '../app/reports/[id]/ReportMap'
 import { MemberElectoralInsights, Person } from './reportsConstituencyItem'
 import { LoadingIcon } from './ui/loadingIcon'
 import {

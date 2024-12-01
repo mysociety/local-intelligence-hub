@@ -34,7 +34,7 @@ import { atom, useAtom } from 'jotai'
 import { ErrorBoundary } from 'next/dist/client/components/error-boundary'
 import { Fragment, useContext, useEffect } from 'react'
 import Map, { Layer, LayerProps, Popup, Source, ViewState } from 'react-map-gl'
-import { PlaceholderLayer } from '../PlaceholderLayer'
+import { PlaceholderLayer } from '../../../components/PlaceholderLayer'
 
 const MAX_REGION_ZOOM = 8
 export const MAX_CONSTITUENCY_ZOOM = 10

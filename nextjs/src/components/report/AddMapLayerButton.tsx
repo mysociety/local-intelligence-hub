@@ -27,6 +27,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { SourceOption } from '@/lib/data'
 import { MAP_REPORT_LAYERS_SUMMARY } from '@/lib/map'
 import { cn } from '@/lib/utils'
 import { gql, useFragment, useQuery } from '@apollo/client'
@@ -42,10 +43,6 @@ type Source = {
   name: string
   id: string
 }
-
-export type SourceOption =
-  | GetMemberListQuery['myOrganisations'][0]['sharingPermissionsFromOtherOrgs'][0]['externalDataSource']
-  | GetMemberListQuery['myOrganisations'][0]['externalDataSources'][0]
 
 export function AddMapLayerButton({
   addLayer,

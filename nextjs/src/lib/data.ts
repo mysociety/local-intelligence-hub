@@ -1,4 +1,4 @@
-import { CrmType } from '@/__generated__/graphql'
+import { CrmType, GetMemberListQuery } from '@/__generated__/graphql'
 import { ActionNetworkIcon } from '@/components/logos/ActionNetworkIcon'
 import { ActionNetworkLogo } from '@/components/logos/ActionNetworkLogo'
 import { AirtableIcon } from '@/components/logos/AirtableIcon'
@@ -103,3 +103,6 @@ export type SourcePath =
       description?: string | null
     }
   | string
+export type SourceOption =
+  | GetMemberListQuery['myOrganisations'][0]['sharingPermissionsFromOtherOrgs'][0]['externalDataSource']
+  | GetMemberListQuery['myOrganisations'][0]['externalDataSources'][0]

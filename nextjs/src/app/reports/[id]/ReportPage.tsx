@@ -1,7 +1,5 @@
 // page.js
 'use client'
-import DataConfigPanel from '@/components/DataConfigPanel'
-import { ReportMap } from '@/components/report/ReportMap'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +35,9 @@ import {
 import { useContext, useEffect, useState } from 'react'
 import { twMerge } from 'tailwind-merge'
 import { ConstituenciesPanel } from './ConstituenciesPanel'
+import DataConfigPanel from './DataConfigPanel'
 import { NotFound } from './NotFound'
+import { ReportMap } from './ReportMap'
 import { ReportContext } from './context'
 
 export function ReportPage() {
