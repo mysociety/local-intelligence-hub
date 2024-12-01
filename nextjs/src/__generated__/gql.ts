@@ -40,8 +40,8 @@ const documents = {
     "\n  query ShareWithOrgPage($orgSlug: String!) {\n    allOrganisations(filters: { slug: $orgSlug }) {\n      id\n      name\n    }\n  }\n": types.ShareWithOrgPageDocument,
     "\n      query GetEditableHubs {\n        hubHomepages {\n          id\n        }\n      }\n    ": types.GetEditableHubsDocument,
     "\n          query VerifyPage($pageId: ID!) {\n            hubHomepages {\n              id\n            }\n            hubPage(pk: $pageId) {\n              id\n              hub {\n                id\n              }\n            }\n          }\n        ": types.VerifyPageDocument,
-    "\n  query ListReports($currentOrganisationId: ID!) {\n    reports(filters: { organisation: { pk: $currentOrganisationId } }) {\n      id\n      name\n      lastUpdate\n    }\n  }\n": types.ListReportsDocument,
     "\n  mutation CreateMapReport($data: MapReportInput!) {\n    createMapReport(data: $data) {\n      ... on MapReport {\n        id\n      }\n      ... on OperationInfo {\n        messages {\n          message\n        }\n      }\n    }\n  }\n": types.CreateMapReportDocument,
+    "\n  query ListReports($currentOrganisationId: ID!) {\n    reports(filters: { organisation: { pk: $currentOrganisationId } }) {\n      id\n      name\n      lastUpdate\n    }\n  }\n": types.ListReportsDocument,
     "\n  query ListExternalDataSources {\n    myOrganisations {\n      id\n      externalDataSources {\n        id\n      }\n    }\n  }\n": types.ListExternalDataSourcesDocument,
     "\n  query GetPublicMapReport($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n    }\n  }\n": types.GetPublicMapReportDocument,
     "\n  query GetPublicMapReportForLayout($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n      displayOptions\n      organisation {\n        id\n        slug\n        name\n      }\n      layers {\n        id\n        name\n      }\n    }\n  }\n": types.GetPublicMapReportForLayoutDocument,
@@ -212,11 +212,11 @@ export function gql(source: "\n          query VerifyPage($pageId: ID!) {\n     
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  query ListReports($currentOrganisationId: ID!) {\n    reports(filters: { organisation: { pk: $currentOrganisationId } }) {\n      id\n      name\n      lastUpdate\n    }\n  }\n"): (typeof documents)["\n  query ListReports($currentOrganisationId: ID!) {\n    reports(filters: { organisation: { pk: $currentOrganisationId } }) {\n      id\n      name\n      lastUpdate\n    }\n  }\n"];
+export function gql(source: "\n  mutation CreateMapReport($data: MapReportInput!) {\n    createMapReport(data: $data) {\n      ... on MapReport {\n        id\n      }\n      ... on OperationInfo {\n        messages {\n          message\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateMapReport($data: MapReportInput!) {\n    createMapReport(data: $data) {\n      ... on MapReport {\n        id\n      }\n      ... on OperationInfo {\n        messages {\n          message\n        }\n      }\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  mutation CreateMapReport($data: MapReportInput!) {\n    createMapReport(data: $data) {\n      ... on MapReport {\n        id\n      }\n      ... on OperationInfo {\n        messages {\n          message\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateMapReport($data: MapReportInput!) {\n    createMapReport(data: $data) {\n      ... on MapReport {\n        id\n      }\n      ... on OperationInfo {\n        messages {\n          message\n        }\n      }\n    }\n  }\n"];
+export function gql(source: "\n  query ListReports($currentOrganisationId: ID!) {\n    reports(filters: { organisation: { pk: $currentOrganisationId } }) {\n      id\n      name\n      lastUpdate\n    }\n  }\n"): (typeof documents)["\n  query ListReports($currentOrganisationId: ID!) {\n    reports(filters: { organisation: { pk: $currentOrganisationId } }) {\n      id\n      name\n      lastUpdate\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
