@@ -3,7 +3,7 @@ import {
   ExternalDataSourceNameQueryVariables,
 } from '@/__generated__/graphql'
 import { requireAuth } from '@/lib/server-auth'
-import { getClient } from '@/services/apollo-client'
+import { getClient } from '@/lib/services/apollo-client'
 import { gql } from '@apollo/client'
 import { Metadata } from 'next'
 import InspectExternalDataSource from './InspectExternalDataSource'

@@ -5,7 +5,7 @@ import {
 } from '@/__generated__/graphql'
 import GetStarted from '@/components/marketing/GetStarted'
 import { buttonVariants } from '@/components/ui/button'
-import { getClient } from '@/services/apollo-client'
+import { getClient } from '@/lib/services/apollo-client'
 import { gql } from '@apollo/client'
 import Link from 'next/link'
 import qs from 'query-string'

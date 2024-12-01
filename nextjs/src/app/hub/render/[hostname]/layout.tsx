@@ -9,7 +9,7 @@ import ConsentRespectingGoogleAnalytics from '@/components/hub/ConsentRespecting
 import { ConsentRespectingPosthogAnalytics } from '@/components/hub/ConsentRespectingPosthogAnalytics'
 import { CookieConsentComponent } from '@/components/hub/CookieConsent'
 import { RootCSS } from '@/data/puck/config/root'
-import { getClient } from '@/services/apollo-client'
+import { getClient } from '@/lib/services/apollo-client'
 import { gql } from '@apollo/client'
 import { Metadata, ResolvingMetadata } from 'next'
 
