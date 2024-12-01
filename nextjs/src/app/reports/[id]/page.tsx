@@ -21,7 +21,7 @@ import { useEffect } from 'react'
 import { MapProvider } from 'react-map-gl'
 import { toast } from 'sonner'
 import spaceCase from 'to-space-case'
-import { ReportPage } from './ReportPage'
+import ReportPage from './ReportPage'
 import {
   DisplayOptionsType,
   ReportContext,

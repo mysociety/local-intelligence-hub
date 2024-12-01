@@ -23,7 +23,6 @@ import { atom, useAtom, useSetAtom } from 'jotai'
 import { Fragment, useContext, useEffect } from 'react'
 import Map, { Layer, Source, ViewState } from 'react-map-gl'
 import { PlaceholderLayer } from '../../../components/PlaceholderLayer'
-import { ExternalDataSourcePointMarkers } from './ExternalDataSourcePointMarkers'
 import MarkerPopup from './MarkerPopup'
 import { getTilesets } from './getTilesets'
 import { MAP_REPORT_LAYER_POINT } from './gql_queries'
@@ -401,16 +400,7 @@ export function ReportMap() {
               />
             )}
             <PlaceholderLayer id={'PLACEHOLDER_MARKERS'} />
-            {/* Wait for all icons to load */}
-            {analytics.data?.mapReport.layers.map((layer, index) => {
-              return (
-                <ExternalDataSourcePointMarkers
-                  key={layer?.source?.id || index}
-                  index={index}
-                  externalDataSourceId={layer?.source?.id}
-                />
-              )
-            })}
+
             <MarkerPopup />
           </>
         )}
