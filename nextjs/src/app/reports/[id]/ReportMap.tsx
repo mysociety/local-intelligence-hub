@@ -30,6 +30,7 @@ import { getTilesets } from './getTilesets'
 import { MAP_REPORT_LAYER_POINT } from './gql_queries'
 import useAnalytics from './useAnalytics'
 import useChoropleths from './useChoropleths'
+import useMarkers from './useMarkers'
 
 export const MAX_REGION_ZOOM = 8
 export const MAX_CONSTITUENCY_ZOOM = 10
@@ -43,6 +44,7 @@ const viewStateAtom = atom<Partial<ViewState>>({
 
 export function ReportMap() {
   const mapbox = useLoadedMap()
+  useMarkers()
 
   /* Get the report context */
   const { id, displayOptions } = useContext(ReportContext)
@@ -54,6 +56,7 @@ export function ReportMap() {
   const { analytics, regionAnalytics, wardAnalytics, constituencyAnalytics } =
     useAnalytics(id, displayOptions.analyticalAreaType)
 
+  /* Get the tilesets for the report */
   const tilesets = getTilesets({
     analytics,
     regionAnalytics,
