@@ -5,10 +5,10 @@ import {
   HostAnalyticsQueryVariables,
 } from '@/__generated__/graphql'
 import { GET_PAGE } from '@/app/hub/render/[hostname]/query'
-import { RootCSS } from '@/components/data/puck/config/root'
 import ConsentRespectingGoogleAnalytics from '@/components/hub/ConsentRespectingGoogleAnalytics'
 import { ConsentRespectingPosthogAnalytics } from '@/components/hub/ConsentRespectingPosthogAnalytics'
 import { CookieConsentComponent } from '@/components/hub/CookieConsent'
+import { RootCSS } from '@/components/puck/config/root'
 import { getClient } from '@/lib/services/apollo-client'
 import { gql } from '@apollo/client'
 import { Metadata, ResolvingMetadata } from 'next'

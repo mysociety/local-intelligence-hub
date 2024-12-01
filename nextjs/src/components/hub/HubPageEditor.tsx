@@ -8,8 +8,8 @@ import {
   GetPageEditorDataQuery,
   GetPageEditorDataQueryVariables,
 } from '@/__generated__/graphql'
-import { getPuckConfigForHostname } from '@/components/data/puck/config/ui'
 import { HubRenderContextProvider } from '@/components/hub/HubRenderContext'
+import { getPuckConfigForHostname } from '@/components/puck/config/ui'
 import {
   Breadcrumb,
   BreadcrumbList,

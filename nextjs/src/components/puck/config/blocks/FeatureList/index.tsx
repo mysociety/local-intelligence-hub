@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { Section } from '@/components/data/puck/config/components/Section'
+import { Section } from '@/components/puck/config/components/Section'
 import { ComponentConfig } from '@measured/puck'
 import dynamicIconImports from 'lucide-react/dynamicIconImports'
 import dynamic from 'next/dynamic'
@@ -19,14 +19,16 @@ const iconOptions = Object.keys(dynamicIconImports).map((iconName) => ({
   value: iconName,
 }))
 
-export type StatsProps = {
+export type FeatureListProps = {
   items: {
     title: string
     description: string
+    icon?: 'feather'
   }[]
+  mode: 'flat' | 'card'
 }
 
-export const Stats: ComponentConfig<StatsProps> = {
+export const FeatureList: ComponentConfig<FeatureListProps> = {
   fields: {
     items: {
       type: 'array',
@@ -34,27 +36,43 @@ export const Stats: ComponentConfig<StatsProps> = {
       defaultItemProps: {
         title: 'Title',
         description: 'Description',
+        icon: 'feather',
       },
       arrayFields: {
         title: { type: 'text' },
-        description: { type: 'text' },
+        description: { type: 'textarea' },
+        icon: {
+          type: 'select',
+          options: iconOptions,
+        },
       },
+    },
+    mode: {
+      type: 'radio',
+      options: [
+        { label: 'flat', value: 'flat' },
+        { label: 'card', value: 'card' },
+      ],
     },
   },
   defaultProps: {
     items: [
       {
-        title: 'Stat',
-        description: '1,000',
+        title: 'Feature',
+        description: 'Description',
+        icon: 'feather',
       },
     ],
+    mode: 'flat',
   },
-  render: ({ items }) => {
+  render: ({ items, mode }) => {
     return (
-      <Section maxWidth={'916px'}>
+      <Section>
         <div>
           {items.map((item, i) => (
             <div key={i}>
+              {/* @ts-ignore */}
+              <div>{icons[item.icon]}</div>
               <div>{item.title}</div>
               <div>{item.description}</div>
             </div>

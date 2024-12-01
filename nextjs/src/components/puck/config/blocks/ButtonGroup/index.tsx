@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { Section } from '@/components/data/puck/config/components/Section'
+import { Section } from '@/components/puck/config/components/Section'
 import { Button } from '@/components/ui/button'
 import { ComponentConfig } from '@measured/puck'
 

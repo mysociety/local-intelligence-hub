@@ -10,7 +10,6 @@ import {
   GetLocalDataQuery,
   GetLocalDataQueryVariables,
 } from '@/__generated__/graphql'
-import Root from '@/components/data/puck/config/root'
 import { ConstituencyView } from '@/components/hub/ConstituencyView'
 import { HubMap } from '@/components/hub/HubMap'
 import {
@@ -18,6 +17,7 @@ import {
   useHubRenderContext,
 } from '@/components/hub/HubRenderContext'
 import { SIDEBAR_WIDTH } from '@/components/hub/data'
+import Root from '@/components/puck/config/root'
 import { useBreakpoint } from '@/lib/hooks/css'
 import { useQuery } from '@apollo/client'
 import { Provider as JotaiProvider } from 'jotai'

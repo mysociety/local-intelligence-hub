@@ -1,7 +1,7 @@
 'use client'
 
-import { getPuckConfigForHostname } from '@/components/data/puck/config/ui'
 import { HubRenderContextProvider } from '@/components/hub/HubRenderContext'
+import { getPuckConfigForHostname } from '@/components/puck/config/ui'
 import { Data, Render } from '@measured/puck'
 import { useMemo } from 'react'
 
