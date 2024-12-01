@@ -5,7 +5,7 @@ import {
   DataSourceType,
   MapReportLayersSummaryFragment,
 } from '@/__generated__/graphql'
-import importData from '@/app/(app)/data-sources/inspect/[externalDataSourceId]/importData'
+import importData from '@/app/(logged-in)/data-sources/inspect/[externalDataSourceId]/importData'
 import { ReportContext, useReportContext } from '@/app/reports/[id]/context'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'

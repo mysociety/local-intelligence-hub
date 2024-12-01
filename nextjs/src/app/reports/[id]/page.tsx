@@ -83,7 +83,7 @@ export default function Page({ params: { id } }: { params: Params }) {
       variables: { id },
     }
   )
-
+  console.log(report)
   const orgId = useAtomValue(currentOrganisationIdAtom)
 
   useEffect(() => {
