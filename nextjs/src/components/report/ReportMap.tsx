@@ -18,7 +18,6 @@ import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { BACKEND_URL } from '@/env'
 import { authenticationHeaders } from '@/lib/auth'
 import {
-  PlaceholderLayer,
   constituencyPanelTabAtom,
   isConstituencyPanelOpenAtom,
   layerColour,
@@ -35,6 +34,7 @@ import { atom, useAtom } from 'jotai'
 import { ErrorBoundary } from 'next/dist/client/components/error-boundary'
 import { Fragment, useContext, useEffect } from 'react'
 import Map, { Layer, LayerProps, Popup, Source, ViewState } from 'react-map-gl'
+import { PlaceholderLayer } from '../PlaceholderLayer'
 
 const MAX_REGION_ZOOM = 8
 export const MAX_CONSTITUENCY_ZOOM = 10
@@ -285,7 +285,7 @@ export function ReportMap() {
       mapbox.loadedMap?.on(
         'click',
         `${constituencyTileset.mapboxSourceId}-fill`,
-        (event) => {
+        (event: any) => {
           try {
             const feature = event.features?.[0]
             if (feature) {

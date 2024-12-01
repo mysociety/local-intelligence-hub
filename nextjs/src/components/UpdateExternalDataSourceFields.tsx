@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { locationTypeOptions } from '@/data/location'
+import { locationTypeOptions } from '@/lib/location'
 import { useMemo } from 'react'
 import { FieldPath, FormProvider, useForm } from 'react-hook-form'
 import { DataSourceFieldLabel } from './DataSourceIcon'
