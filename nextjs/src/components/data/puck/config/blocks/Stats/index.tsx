@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { Section } from '@/data/puck/config/components/Section'
+import { Section } from '@/components/data/puck/config/components/Section'
 import { ComponentConfig } from '@measured/puck'
 import dynamicIconImports from 'lucide-react/dynamicIconImports'
 import dynamic from 'next/dynamic'

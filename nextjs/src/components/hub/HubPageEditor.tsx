@@ -8,6 +8,7 @@ import {
   GetPageEditorDataQuery,
   GetPageEditorDataQueryVariables,
 } from '@/__generated__/graphql'
+import { getPuckConfigForHostname } from '@/components/data/puck/config/ui'
 import { HubRenderContextProvider } from '@/components/hub/HubRenderContext'
 import {
   Breadcrumb,
@@ -23,7 +24,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
-import { getPuckConfigForHostname } from '@/data/puck/config/ui'
 import { toastPromise } from '@/lib/toast'
 import { gql, useApolloClient, useQuery } from '@apollo/client'
 import { Data, Puck, Button as PuckButton } from '@measured/puck'

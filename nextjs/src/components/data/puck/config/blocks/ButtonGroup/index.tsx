@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 
+import { Section } from '@/components/data/puck/config/components/Section'
 import { Button } from '@/components/ui/button'
-import { Section } from '@/data/puck/config/components/Section'
 import { ComponentConfig } from '@measured/puck'
 
 export type ButtonGroupProps = {
