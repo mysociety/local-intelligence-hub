@@ -5,14 +5,14 @@ import {
 } from '@/lib/map/state'
 import { useAtom, useAtomValue } from 'jotai'
 import { useContext, useEffect } from 'react'
+import { reportContext } from '../context'
 import { ConstituenciesPanel } from './ConstituenciesPanel'
 import LayersCard from './LayersCard'
 import { NotFound } from './NotFound'
 import { ReportMap } from './ReportMap'
-import { ReportContext } from './context'
 
 export default function ReportPage() {
-  const { report } = useContext(ReportContext)
+  const { report } = useContext(reportContext)
   const [isConstituencyPanelOpen, setConstituencyPanelOpen] = useAtom(
     isConstituencyPanelOpenAtom
   )

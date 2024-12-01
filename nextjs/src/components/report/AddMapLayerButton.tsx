@@ -4,7 +4,7 @@ import {
   GetMemberListQuery,
   MapReportLayersSummaryFragment,
 } from '@/__generated__/graphql'
-import { ReportContext } from '@/app/reports/[id]/context'
+import { reportContext } from '@/app/reports/[id]/context'
 import { Button } from '@/components/ui/button'
 import {
   Command,
@@ -51,7 +51,7 @@ export function AddMapLayerButton({
   addLayer(layer: Source): void
   filter?: (s: SourceOption) => boolean
 }) {
-  const { id } = useContext(ReportContext)
+  const { id } = useContext(reportContext)
   const form = useForm<{ source?: Source }>()
   const [open, setOpen] = useState(false)
 
@@ -109,7 +109,7 @@ export function MapLayerSelector({
   filter?: (s: SourceOption) => boolean
 }) {
   const [open, setOpen] = useState(false)
-  const { id, report } = useContext(ReportContext)
+  const { id, report } = useContext(reportContext)
   const dataSources = useQuery<GetMemberListQuery>(MEMBER_LISTS, {
     variables: {
       currentOrganisationId: report?.data?.mapReport.organisation.id,

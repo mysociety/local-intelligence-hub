@@ -6,7 +6,7 @@ import {
   MapReportLayersSummaryFragment,
 } from '@/__generated__/graphql'
 import importData from '@/app/(logged-in)/data-sources/inspect/[externalDataSourceId]/importData'
-import { ReportContext, useReportContext } from '@/app/reports/[id]/context'
+import { reportContext, useReportContext } from '@/app/reports/[id]/context'
 import { CRMSelection } from '@/components/CRMButtonItem'
 import { AddMapLayerButton } from '@/components/report/AddMapLayerButton'
 import { Button } from '@/components/ui/button'
@@ -51,7 +51,7 @@ import { v4 } from 'uuid'
 
 export default function DataConfigPanel() {
   const router = useRouter()
-  const { id, report, updateReport } = useContext(ReportContext)
+  const { id, report, updateReport } = useContext(reportContext)
   const client = useApolloClient()
 
   const { displayOptions, setDisplayOptions } = useReportContext()

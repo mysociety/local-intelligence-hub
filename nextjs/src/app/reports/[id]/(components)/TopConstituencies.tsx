@@ -2,7 +2,7 @@ import {
   ConstituencyStatsOverviewQuery,
   ConstituencyStatsOverviewQueryVariables,
 } from '@/__generated__/graphql'
-import { ReportContext, useReportContext } from '@/app/reports/[id]/context'
+import { reportContext, useReportContext } from '@/app/reports/[id]/context'
 import {
   constituencyPanelTabAtom,
   selectedConstituencyAtom,
@@ -13,16 +13,19 @@ import { getYear } from 'date-fns'
 import { useAtom } from 'jotai'
 import { useContext, useState } from 'react'
 import { twMerge } from 'tailwind-merge'
-import { MAX_CONSTITUENCY_ZOOM } from '../app/reports/[id]/ReportMap'
-import { MemberElectoralInsights, Person } from './reportsConstituencyItem'
-import { LoadingIcon } from './ui/loadingIcon'
+import {
+  MemberElectoralInsights,
+  Person,
+} from '../../../../components/reportsConstituencyItem'
+import { LoadingIcon } from '../../../../components/ui/loadingIcon'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select'
+} from '../../../../components/ui/select'
+import { MAX_CONSTITUENCY_ZOOM } from './ReportMap'
 
 export function TopConstituencies() {
   const sortOptions = {
@@ -35,7 +38,7 @@ export function TopConstituencies() {
     displayOptions: { analyticalAreaType },
   } = useReportContext()
 
-  const { id } = useContext(ReportContext)
+  const { id } = useContext(reportContext)
   const constituencyAnalytics = useQuery<
     ConstituencyStatsOverviewQuery,
     ConstituencyStatsOverviewQueryVariables

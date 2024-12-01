@@ -5,7 +5,7 @@ import {
   MapReportLayerGeoJsonPointQuery,
   MapReportLayerGeoJsonPointQueryVariables,
 } from '@/__generated__/graphql'
-import { ReportContext } from '@/app/reports/[id]/context'
+import { reportContext } from '@/app/reports/[id]/context'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { BACKEND_URL } from '@/env'
 import { authenticationHeaders } from '@/lib/auth'
@@ -22,14 +22,14 @@ import { interpolateInferno } from 'd3-scale-chromatic'
 import { atom, useAtom, useSetAtom } from 'jotai'
 import { Fragment, useContext, useEffect } from 'react'
 import Map, { Layer, Source, ViewState } from 'react-map-gl'
-import { PlaceholderLayer } from '../../../components/PlaceholderLayer'
+import { PlaceholderLayer } from '../../../../components/PlaceholderLayer'
+import { getTilesets } from '../getTilesets'
+import { MAP_REPORT_LAYER_POINT } from '../gql_queries'
+import useAnalytics from '../useAnalytics'
+import useChoropleths from '../useChoropleths'
+import useMarkers from '../useMarkers'
 import { ExternalDataSourcePointMarkers } from './ExternalDataSourcePointMarkers'
 import MarkerPopup from './MarkerPopup'
-import { getTilesets } from './getTilesets'
-import { MAP_REPORT_LAYER_POINT } from './gql_queries'
-import useAnalytics from './useAnalytics'
-import useChoropleths from './useChoropleths'
-import useMarkers from './useMarkers'
 
 export const MAX_REGION_ZOOM = 8
 export const MAX_CONSTITUENCY_ZOOM = 10
@@ -49,7 +49,7 @@ export function ReportMap() {
   )
 
   /* Get the report context */
-  const { id, displayOptions } = useContext(ReportContext)
+  const { id, displayOptions } = useContext(reportContext)
 
   /* Add chloropleth data to the mapbox source */
   useChoropleths(id, displayOptions.analyticalAreaType)

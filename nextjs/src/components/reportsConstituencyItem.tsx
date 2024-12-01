@@ -17,7 +17,7 @@ import { format } from 'd3-format'
 import { getYear } from 'date-fns'
 import pluralize from 'pluralize'
 
-import { ReportContext, useReportContext } from '@/app/reports/[id]/context'
+import { reportContext, useReportContext } from '@/app/reports/[id]/context'
 import {
   Tooltip,
   TooltipContent,
@@ -49,7 +49,7 @@ export const ConstituencyElectionDeepDive = ({
   gss: string
   analyticalAreaType: AnalyticalAreaType
 }) => {
-  const { id, displayOptions } = useContext(ReportContext)
+  const { id, displayOptions } = useContext(reportContext)
   const { data, loading, error } = useQuery<
     GetConstituencyDataQuery,
     GetConstituencyDataQueryVariables

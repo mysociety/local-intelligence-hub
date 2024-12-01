@@ -21,11 +21,11 @@ import { useEffect } from 'react'
 import { MapProvider } from 'react-map-gl'
 import { toast } from 'sonner'
 import spaceCase from 'to-space-case'
-import ReportPage from './ReportPage'
+import ReportPage from './(components)/ReportPage'
 import {
   DisplayOptionsType,
-  ReportContext,
   defaultDisplayOptions,
+  reportContext,
 } from './context'
 import {
   DELETE_MAP_REPORT,
@@ -72,7 +72,7 @@ export default function Page({ params: { id } }: { params: Params }) {
   return (
     <JotaiProvider key={id}>
       <MapProvider>
-        <ReportContext.Provider
+        <reportContext.Provider
           value={{
             id,
             report,
@@ -84,7 +84,7 @@ export default function Page({ params: { id } }: { params: Params }) {
           }}
         >
           <ReportPage />
-        </ReportContext.Provider>
+        </reportContext.Provider>
       </MapProvider>
     </JotaiProvider>
   )

@@ -10,12 +10,12 @@ import { useAtom, useSetAtom } from 'jotai'
 import { BarChart3, Layers } from 'lucide-react'
 import { useContext } from 'react'
 import { twMerge } from 'tailwind-merge'
+import { reportContext } from '../context'
 import DataConfigPanel from './DataConfigPanel'
 import ReportActions from './ReportActions'
-import { ReportContext } from './context'
 
 const LayersCard: React.FC = () => {
-  const { report, updateReport } = useContext(ReportContext)
+  const { report, updateReport } = useContext(reportContext)
   const [isDataConfigOpen, setDataConfigOpen] = useAtom(isDataConfigOpenAtom)
   const toggleDataConfig = () => setDataConfigOpen((b) => !b)
   const [isConstituencyPanelOpen, setConstituencyPanelOpen] = useAtom(

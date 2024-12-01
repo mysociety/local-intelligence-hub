@@ -9,13 +9,13 @@ import { useAtom } from 'jotai'
 import { ErrorBoundary } from 'next/dist/client/components/error-boundary'
 import React, { useContext } from 'react'
 import { Popup } from 'react-map-gl'
-import { ReportContext } from './context'
-import { MAP_REPORT_LAYER_POINT } from './gql_queries'
-import useAnalytics from './useAnalytics'
+import { reportContext } from '../context'
+import { MAP_REPORT_LAYER_POINT } from '../gql_queries'
+import useAnalytics from '../useAnalytics'
 
 const MarkerPopup: React.FC = () => {
   /* Get the report context */
-  const { id, displayOptions } = useContext(ReportContext)
+  const { id, displayOptions } = useContext(reportContext)
 
   /* Add c 
   

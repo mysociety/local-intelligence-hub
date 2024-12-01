@@ -18,7 +18,7 @@ export const defaultDisplayOptions = {
 
 export type DisplayOptionsType = typeof defaultDisplayOptions & {}
 
-export const ReportContext = createContext<{
+export const reportContext = createContext<{
   id: string
   updateReport: (data: MapReportInput) => void
   deleteReport: () => void
@@ -36,7 +36,7 @@ export const ReportContext = createContext<{
 })
 
 export const useReportContext = () => {
-  const context = useContext(ReportContext)
+  const context = useContext(reportContext)
   const { displayOptions, setDisplayOptions } = context
 
   const updateDisplayOptions = (options: Partial<DisplayOptionsType>) => {

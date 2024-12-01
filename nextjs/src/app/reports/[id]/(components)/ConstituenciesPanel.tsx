@@ -1,4 +1,3 @@
-import { TopConstituencies } from '@/components/TopConstituencies'
 import { ConstituencyElectionDeepDive } from '@/components/reportsConstituencyItem'
 import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -8,7 +7,8 @@ import {
 } from '@/lib/map/state'
 import { useAtom } from 'jotai'
 import { useEffect, useRef } from 'react'
-import { useReportContext } from './context'
+import { useReportContext } from '../context'
+import { TopConstituencies } from './TopConstituencies'
 
 export function ConstituenciesPanel() {
   const [selectedConstituencyId, setSelectedConstituency] = useAtom(

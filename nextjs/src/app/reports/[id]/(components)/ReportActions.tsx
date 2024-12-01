@@ -19,11 +19,11 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { MoreVertical, RefreshCcw, Trash } from 'lucide-react'
 import { useContext, useState } from 'react'
-import { ReportContext } from './context'
+import { reportContext } from '../context'
 
 const ReportActions: React.FC = () => {
   const { report, deleteReport, refreshReportDataQueries } =
-    useContext(ReportContext)
+    useContext(reportContext)
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   return (

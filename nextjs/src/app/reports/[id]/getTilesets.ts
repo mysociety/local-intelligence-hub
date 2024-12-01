@@ -1,6 +1,9 @@
 import { MapReportRegionStatsQuery } from '@/__generated__/graphql'
 import { LayerProps } from 'react-map-gl'
-import { MAX_CONSTITUENCY_ZOOM, MAX_REGION_ZOOM } from './ReportMap'
+import {
+  MAX_CONSTITUENCY_ZOOM,
+  MAX_REGION_ZOOM,
+} from './(components)/ReportMap'
 import useAnalytics from './useAnalytics'
 
 // TODO: unify this and HubMap's TILESETS
