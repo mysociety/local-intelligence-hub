@@ -87,6 +87,14 @@ export function ReportPage() {
     },
   ]
 
+  if (report?.loading && !report?.data?.mapReport) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <p>Loading...</p>
+      </div>
+    )
+  }
+
   return (
     <>
       <div className="absolute w-full h-full flex flex-row pointer-events-none">
@@ -98,45 +106,39 @@ export function ReportPage() {
           <div className="flex flex-col items-start gap-4 max-h-full">
             <Card className="w-[200px] p-3 bg-white border-1 border-meepGray-700 text-meepGray-800">
               <CardHeader className="flex flex-row items-start">
-                {report?.loading && !report?.data?.mapReport ? (
-                  <CardTitle className="text-hMd grow font-IBMPlexSansMedium">
-                    Loading...
+                <>
+                  <CardTitle
+                    id="nickname"
+                    className="text-hMd grow font-IBMPlexSansMedium"
+                    {...contentEditableMutation(
+                      updateReport,
+                      'name',
+                      'Untitled Report'
+                    )}
+                  >
+                    {report?.data?.mapReport.name}
                   </CardTitle>
-                ) : (
-                  <>
-                    <CardTitle
-                      id="nickname"
-                      className="text-hMd grow font-IBMPlexSansMedium"
-                      {...contentEditableMutation(
-                        updateReport,
-                        'name',
-                        'Untitled Report'
-                      )}
-                    >
-                      {report?.data?.mapReport.name}
-                    </CardTitle>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger>
-                        <MoreVertical className="w-3" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent side="right" align="start">
-                        {report?.data?.mapReport && (
-                          <DropdownMenuItem onClick={refreshReportDataQueries}>
-                            <RefreshCcw className="w-4 mr-2" />
-                            Refresh
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem
-                          onClick={() => setDeleteOpen(true)}
-                          className="text-red-400"
-                        >
-                          <Trash className="w-4 mr-2" />
-                          Delete
+                  <DropdownMenu>
+                    <DropdownMenuTrigger>
+                      <MoreVertical className="w-3" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="right" align="start">
+                      {report?.data?.mapReport && (
+                        <DropdownMenuItem onClick={refreshReportDataQueries}>
+                          <RefreshCcw className="w-4 mr-2" />
+                          Refresh
                         </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </>
-                )}
+                      )}
+                      <DropdownMenuItem
+                        onClick={() => setDeleteOpen(true)}
+                        className="text-red-400"
+                      >
+                        <Trash className="w-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
               </CardHeader>
               {report?.data?.mapReport && (
                 <CardContent className="mt-4 grid grid-cols-1 gap-2">
