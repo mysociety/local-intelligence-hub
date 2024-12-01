@@ -60,7 +60,12 @@ const useAnalytics = (
     },
   })
 
-  return { analytics, regionAnalytics, constituencyAnalytics, wardAnalytics }
+  return {
+    analytics,
+    regionAnalytics,
+    constituencyAnalytics,
+    wardAnalytics,
+  }
 }
 
 export default useAnalytics
