@@ -2,16 +2,9 @@
 
 import {
   AnalyticalAreaType,
-  MapReportConstituencyStatsQuery,
-  MapReportConstituencyStatsQueryVariables,
-  MapReportLayerAnalyticsQuery,
-  MapReportLayerAnalyticsQueryVariables,
   MapReportLayerGeoJsonPointQuery,
   MapReportLayerGeoJsonPointQueryVariables,
   MapReportRegionStatsQuery,
-  MapReportRegionStatsQueryVariables,
-  MapReportWardStatsQuery,
-  MapReportWardStatsQueryVariables,
 } from '@/__generated__/graphql'
 import { ReportContext } from '@/app/reports/[id]/context'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
@@ -35,13 +28,8 @@ import { Fragment, useContext, useEffect } from 'react'
 import Map, { Layer, LayerProps, Popup, Source, ViewState } from 'react-map-gl'
 import { PlaceholderLayer } from '../../../components/PlaceholderLayer'
 import { ExternalDataSourcePointMarkers } from './ExternalDataSourcePointMarkers'
-import {
-  MAP_REPORT_CONSTITUENCY_STATS,
-  MAP_REPORT_LAYER_ANALYTICS,
-  MAP_REPORT_LAYER_POINT,
-  MAP_REPORT_REGION_STATS,
-  MAP_REPORT_WARD_STATS,
-} from './gql_queries'
+import { MAP_REPORT_LAYER_POINT } from './gql_queries'
+import useAnalytics from './useAnalytics'
 
 const MAX_REGION_ZOOM = 8
 export const MAX_CONSTITUENCY_ZOOM = 10
@@ -55,43 +43,8 @@ const viewStateAtom = atom<Partial<ViewState>>({
 
 export function ReportMap() {
   const { id, displayOptions } = useContext(ReportContext)
-  const analytics = useQuery<
-    MapReportLayerAnalyticsQuery,
-    MapReportLayerAnalyticsQueryVariables
-  >(MAP_REPORT_LAYER_ANALYTICS, {
-    variables: {
-      reportID: id,
-    },
-  })
-
-  const regionAnalytics = useQuery<
-    MapReportRegionStatsQuery,
-    MapReportRegionStatsQueryVariables
-  >(MAP_REPORT_REGION_STATS, {
-    variables: {
-      reportID: id,
-    },
-  })
-
-  const constituencyAnalytics = useQuery<
-    MapReportConstituencyStatsQuery,
-    MapReportConstituencyStatsQueryVariables
-  >(MAP_REPORT_CONSTITUENCY_STATS, {
-    variables: {
-      reportID: id,
-      analyticalAreaType: displayOptions.analyticalAreaType,
-    },
-  })
-
-  const wardAnalytics = useQuery<
-    MapReportWardStatsQuery,
-    MapReportWardStatsQueryVariables
-  >(MAP_REPORT_WARD_STATS, {
-    variables: {
-      reportID: id,
-    },
-  })
-
+  const { analytics, regionAnalytics, wardAnalytics, constituencyAnalytics } =
+    useAnalytics(id, displayOptions.analyticalAreaType)
   const mapbox = useLoadedMap()
 
   // TODO: unify this and HubMap's TILESETS
