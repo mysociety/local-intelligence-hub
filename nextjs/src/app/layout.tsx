@@ -1,4 +1,4 @@
-import { ApolloWrapper } from '@/components/apollo-wrapper'
+import { ApolloWrapper } from '@/components/ApolloWrapper'
 import { FRONTEND_URL } from '@/env'
 import { Metadata } from 'next'
 import dynamic from 'next/dynamic'

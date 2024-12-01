@@ -10,7 +10,7 @@ import {
   UpdateMapReportMutation,
   UpdateMapReportMutationVariables,
 } from '@/__generated__/graphql'
-import DataConfigPanel from '@/components/dataConfig'
+import DataConfigPanel from '@/components/DataConfigPanel'
 import { ReportMap } from '@/components/report/ReportMap'
 import {
   AlertDialog,

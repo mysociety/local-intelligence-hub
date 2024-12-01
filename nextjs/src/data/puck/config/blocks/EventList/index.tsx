@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { FieldDefinition } from '@/__generated__/graphql'
-import { makeFrontEndClient } from '@/components/apollo-wrapper'
+import { makeFrontEndClient } from '@/components/ApolloWrapper'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { gql, useQuery } from '@apollo/client'
 import { ComponentConfig } from '@measured/puck'
