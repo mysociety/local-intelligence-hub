@@ -7,11 +7,11 @@ import {
   UpdateExternalDataSourceMutation,
   UpdateExternalDataSourceMutationVariables,
 } from '@/__generated__/graphql'
-import { triggerAnalyticsEvent } from '@/app/utils/posthogutils'
 import { UpdateMappingForm } from '@/components/UpdateMappingForm'
 import { Button } from '@/components/ui/button'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/lib/graphql/mutations'
+import { triggerAnalyticsEvent } from '@/lib/posthogutils'
 import { FetchResult, gql, useMutation, useQuery } from '@apollo/client'
 import { useRouter } from 'next/navigation'
 import { useContext, useEffect } from 'react'

@@ -6,7 +6,6 @@ import {
   ListReportsQuery,
   ListReportsQueryVariables,
 } from '@/__generated__/graphql'
-import { triggerAnalyticsEvent } from '@/app/utils/posthogutils'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -17,6 +16,7 @@ import {
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
+import { triggerAnalyticsEvent } from '@/lib/posthogutils'
 import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
 import { formatRelative } from 'date-fns'
 import { useAtomValue } from 'jotai'
