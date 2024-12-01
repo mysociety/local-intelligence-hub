@@ -6,8 +6,8 @@ import { ReportContext, useReportContext } from '@/app/reports/[id]/context'
 import {
   constituencyPanelTabAtom,
   selectedConstituencyAtom,
-  useLoadedMap,
-} from '@/lib/map'
+} from '@/lib/map/state'
+import { useLoadedMap } from '@/lib/map/useLoadedMap'
 import { gql, useQuery } from '@apollo/client'
 import { getYear } from 'date-fns'
 import { useAtom } from 'jotai'

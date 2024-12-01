@@ -5,7 +5,7 @@ import {
   HubListDataSourcesQuery,
   HubListDataSourcesQueryVariables,
 } from '@/__generated__/graphql'
-import { currentOrganisationIdAtom } from '@/data/organisation'
+import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { gql, useMutation, useQuery } from '@apollo/client'
 import { ComponentConfig, FieldLabel } from '@measured/puck'
 import { useAtomValue } from 'jotai'

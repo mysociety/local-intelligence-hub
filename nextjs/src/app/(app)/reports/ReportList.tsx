@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { currentOrganisationIdAtom } from '@/data/organisation'
+import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
 import { formatRelative } from 'date-fns'
 import { useAtomValue } from 'jotai'

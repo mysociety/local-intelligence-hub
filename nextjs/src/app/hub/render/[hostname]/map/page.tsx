@@ -18,7 +18,7 @@ import {
 } from '@/components/hub/HubRenderContext'
 import { SIDEBAR_WIDTH } from '@/components/hub/data'
 import Root from '@/data/puck/config/root'
-import { useBreakpoint } from '@/hooks/css'
+import { useBreakpoint } from '@/lib/hooks/css'
 import { useQuery } from '@apollo/client'
 import { Provider as JotaiProvider } from 'jotai'
 import 'mapbox-gl/dist/mapbox-gl.css'

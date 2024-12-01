@@ -36,14 +36,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { currentOrganisationIdAtom } from '@/data/organisation'
 import { contentEditableMutation } from '@/lib/html'
+import { MAP_REPORT_FRAGMENT } from '@/lib/map'
 import {
-  MAP_REPORT_FRAGMENT,
   isConstituencyPanelOpenAtom,
   isDataConfigOpenAtom,
   selectedConstituencyAtom,
-} from '@/lib/map'
+} from '@/lib/map/state'
+import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { toastPromise } from '@/lib/toast'
 import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
 import { Provider as JotaiProvider, useAtom, useAtomValue } from 'jotai'

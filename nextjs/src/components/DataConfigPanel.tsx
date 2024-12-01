@@ -35,11 +35,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import {
-  MAP_REPORT_LAYERS_SUMMARY,
-  isDataConfigOpenAtom,
-  layerIdColour,
-} from '@/lib/map'
+import { MAP_REPORT_LAYERS_SUMMARY, layerIdColour } from '@/lib/map'
+import { isDataConfigOpenAtom } from '@/lib/map/state'
 import { useApolloClient, useFragment } from '@apollo/client'
 import { useAtom } from 'jotai'
 import { ArrowRight, ClipboardCopy, Plus, Shuffle, X } from 'lucide-react'

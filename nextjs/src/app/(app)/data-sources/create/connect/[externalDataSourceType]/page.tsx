@@ -36,8 +36,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { locationTypeOptions } from '@/data/location'
-import { currentOrganisationIdAtom } from '@/data/organisation'
+import { locationTypeOptions } from '@/lib/location'
+import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { toastPromise } from '@/lib/toast'
 import { FetchResult, gql, useLazyQuery, useMutation } from '@apollo/client'
 import { useAtomValue } from 'jotai'

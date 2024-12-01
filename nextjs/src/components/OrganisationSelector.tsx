@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { currentOrganisationIdAtom } from '@/data/organisation'
+import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { gql, useQuery } from '@apollo/client'
 import { useAtom } from 'jotai'
 import { ChevronDown } from 'lucide-react'

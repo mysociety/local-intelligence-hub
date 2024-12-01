@@ -1,7 +1,7 @@
 'use client'
 
 import { MyOrgsQuery, UserDataQuery } from '@/__generated__/graphql'
-import { currentOrganisationIdAtom } from '@/data/organisation'
+import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { gql, useQuery } from '@apollo/client'
 import * as Sentry from '@sentry/nextjs'
 import { useAtomValue } from 'jotai'

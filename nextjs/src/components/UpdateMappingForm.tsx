@@ -25,8 +25,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { locationTypeOptions } from '@/data/location'
-import { currentOrganisationIdAtom } from '@/data/organisation'
+import { locationTypeOptions } from '@/lib/location'
+import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { gql, useQuery } from '@apollo/client'
 import { useAtomValue } from 'jotai'
 import { ArrowRight, Plus, RefreshCcw, X } from 'lucide-react'

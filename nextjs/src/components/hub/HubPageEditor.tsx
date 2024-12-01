@@ -23,7 +23,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
-import { getPuckConfigForHostname } from '@/data/puck/ui'
+import { getPuckConfigForHostname } from '@/data/puck/config/ui'
 import { toastPromise } from '@/lib/toast'
 import { gql, useApolloClient, useQuery } from '@apollo/client'
 import { Data, Puck, Button as PuckButton } from '@measured/puck'

@@ -1,6 +1,6 @@
 'use client'
 
-import { clearJwt } from '@/actions/auth'
+import { clearJwt } from '@/lib/actions/auth'
 import { gql, useMutation } from '@apollo/client'
 import { useEffect } from 'react'
 

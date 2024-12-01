@@ -5,7 +5,7 @@ import { gql, useMutation } from '@apollo/client'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { login } from '../../../actions/auth'
+import { login } from '../../../lib/actions/auth'
 
 import {
   Form,
