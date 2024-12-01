@@ -4,8 +4,8 @@ import {
   HostAnalyticsQuery,
   HostAnalyticsQueryVariables,
 } from '@/__generated__/graphql'
-import ConsentRespectingGoogleAnalytics from '@/components/hub/ConsentRespectingGoogleAnalytics'
-import { ConsentRespectingPosthogAnalytics } from '@/components/hub/ConsentRespectingPosthogAnalytics'
+import ConsentRespectingGoogleAnalytics from '@/components/analytics/ConsentRespectingGoogleAnalytics'
+import { ConsentRespectingPosthogAnalytics } from '@/components/analytics/ConsentRespectingPosthogAnalytics'
 import { CookieConsentComponent } from '@/components/hub/CookieConsent'
 import { RootCSS } from '@/components/puck/config/root'
 import { getClient } from '@/lib/services/apollo-client'

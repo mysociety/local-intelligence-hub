@@ -17,7 +17,11 @@ const initializePosthog = (
   return instance
 }
 
-export function PHProvider({ children }: { children: React.ReactNode }) {
+export default function PHProvider({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'production') {

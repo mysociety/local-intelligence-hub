@@ -4,13 +4,16 @@ import { Metadata } from 'next'
 import dynamic from 'next/dynamic'
 import NextTopLoader from 'nextjs-toploader'
 import { Suspense } from 'react'
+import PHProvider from '../components/analytics/PHProvider'
 import { openGraphImage } from '../lib/shared-metadata'
 import './globals.css'
-import { PHProvider } from './providers'
 
-const PostHogPageView = dynamic(() => import('../components/PostHogPageView'), {
-  ssr: false,
-})
+const PostHogPageView = dynamic(
+  () => import('../components/analytics/PostHogPageView'),
+  {
+    ssr: false,
+  }
+)
 
 export default async function RootLayout({
   children,
