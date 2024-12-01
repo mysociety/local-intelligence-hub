@@ -27,7 +27,11 @@ import {
   ReportContext,
   defaultDisplayOptions,
 } from './context'
-import { DELETE_MAP_REPORT, GET_MAP_REPORT, UPDATE_MAP_REPORT } from './lib'
+import {
+  DELETE_MAP_REPORT,
+  GET_MAP_REPORT,
+  UPDATE_MAP_REPORT,
+} from './gql_queries'
 
 type Params = {
   id: string

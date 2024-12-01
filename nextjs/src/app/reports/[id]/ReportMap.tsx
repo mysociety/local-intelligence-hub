@@ -20,13 +20,12 @@ import { authenticationHeaders } from '@/lib/auth'
 import {
   constituencyPanelTabAtom,
   isConstituencyPanelOpenAtom,
-  layerColour,
   selectedConstituencyAtom,
   selectedSourceMarkerAtom,
   useLoadedMap,
   useMapIcons,
 } from '@/lib/map'
-import { gql, useQuery } from '@apollo/client'
+import { useQuery } from '@apollo/client'
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { interpolateInferno } from 'd3-scale-chromatic'
 import { Point } from 'geojson'
@@ -35,10 +34,18 @@ import { ErrorBoundary } from 'next/dist/client/components/error-boundary'
 import { Fragment, useContext, useEffect } from 'react'
 import Map, { Layer, LayerProps, Popup, Source, ViewState } from 'react-map-gl'
 import { PlaceholderLayer } from '../../../components/PlaceholderLayer'
+import { ExternalDataSourcePointMarkers } from './ExternalDataSourcePointMarkers'
+import {
+  MAP_REPORT_CONSTITUENCY_STATS,
+  MAP_REPORT_LAYER_ANALYTICS,
+  MAP_REPORT_LAYER_POINT,
+  MAP_REPORT_REGION_STATS,
+  MAP_REPORT_WARD_STATS,
+} from './gql_queries'
 
 const MAX_REGION_ZOOM = 8
 export const MAX_CONSTITUENCY_ZOOM = 10
-const MIN_MEMBERS_ZOOM = 12
+export const MIN_MEMBERS_ZOOM = 12
 
 const viewStateAtom = atom<Partial<ViewState>>({
   longitude: -2.296605,
@@ -706,256 +713,3 @@ export function ReportMap() {
     </>
   )
 }
-
-function ExternalDataSourcePointMarkers({
-  externalDataSourceId,
-  index,
-}: {
-  externalDataSourceId: string
-  index: number
-}) {
-  const mapbox = useLoadedMap()
-  const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(
-    selectedSourceMarkerAtom
-  )
-
-  useEffect(
-    function selectMarker() {
-      mapbox.loadedMap?.on(
-        'mouseover',
-        `${externalDataSourceId}-marker`,
-        () => {
-          const canvas = mapbox.loadedMap?.getCanvas()
-          if (!canvas) return
-          canvas.style.cursor = 'pointer'
-        }
-      )
-      mapbox.loadedMap?.on(
-        'mouseleave',
-        `${externalDataSourceId}-marker`,
-        () => {
-          const canvas = mapbox.loadedMap?.getCanvas()
-          if (!canvas) return
-          canvas.style.cursor = ''
-        }
-      )
-      mapbox.loadedMap?.on(
-        'click',
-        `${externalDataSourceId}-marker`,
-        (event) => {
-          const feature = event.features?.[0]
-          if (feature?.properties?.id) {
-            setSelectedSourceMarker(feature)
-          }
-        }
-      )
-    },
-    [mapbox.loadedMap, externalDataSourceId]
-  )
-
-  return (
-    <>
-      <Source
-        id={externalDataSourceId}
-        type="vector"
-        url={new URL(
-          `/tiles/external-data-source/${externalDataSourceId}/tiles.json`,
-          BACKEND_URL
-        ).toString()}
-        minzoom={MIN_MEMBERS_ZOOM}
-      >
-        {index <= 1 ? (
-          <Layer
-            beforeId={'PLACEHOLDER_MARKERS'}
-            id={`${externalDataSourceId}-marker`}
-            source={externalDataSourceId}
-            source-layer={'generic_data'}
-            type="symbol"
-            layout={{
-              'icon-image': `meep-marker-${index}`,
-              'icon-allow-overlap': true,
-              'icon-ignore-placement': true,
-              'icon-size': 0.75,
-              'icon-anchor': 'bottom',
-            }}
-            minzoom={MIN_MEMBERS_ZOOM}
-            {...(selectedSourceMarker?.properties?.id
-              ? {
-                  filter: [
-                    '!=',
-                    selectedSourceMarker?.properties?.id,
-                    ['get', 'id'],
-                  ],
-                }
-              : {})}
-          />
-        ) : (
-          <Layer
-            beforeId={'PLACEHOLDER_MARKERS'}
-            id={`${externalDataSourceId}-marker`}
-            source={externalDataSourceId}
-            source-layer={'generic_data'}
-            type="circle"
-            paint={{
-              'circle-radius': 5,
-              'circle-color': layerColour(index, externalDataSourceId),
-            }}
-            minzoom={MIN_MEMBERS_ZOOM}
-            {...(selectedSourceMarker?.properties?.id
-              ? {
-                  filter: [
-                    '!=',
-                    selectedSourceMarker?.properties?.id,
-                    ['get', 'id'],
-                  ],
-                }
-              : {})}
-          />
-        )}
-        {!!selectedSourceMarker?.properties?.id && (
-          <Layer
-            beforeId={'PLACEHOLDER_MARKERS'}
-            id={`${externalDataSourceId}-marker-selected`}
-            source={externalDataSourceId}
-            source-layer={'generic_data'}
-            type="symbol"
-            layout={{
-              'icon-image': 'meep-marker-selected',
-              'icon-size': 0.75,
-              'icon-anchor': 'bottom',
-              'icon-allow-overlap': true,
-              'icon-ignore-placement': true,
-            }}
-            minzoom={MIN_MEMBERS_ZOOM}
-            filter={['==', selectedSourceMarker.properties.id, ['get', 'id']]}
-          />
-        )}
-      </Source>
-    </>
-  )
-}
-
-const MAP_REPORT_LAYER_POINT = gql`
-  query MapReportLayerGeoJSONPoint($genericDataId: String!) {
-    importedDataGeojsonPoint(genericDataId: $genericDataId) {
-      id
-      type
-      geometry {
-        type
-        coordinates
-      }
-      properties {
-        id
-        lastUpdate
-        name
-        phone
-        email
-        postcodeData {
-          postcode
-        }
-        address
-        json
-        remoteUrl
-        dataType {
-          dataSet {
-            externalDataSource {
-              name
-            }
-          }
-        }
-      }
-    }
-  }
-`
-
-export const MAP_REPORT_LAYER_ANALYTICS = gql`
-  query MapReportLayerAnalytics($reportID: ID!) {
-    mapReport(pk: $reportID) {
-      id
-      layers {
-        id
-        name
-        source {
-          id
-          organisation {
-            name
-          }
-        }
-      }
-    }
-  }
-`
-
-const MAP_REPORT_REGION_STATS = gql`
-  query MapReportRegionStats($reportID: ID!) {
-    mapReport(pk: $reportID) {
-      id
-      importedDataCountByRegion {
-        label
-        gss
-        count
-        gssArea {
-          point {
-            id
-            type
-            geometry {
-              type
-              coordinates
-            }
-          }
-        }
-      }
-    }
-  }
-`
-
-const MAP_REPORT_CONSTITUENCY_STATS = gql`
-  query MapReportConstituencyStats(
-    $reportID: ID!
-    $analyticalAreaType: AnalyticalAreaType!
-  ) {
-    mapReport(pk: $reportID) {
-      id
-      importedDataCountByConstituency: importedDataCountByArea(
-        analyticalAreaType: $analyticalAreaType
-      ) {
-        label
-        gss
-        count
-        gssArea {
-          point {
-            id
-            type
-            geometry {
-              type
-              coordinates
-            }
-          }
-        }
-      }
-    }
-  }
-`
-
-const MAP_REPORT_WARD_STATS = gql`
-  query MapReportWardStats($reportID: ID!) {
-    mapReport(pk: $reportID) {
-      id
-      importedDataCountByWard {
-        label
-        gss
-        count
-        gssArea {
-          point {
-            id
-            type
-            geometry {
-              type
-              coordinates
-            }
-          }
-        }
-      }
-    }
-  }
-`
