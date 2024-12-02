@@ -49,6 +49,7 @@ import { externalDataSourceOptions } from '@/lib/data'
 import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/lib/graphql/mutations'
 import { contentEditableMutation } from '@/lib/html'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
+import { capitalizeWords } from '@/lib/utils'
 
 import { ManageSourceSharing } from './ManageSourceSharing'
 import importData from './importData'
@@ -334,7 +335,8 @@ export default function InspectExternalDataSource({
                       </code>
                       <p>
                         Turn this switch on once you have added the above
-                        Webhook URL to your CRM:
+                        Webhook URL to your{' '}
+                        {capitalizeWords(source.crmType || 'CRM')}
                       </p>
                       <EnableWebhooksSwitch
                         externalDataSource={source}

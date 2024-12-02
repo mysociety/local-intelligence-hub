@@ -47,6 +47,7 @@ import {
 import { locationTypeOptions } from '@/lib/location'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { toastPromise } from '@/lib/toast'
+import { capitalizeWords } from '@/lib/utils'
 
 import { CreateAutoUpdateFormContext } from '../../NewExternalDataSourceWrapper'
 
@@ -734,8 +735,9 @@ export default function Page({
       <div className="space-y-6">
         <h1 className="text-hLg">Testing connection...</h1>
         <p className="text-meepGray-400 max-w-lg">
-          Please wait whilst we try to connect to your CRM using the information
-          you provided
+          Please wait whilst we try to connect to your{' '}
+          {capitalizeWords(externalDataSourceType || 'CRM')} using the
+          information you provided
         </p>
         <LoadingIcon />
       </div>
