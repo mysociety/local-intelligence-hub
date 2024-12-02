@@ -4,9 +4,8 @@ import uuid
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from wagtail.models import Site
-
 from asgiref.sync import async_to_sync
+from wagtail.models import Site
 
 from hub.models import (
     AirtableSource,
