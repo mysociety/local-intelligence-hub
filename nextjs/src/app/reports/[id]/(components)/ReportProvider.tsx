@@ -1,7 +1,7 @@
 'use client'
 
 import { FetchResult, useApolloClient } from '@apollo/client'
-import { useRouter } from 'next/router'
+import { useRouter } from 'next/navigation'
 import { ReactNode, createContext, useContext } from 'react'
 import toSpaceCase from 'to-space-case'
 
@@ -23,7 +23,7 @@ interface ReportProviderProps {
 
 const ReportProviderContext = createContext<any>(null)
 
-export const ReportProvider = ({ report, children }: ReportProviderProps) => {
+const ReportProvider = ({ report, children }: ReportProviderProps) => {
   const router = useRouter()
   const client = useApolloClient()
 
@@ -102,4 +102,5 @@ export const ReportProvider = ({ report, children }: ReportProviderProps) => {
   )
 }
 
+export default ReportProvider
 export const useReport = () => useContext(ReportProviderContext)

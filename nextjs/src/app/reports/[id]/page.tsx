@@ -13,8 +13,8 @@ import {
 } from '@/__generated__/graphql'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
 
-import ReportPage from './(components)/ReportPage'
-import { ReportProvider } from './(components)/ReportProvider'
+import ReportPage from './(components)/NewReportPage'
+import ReportProvider from './(components)/ReportProvider'
 import { GET_MAP_REPORT } from './gql_queries'
 
 type Params = {
@@ -44,7 +44,7 @@ export default function Page({ params: { id } }: { params: Params }) {
   return (
     <JotaiProvider key={id}>
       <MapProvider>
-        <ReportProvider report={report}>
+        <ReportProvider report={report.data?.mapReport}>
           <ReportPage />
         </ReportProvider>
       </MapProvider>
