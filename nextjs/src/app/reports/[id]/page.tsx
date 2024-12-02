@@ -23,6 +23,7 @@ import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { toastPromise } from '@/lib/toast'
 
 import ReportPage from './(components)/ReportPage'
+import { ReportProvider } from './(components)/ReportProvider'
 import {
   DisplayOptionsType,
   defaultDisplayOptions,
@@ -39,9 +40,8 @@ type Params = {
 }
 
 export default function Page({ params: { id } }: { params: Params }) {
-  const client = useApolloClient()
   const router = useRouter()
-
+  const client = useApolloClient()
   const report = useQuery<GetMapReportQuery, GetMapReportQueryVariables>(
     GET_MAP_REPORT,
     {
@@ -66,103 +66,13 @@ export default function Page({ params: { id } }: { params: Params }) {
     report.data?.mapReport?.displayOptions || {}
   )
 
-  const updateDisplayOptions = (options: Partial<DisplayOptionsType>) => {
-    updateMutation({ displayOptions: { ...displayOptions, ...options } })
-  }
-
   return (
     <JotaiProvider key={id}>
       <MapProvider>
-        <reportContext.Provider
-          value={{
-            id,
-            report,
-            updateReport: updateMutation,
-            deleteReport: del,
-            refreshReportDataQueries,
-            displayOptions,
-            setDisplayOptions: updateDisplayOptions,
-          }}
-        >
+        <ReportProvider report={report}>
           <ReportPage />
-        </reportContext.Provider>
+        </ReportProvider>
       </MapProvider>
     </JotaiProvider>
   )
-
-  function refreshReportDataQueries() {
-    toastPromise(
-      client.refetchQueries({
-        include: [
-          'GetMapReport',
-          'MapReportLayerAnalytics',
-          'GetConstituencyData',
-          'MapReportRegionStats',
-          'MapReportConstituencyStats',
-          'MapReportWardStats',
-        ],
-      }),
-      {
-        loading: 'Refreshing report data...',
-        success: 'Report data updated',
-        error: `Couldn't refresh report data`,
-      }
-    )
-  }
-
-  function updateMutation(input: MapReportInput) {
-    const update = client.mutate<
-      UpdateMapReportMutation,
-      UpdateMapReportMutationVariables
-    >({
-      mutation: UPDATE_MAP_REPORT,
-      variables: {
-        input: {
-          id,
-          ...input,
-        },
-      },
-    })
-    toastPromise(update, {
-      loading: 'Saving...',
-      success: (d) => {
-        if (!d.errors && d.data) {
-          if ('layers' in input) {
-            // If layers changed, that means
-            // all the member numbers will have changed too.
-            refreshReportDataQueries()
-          }
-          return {
-            title: 'Report saved',
-            description: `Updated ${Object.keys(input).map(spaceCase).join(', ')}`,
-          }
-        } else {
-          throw new Error("Couldn't save report")
-        }
-      },
-      error: `Couldn't save report`,
-    })
-  }
-
-  function del() {
-    const deleteMutation = client.mutate<
-      DeleteMapReportMutation,
-      DeleteMapReportMutationVariables
-    >({
-      mutation: DELETE_MAP_REPORT,
-      variables: {
-        id: { id },
-      },
-    })
-    toast.promise(deleteMutation, {
-      loading: 'Deleting...',
-      success: (d: FetchResult) => {
-        if (!d.errors && d.data) {
-          router.push('/reports')
-          return 'Deleted report'
-        }
-      },
-      error: `Couldn't delete report`,
-    })
-  }
 }
