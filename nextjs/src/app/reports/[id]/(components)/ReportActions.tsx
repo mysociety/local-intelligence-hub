@@ -1,4 +1,3 @@
-// page.js
 'use client'
 
 import { MoreVertical, RefreshCcw, Trash } from 'lucide-react'
@@ -23,10 +22,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 import { reportContext } from '../context'
-
-// page.js
-
-// page.js
 
 const ReportActions: React.FC = () => {
   const { report, deleteReport, refreshReportDataQueries } =

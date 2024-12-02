@@ -1,4 +1,3 @@
-// page.js
 'use client'
 
 import { gql, useQuery } from '@apollo/client'
@@ -12,10 +11,6 @@ import {
 } from '@/__generated__/graphql'
 import { PublicMap } from '@/components/report/PublicMap'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
-
-// page.js
-
-// page.js
 
 type Params = {
   orgSlug: string

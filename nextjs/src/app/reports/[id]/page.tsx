@@ -1,4 +1,3 @@
-// page.js
 'use client'
 
 import { FetchResult, useApolloClient, useQuery } from '@apollo/client'
@@ -34,10 +33,6 @@ import {
   GET_MAP_REPORT,
   UPDATE_MAP_REPORT,
 } from './gql_queries'
-
-// page.js
-
-// page.js
 
 type Params = {
   id: string
