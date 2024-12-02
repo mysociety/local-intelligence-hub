@@ -2,14 +2,12 @@
 
 import { FetchResult, useApolloClient } from '@apollo/client'
 import { useRouter } from 'next/router'
-import React, { ReactNode, createContext, useContext, useState } from 'react'
-import { toast } from 'sonner'
+import { ReactNode, createContext, useContext } from 'react'
 import toSpaceCase from 'to-space-case'
 
 import {
   DeleteMapReportMutation,
   DeleteMapReportMutationVariables,
-  MapReportInput,
   UpdateMapReportMutation,
   UpdateMapReportMutationVariables,
 } from '@/__generated__/graphql'
