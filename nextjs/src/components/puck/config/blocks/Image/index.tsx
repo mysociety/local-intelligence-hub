@@ -189,7 +189,7 @@ export const Image: ComponentConfig<ImageProps> = {
           )}
         </div>
         {caption && (
-          <figcaption style={{ marginTop: '20px' }}>{caption}</figcaption>
+          <figcaption style={{ marginBottom: '25px' }}>{caption}</figcaption>
         )}
       </figure>
     )
