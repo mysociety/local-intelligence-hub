@@ -178,14 +178,10 @@ class Command(BaseCommand):
 
         # Create a hub for the org
         hostname = "hub.localhost"
-        hub = HubHomepage.objects.filter(
-            title=hostname, organisation=org
-        ).first()
+        hub = HubHomepage.objects.filter(title=hostname, organisation=org).first()
         if not hub:
             logger.info("Creating a hub...")
-            hub = HubHomepage.create_for_user(
-                user=user, hostname=hostname, org=org
-            )
+            hub = HubHomepage.create_for_user(user=user, hostname=hostname, org=org)
 
         hub.puck_json_content = {
             "root": {
