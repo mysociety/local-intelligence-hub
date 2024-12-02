@@ -1,10 +1,11 @@
+import Image from 'next/image'
+import Link from 'next/link'
+
 import AboutCTA from '@/components/marketing/AboutCTA'
 import GetStarted from '@/components/marketing/GetStarted'
 import IntegtationsCTA from '@/components/marketing/IntegrationCTA'
 import ProductFeaturesList from '@/components/marketing/ProductFeaturesList'
 import { buttonVariants } from '@/components/ui/button'
-import Image from 'next/image'
-import Link from 'next/link'
 
 export default function MarketingHome() {
   return (

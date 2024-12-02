@@ -1,9 +1,10 @@
 'use client'
 
-import { DataSourceType } from '@/__generated__/graphql'
 import { useSearchParams } from 'next/navigation'
 import { createContext, useState } from 'react'
 import { twMerge } from 'tailwind-merge'
+
+import { DataSourceType } from '@/__generated__/graphql'
 
 export const CreateAutoUpdateFormContext = createContext<{
   step: number

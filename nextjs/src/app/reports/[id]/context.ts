@@ -1,13 +1,14 @@
 'use client'
 
+import { QueryResult } from '@apollo/client'
+import { createContext, useContext } from 'react'
+
 import {
   AnalyticalAreaType,
   Exact,
   GetMapReportQuery,
   MapReportInput,
 } from '@/__generated__/graphql'
-import { QueryResult } from '@apollo/client'
-import { createContext, useContext } from 'react'
 
 export const defaultDisplayOptions = {
   showLastElectionData: false,

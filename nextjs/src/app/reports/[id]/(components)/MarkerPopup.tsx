@@ -1,14 +1,16 @@
-import {
-  MapReportLayerGeoJsonPointQuery,
-  MapReportLayerGeoJsonPointQueryVariables,
-} from '@/__generated__/graphql'
-import { selectedSourceMarkerAtom } from '@/lib/map'
 import { useQuery } from '@apollo/client'
 import { Point } from 'geojson'
 import { useAtom } from 'jotai'
 import { ErrorBoundary } from 'next/dist/client/components/error-boundary'
 import React, { useContext } from 'react'
 import { Popup } from 'react-map-gl'
+
+import {
+  MapReportLayerGeoJsonPointQuery,
+  MapReportLayerGeoJsonPointQueryVariables,
+} from '@/__generated__/graphql'
+import { selectedSourceMarkerAtom } from '@/lib/map'
+
 import { reportContext } from '../context'
 import { MAP_REPORT_LAYER_POINT } from '../gql_queries'
 import useAnalytics from '../useAnalytics'

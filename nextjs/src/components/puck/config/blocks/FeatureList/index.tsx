@@ -1,8 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
-import { Section } from '@/components/puck/config/components/Section'
 import { ComponentConfig } from '@measured/puck'
 import dynamicIconImports from 'lucide-react/dynamicIconImports'
 import dynamic from 'next/dynamic'
+
+import { Section } from '@/components/puck/config/components/Section'
 
 const icons = Object.keys(dynamicIconImports).reduce((acc, iconName) => {
   // @ts-ignore

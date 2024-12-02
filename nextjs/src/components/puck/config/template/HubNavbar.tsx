@@ -1,7 +1,9 @@
 import Image from 'next/image'
-
 import Link from 'next/link'
 
+import logo from '@public/hub/logo.svg'
+
+import { HubNavLink } from '@/__generated__/graphql'
 import {
   Sheet,
   SheetContent,
@@ -10,9 +12,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
-
-import { HubNavLink } from '@/__generated__/graphql'
-import logo from '../../../../../public/hub/logo.svg'
 
 function NavItems({ navLinks }: { navLinks: HubNavLink[] }) {
   return (

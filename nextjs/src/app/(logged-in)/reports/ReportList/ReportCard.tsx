@@ -1,4 +1,9 @@
 'use client'
+
+import { formatRelative } from 'date-fns'
+import Image from 'next/image'
+import Link from 'next/link'
+
 import { ListReportsQuery } from '@/__generated__/graphql'
 import {
   Card,
@@ -7,9 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { formatRelative } from 'date-fns'
-import Image from 'next/image'
-import Link from 'next/link'
 
 export function ReportCard({
   report,

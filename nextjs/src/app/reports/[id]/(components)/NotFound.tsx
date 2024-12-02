@@ -1,5 +1,6 @@
 // page.js
 'use client'
+
 import {
   Card,
   CardContent,
@@ -7,6 +8,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+
+// page.js
+
+// page.js
 
 export function NotFound() {
   return (

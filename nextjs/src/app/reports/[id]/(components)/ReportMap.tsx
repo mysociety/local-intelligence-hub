@@ -1,11 +1,19 @@
 'use client'
 
+import { useQuery } from '@apollo/client'
+import { scaleLinear, scaleSequential } from 'd3-scale'
+import { interpolateInferno } from 'd3-scale-chromatic'
+import { atom, useAtom, useSetAtom } from 'jotai'
+import { Fragment, useContext, useEffect } from 'react'
+import Map, { Layer, Source, ViewState } from 'react-map-gl'
+
 import {
   AnalyticalAreaType,
   MapReportLayerGeoJsonPointQuery,
   MapReportLayerGeoJsonPointQueryVariables,
 } from '@/__generated__/graphql'
 import { reportContext } from '@/app/reports/[id]/context'
+import { PlaceholderLayer } from '@/components/PlaceholderLayer'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { BACKEND_URL } from '@/env'
 import { authenticationHeaders } from '@/lib/auth'
@@ -16,13 +24,7 @@ import {
   selectedSourceMarkerAtom,
   useLoadedMap,
 } from '@/lib/map'
-import { useQuery } from '@apollo/client'
-import { scaleLinear, scaleSequential } from 'd3-scale'
-import { interpolateInferno } from 'd3-scale-chromatic'
-import { atom, useAtom, useSetAtom } from 'jotai'
-import { Fragment, useContext, useEffect } from 'react'
-import Map, { Layer, Source, ViewState } from 'react-map-gl'
-import { PlaceholderLayer } from '../../../../components/PlaceholderLayer'
+
 import { getTilesets } from '../getTilesets'
 import { MAP_REPORT_LAYER_POINT } from '../gql_queries'
 import useAnalytics from '../useAnalytics'

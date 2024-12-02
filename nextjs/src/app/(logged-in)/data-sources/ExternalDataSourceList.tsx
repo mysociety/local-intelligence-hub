@@ -1,5 +1,11 @@
 'use client'
 
+import { gql, useQuery } from '@apollo/client'
+import { useAtomValue } from 'jotai'
+import Link from 'next/link'
+import qs from 'query-string'
+import { useEffect } from 'react'
+
 import {
   DataSourceType,
   ListOrganisationsQuery,
@@ -10,11 +16,6 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { externalDataSourceOptions } from '@/lib/data'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
-import { gql, useQuery } from '@apollo/client'
-import { useAtomValue } from 'jotai'
-import Link from 'next/link'
-import qs from 'query-string'
-import { useEffect } from 'react'
 
 const LIST_UPDATE_CONFIGS = gql`
   query ListOrganisations($currentOrganisationId: ID!) {

@@ -1,3 +1,7 @@
+import Image from 'next/image'
+import Link from 'next/link'
+import Marquee from 'react-fast-marquee'
+
 import { CiviPowerFundLogo } from '@/components/logos/CiviPowerFundLogo'
 import { CommonKnowledgeLogo } from '@/components/logos/CommonKnowledgeLogo'
 import { JRRTLogo } from '@/components/logos/JRRTLogo'
@@ -13,9 +17,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import Image from 'next/image'
-import Link from 'next/link'
-import Marquee from 'react-fast-marquee'
 
 export default function AboutOveriew() {
   let btnLink = '/signup'

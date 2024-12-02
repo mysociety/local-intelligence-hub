@@ -1,6 +1,7 @@
-import { requireAuth } from '@/lib/server-auth'
 import 'graphiql/graphiql.css'
 import { Metadata } from 'next'
+
+import { requireAuth } from '@/lib/server-auth'
 
 export default function GraphiQL({ children }: { children: React.ReactNode }) {
   requireAuth()

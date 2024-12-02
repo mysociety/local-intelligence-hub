@@ -3,6 +3,7 @@
 import { gql } from '@apollo/client'
 import ColorHash from 'color-hash'
 import { MapRef } from 'react-map-gl/dist/esm/mapbox/create-ref'
+
 var colorHash = new ColorHash()
 
 export const MAP_REPORT_LAYERS_SUMMARY = gql`

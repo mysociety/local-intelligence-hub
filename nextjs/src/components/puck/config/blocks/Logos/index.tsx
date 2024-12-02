@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
-import { Section } from '@/components/puck/config/components/Section'
 import { ComponentConfig } from '@measured/puck'
+
+import { Section } from '@/components/puck/config/components/Section'
 
 export type LogosProps = {
   logos: {

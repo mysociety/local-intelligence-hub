@@ -1,15 +1,17 @@
-import { ApolloWrapper } from '@/components/ApolloWrapper'
-import { FRONTEND_URL } from '@/env'
 import { Metadata } from 'next'
 import dynamic from 'next/dynamic'
 import NextTopLoader from 'nextjs-toploader'
 import { Suspense } from 'react'
-import PHProvider from '../components/analytics/PHProvider'
-import { openGraphImage } from '../lib/shared-metadata'
+
+import { ApolloWrapper } from '@/components/ApolloWrapper'
+import PHProvider from '@/components/analytics/PHProvider'
+import { FRONTEND_URL } from '@/env'
+import { openGraphImage } from '@/lib/shared-metadata'
+
 import './globals.css'
 
 const PostHogPageView = dynamic(
-  () => import('../components/analytics/PostHogPageView'),
+  () => import('@/components/analytics/PostHogPageView'),
   {
     ssr: false,
   }

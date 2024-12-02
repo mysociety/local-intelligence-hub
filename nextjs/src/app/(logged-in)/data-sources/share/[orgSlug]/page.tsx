@@ -1,3 +1,6 @@
+import { gql } from '@apollo/client'
+import { Metadata } from 'next'
+
 import {
   ShareWithOrgPageQuery,
   ShareWithOrgPageQueryVariables,
@@ -5,8 +8,7 @@ import {
 import { Card } from '@/components/ui/card'
 import { requireAuth } from '@/lib/server-auth'
 import { getClient } from '@/lib/services/apollo-client'
-import { gql } from '@apollo/client'
-import { Metadata } from 'next'
+
 import { ShareDataForm } from './ShareDataForm'
 
 type Params = {

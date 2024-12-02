@@ -1,5 +1,6 @@
 import { ComponentConfig } from '@measured/puck'
 import dynamic from 'next/dynamic'
+
 import './customRichTextStyles.css'
 
 export type RichTextProps = {

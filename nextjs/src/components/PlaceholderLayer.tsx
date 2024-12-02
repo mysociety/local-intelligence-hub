@@ -1,4 +1,5 @@
 'use client'
+
 import { Layer, LayerProps } from 'react-map-gl'
 
 /**

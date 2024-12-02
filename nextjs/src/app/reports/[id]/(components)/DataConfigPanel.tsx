@@ -1,5 +1,14 @@
 'use client'
 
+import { useApolloClient, useFragment } from '@apollo/client'
+import { useAtom } from 'jotai'
+import { ArrowRight, ClipboardCopy, Plus, Shuffle, X } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useContext } from 'react'
+import { toast } from 'sonner'
+import { v4 } from 'uuid'
+
 import {
   AnalyticalAreaType,
   DataSourceType,
@@ -40,14 +49,6 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { MAP_REPORT_LAYERS_SUMMARY, layerIdColour } from '@/lib/map'
 import { isDataConfigOpenAtom } from '@/lib/map/state'
-import { useApolloClient, useFragment } from '@apollo/client'
-import { useAtom } from 'jotai'
-import { ArrowRight, ClipboardCopy, Plus, Shuffle, X } from 'lucide-react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useContext } from 'react'
-import { toast } from 'sonner'
-import { v4 } from 'uuid'
 
 export default function DataConfigPanel() {
   const router = useRouter()

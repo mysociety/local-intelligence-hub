@@ -1,5 +1,8 @@
+import { Pencil } from 'lucide-react'
+
 import Pin from '@/components/Pin'
 import MarketingPageHeader from '@/components/marketing/MarkertingPageHeader'
+import RoadMapItems from '@/components/marketing/RoadmapItems'
 import TemplateCard from '@/components/marketing/TemplateCard'
 import {
   Card,
@@ -8,11 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Textarea } from '@/components/ui/textarea'
-import { Pencil } from 'lucide-react'
-
-import RoadMapItems from '@/components/marketing/RoadmapItems'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 
 export default function AboutRoadmap() {
   let btnLink = '/signup'

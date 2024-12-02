@@ -1,5 +1,15 @@
 'use client'
 
+import { gql, useApolloClient, useQuery } from '@apollo/client'
+import pluralize from 'pluralize'
+import { useEffect, useState } from 'react'
+import {
+  FormProvider,
+  SubmitHandler,
+  useFieldArray,
+  useForm,
+} from 'react-hook-form'
+
 import {
   DataSourceType,
   ShareDataSourcesMutation,
@@ -14,15 +24,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { Switch } from '@/components/ui/switch'
 import { toastPromise } from '@/lib/toast'
-import { gql, useApolloClient, useQuery } from '@apollo/client'
-import pluralize from 'pluralize'
-import { useEffect, useState } from 'react'
-import {
-  FormProvider,
-  SubmitHandler,
-  useFieldArray,
-  useForm,
-} from 'react-hook-form'
 
 export function ShareDataForm({ toOrgId }: { toOrgId: string }) {
   const query = useQuery<

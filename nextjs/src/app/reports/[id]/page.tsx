@@ -1,6 +1,16 @@
 // page.js
 'use client'
 
+import { FetchResult, useApolloClient, useQuery } from '@apollo/client'
+import { Provider as JotaiProvider, useAtomValue } from 'jotai'
+import { merge } from 'lodash'
+import 'mapbox-gl/dist/mapbox-gl.css'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+import { MapProvider } from 'react-map-gl'
+import { toast } from 'sonner'
+import spaceCase from 'to-space-case'
+
 import {
   DeleteMapReportMutation,
   DeleteMapReportMutationVariables,
@@ -12,15 +22,7 @@ import {
 } from '@/__generated__/graphql'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { toastPromise } from '@/lib/toast'
-import { FetchResult, useApolloClient, useQuery } from '@apollo/client'
-import { Provider as JotaiProvider, useAtomValue } from 'jotai'
-import { merge } from 'lodash'
-import 'mapbox-gl/dist/mapbox-gl.css'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
-import { MapProvider } from 'react-map-gl'
-import { toast } from 'sonner'
-import spaceCase from 'to-space-case'
+
 import ReportPage from './(components)/ReportPage'
 import {
   DisplayOptionsType,
@@ -32,6 +34,10 @@ import {
   GET_MAP_REPORT,
   UPDATE_MAP_REPORT,
 } from './gql_queries'
+
+// page.js
+
+// page.js
 
 type Params = {
   id: string

@@ -1,6 +1,7 @@
+import { Metadata } from 'next'
+
 import { requireAuth } from '@/lib/server-auth'
 
-import { Metadata } from 'next'
 import NewExternalDataSourceWrapper from './NewExternalDataSourceWrapper'
 
 export default async function Layout({

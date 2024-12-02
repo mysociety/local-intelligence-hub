@@ -1,11 +1,15 @@
 /* eslint-disable @next/next/no-img-element */
 import { ComponentConfig, Fields } from '@measured/puck'
-
+import { ErrorBoundary } from '@sentry/nextjs'
+import { Download } from 'lucide-react'
+import dynamicIconImports from 'lucide-react/dynamicIconImports'
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
-import ArrowTopRight from '../../../../../../public/hub/arrow-top-right.svg'
-import CirclePattern from '../../../../../../public/hub/circle-pattern.svg'
-import { PuckText } from '../../components/PuckText'
+import posthog from 'posthog-js'
+
+import ArrowTopRight from '@public/hub/arrow-top-right.svg'
+import CirclePattern from '@public/hub/circle-pattern.svg'
 
 import {
   Dialog,
@@ -16,12 +20,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 
-import { Download } from 'lucide-react'
-
-import { ErrorBoundary } from '@sentry/nextjs'
-import dynamicIconImports from 'lucide-react/dynamicIconImports'
-import dynamic from 'next/dynamic'
-import posthog from 'posthog-js'
+import { PuckText } from '../../components/PuckText'
 import { itemTypes } from '../FilterableGrid/cardTypes'
 
 const icons = Object.keys(dynamicIconImports).reduce((acc, iconName) => {

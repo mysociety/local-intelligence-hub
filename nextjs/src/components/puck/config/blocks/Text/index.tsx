@@ -1,4 +1,5 @@
 import { ComponentConfig } from '@measured/puck'
+
 import { Section } from '../../components/Section'
 
 export type TextProps = {

@@ -1,11 +1,12 @@
+import { Toaster } from 'sonner'
+
+import PreFooter from '@/components/PreFooter'
 import { AreaPattern } from '@/components/areaPattern'
 import Footer from '@/components/footer'
 import FeedbackBanner from '@/components/marketing/FeedbackBanner'
 import SignUp from '@/components/marketing/SignUp'
 import Navbar from '@/components/navbar'
-import PreFooter from '@/components/PreFooter'
 import { loadUser } from '@/lib/server-auth'
-import { Toaster } from 'sonner'
 
 export default async function Layout({
   children,

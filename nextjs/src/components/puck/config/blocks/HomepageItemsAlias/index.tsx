@@ -1,11 +1,13 @@
+import { gql, useQuery } from '@apollo/client'
+import { ComponentConfig, Data } from '@measured/puck'
+
 import {
   GetHubHomepageJsonQuery,
   GetHubHomepageJsonQueryVariables,
 } from '@/__generated__/graphql'
 import { useHubRenderContext } from '@/components/hub/HubRenderContext'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
-import { gql, useQuery } from '@apollo/client'
-import { ComponentConfig, Data } from '@measured/puck'
+
 import { FilterableGridProps, FilterableGridRenderer } from '../FilterableGrid'
 
 // TODO:

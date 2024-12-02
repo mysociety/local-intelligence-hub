@@ -1,8 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
+import { ComponentConfig } from '@measured/puck'
 
 import { Section } from '@/components/puck/config/components/Section'
 import { Button } from '@/components/ui/button'
-import { ComponentConfig } from '@measured/puck'
 
 export type ButtonGroupProps = {
   align?: string

@@ -1,6 +1,7 @@
 import { ComponentConfig } from '@measured/puck'
 import Image from 'next/image'
-import heroImg from '../../../../../../public/hub/hero-img.jpg'
+
+import heroImg from '@public/hub/hero-img.jpg'
 
 export type AboutProps = {}
 

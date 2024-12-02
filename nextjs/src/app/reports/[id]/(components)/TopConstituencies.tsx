@@ -1,30 +1,32 @@
+import { gql, useQuery } from '@apollo/client'
+import { getYear } from 'date-fns'
+import { useAtom } from 'jotai'
+import { useContext, useState } from 'react'
+import { twMerge } from 'tailwind-merge'
+
 import {
   ConstituencyStatsOverviewQuery,
   ConstituencyStatsOverviewQueryVariables,
 } from '@/__generated__/graphql'
 import { reportContext, useReportContext } from '@/app/reports/[id]/context'
 import {
-  constituencyPanelTabAtom,
-  selectedConstituencyAtom,
-} from '@/lib/map/state'
-import { useLoadedMap } from '@/lib/map/useLoadedMap'
-import { gql, useQuery } from '@apollo/client'
-import { getYear } from 'date-fns'
-import { useAtom } from 'jotai'
-import { useContext, useState } from 'react'
-import { twMerge } from 'tailwind-merge'
-import {
   MemberElectoralInsights,
   Person,
-} from '../../../../components/reportsConstituencyItem'
-import { LoadingIcon } from '../../../../components/ui/loadingIcon'
+} from '@/components/reportsConstituencyItem'
+import { LoadingIcon } from '@/components/ui/loadingIcon'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../../../components/ui/select'
+} from '@/components/ui/select'
+import {
+  constituencyPanelTabAtom,
+  selectedConstituencyAtom,
+} from '@/lib/map/state'
+import { useLoadedMap } from '@/lib/map/useLoadedMap'
+
 import { MAX_CONSTITUENCY_ZOOM } from './ReportMap'
 
 export function TopConstituencies() {

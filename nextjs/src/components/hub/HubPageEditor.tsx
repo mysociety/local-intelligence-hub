@@ -1,5 +1,13 @@
 'use client'
 
+import { gql, useApolloClient, useQuery } from '@apollo/client'
+import { Data, Puck, Button as PuckButton } from '@measured/puck'
+import '@measured/puck/puck.css'
+import { ChevronDownIcon, Slash } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { Fragment, useMemo } from 'react'
+
 import {
   CreateChildPageMutation,
   CreateChildPageMutationVariables,
@@ -25,13 +33,6 @@ import {
 } from '@/components/ui/dialog'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { toastPromise } from '@/lib/toast'
-import { gql, useApolloClient, useQuery } from '@apollo/client'
-import { Data, Puck, Button as PuckButton } from '@measured/puck'
-import '@measured/puck/puck.css'
-import { ChevronDownIcon, Slash } from 'lucide-react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { Fragment, useMemo } from 'react'
 
 export default function HubPageEditor({
   hubId,

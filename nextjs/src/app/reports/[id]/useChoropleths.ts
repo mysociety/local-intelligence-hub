@@ -1,8 +1,10 @@
 'use client'
 
+import { useEffect } from 'react'
+
 import { DisplayOptionsType } from '@/app/reports/[id]/context'
 import { useLoadedMap } from '@/lib/map'
-import { useEffect } from 'react'
+
 import { getTilesets } from './getTilesets'
 import useAnalytics from './useAnalytics'
 

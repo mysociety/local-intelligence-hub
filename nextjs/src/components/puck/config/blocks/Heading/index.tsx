@@ -1,5 +1,6 @@
-import { Section } from '@/components/puck/config/components/Section'
 import { ComponentConfig } from '@measured/puck'
+
+import { Section } from '@/components/puck/config/components/Section'
 
 export type HeadingProps = {
   align: 'left' | 'center' | 'right'

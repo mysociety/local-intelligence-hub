@@ -1,3 +1,6 @@
+import { gql } from '@apollo/client'
+import { Metadata, ResolvingMetadata } from 'next'
+
 import {
   GetPageQuery,
   GetPageQueryVariables,
@@ -9,8 +12,7 @@ import { ConsentRespectingPosthogAnalytics } from '@/components/analytics/Consen
 import { CookieConsentComponent } from '@/components/hub/CookieConsent'
 import { RootCSS } from '@/components/puck/config/root'
 import { getClient } from '@/lib/services/apollo-client'
-import { gql } from '@apollo/client'
-import { Metadata, ResolvingMetadata } from 'next'
+
 import { GET_PAGE } from './query'
 
 type Params = {

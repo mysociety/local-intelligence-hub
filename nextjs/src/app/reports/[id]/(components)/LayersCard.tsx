@@ -1,4 +1,10 @@
 'use client'
+
+import { useAtom, useSetAtom } from 'jotai'
+import { BarChart3, Layers } from 'lucide-react'
+import { useContext } from 'react'
+import { twMerge } from 'tailwind-merge'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { contentEditableMutation } from '@/lib/html'
 import {
@@ -6,10 +12,7 @@ import {
   isDataConfigOpenAtom,
   selectedConstituencyAtom,
 } from '@/lib/map/state'
-import { useAtom, useSetAtom } from 'jotai'
-import { BarChart3, Layers } from 'lucide-react'
-import { useContext } from 'react'
-import { twMerge } from 'tailwind-merge'
+
 import { reportContext } from '../context'
 import DataConfigPanel from './DataConfigPanel'
 import ReportActions from './ReportActions'

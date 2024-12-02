@@ -1,5 +1,7 @@
 'use client'
 
+import { useQuery } from '@apollo/client'
+
 import {
   MapReportConstituencyStatsQuery,
   MapReportConstituencyStatsQueryVariables,
@@ -11,7 +13,7 @@ import {
   MapReportWardStatsQueryVariables,
 } from '@/__generated__/graphql'
 import { DisplayOptionsType } from '@/app/reports/[id]/context'
-import { useQuery } from '@apollo/client'
+
 import {
   MAP_REPORT_CONSTITUENCY_STATS,
   MAP_REPORT_LAYER_ANALYTICS,

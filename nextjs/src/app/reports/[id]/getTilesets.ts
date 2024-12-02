@@ -1,5 +1,7 @@
-import { MapReportRegionStatsQuery } from '@/__generated__/graphql'
 import { LayerProps } from 'react-map-gl'
+
+import { MapReportRegionStatsQuery } from '@/__generated__/graphql'
+
 import {
   MAX_CONSTITUENCY_ZOOM,
   MAX_REGION_ZOOM,

@@ -1,13 +1,14 @@
 'use client'
 
-import { MyOrgsQuery, UserDataQuery } from '@/__generated__/graphql'
-import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { gql, useQuery } from '@apollo/client'
 import * as Sentry from '@sentry/nextjs'
 import { useAtomValue } from 'jotai'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { usePostHog } from 'posthog-js/react'
 import { useEffect } from 'react'
+
+import { MyOrgsQuery, UserDataQuery } from '@/__generated__/graphql'
+import { currentOrganisationIdAtom } from '@/lib/organisation'
 
 export default function PostHogPageView(): null {
   const pathname = usePathname()

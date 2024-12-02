@@ -1,4 +1,5 @@
 import { ComponentConfig } from '@measured/puck'
+
 import { spacingOptions } from '../../options'
 
 export type VerticalSpaceProps = {

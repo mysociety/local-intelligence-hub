@@ -1,7 +1,9 @@
 'use client'
+
 import { useAtom } from 'jotai'
 import { useEffect } from 'react'
 import { useMap } from 'react-map-gl'
+
 import { MapLoader } from '.'
 import { mapHasLoaded } from './state'
 

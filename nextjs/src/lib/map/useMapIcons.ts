@@ -1,5 +1,7 @@
 'use client'
+
 import { useEffect, useState } from 'react'
+
 import { MapLoader, MapboxImageSource } from '.'
 
 export function useMapIcons(

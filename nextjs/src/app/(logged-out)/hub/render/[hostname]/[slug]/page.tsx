@@ -1,6 +1,8 @@
+import { Metadata, ResolvingMetadata } from 'next'
+
 import { GetPageQuery, GetPageQueryVariables } from '@/__generated__/graphql'
 import { getClient } from '@/lib/services/apollo-client'
-import { Metadata, ResolvingMetadata } from 'next'
+
 import RenderPuck from '../RenderPuck'
 import { Params } from '../params'
 import { GET_PAGE } from '../query'

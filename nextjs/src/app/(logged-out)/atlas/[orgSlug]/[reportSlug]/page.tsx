@@ -1,16 +1,21 @@
 // page.js
 'use client'
 
+import { gql, useQuery } from '@apollo/client'
+import { Provider as JotaiProvider } from 'jotai'
+import 'mapbox-gl/dist/mapbox-gl.css'
+import { MapProvider } from 'react-map-gl'
+
 import {
   GetPublicMapReportForLayoutQuery,
   GetPublicMapReportForLayoutQueryVariables,
 } from '@/__generated__/graphql'
 import { PublicMap } from '@/components/report/PublicMap'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
-import { gql, useQuery } from '@apollo/client'
-import { Provider as JotaiProvider } from 'jotai'
-import 'mapbox-gl/dist/mapbox-gl.css'
-import { MapProvider } from 'react-map-gl'
+
+// page.js
+
+// page.js
 
 type Params = {
   orgSlug: string

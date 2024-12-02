@@ -1,14 +1,17 @@
 /* eslint-disable @next/next/no-img-element */
-import { FieldDefinition } from '@/__generated__/graphql'
-import { makeFrontEndClient } from '@/components/ApolloWrapper'
-import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { gql, useQuery } from '@apollo/client'
 import { ComponentConfig } from '@measured/puck'
 import { compareAsc, formatDate, isBefore } from 'date-fns'
 import Image from 'next/image'
 import Link from 'next/link'
-import ArrowTopRight from '../../../../../../public/hub/arrow-top-right.svg'
-import CirclePattern from '../../../../../../public/hub/circle-pattern.svg'
+
+import ArrowTopRight from '@public/hub/arrow-top-right.svg'
+import CirclePattern from '@public/hub/circle-pattern.svg'
+
+import { FieldDefinition } from '@/__generated__/graphql'
+import { makeFrontEndClient } from '@/components/ApolloWrapper'
+import { LoadingIcon } from '@/components/ui/loadingIcon'
+
 import { PuckText } from '../../components/PuckText'
 
 export type EventListProps = {

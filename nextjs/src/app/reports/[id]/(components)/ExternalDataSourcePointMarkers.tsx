@@ -1,9 +1,12 @@
 'use client'
-import { BACKEND_URL } from '@/env'
-import { layerColour, selectedSourceMarkerAtom, useLoadedMap } from '@/lib/map'
+
 import { useAtom } from 'jotai'
 import { useEffect } from 'react'
 import { Layer, Source } from 'react-map-gl'
+
+import { BACKEND_URL } from '@/env'
+import { layerColour, selectedSourceMarkerAtom, useLoadedMap } from '@/lib/map'
+
 import { MIN_MEMBERS_ZOOM } from './ReportMap'
 
 export function ExternalDataSourcePointMarkers({

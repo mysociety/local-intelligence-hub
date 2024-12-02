@@ -1,5 +1,7 @@
-import { requireAuth } from '@/lib/server-auth'
 import { Metadata } from 'next'
+
+import { requireAuth } from '@/lib/server-auth'
+
 import ReportList from './ReportList'
 
 export default async function Page() {

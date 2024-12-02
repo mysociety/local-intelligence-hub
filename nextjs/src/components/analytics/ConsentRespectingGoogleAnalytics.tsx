@@ -1,4 +1,5 @@
 'use client'
+
 import Script from 'next/script'
 import { useEffect } from 'react'
 import * as CookieConsent from 'vanilla-cookieconsent'

@@ -1,4 +1,10 @@
 'use client'
+
+import { FetchResult, gql, useApolloClient } from '@apollo/client'
+import { useAtomValue } from 'jotai'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+
 import {
   CreateMapReportMutation,
   CreateMapReportMutationVariables,
@@ -8,10 +14,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { triggerAnalyticsEvent } from '@/lib/posthogutils'
-import { FetchResult, gql, useApolloClient } from '@apollo/client'
-import { useAtomValue } from 'jotai'
-import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
 
 export function CreateReportCard() {
   const client = useApolloClient()

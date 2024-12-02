@@ -1,4 +1,3 @@
-import { GRAPHQL_URL } from '@/env'
 import { ApolloLink, HttpLink } from '@apollo/client'
 import { setContext } from '@apollo/client/link/context'
 import { registerApolloClient } from '@apollo/experimental-nextjs-app-support/rsc'
@@ -7,6 +6,8 @@ import {
   NextSSRInMemoryCache,
 } from '@apollo/experimental-nextjs-app-support/ssr'
 import { cookies } from 'next/headers'
+
+import { GRAPHQL_URL } from '@/env'
 
 const getJwt = (): string | undefined => {
   const cookieStore = cookies()

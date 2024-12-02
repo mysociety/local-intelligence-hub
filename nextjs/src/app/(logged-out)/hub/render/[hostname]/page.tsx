@@ -1,5 +1,6 @@
 import { GetPageQuery, GetPageQueryVariables } from '@/__generated__/graphql'
 import { getClient } from '@/lib/services/apollo-client'
+
 import RenderPuck from './RenderPuck'
 import { Params } from './params'
 import { GET_PAGE } from './query'

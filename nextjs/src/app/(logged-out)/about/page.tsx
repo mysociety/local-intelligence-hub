@@ -1,15 +1,15 @@
 import { Metadata } from 'next'
 
-import AboutHistory from './History'
-import AboutOveriew from './Overview'
-import AboutRoadmap from './Roadmap'
-
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs-rounded'
+
+import AboutHistory from './History'
+import AboutOveriew from './Overview'
+import AboutRoadmap from './Roadmap'
 
 export default function AboutPage() {
   let btnLink = '/signup'

@@ -1,5 +1,10 @@
 'use client'
 
+import { FetchResult, gql, useMutation, useQuery } from '@apollo/client'
+import { useRouter } from 'next/navigation'
+import { useContext, useEffect } from 'react'
+import { toast } from 'sonner'
+
 import {
   ExternalDataSourceInput,
   GetSourceMappingQuery,
@@ -12,10 +17,7 @@ import { Button } from '@/components/ui/button'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/lib/graphql/mutations'
 import { triggerAnalyticsEvent } from '@/lib/posthogutils'
-import { FetchResult, gql, useMutation, useQuery } from '@apollo/client'
-import { useRouter } from 'next/navigation'
-import { useContext, useEffect } from 'react'
-import { toast } from 'sonner'
+
 import { CreateAutoUpdateFormContext } from '../../NewExternalDataSourceWrapper'
 
 const GET_UPDATE_CONFIG = gql`

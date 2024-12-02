@@ -1,6 +1,8 @@
 'use client'
-import { MAP_REPORT_FRAGMENT } from '@/lib/map'
+
 import { gql } from '@apollo/client'
+
+import { MAP_REPORT_FRAGMENT } from '@/lib/map'
 
 export const MAP_REPORT_WARD_STATS = gql`
   query MapReportWardStats($reportID: ID!) {

@@ -1,12 +1,12 @@
 import { ComponentConfig } from '@measured/puck'
+import { AnimatePresence, motion } from 'framer-motion'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import React from 'react'
 
-import illyHero from '../../../../../../public/hub/illystrations/hero.svg'
-import heroImg from '../../../../../../public/hub/tcc-hero-image-7-jun.jpg'
+import illyHero from '@public/hub/illystrations/hero.svg'
+import heroImg from '@public/hub/tcc-hero-image-7-jun.jpg'
 
-import { AnimatePresence, motion } from 'framer-motion'
-import { useRouter } from 'next/navigation'
 import { PuckText } from '../../components/PuckText'
 
 const words = ['Climate', 'People', 'Nature']

@@ -1,11 +1,13 @@
 'use client'
 
-import { GetHubMapDataQuery, GetLocalDataQuery } from '@/__generated__/graphql'
-import { useLoadedMap, useMapIcons } from '@/lib/map'
 import { atom, useAtom } from 'jotai'
 import { useEffect } from 'react'
 import Map, { Layer, LngLatLike, Source, ViewState } from 'react-map-gl'
 import { ImmutableLike } from 'react-map-gl/dist/esm/types'
+
+import { GetHubMapDataQuery, GetLocalDataQuery } from '@/__generated__/graphql'
+import { useLoadedMap, useMapIcons } from '@/lib/map'
+
 import { PlaceholderLayer } from '../PlaceholderLayer'
 import { LoadingIcon } from '../ui/loadingIcon'
 import { HubPointMarkers } from './HubMapPoints'

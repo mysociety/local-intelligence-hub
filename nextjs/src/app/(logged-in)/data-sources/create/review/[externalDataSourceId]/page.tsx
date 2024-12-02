@@ -1,5 +1,9 @@
 'use client'
 
+import { gql, useQuery } from '@apollo/client'
+import { useRouter } from 'next/navigation'
+import { useContext, useEffect } from 'react'
+
 import {
   AutoUpdateCreationReviewQuery,
   AutoUpdateCreationReviewQueryVariables,
@@ -12,9 +16,7 @@ import {
 } from '@/components/ExternalDataSourceCard'
 import { Button } from '@/components/ui/button'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
-import { gql, useQuery } from '@apollo/client'
-import { useRouter } from 'next/navigation'
-import { useContext, useEffect } from 'react'
+
 import { CreateAutoUpdateFormContext } from '../../NewExternalDataSourceWrapper'
 
 const GET_UPDATE_CONFIG = gql`

@@ -1,12 +1,13 @@
 'use client'
 
-import { GRAPHQL_URL } from '@/env'
-import { authenticationHeaders } from '@/lib/auth'
 import { createGraphiQLFetcher } from '@graphiql/toolkit'
 import { ErrorBoundary } from '@sentry/nextjs'
 import { GraphiQL, GraphiQLProps } from 'graphiql'
 import 'graphiql/graphiql.css'
 import { useMemo } from 'react'
+
+import { GRAPHQL_URL } from '@/env'
+import { authenticationHeaders } from '@/lib/auth'
 
 export function GraphQLPlayground(props: Partial<GraphiQLProps>) {
   const fetcher = useMemo(function getAuthenticatedFetcher() {

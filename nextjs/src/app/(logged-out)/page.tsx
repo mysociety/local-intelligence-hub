@@ -1,4 +1,5 @@
 import { loadUser } from '@/lib/server-auth'
+
 import Dashboard from './Dashboard'
 import MarketingHome from './MarketingHome'
 

@@ -1,9 +1,10 @@
+import { ApolloClient, FetchResult, gql } from '@apollo/client'
+
 import {
   ImportDataMutation,
   ImportDataMutationVariables,
 } from '@/__generated__/graphql'
 import { toastPromise } from '@/lib/toast'
-import { ApolloClient, FetchResult, gql } from '@apollo/client'
 
 export default function importData(
   client: ApolloClient<any>,

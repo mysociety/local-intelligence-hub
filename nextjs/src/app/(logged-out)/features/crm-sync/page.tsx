@@ -1,6 +1,7 @@
+import { Metadata } from 'next'
+
 import FeaturesOption from '@/components/marketing/FeaturesOption'
 import IntegtationsCTA from '@/components/marketing/IntegrationCTA'
-import { Metadata } from 'next'
 
 export default function DataEnrichment() {
   let btnLink = '/signup'

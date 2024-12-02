@@ -1,3 +1,5 @@
+import Image from 'next/image'
+
 import GetStarted from '@/components/marketing/GetStarted'
 import MarketingPageHeader from '@/components/marketing/MarkertingPageHeader'
 import TemplateTextBlock from '@/components/marketing/TemplateTextBlock'
@@ -8,7 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { externalDataSourceOptions } from '@/lib/data'
-import Image from 'next/image'
+
 import { MappedLogo } from '../logos/MappedLogo'
 
 interface IntegrationsCRMOptionProps {

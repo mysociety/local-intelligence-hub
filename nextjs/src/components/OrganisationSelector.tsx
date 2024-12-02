@@ -1,5 +1,8 @@
 'use client'
 
+import { gql, useQuery } from '@apollo/client'
+import { useAtom } from 'jotai'
+import { ChevronDown } from 'lucide-react'
 import * as React from 'react'
 
 import { GetOrganisationsQuery } from '@/__generated__/graphql'
@@ -13,9 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
-import { gql, useQuery } from '@apollo/client'
-import { useAtom } from 'jotai'
-import { ChevronDown } from 'lucide-react'
+
 import { LoadingIcon } from './ui/loadingIcon'
 
 export function OrganisationSelector() {

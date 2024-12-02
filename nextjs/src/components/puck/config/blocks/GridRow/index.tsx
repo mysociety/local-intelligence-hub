@@ -1,5 +1,4 @@
 import { ComponentConfig } from '@measured/puck'
-
 import { DropZone } from '@measured/puck'
 
 export type GridRowProps = {

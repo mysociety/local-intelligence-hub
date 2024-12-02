@@ -1,6 +1,10 @@
 'use client'
 
+import { useQuery } from '@apollo/client'
+import { Provider as JotaiProvider } from 'jotai'
+import 'mapbox-gl/dist/mapbox-gl.css'
 import React, { useState } from 'react'
+import { MapProvider } from 'react-map-gl'
 
 import {
   GetEventDataQuery,
@@ -19,10 +23,7 @@ import {
 import { SIDEBAR_WIDTH } from '@/components/hub/data'
 import Root from '@/components/puck/config/root'
 import { useBreakpoint } from '@/lib/hooks/css'
-import { useQuery } from '@apollo/client'
-import { Provider as JotaiProvider } from 'jotai'
-import 'mapbox-gl/dist/mapbox-gl.css'
-import { MapProvider } from 'react-map-gl'
+
 import { SearchPanel } from './SearchPanel'
 import { GET_EVENT_DATA, GET_HUB_MAP_DATA, GET_LOCAL_DATA } from './queries'
 

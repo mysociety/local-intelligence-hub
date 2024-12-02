@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { ComponentConfig } from '@measured/puck'
 import slugify from 'slug'
+
 import { PuckText } from '../../components/PuckText'
 import HubResponsivity from '../../template/HubReponsivity'
 

@@ -1,4 +1,5 @@
 import { ComponentConfig, Config } from '@measured/puck'
+
 import { About } from './blocks/About'
 import { ButtonGroupProps } from './blocks/ButtonGroup'
 import { Card, CardProps } from './blocks/Card'

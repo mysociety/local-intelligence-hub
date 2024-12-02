@@ -1,7 +1,5 @@
 'use client'
 
-import { GRAPHQL_URL } from '@/env'
-import { authenticationHeaders } from '@/lib/auth'
 import { ApolloLink, HttpLink } from '@apollo/client'
 import { setContext } from '@apollo/client/link/context'
 import {
@@ -9,6 +7,9 @@ import {
   NextSSRApolloClient,
   NextSSRInMemoryCache,
 } from '@apollo/experimental-nextjs-app-support/ssr'
+
+import { GRAPHQL_URL } from '@/env'
+import { authenticationHeaders } from '@/lib/auth'
 
 /**
  * Creates an apollo client that can be used in client components.

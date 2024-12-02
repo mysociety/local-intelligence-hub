@@ -1,10 +1,12 @@
 'use client'
 
 import Image from 'next/image'
-import logo from '../../../../../public/hub/logo.svg'
+import * as CookieConsent from 'vanilla-cookieconsent'
+
+import logo from '@public/hub/logo.svg'
+
 // @ts-ignore
 import { useHubRenderContext } from '@/components/hub/HubRenderContext'
-import * as CookieConsent from 'vanilla-cookieconsent'
 
 export default function HubFooter() {
   const hubContext = useHubRenderContext()

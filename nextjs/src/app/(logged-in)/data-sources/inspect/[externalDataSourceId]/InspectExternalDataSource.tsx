@@ -1,5 +1,14 @@
 'use client'
 
+import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
+import { format } from 'd3-format'
+import { formatRelative } from 'date-fns'
+import { useAtom } from 'jotai'
+import { AlertCircle, ExternalLink } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import pluralize from 'pluralize'
+import { toast } from 'sonner'
+
 import {
   DataSourceType,
   DeleteUpdateConfigMutation,
@@ -40,14 +49,7 @@ import { externalDataSourceOptions } from '@/lib/data'
 import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/lib/graphql/mutations'
 import { contentEditableMutation } from '@/lib/html'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
-import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
-import { format } from 'd3-format'
-import { formatRelative } from 'date-fns'
-import { useAtom } from 'jotai'
-import { AlertCircle, ExternalLink } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import pluralize from 'pluralize'
-import { toast } from 'sonner'
+
 import { ManageSourceSharing } from './ManageSourceSharing'
 import importData from './importData'
 

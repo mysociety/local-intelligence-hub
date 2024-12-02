@@ -1,10 +1,20 @@
 'use client'
 
+import { gql, useQuery } from '@apollo/client'
+import { format } from 'd3-format'
+import { getYear } from 'date-fns'
+import { AlertTriangle } from 'lucide-react'
+import Image from 'next/image'
+import pluralize from 'pluralize'
+import { useContext } from 'react'
+import { twMerge } from 'tailwind-merge'
+
 import {
   AnalyticalAreaType,
   GetConstituencyDataQuery,
   GetConstituencyDataQueryVariables,
 } from '@/__generated__/graphql'
+import { reportContext, useReportContext } from '@/app/reports/[id]/context'
 import {
   Card,
   CardContent,
@@ -12,12 +22,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { gql, useQuery } from '@apollo/client'
-import { format } from 'd3-format'
-import { getYear } from 'date-fns'
-import pluralize from 'pluralize'
-
-import { reportContext, useReportContext } from '@/app/reports/[id]/context'
 import {
   Tooltip,
   TooltipContent,
@@ -26,10 +30,7 @@ import {
 } from '@/components/ui/tooltip'
 import { BACKEND_URL } from '@/env'
 import { layerColour } from '@/lib/map'
-import { AlertTriangle } from 'lucide-react'
-import Image from 'next/image'
-import { useContext } from 'react'
-import { twMerge } from 'tailwind-merge'
+
 import { OverlapIcon } from './icons/OverlapIcon'
 import { LoadingIcon } from './ui/loadingIcon'
 

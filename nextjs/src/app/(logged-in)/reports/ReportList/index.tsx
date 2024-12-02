@@ -1,14 +1,16 @@
 'use client'
 
+import { gql, useQuery } from '@apollo/client'
+import { useAtomValue } from 'jotai'
+import { useEffect } from 'react'
+
 import {
   ListReportsQuery,
   ListReportsQueryVariables,
 } from '@/__generated__/graphql'
 import { Skeleton } from '@/components/ui/skeleton'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
-import { gql, useQuery } from '@apollo/client'
-import { useAtomValue } from 'jotai'
-import { useEffect } from 'react'
+
 import { CreateReportCard } from './CreateReportCard'
 import { ReportCard } from './ReportCard'
 

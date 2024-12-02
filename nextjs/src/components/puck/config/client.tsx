@@ -1,7 +1,6 @@
 'use client'
 
 import { DropZone } from '@measured/puck'
-
 import React from 'react'
 import {
   Layout,
@@ -9,6 +8,7 @@ import {
   GridLayout as RGL,
   WidthProvider,
 } from 'react-grid-layout-next'
+
 const GridLayout = WidthProvider(RGL)
 
 type State = {

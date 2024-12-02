@@ -1,13 +1,11 @@
 import { ComponentConfig } from '@measured/puck'
 import Image from 'next/image'
-import CirclePattern from '../../../../../../public/hub/main-circle-pattern.svg'
+import Link from 'next/link'
 
 import ArrowTopRight from '../../../../../../public/hub/arrow-top-right.svg'
-import ukMap from '../../../../../../public/hub/uk-map.svg'
-
+import CirclePattern from '../../../../../../public/hub/main-circle-pattern.svg'
 import tccHeart from '../../../../../../public/hub/tcc-heart.svg'
-
-import Link from 'next/link'
+import ukMap from '../../../../../../public/hub/uk-map.svg'
 import HubResponsivity from '../../template/HubReponsivity'
 
 export type SignPostProps = {

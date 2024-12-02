@@ -1,3 +1,7 @@
+import { gql } from '@apollo/client'
+import Link from 'next/link'
+import qs from 'query-string'
+
 import {
   DataSourceType,
   ExternalDataSource,
@@ -6,9 +10,6 @@ import {
 import GetStarted from '@/components/marketing/GetStarted'
 import { buttonVariants } from '@/components/ui/button'
 import { getClient } from '@/lib/services/apollo-client'
-import { gql } from '@apollo/client'
-import Link from 'next/link'
-import qs from 'query-string'
 
 const LIST_DATA_SOURCES = gql`
   query ListExternalDataSources {

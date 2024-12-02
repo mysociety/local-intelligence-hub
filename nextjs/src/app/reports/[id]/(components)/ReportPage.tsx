@@ -1,10 +1,13 @@
 'use client'
+
+import { useAtom, useAtomValue } from 'jotai'
+import { useContext, useEffect } from 'react'
+
 import {
   isConstituencyPanelOpenAtom,
   selectedConstituencyAtom,
 } from '@/lib/map/state'
-import { useAtom, useAtomValue } from 'jotai'
-import { useContext, useEffect } from 'react'
+
 import { reportContext } from '../context'
 import { ConstituenciesPanel } from './ConstituenciesPanel'
 import LayersCard from './LayersCard'

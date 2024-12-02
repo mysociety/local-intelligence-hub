@@ -1,7 +1,8 @@
 'use client'
-import { useEffect } from 'react'
+
 // @ts-ignore
 import posthog from 'posthog-js'
+import { useEffect } from 'react'
 import * as CookieConsent from 'vanilla-cookieconsent'
 
 export function ConsentRespectingPosthogAnalytics() {

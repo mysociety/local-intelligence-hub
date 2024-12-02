@@ -1,10 +1,11 @@
+import { gql } from '@apollo/client'
+import { Metadata } from 'next'
+
 import {
   GetPublicMapReportQuery,
   GetPublicMapReportQueryVariables,
 } from '@/__generated__/graphql'
 import { getClient } from '@/lib/services/apollo-client'
-import { gql } from '@apollo/client'
-import { Metadata } from 'next'
 
 type Params = {
   orgSlug: string

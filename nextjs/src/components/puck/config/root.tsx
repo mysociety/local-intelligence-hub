@@ -1,5 +1,11 @@
 'use client'
 
+import { useQuery } from '@apollo/client'
+import { DefaultRootProps } from '@measured/puck'
+import { ReactNode } from 'react'
+import { twMerge } from 'tailwind-merge'
+import { getColors } from 'theme-colors'
+
 import {
   GetPageQuery,
   GetPageQueryVariables,
@@ -7,11 +13,7 @@ import {
 } from '@/__generated__/graphql'
 import { GET_PAGE } from '@/app/(logged-out)/hub/render/[hostname]/query'
 import { useHubRenderContext } from '@/components/hub/HubRenderContext'
-import { useQuery } from '@apollo/client'
-import { DefaultRootProps } from '@measured/puck'
-import { ReactNode } from 'react'
-import { twMerge } from 'tailwind-merge'
-import { getColors } from 'theme-colors'
+
 import HubFooter from './template/HubFooter'
 import HubNavbar from './template/HubNavbar'
 
