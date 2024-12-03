@@ -1,3 +1,4 @@
+import { GroupedDataCount } from '@/__generated__/graphql'
 import { LayerProps } from 'react-map-gl'
 
 export type Tileset = {
@@ -11,6 +12,6 @@ export type Tileset = {
     LayerProps,
     'type' | 'url' | 'id' | 'paint' | 'layout'
   >
-  data: unknown[]
+  data: GroupedDataCount[]
   downloadUrl?: string
 }

@@ -1,7 +1,5 @@
-import { QueryResult } from '@apollo/client'
+import { MapReport } from '@/__generated__/graphql'
 import { createContext } from 'react'
-
-import { Exact, GetMapReportQuery } from '@/__generated__/graphql'
 
 type UKPoliticalBoundaries =
   | 'wards'
@@ -11,7 +9,7 @@ type UKPoliticalBoundaries =
 /* // US political boundaries are only here as an example for future expansion
 type USPoliticalBoundaries = 'states' | 'counties' | 'congressionalDistricts'
 type PoliticalBoundaries = UKPoliticalBoundaries | USPoliticalBoundaries */
-type PoliticalBoundaries = UKPoliticalBoundaries
+export type PoliticalBoundaries = UKPoliticalBoundaries
 type VisualisationType = 'choropleth'
 type Palette = 'blue'
 
@@ -46,7 +44,7 @@ export const defaultReportConfig: ReportConfig = {
 }
 
 interface ReportContextProps {
-  report?: QueryResult<GetMapReportQuery, Exact<{ id: string }>>
+  report?: MapReport
   reportConfig: ReportConfig
   deleteReport: () => void
   updateReportConfig: (reportConfig: ReportConfig) => void

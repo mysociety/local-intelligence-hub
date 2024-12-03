@@ -25,12 +25,12 @@ export default function Page({ params: { id } }: { params: Params }) {
   const router = useRouter()
   const report = useQuery<GetMapReportQuery, GetMapReportQueryVariables>(
     GET_MAP_REPORT,
-    {
-      variables: { id },
-    }
+    { variables: { id } }
   )
   const orgId = useAtomValue(currentOrganisationIdAtom)
 
+  // TODO: Implement multi tenancy at the database level
+  // TODO: Move this logic to middleware (add orgIds as a custom data array on the user's JWT)
   useEffect(() => {
     if (
       orgId &&

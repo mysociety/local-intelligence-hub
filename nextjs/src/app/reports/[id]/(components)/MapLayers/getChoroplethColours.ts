@@ -1,19 +1,19 @@
 import { scaleLinear, scaleSequential } from 'd3-scale'
-import { interpolateInferno } from 'd3-scale-chromatic'
+import { interpolateBlues } from 'd3-scale-chromatic'
 import { FillLayerSpecification } from 'mapbox-gl'
 
-export function getChoroplethPaintObject(tileset: {
-  data: any[]
-}): FillLayerSpecification['paint'] {
+export function getChoroplethColours(
+  data: { count: number }[]
+): FillLayerSpecification['paint'] {
   let min =
-    tileset.data.reduce(
+    data.reduce(
       (min, p) => (p?.count! < min ? p?.count! : min),
-      tileset.data?.[0]?.count!
+      data?.[0]?.count!
     ) || 0
   let max =
-    tileset.data.reduce(
+    data.reduce(
       (max, p) => (p?.count! > max ? p?.count! : max),
-      tileset.data?.[0]?.count!
+      data?.[0]?.count!
     ) || 1
 
   // Ensure min and max are different to fix interpolation errors
@@ -32,7 +32,7 @@ export function getChoroplethPaintObject(tileset: {
   // Map real numbers to colours
   const colourScale = scaleSequential()
     .domain([min, max])
-    .interpolator(interpolateInferno)
+    .interpolator(interpolateBlues)
 
   let steps = Math.min(max, 30) // Max 30 steps
   steps = Math.max(steps, 3) // Min 3 steps (for valid Mapbox fill-color rule)

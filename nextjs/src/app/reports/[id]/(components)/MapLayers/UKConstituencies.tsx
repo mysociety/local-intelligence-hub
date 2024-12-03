@@ -1,58 +1,56 @@
-import {
-  AnalyticalAreaType,
-  MapReportConstituencyStatsQuery,
-  MapReportConstituencyStatsQueryVariables,
-} from '@/__generated__/graphql'
-import { useQuery } from '@apollo/client'
+import { GroupedDataCount } from '@/__generated__/graphql'
+import { useLoadedMap } from '@/lib/map'
 import { useEffect, useState } from 'react'
 import { Layer, Source } from 'react-map-gl'
-import { MAP_REPORT_CONSTITUENCY_STATS } from '../../gql_queries'
 import { useReport } from '../ReportProvider'
-import { getChoroplethPaintObject } from './getChoroplethPaintObject'
+import { addCountByGssToMapboxLayer } from './addCountByGssToMapboxLayer'
+import { getChoroplethColours } from './getChoroplethColours'
 import { Tileset } from './types'
+import useDataSources from './useDataSources'
 
 // https://studio.mapbox.com/tilesets/commonknowledge.bhg1h3hj
-const tileset: Tileset = {
-  name: 'GE2024 constituencies',
-  singular: 'constituency',
-  mapboxSourceId: 'commonknowledge.bhg1h3hj',
-  sourceLayerId: 'uk_cons_2025',
-  promoteId: 'gss_code',
-  labelId: 'name',
-  data: [],
+function getTileset(data: GroupedDataCount[]): Tileset {
+  return {
+    name: 'GE2024 constituencies',
+    singular: 'constituency',
+    mapboxSourceId: 'commonknowledge.bhg1h3hj',
+    sourceLayerId: 'uk_cons_2025',
+    promoteId: 'gss_code',
+    labelId: 'name',
+    data,
+  }
 }
 
 const UKConstituencies = () => {
   const { report } = useReport()
-  const [canQuery, setCanQuery] = useState(false)
+  const membersByConstituency = useDataSources(report)
+  const data = membersByConstituency
+  const map = useLoadedMap()
+  const [tileset, setTileset] = useState<Tileset | null>(null)
 
   useEffect(() => {
-    if (report) {
-      setCanQuery(true)
+    if (map.loaded && data) {
+      const tileset = getTileset(data)
+      setTileset(tileset)
+      setTimeout(() => {
+        addCountByGssToMapboxLayer(
+          tileset.data,
+          tileset.mapboxSourceId,
+          tileset.sourceLayerId,
+          map.loadedMap
+        )
+      }, 10)
     }
-  }, [report])
+  }, [map.loaded, data])
 
-  const constituencyAnalytics = useQuery<
-    MapReportConstituencyStatsQuery,
-    MapReportConstituencyStatsQueryVariables
-  >(MAP_REPORT_CONSTITUENCY_STATS, {
-    variables: {
-      reportID: report?.id,
-      analyticalAreaType: AnalyticalAreaType.ParliamentaryConstituency_2024,
-    },
-    skip: !canQuery,
-  })
+  if (!data || !tileset || !map.loadedMap) return null
 
-  const data =
-    constituencyAnalytics.data?.mapReport.importedDataCountByConstituency
-
-  if (!data) return null
-
-  const inDataFilter = [
+  const onlyDrawConstituenciesWithData = [
     'in',
     ['get', tileset.promoteId],
-    ['literal', data.map((d) => d.gss || '')],
+    ['literal', tileset.data.map((d) => d.gss || '')],
   ]
+  const choroplethColours = getChoroplethColours(data)
 
   return (
     <>
@@ -62,13 +60,14 @@ const UKConstituencies = () => {
         url={`mapbox://${tileset.mapboxSourceId}`}
         promoteId={tileset.promoteId}
       >
+        {/* Fill of the boundary */}
         <Layer
           id={`${tileset.mapboxSourceId}-fill`}
           source={tileset.mapboxSourceId}
           source-layer={tileset.sourceLayerId}
           type="fill"
-          filter={inDataFilter}
-          paint={getChoroplethPaintObject(tileset)}
+          filter={onlyDrawConstituenciesWithData}
+          paint={choroplethColours}
         />
         {/* Border of the boundary */}
         <Layer
@@ -88,10 +87,3 @@ const UKConstituencies = () => {
 }
 
 export default UKConstituencies
-
-function getMembersByBoundaryType(
-  data: MapReportConstituencyStatsQuery['mapReport']['importedDataCountByConstituency'],
-  gss: string
-) {
-  return data.find((d) => d.gss === gss)
-}
