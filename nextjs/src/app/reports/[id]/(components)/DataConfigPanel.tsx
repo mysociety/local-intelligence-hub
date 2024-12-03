@@ -89,7 +89,7 @@ export default function DataConfigPanel() {
     ).toString()
 
   return (
-    <Card className="w-[300px] bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700 max-w-xs overflow-y-auto min-h-0">
+    <Card className="w-full bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700  overflow-y-auto min-h-0">
       <CardHeader className="p-3 flex flex-row justify-between items-center">
         <CardTitle className="text-hSm font-semibold">Map layers</CardTitle>
         <X

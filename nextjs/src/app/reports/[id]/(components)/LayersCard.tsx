@@ -4,8 +4,7 @@ import { useAtom, useSetAtom } from 'jotai'
 import { BarChart3, Layers } from 'lucide-react'
 import { twMerge } from 'tailwind-merge'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { contentEditableMutation } from '@/lib/html'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   isConstituencyPanelOpenAtom,
   isDataConfigOpenAtom,
@@ -13,7 +12,6 @@ import {
 } from '@/lib/map/state'
 
 import DataConfigPanel from './DataConfigPanel'
-import ReportActions from './ReportActions'
 import { useReport } from './ReportProvider'
 
 const LayersCard: React.FC = () => {
@@ -50,37 +48,20 @@ const LayersCard: React.FC = () => {
   ]
 
   return (
-    <div className="flex flex-col items-start gap-4 max-h-full">
-      <Card className="w-[300px] p-3 bg-white border-1 border-meepGray-700 text-meepGray-800">
-        <CardHeader className="flex flex-row items-start">
-          <>
-            <CardTitle
-              id="nickname"
-              className="text-hMd grow font-IBMPlexSansMedium"
-              {...contentEditableMutation(
-                updateReport,
-                // @ts-ignore
-                'name',
-                'Untitled Report'
-              )}
-            >
-              {report?.name}
-            </CardTitle>
-            <ReportActions />
-          </>
-        </CardHeader>
+    <div className="flex flex-col items-start gap-4 max-h-full w-full">
+      <Card className="w-full p-3   border-1 border-meepGray-700 text-white">
         {report && (
           <CardContent className="mt-4 grid grid-cols-1 gap-2">
             {toggles.map(({ icon: Icon, label, enabled, toggle }) => (
               <div
                 key={label}
-                className="hover:bg-meepGray-100 px-0 flex flex-row gap-2 items-center overflow-hidden text-nowrap text-ellipsis cursor-pointer"
+                className="px-0 flex flex-row gap-2 items-center overflow-hidden text-nowrap text-ellipsis cursor-pointer"
                 onClick={toggle}
               >
                 <div
                   className={twMerge(
                     'relative rounded inline-block h-9 w-9',
-                    enabled ? 'bg-meepGray-800' : 'bg-meepGray-100'
+                    enabled ? 'bg-meepGray-600' : 'bg-meepGray-800'
                   )}
                 >
                   <Icon

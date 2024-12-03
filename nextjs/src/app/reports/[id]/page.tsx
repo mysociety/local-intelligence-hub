@@ -13,8 +13,11 @@ import {
 } from '@/__generated__/graphql'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
 
+import ReportNavbar from '@/components/NewNavbar'
+import { SidebarProvider } from '@/components/ui/sidebar'
 import ReportPage from './(components)/ReportPage'
 import ReportProvider from './(components)/ReportProvider'
+import { ReportSidebarLeft } from './(components)/ReportSidebarLeft'
 import { GET_MAP_REPORT } from './gql_queries'
 import { MapReportExtended } from './reportContext'
 
@@ -50,7 +53,19 @@ export default function Page({ params: { id } }: { params: Params }) {
     <JotaiProvider key={id}>
       <MapProvider>
         <ReportProvider report={report.data?.mapReport as MapReportExtended}>
-          <ReportPage />
+          <SidebarProvider
+            style={
+              {
+                '--sidebar-width': '360px',
+              } as React.CSSProperties
+            }
+          >
+            <ReportNavbar />
+            <ReportSidebarLeft />
+            <main>
+              <ReportPage />
+            </main>
+          </SidebarProvider>
         </ReportProvider>
       </MapProvider>
     </JotaiProvider>

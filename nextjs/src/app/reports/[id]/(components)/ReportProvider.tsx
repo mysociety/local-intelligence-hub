@@ -1,18 +1,18 @@
 'use client'
 
-import { FetchResult, useApolloClient } from '@apollo/client'
-import { useRouter } from 'next/navigation'
-import { ReactNode, useContext } from 'react'
-import toSpaceCase from 'to-space-case'
-
 import {
   DeleteMapReportMutation,
   DeleteMapReportMutationVariables,
   UpdateMapReportMutation,
   UpdateMapReportMutationVariables,
 } from '@/__generated__/graphql'
+import { navbarTitleAtom } from '@/components/NewNavbar'
 import { toastPromise } from '@/lib/toast'
-
+import { FetchResult, useApolloClient } from '@apollo/client'
+import { useSetAtom } from 'jotai'
+import { useRouter } from 'next/navigation'
+import { ReactNode, useContext, useEffect } from 'react'
+import toSpaceCase from 'to-space-case'
 import { DELETE_MAP_REPORT, UPDATE_MAP_REPORT } from '../gql_queries'
 import ReportContext, {
   MapReportExtended,
@@ -27,6 +27,11 @@ interface ReportProviderProps {
 const ReportProvider = ({ report, children }: ReportProviderProps) => {
   const router = useRouter()
   const client = useApolloClient()
+  const setNavbarTitle = useSetAtom(navbarTitleAtom)
+
+  useEffect(() => {
+    setNavbarTitle(report.name)
+  }, [report.name])
 
   function updateReport(payload: {
     name?: string

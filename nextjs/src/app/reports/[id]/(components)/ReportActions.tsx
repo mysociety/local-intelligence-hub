@@ -1,6 +1,6 @@
 'use client'
 
-import { MoreVertical, RefreshCcw, Trash } from 'lucide-react'
+import { MoreHorizontal, RefreshCcw, Trash } from 'lucide-react'
 import { useState } from 'react'
 
 import {
@@ -31,7 +31,7 @@ const ReportActions: React.FC = () => {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger>
-          <MoreVertical className="w-3" />
+          <MoreHorizontal className="w-5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start">
           {report && (
