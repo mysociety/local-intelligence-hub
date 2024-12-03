@@ -16,6 +16,7 @@ import { currentOrganisationIdAtom } from '@/lib/organisation'
 import ReportPage from './(components)/NewReportPage'
 import ReportProvider from './(components)/ReportProvider'
 import { GET_MAP_REPORT } from './gql_queries'
+import { MapReportExtended } from './reportContext'
 
 type Params = {
   id: string
@@ -44,7 +45,7 @@ export default function Page({ params: { id } }: { params: Params }) {
   return (
     <JotaiProvider key={id}>
       <MapProvider>
-        <ReportProvider report={report.data?.mapReport}>
+        <ReportProvider report={report.data?.mapReport as MapReportExtended}>
           <ReportPage />
         </ReportProvider>
       </MapProvider>

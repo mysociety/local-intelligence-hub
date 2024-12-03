@@ -24,7 +24,7 @@ import {
 import { useReport } from './ReportProvider'
 
 const ReportActions: React.FC = () => {
-  const { report, deleteReport, refreshReportDataQueries } = useReport()
+  const { report, deleteReport, refreshReportData } = useReport()
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   return (
@@ -34,8 +34,8 @@ const ReportActions: React.FC = () => {
           <MoreVertical className="w-3" />
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start">
-          {report?.data?.mapReport && (
-            <DropdownMenuItem onClick={refreshReportDataQueries}>
+          {report && (
+            <DropdownMenuItem onClick={refreshReportData}>
               <RefreshCcw className="w-4 mr-2" />
               Refresh
             </DropdownMenuItem>

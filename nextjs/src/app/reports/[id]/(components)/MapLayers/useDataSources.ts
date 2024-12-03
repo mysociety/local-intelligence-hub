@@ -1,14 +1,14 @@
-import { AnalyticalAreaType, MapReport } from '@/__generated__/graphql'
+import { AnalyticalAreaType } from '@/__generated__/graphql'
 import { useQuery } from '@apollo/client'
 import { useEffect, useState } from 'react'
 import {
   MAP_REPORT_CONSTITUENCY_STATS,
   MAP_REPORT_WARD_STATS,
 } from '../../gql_queries'
-import { PoliticalBoundaries } from '../../reportContext'
+import { MapReportExtended, PoliticalBoundaries } from '../../reportContext'
 
 const useDataSources = (
-  report: MapReport,
+  report: MapReportExtended | undefined,
   boundaryType: PoliticalBoundaries
 ) => {
   const [canQuery, setCanQuery] = useState(false)

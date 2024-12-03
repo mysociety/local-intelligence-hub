@@ -2,7 +2,7 @@
 
 import { FetchResult, useApolloClient } from '@apollo/client'
 import { useRouter } from 'next/navigation'
-import { ReactNode, createContext, useContext } from 'react'
+import { ReactNode, useContext } from 'react'
 import toSpaceCase from 'to-space-case'
 
 import {
@@ -14,14 +14,15 @@ import {
 import { toastPromise } from '@/lib/toast'
 
 import { DELETE_MAP_REPORT, UPDATE_MAP_REPORT } from '../gql_queries'
-import { ReportConfig } from '../reportContext'
+import ReportContext, {
+  MapReportExtended,
+  ReportConfig,
+} from '../reportContext'
 
 interface ReportProviderProps {
-  report: any
+  report: MapReportExtended
   children: ReactNode
 }
-
-const ReportProviderContext = createContext<any>(null)
 
 const ReportProvider = ({ report, children }: ReportProviderProps) => {
   const router = useRouter()
@@ -29,7 +30,8 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
 
   function updateReport(payload: {
     name?: string
-    reportConfig?: ReportConfig
+    displayOptions?: ReportConfig
+    layers?: any[]
   }) {
     const update = client.mutate<
       UpdateMapReportMutation,
@@ -99,13 +101,13 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
   }
 
   return (
-    <ReportProviderContext.Provider
+    <ReportContext.Provider
       value={{ report, deleteReport, refreshReportData, updateReport }}
     >
       {children}
-    </ReportProviderContext.Provider>
+    </ReportContext.Provider>
   )
 }
 
 export default ReportProvider
-export const useReport = () => useContext(ReportProviderContext)
+export const useReport = () => useContext(ReportContext)

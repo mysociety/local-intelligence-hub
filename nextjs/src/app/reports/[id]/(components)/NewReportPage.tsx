@@ -7,13 +7,13 @@ import UKConstituencies from './MapLayers/UKConstituencies'
 import { useReport } from './ReportProvider'
 
 export default function ReportPage() {
-  const { reportConfig } = useReport()
+  const { report } = useReport()
 
   return (
     <div className="absolute w-full h-full flex flex-row pointer-events-none">
       <div className="w-full h-full pointer-events-auto">
         <LocalisedMap
-          showStreetDetails={reportConfig?.showStreetDetails}
+          showStreetDetails={report?.displayOptions.showStreetDetails}
           initViewCountry="uk"
         >
           {/* <UKWards /> */}

@@ -13,6 +13,8 @@ export type PoliticalBoundaries = UKPoliticalBoundaries
 type VisualisationType = 'choropleth'
 type Palette = 'blue'
 
+export type MapReportExtended = MapReport & { displayOptions: ReportConfig }
+
 export interface ReportConfig {
   name: string
   dataSources: any[]
@@ -44,17 +46,20 @@ export const defaultReportConfig: ReportConfig = {
 }
 
 interface ReportContextProps {
-  report?: MapReport
-  reportConfig: ReportConfig
+  report: MapReportExtended
   deleteReport: () => void
-  updateReportConfig: (reportConfig: ReportConfig) => void
+  updateReport: (payload: {
+    name?: string
+    displayOptions?: ReportConfig
+    layers?: any[]
+  }) => void
   refreshReportData: () => void
 }
 
 const ReportContext = createContext<ReportContextProps>({
-  reportConfig: defaultReportConfig,
+  report: {} as MapReportExtended,
   deleteReport: () => {},
-  updateReportConfig: () => {},
+  updateReport: () => {},
   refreshReportData: () => {},
 })
 

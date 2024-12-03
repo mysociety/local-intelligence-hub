@@ -4,7 +4,6 @@ import { useApolloClient, useFragment } from '@apollo/client'
 import { useAtom } from 'jotai'
 import { ArrowRight, ClipboardCopy, Plus, Shuffle, X } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { v4 } from 'uuid'
 
@@ -51,8 +50,7 @@ import { isDataConfigOpenAtom } from '@/lib/map/state'
 import { useReport } from './ReportProvider'
 
 export default function DataConfigPanel() {
-  const router = useRouter()
-  const { report, updateReport, refreshReportData } = useReport()
+  const { report, updateReport } = useReport()
   const client = useApolloClient()
 
   const { displayOptions, setDisplayOptions } = useReportContext()
