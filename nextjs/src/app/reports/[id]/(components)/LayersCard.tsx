@@ -49,12 +49,9 @@ const LayersCard: React.FC = () => {
     },
   ]
 
-  console.log('LayersCard')
-  console.log('report', report)
-
   return (
     <div className="flex flex-col items-start gap-4 max-h-full">
-      <Card className="w-[200px] p-3 bg-white border-1 border-meepGray-700 text-meepGray-800">
+      <Card className="w-[300px] p-3 bg-white border-1 border-meepGray-700 text-meepGray-800">
         <CardHeader className="flex flex-row items-start">
           <>
             <CardTitle

@@ -3,7 +3,7 @@
 import { gql, useFragment, useQuery } from '@apollo/client'
 import { Check, ChevronsUpDown, Plus, RefreshCcw } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 import {
@@ -56,6 +56,12 @@ export function AddMapLayerButton({
   const form = useForm<{ source?: Source }>()
   const [open, setOpen] = useState(false)
 
+  useEffect(() => {
+    return () => {
+      form.reset()
+    }
+  }, [])
+
   return (
     <Dialog open={open} onOpenChange={(o) => setOpen(o)}>
       <DialogTrigger asChild>
@@ -69,6 +75,7 @@ export function AddMapLayerButton({
             setOpen(false)
             if (!d.source) return
             addLayer(d.source)
+            form.reset()
           })}
         >
           <DialogHeader>
@@ -110,7 +117,7 @@ export function MapLayerSelector({
   filter?: (s: SourceOption) => boolean
 }) {
   const [open, setOpen] = useState(false)
-  const { report, refreshReportData } = useReport()
+  const { report } = useReport()
   const dataSources = useQuery<GetMemberListQuery>(MEMBER_LISTS, {
     variables: {
       currentOrganisationId: report.organisation.id,

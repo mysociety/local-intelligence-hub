@@ -1,3 +1,4 @@
+import { MAPBOX_LOAD_INTERVAL } from '@/lib/map/useLoadedMap'
 import { MapRef } from 'react-map-gl'
 
 // GSS (Geographic Statistical System) codes are unique identifiers
@@ -9,20 +10,22 @@ export function addCountByGssToMapboxLayer(
   sourceLayerId?: string,
   mapbox?: MapRef | null
 ) {
-  if (!mapbox) throw new Error('map is required')
+  if (!mapbox?.loaded) throw new Error('loaded map is required')
   if (!sourceLayerId) throw new Error('sourceLayerId is required')
 
-  data.map((d) => {
-    if (!d.gss) return
-    mapbox.setFeatureState(
-      {
-        source: mapboxSourceId,
-        sourceLayer: sourceLayerId,
-        id: d.gss,
-      },
-      {
-        count: d.count,
-      }
-    )
-  })
+  setTimeout(() => {
+    data.map((d) => {
+      if (!d.gss) return
+      mapbox.setFeatureState(
+        {
+          source: mapboxSourceId,
+          sourceLayer: sourceLayerId,
+          id: d.gss,
+        },
+        {
+          count: d.count,
+        }
+      )
+    })
+  }, MAPBOX_LOAD_INTERVAL + 50)
 }

@@ -23,34 +23,31 @@ function getTileset(data: GroupedDataCount[]): Tileset {
 
 const UKConstituencies = () => {
   const { report } = useReport()
-  const membersByConstituency = useDataSources(report)
-  const data = membersByConstituency
+  const countsByConstituency = useDataSources(report)
   const map = useLoadedMap()
   const [tileset, setTileset] = useState<Tileset | null>(null)
 
   useEffect(() => {
-    if (map.loaded && data) {
-      const tileset = getTileset(data)
+    if (map.loaded && countsByConstituency) {
+      const tileset = getTileset(countsByConstituency)
       setTileset(tileset)
-      setTimeout(() => {
-        addCountByGssToMapboxLayer(
-          tileset.data,
-          tileset.mapboxSourceId,
-          tileset.sourceLayerId,
-          map.loadedMap
-        )
-      }, 10)
+      addCountByGssToMapboxLayer(
+        tileset.data,
+        tileset.mapboxSourceId,
+        tileset.sourceLayerId,
+        map.loadedMap
+      )
     }
-  }, [map.loaded, data])
+  }, [map.loaded, countsByConstituency])
 
-  if (!data || !tileset || !map.loadedMap) return null
+  if (!countsByConstituency || !tileset) return null
 
   const onlyDrawConstituenciesWithData = [
     'in',
     ['get', tileset.promoteId],
     ['literal', tileset.data.map((d) => d.gss || '')],
   ]
-  const choroplethColours = getChoroplethColours(data)
+  const choroplethColours = getChoroplethColours(tileset.data)
 
   return (
     <>

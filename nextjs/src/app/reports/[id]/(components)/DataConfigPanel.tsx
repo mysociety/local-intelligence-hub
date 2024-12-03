@@ -75,7 +75,6 @@ export default function DataConfigPanel() {
       id: report.id,
     },
   })
-  console.log('layers', layers)
   const [open, setOpen] = useAtom(isDataConfigOpenAtom)
   const shareURL = () =>
     new URL(
@@ -84,7 +83,7 @@ export default function DataConfigPanel() {
     ).toString()
 
   return (
-    <Card className="bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700 max-w-xs overflow-y-auto min-h-0">
+    <Card className="w-[300px] bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700 max-w-xs overflow-y-auto min-h-0">
       <CardHeader className="p-3 flex flex-row justify-between items-center">
         <CardTitle className="text-hSm font-semibold">Map layers</CardTitle>
         <X
