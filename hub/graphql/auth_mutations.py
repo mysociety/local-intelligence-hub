@@ -1,6 +1,6 @@
 import logging
-from smtplib import SMTPException
 from dataclasses import asdict
+from smtplib import SMTPException
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
