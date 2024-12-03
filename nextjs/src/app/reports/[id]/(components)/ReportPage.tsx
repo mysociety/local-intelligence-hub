@@ -8,8 +8,6 @@ import { useReport } from './ReportProvider'
 export default function ReportPage() {
   const { report } = useReport()
 
-  console.log('report', report)
-
   return (
     <div className="absolute w-[-webkit-fill-available] h-full flex flex-row pointer-events-none">
       <div className="w-full h-full pointer-events-auto">

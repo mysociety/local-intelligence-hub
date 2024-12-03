@@ -1,8 +1,7 @@
 'use client'
 
 import { useApolloClient, useFragment } from '@apollo/client'
-import { useAtom } from 'jotai'
-import { ArrowRight, ClipboardCopy, Plus, Shuffle, X } from 'lucide-react'
+import { ArrowRight, ClipboardCopy, Plus, Shuffle } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { v4 } from 'uuid'
@@ -16,7 +15,7 @@ import importData from '@/app/(logged-in)/data-sources/inspect/[externalDataSour
 import { CRMSelection } from '@/components/CRMButtonItem'
 import { AddMapLayerButton } from '@/components/report/AddMapLayerButton'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
@@ -45,7 +44,6 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { MAP_REPORT_LAYERS_SUMMARY, layerIdColour } from '@/lib/map'
-import { isDataConfigOpenAtom } from '@/lib/map/state'
 import { useReport } from './ReportProvider'
 
 export default function DataConfigPanel() {
@@ -81,7 +79,6 @@ export default function DataConfigPanel() {
       id,
     },
   })
-  const [open, setOpen] = useAtom(isDataConfigOpenAtom)
   const shareURL = () =>
     new URL(
       `/data-sources/share/${organisation.slug}`,
@@ -90,15 +87,6 @@ export default function DataConfigPanel() {
 
   return (
     <Card className="w-full bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700  overflow-y-auto min-h-0">
-      <CardHeader className="p-3 flex flex-row justify-between items-center">
-        <CardTitle className="text-hSm font-semibold">Map layers</CardTitle>
-        <X
-          className="w-4 cursor-pointer"
-          onClick={() => {
-            setOpen(false)
-          }}
-        />
-      </CardHeader>
       <CardContent>
         <div className="p-3 flex flex-col gap-2 border-t border-meepGray-700 ">
           <span className="text-sm mb-2">Your membership lists</span>

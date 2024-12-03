@@ -11,7 +11,7 @@ import {
   selectedConstituencyAtom,
 } from '@/lib/map/state'
 
-import DataConfigPanel from './DataConfigPanel'
+import DataConfigPanel from './_DataConfigPanel'
 import { useReport } from './ReportProvider'
 
 const LayersCard: React.FC = () => {

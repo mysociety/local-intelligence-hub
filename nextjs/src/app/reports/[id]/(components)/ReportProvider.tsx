@@ -6,7 +6,6 @@ import {
   UpdateMapReportMutation,
   UpdateMapReportMutationVariables,
 } from '@/__generated__/graphql'
-import { navbarTitleAtom } from '@/components/NewNavbar'
 import { toastPromise } from '@/lib/toast'
 import { FetchResult, useApolloClient } from '@apollo/client'
 import { useSetAtom } from 'jotai'
@@ -18,6 +17,7 @@ import ReportContext, {
   MapReportExtended,
   ReportConfig,
 } from '../reportContext'
+import { navbarTitleAtom } from './ReportNavbar'
 
 interface ReportProviderProps {
   report: MapReportExtended

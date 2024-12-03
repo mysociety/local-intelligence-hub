@@ -65,7 +65,7 @@ export function AddMapLayerButton({
   return (
     <Dialog open={open} onOpenChange={(o) => setOpen(o)}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="ghost" size="sm" className="text-meepGray-400">
           <Plus className="w-4" /> add data source
         </Button>
       </DialogTrigger>

@@ -3,7 +3,7 @@ import { useReport } from '@/app/reports/[id]/(components)/ReportProvider'
 import { contentEditableMutation } from '@/lib/html'
 import { atom, useAtomValue } from 'jotai'
 import Link from 'next/link'
-import { MappedIcon } from './icons/MappedIcon'
+import { MappedIcon } from '../../../../components/icons/MappedIcon'
 
 // You can set the title & href of the top left icon link based on route & context
 export const navbarTitleAtom = atom('')
@@ -13,7 +13,10 @@ export default function ReportNavbar() {
   const { updateReport } = useReport()
 
   return (
-    <nav className="fixed top-0 left-0 w-full h-12 bg-meepGray-800 flex flex-row items-center justify-between px-4 shadow-md z-10">
+    <nav
+      className="fixed top-0 left-0 w-full h-12 bg-meepGray-600 flex flex-row items-center
+     justify-between px-4 shadow-md z-10 border border-b-meepGray-800"
+    >
       <section className="flex flex-row items-center gap-2">
         <Link href="/reports" className="py-sm">
           <MappedIcon height={20} />

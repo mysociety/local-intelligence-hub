@@ -13,8 +13,8 @@ import {
 } from '@/__generated__/graphql'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
 
-import ReportNavbar from '@/components/NewNavbar'
 import { SidebarProvider } from '@/components/ui/sidebar'
+import ReportNavbar from './(components)/ReportNavbar'
 import ReportPage from './(components)/ReportPage'
 import ReportProvider from './(components)/ReportProvider'
 import { ReportSidebarLeft } from './(components)/ReportSidebarLeft'
