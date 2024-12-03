@@ -9,11 +9,13 @@ import { useReport } from './ReportProvider'
 export default function ReportPage() {
   const { report } = useReport()
 
+  console.log('report', report)
+
   return (
     <div className="absolute w-full h-full flex flex-row pointer-events-none">
       <div className="w-full h-full pointer-events-auto">
         <LocalisedMap
-          showStreetDetails={report?.displayOptions.showStreetDetails}
+          showStreetDetails={report.displayOptions?.display?.streetDetails}
           initViewCountry="uk"
         >
           {/* <UKWards /> */}

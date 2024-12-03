@@ -13,7 +13,7 @@ import {
 } from '@/__generated__/graphql'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
 
-import ReportPage from './(components)/NewReportPage'
+import ReportPage from './(components)/ReportPage'
 import ReportProvider from './(components)/ReportProvider'
 import { GET_MAP_REPORT } from './gql_queries'
 import { MapReportExtended } from './reportContext'
@@ -42,6 +42,8 @@ export default function Page({ params: { id } }: { params: Params }) {
     }
   }, [orgId, report, router])
 
+  // Really important to check if the report is null before rendering the page
+  // The ReportProvider component needs to be able to provide a report to its children
   if (!report.data?.mapReport) return null
 
   return (
