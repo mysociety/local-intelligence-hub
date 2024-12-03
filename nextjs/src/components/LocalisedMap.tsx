@@ -1,9 +1,8 @@
 import { BACKEND_URL } from '@/env'
 import { authenticationHeaders } from '@/lib/auth'
-import { atom } from 'jotai'
 import { RequestTransformFunction } from 'mapbox-gl'
 import React from 'react'
-import Map, { ViewState } from 'react-map-gl'
+import Map from 'react-map-gl'
 
 interface LocalisedMapProps {
   children?: React.ReactNode
@@ -18,8 +17,6 @@ const INITIAL_VIEW_STATES = {
     zoom: 6,
   },
 }
-
-const viewStateAtom = atom<Partial<ViewState>>()
 
 const LocalisedMap: React.FC<LocalisedMapProps> = ({
   children,
