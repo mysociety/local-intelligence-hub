@@ -45,6 +45,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
+import { Progress } from '@/components/ui/progress'
 import { externalDataSourceOptions } from '@/lib/data'
 import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/lib/graphql/mutations'
 import { contentEditableMutation } from '@/lib/html'
@@ -285,6 +286,36 @@ export default function InspectExternalDataSource({
                   batchJobProgress={source.importProgress}
                   pastTenseVerb="Imported"
                 />
+              )}
+
+              {source.isImportScheduled && source.importProgress ? (
+                <div className="space-y-4">
+                  <div className="flex justify-between text-sm text-gray-400">
+                    <span>
+                      Progress: {source.importProgress.succeeded}/
+                      {source.importProgress.total}
+                    </span>
+                    {source.importProgress.estimatedFinishTime && (
+                      <span>
+                        Est. Finish:{' '}
+                        {formatRelative(
+                          new Date(source.importProgress.estimatedFinishTime),
+                          new Date()
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  <Progress
+                    value={
+                      (source.importProgress.succeeded /
+                        source.importProgress.total) *
+                      100
+                    }
+                    className="w-full"
+                  />
+                </div>
+              ) : (
+                <p className="text-gray-400">No ongoing imports.</p>
               )}
               {source.hasWebhooks && (
                 <section className="space-y-4">
