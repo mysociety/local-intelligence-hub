@@ -8,31 +8,28 @@ import { getChoroplethColours } from './getChoroplethColours'
 import { Tileset } from './types'
 import useDataSources from './useDataSources'
 
-// https://studio.mapbox.com/tilesets/commonknowledge.bhg1h3hj
+// https://studio.mapbox.com/tilesets/commonknowledge.0rzbo365
 function getTileset(data: GroupedDataCount[]): Tileset {
   return {
-    name: 'GE2024 constituencies',
-    singular: 'constituency',
-    mapboxSourceId: 'commonknowledge.bhg1h3hj',
-    sourceLayerId: 'uk_cons_2025',
-    promoteId: 'gss_code',
-    labelId: 'name',
+    name: 'GE2024 wards',
+    singular: 'ward',
+    mapboxSourceId: 'commonknowledge.0rzbo365',
+    sourceLayerId: 'Wards_Dec_2023_UK_Boundaries_-7wzb6g',
+    promoteId: 'WD23CD',
+    labelId: 'WD23NM',
     data,
   }
 }
 
-const UKConstituencies = () => {
+const UKWards = () => {
   const { report } = useReport()
-  const countsByConstituency = useDataSources(
-    report,
-    'uk_westminster_constituencies'
-  )
+  const countsByWard = useDataSources(report, 'uk_westminster_wards')
   const map = useLoadedMap()
   const [tileset, setTileset] = useState<Tileset | null>(null)
 
   useEffect(() => {
-    if (map.loaded && countsByConstituency) {
-      const tileset = getTileset(countsByConstituency)
+    if (map.loaded && countsByWard) {
+      const tileset = getTileset(countsByWard)
       setTileset(tileset)
       addCountByGssToMapboxLayer(
         tileset.data,
@@ -41,17 +38,17 @@ const UKConstituencies = () => {
         map.loadedMap
       )
     }
-  }, [map.loaded, countsByConstituency])
+  }, [map.loaded, countsByWard])
 
-  if (!countsByConstituency || !tileset) return null
+  console.log(countsByWard)
+  if (!countsByWard || !tileset) return null
 
-  const onlyDrawConstituenciesWithData = [
+  const onlyDrawWardsWithData = [
     'in',
     ['get', tileset.promoteId],
     ['literal', tileset.data.map((d) => d.gss || '')],
   ]
   const choroplethColours = getChoroplethColours(tileset.data)
-
   return (
     <>
       <Source
@@ -66,7 +63,7 @@ const UKConstituencies = () => {
           source={tileset.mapboxSourceId}
           source-layer={tileset.sourceLayerId}
           type="fill"
-          filter={onlyDrawConstituenciesWithData}
+          filter={onlyDrawWardsWithData}
           paint={choroplethColours}
         />
         {/* Border of the boundary */}
@@ -86,4 +83,4 @@ const UKConstituencies = () => {
   )
 }
 
-export default UKConstituencies
+export default UKWards

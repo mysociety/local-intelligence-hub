@@ -16,6 +16,7 @@ export default function ReportPage() {
           showStreetDetails={reportConfig?.showStreetDetails}
           initViewCountry="uk"
         >
+          {/* <UKWards /> */}
           <UKConstituencies />
         </LocalisedMap>
       </div>
@@ -28,18 +29,3 @@ export default function ReportPage() {
     </div>
   )
 }
-// ;<>
-//   <div className="absolute w-full h-full flex flex-row pointer-events-none">
-//     <div className="w-full h-full pointer-events-auto">
-//       <ReportMap />
-//     </div>
-//     <aside className="absolute top-0 left-0 p-5 w-[200px] h-full pointer-events-auto">
-//       <LayersCard />
-//     </aside>
-//     {report?.data?.mapReport && isConstituencyPanelOpen && (
-//       <aside className="absolute top-0 right-0 p-5 w-[400px] h-full">
-//         <ConstituenciesPanel />
-//       </aside>
-//     )}
-//   </div>
-// </>

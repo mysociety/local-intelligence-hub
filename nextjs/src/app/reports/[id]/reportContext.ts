@@ -2,8 +2,8 @@ import { MapReport } from '@/__generated__/graphql'
 import { createContext } from 'react'
 
 type UKPoliticalBoundaries =
-  | 'wards'
-  | 'constituencies'
+  | 'uk_westminster_wards'
+  | 'uk_westminster_constituencies'
   | 'localAuthorities'
   | 'countries'
 /* // US political boundaries are only here as an example for future expansion
@@ -32,14 +32,14 @@ export const defaultReportConfig: ReportConfig = {
   name: 'My New Report',
   dataSources: [],
   dataVisualisation: {
-    boundaryType: 'constituencies',
+    boundaryType: 'uk_westminster_constituencies',
     visualisationType: 'choropleth',
     palette: 'blue',
   },
   display: {
     streetDetails: false,
     postcodeLabels: false,
-    boundaryOutlines: ['constituencies'],
+    boundaryOutlines: ['uk_westminster_constituencies'],
   },
 }
 
