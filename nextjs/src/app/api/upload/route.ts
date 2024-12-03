@@ -1,10 +1,14 @@
-import { v2 as cloudinary } from 'cloudinary'
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { NextResponse } from 'next/server'
 
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+const s3Client = new S3Client({
+  endpoint: process.env.MINIO_ENDPOINT,
+  region: process.env.MINIO_REGION,
+  credentials: {
+    accessKeyId: process.env.MINIO_ACCESS_KEY || '',
+    secretAccessKey: process.env.MINIO_SECRET_KEY || '',
+  },
+  forcePathStyle: true,
 })
 
 export async function POST(req: Request) {
@@ -19,24 +23,26 @@ export async function POST(req: Request) {
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    const uploadResult = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { folder: 'puck_uploads' }, // Organize uploads in a folder
-        (error, result) => {
-          if (error) {
-            reject(error)
-          } else {
-            resolve(result)
-          }
-        }
-      )
+    const bucketName = process.env.MINIO_BUCKET_NAME || 'uploads'
+    const folderName = 'puck-uploads' // Organise uploads from Puck in a folder
+    const fileName = `${Date.now()}-${file.name}`
 
-      uploadStream.end(buffer)
+    const fileKey = `${folderName}/${fileName}`
+
+    const uploadCommand = new PutObjectCommand({
+      Bucket: bucketName,
+      Key: fileKey,
+      Body: buffer,
+      ContentType: file.type,
     })
 
-    return NextResponse.json({ url: (uploadResult as any).secure_url })
+    await s3Client.send(uploadCommand)
+
+    const fileUrl = `${process.env.MINIO_ENDPOINT}/${bucketName}/${fileKey}`
+
+    return NextResponse.json({ url: fileUrl })
   } catch (error) {
-    console.error('Cloudinary Upload Error:', error)
+    console.error('MinIO Upload Error:', error)
     return NextResponse.json({ error: 'Error uploading file' }, { status: 500 })
   }
 }
