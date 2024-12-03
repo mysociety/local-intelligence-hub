@@ -12,7 +12,6 @@ import {
   MapReportWardStatsQuery,
   MapReportWardStatsQueryVariables,
 } from '@/__generated__/graphql'
-import { DisplayOptionsType } from '@/app/reports/[id]/context'
 
 import {
   MAP_REPORT_CONSTITUENCY_STATS,
@@ -21,10 +20,7 @@ import {
   MAP_REPORT_WARD_STATS,
 } from './gql_queries'
 
-const useAnalytics = (
-  id: string,
-  analyticalAreaType: DisplayOptionsType['analyticalAreaType']
-) => {
+const useAnalytics = (id: string, analyticalAreaType: any) => {
   const analytics = useQuery<
     MapReportLayerAnalyticsQuery,
     MapReportLayerAnalyticsQueryVariables

@@ -42,6 +42,8 @@ export default function Page({ params: { id } }: { params: Params }) {
     }
   }, [orgId, report, router])
 
+  if (!report.data?.mapReport) return null
+
   return (
     <JotaiProvider key={id}>
       <MapProvider>

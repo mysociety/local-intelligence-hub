@@ -9,7 +9,7 @@ import {
   selectedConstituencyAtom,
 } from '@/lib/map/state'
 
-import { useReportContext } from '../context'
+import { useReportContext } from '../_context'
 import { TopConstituencies } from './TopConstituencies'
 
 export function ConstituenciesPanel() {

@@ -1,14 +1,13 @@
 import { gql, useQuery } from '@apollo/client'
 import { getYear } from 'date-fns'
 import { useAtom } from 'jotai'
-import { useContext, useState } from 'react'
+import { useState } from 'react'
 import { twMerge } from 'tailwind-merge'
 
 import {
   ConstituencyStatsOverviewQuery,
   ConstituencyStatsOverviewQueryVariables,
 } from '@/__generated__/graphql'
-import { reportContext, useReportContext } from '@/app/reports/[id]/context'
 import {
   MemberElectoralInsights,
   Person,
@@ -27,7 +26,8 @@ import {
 } from '@/lib/map/state'
 import { useLoadedMap } from '@/lib/map/useLoadedMap'
 
-import { MAX_CONSTITUENCY_ZOOM } from './ReportMap'
+import { MAX_CONSTITUENCY_ZOOM } from './_ReportMap'
+import { useReport } from './ReportProvider'
 
 export function TopConstituencies() {
   const sortOptions = {
@@ -36,11 +36,13 @@ export function TopConstituencies() {
     populationDensity: 'Population Density',
   }
   const [sortBy, setSortBy] = useState<keyof typeof sortOptions>('totalCount')
-  const {
-    displayOptions: { analyticalAreaType },
-  } = useReportContext()
 
-  const { id } = useContext(reportContext)
+  const {
+    report: {
+      id,
+      displayOptions: { analyticalAreaType },
+    },
+  } = useReport()
   const constituencyAnalytics = useQuery<
     ConstituencyStatsOverviewQuery,
     ConstituencyStatsOverviewQueryVariables
@@ -142,7 +144,9 @@ export function ConstituencySummaryCard({
   >
   count: number
 }) {
-  const { displayOptions } = useReportContext()
+  const {
+    report: { displayOptions },
+  } = useReport()
 
   return (
     <div className="p-3 ">

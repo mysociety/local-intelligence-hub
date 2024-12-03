@@ -4,7 +4,7 @@ import { useQuery } from '@apollo/client'
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { interpolateInferno } from 'd3-scale-chromatic'
 import { atom, useAtom, useSetAtom } from 'jotai'
-import { Fragment, useContext, useEffect } from 'react'
+import { Fragment, useEffect } from 'react'
 import Map, { Layer, Source, ViewState } from 'react-map-gl'
 
 import {
@@ -12,7 +12,6 @@ import {
   MapReportLayerGeoJsonPointQuery,
   MapReportLayerGeoJsonPointQueryVariables,
 } from '@/__generated__/graphql'
-import { reportContext } from '@/app/reports/[id]/context'
 import { PlaceholderLayer } from '@/components/PlaceholderLayer'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { BACKEND_URL } from '@/env'
@@ -25,13 +24,13 @@ import {
   useLoadedMap,
 } from '@/lib/map'
 
-import { getTilesets } from '../getTilesets'
+import { getTilesets } from '../_getTilesets'
+import useAnalytics from '../_useAnalytics'
 import { MAP_REPORT_LAYER_POINT } from '../gql_queries'
-import useAnalytics from '../useAnalytics'
-import useChoropleths from '../useChoropleths'
 import useMarkers from '../useMarkers'
 import { ExternalDataSourcePointMarkers } from './ExternalDataSourcePointMarkers'
 import MarkerPopup from './MarkerPopup'
+import { useReport } from './ReportProvider'
 
 export const MAX_REGION_ZOOM = 8
 export const MAX_CONSTITUENCY_ZOOM = 10
@@ -51,10 +50,9 @@ export function ReportMap() {
   )
 
   /* Get the report context */
-  const { id, displayOptions } = useContext(reportContext)
-
-  /* Add chloropleth data to the mapbox source */
-  useChoropleths(id, displayOptions.analyticalAreaType)
+  const {
+    report: { id, displayOptions },
+  } = useReport()
 
   /* Get the analytics data for the report */
   const { analytics, regionAnalytics, wardAnalytics, constituencyAnalytics } =

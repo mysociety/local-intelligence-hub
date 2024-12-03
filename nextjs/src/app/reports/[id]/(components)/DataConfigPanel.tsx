@@ -13,7 +13,6 @@ import {
   MapReportLayersSummaryFragment,
 } from '@/__generated__/graphql'
 import importData from '@/app/(logged-in)/data-sources/inspect/[externalDataSourceId]/importData'
-import { useReportContext } from '@/app/reports/[id]/context'
 import { CRMSelection } from '@/components/CRMButtonItem'
 import { AddMapLayerButton } from '@/components/report/AddMapLayerButton'
 import { Button } from '@/components/ui/button'
@@ -50,19 +49,28 @@ import { isDataConfigOpenAtom } from '@/lib/map/state'
 import { useReport } from './ReportProvider'
 
 export default function DataConfigPanel() {
-  const { report, updateReport } = useReport()
+  const {
+    report: { displayOptions, id, organisation },
+    updateReport,
+  } = useReport()
   const client = useApolloClient()
 
-  const { displayOptions, setDisplayOptions } = useReportContext()
-
   const toggleElectionData = () => {
-    setDisplayOptions({
-      showLastElectionData: !displayOptions.showLastElectionData,
+    updateReport({
+      displayOptions: {
+        // @ts-ignore: Property 'showLastElectionData' does not exist on type 'DeepPartialObject'
+        showLastElectionData: !displayOptions.showLastElectionData,
+      },
     })
   }
 
   const toggleMps = () => {
-    setDisplayOptions({ showMPs: !displayOptions.showMPs })
+    updateReport({
+      displayOptions: {
+        // @ts-ignore: Property 'showMPs' does not exist on type 'DeepPartialObject'
+        showMPs: !displayOptions.showMPs,
+      },
+    })
   }
 
   const layers = useFragment<MapReportLayersSummaryFragment>({
@@ -70,13 +78,13 @@ export default function DataConfigPanel() {
     fragmentName: 'MapReportLayersSummary',
     from: {
       __typename: 'MapReport',
-      id: report.id,
+      id,
     },
   })
   const [open, setOpen] = useAtom(isDataConfigOpenAtom)
   const shareURL = () =>
     new URL(
-      `/data-sources/share/${report.organisation.slug}`,
+      `/data-sources/share/${organisation.slug}`,
       window.location.toString()
     ).toString()
 
@@ -344,7 +352,8 @@ export default function DataConfigPanel() {
             <Switch
               checked={displayOptions.showStreetDetails}
               onCheckedChange={(showStreetDetails) => {
-                setDisplayOptions({ showStreetDetails })
+                // @ts-ignore: Property 'showStreetDetails' does not exist on type 'DeepPartialObject'
+                updateReport({ displayOptions: { showStreetDetails } })
               }}
             />
             Street details
@@ -355,7 +364,8 @@ export default function DataConfigPanel() {
           <Select
             value={displayOptions.analyticalAreaType}
             onValueChange={(analyticalAreaType: AnalyticalAreaType) => {
-              setDisplayOptions({ analyticalAreaType })
+              // @ts-ignore: Property 'analyticalAreaType' does not exist on type 'DeepPartialObject'
+              updateReport({ displayOptions: { analyticalAreaType } })
             }}
           >
             <SelectTrigger>

@@ -6,7 +6,6 @@ import { getYear } from 'date-fns'
 import { AlertTriangle } from 'lucide-react'
 import Image from 'next/image'
 import pluralize from 'pluralize'
-import { useContext } from 'react'
 import { twMerge } from 'tailwind-merge'
 
 import {
@@ -14,7 +13,6 @@ import {
   GetConstituencyDataQuery,
   GetConstituencyDataQueryVariables,
 } from '@/__generated__/graphql'
-import { reportContext, useReportContext } from '@/app/reports/[id]/context'
 import {
   Card,
   CardContent,
@@ -31,6 +29,7 @@ import {
 import { BACKEND_URL } from '@/env'
 import { layerColour } from '@/lib/map'
 
+import { useReport } from '@/app/reports/[id]/(components)/ReportProvider'
 import { OverlapIcon } from './icons/OverlapIcon'
 import { LoadingIcon } from './ui/loadingIcon'
 
@@ -50,7 +49,9 @@ export const ConstituencyElectionDeepDive = ({
   gss: string
   analyticalAreaType: AnalyticalAreaType
 }) => {
-  const { id, displayOptions } = useContext(reportContext)
+  const {
+    report: { id, displayOptions },
+  } = useReport()
   const { data, loading, error } = useQuery<
     GetConstituencyDataQuery,
     GetConstituencyDataQueryVariables
@@ -236,7 +237,9 @@ export function MemberElectoralInsights({
     // First party votes
     electionStats?.firstPartyResult.votes || 0
   )
-  const { displayOptions } = useReportContext()
+  const {
+    report: { displayOptions },
+  } = useReport()
 
   return (
     <section className="border border-meepGray-500 rounded relative p-2 mt-2">

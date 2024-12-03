@@ -8,11 +8,11 @@ import {
   selectedConstituencyAtom,
 } from '@/lib/map/state'
 
-import { reportContext } from '../context'
+import { reportContext } from '../_context'
 import { ConstituenciesPanel } from './ConstituenciesPanel'
 import LayersCard from './LayersCard'
 import { NotFound } from './NotFound'
-import { ReportMap } from './ReportMap'
+import { ReportMap } from './_ReportMap'
 
 export default function ReportPage() {
   const { report } = useContext(reportContext)

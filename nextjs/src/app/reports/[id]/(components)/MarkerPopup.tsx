@@ -11,9 +11,9 @@ import {
 } from '@/__generated__/graphql'
 import { selectedSourceMarkerAtom } from '@/lib/map'
 
-import { reportContext } from '../context'
+import { reportContext } from '../_context'
+import useAnalytics from '../_useAnalytics'
 import { MAP_REPORT_LAYER_POINT } from '../gql_queries'
-import useAnalytics from '../useAnalytics'
 
 const MarkerPopup: React.FC = () => {
   /* Get the report context */
