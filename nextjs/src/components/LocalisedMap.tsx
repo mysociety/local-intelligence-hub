@@ -1,6 +1,6 @@
 import { BACKEND_URL } from '@/env'
 import { authenticationHeaders } from '@/lib/auth'
-import { atom, useAtom } from 'jotai'
+import { atom } from 'jotai'
 import { RequestTransformFunction } from 'mapbox-gl'
 import React from 'react'
 import Map, { ViewState } from 'react-map-gl'
@@ -24,18 +24,14 @@ const viewStateAtom = atom<Partial<ViewState>>()
 const LocalisedMap: React.FC<LocalisedMapProps> = ({
   children,
   showStreetDetails,
-  initViewCountry,
+  initViewCountry = 'uk',
 }) => {
-  const [viewState, setViewState] = useAtom(viewStateAtom)
-
-  React.useEffect(() => {
-    if (!!initViewCountry) setViewState(INITIAL_VIEW_STATES[initViewCountry])
-  }, [initViewCountry, setViewState])
-
   return (
     <Map
-      {...viewState}
-      onMove={(e) => setViewState(e.viewState)}
+      key={Math.random().toString()}
+      initialViewState={{
+        ...INITIAL_VIEW_STATES[initViewCountry],
+      }}
       mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
       mapStyle={
         showStreetDetails

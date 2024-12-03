@@ -5,7 +5,6 @@ import { useAtom } from 'jotai'
 import { ArrowRight, ClipboardCopy, Plus, Shuffle, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useContext } from 'react'
 import { toast } from 'sonner'
 import { v4 } from 'uuid'
 
@@ -15,7 +14,7 @@ import {
   MapReportLayersSummaryFragment,
 } from '@/__generated__/graphql'
 import importData from '@/app/(logged-in)/data-sources/inspect/[externalDataSourceId]/importData'
-import { reportContext, useReportContext } from '@/app/reports/[id]/context'
+import { useReportContext } from '@/app/reports/[id]/context'
 import { CRMSelection } from '@/components/CRMButtonItem'
 import { AddMapLayerButton } from '@/components/report/AddMapLayerButton'
 import { Button } from '@/components/ui/button'
@@ -49,10 +48,11 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { MAP_REPORT_LAYERS_SUMMARY, layerIdColour } from '@/lib/map'
 import { isDataConfigOpenAtom } from '@/lib/map/state'
+import { useReport } from './ReportProvider'
 
 export default function DataConfigPanel() {
   const router = useRouter()
-  const { id, report, updateReport } = useContext(reportContext)
+  const { report, updateReport, refreshReportData } = useReport()
   const client = useApolloClient()
 
   const { displayOptions, setDisplayOptions } = useReportContext()
@@ -72,13 +72,14 @@ export default function DataConfigPanel() {
     fragmentName: 'MapReportLayersSummary',
     from: {
       __typename: 'MapReport',
-      id,
+      id: report.id,
     },
   })
+  console.log('layers', layers)
   const [open, setOpen] = useAtom(isDataConfigOpenAtom)
   const shareURL = () =>
     new URL(
-      `/data-sources/share/${report?.data?.mapReport.organisation.slug}`,
+      `/data-sources/share/${report.organisation.slug}`,
       window.location.toString()
     ).toString()
 

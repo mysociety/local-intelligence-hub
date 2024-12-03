@@ -2,7 +2,6 @@
 
 import { useAtom, useSetAtom } from 'jotai'
 import { BarChart3, Layers } from 'lucide-react'
-import { useContext } from 'react'
 import { twMerge } from 'tailwind-merge'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,12 +12,12 @@ import {
   selectedConstituencyAtom,
 } from '@/lib/map/state'
 
-import { reportContext } from '../context'
 import DataConfigPanel from './DataConfigPanel'
 import ReportActions from './ReportActions'
+import { useReport } from './ReportProvider'
 
 const LayersCard: React.FC = () => {
-  const { report, updateReport } = useContext(reportContext)
+  const { report, updateReport } = useReport()
   const [isDataConfigOpen, setDataConfigOpen] = useAtom(isDataConfigOpenAtom)
   const toggleDataConfig = () => setDataConfigOpen((b) => !b)
   const [isConstituencyPanelOpen, setConstituencyPanelOpen] = useAtom(
@@ -50,6 +49,9 @@ const LayersCard: React.FC = () => {
     },
   ]
 
+  console.log('LayersCard')
+  console.log('report', report)
+
   return (
     <div className="flex flex-col items-start gap-4 max-h-full">
       <Card className="w-[200px] p-3 bg-white border-1 border-meepGray-700 text-meepGray-800">
@@ -60,16 +62,17 @@ const LayersCard: React.FC = () => {
               className="text-hMd grow font-IBMPlexSansMedium"
               {...contentEditableMutation(
                 updateReport,
+                // @ts-ignore
                 'name',
                 'Untitled Report'
               )}
             >
-              {report?.data?.mapReport.name}
+              {report?.name}
             </CardTitle>
             <ReportActions />
           </>
         </CardHeader>
-        {report?.data?.mapReport && (
+        {report && (
           <CardContent className="mt-4 grid grid-cols-1 gap-2">
             {toggles.map(({ icon: Icon, label, enabled, toggle }) => (
               <div
@@ -97,7 +100,7 @@ const LayersCard: React.FC = () => {
         )}
       </Card>
       {/* Data config card */}
-      {report?.data?.mapReport && isDataConfigOpen && <DataConfigPanel />}
+      {report && isDataConfigOpen && <DataConfigPanel />}
     </div>
   )
 }

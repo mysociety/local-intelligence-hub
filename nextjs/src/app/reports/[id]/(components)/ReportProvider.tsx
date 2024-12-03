@@ -27,7 +27,10 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
   const router = useRouter()
   const client = useApolloClient()
 
-  function updateReportConfig(reportConfig: ReportConfig) {
+  function updateReport(payload: {
+    name?: string
+    reportConfig?: ReportConfig
+  }) {
     const update = client.mutate<
       UpdateMapReportMutation,
       UpdateMapReportMutationVariables
@@ -36,7 +39,7 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
       variables: {
         input: {
           id: report.id,
-          displayOptions: reportConfig,
+          ...payload,
         },
       },
     })
@@ -45,10 +48,12 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
       success: (d) => {
         return {
           title: 'Report saved',
-          description: `Updated ${Object.keys(reportConfig).map(toSpaceCase).join(', ')}`,
+          description: `Updated ${Object.keys(payload).map(toSpaceCase).join(', ')}`,
         }
       },
       error: `Couldn't save report`,
+    }).finally(() => {
+      refreshReportData()
     })
   }
 
@@ -95,7 +100,7 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
 
   return (
     <ReportProviderContext.Provider
-      value={{ report, deleteReport, refreshReportData, updateReportConfig }}
+      value={{ report, deleteReport, refreshReportData, updateReport }}
     >
       {children}
     </ReportProviderContext.Provider>
