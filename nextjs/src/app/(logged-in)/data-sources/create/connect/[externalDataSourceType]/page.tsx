@@ -987,7 +987,7 @@ export default function Page({
   if (externalDataSourceType === 'actionnetwork') {
     const groupSlug = form.watch('actionnetwork.groupSlug')
     const actionNetworkApiUrl = groupSlug
-      ? `${groupSlug.replace(/\/manage$/, '')}/apis`
+      ? `https://actionnetwork.org/groups/${groupSlug}/apis`
       : ''
     const showApiKeyField = !!groupSlug
 
