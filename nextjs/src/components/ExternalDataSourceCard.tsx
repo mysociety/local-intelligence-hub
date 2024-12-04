@@ -212,7 +212,7 @@ export function TriggerUpdateButton({
           <AlertDialogDescription className="text-base">
             This will update all records in the{' '}
             {formatCrmNames(crmType || 'CRM')}. Depending on your{' '}
-            {formatCrmNames(crmType || 'CRM')}, this may take a while.
+            {formatCrmNames(crmType || 'CRM')} this may take a while.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

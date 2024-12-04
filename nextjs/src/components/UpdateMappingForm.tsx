@@ -228,6 +228,7 @@ export function UpdateMappingForm({
                             <X className="w-3 h-3" />
                           </Button>
                           <SourcePathSelector
+                            crmType={crmType}
                             focusOnMount={
                               form.watch(`updateMapping.${index}.source`) ===
                               '?'
