@@ -436,7 +436,10 @@ export default function InspectExternalDataSource({
                     </p>
                     <div className="space-y-4">
                       {!source.isUpdateScheduled ? (
-                        <TriggerUpdateButton id={source.id} />
+                        <TriggerUpdateButton
+                          id={source.id}
+                          crmType={source.crmType}
+                        />
                       ) : (
                         <>
                           <Button disabled>
@@ -469,15 +472,15 @@ export default function InspectExternalDataSource({
                         {source.autoUpdateEnabled ? 'enabled' : 'disabled'} for
                         this data source. Mapped can automatically update this
                         data source based on the mapping you{"'"}ve defined in
-                        the Data Mapping section.
+                        the data enrichment configuration.
                       </p>
                       {source.connectionDetails.__typename ===
                         'ActionNetworkSource' && (
                         <p className="text-sm text-meepGray-400 text-red-400">
                           Warning: Action Network auto-updates only work for new
                           members, not changes to existing members{"'"} details.
-                          If existing members change, you must trigger a full
-                          update using the button on the left.
+                          If you are chaning existing members you must trigger a
+                          full update using the button on the left.
                         </p>
                       )}
                       {source.automatedWebhooks ? (
