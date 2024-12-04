@@ -26,6 +26,7 @@
   "dependencies": {
     "@apollo/client": "^3.9.5",
     "@apollo/experimental-nextjs-app-support": "^0.8.0",
+    "@aws-sdk/client-s3": "^3.703.0",
     "@hookform/resolvers": "^3.3.4",
     "@kodingdotninja/use-tailwind-breakpoint": "^1.0.0",
     "@measured/puck": "^0.15.0",
@@ -54,7 +55,6 @@
     "@tanstack/react-table": "^8.13.2",
     "@tohuhono/puck-rich-text": "^0.8.1",
     "class-variance-authority": "^0.7.0",
-    "cloudinary": "^2.5.1",
     "clsx": "^2.1.0",
     "cmdk": "^0.2.1",
     "color-hash": "^2.0.2",
