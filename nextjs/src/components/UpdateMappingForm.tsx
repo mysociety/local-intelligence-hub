@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/select'
 import { locationTypeOptions } from '@/lib/location'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
-import { capitalizeWords } from '@/lib/utils'
+import { formatCrmNames } from '@/lib/utils'
 
 import { DataSourceFieldLabel } from './DataSourceIcon'
 
@@ -331,7 +331,7 @@ export function UpdateMappingForm({
                   className="my-2"
                 >
                   <Plus className="w-4 h-4" /> Add data to another field in your{' '}
-                  {capitalizeWords(crmType || 'CRM')}{' '}
+                  {formatCrmNames(crmType || 'CRM')}{' '}
                 </Button>
               </>
             )}

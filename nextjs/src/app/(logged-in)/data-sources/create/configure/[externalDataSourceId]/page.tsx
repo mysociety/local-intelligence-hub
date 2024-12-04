@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/lib/graphql/mutations'
 import { triggerAnalyticsEvent } from '@/lib/posthogutils'
-import { capitalizeWords } from '@/lib/utils'
+import { formatCrmNames } from '@/lib/utils'
 
 import { CreateAutoUpdateFormContext } from '../../NewExternalDataSourceWrapper'
 
@@ -137,7 +137,7 @@ export default function Page({
         </h1>
         <p className="mt-6 text-meepGray-400 max-w-sm">
           Choose from the following data sources to enhance your{' '}
-          {capitalizeWords(
+          {formatCrmNames(
             externalDataSource.data?.externalDataSource.crmType || 'CRM'
           )}{' '}
           with data that empowers your organisation. For geographic data, we

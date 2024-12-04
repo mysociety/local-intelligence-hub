@@ -16,7 +16,7 @@ import {
 } from '@/components/ExternalDataSourceCard'
 import { Button } from '@/components/ui/button'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
-import { capitalizeWords } from '@/lib/utils'
+import { formatCrmNames } from '@/lib/utils'
 
 import { CreateAutoUpdateFormContext } from '../../NewExternalDataSourceWrapper'
 
@@ -111,7 +111,7 @@ export default function Page({
                   <p>
                     Turn the below switches on once you have added the above
                     Webhook URL to your{' '}
-                    {capitalizeWords(
+                    {formatCrmNames(
                       pageQuery.data?.externalDataSource.crmType || 'CRM'
                     )}{' '}
                     and enabled it.

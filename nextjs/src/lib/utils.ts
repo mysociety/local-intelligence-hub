@@ -4,10 +4,19 @@ import { twMerge } from 'tailwind-merge'
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
-
-export function capitalizeWords(input: string): string {
-  return input
-    .split(' ')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
+export function formatCrmNames(input: string): string {
+  switch (input.toLowerCase()) {
+    case 'actionnetwork':
+      return 'Action Network'
+    case 'editablegooglesheets':
+      return 'Editable Google Sheets'
+    case 'tickettailor':
+      return 'Ticket Tailor'
+    case 'airtable':
+      return 'Airtable'
+    case 'mailchimp':
+      return 'Mailchimp'
+    default:
+      return 'CRM'
+  }
 }
