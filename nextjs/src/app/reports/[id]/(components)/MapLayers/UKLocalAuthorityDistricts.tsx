@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { useReport } from '../ReportProvider'
 import { addCountByGssToMapboxLayer } from './addCountByGssToMapboxLayer'
-import { getChoroplethColours } from './getChoroplethColours'
+import { getChoroplethColours } from './getChoroplethStyles'
 import { Tileset } from './types'
 import useDataSources from './useDataSources'
 

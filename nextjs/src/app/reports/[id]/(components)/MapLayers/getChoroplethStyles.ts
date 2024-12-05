@@ -1,6 +1,6 @@
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { interpolateBlues } from 'd3-scale-chromatic'
-import { FillLayerSpecification } from 'mapbox-gl'
+import { FillLayerSpecification, LineLayerSpecification } from 'mapbox-gl'
 
 export function getChoroplethColours(
   data: { count: number }[]
@@ -52,6 +52,15 @@ export function getChoroplethColours(
       ['to-number', ['feature-state', 'count'], 0],
       ...colourStops,
     ],
-    'fill-opacity': 1,
+    'fill-opacity': 0.75,
+  }
+}
+
+export function getChoroplethEdge(): LineLayerSpecification['paint'] {
+  return {
+    'line-color': 'white',
+    'line-gap-width': ['interpolate', ['linear'], ['zoom'], 8, 0, 12, 3],
+    'line-width': ['interpolate', ['linear'], ['zoom'], 8, 0.1, 12, 1],
+    'line-opacity': 0.5,
   }
 }

@@ -35,7 +35,8 @@ const LocalisedMap: React.FC<LocalisedMapProps> = ({
       mapStyle={
         showStreetDetails
           ? 'mapbox://styles/commonknowledge/clubx087l014y01mj1bv63yg8'
-          : 'mapbox://styles/commonknowledge/clty3prwh004601pr4nqn7l9s'
+          : // : 'mapbox://styles/commonknowledge/clty3prwh004601pr4nqn7l9s'
+            'mapbox://styles/commonknowledge/cm4bptoib01i801sd5bf8for2/draft'
       }
       transformRequest={mapboxTransformRequest}
     >

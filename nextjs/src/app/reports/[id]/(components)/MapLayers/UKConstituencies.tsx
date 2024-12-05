@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { useReport } from '../ReportProvider'
 import { addCountByGssToMapboxLayer } from './addCountByGssToMapboxLayer'
-import { getChoroplethColours } from './getChoroplethColours'
+import { getChoroplethColours, getChoroplethEdge } from './getChoroplethStyles'
 import { Tileset } from './types'
 import useDataSources from './useDataSources'
 
@@ -87,11 +87,7 @@ const UKConstituencies = () => {
           source={tileset.mapboxSourceId}
           source-layer={tileset.sourceLayerId}
           type="line"
-          paint={{
-            'line-color': 'white',
-            'line-width': 0.5,
-            'line-opacity': 0.5,
-          }}
+          paint={getChoroplethEdge()}
           layout={{ visibility }}
         />
       </Source>
