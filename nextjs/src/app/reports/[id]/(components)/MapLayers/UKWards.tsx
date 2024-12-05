@@ -1,4 +1,4 @@
-import { GroupedDataCount } from '@/__generated__/graphql'
+import { AnalyticalAreaType, GroupedDataCount } from '@/__generated__/graphql'
 import { useLoadedMap } from '@/lib/map'
 import { useEffect, useState } from 'react'
 import { Layer, Source } from 'react-map-gl'
@@ -23,9 +23,14 @@ function getTileset(data: GroupedDataCount[]): Tileset {
 
 const UKWards = () => {
   const { report } = useReport()
-  const countsByWard = useDataSources(report, 'uk_westminster_wards')
+  const countsByWard = useDataSources(report, AnalyticalAreaType.AdminWard)
   const map = useLoadedMap()
   const [tileset, setTileset] = useState<Tileset | null>(null)
+  const visibility =
+    report.displayOptions?.dataVisualisation?.boundaryType ===
+    AnalyticalAreaType.AdminWard
+      ? 'visible'
+      : 'none'
 
   useEffect(() => {
     if (map.loaded && countsByWard) {
@@ -37,6 +42,8 @@ const UKWards = () => {
         tileset.sourceLayerId,
         map.loadedMap
       )
+      // TODO: change once we've updated to full zoom range tileset
+      map.loadedMap?.setZoom(8)
     }
   }, [map.loaded, countsByWard])
 
@@ -64,6 +71,7 @@ const UKWards = () => {
           type="fill"
           filter={onlyDrawWardsWithData}
           paint={choroplethColours}
+          layout={{ visibility }}
         />
         {/* Border of the boundary */}
         <Layer
@@ -76,6 +84,7 @@ const UKWards = () => {
             'line-width': 0.5,
             'line-opacity': 0.5,
           }}
+          layout={{ visibility }}
         />
       </Source>
     </>

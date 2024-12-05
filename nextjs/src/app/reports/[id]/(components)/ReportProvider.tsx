@@ -35,7 +35,7 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
 
   function updateReport(payload: {
     name?: string
-    displayOptions?: ReportConfig
+    displayOptions?: Partial<ReportConfig>
     layers?: any[]
   }) {
     const update = client.mutate<
@@ -52,7 +52,7 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
     })
     toastPromise(update, {
       loading: 'Saving...',
-      success: (d) => {
+      success: () => {
         return {
           title: 'Report saved',
           description: `Updated ${Object.keys(payload).map(toSpaceCase).join(', ')}`,

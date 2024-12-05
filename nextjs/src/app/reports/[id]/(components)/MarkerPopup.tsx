@@ -2,7 +2,7 @@ import { useQuery } from '@apollo/client'
 import { Point } from 'geojson'
 import { useAtom } from 'jotai'
 import { ErrorBoundary } from 'next/dist/client/components/error-boundary'
-import React, { useContext } from 'react'
+import React from 'react'
 import { Popup } from 'react-map-gl'
 
 import {
@@ -11,18 +11,25 @@ import {
 } from '@/__generated__/graphql'
 import { selectedSourceMarkerAtom } from '@/lib/map'
 
-import { reportContext } from '../_context'
 import useAnalytics from '../_useAnalytics'
 import { MAP_REPORT_LAYER_POINT } from '../gql_queries'
+import { useReport } from './ReportProvider'
 
 const MarkerPopup: React.FC = () => {
   /* Get the report context */
-  const { id, displayOptions } = useContext(reportContext)
+  const {
+    report: {
+      id,
+      displayOptions: {
+        dataVisualisation: { boundaryType: analyticalAreaType } = {},
+      },
+    },
+  } = useReport()
 
   /* Add c 
   
     /* Get the analytics data for the report */
-  const { analytics } = useAnalytics(id, displayOptions.analyticalAreaType)
+  const { analytics } = useAnalytics(id, analyticalAreaType)
 
   const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(
     selectedSourceMarkerAtom

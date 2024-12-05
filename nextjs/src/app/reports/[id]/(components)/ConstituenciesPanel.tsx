@@ -1,7 +1,7 @@
 import { useAtom } from 'jotai'
 import { useEffect, useRef } from 'react'
 
-import { ConstituencyElectionDeepDive } from '@/components/reportsConstituencyItem'
+import { ConstituencyElectionDeepDive } from '@/app/reports/[id]/(components)/reportsConstituencyItem'
 import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -9,7 +9,7 @@ import {
   selectedConstituencyAtom,
 } from '@/lib/map/state'
 
-import { useReportContext } from '../_context'
+import { useReport } from './ReportProvider'
 import { TopConstituencies } from './TopConstituencies'
 
 export function ConstituenciesPanel() {
@@ -18,8 +18,12 @@ export function ConstituenciesPanel() {
   )
   const [tab, setTab] = useAtom(constituencyPanelTabAtom)
   const {
-    displayOptions: { analyticalAreaType },
-  } = useReportContext()
+    report: {
+      displayOptions: {
+        dataVisualisation: { boundaryType: analyticalAreaType } = {},
+      } = {},
+    },
+  } = useReport()
 
   const lastCons = useRef(selectedConstituencyId)
   useEffect(() => {
@@ -29,6 +33,8 @@ export function ConstituenciesPanel() {
       return setTab('list')
     }
   }, [selectedConstituencyId, setTab])
+
+  if (!analyticalAreaType) return null
 
   return (
     <Card className="pt-4 bg-meepGray-800 border-1 text-meepGray-200 border border-meepGray-700 max-h-full flex flex-col pointer-events-auto">

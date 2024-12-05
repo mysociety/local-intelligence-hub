@@ -5,11 +5,11 @@ import {
   MAP_REPORT_CONSTITUENCY_STATS,
   MAP_REPORT_WARD_STATS,
 } from '../../gql_queries'
-import { MapReportExtended, PoliticalBoundaries } from '../../reportContext'
+import { MapReportExtended } from '../../reportContext'
 
 const useDataSources = (
   report: MapReportExtended | undefined,
-  boundaryType: PoliticalBoundaries
+  boundaryType: AnalyticalAreaType
 ) => {
   const [canQuery, setCanQuery] = useState(false)
 
@@ -25,20 +25,19 @@ const useDataSources = (
   }
   let dataOutputKey
 
-  if (boundaryType === 'uk_westminster_constituencies') {
+  if (boundaryType === 'parliamentary_constituency_2024') {
     query = MAP_REPORT_CONSTITUENCY_STATS
     variables.analyticalAreaType =
       AnalyticalAreaType.ParliamentaryConstituency_2024
     dataOutputKey = 'importedDataCountByConstituency'
-  } else if (boundaryType === 'uk_westminster_wards') {
+  } else if (boundaryType === 'admin_ward') {
     query = MAP_REPORT_WARD_STATS
     dataOutputKey = 'importedDataCountByWard'
-  }
-  if (!query || !dataOutputKey) throw new Error('Invalid boundary type')
+  } else throw new Error('Invalid boundary type')
 
-  const constituencyAnalytics = useQuery(query, { variables, skip: !canQuery })
+  const boundaryAnalytics = useQuery(query, { variables, skip: !canQuery })
 
-  return constituencyAnalytics.data?.mapReport[dataOutputKey]
+  return boundaryAnalytics.data?.mapReport[dataOutputKey]
 }
 
 export default useDataSources

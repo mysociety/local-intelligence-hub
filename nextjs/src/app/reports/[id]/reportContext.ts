@@ -1,47 +1,40 @@
-import { MapReport } from '@/__generated__/graphql'
+import { AnalyticalAreaType, MapReport } from '@/__generated__/graphql'
 import { createContext } from 'react'
 
-type UKPoliticalBoundaries =
-  | 'uk_westminster_wards'
-  | 'uk_westminster_constituencies'
-  | 'localAuthorities'
-  | 'countries'
-/* // US political boundaries are only here as an example for future expansion
-type USPoliticalBoundaries = 'states' | 'counties' | 'congressionalDistricts'
-type PoliticalBoundaries = UKPoliticalBoundaries | USPoliticalBoundaries */
-export type PoliticalBoundaries = UKPoliticalBoundaries
 type VisualisationType = 'choropleth'
 type Palette = 'blue'
 
-export type MapReportExtended = MapReport & { displayOptions: ReportConfig }
+export type MapReportExtended = Omit<MapReport, 'displayOptions'> & {
+  displayOptions: ReportConfig
+}
 
 export interface ReportConfig {
-  name: string
-  dataSources: any[]
-  dataVisualisation: {
-    boundaryType: PoliticalBoundaries
-    visualisationType: VisualisationType
-    palette: Palette
+  dataVisualisation?: {
+    boundaryType?: AnalyticalAreaType
+    visualisationType?: VisualisationType
+    palette?: Palette
   }
-  display: {
-    streetDetails: boolean
-    postcodeLabels: boolean
-    boundaryOutlines: PoliticalBoundaries[]
+  display?: {
+    showStreetDetails?: boolean
+    showMPs?: boolean
+    showLastElectionData?: boolean
+    showPostcodeLabels?: boolean
+    boundaryOutlines?: AnalyticalAreaType[]
   }
 }
 
 export const defaultReportConfig: ReportConfig = {
-  name: 'My New Report',
-  dataSources: [],
   dataVisualisation: {
-    boundaryType: 'uk_westminster_constituencies',
+    boundaryType: AnalyticalAreaType.ParliamentaryConstituency_2024,
     visualisationType: 'choropleth',
     palette: 'blue',
   },
   display: {
-    streetDetails: false,
-    postcodeLabels: false,
-    boundaryOutlines: ['uk_westminster_constituencies'],
+    showStreetDetails: false,
+    showPostcodeLabels: false,
+    showMPs: false,
+    showLastElectionData: false,
+    boundaryOutlines: [AnalyticalAreaType.ParliamentaryConstituency_2024],
   },
 }
 

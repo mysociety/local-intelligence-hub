@@ -7,7 +7,7 @@ import { Layer, Source } from 'react-map-gl'
 import { BACKEND_URL } from '@/env'
 import { layerColour, selectedSourceMarkerAtom, useLoadedMap } from '@/lib/map'
 
-import { MIN_MEMBERS_ZOOM } from './_ReportMap'
+const MIN_MEMBERS_ZOOM = 10
 
 export function ExternalDataSourcePointMarkers({
   externalDataSourceId,

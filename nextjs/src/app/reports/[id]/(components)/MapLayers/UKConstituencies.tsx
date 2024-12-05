@@ -1,4 +1,4 @@
-import { GroupedDataCount } from '@/__generated__/graphql'
+import { AnalyticalAreaType, GroupedDataCount } from '@/__generated__/graphql'
 import { useLoadedMap } from '@/lib/map'
 import { useEffect, useState } from 'react'
 import { Layer, Source } from 'react-map-gl'
@@ -25,11 +25,19 @@ const UKConstituencies = () => {
   const { report } = useReport()
   const countsByConstituency = useDataSources(
     report,
-    'uk_westminster_constituencies'
+    AnalyticalAreaType.ParliamentaryConstituency_2024
   )
   const map = useLoadedMap()
   const [tileset, setTileset] = useState<Tileset | null>(null)
 
+  // Show the layer only if the report is set to show parliamentary constituencies
+  const visibility =
+    report.displayOptions?.dataVisualisation?.boundaryType ===
+    AnalyticalAreaType.ParliamentaryConstituency_2024
+      ? 'visible'
+      : 'none'
+
+  // When the map is loaded and we have the data, add the layer to the map
   useEffect(() => {
     if (map.loaded && countsByConstituency) {
       const tileset = getTileset(countsByConstituency)
@@ -45,6 +53,7 @@ const UKConstituencies = () => {
 
   if (!countsByConstituency || !tileset) return null
 
+  // Only draw the constituencies that have data
   const onlyDrawConstituenciesWithData = [
     'in',
     ['get', tileset.promoteId],
@@ -68,6 +77,7 @@ const UKConstituencies = () => {
           type="fill"
           filter={onlyDrawConstituenciesWithData}
           paint={choroplethColours}
+          layout={{ visibility }}
         />
         {/* Border of the boundary */}
         <Layer
@@ -80,6 +90,7 @@ const UKConstituencies = () => {
             'line-width': 0.5,
             'line-opacity': 0.5,
           }}
+          layout={{ visibility }}
         />
       </Source>
     </>
