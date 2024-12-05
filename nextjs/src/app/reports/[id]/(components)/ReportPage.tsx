@@ -15,6 +15,7 @@ export default function ReportPage() {
         <LocalisedMap
           showStreetDetails={report.displayOptions?.display?.showStreetDetails}
           initViewCountry="uk"
+          mapKey={report.id}
         >
           <UKWards />
           <UKConstituencies />

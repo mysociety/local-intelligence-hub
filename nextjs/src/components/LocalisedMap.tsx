@@ -8,6 +8,7 @@ interface LocalisedMapProps {
   children?: React.ReactNode
   showStreetDetails?: boolean
   initViewCountry?: keyof typeof INITIAL_VIEW_STATES
+  mapKey?: string
 }
 
 const INITIAL_VIEW_STATES = {
@@ -22,10 +23,11 @@ const LocalisedMap: React.FC<LocalisedMapProps> = ({
   children,
   showStreetDetails,
   initViewCountry = 'uk',
+  mapKey,
 }) => {
   return (
     <Map
-      key={Math.random().toString()}
+      key={mapKey || Math.random().toString()}
       initialViewState={{
         ...INITIAL_VIEW_STATES[initViewCountry],
       }}
