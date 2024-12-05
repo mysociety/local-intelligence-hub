@@ -42,8 +42,6 @@ const UKWards = () => {
         tileset.sourceLayerId,
         map.loadedMap
       )
-      // TODO: change once we've updated to full zoom range tileset
-      map.loadedMap?.setZoom(8)
     }
   }, [map.loaded, countsByWard])
 

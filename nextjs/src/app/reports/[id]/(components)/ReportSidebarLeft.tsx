@@ -15,7 +15,7 @@ export function ReportSidebarLeft() {
       <SidebarContent className="bg-meepGray-600">
         <Tabs defaultValue="data-sources" className="w-full">
           <TabsList
-            className="w-full justify-start text-white rounded-none pl-2
+            className="w-full justify-start text-white rounded-none px-4
           border border-b-meepGray-800 pt-4 pb-0 h-fit flex gap-4"
           >
             <TabsTrigger value="data-sources" className={classes.tabsTrigger}>
@@ -25,10 +25,10 @@ export function ReportSidebarLeft() {
               Configuration
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="data-sources" className="p-2">
+          <TabsContent value="data-sources" className="px-4">
             <ReportDataSources />
           </TabsContent>
-          <TabsContent value="configuration" className="p-2">
+          <TabsContent value="configuration" className="px-4">
             <ReportConfiguration />
           </TabsContent>
         </Tabs>
