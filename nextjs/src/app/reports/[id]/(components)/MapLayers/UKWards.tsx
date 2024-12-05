@@ -13,10 +13,10 @@ function getTileset(data: GroupedDataCount[]): Tileset {
   return {
     name: 'GE2024 wards',
     singular: 'ward',
-    mapboxSourceId: 'commonknowledge.0rzbo365',
-    sourceLayerId: 'Wards_Dec_2023_UK_Boundaries_-7wzb6g',
-    promoteId: 'WD23CD',
-    labelId: 'WD23NM',
+    mapboxSourceId: 'commonknowledge.3s92t1yc',
+    sourceLayerId: 'converted_uk_wards_2025',
+    promoteId: 'WD24CD',
+    labelId: 'WD24NM',
     data,
   }
 }

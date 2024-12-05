@@ -8,6 +8,17 @@ export type MapReportExtended = Omit<MapReport, 'displayOptions'> & {
   displayOptions: ReportConfig
 }
 
+export const BoundaryTypes = {
+  uk: [
+    {
+      key: AnalyticalAreaType.ParliamentaryConstituency_2024,
+      label: 'Parliamentary Constituencies',
+    },
+    { key: AnalyticalAreaType.AdminWard, label: 'Wards' },
+    { key: AnalyticalAreaType.AdminDistrict, label: 'District Councils' },
+  ],
+}
+
 export interface ReportConfig {
   dataVisualisation?: {
     boundaryType?: AnalyticalAreaType

@@ -1,6 +1,5 @@
 'use client'
 
-import { AnalyticalAreaType } from '@/__generated__/graphql'
 import {
   Collapsible,
   CollapsibleContent,
@@ -14,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ChevronsUpDown } from 'lucide-react'
+import { BoundaryTypes } from '../reportContext'
 import { useReport } from './ReportProvider'
 import ReportConfigLegacyControls from './_ReportConfigLegacyControls'
 
@@ -35,7 +35,8 @@ const ReportConfiguration: React.FC = () => {
     })
   }
 
-  const politicalBoundaries = Object.values(AnalyticalAreaType)
+  // TODO: Make the country part of the report configuration
+  const politicalBoundaries = BoundaryTypes.uk
 
   return (
     <div>
@@ -58,8 +59,8 @@ const ReportConfiguration: React.FC = () => {
               </SelectTrigger>
               <SelectContent>
                 {politicalBoundaries.map((boundary) => (
-                  <SelectItem key={boundary} value={boundary}>
-                    {boundary}
+                  <SelectItem key={boundary.key} value={boundary.key}>
+                    {boundary.label}
                   </SelectItem>
                 ))}
               </SelectContent>
