@@ -11,24 +11,24 @@ import useDataSources from './useDataSources'
 // https://studio.mapbox.com/tilesets/commonknowledge.0rzbo365
 function getTileset(data: GroupedDataCount[]): Tileset {
   return {
-    name: 'Wards',
-    singular: 'ward',
-    mapboxSourceId: 'commonknowledge.3s92t1yc',
-    sourceLayerId: 'converted_uk_wards_2025',
-    promoteId: 'WD24CD',
-    labelId: 'WD24NM',
+    name: '',
+    singular: '',
+    mapboxSourceId: '',
+    sourceLayerId: '',
+    promoteId: '',
+    labelId: '',
     data,
   }
 }
 
-const UKWards = () => {
+const UKLocalAuthorityDistricts = () => {
   const { report } = useReport()
-  const countsByWard = useDataSources(report, AnalyticalAreaType.AdminWard)
+  const countsByWard = useDataSources(report, AnalyticalAreaType.AdminDistrict)
   const map = useLoadedMap()
   const [tileset, setTileset] = useState<Tileset | null>(null)
   const visibility =
     report.displayOptions?.dataVisualisation?.boundaryType ===
-    AnalyticalAreaType.AdminWard
+    AnalyticalAreaType.AdminDistrict
       ? 'visible'
       : 'none'
 
@@ -48,7 +48,7 @@ const UKWards = () => {
   if (!map.loaded) return null
   if (!countsByWard || !tileset) return null
 
-  const onlyDrawWardsWithData = [
+  const onlyDrawBoundariesWithData = [
     'in',
     ['get', tileset.promoteId],
     ['literal', tileset.data.map((d) => d.gss || '')],
@@ -68,7 +68,7 @@ const UKWards = () => {
           source={tileset.mapboxSourceId}
           source-layer={tileset.sourceLayerId}
           type="fill"
-          filter={onlyDrawWardsWithData}
+          filter={onlyDrawBoundariesWithData}
           paint={choroplethColours}
           layout={{ visibility }}
         />
@@ -90,4 +90,4 @@ const UKWards = () => {
   )
 }
 
-export default UKWards
+export default UKLocalAuthorityDistricts

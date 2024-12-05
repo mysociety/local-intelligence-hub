@@ -11,7 +11,7 @@ import useDataSources from './useDataSources'
 // https://studio.mapbox.com/tilesets/commonknowledge.bhg1h3hj
 function getTileset(data: GroupedDataCount[]): Tileset {
   return {
-    name: 'GE2024 constituencies',
+    name: 'Constituencies',
     singular: 'constituency',
     mapboxSourceId: 'commonknowledge.bhg1h3hj',
     sourceLayerId: 'uk_cons_2025',

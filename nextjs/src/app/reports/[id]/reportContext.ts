@@ -15,7 +15,10 @@ export const BoundaryTypes = {
       label: 'Parliamentary Constituencies',
     },
     { key: AnalyticalAreaType.AdminWard, label: 'Wards' },
-    { key: AnalyticalAreaType.AdminDistrict, label: 'District Councils' },
+    // TODO: bring this back later
+    // { key: AnalyticalAreaType.AdminDistrict, label: 'District Councils' },
+    // TODO: add this to the python model
+    // { key: AnalyticalAreaType.AdminCouncil, label: 'County, Borough or City Councils' },
   ],
 }
 
