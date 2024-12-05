@@ -2,11 +2,14 @@ import { AnalyticalAreaType, GroupedDataCount } from '@/__generated__/graphql'
 import { useLoadedMap } from '@/lib/map'
 import { useEffect, useState } from 'react'
 import { Layer, Source } from 'react-map-gl'
+import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
+import {
+  getChoroplethColours,
+  getChoroplethEdge,
+} from '../../getChoroplethStyles'
+import { Tileset } from '../../types'
+import useBoundaryAnalytics from '../../useBoundaryAnalytics'
 import { useReport } from '../ReportProvider'
-import { addCountByGssToMapboxLayer } from './addCountByGssToMapboxLayer'
-import { getChoroplethColours, getChoroplethEdge } from './getChoroplethStyles'
-import { Tileset } from './types'
-import useDataSources from './useDataSources'
 
 // https://studio.mapbox.com/tilesets/commonknowledge.bhg1h3hj
 function getTileset(data: GroupedDataCount[]): Tileset {
@@ -23,7 +26,7 @@ function getTileset(data: GroupedDataCount[]): Tileset {
 
 const UKConstituencies = () => {
   const { report } = useReport()
-  const countsByConstituency = useDataSources(
+  const countsByConstituency = useBoundaryAnalytics(
     report,
     AnalyticalAreaType.ParliamentaryConstituency_2024
   )

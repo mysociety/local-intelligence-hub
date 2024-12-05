@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react'
 import {
   MAP_REPORT_CONSTITUENCY_STATS,
   MAP_REPORT_WARD_STATS,
-} from '../../gql_queries'
-import { MapReportExtended } from '../../reportContext'
+} from './gql_queries'
+import { MapReportExtended } from './reportContext'
 
-const useDataSources = (
+const useBoundaryAnalytics = (
   report: MapReportExtended | undefined,
   boundaryType: AnalyticalAreaType
 ) => {
@@ -40,4 +40,4 @@ const useDataSources = (
   return boundaryAnalytics.data?.mapReport[dataOutputKey]
 }
 
-export default useDataSources
+export default useBoundaryAnalytics

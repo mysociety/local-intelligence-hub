@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 
 import { useLoadedMap } from '@/lib/map'
-import { Tileset } from './(components)/MapLayers/types'
+import { Tileset } from './types'
 
 const useSelectBoundary = (tileset: Tileset) => {
   const { loadedMap } = useLoadedMap()

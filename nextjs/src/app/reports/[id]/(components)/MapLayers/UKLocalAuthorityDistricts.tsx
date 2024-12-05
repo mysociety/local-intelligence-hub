@@ -2,11 +2,11 @@ import { AnalyticalAreaType, GroupedDataCount } from '@/__generated__/graphql'
 import { useLoadedMap } from '@/lib/map'
 import { useEffect, useState } from 'react'
 import { Layer, Source } from 'react-map-gl'
+import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
+import { getChoroplethColours } from '../../getChoroplethStyles'
+import { Tileset } from '../../types'
+import useBoundaryAnalytics from '../../useBoundaryAnalytics'
 import { useReport } from '../ReportProvider'
-import { addCountByGssToMapboxLayer } from './addCountByGssToMapboxLayer'
-import { getChoroplethColours } from './getChoroplethStyles'
-import { Tileset } from './types'
-import useDataSources from './useDataSources'
 
 // https://studio.mapbox.com/tilesets/commonknowledge.0rzbo365
 function getTileset(data: GroupedDataCount[]): Tileset {
@@ -23,7 +23,10 @@ function getTileset(data: GroupedDataCount[]): Tileset {
 
 const UKLocalAuthorityDistricts = () => {
   const { report } = useReport()
-  const countsByWard = useDataSources(report, AnalyticalAreaType.AdminDistrict)
+  const countsByWard = useBoundaryAnalytics(
+    report,
+    AnalyticalAreaType.AdminDistrict
+  )
   const map = useLoadedMap()
   const [tileset, setTileset] = useState<Tileset | null>(null)
   const visibility =
