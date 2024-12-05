@@ -805,6 +805,18 @@ class BatchJobProgress:
     seconds_per_record: Optional[float] = None
     done: Optional[int] = None
     remaining: Optional[int] = None
+    
+    @strawberry_django.field
+    def in_queue(
+        self, info: Info
+    ) -> bool:
+        if self.status == ProcrastinateJobStatus.doing.value or self.status == ProcrastinateJobStatus.todo.value:
+            return True
+        else:
+            return False
+
+
+    
 
 
 @strawberry.enum
@@ -863,7 +875,7 @@ class BaseDataSource(Analytics):
     def import_progress(
         self: models.ExternalDataSource, info: Info
     ) -> Optional[BatchJobProgress]:
-        job = self.get_scheduled_import_job()
+        job = self.get_latest_import_job()
         if job is None:
             return None
         progress = self.get_scheduled_batch_job_progress(job)

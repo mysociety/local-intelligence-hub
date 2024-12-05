@@ -16,12 +16,12 @@ export function BatchJobProgressReport({
   pastTenseVerb = 'Completed',
 }: {
   pastTenseVerb: string
-  batchJobProgress: Pick<
+  batchJobProgress?: Pick<
     BatchJobProgress,
     'status' | 'total' | 'succeeded' | 'estimatedFinishTime' | 'hasForecast'
-  >
+  > | null
 }) {
-  if (!batchJobProgress.total) {
+  if (!batchJobProgress) {
     return
   }
   return (
@@ -29,7 +29,7 @@ export function BatchJobProgressReport({
       {batchJobProgress.status === ProcrastinateJobStatus.Succeeded ? (
         <div className="flex flex-row gap-2 items-center justify-center">
           <MessageCircleHeart />
-          <div className="text-meepGray-300 text-sm">Job failed</div>
+          <div className="text-meepGray-300 text-sm">{pastTenseVerb}</div>
         </div>
       ) : batchJobProgress.status === ProcrastinateJobStatus.Failed ? (
         <div className="flex flex-row gap-2 items-center justify-center">

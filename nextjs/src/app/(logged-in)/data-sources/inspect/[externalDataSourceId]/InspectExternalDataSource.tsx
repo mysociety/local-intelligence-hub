@@ -121,6 +121,7 @@ const GET_UPDATE_CONFIG = gql`
         total
         succeeded
         estimatedFinishTime
+        inQueue
       }
       isUpdateScheduled
       updateProgress {
@@ -261,11 +262,12 @@ export default function InspectExternalDataSource({
                   : ''}
                 .
               </p>
+
               <Button
-                disabled={source.isImportScheduled}
+                disabled={source.importProgress?.inQueue}
                 onClick={() => importData(client, externalDataSourceId)}
               >
-                {!source.isImportScheduled ? (
+                {!source.importProgress?.inQueue ? (
                   'Import all data'
                 ) : (
                   <span className="flex flex-row gap-2 items-center">
@@ -279,13 +281,11 @@ export default function InspectExternalDataSource({
                   </span>
                 )}
               </Button>
-              {source.importProgress?.status ===
-                ProcrastinateJobStatus.Doing && (
-                <BatchJobProgressReport
-                  batchJobProgress={source.importProgress}
-                  pastTenseVerb="Imported"
-                />
-              )}
+              <BatchJobProgressReport
+                batchJobProgress={source.importProgress}
+                pastTenseVerb="Imported"
+              />
+
               {source.hasWebhooks && (
                 <section className="space-y-4">
                   <h2 className="text-hSm mb-5">Auto-import</h2>
