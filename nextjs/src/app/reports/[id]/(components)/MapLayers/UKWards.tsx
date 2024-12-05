@@ -7,11 +7,12 @@ import {
   getChoroplethColours,
   getChoroplethEdge,
 } from '../../getChoroplethStyles'
+import { getChoroplethFillFilter } from '../../logic'
 import { Tileset } from '../../types'
 import useBoundaryAnalytics from '../../useBoundaryAnalytics'
 import { useReport } from '../ReportProvider'
 
-// https://studio.mapbox.com/tilesets/commonknowledge.0rzbo365
+// https://studio.mapbox.com/tilesets/commonknowledge.3s92t1yc
 function getTileset(data: GroupedDataCount[]): Tileset {
   return {
     name: 'Wards',
@@ -54,12 +55,6 @@ const UKWards = () => {
   if (!map.loaded) return null
   if (!countsByWard || !tileset) return null
 
-  const onlyDrawWardsWithData = [
-    'in',
-    ['get', tileset.promoteId],
-    ['literal', tileset.data.map((d) => d.gss || '')],
-  ]
-  const choroplethColours = getChoroplethColours(tileset.data)
   return (
     <>
       <Source
@@ -75,8 +70,8 @@ const UKWards = () => {
           source={tileset.mapboxSourceId}
           source-layer={tileset.sourceLayerId}
           type="fill"
-          filter={onlyDrawWardsWithData}
-          paint={choroplethColours}
+          filter={getChoroplethFillFilter(tileset)}
+          paint={getChoroplethColours(tileset.data)}
           layout={{ visibility }}
         />
         {/* Border of the boundary */}

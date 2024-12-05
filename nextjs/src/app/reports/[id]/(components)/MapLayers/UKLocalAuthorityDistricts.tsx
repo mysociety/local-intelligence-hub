@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
 import { getChoroplethColours } from '../../getChoroplethStyles'
+import { getChoroplethFillFilter } from '../../logic'
 import { Tileset } from '../../types'
 import useBoundaryAnalytics from '../../useBoundaryAnalytics'
 import { useReport } from '../ReportProvider'
 
-// https://studio.mapbox.com/tilesets/commonknowledge.0rzbo365
+// https://studio.mapbox.com/tilesets/...
 function getTileset(data: GroupedDataCount[]): Tileset {
   return {
     name: '',
@@ -51,11 +52,6 @@ const UKLocalAuthorityDistricts = () => {
   if (!map.loaded) return null
   if (!countsByWard || !tileset) return null
 
-  const onlyDrawBoundariesWithData = [
-    'in',
-    ['get', tileset.promoteId],
-    ['literal', tileset.data.map((d) => d.gss || '')],
-  ]
   const choroplethColours = getChoroplethColours(tileset.data)
   return (
     <>
@@ -71,7 +67,7 @@ const UKLocalAuthorityDistricts = () => {
           source={tileset.mapboxSourceId}
           source-layer={tileset.sourceLayerId}
           type="fill"
-          filter={onlyDrawBoundariesWithData}
+          filter={getChoroplethFillFilter(tileset)}
           paint={choroplethColours}
           layout={{ visibility }}
         />

@@ -4,18 +4,15 @@ import { useEffect, useRef } from 'react'
 import { ConstituencyElectionDeepDive } from '@/app/reports/[id]/(components)/reportsConstituencyItem'
 import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  constituencyPanelTabAtom,
-  selectedConstituencyAtom,
-} from '@/lib/map/state'
+import { constituencyPanelTabAtom } from '@/lib/map/state'
 
+import { selectedBoundaryAtom } from '../useSelectBoundary'
 import { useReport } from './ReportProvider'
 import { TopConstituencies } from './TopConstituencies'
 
 export function ConstituenciesPanel() {
-  const [selectedConstituencyId, setSelectedConstituency] = useAtom(
-    selectedConstituencyAtom
-  )
+  const [selectedBoundary, setSelectedConstituency] =
+    useAtom(selectedBoundaryAtom)
   const [tab, setTab] = useAtom(constituencyPanelTabAtom)
   const {
     report: {
@@ -25,14 +22,14 @@ export function ConstituenciesPanel() {
     },
   } = useReport()
 
-  const lastCons = useRef(selectedConstituencyId)
+  const lastCons = useRef(selectedBoundary)
   useEffect(() => {
-    if (selectedConstituencyId && selectedConstituencyId !== lastCons.current) {
+    if (selectedBoundary && selectedBoundary !== lastCons.current) {
       return setTab('selected')
-    } else if (!selectedConstituencyId) {
+    } else if (!selectedBoundary) {
       return setTab('list')
     }
-  }, [selectedConstituencyId, setTab])
+  }, [selectedBoundary, setTab])
 
   if (!analyticalAreaType) return null
 
@@ -45,7 +42,7 @@ export function ConstituenciesPanel() {
       >
         <TabsList className="mx-4">
           <TabsTrigger value="list">All Constituencies</TabsTrigger>
-          {!!selectedConstituencyId && (
+          {!!selectedBoundary && (
             <TabsTrigger value="selected">Selected</TabsTrigger>
           )}
         </TabsList>
@@ -54,10 +51,10 @@ export function ConstituenciesPanel() {
           <TabsContent value="list" className="pb-4">
             <TopConstituencies />
           </TabsContent>
-          {!!selectedConstituencyId && (
+          {!!selectedBoundary && (
             <TabsContent value="selected" className="pb-4">
               <ConstituencyElectionDeepDive
-                gss={selectedConstituencyId}
+                gss={selectedBoundary}
                 analyticalAreaType={analyticalAreaType}
               />
             </TabsContent>

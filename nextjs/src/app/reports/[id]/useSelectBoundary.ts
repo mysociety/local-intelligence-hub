@@ -1,15 +1,18 @@
 'use client'
-
-import { useEffect } from 'react'
-
 import { useLoadedMap } from '@/lib/map'
+import { atom, useAtom } from 'jotai'
+import { useEffect } from 'react'
 import { Tileset } from './types'
 
-const useSelectBoundary = (tileset: Tileset) => {
+export const selectedBoundaryAtom = atom<string | null>(null)
+
+const useSelectBoundary = (tileset?: Tileset | null) => {
   const { loadedMap } = useLoadedMap()
+  const [selectedBoundary, setSelectedBoundary] = useAtom(selectedBoundaryAtom)
 
   useEffect(
     function selectConstituency() {
+      if (!tileset || !loadedMap) return
       loadedMap?.on('mouseover', `${tileset.mapboxSourceId}-fill`, () => {
         const canvas = loadedMap?.getCanvas()
         if (!canvas) return
@@ -28,6 +31,8 @@ const useSelectBoundary = (tileset: Tileset) => {
               const id = feature.properties?.[tileset.promoteId]
               if (id) {
                 console.log('Selected constituency:', id)
+                setSelectedBoundary(id)
+
                 // setSelectedConstituency(id)
                 // setIsConstituencyPanelOpen(true)
                 // setTab('selected')

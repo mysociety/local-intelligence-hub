@@ -60,7 +60,6 @@ export function getChoroplethEdge(): LineLayerSpecification['paint'] {
   return {
     'line-color': 'white',
     'line-gap-width': ['interpolate', ['linear'], ['zoom'], 8, 0, 12, 3],
-    'line-width': ['interpolate', ['linear'], ['zoom'], 8, 0.1, 12, 1],
     'line-opacity': 0.5,
   }
 }

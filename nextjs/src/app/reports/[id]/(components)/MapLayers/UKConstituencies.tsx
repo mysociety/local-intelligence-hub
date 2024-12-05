@@ -1,5 +1,6 @@
 import { AnalyticalAreaType, GroupedDataCount } from '@/__generated__/graphql'
 import { useLoadedMap } from '@/lib/map'
+import { useAtomValue } from 'jotai'
 import { useEffect, useState } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
@@ -7,8 +8,12 @@ import {
   getChoroplethColours,
   getChoroplethEdge,
 } from '../../getChoroplethStyles'
+import { getChoroplethFillFilter } from '../../logic'
 import { Tileset } from '../../types'
 import useBoundaryAnalytics from '../../useBoundaryAnalytics'
+import useSelectBoundary, {
+  selectedBoundaryAtom,
+} from '../../useSelectBoundary'
 import { useReport } from '../ReportProvider'
 
 // https://studio.mapbox.com/tilesets/commonknowledge.bhg1h3hj
@@ -32,6 +37,8 @@ const UKConstituencies = () => {
   )
   const map = useLoadedMap()
   const [tileset, setTileset] = useState<Tileset | null>(null)
+  useSelectBoundary(tileset)
+  const selectedBoundary = useAtomValue(selectedBoundaryAtom)
 
   // Show the layer only if the report is set to show parliamentary constituencies
   const visibility =
@@ -57,14 +64,6 @@ const UKConstituencies = () => {
   if (!map.loaded) return null
   if (!countsByConstituency || !tileset) return null
 
-  // Only draw the constituencies that have data
-  const onlyDrawConstituenciesWithData = [
-    'in',
-    ['get', tileset.promoteId],
-    ['literal', tileset.data.map((d) => d.gss || '')],
-  ]
-  const choroplethColours = getChoroplethColours(tileset.data)
-
   return (
     <>
       <Source
@@ -80,8 +79,8 @@ const UKConstituencies = () => {
           source={tileset.mapboxSourceId}
           source-layer={tileset.sourceLayerId}
           type="fill"
-          filter={onlyDrawConstituenciesWithData}
-          paint={choroplethColours}
+          filter={getChoroplethFillFilter(tileset)}
+          paint={getChoroplethColours(tileset.data)}
           layout={{ visibility }}
         />
         {/* Border of the boundary */}
@@ -90,8 +89,20 @@ const UKConstituencies = () => {
           source={tileset.mapboxSourceId}
           source-layer={tileset.sourceLayerId}
           type="line"
-          paint={getChoroplethEdge()}
-          layout={{ visibility }}
+          paint={{
+            ...getChoroplethEdge(),
+            'line-width': [
+              'case',
+              [
+                '==',
+                ['get', tileset?.promoteId || null],
+                selectedBoundary || null,
+              ],
+              5,
+              0.3,
+            ],
+          }}
+          layout={{ visibility, 'line-join': 'round', 'line-round-limit': 0.1 }}
         />
       </Source>
     </>
