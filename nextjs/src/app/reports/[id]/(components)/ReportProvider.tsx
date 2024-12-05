@@ -9,6 +9,7 @@ import {
 import { toastPromise } from '@/lib/toast'
 import { FetchResult, useApolloClient } from '@apollo/client'
 import { useSetAtom } from 'jotai'
+import { merge, pick } from 'lodash'
 import { useRouter } from 'next/navigation'
 import { ReactNode, useContext, useEffect } from 'react'
 import toSpaceCase from 'to-space-case'
@@ -44,10 +45,11 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
     >({
       mutation: UPDATE_MAP_REPORT,
       variables: {
-        input: {
-          id: report.id,
-          ...payload,
-        },
+        input: pick(merge({}, report, payload), [
+          'id',
+          'name',
+          'displayOptions',
+        ]),
       },
     })
     toastPromise(update, {

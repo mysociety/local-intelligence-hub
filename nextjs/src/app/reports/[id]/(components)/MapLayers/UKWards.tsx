@@ -45,6 +45,7 @@ const UKWards = () => {
     }
   }, [map.loaded, countsByWard])
 
+  if (!map.loaded) return null
   if (!countsByWard || !tileset) return null
 
   const onlyDrawWardsWithData = [

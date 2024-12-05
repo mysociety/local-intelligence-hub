@@ -25,7 +25,9 @@ const ReportConfigLegacyControls: React.FC = () => {
     updateReport,
     report: {
       organisation,
-      displayOptions: { dataVisualisation, display },
+      displayOptions: {
+        display: { showLastElectionData, showMPs, showStreetDetails } = {},
+      },
     },
   } = useReport()
 
@@ -38,8 +40,9 @@ const ReportConfigLegacyControls: React.FC = () => {
   const toggleElectionData = () => {
     updateReport({
       displayOptions: {
-        // @ts-ignore: Property 'showLastElectionData' does not exist on type 'DeepPartialObject'
-        showLastElectionData: !displayOptions.showLastElectionData,
+        display: {
+          showLastElectionData: !showLastElectionData,
+        },
       },
     })
   }
@@ -47,8 +50,9 @@ const ReportConfigLegacyControls: React.FC = () => {
   const toggleMps = () => {
     updateReport({
       displayOptions: {
-        // @ts-ignore: Property 'showMPs' does not exist on type 'DeepPartialObject'
-        showMPs: !displayOptions.showMPs,
+        display: {
+          showMPs: !showMPs,
+        },
       },
     })
   }
@@ -62,10 +66,12 @@ const ReportConfigLegacyControls: React.FC = () => {
 
         <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
           <Switch
-            checked={display?.showStreetDetails}
+            checked={showStreetDetails}
             onCheckedChange={(showStreetDetails: boolean) => {
               // @ts-ignore: Property 'showStreetDetails' does not exist on type 'DeepPartialObject'
-              updateReport({ displayOptions: { showStreetDetails } })
+              updateReport({
+                displayOptions: { display: { showStreetDetails } },
+              })
             }}
           />
           Street details
@@ -76,12 +82,12 @@ const ReportConfigLegacyControls: React.FC = () => {
           Westminster politics
         </span>
         <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
-          <Switch checked={display?.showMPs} onCheckedChange={toggleMps} />
+          <Switch checked={showMPs} onCheckedChange={toggleMps} />
           Current MP
         </div>
         <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
           <Switch
-            checked={display?.showLastElectionData}
+            checked={showLastElectionData}
             onCheckedChange={toggleElectionData}
           />
           Last GE election results

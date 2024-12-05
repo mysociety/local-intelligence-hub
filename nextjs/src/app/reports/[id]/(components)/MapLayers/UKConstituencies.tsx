@@ -51,6 +51,7 @@ const UKConstituencies = () => {
     }
   }, [map.loaded, countsByConstituency])
 
+  if (!map.loaded) return null
   if (!countsByConstituency || !tileset) return null
 
   // Only draw the constituencies that have data

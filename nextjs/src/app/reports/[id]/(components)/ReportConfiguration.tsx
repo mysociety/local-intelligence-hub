@@ -48,7 +48,7 @@ const ReportConfiguration: React.FC = () => {
             </div>
           </CollapsibleTrigger>
 
-          <CollapsibleContent>
+          <CollapsibleContent className="CollapsibleContent">
             <Select
               onValueChange={updateBoundaryType}
               value={dataVisualisation?.boundaryType}

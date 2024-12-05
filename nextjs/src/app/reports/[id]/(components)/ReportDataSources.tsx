@@ -21,7 +21,7 @@ export function ReportDataSources() {
         </CollapsibleTrigger>
       </div>
 
-      <CollapsibleContent>
+      <CollapsibleContent className="CollapsibleContent">
         <p className="text-meepGray-300 text-sm mb-3  ">
           Connect your own custom data sources or select data sources from our
           library.
