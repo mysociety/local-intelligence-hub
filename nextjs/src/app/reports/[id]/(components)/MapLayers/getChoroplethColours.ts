@@ -52,6 +52,6 @@ export function getChoroplethColours(
       ['to-number', ['feature-state', 'count'], 0],
       ...colourStops,
     ],
-    'fill-opacity': 0.8,
+    'fill-opacity': 1,
   }
 }

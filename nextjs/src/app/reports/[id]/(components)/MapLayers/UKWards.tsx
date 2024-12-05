@@ -64,6 +64,7 @@ const UKWards = () => {
       >
         {/* Fill of the boundary */}
         <Layer
+          beforeId="road-simple"
           id={`${tileset.mapboxSourceId}-fill`}
           source={tileset.mapboxSourceId}
           source-layer={tileset.sourceLayerId}
