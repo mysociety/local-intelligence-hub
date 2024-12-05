@@ -39,17 +39,22 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
     displayOptions?: Partial<ReportConfig>
     layers?: any[]
   }) {
+    const input: any = pick(merge({}, report, payload), [
+      'id',
+      'name',
+      'displayOptions',
+    ])
+    if (payload.layers) {
+      input.layers = payload.layers
+    }
+
     const update = client.mutate<
       UpdateMapReportMutation,
       UpdateMapReportMutationVariables
     >({
       mutation: UPDATE_MAP_REPORT,
       variables: {
-        input: pick(merge({}, report, payload), [
-          'id',
-          'name',
-          'displayOptions',
-        ]),
+        input,
       },
     })
     toastPromise(update, {

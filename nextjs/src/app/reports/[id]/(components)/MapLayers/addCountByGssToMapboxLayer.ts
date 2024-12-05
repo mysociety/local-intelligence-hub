@@ -16,16 +16,20 @@ export function addCountByGssToMapboxLayer(
   setTimeout(() => {
     data.map((d) => {
       if (!d.gss) return
-      mapbox.setFeatureState(
-        {
-          source: mapboxSourceId,
-          sourceLayer: sourceLayerId,
-          id: d.gss,
-        },
-        {
-          count: d.count,
-        }
-      )
+      try {
+        mapbox?.setFeatureState(
+          {
+            source: mapboxSourceId,
+            sourceLayer: sourceLayerId,
+            id: d.gss,
+          },
+          {
+            count: d.count,
+          }
+        )
+      } catch (e) {
+        console.error(e)
+      }
     })
   }, MAPBOX_LOAD_INTERVAL + 50)
 }
