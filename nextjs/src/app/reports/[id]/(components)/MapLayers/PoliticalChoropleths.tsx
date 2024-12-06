@@ -1,69 +1,58 @@
-import { AnalyticalAreaType, GroupedDataCount } from '@/__generated__/graphql'
+import { AnalyticalAreaType } from '@/__generated__/graphql'
 import { useLoadedMap } from '@/lib/map'
 import { useAtomValue } from 'jotai'
-import { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
 import {
   getChoroplethEdge,
   getChoroplethFill,
+  getChoroplethFillFilter,
   getSelectedChoroplethEdge,
-} from '../../getChoroplethStyles'
-import { getChoroplethFillFilter } from '../../logic'
+} from '../../mapboxStyles'
+import { MapReportExtended } from '../../reportContext'
 import { Tileset } from '../../types'
 import useBoundaryAnalytics from '../../useBoundaryAnalytics'
 import useSelectBoundary, {
   selectedBoundaryAtom,
 } from '../../useSelectBoundary'
-import { useReport } from '../ReportProvider'
 
-// https://studio.mapbox.com/tilesets/commonknowledge.bhg1h3hj
-function getTileset(data: GroupedDataCount[]): Tileset {
-  return {
-    name: 'Constituencies',
-    singular: 'constituency',
-    mapboxSourceId: 'commonknowledge.bhg1h3hj',
-    sourceLayerId: 'uk_cons_2025',
-    promoteId: 'gss_code',
-    labelId: 'name',
-    data,
-  }
+interface PoliticalChoroplethsProps {
+  tileset: Tileset
+  report: MapReportExtended
+  boundaryType: AnalyticalAreaType
 }
 
-const UKConstituencies = () => {
-  const { report } = useReport()
-  const countsByConstituency = useBoundaryAnalytics(
-    report,
-    AnalyticalAreaType.ParliamentaryConstituency_2024
-  )
+const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
+  report,
+  boundaryType,
+  tileset,
+}) => {
+  const countsByBoundaryType = useBoundaryAnalytics(report, boundaryType)
   const map = useLoadedMap()
-  const [tileset, setTileset] = useState<Tileset | null>(null)
-  useSelectBoundary(tileset)
   const selectedBoundary = useAtomValue(selectedBoundaryAtom)
+  useSelectBoundary(tileset)
 
-  // Show the layer only if the report is set to show parliamentary constituencies
+  // Show the layer only if the report is set to show the boundary type
   const visibility =
-    report.displayOptions?.dataVisualisation?.boundaryType ===
-    AnalyticalAreaType.ParliamentaryConstituency_2024
+    report.displayOptions?.dataVisualisation?.boundaryType === boundaryType
       ? 'visible'
       : 'none'
 
   // When the map is loaded and we have the data, add the layer to the map
   useEffect(() => {
-    if (map.loaded && countsByConstituency) {
-      const tileset = getTileset(countsByConstituency)
-      setTileset(tileset)
+    if (map.loaded && countsByBoundaryType) {
       addCountByGssToMapboxLayer(
-        tileset.data,
+        countsByBoundaryType,
         tileset.mapboxSourceId,
         tileset.sourceLayerId,
         map.loadedMap
       )
     }
-  }, [map.loaded, countsByConstituency])
+  }, [map.loaded, countsByBoundaryType])
 
   if (!map.loaded) return null
-  if (!countsByConstituency || !tileset) return null
+  if (!countsByBoundaryType || !tileset) return null
 
   return (
     <>
@@ -80,8 +69,8 @@ const UKConstituencies = () => {
           source={tileset.mapboxSourceId}
           source-layer={tileset.sourceLayerId}
           type="fill"
-          filter={getChoroplethFillFilter(tileset)}
-          paint={getChoroplethFill(tileset.data)}
+          filter={getChoroplethFillFilter(countsByBoundaryType, tileset)}
+          paint={getChoroplethFill(countsByBoundaryType)}
           layout={{ visibility }}
         />
         {/* Border of the boundary */}
@@ -93,7 +82,7 @@ const UKConstituencies = () => {
           paint={getChoroplethEdge()}
           layout={{ visibility, 'line-join': 'round', 'line-round-limit': 0.1 }}
         />
-        {/* Selected boundary layer */}
+        {/* Border of the selected boundary  */}
         <Layer
           id={`${tileset.mapboxSourceId}-selected`}
           source={tileset.mapboxSourceId}
@@ -108,4 +97,4 @@ const UKConstituencies = () => {
   )
 }
 
-export default UKConstituencies
+export default PoliticalChoropleths

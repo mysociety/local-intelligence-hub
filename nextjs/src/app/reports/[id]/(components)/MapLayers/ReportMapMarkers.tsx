@@ -7,8 +7,8 @@ import useMapMarkerImages from '@/components/useMapMarkerImages'
 import { useQuery } from '@apollo/client'
 import React from 'react'
 import { MAP_REPORT_LAYER_ANALYTICS } from '../../gql_queries'
+import { ExternalDataSourcePointMarkers } from '../ExternalDataSourcePointMarkers'
 import { useReport } from '../ReportProvider'
-import { ExternalDataSourcePointMarkers } from './ExternalDataSourcePointMarkers'
 
 const ReportMapMarkers: React.FC = () => {
   const { report } = useReport()

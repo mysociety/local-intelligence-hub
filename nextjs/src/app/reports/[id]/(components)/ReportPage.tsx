@@ -1,10 +1,10 @@
 'use client'
 
 import LocalisedMap from '@/components/LocalisedMap'
+import { getTilesetsByCountry } from '../mapboxTilesets'
 import { ConstituenciesPanel } from './ConstituenciesPanel'
+import PoliticalChoropleths from './MapLayers/PoliticalChoropleths'
 import ReportMapMarkers from './MapLayers/ReportMapMarkers'
-import UKConstituencies from './MapLayers/UKConstituencies'
-import UKWards from './MapLayers/UKWards'
 import { useReport } from './ReportProvider'
 
 export default function ReportPage() {
@@ -18,8 +18,14 @@ export default function ReportPage() {
           initViewCountry="uk"
           mapKey={report.id}
         >
-          <UKWards />
-          <UKConstituencies />
+          {getTilesetsByCountry('uk').map(([boundaryType, tileset]) => (
+            <PoliticalChoropleths
+              key={boundaryType}
+              report={report}
+              boundaryType={boundaryType}
+              tileset={tileset}
+            />
+          ))}
           <ReportMapMarkers />
         </LocalisedMap>
       </div>

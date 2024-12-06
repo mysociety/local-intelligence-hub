@@ -1,6 +1,8 @@
+import { GroupedDataCount } from '@/__generated__/graphql'
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { interpolateBlues } from 'd3-scale-chromatic'
 import { FillLayerSpecification, LineLayerSpecification } from 'mapbox-gl'
+import { Tileset } from './types'
 
 export function getChoroplethFill(
   data: { count: number }[]
@@ -59,8 +61,17 @@ export function getChoroplethFill(
 export function getChoroplethEdge(): LineLayerSpecification['paint'] {
   return {
     'line-color': 'white',
-    'line-gap-width': ['interpolate', ['linear'], ['zoom'], 8, 0, 12, 3],
+    'line-gap-width': [
+      'interpolate',
+      ['exponential', 1],
+      ['zoom'],
+      8,
+      0,
+      12,
+      3,
+    ],
     'line-opacity': 0.5,
+    'line-width': ['interpolate', ['exponential', 1], ['zoom'], 8, 0.1, 12, 1],
   }
 }
 
@@ -69,4 +80,21 @@ export function getSelectedChoroplethEdge(): LineLayerSpecification['paint'] {
     'line-color': 'white',
     'line-width': 5,
   }
+}
+export const getChoroplethFillFilter = (
+  data: GroupedDataCount[],
+  tileset: Tileset
+) => {
+  return [
+    'in',
+    ['get', tileset.promoteId],
+    ['literal', data.map((d) => d.gss || '')],
+  ]
+}
+
+export const getSelectedChoroplethFillFilter = (
+  tileset: Tileset,
+  selectedGss: string
+) => {
+  return ['==', ['get', tileset.promoteId], selectedGss]
 }
