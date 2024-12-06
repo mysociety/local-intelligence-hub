@@ -1,5 +1,6 @@
 import { AnalyticalAreaType, GroupedDataCount } from '@/__generated__/graphql'
 import { useLoadedMap } from '@/lib/map'
+import { useAtomValue } from 'jotai'
 import { useEffect, useState } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
@@ -10,6 +11,7 @@ import {
 import { getChoroplethFillFilter } from '../../logic'
 import { Tileset } from '../../types'
 import useBoundaryAnalytics from '../../useBoundaryAnalytics'
+import { selectedBoundaryAtom } from '../../useSelectBoundary'
 import { useReport } from '../ReportProvider'
 
 // https://studio.mapbox.com/tilesets/commonknowledge.3s92t1yc
@@ -33,6 +35,7 @@ const UKWards = () => {
   )
   const map = useLoadedMap()
   const [tileset, setTileset] = useState<Tileset | null>(null)
+  const selectedBoundary = useAtomValue(selectedBoundaryAtom)
   const visibility =
     report.displayOptions?.dataVisualisation?.boundaryType ===
     AnalyticalAreaType.AdminWard
@@ -80,7 +83,19 @@ const UKWards = () => {
           source={tileset.mapboxSourceId}
           source-layer={tileset.sourceLayerId}
           type="line"
-          paint={getChoroplethEdge()}
+          paint={{
+            ...getChoroplethEdge(),
+            'line-width': [
+              'case',
+              [
+                '==',
+                ['get', tileset?.promoteId || null],
+                selectedBoundary || null,
+              ],
+              5,
+              0.3,
+            ],
+          }}
           layout={{ visibility }}
         />
       </Source>

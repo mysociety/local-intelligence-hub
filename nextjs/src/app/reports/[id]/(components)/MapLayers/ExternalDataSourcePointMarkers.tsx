@@ -6,7 +6,7 @@ import { useAtom } from 'jotai'
 import { useEffect } from 'react'
 import { Layer, Source } from 'react-map-gl'
 
-const MIN_MEMBERS_ZOOM = 8
+const MIN_MEMBERS_ZOOM = 10
 
 export function ExternalDataSourcePointMarkers({
   externalDataSourceId,
