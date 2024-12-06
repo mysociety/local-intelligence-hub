@@ -3,7 +3,7 @@ import { useLoadedMap } from '@/lib/map'
 import { useEffect, useState } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
-import { getChoroplethColours } from '../../getChoroplethStyles'
+import { getChoroplethFill } from '../../getChoroplethStyles'
 import { getChoroplethFillFilter } from '../../logic'
 import { Tileset } from '../../types'
 import useBoundaryAnalytics from '../../useBoundaryAnalytics'
@@ -52,7 +52,7 @@ const UKLocalAuthorityDistricts = () => {
   if (!map.loaded) return null
   if (!countsByWard || !tileset) return null
 
-  const choroplethColours = getChoroplethColours(tileset.data)
+  const choroplethColours = getChoroplethFill(tileset.data)
   return (
     <>
       <Source

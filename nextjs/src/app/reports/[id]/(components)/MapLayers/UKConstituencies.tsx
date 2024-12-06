@@ -5,8 +5,9 @@ import { useEffect, useState } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
 import {
-  getChoroplethColours,
   getChoroplethEdge,
+  getChoroplethFill,
+  getSelectedChoroplethEdge,
 } from '../../getChoroplethStyles'
 import { getChoroplethFillFilter } from '../../logic'
 import { Tileset } from '../../types'
@@ -80,7 +81,7 @@ const UKConstituencies = () => {
           source-layer={tileset.sourceLayerId}
           type="fill"
           filter={getChoroplethFillFilter(tileset)}
-          paint={getChoroplethColours(tileset.data)}
+          paint={getChoroplethFill(tileset.data)}
           layout={{ visibility }}
         />
         {/* Border of the boundary */}
@@ -89,19 +90,17 @@ const UKConstituencies = () => {
           source={tileset.mapboxSourceId}
           source-layer={tileset.sourceLayerId}
           type="line"
-          paint={{
-            ...getChoroplethEdge(),
-            'line-width': [
-              'case',
-              [
-                '==',
-                ['get', tileset?.promoteId || null],
-                selectedBoundary || null,
-              ],
-              5,
-              0.3,
-            ],
-          }}
+          paint={getChoroplethEdge()}
+          layout={{ visibility, 'line-join': 'round', 'line-round-limit': 0.1 }}
+        />
+        {/* Selected boundary layer */}
+        <Layer
+          id={`${tileset.mapboxSourceId}-selected`}
+          source={tileset.mapboxSourceId}
+          source-layer={tileset.sourceLayerId}
+          type="line"
+          paint={getSelectedChoroplethEdge()}
+          filter={['==', ['get', tileset.promoteId], selectedBoundary]}
           layout={{ visibility, 'line-join': 'round', 'line-round-limit': 0.1 }}
         />
       </Source>

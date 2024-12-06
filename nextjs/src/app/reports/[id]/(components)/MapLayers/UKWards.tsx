@@ -4,10 +4,7 @@ import { useAtomValue } from 'jotai'
 import { useEffect, useState } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
-import {
-  getChoroplethColours,
-  getChoroplethEdge,
-} from '../../getChoroplethStyles'
+import { getChoroplethEdge, getChoroplethFill } from '../../getChoroplethStyles'
 import { getChoroplethFillFilter } from '../../logic'
 import { Tileset } from '../../types'
 import useBoundaryAnalytics from '../../useBoundaryAnalytics'
@@ -74,7 +71,7 @@ const UKWards = () => {
           source-layer={tileset.sourceLayerId}
           type="fill"
           filter={getChoroplethFillFilter(tileset)}
-          paint={getChoroplethColours(tileset.data)}
+          paint={getChoroplethFill(tileset.data)}
           layout={{ visibility }}
         />
         {/* Border of the boundary */}
@@ -83,20 +80,21 @@ const UKWards = () => {
           source={tileset.mapboxSourceId}
           source-layer={tileset.sourceLayerId}
           type="line"
+          paint={getChoroplethEdge()}
+          layout={{ visibility, 'line-join': 'round', 'line-round-limit': 0.1 }}
+        />
+        {/* Selected boundary layer */}
+        <Layer
+          id={`${tileset.mapboxSourceId}-selected`}
+          source={tileset.mapboxSourceId}
+          source-layer={tileset.sourceLayerId}
+          type="line"
           paint={{
-            ...getChoroplethEdge(),
-            'line-width': [
-              'case',
-              [
-                '==',
-                ['get', tileset?.promoteId || null],
-                selectedBoundary || null,
-              ],
-              5,
-              0.3,
-            ],
+            'line-color': 'red',
+            'line-width': 2,
           }}
-          layout={{ visibility }}
+          filter={['==', ['get', tileset.promoteId], selectedBoundary]}
+          layout={{ visibility, 'line-join': 'round', 'line-round-limit': 0.1 }}
         />
       </Source>
     </>
