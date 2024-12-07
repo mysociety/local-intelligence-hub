@@ -1,6 +1,6 @@
 'use client'
-import { useLoadedMap } from '@/lib/map'
-import { atom, useAtom } from 'jotai'
+import { isConstituencyPanelOpenAtom, useLoadedMap } from '@/lib/map'
+import { atom, useAtom, useSetAtom } from 'jotai'
 import { useEffect } from 'react'
 import { Tileset } from './types'
 
@@ -9,6 +9,7 @@ export const selectedBoundaryAtom = atom<string | null>(null)
 const useSelectBoundary = (tileset?: Tileset | null) => {
   const { loadedMap } = useLoadedMap()
   const [selectedBoundary, setSelectedBoundary] = useAtom(selectedBoundaryAtom)
+  const setIsConstituencyPanelOpen = useSetAtom(isConstituencyPanelOpenAtom)
 
   useEffect(
     function selectConstituency() {
@@ -30,12 +31,15 @@ const useSelectBoundary = (tileset?: Tileset | null) => {
             if (feature.source === tileset.mapboxSourceId) {
               const id = feature.properties?.[tileset.promoteId]
               if (id) {
-                console.log('Selected constituency:', id)
-                setSelectedBoundary(id)
-
-                // setSelectedConstituency(id)
-                // setIsConstituencyPanelOpen(true)
-                // setTab('selected')
+                // If already selected boundary, deselect it
+                if (selectedBoundary === id) {
+                  setSelectedBoundary(null)
+                  setIsConstituencyPanelOpen(false)
+                  return
+                } else {
+                  setSelectedBoundary(id)
+                  setIsConstituencyPanelOpen(true)
+                }
               }
             }
           }
@@ -44,7 +48,13 @@ const useSelectBoundary = (tileset?: Tileset | null) => {
         }
       })
     },
-    [loadedMap, tileset]
+    [
+      loadedMap,
+      tileset,
+      selectedBoundary,
+      setSelectedBoundary,
+      setIsConstituencyPanelOpen,
+    ]
   )
 }
 

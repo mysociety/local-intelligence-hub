@@ -16,7 +16,6 @@ import {
 import { ChevronsUpDown } from 'lucide-react'
 import { getPoliticalTilesetsByCountry } from '../politicalTilesets'
 import { useReport } from './ReportProvider'
-import ReportConfigLegacyControls from './_ReportConfigLegacyControls'
 
 const ReportConfiguration: React.FC = () => {
   const { report, updateReport } = useReport()
@@ -74,7 +73,6 @@ const ReportConfiguration: React.FC = () => {
             </p>
           </CollapsibleContent>
         </Collapsible>
-        <ReportConfigLegacyControls />
       </div>
     </div>
   )

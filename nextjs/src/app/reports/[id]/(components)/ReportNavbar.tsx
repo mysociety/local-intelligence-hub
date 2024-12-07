@@ -7,6 +7,7 @@ import { MappedIcon } from '../../../../components/icons/MappedIcon'
 
 // You can set the title & href of the top left icon link based on route & context
 export const navbarTitleAtom = atom('')
+export const NAVBAR_HEIGHT = 48
 
 export default function ReportNavbar() {
   const title = useAtomValue(navbarTitleAtom)
@@ -14,7 +15,8 @@ export default function ReportNavbar() {
 
   return (
     <nav
-      className="fixed top-0 left-0 w-full h-12 bg-meepGray-600 flex flex-row items-center
+      style={{ height: NAVBAR_HEIGHT.toString() + 'px' }}
+      className="fixed top-0 left-0 w-full bg-meepGray-600 flex flex-row items-center
      justify-between px-4 shadow-md z-10 border border-b-meepGray-800"
     >
       <section className="flex flex-row items-center gap-2">

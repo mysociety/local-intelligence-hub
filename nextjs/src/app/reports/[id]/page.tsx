@@ -14,6 +14,7 @@ import {
 import { currentOrganisationIdAtom } from '@/lib/organisation'
 
 import { SidebarProvider } from '@/components/ui/sidebar'
+import ReportDisplaySettings from './(components)/ReportDisplaySettings'
 import ReportNavbar from './(components)/ReportNavbar'
 import ReportPage from './(components)/ReportPage'
 import ReportProvider from './(components)/ReportProvider'
@@ -49,7 +50,6 @@ export default function Page({ params: { id } }: { params: Params }) {
   // The ReportProvider component needs to be able to provide a report to its children
   if (!report.data?.mapReport) return null
 
-  console.log('report.data?.mapReport', report.data?.mapReport)
   return (
     <JotaiProvider key={id}>
       <MapProvider>
@@ -63,6 +63,7 @@ export default function Page({ params: { id } }: { params: Params }) {
           >
             <ReportNavbar />
             <ReportSidebarLeft />
+            <ReportDisplaySettings />
             <main>
               <ReportPage />
             </main>

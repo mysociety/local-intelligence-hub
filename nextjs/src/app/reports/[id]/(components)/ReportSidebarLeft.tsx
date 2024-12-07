@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 import ReportConfiguration from './ReportConfiguration'
 import { ReportDataSources } from './ReportDataSources'
+import { NAVBAR_HEIGHT } from './ReportNavbar'
 
 const classes = {
   tabsTrigger:
@@ -11,7 +12,12 @@ const classes = {
 
 export function ReportSidebarLeft() {
   return (
-    <Sidebar className="top-[48px]  border border-r-meepGray-800">
+    <Sidebar
+      style={{
+        top: NAVBAR_HEIGHT + 'px',
+      }}
+      className="border border-r-meepGray-800"
+    >
       <SidebarContent className="bg-meepGray-600">
         <Tabs defaultValue="data-sources" className="w-full">
           <TabsList
