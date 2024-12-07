@@ -43,8 +43,9 @@ const MarkerPopup: React.FC = () => {
         latitude={(selectedSourceMarker.geometry as Point)?.coordinates[1] || 0}
         closeOnClick={false}
         className="text-black [&>.mapboxgl-popup-content]:p-0 [&>.mapboxgl-popup-content]:overflow-auto w-[150px] [&>.mapboxgl-popup-tip]:!border-t-meepGray-200"
-        closeButton={false}
-        closeOnMove={false}
+        closeButton={true}
+        closeOnMove={true}
+        onClose={() => setSelectedSourceMarker(null)}
         anchor="bottom"
         offset={[0, -35] as any}
       >
