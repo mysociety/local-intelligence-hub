@@ -25,6 +25,11 @@ const useBoundaryAnalytics = (
   }
   let dataOutputKey
 
+  // TODO: This is where we can implement arithmetic operations on data from multiple
+  // sources, such as the sum of member count per political boundary from two different
+  // organisation's membership lists
+
+  // All the queries below do is return membership counts by boundary type
   if (boundaryType === 'parliamentary_constituency_2024') {
     query = MAP_REPORT_CONSTITUENCY_STATS
     variables.analyticalAreaType =
