@@ -69,6 +69,7 @@ export const MAP_REPORT_LAYER_ANALYTICS = gql`
         name
         source {
           id
+          dataType
           organisation {
             name
           }

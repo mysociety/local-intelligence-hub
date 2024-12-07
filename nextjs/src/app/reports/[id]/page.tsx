@@ -64,9 +64,7 @@ export default function Page({ params: { id } }: { params: Params }) {
             <ReportNavbar />
             <ReportSidebarLeft />
             <ReportDisplaySettings />
-            <main>
-              <ReportPage />
-            </main>
+            <ReportPage />
           </SidebarProvider>
         </ReportProvider>
       </MapProvider>

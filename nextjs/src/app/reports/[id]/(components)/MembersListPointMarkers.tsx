@@ -5,10 +5,11 @@ import { layerColour, selectedSourceMarkerAtom, useLoadedMap } from '@/lib/map'
 import { useAtom } from 'jotai'
 import { useEffect } from 'react'
 import { Layer, Source } from 'react-map-gl'
+import MarkerPopup from './MarkerPopup'
 
 const MIN_MEMBERS_ZOOM = 10
 
-export function ExternalDataSourcePointMarkers({
+export function MembersListPointMarkers({
   externalDataSourceId,
   index,
 }: {
@@ -111,6 +112,7 @@ export function ExternalDataSourcePointMarkers({
               : {})}
           />
         )}
+
         {!!selectedSourceMarker?.properties?.id && (
           <Layer
             id={`${externalDataSourceId}-marker-selected`}
@@ -129,6 +131,7 @@ export function ExternalDataSourcePointMarkers({
           />
         )}
       </Source>
+      <MarkerPopup />
     </>
   )
 }
