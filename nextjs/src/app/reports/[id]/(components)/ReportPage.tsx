@@ -1,7 +1,7 @@
 'use client'
 
 import LocalisedMap from '@/components/LocalisedMap'
-import { getTilesetsByCountry } from '../mapboxTilesets'
+import { getPoliticalTilesetsByCountry } from '../politicalTilesets'
 import { ConstituenciesPanel } from './ConstituenciesPanel'
 import PoliticalChoropleths from './MapLayers/PoliticalChoropleths'
 import ReportMapMarkers from './MapLayers/ReportMapMarkers'
@@ -18,14 +18,16 @@ export default function ReportPage() {
           initViewCountry="uk"
           mapKey={report.id}
         >
-          {getTilesetsByCountry('uk').map(([boundaryType, tileset]) => (
-            <PoliticalChoropleths
-              key={boundaryType}
-              report={report}
-              boundaryType={boundaryType}
-              tileset={tileset}
-            />
-          ))}
+          {getPoliticalTilesetsByCountry('uk').map(
+            ({ boundaryType, tileset }) => (
+              <PoliticalChoropleths
+                key={`${boundaryType}-${tileset.mapboxSourceId}`}
+                report={report}
+                boundaryType={boundaryType}
+                tileset={tileset}
+              />
+            )
+          )}
           <ReportMapMarkers />
         </LocalisedMap>
       </div>

@@ -11,25 +11,12 @@ import {
 } from '@/__generated__/graphql'
 import { selectedSourceMarkerAtom } from '@/lib/map'
 
-import useAnalytics from '../_useAnalytics'
 import { MAP_REPORT_LAYER_POINT } from '../gql_queries'
-import { useReport } from './ReportProvider'
+import useMarkerAnalytics from '../useMarkerAnalytics'
 
 const MarkerPopup: React.FC = () => {
-  /* Get the report context */
-  const {
-    report: {
-      id,
-      displayOptions: {
-        dataVisualisation: { boundaryType: analyticalAreaType } = {},
-      },
-    },
-  } = useReport()
-
-  /* Add c 
-  
-    /* Get the analytics data for the report */
-  const { analytics } = useAnalytics(id, analyticalAreaType)
+  /* Get the analytics data for the report */
+  const analytics = useMarkerAnalytics()
 
   const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(
     selectedSourceMarkerAtom

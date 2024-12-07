@@ -1,5 +1,6 @@
 'use client'
 
+import { AnalyticalAreaType } from '@/__generated__/graphql'
 import {
   Collapsible,
   CollapsibleContent,
@@ -13,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ChevronsUpDown } from 'lucide-react'
-import { BoundaryTypes } from '../reportContext'
+import { getPoliticalTilesetsByCountry } from '../politicalTilesets'
 import { useReport } from './ReportProvider'
 import ReportConfigLegacyControls from './_ReportConfigLegacyControls'
 
@@ -24,11 +25,11 @@ const ReportConfiguration: React.FC = () => {
     displayOptions: { dataVisualisation, display },
   } = report
 
-  const updateBoundaryType = (boundaryType: string) => {
+  const updateBoundaryType = (boundaryType: AnalyticalAreaType) => {
+    console.log(boundaryType)
     updateReport({
       displayOptions: {
         dataVisualisation: {
-          // @ts-ignore: Property 'boundaryType' does not exist on type 'DeepPartialObject'
           boundaryType,
         },
       },
@@ -36,7 +37,7 @@ const ReportConfiguration: React.FC = () => {
   }
 
   // TODO: Make the country part of the report configuration
-  const politicalBoundaries = BoundaryTypes.uk
+  const politicalBoundaries = getPoliticalTilesetsByCountry('uk')
 
   return (
     <div>
@@ -59,7 +60,10 @@ const ReportConfiguration: React.FC = () => {
               </SelectTrigger>
               <SelectContent>
                 {politicalBoundaries.map((boundary) => (
-                  <SelectItem key={boundary.key} value={boundary.key}>
+                  <SelectItem
+                    key={boundary.boundaryType}
+                    value={boundary.boundaryType}
+                  >
                     {boundary.label}
                   </SelectItem>
                 ))}

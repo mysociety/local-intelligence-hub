@@ -49,6 +49,7 @@ export default function Page({ params: { id } }: { params: Params }) {
   // The ReportProvider component needs to be able to provide a report to its children
   if (!report.data?.mapReport) return null
 
+  console.log('report.data?.mapReport', report.data?.mapReport)
   return (
     <JotaiProvider key={id}>
       <MapProvider>

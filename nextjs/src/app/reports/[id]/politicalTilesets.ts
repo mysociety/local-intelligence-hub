@@ -3,21 +3,17 @@ import { Tileset } from './types'
 
 type AvailableCountries = 'uk'
 
-const uk: [AnalyticalAreaType, Tileset][] = [
-  [
-    AnalyticalAreaType.AdminWard,
-    {
-      name: 'Wards',
-      singular: 'ward',
-      mapboxSourceId: 'commonknowledge.3s92t1yc',
-      sourceLayerId: 'converted_uk_wards_2025',
-      promoteId: 'WD24CD',
-      labelId: 'WD24NM',
-    },
-  ],
-  [
-    AnalyticalAreaType.ParliamentaryConstituency_2024,
-    {
+type PoliticalTileset = {
+  boundaryType: AnalyticalAreaType
+  label: string
+  tileset: Tileset
+}
+
+const uk: PoliticalTileset[] = [
+  {
+    boundaryType: AnalyticalAreaType.ParliamentaryConstituency_2024,
+    label: 'Parliamentary Constituencies',
+    tileset: {
       name: 'Constituencies',
       singular: 'constituency',
       mapboxSourceId: 'commonknowledge.bhg1h3hj',
@@ -25,7 +21,19 @@ const uk: [AnalyticalAreaType, Tileset][] = [
       promoteId: 'gss_code',
       labelId: 'name',
     },
-  ],
+  },
+  {
+    boundaryType: AnalyticalAreaType.AdminWard,
+    label: 'Wards',
+    tileset: {
+      name: 'Wards',
+      singular: 'ward',
+      mapboxSourceId: 'commonknowledge.3s92t1yc',
+      sourceLayerId: 'converted_uk_wards_2025',
+      promoteId: 'WD24CD',
+      labelId: 'WD24NM',
+    },
+  },
   // [AnalyticalAreaType.LocalAuthorityDistrict]: {
   //   name: '',
   //   singular: '',
@@ -36,9 +44,9 @@ const uk: [AnalyticalAreaType, Tileset][] = [
   // },
 ]
 
-export function getTilesetsByCountry(
+export function getPoliticalTilesetsByCountry(
   country: AvailableCountries
-): [AnalyticalAreaType, Tileset][] {
+): PoliticalTileset[] {
   switch (country) {
     case 'uk':
       return uk

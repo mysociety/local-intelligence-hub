@@ -1,27 +1,13 @@
 'use client'
-import {
-  MapReportLayerAnalyticsQuery,
-  MapReportLayerAnalyticsQueryVariables,
-} from '@/__generated__/graphql'
 import useMapMarkerImages from '@/components/useMapMarkerImages'
-import { useQuery } from '@apollo/client'
 import React from 'react'
-import { MAP_REPORT_LAYER_ANALYTICS } from '../../gql_queries'
+import useMarkerAnalytics from '../../useMarkerAnalytics'
 import { ExternalDataSourcePointMarkers } from '../ExternalDataSourcePointMarkers'
-import { useReport } from '../ReportProvider'
+import MarkerPopup from '../MarkerPopup'
 
 const ReportMapMarkers: React.FC = () => {
-  const { report } = useReport()
+  const analytics = useMarkerAnalytics()
   useMapMarkerImages()
-
-  const analytics = useQuery<
-    MapReportLayerAnalyticsQuery,
-    MapReportLayerAnalyticsQueryVariables
-  >(MAP_REPORT_LAYER_ANALYTICS, {
-    variables: {
-      reportID: report.id,
-    },
-  })
 
   if (!analytics.data) return null
 
@@ -34,6 +20,7 @@ const ReportMapMarkers: React.FC = () => {
           externalDataSourceId={layer?.source?.id}
         />
       ))}
+      <MarkerPopup />
     </div>
   )
 }
