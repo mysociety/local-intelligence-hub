@@ -9,9 +9,12 @@ const ReportMapMarkers: React.FC = () => {
   const analytics = useMarkerAnalytics()
   useMapMarkerImages()
 
+  // TODO: Get clarity on what the pointSourceTypes are
+  const pointSourceTypes = [DataSourceType.Member, DataSourceType.Location]
+
   if (!analytics.data) return null
-  const memberListSources = analytics.data.mapReport.layers.filter(
-    (layer) => layer.source.dataType === DataSourceType.Member
+  const memberListSources = analytics.data.mapReport.layers.filter((layer) =>
+    pointSourceTypes.includes(layer.source.dataType)
   )
 
   return (
