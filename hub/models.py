@@ -1229,16 +1229,22 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         return self.get_scheduled_parent_job(
             dict(task_name__contains="hub.tasks.import")
         )
+    
+    def get_scheduled_update_job(self):
+        return self.get_scheduled_parent_job(
+            dict(task_name__contains="hub.tasks.refresh")
+        )
         
     def get_latest_import_job(self):
         return self.get_latest_parent_job(
             dict(task_name__contains="hub.tasks.import")
         )
-
-    def get_scheduled_update_job(self):
-        return self.get_scheduled_parent_job(
+        
+    def get_latest_update_job(self):
+        return self.get_latest_parent_job(
             dict(task_name__contains="hub.tasks.refresh")
         )
+
 
     class BatchJobProgress(TypedDict):
         status: str
@@ -1249,6 +1255,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         doing: int = 0
         failed: int = 0
         estimated_seconds_remaining: float = 0
+        actual_finish_time: Optional[datetime]
         estimated_finish_time: Optional[datetime]
         has_forecast: bool = True
         seconds_per_record: float = 0
@@ -1328,6 +1335,17 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         duration_per_record = time_so_far / (done or 1)
         time_remaining = duration_per_record * remaining
         estimated_finish_time = datetime.now() + time_remaining
+        
+        if status == 'succeeded' or status == 'failed':
+            actual_finish_time = (
+                ProcrastinateEvent.objects.filter(job__in=jobs)
+                .order_by("-at")
+                .first()
+                .at.replace(tzinfo=pytz.utc)
+            )
+        else:
+            actual_finish_time = None
+
 
         return self.BatchJobProgress(
             status=status,
@@ -1335,6 +1353,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             started_at=time_started,
             estimated_seconds_remaining=time_remaining,
             estimated_finish_time=estimated_finish_time,
+            actual_finish_time=actual_finish_time,
             seconds_per_record=duration_per_record.seconds,
             total=total,
             done=done,
@@ -2206,8 +2225,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     async def deferred_import_many(
         cls, external_data_source_id: str, members: list, request_id: str = None
     ):
-        from time import sleep
-        sleep(10)
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
