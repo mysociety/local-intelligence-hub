@@ -121,6 +121,7 @@ const GET_UPDATE_CONFIG = gql`
         total
         succeeded
         estimatedFinishTime
+        actualFinishTime
         inQueue
       }
       isUpdateScheduled
@@ -131,6 +132,8 @@ const GET_UPDATE_CONFIG = gql`
         total
         succeeded
         estimatedFinishTime
+        actualFinishTime
+        inQueue
       }
       importedDataCount
       fieldDefinitions {
@@ -281,10 +284,12 @@ export default function InspectExternalDataSource({
                   </span>
                 )}
               </Button>
-              <BatchJobProgressReport
-                batchJobProgress={source.importProgress}
-                pastTenseVerb="Imported"
-              />
+              {source.importProgress?.status !== 'todo' ? (
+                <BatchJobProgressReport
+                  batchJobProgress={source.importProgress}
+                  pastTenseVerb="Imported"
+                />
+              ) : null}
 
               {source.hasWebhooks && (
                 <section className="space-y-4">
@@ -433,7 +438,7 @@ export default function InspectExternalDataSource({
                       />
                     </p>
                     <div className="space-y-4">
-                      {!source.isUpdateScheduled ? (
+                      {!source.updateProgress?.inQueue ? (
                         <TriggerUpdateButton id={source.id} />
                       ) : (
                         <>
@@ -448,15 +453,14 @@ export default function InspectExternalDataSource({
                               </span>
                             </span>
                           </Button>
-                          {source.updateProgress?.status ===
-                            ProcrastinateJobStatus.Doing && (
-                            <BatchJobProgressReport
-                              batchJobProgress={source.updateProgress}
-                              pastTenseVerb="Done"
-                            />
-                          )}
                         </>
                       )}
+                      {source.updateProgress?.status !== 'todo' ? (
+                        <BatchJobProgressReport
+                          batchJobProgress={source.updateProgress}
+                          pastTenseVerb="Done"
+                        />
+                      ) : null}
                     </div>
                   </section>
                   {source.hasWebhooks && (
