@@ -106,9 +106,9 @@ type FormInputs = CreateExternalDataSourceInput &
   }
 
 export default function Page({
-  params: { externalDataSourceType },
+  params: { externalDataProviderType },
 }: {
-  params: { externalDataSourceType: keyof CreateExternalDataSourceInput }
+  params: { externalDataProviderType: keyof CreateExternalDataSourceInput }
 }) {
   const orgId = useAtomValue(currentOrganisationIdAtom)
   const router = useRouter()
@@ -396,13 +396,13 @@ export default function Page({
   }, [airtableUrl])
 
   async function submitTestConnection(formData: FormInputs) {
-    if (!formData[externalDataSourceType]) {
+    if (!formData[externalDataProviderType]) {
       throw Error('Need some CRM connection details to proceed!')
     }
 
     // To avoid mutation of the form data
     const genericCRMData = Object.assign({}, formData)
-    const CRMSpecificData = formData[externalDataSourceType]
+    const CRMSpecificData = formData[externalDataProviderType]
 
     // Remove specific CRM data from the generic data
     // TODO: make this less fragile. Currently it assumes any nested
@@ -414,7 +414,7 @@ export default function Page({
     }
 
     const input: TestDataSourceQueryVariables['input'] = {
-      [externalDataSourceType]: {
+      [externalDataProviderType]: {
         ...genericCRMData,
         ...CRMSpecificData,
       },
@@ -444,15 +444,15 @@ export default function Page({
   }
 
   async function submitCreateSource(formData: FormInputs) {
-    if (!formData[externalDataSourceType]) {
+    if (!formData[externalDataProviderType]) {
       throw Error('Need some CRM connection details to proceed!')
     }
     // To avoid mutation of the form data
     const genericCRMData = Object.assign({}, formData)
-    let CRMSpecificData = formData[externalDataSourceType]
+    let CRMSpecificData = formData[externalDataProviderType]
 
     // TODO: can this be less messy?
-    if (externalDataSourceType === CrmType.Editablegooglesheets) {
+    if (externalDataProviderType === CrmType.Editablegooglesheets) {
       // Remove the redirectSuccessUrl from the variables and replace it
       // with the credentials returned when the connection was tested.
       // Cannot reuse the oauth parameters in the URL to get new
@@ -473,7 +473,7 @@ export default function Page({
     }
 
     let input: CreateExternalDataSourceInput = {
-      [externalDataSourceType]: {
+      [externalDataProviderType]: {
         ...genericCRMData,
         ...CRMSpecificData,
         organisation: { set: orgId },
@@ -742,7 +742,7 @@ export default function Page({
     )
   }
 
-  if (externalDataSourceType === 'airtable') {
+  if (externalDataProviderType === 'airtable') {
     return (
       <div className="space-y-7">
         <header>
@@ -891,7 +891,7 @@ export default function Page({
     )
   }
 
-  if (externalDataSourceType === 'mailchimp') {
+  if (externalDataProviderType === 'mailchimp') {
     return (
       <div className="space-y-7">
         <header>
@@ -983,7 +983,7 @@ export default function Page({
     )
   }
 
-  if (externalDataSourceType === 'actionnetwork') {
+  if (externalDataProviderType === 'actionnetwork') {
     return (
       <div className="space-y-7">
         <header>
@@ -1075,7 +1075,7 @@ export default function Page({
     )
   }
 
-  if (externalDataSourceType === 'editablegooglesheets') {
+  if (externalDataProviderType === 'editablegooglesheets') {
     const redirectSuccessUrl = form.watch(
       'editablegooglesheets.redirectSuccessUrl'
     )
@@ -1224,7 +1224,7 @@ export default function Page({
     )
   }
 
-  if (externalDataSourceType === 'tickettailor') {
+  if (externalDataProviderType === 'tickettailor') {
     return (
       <div className="space-y-7">
         <header>
