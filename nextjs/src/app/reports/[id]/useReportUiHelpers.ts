@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useReport } from './(components)/ReportProvider'
 
+const HELPER_TIMEOUT = 3000
+
 const useReportUiHelpers = () => {
   const { report } = useReport()
   const [userJourneyHelpers, setUserJourneyHelpers] = useState<{
@@ -49,7 +51,7 @@ const useReportUiHelpers = () => {
             open: false,
           },
         })
-      }, 3000)
+      }, HELPER_TIMEOUT)
     }
   }, [report.layers, userJourneyHelpers])
 
