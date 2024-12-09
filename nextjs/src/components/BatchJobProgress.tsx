@@ -18,26 +18,39 @@ export function BatchJobProgressReport({
   pastTenseVerb: string
   batchJobProgress?: Pick<
     BatchJobProgress,
-    'status' | 'total' | 'succeeded' | 'estimatedFinishTime' | 'hasForecast'
+    | 'status'
+    | 'total'
+    | 'succeeded'
+    | 'estimatedFinishTime'
+    | 'hasForecast'
+    | 'actualFinishTime'
   > | null
 }) {
   if (!batchJobProgress) {
     return
   }
+  if (batchJobProgress.actualFinishTime) {
+    const secondsSinceActualFinishTime =
+      new Date().getTime() -
+      new Date(batchJobProgress.actualFinishTime).getTime()
+    if (secondsSinceActualFinishTime > 30000) {
+      return
+    }
+  }
   return (
     <ErrorBoundary>
       {batchJobProgress.status === ProcrastinateJobStatus.Succeeded ? (
-        <div className="flex flex-row gap-2 items-center justify-center">
+        <div className="flex flex-row gap-2 items-center">
           <MessageCircleHeart />
           <div className="text-meepGray-300 text-sm">{pastTenseVerb}</div>
         </div>
       ) : batchJobProgress.status === ProcrastinateJobStatus.Failed ? (
-        <div className="flex flex-row gap-2 items-center justify-center">
+        <div className="flex flex-row gap-2 items-center">
           <MessageCircleWarning />
           <div className="text-meepGray-300 text-sm">Job failed</div>
         </div>
       ) : batchJobProgress.status === ProcrastinateJobStatus.Todo ? (
-        <div className="flex flex-row gap-2 items-center justify-center">
+        <div className="flex flex-row gap-2 items-center">
           <LoadingIcon size="15" />
           <div className="text-meepGray-300 text-sm">
             Waiting in the job queue
