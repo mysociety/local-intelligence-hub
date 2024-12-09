@@ -806,6 +806,8 @@ class BatchJobProgress:
     seconds_per_record: Optional[float] = None
     done: Optional[int] = None
     remaining: Optional[int] = None
+    number_of_jobs_ahead_in_queue: Optional[int] = None
+
     
     @strawberry_django.field
     def in_queue(

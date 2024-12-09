@@ -1261,6 +1261,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         seconds_per_record: float = 0
         done: int = 0
         remaining: int = 0
+        number_of_jobs_ahead_in_queue: int = 0
 
     def get_scheduled_batch_job_progress(self, parent_job: ProcrastinateJob):
         # TODO: This doesn't work for import/refresh by page. How can it cover this case?
@@ -1321,7 +1322,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         done =  statuses.get("succeeded", 0) + statuses.get("failed", 0) + statuses.get("doing", 0)
    
-
+        number_of_jobs_ahead_in_queue = ProcrastinateJob.objects.filter(id__lt=parent_job.id).filter(status__in=['todo', 'doing']).count()
+        
         time_started = (
             ProcrastinateEvent.objects.filter(job_id=parent_job.id)
             .order_by("at")
@@ -1361,6 +1363,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             succeeded=statuses.get("succeeded", 0),
             failed=statuses.get("failed", 0),
             doing=statuses.get("doing", 0),
+            number_of_jobs_ahead_in_queue=number_of_jobs_ahead_in_queue
         )
 
     def get_update_mapping(self) -> list[UpdateMapping]:
@@ -2161,6 +2164,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     async def deferred_refresh_many(
         cls, external_data_source_id: str, members: list, request_id: str = None
     ):
+  
         if not cls.allow_updates:
             logger.error(f"Updates requested for non-updatable CRM {cls}")
             return
@@ -2224,7 +2228,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     @classmethod
     async def deferred_import_many(
         cls, external_data_source_id: str, members: list, request_id: str = None
-    ):
+    ):  
+
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
