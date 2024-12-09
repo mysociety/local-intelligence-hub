@@ -1,6 +1,11 @@
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card'
 import { Sidebar, SidebarContent } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-
+import useReportUiHelpers from '../useReportUiHelpers'
 import ReportConfiguration from './ReportConfiguration'
 import { ReportDataSources } from './ReportDataSources'
 import { NAVBAR_HEIGHT } from './ReportNavbar'
@@ -11,6 +16,8 @@ const classes = {
 }
 
 export function ReportSidebarLeft() {
+  const { userJourneyHelpers, updateUserJourneyHelpers } = useReportUiHelpers()
+
   return (
     <Sidebar
       style={{
@@ -27,9 +34,25 @@ export function ReportSidebarLeft() {
             <TabsTrigger value="data-sources" className={classes.tabsTrigger}>
               Data Sources
             </TabsTrigger>
-            <TabsTrigger value="configuration" className={classes.tabsTrigger}>
-              Configuration
-            </TabsTrigger>
+
+            <HoverCard
+              open={userJourneyHelpers?.visualiseYourData.open}
+              onOpenChange={() =>
+                updateUserJourneyHelpers('visualiseYourData', false)
+              }
+            >
+              <HoverCardTrigger>
+                <TabsTrigger
+                  value="configuration"
+                  className={classes.tabsTrigger}
+                >
+                  Configuration
+                </TabsTrigger>
+              </HoverCardTrigger>
+              <HoverCardContent align="start">
+                Click on "Configuration" to visualise your data
+              </HoverCardContent>
+            </HoverCard>
           </TabsList>
           <TabsContent value="data-sources" className="px-4">
             <ReportDataSources />
