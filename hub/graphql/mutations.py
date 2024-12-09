@@ -160,12 +160,14 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
     else:
         organisation = models.Organisation.get_or_create_for_user(user)
 
+    date_time_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+
     params = {
         **graphql_type_to_dict(data, delete_null_keys=True),
         **{
             "organisation": organisation,
             "slug": data.slug or slugify(data.name),
-            "name": "Type your report name here",  # Default name for reports
+            "name": f"New map ({date_time_str})",  # Default name for reports
             "display_options": data.display_options or {}
         },
     }
