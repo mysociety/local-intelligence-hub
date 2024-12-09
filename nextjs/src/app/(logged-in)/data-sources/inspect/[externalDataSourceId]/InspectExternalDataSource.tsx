@@ -123,6 +123,7 @@ const GET_UPDATE_CONFIG = gql`
         estimatedFinishTime
         actualFinishTime
         inQueue
+        numberOfJobsAheadInQueue
       }
       isUpdateScheduled
       updateProgress {
@@ -134,6 +135,7 @@ const GET_UPDATE_CONFIG = gql`
         estimatedFinishTime
         actualFinishTime
         inQueue
+        numberOfJobsAheadInQueue
       }
       importedDataCount
       fieldDefinitions {
@@ -265,7 +267,6 @@ export default function InspectExternalDataSource({
                   : ''}
                 .
               </p>
-
               <Button
                 disabled={source.importProgress?.inQueue}
                 onClick={() => importData(client, externalDataSourceId)}
@@ -290,7 +291,17 @@ export default function InspectExternalDataSource({
                   pastTenseVerb="Imported"
                 />
               ) : null}
-
+              {source?.importProgress?.status === 'todo' &&
+                source?.importProgress?.numberOfJobsAheadInQueue != null &&
+                source.importProgress.numberOfJobsAheadInQueue > 0 && (
+                  <div>
+                    {source.importProgress.numberOfJobsAheadInQueue}{' '}
+                    {source.importProgress.numberOfJobsAheadInQueue === 1
+                      ? 'job'
+                      : 'jobs'}{' '}
+                    ahead of this one in the queue
+                  </div>
+                )}
               {source.hasWebhooks && (
                 <section className="space-y-4">
                   <h2 className="text-hSm mb-5">Auto-import</h2>
@@ -455,6 +466,19 @@ export default function InspectExternalDataSource({
                           </Button>
                         </>
                       )}
+                      {source?.updateProgress?.status === 'todo' &&
+                        source?.updateProgress?.numberOfJobsAheadInQueue !=
+                          null &&
+                        source.updateProgress.numberOfJobsAheadInQueue > 0 && (
+                          <div>
+                            {source.updateProgress.numberOfJobsAheadInQueue}{' '}
+                            {source.updateProgress.numberOfJobsAheadInQueue ===
+                            1
+                              ? 'job'
+                              : 'jobs'}{' '}
+                            ahead of this one in the queue
+                          </div>
+                        )}
                       {source.updateProgress?.status !== 'todo' ? (
                         <BatchJobProgressReport
                           batchJobProgress={source.updateProgress}
