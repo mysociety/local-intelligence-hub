@@ -802,6 +802,7 @@ class BatchJobProgress:
     failed: Optional[int] = None
     estimated_seconds_remaining: Optional[float] = None
     estimated_finish_time: Optional[datetime] = None
+    actual_finish_time: Optional[datetime] = None
     seconds_per_record: Optional[float] = None
     done: Optional[int] = None
     remaining: Optional[int] = None
@@ -892,7 +893,7 @@ class BaseDataSource(Analytics):
     def update_progress(
         self: models.ExternalDataSource, info: Info
     ) -> Optional[BatchJobProgress]:
-        job = self.get_scheduled_update_job()
+        job = self.get_latest_update_job()
         if job is None:
             return None
         progress = self.get_scheduled_batch_job_progress(job)
