@@ -332,7 +332,7 @@ export function UpdateMappingForm({
                   className="my-2"
                 >
                   <Plus className="w-4 h-4" /> Add data to another field in your{' '}
-                  {formatCrmNames(crmType || 'CRM')}{' '}
+                  {formatCrmNames(crmType || 'database')}{' '}
                 </Button>
               </>
             )}

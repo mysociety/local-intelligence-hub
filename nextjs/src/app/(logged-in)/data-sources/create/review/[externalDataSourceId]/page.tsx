@@ -112,7 +112,7 @@ export default function Page({
                     Turn the below switches on once you have added the above
                     Webhook URL to your{' '}
                     {formatCrmNames(
-                      pageQuery.data?.externalDataSource.crmType || 'CRM'
+                      pageQuery.data?.externalDataSource.crmType || 'database'
                     )}{' '}
                     and enabled it.
                   </p>

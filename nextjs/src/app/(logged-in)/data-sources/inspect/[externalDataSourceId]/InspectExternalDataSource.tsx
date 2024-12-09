@@ -337,7 +337,7 @@ export default function InspectExternalDataSource({
                       <p>
                         Turn this switch on once you have added the above
                         Webhook URL to your{' '}
-                        {formatCrmNames(source.crmType || 'CRM')}
+                        {formatCrmNames(source.crmType || 'database')}
                       </p>
                       <EnableWebhooksSwitch
                         externalDataSource={source}
@@ -425,8 +425,8 @@ export default function InspectExternalDataSource({
                     <h2 className="text-hMd mb-5">Enrich your original data</h2>
                     <p className="text-meepGray-400">
                       <span className="align-middle">
-                        Pull Mapped data into your{' '}
-                        {crmInfo?.name || 'data source'} based on each record
+                        Pull Mapped data into your {crmInfo?.name || 'database'}{' '}
+                        based on each record
                         {"'"}s
                       </span>
                       <DataSourceFieldLabel
@@ -516,7 +516,7 @@ export default function InspectExternalDataSource({
                           </code>
                           <p>
                             Turn this switch on once you have added the above
-                            Webhook URL to your CRM:
+                            Webhook URL to your database:
                           </p>
                           <EnableWebhooksSwitch
                             externalDataSource={source}

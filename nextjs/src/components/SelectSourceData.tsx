@@ -105,7 +105,7 @@ export function SourcePathSelector({
             <DialogTitle>Data sources</DialogTitle>
             <DialogDescription>
               Pick a data source and a field to import to your{' '}
-              {formatCrmNames(crmType || 'CRM')}
+              {formatCrmNames(crmType || 'database')}
             </DialogDescription>
           </DialogHeader>
           {loading ? (

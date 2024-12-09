@@ -138,7 +138,7 @@ export default function Page({
         <p className="mt-6 text-meepGray-400 max-w-sm">
           Choose from the following data sources to enhance your{' '}
           {formatCrmNames(
-            externalDataSource.data?.externalDataSource.crmType || 'CRM'
+            externalDataSource.data?.externalDataSource.crmType || 'database'
           )}{' '}
           with data that empowers your organisation. For geographic data, we
           need to know which field has the postcode so we can make sure you are

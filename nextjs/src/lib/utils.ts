@@ -17,6 +17,6 @@ export function formatCrmNames(input: string): string {
     case 'mailchimp':
       return 'Mailchimp'
     default:
-      return 'CRM'
+      return 'database'
   }
 }
