@@ -152,6 +152,13 @@ export default function Page({
   const form = useForm<FormInputs>({
     defaultValues: {
       ...defaultValues,
+      // REMOVE
+      airtable: {
+        baseId: 'appZ9UYXvsIrTbYQs',
+        tableId: 'tblGrH67nWM4ROgwf',
+        apiKey:
+          'patpg0NikxPjHb59O.8b72db8273cc25526b582e47efe0bba18882e679aec15ea3c854f59c8af3263c',
+      },
     } as FormInputs,
   })
 
@@ -171,6 +178,7 @@ export default function Page({
   const collectFields = useMemo(() => {
     return getFieldsForDataSourceType(dataType)
   }, [dataType])
+
   const geographyFields = ['geographyColumn', 'geographyColumnType']
 
   const [createSource, createSourceResult] =
@@ -615,6 +623,12 @@ export default function Page({
                                 <div className="flex flex-row gap-2 items-center">
                                   <User className="w-4 text-meepGray-300" />{' '}
                                   People
+                                </div>
+                              </SelectItem>
+                              <SelectItem value={DataSourceType.AreaStats}>
+                                <div className="flex flex-row gap-2 items-center">
+                                  <User className="w-4 text-meepGray-300" />{' '}
+                                  Area Stats
                                 </div>
                               </SelectItem>
                               <SelectItem value={DataSourceType.Group}>
