@@ -1,7 +1,11 @@
 import { GroupedDataCount } from '@/__generated__/graphql'
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { interpolateBlues } from 'd3-scale-chromatic'
-import { FillLayerSpecification, LineLayerSpecification } from 'mapbox-gl'
+import {
+  FillLayerSpecification,
+  LineLayerSpecification,
+  SymbolLayerSpecification,
+} from 'mapbox-gl'
 import { Tileset } from './types'
 
 export function getChoroplethFill(
@@ -97,4 +101,94 @@ export const getSelectedChoroplethFillFilter = (
   selectedGss: string
 ) => {
   return ['==', ['get', tileset.promoteId], selectedGss]
+}
+
+export function getAreaGeoJSON(data: GroupedDataCount[]) {
+  return {
+    type: 'FeatureCollection',
+    features: data
+      .filter((d) => d.gssArea?.point?.geometry)
+      .map((d) => ({
+        type: 'Feature',
+        geometry: d.gssArea?.point?.geometry! as GeoJSON.Point,
+        properties: {
+          count: d.count,
+          label: d.label,
+        },
+      })),
+  }
+}
+
+function getStatsForData(data: GroupedDataCount[]) {
+  let min =
+    data.reduce(
+      (min, p) => (p?.count! < min ? p?.count! : min),
+      data?.[0]?.count!
+    ) || 0
+  let max =
+    data.reduce(
+      (max, p) => (p?.count! > max ? p?.count! : max),
+      data?.[0]?.count!
+    ) || 1
+
+  // Ensure min and max are different to fix interpolation errors
+  if (min === max) {
+    if (min >= 1) {
+      min = min - 1
+    } else {
+      max = max + 1
+    }
+  }
+
+  const textScale = scaleLinear().domain([min, max]).range([1, 1.5])
+
+  return { min, max, textScale }
+}
+
+export const getAreaCountLayout = (
+  data: GroupedDataCount[]
+): SymbolLayerSpecification['layout'] => {
+  const { min, max, textScale } = getStatsForData(data)
+
+  return {
+    'symbol-spacing': 1000,
+    'text-field': ['get', 'count'],
+    'text-size': [
+      'interpolate',
+      ['linear'],
+      ['get', 'count'],
+      min,
+      textScale(min) * 17,
+      max,
+      textScale(max) * 17,
+    ],
+    'symbol-placement': 'point',
+    'text-offset': [0, -0.5],
+    'text-allow-overlap': true,
+    'text-ignore-placement': true,
+    'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+  }
+}
+
+export const getAreaLabelLayout = (
+  data: GroupedDataCount[]
+): SymbolLayerSpecification['layout'] => {
+  const { min, max, textScale } = getStatsForData(data)
+
+  return {
+    'symbol-spacing': 1000,
+    'text-field': ['get', 'label'],
+    'text-size': [
+      'interpolate',
+      ['linear'],
+      ['get', 'count'],
+      min,
+      textScale(min) * 9,
+      max,
+      textScale(max) * 9,
+    ],
+    'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+    'symbol-placement': 'point',
+    'text-offset': [0, 0.6],
+  }
 }

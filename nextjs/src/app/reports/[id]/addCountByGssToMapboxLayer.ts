@@ -1,3 +1,4 @@
+import { GroupedDataCount } from '@/__generated__/graphql'
 import { MAPBOX_LOAD_INTERVAL } from '@/lib/map/useLoadedMap'
 import { MapRef } from 'react-map-gl'
 
@@ -5,7 +6,7 @@ import { MapRef } from 'react-map-gl'
 // used in the UK to reference geographic areas for statistical purposes.
 // The data prop needs to contain the gss code and the count
 export function addCountByGssToMapboxLayer(
-  data: { gss?: string | null; count: number }[],
+  data: GroupedDataCount[],
   mapboxSourceId: string,
   sourceLayerId?: string,
   mapbox?: MapRef | null
@@ -14,7 +15,7 @@ export function addCountByGssToMapboxLayer(
   if (!sourceLayerId) throw new Error('sourceLayerId is required')
 
   setTimeout(() => {
-    data.map((d) => {
+    data.forEach((d) => {
       if (!d.gss) return
       try {
         mapbox?.setFeatureState(
@@ -23,9 +24,7 @@ export function addCountByGssToMapboxLayer(
             sourceLayer: sourceLayerId,
             id: d.gss,
           },
-          {
-            count: d.count,
-          }
+          d
         )
       } catch (e) {
         console.error(e)

@@ -5,6 +5,9 @@ import React, { useEffect } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
 import {
+  getAreaCountLayout,
+  getAreaGeoJSON,
+  getAreaLabelLayout,
   getChoroplethEdge,
   getChoroplethFill,
   getChoroplethFillFilter,
@@ -16,6 +19,7 @@ import useBoundaryAnalytics from '../../useBoundaryAnalytics'
 import useSelectBoundary, {
   selectedBoundaryAtom,
 } from '../../useSelectBoundary'
+import { PLACEHOLDER_LAYER_ID_CHOROPLETH } from '../ReportPage'
 
 interface PoliticalChoroplethsProps {
   tileset: Tileset
@@ -75,6 +79,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
         />
         {/* Border of the boundary */}
         <Layer
+          beforeId={PLACEHOLDER_LAYER_ID_CHOROPLETH}
           id={`${tileset.mapboxSourceId}-line`}
           source={tileset.mapboxSourceId}
           source-layer={tileset.sourceLayerId}
@@ -84,6 +89,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
         />
         {/* Border of the selected boundary  */}
         <Layer
+          beforeId={PLACEHOLDER_LAYER_ID_CHOROPLETH}
           id={`${tileset.mapboxSourceId}-selected`}
           source={tileset.mapboxSourceId}
           source-layer={tileset.sourceLayerId}
@@ -91,6 +97,39 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           paint={getSelectedChoroplethEdge()}
           filter={['==', ['get', tileset.promoteId], selectedBoundary]}
           layout={{ visibility, 'line-join': 'round', 'line-round-limit': 0.1 }}
+        />
+      </Source>
+      <Source
+        id={`${tileset.mapboxSourceId}-area-count`}
+        type="geojson"
+        data={getAreaGeoJSON(countsByBoundaryType)}
+      >
+        <Layer
+          id={`${tileset.mapboxSourceId}-area-count`}
+          type="symbol"
+          layout={{
+            ...getAreaCountLayout(countsByBoundaryType),
+            visibility,
+          }}
+          paint={{
+            'text-color': 'white',
+            'text-halo-color': 'black',
+            'text-halo-width': 0.3,
+          }}
+        />
+        <Layer
+          id={`${tileset.mapboxSourceId}-area-label`}
+          type="symbol"
+          layout={{
+            ...getAreaLabelLayout(countsByBoundaryType),
+            visibility,
+          }}
+          paint={{
+            'text-color': 'white',
+            'text-opacity': 0.9,
+            'text-halo-color': 'black',
+            'text-halo-width': 0.3,
+          }}
         />
       </Source>
     </>

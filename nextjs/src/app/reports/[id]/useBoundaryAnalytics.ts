@@ -1,4 +1,8 @@
-import { AnalyticalAreaType } from '@/__generated__/graphql'
+import {
+  AnalyticalAreaType,
+  GroupedDataCount,
+  MapReportConstituencyStatsQuery,
+} from '@/__generated__/graphql'
 import { useQuery } from '@apollo/client'
 import { useEffect, useState } from 'react'
 import {
@@ -23,7 +27,7 @@ const useBoundaryAnalytics = (
   let variables: any = {
     reportID: report?.id,
   }
-  let dataOutputKey
+  let dataOutputKey: keyof MapReportConstituencyStatsQuery['mapReport']
 
   // TODO: This is where we can implement arithmetic operations on data from multiple
   // sources, such as the sum of member count per political boundary from two different
@@ -37,12 +41,16 @@ const useBoundaryAnalytics = (
     dataOutputKey = 'importedDataCountByConstituency'
   } else if (boundaryType === 'admin_ward') {
     query = MAP_REPORT_WARD_STATS
+    // @ts-ignore — asserting here that importedDataCountByWard will also return GroupedDataCount[]
     dataOutputKey = 'importedDataCountByWard'
   } else throw new Error('Invalid boundary type')
 
-  const boundaryAnalytics = useQuery(query, { variables, skip: !canQuery })
+  const boundaryAnalytics = useQuery<MapReportConstituencyStatsQuery>(query, {
+    variables,
+    skip: !canQuery,
+  })
 
-  return boundaryAnalytics.data?.mapReport[dataOutputKey]
+  return boundaryAnalytics.data?.mapReport[dataOutputKey] as GroupedDataCount[]
 }
 
 export default useBoundaryAnalytics
