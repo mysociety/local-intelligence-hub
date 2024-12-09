@@ -1020,11 +1020,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     # TODO: Revisit the rationale behind these data source types, then
     # document what they are in the repo wiki
     # Specifically in terms of geocoding: what is the difference between
-    # each type in terms of how they are geocoded.
+    # each type in terms of how they are or can be geocoded, and what the requirements are
+    # for the source data to be correctly (successfully) processed
     class DataSourceType(models.TextChoices):
         MEMBER = "MEMBER", "Members or supporters"
         GROUP = "GROUP", "Group or organisation"
-        REGION = "REGION", "Areas or regions"
+        # Example: AREA_STATS expects (requires) a data source with a single row per area code 
+        # (for example an ONS GSS code for UK geographies) and a column for each stat
+        AREA_STATS = "AREA_STATS", "Area statistics"
         EVENT = "EVENT", "Events"
         LOCATION = "LOCATION", "Locations"
         STORY = "STORY", "Stories"
