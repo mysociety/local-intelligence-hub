@@ -166,6 +166,7 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
             "organisation": organisation,
             "slug": data.slug or slugify(data.name),
             "name": "Type your report name here",  # Default name for reports
+            "display_options": data.display_options or {}
         },
     }
 
