@@ -205,6 +205,39 @@ export default function Page({
   }, [dataType])
   const geographyFields = ['geographyColumn', 'geographyColumnType']
 
+  async function fetchSheetNamesUsingCredentials(
+    spreadsheetId: string,
+    oauthCredentials: string
+  ): Promise<string[]> {
+    const parsedCredentials = JSON.parse(oauthCredentials)
+    const accessToken = parsedCredentials.access_token
+
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+    }
+    const response = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`,
+      {
+        method: 'GET',
+        headers,
+      }
+    )
+
+    if (!response.ok) {
+      const error = await response.json()
+      console.error('API Error:', error)
+      throw new Error(error.error.message || 'Failed to fetch sheet names')
+    }
+    const data = await response.json()
+    const sheets = data.sheets || []
+    return sheets.map(
+      (sheet: { properties: { title: string } }) => sheet.properties.title
+    )
+  }
+  const [sheetNames, setSheetNames] = useState<string[]>([])
+  const [loadingSheets, setLoadingSheets] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+
   const [createSource, createSourceResult] =
     useMutation<CreateSourceMutation>(CREATE_DATA_SOURCE)
   const [testSource, testSourceResult] = useLazyQuery<
@@ -1210,27 +1243,62 @@ export default function Page({
               name="editablegooglesheets.spreadsheetId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Spreadsheet ID</FormLabel>
+                  <FormLabel>Google Sheets URL</FormLabel>
                   <FormControl>
-                    {/* @ts-ignore */}
                     <Input
-                      placeholder="1MEDFli9uakvmf_wGghJZtZg2AvF2xybGtiaG7OX1mmg"
-                      {...field}
+                      placeholder="https://docs.google.com/spreadsheets/d/1MEDFli9uakvmf_wGghJZtZg2AvF2xybGtiaG7OX1mmg/edit#gid=0"
+                      value={field.value}
+                      onChange={async (e) => {
+                        const url = e.target.value
+                        field.onChange(url) // Update the form value
+                        try {
+                          const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/)
+                          if (match && match[1]) {
+                            const spreadsheetId = match[1]
+                            form.setValue(
+                              'editablegooglesheets.spreadsheetId',
+                              spreadsheetId
+                            )
+                            setLoadingSheets(true)
+
+                            // Fetch sheet names using OAuth credentials
+                            const oauthCredentials = form.getValues(
+                              'editablegooglesheets.oauthCredentials'
+                            )
+                            if (oauthCredentials) {
+                              const sheets =
+                                await fetchSheetNamesUsingCredentials(
+                                  spreadsheetId,
+                                  oauthCredentials
+                                )
+                              setSheetNames(sheets)
+                            } else {
+                              throw new Error('OAuth credentials not available')
+                            }
+
+                            setLoadingSheets(false)
+                          }
+                        } catch (err) {
+                          setFetchError(
+                            'Failed to fetch sheet names. Please check the URL or credentials.'
+                          )
+                          setLoadingSheets(false)
+                        }
+                      }}
                       required
                     />
                   </FormControl>
                   <FormDescription>
-                    Get your spreadsheet ID from its URL in the address bar of
-                    the browser. The URL will be
-                    <code className="block bg-black p-2 rounded my-2">
-                      https://docs.google.com/spreadsheets/d/spreadsheet-id/edit?gid=0#gid=0e
-                    </code>
-                    with your ID in the place of {'"'}spreadsheet-id{'"'}.
+                    Paste the URL of your Google Sheets document. The system
+                    will extract the spreadsheet ID and fetch sheet names
+                    automatically.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {/* Dropdown for Sheet Names */}
             <FormField
               control={form.control}
               name="editablegooglesheets.sheetName"
@@ -1238,14 +1306,32 @@ export default function Page({
                 <FormItem>
                   <FormLabel>Sheet Name</FormLabel>
                   <FormControl>
-                    {/* @ts-ignore */}
-                    <Input placeholder="Sheet1" {...field} required />
+                    <Select
+                      onValueChange={field.onChange}
+                      /* @ts-ignore */
+                      defaultValue={field.value}
+                      required
+                      disabled={loadingSheets || !sheetNames.length}
+                    >
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={
+                            loadingSheets ? 'Loading...' : 'Select a sheet'
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sheetNames.map((name) => (
+                          <SelectItem key={name} value={name}>
+                            {name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </FormControl>
-                  <FormDescription>
-                    The name of the sheet with data you want imported/updated.
-                    This is {'"'}Sheet1{'"'} by default. You can find it on the
-                    tabs at the bottom of your spreadsheet.
-                  </FormDescription>
+                  {fetchError && (
+                    <small className="text-red-500">{fetchError}</small>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
