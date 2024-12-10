@@ -9,13 +9,13 @@ export function formatCrmNames(input: string): string {
     case 'actionnetwork':
       return 'Action Network'
     case 'editablegooglesheets':
-      return 'Editable Google Sheets'
+      return 'Google Sheet'
     case 'tickettailor':
       return 'Ticket Tailor'
     case 'airtable':
-      return 'Airtable'
+      return 'Airtable base'
     case 'mailchimp':
-      return 'Mailchimp'
+      return 'Mailchimp list'
     default:
       return 'database'
   }
