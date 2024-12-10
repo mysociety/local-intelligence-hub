@@ -1553,7 +1553,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             geography_config will look something like:
             [
               {
-                "type": "LAD",
+                "type": ["STC", "DIS"],
                 "field": "Local authority"
               },
               {
@@ -1578,19 +1578,22 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     if searchable_name is None:
                         continue
                     parsed_area_types = ensure_list(literal_area_type)
-                    is_council = parsed_area_types[0] == "LAD"
-                    area_types = ["STC", "DIS"] if is_council else parsed_area_types
+                    is_council = (
+                        "STC" in parsed_area_types or "DIS" in parsed_area_types
+                    )
 
-                    qs = Area.objects.filter(area_type__code__in=area_types)
+                    logger.debug(
+                        f"Searching for {searchable_name} via {literal_area_field} of type {literal_area_type}. is_council? {is_council}"
+                    )
+
+                    qs = Area.objects.filter(area_type__code__in=parsed_area_types)
                     if is_council:
+                        logger.debug(f"Searching council names for {searchable_name}")
                         # Mapit stores councils with their type in the name
                         # e.g. https://mapit.mysociety.org/area/2641.html
                         qs = qs.filter(
                             Q(name__iexact=searchable_name)
-                            | Q(name__iexact=f"{searchable_name} city council")
-                            | Q(name__iexact=f"{searchable_name} borough council")
-                            | Q(name__iexact=f"{searchable_name} district council")
-                            | Q(name__iexact=f"{searchable_name} county council")
+                            | Q(name__ilike=f"{searchable_name}%council")
                         )
                     else:
                         qs = qs.filter(name__iexact=searchable_name)
@@ -1599,6 +1602,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         qs = qs.filter(polygon__overlaps=area.polygon)
 
                     area = await qs.afirst()
+                    if area is None:
+                        logger.debug(f"Could not find area for {searchable_name}")
+                        if is_council:
+                            logger.debug(
+                                f"Also searched for '{searchable_name} council', '{searchable_name} city council', '{searchable_name} borough council', '{searchable_name} district council', '{searchable_name} county council'"
+                            )
                 if area is not None:
                     # get postcodeIO result for area.coordinates
                     postcode_data: PostcodesIOResult = await loaders[

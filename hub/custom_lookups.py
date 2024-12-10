@@ -1,4 +1,6 @@
 from django.db.models import BooleanField, DateTimeField, Transform
+from django.db.models.fields import Field
+from django.db.models.lookups import IContains
 
 
 @DateTimeField.register_lookup
@@ -59,3 +61,18 @@ class IsFutureFillter(Transform):
     @property
     def output_field(self):
         return BooleanField()
+
+
+class ILike(IContains):
+    def get_rhs_op(self, connection, rhs):
+        if connection.vendor == "postgres":
+            return f"ILIKE {rhs}"
+        return super().get_rhs_op(connection, rhs)
+
+
+# This will override `__icontains` to use `ILIKE` on Postgres
+Field.register_lookup(ILike)
+
+# This will register a new `__ilike` lookup while keeping
+# `__icontains` unchanged on Postgres
+Field.register_lookup(ILike, lookup_name="ilike")
