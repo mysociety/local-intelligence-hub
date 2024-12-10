@@ -6,7 +6,7 @@ import {
 import { TriangleDownIcon } from '@radix-ui/react-icons'
 import clsx from 'clsx'
 import { atom, useAtom } from 'jotai'
-import React, { useEffect } from 'react'
+import React from 'react'
 
 interface Props {
   id: string
@@ -18,18 +18,17 @@ const collapsibleSectionsAtom = atom<{ [key: string]: boolean }>({})
 
 const CollapsibleSection: React.FC<Props> = ({ children, id, title }) => {
   const [sections, setSections] = useAtom(collapsibleSectionsAtom)
-  const thisSectionOpen = sections[id]
+  const thisSectionOpen = sections[id] === undefined ? true : !!sections[id]
 
-  const toggleSection = (override: boolean) => {
-    setSections((prev) => ({
-      ...prev,
-      [id]: override !== undefined ? override : !prev[id],
-    }))
+  const toggleSection = () => {
+    setSections((prev) => {
+      const newValue = prev[id] === undefined ? false : !prev[id]
+      return {
+        ...prev,
+        [id]: newValue,
+      }
+    })
   }
-
-  useEffect(() => {
-    toggleSection(true)
-  }, [])
 
   return (
     <Collapsible

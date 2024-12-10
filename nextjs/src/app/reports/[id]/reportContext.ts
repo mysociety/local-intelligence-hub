@@ -24,7 +24,7 @@ export interface ReportConfig {
     boundaryType?: AnalyticalAreaType
     visualisationType?: VisualisationType
     palette?: Palette
-    dataSource?: MapLayer
+    dataSource?: MapLayer['id']
   }
   display?: {
     showStreetDetails?: boolean
