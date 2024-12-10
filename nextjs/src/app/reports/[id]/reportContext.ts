@@ -1,5 +1,10 @@
-import { AnalyticalAreaType, MapReport } from '@/__generated__/graphql'
+import {
+  AnalyticalAreaType,
+  MapLayer,
+  MapReport,
+} from '@/__generated__/graphql'
 import { createContext } from 'react'
+import { PoliticalTileset } from './politicalTilesets'
 
 export enum VisualisationType {
   Choropleth = 'choropleth',
@@ -11,6 +16,7 @@ export enum Palette {
 
 export type MapReportExtended = Omit<MapReport, 'displayOptions'> & {
   displayOptions: ReportConfig
+  politicalBoundaries: PoliticalTileset[]
 }
 
 export interface ReportConfig {
@@ -18,6 +24,7 @@ export interface ReportConfig {
     boundaryType?: AnalyticalAreaType
     visualisationType?: VisualisationType
     palette?: Palette
+    dataSource?: MapLayer
   }
   display?: {
     showStreetDetails?: boolean

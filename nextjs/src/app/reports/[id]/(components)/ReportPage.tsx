@@ -2,7 +2,6 @@
 
 import LocalisedMap from '@/components/LocalisedMap'
 import { PlaceholderLayer } from '@/components/PlaceholderLayer'
-import { getPoliticalTilesetsByCountry } from '../politicalTilesets'
 import { ConstituenciesPanel } from './ConstituenciesPanel'
 import PoliticalChoropleths from './MapLayers/PoliticalChoropleths'
 import ReportMapMarkers from './MapLayers/ReportMapMarkers'
@@ -23,16 +22,14 @@ export default function ReportPage() {
           mapKey={report.id}
         >
           <PlaceholderLayer id={PLACEHOLDER_LAYER_ID_CHOROPLETH} />
-          {getPoliticalTilesetsByCountry('uk').map(
-            ({ boundaryType, tileset }) => (
-              <PoliticalChoropleths
-                key={`${boundaryType}-${tileset.mapboxSourceId}`}
-                report={report}
-                boundaryType={boundaryType}
-                tileset={tileset}
-              />
-            )
-          )}
+          {report.politicalBoundaries.map(({ boundaryType, tileset }) => (
+            <PoliticalChoropleths
+              key={`${boundaryType}-${tileset.mapboxSourceId}`}
+              report={report}
+              boundaryType={boundaryType}
+              tileset={tileset}
+            />
+          ))}
           <PlaceholderLayer id={PLACEHOLDER_LAYER_ID_MARKERS} />
           <ReportMapMarkers />
         </LocalisedMap>

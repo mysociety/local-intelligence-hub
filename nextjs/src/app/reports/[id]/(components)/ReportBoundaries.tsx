@@ -7,7 +7,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import React from 'react'
-import { getPoliticalTilesetsByCountry } from '../politicalTilesets'
 import CollapsibleSection from './CollapsibleSection'
 import { UpdateConfigProps } from './ReportConfiguration'
 import { useReport } from './ReportProvider'
@@ -16,9 +15,6 @@ const ReportBoundaries: React.FC<UpdateConfigProps> = ({
   updateVisualisationConfig,
 }) => {
   const { report } = useReport()
-
-  // TODO: Make the country part of the report configuration
-  const politicalBoundaries = getPoliticalTilesetsByCountry('uk')
 
   const {
     displayOptions: { dataVisualisation },
@@ -40,7 +36,7 @@ const ReportBoundaries: React.FC<UpdateConfigProps> = ({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {politicalBoundaries.map((boundary) => (
+          {report.politicalBoundaries.map((boundary) => (
             <SelectItem
               className="font-medium"
               key={boundary.boundaryType}
