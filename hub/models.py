@@ -1352,7 +1352,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         else:
             actual_finish_time = None
             
-        time_threshold = timedelta(seconds=1)
+        time_threshold = timedelta(minutes=5)
         send_email = False  
         actual_job_duration = None
 
