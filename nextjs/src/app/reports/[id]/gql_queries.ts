@@ -106,16 +106,14 @@ export const MAP_REPORT_REGION_STATS = gql`
     }
   }
 `
-export const MAP_REPORT_CONSTITUENCY_STATS = gql`
-  query MapReportConstituencyStats(
+export const MAP_REPORT_AREA_STATS = gql`
+  query MapReportAreaStats(
     $reportID: ID!
     $analyticalAreaType: AnalyticalAreaType!
   ) {
     mapReport(pk: $reportID) {
       id
-      importedDataCountByConstituency: importedDataCountByArea(
-        analyticalAreaType: $analyticalAreaType
-      ) {
+      importedDataCountByArea(analyticalAreaType: $analyticalAreaType) {
         label
         gss
         count

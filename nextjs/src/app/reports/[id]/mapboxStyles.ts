@@ -1,4 +1,3 @@
-import { GroupedDataCount } from '@/__generated__/graphql'
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { interpolateBlues } from 'd3-scale-chromatic'
 import {
@@ -7,6 +6,7 @@ import {
   SymbolLayerSpecification,
 } from 'mapbox-gl'
 import { Tileset } from './types'
+import { BoundaryAnalytics } from './useBoundaryAnalytics'
 
 export function getChoroplethFill(
   data: { count: number }[]
@@ -97,7 +97,7 @@ export function getSelectedChoroplethEdge(): LineLayerSpecification['paint'] {
   }
 }
 export const getChoroplethFillFilter = (
-  data: GroupedDataCount[],
+  data: BoundaryAnalytics,
   tileset: Tileset
 ) => {
   return [
@@ -114,7 +114,7 @@ export const getSelectedChoroplethFillFilter = (
   return ['==', ['get', tileset.promoteId], selectedGss]
 }
 
-export function getAreaGeoJSON(data: GroupedDataCount[]) {
+export function getAreaGeoJSON(data: BoundaryAnalytics) {
   return {
     type: 'FeatureCollection',
     features: data
@@ -130,7 +130,7 @@ export function getAreaGeoJSON(data: GroupedDataCount[]) {
   }
 }
 
-function getStatsForData(data: GroupedDataCount[]) {
+function getStatsForData(data: BoundaryAnalytics) {
   let min =
     data.reduce(
       (min, p) => (p?.count! < min ? p?.count! : min),
@@ -157,7 +157,7 @@ function getStatsForData(data: GroupedDataCount[]) {
 }
 
 export const getAreaCountLayout = (
-  data: GroupedDataCount[]
+  data: BoundaryAnalytics
 ): SymbolLayerSpecification['layout'] => {
   const { min, max, textScale } = getStatsForData(data)
 
@@ -182,7 +182,7 @@ export const getAreaCountLayout = (
 }
 
 export const getAreaLabelLayout = (
-  data: GroupedDataCount[]
+  data: BoundaryAnalytics
 ): SymbolLayerSpecification['layout'] => {
   const { min, max, textScale } = getStatsForData(data)
 
