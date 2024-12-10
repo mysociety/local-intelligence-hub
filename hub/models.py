@@ -4,7 +4,7 @@ import itertools
 import json
 import math
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import List, Optional, Self, Type, TypedDict, Union
 from urllib.parse import urlencode, urljoin
@@ -15,6 +15,7 @@ from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.gis.db.models import MultiPolygonField, PointField
 from django.contrib.gis.geos import Point
 from django.core.cache import cache
+from django.core.mail import EmailMessage
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min, Q
 from django.db.models.functions import Cast, Coalesce
@@ -82,8 +83,6 @@ from utils.postcodesIO import (
     get_bulk_postcode_geo_from_coords,
 )
 from utils.py import batched, ensure_list, get, is_maybe_id, parse_datetime
-from datetime import timedelta
-from django.core.mail import EmailMessage
 
 User = get_user_model()
 
