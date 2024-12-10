@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Switch } from '@/components/ui/switch'
 
+import { formatCrmNames } from '@/lib/utils'
 import { DataSourceIcon } from './DataSourceIcon'
 import { Button, ButtonProps, buttonVariants } from './ui/button'
 
@@ -73,9 +74,15 @@ export function ExternalDataSourceCard({
         <div className="space-y-3">
           <DataSourceIcon crmType={externalDataSource.crmType} />
           <h3 className="text-hSm">
-            {externalDataSource.name ||
-              externalDataSource.crmType ||
-              'Un-named data source'}
+            <h3 className="text-hSm">
+              <h3 className="text-hSm">
+                {externalDataSource.name ||
+                  (externalDataSource.crmType
+                    ? formatCrmNames(externalDataSource.crmType)
+                    : 'Un-named data source') ||
+                  'Un-named data source'}
+              </h3>
+            </h3>
           </h3>
         </div>
         {withLink && (
@@ -188,10 +195,12 @@ export function WebhookRefresh({
 
 export function TriggerUpdateButton({
   id,
+  crmType,
   label = 'Enrich all data now',
   ...buttonProps
 }: {
   id: string
+  crmType?: string
   label?: string
 } & ButtonProps) {
   const client = useApolloClient()
@@ -207,8 +216,9 @@ export function TriggerUpdateButton({
         <AlertDialogHeader>
           <AlertDialogTitle>Trigger a full update</AlertDialogTitle>
           <AlertDialogDescription className="text-base">
-            This will update all records in the CRM. Depending on the size of
-            your CRM, this may take a while.
+            This will update all records in the{' '}
+            {formatCrmNames(crmType || 'database')}. Depending on your{' '}
+            {formatCrmNames(crmType || 'database')} this may take a while.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
