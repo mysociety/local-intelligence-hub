@@ -1,5 +1,4 @@
 'use client'
-
 import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
 import { formatRelative } from 'date-fns'
@@ -124,6 +123,7 @@ const GET_UPDATE_CONFIG = gql`
         actualFinishTime
         inQueue
         numberOfJobsAheadInQueue
+        sendEmail
       }
       isUpdateScheduled
       updateProgress {
@@ -136,6 +136,7 @@ const GET_UPDATE_CONFIG = gql`
         actualFinishTime
         inQueue
         numberOfJobsAheadInQueue
+        sendEmail
       }
       importedDataCount
       fieldDefinitions {
@@ -300,6 +301,16 @@ export default function InspectExternalDataSource({
                       ? 'job'
                       : 'jobs'}{' '}
                     ahead of this one in the queue
+                  </div>
+                )}
+
+              {source.importProgress?.sendEmail &&
+                (source?.importProgress?.status === 'todo' ||
+                  source?.importProgress?.status === 'doing') && (
+                  <div>
+                    This job is predicted to take more than 5 minutes. Feel free
+                    to navigate away from this page and we will send you an
+                    email when it's finished.
                   </div>
                 )}
               {source.hasWebhooks && (
@@ -477,6 +488,15 @@ export default function InspectExternalDataSource({
                               ? 'job'
                               : 'jobs'}{' '}
                             ahead of this one in the queue
+                          </div>
+                        )}
+                      {source.updateProgress?.sendEmail &&
+                        (source?.updateProgress?.status === 'todo' ||
+                          source?.updateProgress?.status === 'doing') && (
+                          <div>
+                            This job is predicted to take more than 5 minutes.
+                            Feel free to navigate away from this page and we
+                            will send you an email when it's finished.
                           </div>
                         )}
                       {source.updateProgress?.status !== 'todo' ? (
