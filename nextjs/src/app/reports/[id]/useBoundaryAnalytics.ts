@@ -4,7 +4,6 @@ import {
   MapReportAreaStatsQueryVariables,
 } from '@/__generated__/graphql'
 import { useQuery } from '@apollo/client'
-import { useEffect, useState } from 'react'
 import { MAP_REPORT_AREA_STATS } from './gql_queries'
 import { MapReportExtended } from './reportContext'
 
@@ -12,17 +11,11 @@ export default function useBoundaryAnalytics(
   report: MapReportExtended | undefined,
   boundaryType: AnalyticalAreaType
 ) {
-  const [canQuery, setCanQuery] = useState(false)
-
-  useEffect(() => {
-    if (report) {
-      setCanQuery(true)
-    }
-  }, [report])
-
   if (!ENABLED_ANALYTICAL_AREA_TYPES.includes(boundaryType)) {
     throw new Error('Invalid boundary type')
   }
+
+  const canQuery = !!report
 
   const boundaryAnalytics = useQuery<
     MapReportAreaStatsQuery,
