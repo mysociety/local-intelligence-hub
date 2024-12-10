@@ -16,7 +16,7 @@ import {
 import { MapReportExtended } from '../../reportContext'
 import { Tileset } from '../../types'
 import useBoundaryAnalytics from '../../useBoundaryAnalytics'
-import useSelectBoundary, {
+import useClickOnBoundaryEvents, {
   selectedBoundaryAtom,
 } from '../../useSelectBoundary'
 import { PLACEHOLDER_LAYER_ID_CHOROPLETH } from '../ReportPage'
@@ -35,7 +35,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   const countsByBoundaryType = useBoundaryAnalytics(report, boundaryType)
   const map = useLoadedMap()
   const selectedBoundary = useAtomValue(selectedBoundaryAtom)
-  useSelectBoundary(tileset)
+  useClickOnBoundaryEvents(tileset)
 
   // Show the layer only if the report is set to show the boundary type
   const visibility =
@@ -43,15 +43,21 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
       ? 'visible'
       : 'none'
 
-  // When the map is loaded and we have the data, add the layer to the map
+  // When the map is loaded and we have the data, add the data to the boundaries
   useEffect(() => {
     if (map.loaded && countsByBoundaryType) {
+      // If the currently selected dataSource is of type "MEMBER",
+      // we need to add the count to the mapbox layer
       addCountByGssToMapboxLayer(
         countsByBoundaryType,
         tileset.mapboxSourceId,
         tileset.sourceLayerId,
         map.loadedMap
       )
+
+      // If the currently selected boundary is of type "AREA_STATS"
+      // we need to get the chosen dataSourecField
+      // and add the area stats to the mapbox layer
     }
   }, [map.loaded, countsByBoundaryType])
 

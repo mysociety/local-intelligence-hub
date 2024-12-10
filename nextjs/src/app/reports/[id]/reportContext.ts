@@ -25,6 +25,7 @@ export interface ReportConfig {
     visualisationType?: VisualisationType
     palette?: Palette
     dataSource?: MapLayer['id']
+    dataSourceField?: string
   }
   display?: {
     showStreetDetails?: boolean
