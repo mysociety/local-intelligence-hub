@@ -3496,15 +3496,15 @@ class EditableGoogleSheetsSource(ExternalDataSource):
         )
 
     @classmethod
-    def from_oauth_redirect_success(cls, redirect_success_url: str, **kwargs):
+    def redirect_success_to_oauth_credentials(cls, redirect_success_url: str) -> str:
         """
-        Create an instance of the class, converting the redirect_success_url
-        into oauth credentials with the Google API.
+        Convert the redirect_success_url (e.g. https://mapped.tools/.../?code=...&state=...)
+        into the oauth_credentials that will be used for future Google API requests.
         """
         flow = cls.oauth_flow()
         flow.redirect_uri = redirect_success_url.split("?")[0]
         token = flow.fetch_token(authorization_response=redirect_success_url)
-        oauth_credentials = json.dumps(
+        return json.dumps(
             {
                 "access_token": token["access_token"],
                 "refresh_token": token["refresh_token"],
@@ -3514,7 +3514,6 @@ class EditableGoogleSheetsSource(ExternalDataSource):
                 "expiry": datetime.fromtimestamp(token["expires_at"]).isoformat(),
             }
         )
-        return cls(oauth_credentials=oauth_credentials, **kwargs)
 
     @classmethod
     def get_deduplication_field_names(cls) -> list[str]:

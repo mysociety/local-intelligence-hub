@@ -4,7 +4,7 @@ import { FetchResult, gql, useLazyQuery, useMutation } from '@apollo/client'
 import { useAtomValue } from 'jotai'
 import { camelCase } from 'lodash'
 import { Building, Calendar, Pin, Quote, User, Users } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { FieldPath, FormProvider, useForm } from 'react-hook-form'
 
@@ -13,11 +13,12 @@ import {
   CreateSourceMutation,
   CrmType,
   DataSourceType,
-  EditableGoogleSheetsSourceInput,
   ExternalDataSourceInput,
   GeographyTypes,
-  GoogleSheetsAuthUrlQuery,
-  GoogleSheetsAuthUrlQueryVariables,
+  GoogleSheetsOauthCredentialsQuery,
+  GoogleSheetsOauthCredentialsQueryVariables,
+  GoogleSheetsOauthUrlQuery,
+  GoogleSheetsOauthUrlQueryVariables,
   TestDataSourceQuery,
   TestDataSourceQueryVariables,
 } from '@/__generated__/graphql'
@@ -74,9 +75,15 @@ const TEST_DATA_SOURCE = gql`
   }
 `
 
-const GOOGLE_SHEETS_AUTH_URL = gql`
-  query GoogleSheetsAuthUrl($redirectUrl: String!) {
-    googleSheetsAuthUrl(redirectUrl: $redirectUrl)
+const GOOGLE_SHEETS_OAUTH_URL = gql`
+  query GoogleSheetsOauthUrl($redirectUrl: String!) {
+    googleSheetsOauthUrl(redirectUrl: $redirectUrl)
+  }
+`
+
+const GOOGLE_SHEETS_OAUTH_CREDENTIALS = gql`
+  query GoogleSheetsOauthCredentials($redirectSuccessUrl: String!) {
+    googleSheetsOauthCredentials(redirectSuccessUrl: $redirectSuccessUrl)
   }
 `
 
@@ -118,8 +125,6 @@ export default function Page({
     context.setStep(2)
   }, [context])
 
-  const RNN_ORIG = Symbol()
-
   const defaultValues: CreateExternalDataSourceInput & ExternalDataSourceInput =
     {
       name: '',
@@ -140,7 +145,7 @@ export default function Page({
         groupSlug: '',
       },
       editablegooglesheets: {
-        redirectSuccessUrl: '',
+        oauthCredentials: '',
         spreadsheetId: '',
         sheetName: '',
       },
@@ -155,17 +160,39 @@ export default function Page({
     } as FormInputs,
   })
 
+  const searchParams = useSearchParams()
+
+  const [googleSheetsOauthCredentials, googleSheetsOauthCredentialsResult] =
+    useLazyQuery<
+      GoogleSheetsOauthCredentialsQuery,
+      GoogleSheetsOauthCredentialsQueryVariables
+    >(GOOGLE_SHEETS_OAUTH_CREDENTIALS)
+
   useEffect(() => {
-    const urlParams = new URLSearchParams(
-      typeof window === 'undefined' ? '' : window.location.search
-    )
-    if (urlParams.get('state') && urlParams.get('code')) {
-      form.setValue(
-        'editablegooglesheets.redirectSuccessUrl',
-        window.location.href
+    if (searchParams.get('state') && searchParams.get('code')) {
+      toastPromise(
+        googleSheetsOauthCredentials({
+          variables: { redirectSuccessUrl: window.location.href },
+        }),
+        {
+          loading: 'Completing Google authorization...',
+          success: (d: FetchResult<GoogleSheetsOauthCredentialsQuery>) => {
+            if (!d.errors && d.data?.googleSheetsOauthCredentials) {
+              form.setValue(
+                'editablegooglesheets.oauthCredentials',
+                d.data.googleSheetsOauthCredentials
+              )
+              return 'Google authorization succeeded'
+            }
+            throw new Error('Google authorization failed')
+          },
+          error: () => {
+            return 'Google authorization failed'
+          },
+        }
       )
     }
-  }, [form])
+  }, [form, searchParams])
 
   const dataType = form.watch('dataType') as DataSourceType
   const collectFields = useMemo(() => {
@@ -179,10 +206,10 @@ export default function Page({
     TestDataSourceQuery,
     TestDataSourceQueryVariables
   >(TEST_DATA_SOURCE)
-  const [googleSheetsAuthUrl, googleSheetsAuthUrlResult] = useLazyQuery<
-    GoogleSheetsAuthUrlQuery,
-    GoogleSheetsAuthUrlQueryVariables
-  >(GOOGLE_SHEETS_AUTH_URL)
+  const [googleSheetsOauthUrl, googleSheetsOauthUrlResult] = useLazyQuery<
+    GoogleSheetsOauthUrlQuery,
+    GoogleSheetsOauthUrlQueryVariables
+  >(GOOGLE_SHEETS_OAUTH_URL)
   const [googleSheetsError, setGoogleSheetsError] = useState('')
 
   const currentSource = testSourceResult.data
@@ -450,18 +477,6 @@ export default function Page({
     // To avoid mutation of the form data
     const genericCRMData = Object.assign({}, formData)
     let CRMSpecificData = formData[externalDataSourceType]
-
-    // TODO: can this be less messy?
-    if (externalDataSourceType === CrmType.Editablegooglesheets) {
-      // Remove the redirectSuccessUrl from the variables and replace it
-      // with the credentials returned when the connection was tested.
-      // Cannot reuse the oauth parameters in the URL to get new
-      // credentials on the back-end, as they are one-use only.
-      CRMSpecificData = CRMSpecificData as EditableGoogleSheetsSourceInput
-      delete CRMSpecificData['redirectSuccessUrl']
-      CRMSpecificData['oauthCredentials'] =
-        testSourceResult.data?.testDataSource.oauthCredentials
-    }
 
     // Remove specific CRM data from the generic data
     // TODO: make this less fragile. Currently it assumes any nested
@@ -1076,22 +1091,148 @@ export default function Page({
   }
 
   if (externalDataSourceType === 'editablegooglesheets') {
-    const redirectSuccessUrl = form.watch(
-      'editablegooglesheets.redirectSuccessUrl'
-    )
+    const hasOauthParams = searchParams.get('state') && searchParams.get('code')
+    if (
+      hasOauthParams &&
+      !googleSheetsOauthCredentialsResult.data &&
+      !googleSheetsOauthCredentialsResult.error
+    ) {
+      return (
+        <div className="space-y-7">
+          <header>
+            <h1 className="text-hLg">
+              Connecting to your Google Sheets spreadsheet
+            </h1>
+          </header>
+          <LoadingIcon />
+        </div>
+      )
+    }
+    if (!form.watch('editablegooglesheets.oauthCredentials')) {
+      return (
+        <div className="space-y-7">
+          <header>
+            <h1 className="text-hLg">
+              Connecting to your Google Sheets spreadsheet
+            </h1>
+            <p className="mt-6 text-meepGray-400 max-w-lg">
+              Click the button below to grant Mapped permission to access your
+              spreadsheet.
+            </p>
+          </header>
+          <div className="flex flex-row gap-x-4">
+            <Button
+              variant="outline"
+              type="reset"
+              onClick={() => {
+                // Can't use router.back() as this could take the user
+                // back to the Google OAuth screen
+                router.push('/data-sources')
+              }}
+            >
+              Back
+            </Button>
+            <Button
+              type="button"
+              variant={'reverse'}
+              disabled={googleSheetsOauthUrlResult.loading}
+              onClick={() => {
+                setGoogleSheetsError('')
+
+                // Remove Google parameters from any previous failed request
+                const redirectUrl = new URL(window.location.href)
+                redirectUrl.searchParams.delete('code')
+                redirectUrl.searchParams.delete('error')
+                redirectUrl.searchParams.delete('state')
+                redirectUrl.searchParams.delete('scope')
+
+                googleSheetsOauthUrl({
+                  variables: { redirectUrl: redirectUrl.toString() },
+                })
+                  .then(({ data }) => {
+                    if (!data?.googleSheetsOauthUrl) {
+                      throw Error('Missing data')
+                    }
+                    window.location.href = data.googleSheetsOauthUrl
+                  })
+                  .catch((e) => {
+                    console.error('Error: ', e)
+                    setGoogleSheetsError(
+                      'Could not get Google authorization URL, please try again.'
+                    )
+                  })
+              }}
+            >
+              Authorize
+            </Button>
+          </div>
+          {googleSheetsError && (
+            <small className="text-red-500">{googleSheetsError}</small>
+          )}
+        </div>
+      )
+    }
     return (
       <div className="space-y-7">
-        {!redirectSuccessUrl ? (
-          <>
-            <header>
-              <h1 className="text-hLg">
-                Connecting to your Google Sheets spreadsheet
-              </h1>
-              <p className="mt-6 text-meepGray-400 max-w-lg">
-                Click the button below to grant Mapped permission to access your
-                spreadsheet.
-              </p>
-            </header>
+        <header>
+          <h1 className="text-hLg">
+            Connecting to your Google Sheets spreadsheet
+          </h1>
+          <p className="mt-6 text-meepGray-400 max-w-lg">
+            Now we just need a few details to know which spreadsheet to import
+            and update.
+          </p>
+        </header>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(submitTestConnection)}
+            className="space-y-7 max-w-lg"
+          >
+            <FormField
+              control={form.control}
+              name="editablegooglesheets.spreadsheetId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Spreadsheet ID</FormLabel>
+                  <FormControl>
+                    {/* @ts-ignore */}
+                    <Input
+                      placeholder="1MEDFli9uakvmf_wGghJZtZg2AvF2xybGtiaG7OX1mmg"
+                      {...field}
+                      required
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Get your spreadsheet ID from its URL in the address bar of
+                    the browser. The URL will be
+                    <code className="block bg-black p-2 rounded my-2">
+                      https://docs.google.com/spreadsheets/d/spreadsheet-id/edit?gid=0#gid=0e
+                    </code>
+                    with your ID in the place of {'"'}spreadsheet-id{'"'}.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="editablegooglesheets.sheetName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sheet Name</FormLabel>
+                  <FormControl>
+                    {/* @ts-ignore */}
+                    <Input placeholder="Sheet1" {...field} required />
+                  </FormControl>
+                  <FormDescription>
+                    The name of the sheet with data you want imported/updated.
+                    This is {'"'}Sheet1{'"'} by default. You can find it on the
+                    tabs at the bottom of your spreadsheet.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="flex flex-row gap-x-4">
               <Button
                 variant="outline"
@@ -1105,121 +1246,15 @@ export default function Page({
                 Back
               </Button>
               <Button
-                type="button"
+                type="submit"
                 variant={'reverse'}
-                disabled={googleSheetsAuthUrlResult.loading}
-                onClick={() => {
-                  setGoogleSheetsError('')
-                  googleSheetsAuthUrl({
-                    variables: { redirectUrl: window.location.href },
-                  })
-                    .then(({ data }) => {
-                      if (!data?.googleSheetsAuthUrl) {
-                        throw Error('Missing data')
-                      }
-                      window.location.href = data.googleSheetsAuthUrl
-                    })
-                    .catch((e) => {
-                      console.error('Error: ', e)
-                      setGoogleSheetsError(
-                        'Could not get Google authorization URL, please try again.'
-                      )
-                    })
-                }}
+                disabled={testSourceResult.loading}
               >
-                Authorize
+                Test connection
               </Button>
             </div>
-            {googleSheetsError && (
-              <small className="text-red-500">{googleSheetsError}</small>
-            )}
-          </>
-        ) : (
-          <>
-            <header>
-              <h1 className="text-hLg">
-                Connecting to your Google Sheets spreadsheet
-              </h1>
-              <p className="mt-6 text-meepGray-400 max-w-lg">
-                Now we just need a few details to know which spreadsheet to
-                import and update.
-              </p>
-            </header>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(submitTestConnection)}
-                className="space-y-7 max-w-lg"
-              >
-                <FormField
-                  control={form.control}
-                  name="editablegooglesheets.spreadsheetId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Spreadsheet ID</FormLabel>
-                      <FormControl>
-                        {/* @ts-ignore */}
-                        <Input
-                          placeholder="1MEDFli9uakvmf_wGghJZtZg2AvF2xybGtiaG7OX1mmg"
-                          {...field}
-                          required
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Get your spreadsheet ID from its URL in the address bar
-                        of the browser. The URL will be
-                        <code className="block bg-black p-2 rounded my-2">
-                          https://docs.google.com/spreadsheets/d/spreadsheet-id/edit?gid=0#gid=0e
-                        </code>
-                        with your ID in the place of {'"'}spreadsheet-id{'"'}.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="editablegooglesheets.sheetName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Sheet Name</FormLabel>
-                      <FormControl>
-                        {/* @ts-ignore */}
-                        <Input placeholder="Sheet1" {...field} required />
-                      </FormControl>
-                      <FormDescription>
-                        The name of the sheet with data you want
-                        imported/updated. This is {'"'}Sheet1{'"'} by default.
-                        You can find it on the tabs at the bottom of your
-                        spreadsheet.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex flex-row gap-x-4">
-                  <Button
-                    variant="outline"
-                    type="reset"
-                    onClick={() => {
-                      // Can't use router.back() as this could take the user
-                      // back to the Google OAuth screen
-                      router.push('/data-sources')
-                    }}
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant={'reverse'}
-                    disabled={testSourceResult.loading}
-                  >
-                    Test connection
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </>
-        )}
+          </form>
+        </Form>
       </div>
     )
   }
