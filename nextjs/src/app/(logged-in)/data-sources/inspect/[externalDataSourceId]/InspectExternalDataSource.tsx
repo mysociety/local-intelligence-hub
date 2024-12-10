@@ -293,7 +293,7 @@ export default function InspectExternalDataSource({
                   <h2 className="text-hSm mb-5">Auto-import</h2>
                   <p className="text-sm text-meepGray-400">
                     Auto-imports are{' '}
-                    {source.autoImportEnabled ? 'enabled' : 'disabled'} for this
+                    {source.autoImportEnabled ? 'enabled' : 'disabled'} for this{' '}
                     {source.crmType}.
                   </p>
                   {source.connectionDetails.__typename ===
