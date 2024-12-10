@@ -86,8 +86,8 @@ const config = {
         ],
       },
       fontWeight: {
-        light: '300',
-        normal: '400',
+        light: '200',
+        normal: '300',
         medium: '500',
         bold: '600',
       },

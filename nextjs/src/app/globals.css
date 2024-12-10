@@ -30,13 +30,14 @@
 @font-face {
   font-family: IBMPlexSans;
   src: url('../fonts/IBMPlexSans/IBMPlexSans-Light.ttf');
-  font-weight: 300;
+  font-weight: 200;
 }
 
 @font-face {
   font-family: IBMPlexSans;
   src: url('../fonts/IBMPlexSans/IBMPlexSans-Regular.ttf');
-  font-weight: 400;
+  font-weight: 300;
+  font-style: normal;
 }
 @font-face {
   font-family: IBMPlexSans;
@@ -128,7 +129,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-meepGray-800 text-white font-IBMPlexSans;
+    @apply bg-meepGray-800 text-white font-IBMPlexSans font-normal;
   }
 }
 
