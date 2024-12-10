@@ -1025,7 +1025,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     class DataSourceType(models.TextChoices):
         MEMBER = "MEMBER", "Members or supporters"
         GROUP = "GROUP", "Group or organisation"
-        # Example: AREA_STATS expects (requires) a data source with a single row per area code 
+        # Example: AREA_STATS expects (requires) a data source with a single row per area code
         # (for example an ONS GSS code for UK geographies) and a column for each stat
         AREA_STATS = "AREA_STATS", "Area statistics"
         EVENT = "EVENT", "Events"
@@ -1500,11 +1500,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     async def import_many(self, members: list):
         """
+        Members doesn't mean members, it's actually generic records.
         Copy data to this database for use in dashboarding features.
         """
 
         if not members:
-            logger.error("import_many called with 0 members")
+            logger.error("import_many called with 0 records")
             return
 
         if is_maybe_id(members[0]):
@@ -1587,6 +1588,38 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 )
 
             await asyncio.gather(*[create_import_record(record) for record in data])
+        elif (
+            self.geography_column
+            and self.geography_column_type == self.GeographyTypes.WARD
+        ):
+            loaders = await self.get_loaders()
+
+            async def create_import_record(record):
+                structured_data = get_update_data(record)
+                wards = Area.objects.filter(
+                    area_type__code="WD23",
+                    gss=self.get_record_field(record, self.geography_column),
+                )
+                ward = await sync_to_async(wards.first)()
+                coord = ward.point.centroid
+                postcode_data: PostcodesIOResult = await loaders[
+                    "postcodesIOFromPoint"
+                ].load(coord)
+
+                update_data = {
+                    **structured_data,
+                    "postcode_data": postcode_data,
+                }
+
+                await GenericData.objects.aupdate_or_create(
+                    data_type=data_type,
+                    data=self.get_record_id(record),
+                    defaults=update_data,
+                )
+
+            await asyncio.gather(*[create_import_record(record) for record in data])
+            logger.info(f"Imported {len(data)} records from {self}")
+
         elif (
             self.geography_column
             and self.geography_column_type == self.GeographyTypes.ADDRESS
