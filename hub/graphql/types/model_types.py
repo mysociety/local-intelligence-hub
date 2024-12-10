@@ -809,18 +809,15 @@ class BatchJobProgress:
     number_of_jobs_ahead_in_queue: Optional[int] = None
     send_email: bool = False
 
-    
     @strawberry_django.field
-    def in_queue(
-        self, info: Info
-    ) -> bool:
-        if self.status == ProcrastinateJobStatus.doing.value or self.status == ProcrastinateJobStatus.todo.value:
+    def in_queue(self, info: Info) -> bool:
+        if (
+            self.status == ProcrastinateJobStatus.doing.value
+            or self.status == ProcrastinateJobStatus.todo.value
+        ):
             return True
         else:
             return False
-
-
-    
 
 
 @strawberry.enum
