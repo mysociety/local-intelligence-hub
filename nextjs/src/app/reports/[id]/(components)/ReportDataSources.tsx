@@ -16,13 +16,13 @@ export function ReportDataSources() {
         <CollapsibleTrigger asChild>
           <div className="flex flex-row gap-2 items-center my-3 cursor-pointer">
             <ChevronsUpDown className="h-4 w-4 text-white" />
-            <h3 className="text-white font-bold">Data Sources</h3>
+            <h3 className="text-white font-medium">Data Sources</h3>
           </div>
         </CollapsibleTrigger>
       </div>
 
       <CollapsibleContent className="CollapsibleContent">
-        <p className="text-meepGray-300 text-sm mb-3  ">
+        <p className="text-meepGray-300 text-sm mb-3 font-normal">
           Connect your own custom data sources or select data sources from our
           library.
         </p>

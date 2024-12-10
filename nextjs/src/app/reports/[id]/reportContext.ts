@@ -1,8 +1,13 @@
 import { AnalyticalAreaType, MapReport } from '@/__generated__/graphql'
 import { createContext } from 'react'
 
-type VisualisationType = 'choropleth'
-type Palette = 'blue'
+export enum VisualisationType {
+  Choropleth = 'choropleth',
+}
+
+export enum Palette {
+  Blue = 'blue',
+}
 
 export type MapReportExtended = Omit<MapReport, 'displayOptions'> & {
   displayOptions: ReportConfig
@@ -26,8 +31,8 @@ export interface ReportConfig {
 export const defaultReportConfig: ReportConfig = {
   dataVisualisation: {
     boundaryType: AnalyticalAreaType.ParliamentaryConstituency_2024,
-    visualisationType: 'choropleth',
-    palette: 'blue',
+    visualisationType: VisualisationType.Choropleth,
+    palette: Palette.Blue,
   },
   display: {
     showStreetDetails: false,
