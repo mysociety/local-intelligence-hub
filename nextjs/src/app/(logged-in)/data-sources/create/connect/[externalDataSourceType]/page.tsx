@@ -169,6 +169,10 @@ export default function Page({
     >(GOOGLE_SHEETS_OAUTH_CREDENTIALS)
 
   useEffect(() => {
+    // The presence of these URL parameters indicates an OAuth redirect
+    // back from Google. Convert these into oauth_credentials using
+    // the GoogleSheetsOauthCredentialsQuery, then save the
+    // credentials in the form object.
     if (searchParams.get('state') && searchParams.get('code')) {
       toastPromise(
         googleSheetsOauthCredentials({
@@ -1092,11 +1096,16 @@ export default function Page({
 
   if (externalDataSourceType === 'editablegooglesheets') {
     const hasOauthParams = searchParams.get('state') && searchParams.get('code')
-    if (
+    // The presence of the params and absence of an oauthCredentialsResult
+    // means the query has either not yet been sent, or is in progress.
+    // Checking this instead of the `loading` property catches the
+    // case where the page has been loaded but the query hasn't
+    // yet been sent.
+    const oauthCredentialsLoading =
       hasOauthParams &&
       !googleSheetsOauthCredentialsResult.data &&
       !googleSheetsOauthCredentialsResult.error
-    ) {
+    if (oauthCredentialsLoading) {
       return (
         <div className="space-y-7">
           <header>
