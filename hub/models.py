@@ -82,6 +82,8 @@ from utils.postcodesIO import (
     get_bulk_postcode_geo_from_coords,
 )
 from utils.py import batched, ensure_list, get, is_maybe_id, parse_datetime
+from datetime import timedelta
+from django.core.mail import EmailMessage
 
 User = get_user_model()
 
@@ -1262,8 +1264,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         done: int = 0
         remaining: int = 0
         number_of_jobs_ahead_in_queue: int = 0
+        send_email: bool = False
 
-    def get_scheduled_batch_job_progress(self, parent_job: ProcrastinateJob):
+    def get_scheduled_batch_job_progress(self, parent_job: ProcrastinateJob, user=None):
         # TODO: This doesn't work for import/refresh by page. How can it cover this case?
         request_id = parent_job.args.get("request_id")
 
@@ -1336,7 +1339,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         time_so_far = datetime.now(pytz.utc) - time_started
         duration_per_record = time_so_far / (done or 1)
         time_remaining = duration_per_record * remaining
-        estimated_finish_time = datetime.now() + time_remaining
+        estimated_finish_time = datetime.now(pytz.utc) + time_remaining
         
         if status == 'succeeded' or status == 'failed':
             actual_finish_time = (
@@ -1345,11 +1348,59 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 .first()
                 .at.replace(tzinfo=pytz.utc)
             )
+            
         else:
             actual_finish_time = None
+            
+        time_threshold = timedelta(seconds=1)
+        send_email = False  
+        actual_job_duration = None
 
+        estimated_job_duration = estimated_finish_time - time_started
+       
+        if actual_finish_time is not None:
+            actual_job_duration = actual_finish_time - time_started
+
+        if estimated_job_duration > time_threshold:
+            send_email = True
+            
+        if actual_job_duration and actual_job_duration > time_threshold:
+            if status == "succeeded" and user and user.is_authenticated:
+                user_email = user.email
+                email_subject = "Mapped Job Progress Notification"
+                email_body = "Your job has been successfully completed."
+                try:
+                    email = EmailMessage(
+                        subject=email_subject,
+                        body=email_body,
+                        from_email="noreply@example.com",
+                        to=[user_email],
+                    )
+                    email.send()
+                    
+                except Exception as e:
+                    logger.error(f"Failed to send email: {e}")
+
+            elif status == "failed" and user and user.is_authenticated:
+                user_email = user.email
+                email_subject = "Mapped Job Progress Notification"
+                email_body = "Your job has failed. Please check the details."
+                try:
+                    email = EmailMessage(
+                        subject=email_subject,
+                        body=email_body,
+                        from_email="noreply@example.com",
+                        to=[user_email],
+                    )
+                    email.send()
+        
+                except Exception as e:
+                    logger.error(
+                        f"Failed to send email to {user_email}: {e}"
+                    )
 
         return self.BatchJobProgress(
+            send_email=send_email,
             status=status,
             id=request_id,
             started_at=time_started,
@@ -1363,7 +1414,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             succeeded=statuses.get("succeeded", 0),
             failed=statuses.get("failed", 0),
             doing=statuses.get("doing", 0),
-            number_of_jobs_ahead_in_queue=number_of_jobs_ahead_in_queue
+            number_of_jobs_ahead_in_queue=number_of_jobs_ahead_in_queue,
         )
 
     def get_update_mapping(self) -> list[UpdateMapping]:
