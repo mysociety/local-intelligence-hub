@@ -294,7 +294,7 @@ export default function InspectExternalDataSource({
                   <p className="text-sm text-meepGray-400">
                     Auto-imports are{' '}
                     {source.autoImportEnabled ? 'enabled' : 'disabled'} for this{' '}
-                    {source.crmType}.
+                    {formatCrmNames(source.crmType)}.
                   </p>
                   {source.connectionDetails.__typename ===
                     'ActionNetworkSource' && (

@@ -74,9 +74,15 @@ export function ExternalDataSourceCard({
         <div className="space-y-3">
           <DataSourceIcon crmType={externalDataSource.crmType} />
           <h3 className="text-hSm">
-            {externalDataSource.name ||
-              externalDataSource.crmType ||
-              'Un-named data source'}
+            <h3 className="text-hSm">
+              <h3 className="text-hSm">
+                {externalDataSource.name ||
+                  (externalDataSource.crmType
+                    ? formatCrmNames(externalDataSource.crmType)
+                    : 'Un-named data source') ||
+                  'Un-named data source'}
+              </h3>
+            </h3>
           </h3>
         </div>
         {withLink && (
