@@ -28,19 +28,30 @@
 }
 
 @font-face {
-  font-family: IBMPlexSansReg;
+  font-family: IBMPlexSans;
+  src: url('../fonts/IBMPlexSans/IBMPlexSans-Light.ttf');
+  font-weight: 300;
+}
+
+@font-face {
+  font-family: IBMPlexSans;
   src: url('../fonts/IBMPlexSans/IBMPlexSans-Regular.ttf');
+  font-weight: 400;
 }
 @font-face {
-  font-family: IBMPlexSansMedium;
+  font-family: IBMPlexSans;
   src: url('../fonts/IBMPlexSans/IBMPlexSans-Medium.ttf');
+  font-weight: 500;
 }
+
 @font-face {
-  font-family: IBMPlexSansSemiBold;
-  src: url('../fonts/IBMPlexSans/IBMPlexSans-SemiBold.ttf');
+  font-family: IBMPlexSans;
+  src: url('../fonts/IBMPlexSans/IBMPlexSans-Bold.ttf');
+  font-weight: 600;
 }
+
 @font-face {
-  font-family: IBMPlexSansCondensed;
+  font-family: IBMPlexSans;
   src: url('../fonts/IBMPlexSans/IBMPlexSansCondensed-Regular.ttf');
 }
 

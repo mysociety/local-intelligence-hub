@@ -19,10 +19,7 @@ const config = {
     },
     extend: {
       fontFamily: {
-        IBMPlexSans: ['IBMPlexSansReg', 'sans-serif'],
-        IBMPlexSansLight: ['IBMPlexSansLight', 'sans-serif'],
-        IBMPlexSansSemiBold: ['IBMPlexSansSemiBold', 'sans-serif'],
-        IBMPlexSansMedium: ['IBMPlexSansMedium', 'sans-serif'],
+        IBMPlexSans: ['IBMPlexSans', 'sans-serif'],
         IBMPlexSansCondensed: ['IBMPlexSansCondensed', 'sans-serif'],
         IBMPlexMono: ['IBMPlexMono', 'sans-serif'],
         PPRightGrotesk: ['PPRightGrotesk, sans-serif'],
@@ -92,7 +89,7 @@ const config = {
         light: '300',
         normal: '400',
         medium: '500',
-        bold: '800',
+        bold: '600',
       },
       colors: {
         brandBlue: 'hsl(var(--brand-blue))',
