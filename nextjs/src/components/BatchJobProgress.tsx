@@ -62,8 +62,8 @@ export function BatchJobProgressReport({
         // Progress bar
         <>
           <Progress
-            value={batchJobProgress.succeeded}
-            max={batchJobProgress.total}
+            value={batchJobProgress.succeeded ?? 0}
+            max={batchJobProgress.total ?? 0}
           />
           <div className="text-meepGray-300 text-sm">
             Completed{' '}
@@ -72,7 +72,10 @@ export function BatchJobProgressReport({
             </span>{' '}
             of{' '}
             <span className="text-meepGray-100">
-              {format(',')(batchJobProgress.total)}
+              {batchJobProgress.total !== null &&
+              batchJobProgress.total !== undefined
+                ? format(',')(batchJobProgress.total)
+                : 0}
             </span>
             . Estimated done{' '}
             <span className="text-meepGray-100">
