@@ -69,6 +69,7 @@ black = "^24.3.0"
 coverage = "^6.5.0"
 flake8 = "^6.1.0"
 isort = "^5.10.1"
+watchdog = "^6.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
