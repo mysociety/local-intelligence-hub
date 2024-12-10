@@ -65,6 +65,8 @@ You could alternatively run commands individually (again, from inside the contai
     ./manage.py import_areas
     ./manage.py import_mps
 
+Finally, you will want to log in to `/admin` and make a selection of datasets “Public”, so they appear to logged-out users, on the site.
+
 ### Running the tests
 
 First start the Docker environment:
