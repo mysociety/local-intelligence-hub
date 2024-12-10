@@ -1060,6 +1060,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
         # TODO: LNG_LAT = "LNG_LAT", "Longitude and Latitude"
 
+    geography_config = JSONField(blank=True, null=True, default=list)
     geography_column_type = TextChoicesField(
         choices_enum=GeographyTypes,
         default=GeographyTypes.POSTCODE,
@@ -1544,6 +1545,75 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             return update_data
 
         if (
+            self.geography_config
+            and isinstance(self.geography_config, list)
+            and len(self.geography_config) > 0
+        ):
+            """
+            geography_config will look something like:
+            [
+              {
+                "type": "LAD",
+                "field": "Local authority"
+              },
+              {
+                "type": "WD23",
+                "field": "Ward"
+              }
+            ]
+            """
+            loaders = await self.get_loaders()
+
+            async def create_import_record(record):
+                # Filter down geographies by the config
+                area = None
+                for item in self.geography_config:
+                    literal_area_type = item.get("type", None)
+                    literal_area_field = item.get("field", None)
+                    if literal_area_type is None or literal_area_field is None:
+                        continue
+                    searchable_name = str(
+                        self.get_record_field(record, literal_area_field) or ""
+                    ).lower()
+                    if searchable_name is None:
+                        continue
+                    parsed_area_types = ensure_list(literal_area_type)
+                    is_council = parsed_area_types[0] == "LAD"
+                    area_types = ["STC", "DIS"] if is_council else parsed_area_types
+
+                    qs = Area.objects.filter(area_type__code__in=area_types)
+                    if is_council:
+                        # Mapit stores councils with their type in the name
+                        # e.g. https://mapit.mysociety.org/area/2641.html
+                        qs = qs.filter(
+                            Q(name__iexact=searchable_name)
+                            | Q(name__iexact=f"{searchable_name} city council")
+                            | Q(name__iexact=f"{searchable_name} borough council")
+                            | Q(name__iexact=f"{searchable_name} district council")
+                            | Q(name__iexact=f"{searchable_name} county council")
+                        )
+                    else:
+                        qs = qs.filter(name__iexact=searchable_name)
+
+                    if area is not None and area.polygon is not None:
+                        qs = qs.filter(polygon__overlaps=area.polygon)
+
+                    area = await qs.afirst()
+                if area is not None:
+                    # get postcodeIO result for area.coordinates
+                    postcode_data: PostcodesIOResult = await loaders[
+                        "postcodesIOFromPoint"
+                    ].load(area.point)
+                    update_data = {"postcode_data": postcode_data}
+
+                    await GenericData.objects.aupdate_or_create(
+                        data_type=data_type,
+                        data=self.get_record_id(record),
+                        defaults=update_data,
+                    )
+
+            await asyncio.gather(*[create_import_record(record) for record in data])
+        elif (
             self.geography_column
             and self.geography_column_type == self.GeographyTypes.POSTCODE
         ):
@@ -3719,7 +3789,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
         del self.spreadsheet
 
     def get_record_id(self, record: dict):
-        return record[self.id_field]
+        return record.get(self.id_field, None)
 
     def get_record_dict(self, record: dict) -> dict:
         return record
