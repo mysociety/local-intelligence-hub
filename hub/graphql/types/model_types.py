@@ -807,6 +807,7 @@ class BatchJobProgress:
     done: Optional[int] = None
     remaining: Optional[int] = None
     number_of_jobs_ahead_in_queue: Optional[int] = None
+    send_email: bool = True
 
     
     @strawberry_django.field
@@ -878,10 +879,11 @@ class BaseDataSource(Analytics):
     def import_progress(
         self: models.ExternalDataSource, info: Info
     ) -> Optional[BatchJobProgress]:
+        user = info.context.request.user
         job = self.get_latest_import_job()
         if job is None:
             return None
-        progress = self.get_scheduled_batch_job_progress(job)
+        progress = self.get_scheduled_batch_job_progress(job, user=user)
         if progress is None:
             return None
         return BatchJobProgress(**progress)
