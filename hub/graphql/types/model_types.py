@@ -807,7 +807,7 @@ class BatchJobProgress:
     done: Optional[int] = None
     remaining: Optional[int] = None
     number_of_jobs_ahead_in_queue: Optional[int] = None
-    send_email: bool = True
+    send_email: bool = False
 
     
     @strawberry_django.field
