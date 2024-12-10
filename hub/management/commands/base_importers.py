@@ -36,6 +36,12 @@ party_shades = {
     "Independents": "#DCDCDC",
 }
 
+# common constituency name mismatches
+CONS_MAP = {
+    "Ynys Mon": "Ynys Môn",
+    "Montgomeryshire and Glyndwr": "Montgomeryshire and Glyndŵr",
+}
+
 
 class MultipleAreaTypesMixin:
     def handle(self, *args, **options):
@@ -47,10 +53,12 @@ class MultipleAreaTypesMixin:
 class BaseAreaImportCommand(BaseCommand):
     area_type = "WMC"
     uses_gss = False
+    skip_delete = False
 
     def __init__(self):
         super().__init__()
 
+        self.cons_map = CONS_MAP
         self.data_types = {}
 
     def add_arguments(self, parser):
@@ -68,6 +76,9 @@ class BaseAreaImportCommand(BaseCommand):
         return config["defaults"]["label"]
 
     def delete_data(self):
+        if self.skip_delete:
+            return
+
         for data_type in self.data_types.values():
             AreaData.objects.filter(
                 data_type=data_type, area__area_type__code=self.area_type
@@ -85,6 +96,15 @@ class BaseAreaImportCommand(BaseCommand):
     def add_data_sets(self, df=None):
         for name, config in self.data_sets.items():
             label = self.get_label(config)
+            data_set_name = name
+            if config["defaults"].get("data_set_name"):
+                data_set_name = config["defaults"]["data_set_name"]
+                del config["defaults"]["data_set_name"]
+
+            data_set_label = label
+            if config["defaults"].get("data_set_label"):
+                data_set_label = config["defaults"]["data_set_label"]
+                del config["defaults"]["data_set_label"]
 
             if config["defaults"].get("is_filterable", None) is None:
                 if config["defaults"].get("table", None) is None:
@@ -109,14 +129,17 @@ class BaseAreaImportCommand(BaseCommand):
                 )
 
             data_set, created = DataSet.objects.update_or_create(
-                name=name,
+                name=data_set_name,
                 defaults={
-                    "label": label,
                     **config["defaults"],
+                    "label": data_set_label,
                 },
             )
             data_set.areas_available.add(self.get_area_type())
 
+            type_defaults = {}
+            if config["defaults"].get("order"):
+                type_defaults["order"] = config["defaults"]["order"]
             data_type, created = DataType.objects.update_or_create(
                 data_set=data_set,
                 name=name,
@@ -124,6 +147,7 @@ class BaseAreaImportCommand(BaseCommand):
                 defaults={
                     "data_type": config["defaults"]["data_type"],
                     "label": label,
+                    **type_defaults,
                 },
             )
 
@@ -231,13 +255,17 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
             self.stdout.write(self.message)
 
         for index, row in tqdm(df.iterrows(), disable=self._quiet, total=df.shape[0]):
-            cons = row[self.cons_row]
+            if type(self.cons_row) is int:
+                cons = row.iloc[self.cons_row]
+            else:
+                cons = row[self.cons_row]
 
             if not pd.isna(cons):
                 if self.uses_gss:
                     area = Area.get_by_gss(cons, area_type=self.area_type)
                 else:
                     cons = cons.replace(" & ", " and ")
+                    cons = self.cons_map.get(cons, cons)
                     area = Area.get_by_name(cons, area_type=self.area_type)
 
             if area is None:
