@@ -1,59 +1,45 @@
 'use client'
 
-import { useAtom, useAtomValue } from 'jotai'
-import { useContext, useEffect } from 'react'
-
-import {
-  isConstituencyPanelOpenAtom,
-  selectedConstituencyAtom,
-} from '@/lib/map/state'
-
-import { reportContext } from '../context'
+import LocalisedMap from '@/components/LocalisedMap'
+import { PlaceholderLayer } from '@/components/PlaceholderLayer'
+import { getPoliticalTilesetsByCountry } from '../politicalTilesets'
 import { ConstituenciesPanel } from './ConstituenciesPanel'
-import LayersCard from './LayersCard'
-import { NotFound } from './NotFound'
-import { ReportMap } from './ReportMap'
+import PoliticalChoropleths from './MapLayers/PoliticalChoropleths'
+import ReportMapMarkers from './MapLayers/ReportMapMarkers'
+import { useReport } from './ReportProvider'
+
+export const PLACEHOLDER_LAYER_ID_CHOROPLETH = 'choropleths'
+export const PLACEHOLDER_LAYER_ID_MARKERS = 'markers'
 
 export default function ReportPage() {
-  const { report } = useContext(reportContext)
-  const [isConstituencyPanelOpen, setConstituencyPanelOpen] = useAtom(
-    isConstituencyPanelOpenAtom
-  )
-  const selectedConstituency = useAtomValue(selectedConstituencyAtom)
-
-  useEffect(() => {
-    if (!report?.data?.mapReport?.layers?.length) {
-      return setConstituencyPanelOpen(false)
-    }
-  }, [selectedConstituency, report])
-
-  if (!report?.loading && report?.called && !report?.data?.mapReport) {
-    return NotFound()
-  }
-
-  if (report?.loading && !report?.data?.mapReport) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        <p>Loading...</p>
-      </div>
-    )
-  }
+  const { report } = useReport()
 
   return (
-    <>
-      <div className="absolute w-full h-full flex flex-row pointer-events-none">
-        <div className="w-full h-full pointer-events-auto">
-          <ReportMap />
-        </div>
-        <aside className="absolute top-0 left-0 p-5 w-[200px] h-full pointer-events-auto">
-          <LayersCard />
-        </aside>
-        {report?.data?.mapReport && isConstituencyPanelOpen && (
-          <aside className="absolute top-0 right-0 p-5 w-[400px] h-full">
-            <ConstituenciesPanel />
-          </aside>
-        )}
+    <div className="absolute w-[-webkit-fill-available] h-full flex flex-row pointer-events-none">
+      <div className="w-full h-full pointer-events-auto">
+        <LocalisedMap
+          showStreetDetails={report.displayOptions?.display?.showStreetDetails}
+          initViewCountry="uk"
+          mapKey={report.id}
+        >
+          <PlaceholderLayer id={PLACEHOLDER_LAYER_ID_CHOROPLETH} />
+          {getPoliticalTilesetsByCountry('uk').map(
+            ({ boundaryType, tileset }) => (
+              <PoliticalChoropleths
+                key={`${boundaryType}-${tileset.mapboxSourceId}`}
+                report={report}
+                boundaryType={boundaryType}
+                tileset={tileset}
+              />
+            )
+          )}
+          <PlaceholderLayer id={PLACEHOLDER_LAYER_ID_MARKERS} />
+          <ReportMapMarkers />
+        </LocalisedMap>
       </div>
-    </>
+      <aside className="absolute top-0 right-0 p-5 w-[400px] h-full">
+        <ConstituenciesPanel />
+      </aside>
+    </div>
   )
 }
