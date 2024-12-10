@@ -4,35 +4,6 @@ import { gql } from '@apollo/client'
 
 import { MAP_REPORT_FRAGMENT } from '@/lib/map'
 
-//  TODO: In general, make these query names more consistent with their actual function and return data
-// for example, "_STATS" is ambiguous now that we're moving into the phase
-// of not just returning row counts for every geographic query.
-// Also, "MAP_REPORT" is redundant, since the queries take a report ID as an argument.
-// These should be replaced by e.g. DATA_SOURCE_ROW_COUNT_BY_WARD
-
-export const MAP_REPORT_WARD_STATS = gql`
-  query MapReportWardStats($reportID: ID!) {
-    mapReport(pk: $reportID) {
-      id
-      importedDataCountByWard {
-        label
-        gss
-        count
-        gssArea {
-          point {
-            id
-            type
-            geometry {
-              type
-              coordinates
-            }
-          }
-        }
-      }
-    }
-  }
-`
-
 export const MAP_REPORT_LAYER_POINT = gql`
   query MapReportLayerGeoJSONPoint($genericDataId: String!) {
     importedDataGeojsonPoint(genericDataId: $genericDataId) {
