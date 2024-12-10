@@ -13,9 +13,9 @@ export function formatCrmNames(input: string): string {
     case 'tickettailor':
       return 'Ticket Tailor'
     case 'airtable':
-      return 'Airtable base'
+      return 'Airtable'
     case 'mailchimp':
-      return 'Mailchimp list'
+      return 'Mailchimp'
     default:
       return 'database'
   }
