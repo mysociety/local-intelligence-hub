@@ -1,40 +1,48 @@
-import {
-  AnalyticalAreaType,
-  MapReportAreaStatsQuery,
-  MapReportAreaStatsQueryVariables,
-} from '@/__generated__/graphql'
+import { AnalyticalAreaType } from '@/__generated__/graphql'
 import { useQuery } from '@apollo/client'
-import { MAP_REPORT_AREA_STATS } from './gql_queries'
+import { useEffect, useState } from 'react'
+import {
+  MAP_REPORT_CONSTITUENCY_STATS,
+  MAP_REPORT_WARD_STATS,
+} from './gql_queries'
 import { MapReportExtended } from './reportContext'
 
-export default function useBoundaryAnalytics(
+const useBoundaryAnalytics = (
   report: MapReportExtended | undefined,
   boundaryType: AnalyticalAreaType
-) {
-  if (!ENABLED_ANALYTICAL_AREA_TYPES.includes(boundaryType)) {
-    throw new Error('Invalid boundary type')
+) => {
+  const [canQuery, setCanQuery] = useState(false)
+
+  useEffect(() => {
+    if (report) {
+      setCanQuery(true)
+    }
+  }, [report])
+
+  let query
+  let variables: any = {
+    reportID: report?.id,
   }
+  let dataOutputKey
 
-  const canQuery = !!report
+  // TODO: This is where we can implement arithmetic operations on data from multiple
+  // sources, such as the sum of member count per political boundary from two different
+  // organisation's membership lists
 
-  const boundaryAnalytics = useQuery<
-    MapReportAreaStatsQuery,
-    MapReportAreaStatsQueryVariables
-  >(MAP_REPORT_AREA_STATS, {
-    variables: {
-      reportID: report?.id,
-      analyticalAreaType: boundaryType,
-    },
-    skip: !canQuery,
-  })
+  // All the queries below do is return membership counts by boundary type
+  if (boundaryType === 'parliamentary_constituency_2024') {
+    query = MAP_REPORT_CONSTITUENCY_STATS
+    variables.analyticalAreaType =
+      AnalyticalAreaType.ParliamentaryConstituency_2024
+    dataOutputKey = 'importedDataCountByConstituency'
+  } else if (boundaryType === 'admin_ward') {
+    query = MAP_REPORT_WARD_STATS
+    dataOutputKey = 'importedDataCountByWard'
+  } else throw new Error('Invalid boundary type')
 
-  return boundaryAnalytics.data?.mapReport.importedDataCountByArea || []
+  const boundaryAnalytics = useQuery(query, { variables, skip: !canQuery })
+
+  return boundaryAnalytics.data?.mapReport[dataOutputKey]
 }
 
-export type BoundaryAnalytics = ReturnType<typeof useBoundaryAnalytics>
-
-const ENABLED_ANALYTICAL_AREA_TYPES = [
-  AnalyticalAreaType.ParliamentaryConstituency_2024,
-  AnalyticalAreaType.AdminWard,
-  AnalyticalAreaType.AdminDistrict,
-]
+export default useBoundaryAnalytics
