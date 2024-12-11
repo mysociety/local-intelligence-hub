@@ -119,6 +119,36 @@ export const MAP_REPORT_COUNT_BY_AREA = gql`
   }
 `
 
+export const MAP_REPORT_DATA_BY_AREA = gql`
+  query MapReportDataByArea(
+    $reportID: ID!
+    $analyticalAreaType: AnalyticalAreaType!
+    $layerIds: [String!]
+  ) {
+    mapReport(pk: $reportID) {
+      id
+      importedDataByArea: importedDataByArea(
+        analyticalAreaType: $analyticalAreaType
+        layerIds: $layerIds
+      ) {
+        label
+        gss
+        importedData
+        gssArea {
+          point {
+            id
+            type
+            geometry {
+              type
+              coordinates
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
 export const GET_MAP_REPORT = gql`
   query GetMapReport($id: ID!) {
     mapReport(pk: $id) {

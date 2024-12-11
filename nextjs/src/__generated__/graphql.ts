@@ -94,6 +94,7 @@ export type ActionNetworkSource = Analytics & {
   id: Scalars['UUID']['output'];
   imageField?: Maybe<Scalars['String']['output']>;
   importProgress?: Maybe<BatchJobProgress>;
+  importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
   importedDataCountByConstituency: Array<GroupedDataCount>;
@@ -132,6 +133,13 @@ export type ActionNetworkSource = Analytics & {
   updateProgress?: Maybe<BatchJobProgress>;
   webhookHealthcheck: Scalars['Boolean']['output'];
   webhookUrl: Scalars['String']['output'];
+};
+
+
+/** An Action Network member list. */
+export type ActionNetworkSourceImportedDataByAreaArgs = {
+  analyticalAreaType: AnalyticalAreaType;
+  layerIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -242,6 +250,7 @@ export type AirtableSource = Analytics & {
   id: Scalars['UUID']['output'];
   imageField?: Maybe<Scalars['String']['output']>;
   importProgress?: Maybe<BatchJobProgress>;
+  importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
   importedDataCountByConstituency: Array<GroupedDataCount>;
@@ -281,6 +290,13 @@ export type AirtableSource = Analytics & {
   updateProgress?: Maybe<BatchJobProgress>;
   webhookHealthcheck: Scalars['Boolean']['output'];
   webhookUrl: Scalars['String']['output'];
+};
+
+
+/** An Airtable table. */
+export type AirtableSourceImportedDataByAreaArgs = {
+  analyticalAreaType: AnalyticalAreaType;
+  layerIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -372,6 +388,7 @@ export enum AnalyticalAreaType {
 }
 
 export type Analytics = {
+  importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
   importedDataCountByConstituency: Array<GroupedDataCount>;
@@ -382,6 +399,12 @@ export type Analytics = {
   importedDataCountForArea?: Maybe<GroupedDataCount>;
   importedDataCountForConstituency?: Maybe<GroupedDataCount>;
   importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
+};
+
+
+export type AnalyticsImportedDataByAreaArgs = {
+  analyticalAreaType: AnalyticalAreaType;
+  layerIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -757,6 +780,7 @@ export type EditableGoogleSheetsSource = Analytics & {
   id: Scalars['UUID']['output'];
   imageField?: Maybe<Scalars['String']['output']>;
   importProgress?: Maybe<BatchJobProgress>;
+  importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
   importedDataCountByConstituency: Array<GroupedDataCount>;
@@ -797,6 +821,13 @@ export type EditableGoogleSheetsSource = Analytics & {
   updateProgress?: Maybe<BatchJobProgress>;
   webhookHealthcheck: Scalars['Boolean']['output'];
   webhookUrl: Scalars['String']['output'];
+};
+
+
+/** An editable Google Sheet */
+export type EditableGoogleSheetsSourceImportedDataByAreaArgs = {
+  analyticalAreaType: AnalyticalAreaType;
+  layerIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -1001,6 +1032,7 @@ export type ExternalDataSource = Analytics & {
   id: Scalars['UUID']['output'];
   imageField?: Maybe<Scalars['String']['output']>;
   importProgress?: Maybe<BatchJobProgress>;
+  importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
   importedDataCountByConstituency: Array<GroupedDataCount>;
@@ -1039,6 +1071,17 @@ export type ExternalDataSource = Analytics & {
   updateProgress?: Maybe<BatchJobProgress>;
   webhookHealthcheck: Scalars['Boolean']['output'];
   webhookUrl: Scalars['String']['output'];
+};
+
+
+/**
+ * A third-party data source that can be read and optionally written back to.
+ * E.g. Google Sheet or an Action Network table.
+ * This class is to be subclassed by specific data source types.
+ */
+export type ExternalDataSourceImportedDataByAreaArgs = {
+  analyticalAreaType: AnalyticalAreaType;
+  layerIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -1239,6 +1282,17 @@ export enum GeographyTypes {
   Postcode = 'POSTCODE',
   Ward = 'WARD'
 }
+
+/** GenericData(id, data_type, data, date, float, int, json, created_at, last_update, point, polygon, postcode_data, postcode, first_name, last_name, full_name, email, phone, start_time, end_time, public_url, social_url, geocode_data, geocoder, address, title, description, image, can_display_point) */
+export type GroupedData = {
+  __typename?: 'GroupedData';
+  areaData?: Maybe<Area>;
+  areaType?: Maybe<Scalars['String']['output']>;
+  gss?: Maybe<Scalars['String']['output']>;
+  gssArea?: Maybe<Area>;
+  importedData?: Maybe<Scalars['JSON']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+};
 
 export type GroupedDataCount = {
   __typename?: 'GroupedDataCount';
@@ -1480,6 +1534,7 @@ export type MailchimpSource = Analytics & {
   id: Scalars['UUID']['output'];
   imageField?: Maybe<Scalars['String']['output']>;
   importProgress?: Maybe<BatchJobProgress>;
+  importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
   importedDataCountByConstituency: Array<GroupedDataCount>;
@@ -1520,6 +1575,13 @@ export type MailchimpSource = Analytics & {
   updateProgress?: Maybe<BatchJobProgress>;
   webhookHealthcheck: Scalars['Boolean']['output'];
   webhookUrl: Scalars['String']['output'];
+};
+
+
+/** A Mailchimp list. */
+export type MailchimpSourceImportedDataByAreaArgs = {
+  analyticalAreaType: AnalyticalAreaType;
+  layerIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -1597,6 +1659,7 @@ export type MapReport = Analytics & {
   description?: Maybe<Scalars['String']['output']>;
   displayOptions: Scalars['JSON']['output'];
   id: Scalars['UUID']['output'];
+  importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
   importedDataCountByConstituency: Array<GroupedDataCount>;
@@ -1613,6 +1676,13 @@ export type MapReport = Analytics & {
   organisation: Organisation;
   organisationId: Scalars['String']['output'];
   slug: Scalars['String']['output'];
+};
+
+
+/** MapReport(polymorphic_ctype, id, organisation, name, slug, description, created_at, last_update, public, report_ptr, layers, display_options) */
+export type MapReportImportedDataByAreaArgs = {
+  analyticalAreaType: AnalyticalAreaType;
+  layerIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -2488,6 +2558,7 @@ export type SharedDataSource = Analytics & {
   id: Scalars['UUID']['output'];
   imageField?: Maybe<Scalars['String']['output']>;
   importProgress?: Maybe<BatchJobProgress>;
+  importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
   importedDataCountByConstituency: Array<GroupedDataCount>;
@@ -2515,6 +2586,17 @@ export type SharedDataSource = Analytics & {
   startTimeField?: Maybe<Scalars['String']['output']>;
   titleField?: Maybe<Scalars['String']['output']>;
   updateProgress?: Maybe<BatchJobProgress>;
+};
+
+
+/**
+ * A third-party data source that can be read and optionally written back to.
+ * E.g. Google Sheet or an Action Network table.
+ * This class is to be subclassed by specific data source types.
+ */
+export type SharedDataSourceImportedDataByAreaArgs = {
+  analyticalAreaType: AnalyticalAreaType;
+  layerIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -2652,6 +2734,7 @@ export type TicketTailorSource = Analytics & {
   id: Scalars['UUID']['output'];
   imageField?: Maybe<Scalars['String']['output']>;
   importProgress?: Maybe<BatchJobProgress>;
+  importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
   importedDataCountByConstituency: Array<GroupedDataCount>;
@@ -2690,6 +2773,13 @@ export type TicketTailorSource = Analytics & {
   updateProgress?: Maybe<BatchJobProgress>;
   webhookHealthcheck: Scalars['Boolean']['output'];
   webhookUrl: Scalars['String']['output'];
+};
+
+
+/** Ticket Tailor box office */
+export type TicketTailorSourceImportedDataByAreaArgs = {
+  analyticalAreaType: AnalyticalAreaType;
+  layerIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -3181,6 +3271,15 @@ export type MapReportCountByAreaQueryVariables = Exact<{
 
 export type MapReportCountByAreaQuery = { __typename?: 'Query', mapReport: { __typename?: 'MapReport', id: any, importedDataCountByArea: Array<{ __typename?: 'GroupedDataCount', label?: string | null, gss?: string | null, count: number, gssArea?: { __typename?: 'Area', point?: { __typename?: 'PointFeature', id?: string | null, type: GeoJsonTypes, geometry: { __typename?: 'PointGeometry', type: GeoJsonTypes, coordinates: Array<number> } } | null } | null }> } };
 
+export type MapReportDataByAreaQueryVariables = Exact<{
+  reportID: Scalars['ID']['input'];
+  analyticalAreaType: AnalyticalAreaType;
+  layerIds?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
+}>;
+
+
+export type MapReportDataByAreaQuery = { __typename?: 'Query', mapReport: { __typename?: 'MapReport', id: any, importedDataByArea: Array<{ __typename?: 'GroupedData', label?: string | null, gss?: string | null, importedData?: any | null, gssArea?: { __typename?: 'Area', point?: { __typename?: 'PointFeature', id?: string | null, type: GeoJsonTypes, geometry: { __typename?: 'PointGeometry', type: GeoJsonTypes, coordinates: Array<number> } } | null } | null }> } };
+
 export type GetMapReportQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -3422,6 +3521,7 @@ export const MapReportWardStatsDocument = {"kind":"Document","definitions":[{"ki
 export const MapReportLayerGeoJsonPointDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MapReportLayerGeoJSONPoint"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"genericDataId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"importedDataGeojsonPoint"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"genericDataId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"genericDataId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"geometry"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"coordinates"}}]}},{"kind":"Field","name":{"kind":"Name","value":"properties"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"lastUpdate"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"phone"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"postcodeData"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"postcode"}}]}},{"kind":"Field","name":{"kind":"Name","value":"address"}},{"kind":"Field","name":{"kind":"Name","value":"json"}},{"kind":"Field","name":{"kind":"Name","value":"remoteUrl"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"dataSet"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<MapReportLayerGeoJsonPointQuery, MapReportLayerGeoJsonPointQueryVariables>;
 export const MapReportLayerAnalyticsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MapReportLayerAnalytics"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"reportID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"mapReport"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"reportID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"layers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"source"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}},{"kind":"Field","name":{"kind":"Name","value":"organisation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<MapReportLayerAnalyticsQuery, MapReportLayerAnalyticsQueryVariables>;
 export const MapReportCountByAreaDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MapReportCountByArea"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"reportID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"analyticalAreaType"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"AnalyticalAreaType"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"layerIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"mapReport"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"reportID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","alias":{"kind":"Name","value":"importedDataCountByArea"},"name":{"kind":"Name","value":"importedDataCountByArea"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"analyticalAreaType"},"value":{"kind":"Variable","name":{"kind":"Name","value":"analyticalAreaType"}}},{"kind":"Argument","name":{"kind":"Name","value":"layerIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"layerIds"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"gss"}},{"kind":"Field","name":{"kind":"Name","value":"count"}},{"kind":"Field","name":{"kind":"Name","value":"gssArea"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"point"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"geometry"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"coordinates"}}]}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<MapReportCountByAreaQuery, MapReportCountByAreaQueryVariables>;
+export const MapReportDataByAreaDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MapReportDataByArea"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"reportID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"analyticalAreaType"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"AnalyticalAreaType"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"layerIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"mapReport"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"reportID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","alias":{"kind":"Name","value":"importedDataByArea"},"name":{"kind":"Name","value":"importedDataByArea"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"analyticalAreaType"},"value":{"kind":"Variable","name":{"kind":"Name","value":"analyticalAreaType"}}},{"kind":"Argument","name":{"kind":"Name","value":"layerIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"layerIds"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"gss"}},{"kind":"Field","name":{"kind":"Name","value":"importedData"}},{"kind":"Field","name":{"kind":"Name","value":"gssArea"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"point"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"geometry"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"coordinates"}}]}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<MapReportDataByAreaQuery, MapReportDataByAreaQueryVariables>;
 export const GetMapReportDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetMapReport"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"mapReport"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"displayOptions"}},{"kind":"Field","name":{"kind":"Name","value":"organisation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"MapReportPage"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"MapReportLayersSummary"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"MapReport"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"layers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"sharingPermission"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"visibilityRecordDetails"}},{"kind":"Field","name":{"kind":"Name","value":"visibilityRecordCoordinates"}},{"kind":"Field","name":{"kind":"Name","value":"organisation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"source"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"isImportScheduled"}},{"kind":"Field","name":{"kind":"Name","value":"importedDataCount"}},{"kind":"Field","name":{"kind":"Name","value":"crmType"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}},{"kind":"Field","name":{"kind":"Name","value":"organisation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"MapReportPage"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"MapReport"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"MapReportLayersSummary"}}]}}]} as unknown as DocumentNode<GetMapReportQuery, GetMapReportQueryVariables>;
 export const UpdateMapReportDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateMapReport"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"MapReportInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateMapReport"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"displayOptions"}},{"kind":"Field","name":{"kind":"Name","value":"layers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"source"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]}}]} as unknown as DocumentNode<UpdateMapReportMutation, UpdateMapReportMutationVariables>;
 export const DeleteMapReportDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteMapReport"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"IDObject"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteMapReport"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<DeleteMapReportMutation, DeleteMapReportMutationVariables>;

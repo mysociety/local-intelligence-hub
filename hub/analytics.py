@@ -19,6 +19,11 @@ class Analytics:
         gss: Optional[str]
         count: int
 
+    class AreaStat(TypedDict):
+        label: str
+        gss: Optional[str]
+        external_data: dict
+
     # TODO: Rename to e.g. row_count_by_political_boundary
     def imported_data_count_by_area(
         self,
@@ -45,6 +50,21 @@ class Analytics:
             .annotate(count=Count("label"))
             .order_by("-count")
         )
+
+    def imported_data_by_area(
+        self,
+        postcode_io_key: str = None,
+        layer_ids: List[str] = None,
+    ) -> QuerySet[AreaStat]:
+        qs = self.get_analytics_queryset(layer_ids=layer_ids)
+        if postcode_io_key is None:
+            return []
+
+        return qs.annotate(
+            label=F(f"postcode_data__{postcode_io_key}"),
+            gss=F(f"postcode_data__codes__{postcode_io_key}"),
+            imported_data=F("json"),
+        ).values("label", "gss", "imported_data")
 
     def imported_data_count_by_constituency(
         self, gss: str = None

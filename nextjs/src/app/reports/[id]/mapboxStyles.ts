@@ -59,7 +59,7 @@ export function getChoroplethFill(
       ['to-number', ['feature-state', 'count'], 0],
       ...colourStops,
     ],
-    'fill-opacity': 0.75,
+    'fill-opacity-transition': { duration: 1500 },
   }
 }
 

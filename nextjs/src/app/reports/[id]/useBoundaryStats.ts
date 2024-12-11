@@ -1,16 +1,16 @@
 import {
   AnalyticalAreaType,
-  MapReportCountByAreaQuery,
-  MapReportCountByAreaQueryVariables,
+  MapReportDataByAreaQuery,
+  MapReportDataByAreaQueryVariables,
 } from '@/__generated__/graphql'
 import { useQuery } from '@apollo/client'
-import { MAP_REPORT_COUNT_BY_AREA } from './gql_queries'
+import { MAP_REPORT_DATA_BY_AREA } from './gql_queries'
 import { MapReportExtended } from './reportContext'
 import { ENABLED_ANALYTICAL_AREA_TYPES } from './types'
 
-export type CountByBoundary = ReturnType<typeof useBoundaryCounts>
+export type StatsByBoundary = ReturnType<typeof useBoundaryStats>
 
-const useBoundaryCounts = (
+const useBoundaryStats = (
   report: MapReportExtended | undefined,
   boundaryType: AnalyticalAreaType
 ) => {
@@ -22,12 +22,13 @@ const useBoundaryCounts = (
     (layer) =>
       layer.id === report?.displayOptions?.dataVisualisation?.dataSource
   )
-  const canQuery = !!report && selectedLayer?.source.dataType === 'MEMBER'
+
+  const canQuery = !!report && selectedLayer?.source.dataType === 'AREA_STATS'
 
   const boundaryAnalytics = useQuery<
-    MapReportCountByAreaQuery,
-    MapReportCountByAreaQueryVariables
-  >(MAP_REPORT_COUNT_BY_AREA, {
+    MapReportDataByAreaQuery,
+    MapReportDataByAreaQueryVariables
+  >(MAP_REPORT_DATA_BY_AREA, {
     variables: {
       reportID: report?.id,
       analyticalAreaType: boundaryType,
@@ -36,7 +37,7 @@ const useBoundaryCounts = (
     skip: !canQuery,
   })
 
-  return boundaryAnalytics.data?.mapReport.importedDataCountByArea || []
+  return boundaryAnalytics.data?.mapReport.importedDataByArea || []
 }
 
-export default useBoundaryCounts
+export default useBoundaryStats

@@ -16,6 +16,7 @@ import {
 import { MapReportExtended } from '../../reportContext'
 import { Tileset } from '../../types'
 import useBoundaryCounts from '../../useBoundaryCounts'
+import useBoundaryStats from '../../useBoundaryStats'
 import useClickOnBoundaryEvents, {
   selectedBoundaryAtom,
 } from '../../useSelectBoundary'
@@ -33,6 +34,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   tileset,
 }) => {
   const countsByBoundaryType = useBoundaryCounts(report, boundaryType)
+  const dataByBoundaryType = useBoundaryStats(report, boundaryType)
   const map = useLoadedMap()
   const selectedBoundary = useAtomValue(selectedBoundaryAtom)
   useClickOnBoundaryEvents(tileset)
@@ -80,8 +82,11 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           source-layer={tileset.sourceLayerId}
           type="fill"
           filter={getChoroplethFillFilter(countsByBoundaryType, tileset)}
-          paint={getChoroplethFill(countsByBoundaryType)}
-          layout={{ visibility }}
+          paint={{
+            ...getChoroplethFill(countsByBoundaryType),
+            'fill-opacity': visibility === 'visible' ? 1 : 0,
+          }}
+          // layout={{ visibility }}
         />
         {/* Border of the boundary */}
         <Layer
