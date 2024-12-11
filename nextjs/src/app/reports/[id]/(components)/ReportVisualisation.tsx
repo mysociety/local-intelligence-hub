@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/select'
 import React from 'react'
 import { VisualisationType } from '../reportContext'
+import useBoundaryStats, { getFieldsFromDataSource } from '../useBoundaryStats'
 import CollapsibleSection from './CollapsibleSection'
 import { UpdateConfigProps } from './ReportConfiguration'
 import { useReport } from './ReportProvider'
@@ -16,15 +17,20 @@ import { useReport } from './ReportProvider'
 const ReportVisualisation: React.FC<UpdateConfigProps> = ({
   updateVisualisationConfig,
 }) => {
+  const { report } = useReport()
   const {
-    report: {
-      layers,
-      politicalBoundaries,
-      displayOptions: { dataVisualisation },
-    },
-  } = useReport()
+    layers,
+    politicalBoundaries,
+    displayOptions: { dataVisualisation },
+  } = report
+  const dataByBoundaryType = useBoundaryStats(report)
+  const sourceFields =
+    dataByBoundaryType && getFieldsFromDataSource(dataByBoundaryType)
+
   const visualisationType = dataVisualisation?.visualisationType
-  const dataSource = dataVisualisation?.dataSource
+  const dataSourceId = dataVisualisation?.dataSource
+  const dataSourceField = dataVisualisation?.dataSourceField
+  const selectedDataSource = layers.find((layer) => layer.id === dataSourceId)
   const selectedBoundaryLabel = politicalBoundaries.find(
     (boundary) => boundary.boundaryType === dataVisualisation?.boundaryType
   )?.label
@@ -72,7 +78,7 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
                 dataSource: type as MapLayer['id'],
               })
             }
-            value={dataSource}
+            value={dataSourceId}
           >
             <Label
               htmlFor="select-vis-type"
@@ -102,6 +108,41 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
             Select which data will populate your {selectedBoundaryLabel}
           </p>
         </div>
+        {selectedDataSource?.source.dataType === 'AREA_STATS' && (
+          <div>
+            <Select
+              onValueChange={(type) =>
+                updateVisualisationConfig({
+                  dataSourceField: type as MapLayer['id'],
+                })
+              }
+              value={dataSourceField}
+            >
+              <Label
+                htmlFor="select-vis-type"
+                className="text-white text-sm font-medium"
+              >
+                Select data field
+              </Label>
+              <SelectTrigger
+                id="select-vis-type"
+                className="w-full border-meepGray-100 text-meepGray-100 mt-2 font-medium"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {sourceFields?.map((field) => (
+                  <SelectItem className="font-medium" key={field} value={field}>
+                    {field}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-meepGray-400 text-sm font-normal mb-3 mt-3">
+              Select the field from your data source
+            </p>
+          </div>
+        )}
       </div>
     </CollapsibleSection>
   )
