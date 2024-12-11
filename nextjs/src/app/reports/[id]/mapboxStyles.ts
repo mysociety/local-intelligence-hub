@@ -103,6 +103,7 @@ export const getChoroplethFillFilter = (
   return [
     'in',
     ['get', tileset.promoteId],
+    // @ts-ignore
     ['literal', data.map((d) => d.gss || '')],
   ]
 }
@@ -118,7 +119,9 @@ export function getAreaGeoJSON(data: BoundaryAnalytics) {
   return {
     type: 'FeatureCollection',
     features: data
+      // @ts-ignore
       .filter((d) => d.gssArea?.point?.geometry)
+      // @ts-ignore
       .map((d) => ({
         type: 'Feature',
         geometry: d.gssArea?.point?.geometry! as GeoJSON.Point,
@@ -133,11 +136,13 @@ export function getAreaGeoJSON(data: BoundaryAnalytics) {
 function getStatsForData(data: BoundaryAnalytics) {
   let min =
     data.reduce(
+      // @ts-ignore
       (min, p) => (p?.count! < min ? p?.count! : min),
       data?.[0]?.count!
     ) || 0
   let max =
     data.reduce(
+      // @ts-ignore
       (max, p) => (p?.count! > max ? p?.count! : max),
       data?.[0]?.count!
     ) || 1
@@ -192,11 +197,19 @@ export const getAreaLabelLayout = (
     'text-size': [
       'interpolate',
       ['linear'],
-      ['get', 'count'],
-      min,
-      textScale(min) * 9,
-      max,
-      textScale(max) * 9,
+      ['zoom'],
+      1,
+      [
+        'max',
+        ['*', ['/', ['get', 'count'], max], textScale(max) * 9],
+        textScale(min) * 10,
+      ],
+      12,
+      [
+        'max',
+        ['*', ['/', ['get', 'count'], max], textScale(max) * 18],
+        textScale(min) * 20,
+      ],
     ],
     'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
     'symbol-placement': 'point',

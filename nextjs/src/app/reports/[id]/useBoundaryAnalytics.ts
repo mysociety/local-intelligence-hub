@@ -7,6 +7,8 @@ import {
 } from './gql_queries'
 import { MapReportExtended } from './reportContext'
 
+export type BoundaryAnalytics = ReturnType<typeof useBoundaryAnalytics>
+
 const useBoundaryAnalytics = (
   report: MapReportExtended | undefined,
   boundaryType: AnalyticalAreaType
