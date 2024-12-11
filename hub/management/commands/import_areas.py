@@ -46,7 +46,7 @@ class Command(BaseCommand):
         mapit_client = mapit.MapIt()
         for b_type in self.boundary_types:
             areas = mapit_client.areas_of_type(
-                b_type["mapit_type"], {"min_generation": 45}
+                b_type["mapit_type"], {"min_generation": 10}
             )
             area_type, created = AreaType.objects.get_or_create(
                 name=b_type["name"],
