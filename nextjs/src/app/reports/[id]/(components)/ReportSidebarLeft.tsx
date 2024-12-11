@@ -49,7 +49,7 @@ export function ReportSidebarLeft() {
                   Configuration
                 </TabsTrigger>
               </HoverCardTrigger>
-              <HoverCardContent align="start">
+              <HoverCardContent align="start" className="font-normal">
                 Click on "Configuration" to visualise your data
               </HoverCardContent>
             </HoverCard>

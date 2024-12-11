@@ -114,9 +114,9 @@ type FormInputs = CreateExternalDataSourceInput &
   }
 
 export default function Page({
-  params: { externalDataProviderType },
+  params: { externalDataSourceType },
 }: {
-  params: { externalDataProviderType: keyof CreateExternalDataSourceInput }
+  params: { externalDataSourceType: keyof CreateExternalDataSourceInput }
 }) {
   const orgId = useAtomValue(currentOrganisationIdAtom)
   const router = useRouter()
@@ -158,13 +158,6 @@ export default function Page({
   const form = useForm<FormInputs>({
     defaultValues: {
       ...defaultValues,
-      // REMOVE
-      airtable: {
-        baseId: 'appZ9UYXvsIrTbYQs',
-        tableId: 'tblGrH67nWM4ROgwf',
-        apiKey:
-          'patpg0NikxPjHb59O.8b72db8273cc25526b582e47efe0bba18882e679aec15ea3c854f59c8af3263c',
-      },
     } as FormInputs,
   })
 
@@ -436,13 +429,13 @@ export default function Page({
   }, [airtableUrl])
 
   async function submitTestConnection(formData: FormInputs) {
-    if (!formData[externalDataProviderType]) {
+    if (!formData[externalDataSourceType]) {
       throw Error('Need some CRM connection details to proceed!')
     }
 
     // To avoid mutation of the form data
     const genericCRMData = Object.assign({}, formData)
-    const CRMSpecificData = formData[externalDataProviderType]
+    const CRMSpecificData = formData[externalDataSourceType]
 
     // Remove specific CRM data from the generic data
     // TODO: make this less fragile. Currently it assumes any nested
@@ -454,7 +447,7 @@ export default function Page({
     }
 
     const input: TestDataSourceQueryVariables['input'] = {
-      [externalDataProviderType]: {
+      [externalDataSourceType]: {
         ...genericCRMData,
         ...CRMSpecificData,
       },
@@ -484,12 +477,12 @@ export default function Page({
   }
 
   async function submitCreateSource(formData: FormInputs) {
-    if (!formData[externalDataProviderType]) {
+    if (!formData[externalDataSourceType]) {
       throw Error('Need some CRM connection details to proceed!')
     }
     // To avoid mutation of the form data
     const genericCRMData = Object.assign({}, formData)
-    let CRMSpecificData = formData[externalDataProviderType]
+    let CRMSpecificData = formData[externalDataSourceType]
 
     // Remove specific CRM data from the generic data
     // TODO: make this less fragile. Currently it assumes any nested
@@ -501,7 +494,7 @@ export default function Page({
     }
 
     let input: CreateExternalDataSourceInput = {
-      [externalDataProviderType]: {
+      [externalDataSourceType]: {
         ...genericCRMData,
         ...CRMSpecificData,
         organisation: { set: orgId },
@@ -769,7 +762,7 @@ export default function Page({
         <h1 className="text-hLg">Testing connection...</h1>
         <p className="text-meepGray-400 max-w-lg">
           Please wait whilst we try to connect to your{' '}
-          {formatCrmNames(externalDataProviderType || 'CRM')} using the
+          {formatCrmNames(externalDataSourceType || 'CRM')} using the
           information you provided
         </p>
         <LoadingIcon />
@@ -777,7 +770,7 @@ export default function Page({
     )
   }
 
-  if (externalDataProviderType === 'airtable') {
+  if (externalDataSourceType === 'airtable') {
     return (
       <div className="space-y-7">
         <header>
@@ -926,7 +919,7 @@ export default function Page({
     )
   }
 
-  if (externalDataProviderType === 'mailchimp') {
+  if (externalDataSourceType === 'mailchimp') {
     return (
       <div className="space-y-7">
         <header>
@@ -1017,7 +1010,7 @@ export default function Page({
       </div>
     )
   }
-  if (externalDataProviderType === 'actionnetwork') {
+  if (externalDataSourceType === 'actionnetwork') {
     const groupSlug = form.watch('actionnetwork.groupSlug')
     const actionNetworkApiUrl = groupSlug
       ? `https://actionnetwork.org/groups/${groupSlug}/apis`
@@ -1116,7 +1109,7 @@ export default function Page({
       </div>
     )
   }
-  if (externalDataProviderType === 'editablegooglesheets') {
+  if (externalDataSourceType === 'editablegooglesheets') {
     const hasOauthParams = searchParams.get('state') && searchParams.get('code')
     // The presence of the params and absence of an oauthCredentialsResult
     // means the query has either not yet been sent, or is in progress.
@@ -1290,7 +1283,7 @@ export default function Page({
     )
   }
 
-  if (externalDataProviderType === 'tickettailor') {
+  if (externalDataSourceType === 'tickettailor') {
     return (
       <div className="space-y-7">
         <header>
