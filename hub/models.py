@@ -1547,7 +1547,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         value = bool(value)  # cast None value to False
                     if field == "phone_field":
                         try:
-                            phone_number = phonenumbers.parse(value, "GB")  # Use GB as the default country code
+                            phone_number = phonenumbers.parse(value, self.countries[0])  
                             if phonenumbers.is_valid_number(phone_number):
                                 value = phonenumbers.format_number(phone_number, phonenumbers.PhoneNumberFormat.E164)
                             else:
