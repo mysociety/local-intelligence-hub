@@ -12,7 +12,7 @@ export default function MarketingHome() {
     <div className="flex flex-col gap-4">
       <div className="display md:grid md:grid-cols-3 gap-5">
         <div className="col-span-2 pb-10">
-          <h1 className="md:text-hXlg text-hLg font-light font-IBMPlexSansLight w-full max-w-[915px] mb-6 ">
+          <h1 className="md:text-hXlg text-hLg font-light font-IBMPlexSans w-full max-w-[915px] mb-6 ">
             Empowering{' '}
             <span className="font-PPRightGrotesk md:text-hXlgPP text-hLgPP">
               organisers

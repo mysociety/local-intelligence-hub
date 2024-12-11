@@ -1020,11 +1020,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     # TODO: Revisit the rationale behind these data source types, then
     # document what they are in the repo wiki
     # Specifically in terms of geocoding: what is the difference between
-    # each type in terms of how they are geocoded.
+    # each type in terms of how they are or can be geocoded, and what the requirements are
+    # for the source data to be correctly (successfully) processed
     class DataSourceType(models.TextChoices):
         MEMBER = "MEMBER", "Members or supporters"
         GROUP = "GROUP", "Group or organisation"
-        REGION = "REGION", "Areas or regions"
+        # Example: AREA_STATS expects (requires) a data source with a single row per area code
+        # (for example an ONS GSS code for UK geographies) and a column for each stat
+        AREA_STATS = "AREA_STATS", "Area statistics"
         EVENT = "EVENT", "Events"
         LOCATION = "LOCATION", "Locations"
         STORY = "STORY", "Stories"
@@ -1497,11 +1500,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     async def import_many(self, members: list):
         """
+        Members doesn't mean members, it's actually generic records.
         Copy data to this database for use in dashboarding features.
         """
 
         if not members:
-            logger.error("import_many called with 0 members")
+            logger.error("import_many called with 0 records")
             return
 
         if is_maybe_id(members[0]):
@@ -1584,6 +1588,37 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 )
 
             await asyncio.gather(*[create_import_record(record) for record in data])
+        elif (
+            self.geography_column
+            and self.geography_column_type == self.GeographyTypes.WARD
+        ):
+            loaders = await self.get_loaders()
+
+            async def create_import_record(record):
+                structured_data = get_update_data(record)
+                ward = await Area.objects.filter(
+                    area_type__code="WD23",
+                    gss=self.get_record_field(record, self.geography_column),
+                ).afirst()
+                coord = ward.point.centroid
+                postcode_data: PostcodesIOResult = await loaders[
+                    "postcodesIOFromPoint"
+                ].load(coord)
+
+                update_data = {
+                    **structured_data,
+                    "postcode_data": postcode_data,
+                }
+
+                await GenericData.objects.aupdate_or_create(
+                    data_type=data_type,
+                    data=self.get_record_id(record),
+                    defaults=update_data,
+                )
+
+            await asyncio.gather(*[create_import_record(record) for record in data])
+            logger.info(f"Imported {len(data)} records from {self}")
+
         elif (
             self.geography_column
             and self.geography_column_type == self.GeographyTypes.ADDRESS
@@ -3496,15 +3531,15 @@ class EditableGoogleSheetsSource(ExternalDataSource):
         )
 
     @classmethod
-    def from_oauth_redirect_success(cls, redirect_success_url: str, **kwargs):
+    def redirect_success_to_oauth_credentials(cls, redirect_success_url: str) -> str:
         """
-        Create an instance of the class, converting the redirect_success_url
-        into oauth credentials with the Google API.
+        Convert the redirect_success_url (e.g. https://mapped.tools/.../?code=...&state=...)
+        into the oauth_credentials that will be used for future Google API requests.
         """
         flow = cls.oauth_flow()
         flow.redirect_uri = redirect_success_url.split("?")[0]
         token = flow.fetch_token(authorization_response=redirect_success_url)
-        oauth_credentials = json.dumps(
+        return json.dumps(
             {
                 "access_token": token["access_token"],
                 "refresh_token": token["refresh_token"],
@@ -3514,7 +3549,6 @@ class EditableGoogleSheetsSource(ExternalDataSource):
                 "expiry": datetime.fromtimestamp(token["expires_at"]).isoformat(),
             }
         )
-        return cls(oauth_credentials=oauth_credentials, **kwargs)
 
     @classmethod
     def get_deduplication_field_names(cls) -> list[str]:

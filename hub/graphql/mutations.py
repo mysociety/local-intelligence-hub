@@ -269,7 +269,6 @@ class TicketTailorSourceInput(ExternalDataSourceInput):
 @strawberry_django.input(models.EditableGoogleSheetsSource, partial=True)
 class EditableGoogleSheetsSourceInput(ExternalDataSourceInput):
     oauth_credentials: Optional[str]
-    redirect_success_url: Optional[str]
     spreadsheet_id: str
     sheet_name: str
     id_field: Optional[str]

@@ -195,7 +195,6 @@ export function getFieldsForDataSourceType(
         'fullNameField',
         'firstNameField',
         'lastNameField',
-        'canDisplayPointField',
       ]
     case DataSourceType.Group:
       return [
@@ -205,7 +204,6 @@ export function getFieldsForDataSourceType(
         'titleField',
         'publicUrlField',
         'socialUrlField',
-        'canDisplayPointField',
       ]
     case DataSourceType.Location:
       return [
@@ -231,6 +229,8 @@ export function getFieldsForDataSourceType(
       ]
     case DataSourceType.Story:
       return ['titleField', 'descriptionField', 'imageField', 'publicUrlField']
+    case DataSourceType.AreaStats:
+      return ['titleField']
     default:
       return [
         'titleField',
