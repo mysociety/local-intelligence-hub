@@ -4,6 +4,8 @@ from django.conf import settings
 
 from requests_cache import CachedSession
 
+from requests.models import PreparedRequest
+
 session = CachedSession(cache_name=settings.CACHE_FILE, expire_after=86400)
 
 
@@ -102,9 +104,9 @@ class MapIt(object):
                 gss_codes[area["type"]] = area["codes"]["gss"]
         return gss_codes
 
-    def areas_of_type(self, types):
+    def areas_of_type(self, types, params):
         url = self.areas_url % (self.base, ",".join(types), settings.MAPIT_API_KEY)
-        data = self.get(url)
+        data = self.get(url, params)
         areas = []
         for code, area in data.items():
             areas.append(area)
@@ -115,8 +117,16 @@ class MapIt(object):
         data = self.get(url)
         return data
 
-    def get(self, url):
+    def get(self, url, params=None):
         data = None
+
+        if params:
+            # add params to url
+            req = PreparedRequest()
+            req.prepare_url(url, params)
+            url = req.url
+            print(url)
+
         if self.disable_cache or url not in self.cache:
             resp = session.get(url)
             try:

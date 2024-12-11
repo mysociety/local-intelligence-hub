@@ -1593,7 +1593,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         # e.g. https://mapit.mysociety.org/area/2641.html
                         qs = qs.filter(
                             Q(name__iexact=searchable_name)
-                            | Q(name__ilike=f"{searchable_name}%council")
+                            | Q(name__iexact=f"{searchable_name} council")
+                            | Q(name__iexact=f"{searchable_name} city council")
+                            | Q(name__iexact=f"{searchable_name} borough council")
+                            | Q(name__iexact=f"{searchable_name} district council")
+                            | Q(name__iexact=f"{searchable_name} county council")
                         )
                     else:
                         qs = qs.filter(name__iexact=searchable_name)
@@ -1601,13 +1605,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     if area is not None and area.polygon is not None:
                         qs = qs.filter(polygon__overlaps=area.polygon)
 
+                    query = qs.query
+
                     area = await qs.afirst()
                     if area is None:
-                        logger.debug(f"Could not find area for {searchable_name}")
-                        if is_council:
-                            logger.debug(
-                                f"Also searched for '{searchable_name} council', '{searchable_name} city council', '{searchable_name} borough council', '{searchable_name} district council', '{searchable_name} county council'"
-                            )
+                        logger.debug(
+                            f"Could not find area for {searchable_name} using query: {query}"
+                        )
                 if area is not None:
                     # get postcodeIO result for area.coordinates
                     postcode_data: PostcodesIOResult = await loaders[
