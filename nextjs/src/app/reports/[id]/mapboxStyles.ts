@@ -39,6 +39,7 @@ export function getChoroplethFill(
   const colourScale = scaleSequential()
     .domain([min, max])
     .interpolator(interpolateBlues)
+    .interpolator((t) => interpolateBlues(1 - t))
 
   let steps = Math.min(max, 30) // Max 30 steps
   steps = Math.max(steps, 3) // Min 3 steps (for valid Mapbox fill-color rule)
@@ -172,14 +173,30 @@ export const getAreaCountLayout = (
     'text-size': [
       'interpolate',
       ['linear'],
-      ['get', 'count'],
-      min,
-      textScale(min) * 17,
-      max,
-      textScale(max) * 17,
+      ['zoom'],
+      1,
+      [
+        'max',
+        ['*', ['/', ['get', 'count'], max], textScale(max) * 9],
+        textScale(min) * 10,
+      ],
+      12,
+      [
+        'max',
+        ['*', ['/', ['get', 'count'], max], textScale(max) * 18],
+        textScale(min) * 20,
+      ],
     ],
     'symbol-placement': 'point',
-    'text-offset': [0, -0.5],
+    'text-offset': [
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      1,
+      [0, -0.1],
+      12,
+      [0, -1],
+    ],
     'text-allow-overlap': true,
     'text-ignore-placement': true,
     'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],

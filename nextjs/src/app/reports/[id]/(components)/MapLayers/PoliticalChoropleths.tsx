@@ -112,6 +112,17 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
             visibility,
           }}
           paint={{
+            'text-opacity': [
+              'interpolate',
+              ['exponential', 1],
+              ['zoom'],
+              //
+              7.5,
+              0,
+              //
+              7.8,
+              1,
+            ],
             'text-color': 'white',
             'text-halo-color': '#24262b',
             'text-halo-width': 1.5,
@@ -126,7 +137,17 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           }}
           paint={{
             'text-color': 'white',
-            'text-opacity': 1,
+            'text-opacity': [
+              'interpolate',
+              ['exponential', 1],
+              ['zoom'],
+              //
+              6.5,
+              0,
+              //
+              7,
+              1,
+            ],
             'text-halo-color': '#24262b',
             'text-halo-width': 1.5,
           }}
