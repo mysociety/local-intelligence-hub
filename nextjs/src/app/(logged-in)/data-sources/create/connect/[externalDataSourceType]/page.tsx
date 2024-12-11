@@ -110,6 +110,7 @@ type FormInputs = CreateExternalDataSourceInput &
   ExternalDataSourceInput & {
     temp?: {
       airtableBaseUrl?: string
+      actionnetworkGroupUrl?: string
     }
   }
 
@@ -253,6 +254,16 @@ export default function Page({
     } catch (error) {
       console.error('Error extracting Base ID and Table ID:', error)
       return {}
+    }
+  }
+
+  function extractGroupSlug(url: string): string | null {
+    try {
+      const match = url.match(/\/groups\/([a-zA-Z0-9-]+)\//)
+      return match ? match[1] : null
+    } catch (error) {
+      console.error('Error extracting group slug:', error)
+      return null
     }
   }
 
@@ -1034,21 +1045,30 @@ export default function Page({
             <div className="text-hSm">Connection details</div>
             <FormField
               control={form.control}
-              name="actionnetwork.groupSlug"
+              name="temp.actionnetworkGroupUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Action Network Group Slug</FormLabel>
+                  <FormLabel>Action Network Group URL</FormLabel>
                   <FormControl>
-                    {/* @ts-ignore */}
-                    <Input placeholder="my-group" {...field} required />
+                    <Input
+                      placeholder="https://actionnetwork.org/groups/testgroup-3/manage"
+                      {...field}
+                      onBlur={(e) => {
+                        const slug = extractGroupSlug(e.target.value)
+                        if (slug) {
+                          form.setValue('actionnetwork.groupSlug', slug)
+                        } else {
+                          form.setError('temp.actionnetworkGroupUrl', {
+                            type: 'validate',
+                            message: 'Invalid URL',
+                          })
+                        }
+                      }}
+                      required
+                    />
                   </FormControl>
                   <FormDescription>
-                    {`
-                    Get your group slug from the group dashboard in Action
-                    Network. The URL will be
-                    https://actionnetwork.org/groups/"your-group-name"/manage, 
-                    with your group slug in the place of "your-group_name".
-                    `}
+                    Paste the URL of your Action Network group here.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -1075,7 +1095,6 @@ export default function Page({
                   <FormItem>
                     <FormLabel>Action Network API key</FormLabel>
                     <FormControl>
-                      {/* @ts-ignore */}
                       <Input placeholder="52b...bce" {...field} required />
                     </FormControl>
                     <FormMessage />
