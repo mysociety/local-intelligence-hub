@@ -84,28 +84,7 @@ export const MAP_REPORT_LAYER_ANALYTICS = gql`
     }
   }
 `
-export const MAP_REPORT_REGION_STATS = gql`
-  query MapReportRegionStats($reportID: ID!) {
-    mapReport(pk: $reportID) {
-      id
-      importedDataCountByRegion {
-        label
-        gss
-        count
-        gssArea {
-          point {
-            id
-            type
-            geometry {
-              type
-              coordinates
-            }
-          }
-        }
-      }
-    }
-  }
-`
+
 export const MAP_REPORT_COUNT_BY_AREA = gql`
   query MapReportCountByArea(
     $reportID: ID!

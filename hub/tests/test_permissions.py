@@ -104,7 +104,9 @@ class TestOwnSources(Setup, TestCase):
             query MapReportLayerGeoJSONPoint($sourceId: ID!) {
               sharedDataSource(pk: $sourceId) {
                 id
-                importedDataCountByRegion {
+                importedDataCountByArea(
+                    analyticalAreaType: european_electoral_region
+                ) {
                   gss
                   count
                 }
@@ -122,10 +124,13 @@ class TestOwnSources(Setup, TestCase):
         )
         result = res.json()
 
+        print(result)
+        print(result)
+
         self.assertIsNone(result.get("errors", None))
         self.assertEqual(
             [{"gss": "XXX", "count": 1}],
-            result["data"]["sharedDataSource"]["importedDataCountByRegion"],
+            result["data"]["sharedDataSource"]["importedDataCountByArea"],
         )
 
     # Test graphQL query for geojson point
@@ -241,7 +246,9 @@ class TestFullSharing(Setup, TestCase):
             query MapReportLayerGeoJSONPoint($sourceId: ID!) {
               sharedDataSource(pk: $sourceId) {
                 id
-                importedDataCountByRegion {
+                importedDataCountByArea(
+                    analyticalAreaType: european_electoral_region
+                ) {
                   gss
                   count
                 }
@@ -262,7 +269,7 @@ class TestFullSharing(Setup, TestCase):
         self.assertIsNone(result.get("errors", None))
         self.assertEqual(
             [{"gss": "XXX", "count": 1}],
-            result["data"]["sharedDataSource"]["importedDataCountByRegion"],
+            result["data"]["sharedDataSource"]["importedDataCountByArea"],
         )
 
     def test_generic_data_visibility(self):
@@ -376,7 +383,9 @@ class TestLocationOnlySharing(Setup, TestCase):
             query MapReportLayerGeoJSONPoint($sourceId: ID!) {
               sharedDataSource(pk: $sourceId) {
                 id
-                importedDataCountByRegion {
+                importedDataCountByArea(
+                    analyticalAreaType: european_electoral_region
+                ) {
                   gss
                   count
                 }
@@ -397,7 +406,7 @@ class TestLocationOnlySharing(Setup, TestCase):
         self.assertIsNone(result.get("errors", None))
         self.assertEqual(
             [{"gss": "XXX", "count": 1}],
-            result["data"]["sharedDataSource"]["importedDataCountByRegion"],
+            result["data"]["sharedDataSource"]["importedDataCountByArea"],
         )
 
     def test_vector_tiles_visibility(self):
@@ -508,7 +517,9 @@ class TestAggregateOnlySharing(Setup, TestCase):
             query MapReportLayerGeoJSONPoint($sourceId: ID!) {
               sharedDataSource(pk: $sourceId) {
                 id
-                importedDataCountByRegion {
+                importedDataCountByArea(
+                    analyticalAreaType: european_electoral_region
+                ) {
                   gss
                   count
                 }
@@ -529,7 +540,7 @@ class TestAggregateOnlySharing(Setup, TestCase):
         self.assertIsNone(result.get("errors", None))
         self.assertEqual(
             [{"gss": "XXX", "count": 1}],
-            result["data"]["sharedDataSource"]["importedDataCountByRegion"],
+            result["data"]["sharedDataSource"]["importedDataCountByArea"],
         )
 
     def test_vector_tiles_visibility(self):
@@ -628,7 +639,9 @@ class TestNoSharing(Setup, TestCase):
             query MapReportLayerGeoJSONPoint($sourceId: ID!) {
               sharedDataSource(pk: $sourceId) {
                 id
-                importedDataCountByRegion {
+                importedDataCountByArea(
+                    analyticalAreaType: european_electoral_region
+                ) {
                   gss
                   count
                 }
@@ -713,7 +726,7 @@ class TestLoggedOutUserForUnsharedSource(Setup, TestCase):
             query MapReportLayerGeoJSONPoint($sourceId: ID!) {
               sharedDataSource(pk: $sourceId) {
                 id
-                importedDataCountByRegion {
+                importedDataCountByArea {
                   gss
                   count
                 }
@@ -808,7 +821,9 @@ class TestLoggedOutUserForSharedSource(Setup, TestCase):
             query MapReportLayerGeoJSONPoint($sourceId: ID!) {
               sharedDataSource(pk: $sourceId) {
                 id
-                importedDataCountByRegion {
+                importedDataCountByArea(
+                    analyticalAreaType: european_electoral_region
+                ) {
                   gss
                   count
                 }
@@ -894,7 +909,9 @@ class TestLoggedOutUserForPublicSource(Setup, TestCase):
             query MapReportLayerGeoJSONPoint($sourceId: ID!) {
               sharedDataSource(pk: $sourceId) {
                 id
-                importedDataCountByRegion {
+                importedDataCountByArea(
+                    analyticalAreaType: european_electoral_region
+                ) {
                   gss
                   count
                 }
@@ -1019,7 +1036,9 @@ class TestLoggedInUserForPublicSource(Setup, TestCase):
             query MapReportLayerGeoJSONPoint($sourceId: ID!) {
               sharedDataSource(pk: $sourceId) {
                 id
-                importedDataCountByRegion {
+                importedDataCountByArea(
+                    analyticalAreaType: european_electoral_region
+                ) {
                   gss
                   count
                 }

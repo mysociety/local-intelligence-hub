@@ -683,6 +683,7 @@ class AnalyticalAreaType(Enum):
     parliamentary_constituency_2024 = "parliamentary_constituency_2024"
     admin_district = "admin_district"
     admin_ward = "admin_ward"
+    european_electoral_region = "european_electoral_region"
 
 
 postcodeIOKeyAreaTypeLookup = {
@@ -690,17 +691,13 @@ postcodeIOKeyAreaTypeLookup = {
     AnalyticalAreaType.parliamentary_constituency_2024: "WMC23",
     AnalyticalAreaType.admin_district: "DIS",
     AnalyticalAreaType.admin_ward: "WD23",
+    AnalyticalAreaType.european_electoral_region: "EER",
 }
 
 
 @strawberry.interface
 class Analytics:
     imported_data_count: int = fn_field()
-
-    @strawberry_django.field
-    def imported_data_count_by_region(self) -> List[GroupedDataCount]:
-        data = self.imported_data_count_by_region()
-        return [GroupedDataCount(**datum) for datum in data]
 
     @strawberry_django.field
     def imported_data_count_by_area(
