@@ -55,6 +55,8 @@ from wagtail.models import Page, Site
 from wagtail_color_panel.edit_handlers import NativeColorPanel
 from wagtail_color_panel.fields import ColorField
 from wagtail_json_widget.widgets import JSONEditorWidget
+import phonenumbers
+from phonenumbers.phonenumberutil import NumberParseException
 
 import utils as lih_utils
 from hub.analytics import Analytics
@@ -1543,6 +1545,15 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         value: datetime = parse_datetime(value)
                     if field == "can_display_point_field":
                         value = bool(value)  # cast None value to False
+                    if field == "phone_field":
+                        try:
+                            phone_number = phonenumbers.parse(value, "GB")  # Use GB as the default country code
+                            if phonenumbers.is_valid_number(phone_number):
+                                value = phonenumbers.format_number(phone_number, phonenumbers.PhoneNumberFormat.E164)
+                            else:
+                                value = None 
+                        except NumberParseException:
+                            value = None 
                     update_data[field.removesuffix("_field")] = value
 
             return update_data
