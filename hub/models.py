@@ -30,6 +30,7 @@ import googleapiclient.discovery
 import httpx
 import numpy as np
 import pandas as pd
+import phonenumbers
 import posthog
 import pytz
 from asgiref.sync import async_to_sync, sync_to_async
@@ -40,6 +41,7 @@ from django_jsonform.models.fields import JSONField
 from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2.credentials import Credentials as GoogleCredentials
 from mailchimp3 import MailChimp
+from phonenumbers.phonenumberutil import NumberParseException
 from polymorphic.models import PolymorphicModel
 from procrastinate.contrib.django.models import ProcrastinateEvent, ProcrastinateJob
 from psycopg.errors import UniqueViolation
@@ -55,8 +57,6 @@ from wagtail.models import Page, Site
 from wagtail_color_panel.edit_handlers import NativeColorPanel
 from wagtail_color_panel.fields import ColorField
 from wagtail_json_widget.widgets import JSONEditorWidget
-import phonenumbers
-from phonenumbers.phonenumberutil import NumberParseException
 
 import utils as lih_utils
 from hub.analytics import Analytics
@@ -1547,13 +1547,15 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         value = bool(value)  # cast None value to False
                     if field == "phone_field":
                         try:
-                            phone_number = phonenumbers.parse(value, self.countries[0])  
+                            phone_number = phonenumbers.parse(value, self.countries[0])
                             if phonenumbers.is_valid_number(phone_number):
-                                value = phonenumbers.format_number(phone_number, phonenumbers.PhoneNumberFormat.E164)
+                                value = phonenumbers.format_number(
+                                    phone_number, phonenumbers.PhoneNumberFormat.E164
+                                )
                             else:
-                                value = None 
+                                value = None
                         except NumberParseException:
-                            value = None 
+                            value = None
                     update_data[field.removesuffix("_field")] = value
 
             return update_data
