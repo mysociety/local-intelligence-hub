@@ -468,8 +468,6 @@ export default function Page({
   }, [testSourceResult.data])
 
   const airtableUrl = form.watch('temp.airtableBaseUrl')
-  const baseId = form.watch('airtable.baseId')
-  const tableId = form.watch('airtable.tableId')
 
   useEffect(() => {
     if (airtableUrl) {
