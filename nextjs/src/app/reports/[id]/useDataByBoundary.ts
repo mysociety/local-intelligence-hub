@@ -76,19 +76,40 @@ const useDataByBoundary = ({
     fieldNames = data && getNumericFieldsFromDataSource(data)
 
     // Data source logic
-    // TODO: later here is where we do arithmetic operations data from multiple sources
+    // TODO: later here is where we do arithmetic operations with data from multiple sources
     const dataSourceField =
       report?.displayOptions?.dataVisualisation?.dataSourceField
 
+    // The added count field is the value of the dataSourceField
+    // The mapbox layer code expects a field called "count" to visualise numeric data
     if (data && dataSourceField) {
+      const dataWithCounts = data.map((row) => {
+        const value = row.importedData[dataSourceField]
+        return {
+          ...row,
+          count: value,
+        }
+      }) as DataByBoundary
+
+      // Delete rows where the import geocoding has failed (no GSS code)
+      const filteredDataWithCounts = dataWithCounts.filter(
+        (row) => row.gss !== null
+      )
+
+      // Sum the counts for each GSS code. This allows us traverse boundary types using the
+      // same data source and have the counts summed up for the GSS codes
+      const summedByGss = filteredDataWithCounts.reduce((acc, row) => {
+        const existing = acc.find((item) => item.gss === row.gss)
+        if (existing) {
+          existing.count += row.count
+        } else {
+          acc.push({ ...row })
+        }
+        return acc
+      }, [] as DataByBoundary)
+
       return {
-        data: data.map((row) => {
-          const value = row.importedData[dataSourceField]
-          return {
-            ...row,
-            count: value,
-          }
-        }) as DataByBoundary,
+        data: summedByGss,
         fieldNames,
       }
     } else {
