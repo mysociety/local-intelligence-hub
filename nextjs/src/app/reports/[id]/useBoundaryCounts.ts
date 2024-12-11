@@ -13,17 +13,21 @@ const ENABLED_ANALYTICAL_AREA_TYPES = [
   AnalyticalAreaType.AdminDistrict,
 ]
 
-export type StatisticByArea = ReturnType<typeof useBoundaryAnalytics>
+export type CountByBoundary = ReturnType<typeof useBoundaryCounts>
 
-const useBoundaryAnalytics = (
+const useBoundaryCounts = (
   report: MapReportExtended | undefined,
   boundaryType: AnalyticalAreaType
 ) => {
   if (!ENABLED_ANALYTICAL_AREA_TYPES.includes(boundaryType)) {
     throw new Error('Invalid boundary type')
   }
-  const selectedLayer = report?.displayOptions?.dataVisualisation?.dataSource
-  const canQuery = !!report && !!selectedLayer
+
+  const selectedLayer = report?.layers?.find(
+    (layer) =>
+      layer.id === report?.displayOptions?.dataVisualisation?.dataSource
+  )
+  const canQuery = !!report && selectedLayer?.source.dataType === 'MEMBER'
 
   const boundaryAnalytics = useQuery<
     MapReportCountByAreaQuery,
@@ -32,7 +36,7 @@ const useBoundaryAnalytics = (
     variables: {
       reportID: report?.id,
       analyticalAreaType: boundaryType,
-      layerIds: selectedLayer ? [selectedLayer] : [],
+      layerIds: selectedLayer?.id ? [selectedLayer.id] : [],
     },
     skip: !canQuery,
   })
@@ -40,4 +44,4 @@ const useBoundaryAnalytics = (
   return boundaryAnalytics.data?.mapReport.importedDataCountByArea || []
 }
 
-export default useBoundaryAnalytics
+export default useBoundaryCounts

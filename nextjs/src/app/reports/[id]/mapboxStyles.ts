@@ -6,7 +6,7 @@ import {
   SymbolLayerSpecification,
 } from 'mapbox-gl'
 import { Tileset } from './types'
-import { StatisticByArea } from './useBoundaryAnalytics'
+import { CountByBoundary } from './useBoundaryCounts'
 
 export function getChoroplethFill(
   data: { count: number }[]
@@ -98,7 +98,7 @@ export function getSelectedChoroplethEdge(): LineLayerSpecification['paint'] {
   }
 }
 export const getChoroplethFillFilter = (
-  data: StatisticByArea,
+  data: CountByBoundary,
   tileset: Tileset
 ) => {
   return [
@@ -115,7 +115,7 @@ export const getSelectedChoroplethFillFilter = (
   return ['==', ['get', tileset.promoteId], selectedGss]
 }
 
-export function getAreaGeoJSON(data: StatisticByArea) {
+export function getAreaGeoJSON(data: CountByBoundary) {
   return {
     type: 'FeatureCollection',
     features: data
@@ -131,7 +131,7 @@ export function getAreaGeoJSON(data: StatisticByArea) {
   }
 }
 
-function getStatsForData(data: StatisticByArea) {
+function getStatsForData(data: CountByBoundary) {
   let min =
     data.reduce(
       (min, p) => (p?.count! < min ? p?.count! : min),
@@ -158,7 +158,7 @@ function getStatsForData(data: StatisticByArea) {
 }
 
 export const getAreaCountLayout = (
-  data: StatisticByArea
+  data: CountByBoundary
 ): SymbolLayerSpecification['layout'] => {
   const { min, max, textScale } = getStatsForData(data)
 
@@ -199,7 +199,7 @@ export const getAreaCountLayout = (
 }
 
 export const getAreaLabelLayout = (
-  data: StatisticByArea
+  data: CountByBoundary
 ): SymbolLayerSpecification['layout'] => {
   const { min, max, textScale } = getStatsForData(data)
 

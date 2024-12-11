@@ -15,7 +15,7 @@ import {
 } from '../../mapboxStyles'
 import { MapReportExtended } from '../../reportContext'
 import { Tileset } from '../../types'
-import useBoundaryAnalytics from '../../useBoundaryAnalytics'
+import useBoundaryCounts from '../../useBoundaryCounts'
 import useClickOnBoundaryEvents, {
   selectedBoundaryAtom,
 } from '../../useSelectBoundary'
@@ -32,7 +32,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   boundaryType,
   tileset,
 }) => {
-  const countsByBoundaryType = useBoundaryAnalytics(report, boundaryType)
+  const countsByBoundaryType = useBoundaryCounts(report, boundaryType)
   const map = useLoadedMap()
   const selectedBoundary = useAtomValue(selectedBoundaryAtom)
   useClickOnBoundaryEvents(tileset)
