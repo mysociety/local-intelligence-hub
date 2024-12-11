@@ -1,6 +1,6 @@
 import { AnalyticalAreaType } from '@/__generated__/graphql'
 import { useLoadedMap } from '@/lib/map'
-import { useAtomValue } from 'jotai'
+import { useAtom } from 'jotai'
 import React, { useEffect } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
@@ -33,17 +33,24 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   boundaryType,
   tileset,
 }) => {
-  const countsByBoundaryType = useBoundaryCounts(report, boundaryType)
-  const dataByBoundaryType = useBoundaryStats(report, boundaryType)
-  const map = useLoadedMap()
-  const selectedBoundary = useAtomValue(selectedBoundaryAtom)
-  useClickOnBoundaryEvents(tileset)
-
   // Show the layer only if the report is set to show the boundary type
+  // and the selected dataSource
   const visibility =
     report.displayOptions?.dataVisualisation?.boundaryType === boundaryType
       ? 'visible'
       : 'none'
+
+  const countsByBoundaryType = useBoundaryCounts(report, boundaryType)
+  const dataByBoundaryType = useBoundaryStats(report, boundaryType)
+  const map = useLoadedMap()
+  const [selectedBoundary, setSelectedBoundary] = useAtom(selectedBoundaryAtom)
+  useClickOnBoundaryEvents(visibility === 'visible' ? tileset : null)
+
+  useEffect(() => {
+    if (visibility === 'none') {
+      setSelectedBoundary(null)
+    }
+  }, [visibility])
 
   // When the map is loaded and we have the data, add the data to the boundaries
   useEffect(() => {
@@ -82,11 +89,11 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           source-layer={tileset.sourceLayerId}
           type="fill"
           filter={getChoroplethFillFilter(countsByBoundaryType, tileset)}
-          paint={{
-            ...getChoroplethFill(countsByBoundaryType),
-            'fill-opacity': visibility === 'visible' ? 1 : 0,
-          }}
-          // layout={{ visibility }}
+          paint={getChoroplethFill(
+            countsByBoundaryType,
+            visibility === 'visible'
+          )}
+          //layout={{ visibility: delayedVisibility }}
         />
         {/* Border of the boundary */}
         <Layer
@@ -95,8 +102,11 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           source={tileset.mapboxSourceId}
           source-layer={tileset.sourceLayerId}
           type="line"
-          paint={getChoroplethEdge()}
-          layout={{ visibility, 'line-join': 'round', 'line-round-limit': 0.1 }}
+          paint={getChoroplethEdge(visibility === 'visible')}
+          layout={{
+            'line-join': 'round',
+            'line-round-limit': 0.1,
+          }}
         />
         {/* Border of the selected boundary  */}
         <Layer
@@ -153,10 +163,10 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
               ['exponential', 1],
               ['zoom'],
               //
-              6.5,
+              7.5,
               0,
               //
-              7,
+              7.8,
               1,
             ],
             'text-halo-color': '#24262b',

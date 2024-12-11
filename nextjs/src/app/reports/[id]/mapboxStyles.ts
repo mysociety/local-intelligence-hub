@@ -9,7 +9,8 @@ import { Tileset } from './types'
 import { CountByBoundary } from './useBoundaryCounts'
 
 export function getChoroplethFill(
-  data: { count: number }[]
+  data: { count: number }[],
+  visible?: boolean
 ): FillLayerSpecification['paint'] {
   let min =
     data.reduce(
@@ -59,24 +60,30 @@ export function getChoroplethFill(
       ['to-number', ['feature-state', 'count'], 0],
       ...colourStops,
     ],
-    'fill-opacity-transition': { duration: 1500 },
+    'fill-opacity': visible ? 1 : 0,
+    'fill-opacity-transition': { duration: 500 },
   }
 }
 
-export function getChoroplethEdge(): LineLayerSpecification['paint'] {
+export function getChoroplethEdge(
+  visible?: boolean
+): LineLayerSpecification['paint'] {
   return {
     'line-color': 'white',
-    'line-opacity': [
-      'interpolate',
-      ['exponential', 1],
-      ['zoom'],
-      //
-      8,
-      0.3,
-      //
-      12,
-      1,
-    ],
+    'line-opacity-transition': { duration: 750 },
+    'line-opacity': visible
+      ? [
+          'interpolate',
+          ['exponential', 1],
+          ['zoom'],
+          //
+          8,
+          0.3,
+          //
+          12,
+          1,
+        ]
+      : 0,
     'line-width': [
       'interpolate',
       ['exponential', 1],
