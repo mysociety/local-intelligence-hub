@@ -237,6 +237,7 @@ export default function Page({
   const [sheetNames, setSheetNames] = useState<string[]>([])
   const [loadingSheets, setLoadingSheets] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const [sheetUrl, setSheetUrl] = useState<string>('')
 
   const [createSource, createSourceResult] =
     useMutation<CreateSourceMutation>(CREATE_DATA_SOURCE)
@@ -1247,10 +1248,10 @@ export default function Page({
                   <FormControl>
                     <Input
                       placeholder="https://docs.google.com/spreadsheets/d/1MEDFli9uakvmf_wGghJZtZg2AvF2xybGtiaG7OX1mmg/edit#gid=0"
-                      value={field.value}
+                      value={sheetUrl}
                       onChange={async (e) => {
                         const url = e.target.value
-                        field.onChange(url) // Update the form value
+                        setSheetUrl(url)
                         try {
                           const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/)
                           if (match && match[1]) {
@@ -1260,8 +1261,6 @@ export default function Page({
                               spreadsheetId
                             )
                             setLoadingSheets(true)
-
-                            // Fetch sheet names using OAuth credentials
                             const oauthCredentials = form.getValues(
                               'editablegooglesheets.oauthCredentials'
                             )
@@ -1289,16 +1288,12 @@ export default function Page({
                     />
                   </FormControl>
                   <FormDescription>
-                    Paste the URL of your Google Sheets document. The system
-                    will extract the spreadsheet ID and fetch sheet names
-                    automatically.
+                    Paste the URL of your Google Sheets document
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            {/* Dropdown for Sheet Names */}
             <FormField
               control={form.control}
               name="editablegooglesheets.sheetName"
@@ -1308,7 +1303,6 @@ export default function Page({
                   <FormControl>
                     <Select
                       onValueChange={field.onChange}
-                      /* @ts-ignore */
                       defaultValue={field.value}
                       required
                       disabled={loadingSheets || !sheetNames.length}
