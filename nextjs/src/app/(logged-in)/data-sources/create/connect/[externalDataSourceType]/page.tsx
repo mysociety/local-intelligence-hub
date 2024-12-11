@@ -257,7 +257,7 @@ export default function Page({
     }
   }
 
-  function extractGroupSlug(url: string): string | null {
+  function extractActionNetworkGroupSlug(url: string): string | null {
     try {
       const match = url.match(/\/groups\/([a-zA-Z0-9-]+)\//)
       return match ? match[1] : null
@@ -1056,7 +1056,9 @@ export default function Page({
                       placeholder="https://actionnetwork.org/groups/testgroup-3/manage"
                       {...field}
                       onBlur={(e) => {
-                        const slug = extractGroupSlug(e.target.value)
+                        const slug = extractActionNetworkGroupSlug(
+                          e.target.value
+                        )
                         if (slug) {
                           form.setValue('actionnetwork.groupSlug', slug)
                         } else {
