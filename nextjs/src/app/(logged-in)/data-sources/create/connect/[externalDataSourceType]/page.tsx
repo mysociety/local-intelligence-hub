@@ -267,6 +267,48 @@ export default function Page({
     }
   }
 
+  async function handleSheetUrlChange(
+    url: string,
+    setSheetUrl: React.Dispatch<React.SetStateAction<string>>,
+    form: ReturnType<typeof useForm>,
+    setLoadingSheets: React.Dispatch<React.SetStateAction<boolean>>,
+    setSheetNames: React.Dispatch<React.SetStateAction<string[]>>,
+    fetchSheetNamesUsingCredentials: (
+      spreadsheetId: string,
+      oauthCredentials: string
+    ) => Promise<string[]>,
+    setFetchError: React.Dispatch<React.SetStateAction<string | null>>
+  ) {
+    setSheetUrl(url)
+    try {
+      const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/)
+      if (match && match[1]) {
+        const spreadsheetId = match[1]
+        form.setValue('editablegooglesheets.spreadsheetId', spreadsheetId)
+        setLoadingSheets(true)
+        const oauthCredentials = form.getValues(
+          'editablegooglesheets.oauthCredentials'
+        )
+        if (oauthCredentials) {
+          const sheets = await fetchSheetNamesUsingCredentials(
+            spreadsheetId,
+            oauthCredentials
+          )
+          setSheetNames(sheets)
+        } else {
+          throw new Error('OAuth credentials not available')
+        }
+
+        setLoadingSheets(false)
+      }
+    } catch (err) {
+      setFetchError(
+        'Failed to fetch sheet names. Please check the URL or credentials.'
+      )
+      setLoadingSheets(false)
+    }
+  }
+
   const [createSource, createSourceResult] =
     useMutation<CreateSourceMutation>(CREATE_DATA_SOURCE)
   const [testSource, testSourceResult] = useLazyQuery<
@@ -1242,41 +1284,17 @@ export default function Page({
                     <Input
                       placeholder="https://docs.google.com/spreadsheets/d/1MEDFli9uakvmf_wGghJZtZg2AvF2xybGtiaG7OX1mmg/edit#gid=0"
                       value={sheetUrl}
-                      onChange={async (e) => {
-                        const url = e.target.value
-                        setSheetUrl(url)
-                        try {
-                          const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/)
-                          if (match && match[1]) {
-                            const spreadsheetId = match[1]
-                            form.setValue(
-                              'editablegooglesheets.spreadsheetId',
-                              spreadsheetId
-                            )
-                            setLoadingSheets(true)
-                            const oauthCredentials = form.getValues(
-                              'editablegooglesheets.oauthCredentials'
-                            )
-                            if (oauthCredentials) {
-                              const sheets =
-                                await fetchSheetNamesUsingCredentials(
-                                  spreadsheetId,
-                                  oauthCredentials
-                                )
-                              setSheetNames(sheets)
-                            } else {
-                              throw new Error('OAuth credentials not available')
-                            }
-
-                            setLoadingSheets(false)
-                          }
-                        } catch (err) {
-                          setFetchError(
-                            'Failed to fetch sheet names. Please check the URL or credentials.'
-                          )
-                          setLoadingSheets(false)
-                        }
-                      }}
+                      onChange={(e) =>
+                        handleSheetUrlChange(
+                          e.target.value,
+                          setSheetUrl,
+                          form,
+                          setLoadingSheets,
+                          setSheetNames,
+                          fetchSheetNamesUsingCredentials,
+                          setFetchError
+                        )
+                      }
                       required
                     />
                   </FormControl>
