@@ -473,8 +473,12 @@ export default function Page({
     if (airtableUrl) {
       try {
         const { baseId, tableId } = extractBaseAndTableId(airtableUrl)
-        if (baseId) form.setValue('airtable.baseId', baseId)
-        if (tableId) form.setValue('airtable.tableId', tableId)
+        if (baseId) {
+          form.setValue('airtable.baseId', baseId)
+        }
+        if (tableId) {
+          form.setValue('airtable.tableId', tableId)
+        }
       } catch (e) {
         // Invalid URL
         form.setError('temp.airtableBaseUrl', {
