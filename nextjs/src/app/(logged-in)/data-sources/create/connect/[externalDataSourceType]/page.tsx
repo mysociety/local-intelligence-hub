@@ -239,6 +239,23 @@ export default function Page({
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [sheetUrl, setSheetUrl] = useState<string>('')
 
+  function extractBaseAndTableId(url: string): {
+    baseId?: string
+    tableId?: string
+  } {
+    try {
+      const match = url.match(/\/(app[a-zA-Z0-9]+)\/(tbl[a-zA-Z0-9]+)/)
+      if (match) {
+        const [, baseId, tableId] = match
+        return { baseId, tableId }
+      }
+      return {}
+    } catch (error) {
+      console.error('Error extracting Base ID and Table ID:', error)
+      return {}
+    }
+  }
+
   const [createSource, createSourceResult] =
     useMutation<CreateSourceMutation>(CREATE_DATA_SOURCE)
   const [testSource, testSourceResult] = useLazyQuery<
@@ -446,17 +463,15 @@ export default function Page({
   useEffect(() => {
     if (airtableUrl) {
       try {
-        const url = new URL(airtableUrl)
-        const [_, base, table, ...pathSegments] = url.pathname.split('/')
-        form.setValue('airtable.baseId', base)
-        form.setValue('airtable.tableId', table)
+        const { baseId, tableId } = extractBaseAndTableId(airtableUrl)
+        if (baseId) form.setValue('airtable.baseId', baseId)
+        if (tableId) form.setValue('airtable.tableId', tableId)
       } catch (e) {
         // Invalid URL
         form.setError('temp.airtableBaseUrl', {
           type: 'validate',
           message: 'Invalid URL',
         })
-        return
       }
     }
   }, [airtableUrl])
@@ -804,7 +819,7 @@ export default function Page({
           <h1 className="text-hLg">Connecting to your Airtable base</h1>
           <p className="mt-6 text-meepGray-400 max-w-lg">
             In order to send data across to your Airtable, we{"'"}ll need a few
-            details that gives us permission to make updates to your base, as
+            details that give us permission to make updates to your base, as
             well as tell us which table to update in the first place.
           </p>
         </header>
@@ -816,18 +831,44 @@ export default function Page({
             <div className="text-hSm">Connection details</div>
             <FormField
               control={form.control}
+              name="temp.airtableBaseUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Airtable URL</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="https://airtable.com/app123/tbl123"
+                      {...field}
+                      onBlur={(e) => {
+                        const { baseId, tableId } = extractBaseAndTableId(
+                          e.target.value
+                        )
+                        if (baseId) form.setValue('airtable.baseId', baseId)
+                        if (tableId) form.setValue('airtable.tableId', tableId)
+                      }}
+                      required
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    The URL for your Airtable base.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="airtable.apiKey"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Airtable access token</FormLabel>
                   <FormControl>
-                    {/* @ts-ignore */}
                     <Input placeholder="patAB1" {...field} required />
                   </FormControl>
                   <div className="text-sm text-meepGray-400">
                     <span>
                       Your token should have access to the base and the
-                      following {'"'}scopes{'"'}:
+                      following scopes:
                     </span>
                     <ul className="list-disc list-inside pl-1">
                       <li>
@@ -855,77 +896,7 @@ export default function Page({
                 </FormItem>
               )}
             />
-            {!baseId && !tableId && (
-              <FormField
-                control={form.control}
-                name="temp.airtableBaseUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Airtable URL</FormLabel>
-                    <FormControl>
-                      {/* @ts-ignore */}
-                      <Input
-                        placeholder="https://airtable.com/app123/tbl123"
-                        {...field}
-                        required
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      The URL for your airtable base.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-            <FormField
-              control={form.control}
-              name="airtable.baseId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Base ID</FormLabel>
-                  <FormControl>
-                    {/* @ts-ignore */}
-                    <Input placeholder="app1234" {...field} required />
-                  </FormControl>
-                  <FormDescription>
-                    The unique identifier for your base.{' '}
-                    <a
-                      className="underline"
-                      target="_blank"
-                      href="https://support.airtable.com/docs/en/finding-airtable-ids#:~:text=Finding%20base%20URL%20IDs,-Base%20URLs"
-                    >
-                      Learn how to find your base ID.
-                    </a>
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="airtable.tableId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Table ID</FormLabel>
-                  <FormControl>
-                    {/* @ts-ignore */}
-                    <Input placeholder="tbl1234" {...field} required />
-                  </FormControl>
-                  <FormDescription>
-                    The unique identifier for your table.{' '}
-                    <a
-                      className="underline"
-                      target="_blank"
-                      href="https://support.airtable.com/docs/en/finding-airtable-ids#:~:text=Finding%20base%20URL%20IDs,-Base%20URLs"
-                    >
-                      Learn how to find your table ID.
-                    </a>
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
             <div className="flex flex-row gap-x-4">
               <Button
                 variant="outline"
@@ -945,7 +916,6 @@ export default function Page({
       </div>
     )
   }
-
   if (externalDataSourceType === 'mailchimp') {
     return (
       <div className="space-y-7">
