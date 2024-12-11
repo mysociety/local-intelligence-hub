@@ -110,6 +110,7 @@ type FormInputs = CreateExternalDataSourceInput &
   ExternalDataSourceInput & {
     temp?: {
       airtableBaseUrl?: string
+      actionnetworkGroupUrl?: string
     }
   }
 
@@ -205,6 +206,109 @@ export default function Page({
   }, [dataType])
 
   const geographyFields = ['geographyColumn', 'geographyColumnType']
+
+  async function fetchSheetNamesUsingCredentials(
+    spreadsheetId: string,
+    oauthCredentials: string
+  ): Promise<string[]> {
+    const parsedCredentials = JSON.parse(oauthCredentials)
+    const accessToken = parsedCredentials.access_token
+
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+    }
+    const response = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`,
+      {
+        method: 'GET',
+        headers,
+      }
+    )
+
+    if (!response.ok) {
+      const error = await response.json()
+      console.error('API Error:', error)
+      throw new Error(error.error.message || 'Failed to fetch sheet names')
+    }
+    const data = await response.json()
+    const sheets = data.sheets || []
+    return sheets.map(
+      (sheet: { properties: { title: string } }) => sheet.properties.title
+    )
+  }
+  const [sheetNames, setSheetNames] = useState<string[]>([])
+  const [loadingSheets, setLoadingSheets] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+  const [sheetUrl, setSheetUrl] = useState<string>('')
+
+  function extractBaseAndTableId(url: string): {
+    baseId?: string
+    tableId?: string
+  } {
+    try {
+      const match = url.match(/\/(app[a-zA-Z0-9]+)\/(tbl[a-zA-Z0-9]+)/)
+      if (match) {
+        const [, baseId, tableId] = match
+        return { baseId, tableId }
+      }
+      return {}
+    } catch (error) {
+      console.error('Error extracting Base ID and Table ID:', error)
+      return {}
+    }
+  }
+
+  function extractActionNetworkGroupSlug(url: string): string | null {
+    try {
+      const match = url.match(/\/groups\/([a-zA-Z0-9-]+)\//)
+      return match ? match[1] : null
+    } catch (error) {
+      console.error('Error extracting group slug:', error)
+      return null
+    }
+  }
+
+  async function handleSheetUrlChange(
+    url: string,
+    setSheetUrl: React.Dispatch<React.SetStateAction<string>>,
+    form: ReturnType<typeof useForm>,
+    setLoadingSheets: React.Dispatch<React.SetStateAction<boolean>>,
+    setSheetNames: React.Dispatch<React.SetStateAction<string[]>>,
+    fetchSheetNamesUsingCredentials: (
+      spreadsheetId: string,
+      oauthCredentials: string
+    ) => Promise<string[]>,
+    setFetchError: React.Dispatch<React.SetStateAction<string | null>>
+  ) {
+    setSheetUrl(url)
+    try {
+      const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/)
+      if (match && match[1]) {
+        const spreadsheetId = match[1]
+        form.setValue('editablegooglesheets.spreadsheetId', spreadsheetId)
+        setLoadingSheets(true)
+        const oauthCredentials = form.getValues(
+          'editablegooglesheets.oauthCredentials'
+        )
+        if (oauthCredentials) {
+          const sheets = await fetchSheetNamesUsingCredentials(
+            spreadsheetId,
+            oauthCredentials
+          )
+          setSheetNames(sheets)
+        } else {
+          throw new Error('OAuth credentials not available')
+        }
+
+        setLoadingSheets(false)
+      }
+    } catch (err) {
+      setFetchError(
+        'Failed to fetch sheet names. Please check the URL or credentials.'
+      )
+      setLoadingSheets(false)
+    }
+  }
 
   const [createSource, createSourceResult] =
     useMutation<CreateSourceMutation>(CREATE_DATA_SOURCE)
@@ -407,23 +511,23 @@ export default function Page({
   }, [testSourceResult.data])
 
   const airtableUrl = form.watch('temp.airtableBaseUrl')
-  const baseId = form.watch('airtable.baseId')
-  const tableId = form.watch('airtable.tableId')
 
   useEffect(() => {
     if (airtableUrl) {
       try {
-        const url = new URL(airtableUrl)
-        const [_, base, table, ...pathSegments] = url.pathname.split('/')
-        form.setValue('airtable.baseId', base)
-        form.setValue('airtable.tableId', table)
+        const { baseId, tableId } = extractBaseAndTableId(airtableUrl)
+        if (baseId) {
+          form.setValue('airtable.baseId', baseId)
+        }
+        if (tableId) {
+          form.setValue('airtable.tableId', tableId)
+        }
       } catch (e) {
         // Invalid URL
         form.setError('temp.airtableBaseUrl', {
           type: 'validate',
           message: 'Invalid URL',
         })
-        return
       }
     }
   }, [airtableUrl])
@@ -777,7 +881,7 @@ export default function Page({
           <h1 className="text-hLg">Connecting to your Airtable base</h1>
           <p className="mt-6 text-meepGray-400 max-w-lg">
             In order to send data across to your Airtable, we{"'"}ll need a few
-            details that gives us permission to make updates to your base, as
+            details that give us permission to make updates to your base, as
             well as tell us which table to update in the first place.
           </p>
         </header>
@@ -789,18 +893,44 @@ export default function Page({
             <div className="text-hSm">Connection details</div>
             <FormField
               control={form.control}
+              name="temp.airtableBaseUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Airtable URL</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="https://airtable.com/app123/tbl123"
+                      {...field}
+                      onBlur={(e) => {
+                        const { baseId, tableId } = extractBaseAndTableId(
+                          e.target.value
+                        )
+                        if (baseId) form.setValue('airtable.baseId', baseId)
+                        if (tableId) form.setValue('airtable.tableId', tableId)
+                      }}
+                      required
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    The URL for your Airtable base.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="airtable.apiKey"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Airtable access token</FormLabel>
                   <FormControl>
-                    {/* @ts-ignore */}
                     <Input placeholder="patAB1" {...field} required />
                   </FormControl>
                   <div className="text-sm text-meepGray-400">
                     <span>
                       Your token should have access to the base and the
-                      following {'"'}scopes{'"'}:
+                      following scopes:
                     </span>
                     <ul className="list-disc list-inside pl-1">
                       <li>
@@ -828,77 +958,7 @@ export default function Page({
                 </FormItem>
               )}
             />
-            {!baseId && !tableId && (
-              <FormField
-                control={form.control}
-                name="temp.airtableBaseUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Airtable URL</FormLabel>
-                    <FormControl>
-                      {/* @ts-ignore */}
-                      <Input
-                        placeholder="https://airtable.com/app123/tbl123"
-                        {...field}
-                        required
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      The URL for your airtable base.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-            <FormField
-              control={form.control}
-              name="airtable.baseId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Base ID</FormLabel>
-                  <FormControl>
-                    {/* @ts-ignore */}
-                    <Input placeholder="app1234" {...field} required />
-                  </FormControl>
-                  <FormDescription>
-                    The unique identifier for your base.{' '}
-                    <a
-                      className="underline"
-                      target="_blank"
-                      href="https://support.airtable.com/docs/en/finding-airtable-ids#:~:text=Finding%20base%20URL%20IDs,-Base%20URLs"
-                    >
-                      Learn how to find your base ID.
-                    </a>
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="airtable.tableId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Table ID</FormLabel>
-                  <FormControl>
-                    {/* @ts-ignore */}
-                    <Input placeholder="tbl1234" {...field} required />
-                  </FormControl>
-                  <FormDescription>
-                    The unique identifier for your table.{' '}
-                    <a
-                      className="underline"
-                      target="_blank"
-                      href="https://support.airtable.com/docs/en/finding-airtable-ids#:~:text=Finding%20base%20URL%20IDs,-Base%20URLs"
-                    >
-                      Learn how to find your table ID.
-                    </a>
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
             <div className="flex flex-row gap-x-4">
               <Button
                 variant="outline"
@@ -918,7 +978,6 @@ export default function Page({
       </div>
     )
   }
-
   if (externalDataSourceType === 'mailchimp') {
     return (
       <div className="space-y-7">
@@ -1037,21 +1096,32 @@ export default function Page({
             <div className="text-hSm">Connection details</div>
             <FormField
               control={form.control}
-              name="actionnetwork.groupSlug"
+              name="temp.actionnetworkGroupUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Action Network Group Slug</FormLabel>
+                  <FormLabel>Action Network Group URL</FormLabel>
                   <FormControl>
-                    {/* @ts-ignore */}
-                    <Input placeholder="my-group" {...field} required />
+                    <Input
+                      placeholder="https://actionnetwork.org/groups/testgroup-3/manage"
+                      {...field}
+                      onBlur={(e) => {
+                        const slug = extractActionNetworkGroupSlug(
+                          e.target.value
+                        )
+                        if (slug) {
+                          form.setValue('actionnetwork.groupSlug', slug)
+                        } else {
+                          form.setError('temp.actionnetworkGroupUrl', {
+                            type: 'validate',
+                            message: 'Invalid URL',
+                          })
+                        }
+                      }}
+                      required
+                    />
                   </FormControl>
                   <FormDescription>
-                    {`
-                    Get your group slug from the group dashboard in Action
-                    Network. The URL will be
-                    https://actionnetwork.org/groups/"your-group-name"/manage, 
-                    with your group slug in the place of "your-group_name".
-                    `}
+                    Paste the URL of your Action Network group here.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -1078,7 +1148,6 @@ export default function Page({
                   <FormItem>
                     <FormLabel>Action Network API key</FormLabel>
                     <FormControl>
-                      {/* @ts-ignore */}
                       <Input placeholder="52b...bce" {...field} required />
                     </FormControl>
                     <FormMessage />
@@ -1217,22 +1286,27 @@ export default function Page({
               name="editablegooglesheets.spreadsheetId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Spreadsheet ID</FormLabel>
+                  <FormLabel>Google Sheets URL</FormLabel>
                   <FormControl>
-                    {/* @ts-ignore */}
                     <Input
-                      placeholder="1MEDFli9uakvmf_wGghJZtZg2AvF2xybGtiaG7OX1mmg"
-                      {...field}
+                      placeholder="https://docs.google.com/spreadsheets/d/1MEDFli9uakvmf_wGghJZtZg2AvF2xybGtiaG7OX1mmg/edit#gid=0"
+                      value={sheetUrl}
+                      onChange={(e) =>
+                        handleSheetUrlChange(
+                          e.target.value,
+                          setSheetUrl,
+                          form,
+                          setLoadingSheets,
+                          setSheetNames,
+                          fetchSheetNamesUsingCredentials,
+                          setFetchError
+                        )
+                      }
                       required
                     />
                   </FormControl>
                   <FormDescription>
-                    Get your spreadsheet ID from its URL in the address bar of
-                    the browser. The URL will be
-                    <code className="block bg-black p-2 rounded my-2">
-                      https://docs.google.com/spreadsheets/d/spreadsheet-id/edit?gid=0#gid=0e
-                    </code>
-                    with your ID in the place of {'"'}spreadsheet-id{'"'}.
+                    Paste the URL of your Google Sheets document
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -1245,14 +1319,31 @@ export default function Page({
                 <FormItem>
                   <FormLabel>Sheet Name</FormLabel>
                   <FormControl>
-                    {/* @ts-ignore */}
-                    <Input placeholder="Sheet1" {...field} required />
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      required
+                      disabled={loadingSheets || !sheetNames.length}
+                    >
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={
+                            loadingSheets ? 'Loading...' : 'Select a sheet'
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sheetNames.map((name) => (
+                          <SelectItem key={name} value={name}>
+                            {name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </FormControl>
-                  <FormDescription>
-                    The name of the sheet with data you want imported/updated.
-                    This is {'"'}Sheet1{'"'} by default. You can find it on the
-                    tabs at the bottom of your spreadsheet.
-                  </FormDescription>
+                  {fetchError && (
+                    <small className="text-red-500">{fetchError}</small>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -1313,7 +1404,7 @@ export default function Page({
                   </FormControl>
                   <FormDescription>
                     Your API key can be found or generated in the Box Office
-                    Settings under API.
+                    Settings under API.{' '}
                     <a
                       className="underline"
                       target="_blank"
