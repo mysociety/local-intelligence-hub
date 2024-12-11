@@ -59,35 +59,39 @@ class Command(BaseCommand):
                 print(f"Importing {b_type['name']} Areas")
             for area in tqdm(areas, disable=quiet):
                 try:
-                    geom = mapit_client.area_geometry(area["id"])
-                    geom = {
-                        "type": "Feature",
-                        "geometry": geom,
-                        "properties": {
-                            "PCON13CD": area["codes"]["gss"],
-                            "name": area["name"],
-                            "type": b_type["code"],
-                        },
-                    }
-                    geom_str = json.dumps(geom)
-                except mapit.NotFoundException:  # pragma: no cover
-                    print(f"could not find mapit area for {area['name']}")
-                    geom = None
+                    try:
+                        geom = mapit_client.area_geometry(area["id"])
+                        geom = {
+                            "type": "Feature",
+                            "geometry": geom,
+                            "properties": {
+                                "PCON13CD": area["codes"]["gss"],
+                                "name": area["name"],
+                                "type": b_type["code"],
+                            },
+                        }
+                        geom_str = json.dumps(geom)
+                    except mapit.NotFoundException:  # pragma: no cover
+                        print(f"could not find mapit area for {area['name']}")
+                        geom = None
 
-                a, created = Area.objects.get_or_create(
-                    mapit_id=area["id"],
-                    gss=area["codes"]["gss"],
-                    name=area["name"],
-                    area_type=area_type,
-                )
+                    a, created = Area.objects.get_or_create(
+                        mapit_id=area["id"],
+                        gss=area["codes"]["gss"],
+                        name=area["name"],
+                        area_type=area_type,
+                    )
 
-                if geom is not None:
-                    geos = json.dumps(geom["geometry"])
-                    geom = GEOSGeometry(geos)
-                    if isinstance(geom, Polygon):
-                        geom = MultiPolygon([geom])
+                    if geom is not None:
+                        geos = json.dumps(geom["geometry"])
+                        geom = GEOSGeometry(geos)
+                        if isinstance(geom, Polygon):
+                            geom = MultiPolygon([geom])
 
-                    a.geometry = geom_str
-                    a.polygon = geom
-                    a.point = a.polygon.centroid
-                    a.save()
+                        a.geometry = geom_str
+                        a.polygon = geom
+                        a.point = a.polygon.centroid
+                        a.save()
+                except KeyError as e:  # pragma: no cover
+                    print(f"KeyError: {e}")
+                    print(area)
