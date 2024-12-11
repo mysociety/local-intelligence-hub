@@ -1,16 +1,16 @@
-from django.core.management.base import BaseCommand
-from django.conf import settings
-from procrastinate import cli
-from procrastinate.contrib.django import app, django_connector, healthchecks
-
 import argparse
-import subprocess
 import asyncio
+import logging
+import subprocess
 import sys
 
+from django.conf import settings
+from django.core.management.base import BaseCommand
+
+from procrastinate import cli
+from procrastinate.contrib.django import app, django_connector, healthchecks
 from watchdog.events import FileSystemEvent, PatternMatchingEventHandler
 from watchdog.observers import Observer
-import logging
 
 logger = logging.getLogger(__name__)
 
