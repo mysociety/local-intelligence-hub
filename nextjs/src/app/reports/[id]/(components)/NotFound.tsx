@@ -14,7 +14,7 @@ export function NotFound() {
       <div className="flex flex-col items-center justify-center w-full h-full">
         <Card className="p-4 bg-white border-1 border-meepGray-700 text-meepGray-800">
           <CardHeader>
-            <CardTitle className="text-hMd grow font-IBMPlexSansMedium">
+            <CardTitle className="text-hMd grow font-IBMPlexSans font-medium">
               Report not found
             </CardTitle>
           </CardHeader>

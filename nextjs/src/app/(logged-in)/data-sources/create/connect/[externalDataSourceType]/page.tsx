@@ -48,8 +48,8 @@ import {
 import { locationTypeOptions } from '@/lib/location'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { toastPromise } from '@/lib/toast'
-import { formatCrmNames } from '@/lib/utils'
 
+import { formatCrmNames } from '@/lib/utils'
 import { CreateAutoUpdateFormContext } from '../../NewExternalDataSourceWrapper'
 
 const TEST_DATA_SOURCE = gql`
@@ -203,6 +203,7 @@ export default function Page({
   const collectFields = useMemo(() => {
     return getFieldsForDataSourceType(dataType)
   }, [dataType])
+
   const geographyFields = ['geographyColumn', 'geographyColumnType']
 
   const [createSource, createSourceResult] =
@@ -635,6 +636,12 @@ export default function Page({
                                 <div className="flex flex-row gap-2 items-center">
                                   <User className="w-4 text-meepGray-300" />{' '}
                                   People
+                                </div>
+                              </SelectItem>
+                              <SelectItem value={DataSourceType.AreaStats}>
+                                <div className="flex flex-row gap-2 items-center">
+                                  <User className="w-4 text-meepGray-300" />{' '}
+                                  Area Stats
                                 </div>
                               </SelectItem>
                               <SelectItem value={DataSourceType.Group}>

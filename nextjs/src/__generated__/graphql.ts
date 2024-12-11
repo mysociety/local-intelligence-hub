@@ -659,12 +659,12 @@ export type DataSetOption = {
 };
 
 export enum DataSourceType {
+  AreaStats = 'AREA_STATS',
   Event = 'EVENT',
   Group = 'GROUP',
   Location = 'LOCATION',
   Member = 'MEMBER',
   Other = 'OTHER',
-  Region = 'REGION',
   Story = 'STORY'
 }
 

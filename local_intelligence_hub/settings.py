@@ -436,16 +436,34 @@ LOGGING = {
         },
     },
     "loggers": {
-        "procrastinate": {
-            "handlers": ["truncated"],
-            "level": "DEBUG",
-        },
+        "procrastinate": (
+            {
+                "level": "DEBUG",
+                "handlers": ["console"],
+                "class": "logging.StreamHandler",
+                "formatter": "procrastinate",
+            }
+            if ENVIRONMENT != "production"
+            else {
+                "handlers": ["truncated"],
+                "level": "DEBUG",
+            }
+        ),
         # Silence endless waiting for job log
-        "procrastinate.worker": {
-            "handlers": ["truncated"],
-            "level": "INFO",
-            "propagate": False,
-        },
+        "procrastinate.worker": (
+            {
+                "level": "DEBUG",
+                "handlers": ["console"],
+                "class": "logging.StreamHandler",
+                "formatter": "procrastinate",
+            }
+            if ENVIRONMENT != "production"
+            else {
+                "handlers": ["truncated"],
+                "level": "INFO",
+                "propagate": False,
+            }
+        ),
         "django": {
             "handlers": ["console"],
             "level": DJANGO_LOG_LEVEL,
