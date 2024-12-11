@@ -39,6 +39,7 @@ export function getChoroplethFill(
   const colourScale = scaleSequential()
     .domain([min, max])
     .interpolator(interpolateBlues)
+    .interpolator((t) => interpolateBlues(1 - t))
 
   let steps = Math.min(max, 30) // Max 30 steps
   steps = Math.max(steps, 3) // Min 3 steps (for valid Mapbox fill-color rule)
@@ -65,17 +66,28 @@ export function getChoroplethFill(
 export function getChoroplethEdge(): LineLayerSpecification['paint'] {
   return {
     'line-color': 'white',
-    'line-gap-width': [
+    'line-opacity': [
       'interpolate',
       ['exponential', 1],
       ['zoom'],
+      //
       8,
-      0,
+      0.3,
+      //
       12,
-      3,
+      1,
     ],
-    'line-opacity': 0.5,
-    'line-width': ['interpolate', ['exponential', 1], ['zoom'], 8, 0.1, 12, 1],
+    'line-width': [
+      'interpolate',
+      ['exponential', 1],
+      ['zoom'],
+      //
+      8,
+      0.3,
+      //
+      12,
+      2,
+    ],
   }
 }
 
@@ -156,14 +168,30 @@ export const getAreaCountLayout = (
     'text-size': [
       'interpolate',
       ['linear'],
-      ['get', 'count'],
-      min,
-      textScale(min) * 17,
-      max,
-      textScale(max) * 17,
+      ['zoom'],
+      1,
+      [
+        'max',
+        ['*', ['/', ['get', 'count'], max], textScale(max) * 9],
+        textScale(min) * 10,
+      ],
+      12,
+      [
+        'max',
+        ['*', ['/', ['get', 'count'], max], textScale(max) * 18],
+        textScale(min) * 20,
+      ],
     ],
     'symbol-placement': 'point',
-    'text-offset': [0, -0.5],
+    'text-offset': [
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      1,
+      [0, -0.1],
+      12,
+      [0, -1],
+    ],
     'text-allow-overlap': true,
     'text-ignore-placement': true,
     'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
@@ -181,11 +209,19 @@ export const getAreaLabelLayout = (
     'text-size': [
       'interpolate',
       ['linear'],
-      ['get', 'count'],
-      min,
-      textScale(min) * 9,
-      max,
-      textScale(max) * 9,
+      ['zoom'],
+      1,
+      [
+        'max',
+        ['*', ['/', ['get', 'count'], max], textScale(max) * 9],
+        textScale(min) * 10,
+      ],
+      12,
+      [
+        'max',
+        ['*', ['/', ['get', 'count'], max], textScale(max) * 18],
+        textScale(min) * 20,
+      ],
     ],
     'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
     'symbol-placement': 'point',

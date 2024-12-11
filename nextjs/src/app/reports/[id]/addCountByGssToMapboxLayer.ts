@@ -1,12 +1,12 @@
 import { MAPBOX_LOAD_INTERVAL } from '@/lib/map/useLoadedMap'
 import { MapRef } from 'react-map-gl'
-import useBoundaryAnalytics from './useBoundaryAnalytics'
+import { StatisticByArea } from './useBoundaryAnalytics'
 
 // GSS (Geographic Statistical System) codes are unique identifiers
 // used in the UK to reference geographic areas for statistical purposes.
 // The data prop needs to contain the gss code and the count
 export function addCountByGssToMapboxLayer(
-  data: ReturnType<typeof useBoundaryAnalytics>,
+  data: StatisticByArea,
   mapboxSourceId: string,
   sourceLayerId?: string,
   mapbox?: MapRef | null
