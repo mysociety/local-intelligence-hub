@@ -701,10 +701,13 @@ class Analytics:
 
     @strawberry_django.field
     def imported_data_count_by_area(
-        self, analytical_area_type: AnalyticalAreaType
+        self,
+        analytical_area_type: AnalyticalAreaType,
+        layer_ids: Optional[List[str]],
     ) -> List[GroupedDataCount]:
         data = self.imported_data_count_by_area(
-            postcode_io_key=analytical_area_type.value
+            postcode_io_key=analytical_area_type.value,
+            layer_ids=layer_ids,
         )
         area_key = postcodeIOKeyAreaTypeLookup[analytical_area_type]
         return [GroupedDataCount(**datum, area_type=area_key) for datum in data]

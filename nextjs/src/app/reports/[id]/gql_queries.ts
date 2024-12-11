@@ -85,15 +85,21 @@ export const MAP_REPORT_LAYER_ANALYTICS = gql`
   }
 `
 
+/**
+ * This query is used to get the data for the choropleth layers on the map.
+ * It returns the count of data points in each area, which is used to colour the choropleth.
+ */
 export const MAP_REPORT_COUNT_BY_AREA = gql`
   query MapReportCountByArea(
     $reportID: ID!
     $analyticalAreaType: AnalyticalAreaType!
+    $layerIds: [String!]
   ) {
     mapReport(pk: $reportID) {
       id
       importedDataCountByArea: importedDataCountByArea(
         analyticalAreaType: $analyticalAreaType
+        layerIds: $layerIds
       ) {
         label
         gss

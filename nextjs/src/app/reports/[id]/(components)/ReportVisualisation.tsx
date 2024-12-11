@@ -29,8 +29,6 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
     (boundary) => boundary.boundaryType === dataVisualisation?.boundaryType
   )?.label
 
-  console.log(layers)
-
   return (
     <CollapsibleSection id="report-visualisation" title="Data Visualisation">
       <div className="flex flex-col gap-3">

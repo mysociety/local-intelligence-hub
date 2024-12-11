@@ -4183,9 +4183,18 @@ class MapReport(Report, Analytics):
     def get_layers(self) -> list[MapLayer]:
         return self.layers or []
 
-    def get_import_data(self):
+    def get_import_data(self, layer_ids=None):
+        filtered_layers = (
+            self.get_layers()
+            if layer_ids is None
+            else [layer for layer in self.get_layers() if layer["id"] in layer_ids]
+        )
+
+        if not filtered_layers:
+            return GenericData.objects.none()
+
         visible_layer_ids = [
-            layer["source"] for layer in self.get_layers() if layer.get("visible", True)
+            layer["source"] for layer in filtered_layers if layer.get("visible", True)
         ]
         return GenericData.objects.filter(
             models.Q(data_type__data_set__external_data_source_id__in=visible_layer_ids)
@@ -4201,8 +4210,8 @@ class MapReport(Report, Analytics):
             )
         )
 
-    def get_analytics_queryset(self):
-        return self.get_import_data()
+    def get_analytics_queryset(self, layer_ids=None):
+        return self.get_import_data(layer_ids=layer_ids)
 
 
 def generate_puck_json_content():

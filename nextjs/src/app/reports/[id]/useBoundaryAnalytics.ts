@@ -22,7 +22,8 @@ const useBoundaryAnalytics = (
   if (!ENABLED_ANALYTICAL_AREA_TYPES.includes(boundaryType)) {
     throw new Error('Invalid boundary type')
   }
-  const canQuery = !!report
+  const selectedLayer = report?.displayOptions?.dataVisualisation?.dataSource
+  const canQuery = !!report && !!selectedLayer
 
   const boundaryAnalytics = useQuery<
     MapReportCountByAreaQuery,
@@ -31,6 +32,7 @@ const useBoundaryAnalytics = (
     variables: {
       reportID: report?.id,
       analyticalAreaType: boundaryType,
+      layerIds: selectedLayer ? [selectedLayer] : [],
     },
     skip: !canQuery,
   })
