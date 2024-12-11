@@ -1356,7 +1356,7 @@ export default function Page({
                   </FormControl>
                   <FormDescription>
                     Your API key can be found or generated in the Box Office
-                    Settings under API.
+                    Settings under API.{' '}
                     <a
                       className="underline"
                       target="_blank"
