@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import List, Optional, Self, Type, TypedDict, Union
 from urllib.parse import urlencode, urljoin
+import re
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -1572,11 +1573,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     literal_area_field = item.get("field", None)
                     if literal_area_type is None or literal_area_field is None:
                         continue
+
+                    # make searchable for the MapIt database
                     searchable_name = str(
                         self.get_record_field(record, literal_area_field) or ""
                     ).lower()
+                    # E.g. ""Bristol, city of" becomes "bristol city" (https://mapit.mysociety.org/area/2561.html)
+                    searchable_name = re.sub(
+                        r"(.+), (.+) of", r"\1 \2", searchable_name, flags=re.IGNORECASE
+                    )
                     if searchable_name is None:
                         continue
+
                     parsed_area_types = ensure_list(literal_area_type)
                     is_council = (
                         "STC" in parsed_area_types or "DIS" in parsed_area_types
