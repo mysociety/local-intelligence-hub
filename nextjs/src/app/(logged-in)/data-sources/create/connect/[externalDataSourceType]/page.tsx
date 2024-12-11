@@ -198,7 +198,7 @@ export default function Page({
         }
       )
     }
-  }, [form, searchParams])
+  }, []) // No dependencies here so useEffect only runs once
 
   const dataType = form.watch('dataType') as DataSourceType
   const collectFields = useMemo(() => {
