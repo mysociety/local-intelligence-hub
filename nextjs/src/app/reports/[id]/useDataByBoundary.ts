@@ -93,7 +93,7 @@ const useDataByBoundary = ({
 
       // Delete rows where the import geocoding has failed (no GSS code)
       const filteredDataWithCounts = dataWithCounts.filter(
-        (row) => row.gss !== null
+        (row) => row.gss !== null && row.count > 0
       )
 
       // Sum the counts for each GSS code. This allows us traverse boundary types using the
