@@ -1147,7 +1147,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             hash_values = ["name"]
         else:
             hash_values = [
-                getattr(self, field) for field in self.get_deduplication_field_names()
+                str(getattr(self, field)) for field in self.get_deduplication_field_names()
             ]
         return hashlib.md5("".join(hash_values).encode()).hexdigest()
 
@@ -2577,6 +2577,86 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         raise NotImplementedError("Lookup not implemented for this data source type.")
 
+
+class LocalJSONSource(ExternalDataSource):
+    """
+    A test table.
+    """
+    crm_type = "test"
+    has_webhooks = False
+    automated_webhooks = False
+    introspect_fields = False
+    default_data_type = None
+    data = JSONField(default=list, blank=True)
+    id_field = models.CharField(max_length=250, default="id")
+
+    class Meta:
+        verbose_name = "Test source"
+
+    @classmethod
+    def get_deduplication_field_names(self) -> list[str]:
+        return ["id"]
+
+    def healthcheck(self):
+        return True
+    
+    @cached_property
+    def df(self):
+        return pd.DataFrame(self.data).set_index(self.id_field)
+
+    def field_definitions(self):
+        # get all keys from self.data
+        return [
+            self.FieldDefinition(
+                label=col,
+                value=col
+            ) for col in self.df.columns.tolist()
+        ]
+
+    def get_record_id(self, record: dict):
+        return record[self.id_field]
+
+    async def fetch_one(self, member_id):
+        return self.df[self.df[self.id_field] == member_id].to_dict(orient="records")[0]
+
+    async def fetch_many(self, id_list: list[str]):
+        return self.df[self.df[self.id_field].isin(id_list)].to_dict(orient="records")
+
+    async def fetch_all(self):
+        return self.df.to_dict(orient="records")
+
+    def get_record_field(self, record, field, field_type=None):
+        return get(record, field)
+
+    def get_record_dict(self, record):
+        return record
+
+    async def update_one(self, mapped_record, **kwargs):
+        id = self.get_record_id(mapped_record["member"])
+        data = mapped_record["update_fields"]
+        self.data = [
+            {**record, **data} if record[self.id_field] == id else record
+            for record in self.data
+        ]
+        self.save()
+
+    async def update_many(self, mapped_records, **kwargs):
+        for mapped_record in mapped_records:
+            await self.update_one(mapped_record)
+
+    def delete_one(self, record_id):
+        self.data = [record for record in self.data if record[self.id_field] != record_id]
+        self.save()
+
+    def create_one(self, record):
+        self.data.append(record["data"])
+        self.save()
+        return record
+
+    def create_many(self, records):
+        self.data.extend([record["data"] for record in records])
+        self.save()
+        return records
 
 class AirtableSource(ExternalDataSource):
     """

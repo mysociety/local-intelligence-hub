@@ -1,9 +1,11 @@
 from datetime import datetime, timezone
 
 from django.test import TestCase
+from asgiref.sync import sync_to_async
 
 from hub.validation import validate_and_format_phone_number
 from utils.py import parse_datetime
+from hub.models import LocalJSONSource, GenericData
 
 
 class TestSourceParser(TestCase):
@@ -20,20 +22,37 @@ class TestSourceParser(TestCase):
 
 
 class TestPhoneField(TestCase):
-    def test_invalid_phone_number(self):
-        phone = "123456789"
-        result = validate_and_format_phone_number(phone, "GB")
-        self.assertIsNone(result)
+    async def test_save_phone_field(self):
+        source = await LocalJSONSource.objects.acreate(
+            name="test",
+            id_field="id",
+            phone_field="phone",
+            countries=["GB"],
+            data=[
+                {"id": "bad1", "phone": "123456789"},
+                {"id": "good1", "phone": "07123456789"},
+                {"id": "good2", "phone": "+447123456789"}
+            ]
+        )
+        await sync_to_async(source.save)()
 
-    def test_valid_phone_number_without_country_code(self):
-        phone = "07123456789"
-        result = validate_and_format_phone_number(phone, "GB")
-        self.assertEqual(result, "+447123456789")
+        # parse the raw data
+        await source.import_many(source.data)
 
-    def test_valid_phone_number_with_country_code(self):
-        phone = "+447123456789"
-        result = validate_and_format_phone_number(phone, ["GB"])
-        self.assertEqual(result, "+447123456789")
+        # tests
+        data = source.get_import_data()
+
+        bad1 = await data.aget(data="bad1")
+        self.assertIsNone(bad1.phone)
+        self.assertEqual(bad1.json["phone"], "123456789")
+
+        good1 = await data.aget(data="good1")
+        self.assertEqual(good1.phone, "+447123456789")
+        self.assertEqual(good1.json["phone"], "07123456789")
+
+        good2 = await data.aget(data="good2")
+        self.assertEqual(good2.phone, "+447123456789")
+        self.assertEqual(good2.json["phone"], "+447123456789")
 
     def test_valid_phone_number_for_usa(self):
         phone = "4155552671"
