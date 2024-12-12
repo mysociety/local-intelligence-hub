@@ -34,7 +34,17 @@ const useDataSources = () => {
       source: l!.source?.id,
     }))
     const newDataSources = oldDataSources?.filter((l) => l.source !== sourceId)
-    updateReport({ layers: newDataSources })
+    if (newDataSources?.length === 0) {
+      updateReport({
+        layers: newDataSources,
+        displayOptions: {
+          dataVisualisation: {
+            dataSource: '',
+            dataSourceField: '',
+          },
+        },
+      })
+    } else updateReport({ layers: newDataSources })
   }
 
   function addDataSource(source: { name: string; id: string }) {

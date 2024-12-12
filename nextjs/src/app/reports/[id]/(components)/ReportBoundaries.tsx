@@ -27,7 +27,7 @@ const ReportBoundaries: React.FC<UpdateConfigProps> = ({
   }
 
   return (
-    <CollapsibleSection id="report-boundaries" title="Boundaries">
+    <CollapsibleSection id="report-boundaries" title="Political Boundaries">
       <Select
         onValueChange={updateBoundaryType}
         value={dataVisualisation?.boundaryType}

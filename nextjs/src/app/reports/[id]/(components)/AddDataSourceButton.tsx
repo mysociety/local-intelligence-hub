@@ -37,9 +37,9 @@ import { MAP_REPORT_LAYERS_SUMMARY } from '@/lib/map'
 import { cn } from '@/lib/utils'
 
 import { useReport } from '@/app/reports/[id]/(components)/ReportProvider'
-import { CRMSelection } from '../CRMButtonItem'
-import { FormField } from '../ui/form'
-import { LoadingIcon } from '../ui/loadingIcon'
+import { CRMSelection } from '@/components/CRMButtonItem'
+import { FormField } from '@/components/ui/form'
+import { LoadingIcon } from '@/components/ui/loadingIcon'
 
 type Source = {
   name: string
@@ -79,7 +79,7 @@ export function AddMapLayerButton({
           })}
         >
           <DialogHeader>
-            <DialogTitle>Add a map layer</DialogTitle>
+            <DialogTitle>Add a data source</DialogTitle>
             <DialogDescription>
               Select a data source from your org or one that{"'"}s been shared
               with you.
@@ -99,7 +99,7 @@ export function AddMapLayerButton({
             />
           </div>
           <DialogFooter>
-            <Button type="submit">Add layer</Button>
+            <Button type="submit">Add Data Source</Button>
           </DialogFooter>
         </form>
       </DialogContent>

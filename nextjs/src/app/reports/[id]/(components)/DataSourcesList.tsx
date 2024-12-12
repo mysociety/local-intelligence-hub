@@ -126,7 +126,7 @@ const DataSourcesList: React.FC = () => {
                       }}
                       variant="destructive"
                     >
-                      Remove layer
+                      Remove data source
                     </Button>
                   </PopoverContent>
                 </Popover>

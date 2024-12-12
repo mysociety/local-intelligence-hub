@@ -1,5 +1,5 @@
-import { AddMapLayerButton } from '@/components/report/AddMapLayerButton'
 import useDataSources from '../useDataSources'
+import { AddMapLayerButton } from './AddDataSourceButton'
 import CollapsibleSection from './CollapsibleSection'
 import DataSourcesList from './DataSourcesList'
 
