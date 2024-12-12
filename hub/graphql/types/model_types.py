@@ -705,16 +705,20 @@ class AnalyticalAreaType(Enum):
     parliamentary_constituency = "parliamentary_constituency"
     parliamentary_constituency_2024 = "parliamentary_constituency_2024"
     admin_district = "admin_district"
+    admin_county = "admin_county"
     admin_ward = "admin_ward"
     european_electoral_region = "european_electoral_region"
+    country = "country"
 
 
 postcodeIOKeyAreaTypeLookup = {
     AnalyticalAreaType.parliamentary_constituency: "WMC",
     AnalyticalAreaType.parliamentary_constituency_2024: "WMC23",
     AnalyticalAreaType.admin_district: "DIS",
+    AnalyticalAreaType.admin_county: "STC",
     AnalyticalAreaType.admin_ward: "WD23",
     AnalyticalAreaType.european_electoral_region: "EER",
+    AnalyticalAreaType.country: "CTRY",
 }
 
 

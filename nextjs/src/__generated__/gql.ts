@@ -39,13 +39,13 @@ const documents = {
     "\n          mutation ShareDataSources(\n            $fromOrgId: String!\n            $permissions: [SharingPermissionInput!]!\n          ) {\n            updateSharingPermissions(\n              fromOrgId: $fromOrgId\n              permissions: $permissions\n            ) {\n              id\n              sharingPermissions {\n                id\n                organisationId\n                externalDataSourceId\n                visibilityRecordCoordinates\n                visibilityRecordDetails\n                deleted\n              }\n            }\n          }\n        ": types.ShareDataSourcesDocument,
     "\n  query YourSourcesForSharing {\n    myOrganisations {\n      id\n      name\n      externalDataSources {\n        id\n        name\n        crmType\n        importedDataCount\n        dataType\n        fieldDefinitions {\n          label\n          editable\n        }\n        organisationId\n        sharingPermissions {\n          id\n          organisationId\n          externalDataSourceId\n          visibilityRecordCoordinates\n          visibilityRecordDetails\n          deleted\n        }\n      }\n    }\n  }\n": types.YourSourcesForSharingDocument,
     "\n  query ShareWithOrgPage($orgSlug: String!) {\n    allOrganisations(filters: { slug: $orgSlug }) {\n      id\n      name\n    }\n  }\n": types.ShareWithOrgPageDocument,
-    "\n      query GetEditableHubs {\n        hubHomepages {\n          id\n        }\n      }\n    ": types.GetEditableHubsDocument,
-    "\n          query VerifyPage($pageId: ID!) {\n            hubHomepages {\n              id\n            }\n            hubPage(pk: $pageId) {\n              id\n              hub {\n                id\n              }\n            }\n          }\n        ": types.VerifyPageDocument,
     "\n  mutation CreateMapReport($data: MapReportInput!) {\n    createMapReport(data: $data) {\n      ... on MapReport {\n        id\n      }\n      ... on OperationInfo {\n        messages {\n          message\n        }\n      }\n    }\n  }\n": types.CreateMapReportDocument,
     "\n  query ListReports($currentOrganisationId: ID!) {\n    reports(filters: { organisation: { pk: $currentOrganisationId } }) {\n      id\n      name\n      lastUpdate\n    }\n  }\n": types.ListReportsDocument,
     "\n  query ListExternalDataSources {\n    myOrganisations {\n      id\n      externalDataSources {\n        id\n      }\n    }\n  }\n": types.ListExternalDataSourcesDocument,
     "\n  query GetPublicMapReport($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n    }\n  }\n": types.GetPublicMapReportDocument,
     "\n  query GetPublicMapReportForLayout($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n      displayOptions\n      organisation {\n        id\n        slug\n        name\n      }\n      layers {\n        id\n        name\n      }\n    }\n  }\n": types.GetPublicMapReportForLayoutDocument,
+    "\n      query GetEditableHubs {\n        hubHomepages {\n          id\n        }\n      }\n    ": types.GetEditableHubsDocument,
+    "\n          query VerifyPage($pageId: ID!) {\n            hubHomepages {\n              id\n            }\n            hubPage(pk: $pageId) {\n              id\n              hub {\n                id\n              }\n            }\n          }\n        ": types.VerifyPageDocument,
     "\n  query HostAnalytics($hostname: String!) {\n    hubByHostname(hostname: $hostname) {\n      googleAnalyticsTagId\n      primaryColour\n      secondaryColour\n      customCss\n    }\n  }\n": types.HostAnalyticsDocument,
     "\n  query GetHubMapData($hostname: String!) {\n    hubByHostname(hostname: $hostname) {\n      id\n      organisation {\n        id\n        slug\n        name\n      }\n      layers {\n        id\n        name\n        type\n        visible\n        iconImage\n        source {\n          id\n        }\n        mapboxPaint\n        mapboxLayout\n      }\n      navLinks {\n        label\n        link\n      }\n    }\n  }\n": types.GetHubMapDataDocument,
     "\n  fragment EventFragment on GenericData {\n    id\n    title\n    address\n    postcode\n    startTime\n    publicUrl\n    description\n    dataType {\n      id\n      dataSet {\n        externalDataSource {\n          dataType\n        }\n      }\n    }\n  }\n": types.EventFragmentFragmentDoc,
@@ -209,14 +209,6 @@ export function gql(source: "\n  query ShareWithOrgPage($orgSlug: String!) {\n  
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n      query GetEditableHubs {\n        hubHomepages {\n          id\n        }\n      }\n    "): (typeof documents)["\n      query GetEditableHubs {\n        hubHomepages {\n          id\n        }\n      }\n    "];
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(source: "\n          query VerifyPage($pageId: ID!) {\n            hubHomepages {\n              id\n            }\n            hubPage(pk: $pageId) {\n              id\n              hub {\n                id\n              }\n            }\n          }\n        "): (typeof documents)["\n          query VerifyPage($pageId: ID!) {\n            hubHomepages {\n              id\n            }\n            hubPage(pk: $pageId) {\n              id\n              hub {\n                id\n              }\n            }\n          }\n        "];
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
 export function gql(source: "\n  mutation CreateMapReport($data: MapReportInput!) {\n    createMapReport(data: $data) {\n      ... on MapReport {\n        id\n      }\n      ... on OperationInfo {\n        messages {\n          message\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateMapReport($data: MapReportInput!) {\n    createMapReport(data: $data) {\n      ... on MapReport {\n        id\n      }\n      ... on OperationInfo {\n        messages {\n          message\n        }\n      }\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -234,6 +226,14 @@ export function gql(source: "\n  query GetPublicMapReport($orgSlug: String!, $re
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  query GetPublicMapReportForLayout($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n      displayOptions\n      organisation {\n        id\n        slug\n        name\n      }\n      layers {\n        id\n        name\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetPublicMapReportForLayout($orgSlug: String!, $reportSlug: String!) {\n    publicMapReport(orgSlug: $orgSlug, reportSlug: $reportSlug) {\n      id\n      name\n      displayOptions\n      organisation {\n        id\n        slug\n        name\n      }\n      layers {\n        id\n        name\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n      query GetEditableHubs {\n        hubHomepages {\n          id\n        }\n      }\n    "): (typeof documents)["\n      query GetEditableHubs {\n        hubHomepages {\n          id\n        }\n      }\n    "];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n          query VerifyPage($pageId: ID!) {\n            hubHomepages {\n              id\n            }\n            hubPage(pk: $pageId) {\n              id\n              hub {\n                id\n              }\n            }\n          }\n        "): (typeof documents)["\n          query VerifyPage($pageId: ID!) {\n            hubHomepages {\n              id\n            }\n            hubPage(pk: $pageId) {\n              id\n              hub {\n                id\n              }\n            }\n          }\n        "];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
