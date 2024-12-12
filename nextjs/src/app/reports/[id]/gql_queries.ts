@@ -127,7 +127,7 @@ export const MAP_REPORT_STATS_BY_AREA = gql`
   ) {
     mapReport(pk: $reportID) {
       id
-      importedDataByArea: importedDataByArea(
+      importedDataByArea(
         analyticalAreaType: $analyticalAreaType
         layerIds: $layerIds
       ) {
