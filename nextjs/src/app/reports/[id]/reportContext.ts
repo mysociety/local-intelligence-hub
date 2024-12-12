@@ -60,6 +60,8 @@ interface ReportContextProps {
     layers?: any[]
   }) => void
   refreshReportData: () => void
+  dataLoading: boolean
+  setDataLoading: (loading: boolean) => void
 }
 
 const ReportContext = createContext<ReportContextProps>({
@@ -67,6 +69,8 @@ const ReportContext = createContext<ReportContextProps>({
   deleteReport: () => {},
   updateReport: () => {},
   refreshReportData: () => {},
+  dataLoading: false,
+  setDataLoading: () => {},
 })
 
 export default ReportContext

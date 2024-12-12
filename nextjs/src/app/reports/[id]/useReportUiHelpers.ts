@@ -4,7 +4,7 @@ import { useReport } from './(components)/ReportProvider'
 const HELPER_TIMEOUT = 3000
 
 const useReportUiHelpers = () => {
-  const { report } = useReport()
+  const { report, dataLoading } = useReport()
   const [userJourneyHelpers, setUserJourneyHelpers] = useState<{
     visualiseYourData: {
       triggered: boolean
@@ -21,8 +21,9 @@ const useReportUiHelpers = () => {
   useEffect(() => {
     // Reset the user journey helper if there are no layers
     if (
-      report.layers.length === 0 &&
-      userJourneyHelpers?.visualiseYourData.triggered
+      dataLoading ||
+      (report.layers.length === 0 &&
+        userJourneyHelpers?.visualiseYourData.triggered)
     ) {
       setUserJourneyHelpers({
         ...userJourneyHelpers,
@@ -37,13 +38,16 @@ const useReportUiHelpers = () => {
       report.layers.length === 1 &&
       !userJourneyHelpers?.visualiseYourData.triggered
     ) {
-      setUserJourneyHelpers({
-        ...userJourneyHelpers,
-        visualiseYourData: {
-          triggered: true,
-          open: true,
-        },
-      })
+      setTimeout(() => {
+        setUserJourneyHelpers({
+          ...userJourneyHelpers,
+          visualiseYourData: {
+            triggered: true,
+            open: true,
+          },
+        })
+      }, 300)
+
       setTimeout(() => {
         setUserJourneyHelpers({
           visualiseYourData: {
@@ -53,7 +57,7 @@ const useReportUiHelpers = () => {
         })
       }, HELPER_TIMEOUT)
     }
-  }, [report.layers, userJourneyHelpers])
+  }, [report.layers, dataLoading])
 
   function updateUserJourneyHelpers(
     key: keyof typeof userJourneyHelpers,

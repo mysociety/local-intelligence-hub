@@ -6,6 +6,8 @@ import {
   MapReportStatsByAreaQueryVariables,
 } from '@/__generated__/graphql'
 import { useQuery } from '@apollo/client'
+import { useEffect } from 'react'
+import { useReport } from './(components)/ReportProvider'
 import {
   MAP_REPORT_COUNT_BY_AREA,
   MAP_REPORT_STATS_BY_AREA,
@@ -30,6 +32,7 @@ const useDataByBoundary = ({
   if (boundaryType && !ENABLED_ANALYTICAL_AREA_TYPES.includes(boundaryType)) {
     throw new Error('Invalid boundary type')
   }
+  const { setDataLoading } = useReport()
 
   const selectedDataSource = report?.layers?.find(
     (layer) =>
@@ -66,6 +69,14 @@ const useDataByBoundary = ({
   })
 
   const loading = loadingStats || loadingCounts
+  useEffect(() => {
+    if (loading) {
+      setDataLoading(true)
+    } else {
+      setDataLoading(false)
+    }
+  }, [loading])
+
   let fieldNames: string[] | undefined
 
   if (queryForCounts) {
