@@ -161,43 +161,65 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
         organisation = models.Organisation.get_or_create_for_user(user)
 
     date_time_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    base_slug = slugify(data.name or f"new-map-{date_time_str}")
 
+    # Generate a unique slug for reach report so we can create multiple ones for testing purposes 
+    unique_slug = base_slug
+    counter = 1
+    while models.MapReport.objects.filter(slug=unique_slug).exists():
+        unique_slug = f"{base_slug}-{counter}"
+        counter += 1
+
+    # Prepare base parameters
     params = {
         **graphql_type_to_dict(data, delete_null_keys=True),
         **{
             "organisation": organisation,
-            "slug": data.slug or slugify(data.name),
-            "name": f"New map ({date_time_str})",  # Default name for reports
+            "slug": unique_slug, 
+            "name": data.name or f"New map ({date_time_str})",
             "display_options": data.display_options or {},
         },
     }
 
     map_report = models.MapReport.objects.create(**params)
-    if existing_reports:
-        return map_report
-
-    # If this is the first report, add the user's first member list to it
-    member_list = (
-        model_types.ExternalDataSource.get_queryset(
-            models.ExternalDataSource.objects.get_queryset(),
-            info,
-        )
-        .filter(data_type=models.ExternalDataSource.DataSourceType.MEMBER)
-        .first()
-    )
-    if member_list:
-        map_report.name = f"Auto-generated report on {member_list.name}"
+    
+    if "layers" in data.display_options:
+        display_layers = data.display_options["layers"]
         map_report.layers = [
             {
-                "id": str(uuid.uuid4()),
-                "name": member_list.name,
-                "source": str(member_list.id),
-                "visible": True,
+                "id": layer["id"],
+                "name": layer["name"],
+                "source": layer["source"],
+                "visible": layer["visible"],
+                "custom_marker_text": layer.get("custom_marker_text"),
             }
+            for layer in display_layers
         ]
-        map_report.save()
-    return map_report
 
+    map_report.save()
+
+    if not data.layers and not existing_reports:
+        member_list = (
+            model_types.ExternalDataSource.get_queryset(
+                models.ExternalDataSource.objects.get_queryset(),
+                info,
+            )
+            .filter(data_type=models.ExternalDataSource.DataSourceType.MEMBER)
+            .first()
+        )
+        if member_list:
+            map_report.name = f"Auto-generated report on {member_list.name}"
+            map_report.layers = [
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": member_list.name,
+                    "source": str(member_list.id),
+                    "visible": True,
+                }
+            ]
+            map_report.save()
+
+    return map_report
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
 async def import_all(external_data_source_id: str) -> ExternalDataSourceAction:
