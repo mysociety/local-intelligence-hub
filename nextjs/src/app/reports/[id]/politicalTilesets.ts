@@ -34,14 +34,42 @@ const uk: PoliticalTileset[] = [
       labelId: 'WD24NM',
     },
   },
-  // [AnalyticalAreaType.LocalAuthorityDistrict]: {
-  //   name: '',
-  //   singular: '',
-  //   mapboxSourceId: '',
-  //   sourceLayerId: '',
-  //   promoteId: '',
-  //   labelId: '',
+  // {
+  //   boundaryType: AnalyticalAreaType.Country,
+  //   label: 'Countries',
+  //   tileset: {
+  //     name: 'Countries',
+  //     singular: 'country',
+  //     mapboxSourceId: 'commonknowledge.48bu0oj9',
+  //     sourceLayerId: 'converted_uk_countries_2023',
+  //     promoteId: 'CTRY23CD',
+  //     labelId: 'CTRY23NM',
+  //   },
   // },
+  {
+    boundaryType: AnalyticalAreaType.EuropeanElectoralRegion,
+    label: 'European Electoral Regions',
+    tileset: {
+      name: 'European Electoral Regions',
+      singular: 'European Electoral Region',
+      mapboxSourceId: 'commonknowledge.awsfhx20',
+      sourceLayerId: 'European_Electoral_Regions_De-bxyqod',
+      promoteId: 'eer18cd',
+      labelId: 'eer18nm',
+    },
+  },
+  {
+    boundaryType: AnalyticalAreaType.AdminDistrict,
+    label: 'Local Authority Districts',
+    tileset: {
+      name: 'Local Authority Districts',
+      singular: 'Local Authority District',
+      mapboxSourceId: 'commonknowledge.2p1squ75',
+      sourceLayerId: 'lads_2023geo',
+      promoteId: 'LAD23CD',
+      labelId: 'LAD23NM',
+    },
+  },
 ]
 
 export function getPoliticalTilesetsByCountry(
