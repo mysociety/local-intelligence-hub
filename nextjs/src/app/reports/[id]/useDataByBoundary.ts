@@ -72,7 +72,8 @@ const useDataByBoundary = ({
       data: countsByBoundary.data?.mapReport.importedDataCountByArea || [],
     }
   } else if (queryForExternalData) {
-    const data = externalDataByBoundary.data?.mapReport.importedDataByArea
+    const rawData = externalDataByBoundary.data?.mapReport.importedDataByArea
+    const data = rawData && processNumericFieldsInDataSource(rawData)
     fieldNames = data && getNumericFieldsFromDataSource(data)
 
     // Data source logic
@@ -129,5 +130,22 @@ export function getNumericFieldsFromDataSource(data: ExternalDataByBoundary) {
   return Object.keys(firstRow).filter((key) => {
     const value = firstRow[key]
     return typeof value === 'number'
+  })
+}
+
+/* Make sure that valid number strings are converted to numbers */
+function processNumericFieldsInDataSource(data: ExternalDataByBoundary) {
+  return data.map((row) => {
+    const processedData = { ...row.importedData }
+    Object.keys(processedData).forEach((key) => {
+      const value = processedData[key]
+      if (typeof value === 'string' && !isNaN(Number(value))) {
+        processedData[key] = Number(value)
+      }
+    })
+    return {
+      ...row,
+      importedData: processedData,
+    }
   })
 }
