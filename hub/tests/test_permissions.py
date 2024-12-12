@@ -106,6 +106,7 @@ class TestOwnSources(Setup, TestCase):
                 id
                 importedDataCountByArea(
                     analyticalAreaType: european_electoral_region
+                    layerIds: ["testlayer"]
                 ) {
                   gss
                   count
@@ -248,6 +249,7 @@ class TestFullSharing(Setup, TestCase):
                 id
                 importedDataCountByArea(
                     analyticalAreaType: european_electoral_region
+                    layerIds: ["testlayer"]
                 ) {
                   gss
                   count
@@ -385,6 +387,7 @@ class TestLocationOnlySharing(Setup, TestCase):
                 id
                 importedDataCountByArea(
                     analyticalAreaType: european_electoral_region
+                    layerIds: ["testlayer"]
                 ) {
                   gss
                   count
@@ -519,6 +522,7 @@ class TestAggregateOnlySharing(Setup, TestCase):
                 id
                 importedDataCountByArea(
                     analyticalAreaType: european_electoral_region
+                    layerIds: ["testlayer"]
                 ) {
                   gss
                   count

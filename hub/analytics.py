@@ -29,7 +29,7 @@ class Analytics:
         self,
         postcode_io_key: str = None,
         gss: str = None,
-        layer_ids: List[str] = None,
+        layer_ids: Optional[List[str]] = None,
     ) -> QuerySet[AreaCount]:
         qs = self.get_analytics_queryset(layer_ids=layer_ids)
         if postcode_io_key is None:

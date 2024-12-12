@@ -1778,13 +1778,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             for key in keys
         ]
 
-    def get_import_data(self):
+    def get_import_data(self, **kwargs):
         logger.debug(f"getting import data where external data source id is {self.id}")
         return GenericData.objects.filter(
             data_type__data_set__external_data_source_id=self.id
         )
 
-    def get_analytics_queryset(self):
+    def get_analytics_queryset(self, **kwargs):
         return self.get_import_data()
 
     def get_imported_dataframe(self):
