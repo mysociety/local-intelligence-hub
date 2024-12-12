@@ -822,9 +822,9 @@ class GenericData(CommonData):
     def save(self, *args, **kwargs):
         if self.phone:
             try:
-                self.phone = validate_and_format_phone_number(
-                    self.phone, default_countries
-                )
+               self.phone = validate_and_format_phone_number(
+               self.phone, default_countries()
+            )
             except ValidationError as e:
                 raise ValidationError({"phone": f"Invalid phone number: {e}"})
 
