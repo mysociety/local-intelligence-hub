@@ -819,11 +819,15 @@ class GenericData(CommonData):
 
         return self.postcode_data
 
+    @cached_property
+    def external_data_source(self):
+        return self.data_type.data_set.external_data_source
+
     def save(self, *args, **kwargs):
         if self.phone:
             try:
                 self.phone = validate_and_format_phone_number(
-                    self.phone, ExternalDataSource.countries
+                    self.phone, self.external_data_source.countries
                 )
             except ValidationError as e:
                 raise ValidationError({"phone": f"Invalid phone number: {e}"})
