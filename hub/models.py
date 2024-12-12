@@ -15,6 +15,7 @@ from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.gis.db.models import MultiPolygonField, PointField
 from django.contrib.gis.geos import Point
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min, Q
 from django.db.models.functions import Cast, Coalesce
@@ -30,7 +31,6 @@ import googleapiclient.discovery
 import httpx
 import numpy as np
 import pandas as pd
-import phonenumbers
 import posthog
 import pytz
 from asgiref.sync import async_to_sync, sync_to_async
@@ -41,7 +41,6 @@ from django_jsonform.models.fields import JSONField
 from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2.credentials import Credentials as GoogleCredentials
 from mailchimp3 import MailChimp
-from phonenumbers.phonenumberutil import NumberParseException
 from polymorphic.models import PolymorphicModel
 from procrastinate.contrib.django.models import ProcrastinateEvent, ProcrastinateJob
 from psycopg.errors import UniqueViolation
@@ -75,6 +74,7 @@ from hub.tasks import (
     refresh_pages,
     refresh_webhooks,
 )
+from hub.validation import validate_and_format_phone_number
 from hub.views.mapped import ExternalDataSourceWebhook
 from utils import google_maps, google_sheets
 from utils.log import get_simple_debug_logger
@@ -819,6 +819,17 @@ class GenericData(CommonData):
 
         return self.postcode_data
 
+    def save(self, *args, **kwargs):
+        if self.phone:
+            try:
+                self.phone = validate_and_format_phone_number(
+                    self.phone, default_countries
+                )
+            except ValidationError as e:
+                raise ValidationError({"phone": f"Invalid phone number: {e}"})
+
+        super().save(*args, **kwargs)
+
 
 class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
@@ -1546,16 +1557,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     if field == "can_display_point_field":
                         value = bool(value)  # cast None value to False
                     if field == "phone_field":
-                        try:
-                            phone_number = phonenumbers.parse(value, self.countries[0])
-                            if phonenumbers.is_valid_number(phone_number):
-                                value = phonenumbers.format_number(
-                                    phone_number, phonenumbers.PhoneNumberFormat.E164
-                                )
-                            else:
-                                value = None
-                        except NumberParseException:
-                            value = None
+                        value = validate_and_format_phone_number(value, self.countries)
                     update_data[field.removesuffix("_field")] = value
 
             return update_data
