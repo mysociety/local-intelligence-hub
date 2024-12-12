@@ -823,7 +823,7 @@ class GenericData(CommonData):
         if self.phone:
             try:
                 self.phone = validate_and_format_phone_number(
-                    self.phone, ExternalDataSource.countries()
+                    self.phone, ExternalDataSource.countries
                 )
             except ValidationError as e:
                 raise ValidationError({"phone": f"Invalid phone number: {e}"})
