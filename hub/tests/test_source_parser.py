@@ -2,9 +2,8 @@ from datetime import datetime, timezone
 
 from django.test import TestCase
 
-from utils.py import parse_datetime
-
 from hub.validation import validate_and_format_phone_number
+from utils.py import parse_datetime
 
 
 class TestSourceParser(TestCase):
