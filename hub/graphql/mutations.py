@@ -17,9 +17,9 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import IsAuthenticated
 
 from hub import models
-from hub.models import BatchRequest
 from hub.graphql.types import model_types
 from hub.graphql.utils import graphql_type_to_dict
+from hub.models import BatchRequest
 
 logger = logging.getLogger(__name__)
 
@@ -202,14 +202,14 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
 
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
-async def import_all(info: Info, external_data_source_id: str) -> ExternalDataSourceAction:
+async def import_all(
+    info: Info, external_data_source_id: str
+) -> ExternalDataSourceAction:
     data_source: models.ExternalDataSource = (
         await models.ExternalDataSource.objects.aget(id=external_data_source_id)
     )
-    batch_request = await BatchRequest.objects.acreate(
-        user=get_current_user(info)
-    )
-    
+    batch_request = await BatchRequest.objects.acreate(user=get_current_user(info))
+
     request_id = str(batch_request.id)
     requested_at = now().isoformat()
 
@@ -217,6 +217,7 @@ async def import_all(info: Info, external_data_source_id: str) -> ExternalDataSo
         requested_at=requested_at, request_id=request_id
     )
     return ExternalDataSourceAction(id=request_id, external_data_source=data_source)
+
 
 @strawberry_django.input(models.ExternalDataSource, partial=True)
 class ExternalDataSourceInput:
