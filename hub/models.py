@@ -1359,17 +1359,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         time_threshold = timedelta(minutes=5)
         send_email = False
-        actual_job_duration = None
-
         estimated_job_duration = estimated_finish_time - time_started
-
-        if actual_finish_time is not None:
-            actual_job_duration = actual_finish_time - time_started
 
         if estimated_job_duration > time_threshold:
             send_email = True
-
-        if actual_job_duration and actual_job_duration > time_threshold:
             try:
                 batch_request = BatchRequest.objects.get(id=request_id)
                 if not batch_request.user:
