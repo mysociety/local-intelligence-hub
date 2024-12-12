@@ -1370,23 +1370,29 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             send_email = True
 
         if actual_job_duration and actual_job_duration > time_threshold:
-            if status == "succeeded" and user and user.is_authenticated:
+              try:
+                batch_request = BatchRequest.objects.get(id=request_id)
+                if not batch_request.user:
+                    return 
+              except BatchRequest.DoesNotExist:
+                return  
+              if status == "succeeded" and user and user.is_authenticated:
                 user_email = user.email
                 email_subject = "Mapped Job Progress Notification"
                 email_body = "Your job has been successfully completed."
                 try:
-                    email = EmailMessage(
-                        subject=email_subject,
-                        body=email_body,
-                        from_email="noreply@example.com",
-                        to=[user_email],
-                    )
-                    email.send()
+                        email = EmailMessage(
+                            subject=email_subject,
+                            body=email_body,
+                            from_email="noreply@example.com",
+                            to=[user_email],
+                        )
+                        email.send()
 
                 except Exception as e:
-                    logger.error(f"Failed to send email: {e}")
+                        logger.error(f"Failed to send email: {e}")
 
-            elif status == "failed" and user and user.is_authenticated:
+              elif status == "failed" and user and user.is_authenticated:
                 user_email = user.email
                 email_subject = "Mapped Job Progress Notification"
                 email_body = "Your job has failed. Please check the details."
@@ -1400,7 +1406,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     email.send()
 
                 except Exception as e:
-                    logger.error(f"Failed to send email to {user_email}: {e}")
+                        logger.error(f"Failed to send email to {user_email}: {e}")
 
         return self.BatchJobProgress(
             send_email=send_email,
@@ -4511,6 +4517,3 @@ source_models: dict[str, Type[ExternalDataSource]] = {
 class BatchRequest(models.Model):  
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"BatchRequest {self.id} for User {self.user}"
