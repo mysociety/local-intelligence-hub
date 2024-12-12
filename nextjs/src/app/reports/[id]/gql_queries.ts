@@ -119,8 +119,8 @@ export const MAP_REPORT_COUNT_BY_AREA = gql`
   }
 `
 
-export const MAP_REPORT_DATA_BY_AREA = gql`
-  query MapReportDataByArea(
+export const MAP_REPORT_STATS_BY_AREA = gql`
+  query MapReportStatsByArea(
     $reportID: ID!
     $analyticalAreaType: AnalyticalAreaType!
     $layerIds: [String!]

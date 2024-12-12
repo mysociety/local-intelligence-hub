@@ -2,13 +2,13 @@ import {
   AnalyticalAreaType,
   MapReportCountByAreaQuery,
   MapReportCountByAreaQueryVariables,
-  MapReportDataByAreaQuery,
-  MapReportDataByAreaQueryVariables,
+  MapReportStatsByAreaQuery,
+  MapReportStatsByAreaQueryVariables,
 } from '@/__generated__/graphql'
 import { useQuery } from '@apollo/client'
 import {
   MAP_REPORT_COUNT_BY_AREA,
-  MAP_REPORT_DATA_BY_AREA,
+  MAP_REPORT_STATS_BY_AREA,
 } from './gql_queries'
 import { MapReportExtended } from './reportContext'
 import { ENABLED_ANALYTICAL_AREA_TYPES } from './types'
@@ -16,7 +16,7 @@ import { ENABLED_ANALYTICAL_AREA_TYPES } from './types'
 export type DataByBoundary =
   MapReportCountByAreaQuery['mapReport']['importedDataCountByArea']
 export type ExternalDataByBoundary =
-  MapReportDataByAreaQuery['mapReport']['importedDataByArea']
+  MapReportStatsByAreaQuery['mapReport']['importedDataByArea']
 
 const useDataByBoundary = ({
   report,
@@ -26,7 +26,7 @@ const useDataByBoundary = ({
   boundaryType?: AnalyticalAreaType
   // Source fields are the numeric data columns from the external data source
   getSourceFieldNames?: boolean
-}): { data: DataByBoundary; fieldNames?: string[] } => {
+}): { data: DataByBoundary; fieldNames?: string[]; loading?: boolean } => {
   if (boundaryType && !ENABLED_ANALYTICAL_AREA_TYPES.includes(boundaryType)) {
     throw new Error('Invalid boundary type')
   }
@@ -41,10 +41,10 @@ const useDataByBoundary = ({
 
   const queryForCounts = selectedDataSource?.source.dataType === 'MEMBER'
 
-  const externalDataByBoundary = useQuery<
-    MapReportDataByAreaQuery,
-    MapReportDataByAreaQueryVariables
-  >(MAP_REPORT_DATA_BY_AREA, {
+  const { data: externalStatsByBoundary, loading: loadingStats } = useQuery<
+    MapReportStatsByAreaQuery,
+    MapReportStatsByAreaQueryVariables
+  >(MAP_REPORT_STATS_BY_AREA, {
     variables: {
       reportID: report?.id,
       analyticalAreaType: boundaryType!,
@@ -53,7 +53,7 @@ const useDataByBoundary = ({
     skip: !boundaryType || !report || !queryForExternalData,
   })
 
-  const countsByBoundary = useQuery<
+  const { data: countsByBoundary, loading: loadingCounts } = useQuery<
     MapReportCountByAreaQuery,
     MapReportCountByAreaQueryVariables
   >(MAP_REPORT_COUNT_BY_AREA, {
@@ -65,14 +65,16 @@ const useDataByBoundary = ({
     skip: !boundaryType || !report || !queryForCounts,
   })
 
+  const loading = loadingStats || loadingCounts
   let fieldNames: string[] | undefined
 
   if (queryForCounts) {
     return {
-      data: countsByBoundary.data?.mapReport.importedDataCountByArea || [],
+      data: countsByBoundary?.mapReport.importedDataCountByArea || [],
+      loading,
     }
   } else if (queryForExternalData) {
-    const rawData = externalDataByBoundary.data?.mapReport.importedDataByArea
+    const rawData = externalStatsByBoundary?.mapReport.importedDataByArea
     const data = rawData && processNumericFieldsInDataSource(rawData)
     fieldNames = data && getNumericFieldsFromDataSource(data)
 
@@ -112,13 +114,14 @@ const useDataByBoundary = ({
       return {
         data: summedByGss,
         fieldNames,
+        loading,
       }
     } else {
-      return { fieldNames, data: [] }
+      return { fieldNames, data: [], loading }
     }
   }
 
-  return { data: [] }
+  return { data: [], loading }
 }
 
 export default useDataByBoundary
