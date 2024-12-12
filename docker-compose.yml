@@ -22,7 +22,7 @@ services:
   web:
     image: mysociety/local-intelligence-hub:${TAG:-latest}
     build: .
-    command: /app/script/server --development
+    command: .venv/bin/python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
     depends_on:

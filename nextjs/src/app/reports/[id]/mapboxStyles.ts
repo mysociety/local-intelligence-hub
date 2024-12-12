@@ -1,4 +1,3 @@
-import { GroupedDataCount } from '@/__generated__/graphql'
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { interpolateBlues } from 'd3-scale-chromatic'
 import {
@@ -7,6 +6,7 @@ import {
   SymbolLayerSpecification,
 } from 'mapbox-gl'
 import { Tileset } from './types'
+import { BoundaryAnalytics } from './useBoundaryAnalytics'
 
 export function getChoroplethFill(
   data: { count: number }[]
@@ -39,6 +39,7 @@ export function getChoroplethFill(
   const colourScale = scaleSequential()
     .domain([min, max])
     .interpolator(interpolateBlues)
+    .interpolator((t) => interpolateBlues(1 - t))
 
   let steps = Math.min(max, 30) // Max 30 steps
   steps = Math.max(steps, 3) // Min 3 steps (for valid Mapbox fill-color rule)
@@ -65,17 +66,28 @@ export function getChoroplethFill(
 export function getChoroplethEdge(): LineLayerSpecification['paint'] {
   return {
     'line-color': 'white',
-    'line-gap-width': [
+    'line-opacity': [
       'interpolate',
       ['exponential', 1],
       ['zoom'],
+      //
       8,
-      0,
+      0.3,
+      //
       12,
-      3,
+      1,
     ],
-    'line-opacity': 0.5,
-    'line-width': ['interpolate', ['exponential', 1], ['zoom'], 8, 0.1, 12, 1],
+    'line-width': [
+      'interpolate',
+      ['exponential', 1],
+      ['zoom'],
+      //
+      8,
+      0.3,
+      //
+      12,
+      2,
+    ],
   }
 }
 
@@ -86,12 +98,13 @@ export function getSelectedChoroplethEdge(): LineLayerSpecification['paint'] {
   }
 }
 export const getChoroplethFillFilter = (
-  data: GroupedDataCount[],
+  data: BoundaryAnalytics,
   tileset: Tileset
 ) => {
   return [
     'in',
     ['get', tileset.promoteId],
+    // @ts-ignore
     ['literal', data.map((d) => d.gss || '')],
   ]
 }
@@ -103,11 +116,13 @@ export const getSelectedChoroplethFillFilter = (
   return ['==', ['get', tileset.promoteId], selectedGss]
 }
 
-export function getAreaGeoJSON(data: GroupedDataCount[]) {
+export function getAreaGeoJSON(data: BoundaryAnalytics) {
   return {
     type: 'FeatureCollection',
     features: data
+      // @ts-ignore
       .filter((d) => d.gssArea?.point?.geometry)
+      // @ts-ignore
       .map((d) => ({
         type: 'Feature',
         geometry: d.gssArea?.point?.geometry! as GeoJSON.Point,
@@ -119,14 +134,16 @@ export function getAreaGeoJSON(data: GroupedDataCount[]) {
   }
 }
 
-function getStatsForData(data: GroupedDataCount[]) {
+function getStatsForData(data: BoundaryAnalytics) {
   let min =
     data.reduce(
+      // @ts-ignore
       (min, p) => (p?.count! < min ? p?.count! : min),
       data?.[0]?.count!
     ) || 0
   let max =
     data.reduce(
+      // @ts-ignore
       (max, p) => (p?.count! > max ? p?.count! : max),
       data?.[0]?.count!
     ) || 1
@@ -146,7 +163,7 @@ function getStatsForData(data: GroupedDataCount[]) {
 }
 
 export const getAreaCountLayout = (
-  data: GroupedDataCount[]
+  data: BoundaryAnalytics
 ): SymbolLayerSpecification['layout'] => {
   const { min, max, textScale } = getStatsForData(data)
 
@@ -156,14 +173,30 @@ export const getAreaCountLayout = (
     'text-size': [
       'interpolate',
       ['linear'],
-      ['get', 'count'],
-      min,
-      textScale(min) * 17,
-      max,
-      textScale(max) * 17,
+      ['zoom'],
+      1,
+      [
+        'max',
+        ['*', ['/', ['get', 'count'], max], textScale(max) * 9],
+        textScale(min) * 10,
+      ],
+      12,
+      [
+        'max',
+        ['*', ['/', ['get', 'count'], max], textScale(max) * 18],
+        textScale(min) * 20,
+      ],
     ],
     'symbol-placement': 'point',
-    'text-offset': [0, -0.5],
+    'text-offset': [
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      1,
+      [0, -0.1],
+      12,
+      [0, -1],
+    ],
     'text-allow-overlap': true,
     'text-ignore-placement': true,
     'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
@@ -171,7 +204,7 @@ export const getAreaCountLayout = (
 }
 
 export const getAreaLabelLayout = (
-  data: GroupedDataCount[]
+  data: BoundaryAnalytics
 ): SymbolLayerSpecification['layout'] => {
   const { min, max, textScale } = getStatsForData(data)
 
@@ -181,11 +214,19 @@ export const getAreaLabelLayout = (
     'text-size': [
       'interpolate',
       ['linear'],
-      ['get', 'count'],
-      min,
-      textScale(min) * 9,
-      max,
-      textScale(max) * 9,
+      ['zoom'],
+      1,
+      [
+        'max',
+        ['*', ['/', ['get', 'count'], max], textScale(max) * 9],
+        textScale(min) * 10,
+      ],
+      12,
+      [
+        'max',
+        ['*', ['/', ['get', 'count'], max], textScale(max) * 18],
+        textScale(min) * 20,
+      ],
     ],
     'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
     'symbol-placement': 'point',

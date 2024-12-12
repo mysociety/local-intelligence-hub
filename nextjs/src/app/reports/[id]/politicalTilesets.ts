@@ -3,7 +3,7 @@ import { Tileset } from './types'
 
 type AvailableCountries = 'uk'
 
-type PoliticalTileset = {
+export type PoliticalTileset = {
   boundaryType: AnalyticalAreaType
   label: string
   tileset: Tileset

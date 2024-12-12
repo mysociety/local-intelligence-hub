@@ -20,6 +20,7 @@ import ReportPage from './(components)/ReportPage'
 import ReportProvider from './(components)/ReportProvider'
 import { ReportSidebarLeft } from './(components)/ReportSidebarLeft'
 import { GET_MAP_REPORT } from './gql_queries'
+import { getPoliticalTilesetsByCountry } from './politicalTilesets'
 import { MapReportExtended } from './reportContext'
 
 type Params = {
@@ -49,11 +50,15 @@ export default function Page({ params: { id } }: { params: Params }) {
   // Really important to check if the report is null before rendering the page
   // The ReportProvider component needs to be able to provide a report to its children
   if (!report.data?.mapReport) return null
+  const mapReport = {
+    ...report.data.mapReport,
+    politicalBoundaries: getPoliticalTilesetsByCountry('uk'),
+  } as unknown as MapReportExtended
 
   return (
     <JotaiProvider key={id}>
       <MapProvider>
-        <ReportProvider report={report.data?.mapReport as MapReportExtended}>
+        <ReportProvider report={mapReport}>
           <SidebarProvider
             style={
               {

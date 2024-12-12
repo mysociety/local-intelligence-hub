@@ -1,85 +1,81 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Django",
-            "type": "debugpy",
-            "python": "${workspaceFolder}/.venv/bin/python",
-            "request": "launch",
-            "justMyCode": false,
-            "program": "${workspaceFolder}/manage.py",
-            "args": [
-                "runserver"
-            ],
-            "django": true,
-            "presentation": {
-                "group": "power users",
-                "order": 1
-            }
-        },
-        {
-            "name": "NextJS",
-            "type": "node-terminal",
-            "command": "cd nextjs && npm install && npm run dev",
-            "request": "launch",
-            "presentation": {
-                "group": "power users",
-                "order": 1
-            }
-        },
-        {
-          "name": "Django background worker",
-          "type": "debugpy",
-          "python": "${workspaceFolder}/.venv/bin/python",
-          "request": "launch",
-          "program": "${workspaceFolder}/manage.py",
-          "args": [
-            "procrastinate", "worker"
-          ],
-          "justMyCode": true,
-          "django": true,
-          "presentation": {
-            "group": "power users",
-            "order": 1
-        }
-        },
-        {
-          // Node 
-          "name": "Generate GraphQL types for client",
-          "type": "node-terminal",
-          "command": "./bin/graphql_codegen.sh",
-          "request": "launch",
-          "presentation": {
-            "group": "power users",
-            "order": 1
-        }
-        }
-    ],
-    "compounds": [
-        {
-            "name": "Run Mapped!",
-            "configurations": [
-                "NextJS",
-                "Django",
-                "Django background worker",
-                "Generate GraphQL types for client"
-            ],
-            "presentation": {
-                "group": "0",
-                "order": 0
-            }
-        },
-        {
-            "name": "Backend",
-            "configurations": [
-                "Django",
-                "Django background worker",
-                "Generate GraphQL types for client"
-            ],
-            "presentation": {
-                "group": "power users",
-                "order": 1
-            }
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Django",
+      "type": "debugpy",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "request": "launch",
+      "justMyCode": false,
+      "program": "${workspaceFolder}/manage.py",
+      "args": ["runserver"],
+      "django": true,
+      "presentation": {
+        "group": "power users",
+        "order": 1
+      }
+    },
+    {
+      "name": "NextJS",
+      "type": "node-terminal",
+      "command": "cd nextjs && npm install && npm run dev",
+      "request": "launch",
+      "presentation": {
+        "group": "power users",
+        "order": 1
+      }
+    },
+    {
+      "name": "Django background worker",
+      "type": "debugpy",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "request": "launch",
+      "program": "${workspaceFolder}/manage.py",
+      "args": ["runworker"],
+      "justMyCode": true,
+      "django": true,
+      "presentation": {
+        "group": "power users",
+        "order": 1
+      }
+    },
+    {
+      // Node
+      "name": "Generate GraphQL types for client",
+      "type": "node-terminal",
+      "command": "./bin/graphql_codegen.sh",
+      "request": "launch",
+      "presentation": {
+        "group": "power users",
+        "order": 1
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Run Mapped!",
+      "configurations": [
+        "NextJS",
+        "Django",
+        "Django background worker",
+        "Generate GraphQL types for client"
+      ],
+      "presentation": {
+        "group": "0",
+        "order": 0
+      }
+    },
+    {
+      "name": "Backend",
+      "configurations": [
+        "Django",
+        "Django background worker",
+        "Generate GraphQL types for client"
+      ],
+      "presentation": {
+        "group": "power users",
+        "order": 1
+      }
+    }
+  ]
 }
