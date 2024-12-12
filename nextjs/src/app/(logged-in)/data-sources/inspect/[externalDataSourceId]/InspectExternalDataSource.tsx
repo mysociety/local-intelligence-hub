@@ -50,7 +50,7 @@ import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/lib/graphql/mutations'
 import { contentEditableMutation } from '@/lib/html'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { formatCrmNames } from '@/lib/utils'
-
+import { CREATE_MAP_REPORT } from '../../../reports/ReportList/CreateReportCard'
 import { ManageSourceSharing } from './ManageSourceSharing'
 import importData from './importData'
 
@@ -204,6 +204,44 @@ export default function InspectExternalDataSource({
     ? externalDataSourceOptions[source?.crmType]
     : undefined
 
+  const handleCreateReport = () => {
+    const layer = {
+      id: externalDataSourceId,
+      name,
+      source: externalDataSourceId,
+      visible: true,
+    }
+
+    const variables = {
+      data: {
+        name: `Report for ${name}`,
+        displayOptions: {
+          layers: [layer],
+        },
+      },
+    }
+    toast.promise(
+      client.mutate({
+        mutation: CREATE_MAP_REPORT,
+        variables,
+      }),
+      {
+        loading: 'Creating report...',
+        success: (d) => {
+          console.log('Mutation Response:', d)
+
+          if (d.data?.createMapReport?.__typename === 'MapReport') {
+            router.push(`/reports/${d.data.createMapReport.id}`)
+            return 'Report created!'
+          } else {
+            throw new Error('Failed to create report.')
+          }
+        },
+        error: 'Failed to create report.',
+      }
+    )
+  }
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-7">
       <header className="flex flex-row justify-between gap-8">
@@ -242,6 +280,7 @@ export default function InspectExternalDataSource({
           )}
         </div>
       </header>
+      <Button onClick={handleCreateReport}>Generate Report</Button>
       <div className="border-b border-meepGray-700 pt-10" />
       {(!data?.externalDataSource && loading) || !source ? (
         <div className="py-8 text-center">
