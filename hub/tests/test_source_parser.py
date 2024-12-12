@@ -31,8 +31,8 @@ class TestPhoneField(TestCase):
             data=[
                 {"id": "bad1", "phone": "123456789"},
                 {"id": "good1", "phone": "07123456789"},
-                {"id": "good2", "phone": "+447123456789"}
-            ]
+                {"id": "good2", "phone": "+447123456789"},
+            ],
         )
         await sync_to_async(source.save)()
 

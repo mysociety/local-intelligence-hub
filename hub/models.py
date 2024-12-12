@@ -1147,7 +1147,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             hash_values = ["name"]
         else:
             hash_values = [
-                str(getattr(self, field)) for field in self.get_deduplication_field_names()
+                str(getattr(self, field))
+                for field in self.get_deduplication_field_names()
             ]
         return hashlib.md5("".join(hash_values).encode()).hexdigest()
 
@@ -2582,6 +2583,7 @@ class LocalJSONSource(ExternalDataSource):
     """
     A test table.
     """
+
     crm_type = "test"
     has_webhooks = False
     automated_webhooks = False
@@ -2599,7 +2601,7 @@ class LocalJSONSource(ExternalDataSource):
 
     def healthcheck(self):
         return True
-    
+
     @cached_property
     def df(self):
         return pd.DataFrame(self.data).set_index(self.id_field)
@@ -2607,10 +2609,8 @@ class LocalJSONSource(ExternalDataSource):
     def field_definitions(self):
         # get all keys from self.data
         return [
-            self.FieldDefinition(
-                label=col,
-                value=col
-            ) for col in self.df.columns.tolist()
+            self.FieldDefinition(label=col, value=col)
+            for col in self.df.columns.tolist()
         ]
 
     def get_record_id(self, record: dict):
@@ -2645,7 +2645,9 @@ class LocalJSONSource(ExternalDataSource):
             await self.update_one(mapped_record)
 
     def delete_one(self, record_id):
-        self.data = [record for record in self.data if record[self.id_field] != record_id]
+        self.data = [
+            record for record in self.data if record[self.id_field] != record_id
+        ]
         self.save()
 
     def create_one(self, record):
@@ -2657,6 +2659,7 @@ class LocalJSONSource(ExternalDataSource):
         self.data.extend([record["data"] for record in records])
         self.save()
         return records
+
 
 class AirtableSource(ExternalDataSource):
     """
