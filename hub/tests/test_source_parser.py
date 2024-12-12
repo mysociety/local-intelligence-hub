@@ -4,6 +4,8 @@ from django.test import TestCase
 
 from utils.py import parse_datetime
 
+from hub.validation import validate_and_format_phone_number
+
 
 class TestSourceParser(TestCase):
     dates_that_should_work = [
@@ -16,3 +18,32 @@ class TestSourceParser(TestCase):
     def test_dateparse(self):
         for date in self.dates_that_should_work:
             self.assertEqual(parse_datetime(date[0]), date[1])
+
+class TestPhoneField(TestCase):
+    def test_invalid_phone_number(self):
+        phone = "123456789"
+        result = validate_and_format_phone_number(
+            phone, "GB"
+        )
+        self.assertIsNone(result)
+
+    def test_valid_phone_number_without_country_code(self):
+        phone = "07123456789"
+        result = validate_and_format_phone_number(
+            phone, "GB"
+        )
+        self.assertEqual(result, "+447123456789")
+    
+    def test_valid_phone_number_with_country_code(self):
+        phone = "+447123456789"
+        result = validate_and_format_phone_number(
+            phone, ["GB"]
+        )
+        self.assertEqual(result, "+447123456789")
+
+    def test_valid_phone_number_for_usa(self):
+        phone = "4155552671"
+        result = validate_and_format_phone_number(
+            phone, ["US"]
+        )
+        self.assertEqual(result, "+14155552671")
