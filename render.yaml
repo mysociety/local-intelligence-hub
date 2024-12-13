@@ -61,7 +61,7 @@ services:
     python manage.py migrate &&
     python manage.py createcachetable &&
     unzip data/preview_env_seed.zip -d data &&
-    cat data/preview_env_seed.psql | python manage.py dbshell &&
+    ./bin/import_preview_env_seed.sh &&
     python manage.py seed
   healthCheckPath: /
   buildFilter:
