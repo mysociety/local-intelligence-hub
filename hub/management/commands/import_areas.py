@@ -39,8 +39,8 @@ class Command(BaseCommand):
             "mapit_type": ["COI", "CPW", "DIW", "LBW", "LGW", "MTW", "UTW"],
             "name": "Wards",
             "code": "WD23",
-            "area_type": "Ward",
-            "description": "Ward",
+            "area_type": "Electoral Ward",
+            "description": "Electoral wards",
         },
     ]
 
