@@ -1625,6 +1625,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     logger.error(
                         f"Could not find ward for record {self.get_record_id(record)} and gss {gss}"
                     )
+                    return
                 coord = ward.point.centroid
                 postcode_data: PostcodesIOResult = await loaders[
                     "postcodesIOFromPoint"
