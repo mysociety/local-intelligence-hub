@@ -7,13 +7,13 @@ import django_jsonform.models.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("hub", "0142_alter_hubhomepage_organisation"),
+        ("hub", "0146_batchrequest"),
     ]
 
     operations = [
         migrations.AddField(
             model_name="externaldatasource",
-            name="geography_config",
+            name="geocoding_config",
             field=django_jsonform.models.fields.JSONField(
                 blank=True, default=list, null=True
             ),

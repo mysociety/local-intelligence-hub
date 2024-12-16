@@ -3,12 +3,12 @@ import hashlib
 import itertools
 import json
 import math
+import re
 import uuid
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import List, Optional, Self, Type, TypedDict, Union
 from urllib.parse import urlencode, urljoin
-import re
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -1082,7 +1082,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
         # TODO: LNG_LAT = "LNG_LAT", "Longitude and Latitude"
 
-    geography_config = JSONField(blank=True, null=True, default=list)
+    geocoding_config = JSONField(blank=True, null=True, default=list)
     geography_column_type = TextChoicesField(
         choices_enum=GeographyTypes,
         default=GeographyTypes.POSTCODE,
@@ -1661,12 +1661,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             return update_data
 
         if (
-            self.geography_config
-            and isinstance(self.geography_config, list)
-            and len(self.geography_config) > 0
+            self.geocoding_config
+            and isinstance(self.geocoding_config, list)
+            and len(self.geocoding_config) > 0
         ):
             """
-            geography_config will look something like:
+            geocoding_config will look something like:
             [
               {
                 "type": ["STC", "DIS"],
@@ -1683,7 +1683,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             async def create_import_record(record):
                 # Filter down geographies by the config
                 area = None
-                for item in self.geography_config:
+                for item in self.geocoding_config:
                     literal_area_type = item.get("type", None)
                     literal_area_field = item.get("field", None)
                     if literal_area_type is None or literal_area_field is None:

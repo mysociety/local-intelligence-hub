@@ -2,9 +2,8 @@ from json.decoder import JSONDecodeError
 
 from django.conf import settings
 
-from requests_cache import CachedSession
-
 from requests.models import PreparedRequest
+from requests_cache import CachedSession
 
 session = CachedSession(cache_name=settings.CACHE_FILE, expire_after=86400)
 

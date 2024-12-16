@@ -99,6 +99,6 @@ class Command(BaseCommand):
                         a.polygon = geom
                         a.point = a.polygon.centroid
                         a.save()
-                except KeyError as e:  # pragma: no cover
+                except KeyError:  # pragma: no cover
                     # Ignore areas without a GSS code
                     pass
