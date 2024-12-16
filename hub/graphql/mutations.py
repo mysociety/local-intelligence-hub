@@ -4,11 +4,10 @@ import uuid
 from enum import Enum
 from typing import List, Optional
 
-from django.utils.text import slugify
-
 import strawberry
 import strawberry_django
 from asgiref.sync import async_to_sync
+from graphql import GraphQLError
 from strawberry import auto
 from strawberry.field_extensions import InputMutationExtension
 from strawberry.types.info import Info
@@ -18,7 +17,6 @@ from strawberry_django.permissions import IsAuthenticated
 from hub import models
 from hub.graphql.types import model_types
 from hub.graphql.utils import graphql_type_to_dict
-from graphql import GraphQLError
 
 logger = logging.getLogger(__name__)
 
@@ -169,13 +167,15 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
         for layer in display_layers:
             layer_id = layer["id"]
             # Query for existing report with the same layer
-            existing_report = models.MapReport.objects.filter(layers__contains=[{"id": layer_id}]).first()
+            existing_report = models.MapReport.objects.filter(
+                layers__contains=[{"id": layer_id}]
+            ).first()
             if existing_report:
-                report_link = f"/reports/{existing_report.id}" 
+                report_link = f"/reports/{existing_report.id}"
                 raise GraphQLError(
-                f"A map for this data source already exists. "
-                f'You can view it <a className="underline" href="{report_link}" target="_blank">here</a>'
-            )
+                    f"A map for this data source already exists. "
+                    f'You can view it <a className="underline" href="{report_link}" target="_blank">here</a>'
+                )
 
     # Prepare base parameters
     params = {
@@ -188,7 +188,7 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
     }
 
     map_report = models.MapReport.objects.create(**params)
-    
+
     if "layers" in data.display_options:
         display_layers = data.display_options["layers"]
         map_report.layers = [
@@ -226,6 +226,7 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
             map_report.save()
 
     return map_report
+
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
 async def import_all(external_data_source_id: str) -> ExternalDataSourceAction:
