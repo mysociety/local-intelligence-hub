@@ -1,14 +1,5 @@
 'use client'
 
-import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
-import { format } from 'd3-format'
-import { formatRelative } from 'date-fns'
-import { useAtom } from 'jotai'
-import { AlertCircle, ExternalLink } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import pluralize from 'pluralize'
-import { toast } from 'sonner'
-
 import {
   DataSourceType,
   DeleteUpdateConfigMutation,
@@ -50,6 +41,15 @@ import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/lib/graphql/mutations'
 import { contentEditableMutation } from '@/lib/html'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { formatCrmNames } from '@/lib/utils'
+import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
+import { format } from 'd3-format'
+import { formatRelative } from 'date-fns'
+import parse from 'html-react-parser' // Install with `npm install html-react-parser`
+import { useAtom } from 'jotai'
+import { AlertCircle, ExternalLink } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import pluralize from 'pluralize'
+import { toast } from 'sonner'
 import { CREATE_MAP_REPORT } from '../../../reports/ReportList/CreateReportCard'
 import { ManageSourceSharing } from './ManageSourceSharing'
 import importData from './importData'
@@ -214,12 +214,13 @@ export default function InspectExternalDataSource({
 
     const variables = {
       data: {
-        name: `Report for ${name}`,
+        name: `Map for ${name}`,
         displayOptions: {
           layers: [layer],
         },
       },
     }
+
     toast.promise(
       client.mutate({
         mutation: CREATE_MAP_REPORT,
@@ -232,16 +233,19 @@ export default function InspectExternalDataSource({
 
           if (d.data?.createMapReport?.__typename === 'MapReport') {
             router.push(`/reports/${d.data.createMapReport.id}`)
-            return 'Report created!'
+            return 'Map created!'
           } else {
-            throw new Error('Failed to create report.')
+            throw new Error('Failed to create map.')
           }
         },
-        error: 'Failed to create report.',
+        error: (e) => {
+          const errorMessage =
+            e?.graphQLErrors?.[0]?.message || 'Failed to create map.'
+          return parse(errorMessage)
+        },
       }
     )
   }
-
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-7">
       <header className="flex flex-row justify-between gap-8">
@@ -280,7 +284,7 @@ export default function InspectExternalDataSource({
           )}
         </div>
       </header>
-      <Button onClick={handleCreateReport}>Generate Report</Button>
+
       <div className="border-b border-meepGray-700 pt-10" />
       {(!data?.externalDataSource && loading) || !source ? (
         <div className="py-8 text-center">
@@ -396,6 +400,9 @@ export default function InspectExternalDataSource({
                   ) : null}
                 </section>
               )}
+              <Button onClick={handleCreateReport}>
+                Generate map for this data source
+              </Button>
             </section>
             <section className="space-y-4">
               <header className="flex flex-row justify-between items-center">
