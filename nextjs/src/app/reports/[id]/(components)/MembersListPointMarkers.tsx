@@ -3,11 +3,11 @@
 import { BACKEND_URL } from '@/env'
 import { layerColour, selectedSourceMarkerAtom, useLoadedMap } from '@/lib/map'
 import { useAtom } from 'jotai'
+import { MapMouseEvent } from 'mapbox-gl'
 import { useEffect } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import MarkerPopup from './MarkerPopup'
 import { PLACEHOLDER_LAYER_ID_MARKERS } from './ReportPage'
-
 const MIN_MEMBERS_ZOOM = 10
 
 export function MembersListPointMarkers({
@@ -24,36 +24,42 @@ export function MembersListPointMarkers({
 
   useEffect(
     function selectMarker() {
-      mapbox.loadedMap?.on(
-        'mouseover',
-        `${externalDataSourceId}-marker`,
-        () => {
-          const canvas = mapbox.loadedMap?.getCanvas()
-          if (!canvas) return
-          canvas.style.cursor = 'pointer'
+      const map = mapbox.loadedMap
+      if (!map) return
+
+      const handleMouseOver = (event: MapMouseEvent) => {
+        const feature = event.features?.[0]
+        if (feature?.properties?.id) {
+          setSelectedSourceMarker(feature)
         }
-      )
-      mapbox.loadedMap?.on(
-        'mouseleave',
-        `${externalDataSourceId}-marker`,
-        () => {
-          const canvas = mapbox.loadedMap?.getCanvas()
-          if (!canvas) return
-          canvas.style.cursor = ''
+      }
+
+      const handleMouseLeave = () => {
+        setSelectedSourceMarker(null)
+      }
+
+      const handleClick = (event: MapMouseEvent) => {
+        const feature = event.features?.[0]
+        if (feature?.properties?.id) {
+          setSelectedSourceMarker(feature)
         }
-      )
-      mapbox.loadedMap?.on(
-        'click',
-        `${externalDataSourceId}-marker`,
-        (event) => {
-          const feature = event.features?.[0]
-          if (feature?.properties?.id) {
-            setSelectedSourceMarker(feature)
-          }
-        }
-      )
+      }
+
+      map.on('mouseover', `${externalDataSourceId}-marker`, handleMouseOver)
+      map.on('mouseleave', `${externalDataSourceId}-marker`, handleMouseLeave)
+      map.on('click', `${externalDataSourceId}-marker`, handleClick)
+
+      return () => {
+        map.off('mouseover', `${externalDataSourceId}-marker`, handleMouseOver)
+        map.off(
+          'mouseleave',
+          `${externalDataSourceId}-marker`,
+          handleMouseLeave
+        )
+        map.off('click', `${externalDataSourceId}-marker`, handleClick)
+      }
     },
-    [mapbox.loadedMap, externalDataSourceId]
+    [mapbox.loadedMap, externalDataSourceId, setSelectedSourceMarker]
   )
 
   return (
