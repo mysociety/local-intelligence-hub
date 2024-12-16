@@ -2,7 +2,6 @@
 import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
 import { formatRelative } from 'date-fns'
-import { useAtom } from 'jotai'
 import { AlertCircle, ExternalLink } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import pluralize from 'pluralize'
@@ -47,9 +46,8 @@ import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { externalDataSourceOptions } from '@/lib/data'
 import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/lib/graphql/mutations'
 import { contentEditableMutation } from '@/lib/html'
-import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { formatCrmNames } from '@/lib/utils'
-import parse from 'html-react-parser' // Install with `npm install html-react-parser`
+import parse from 'html-react-parser'
 import { CREATE_MAP_REPORT } from '../../../reports/ReportList/CreateReportCard'
 import { ManageSourceSharing } from './ManageSourceSharing'
 import importData from './importData'
@@ -187,7 +185,7 @@ export default function InspectExternalDataSource({
   const router = useRouter()
   const client = useApolloClient()
 
-  const { loading, error, data, refetch } = useQuery<
+  const { loading, data, refetch } = useQuery<
     ExternalDataSourceInspectPageQuery,
     ExternalDataSourceInspectPageQueryVariables
   >(GET_UPDATE_CONFIG, {
@@ -196,8 +194,6 @@ export default function InspectExternalDataSource({
     },
     pollInterval: 5000,
   })
-
-  const orgId = useAtom(currentOrganisationIdAtom)
 
   if (!loading && !data?.externalDataSource) {
     return <h2>Couldn{"'"}t find this data source</h2>
