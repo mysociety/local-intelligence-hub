@@ -1618,14 +1618,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     area = await qs.afirst()
                     if area is None:
                         logger.debug(
-                            f"Could not find area for {searchable_name} using query: {query}"
+                            f"Could not find area for {searchable_name} using query: {query[:1000]}"
                         )
                 if area is not None:
                     # get postcodeIO result for area.coordinates
                     postcode_data: PostcodesIOResult = await loaders[
                         "postcodesIOFromPoint"
                     ].load(area.point)
-                    update_data = {"postcode_data": postcode_data}
+
+                    update_data = {
+                        **get_update_data(record),
+                        "postcode_data": postcode_data,
+                    }
 
                     await GenericData.objects.aupdate_or_create(
                         data_type=data_type,
