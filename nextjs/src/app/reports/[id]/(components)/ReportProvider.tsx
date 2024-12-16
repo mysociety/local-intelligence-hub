@@ -11,7 +11,7 @@ import { FetchResult, useApolloClient } from '@apollo/client'
 import { useSetAtom } from 'jotai'
 import { merge, pick } from 'lodash'
 import { useRouter } from 'next/navigation'
-import { ReactNode, useContext, useEffect } from 'react'
+import { ReactNode, useContext, useEffect, useState } from 'react'
 import toSpaceCase from 'to-space-case'
 import { DELETE_MAP_REPORT, UPDATE_MAP_REPORT } from '../gql_queries'
 import ReportContext, {
@@ -29,10 +29,24 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
   const router = useRouter()
   const client = useApolloClient()
   const setNavbarTitle = useSetAtom(navbarTitleAtom)
+  const [dataLoading, setDataLoading] = useState(false)
 
   useEffect(() => {
     setNavbarTitle(report.name)
   }, [report.name])
+
+  // If the report has only one layer, set it as the data source
+  useEffect(() => {
+    if (report.layers.length === 1) {
+      updateReport({
+        displayOptions: {
+          dataVisualisation: {
+            dataSource: report.layers[0].id,
+          },
+        },
+      })
+    }
+  }, [report.layers])
 
   function updateReport(payload: {
     name?: string
@@ -99,9 +113,6 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
           'GetMapReport',
           'MapReportLayerAnalytics',
           'GetConstituencyData',
-          'MapReportRegionStats',
-          'MapReportConstituencyStats',
-          'MapReportWardStats',
         ],
       }),
       {
@@ -114,7 +125,14 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
 
   return (
     <ReportContext.Provider
-      value={{ report, deleteReport, refreshReportData, updateReport }}
+      value={{
+        report,
+        deleteReport,
+        refreshReportData,
+        updateReport,
+        dataLoading,
+        setDataLoading,
+      }}
     >
       {children}
     </ReportContext.Provider>

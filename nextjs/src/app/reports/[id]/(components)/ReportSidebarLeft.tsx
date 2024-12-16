@@ -3,12 +3,16 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card'
+import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { Sidebar, SidebarContent } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useDebounce } from '@uidotdev/usehooks'
+import clsx from 'clsx'
 import useReportUiHelpers from '../useReportUiHelpers'
 import ReportConfiguration from './ReportConfiguration'
 import { ReportDataSources } from './ReportDataSources'
 import { NAVBAR_HEIGHT } from './ReportNavbar'
+import { useReport } from './ReportProvider'
 
 const classes = {
   tabsTrigger:
@@ -17,6 +21,8 @@ const classes = {
 
 export function ReportSidebarLeft() {
   const { userJourneyHelpers, updateUserJourneyHelpers } = useReportUiHelpers()
+  const { dataLoading: undebouncedDataLoading } = useReport()
+  const dataLoading = useDebounce(undebouncedDataLoading, 300)
 
   return (
     <Sidebar
@@ -31,8 +37,12 @@ export function ReportSidebarLeft() {
             className="w-full justify-start text-white rounded-none px-4
           border border-b-meepGray-800 pt-4 pb-0 h-fit flex gap-4"
           >
-            <TabsTrigger value="data-sources" className={classes.tabsTrigger}>
-              Data Sources
+            <TabsTrigger
+              value="data-sources"
+              className={classes.tabsTrigger}
+              disabled={dataLoading}
+            >
+              Data Sources {}
             </TabsTrigger>
 
             <HoverCard
@@ -45,6 +55,7 @@ export function ReportSidebarLeft() {
                 <TabsTrigger
                   value="configuration"
                   className={classes.tabsTrigger}
+                  disabled={dataLoading}
                 >
                   Configuration
                 </TabsTrigger>
@@ -54,10 +65,28 @@ export function ReportSidebarLeft() {
               </HoverCardContent>
             </HoverCard>
           </TabsList>
-          <TabsContent value="data-sources" className="px-4">
-            <ReportDataSources />
+          <TabsContent value="data-sources" className="">
+            <div id="sources-loading-indicator">
+              <div
+                className={clsx(
+                  'flex flex-col px-4 pb-24 transition',
+                  dataLoading ? 'blur-md grayscale pointer-events-none' : ''
+                )}
+              >
+                <ReportDataSources />
+              </div>
+              <div
+                className={clsx(
+                  'absolute top-0 w-full h-[300px] flex flex-col justify-center items-center',
+                  dataLoading ? 'flex' : 'hidden'
+                )}
+              >
+                <p className="text-white">Loading data source...</p>
+                <LoadingIcon className="w-20 h-20 mt-4" />
+              </div>
+            </div>
           </TabsContent>
-          <TabsContent value="configuration" className="px-4">
+          <TabsContent value="configuration" className="px-4 pb-24">
             <ReportConfiguration />
           </TabsContent>
         </Tabs>

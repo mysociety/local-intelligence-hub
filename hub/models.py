@@ -15,6 +15,7 @@ from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.gis.db.models import MultiPolygonField, PointField
 from django.contrib.gis.geos import Point
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min, Q
@@ -74,6 +75,7 @@ from hub.tasks import (
     refresh_pages,
     refresh_webhooks,
 )
+from hub.validation import validate_and_format_phone_number
 from hub.views.mapped import ExternalDataSourceWebhook
 from utils import google_maps, google_sheets
 from utils.log import get_simple_debug_logger
@@ -818,6 +820,21 @@ class GenericData(CommonData):
 
         return self.postcode_data
 
+    @cached_property
+    def external_data_source(self):
+        return self.data_type.data_set.external_data_source
+
+    def save(self, *args, **kwargs):
+        if self.phone:
+            try:
+                self.phone = validate_and_format_phone_number(
+                    self.phone, self.external_data_source.countries
+                )
+            except ValidationError as e:
+                raise ValidationError({"phone": f"Invalid phone number: {e}"})
+
+        super().save(*args, **kwargs)
+
 
 class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
@@ -1131,7 +1148,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             hash_values = ["name"]
         else:
             hash_values = [
-                getattr(self, field) for field in self.get_deduplication_field_names()
+                str(getattr(self, field))
+                for field in self.get_deduplication_field_names()
             ]
         return hashlib.md5("".join(hash_values).encode()).hexdigest()
 
@@ -1634,6 +1652,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         value: datetime = parse_datetime(value)
                     if field == "can_display_point_field":
                         value = bool(value)  # cast None value to False
+                    if field == "phone_field":
+                        value = validate_and_format_phone_number(value, self.countries)
                     update_data[field.removesuffix("_field")] = value
 
             return update_data
@@ -1687,10 +1707,15 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
             async def create_import_record(record):
                 structured_data = get_update_data(record)
+                gss = self.get_record_field(record, self.geography_column)
                 ward = await Area.objects.filter(
                     area_type__code="WD23",
-                    gss=self.get_record_field(record, self.geography_column),
+                    gss=gss,
                 ).afirst()
+                if not ward:
+                    logger.error(
+                        f"Could not find ward for record {self.get_record_id(record)} and gss {gss}"
+                    )
                 coord = ward.point.centroid
                 postcode_data: PostcodesIOResult = await loaders[
                     "postcodesIOFromPoint"
@@ -1869,13 +1894,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             for key in keys
         ]
 
-    def get_import_data(self):
+    def get_import_data(self, **kwargs):
         logger.debug(f"getting import data where external data source id is {self.id}")
         return GenericData.objects.filter(
             data_type__data_set__external_data_source_id=self.id
         )
 
-    def get_analytics_queryset(self):
+    def get_analytics_queryset(self, **kwargs):
         return self.get_import_data()
 
     def get_imported_dataframe(self):
@@ -2650,6 +2675,88 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         Look up a record by a value in a column.
         """
         raise NotImplementedError("Lookup not implemented for this data source type.")
+
+
+class LocalJSONSource(ExternalDataSource):
+    """
+    A test table.
+    """
+
+    crm_type = "test"
+    has_webhooks = False
+    automated_webhooks = False
+    introspect_fields = False
+    default_data_type = None
+    data = JSONField(default=list, blank=True)
+    id_field = models.CharField(max_length=250, default="id")
+
+    class Meta:
+        verbose_name = "Test source"
+
+    @classmethod
+    def get_deduplication_field_names(self) -> list[str]:
+        return ["id"]
+
+    def healthcheck(self):
+        return True
+
+    @cached_property
+    def df(self):
+        return pd.DataFrame(self.data).set_index(self.id_field)
+
+    def field_definitions(self):
+        # get all keys from self.data
+        return [
+            self.FieldDefinition(label=col, value=col)
+            for col in self.df.columns.tolist()
+        ]
+
+    def get_record_id(self, record: dict):
+        return record[self.id_field]
+
+    async def fetch_one(self, member_id):
+        return self.df[self.df[self.id_field] == member_id].to_dict(orient="records")[0]
+
+    async def fetch_many(self, id_list: list[str]):
+        return self.df[self.df[self.id_field].isin(id_list)].to_dict(orient="records")
+
+    async def fetch_all(self):
+        return self.df.to_dict(orient="records")
+
+    def get_record_field(self, record, field, field_type=None):
+        return get(record, field)
+
+    def get_record_dict(self, record):
+        return record
+
+    async def update_one(self, mapped_record, **kwargs):
+        id = self.get_record_id(mapped_record["member"])
+        data = mapped_record["update_fields"]
+        self.data = [
+            {**record, **data} if record[self.id_field] == id else record
+            for record in self.data
+        ]
+        self.save()
+
+    async def update_many(self, mapped_records, **kwargs):
+        for mapped_record in mapped_records:
+            await self.update_one(mapped_record)
+
+    def delete_one(self, record_id):
+        self.data = [
+            record for record in self.data if record[self.id_field] != record_id
+        ]
+        self.save()
+
+    def create_one(self, record):
+        self.data.append(record["data"])
+        self.save()
+        return record
+
+    def create_many(self, records):
+        self.data.extend([record["data"] for record in records])
+        self.save()
+        return records
 
 
 class AirtableSource(ExternalDataSource):
@@ -4276,9 +4383,18 @@ class MapReport(Report, Analytics):
     def get_layers(self) -> list[MapLayer]:
         return self.layers or []
 
-    def get_import_data(self):
+    def get_import_data(self, layer_ids=None):
+        filtered_layers = (
+            self.get_layers()
+            if layer_ids is None
+            else [layer for layer in self.get_layers() if layer["id"] in layer_ids]
+        )
+
+        if not filtered_layers:
+            return GenericData.objects.none()
+
         visible_layer_ids = [
-            layer["source"] for layer in self.get_layers() if layer.get("visible", True)
+            layer["source"] for layer in filtered_layers if layer.get("visible", True)
         ]
         return GenericData.objects.filter(
             models.Q(data_type__data_set__external_data_source_id__in=visible_layer_ids)
@@ -4294,8 +4410,8 @@ class MapReport(Report, Analytics):
             )
         )
 
-    def get_analytics_queryset(self):
-        return self.get_import_data()
+    def get_analytics_queryset(self, layer_ids=None):
+        return self.get_import_data(layer_ids=layer_ids)
 
 
 def generate_puck_json_content():
