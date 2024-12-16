@@ -2,10 +2,11 @@ from datetime import datetime, timezone
 
 from django.test import TestCase
 from asgiref.sync import async_to_sync
-from hub.models import LocalJSONSource
+from hub.models import LocalJSONSource, Area
 from hub.validation import validate_and_format_phone_number
 from benedict import benedict
 from unittest import skip
+import subprocess
 
 
 class TestDateFieldParer(TestCase):
@@ -100,7 +101,7 @@ class TestPhoneFieldParser(TestCase):
         self.assertEqual(result, "+14155552671")
 
 
-@skip(reason="Requires areas to be loaded in the database")
+# @skip(reason="Requires areas to be loaded in the database")
 class TestMultiLevelGeocoding(TestCase):
     fixture = [
         # Name matching; cases that historically didn't work
@@ -151,6 +152,17 @@ class TestMultiLevelGeocoding(TestCase):
 
     @classmethod
     def setUpTestData(cls):
+        subprocess.call("bin/import_areas_seed.sh")
+
+        print("All area count: ", Area.objects.count())
+        print(
+            "All areas with polygons count: ",
+            Area.objects.filter(polygon__isnull=False).count(),
+        )
+        print("DIS area count: ", Area.objects.filter(area_type__code="DIS").count())
+        print("STC area count: ", Area.objects.filter(area_type__code="STC").count())
+        print("WD23 area count: ", Area.objects.filter(area_type__code="WD23").count())
+
         cls.source = LocalJSONSource.objects.create(
             name="geo_test",
             id_field="id",
@@ -169,6 +181,14 @@ class TestMultiLevelGeocoding(TestCase):
 
     def test_geocoding_matches(self):
         for d in self.data:
+            if d.postcode_data is None:
+                print(
+                    "❌ Data failed geocoding: ",
+                    d.id,
+                    d.postcode_data,
+                    d.geocode_data,
+                    d.json,
+                )
             self.assertIsNotNone(d.postcode_data)
             postcode_data = benedict(d.postcode_data)
             self.assertEqual(
