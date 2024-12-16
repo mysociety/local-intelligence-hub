@@ -5,6 +5,7 @@ from asgiref.sync import async_to_sync
 from hub.models import LocalJSONSource
 from hub.validation import validate_and_format_phone_number
 from benedict import benedict
+from unittest import skip
 
 
 class TestDateFieldParer(TestCase):
@@ -99,7 +100,8 @@ class TestPhoneFieldParser(TestCase):
         self.assertEqual(result, "+14155552671")
 
 
-class TestMultiFieldGeocoding(TestCase):
+@skip(reason="Requires areas to be loaded in the database")
+class TestMultiLevelGeocoding(TestCase):
     fixture = [
         # Name matching; cases that historically didn't work
         {
