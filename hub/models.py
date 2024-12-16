@@ -97,6 +97,7 @@ class Geocoder(Enum):
     POSTCODES_IO = "postcodes_io"
     MAPBOX = "mapbox"
     GOOGLE = "google"
+    GEOCODING_CONFIG = "geocoding_config"
 
 
 class Organisation(models.Model):
@@ -1685,6 +1686,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
                 # Filter down geographies by the config
                 area = None
+                geocoding_data = {}
                 for item in self.geocoding_config:
                     literal_area_type = item.get("type", None)
                     literal_area_field = item.get("field", None)
@@ -1735,8 +1737,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     area = await qs.afirst()
                     if area is None:
                         logger.debug(
-                            f"Could not find area for {searchable_name} using query: {query}"
+                            f"Could not find area for {searchable_name} using query: {query_str}"
                         )
+                    else:
+                        geocoding_data["area_fields"] = geocoding_data.get(
+                            "area_fields", {}
+                        )
+                        geocoding_data["area_fields"][literal_area_field] = area.gss
                 if area is not None:
                     # get postcodeIO result for area.coordinates
                     postcode_data: PostcodesIOResult = await loaders[
@@ -1744,6 +1751,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     ].load(area.point)
 
                     update_data["postcode_data"] = postcode_data
+                    update_data["geocoder"] = Geocoder.GEOCODING_CONFIG.value
+                    update_data["geocode_data"] = {
+                        "config": self.geocoding_config,
+                        "data": geocoding_data,
+                    }
 
                 await GenericData.objects.aupdate_or_create(
                     data_type=data_type,
