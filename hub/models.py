@@ -1643,6 +1643,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             data_set=data_set, name=self.id, defaults={"data_type": "json"}
         )
 
+        loaders = await self.get_loaders()
+
         def get_update_data(record):
             update_data = {
                 "json": self.get_record_dict(record),
@@ -1679,30 +1681,29 @@ class ExternalDataSource(PolymorphicModel, Analytics):
               }
             ]
             """
-            loaders = await self.get_loaders()
 
             async def create_import_record(record):
                 update_data = get_update_data(record)
+                id = self.get_record_id(record)
 
                 # Filter down geographies by the config
+                parent_area = None
                 area = None
                 geocoding_data = {}
                 for item in self.geocoding_config:
+                    parent_area = area
                     literal_area_type = item.get("type", None)
                     literal_area_field = item.get("field", None)
+                    raw_area_value = self.get_record_field(record, literal_area_field)
                     if literal_area_type is None or literal_area_field is None:
                         continue
 
                     # make searchable for the MapIt database
-                    searchable_name = str(
-                        self.get_record_field(record, literal_area_field) or ""
-                    ).lower()
+                    searchable_name = str(raw_area_value).lower()
                     # E.g. ""Bristol, city of" becomes "bristol city" (https://mapit.mysociety.org/area/2561.html)
                     searchable_name = re.sub(
                         r"(.+), (.+) of", r"\1 \2", searchable_name, flags=re.IGNORECASE
                     )
-                    if searchable_name is None:
-                        continue
 
                     parsed_area_types = ensure_list(literal_area_type)
                     is_council = (
@@ -1719,7 +1720,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         # Mapit stores councils with their type in the name
                         # e.g. https://mapit.mysociety.org/area/2641.html
                         qs = qs.filter(
-                            Q(name__iexact=searchable_name)
+                            Q(gss__iexact=raw_area_value)
+                            | Q(name__iexact=raw_area_value)
+                            | Q(name__iexact=searchable_name)
                             | Q(name__iexact=f"{searchable_name} council")
                             | Q(name__iexact=f"{searchable_name} city council")
                             | Q(name__iexact=f"{searchable_name} borough council")
@@ -1727,12 +1730,17 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             | Q(name__iexact=f"{searchable_name} county council")
                         )
                     else:
-                        qs = qs.filter(name__iexact=searchable_name)
+                        qs = qs.filter(
+                            Q(gss__iexact=raw_area_value)
+                            | Q(name__iexact=raw_area_value)
+                            | Q(name__iexact=searchable_name)
+                        )
 
-                    if area is not None and area.polygon is not None:
-                        qs = qs.filter(polygon__overlaps=area.polygon)
+                    if parent_area is not None and parent_area.polygon is None:
+                        # I.e. if a parent area was already identified
+                        qs = qs.filter(polygon__overlaps=parent_area.polygon)
 
-                    query = qs.query
+                    query_str = qs.query
 
                     area = await qs.afirst()
                     if area is None:
@@ -1757,18 +1765,20 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         "data": geocoding_data,
                     }
 
-                await GenericData.objects.aupdate_or_create(
+                args = dict(
                     data_type=data_type,
-                    data=self.get_record_id(record),
+                    data=id,
                     defaults=update_data,
                 )
+
+
+                await GenericData.objects.aupdate_or_create(args)
 
             await asyncio.gather(*[create_import_record(record) for record in data])
         elif (
             self.geography_column
             and self.geography_column_type == self.GeographyTypes.POSTCODE
         ):
-            loaders = await self.get_loaders()
 
             async def create_import_record(record):
                 """
@@ -1784,6 +1794,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 update_data = {
                     **structured_data,
                     "postcode_data": postcode_data,
+                    "geocoder": Geocoder.POSTCODES_IO.value,
                     "point": (
                         Point(
                             postcode_data["longitude"],
@@ -1809,7 +1820,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             self.geography_column
             and self.geography_column_type == self.GeographyTypes.WARD
         ):
-            loaders = await self.get_loaders()
 
             async def create_import_record(record):
                 structured_data = get_update_data(record)
@@ -1846,7 +1856,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             self.geography_column
             and self.geography_column_type == self.GeographyTypes.ADDRESS
         ):
-            loaders = await self.get_loaders()
 
             async def create_import_record(record):
                 """
