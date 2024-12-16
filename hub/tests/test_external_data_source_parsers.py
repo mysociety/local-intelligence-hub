@@ -4,6 +4,7 @@ from django.test import TestCase
 from asgiref.sync import async_to_sync
 from hub.models import LocalJSONSource
 from hub.validation import validate_and_format_phone_number
+from benedict import benedict
 
 
 class TestDateFieldParer(TestCase):
@@ -96,3 +97,79 @@ class TestPhoneFieldParser(TestCase):
         phone = "4155552671"
         result = validate_and_format_phone_number(phone, ["US"])
         self.assertEqual(result, "+14155552671")
+
+
+class TestMultiFieldGeocoding(TestCase):
+    fixture = [
+        # Name matching; cases that historically didn't work
+        {
+            "id": "1",
+            "council": "Barnsley",
+            "ward": "St Helens",
+            "expected_postcodedata_column": "codes.admin_ward",
+            "expected_postcodedata_value": "E05000993",
+        },
+        {
+            "id": "2",
+            "council": "North Lincolnshire",
+            "ward": "Brigg & Wolds",
+            "expected_postcodedata_column": "codes.admin_ward",
+            "expected_postcodedata_value": "E05015081",
+        },
+        {
+            "id": "3",
+            "council": "Test Valley",
+            "ward": "Andover Downlands",
+            "expected_postcodedata_column": "codes.admin_ward",
+            "expected_postcodedata_value": "E05012085",
+        },
+        {
+            "id": "4",
+            "council": "North Warwickshire",
+            "ward": "Baddesley and Grendon",
+            "expected_postcodedata_column": "codes.admin_ward",
+            "expected_postcodedata_value": "E05007461",
+        },
+        # Name rewriting required
+        {
+            "id": "5",
+            "council": "Herefordshire, County of",
+            "ward": "Credenhill",
+            "expected_postcodedata_column": "codes.admin_ward",
+            "expected_postcodedata_value": "E05012957",
+        },
+        # GSS code matching
+        {
+            "id": "999",
+            "ward": "E05000993",
+            "expected_postcodedata_column": "codes.admin_ward",
+            "expected_postcodedata_value": "E05000993",
+        },
+    ]
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.source = LocalJSONSource.objects.create(
+            name="geo_test",
+            id_field="id",
+            data=cls.fixture.copy(),
+            geocoding_config=[
+                {"field": "council", "type": ["STC", "DIS"]},
+                {"field": "ward", "type": "WD23"},
+            ],
+        )
+
+        # generate GenericData records
+        async_to_sync(cls.source.import_many)(cls.source.data)
+
+        # test that the GenericData records have valid, formatted phone field
+        cls.data = cls.source.get_import_data()
+
+    def test_geocoding_matches(self):
+        for d in self.data:
+            self.assertIsNotNone(d.postcode_data)
+            postcode_data = benedict(d.postcode_data)
+            self.assertEqual(
+                postcode_data[d.json["expected_postcodedata_column"]],
+                d.json["expected_postcodedata_value"],
+            )
