@@ -4,12 +4,12 @@ import uuid
 from enum import Enum
 from typing import List, Optional
 
-from django.utils.text import slugify
 from django.utils.timezone import now
 
 import strawberry
 import strawberry_django
 from asgiref.sync import async_to_sync
+from graphql import GraphQLError
 from strawberry import auto
 from strawberry.field_extensions import InputMutationExtension
 from strawberry.types.info import Info
@@ -164,40 +164,70 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
 
     date_time_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
+    # Check for duplicate layers in existing reports
+    if "layers" in data.display_options:
+        display_layers = data.display_options["layers"]
+        for layer in display_layers:
+            layer_id = layer["id"]
+            # Query for existing report with the same layer
+            existing_report = models.MapReport.objects.filter(
+                layers__contains=[{"id": layer_id}]
+            ).first()
+            if existing_report:
+                report_link = f"/reports/{existing_report.id}"
+                raise GraphQLError(
+                    f"A map for this data source already exists. "
+                    f'You can view it <a className="underline" href="{report_link}" target="_blank">here</a>'
+                )
+
+    # Prepare base parameters
     params = {
         **graphql_type_to_dict(data, delete_null_keys=True),
         **{
             "organisation": organisation,
-            "slug": data.slug or slugify(data.name),
-            "name": f"New map ({date_time_str})",  # Default name for reports
+            "name": data.name or f"New map ({date_time_str})",
             "display_options": data.display_options or {},
         },
     }
 
     map_report = models.MapReport.objects.create(**params)
-    if existing_reports:
-        return map_report
 
-    # If this is the first report, add the user's first member list to it
-    member_list = (
-        model_types.ExternalDataSource.get_queryset(
-            models.ExternalDataSource.objects.get_queryset(),
-            info,
-        )
-        .filter(data_type=models.ExternalDataSource.DataSourceType.MEMBER)
-        .first()
-    )
-    if member_list:
-        map_report.name = f"Auto-generated report on {member_list.name}"
+    if "layers" in data.display_options:
+        display_layers = data.display_options["layers"]
         map_report.layers = [
             {
-                "id": str(uuid.uuid4()),
-                "name": member_list.name,
-                "source": str(member_list.id),
-                "visible": True,
+                "id": layer["id"],
+                "name": layer["name"],
+                "source": layer["source"],
+                "visible": layer["visible"],
+                "custom_marker_text": layer.get("custom_marker_text"),
             }
+            for layer in display_layers
         ]
-        map_report.save()
+
+    map_report.save()
+    # If this is the first report, add the user's first member list to it
+    if not data.layers and not existing_reports:
+        member_list = (
+            model_types.ExternalDataSource.get_queryset(
+                models.ExternalDataSource.objects.get_queryset(),
+                info,
+            )
+            .filter(data_type=models.ExternalDataSource.DataSourceType.MEMBER)
+            .first()
+        )
+        if member_list:
+            map_report.name = f"Auto-generated report on {member_list.name}"
+            map_report.layers = [
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": member_list.name,
+                    "source": str(member_list.id),
+                    "visible": True,
+                }
+            ]
+            map_report.save()
+
     return map_report
 
 

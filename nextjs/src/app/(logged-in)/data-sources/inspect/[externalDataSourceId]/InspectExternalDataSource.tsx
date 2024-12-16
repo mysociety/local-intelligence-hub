@@ -2,7 +2,6 @@
 import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
 import { formatRelative } from 'date-fns'
-import { useAtom } from 'jotai'
 import { AlertCircle, ExternalLink } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import pluralize from 'pluralize'
@@ -47,9 +46,9 @@ import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { externalDataSourceOptions } from '@/lib/data'
 import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/lib/graphql/mutations'
 import { contentEditableMutation } from '@/lib/html'
-import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { formatCrmNames } from '@/lib/utils'
-
+import parse from 'html-react-parser'
+import { CREATE_MAP_REPORT } from '../../../reports/ReportList/CreateReportCard'
 import { ManageSourceSharing } from './ManageSourceSharing'
 import importData from './importData'
 
@@ -186,7 +185,7 @@ export default function InspectExternalDataSource({
   const router = useRouter()
   const client = useApolloClient()
 
-  const { loading, error, data, refetch } = useQuery<
+  const { loading, data, refetch } = useQuery<
     ExternalDataSourceInspectPageQuery,
     ExternalDataSourceInspectPageQueryVariables
   >(GET_UPDATE_CONFIG, {
@@ -195,8 +194,6 @@ export default function InspectExternalDataSource({
     },
     pollInterval: 5000,
   })
-
-  const orgId = useAtom(currentOrganisationIdAtom)
 
   if (!loading && !data?.externalDataSource) {
     return <h2>Couldn{"'"}t find this data source</h2>
@@ -211,6 +208,48 @@ export default function InspectExternalDataSource({
     ? externalDataSourceOptions[source?.crmType]
     : undefined
 
+  const handleCreateReport = () => {
+    const layer = {
+      id: externalDataSourceId,
+      name,
+      source: externalDataSourceId,
+      visible: true,
+    }
+
+    const variables = {
+      data: {
+        name: `Map for ${name}`,
+        displayOptions: {
+          layers: [layer],
+        },
+      },
+    }
+
+    toast.promise(
+      client.mutate({
+        mutation: CREATE_MAP_REPORT,
+        variables,
+      }),
+      {
+        loading: 'Creating report...',
+        success: (d) => {
+          console.log('Mutation Response:', d)
+
+          if (d.data?.createMapReport?.__typename === 'MapReport') {
+            router.push(`/reports/${d.data.createMapReport.id}`)
+            return 'Map created!'
+          } else {
+            throw new Error('Failed to create map.')
+          }
+        },
+        error: (e) => {
+          const errorMessage =
+            e?.graphQLErrors?.[0]?.message || 'Failed to create map.'
+          return parse(errorMessage)
+        },
+      }
+    )
+  }
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-7">
       <header className="flex flex-row justify-between gap-8">
@@ -249,6 +288,7 @@ export default function InspectExternalDataSource({
           )}
         </div>
       </header>
+
       <div className="border-b border-meepGray-700 pt-10" />
       {(!data?.externalDataSource && loading) || !source ? (
         <div className="py-8 text-center">
@@ -384,6 +424,9 @@ export default function InspectExternalDataSource({
                   ) : null}
                 </section>
               )}
+              <Button onClick={handleCreateReport}>
+                Generate map for this data source
+              </Button>
             </section>
             <section className="space-y-4">
               <header className="flex flex-row justify-between items-center">
