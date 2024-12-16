@@ -1712,15 +1712,16 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     area_type__code="WD23",
                     gss=gss,
                 ).afirst()
-                if not ward:
-                    logger.error(
+                if ward:
+                    coord = ward.point.centroid
+                    postcode_data: PostcodesIOResult = await loaders[
+                        "postcodesIOFromPoint"
+                    ].load(coord)
+                else:
+                    logger.warning(
                         f"Could not find ward for record {self.get_record_id(record)} and gss {gss}"
                     )
-                    return
-                coord = ward.point.centroid
-                postcode_data: PostcodesIOResult = await loaders[
-                    "postcodesIOFromPoint"
-                ].load(coord)
+                    postcode_data = None
 
                 update_data = {
                     **structured_data,
