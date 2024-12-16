@@ -132,6 +132,15 @@ class BaseAreaImportCommand(BaseCommand):
     def add_data_sets(self, df=None):
         for name, config in self.data_sets.items():
             label = self.get_label(config)
+            data_set_name = name
+            if config["defaults"].get("data_set_name"):
+                data_set_name = config["defaults"]["data_set_name"]
+                del config["defaults"]["data_set_name"]
+
+            data_set_label = label
+            if config["defaults"].get("data_set_label"):
+                data_set_label = config["defaults"]["data_set_label"]
+                del config["defaults"]["data_set_label"]
 
             if config["defaults"].get("is_filterable", None) is None:
                 if config["defaults"].get("table", None) is None:
@@ -156,14 +165,17 @@ class BaseAreaImportCommand(BaseCommand):
                 )
 
             data_set, created = DataSet.objects.update_or_create(
-                name=name,
+                name=data_set_name,
                 defaults={
-                    "label": label,
                     **config["defaults"],
+                    "label": data_set_label,
                 },
             )
             data_set.areas_available.add(self.get_area_type())
 
+            type_defaults = {}
+            if config["defaults"].get("order"):
+                type_defaults["order"] = config["defaults"]["order"]
             data_type, created = DataType.objects.update_or_create(
                 data_set=data_set,
                 name=name,
@@ -171,6 +183,7 @@ class BaseAreaImportCommand(BaseCommand):
                 defaults={
                     "data_type": config["defaults"]["data_type"],
                     "label": label,
+                    **type_defaults,
                 },
             )
 
