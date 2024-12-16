@@ -1681,6 +1681,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             loaders = await self.get_loaders()
 
             async def create_import_record(record):
+                update_data = get_update_data(record)
+
                 # Filter down geographies by the config
                 area = None
                 for item in self.geocoding_config:
@@ -1733,7 +1735,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     area = await qs.afirst()
                     if area is None:
                         logger.debug(
-                            f"Could not find area for {searchable_name} using query: {query[:1000]}"
+                            f"Could not find area for {searchable_name} using query: {query}"
                         )
                 if area is not None:
                     # get postcodeIO result for area.coordinates
@@ -1741,16 +1743,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         "postcodesIOFromPoint"
                     ].load(area.point)
 
-                    update_data = {
-                        **get_update_data(record),
-                        "postcode_data": postcode_data,
-                    }
+                    update_data["postcode_data"] = postcode_data
 
-                    await GenericData.objects.aupdate_or_create(
-                        data_type=data_type,
-                        data=self.get_record_id(record),
-                        defaults=update_data,
-                    )
+                await GenericData.objects.aupdate_or_create(
+                    data_type=data_type,
+                    data=self.get_record_id(record),
+                    defaults=update_data,
+                )
 
             await asyncio.gather(*[create_import_record(record) for record in data])
         elif (
