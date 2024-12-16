@@ -1714,7 +1714,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         f"Searching for {searchable_name} via {literal_area_field} of type {literal_area_type}. is_council? {is_council}"
                     )
 
-                    qs = Area.objects.filter(area_type__code__in=parsed_area_types)
+                    qs = Area.objects.select_related("area_type").filter(
+                        area_type__code__in=parsed_area_types
+                    )
                     if is_council:
                         logger.debug(f"Searching council names for {searchable_name}")
                         # Mapit stores councils with their type in the name
@@ -1751,12 +1753,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         geocoding_data["area_fields"] = geocoding_data.get(
                             "area_fields", {}
                         )
-                        geocoding_data["area_fields"][literal_area_field] = area.gss
+                        geocoding_data["area_fields"][area.area_type.code] = area.gss
                 if area is not None:
+                    sample_point = area.polygon.centroid
+
                     # get postcodeIO result for area.coordinates
                     postcode_data: PostcodesIOResult = await loaders[
                         "postcodesIOFromPoint"
-                    ].load(area.point)
+                    ].load(sample_point)
 
                     update_data["postcode_data"] = postcode_data
                     update_data["geocoder"] = Geocoder.GEOCODING_CONFIG.value
@@ -1771,8 +1775,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     defaults=update_data,
                 )
 
-
-                await GenericData.objects.aupdate_or_create(args)
+                await GenericData.objects.aupdate_or_create(**args)
 
             await asyncio.gather(*[create_import_record(record) for record in data])
         elif (
