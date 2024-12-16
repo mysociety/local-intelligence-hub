@@ -61,6 +61,7 @@ class MultipleAreaTypesMixin:
 class BaseAreaImportCommand(BaseCommand):
     area_type = "WMC"
     uses_gss = False
+    skip_delete = False
 
     def __init__(self):
         super().__init__()
@@ -119,6 +120,9 @@ class BaseAreaImportCommand(BaseCommand):
         return config["defaults"]["label"]
 
     def delete_data(self):
+        if self.skip_delete:
+            return
+
         for data_type in self.data_types.values():
             AreaData.objects.filter(
                 data_type=data_type, area__area_type__code=self.area_type
