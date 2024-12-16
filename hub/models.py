@@ -2102,6 +2102,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     async def get_source_loaders(self) -> dict[str, Self]:
         # If this isn't preloaded, it is a sync function to use self.organisation
         org: Organisation = await sync_to_async(getattr)(self, "organisation")
+        loaders = {}
+
+        if org is None:
+            return loaders
+
         sources = (
             org.get_external_data_sources(
                 # Allow enrichment via sources shared with this data source's organisation
@@ -2118,7 +2123,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             .all()
         )
 
-        loaders = {}
         async for source in sources:
             loaders[str(source.id)] = source.data_loader_factory()
 
