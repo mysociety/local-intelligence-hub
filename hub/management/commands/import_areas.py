@@ -35,6 +35,13 @@ class Command(BaseCommand):
             "area_type": "District Council",
             "description": "District Council",
         },
+        {
+            "mapit_type": ["COI", "CPW", "DIW", "LBW", "LGW", "MTW", "UTW"],
+            "name": "Wards",
+            "code": "WD23",
+            "area_type": "Ward",
+            "description": "Ward",
+        },
     ]
 
     def add_arguments(self, parser):

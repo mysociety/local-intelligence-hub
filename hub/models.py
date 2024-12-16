@@ -1616,10 +1616,15 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
             async def create_import_record(record):
                 structured_data = get_update_data(record)
+                gss = self.get_record_field(record, self.geography_column)
                 ward = await Area.objects.filter(
                     area_type__code="WD23",
-                    gss=self.get_record_field(record, self.geography_column),
+                    gss=gss,
                 ).afirst()
+                if not ward:
+                    logger.error(
+                        f"Could not find ward for record {self.get_record_id(record)} and gss {gss}"
+                    )
                 coord = ward.point.centroid
                 postcode_data: PostcodesIOResult = await loaders[
                     "postcodesIOFromPoint"
