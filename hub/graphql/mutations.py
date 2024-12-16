@@ -203,7 +203,8 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
         ]
 
     map_report.save()
-
+    
+    # If this is the first report, add the user's first member list to it
     if not data.layers and not existing_reports:
         member_list = (
             model_types.ExternalDataSource.get_queryset(
