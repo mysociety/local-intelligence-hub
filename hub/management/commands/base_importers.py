@@ -40,11 +40,14 @@ party_shades = {
 TWFY_CONSTITUENCIES_DATA_URL = (
     "https://raw.githubusercontent.com/mysociety/parlparse/master/members/people.json"
 )
+# common constituency name mismatches
 HARD_CODED_CONSTITUENCY_LOOKUP = {
     "Cotswolds The": "The Cotswolds",
     "Basildon South and East Thurrock": "South Basildon and East Thurrock",
     "Na h-Eileanan An Iar (Western Isles)": "Na h-Eileanan an Iar",
     "Ynys M¶n": "Ynys Môn",
+    "Ynys Mon": "Ynys Môn",
+    "Montgomeryshire and Glyndwr": "Montgomeryshire and Glyndŵr",
 }
 
 
@@ -62,6 +65,7 @@ class BaseAreaImportCommand(BaseCommand):
     def __init__(self):
         super().__init__()
 
+        self.cons_map = HARD_CODED_CONSTITUENCY_LOOKUP
         self.data_types = {}
 
     def add_arguments(self, parser):
@@ -298,6 +302,7 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
                     area = Area.get_by_gss(cons, area_type=self.area_type)
                 else:
                     cons = cons.replace(" & ", " and ")
+                    cons = self.cons_map.get(cons, cons)
                     area = Area.get_by_name(cons, area_type=self.area_type)
 
             if area is None:
