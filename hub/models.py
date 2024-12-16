@@ -3,7 +3,7 @@ from operator import itemgetter
 
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.db.models import Avg, IntegerField, Max, Min
+from django.db.models import Avg, FloatField, IntegerField, Max, Min
 from django.db.models.functions import Cast, Coalesce
 from django.dispatch import receiver
 
@@ -515,6 +515,9 @@ class DataType(TypeMixin, ShaderMixin, models.Model):
 
     @property
     def cast_field(self):
+        if self.is_float:
+            return FloatField
+
         return IntegerField
 
     @property
