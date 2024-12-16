@@ -39,10 +39,9 @@ const useDataByBoundary = ({
       layer.id === report?.displayOptions?.dataVisualisation?.dataSource
   )
 
-  const queryForExternalData =
-    selectedDataSource?.source.dataType === 'AREA_STATS'
+  const queryForAreaStats = selectedDataSource?.source.dataType === 'AREA_STATS'
 
-  const queryForCounts = selectedDataSource?.source.dataType === 'MEMBER'
+  const queryForCounts = !queryForAreaStats
 
   const { data: externalStatsByBoundary, loading: loadingStats } = useQuery<
     MapReportStatsByAreaQuery,
@@ -53,7 +52,7 @@ const useDataByBoundary = ({
       analyticalAreaType: boundaryType!,
       layerIds: selectedDataSource?.id ? [selectedDataSource.id] : [],
     },
-    skip: !boundaryType || !report || !queryForExternalData,
+    skip: !boundaryType || !report || !queryForAreaStats,
   })
 
   const { data: countsByBoundary, loading: loadingCounts } = useQuery<
@@ -84,7 +83,7 @@ const useDataByBoundary = ({
       data: countsByBoundary?.mapReport.importedDataCountByArea || [],
       loading,
     }
-  } else if (queryForExternalData) {
+  } else if (queryForAreaStats) {
     const rawData = externalStatsByBoundary?.mapReport.importedDataByArea
     const data = rawData && processNumericFieldsInDataSource(rawData)
     fieldNames = data && getNumericFieldsFromDataSource(data)

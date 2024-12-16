@@ -3,6 +3,7 @@ import logging
 import uuid
 from enum import Enum
 from typing import List, Optional
+from django.utils.timezone import now
 
 import strawberry
 import strawberry_django
@@ -17,6 +18,7 @@ from strawberry_django.permissions import IsAuthenticated
 from hub import models
 from hub.graphql.types import model_types
 from hub.graphql.utils import graphql_type_to_dict
+from hub.models import BatchRequest
 
 logger = logging.getLogger(__name__)
 
@@ -230,12 +232,16 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
 
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
-async def import_all(external_data_source_id: str) -> ExternalDataSourceAction:
+async def import_all(
+    info: Info, external_data_source_id: str
+) -> ExternalDataSourceAction:
     data_source: models.ExternalDataSource = (
         await models.ExternalDataSource.objects.aget(id=external_data_source_id)
     )
-    request_id = str(uuid.uuid4())
-    requested_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    batch_request = await BatchRequest.objects.acreate(user=get_current_user(info))
+
+    request_id = str(batch_request.id)
+    requested_at = now().isoformat()
 
     await data_source.schedule_import_all(
         requested_at=requested_at, request_id=request_id
