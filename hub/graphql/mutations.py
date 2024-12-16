@@ -18,6 +18,7 @@ from strawberry_django.permissions import IsAuthenticated
 from hub import models
 from hub.graphql.types import model_types
 from hub.graphql.utils import graphql_type_to_dict
+from graphql import GraphQLError
 
 logger = logging.getLogger(__name__)
 
@@ -161,21 +162,26 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
         organisation = models.Organisation.get_or_create_for_user(user)
 
     date_time_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-    base_slug = slugify(data.name or f"new-map-{date_time_str}")
 
-    # Generate a unique slug for reach report so we can create multiple ones for testing purposes 
-    unique_slug = base_slug
-    counter = 1
-    while models.MapReport.objects.filter(slug=unique_slug).exists():
-        unique_slug = f"{base_slug}-{counter}"
-        counter += 1
+    # Check for duplicate layers in existing reports
+    if "layers" in data.display_options:
+        display_layers = data.display_options["layers"]
+        for layer in display_layers:
+            layer_id = layer["id"]
+            # Query for existing report with the same layer
+            existing_report = models.MapReport.objects.filter(layers__contains=[{"id": layer_id}]).first()
+            if existing_report:
+                report_link = f"/reports/{existing_report.id}" 
+                raise GraphQLError(
+                f"A map for this data source already exists. "
+                f'You can view it <a className="underline" href="{report_link}" target="_blank">here</a>'
+            )
 
     # Prepare base parameters
     params = {
         **graphql_type_to_dict(data, delete_null_keys=True),
         **{
             "organisation": organisation,
-            "slug": unique_slug, 
             "name": data.name or f"New map ({date_time_str})",
             "display_options": data.display_options or {},
         },
