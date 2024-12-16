@@ -83,7 +83,7 @@ const useDataByBoundary = ({
       data: countsByBoundary?.mapReport.importedDataCountByArea || [],
       loading,
     }
-  } else if (queryForExternalData) {
+  } else if (queryForAreaStats) {
     const rawData = externalStatsByBoundary?.mapReport.importedDataByArea
     const data = rawData && processNumericFieldsInDataSource(rawData)
     fieldNames = data && getNumericFieldsFromDataSource(data)
