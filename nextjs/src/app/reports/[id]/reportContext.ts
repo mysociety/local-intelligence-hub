@@ -1,20 +1,33 @@
-import { AnalyticalAreaType, MapReport } from '@/__generated__/graphql'
+import {
+  AnalyticalAreaType,
+  MapLayer,
+  MapReport,
+} from '@/__generated__/graphql'
 import { createContext } from 'react'
+import { PoliticalTileset } from './politicalTilesets'
 
-type VisualisationType = 'choropleth'
-type Palette = 'blue'
+export enum VisualisationType {
+  Choropleth = 'choropleth',
+}
+
+export enum Palette {
+  Blue = 'blue',
+}
 
 export type MapReportExtended = Omit<MapReport, 'displayOptions'> & {
   displayOptions: ReportConfig
+  politicalBoundaries: PoliticalTileset[]
 }
 
 export interface ReportConfig {
-  dataVisualisation?: {
+  dataVisualisation: {
     boundaryType?: AnalyticalAreaType
     visualisationType?: VisualisationType
     palette?: Palette
+    dataSource?: MapLayer['id']
+    dataSourceField?: string
   }
-  display?: {
+  display: {
     showStreetDetails?: boolean
     showMPs?: boolean
     showLastElectionData?: boolean
@@ -26,8 +39,8 @@ export interface ReportConfig {
 export const defaultReportConfig: ReportConfig = {
   dataVisualisation: {
     boundaryType: AnalyticalAreaType.ParliamentaryConstituency_2024,
-    visualisationType: 'choropleth',
-    palette: 'blue',
+    visualisationType: VisualisationType.Choropleth,
+    palette: Palette.Blue,
   },
   display: {
     showStreetDetails: false,
@@ -43,10 +56,12 @@ interface ReportContextProps {
   deleteReport: () => void
   updateReport: (payload: {
     name?: string
-    displayOptions?: ReportConfig
+    displayOptions?: Partial<ReportConfig>
     layers?: any[]
   }) => void
   refreshReportData: () => void
+  dataLoading: boolean
+  setDataLoading: (loading: boolean) => void
 }
 
 const ReportContext = createContext<ReportContextProps>({
@@ -54,6 +69,8 @@ const ReportContext = createContext<ReportContextProps>({
   deleteReport: () => {},
   updateReport: () => {},
   refreshReportData: () => {},
+  dataLoading: false,
+  setDataLoading: () => {},
 })
 
 export default ReportContext

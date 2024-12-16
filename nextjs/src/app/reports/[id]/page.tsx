@@ -14,13 +14,15 @@ import {
 import { currentOrganisationIdAtom } from '@/lib/organisation'
 
 import { SidebarProvider } from '@/components/ui/sidebar'
+import { merge } from 'lodash'
 import ReportDisplaySettings from './(components)/ReportDisplaySettings'
 import ReportNavbar from './(components)/ReportNavbar'
 import ReportPage from './(components)/ReportPage'
 import ReportProvider from './(components)/ReportProvider'
 import { ReportSidebarLeft } from './(components)/ReportSidebarLeft'
 import { GET_MAP_REPORT } from './gql_queries'
-import { MapReportExtended } from './reportContext'
+import { getPoliticalTilesetsByCountry } from './politicalTilesets'
+import { defaultReportConfig, MapReportExtended } from './reportContext'
 
 type Params = {
   id: string
@@ -49,11 +51,18 @@ export default function Page({ params: { id } }: { params: Params }) {
   // Really important to check if the report is null before rendering the page
   // The ReportProvider component needs to be able to provide a report to its children
   if (!report.data?.mapReport) return null
+  const mapReport = merge(
+    {
+      displayOptions: defaultReportConfig,
+      politicalBoundaries: getPoliticalTilesetsByCountry('uk'),
+    },
+    report.data.mapReport
+  ) as unknown as MapReportExtended
 
   return (
     <JotaiProvider key={id}>
       <MapProvider>
-        <ReportProvider report={report.data?.mapReport as MapReportExtended}>
+        <ReportProvider report={mapReport}>
           <SidebarProvider
             style={
               {

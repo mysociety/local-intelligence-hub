@@ -98,7 +98,7 @@ const DataSourceDetails: React.FC<DataSourceDetailsProps> = ({
         }}
         variant="destructive"
       >
-        Remove layer
+        Remove data source
       </Button>
     </div>
   )

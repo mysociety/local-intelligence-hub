@@ -593,6 +593,29 @@ class GroupedDataCount:
         return await loader(context=info.context).load(self.gss)
 
 
+@strawberry_django.type(models.GenericData, filters=CommonDataFilter)
+class GroupedData:
+    label: Optional[str]
+    # Provide area_type if gss code is not unique (e.g. WMC and WMC23 constituencies)
+    area_type: Optional[str] = None
+    gss: Optional[str]
+    area_data: Optional[strawberry.Private[Area]] = None
+    imported_data: Optional[JSON] = None
+
+    @strawberry_django.field
+    async def gss_area(self, info: Info) -> Optional[Area]:
+        if self.area_data is not None:
+            return self.area_data
+        if self.area_type is not None:
+            filters = {"area_type__code": self.area_type}
+        else:
+            filters = {}
+        loader = FieldDataLoaderFactory.get_loader_class(
+            models.Area, field="gss", filters=filters
+        )
+        return await loader(context=info.context).load(self.gss)
+
+
 class GroupedDataCountForSource(GroupedDataCount):
     source_id: Optional[str] = dict_key_field()
 
@@ -683,6 +706,7 @@ class AnalyticalAreaType(Enum):
     parliamentary_constituency_2024 = "parliamentary_constituency_2024"
     admin_district = "admin_district"
     admin_ward = "admin_ward"
+    european_electoral_region = "european_electoral_region"
 
 
 postcodeIOKeyAreaTypeLookup = {
@@ -690,6 +714,7 @@ postcodeIOKeyAreaTypeLookup = {
     AnalyticalAreaType.parliamentary_constituency_2024: "WMC23",
     AnalyticalAreaType.admin_district: "DIS",
     AnalyticalAreaType.admin_ward: "WD23",
+    AnalyticalAreaType.european_electoral_region: "EER",
 }
 
 
@@ -698,26 +723,37 @@ class Analytics:
     imported_data_count: int = fn_field()
 
     @strawberry_django.field
-    def imported_data_count_by_region(self) -> List[GroupedDataCount]:
-        data = self.imported_data_count_by_region()
-        return [GroupedDataCount(**datum) for datum in data]
-
-    @strawberry_django.field
     def imported_data_count_by_area(
-        self, analytical_area_type: AnalyticalAreaType
+        self,
+        analytical_area_type: AnalyticalAreaType,
+        layer_ids: Optional[List[str]],
     ) -> List[GroupedDataCount]:
         data = self.imported_data_count_by_area(
-            postcode_io_key=analytical_area_type.value
+            postcode_io_key=analytical_area_type.value,
+            layer_ids=layer_ids,
         )
         area_key = postcodeIOKeyAreaTypeLookup[analytical_area_type]
         return [GroupedDataCount(**datum, area_type=area_key) for datum in data]
+
+    @strawberry_django.field
+    def imported_data_by_area(
+        self,
+        analytical_area_type: AnalyticalAreaType,
+        layer_ids: Optional[List[str]],
+    ) -> List[GroupedData]:
+        data = self.imported_data_by_area(
+            postcode_io_key=analytical_area_type.value,
+            layer_ids=layer_ids,
+        )
+        area_key = postcodeIOKeyAreaTypeLookup[analytical_area_type]
+        return [GroupedData(**datum, area_type=area_key) for datum in data]
 
     @strawberry_django.field
     def imported_data_count_for_area(
         self, info: Info, analytical_area_type: AnalyticalAreaType, gss: str
     ) -> Optional[GroupedDataCount]:
         res = self.imported_data_count_by_area(
-            postcode_io_key=analytical_area_type.value, gss=gss
+            postcode_io_key=analytical_area_type.value, gss=gss, layer_ids=None
         )
         if len(res) == 0:
             return None
@@ -802,9 +838,22 @@ class BatchJobProgress:
     failed: Optional[int] = None
     estimated_seconds_remaining: Optional[float] = None
     estimated_finish_time: Optional[datetime] = None
+    actual_finish_time: Optional[datetime] = None
     seconds_per_record: Optional[float] = None
     done: Optional[int] = None
     remaining: Optional[int] = None
+    number_of_jobs_ahead_in_queue: Optional[int] = None
+    send_email: bool = False
+
+    @strawberry_django.field
+    def in_queue(self, info: Info) -> bool:
+        if (
+            self.status == ProcrastinateJobStatus.doing.value
+            or self.status == ProcrastinateJobStatus.todo.value
+        ):
+            return True
+        else:
+            return False
 
 
 @strawberry.enum
@@ -863,10 +912,11 @@ class BaseDataSource(Analytics):
     def import_progress(
         self: models.ExternalDataSource, info: Info
     ) -> Optional[BatchJobProgress]:
-        job = self.get_scheduled_import_job()
+        user = info.context.request.user
+        job = self.get_latest_import_job()
         if job is None:
             return None
-        progress = self.get_scheduled_batch_job_progress(job)
+        progress = self.get_scheduled_batch_job_progress(job, user=user)
         if progress is None:
             return None
         return BatchJobProgress(**progress)
@@ -880,10 +930,11 @@ class BaseDataSource(Analytics):
     def update_progress(
         self: models.ExternalDataSource, info: Info
     ) -> Optional[BatchJobProgress]:
-        job = self.get_scheduled_update_job()
+        user = info.context.request.user
+        job = self.get_latest_update_job()
         if job is None:
             return None
-        progress = self.get_scheduled_batch_job_progress(job)
+        progress = self.get_scheduled_batch_job_progress(job, user=user)
         if progress is None:
             return None
         return BatchJobProgress(**progress)

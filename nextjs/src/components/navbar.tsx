@@ -67,7 +67,10 @@ export default function Navbar({ isLoggedIn }: NavbarProps) {
   return (
     <>
       {isLoggedIn ? (
-        <nav className="sticky top-0 shrink-0 flex flex-row justify-start items-stretch gap-md font-IBMPlexSansCondensed text-lg border-b border-meepGray-700 px-sm">
+        <nav
+          className="sticky top-0 shrink-0 flex flex-row justify-start items-stretch gap-md font-medium
+        font-IBMPlexSansCondensed text-lg border-b border-meepGray-700 px-sm"
+        >
           <Link href="/" className="py-sm">
             <MappedIcon />
           </Link>

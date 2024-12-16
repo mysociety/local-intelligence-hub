@@ -1,4 +1,9 @@
 #!/bin/bash
+
+# NB: Keep the resulting database state up to date with data/post_ck_setup_db_export.psql
+# (excluding the `python manage.py seed` command) in order to keep the preview environments
+# in-sync with the dev environments.
+
 echo '';
 echo '------------------------------------';
 echo '';
@@ -35,19 +40,12 @@ echo "Done"
 echo '';
 echo '------------------------------------';
 echo '';
-echo 'Seeding database...';
-echo '';
-echo '------------------------------------';
-python manage.py seed
-
-echo '';
-echo '------------------------------------';
-echo '';
 echo 'Downloading LIH data...';
 echo '';
 echo '------------------------------------';
-python manage.py import_regions
+python manage.py import_wards
 python manage.py import_areas
+python manage.py import_regions
 python manage.py import_mps
 
 echo '';
@@ -67,6 +65,14 @@ python manage.py import_last_election_data
 echo '';
 echo '------------------------------------';
 echo '';
+echo 'Seeding database...';
+echo '';
+echo '------------------------------------';
+python manage.py seed
+
+echo '';
+echo '------------------------------------';
+echo '';
 echo -n "> Installing JavaScript dependencies..."
 echo '';
 echo '------------------------------------';
@@ -81,3 +87,7 @@ echo '';
 echo 'Setup complete!';
 echo '';
 echo '------------------------------------';
+
+# NB: Keep the resulting database state up to date with data/post_ck_setup_db_export.psql
+# (excluding the `python manage.py seed` command) in order to keep the preview environments
+# in-sync with the dev environments.

@@ -1,4 +1,3 @@
-import { GroupedDataCount } from '@/__generated__/graphql'
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { interpolateBlues } from 'd3-scale-chromatic'
 import {
@@ -7,9 +6,11 @@ import {
   SymbolLayerSpecification,
 } from 'mapbox-gl'
 import { Tileset } from './types'
+import { DataByBoundary } from './useDataByBoundary'
 
 export function getChoroplethFill(
-  data: { count: number }[]
+  data: { count: number }[],
+  visible?: boolean
 ): FillLayerSpecification['paint'] {
   let min =
     data.reduce(
@@ -39,6 +40,7 @@ export function getChoroplethFill(
   const colourScale = scaleSequential()
     .domain([min, max])
     .interpolator(interpolateBlues)
+    .interpolator((t) => interpolateBlues(1 - t))
 
   let steps = Math.min(max, 30) // Max 30 steps
   steps = Math.max(steps, 3) // Min 3 steps (for valid Mapbox fill-color rule)
@@ -58,24 +60,41 @@ export function getChoroplethFill(
       ['to-number', ['feature-state', 'count'], 0],
       ...colourStops,
     ],
-    'fill-opacity': 0.75,
+    'fill-opacity': visible ? 1 : 0,
+    'fill-opacity-transition': { duration: 750 },
   }
 }
 
-export function getChoroplethEdge(): LineLayerSpecification['paint'] {
+export function getChoroplethEdge(
+  visible?: boolean
+): LineLayerSpecification['paint'] {
   return {
     'line-color': 'white',
-    'line-gap-width': [
+    'line-opacity-transition': { duration: 750 },
+    'line-opacity': visible
+      ? [
+          'interpolate',
+          ['exponential', 1],
+          ['zoom'],
+          //
+          8,
+          0.3,
+          //
+          12,
+          1,
+        ]
+      : 0,
+    'line-width': [
       'interpolate',
       ['exponential', 1],
       ['zoom'],
+      //
       8,
-      0,
+      0.3,
+      //
       12,
-      3,
+      2,
     ],
-    'line-opacity': 0.5,
-    'line-width': ['interpolate', ['exponential', 1], ['zoom'], 8, 0.1, 12, 1],
   }
 }
 
@@ -86,7 +105,7 @@ export function getSelectedChoroplethEdge(): LineLayerSpecification['paint'] {
   }
 }
 export const getChoroplethFillFilter = (
-  data: GroupedDataCount[],
+  data: DataByBoundary,
   tileset: Tileset
 ) => {
   return [
@@ -103,7 +122,7 @@ export const getSelectedChoroplethFillFilter = (
   return ['==', ['get', tileset.promoteId], selectedGss]
 }
 
-export function getAreaGeoJSON(data: GroupedDataCount[]) {
+export function getAreaGeoJSON(data: DataByBoundary) {
   return {
     type: 'FeatureCollection',
     features: data
@@ -119,7 +138,7 @@ export function getAreaGeoJSON(data: GroupedDataCount[]) {
   }
 }
 
-function getStatsForData(data: GroupedDataCount[]) {
+function getStatsForData(data: DataByBoundary) {
   let min =
     data.reduce(
       (min, p) => (p?.count! < min ? p?.count! : min),
@@ -146,7 +165,7 @@ function getStatsForData(data: GroupedDataCount[]) {
 }
 
 export const getAreaCountLayout = (
-  data: GroupedDataCount[]
+  data: DataByBoundary
 ): SymbolLayerSpecification['layout'] => {
   const { min, max, textScale } = getStatsForData(data)
 
@@ -156,14 +175,30 @@ export const getAreaCountLayout = (
     'text-size': [
       'interpolate',
       ['linear'],
-      ['get', 'count'],
-      min,
-      textScale(min) * 17,
-      max,
-      textScale(max) * 17,
+      ['zoom'],
+      1,
+      [
+        'max',
+        ['*', ['/', ['get', 'count'], max], textScale(max) * 9],
+        textScale(min) * 10,
+      ],
+      12,
+      [
+        'max',
+        ['*', ['/', ['get', 'count'], max], textScale(max) * 18],
+        textScale(min) * 20,
+      ],
     ],
     'symbol-placement': 'point',
-    'text-offset': [0, -0.5],
+    'text-offset': [
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      1,
+      [0, -0.1],
+      12,
+      [0, -1],
+    ],
     'text-allow-overlap': true,
     'text-ignore-placement': true,
     'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
@@ -171,7 +206,7 @@ export const getAreaCountLayout = (
 }
 
 export const getAreaLabelLayout = (
-  data: GroupedDataCount[]
+  data: DataByBoundary
 ): SymbolLayerSpecification['layout'] => {
   const { min, max, textScale } = getStatsForData(data)
 
@@ -181,11 +216,19 @@ export const getAreaLabelLayout = (
     'text-size': [
       'interpolate',
       ['linear'],
-      ['get', 'count'],
-      min,
-      textScale(min) * 9,
-      max,
-      textScale(max) * 9,
+      ['zoom'],
+      1,
+      [
+        'max',
+        ['*', ['/', ['get', 'count'], max], textScale(max) * 9],
+        textScale(min) * 10,
+      ],
+      12,
+      [
+        'max',
+        ['*', ['/', ['get', 'count'], max], textScale(max) * 18],
+        textScale(min) * 20,
+      ],
     ],
     'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
     'symbol-placement': 'point',

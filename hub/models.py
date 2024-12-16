@@ -4,7 +4,7 @@ import itertools
 import json
 import math
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import List, Optional, Self, Type, TypedDict, Union
 from urllib.parse import urlencode, urljoin
@@ -16,6 +16,8 @@ from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.gis.db.models import MultiPolygonField, PointField
 from django.contrib.gis.geos import Point
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
+from django.core.mail import EmailMessage
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min, Q
 from django.db.models.functions import Cast, Coalesce
@@ -74,6 +76,7 @@ from hub.tasks import (
     refresh_pages,
     refresh_webhooks,
 )
+from hub.validation import validate_and_format_phone_number
 from hub.views.mapped import ExternalDataSourceWebhook
 from utils import google_maps, google_sheets
 from utils.log import get_simple_debug_logger
@@ -818,6 +821,21 @@ class GenericData(CommonData):
 
         return self.postcode_data
 
+    @cached_property
+    def external_data_source(self):
+        return self.data_type.data_set.external_data_source
+
+    def save(self, *args, **kwargs):
+        if self.phone:
+            try:
+                self.phone = validate_and_format_phone_number(
+                    self.phone, self.external_data_source.countries
+                )
+            except ValidationError as e:
+                raise ValidationError({"phone": f"Invalid phone number: {e}"})
+
+        super().save(*args, **kwargs)
+
 
 class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
@@ -1021,11 +1039,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     # TODO: Revisit the rationale behind these data source types, then
     # document what they are in the repo wiki
     # Specifically in terms of geocoding: what is the difference between
-    # each type in terms of how they are geocoded.
+    # each type in terms of how they are or can be geocoded, and what the requirements are
+    # for the source data to be correctly (successfully) processed
     class DataSourceType(models.TextChoices):
         MEMBER = "MEMBER", "Members or supporters"
         GROUP = "GROUP", "Group or organisation"
-        REGION = "REGION", "Areas or regions"
+        # Example: AREA_STATS expects (requires) a data source with a single row per area code
+        # (for example an ONS GSS code for UK geographies) and a column for each stat
+        AREA_STATS = "AREA_STATS", "Area statistics"
         EVENT = "EVENT", "Events"
         LOCATION = "LOCATION", "Locations"
         STORY = "STORY", "Stories"
@@ -1129,7 +1150,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             hash_values = ["name"]
         else:
             hash_values = [
-                getattr(self, field) for field in self.get_deduplication_field_names()
+                str(getattr(self, field))
+                for field in self.get_deduplication_field_names()
             ]
         return hashlib.md5("".join(hash_values).encode()).hexdigest()
 
@@ -1210,6 +1232,24 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
         return original_job
 
+    def get_latest_parent_job(self, filter: dict):
+        latest_batch_job_for_this_source = (
+            self.event_log_queryset()
+            .filter(**filter, args__request_id__isnull=False)
+            .first()
+        )
+        if latest_batch_job_for_this_source is None:
+            return None
+        request_id = latest_batch_job_for_this_source.args.get("request_id", None)
+        # Now find the oldest, first job with that request_id
+        original_job = (
+            self.event_log_queryset()
+            .filter(args__request_id=request_id)
+            .order_by("id")
+            .first()
+        )
+        return original_job
+
     def get_scheduled_import_job(self):
         return self.get_scheduled_parent_job(
             dict(task_name__contains="hub.tasks.import")
@@ -1220,6 +1260,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             dict(task_name__contains="hub.tasks.refresh")
         )
 
+    def get_latest_import_job(self):
+        return self.get_latest_parent_job(dict(task_name__contains="hub.tasks.import"))
+
+    def get_latest_update_job(self):
+        return self.get_latest_parent_job(dict(task_name__contains="hub.tasks.refresh"))
+
     class BatchJobProgress(TypedDict):
         status: str
         id: str
@@ -1229,13 +1275,16 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         doing: int = 0
         failed: int = 0
         estimated_seconds_remaining: float = 0
+        actual_finish_time: Optional[datetime]
         estimated_finish_time: Optional[datetime]
         has_forecast: bool = True
         seconds_per_record: float = 0
         done: int = 0
         remaining: int = 0
+        number_of_jobs_ahead_in_queue: int = 0
+        send_email: bool = False
 
-    def get_scheduled_batch_job_progress(self, parent_job: ProcrastinateJob):
+    def get_scheduled_batch_job_progress(self, parent_job: ProcrastinateJob, user=None):
         # TODO: This doesn't work for import/refresh by page. How can it cover this case?
         request_id = parent_job.args.get("request_id")
 
@@ -1271,25 +1320,36 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 )
 
         jobs = self.event_log_queryset().filter(args__request_id=request_id).all()
+        status = "todo"
 
-        total = 2
+        if any([job.status == "doing" for job in jobs]):
+            status = "doing"
+        elif any([job.status == "failed" for job in jobs]):
+            status = "failed"
+        elif all([job.status == "succeeded" for job in jobs]):
+            status = "succeeded"
+
+        total = 0
         statuses = dict()
 
         for job in jobs:
-            job_count = len(job.args.get("members", []))
-            total += job_count
+            job_record_count = len(job.args.get("members", []))
+            total += job_record_count
             if statuses.get(job.status, None) is not None:
-                statuses[job.status] += job_count
+                statuses[job.status] += job_record_count
             else:
-                statuses[job.status] = job_count
+                statuses[job.status] = job_record_count
 
         done = (
-            int(
-                statuses.get("succeeded", 0)
-                + statuses.get("failed", 0)
-                + statuses.get("doing", 0)
-            )
-            + 1
+            statuses.get("succeeded", 0)
+            + statuses.get("failed", 0)
+            + statuses.get("doing", 0)
+        )
+
+        number_of_jobs_ahead_in_queue = (
+            ProcrastinateJob.objects.filter(id__lt=parent_job.id)
+            .filter(status__in=["todo", "doing"])
+            .count()
         )
 
         time_started = (
@@ -1302,29 +1362,81 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         remaining = total - done
 
         time_so_far = datetime.now(pytz.utc) - time_started
-        duration_per_record = time_so_far / done
+        duration_per_record = time_so_far / (done or 1)
         time_remaining = duration_per_record * remaining
-        estimated_finish_time = datetime.now() + time_remaining
+        estimated_finish_time = datetime.now(pytz.utc) + time_remaining
+
+        if status == "succeeded" or status == "failed":
+            actual_finish_time = (
+                ProcrastinateEvent.objects.filter(job__in=jobs)
+                .order_by("-at")
+                .first()
+                .at.replace(tzinfo=pytz.utc)
+            )
+
+        else:
+            actual_finish_time = None
+
+        time_threshold = timedelta(minutes=5)
+        send_email = False
+        estimated_job_duration = estimated_finish_time - time_started
+
+        if estimated_job_duration > time_threshold:
+            send_email = True
+            try:
+                batch_request = BatchRequest.objects.get(id=request_id)
+                if not batch_request.user:
+                    return
+            except BatchRequest.DoesNotExist:
+                return
+            if status == "succeeded" and user and user.is_authenticated:
+                user_email = user.email
+                email_subject = "Mapped Job Progress Notification"
+                email_body = "Your job has been successfully completed."
+                try:
+                    email = EmailMessage(
+                        subject=email_subject,
+                        body=email_body,
+                        from_email="noreply@example.com",
+                        to=[user_email],
+                    )
+                    email.send()
+
+                except Exception as e:
+                    logger.error(f"Failed to send email: {e}")
+
+            elif status == "failed" and user and user.is_authenticated:
+                user_email = user.email
+                email_subject = "Mapped Job Progress Notification"
+                email_body = "Your job has failed. Please check the details."
+                try:
+                    email = EmailMessage(
+                        subject=email_subject,
+                        body=email_body,
+                        from_email="noreply@example.com",
+                        to=[user_email],
+                    )
+                    email.send()
+
+                except Exception as e:
+                    logger.error(f"Failed to send email to {user_email}: {e}")
 
         return self.BatchJobProgress(
-            status=(
-                "succeeded"
-                if remaining <= 0
-                else (
-                    parent_job.status if parent_job.status != "succeeded" else "doing"
-                )
-            ),
+            send_email=send_email,
+            status=status,
             id=request_id,
             started_at=time_started,
             estimated_seconds_remaining=time_remaining,
             estimated_finish_time=estimated_finish_time,
+            actual_finish_time=actual_finish_time,
             seconds_per_record=duration_per_record.seconds,
-            total=total - 2,
-            done=done - 1,
-            remaining=remaining - 1,
+            total=total,
+            done=done,
+            remaining=remaining,
             succeeded=statuses.get("succeeded", 0),
             failed=statuses.get("failed", 0),
             doing=statuses.get("doing", 0),
+            number_of_jobs_ahead_in_queue=number_of_jobs_ahead_in_queue,
         )
 
     def get_update_mapping(self) -> list[UpdateMapping]:
@@ -1499,11 +1611,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
     async def import_many(self, members: list):
         """
+        Members doesn't mean members, it's actually generic records.
         Copy data to this database for use in dashboarding features.
         """
 
         if not members:
-            logger.error("import_many called with 0 members")
+            logger.error("import_many called with 0 records")
             return
 
         if is_maybe_id(members[0]):
@@ -1541,6 +1654,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         value: datetime = parse_datetime(value)
                     if field == "can_display_point_field":
                         value = bool(value)  # cast None value to False
+                    if field == "phone_field":
+                        value = validate_and_format_phone_number(value, self.countries)
                     update_data[field.removesuffix("_field")] = value
 
             return update_data
@@ -1679,6 +1794,43 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 )
 
             await asyncio.gather(*[create_import_record(record) for record in data])
+        elif (
+            self.geography_column
+            and self.geography_column_type == self.GeographyTypes.WARD
+        ):
+            loaders = await self.get_loaders()
+
+            async def create_import_record(record):
+                structured_data = get_update_data(record)
+                gss = self.get_record_field(record, self.geography_column)
+                ward = await Area.objects.filter(
+                    area_type__code="WD23",
+                    gss=gss,
+                ).afirst()
+                if not ward:
+                    logger.error(
+                        f"Could not find ward for record {self.get_record_id(record)} and gss {gss}"
+                    )
+                    return
+                coord = ward.point.centroid
+                postcode_data: PostcodesIOResult = await loaders[
+                    "postcodesIOFromPoint"
+                ].load(coord)
+
+                update_data = {
+                    **structured_data,
+                    "postcode_data": postcode_data,
+                }
+
+                await GenericData.objects.aupdate_or_create(
+                    data_type=data_type,
+                    data=self.get_record_id(record),
+                    defaults=update_data,
+                )
+
+            await asyncio.gather(*[create_import_record(record) for record in data])
+            logger.info(f"Imported {len(data)} records from {self}")
+
         elif (
             self.geography_column
             and self.geography_column_type == self.GeographyTypes.ADDRESS
@@ -1838,13 +1990,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             for key in keys
         ]
 
-    def get_import_data(self):
+    def get_import_data(self, **kwargs):
         logger.debug(f"getting import data where external data source id is {self.id}")
         return GenericData.objects.filter(
             data_type__data_set__external_data_source_id=self.id
         )
 
-    def get_analytics_queryset(self):
+    def get_analytics_queryset(self, **kwargs):
         return self.get_import_data()
 
     def get_imported_dataframe(self):
@@ -2218,6 +2370,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     async def deferred_refresh_many(
         cls, external_data_source_id: str, members: list, request_id: str = None
     ):
+
         if not cls.allow_updates:
             logger.error(f"Updates requested for non-updatable CRM {cls}")
             return
@@ -2282,6 +2435,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     async def deferred_import_many(
         cls, external_data_source_id: str, members: list, request_id: str = None
     ):
+
         external_data_source: ExternalDataSource = await cls.objects.aget(
             id=external_data_source_id
         )
@@ -2617,6 +2771,88 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         Look up a record by a value in a column.
         """
         raise NotImplementedError("Lookup not implemented for this data source type.")
+
+
+class LocalJSONSource(ExternalDataSource):
+    """
+    A test table.
+    """
+
+    crm_type = "test"
+    has_webhooks = False
+    automated_webhooks = False
+    introspect_fields = False
+    default_data_type = None
+    data = JSONField(default=list, blank=True)
+    id_field = models.CharField(max_length=250, default="id")
+
+    class Meta:
+        verbose_name = "Test source"
+
+    @classmethod
+    def get_deduplication_field_names(self) -> list[str]:
+        return ["id"]
+
+    def healthcheck(self):
+        return True
+
+    @cached_property
+    def df(self):
+        return pd.DataFrame(self.data).set_index(self.id_field)
+
+    def field_definitions(self):
+        # get all keys from self.data
+        return [
+            self.FieldDefinition(label=col, value=col)
+            for col in self.df.columns.tolist()
+        ]
+
+    def get_record_id(self, record: dict):
+        return record[self.id_field]
+
+    async def fetch_one(self, member_id):
+        return self.df[self.df[self.id_field] == member_id].to_dict(orient="records")[0]
+
+    async def fetch_many(self, id_list: list[str]):
+        return self.df[self.df[self.id_field].isin(id_list)].to_dict(orient="records")
+
+    async def fetch_all(self):
+        return self.df.to_dict(orient="records")
+
+    def get_record_field(self, record, field, field_type=None):
+        return get(record, field)
+
+    def get_record_dict(self, record):
+        return record
+
+    async def update_one(self, mapped_record, **kwargs):
+        id = self.get_record_id(mapped_record["member"])
+        data = mapped_record["update_fields"]
+        self.data = [
+            {**record, **data} if record[self.id_field] == id else record
+            for record in self.data
+        ]
+        self.save()
+
+    async def update_many(self, mapped_records, **kwargs):
+        for mapped_record in mapped_records:
+            await self.update_one(mapped_record)
+
+    def delete_one(self, record_id):
+        self.data = [
+            record for record in self.data if record[self.id_field] != record_id
+        ]
+        self.save()
+
+    def create_one(self, record):
+        self.data.append(record["data"])
+        self.save()
+        return record
+
+    def create_many(self, records):
+        self.data.extend([record["data"] for record in records])
+        self.save()
+        return records
 
 
 class AirtableSource(ExternalDataSource):
@@ -4243,9 +4479,18 @@ class MapReport(Report, Analytics):
     def get_layers(self) -> list[MapLayer]:
         return self.layers or []
 
-    def get_import_data(self):
+    def get_import_data(self, layer_ids=None):
+        filtered_layers = (
+            self.get_layers()
+            if layer_ids is None
+            else [layer for layer in self.get_layers() if layer["id"] in layer_ids]
+        )
+
+        if not filtered_layers:
+            return GenericData.objects.none()
+
         visible_layer_ids = [
-            layer["source"] for layer in self.get_layers() if layer.get("visible", True)
+            layer["source"] for layer in filtered_layers if layer.get("visible", True)
         ]
         return GenericData.objects.filter(
             models.Q(data_type__data_set__external_data_source_id__in=visible_layer_ids)
@@ -4261,8 +4506,8 @@ class MapReport(Report, Analytics):
             )
         )
 
-    def get_analytics_queryset(self):
-        return self.get_import_data()
+    def get_analytics_queryset(self, layer_ids=None):
+        return self.get_import_data(layer_ids=layer_ids)
 
 
 def generate_puck_json_content():
@@ -4474,3 +4719,8 @@ source_models: dict[str, Type[ExternalDataSource]] = {
     "editablegooglesheets": EditableGoogleSheetsSource,
     "tickettailor": TicketTailorSource,
 }
+
+
+class BatchRequest(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)

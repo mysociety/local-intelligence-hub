@@ -57,7 +57,11 @@ services:
   # SEED_AIRTABLE_PLEDGELIST_API_KEY, SEED_AIRTABLE_PLEDGELIST_BASE_ID, SEED_AIRTABLE_PLEDGELIST_TABLE_NAME
   # SEED_AIRTABLE_DATASOURCE_API_KEY, SEED_AIRTABLE_DATASOURCE_BASE_ID, SEED_AIRTABLE_DATASOURCE_TABLE_NAME
   # SEED_AIRTABLE_EVENTS_API_KEY, SEED_AIRTABLE_EVENTS_BASE_ID, SEED_AIRTABLE_EVENTS_TABLE_NAME
-  preDeployCommand: python manage.py migrate && python manage.py createcachetable && python manage.py seed
+  preDeployCommand: >
+    python manage.py migrate &&
+    python manage.py createcachetable &&
+    ./bin/import_preview_env_seed_if_staging_env.sh &&
+    python manage.py seed
   healthCheckPath: /
   buildFilter:
     ignoredPaths:

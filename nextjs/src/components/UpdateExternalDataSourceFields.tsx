@@ -229,6 +229,8 @@ export function getFieldsForDataSourceType(
       ]
     case DataSourceType.Story:
       return ['titleField', 'descriptionField', 'imageField', 'publicUrlField']
+    case DataSourceType.AreaStats:
+      return ['titleField']
     default:
       return [
         'titleField',

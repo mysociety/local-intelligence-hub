@@ -2,7 +2,6 @@
 
 import LocalisedMap from '@/components/LocalisedMap'
 import { PlaceholderLayer } from '@/components/PlaceholderLayer'
-import { getPoliticalTilesetsByCountry } from '../politicalTilesets'
 import { ConstituenciesPanel } from './ConstituenciesPanel'
 import PoliticalChoropleths from './MapLayers/PoliticalChoropleths'
 import ReportMapMarkers from './MapLayers/ReportMapMarkers'
@@ -23,16 +22,17 @@ export default function ReportPage() {
           mapKey={report.id}
         >
           <PlaceholderLayer id={PLACEHOLDER_LAYER_ID_CHOROPLETH} />
-          {getPoliticalTilesetsByCountry('uk').map(
-            ({ boundaryType, tileset }) => (
-              <PoliticalChoropleths
-                key={`${boundaryType}-${tileset.mapboxSourceId}`}
-                report={report}
-                boundaryType={boundaryType}
-                tileset={tileset}
-              />
-            )
-          )}
+          {/* We load and populate all available political boundaries first, then toggle their visibility later.
+          This prevents re-rendering and re-initialisting the layers and re-calculating stats when a user
+          just wants to change the visible boundary type */}
+          {report.politicalBoundaries.map(({ boundaryType, tileset }) => (
+            <PoliticalChoropleths
+              key={`${boundaryType}-${tileset.mapboxSourceId}`}
+              report={report}
+              boundaryType={boundaryType}
+              tileset={tileset}
+            />
+          ))}
           <PlaceholderLayer id={PLACEHOLDER_LAYER_ID_MARKERS} />
           <ReportMapMarkers />
         </LocalisedMap>

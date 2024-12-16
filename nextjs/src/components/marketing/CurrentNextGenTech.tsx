@@ -32,7 +32,7 @@ const CurrentNextGenTech: React.FC<CurrentNextGenTechProps> = () => {
   return (
     <>
       <Switch onCheckedChange={changeSwitch} onScroll={changeSwitch} />
-      <h2 className="md:text-hXlg text-hLg font-light font-IBMPlexSansLight max-w-2xl text-center mb-10">
+      <h2 className="md:text-hXlg text-hLg font-IBMPlexSans font-light max-w-2xl text-center mb-10">
         The{' '}
         <span className="md:text-hXlgPP text-hLg font-PPRightGrotesk">
           {text}
@@ -55,7 +55,7 @@ const CurrentNextGenTech: React.FC<CurrentNextGenTechProps> = () => {
             development has led to a restriction on what is possible for
             organisers.
           </p>
-          <p className="text-lg font-IBMPlexSansSemiBold">
+          <p className="text-lg font-IBMPlexSans font-medium">
             Mapped is a tool designed to finally match the ambition of the
             movement.
           </p>
