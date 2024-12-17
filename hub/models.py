@@ -99,6 +99,7 @@ logger = get_simple_debug_logger(__name__)
 # enum of geocoders: postcodes_io, mapbox, google
 class Geocoder(Enum):
     POSTCODES_IO = "postcodes_io"
+    FINDTHATPOSTCODE = "findthatpostcode"
     MAPBOX = "mapbox"
     GOOGLE = "google"
     GEOCODING_CONFIG = "geocoding_config"
@@ -1694,6 +1695,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 parent_area = None
                 area = None
                 geocoding_data = {}
+                steps = []
+
                 for item in self.geocoding_config:
                     parent_area = area
                     literal_area_type = item.get("type", None)
@@ -1749,6 +1752,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     query_str = qs.query
 
                     area = await qs.afirst()
+
+                    steps.append({ "type": "sql_area_matching", "area_types": parsed_area_types, "result": "failed" if area is None else "success" })
+
                     if area is None:
                         logger.debug(
                             f"Could not find area for {searchable_name} using query: {query_str}"
@@ -1766,21 +1772,28 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         "postcodesIOFromPoint"
                     ].load(sample_point)
 
+                    steps.append({ "task": "postcode_from_area_coordinates", "service": Geocoder.POSTCODES_IO.value, "result": "failed" if postcode_data is None else "success" })
+
                     # Try a few other backup strategies (example postcode, another geocoder)
                     # to get postcodes.io data
                     if postcode_data is None:
                         postcode = await get_example_postcode_from_area_gss(area.gss)
+                        steps.append({ "task": "postcode_from_area", "service": Geocoder.FINDTHATPOSTCODE.value, "result": "failed" if postcode is None else "success" })
                         if postcode is not None:
                             postcode_data = await loaders["postcodesIO"].load(postcode)
+                            steps.append({ "task": "data_from_postcode", "service": Geocoder.POSTCODES_IO.value, "result": "failed" if postcode_data is None else "success" })
                     if postcode_data is None:
                         postcode = await get_postcode_from_coords_ftp(sample_point)
+                        steps.append({ "task": "postcode_from_area_coordinates", "service": Geocoder.FINDTHATPOSTCODE.value, "result": "failed" if postcode is None else "success" })
                         if postcode is not None:
                             postcode_data = await loaders["postcodesIO"].load(postcode)
+                            steps.append({ "task": "data_from_postcode", "service": Geocoder.POSTCODES_IO.value, "result": "failed" if postcode_data is None else "success" })
 
                     update_data["postcode_data"] = postcode_data
                     update_data["geocoder"] = Geocoder.GEOCODING_CONFIG.value
-                    update_data["geocode_data"] = {
+                    update_data["geocode_data"].update({
                         "config": self.geocoding_config,
+                        "steps": steps,
                         "data": geocoding_data,
                         "area": {
                             "centroid": area.polygon.centroid.json,
@@ -1788,7 +1801,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             "id": area.id,
                             "gss": area.gss,
                         },
-                    }
+                    })
 
                 args = dict(
                     data_type=data_type,
