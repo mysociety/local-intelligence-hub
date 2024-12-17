@@ -26,7 +26,12 @@ const ReportConfigLegacyControls: React.FC = () => {
     report: {
       organisation,
       displayOptions: {
-        display: { showLastElectionData, showMPs, showStreetDetails } = {},
+        display: {
+          showLastElectionData,
+          showMPs,
+          showStreetDetails,
+          showBoundaryNames,
+        } = {},
       },
     },
   } = useReport()
@@ -56,7 +61,6 @@ const ReportConfigLegacyControls: React.FC = () => {
       },
     })
   }
-
   return (
     <div className="bg-meepGray-700 p-3">
       <div className="p-3 pb-4 flex flex-col gap-2 border-t border-meepGray-700 ">
@@ -75,6 +79,17 @@ const ReportConfigLegacyControls: React.FC = () => {
             }}
           />
           Street details
+        </div>
+        <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
+          <Switch
+            checked={showBoundaryNames}
+            onCheckedChange={(showBoundaryNames: boolean) => {
+              updateReport({
+                displayOptions: { display: { showBoundaryNames } },
+              })
+            }}
+          />
+          Political boundary names
         </div>
       </div>
       <div className="p-3 pb-4 flex flex-col gap-2 border-t border-meepGray-700 ">
