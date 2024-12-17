@@ -1,7 +1,7 @@
 import { AnalyticalAreaType } from '@/__generated__/graphql'
 import { useLoadedMap } from '@/lib/map'
 import { useAtom } from 'jotai'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
 import {
@@ -38,10 +38,21 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
       ? 'visible'
       : 'none'
 
+  const visualisationType =
+    report.displayOptions?.dataVisualisation?.visualisationType
+
   const { data: dataByBoundary } = useDataByBoundary({ report, boundaryType })
   const map = useLoadedMap()
   const [selectedBoundary, setSelectedBoundary] = useAtom(selectedBoundaryAtom)
   useClickOnBoundaryEvents(visibility === 'visible' ? tileset : null)
+
+  const [fillVisibility, setFillVisibility] = useState<'choropleth' | 'none'>(
+    visualisationType === 'none' ? 'none' : 'choropleth'
+  )
+
+  useEffect(() => {
+    setFillVisibility(visualisationType === 'none' ? 'none' : 'choropleth')
+  }, [visualisationType])
 
   useEffect(() => {
     if (visibility === 'none') {
@@ -78,17 +89,19 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
         url={`mapbox://${tileset.mapboxSourceId}`}
         promoteId={tileset.promoteId}
       >
+        {/* Display fill when visualisation type if not none */}
         {/* Fill of the boundary */}
-        <Layer
-          beforeId="road-simple"
-          id={`${tileset.mapboxSourceId}-fill`}
-          source={tileset.mapboxSourceId}
-          source-layer={tileset.sourceLayerId}
-          type="fill"
-          filter={getChoroplethFillFilter(dataByBoundary, tileset)}
-          paint={getChoroplethFill(dataByBoundary, visibility === 'visible')}
-          //layout={{ visibility: delayedVisibility }}
-        />
+        {fillVisibility !== 'none' && (
+          <Layer
+            beforeId="road-simple"
+            id={`${tileset.mapboxSourceId}-fill`}
+            source={tileset.mapboxSourceId}
+            source-layer={tileset.sourceLayerId}
+            type="fill"
+            filter={getChoroplethFillFilter(dataByBoundary, tileset)}
+            paint={getChoroplethFill(dataByBoundary, visibility === 'visible')}
+          />
+        )}
         {/* Border of the boundary */}
         <Layer
           beforeId={PLACEHOLDER_LAYER_ID_CHOROPLETH}
