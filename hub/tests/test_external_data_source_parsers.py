@@ -211,6 +211,123 @@ class TestMultiLevelGeocoding(TestCase):
             "expected_area_type_code": "WD23", # TODO: actually a UTE
             "expected_area_gss": "W05000107",
         }
+        # A bunch of wards with the same name, should all point to different things
+        {
+            "id": "11",
+            "council": "Sandwell",
+            "ward": "Abbey",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05001260",
+        },
+        {
+            "id": "12",
+            "council": "Nuneaton and Bedworth",
+            "ward": "Abbey",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05007474",
+        },
+        {
+            "id": "13",
+            "council": "Redditch",
+            "ward": "Abbey",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05007868",
+            # TODO: this one is not findable in MapIt! https://findthatpostcode.uk/areas/E05007868.html
+        },
+        {
+            "id": "14",
+            "council": "Shropshire",
+            "ward": "Abbey",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05008136",
+            # TODO: https://findthatpostcode.uk/areas/E05008136.html 
+        },
+        {
+            "id": "15",
+            "council": "Swale",
+            "ward": "Abbey",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05009544",
+        },
+        {
+            "id": "16",
+            "council": "Leicester",
+            "ward": "Abbey",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05010458",
+        },
+        {
+            "id": "17",
+            "council": "Cotswold",
+            "ward": "Abbey",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05010696",
+        },
+        {
+            "id": "18",
+            "council": "Lincoln",
+            "ward": "Abbey",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05010784",
+        },
+        {
+            "id": "19",
+            "council": "Cambridge",
+            "ward": "Abbey",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05002702",
+        },
+        {
+            "id": "20",
+            "council": "Buckinghamshire",
+            "ward": "Abbey",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05002674",
+        },
+        {
+            "id": "21",
+            "council": "Merton",
+            "ward": "Abbey",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05000455",
+        },
+        {
+            "id": "22",
+            "council": "Reading",
+            "ward": "Abbey",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05013864",
+            # TODO: Not in current MapIt, appears to be outdated
+            # https://findthatpostcode.uk/areas/E05013864.html
+        },
+        {
+            "id": "23",
+            "council": "Barking and Dagenham",
+            "ward": "Abbey",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05000026",
+        },
+        {
+            "id": "24",
+            "council": "Rushcliffe",
+            "ward": "Abbey",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05009708",
+        },
+        {
+            "id": "25",
+            "council": "Derby",
+            "ward": "Abbey",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05001767",
+        },
+        {
+            "id": "26",
+            "council": "Dumfries and Galloway",
+            "ward": "Abbey",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "S13002537",
+        },
     ]
 
     @classmethod
