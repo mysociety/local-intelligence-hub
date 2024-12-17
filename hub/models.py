@@ -1300,7 +1300,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             )
             if request_completed_signal is not None:
                 return self.BatchJobProgress(
-                    status="done",
+                    status=(
+                        "succeeded"
+                        if request_completed_signal.args.get("success", True)
+                        else "failed"
+                    ),
                     id=request_id,
                     started_at=parent_job.scheduled_at,
                     has_forecast=False,
@@ -3449,7 +3453,16 @@ class ActionNetworkSource(ExternalDataSource):
         for id in ids:
             if "action_network:" in id:
                 return id
-        return ids[0]
+        if ids:
+            return ids[0]
+
+        logger.error(f"Action network record has no identifiers: {record}")
+        self_link = record.get("_links", {}).get("self", {}).get("href")
+        if self_link:
+            return self_link
+        # TODO: what should be returned here?
+        # returning None breaks a lot of downstream code...
+        return hashlib.md5(json.dumps(record).encode()).hexdigest()
 
     def get_record_uuid(self, record):
         """

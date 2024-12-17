@@ -95,11 +95,17 @@ async def refresh_pages(
 ):
     from hub.models import ExternalDataSource
 
-    has_more_data = await ExternalDataSource.deferred_refresh_page(
-        external_data_source_id=external_data_source_id,
-        page=current_page,
-        request_id=request_id,
-    )
+    error = None
+    try:
+        has_more_data = await ExternalDataSource.deferred_refresh_page(
+            external_data_source_id=external_data_source_id,
+            page=current_page,
+            request_id=request_id,
+        )
+    except Exception as e:
+        logger.error(f"refresh_pages failed: {e}")
+        error = e
+        has_more_data = False
 
     # Create task to refresh next page
     if has_more_data:
@@ -108,15 +114,23 @@ async def refresh_pages(
             current_page=current_page + 1,
             request_id=request_id,
         )
-    else:
-        return await signal_request_complete.configure(
-            # Dedupe `refresh_pages` jobs for the same config
-            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-            queueing_lock=f"request_complete_{request_id}"
-        ).defer_async(
-            request_id=request_id,
-            external_data_source_id=external_data_source_id,
-        )
+
+    # Always queue signal_request_complete job, to mark this batch of jobs as terminated
+    enqueue_result = await signal_request_complete.configure(
+        # Dedupe `refresh_pages` jobs for the same config
+        # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+        queueing_lock=f"request_complete_{request_id}"
+    ).defer_async(
+        request_id=request_id,
+        success=not error,
+        external_data_source_id=external_data_source_id,
+    )
+
+    # If an error happened, raise it, to mark this job as failed
+    if error:
+        raise error
+
+    return enqueue_result
 
 
 @app.task(queue="external_data_sources")
@@ -181,11 +195,17 @@ async def import_pages(
 ):
     from hub.models import ExternalDataSource
 
-    has_more_data = await ExternalDataSource.deferred_import_page(
-        external_data_source_id=external_data_source_id,
-        page=current_page,
-        request_id=request_id,
-    )
+    error = None
+    try:
+        has_more_data = await ExternalDataSource.deferred_import_page(
+            external_data_source_id=external_data_source_id,
+            page=current_page,
+            request_id=request_id,
+        )
+    except Exception as e:
+        logger.error(f"refresh_pages failed: {e}")
+        error = e
+        has_more_data = False
 
     # Create task to import next page
     if has_more_data:
@@ -194,15 +214,23 @@ async def import_pages(
             current_page=current_page + 1,
             request_id=request_id,
         )
-    else:
-        return await signal_request_complete.configure(
-            # Dedupe `refresh_pages` jobs for the same config
-            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-            queueing_lock=f"request_complete_{request_id}"
-        ).defer_async(
-            request_id=request_id,
-            external_data_source_id=external_data_source_id,
-        )
+
+    # mark batch of jobs as completed
+    enqueue_result = await signal_request_complete.configure(
+        # Dedupe `refresh_pages` jobs for the same config
+        # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+        queueing_lock=f"request_complete_{request_id}"
+    ).defer_async(
+        request_id=request_id,
+        success=not error,
+        external_data_source_id=external_data_source_id,
+    )
+
+    # raise any error to mark this job as failed
+    if error:
+        raise error
+
+    return enqueue_result
 
 
 @app.task(queue="external_data_sources")
@@ -222,7 +250,7 @@ async def import_all(
 
 
 @app.task(queue="external_data_sources")
-async def signal_request_complete(request_id: str, *args, **kwargs):
+async def signal_request_complete(request_id: str, success: bool, *args, **kwargs):
     """
     Empty task which is used to query the status of the batch tasks.
     """
