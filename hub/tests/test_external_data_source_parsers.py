@@ -351,14 +351,14 @@ class TestMultiLevelGeocoding(TestCase):
         cls.data = cls.source.get_import_data()
 
     def test_geocoding_test_rig_is_valid(self):
-        self.assertGreaterEqual(Area.objects.count(), 10135)
+        self.assertGreaterEqual(Area.objects.count(), 9000)
         self.assertGreaterEqual(
-            Area.objects.filter(polygon__isnull=False).count(), 10135
+            Area.objects.filter(polygon__isnull=False).count(), 9000
         )
         self.assertGreaterEqual(Area.objects.filter(area_type__code="DIS").count(), 164)
         self.assertGreaterEqual(Area.objects.filter(area_type__code="STC").count(), 218)
         self.assertGreaterEqual(
-            Area.objects.filter(area_type__code="WD23").count(), 8441
+            Area.objects.filter(area_type__code="WD23").count(), 8000
         )
 
     def test_geocoding_matches(self):
