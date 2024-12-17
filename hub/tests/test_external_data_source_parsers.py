@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import json
 
 from django.test import TestCase
 from asgiref.sync import async_to_sync
@@ -109,59 +110,50 @@ class TestMultiLevelGeocoding(TestCase):
             "id": "1",
             "council": "Barnsley",
             "ward": "St Helens",
-            "expected_postcodedata_column": "codes.admin_ward",
-            "expected_postcodedata_value": "E05000993",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05000993",
         },
         {
             "id": "2",
             "council": "North Lincolnshire",
             "ward": "Brigg & Wolds",
-            "expected_postcodedata_column": "codes.admin_ward",
-            "expected_postcodedata_value": "E05015081",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05015081",
         },
         {
             "id": "3",
             "council": "Test Valley",
             "ward": "Andover Downlands",
-            "expected_postcodedata_column": "codes.admin_ward",
-            "expected_postcodedata_value": "E05012085",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05012085",
         },
         {
             "id": "4",
             "council": "North Warwickshire",
             "ward": "Baddesley and Grendon",
-            "expected_postcodedata_column": "codes.admin_ward",
-            "expected_postcodedata_value": "E05007461",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05007461",
         },
         # Name rewriting required
         {
             "id": "5",
             "council": "Herefordshire, County of",
             "ward": "Credenhill",
-            "expected_postcodedata_column": "codes.admin_ward",
-            "expected_postcodedata_value": "E05012957",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05012957",
         },
         # GSS code matching
         {
             "id": "999",
             "ward": "E05000993",
-            "expected_postcodedata_column": "codes.admin_ward",
-            "expected_postcodedata_value": "E05000993",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": "E05000993",
         },
     ]
 
     @classmethod
     def setUpTestData(cls):
         subprocess.call("bin/import_areas_seed.sh")
-
-        print("All area count: ", Area.objects.count())
-        print(
-            "All areas with polygons count: ",
-            Area.objects.filter(polygon__isnull=False).count(),
-        )
-        print("DIS area count: ", Area.objects.filter(area_type__code="DIS").count())
-        print("STC area count: ", Area.objects.filter(area_type__code="STC").count())
-        print("WD23 area count: ", Area.objects.filter(area_type__code="WD23").count())
 
         cls.source = LocalJSONSource.objects.create(
             name="geo_test",
@@ -179,19 +171,30 @@ class TestMultiLevelGeocoding(TestCase):
         # test that the GenericData records have valid, formatted phone field
         cls.data = cls.source.get_import_data()
 
+    def test_geocoding_test_rig_is_valid(self):
+        self.assertGreaterEqual(Area.objects.count(), 10135)
+        self.assertGreaterEqual(
+            Area.objects.filter(polygon__isnull=False).count(), 10135
+        )
+        self.assertGreaterEqual(Area.objects.filter(area_type__code="DIS").count(), 164)
+        self.assertGreaterEqual(Area.objects.filter(area_type__code="STC").count(), 218)
+        self.assertGreaterEqual(
+            Area.objects.filter(area_type__code="WD23").count(), 8441
+        )
+
     def test_geocoding_matches(self):
         for d in self.data:
-            if d.postcode_data is None:
-                print(
-                    "❌ Data failed geocoding: ",
-                    d.id,
-                    d.postcode_data,
-                    d.geocode_data,
-                    d.json,
+            try:
+                self.assertEqual(
+                    d.geocode_data["data"]["area_fields"][
+                        d.json["expected_area_type_code"]
+                    ],
+                    d.json["expected_area_gss"],
                 )
-            self.assertIsNotNone(d.postcode_data)
-            postcode_data = benedict(d.postcode_data)
-            self.assertEqual(
-                postcode_data[d.json["expected_postcodedata_column"]],
-                d.json["expected_postcodedata_value"],
-            )
+                self.assertIsNotNone(d.postcode_data)
+            except AssertionError as e:
+                print(e)
+                print(f"Geocoding failed:", d.id, json.dumps(d.json, indent=4))
+                print(f"--Geocode data:", d.id, json.dumps(d.geocode_data, indent=4))
+                print(f"--Postcode data:", d.id, json.dumps(d.postcode_data, indent=4))
+                raise
