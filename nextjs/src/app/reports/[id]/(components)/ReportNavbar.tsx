@@ -1,7 +1,10 @@
 import ReportActions from '@/app/reports/[id]/(components)/ReportActions'
 import { useReport } from '@/app/reports/[id]/(components)/ReportProvider'
+import { useSidebar } from '@/components/ui/sidebar'
+
 import { contentEditableMutation } from '@/lib/html'
 import { atom, useAtomValue } from 'jotai'
+import { PanelRight } from 'lucide-react'
 import Link from 'next/link'
 import { MappedIcon } from '../../../../components/icons/MappedIcon'
 
@@ -12,6 +15,7 @@ export const NAVBAR_HEIGHT = 48
 export default function ReportNavbar() {
   const title = useAtomValue(navbarTitleAtom)
   const { updateReport } = useReport()
+  const { toggleSidebar } = useSidebar()
 
   return (
     <nav
@@ -29,9 +33,15 @@ export default function ReportNavbar() {
         >
           {title}
         </div>
-        <ReportActions />
+        <div className="flex gap-8 items-center">
+          <ReportActions />
+          <PanelRight
+            onClick={toggleSidebar}
+            className="text-meepGray-400 w-4 h-4 cursor-pointer"
+          />{' '}
+        </div>
       </section>
-      <section className="flex space-x-4"></section>
+      <section className="flex space-x-4"> </section>
     </nav>
   )
 }
