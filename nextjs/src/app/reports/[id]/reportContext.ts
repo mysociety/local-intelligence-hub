@@ -7,6 +7,7 @@ import { createContext } from 'react'
 import { PoliticalTileset } from './politicalTilesets'
 
 export enum VisualisationType {
+  None = 'none',
   Choropleth = 'choropleth',
 }
 
