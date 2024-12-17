@@ -1844,12 +1844,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         "type": "sql_area_matching",
                         "area_types": parsed_area_types,
                         "result": "failed" if area is None else "success",
+                        "search_term": raw_area_value,
                         "data": {
                             "centroid": area.polygon.centroid.json,
                             "name": area.name,
                             "id": area.id,
                             "gss": area.gss,
-                            "search_term": raw_area_value
                         } if area is not None else None
                     }
                     if settings.DEBUG:
