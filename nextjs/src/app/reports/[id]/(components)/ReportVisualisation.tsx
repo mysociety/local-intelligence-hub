@@ -66,100 +66,116 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {Object.values(VisualisationType).map((type) => (
-                <SelectItem className="font-medium" key={type} value={type}>
-                  {startCase(type)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-meepGray-400 text-sm font-normal mb-3 mt-3">
-            Colour shading by category
-          </p>
-        </div>
-
-        {report.layers.length && (
-          <div>
-            <Select
-              onValueChange={(type) =>
-                updateVisualisationConfig({
-                  dataSource: type as MapLayer['id'],
-                })
-              }
-              value={dataSourceId}
-            >
-              <Label
-                htmlFor="select-vis-type"
-                className="text-white text-sm font-medium"
-              >
-                Colour by
-              </Label>
-              <SelectTrigger
-                id="select-vis-type"
-                className="w-full border-meepGray-100 text-meepGray-100 mt-2 font-medium"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {layers.map((layer) => (
+              {Object.values(VisualisationType)
+                .filter((type) => type !== VisualisationType.None)
+                .map((type) => (
                   <SelectItem
-                    className="font-medium"
-                    key={layer.id}
-                    value={layer.id}
+                    className="font-medium flex items-center"
+                    key={type}
+                    value={type}
                   >
-                    {startCase(layer.name)}
+                    {startCase(type)}
+                    {type === 'choropleth' && (
+                      <span className="text-meepGray-400 text-xs ml-2">
+                        Colour shading by category
+                      </span>
+                    )}
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-            <p className="text-meepGray-400 text-sm font-normal mb-3 mt-3">
-              Select which data will populate your {selectedBoundaryLabel}
-            </p>
-          </div>
-        )}
-        {selectedDataSource?.source.dataType === 'AREA_STATS' && (
-          <div>
-            <Select
-              onValueChange={(type) =>
-                updateVisualisationConfig({
-                  dataSourceField: type as MapLayer['id'],
-                })
-              }
-              value={dataSourceField}
-              defaultOpen={!dataSourceField}
-              required
-              disabled={isLoading}
-            >
-              <Label
-                htmlFor="select-vis-type"
-                className="text-white text-sm font-medium"
-              >
-                Select data field
-              </Label>
-              <SelectTrigger
-                id="select-vis-type"
-                className="w-full border-meepGray-100 text-meepGray-100 mt-2 font-medium flex items-center"
-              >
-                {isLoading ? <LoadingIcon size={'18'} /> : <SelectValue />}
-              </SelectTrigger>
-              {!isLoading && (
-                <SelectContent>
-                  {fieldNames.map((field) => (
-                    <SelectItem
-                      className="font-medium"
-                      key={field}
-                      value={field}
-                    >
-                      {field}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              )}
-            </Select>
-            <p className="text-meepGray-400 text-sm font-normal mb-3 mt-3">
-              Select the field from your data source
-            </p>
-          </div>
+              <SelectItem className="font-medium" key="none" value="none">
+                None
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {/* Conditionally render selectors if visualisationType is not 'none' */}
+        {visualisationType !== 'none' && (
+          <>
+            {report.layers.length && (
+              <div>
+                <Select
+                  onValueChange={(type) =>
+                    updateVisualisationConfig({
+                      dataSource: type as MapLayer['id'],
+                    })
+                  }
+                  value={dataSourceId}
+                >
+                  <Label
+                    htmlFor="select-vis-type"
+                    className="text-white text-sm font-medium"
+                  >
+                    Colour by
+                  </Label>
+                  <SelectTrigger
+                    id="select-vis-type"
+                    className="w-full border-meepGray-100 text-meepGray-100 mt-2 font-medium"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {layers.map((layer) => (
+                      <SelectItem
+                        className="font-medium"
+                        key={layer.id}
+                        value={layer.id}
+                      >
+                        {startCase(layer.name)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-meepGray-400 text-sm font-normal mb-3 mt-3">
+                  Select which data will populate your {selectedBoundaryLabel}
+                </p>
+              </div>
+            )}
+
+            {selectedDataSource?.source.dataType === 'AREA_STATS' && (
+              <div>
+                <Select
+                  onValueChange={(type) =>
+                    updateVisualisationConfig({
+                      dataSourceField: type as MapLayer['id'],
+                    })
+                  }
+                  value={dataSourceField}
+                  defaultOpen={!dataSourceField}
+                  required
+                  disabled={isLoading}
+                >
+                  <Label
+                    htmlFor="select-vis-type"
+                    className="text-white text-sm font-medium"
+                  >
+                    Select data field
+                  </Label>
+                  <SelectTrigger
+                    id="select-vis-type"
+                    className="w-full border-meepGray-100 text-meepGray-100 mt-2 font-medium flex items-center"
+                  >
+                    {isLoading ? <LoadingIcon size={'18'} /> : <SelectValue />}
+                  </SelectTrigger>
+                  {!isLoading && (
+                    <SelectContent>
+                      {fieldNames.map((field) => (
+                        <SelectItem
+                          className="font-medium"
+                          key={field}
+                          value={field}
+                        >
+                          {field}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  )}
+                </Select>
+                <p className="text-meepGray-400 text-sm font-normal mb-3 mt-3">
+                  Select the field from your data source
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </CollapsibleSection>
