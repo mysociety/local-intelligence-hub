@@ -34,10 +34,6 @@ export function MembersListPointMarkers({
         }
       }
 
-      const handleMouseLeave = () => {
-        setSelectedSourceMarker(null)
-      }
-
       const handleClick = (event: MapMouseEvent) => {
         const feature = event.features?.[0]
         if (feature?.properties?.id) {
@@ -46,16 +42,11 @@ export function MembersListPointMarkers({
       }
 
       map.on('mouseover', `${externalDataSourceId}-marker`, handleMouseOver)
-      map.on('mouseleave', `${externalDataSourceId}-marker`, handleMouseLeave)
       map.on('click', `${externalDataSourceId}-marker`, handleClick)
 
       return () => {
         map.off('mouseover', `${externalDataSourceId}-marker`, handleMouseOver)
-        map.off(
-          'mouseleave',
-          `${externalDataSourceId}-marker`,
-          handleMouseLeave
-        )
+
         map.off('click', `${externalDataSourceId}-marker`, handleClick)
       }
     },
