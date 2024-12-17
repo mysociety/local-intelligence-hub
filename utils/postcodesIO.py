@@ -166,7 +166,7 @@ async def get_bulk_postcode_geo(postcodes) -> list[PostcodesIOResult]:
 
 
 @async_batch_and_aggregate(settings.POSTCODES_IO_BATCH_MAXIMUM)
-async def get_bulk_postcode_geo_from_coords(coordinates: list[Point], radius=500):
+async def get_bulk_postcode_geo_from_coords(coordinates: list[Point], radius=150):
     coords = [
         {
             "longitude": coord.x,

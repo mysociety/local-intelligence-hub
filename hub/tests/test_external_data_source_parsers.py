@@ -210,7 +210,7 @@ class TestMultiLevelGeocoding(TestCase):
             "ward": "Tre-garth a Mynydd Llandyg├íi",
             "expected_area_type_code": "WD23", # TODO: actually a UTE
             "expected_area_gss": "W05000107",
-        }
+        },
         # A bunch of wards with the same name, should all point to different things
         {
             "id": "11",
