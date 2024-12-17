@@ -1799,7 +1799,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     query_str = str(qs.query)
 
                     if parent_area is not None and parent_area.polygon is not None:
-                        qs = qs.filter(polygon__overlaps=parent_area.polygon)
+                        qs = qs.filter(polygon__intersects=parent_area.polygon)
 
                     area = await qs.afirst()
 
