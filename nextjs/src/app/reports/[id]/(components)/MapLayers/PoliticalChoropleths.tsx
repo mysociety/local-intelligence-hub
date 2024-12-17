@@ -37,8 +37,9 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
     report.displayOptions?.dataVisualisation?.boundaryType === boundaryType
       ? 'visible'
       : 'none'
-
   const { data: dataByBoundary } = useDataByBoundary({ report, boundaryType })
+  const boundaryNames = report.displayOptions?.display.showBoundaryNames
+
   const map = useLoadedMap()
   const [selectedBoundary, setSelectedBoundary] = useAtom(selectedBoundaryAtom)
   useClickOnBoundaryEvents(visibility === 'visible' ? tileset : null)
