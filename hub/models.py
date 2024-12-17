@@ -16,6 +16,7 @@ from django.contrib.gis.db.models import MultiPolygonField, PointField
 from django.contrib.gis.geos import Point
 from django.core.cache import cache
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 from django.db.models import Avg, IntegerField, Max, Min, Q
 from django.db.models.functions import Cast, Coalesce
 from django.db.utils import IntegrityError
@@ -823,6 +824,7 @@ class Area(models.Model):
     mapit_type = models.CharField(max_length=30, db_index=True, blank=True, null=True)
     gss = models.CharField(max_length=30)
     name = models.CharField(max_length=200)
+    mapit_all_names = models.JSONField(blank=True, null=True)
     area_type = models.ForeignKey(
         AreaType, on_delete=models.CASCADE, related_name="areas"
     )
