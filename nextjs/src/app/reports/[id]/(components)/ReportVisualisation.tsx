@@ -136,13 +136,19 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
               >
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                {fieldNames?.map((field) => (
-                  <SelectItem className="font-medium" key={field} value={field}>
-                    {field}
-                  </SelectItem>
-                ))}
-              </SelectContent>
+              {fieldNames && (
+                <SelectContent>
+                  {fieldNames.map((field) => (
+                    <SelectItem
+                      className="font-medium"
+                      key={field}
+                      value={field}
+                    >
+                      {field}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              )}
             </Select>
             <p className="text-meepGray-400 text-sm font-normal mb-3 mt-3">
               Select the field from your data source
