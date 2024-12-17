@@ -34,6 +34,13 @@ export function MembersListPointMarkers({
         }
       }
 
+      const handleTouchStart = (event: mapboxgl.MapTouchEvent) => {
+        const feature = event.features?.[0]
+        if (feature?.properties?.id) {
+          setSelectedSourceMarker(feature)
+        }
+      }
+
       const handleClick = (event: MapMouseEvent) => {
         const feature = event.features?.[0]
         if (feature?.properties?.id) {
@@ -41,13 +48,16 @@ export function MembersListPointMarkers({
         }
       }
 
-      map.on('mouseover', `${externalDataSourceId}-marker`, handleMouseOver)
-      map.on('click', `${externalDataSourceId}-marker`, handleClick)
+      const layerId = `${externalDataSourceId}-marker`
+
+      map.on('mouseover', layerId, handleMouseOver)
+      map.on('click', layerId, handleClick)
+      map.on('touchstart', layerId, handleTouchStart)
 
       return () => {
-        map.off('mouseover', `${externalDataSourceId}-marker`, handleMouseOver)
-
-        map.off('click', `${externalDataSourceId}-marker`, handleClick)
+        map.off('mouseover', layerId, handleMouseOver)
+        map.off('click', layerId, handleClick)
+        map.off('touchstart', layerId, handleTouchStart)
       }
     },
     [mapbox.loadedMap, externalDataSourceId, setSelectedSourceMarker]
