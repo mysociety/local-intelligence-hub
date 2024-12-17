@@ -1,12 +1,14 @@
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
 from django.conf import settings
-from dataclasses import dataclass, field
-from psycopg import Column
 
 # from django postgis
 from django.core.management.base import BaseCommand
 from django.db import connection
+
+from psycopg import Column
 
 
 @dataclass
