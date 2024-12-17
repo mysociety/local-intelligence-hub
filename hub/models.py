@@ -1796,7 +1796,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                       )
 
                     # for debugging, but without all the polygon characters which spam up the terminal/logger
-                    query_str = str(qs.query)
+                    non_polygon_query = qs
 
                     if parent_area is not None and parent_area.polygon is not None:
                         qs = qs.filter(polygon__intersects=parent_area.polygon)
@@ -1817,15 +1817,19 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     }
                     if settings.DEBUG:
                         step.update({
-                          "query": query_str,
+                          "query": str(non_polygon_query.query),
                           "parent_polygon_query": parent_area.polygon.json if parent_area is not None and parent_area.polygon is not None else None,
                         })
                     steps.append(step)
 
                     if area is None:
                         logger.debug(
-                            f"Could not find area for {searchable_name} using query: {query_str}"
+                            f"Could not find area for {searchable_name} using query: {non_polygon_query.query}"
                         )
+                        if settings.DEBUG:
+                            async for candidate in non_polygon_query:
+                                logger.debug(f"Candidates considered for {searchable_name}: ", candidate.gss, candidate.polygon.centroid)
+                            logger.debug("Polygon used to filter candidates:", parent_area.gss, parent_area.polygon.centroid)
                         break
                     else:
                         geocoding_data["area_fields"] = geocoding_data.get(
