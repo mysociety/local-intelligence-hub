@@ -18,4 +18,7 @@ export const ENABLED_ANALYTICAL_AREA_TYPES = [
   AnalyticalAreaType.ParliamentaryConstituency_2024,
   AnalyticalAreaType.AdminWard,
   AnalyticalAreaType.AdminDistrict,
+  AnalyticalAreaType.AdminCounty,
+  AnalyticalAreaType.EuropeanElectoralRegion,
+  AnalyticalAreaType.Country,
 ]

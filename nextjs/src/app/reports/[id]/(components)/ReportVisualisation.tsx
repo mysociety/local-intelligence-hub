@@ -57,6 +57,7 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
             </Label>
             <SelectTrigger
               id="select-vis-type"
+              disabled
               className="w-full border-meepGray-100 text-meepGray-100 mt-2 font-medium"
             >
               <SelectValue />

@@ -39,8 +39,8 @@ class Command(BaseCommand):
             "mapit_type": ["COI", "CPW", "DIW", "LBW", "LGW", "MTW", "UTW"],
             "name": "Wards",
             "code": "WD23",
-            "area_type": "Ward",
-            "description": "Ward",
+            "area_type": "Electoral Ward",
+            "description": "Electoral wards",
         },
     ]
 
@@ -66,28 +66,31 @@ class Command(BaseCommand):
                 print(f"Importing {b_type['name']} Areas")
             for area in tqdm(areas, disable=quiet):
                 try:
-                    try:
-                        geom = mapit_client.area_geometry(area["id"])
-                        geom = {
-                            "type": "Feature",
-                            "geometry": geom,
-                            "properties": {
-                                "PCON13CD": area["codes"]["gss"],
-                                "name": area["name"],
-                                "type": b_type["code"],
-                            },
-                        }
-                        geom_str = json.dumps(geom)
-                    except mapit.NotFoundException:  # pragma: no cover
-                        print(f"could not find mapit area for {area['name']}")
-                        geom = None
+                    geom = mapit_client.area_geometry(area["id"])
+                    geom = {
+                        "type": "Feature",
+                        "geometry": geom,
+                        "properties": {
+                            "PCON13CD": area["codes"]["gss"],
+                            "name": area["name"],
+                            "type": b_type["code"],
+                            "mapit_type": area["type"],
+                        },
+                    }
+                    geom_str = json.dumps(geom)
+                except mapit.NotFoundException:  # pragma: no cover
+                    print(f"could not find mapit area for {area['name']}")
+                    geom = None
 
-                    a, created = Area.objects.get_or_create(
-                        mapit_id=area["id"],
-                        gss=area["codes"]["gss"],
-                        name=area["name"],
-                        area_type=area_type,
-                    )
+                a, created = Area.objects.update_or_create(
+                    gss=area["codes"]["gss"],
+                    area_type=area_type,
+                    defaults={
+                        "mapit_id": area["id"],
+                        "name": area["name"],
+                        "mapit_type": area["type"],
+                    },
+                )
 
                     if geom is not None:
                         geos = json.dumps(geom["geometry"])

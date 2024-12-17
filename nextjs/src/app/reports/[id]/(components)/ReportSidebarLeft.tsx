@@ -3,12 +3,12 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card'
-import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { Sidebar, SidebarContent } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDebounce } from '@uidotdev/usehooks'
-import clsx from 'clsx'
+import { useState } from 'react'
 import useReportUiHelpers from '../useReportUiHelpers'
+import InactivateOnLoading from './InactivateOnLoading'
 import ReportConfiguration from './ReportConfiguration'
 import { ReportDataSources } from './ReportDataSources'
 import { NAVBAR_HEIGHT } from './ReportNavbar'
@@ -22,6 +22,7 @@ const classes = {
 export function ReportSidebarLeft() {
   const { userJourneyHelpers, updateUserJourneyHelpers } = useReportUiHelpers()
   const { dataLoading: undebouncedDataLoading } = useReport()
+  const [selectedTab, setSelectedTab] = useState('data-sources')
   const dataLoading = useDebounce(undebouncedDataLoading, 300)
 
   return (
@@ -32,7 +33,11 @@ export function ReportSidebarLeft() {
       className="border border-r-meepGray-800"
     >
       <SidebarContent className="bg-meepGray-600">
-        <Tabs defaultValue="data-sources" className="w-full">
+        <Tabs
+          defaultValue="data-sources"
+          className="w-full"
+          onValueChange={setSelectedTab}
+        >
           <TabsList
             className="w-full justify-start text-white rounded-none px-4
           border border-b-meepGray-800 pt-4 pb-0 h-fit flex gap-4"
@@ -46,7 +51,10 @@ export function ReportSidebarLeft() {
             </TabsTrigger>
 
             <HoverCard
-              open={userJourneyHelpers?.visualiseYourData.open}
+              open={
+                userJourneyHelpers?.visualiseYourData.open &&
+                selectedTab === 'data-sources'
+              }
               onOpenChange={() =>
                 updateUserJourneyHelpers('visualiseYourData', false)
               }
@@ -65,29 +73,15 @@ export function ReportSidebarLeft() {
               </HoverCardContent>
             </HoverCard>
           </TabsList>
-          <TabsContent value="data-sources" className="">
-            <div id="sources-loading-indicator">
-              <div
-                className={clsx(
-                  'flex flex-col px-4 pb-24 transition',
-                  dataLoading ? 'blur-md grayscale pointer-events-none' : ''
-                )}
-              >
-                <ReportDataSources />
-              </div>
-              <div
-                className={clsx(
-                  'absolute top-0 w-full h-[300px] flex flex-col justify-center items-center',
-                  dataLoading ? 'flex' : 'hidden'
-                )}
-              >
-                <p className="text-white">Loading data source...</p>
-                <LoadingIcon className="w-20 h-20 mt-4" />
-              </div>
-            </div>
+          <TabsContent value="data-sources" className="px-4 pb-24">
+            <InactivateOnLoading>
+              <ReportDataSources />
+            </InactivateOnLoading>
           </TabsContent>
           <TabsContent value="configuration" className="px-4 pb-24">
-            <ReportConfiguration />
+            <InactivateOnLoading>
+              <ReportConfiguration />
+            </InactivateOnLoading>
           </TabsContent>
         </Tabs>
       </SidebarContent>
