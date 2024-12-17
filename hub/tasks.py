@@ -6,7 +6,7 @@ import logging
 import os
 
 from django.conf import settings
-from django.core import management
+from django.core.mail import EmailMessage
 from django.db.models import Count, Q
 
 from procrastinate.contrib.django import app
@@ -257,8 +257,49 @@ async def signal_request_complete(request_id: str, success: bool, *args, **kwarg
     pass
 
 
-# cron that calls the `import_2024_ppcs` command every hour
+# cron that sends batch job emails every hour
 @app.periodic(cron="0 * * * *")
-@app.task(queue="built_in_data")
-def import_2024_ppcs(timestamp=None):
-    management.call_command("import_2024_ppcs")
+@app.task(queue="emails")
+def send_batch_job_emails(timestamp=None):
+    from hub.models import BatchRequest
+
+    batch_requests = BatchRequest.objects.filter(
+        Q(send_email=True, sent_email=False) & ~Q(user=None)
+    )
+    for batch_request in batch_requests:
+        status = batch_request.status
+        user = batch_request.user
+        if status == "succeeded":
+            user_email = user.email
+            email_subject = "Mapped Job Progress Notification"
+            email_body = "Your job has been successfully completed."
+            try:
+                email = EmailMessage(
+                    subject=email_subject,
+                    body=email_body,
+                    from_email="noreply@example.com",
+                    to=[user_email],
+                )
+                email.send()
+
+            except Exception as e:
+                logger.error(f"Failed to send email: {e}")
+
+        elif status == "failed":
+            user_email = user.email
+            email_subject = "Mapped Job Progress Notification"
+            email_body = "Your job has failed. Please check the details."
+            try:
+                email = EmailMessage(
+                    subject=email_subject,
+                    body=email_body,
+                    from_email="noreply@example.com",
+                    to=[user_email],
+                )
+                email.send()
+
+            except Exception as e:
+                logger.error(f"Failed to send email to {user_email}: {e}")
+
+        batch_request.sent_email = True
+        batch_request.save()
