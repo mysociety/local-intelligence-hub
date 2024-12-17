@@ -573,8 +573,8 @@ class Area:
 @strawberry.type
 class GroupedDataCount:
     label: Optional[str]
-    # Provide area_type if gss code is not unique (e.g. WMC and WMC23 constituencies)
-    area_type: Optional[str] = None
+    # Provide filter if gss code is not unique (e.g. WMC and WMC23 constituencies)
+    area_type_filter: Optional["AreaTypeFilter"] = None
     gss: Optional[str]
     count: int
     area_data: Optional[strawberry.Private[Area]] = None
@@ -583,10 +583,7 @@ class GroupedDataCount:
     async def gss_area(self, info: Info) -> Optional[Area]:
         if self.area_data is not None:
             return self.area_data
-        if self.area_type is not None:
-            filters = {"area_type__code": self.area_type}
-        else:
-            filters = {}
+        filters = self.area_type_filter.query_filter if self.area_type_filter else {}
         loader = FieldDataLoaderFactory.get_loader_class(
             models.Area, field="gss", filters=filters
         )
@@ -711,14 +708,35 @@ class AnalyticalAreaType(Enum):
     country = "country"
 
 
+@strawberry.type
+class AreaTypeFilter:
+    lih_area_type: Optional[str] = None
+    mapit_area_types: Optional[list[str]] = None
+
+    @property
+    def query_filter(self) -> dict[str, str]:
+        filter = {}
+        if self.lih_area_type:
+            filter["area_type__code"] = self.lih_area_type
+        if self.mapit_area_types:
+            filter["mapit_type__in"] = self.mapit_area_types
+        return filter
+
+
+# Provides a map from postcodes.io area type to Local Intelligence Hub
+# area types, or mapit types if LIH is misaligned.
 postcodeIOKeyAreaTypeLookup = {
-    AnalyticalAreaType.parliamentary_constituency: "WMC",
-    AnalyticalAreaType.parliamentary_constituency_2024: "WMC23",
-    AnalyticalAreaType.admin_district: "DIS",
-    AnalyticalAreaType.admin_county: "STC",
-    AnalyticalAreaType.admin_ward: "WD23",
-    AnalyticalAreaType.european_electoral_region: "EER",
-    AnalyticalAreaType.country: "CTRY",
+    AnalyticalAreaType.parliamentary_constituency: AreaTypeFilter(lih_area_type="WMC"),
+    AnalyticalAreaType.parliamentary_constituency_2024: AreaTypeFilter(
+        lih_area_type="WMC23"
+    ),
+    AnalyticalAreaType.admin_district: AreaTypeFilter(
+        mapit_area_types=["LBO", "UTA", "COI", "LGD", "MTD", "DIS", "NMD"]
+    ),
+    AnalyticalAreaType.admin_county: AreaTypeFilter(mapit_area_types=["CTY"]),
+    AnalyticalAreaType.admin_ward: AreaTypeFilter(mapit_area_types="WD23"),
+    AnalyticalAreaType.european_electoral_region: AreaTypeFilter(lih_area_type="EER"),
+    AnalyticalAreaType.european_electoral_region: AreaTypeFilter(lih_area_type="CTRY"),
 }
 
 
@@ -736,8 +754,11 @@ class Analytics:
             postcode_io_key=analytical_area_type.value,
             layer_ids=layer_ids,
         )
-        area_key = postcodeIOKeyAreaTypeLookup[analytical_area_type]
-        return [GroupedDataCount(**datum, area_type=area_key) for datum in data]
+        area_type_filter = postcodeIOKeyAreaTypeLookup[analytical_area_type]
+        return [
+            GroupedDataCount(**datum, area_type_filter=area_type_filter)
+            for datum in data
+        ]
 
     @strawberry_django.field
     def imported_data_by_area(
@@ -749,8 +770,10 @@ class Analytics:
             postcode_io_key=analytical_area_type.value,
             layer_ids=layer_ids,
         )
-        area_key = postcodeIOKeyAreaTypeLookup[analytical_area_type]
-        return [GroupedData(**datum, area_type=area_key) for datum in data]
+        area_type_filter = postcodeIOKeyAreaTypeLookup[analytical_area_type]
+        return [
+            GroupedData(**datum, area_type_filter=area_type_filter) for datum in data
+        ]
 
     @strawberry_django.field
     def imported_data_count_for_area(
@@ -761,8 +784,8 @@ class Analytics:
         )
         if len(res) == 0:
             return None
-        area_key = postcodeIOKeyAreaTypeLookup[analytical_area_type]
-        return GroupedDataCount(**res[0], area_type=area_key)
+        area_type_filter = postcodeIOKeyAreaTypeLookup[analytical_area_type]
+        return GroupedDataCount(**res[0], area_type_filter=area_type_filter)
 
     @strawberry_django.field
     def imported_data_count_by_constituency(self) -> List[GroupedDataCount]:
@@ -1228,8 +1251,8 @@ def public_map_report(info: Info, org_slug: str, report_slug: str) -> models.Map
 def area_by_gss(gss: str, analytical_area_type: AnalyticalAreaType) -> models.Area:
     qs = models.Area.objects.all()
     if analytical_area_type:
-        area_key = postcodeIOKeyAreaTypeLookup[analytical_area_type]
-        qs = qs.filter(area_type__code=area_key)
+        area_type_filter = postcodeIOKeyAreaTypeLookup[analytical_area_type]
+        qs = qs.filter(**area_type_filter.query_filter)
     return qs.get(gss=gss)
 
 

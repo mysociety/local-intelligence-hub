@@ -35,6 +35,13 @@ class Command(BaseCommand):
             "area_type": "District Council",
             "description": "District Council",
         },
+        {
+            "mapit_type": ["COI", "CPW", "DIW", "LBW", "LGW", "MTW", "UTW"],
+            "name": "Wards",
+            "code": "WD23",
+            "area_type": "Electoral Ward",
+            "description": "Electoral wards",
+        },
     ]
 
     def add_arguments(self, parser):
@@ -65,6 +72,7 @@ class Command(BaseCommand):
                             "PCON13CD": area["codes"]["gss"],
                             "name": area["name"],
                             "type": b_type["code"],
+                            "mapit_type": area["type"],
                         },
                     }
                     geom_str = json.dumps(geom)
@@ -72,11 +80,14 @@ class Command(BaseCommand):
                     print(f"could not find mapit area for {area['name']}")
                     geom = None
 
-                a, created = Area.objects.get_or_create(
-                    mapit_id=area["id"],
+                a, created = Area.objects.update_or_create(
                     gss=area["codes"]["gss"],
-                    name=area["name"],
                     area_type=area_type,
+                    defaults={
+                        "mapit_id": area["id"],
+                        "name": area["name"],
+                        "mapit_type": area["type"],
+                    },
                 )
 
                 if geom is not None:
