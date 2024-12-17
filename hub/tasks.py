@@ -6,7 +6,7 @@ import logging
 import os
 
 from django.conf import settings
-from django.core import management
+from django.core.mail import EmailMessage
 from django.db.models import Count, Q
 
 from procrastinate.contrib.django import app
@@ -95,11 +95,17 @@ async def refresh_pages(
 ):
     from hub.models import ExternalDataSource
 
-    has_more_data = await ExternalDataSource.deferred_refresh_page(
-        external_data_source_id=external_data_source_id,
-        page=current_page,
-        request_id=request_id,
-    )
+    error = None
+    try:
+        has_more_data = await ExternalDataSource.deferred_refresh_page(
+            external_data_source_id=external_data_source_id,
+            page=current_page,
+            request_id=request_id,
+        )
+    except Exception as e:
+        logger.error(f"refresh_pages failed: {e}")
+        error = e
+        has_more_data = False
 
     # Create task to refresh next page
     if has_more_data:
@@ -108,15 +114,23 @@ async def refresh_pages(
             current_page=current_page + 1,
             request_id=request_id,
         )
-    else:
-        return await signal_request_complete.configure(
-            # Dedupe `refresh_pages` jobs for the same config
-            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-            queueing_lock=f"request_complete_{request_id}"
-        ).defer_async(
-            request_id=request_id,
-            external_data_source_id=external_data_source_id,
-        )
+
+    # Always queue signal_request_complete job, to mark this batch of jobs as terminated
+    enqueue_result = await signal_request_complete.configure(
+        # Dedupe `refresh_pages` jobs for the same config
+        # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+        queueing_lock=f"request_complete_{request_id}"
+    ).defer_async(
+        request_id=request_id,
+        success=not error,
+        external_data_source_id=external_data_source_id,
+    )
+
+    # If an error happened, raise it, to mark this job as failed
+    if error:
+        raise error
+
+    return enqueue_result
 
 
 @app.task(queue="external_data_sources")
@@ -181,11 +195,17 @@ async def import_pages(
 ):
     from hub.models import ExternalDataSource
 
-    has_more_data = await ExternalDataSource.deferred_import_page(
-        external_data_source_id=external_data_source_id,
-        page=current_page,
-        request_id=request_id,
-    )
+    error = None
+    try:
+        has_more_data = await ExternalDataSource.deferred_import_page(
+            external_data_source_id=external_data_source_id,
+            page=current_page,
+            request_id=request_id,
+        )
+    except Exception as e:
+        logger.error(f"refresh_pages failed: {e}")
+        error = e
+        has_more_data = False
 
     # Create task to import next page
     if has_more_data:
@@ -194,15 +214,23 @@ async def import_pages(
             current_page=current_page + 1,
             request_id=request_id,
         )
-    else:
-        return await signal_request_complete.configure(
-            # Dedupe `refresh_pages` jobs for the same config
-            # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
-            queueing_lock=f"request_complete_{request_id}"
-        ).defer_async(
-            request_id=request_id,
-            external_data_source_id=external_data_source_id,
-        )
+
+    # mark batch of jobs as completed
+    enqueue_result = await signal_request_complete.configure(
+        # Dedupe `refresh_pages` jobs for the same config
+        # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
+        queueing_lock=f"request_complete_{request_id}"
+    ).defer_async(
+        request_id=request_id,
+        success=not error,
+        external_data_source_id=external_data_source_id,
+    )
+
+    # raise any error to mark this job as failed
+    if error:
+        raise error
+
+    return enqueue_result
 
 
 @app.task(queue="external_data_sources")
@@ -222,15 +250,56 @@ async def import_all(
 
 
 @app.task(queue="external_data_sources")
-async def signal_request_complete(request_id: str, *args, **kwargs):
+async def signal_request_complete(request_id: str, success: bool, *args, **kwargs):
     """
     Empty task which is used to query the status of the batch tasks.
     """
     pass
 
 
-# cron that calls the `import_2024_ppcs` command every hour
+# cron that sends batch job emails every hour
 @app.periodic(cron="0 * * * *")
-@app.task(queue="built_in_data")
-def import_2024_ppcs(timestamp=None):
-    management.call_command("import_2024_ppcs")
+@app.task(queue="emails")
+def send_batch_job_emails(timestamp=None):
+    from hub.models import BatchRequest
+
+    batch_requests = BatchRequest.objects.filter(
+        Q(send_email=True, sent_email=False) & ~Q(user=None)
+    )
+    for batch_request in batch_requests:
+        status = batch_request.status
+        user = batch_request.user
+        if status == "succeeded":
+            user_email = user.email
+            email_subject = "Mapped Job Progress Notification"
+            email_body = "Your job has been successfully completed."
+            try:
+                email = EmailMessage(
+                    subject=email_subject,
+                    body=email_body,
+                    from_email="noreply@example.com",
+                    to=[user_email],
+                )
+                email.send()
+
+            except Exception as e:
+                logger.error(f"Failed to send email: {e}")
+
+        elif status == "failed":
+            user_email = user.email
+            email_subject = "Mapped Job Progress Notification"
+            email_body = "Your job has failed. Please check the details."
+            try:
+                email = EmailMessage(
+                    subject=email_subject,
+                    body=email_body,
+                    from_email="noreply@example.com",
+                    to=[user_email],
+                )
+                email.send()
+
+            except Exception as e:
+                logger.error(f"Failed to send email to {user_email}: {e}")
+
+        batch_request.sent_email = True
+        batch_request.save()

@@ -16,7 +16,6 @@ from django.contrib.gis.db.models import MultiPolygonField, PointField
 from django.contrib.gis.geos import Point
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.core.mail import EmailMessage
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min, Q
 from django.db.models.functions import Cast, Coalesce
@@ -1300,7 +1299,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             )
             if request_completed_signal is not None:
                 return self.BatchJobProgress(
-                    status="done",
+                    status=(
+                        "succeeded"
+                        if request_completed_signal.args.get("success", True)
+                        else "failed"
+                    ),
                     id=request_id,
                     started_at=parent_job.scheduled_at,
                     has_forecast=False,
@@ -1381,43 +1384,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         if estimated_job_duration > time_threshold:
             send_email = True
-            try:
-                batch_request = BatchRequest.objects.get(id=request_id)
-                if not batch_request.user:
-                    return
-            except BatchRequest.DoesNotExist:
-                return
-            if status == "succeeded" and user and user.is_authenticated:
-                user_email = user.email
-                email_subject = "Mapped Job Progress Notification"
-                email_body = "Your job has been successfully completed."
-                try:
-                    email = EmailMessage(
-                        subject=email_subject,
-                        body=email_body,
-                        from_email="noreply@example.com",
-                        to=[user_email],
-                    )
-                    email.send()
-
-                except Exception as e:
-                    logger.error(f"Failed to send email: {e}")
-
-            elif status == "failed" and user and user.is_authenticated:
-                user_email = user.email
-                email_subject = "Mapped Job Progress Notification"
-                email_body = "Your job has failed. Please check the details."
-                try:
-                    email = EmailMessage(
-                        subject=email_subject,
-                        body=email_body,
-                        from_email="noreply@example.com",
-                        to=[user_email],
-                    )
-                    email.send()
-
-                except Exception as e:
-                    logger.error(f"Failed to send email to {user_email}: {e}")
+            BatchRequest.objects.filter(id=request_id).update(
+                send_email=True, status=status
+            )
 
         return self.BatchJobProgress(
             send_email=send_email,
@@ -3449,7 +3418,22 @@ class ActionNetworkSource(ExternalDataSource):
         for id in ids:
             if "action_network:" in id:
                 return id
-        return ids[0]
+        if ids:
+            return ids[0]
+
+        logger.error(f"Action network record has no identifiers: {record}")
+        self_link = record.get("_links", {}).get("self", {}).get("href")
+        if self_link:
+            return self_link
+
+        email_addresses = record.get("email_addresses")
+        email_address = email_addresses[0].get("address") if email_addresses else None
+        if email_address:
+            return email_address
+
+        # TODO: what should be returned here?
+        # returning None breaks a lot of downstream code...
+        return hashlib.md5(json.dumps(record).encode()).hexdigest()
 
     def get_record_uuid(self, record):
         """
@@ -4630,3 +4614,6 @@ source_models: dict[str, Type[ExternalDataSource]] = {
 class BatchRequest(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    send_email = models.BooleanField(default=False)
+    sent_email = models.BooleanField(default=False)
+    status = models.CharField(max_length=32, default="todo")

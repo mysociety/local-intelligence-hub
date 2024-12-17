@@ -133,12 +133,16 @@ class ExternalDataSourceAction:
 
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
-async def trigger_update(external_data_source_id: str) -> ExternalDataSourceAction:
-    data_source = await models.ExternalDataSource.objects.aget(
-        id=external_data_source_id
+async def trigger_update(
+    info: Info, external_data_source_id: str
+) -> ExternalDataSourceAction:
+    data_source: models.ExternalDataSource = (
+        await models.ExternalDataSource.objects.aget(id=external_data_source_id)
     )
-    # Use this ID to track all jobs against it
-    request_id = str(uuid.uuid4())
+
+    batch_request = await BatchRequest.objects.acreate(user=get_current_user(info))
+    request_id = str(batch_request.id)
+
     await data_source.schedule_refresh_all(request_id=request_id)
     return ExternalDataSourceAction(id=request_id, external_data_source=data_source)
 
