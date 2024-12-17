@@ -1707,7 +1707,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     parent_area = area
                     literal_area_type = item.get("type", None)
                     literal_area_field = item.get("field", None)
-                    raw_area_value = self.get_record_field(record, literal_area_field)
+                    raw_area_value = str(self.get_record_field(record, literal_area_field))
                     if literal_area_type is None or literal_area_field is None:
                         continue
 
@@ -1726,113 +1726,76 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     ) or lower_name
 
                     parsed_area_types = ensure_list(literal_area_type)
-                    is_council = (
+                    is_local_authority = (
                         "STC" in parsed_area_types or "DIS" in parsed_area_types
                     )
 
                     logger.debug(
-                        f"Searching for {searchable_name} via {literal_area_field} of type {literal_area_type}. is_council? {is_council}"
+                        f"Searching for {searchable_name} via {literal_area_field} of type {literal_area_type}. is_local_authority? {is_local_authority}"
                     )
 
                     qs = Area.objects.select_related("area_type").filter(
                         area_type__code__in=parsed_area_types
                     )
-                    if is_council:
-                        logger.debug(f"Searching council names for {searchable_name}")
+
+                    search_values = [
+                        raw_area_value,
+                        lower_name,
+                        searchable_name,
+                        searchable_name_sans_title
+                    ]
+
+                    suffixes = [
+                        # try the values on their own
+                        ""
+                    ]
+
+                    if is_local_authority:
                         # Mapit stores councils with their type in the name
                         # e.g. https://mapit.mysociety.org/area/2641.html
-                        qs = qs.filter(
-                            #
-                            # code
-                            Q(gss__iexact=raw_area_value)
-                            #
-                            # raw
-                            | Q(name__unaccent__iexact=raw_area_value)
-                            | Q(name__unaccent__trigram_similar=raw_area_value)
-                            #
-                            # lower
-                            | Q(name__unaccent__iexact=lower_name)
-                            | Q(name__unaccent__trigram_similar=lower_name)
-                            #
-                            # searchable
-                            | Q(name__unaccent__iexact=searchable_name)
-                            | Q(name__unaccent__trigram_similar=searchable_name)
-                            #
-                            # sans title
-                            | Q(name__unaccent__iexact=searchable_name_sans_title)
-                            | Q(name__unaccent__trigram_similar=searchable_name_sans_title)
-                            #
-                            # council
-                            | Q(name__unaccent__iexact=f"{lower_name} council")
-                            | Q(name__unaccent__trigram_similar=f"{lower_name} council")
-                            #
-                            | Q(name__unaccent__iexact=f"{searchable_name} council")
-                            | Q(name__unaccent__trigram_similar=f"{searchable_name} council")
-                            #
-                            | Q(name__unaccent__iexact=f"{searchable_name_sans_title} council")
-                            | Q(name__unaccent__trigram_similar=f"{searchable_name_sans_title} council")
-                            #
-                            # city
-                            | Q(name__unaccent__iexact=f"{lower_name} city council")
-                            | Q(name__unaccent__trigram_similar=f"{lower_name} city council")
-                            #
-                            | Q(name__unaccent__iexact=f"{searchable_name} city council")
-                            | Q(name__unaccent__trigram_similar=f"{searchable_name} city council")
-                            #
-                            | Q(name__unaccent__iexact=f"{searchable_name_sans_title} city council")
-                            | Q(name__unaccent__trigram_similar=f"{searchable_name_sans_title} city council")
-                            #
-                            # borough
-                            | Q(name__unaccent__iexact=f"{lower_name} borough council")
-                            | Q(name__unaccent__trigram_similar=f"{lower_name} borough council")
-                            #
-                            | Q(name__unaccent__iexact=f"{searchable_name} borough council")
-                            | Q(name__unaccent__trigram_similar=f"{searchable_name} borough council")
-                            #
-                            | Q(name__unaccent__iexact=f"{searchable_name_sans_title} borough council")
-                            | Q(name__unaccent__trigram_similar=f"{searchable_name_sans_title} borough council")
-                            #
-                            # district
-                            | Q(name__unaccent__iexact=f"{lower_name} district council")
-                            | Q(name__unaccent__trigram_similar=f"{lower_name} district council")
-                            #
-                            | Q(name__unaccent__iexact=f"{searchable_name} district council")
-                            | Q(name__unaccent__trigram_similar=f"{searchable_name} district council")
-                            #
-                            | Q(name__unaccent__iexact=f"{searchable_name_sans_title} district council")
-                            | Q(name__unaccent__trigram_similar=f"{searchable_name_sans_title} district council")
-                            #
-                            # county
-                            | Q(name__unaccent__iexact=f"{lower_name} county council")
-                            | Q(name__unaccent__trigram_similar=f"{lower_name} county council")
-                            #
-                            | Q(name__unaccent__iexact=f"{searchable_name} county council")
-                            | Q(name__unaccent__trigram_similar=f"{searchable_name} county council")
-                            #
-                            | Q(name__unaccent__iexact=f"{searchable_name_sans_title} county council")
-                            | Q(name__unaccent__trigram_similar=f"{searchable_name_sans_title} county council")
-                        )
-                    else:
-                        qs = qs.filter(
-                            Q(gss__iexact=raw_area_value)
-                            | Q(name__unaccent__iexact=raw_area_value)
-                            | Q(name__unaccent__iexact=searchable_name)
-                            | Q(name__unaccent__iexact=searchable_name_sans_title)
-                            | Q(name__unaccent__iexact=lower_name)
-                            | Q(name__unaccent__trigram_similar=raw_area_value)
-                            | Q(name__unaccent__trigram_similar=searchable_name)
-                            | Q(name__unaccent__trigram_similar=searchable_name_sans_title)
-                            | Q(name__unaccent__trigram_similar=lower_name)
-                        )
+                        suffixes += [
+                            # add council suffixes
+                            " council",
+                            " city council",
+                            " borough council",
+                            " district council",
+                            " county council"
+                        ]
 
-                    # Sort by trigram similarity descending
-                    qs = qs.extra(
+                    # always try a code
+                    or_statement_area_text_matcher = Q(gss__iexact=raw_area_value.upper().upper())
+
+                    # matrix of strings and suffixes
+                    for value in list(set(search_values)):
+                        for suffix in suffixes:
+                            computed_value = f"{value}{suffix}"
+                            print("Trying ", computed_value)
+                            # we also try trigram because different versions of the same name are used by organisers and researchers
+                            or_statement_area_text_matcher |= Q(name__unaccent__iexact=computed_value)
+                            or_statement_area_text_matcher |= Q(name__unaccent__trigram_similar=computed_value)
+
+                    qs = qs\
+                      .filter(or_statement_area_text_matcher)\
+                      .extra(
                         select={
-                            'name_distance': "similarity(hub_area.name, %s)"},
-                            select_params=[searchable_name_sans_title]
-                        )\
-                        .order_by('-name_distance')
+                            'exact_gss_match': "hub_area.gss = %s"
+                        },
+                        select_params=[raw_area_value.upper()]
+                      )\
+                      .extra(
+                        select={
+                            'name_distance': "similarity(hub_area.name, %s)"
+                        },
+                        select_params=[searchable_name_sans_title]
+                      )\
+                      .order_by(
+                          # Prefer exact matches on GSS codes
+                          '-exact_gss_match',
+                          # Then prefer name similarity
+                          '-name_distance'
+                      )
 
+                    # for debugging, but without all the polygon characters which spam up the terminal/logger
                     query_str = str(qs.query)
 
                     if parent_area is not None and parent_area.polygon is not None:
