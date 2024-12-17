@@ -1,9 +1,7 @@
 'use client'
-
 import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
 import { formatRelative } from 'date-fns'
-import { useAtom } from 'jotai'
 import { AlertCircle, ExternalLink } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import pluralize from 'pluralize'
@@ -48,9 +46,9 @@ import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { externalDataSourceOptions } from '@/lib/data'
 import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/lib/graphql/mutations'
 import { contentEditableMutation } from '@/lib/html'
-import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { formatCrmNames } from '@/lib/utils'
-
+import parse from 'html-react-parser'
+import { CREATE_MAP_REPORT } from '../../../reports/ReportList/CreateReportCard'
 import { ManageSourceSharing } from './ManageSourceSharing'
 import importData from './importData'
 
@@ -122,6 +120,10 @@ const GET_UPDATE_CONFIG = gql`
         total
         succeeded
         estimatedFinishTime
+        actualFinishTime
+        inQueue
+        numberOfJobsAheadInQueue
+        sendEmail
       }
       isUpdateScheduled
       updateProgress {
@@ -131,6 +133,10 @@ const GET_UPDATE_CONFIG = gql`
         total
         succeeded
         estimatedFinishTime
+        actualFinishTime
+        inQueue
+        numberOfJobsAheadInQueue
+        sendEmail
       }
       importedDataCount
       fieldDefinitions {
@@ -179,7 +185,7 @@ export default function InspectExternalDataSource({
   const router = useRouter()
   const client = useApolloClient()
 
-  const { loading, error, data, refetch } = useQuery<
+  const { loading, data, refetch } = useQuery<
     ExternalDataSourceInspectPageQuery,
     ExternalDataSourceInspectPageQueryVariables
   >(GET_UPDATE_CONFIG, {
@@ -188,8 +194,6 @@ export default function InspectExternalDataSource({
     },
     pollInterval: 5000,
   })
-
-  const orgId = useAtom(currentOrganisationIdAtom)
 
   if (!loading && !data?.externalDataSource) {
     return <h2>Couldn{"'"}t find this data source</h2>
@@ -204,6 +208,48 @@ export default function InspectExternalDataSource({
     ? externalDataSourceOptions[source?.crmType]
     : undefined
 
+  const handleCreateReport = () => {
+    const layer = {
+      id: externalDataSourceId,
+      name,
+      source: externalDataSourceId,
+      visible: true,
+    }
+
+    const variables = {
+      data: {
+        name: `Map for ${name}`,
+        displayOptions: {
+          layers: [layer],
+        },
+      },
+    }
+
+    toast.promise(
+      client.mutate({
+        mutation: CREATE_MAP_REPORT,
+        variables,
+      }),
+      {
+        loading: 'Creating report...',
+        success: (d) => {
+          console.log('Mutation Response:', d)
+
+          if (d.data?.createMapReport?.__typename === 'MapReport') {
+            router.push(`/reports/${d.data.createMapReport.id}`)
+            return 'Map created!'
+          } else {
+            throw new Error('Failed to create map.')
+          }
+        },
+        error: (e) => {
+          const errorMessage =
+            e?.graphQLErrors?.[0]?.message || 'Failed to create map.'
+          return parse(errorMessage)
+        },
+      }
+    )
+  }
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-7">
       <header className="flex flex-row justify-between gap-8">
@@ -242,6 +288,7 @@ export default function InspectExternalDataSource({
           )}
         </div>
       </header>
+
       <div className="border-b border-meepGray-700 pt-10" />
       {(!data?.externalDataSource && loading) || !source ? (
         <div className="py-8 text-center">
@@ -264,10 +311,10 @@ export default function InspectExternalDataSource({
                 .
               </p>
               <Button
-                disabled={source.isImportScheduled}
+                disabled={source.importProgress?.inQueue}
                 onClick={() => importData(client, externalDataSourceId)}
               >
-                {!source.isImportScheduled ? (
+                {!source.importProgress?.inQueue ? (
                   'Import all data'
                 ) : (
                   <span className="flex flex-row gap-2 items-center">
@@ -281,13 +328,33 @@ export default function InspectExternalDataSource({
                   </span>
                 )}
               </Button>
-              {source.importProgress?.status ===
-                ProcrastinateJobStatus.Doing && (
+              {source.importProgress?.status !== 'todo' ? (
                 <BatchJobProgressReport
                   batchJobProgress={source.importProgress}
                   pastTenseVerb="Imported"
                 />
-              )}
+              ) : null}
+              {source?.importProgress?.status === 'todo' &&
+                source?.importProgress?.numberOfJobsAheadInQueue != null &&
+                source.importProgress.numberOfJobsAheadInQueue > 0 && (
+                  <div>
+                    {source.importProgress.numberOfJobsAheadInQueue}{' '}
+                    {source.importProgress.numberOfJobsAheadInQueue === 1
+                      ? 'job'
+                      : 'jobs'}{' '}
+                    ahead of this one in the queue
+                  </div>
+                )}
+
+              {source.importProgress?.sendEmail &&
+                (source?.importProgress?.status === 'todo' ||
+                  source?.importProgress?.status === 'doing') && (
+                  <div>
+                    This job is predicted to take more than 5 minutes. Feel free
+                    to navigate away from this page and we will send you an
+                    email when it's finished.
+                  </div>
+                )}
               {source.hasWebhooks && (
                 <section className="space-y-4">
                   <h2 className="text-hSm mb-5">Auto-import</h2>
@@ -357,6 +424,9 @@ export default function InspectExternalDataSource({
                   ) : null}
                 </section>
               )}
+              <Button onClick={handleCreateReport}>
+                Generate map for this data source
+              </Button>
             </section>
             <section className="space-y-4">
               <header className="flex flex-row justify-between items-center">
@@ -436,11 +506,8 @@ export default function InspectExternalDataSource({
                       />
                     </p>
                     <div className="space-y-4">
-                      {!source.isUpdateScheduled ? (
-                        <TriggerUpdateButton
-                          id={source.id}
-                          crmType={source.crmType}
-                        />
+                      {!source.updateProgress?.inQueue ? (
+                        <TriggerUpdateButton id={source.id} />
                       ) : (
                         <>
                           <Button disabled>
@@ -454,15 +521,36 @@ export default function InspectExternalDataSource({
                               </span>
                             </span>
                           </Button>
-                          {source.updateProgress?.status ===
-                            ProcrastinateJobStatus.Doing && (
-                            <BatchJobProgressReport
-                              batchJobProgress={source.updateProgress}
-                              pastTenseVerb="Done"
-                            />
-                          )}
                         </>
                       )}
+                      {source?.updateProgress?.status === 'todo' &&
+                        source?.updateProgress?.numberOfJobsAheadInQueue !=
+                          null &&
+                        source.updateProgress.numberOfJobsAheadInQueue > 0 && (
+                          <div>
+                            {source.updateProgress.numberOfJobsAheadInQueue}{' '}
+                            {source.updateProgress.numberOfJobsAheadInQueue ===
+                            1
+                              ? 'job'
+                              : 'jobs'}{' '}
+                            ahead of this one in the queue
+                          </div>
+                        )}
+                      {source.updateProgress?.sendEmail &&
+                        (source?.updateProgress?.status === 'todo' ||
+                          source?.updateProgress?.status === 'doing') && (
+                          <div>
+                            This job is predicted to take more than 5 minutes.
+                            Feel free to navigate away from this page and we
+                            will send you an email when it's finished.
+                          </div>
+                        )}
+                      {source.updateProgress?.status !== 'todo' ? (
+                        <BatchJobProgressReport
+                          batchJobProgress={source.updateProgress}
+                          pastTenseVerb="Done"
+                        />
+                      ) : null}
                     </div>
                   </section>
                   {source.hasWebhooks && (

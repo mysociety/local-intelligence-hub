@@ -1,5 +1,6 @@
 import { MapLayer } from '@/__generated__/graphql'
 import { Label } from '@/components/ui/label'
+import { LoadingIcon } from '@/components/ui/loadingIcon'
 import {
   Select,
   SelectContent,
@@ -24,6 +25,7 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
     politicalBoundaries,
     displayOptions: { dataVisualisation },
   } = report
+
   const { fieldNames } = useDataByBoundary({
     report,
     boundaryType: dataVisualisation?.boundaryType,
@@ -36,6 +38,8 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
   const selectedBoundaryLabel = politicalBoundaries.find(
     (boundary) => boundary.boundaryType === dataVisualisation?.boundaryType
   )?.label
+
+  const isLoading = !fieldNames || fieldNames.length === 0
 
   return (
     <CollapsibleSection id="report-visualisation" title="Data Visualisation">
@@ -74,6 +78,7 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
             Colour shading by category
           </p>
         </div>
+
         {report.layers.length && (
           <div>
             <Select
@@ -124,6 +129,7 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
               value={dataSourceField}
               defaultOpen={!dataSourceField}
               required
+              disabled={isLoading}
             >
               <Label
                 htmlFor="select-vis-type"
@@ -133,17 +139,23 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
               </Label>
               <SelectTrigger
                 id="select-vis-type"
-                className="w-full border-meepGray-100 text-meepGray-100 mt-2 font-medium"
+                className="w-full border-meepGray-100 text-meepGray-100 mt-2 font-medium flex items-center"
               >
-                <SelectValue />
+                {isLoading ? <LoadingIcon size={'18'} /> : <SelectValue />}
               </SelectTrigger>
-              <SelectContent>
-                {fieldNames?.map((field) => (
-                  <SelectItem className="font-medium" key={field} value={field}>
-                    {field}
-                  </SelectItem>
-                ))}
-              </SelectContent>
+              {!isLoading && (
+                <SelectContent>
+                  {fieldNames.map((field) => (
+                    <SelectItem
+                      className="font-medium"
+                      key={field}
+                      value={field}
+                    >
+                      {field}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              )}
             </Select>
             <p className="text-meepGray-400 text-sm font-normal mb-3 mt-3">
               Select the field from your data source

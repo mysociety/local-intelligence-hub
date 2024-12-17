@@ -4,11 +4,12 @@ import uuid
 from enum import Enum
 from typing import List, Optional
 
-from django.utils.text import slugify
+from django.utils.timezone import now
 
 import strawberry
 import strawberry_django
 from asgiref.sync import async_to_sync
+from graphql import GraphQLError
 from strawberry import auto
 from strawberry.field_extensions import InputMutationExtension
 from strawberry.types.info import Info
@@ -18,6 +19,7 @@ from strawberry_django.permissions import IsAuthenticated
 from hub import models
 from hub.graphql.types import model_types
 from hub.graphql.utils import graphql_type_to_dict
+from hub.models import BatchRequest
 
 logger = logging.getLogger(__name__)
 
@@ -131,12 +133,16 @@ class ExternalDataSourceAction:
 
 
 @strawberry.mutation(extensions=[IsAuthenticated()])
-async def trigger_update(external_data_source_id: str) -> ExternalDataSourceAction:
-    data_source = await models.ExternalDataSource.objects.aget(
-        id=external_data_source_id
+async def trigger_update(
+    info: Info, external_data_source_id: str
+) -> ExternalDataSourceAction:
+    data_source: models.ExternalDataSource = (
+        await models.ExternalDataSource.objects.aget(id=external_data_source_id)
     )
-    # Use this ID to track all jobs against it
-    request_id = str(uuid.uuid4())
+
+    batch_request = await BatchRequest.objects.acreate(user=get_current_user(info))
+    request_id = str(batch_request.id)
+
     await data_source.schedule_refresh_all(request_id=request_id)
     return ExternalDataSourceAction(id=request_id, external_data_source=data_source)
 
@@ -162,50 +168,84 @@ def create_map_report(info: Info, data: MapReportInput) -> models.MapReport:
 
     date_time_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
+    # Check for duplicate layers in existing reports
+    if "layers" in data.display_options:
+        display_layers = data.display_options["layers"]
+        for layer in display_layers:
+            layer_id = layer["id"]
+            # Query for existing report with the same layer
+            existing_report = models.MapReport.objects.filter(
+                layers__contains=[{"id": layer_id}]
+            ).first()
+            if existing_report:
+                report_link = f"/reports/{existing_report.id}"
+                raise GraphQLError(
+                    f"A map for this data source already exists. "
+                    f'You can view it <a className="underline" href="{report_link}" target="_blank">here</a>'
+                )
+
+    # Prepare base parameters
     params = {
         **graphql_type_to_dict(data, delete_null_keys=True),
         **{
             "organisation": organisation,
-            "slug": data.slug or slugify(data.name),
-            "name": f"New map ({date_time_str})",  # Default name for reports
+            "name": data.name or f"New map ({date_time_str})",
             "display_options": data.display_options or {},
         },
     }
 
     map_report = models.MapReport.objects.create(**params)
-    if existing_reports:
-        return map_report
 
-    # If this is the first report, add the user's first member list to it
-    member_list = (
-        model_types.ExternalDataSource.get_queryset(
-            models.ExternalDataSource.objects.get_queryset(),
-            info,
-        )
-        .filter(data_type=models.ExternalDataSource.DataSourceType.MEMBER)
-        .first()
-    )
-    if member_list:
-        map_report.name = f"Auto-generated report on {member_list.name}"
+    if "layers" in data.display_options:
+        display_layers = data.display_options["layers"]
         map_report.layers = [
             {
-                "id": str(uuid.uuid4()),
-                "name": member_list.name,
-                "source": str(member_list.id),
-                "visible": True,
+                "id": layer["id"],
+                "name": layer["name"],
+                "source": layer["source"],
+                "visible": layer["visible"],
+                "custom_marker_text": layer.get("custom_marker_text"),
             }
+            for layer in display_layers
         ]
-        map_report.save()
+
+    map_report.save()
+    # If this is the first report, add the user's first member list to it
+    if not data.layers and not existing_reports:
+        member_list = (
+            model_types.ExternalDataSource.get_queryset(
+                models.ExternalDataSource.objects.get_queryset(),
+                info,
+            )
+            .filter(data_type=models.ExternalDataSource.DataSourceType.MEMBER)
+            .first()
+        )
+        if member_list:
+            map_report.name = f"Auto-generated report on {member_list.name}"
+            map_report.layers = [
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": member_list.name,
+                    "source": str(member_list.id),
+                    "visible": True,
+                }
+            ]
+            map_report.save()
+
     return map_report
 
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
-async def import_all(external_data_source_id: str) -> ExternalDataSourceAction:
+async def import_all(
+    info: Info, external_data_source_id: str
+) -> ExternalDataSourceAction:
     data_source: models.ExternalDataSource = (
         await models.ExternalDataSource.objects.aget(id=external_data_source_id)
     )
-    request_id = str(uuid.uuid4())
-    requested_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    batch_request = await BatchRequest.objects.acreate(user=get_current_user(info))
+
+    request_id = str(batch_request.id)
+    requested_at = now().isoformat()
 
     await data_source.schedule_import_all(
         requested_at=requested_at, request_id=request_id

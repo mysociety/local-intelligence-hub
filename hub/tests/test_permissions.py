@@ -730,7 +730,9 @@ class TestLoggedOutUserForUnsharedSource(Setup, TestCase):
             query MapReportLayerGeoJSONPoint($sourceId: ID!) {
               sharedDataSource(pk: $sourceId) {
                 id
-                importedDataCountByArea {
+                importedDataCountByArea(
+                    analyticalAreaType: european_electoral_region
+                ) {
                   gss
                   count
                 }

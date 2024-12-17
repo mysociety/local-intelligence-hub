@@ -113,9 +113,6 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
           'GetMapReport',
           'MapReportLayerAnalytics',
           'GetConstituencyData',
-          'MapReportRegionStats',
-          'MapReportConstituencyStats',
-          'MapReportWardStats',
         ],
       }),
       {
