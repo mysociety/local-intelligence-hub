@@ -89,7 +89,7 @@ from utils.findthatpostcode import (
     get_example_postcode_from_area_gss,
     get_postcode_from_coords_ftp,
 )
-from utils.py import batched, ensure_list, get, is_maybe_id, parse_datetime
+from utils.py import batched, ensure_list, get, is_maybe_id, is_test_mode, parse_datetime
 
 User = get_user_model()
 
@@ -1730,9 +1730,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         "STC" in parsed_area_types or "DIS" in parsed_area_types
                     )
 
-                    logger.debug(
-                        f"Searching for {searchable_name} via {literal_area_field} of type {literal_area_type}. is_local_authority? {is_local_authority}"
-                    )
+                    # logger.debug(
+                    #     f"Searching for {searchable_name} via {literal_area_field} of type {literal_area_type}. is_local_authority? {is_local_authority}"
+                    # )
 
                     qs = Area.objects.select_related("area_type").filter(
                         area_type__code__in=parsed_area_types
@@ -1769,7 +1769,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     for value in list(set(search_values)):
                         for suffix in suffixes:
                             computed_value = f"{value}{suffix}"
-                            print("Trying ", computed_value)
+                            # logger.debug("Trying ", computed_value)
                             # we also try trigram because different versions of the same name are used by organisers and researchers
                             or_statement_area_text_matcher |= Q(name__unaccent__iexact=computed_value)
                             or_statement_area_text_matcher |= Q(name__unaccent__trigram_similar=computed_value)
@@ -1823,13 +1823,16 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     steps.append(step)
 
                     if area is None:
-                        logger.debug(
-                            f"Could not find area for {searchable_name} using query: {non_polygon_query.query}"
-                        )
-                        if settings.DEBUG:
+                        if is_test_mode():
+                            random_id = uuid.uuid4()
+                            logger.debug(f"--- [{random_id}]: {searchable_name}")
+                            logger.debug(
+                                f"[{random_id}] Could not find area for {searchable_name}."
+                            )
+                            logger.debug(f"[{random_id}] Polygon used to filter candidates:", parent_area.gss, parent_area.polygon.centroid)
                             async for candidate in non_polygon_query:
-                                logger.debug(f"Candidates considered for {searchable_name}: ", candidate.gss, candidate.polygon.centroid)
-                            logger.debug("Polygon used to filter candidates:", parent_area.gss, parent_area.polygon.centroid)
+                                logger.debug(f"[{random_id}] Candidates considered:", candidate.gss, candidate.polygon.centroid)
+                            logger.debug(f"Candidate query", str(non_polygon_query.query))
                         break
                     else:
                         geocoding_data["area_fields"] = geocoding_data.get(

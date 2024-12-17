@@ -208,3 +208,8 @@ def parse_datetime(value):
         dt = dt.replace(tzinfo=datetime.timezone.utc)
 
     return dt
+
+
+def is_test_mode():
+    import sys
+    return 'test' in sys.argv
