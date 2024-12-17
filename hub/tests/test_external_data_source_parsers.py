@@ -145,10 +145,72 @@ class TestMultiLevelGeocoding(TestCase):
         # GSS code matching
         {
             "id": "999",
+            "council": "E08000016",
             "ward": "E05000993",
             "expected_area_type_code": "WD23",
             "expected_area_gss": "E05000993",
         },
+        # Misc
+        # Gwynedd		Brithdir and Llanfachreth, Ganllwyd, Llanelltyd
+        # is Brithdir and Llanfachreth/Ganllwyd/Llanelltyd in MapIt
+        # https://mapit.mysociety.org/area/165898.html
+        {
+            "id": "6",
+            "council": "Gwynedd",
+            "ward": "Brithdir and Llanfachreth, Ganllwyd, Llanelltyd",
+            "expected_area_type_code": "WD23", # TODO: actually it's a UTE, which 
+            "expected_area_gss": "W05001514",
+        },
+        # Isle of Anglesey		Canolbarth Mon
+        # https://mapit.mysociety.org/area/144265.html
+        {
+            "id": "7",
+            "council": "Isle of Anglesey",
+            "ward": "Canolbarth Mon",
+            "expected_area_type_code": "WD23", # TODO: actually a UTE
+            "expected_area_gss": "W05000985",
+        },
+        # Denbighshire		Rhyl T┼À Newydd
+        # Weird character in the name, probably needs trigram matching or something
+        # https://mapit.mysociety.org/area/166232.html
+        {
+            "id": "8",
+            "council": "Denbighshire",
+            "ward": "Rhyl T┼À Newydd",
+            "expected_area_type_code": "WD23", # TODO: actually a UTE
+            "expected_area_gss": "W05001354",
+        },
+        # Swansea		B├┤n-y-maen
+        # Similarly, weird stuff in name
+        # Maybe it's a problem with the encoding?
+        # https://mapit.mysociety.org/area/165830.html  — Bon-y-maen
+        {
+            "id": "9",
+            "council": "Swansea",
+            "ward": "B├┤n-y-maen",
+            "expected_area_type_code": "WD23", # TODO: actually a UTE
+            "expected_area_gss": "W05001040",
+        },
+        # Gwynedd		Pendraw'r Llan
+        # Ought to be Pen draw Llyn
+        # https://mapit.mysociety.org/area/166296.html
+        {
+            "id": "10",
+            "council": "Gwynedd",
+            "ward": "Pendraw'r Llan",
+            "expected_area_type_code": "WD23", # TODO: actually a UTE
+            "expected_area_gss": "W05001556",
+        },
+        # Gwynedd		Tre-garth a Mynydd Llandyg├íi
+        # https://mapit.mysociety.org/area/12219.html
+        # Tregarth & Mynydd Llandygai
+        {
+            "id": "10",
+            "council": "Gwynedd",
+            "ward": "Tre-garth a Mynydd Llandyg├íi",
+            "expected_area_type_code": "WD23", # TODO: actually a UTE
+            "expected_area_gss": "W05000107",
+        }
     ]
 
     @classmethod
@@ -185,12 +247,15 @@ class TestMultiLevelGeocoding(TestCase):
     def test_geocoding_matches(self):
         for d in self.data:
             try:
-                self.assertEqual(
-                    d.geocode_data["data"]["area_fields"][
-                        d.json["expected_area_type_code"]
-                    ],
-                    d.json["expected_area_gss"],
-                )
+                try:
+                    self.assertEqual(
+                        d.geocode_data["data"]["area_fields"][
+                            d.json["expected_area_type_code"]
+                        ],
+                        d.json["expected_area_gss"],
+                    )
+                except KeyError:
+                    raise AssertionError("Expected geocoding data was missing.")
                 self.assertIsNotNone(d.postcode_data)
             except AssertionError as e:
                 print(e)

@@ -1689,9 +1689,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
             async def create_import_record(record):
                 update_data = get_update_data(record)
+                update_data["geocoder"] = Geocoder.GEOCODING_CONFIG.value
+                update_data["geocode_data"] = {
+                    "config": self.geocoding_config,
+                }
                 id = self.get_record_id(record)
 
                 # Filter down geographies by the config
+                i = 0
                 parent_area = None
                 area = None
                 geocoding_data = {}
@@ -1706,11 +1711,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         continue
 
                     # make searchable for the MapIt database
-                    searchable_name = str(raw_area_value).lower()
+                    lower_name = str(raw_area_value).lower()
+
                     # E.g. ""Bristol, city of" becomes "bristol city" (https://mapit.mysociety.org/area/2561.html)
                     searchable_name = re.sub(
-                        r"(.+), (.+) of", r"\1 \2", searchable_name, flags=re.IGNORECASE
-                    )
+                        r"(.+), (.+) of", r"\1 \2", lower_name, flags=re.IGNORECASE
+                    ) or lower_name
+                    
+                    # Sometimes MapIt uses "X council", sometimes "X city council"
+                    # so try both, knowing we're already specifying the area type so it is safe.
+                    searchable_name_sans_title = re.sub(
+                        r"(.+), (.+) of", r"\1", lower_name, flags=re.IGNORECASE
+                    ) or lower_name
 
                     parsed_area_types = ensure_list(literal_area_type)
                     is_council = (
@@ -1731,12 +1743,24 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         qs = qs.filter(
                             Q(gss__iexact=raw_area_value)
                             | Q(name__iexact=raw_area_value)
+                            | Q(name__iexact=lower_name)
                             | Q(name__iexact=searchable_name)
+                            | Q(name__iexact=searchable_name_sans_title)
+                            | Q(name__iexact=f"{lower_name} council")
                             | Q(name__iexact=f"{searchable_name} council")
+                            | Q(name__iexact=f"{searchable_name_sans_title} council")
+                            | Q(name__iexact=f"{lower_name} city council")
                             | Q(name__iexact=f"{searchable_name} city council")
+                            | Q(name__iexact=f"{searchable_name_sans_title} city council")
+                            | Q(name__iexact=f"{lower_name} borough council")
                             | Q(name__iexact=f"{searchable_name} borough council")
+                            | Q(name__iexact=f"{searchable_name_sans_title} borough council")
+                            | Q(name__iexact=f"{lower_name} district council")
                             | Q(name__iexact=f"{searchable_name} district council")
+                            | Q(name__iexact=f"{searchable_name_sans_title} district council")
+                            | Q(name__iexact=f"{lower_name} county council")
                             | Q(name__iexact=f"{searchable_name} county council")
+                            | Q(name__iexact=f"{searchable_name_sans_title} county council")
                         )
                     else:
                         qs = qs.filter(
@@ -1745,25 +1769,44 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             | Q(name__iexact=searchable_name)
                         )
 
-                    if parent_area is not None and parent_area.polygon is None:
-                        # I.e. if a parent area was already identified
-                        qs = qs.filter(polygon__overlaps=parent_area.polygon)
+                    query_str = str(qs.query)
 
-                    query_str = qs.query
+                    if parent_area is not None and parent_area.polygon is not None:
+                        qs = qs.filter(polygon__overlaps=parent_area.polygon)
 
                     area = await qs.afirst()
 
-                    steps.append({ "type": "sql_area_matching", "area_types": parsed_area_types, "result": "failed" if area is None else "success" })
+                    step = {
+                        "type": "sql_area_matching",
+                        "area_types": parsed_area_types,
+                        "result": "failed" if area is None else "success",
+                        "data": {
+                            "centroid": area.polygon.centroid.json,
+                            "name": area.name,
+                            "id": area.id,
+                            "gss": area.gss,
+                        } if area is not None else None
+                    }
+                    if settings.DEBUG:
+                      step.update({
+                        "query": query_str,
+                        "parent_polygon_query": parent_area.polygon.json if parent_area is not None and parent_area.polygon is not None else None,
+                      })
+                    steps.append(step)
 
                     if area is None:
                         logger.debug(
                             f"Could not find area for {searchable_name} using query: {query_str}"
                         )
+                        break
                     else:
                         geocoding_data["area_fields"] = geocoding_data.get(
                             "area_fields", {}
                         )
                         geocoding_data["area_fields"][area.area_type.code] = area.gss
+                        update_data["geocode_data"].update({
+                            "data": geocoding_data
+                        })
                 if area is not None:
                     sample_point = area.polygon.centroid
 
@@ -1790,18 +1833,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             steps.append({ "task": "data_from_postcode", "service": Geocoder.POSTCODES_IO.value, "result": "failed" if postcode_data is None else "success" })
 
                     update_data["postcode_data"] = postcode_data
-                    update_data["geocoder"] = Geocoder.GEOCODING_CONFIG.value
-                    update_data["geocode_data"].update({
-                        "config": self.geocoding_config,
-                        "steps": steps,
-                        "data": geocoding_data,
-                        "area": {
-                            "centroid": area.polygon.centroid.json,
-                            "name": area.name,
-                            "id": area.id,
-                            "gss": area.gss,
-                        },
-                    })
+                else:
+                    # Reset geocoding data
+                    update_data["postcode_data"] = None
+
+                # Update the geocode data regardless, for debugging purposes
+                update_data["geocode_data"].update({
+                    "steps": steps
+                })
 
                 args = dict(
                     data_type=data_type,
