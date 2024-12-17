@@ -1742,33 +1742,96 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         # Mapit stores councils with their type in the name
                         # e.g. https://mapit.mysociety.org/area/2641.html
                         qs = qs.filter(
+                            #
+                            # code
                             Q(gss__iexact=raw_area_value)
-                            | Q(name__iexact=raw_area_value)
-                            | Q(name__iexact=lower_name)
-                            | Q(name__iexact=searchable_name)
-                            | Q(name__iexact=searchable_name_sans_title)
-                            | Q(name__iexact=f"{lower_name} council")
-                            | Q(name__iexact=f"{searchable_name} council")
-                            | Q(name__iexact=f"{searchable_name_sans_title} council")
-                            | Q(name__iexact=f"{lower_name} city council")
-                            | Q(name__iexact=f"{searchable_name} city council")
-                            | Q(name__iexact=f"{searchable_name_sans_title} city council")
-                            | Q(name__iexact=f"{lower_name} borough council")
-                            | Q(name__iexact=f"{searchable_name} borough council")
-                            | Q(name__iexact=f"{searchable_name_sans_title} borough council")
-                            | Q(name__iexact=f"{lower_name} district council")
-                            | Q(name__iexact=f"{searchable_name} district council")
-                            | Q(name__iexact=f"{searchable_name_sans_title} district council")
-                            | Q(name__iexact=f"{lower_name} county council")
-                            | Q(name__iexact=f"{searchable_name} county council")
-                            | Q(name__iexact=f"{searchable_name_sans_title} county council")
+                            #
+                            # raw
+                            | Q(name__unaccent__iexact=raw_area_value)
+                            | Q(name__unaccent__trigram_similar=raw_area_value)
+                            #
+                            # lower
+                            | Q(name__unaccent__iexact=lower_name)
+                            | Q(name__unaccent__trigram_similar=lower_name)
+                            #
+                            # searchable
+                            | Q(name__unaccent__iexact=searchable_name)
+                            | Q(name__unaccent__trigram_similar=searchable_name)
+                            #
+                            # sans title
+                            | Q(name__unaccent__iexact=searchable_name_sans_title)
+                            | Q(name__unaccent__trigram_similar=searchable_name_sans_title)
+                            #
+                            # council
+                            | Q(name__unaccent__iexact=f"{lower_name} council")
+                            | Q(name__unaccent__trigram_similar=f"{lower_name} council")
+                            #
+                            | Q(name__unaccent__iexact=f"{searchable_name} council")
+                            | Q(name__unaccent__trigram_similar=f"{searchable_name} council")
+                            #
+                            | Q(name__unaccent__iexact=f"{searchable_name_sans_title} council")
+                            | Q(name__unaccent__trigram_similar=f"{searchable_name_sans_title} council")
+                            #
+                            # city
+                            | Q(name__unaccent__iexact=f"{lower_name} city council")
+                            | Q(name__unaccent__trigram_similar=f"{lower_name} city council")
+                            #
+                            | Q(name__unaccent__iexact=f"{searchable_name} city council")
+                            | Q(name__unaccent__trigram_similar=f"{searchable_name} city council")
+                            #
+                            | Q(name__unaccent__iexact=f"{searchable_name_sans_title} city council")
+                            | Q(name__unaccent__trigram_similar=f"{searchable_name_sans_title} city council")
+                            #
+                            # borough
+                            | Q(name__unaccent__iexact=f"{lower_name} borough council")
+                            | Q(name__unaccent__trigram_similar=f"{lower_name} borough council")
+                            #
+                            | Q(name__unaccent__iexact=f"{searchable_name} borough council")
+                            | Q(name__unaccent__trigram_similar=f"{searchable_name} borough council")
+                            #
+                            | Q(name__unaccent__iexact=f"{searchable_name_sans_title} borough council")
+                            | Q(name__unaccent__trigram_similar=f"{searchable_name_sans_title} borough council")
+                            #
+                            # district
+                            | Q(name__unaccent__iexact=f"{lower_name} district council")
+                            | Q(name__unaccent__trigram_similar=f"{lower_name} district council")
+                            #
+                            | Q(name__unaccent__iexact=f"{searchable_name} district council")
+                            | Q(name__unaccent__trigram_similar=f"{searchable_name} district council")
+                            #
+                            | Q(name__unaccent__iexact=f"{searchable_name_sans_title} district council")
+                            | Q(name__unaccent__trigram_similar=f"{searchable_name_sans_title} district council")
+                            #
+                            # county
+                            | Q(name__unaccent__iexact=f"{lower_name} county council")
+                            | Q(name__unaccent__trigram_similar=f"{lower_name} county council")
+                            #
+                            | Q(name__unaccent__iexact=f"{searchable_name} county council")
+                            | Q(name__unaccent__trigram_similar=f"{searchable_name} county council")
+                            #
+                            | Q(name__unaccent__iexact=f"{searchable_name_sans_title} county council")
+                            | Q(name__unaccent__trigram_similar=f"{searchable_name_sans_title} county council")
                         )
                     else:
                         qs = qs.filter(
                             Q(gss__iexact=raw_area_value)
-                            | Q(name__iexact=raw_area_value)
-                            | Q(name__iexact=searchable_name)
+                            | Q(name__unaccent__iexact=raw_area_value)
+                            | Q(name__unaccent__iexact=searchable_name)
+                            | Q(name__unaccent__iexact=searchable_name_sans_title)
+                            | Q(name__unaccent__iexact=lower_name)
+                            | Q(name__unaccent__trigram_similar=raw_area_value)
+                            | Q(name__unaccent__trigram_similar=searchable_name)
+                            | Q(name__unaccent__trigram_similar=searchable_name_sans_title)
+                            | Q(name__unaccent__trigram_similar=lower_name)
                         )
+
+                    # Sort by trigram similarity descending
+                    qs = qs.extra(
+                        select={
+                            'name_distance': "similarity(hub_area.name, %s)"},
+                            select_params=[searchable_name_sans_title]
+                        )\
+                        .order_by('-name_distance')
 
                     query_str = str(qs.query)
 
@@ -1786,13 +1849,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             "name": area.name,
                             "id": area.id,
                             "gss": area.gss,
+                            "search_term": raw_area_value
                         } if area is not None else None
                     }
                     if settings.DEBUG:
-                      step.update({
-                        "query": query_str,
-                        "parent_polygon_query": parent_area.polygon.json if parent_area is not None and parent_area.polygon is not None else None,
-                      })
+                        step.update({
+                          "query": query_str,
+                          "parent_polygon_query": parent_area.polygon.json if parent_area is not None and parent_area.polygon is not None else None,
+                        })
                     steps.append(step)
 
                     if area is None:
