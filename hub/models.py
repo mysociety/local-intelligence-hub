@@ -85,6 +85,10 @@ from utils.postcodesIO import (
     get_bulk_postcode_geo,
     get_bulk_postcode_geo_from_coords,
 )
+from utils.findthatpostcode import (
+    get_example_postcode_from_area_gss,
+    get_postcode_from_coords_ftp,
+)
 from utils.py import batched, ensure_list, get, is_maybe_id, parse_datetime
 
 User = get_user_model()
@@ -1762,11 +1766,28 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         "postcodesIOFromPoint"
                     ].load(sample_point)
 
+                    # Try a few other backup strategies (example postcode, another geocoder)
+                    # to get postcodes.io data
+                    if postcode_data is None:
+                        postcode = await get_example_postcode_from_area_gss(area.gss)
+                        if postcode is not None:
+                            postcode_data = await loaders["postcodesIO"].load(postcode)
+                    if postcode_data is None:
+                        postcode = await get_postcode_from_coords_ftp(sample_point)
+                        if postcode is not None:
+                            postcode_data = await loaders["postcodesIO"].load(postcode)
+
                     update_data["postcode_data"] = postcode_data
                     update_data["geocoder"] = Geocoder.GEOCODING_CONFIG.value
                     update_data["geocode_data"] = {
                         "config": self.geocoding_config,
                         "data": geocoding_data,
+                        "area": {
+                            "centroid": area.polygon.centroid.json,
+                            "name": area.name,
+                            "id": area.id,
+                            "gss": area.gss,
+                        },
                     }
 
                 args = dict(
