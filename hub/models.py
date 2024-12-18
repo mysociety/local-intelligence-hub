@@ -9,7 +9,6 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import List, Optional, Self, Type, TypedDict, Union
 from urllib.parse import urlencode, urljoin
-from utils import mapit_types
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -78,7 +77,7 @@ from hub.tasks import (
 )
 from hub.validation import validate_and_format_phone_number
 from hub.views.mapped import ExternalDataSourceWebhook
-from utils import google_maps, google_sheets
+from utils import google_maps, google_sheets, mapit_types
 from utils.findthatpostcode import (
     get_example_postcode_from_area_gss,
     get_postcode_from_coords_ftp,
@@ -1716,8 +1715,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     )
 
                     parsed_area_types = [
-                        str(s).upper()
-                        for s in ensure_list(area_types)
+                        str(s).upper() for s in ensure_list(area_types)
                     ]
 
                     maybe_council = (
@@ -1725,8 +1723,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         literal_lih_area_type__code is not None
                         and any(
                             [
-                                t
-                                in mapit_types.LIH_COUNCIL_TYPES
+                                t in mapit_types.LIH_COUNCIL_TYPES
                                 for t in parsed_area_types
                             ]
                         )
@@ -1735,8 +1732,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         literal_mapit_type is not None
                         and any(
                             [
-                                t
-                                in mapit_types.MAPIT_COUNCIL_TYPES
+                                t in mapit_types.MAPIT_COUNCIL_TYPES
                                 for t in parsed_area_types
                             ]
                         )
