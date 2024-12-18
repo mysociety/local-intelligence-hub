@@ -14,6 +14,7 @@ from psycopg import Column
 @dataclass
 class TableConfig:
     table_name: str
+    exclude_columns: list[str] = field(default_factory=list)
     extra_select_columns: dict[str, str] = field(default_factory=dict)
     output_column_templates: dict[str, str] = field(default_factory=dict)
 
@@ -81,7 +82,11 @@ class Command(BaseCommand):
         record = {}
         for i, column in enumerate(columns):
             # Don't output ID columns or extra select columns (these can't be imported)
-            if column.name == "id" or column.name in table_config.extra_select_columns:
+            if (
+                column.name == "id"
+                or column.name in table_config.extra_select_columns
+                or column.name in table_config.exclude_columns
+            ):
                 continue
 
             if column.name in table_config.output_column_templates:

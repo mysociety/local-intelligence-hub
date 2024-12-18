@@ -380,8 +380,10 @@ export type AirtableSourceInput = {
 export type AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSource = ActionNetworkSource | AirtableSource | EditableGoogleSheetsSource | MailchimpSource | TicketTailorSource;
 
 export enum AnalyticalAreaType {
+  AdminCounty = 'admin_county',
   AdminDistrict = 'admin_district',
   AdminWard = 'admin_ward',
+  Country = 'country',
   EuropeanElectoralRegion = 'european_electoral_region',
   ParliamentaryConstituency = 'parliamentary_constituency',
   ParliamentaryConstituency_2024 = 'parliamentary_constituency_2024'

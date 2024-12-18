@@ -2,6 +2,7 @@ from json.decoder import JSONDecodeError
 
 from django.conf import settings
 
+from requests.exceptions import JSONDecodeError as RequestsJSONDecodeError
 from requests_cache import CachedSession
 
 session = CachedSession(cache_name=settings.CACHE_FILE, expire_after=86400)
@@ -45,6 +46,7 @@ class MapIt(object):
     touches_url = "%s/area/%s/intersects?type=CTY,COI,DIS,LBO,LGD,MTD,UTA&api_key=%s"
     wgs84_url = "%s/point/4326/%s,%s?api_key=%s"
     areas_url = "%s/areas/%s?api_key=%s"
+    area_url = "%s/area/%s.json?api_key=%s"
     geometry_url = "%s/area/%s.geojson?simplify_tolerance=0.001&api_key=%s"
     cache = {}
 
@@ -110,6 +112,11 @@ class MapIt(object):
             areas.append(area)
         return areas
 
+    def area_details(self, area_id):
+        url = self.area_url % (self.base, area_id, settings.MAPIT_API_KEY)
+        data = self.get(url)
+        return data
+
     def area_geometry(self, area):
         url = self.geometry_url % (self.base, area, settings.MAPIT_API_KEY)
         data = self.get(url)
@@ -121,7 +128,7 @@ class MapIt(object):
             resp = session.get(url)
             try:
                 data = resp.json()
-            except JSONDecodeError as error:
+            except (JSONDecodeError, RequestsJSONDecodeError) as error:
                 data = {"error": str(error)}
 
             if resp.status_code == 403 and resp.content == b"Rate limit exceeded":

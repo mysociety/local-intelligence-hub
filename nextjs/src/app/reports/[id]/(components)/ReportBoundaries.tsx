@@ -36,15 +36,17 @@ const ReportBoundaries: React.FC<UpdateConfigProps> = ({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {report.politicalBoundaries.map((boundary) => (
-            <SelectItem
-              className="font-medium"
-              key={boundary.boundaryType}
-              value={boundary.boundaryType}
-            >
-              {boundary.label}
-            </SelectItem>
-          ))}
+          {report.politicalBoundaries
+            .sort((a, b) => a.label.localeCompare(b.label))
+            .map((boundary) => (
+              <SelectItem
+                className="font-medium"
+                key={boundary.boundaryType}
+                value={boundary.boundaryType}
+              >
+                {boundary.label}
+              </SelectItem>
+            ))}
         </SelectContent>
       </Select>
       <p className="text-meepGray-400 text-sm font-normal mb-3 mt-3">
