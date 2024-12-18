@@ -38,7 +38,11 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
       ? 'visible'
       : 'none'
   const { data: dataByBoundary } = useDataByBoundary({ report, boundaryType })
-  const showBoundaryNames = report.displayOptions?.display.showBoundaryNames
+
+  const boundaryNameVisibility =
+    visibility === 'visible' && report.displayOptions?.display.showBoundaryNames
+      ? 'visible'
+      : 'none'
   const map = useLoadedMap()
   const [selectedBoundary, setSelectedBoundary] = useAtom(selectedBoundaryAtom)
   useClickOnBoundaryEvents(visibility === 'visible' ? tileset : null)
@@ -114,63 +118,62 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           layout={{ visibility, 'line-join': 'round', 'line-round-limit': 0.1 }}
         />
       </Source>
-      {showBoundaryNames && (
-        <Source
-          id={`${tileset.mapboxSourceId}-area-count`}
-          type="geojson"
-          data={getAreaGeoJSON(dataByBoundary)}
-        >
-          <Layer
-            id={`${tileset.mapboxSourceId}-area-count`}
-            type="symbol"
-            layout={{
-              ...getAreaCountLayout(dataByBoundary),
-              visibility,
-            }}
-            paint={{
-              'text-opacity': [
-                'interpolate',
-                ['exponential', 1],
-                ['zoom'],
-                //
-                7.5,
-                0,
-                //
-                7.8,
-                1,
-              ],
-              'text-color': 'white',
-              'text-halo-color': '#24262b',
-              'text-halo-width': 1.5,
-            }}
-          />
 
-          <Layer
-            id={`${tileset.mapboxSourceId}-area-label`}
-            type="symbol"
-            layout={{
-              ...getAreaLabelLayout(dataByBoundary),
-              visibility,
-            }}
-            paint={{
-              'text-color': 'white',
-              'text-opacity': [
-                'interpolate',
-                ['exponential', 1],
-                ['zoom'],
-                //
-                7.5,
-                0,
-                //
-                7.8,
-                1,
-              ],
-              'text-halo-color': '#24262b',
-              'text-halo-width': 1.5,
-            }}
-          />
-        </Source>
-      )}
+      <Source
+        id={`${tileset.mapboxSourceId}-area-count`}
+        type="geojson"
+        data={getAreaGeoJSON(dataByBoundary)}
+      >
+        <Layer
+          id={`${tileset.mapboxSourceId}-area-count`}
+          type="symbol"
+          layout={{
+            ...getAreaCountLayout(dataByBoundary),
+            visibility: boundaryNameVisibility,
+          }}
+          paint={{
+            'text-opacity': [
+              'interpolate',
+              ['exponential', 1],
+              ['zoom'],
+              //
+              7.5,
+              0,
+              //
+              7.8,
+              1,
+            ],
+            'text-color': 'white',
+            'text-halo-color': '#24262b',
+            'text-halo-width': 1.5,
+          }}
+        />
+
+        <Layer
+          id={`${tileset.mapboxSourceId}-area-label`}
+          type="symbol"
+          layout={{
+            ...getAreaLabelLayout(dataByBoundary),
+            visibility: boundaryNameVisibility,
+          }}
+          paint={{
+            'text-color': 'white',
+            'text-opacity': [
+              'interpolate',
+              ['exponential', 1],
+              ['zoom'],
+              //
+              7.5,
+              0,
+              //
+              7.8,
+              1,
+            ],
+            'text-halo-color': '#24262b',
+            'text-halo-width': 1.5,
+          }}
+        />
+      </Source>
     </>
   )
 }
