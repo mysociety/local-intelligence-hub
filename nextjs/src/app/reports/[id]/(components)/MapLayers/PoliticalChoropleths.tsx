@@ -38,8 +38,8 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
       ? 'visible'
       : 'none'
   const { data: dataByBoundary } = useDataByBoundary({ report, boundaryType })
-  const boundaryNames = report.displayOptions?.display.showBoundaryNames
-
+  const showBoundaryNames = report.displayOptions?.display.showBoundaryNames
+  console.log('show boundary  names', showBoundaryNames)
   const map = useLoadedMap()
   const [selectedBoundary, setSelectedBoundary] = useAtom(selectedBoundaryAtom)
   useClickOnBoundaryEvents(visibility === 'visible' ? tileset : null)
@@ -144,30 +144,32 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
             'text-halo-width': 1.5,
           }}
         />
-        <Layer
-          id={`${tileset.mapboxSourceId}-area-label`}
-          type="symbol"
-          layout={{
-            ...getAreaLabelLayout(dataByBoundary),
-            visibility,
-          }}
-          paint={{
-            'text-color': 'white',
-            'text-opacity': [
-              'interpolate',
-              ['exponential', 1],
-              ['zoom'],
-              //
-              7.5,
-              0,
-              //
-              7.8,
-              1,
-            ],
-            'text-halo-color': '#24262b',
-            'text-halo-width': 1.5,
-          }}
-        />
+        {showBoundaryNames && (
+          <Layer
+            id={`${tileset.mapboxSourceId}-area-label`}
+            type="symbol"
+            layout={{
+              ...getAreaLabelLayout(dataByBoundary),
+              visibility,
+            }}
+            paint={{
+              'text-color': 'white',
+              'text-opacity': [
+                'interpolate',
+                ['exponential', 1],
+                ['zoom'],
+                //
+                7.5,
+                0,
+                //
+                7.8,
+                1,
+              ],
+              'text-halo-color': '#24262b',
+              'text-halo-width': 1.5,
+            }}
+          />
+        )}
       </Source>
     </>
   )
