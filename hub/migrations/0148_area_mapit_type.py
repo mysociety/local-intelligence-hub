@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("hub", "0144_hubimage_description"),
+        ("hub", "0147_batchrequest_send_email_batchrequest_sent_email_and_more"),
     ]
 
     operations = [
