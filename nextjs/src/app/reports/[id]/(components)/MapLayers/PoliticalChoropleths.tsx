@@ -1,7 +1,7 @@
 import { AnalyticalAreaType } from '@/__generated__/graphql'
 import { useLoadedMap } from '@/lib/map'
 import { useAtom } from 'jotai'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
 import {
@@ -38,27 +38,14 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
       ? 'visible'
       : 'none'
 
-  const visualisationType =
-    report.displayOptions?.dataVisualisation?.visualisationType
+  const showChoropleth =
+    report.displayOptions?.dataVisualisation?.showDataVisualisation
+      ?.choropleth ?? false
 
   const { data: dataByBoundary } = useDataByBoundary({ report, boundaryType })
   const map = useLoadedMap()
   const [selectedBoundary, setSelectedBoundary] = useAtom(selectedBoundaryAtom)
   useClickOnBoundaryEvents(visibility === 'visible' ? tileset : null)
-
-  const [fillVisibility, setFillVisibility] = useState<'choropleth' | 'none'>(
-    visualisationType === 'none' ? 'none' : 'choropleth'
-  )
-
-  useEffect(() => {
-    setFillVisibility(visualisationType === 'none' ? 'none' : 'choropleth')
-  }, [visualisationType])
-
-  useEffect(() => {
-    if (visibility === 'none') {
-      setSelectedBoundary(null)
-    }
-  }, [visibility])
 
   // When the map is loaded and we have the data, add the data to the boundaries
   useEffect(() => {
@@ -89,18 +76,22 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
         url={`mapbox://${tileset.mapboxSourceId}`}
         promoteId={tileset.promoteId}
       >
-        {/* Display fill when visualisation type if not none */}
         {/* Fill of the boundary */}
-        {fillVisibility !== 'none' && (
-          <Layer
-            beforeId="road-simple"
-            id={`${tileset.mapboxSourceId}-fill`}
-            source={tileset.mapboxSourceId}
-            source-layer={tileset.sourceLayerId}
-            type="fill"
-            filter={getChoroplethFillFilter(dataByBoundary, tileset)}
-            paint={getChoroplethFill(dataByBoundary, visibility === 'visible')}
-          />
+        {showChoropleth && (
+          <>
+            <Layer
+              beforeId="road-simple"
+              id={`${tileset.mapboxSourceId}-fill`}
+              source={tileset.mapboxSourceId}
+              source-layer={tileset.sourceLayerId}
+              type="fill"
+              filter={getChoroplethFillFilter(dataByBoundary, tileset)}
+              paint={getChoroplethFill(
+                dataByBoundary,
+                visibility === 'visible'
+              )}
+            />
+          </>
         )}
         {/* Border of the boundary */}
         <Layer
@@ -124,7 +115,11 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           type="line"
           paint={getSelectedChoroplethEdge()}
           filter={['==', ['get', tileset.promoteId], selectedBoundary]}
-          layout={{ visibility, 'line-join': 'round', 'line-round-limit': 0.1 }}
+          layout={{
+            visibility,
+            'line-join': 'round',
+            'line-round-limit': 0.1,
+          }}
         />
       </Source>
       <Source
@@ -144,10 +139,8 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
               'interpolate',
               ['exponential', 1],
               ['zoom'],
-              //
               7.5,
               0,
-              //
               7.8,
               1,
             ],
@@ -169,10 +162,8 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
               'interpolate',
               ['exponential', 1],
               ['zoom'],
-              //
               7.5,
               0,
-              //
               7.8,
               1,
             ],
