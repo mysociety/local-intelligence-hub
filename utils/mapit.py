@@ -2,9 +2,8 @@ from json.decoder import JSONDecodeError
 
 from django.conf import settings
 
-from requests_cache import CachedSession
 from requests.exceptions import JSONDecodeError as RequestsJSONDecodeError
-
+from requests_cache import CachedSession
 
 session = CachedSession(cache_name=settings.CACHE_FILE, expire_after=86400)
 
@@ -112,7 +111,7 @@ class MapIt(object):
         for code, area in data.items():
             areas.append(area)
         return areas
-    
+
     def area_details(self, area_id):
         url = self.area_url % (self.base, area_id, settings.MAPIT_API_KEY)
         data = self.get(url)

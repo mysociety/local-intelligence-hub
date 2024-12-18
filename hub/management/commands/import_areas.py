@@ -1,11 +1,11 @@
 import json
+from time import sleep
 
 # from django postgis
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
 from django.core.management.base import BaseCommand
 
 from tqdm import tqdm
-from time import sleep
 
 from hub.models import Area, AreaType
 from utils import mapit
@@ -37,7 +37,7 @@ class Command(BaseCommand):
             "description": "District Council",
         },
         {
-            "mapit_type": ["COI", "CPW", "DIW", "LBW", "LGW", "MTW", "UTW"],
+            "mapit_type": ["COI", "CPW", "DIW", "LBW", "LGW", "MTW", "UTE", "UTW"],
             "name": "Wards",
             "code": "WD23",
             "area_type": "Electoral Ward",
@@ -49,8 +49,14 @@ class Command(BaseCommand):
         parser.add_argument(
             "-q", "--quiet", action="store_true", help="Silence progress bars."
         )
+        parser.add_argument(
+            "-a",
+            "--all-names",
+            action="store_true",
+            help="Fetch alternative names from MapIt",
+        )
 
-    def handle(self, quiet: bool = False, *args, **options):
+    def handle(self, quiet: bool = False, all_names: bool = False, *args, **options):
         self.mapit_client = mapit.MapIt()
         for b_type in self.boundary_types:
             areas = self.mapit_client.areas_of_type(b_type["mapit_type"])
@@ -65,14 +71,14 @@ class Command(BaseCommand):
                 print(f"Importing {b_type['name']} Areas")
             for area in tqdm(areas, disable=quiet):
                 try:
-                    self.import_area(area, area_type)
+                    self.import_area(area, area_type, all_names)
                 except mapit.RateLimitException:
-                    print("Rate limited, sleeping for 60 seconds then retrying...")
-                    sleep(60)
+                    print("Rate limited, sleeping for 3 minutes then retrying...")
+                    sleep(180)
                     self.import_area(area, area_type)
 
-    def import_area(self, area, area_type):
-        #area_details = self.mapit_client.area_details(area["id"])
+    def import_area(self, area, area_type, all_names):
+        area_details = self.mapit_client.area_details(area["id"]) if all_names else {}
         try:
             geom = self.mapit_client.area_geometry(area["id"])
             geom = {
@@ -97,7 +103,7 @@ class Command(BaseCommand):
                 "mapit_id": area["id"],
                 "name": area["name"],
                 "mapit_type": area["type"],
-                "mapit_all_names": {} #area_details.get("all_names")
+                "mapit_all_names": area_details.get("all_names"),
             },
         )
 

@@ -60,7 +60,7 @@ services:
   preDeployCommand: >
     python manage.py migrate &&
     python manage.py createcachetable &&
-    ./bin/import_preview_env_seed_if_staging_env.sh &&
+    ./bin/import_areas_if_staging_env.sh &&
     python manage.py seed
   healthCheckPath: /
   buildFilter:

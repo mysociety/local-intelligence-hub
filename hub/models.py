@@ -17,7 +17,6 @@ from django.contrib.gis.geos import Point
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.contrib.postgres.fields import ArrayField
 from django.db.models import Avg, IntegerField, Max, Min, Q
 from django.db.models.functions import Cast, Coalesce
 from django.db.utils import IntegrityError
