@@ -168,7 +168,7 @@ class TestMultiLevelGeocoding(TestCase):
             "council": "Isle of Anglesey",
             "ward": "Canolbarth Mon",
             "expected_area_type_code": "WD23", # TODO: actually a UTE
-            "expected_area_gss": "W05000985",
+            "expected_area_gss": "W05001496",
         },
         # Denbighshire		Rhyl T┼À Newydd
         # Weird character in the name, probably needs trigram matching or something
@@ -209,7 +209,7 @@ class TestMultiLevelGeocoding(TestCase):
             "council": "Gwynedd",
             "ward": "Tre-garth a Mynydd Llandyg├íi",
             "expected_area_type_code": "WD23", # TODO: actually a UTE
-            "expected_area_gss": "W05000107",
+            "expected_area_gss": "W05001563",
         },
         # A bunch of wards with the same name, should all point to different things
         {
@@ -219,13 +219,13 @@ class TestMultiLevelGeocoding(TestCase):
             "expected_area_type_code": "WD23",
             "expected_area_gss": "E05001260",
         },
-        {
-            "id": "12",
-            "council": "Nuneaton and Bedworth", #E07000219
-            "ward": "Abbey",
-            "expected_area_type_code": "WD23",
-            "expected_area_gss": "E05007474",
-        },
+        # {
+        #     "id": "12",
+        #     "council": "Nuneaton and Bedworth", #E07000219
+        #     "ward": "Abbey",
+        #     "expected_area_type_code": "WD23",
+        #     "expected_area_gss": "E05007474", # Another one not in MapIt!
+        # },
         # {
         #     "id": "13",
         #     "council": "Redditch",
@@ -276,7 +276,7 @@ class TestMultiLevelGeocoding(TestCase):
             "council": "Cambridge",
             "ward": "Abbey",
             "expected_area_type_code": "WD23",
-            "expected_area_gss": "E05002702",
+            "expected_area_gss": "E05013050",
         },
         {
             "id": "20",
@@ -290,7 +290,7 @@ class TestMultiLevelGeocoding(TestCase):
             "council": "Merton",
             "ward": "Abbey",
             "expected_area_type_code": "WD23",
-            "expected_area_gss": "E05000455",
+            "expected_area_gss": "E05013810",
         },
         {
             "id": "22",
@@ -306,7 +306,7 @@ class TestMultiLevelGeocoding(TestCase):
             "council": "Barking and Dagenham",
             "ward": "Abbey",
             "expected_area_type_code": "WD23",
-            "expected_area_gss": "E05000026",
+            "expected_area_gss": "E05014053",
         },
         {
             "id": "24",
@@ -320,7 +320,7 @@ class TestMultiLevelGeocoding(TestCase):
             "council": "Derby",
             "ward": "Abbey",
             "expected_area_type_code": "WD23",
-            "expected_area_gss": "E05001767",
+            "expected_area_gss": "E05015507",
         },
         {
             "id": "26",
