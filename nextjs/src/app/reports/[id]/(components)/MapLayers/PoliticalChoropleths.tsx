@@ -115,36 +115,37 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           layout={{ visibility, 'line-join': 'round', 'line-round-limit': 0.1 }}
         />
       </Source>
-      <Source
-        id={`${tileset.mapboxSourceId}-area-count`}
-        type="geojson"
-        data={getAreaGeoJSON(dataByBoundary)}
-      >
-        <Layer
+      {showBoundaryNames && (
+        <Source
           id={`${tileset.mapboxSourceId}-area-count`}
-          type="symbol"
-          layout={{
-            ...getAreaCountLayout(dataByBoundary),
-            visibility,
-          }}
-          paint={{
-            'text-opacity': [
-              'interpolate',
-              ['exponential', 1],
-              ['zoom'],
-              //
-              7.5,
-              0,
-              //
-              7.8,
-              1,
-            ],
-            'text-color': 'white',
-            'text-halo-color': '#24262b',
-            'text-halo-width': 1.5,
-          }}
-        />
-        {showBoundaryNames && (
+          type="geojson"
+          data={getAreaGeoJSON(dataByBoundary)}
+        >
+          <Layer
+            id={`${tileset.mapboxSourceId}-area-count`}
+            type="symbol"
+            layout={{
+              ...getAreaCountLayout(dataByBoundary),
+              visibility,
+            }}
+            paint={{
+              'text-opacity': [
+                'interpolate',
+                ['exponential', 1],
+                ['zoom'],
+                //
+                7.5,
+                0,
+                //
+                7.8,
+                1,
+              ],
+              'text-color': 'white',
+              'text-halo-color': '#24262b',
+              'text-halo-width': 1.5,
+            }}
+          />
+
           <Layer
             id={`${tileset.mapboxSourceId}-area-label`}
             type="symbol"
@@ -169,8 +170,8 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
               'text-halo-width': 1.5,
             }}
           />
-        )}
-      </Source>
+        </Source>
+      )}
     </>
   )
 }
