@@ -2,6 +2,7 @@ from json.decoder import JSONDecodeError
 
 from django.conf import settings
 
+from requests import PreparedRequest
 from requests.exceptions import JSONDecodeError as RequestsJSONDecodeError
 from requests_cache import CachedSession
 

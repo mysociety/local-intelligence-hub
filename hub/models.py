@@ -78,17 +78,24 @@ from hub.tasks import (
 from hub.validation import validate_and_format_phone_number
 from hub.views.mapped import ExternalDataSourceWebhook
 from utils import google_maps, google_sheets
+from utils.findthatpostcode import (
+    get_example_postcode_from_area_gss,
+    get_postcode_from_coords_ftp,
+)
 from utils.log import get_simple_debug_logger
 from utils.postcodesIO import (
     PostcodesIOResult,
     get_bulk_postcode_geo,
     get_bulk_postcode_geo_from_coords,
 )
-from utils.findthatpostcode import (
-    get_example_postcode_from_area_gss,
-    get_postcode_from_coords_ftp,
+from utils.py import (
+    batched,
+    ensure_list,
+    get,
+    is_maybe_id,
+    is_test_mode,
+    parse_datetime,
 )
-from utils.py import batched, ensure_list, get, is_maybe_id, is_test_mode, parse_datetime
 
 User = get_user_model()
 
@@ -1667,7 +1674,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 id = self.get_record_id(record)
 
                 # Filter down geographies by the config
-                i = 0
                 parent_area = None
                 area = None
                 geocoding_data = {}
@@ -1677,24 +1683,34 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     parent_area = area
                     literal_area_type = item.get("type", None)
                     literal_area_field = item.get("field", None)
-                    raw_area_value = str(self.get_record_field(record, literal_area_field))
+                    raw_area_value = str(
+                        self.get_record_field(record, literal_area_field)
+                    )
 
-                    if literal_area_type is None or literal_area_field is None or raw_area_value is None:
+                    if (
+                        literal_area_type is None
+                        or literal_area_field is None
+                        or raw_area_value is None
+                    ):
                         continue
 
                     # make searchable for the MapIt database
                     lower_name = str(raw_area_value).lower()
 
                     # E.g. ""Bristol, city of" becomes "bristol city" (https://mapit.mysociety.org/area/2561.html)
-                    searchable_name = re.sub(
-                        r"(.+), (.+) of", r"\1 \2", lower_name, flags=re.IGNORECASE
-                    ) or lower_name
-                    
+                    searchable_name = (
+                        re.sub(
+                            r"(.+), (.+) of", r"\1 \2", lower_name, flags=re.IGNORECASE
+                        )
+                        or lower_name
+                    )
+
                     # Sometimes MapIt uses "X council", sometimes "X city council"
                     # so try both, knowing we're already specifying the area type so it is safe.
-                    searchable_name_sans_title = re.sub(
-                        r"(.+), (.+) of", r"\1", lower_name, flags=re.IGNORECASE
-                    ) or lower_name
+                    searchable_name_sans_title = (
+                        re.sub(r"(.+), (.+) of", r"\1", lower_name, flags=re.IGNORECASE)
+                        or lower_name
+                    )
 
                     parsed_area_types = ensure_list(literal_area_type)
                     is_local_authority = (
@@ -1713,7 +1729,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         raw_area_value,
                         lower_name,
                         searchable_name,
-                        searchable_name_sans_title
+                        searchable_name_sans_title,
                     ]
 
                     suffixes = [
@@ -1730,11 +1746,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             " city council",
                             " borough council",
                             " district council",
-                            " county council"
+                            " county council",
                         ]
 
                     # always try a code
-                    or_statement_area_text_matcher = Q(gss__iexact=raw_area_value.upper().upper())
+                    or_statement_area_text_matcher = Q(
+                        gss__iexact=raw_area_value.upper().upper()
+                    )
 
                     # matrix of strings and suffixes
                     for value in list(set(search_values)):
@@ -1742,29 +1760,30 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             computed_value = f"{value}{suffix}"
                             # logger.debug("Trying ", computed_value)
                             # we also try trigram because different versions of the same name are used by organisers and researchers
-                            or_statement_area_text_matcher |= Q(name__unaccent__iexact=computed_value)
-                            or_statement_area_text_matcher |= Q(name__unaccent__trigram_similar=computed_value)
+                            or_statement_area_text_matcher |= Q(
+                                name__unaccent__iexact=computed_value
+                            )
+                            or_statement_area_text_matcher |= Q(
+                                name__unaccent__trigram_similar=computed_value
+                            )
 
-                    qs = qs\
-                      .filter(or_statement_area_text_matcher)\
-                      .extra(
-                        select={
-                            'exact_gss_match': "hub_area.gss = %s"
-                        },
-                        select_params=[raw_area_value.upper()]
-                      )\
-                      .extra(
-                        select={
-                            'name_distance': "similarity(hub_area.name, %s)"
-                        },
-                        select_params=[searchable_name_sans_title]
-                      )\
-                      .order_by(
-                          # Prefer exact matches on GSS codes
-                          '-exact_gss_match',
-                          # Then prefer name similarity
-                          '-name_distance'
-                      )
+                    qs = (
+                        qs.filter(or_statement_area_text_matcher)
+                        .extra(
+                            select={"exact_gss_match": "hub_area.gss = %s"},
+                            select_params=[raw_area_value.upper()],
+                        )
+                        .extra(
+                            select={"name_distance": "similarity(hub_area.name, %s)"},
+                            select_params=[searchable_name_sans_title],
+                        )
+                        .order_by(
+                            # Prefer exact matches on GSS codes
+                            "-exact_gss_match",
+                            # Then prefer name similarity
+                            "-name_distance",
+                        )
+                    )
 
                     # for debugging, but without all the polygon characters which spam up the terminal/logger
                     non_polygon_query = qs
@@ -1779,18 +1798,29 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         "area_types": parsed_area_types,
                         "result": "failed" if area is None else "success",
                         "search_term": raw_area_value,
-                        "data": {
-                            "centroid": area.polygon.centroid.json,
-                            "name": area.name,
-                            "id": area.id,
-                            "gss": area.gss,
-                        } if area is not None else None
+                        "data": (
+                            {
+                                "centroid": area.polygon.centroid.json,
+                                "name": area.name,
+                                "id": area.id,
+                                "gss": area.gss,
+                            }
+                            if area is not None
+                            else None
+                        ),
                     }
                     if settings.DEBUG:
-                        step.update({
-                          "query": str(non_polygon_query.query),
-                          "parent_polygon_query": parent_area.polygon.json if parent_area is not None and parent_area.polygon is not None else None,
-                        })
+                        step.update(
+                            {
+                                "query": str(non_polygon_query.query),
+                                "parent_polygon_query": (
+                                    parent_area.polygon.json
+                                    if parent_area is not None
+                                    and parent_area.polygon is not None
+                                    else None
+                                ),
+                            }
+                        )
                     steps.append(step)
 
                     if area is None:
@@ -1800,19 +1830,27 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             logger.debug(
                                 f"[{random_id}] Could not find area for {searchable_name}."
                             )
-                            logger.debug(f"[{random_id}] Polygon used to filter candidates:", parent_area.gss, parent_area.polygon.centroid)
+                            logger.debug(
+                                f"[{random_id}] Polygon used to filter candidates:",
+                                parent_area.gss,
+                                parent_area.polygon.centroid,
+                            )
                             async for candidate in non_polygon_query:
-                                logger.debug(f"[{random_id}] Candidates considered:", candidate.gss, candidate.polygon.centroid)
-                            logger.debug(f"Candidate query", str(non_polygon_query.query))
+                                logger.debug(
+                                    f"[{random_id}] Candidates considered:",
+                                    candidate.gss,
+                                    candidate.polygon.centroid,
+                                )
+                            logger.debug(
+                                "Candidate query", str(non_polygon_query.query)
+                            )
                         break
                     else:
                         geocoding_data["area_fields"] = geocoding_data.get(
                             "area_fields", {}
                         )
                         geocoding_data["area_fields"][area.area_type.code] = area.gss
-                        update_data["geocode_data"].update({
-                            "data": geocoding_data
-                        })
+                        update_data["geocode_data"].update({"data": geocoding_data})
                 if area is not None:
                     sample_point = area.polygon.centroid
 
@@ -1822,25 +1860,61 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             "postcodesIOFromPoint"
                         ].load(sample_point)
                     except Exception as e:
-                        logger.error(f"Failed to get postcode data for {sample_point}: {e}")
+                        logger.error(
+                            f"Failed to get postcode data for {sample_point}: {e}"
+                        )
                         postcode_data = None
 
-                    steps.append({ "task": "postcode_from_area_coordinates", "service": Geocoder.POSTCODES_IO.value, "result": "failed" if postcode_data is None else "success" })
+                    steps.append(
+                        {
+                            "task": "postcode_from_area_coordinates",
+                            "service": Geocoder.POSTCODES_IO.value,
+                            "result": "failed" if postcode_data is None else "success",
+                        }
+                    )
 
                     # Try a few other backup strategies (example postcode, another geocoder)
                     # to get postcodes.io data
                     if postcode_data is None:
                         postcode = await get_example_postcode_from_area_gss(area.gss)
-                        steps.append({ "task": "postcode_from_area", "service": Geocoder.FINDTHATPOSTCODE.value, "result": "failed" if postcode is None else "success" })
+                        steps.append(
+                            {
+                                "task": "postcode_from_area",
+                                "service": Geocoder.FINDTHATPOSTCODE.value,
+                                "result": "failed" if postcode is None else "success",
+                            }
+                        )
                         if postcode is not None:
                             postcode_data = await loaders["postcodesIO"].load(postcode)
-                            steps.append({ "task": "data_from_postcode", "service": Geocoder.POSTCODES_IO.value, "result": "failed" if postcode_data is None else "success" })
+                            steps.append(
+                                {
+                                    "task": "data_from_postcode",
+                                    "service": Geocoder.POSTCODES_IO.value,
+                                    "result": (
+                                        "failed" if postcode_data is None else "success"
+                                    ),
+                                }
+                            )
                     if postcode_data is None:
                         postcode = await get_postcode_from_coords_ftp(sample_point)
-                        steps.append({ "task": "postcode_from_area_coordinates", "service": Geocoder.FINDTHATPOSTCODE.value, "result": "failed" if postcode is None else "success" })
+                        steps.append(
+                            {
+                                "task": "postcode_from_area_coordinates",
+                                "service": Geocoder.FINDTHATPOSTCODE.value,
+                                "result": "failed" if postcode is None else "success",
+                            }
+                        )
                         if postcode is not None:
                             postcode_data = await loaders["postcodesIO"].load(postcode)
-                            steps.append({ "task": "data_from_postcode", "service": Geocoder.POSTCODES_IO.value, "result": "failed" if postcode_data is None else "success" })
+                            steps.append(
+                                {
+                                    "task": "data_from_postcode",
+                                    "service": Geocoder.POSTCODES_IO.value,
+                                    "result": (
+                                        "failed" if postcode_data is None else "success"
+                                    ),
+                                }
+                            )
 
                     update_data["postcode_data"] = postcode_data
                 else:
@@ -1848,9 +1922,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     update_data["postcode_data"] = None
 
                 # Update the geocode data regardless, for debugging purposes
-                update_data["geocode_data"].update({
-                    "steps": steps
-                })
+                update_data["geocode_data"].update({"steps": steps})
 
                 args = dict(
                     data_type=data_type,

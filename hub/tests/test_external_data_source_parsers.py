@@ -1,13 +1,13 @@
-from datetime import datetime, timezone
 import json
+import subprocess
+from datetime import datetime, timezone
 
 from django.test import TestCase
+
 from asgiref.sync import async_to_sync
-from hub.models import LocalJSONSource, Area
+
+from hub.models import Area, LocalJSONSource
 from hub.validation import validate_and_format_phone_number
-from benedict import benedict
-from unittest import skip
-import subprocess
 
 
 class TestDateFieldParer(TestCase):
@@ -102,7 +102,6 @@ class TestPhoneFieldParser(TestCase):
         self.assertEqual(result, "+14155552671")
 
 
-# @skip(reason="Requires areas to be loaded in the database")
 class TestMultiLevelGeocoding(TestCase):
     fixture = [
         # Name matching; cases that historically didn't work
@@ -158,7 +157,7 @@ class TestMultiLevelGeocoding(TestCase):
             "id": "6",
             "council": "Gwynedd",
             "ward": "Brithdir and Llanfachreth, Ganllwyd, Llanelltyd",
-            "expected_area_type_code": "WD23", # TODO: actually it's a UTE, which 
+            "expected_area_type_code": "WD23",  # TODO: actually it's a UTE, which
             "expected_area_gss": "W05001514",
         },
         # Isle of Anglesey		Canolbarth Mon
@@ -167,7 +166,7 @@ class TestMultiLevelGeocoding(TestCase):
             "id": "7",
             "council": "Isle of Anglesey",
             "ward": "Canolbarth Mon",
-            "expected_area_type_code": "WD23", # TODO: actually a UTE
+            "expected_area_type_code": "WD23",  # TODO: actually a UTE
             "expected_area_gss": "W05001496",
         },
         # Denbighshire		Rhyl T┼À Newydd
@@ -177,7 +176,7 @@ class TestMultiLevelGeocoding(TestCase):
             "id": "8",
             "council": "Denbighshire",
             "ward": "Rhyl T┼À Newydd",
-            "expected_area_type_code": "WD23", # TODO: actually a UTE
+            "expected_area_type_code": "WD23",  # TODO: actually a UTE
             "expected_area_gss": "W05001354",
         },
         # Swansea		B├┤n-y-maen
@@ -188,7 +187,7 @@ class TestMultiLevelGeocoding(TestCase):
             "id": "9",
             "council": "Swansea",
             "ward": "B├┤n-y-maen",
-            "expected_area_type_code": "WD23", # TODO: actually a UTE
+            "expected_area_type_code": "WD23",  # TODO: actually a UTE
             "expected_area_gss": "W05001040",
         },
         # Gwynedd		Pendraw'r Llan
@@ -198,7 +197,7 @@ class TestMultiLevelGeocoding(TestCase):
             "id": "10",
             "council": "Gwynedd",
             "ward": "Pendraw'r Llan",
-            "expected_area_type_code": "WD23", # TODO: actually a UTE
+            "expected_area_type_code": "WD23",  # TODO: actually a UTE
             "expected_area_gss": "W05001556",
         },
         # Gwynedd		Tre-garth a Mynydd Llandyg├íi
@@ -208,7 +207,7 @@ class TestMultiLevelGeocoding(TestCase):
             "id": "542",
             "council": "Gwynedd",
             "ward": "Tre-garth a Mynydd Llandyg├íi",
-            "expected_area_type_code": "WD23", # TODO: actually a UTE
+            "expected_area_type_code": "WD23",  # TODO: actually a UTE
             "expected_area_gss": "W05001563",
         },
         # A bunch of wards with the same name, should all point to different things
@@ -221,17 +220,17 @@ class TestMultiLevelGeocoding(TestCase):
         },
         {
             "id": "12",
-            "council": "Nuneaton and Bedworth", #E07000219
+            "council": "Nuneaton and Bedworth",  # E07000219
             "ward": "Abbey",
             "expected_area_type_code": "WD23",
-            "expected_area_gss": None # "E05007474", # Another one not in MapIt!
+            "expected_area_gss": None,  # "E05007474", # Another one not in MapIt!
         },
         {
             "id": "13",
             "council": "Redditch",
             "ward": "Abbey",
             "expected_area_type_code": "WD23",
-            "expected_area_gss": None # "E05007868",
+            "expected_area_gss": None,  # "E05007868",
             # TODO: this one is not findable in MapIt! https://findthatpostcode.uk/areas/E05007868.html
             # Sometimes they really just don't exist... https://mapit.mysociety.org/area/E05007868.html
         },
@@ -241,7 +240,7 @@ class TestMultiLevelGeocoding(TestCase):
             "ward": "Abbey",
             "expected_area_type_code": "WD23",
             "expected_area_gss": "E05008136",
-            # TODO: https://findthatpostcode.uk/areas/E05008136.html 
+            # TODO: https://findthatpostcode.uk/areas/E05008136.html
         },
         {
             "id": "15",
@@ -283,7 +282,7 @@ class TestMultiLevelGeocoding(TestCase):
             "council": "Buckinghamshire",
             "ward": "Abbey",
             "expected_area_type_code": "WD23",
-            "expected_area_gss": "E05013120", # old "E05002674",
+            "expected_area_gss": "E05013120",  # old "E05002674",
         },
         {
             "id": "21",
@@ -312,7 +311,7 @@ class TestMultiLevelGeocoding(TestCase):
             "council": "Rushcliffe",
             "ward": "Abbey",
             "expected_area_type_code": "WD23",
-            "expected_area_gss": "E05014965", #old"E05009708",
+            "expected_area_gss": "E05014965",  # old"E05009708",
         },
         {
             "id": "25",
@@ -326,7 +325,7 @@ class TestMultiLevelGeocoding(TestCase):
             "council": "Dumfries and Galloway",
             "ward": "Abbey",
             "expected_area_type_code": "WD23",
-            "expected_area_gss": "S13002884", #old:"S13002537",
+            "expected_area_gss": "S13002884",  # old:"S13002537",
         },
         # Nones
         {
@@ -335,7 +334,7 @@ class TestMultiLevelGeocoding(TestCase):
             "ward": None,
             "expected_area_type_code": None,
             "expected_area_gss": None,
-        }
+        },
     ]
 
     @classmethod
@@ -358,8 +357,8 @@ class TestMultiLevelGeocoding(TestCase):
             id_field="id",
             data=cls.fixture.copy(),
             geocoding_config=[
-                {"field": "council", "type": ["STC", "DIS"]},
-                {"field": "ward", "type": "WD23"},
+                {"field": "council", "lih_area_type__code": ["STC", "DIS"]},
+                {"field": "ward", "lih_area_type__code": "WD23"},
             ],
         )
 
@@ -396,7 +395,9 @@ class TestMultiLevelGeocoding(TestCase):
                         self.assertIsNone(d.postcode_data, "None shouldn't geocode.")
                         continue
                     elif d.json["expected_area_gss"] is None:
-                        self.assertIsNone(d.postcode_data, "Expect MapIt to have failed.")
+                        self.assertIsNone(
+                            d.postcode_data, "Expect MapIt to have failed."
+                        )
                         continue
                     elif d.json["expected_area_gss"] is not None:
                         self.assertEqual(
@@ -412,7 +413,7 @@ class TestMultiLevelGeocoding(TestCase):
                 print("Geocoding success rate:", success_count / len(self.data))
             except AssertionError as e:
                 print(e)
-                print(f"Geocoding failed:", d.id, json.dumps(d.json, indent=4))
-                print(f"--Geocode data:", d.id, json.dumps(d.geocode_data, indent=4))
-                print(f"--Postcode data:", d.id, json.dumps(d.postcode_data, indent=4))
+                print("Geocoding failed:", d.id, json.dumps(d.json, indent=4))
+                print("--Geocode data:", d.id, json.dumps(d.geocode_data, indent=4))
+                print("--Postcode data:", d.id, json.dumps(d.postcode_data, indent=4))
                 raise

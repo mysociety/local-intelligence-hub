@@ -212,4 +212,5 @@ def parse_datetime(value):
 
 def is_test_mode():
     import sys
-    return 'test' in sys.argv
+
+    return "test" in sys.argv

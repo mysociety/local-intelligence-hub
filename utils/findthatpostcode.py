@@ -18,7 +18,7 @@ async def get_postcode_from_coords_ftp(point: Point):
             raise Exception(f"Failed to geocode point, {point.json}.")
         response = response.json()
         return response["data"]["relationships"]["nearest_postcode"]["data"]["id"]
-    except KeyError as e:
+    except KeyError:
         return None
 
 
@@ -34,5 +34,5 @@ async def get_example_postcode_from_area_gss(gss: str):
             raise Exception(f"Failed to geocode area, {gss}.")
         response = response.json()
         return response["data"]["relationships"]["example_postcodes"]["data"][0]["id"]
-    except KeyError as e:
+    except KeyError:
         return None
