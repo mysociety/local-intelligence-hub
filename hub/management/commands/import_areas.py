@@ -8,42 +8,11 @@ from django.core.management.base import BaseCommand
 from tqdm import tqdm
 
 from hub.models import Area, AreaType
-from utils import mapit
+from utils import mapit, mapit_types
 
 
 class Command(BaseCommand):
     help = "Import basic area information from Mapit"
-
-    boundary_types = [
-        {
-            "mapit_type": ["WMC"],
-            "name": "2023 Parliamentary Constituency",
-            "code": "WMC23",
-            "area_type": "Westminster Constituency",
-            "description": "Westminster Parliamentary Constituency boundaries, as created in 2023",
-        },
-        {
-            "mapit_type": ["LBO", "UTA", "COI", "LGD", "CTY", "MTD"],
-            "name": "Single Tier Councils",
-            "code": "STC",
-            "area_type": "Single Tier Council",
-            "description": "Single Tier Council",
-        },
-        {
-            "mapit_type": ["DIS", "NMD"],
-            "name": "District Councils",
-            "code": "DIS",
-            "area_type": "District Council",
-            "description": "District Council",
-        },
-        {
-            "mapit_type": ["COI", "CPW", "DIW", "LBW", "LGW", "MTW", "UTE", "UTW"],
-            "name": "Wards",
-            "code": "WD23",
-            "area_type": "Electoral Ward",
-            "description": "Electoral wards",
-        },
-    ]
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -58,7 +27,7 @@ class Command(BaseCommand):
 
     def handle(self, quiet: bool = False, all_names: bool = False, *args, **options):
         self.mapit_client = mapit.MapIt()
-        for b_type in self.boundary_types:
+        for b_type in mapit_types.boundary_types:
             areas = self.mapit_client.areas_of_type(b_type["mapit_type"])
             area_type, created = AreaType.objects.get_or_create(
                 name=b_type["name"],

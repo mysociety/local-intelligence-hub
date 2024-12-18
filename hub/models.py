@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import List, Optional, Self, Type, TypedDict, Union
 from urllib.parse import urlencode, urljoin
+from utils import mapit_types
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -1681,14 +1682,16 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
                 for item in self.geocoding_config:
                     parent_area = area
-                    literal_area_type = item.get("type", None)
+                    literal_lih_area_type__code = item.get("lih_area_type__code", None)
+                    literal_mapit_type = item.get("mapit_type", None)
+                    area_types = literal_lih_area_type__code or literal_mapit_type
                     literal_area_field = item.get("field", None)
                     raw_area_value = str(
                         self.get_record_field(record, literal_area_field)
                     )
 
                     if (
-                        literal_area_type is None
+                        area_types is None
                         or literal_area_field is None
                         or raw_area_value is None
                     ):
@@ -1712,18 +1715,39 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         or lower_name
                     )
 
-                    parsed_area_types = ensure_list(literal_area_type)
-                    is_local_authority = (
-                        "STC" in parsed_area_types or "DIS" in parsed_area_types
+                    parsed_area_types = [
+                        str(s).upper()
+                        for s in ensure_list(area_types)
+                    ]
+
+                    maybe_council = (
+                        # Check if using LIH area types
+                        literal_lih_area_type__code is not None
+                        and any(
+                            [
+                                t
+                                in mapit_types.LIH_COUNCIL_TYPES
+                                for t in parsed_area_types
+                            ]
+                        )
+                    ) or (
+                        # Check if using MapIt types
+                        literal_mapit_type is not None
+                        and any(
+                            [
+                                t
+                                in mapit_types.MAPIT_COUNCIL_TYPES
+                                for t in parsed_area_types
+                            ]
+                        )
                     )
 
-                    # logger.debug(
-                    #     f"Searching for {searchable_name} via {literal_area_field} of type {literal_area_type}. is_local_authority? {is_local_authority}"
-                    # )
+                    qs = Area.objects.select_related("area_type")
 
-                    qs = Area.objects.select_related("area_type").filter(
-                        area_type__code__in=parsed_area_types
-                    )
+                    if literal_lih_area_type__code is not None:
+                        qs = qs.filter(area_type__code__in=parsed_area_types)
+                    elif literal_mapit_type is not None:
+                        qs = qs.filter(mapit_type__in=parsed_area_types)
 
                     search_values = [
                         raw_area_value,
@@ -1737,7 +1761,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         ""
                     ]
 
-                    if is_local_authority:
+                    if maybe_council:
                         # Mapit stores councils with their type in the name
                         # e.g. https://mapit.mysociety.org/area/2641.html
                         suffixes += [

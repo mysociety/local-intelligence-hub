@@ -8,6 +8,7 @@ from asgiref.sync import async_to_sync
 
 from hub.models import Area, LocalJSONSource
 from hub.validation import validate_and_format_phone_number
+from utils import mapit_types
 
 
 class TestDateFieldParer(TestCase):
@@ -387,6 +388,57 @@ class TestMultiLevelGeocoding(TestCase):
                 pass
 
     def test_geocoding_matches(self):
+        success_count = 0
+        for d in self.data:
+            try:
+                try:
+                    if d.json["ward"] is None:
+                        self.assertIsNone(d.postcode_data, "None shouldn't geocode.")
+                        continue
+                    elif d.json["expected_area_gss"] is None:
+                        self.assertIsNone(
+                            d.postcode_data, "Expect MapIt to have failed."
+                        )
+                        continue
+                    elif d.json["expected_area_gss"] is not None:
+                        self.assertEqual(
+                            d.geocode_data["data"]["area_fields"][
+                                d.json["expected_area_type_code"]
+                            ],
+                            d.json["expected_area_gss"],
+                        )
+                except KeyError:
+                    raise AssertionError("Expected geocoding data was missing.")
+                self.assertIsNotNone(d.postcode_data)
+                success_count += 1
+                print("Geocoding success rate:", success_count / len(self.data))
+            except AssertionError as e:
+                print(e)
+                print("Geocoding failed:", d.id, json.dumps(d.json, indent=4))
+                print("--Geocode data:", d.id, json.dumps(d.geocode_data, indent=4))
+                print("--Postcode data:", d.id, json.dumps(d.postcode_data, indent=4))
+                raise
+
+    def test_by_mapit_types(self):
+        """
+        Geocoding should work identically on more granular mapit_types
+        """
+
+        self.source.geocoding_config = [
+            {
+                "field": "council",
+                "mapit_type": mapit_types.MAPIT_COUNCIL_TYPES,
+            },
+            {"field": "ward", "mapit_type": mapit_types.MAPIT_WARD_TYPES},
+        ]
+        self.source.save()
+
+        # re-generate GenericData records
+        async_to_sync(self.source.import_many)(self.source.data)
+
+        # test that the GenericData records have valid, formatted phone field
+        self.data = self.source.get_import_data()
+
         success_count = 0
         for d in self.data:
             try:
