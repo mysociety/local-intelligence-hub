@@ -33,7 +33,7 @@ export interface ReportConfig {
     showLastElectionData?: boolean
     showPostcodeLabels?: boolean
     boundaryOutlines?: AnalyticalAreaType[]
-    showBoundaryNames?: boolean
+    showBoundaryNames?: false
   }
 }
 
