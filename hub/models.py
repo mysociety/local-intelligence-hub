@@ -1678,7 +1678,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     literal_area_type = item.get("type", None)
                     literal_area_field = item.get("field", None)
                     raw_area_value = str(self.get_record_field(record, literal_area_field))
-                    if literal_area_type is None or literal_area_field is None:
+
+                    if literal_area_type is None or literal_area_field is None or raw_area_value is None:
                         continue
 
                     # make searchable for the MapIt database

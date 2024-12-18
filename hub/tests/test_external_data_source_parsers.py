@@ -219,22 +219,22 @@ class TestMultiLevelGeocoding(TestCase):
             "expected_area_type_code": "WD23",
             "expected_area_gss": "E05001260",
         },
-        # {
-        #     "id": "12",
-        #     "council": "Nuneaton and Bedworth", #E07000219
-        #     "ward": "Abbey",
-        #     "expected_area_type_code": "WD23",
-        #     "expected_area_gss": "E05007474", # Another one not in MapIt!
-        # },
-        # {
-        #     "id": "13",
-        #     "council": "Redditch",
-        #     "ward": "Abbey",
-        #     "expected_area_type_code": "WD23",
-        #     "expected_area_gss": "E05007868",
-        #     # TODO: this one is not findable in MapIt! https://findthatpostcode.uk/areas/E05007868.html
-        #     # Sometimes they really just don't exist... https://mapit.mysociety.org/area/E05007868.html
-        # },
+        {
+            "id": "12",
+            "council": "Nuneaton and Bedworth", #E07000219
+            "ward": "Abbey",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": None # "E05007474", # Another one not in MapIt!
+        },
+        {
+            "id": "13",
+            "council": "Redditch",
+            "ward": "Abbey",
+            "expected_area_type_code": "WD23",
+            "expected_area_gss": None # "E05007868",
+            # TODO: this one is not findable in MapIt! https://findthatpostcode.uk/areas/E05007868.html
+            # Sometimes they really just don't exist... https://mapit.mysociety.org/area/E05007868.html
+        },
         {
             "id": "14",
             "council": "Shropshire",
@@ -298,7 +298,6 @@ class TestMultiLevelGeocoding(TestCase):
             "ward": "Abbey",
             "expected_area_type_code": "WD23",
             "expected_area_gss": "E05013864",
-            # TODO: Not in current MapIt, appears to be outdated
             # https://findthatpostcode.uk/areas/E05013864.html
         },
         {
@@ -329,6 +328,14 @@ class TestMultiLevelGeocoding(TestCase):
             "expected_area_type_code": "WD23",
             "expected_area_gss": "S13002884", #old:"S13002537",
         },
+        # Nones
+        {
+            "id": "27",
+            "council": None,
+            "ward": None,
+            "expected_area_type_code": None,
+            "expected_area_gss": None,
+        }
     ]
 
     @classmethod
@@ -336,14 +343,15 @@ class TestMultiLevelGeocoding(TestCase):
         subprocess.call("bin/import_areas_seed.sh")
 
         for d in cls.fixture:
-            area = Area.objects.filter(gss=d["expected_area_gss"]).first()
-            if area is None:
-                print(f"Area not found, skipping: {d['expected_area_gss']}")
-                # remove the area from the test data so tests can run
-                index_of_data = next(
-                    i for i, item in enumerate(cls.fixture) if item["id"] == d["id"]
-                )
-                cls.fixture.pop(index_of_data)
+            if d["expected_area_gss"] is not None:
+                area = Area.objects.filter(gss=d["expected_area_gss"]).first()
+                if area is None:
+                    print(f"Area not found, skipping: {d['expected_area_gss']}")
+                    # remove the area from the test data so tests can run
+                    index_of_data = next(
+                        i for i, item in enumerate(cls.fixture) if item["id"] == d["id"]
+                    )
+                    cls.fixture.pop(index_of_data)
 
         cls.source = LocalJSONSource.objects.create(
             name="geo_test",
@@ -373,8 +381,9 @@ class TestMultiLevelGeocoding(TestCase):
         )
         for d in self.data:
             try:
-                area = Area.objects.get(gss=d.json["expected_area_gss"])
-                self.assertIsNotNone(area)
+                if d.json["expected_area_gss"] is not None:
+                    area = Area.objects.get(gss=d.json["expected_area_gss"])
+                    self.assertIsNotNone(area)
             except Area.DoesNotExist:
                 pass
 
@@ -383,12 +392,19 @@ class TestMultiLevelGeocoding(TestCase):
         for d in self.data:
             try:
                 try:
-                    self.assertEqual(
-                        d.geocode_data["data"]["area_fields"][
-                            d.json["expected_area_type_code"]
-                        ],
-                        d.json["expected_area_gss"],
-                    )
+                    if d.json["ward"] is None:
+                        self.assertIsNone(d.postcode_data, "None shouldn't geocode.")
+                        continue
+                    elif d.json["expected_area_gss"] is None:
+                        self.assertIsNone(d.postcode_data, "Expect MapIt to have failed.")
+                        continue
+                    elif d.json["expected_area_gss"] is not None:
+                        self.assertEqual(
+                            d.geocode_data["data"]["area_fields"][
+                                d.json["expected_area_type_code"]
+                            ],
+                            d.json["expected_area_gss"],
+                        )
                 except KeyError:
                     raise AssertionError("Expected geocoding data was missing.")
                 self.assertIsNotNone(d.postcode_data)
