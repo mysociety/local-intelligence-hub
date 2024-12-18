@@ -49,7 +49,7 @@ export const defaultReportConfig: ReportConfig = {
     showMPs: false,
     showLastElectionData: false,
     boundaryOutlines: [AnalyticalAreaType.ParliamentaryConstituency_2024],
-    showBoundaryNames: false,
+    showBoundaryNames: true,
   },
 }
 
