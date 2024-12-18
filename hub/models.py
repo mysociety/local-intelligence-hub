@@ -89,11 +89,11 @@ from utils.postcodesIO import (
     get_bulk_postcode_geo_from_coords,
 )
 from utils.py import (
+    are_dicts_equal,
     batched,
     ensure_list,
     get,
     is_maybe_id,
-    is_test_mode,
     parse_datetime,
 )
 
@@ -1667,11 +1667,66 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
             async def create_import_record(record):
                 update_data = get_update_data(record)
+                id = self.get_record_id(record)
+
+                # check if geocoding_config and dependent fields are the same; if so, skip geocoding
+                try:
+                    generic_data = await GenericData.objects.aget(
+                        data_type=data_type, data=id
+                    )
+
+                    if (
+                        generic_data is not None
+                        and
+                        # Already is geocoded
+                        generic_data.postcode_data is not None
+                        and
+                        # Has all the required geocoding metadata for us to check for deduplication
+                        generic_data.geocode_data is not None
+                        and generic_data.geocode_data.get("config", None) is not None
+                        and are_dicts_equal(
+                            generic_data.geocode_data["config"], self.geocoding_config
+                        )
+                        and generic_data.geocode_data.get("steps", None) is not None
+                    ):
+                        # if the geocoding config is the same,
+                        # then all we have to do is check if the
+                        # old data and the new data are also the same
+                        geocoding_field_values = set()
+                        search_terms_from_last_time = set()
+                        for item in self.geocoding_config:
+                            field = item.get("field")
+                            if field:
+                                # new data
+                                geocoding_field_values.add(
+                                    self.get_record_field(record, field)
+                                )
+                                # old data
+                                search_terms_from_last_time.add(
+                                    self.get_record_field(generic_data.json, field)
+                                )
+                        is_equal = geocoding_field_values == search_terms_from_last_time
+
+                        if is_equal:
+                            # Don't bother with geocoding again.
+                            # Mark this as such
+                            # And simply update the other data.
+                            update_data["geocode_data"] = (
+                                generic_data.geocode_data or {}
+                            )
+                            update_data["geocode_data"]["skipped"] = True
+                            await GenericData.objects.aupdate_or_create(
+                                data_type=data_type, data=id, defaults=update_data
+                            )
+                            # Cool, don't need to geocode!
+                            return
+                except GenericData.DoesNotExist:
+                    pass
+
                 update_data["geocoder"] = Geocoder.GEOCODING_CONFIG.value
                 update_data["geocode_data"] = {
                     "config": self.geocoding_config,
                 }
-                id = self.get_record_id(record)
 
                 # Filter down geographies by the config
                 parent_area = None
@@ -1844,26 +1899,26 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     steps.append(step)
 
                     if area is None:
-                        if is_test_mode():
-                            random_id = uuid.uuid4()
-                            logger.debug(f"--- [{random_id}]: {searchable_name}")
-                            logger.debug(
-                                f"[{random_id}] Could not find area for {searchable_name}."
-                            )
-                            logger.debug(
-                                f"[{random_id}] Polygon used to filter candidates:",
-                                parent_area.gss,
-                                parent_area.polygon.centroid,
-                            )
-                            async for candidate in non_polygon_query:
-                                logger.debug(
-                                    f"[{random_id}] Candidates considered:",
-                                    candidate.gss,
-                                    candidate.polygon.centroid,
-                                )
-                            logger.debug(
-                                "Candidate query", str(non_polygon_query.query)
-                            )
+                        # if is_test_mode():
+                        #     random_id = uuid.uuid4()
+                        #     logger.debug(f"--- [{random_id}]: {searchable_name}")
+                        #     logger.debug(
+                        #         f"[{random_id}] Could not find area for {searchable_name}."
+                        #     )
+                        #     logger.debug(
+                        #         f"[{random_id}] Polygon used to filter candidates:",
+                        #         parent_area.gss,
+                        #         parent_area.polygon.centroid,
+                        #     )
+                        #     async for candidate in non_polygon_query:
+                        #         logger.debug(
+                        #             f"[{random_id}] Candidates considered:",
+                        #             candidate.gss,
+                        #             candidate.polygon.centroid,
+                        #         )
+                        #     logger.debug(
+                        #         "Candidate query", str(non_polygon_query.query)
+                        #     )
                         break
                     else:
                         geocoding_data["area_fields"] = geocoding_data.get(
@@ -1943,14 +1998,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
                 # Update the geocode data regardless, for debugging purposes
                 update_data["geocode_data"].update({"steps": steps})
+                update_data["geocode_data"]["skipped"] = None
 
-                args = dict(
-                    data_type=data_type,
-                    data=id,
-                    defaults=update_data,
+                await GenericData.objects.aupdate_or_create(
+                    data_type=data_type, data=id, defaults=update_data
                 )
-
-                await GenericData.objects.aupdate_or_create(**args)
 
             await asyncio.gather(*[create_import_record(record) for record in data])
         elif (

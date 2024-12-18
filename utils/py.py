@@ -1,5 +1,6 @@
 import datetime
 import itertools
+import json
 import pprint
 from types import SimpleNamespace
 from uuid import UUID
@@ -214,3 +215,12 @@ def is_test_mode():
     import sys
 
     return "test" in sys.argv
+
+
+def are_dicts_equal(d1, d2):
+    """
+    Compare two dictionaries, ignoring order of keys
+    """
+    D1 = json.dumps(d1, sort_keys=True, indent=2)
+    D2 = json.dumps(d2, sort_keys=True, indent=2)
+    return D1 == D2
