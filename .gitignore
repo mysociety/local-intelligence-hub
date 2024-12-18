@@ -8,7 +8,7 @@ __pycache__
 .media
 data/**/*
 !data/.gitkeep
-!data/preview_env_seed.zip
+!data/areas.psql.zip
 .next
 
 conf/env

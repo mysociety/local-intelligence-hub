@@ -837,8 +837,10 @@ class GenericData(CommonData):
 
 class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
+    mapit_type = models.CharField(max_length=30, db_index=True, blank=True, null=True)
     gss = models.CharField(max_length=30)
     name = models.CharField(max_length=200)
+    mapit_all_names = models.JSONField(blank=True, null=True)
     area_type = models.ForeignKey(
         AreaType, on_delete=models.CASCADE, related_name="areas"
     )
