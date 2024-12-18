@@ -271,4 +271,12 @@ geocoding_cases = [
         "expected_area_type_code": "WD23",
         "expected_area_gss": "W05001219",
     },
+    # RyedaleAmotherby & Ampleforth
+    {
+        "id": "33",
+        "council": "Ryedale",
+        "ward": "Amotherby & Ampleforth",
+        "expected_area_type_code": "WD23",
+        "expected_area_gss": "E05014252",
+    },
 ]
