@@ -7,8 +7,11 @@ import { createContext } from 'react'
 import { PoliticalTileset } from './politicalTilesets'
 
 export enum VisualisationType {
-  None = 'none',
   Choropleth = 'choropleth',
+}
+
+export const VisualisationLabels: Record<VisualisationType, string> = {
+  [VisualisationType.Choropleth]: 'Colour shading by category',
 }
 
 export enum Palette {
@@ -27,6 +30,7 @@ export interface ReportConfig {
     palette?: Palette
     dataSource?: MapLayer['id']
     dataSourceField?: string
+    showDataVisualisation?: Record<VisualisationType, boolean>
   }
   display: {
     showStreetDetails?: boolean
@@ -42,6 +46,9 @@ export const defaultReportConfig: ReportConfig = {
     boundaryType: AnalyticalAreaType.ParliamentaryConstituency_2024,
     visualisationType: VisualisationType.Choropleth,
     palette: Palette.Blue,
+    showDataVisualisation: {
+      [VisualisationType.Choropleth]: true, // Default to Choropleth
+    },
   },
   display: {
     showStreetDetails: false,
@@ -51,7 +58,6 @@ export const defaultReportConfig: ReportConfig = {
     boundaryOutlines: [AnalyticalAreaType.ParliamentaryConstituency_2024],
   },
 }
-
 interface ReportContextProps {
   report: MapReportExtended
   deleteReport: () => void
