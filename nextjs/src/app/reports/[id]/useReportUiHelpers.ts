@@ -36,7 +36,8 @@ const useReportUiHelpers = () => {
     // Trigger the user journey helper when the first layer is added
     else if (
       report.layers.length === 1 &&
-      !userJourneyHelpers?.visualiseYourData.triggered
+      !userJourneyHelpers?.visualiseYourData.triggered &&
+      !dataLoading
     ) {
       setTimeout(() => {
         setUserJourneyHelpers({
