@@ -82,10 +82,10 @@ const ReportConfigLegacyControls: React.FC = () => {
         </div>
         <div className="text-labelLg text-meepGray-200 flex items-center gap-2">
           <Switch
-            checked={showBoundaryNames}
-            onCheckedChange={(showBoundaryNames: boolean) => {
+            checked={showBoundaryNames ?? false}
+            onCheckedChange={(checked: boolean) => {
               updateReport({
-                displayOptions: { display: { showBoundaryNames } },
+                displayOptions: { display: { showBoundaryNames: checked } },
               })
             }}
           />
