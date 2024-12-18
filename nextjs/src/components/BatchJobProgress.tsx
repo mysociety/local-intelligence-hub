@@ -83,13 +83,8 @@ export function BatchJobProgressReport({
             </span>
           </div>
         </>
-      ) : (
-        // Progress spinner
-        <div className="flex flex-row gap-2 items-center justify-center">
-          <LoadingIcon size="15" />
-          <div className="text-meepGray-300 text-sm">In progress</div>
-        </div>
-      )}
+      ) : // No progress bar available
+      null}
     </ErrorBoundary>
   )
 }

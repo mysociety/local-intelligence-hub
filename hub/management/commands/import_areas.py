@@ -1,4 +1,5 @@
 import json
+from time import sleep
 
 # from django postgis
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
@@ -36,7 +37,7 @@ class Command(BaseCommand):
             "description": "District Council",
         },
         {
-            "mapit_type": ["COI", "CPW", "DIW", "LBW", "LGW", "MTW", "UTW"],
+            "mapit_type": ["COI", "CPW", "DIW", "LBW", "LGW", "MTW", "UTE", "UTW"],
             "name": "Wards",
             "code": "WD23",
             "area_type": "Electoral Ward",
@@ -48,13 +49,17 @@ class Command(BaseCommand):
         parser.add_argument(
             "-q", "--quiet", action="store_true", help="Silence progress bars."
         )
+        parser.add_argument(
+            "-a",
+            "--all-names",
+            action="store_true",
+            help="Fetch alternative names from MapIt",
+        )
 
-    def handle(self, quiet: bool = False, *args, **options):
-        mapit_client = mapit.MapIt()
+    def handle(self, quiet: bool = False, all_names: bool = False, *args, **options):
+        self.mapit_client = mapit.MapIt()
         for b_type in self.boundary_types:
-            areas = mapit_client.areas_of_type(
-                b_type["mapit_type"], {"min_generation": 10}
-            )
+            areas = self.mapit_client.areas_of_type(b_type["mapit_type"])
             area_type, created = AreaType.objects.get_or_create(
                 name=b_type["name"],
                 code=b_type["code"],
@@ -66,42 +71,49 @@ class Command(BaseCommand):
                 print(f"Importing {b_type['name']} Areas")
             for area in tqdm(areas, disable=quiet):
                 try:
-                    geom = mapit_client.area_geometry(area["id"])
-                    geom = {
-                        "type": "Feature",
-                        "geometry": geom,
-                        "properties": {
-                            "PCON13CD": area["codes"]["gss"],
-                            "name": area["name"],
-                            "type": b_type["code"],
-                            "mapit_type": area["type"],
-                        },
-                    }
-                    geom_str = json.dumps(geom)
-                except mapit.NotFoundException:  # pragma: no cover
-                    print(f"could not find mapit area for {area['name']}")
-                    geom = None
+                    self.import_area(area, area_type, all_names)
+                except mapit.RateLimitException:
+                    print("Rate limited, sleeping for 3 minutes then retrying...")
+                    sleep(180)
+                    self.import_area(area, area_type)
 
-                a, created = Area.objects.update_or_create(
-                    gss=area["codes"]["gss"],
-                    area_type=area_type,
-                    defaults={
-                        "mapit_id": area["id"],
-                        "name": area["name"],
-                        "mapit_type": area["type"],
-                    },
-                )
+    def import_area(self, area, area_type, all_names):
+        area_details = self.mapit_client.area_details(area["id"]) if all_names else {}
+        try:
+            geom = self.mapit_client.area_geometry(area["id"])
+            geom = {
+                "type": "Feature",
+                "geometry": geom,
+                "properties": {
+                    "PCON13CD": area["codes"]["gss"],
+                    "name": area["name"],
+                    "type": area_type.code,
+                    "mapit_type": area["type"],
+                },
+            }
+            geom_str = json.dumps(geom)
+        except mapit.NotFoundException:  # pragma: no cover
+            print(f"could not find mapit area for {area['name']}")
+            geom = None
 
-                    if geom is not None:
-                        geos = json.dumps(geom["geometry"])
-                        geom = GEOSGeometry(geos)
-                        if isinstance(geom, Polygon):
-                            geom = MultiPolygon([geom])
+        a, created = Area.objects.update_or_create(
+            gss=area["codes"]["gss"],
+            area_type=area_type,
+            defaults={
+                "mapit_id": area["id"],
+                "name": area["name"],
+                "mapit_type": area["type"],
+                "mapit_all_names": area_details.get("all_names"),
+            },
+        )
 
-                        a.geometry = geom_str
-                        a.polygon = geom
-                        a.point = a.polygon.centroid
-                        a.save()
-                except KeyError:  # pragma: no cover
-                    # Ignore areas without a GSS code
-                    pass
+        if geom is not None:
+            geos = json.dumps(geom["geometry"])
+            geom = GEOSGeometry(geos)
+            if isinstance(geom, Polygon):
+                geom = MultiPolygon([geom])
+
+            a.geometry = geom_str
+            a.polygon = geom
+            a.point = a.polygon.centroid
+            a.save()

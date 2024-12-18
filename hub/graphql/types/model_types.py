@@ -598,6 +598,7 @@ class GroupedData:
     gss: Optional[str]
     area_data: Optional[strawberry.Private[Area]] = None
     imported_data: Optional[JSON] = None
+    area_type_filter: Optional["AreaTypeFilter"] = None
 
     @strawberry_django.field
     async def gss_area(self, info: Info) -> Optional[Area]:

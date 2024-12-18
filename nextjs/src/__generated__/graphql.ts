@@ -436,7 +436,7 @@ export type AnalyticsImportedDataCountForConstituency2024Args = {
   gss: Scalars['String']['input'];
 };
 
-/** Area(id, mapit_id, gss, name, area_type, geometry, polygon, point) */
+/** Area(id, mapit_id, mapit_type, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
 export type Area = {
   __typename?: 'Area';
   areaType: AreaType;
@@ -459,43 +459,43 @@ export type Area = {
 };
 
 
-/** Area(id, mapit_id, gss, name, area_type, geometry, polygon, point) */
+/** Area(id, mapit_id, mapit_type, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
 export type AreaDataArgs = {
   filters?: InputMaybe<CommonDataLoaderFilter>;
 };
 
 
-/** Area(id, mapit_id, gss, name, area_type, geometry, polygon, point) */
+/** Area(id, mapit_id, mapit_type, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
 export type AreaDatumArgs = {
   filters?: InputMaybe<CommonDataLoaderFilter>;
 };
 
 
-/** Area(id, mapit_id, gss, name, area_type, geometry, polygon, point) */
+/** Area(id, mapit_id, mapit_type, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
 export type AreaGenericDataForHubArgs = {
   hostname: Scalars['String']['input'];
 };
 
 
-/** Area(id, mapit_id, gss, name, area_type, geometry, polygon, point) */
+/** Area(id, mapit_id, mapit_type, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
 export type AreaPeopleArgs = {
   filters?: InputMaybe<PersonFilter>;
 };
 
 
-/** Area(id, mapit_id, gss, name, area_type, geometry, polygon, point) */
+/** Area(id, mapit_id, mapit_type, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
 export type AreaPersonArgs = {
   filters?: InputMaybe<PersonFilter>;
 };
 
 
-/** Area(id, mapit_id, gss, name, area_type, geometry, polygon, point) */
+/** Area(id, mapit_id, mapit_type, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
 export type AreaPointArgs = {
   withParentData?: Scalars['Boolean']['input'];
 };
 
 
-/** Area(id, mapit_id, gss, name, area_type, geometry, polygon, point) */
+/** Area(id, mapit_id, mapit_type, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
 export type AreaPolygonArgs = {
   withParentData?: Scalars['Boolean']['input'];
 };
@@ -522,6 +522,12 @@ export type AreaType = {
   dataTypes: Array<DataType>;
   description: Scalars['String']['output'];
   name: Scalars['String']['output'];
+};
+
+export type AreaTypeFilter = {
+  __typename?: 'AreaTypeFilter';
+  lihAreaType?: Maybe<Scalars['String']['output']>;
+  mapitAreaTypes?: Maybe<Array<Scalars['String']['output']>>;
 };
 
 export type AuthenticatedPostcodeQueryResponse = {
@@ -1294,6 +1300,7 @@ export type GroupedData = {
   __typename?: 'GroupedData';
   areaData?: Maybe<Area>;
   areaType?: Maybe<Scalars['String']['output']>;
+  areaTypeFilter?: Maybe<AreaTypeFilter>;
   gss?: Maybe<Scalars['String']['output']>;
   gssArea?: Maybe<Area>;
   importedData?: Maybe<Scalars['JSON']['output']>;
@@ -1303,7 +1310,7 @@ export type GroupedData = {
 export type GroupedDataCount = {
   __typename?: 'GroupedDataCount';
   areaData?: Maybe<Area>;
-  areaType?: Maybe<Scalars['String']['output']>;
+  areaTypeFilter?: Maybe<AreaTypeFilter>;
   count: Scalars['Int']['output'];
   gss?: Maybe<Scalars['String']['output']>;
   gssArea?: Maybe<Area>;
@@ -1313,7 +1320,7 @@ export type GroupedDataCount = {
 export type GroupedDataCountWithBreakdown = {
   __typename?: 'GroupedDataCountWithBreakdown';
   areaData?: Maybe<Area>;
-  areaType?: Maybe<Scalars['String']['output']>;
+  areaTypeFilter?: Maybe<AreaTypeFilter>;
   count: Scalars['Int']['output'];
   gss?: Maybe<Scalars['String']['output']>;
   gssArea?: Maybe<Area>;
@@ -1811,15 +1818,25 @@ export type Mutation = {
   enableWebhook: ExternalDataSource;
   importAll: ExternalDataSourceAction;
   /**
+   * Change user password without old password.
    *
-   *     Override library mutation to add copious logging.
+   *     Receive the token that was sent by email.
+   *
+   *     If token and new passwords are valid, update user password and in
+   *     case of using refresh tokens, revoke all of them.
+   *
+   *     Also, if user has not been verified yet, verify it.
    *
    */
   performPasswordReset: MutationNormalOutput;
   refreshWebhooks: ExternalDataSource;
   /**
+   * Send password reset email.
    *
-   *     Override library mutation to add copious logging.
+   *     For non verified users, send an activation email instead.
+   *
+   *     If there is no user with the requested email, a successful response
+   *     is returned.
    *
    */
   requestPasswordReset: MutationNormalOutput;

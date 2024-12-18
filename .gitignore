@@ -9,7 +9,7 @@ __pycache__
 data/**/*
 !data/areas.psql.zip
 !data/.gitkeep
-!data/preview_env_seed.zip
+!data/areas.psql.zip
 .next
 
 conf/env

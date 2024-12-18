@@ -83,7 +83,7 @@ export function CreateReportCard() {
   }
 }
 
-const CREATE_MAP_REPORT = gql`
+export const CREATE_MAP_REPORT = gql`
   mutation CreateMapReport($data: MapReportInput!) {
     createMapReport(data: $data) {
       ... on MapReport {
