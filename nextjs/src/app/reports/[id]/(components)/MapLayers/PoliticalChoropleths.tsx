@@ -32,15 +32,12 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   boundaryType,
   tileset,
 }) => {
-  // Show the layer only if the report is set to show the boundary type
+  // Show the layer only if the report is set to show the boundary type and the VisualisationType is choropleth
   const visibility =
-    report.displayOptions?.dataVisualisation?.boundaryType === boundaryType
+    report.displayOptions?.dataVisualisation?.boundaryType === boundaryType &&
+    report.displayOptions?.dataVisualisation?.showDataVisualisation?.choropleth
       ? 'visible'
       : 'none'
-
-  const showChoropleth =
-    report.displayOptions?.dataVisualisation?.showDataVisualisation
-      ?.choropleth ?? false
 
   const { data: dataByBoundary } = useDataByBoundary({ report, boundaryType })
   const map = useLoadedMap()
@@ -77,22 +74,19 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
         promoteId={tileset.promoteId}
       >
         {/* Fill of the boundary */}
-        {showChoropleth && (
-          <>
-            <Layer
-              beforeId="road-simple"
-              id={`${tileset.mapboxSourceId}-fill`}
-              source={tileset.mapboxSourceId}
-              source-layer={tileset.sourceLayerId}
-              type="fill"
-              filter={getChoroplethFillFilter(dataByBoundary, tileset)}
-              paint={getChoroplethFill(
-                dataByBoundary,
-                visibility === 'visible'
-              )}
-            />
-          </>
-        )}
+
+        <>
+          <Layer
+            beforeId="road-simple"
+            id={`${tileset.mapboxSourceId}-fill`}
+            source={tileset.mapboxSourceId}
+            source-layer={tileset.sourceLayerId}
+            type="fill"
+            filter={getChoroplethFillFilter(dataByBoundary, tileset)}
+            paint={getChoroplethFill(dataByBoundary, visibility === 'visible')}
+          />
+        </>
+
         {/* Border of the boundary */}
         <Layer
           beforeId={PLACEHOLDER_LAYER_ID_CHOROPLETH}
