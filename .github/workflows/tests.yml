@@ -87,7 +87,9 @@ jobs:
       - name: Run django tests
         run: cat .env && coverage run --source=. --branch manage.py test || (cat server.log && exit 1)
       - name: Run geocoding tests in isolation
-        run: RUN_GEOCODING_TESTS=1 cat .env && python manage.py test hub.tests.test_external_data_source_parsers || (cat server.log && exit 1)
+        run: |
+          echo "RUN_GEOCODING_TESTS=1" >> .env
+          cat .env && python manage.py test hub.tests.test_external_data_source_parsers || (cat server.log && exit 1)
       - name: Generate coverage xml
         run: coverage xml
       - name: Upload coverage.xml
