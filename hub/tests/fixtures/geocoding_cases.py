@@ -115,27 +115,24 @@ geocoding_cases = [
     },
     {
         "id": "12",
-        "council": "Nuneaton and Bedworth",  # E07000219
+        "council": "Nuneaton and Bedworth",
         "ward": "Abbey",
         "expected_area_type_code": "WD23",
-        "expected_area_gss": None,  # "E05007474", # Another one not in MapIt!
+        "expected_area_gss": "E05007474",
     },
     {
         "id": "13",
         "council": "Redditch",
         "ward": "Abbey",
         "expected_area_type_code": "WD23",
-        "expected_area_gss": None,  # "E05007868",
-        # TODO: this one is not findable in MapIt! https://findthatpostcode.uk/areas/E05007868.html
-        # Sometimes they really just don't exist... https://mapit.mysociety.org/area/E05007868.html
+        "expected_area_gss": "E05007868"
     },
     {
         "id": "14",
         "council": "Shropshire",
         "ward": "Abbey",
         "expected_area_type_code": "WD23",
-        "expected_area_gss": "E05008136",
-        # TODO: https://findthatpostcode.uk/areas/E05008136.html
+        "expected_area_gss": "E05008136"
     },
     {
         "id": "15",
@@ -271,6 +268,9 @@ geocoding_cases = [
         "expected_area_type_code": "WD23",
         "expected_area_gss": "W05001219",
     },
+    # Geocoding based on historical parent areas
+    # that nonetheless point to live child areas
+    #
     # RyedaleAmotherby & Ampleforth:
     # This is a case where Ryedale is a now-defunct council
     # but Amotherby & Ampleforth is still a live ward, under a new council.
