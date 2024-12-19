@@ -1854,7 +1854,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             # We round the similarity score to 1dp so that
                             # two areas with score 0.8 can be distinguished by which has a larger mapit_generation_high
                             # which wouldn't be possible if the invalid one had 0.82 and the valid one had 0.80 (because it was renamed "&" to "and")
-                            select={"name_distance": "round(similarity(hub_area.name, %s)::numeric, 1)"},
+                            select={
+                                "name_distance": "round(similarity(hub_area.name, %s)::numeric, 1)"
+                            },
                             select_params=[searchable_name_sans_title],
                         )
                         .order_by(
@@ -1906,26 +1908,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     steps.append(step)
 
                     if area is None:
-                        # if is_test_mode():
-                        #     random_id = uuid.uuid4()
-                        #     logger.debug(f"--- [{random_id}]: {searchable_name}")
-                        #     logger.debug(
-                        #         f"[{random_id}] Could not find area for {searchable_name}."
-                        #     )
-                        #     logger.debug(
-                        #         f"[{random_id}] Polygon used to filter candidates:",
-                        #         parent_area.gss,
-                        #         parent_area.polygon.centroid,
-                        #     )
-                        #     async for candidate in non_polygon_query:
-                        #         logger.debug(
-                        #             f"[{random_id}] Candidates considered:",
-                        #             candidate.gss,
-                        #             candidate.polygon.centroid,
-                        #         )
-                        #     logger.debug(
-                        #         "Candidate query", str(non_polygon_query.query)
-                        #     )
                         break
                     else:
                         geocoding_data["area_fields"] = geocoding_data.get(

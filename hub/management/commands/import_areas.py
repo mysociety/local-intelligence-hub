@@ -1,4 +1,5 @@
 import json
+import logging
 from time import sleep
 
 # from django postgis
@@ -10,8 +11,8 @@ from tqdm import tqdm
 from hub.models import Area, AreaType
 from utils import mapit, mapit_types
 
-import logging
 logger = logging.getLogger(__name__)
+
 
 class Command(BaseCommand):
     help = "Import basic area information from Mapit"
@@ -30,9 +31,12 @@ class Command(BaseCommand):
     def handle(self, quiet: bool = False, all_names: bool = False, *args, **options):
         self.mapit_client = mapit.MapIt()
         for b_type in mapit_types.boundary_types:
-            areas = self.mapit_client.areas_of_type(b_type["mapit_type"], {
-                "min_generation": 1,
-            })
+            areas = self.mapit_client.areas_of_type(
+                b_type["mapit_type"],
+                {
+                    "min_generation": 1,
+                },
+            )
             area_type, created = AreaType.objects.get_or_create(
                 name=b_type["name"],
                 code=b_type["code"],
@@ -60,8 +64,7 @@ class Command(BaseCommand):
         geom = None
         try:
             geom_already_loaded = Area.objects.filter(
-                gss=area["codes"]["gss"],
-                polygon__isnull=False
+                gss=area["codes"]["gss"], polygon__isnull=False
             ).exists()
             if geom_already_loaded:
                 # Only fetch geometry data if required, to speed things up
