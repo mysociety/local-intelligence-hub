@@ -29,7 +29,7 @@ TABLES = [
         output_column_templates={
             "area_type_id": "(SELECT id FROM hub_areatype WHERE code = '{area_type_code}')"
         },
-        exclude_columns=["mapit_all_names"]
+        exclude_columns=["mapit_all_names"],
     ),
 ]
 

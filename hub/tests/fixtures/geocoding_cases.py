@@ -125,14 +125,14 @@ geocoding_cases = [
         "council": "Redditch",
         "ward": "Abbey",
         "expected_area_type_code": "WD23",
-        "expected_area_gss": "E05007868"
+        "expected_area_gss": "E05007868",
     },
     {
         "id": "14",
         "council": "Shropshire",
         "ward": "Abbey",
         "expected_area_type_code": "WD23",
-        "expected_area_gss": "E05008136"
+        "expected_area_gss": "E05008136",
     },
     {
         "id": "15",
