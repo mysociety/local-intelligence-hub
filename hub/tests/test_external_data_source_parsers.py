@@ -138,10 +138,15 @@ class TestMultiLevelGeocoding(TestCase):
         # load up the data for tests
         cls.data = cls.source.get_import_data()
 
+    def tearDown(self):
+        self.source.get_import_data().delete()
+        self.source.delete()
+        Area.objects.all().delete()
+
     def test_geocoding_test_rig_is_valid(self):
-        self.assertGreaterEqual(Area.objects.count(), 9000)
+        self.assertGreaterEqual(Area.objects.count(), 20000)
         self.assertGreaterEqual(
-            Area.objects.filter(polygon__isnull=False).count(), 9000
+            Area.objects.filter(polygon__isnull=False).count(), 20000
         )
         self.assertGreaterEqual(Area.objects.filter(area_type__code="DIS").count(), 164)
         self.assertGreaterEqual(Area.objects.filter(area_type__code="STC").count(), 218)
