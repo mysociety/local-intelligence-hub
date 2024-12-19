@@ -425,16 +425,38 @@ class TestCoordinateGeocoding(TestCase):
                     "expected_postcode": "OX20 1ND",
                 },
                 {
+                    # Should work with strings too
                     "id": "2",
-                    "longitude": -1.702695,
-                    "latitude": 52.447681,
+                    "longitude": "-1.702695",
+                    "latitude": "52.447681",
                     "expected_postcode": "B92 0HJ",
                 },
                 {
                     "id": "3",
-                    "longitude": -1.301473,
+                    "longitude": " -1.301473",
                     "latitude": 53.362753,
                     "expected_postcode": "S26 2GA",
+                },
+                {
+                    # Handle failure cases gracefully
+                    "id": "4",
+                    "longitude": -4.2858,
+                    "latitude": None,
+                    "expected_postcode": None,
+                },
+                # Gracefully handle non-numeric coordinates
+                {
+                    "id": "5",
+                    "longitude": "invalid",
+                    "latitude": "invalid",
+                    "expected_postcode": None,
+                },
+                # Gracefully handle crazy big coordinates
+                {
+                    "id": "6",
+                    "longitude": 0,
+                    "latitude": 1000,
+                    "expected_postcode": None,
                 },
             ],
             geocoding_config=[

@@ -532,26 +532,36 @@ async def import_coordinate_data(
 
     steps = []
 
-    point = Point(
-        x=get_config_item_value(
-            source, find_config_item(source, "type", "longitude"), record
-        ),
-        y=get_config_item_value(
-            source, find_config_item(source, "type", "latitude"), record
-        ),
+    raw_lng = get_config_item_value(
+        source, find_config_item(source, "type", "longitude"), record
     )
-    postcode_data: PostcodesIOResult = await loaders["postcodesIOFromPoint"].load(point)
+    raw_lat = get_config_item_value(
+        source, find_config_item(source, "type", "latitude"), record
+    )
+    postcode_data = None
+    point = None
 
-    steps.append(
-        {
-            "task": "postcode_from_coordinates",
-            "service": Geocoder.POSTCODES_IO.value,
-            "result": "failed" if postcode_data is None else "success",
-        }
-    )
+    if raw_lng is not None and raw_lat is not None:
+        try:
+            point = Point(
+                x=float(raw_lng),
+                y=float(raw_lat),
+            )
+            postcode_data = await loaders["postcodesIOFromPoint"].load(point)
+
+            steps.append(
+                {
+                    "task": "postcode_from_coordinates",
+                    "service": Geocoder.POSTCODES_IO.value,
+                    "result": "failed" if postcode_data is None else "success",
+                }
+            )
+        except ValueError:
+            # If the coordinates are invalid, let it go.
+            pass
 
     # Try a backup geocoder in case that one fails
-    if postcode_data is None:
+    if point is not None and postcode_data is None:
         postcode = await get_postcode_from_coords_ftp(point)
         steps.append(
             {
