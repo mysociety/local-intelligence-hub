@@ -1883,7 +1883,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         ]
 
     def get_import_data(self, **kwargs):
-        logger.debug(f"getting import data where external data source id is {self.id}")
         return GenericData.objects.filter(
             data_type__data_set__external_data_source_id=self.id
         )
@@ -3695,7 +3694,6 @@ class ActionNetworkSource(ExternalDataSource):
         return created_records
 
     def get_import_data(self):
-        logger.debug(f"getting import data where action network source id is {self.id}")
         return GenericData.objects.filter(
             models.Q(data_type__data_set__external_data_source_id=self.id)
             & (
