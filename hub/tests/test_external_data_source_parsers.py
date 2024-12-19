@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 from datetime import datetime, timezone
 from unittest import skipIf
@@ -12,7 +13,7 @@ from hub.tests.fixtures.geocoding_cases import geocoding_cases
 from hub.validation import validate_and_format_phone_number
 from utils import mapit_types
 
-ignore_geocoding_tests = False
+ignore_geocoding_tests = os.getenv("RUN_GEOCODING_TESTS") != "1"
 
 
 class TestDateFieldParer(TestCase):
@@ -107,7 +108,7 @@ class TestPhoneFieldParser(TestCase):
         self.assertEqual(result, "+14155552671")
 
 
-# @skipIf(ignore_geocoding_tests, "It messes up data for other tests.")
+@skipIf(ignore_geocoding_tests, "It messes up data for other tests.")
 class TestMultiLevelGeocoding(TestCase):
     fixture = geocoding_cases
 
@@ -301,7 +302,7 @@ class TestMultiLevelGeocoding(TestCase):
                 raise
 
 
-# @skipIf(ignore_geocoding_tests, "It messes up data for other tests.")
+@skipIf(ignore_geocoding_tests, "It messes up data for other tests.")
 class TestComplexAddressGeocoding(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -409,7 +410,7 @@ class TestComplexAddressGeocoding(TestCase):
                 raise
 
 
-# @skipIf(ignore_geocoding_tests, "It messes up data for other tests.")
+@skipIf(ignore_geocoding_tests, "It messes up data for other tests.")
 class TestCoordinateGeocoding(TestCase):
     @classmethod
     def setUpTestData(cls):
