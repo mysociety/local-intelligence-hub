@@ -211,12 +211,6 @@ def parse_datetime(value):
     return dt
 
 
-def is_test_mode():
-    import sys
-
-    return "test" in sys.argv
-
-
 def are_dicts_equal(d1, d2):
     """
     Compare two dictionaries, ignoring order of keys
