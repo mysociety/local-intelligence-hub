@@ -335,6 +335,31 @@ class TestComplexAddressGeocoding(TestCase):
                     "address": "online",
                     "expected_postcode": None,
                 },
+                # Edge cases
+                {
+                    "id": "5",
+                    "venue_name": None,
+                    "address": "100 Torisdale Street",
+                    "expected_postcode": "G42 8PH",
+                },
+                {
+                    "id": "6",
+                    "venue_name": "Glasgow City Council Chambers",
+                    "address": None,
+                    "expected_postcode": "G2 1DU",
+                },
+                {
+                    "id": "7",
+                    "venue_name": "Boots",
+                    "address": None,
+                    "expected_postcode": None,
+                },
+                {
+                    "id": "8",
+                    "venue_name": None,
+                    "address": None,
+                    "expected_postcode": None,
+                },
             ],
             geocoding_config=[
                 # Resulting address query should be something like "Barclays, Victoria Road, Glasgow"

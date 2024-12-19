@@ -387,22 +387,20 @@ async def import_address_data(
     """
     from hub.models import GenericData, Geocoder
 
-    steps = []
-
-    address_item = find_config_item(source, "type", "address")
-    address_text = get_config_item_value(source, address_item, record)
     point = None
     address_data = None
     postcode_data = None
-    if address_text is None or (
-        isinstance(address_text, str)
-        and (address_text.strip() == "" or address_text.lower() == "online")
-    ):
-        address_data = None
-    else:
-        # Prefix
-        prefix_config = find_config_item(source, "type", "prefix")
-        prefix_value = get_config_item_value(source, prefix_config, record)
+    steps = []
+
+    # Prefix — could be as simple as "Glasgow City Chambers"
+    prefix_config = find_config_item(source, "type", "prefix")
+    prefix_value = get_config_item_value(source, prefix_config, record)
+    # Address — the prefix (i.e. line1, location name) might be so specific
+    # that it's the only thing the organisers add, so don't require it
+    address_item = find_config_item(source, "type", "address")
+    address_value = get_config_item_value(source, address_item, record)
+
+    if prefix_value or address_value:
         # Suffix
         suffix_config = find_config_item(source, "type", "suffix")
         suffix_value = get_config_item_value(source, suffix_config, record)
@@ -415,7 +413,7 @@ async def import_address_data(
         query = ", ".join(
             [
                 x
-                for x in [prefix_value, address_text, suffix_value]
+                for x in [prefix_value, address_value, suffix_value]
                 if x is not None and x != ""
             ]
         )
