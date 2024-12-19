@@ -94,10 +94,10 @@ class Command(BaseCommand):
             defaults={
                 "mapit_id": area["id"],
                 "name": area["name"],
-                "mapit_type": area["type"],
-                "mapit_generation_low": area["generation_low"],
-                "mapit_generation_high": area["generation_high"],
-                "mapit_all_names": area_details.get("all_names"),
+                "mapit_type": area.get("type", None),
+                "mapit_generation_low": area.get("generation_low", None),
+                "mapit_generation_high": area.get("generation_high", None),
+                "mapit_all_names": area_details.get("all_names", None),
             },
         )
 
