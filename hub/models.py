@@ -852,6 +852,8 @@ class GenericData(CommonData):
 class Area(models.Model):
     mapit_id = models.CharField(max_length=30)
     mapit_type = models.CharField(max_length=30, db_index=True, blank=True, null=True)
+    mapit_generation_low = models.IntegerField(blank=True, null=True)
+    mapit_generation_high = models.IntegerField(blank=True, null=True)
     gss = models.CharField(max_length=30)
     name = models.CharField(max_length=200)
     mapit_all_names = models.JSONField(blank=True, null=True)
@@ -1849,7 +1851,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             select_params=[raw_area_value.upper()],
                         )
                         .extra(
-                            select={"name_distance": "similarity(hub_area.name, %s)"},
+                            # We round the similarity score to 1dp so that
+                            # two areas with score 0.8 can be distinguished by which has a larger mapit_generation_high
+                            # which wouldn't be possible if the invalid one had 0.82 and the valid one had 0.80 (because it was renamed "&" to "and")
+                            select={"name_distance": "round(similarity(hub_area.name, %s)::numeric, 1)"},
                             select_params=[searchable_name_sans_title],
                         )
                         .order_by(
@@ -1857,6 +1862,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                             "-exact_gss_match",
                             # Then prefer name similarity
                             "-name_distance",
+                            # If the names are the same, prefer the most recent one
+                            "-mapit_generation_high",
                         )
                     )
 

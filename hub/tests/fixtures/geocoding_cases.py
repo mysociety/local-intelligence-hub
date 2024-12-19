@@ -271,7 +271,12 @@ geocoding_cases = [
         "expected_area_type_code": "WD23",
         "expected_area_gss": "W05001219",
     },
-    # RyedaleAmotherby & Ampleforth
+    # RyedaleAmotherby & Ampleforth:
+    # This is a case where Ryedale is a now-defunct council
+    # but Amotherby & Ampleforth is still a live ward, under a new council.
+    # Because the dataset is ultimately about the ward, the geocoding should still work.
+    # Code-wise, this means looking for parent areas even when they're defunct
+    # if it means finding the right live child area.
     {
         "id": "33",
         "council": "Ryedale",

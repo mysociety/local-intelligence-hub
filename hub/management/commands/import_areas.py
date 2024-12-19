@@ -10,6 +10,8 @@ from tqdm import tqdm
 from hub.models import Area, AreaType
 from utils import mapit, mapit_types
 
+import logging
+logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = "Import basic area information from Mapit"
@@ -28,7 +30,9 @@ class Command(BaseCommand):
     def handle(self, quiet: bool = False, all_names: bool = False, *args, **options):
         self.mapit_client = mapit.MapIt()
         for b_type in mapit_types.boundary_types:
-            areas = self.mapit_client.areas_of_type(b_type["mapit_type"])
+            areas = self.mapit_client.areas_of_type(b_type["mapit_type"], {
+                "min_generation": 1,
+            })
             area_type, created = AreaType.objects.get_or_create(
                 name=b_type["name"],
                 code=b_type["code"],
@@ -48,19 +52,35 @@ class Command(BaseCommand):
 
     def import_area(self, area, area_type, all_names):
         area_details = self.mapit_client.area_details(area["id"]) if all_names else {}
+
+        if "gss" not in area["codes"]:
+            # logger.debug(f"no gss code for {area['id']}")
+            return
+
+        geom = None
         try:
-            geom = self.mapit_client.area_geometry(area["id"])
-            geom = {
-                "type": "Feature",
-                "geometry": geom,
-                "properties": {
-                    "PCON13CD": area["codes"]["gss"],
-                    "name": area["name"],
-                    "type": area_type.code,
-                    "mapit_type": area["type"],
-                },
-            }
-            geom_str = json.dumps(geom)
+            geom_already_loaded = Area.objects.filter(
+                gss=area["codes"]["gss"],
+                polygon__isnull=False
+            ).exists()
+            if geom_already_loaded:
+                # Only fetch geometry data if required, to speed things up
+                # logger.debug(f"skipping geometry for {area['name']}")
+                pass
+            else:
+                geom = self.mapit_client.area_geometry(area["id"])
+
+                geom = {
+                    "type": "Feature",
+                    "geometry": geom,
+                    "properties": {
+                        "PCON13CD": area["codes"]["gss"],
+                        "name": area["name"],
+                        "type": area_type.code,
+                        "mapit_type": area["type"],
+                    },
+                }
+                geom_str = json.dumps(geom)
         except mapit.NotFoundException:  # pragma: no cover
             print(f"could not find mapit area for {area['name']}")
             geom = None
@@ -72,6 +92,8 @@ class Command(BaseCommand):
                 "mapit_id": area["id"],
                 "name": area["name"],
                 "mapit_type": area["type"],
+                "mapit_generation_low": area["generation_low"],
+                "mapit_generation_high": area["generation_high"],
                 "mapit_all_names": area_details.get("all_names"),
             },
         )
