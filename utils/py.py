@@ -211,6 +211,11 @@ def parse_datetime(value):
     return dt
 
 
+def find(list, fn, default=None):
+    # find first by matching fn, or return default
+    return next((x for x in list if fn(x)), default)
+
+
 def are_dicts_equal(d1, d2):
     """
     Compare two dictionaries, ignoring order of keys

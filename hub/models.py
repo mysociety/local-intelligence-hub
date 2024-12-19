@@ -1086,7 +1086,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             "PARLIAMENTARY_CONSTITUENCY_2024",
             "Constituency (2024)",
         )
-        # TODO: LNG_LAT = "LNG_LAT", "Longitude and Latitude"
+        COORDINATES = "COORDINATES", "Coordinates"
 
     geocoding_config = JSONField(blank=True, null=True, default=list)
     geography_column_type = TextChoicesField(
@@ -1625,24 +1625,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             and isinstance(self.geocoding_config, list)
             and len(self.geocoding_config) > 0
         ):
-            """
-            geocoding_config will look something like:
-            [
-              {
-                "type": ["STC", "DIS"],
-                "field": "Local authority"
-              },
-              {
-                "type": "WD23",
-                "field": "Ward"
-              }
-            ]
-            """
             await asyncio.gather(
                 *[
-                    geocoding_config.create_import_record(
-                        record, self, data_type, loaders
-                    )
+                    geocoding_config.import_record(record, self, data_type, loaders)
                     for record in data
                 ]
             )
@@ -1658,7 +1643,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
                 Used to batch-import data.
                 """
-                structured_data = get_update_data(record)
+                structured_data = get_update_data(self, record)
                 postcode_data: PostcodesIOResult = await loaders["postcodesIO"].load(
                     self.get_record_field(record, self.geography_column)
                 )
@@ -1680,7 +1665,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     ),
                 }
 
-                await GenericData.objects.aupdate_or_create(
+                return await GenericData.objects.aupdate_or_create(
                     data_type=data_type,
                     data=self.get_record_id(record),
                     defaults=update_data,
@@ -1693,7 +1678,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         ):
 
             async def create_import_record(record):
-                structured_data = get_update_data(record)
+                structured_data = get_update_data(self, record)
                 gss = self.get_record_field(record, self.geography_column)
                 ward = await Area.objects.filter(
                     area_type__code="WD23",
@@ -1715,7 +1700,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     "postcode_data": postcode_data,
                 }
 
-                await GenericData.objects.aupdate_or_create(
+                return await GenericData.objects.aupdate_or_create(
                     data_type=data_type,
                     data=self.get_record_id(record),
                     defaults=update_data,
@@ -1736,7 +1721,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
                 Used to batch-import data.
                 """
-                structured_data = get_update_data(record)
+                structured_data = get_update_data(self, record)
                 address = self.get_record_field(record, self.geography_column)
                 point = None
                 address_data = None
@@ -1786,7 +1771,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     "point": point,
                 }
 
-                await GenericData.objects.aupdate_or_create(
+                return await GenericData.objects.aupdate_or_create(
                     data_type=data_type,
                     data=self.get_record_id(record),
                     defaults=update_data,
@@ -1798,7 +1783,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             # TODO: Re-implement this data as `AreaData`, linking each datum to an Area/AreaType as per `self.geography_column` and `self.geography_column_type`.
             # This will require importing other AreaTypes like admin_district, Ward
             for record in data:
-                update_data = get_update_data(record)
+                update_data = get_update_data(self, record)
                 data, created = await GenericData.objects.aupdate_or_create(
                     data_type=data_type,
                     data=self.get_record_id(record),

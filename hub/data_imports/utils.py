@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from hub.models import ExternalDataSource
 
 
-def get_update_data(record, source: "ExternalDataSource"):
+def get_update_data(source: "ExternalDataSource", record):
     update_data = {
         "json": source.get_record_dict(record),
     }
