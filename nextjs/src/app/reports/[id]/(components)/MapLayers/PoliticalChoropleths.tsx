@@ -38,8 +38,12 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
     report.displayOptions?.dataVisualisation?.showDataVisualisation?.choropleth
       ? 'visible'
       : 'none'
-
   const { data: dataByBoundary } = useDataByBoundary({ report, boundaryType })
+
+  const boundaryNameVisibility =
+    visibility === 'visible' && report.displayOptions?.display.showBoundaryNames
+      ? 'visible'
+      : 'none'
   const map = useLoadedMap()
   const [selectedBoundary, setSelectedBoundary] = useAtom(selectedBoundaryAtom)
   useClickOnBoundaryEvents(visibility === 'visible' ? tileset : null)
@@ -116,6 +120,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           }}
         />
       </Source>
+
       <Source
         id={`${tileset.mapboxSourceId}-area-count`}
         type="geojson"
@@ -126,7 +131,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           type="symbol"
           layout={{
             ...getAreaCountLayout(dataByBoundary),
-            visibility,
+            visibility: boundaryNameVisibility,
           }}
           paint={{
             'text-opacity': [
@@ -143,12 +148,13 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
             'text-halo-width': 1.5,
           }}
         />
+
         <Layer
           id={`${tileset.mapboxSourceId}-area-label`}
           type="symbol"
           layout={{
             ...getAreaLabelLayout(dataByBoundary),
-            visibility,
+            visibility: boundaryNameVisibility,
           }}
           paint={{
             'text-color': 'white',

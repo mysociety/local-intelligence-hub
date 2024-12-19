@@ -38,6 +38,7 @@ export interface ReportConfig {
     showLastElectionData?: boolean
     showPostcodeLabels?: boolean
     boundaryOutlines?: AnalyticalAreaType[]
+    showBoundaryNames?: boolean
   }
 }
 
@@ -56,6 +57,7 @@ export const defaultReportConfig: ReportConfig = {
     showMPs: false,
     showLastElectionData: false,
     boundaryOutlines: [AnalyticalAreaType.ParliamentaryConstituency_2024],
+    showBoundaryNames: true,
   },
 }
 interface ReportContextProps {
