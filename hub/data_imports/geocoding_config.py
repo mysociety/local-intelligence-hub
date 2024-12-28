@@ -7,6 +7,7 @@ from django.contrib.gis.geos import Point
 from django.db.models import Q
 
 from asgiref.sync import sync_to_async
+from benedict import benedict
 
 from hub.data_imports.utils import get_update_data
 from utils import google_maps, mapit_types
@@ -24,7 +25,9 @@ if TYPE_CHECKING:
 
 def find_config_item(source: "ExternalDataSource", key: str, value, default=None):
     return find(
-        source.geocoding_config, lambda item: item.get(key, None) == value, default
+        source.geocoding_config.get("components", []),
+        lambda item: item.get(key, None) == value,
+        default,
     )
 
 
@@ -62,7 +65,7 @@ async def import_record(
     data_type: "DataType",
     loaders: "Loaders",
 ):
-    from hub.models import GenericData, Geocoder
+    from hub.models import GenericData, Geocoder, ExternalDataSource
 
     update_data = get_update_data(source, record)
     id = source.get_record_id(record)
@@ -88,7 +91,7 @@ async def import_record(
             # Then, if so, check if the data has changed
             geocoding_field_values = set()
             search_terms_from_last_time = set()
-            for item in source.geocoding_config:
+            for item in source.geocoding_config.get("components", []):
                 # new data
                 new_value = get_config_item_value(source, item, record)
                 geocoding_field_values.add(new_value)
@@ -115,24 +118,16 @@ async def import_record(
     update_data["geocode_data"]["skipped"] = False
     update_data["geocoder"] = Geocoder.GEOCODING_CONFIG.value
 
-    if all(
-        (
-            item.get("lih_area_type__code", None) is not None
-            or item.get("mapit_type", None) is not None
-        )
-        for item in source.geocoding_config
-    ):
+    geocoding_config_type = source.geocoding_config.get("type", None)
+    if geocoding_config_type == ExternalDataSource.GeographyTypes.AREA:
         importer_fn = import_area_data
-    elif find_config_item(source, "type", "address") is not None:
+    elif geocoding_config_type == ExternalDataSource.GeographyTypes.ADDRESS:
         importer_fn = import_address_data
-    elif (
-        find_config_item(source, "type", "latitude") is not None
-        and find_config_item(source, "type", "longitude") is not None
-    ):
+    elif geocoding_config_type == ExternalDataSource.GeographyTypes.COORDINATES:
         importer_fn = import_coordinate_data
     else:
         logger.debug(source.geocoding_config)
-        raise ValueError("geocoding_config is not a valid shape")
+        raise ValueError("geocoding_config is not a valid type")
 
     return await importer_fn(
         record=record,
@@ -158,7 +153,7 @@ async def import_area_data(
     geocoding_data = {}
     steps = []
 
-    for item in source.geocoding_config:
+    for item in source.geocoding_config.get("components", []):
         parent_area = area
         literal_lih_area_type__code = item.get("lih_area_type__code", None)
         literal_mapit_type = item.get("mapit_type", None)
@@ -412,11 +407,11 @@ async def import_address_data(
     )
     # Address — the place_name (i.e. line1, location name) might be so specific
     # that it's the only thing the organisers add, so don't require it
-    address_item = find_config_item(source, "type", "address")
-    address_value = get_config_item_field_value(source, address_item, record)
+    address_item = find_config_item(source, "type", "street_address")
+    street_address_value = get_config_item_field_value(source, address_item, record)
 
     if (
-        address_value
+        street_address_value
         or
         # In the case of a list of Barclays addresses, the organiser might have defined
         # { "type": "place_name", "value": "Barclays" } in the geocoding_config
@@ -425,9 +420,9 @@ async def import_address_data(
         # queries that are just "Barclays", "Barclays", "Barclays"...
         has_dynamic_place_name_value
     ):
-        # area_hint
-        area_hint_config = find_config_item(source, "type", "area_hint")
-        area_hint_value = get_config_item_value(source, area_hint_config, record)
+        # area
+        area_name_config = find_config_item(source, "type", "area_name")
+        area_name_value = get_config_item_value(source, area_name_config, record)
         # Countries
         countries_config = find_config_item(source, "type", "countries")
         countries_value = ensure_list(
@@ -437,7 +432,7 @@ async def import_address_data(
         query = ", ".join(
             [
                 x
-                for x in [place_name_value, address_value, area_hint_value]
+                for x in [place_name_value, street_address_value, area_name_value]
                 if x is not None and x != ""
             ]
         )

@@ -8,7 +8,7 @@ from django.test import TestCase
 
 from asgiref.sync import async_to_sync
 
-from hub.models import Area, LocalJSONSource
+from hub.models import Area, ExternalDataSource, LocalJSONSource
 from hub.tests.fixtures.geocoding_cases import geocoding_cases
 from hub.validation import validate_and_format_phone_number
 from utils import mapit_types
@@ -131,10 +131,13 @@ class TestMultiLevelGeocoding(TestCase):
             name="geo_test",
             id_field="id",
             data=cls.fixture.copy(),
-            geocoding_config=[
-                {"field": "council", "lih_area_type__code": ["STC", "DIS"]},
-                {"field": "ward", "lih_area_type__code": "WD23"},
-            ],
+            geocoding_config={
+                "type": ExternalDataSource.GeographyTypes.AREA,
+                "components": [
+                    {"field": "Council", "lih_area_type__code": ["STC", "DIS"]},
+                    {"field": "Ward", "lih_area_type__code": "WD23"},
+                ],
+            },
         )
 
     def test_geocoding_test_rig_is_valid(self):
@@ -216,13 +219,16 @@ class TestMultiLevelGeocoding(TestCase):
         Geocoding should work identically on more granular mapit_types
         """
 
-        self.source.geocoding_config = [
-            {
-                "field": "council",
-                "mapit_type": mapit_types.MAPIT_COUNCIL_TYPES,
-            },
-            {"field": "ward", "mapit_type": mapit_types.MAPIT_WARD_TYPES},
-        ]
+        self.source.geocoding_config = {
+            "type": ExternalDataSource.GeographyTypes.AREA,
+            "components": [
+                {
+                    "field": "Council",
+                    "lih_area_type__code": mapit_types.MAPIT_COUNCIL_TYPES,
+                },
+                {"field": "Ward", "lih_area_type__code": mapit_types.MAPIT_WARD_TYPES},
+            ],
+        }
         self.source.save()
 
         # re-generate GenericData records
@@ -361,12 +367,14 @@ class TestComplexAddressGeocoding(TestCase):
                     "expected_postcode": None,
                 },
             ],
-            geocoding_config=[
-                # Resulting address query should be something like "Barclays, Victoria Road, Glasgow"
-                {"type": "place_name", "field": "venue_name"},
-                {"type": "address", "field": "address"},
-                {"type": "area_hint", "value": "Glasgow"},
-            ],
+            geocoding_config={
+                "type": ExternalDataSource.GeographyTypes.ADDRESS,
+                "components": [
+                    {"type": "place_name", "field": "venue_name"},
+                    {"type": "street_address", "field": "address"},
+                    {"type": "area", "value": "Glasgow"},
+                ],
+            },
         )
 
     def test_geocoding_matches(self):
@@ -484,11 +492,14 @@ class TestCoordinateGeocoding(TestCase):
                     "expected_postcode": None,
                 },
             ],
-            geocoding_config=[
-                # Resulting address query should be something like "Barclays, Victoria Road, Glasgow"
-                {"type": "latitude", "field": "latitude"},
-                {"type": "longitude", "field": "longitude"},
-            ],
+            # Resulting address query should be something like "Barclays, Victoria Road, Glasgow"
+            geocoding_config={
+                "type": ExternalDataSource.GeographyTypes.COORDINATES,
+                "components": [
+                    {"type": "latitude", "field": "latitude"},
+                    {"type": "longitude", "field": "longitude"},
+                ],
+            },
         )
 
     def test_geocoding_matches(self):
