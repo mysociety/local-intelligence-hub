@@ -363,9 +363,9 @@ class TestComplexAddressGeocoding(TestCase):
             ],
             geocoding_config=[
                 # Resulting address query should be something like "Barclays, Victoria Road, Glasgow"
-                {"type": "prefix", "field": "venue_name"},
+                {"type": "place_name", "field": "venue_name"},
                 {"type": "address", "field": "address"},
-                {"type": "suffix", "value": "Glasgow"},
+                {"type": "area_hint", "value": "Glasgow"},
             ],
         )
 

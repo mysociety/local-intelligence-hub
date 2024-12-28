@@ -44,6 +44,18 @@ def get_config_item_value(
     return value or default
 
 
+def get_config_item_field_value(
+    source: "ExternalDataSource", config_item, record, default=None
+):
+    if config_item is None:
+        return default
+    if config_item.get("field", None):
+        # Data comes from the member record
+        field = config_item.get("field", None)
+        value = source.get_record_field(record, field)
+    return value or default
+
+
 async def import_record(
     record,
     source: "ExternalDataSource",
@@ -392,18 +404,30 @@ async def import_address_data(
     postcode_data = None
     steps = []
 
-    # Prefix — could be as simple as "Glasgow City Chambers"
-    prefix_config = find_config_item(source, "type", "prefix")
-    prefix_value = get_config_item_value(source, prefix_config, record)
-    # Address — the prefix (i.e. line1, location name) might be so specific
+    # place_name — could be as simple as "Glasgow City Chambers"
+    place_name_config = find_config_item(source, "type", "place_name")
+    place_name_value = get_config_item_value(source, place_name_config, record)
+    has_dynamic_place_name_value = place_name_value and place_name_config.get(
+        "field", None
+    )
+    # Address — the place_name (i.e. line1, location name) might be so specific
     # that it's the only thing the organisers add, so don't require it
     address_item = find_config_item(source, "type", "address")
-    address_value = get_config_item_value(source, address_item, record)
+    address_value = get_config_item_field_value(source, address_item, record)
 
-    if prefix_value or address_value:
-        # Suffix
-        suffix_config = find_config_item(source, "type", "suffix")
-        suffix_value = get_config_item_value(source, suffix_config, record)
+    if (
+        address_value
+        or
+        # In the case of a list of Barclays addresses, the organiser might have defined
+        # { "type": "place_name", "value": "Barclays" } in the geocoding_config
+        # so that the spreadsheet only needs to contain the address.
+        # So we check for a dynamic place_name_value here, so we're not just geocoding a bunch of
+        # queries that are just "Barclays", "Barclays", "Barclays"...
+        has_dynamic_place_name_value
+    ):
+        # area_hint
+        area_hint_config = find_config_item(source, "type", "area_hint")
+        area_hint_value = get_config_item_value(source, area_hint_config, record)
         # Countries
         countries_config = find_config_item(source, "type", "countries")
         countries_value = ensure_list(
@@ -413,7 +437,7 @@ async def import_address_data(
         query = ", ".join(
             [
                 x
-                for x in [prefix_value, address_value, suffix_value]
+                for x in [place_name_value, address_value, area_hint_value]
                 if x is not None and x != ""
             ]
         )
