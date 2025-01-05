@@ -134,8 +134,8 @@ class TestMultiLevelGeocoding(TestCase):
             geocoding_config={
                 "type": ExternalDataSource.GeographyTypes.AREA,
                 "components": [
-                    {"field": "Council", "lih_area_type__code": ["STC", "DIS"]},
-                    {"field": "Ward", "lih_area_type__code": "WD23"},
+                    {"field": "council", "lih_area_type__code": ["STC", "DIS"]},
+                    {"field": "ward", "lih_area_type__code": "WD23"},
                 ],
             },
         )
@@ -223,10 +223,10 @@ class TestMultiLevelGeocoding(TestCase):
             "type": ExternalDataSource.GeographyTypes.AREA,
             "components": [
                 {
-                    "field": "Council",
+                    "field": "council",
                     "lih_area_type__code": mapit_types.MAPIT_COUNCIL_TYPES,
                 },
-                {"field": "Ward", "lih_area_type__code": mapit_types.MAPIT_WARD_TYPES},
+                {"field": "ward", "lih_area_type__code": mapit_types.MAPIT_WARD_TYPES},
             ],
         }
         self.source.save()
