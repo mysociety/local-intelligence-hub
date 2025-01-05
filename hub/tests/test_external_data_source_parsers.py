@@ -352,7 +352,7 @@ class TestComplexAddressGeocoding(TestCase):
                     "id": "6",
                     "venue_name": "Glasgow City Council Chambers",
                     "address": None,
-                    "expected_postcode": "G2 1DU",
+                    "expected_postcode": "G2 5AF",
                 },
                 {
                     "id": "7",
