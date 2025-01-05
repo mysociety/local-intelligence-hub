@@ -1086,9 +1086,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             "PARLIAMENTARY_CONSTITUENCY_2024",
             "Constituency (2024)",
         )
-        COORDINATES = "COORDINATES", "Coordinates"
+        COORDINATES = (
+            "COORDINATES",
+            "Coordinates",
+        )
+        AREA = "AREA", "Area"
 
-    geocoding_config = JSONField(blank=True, null=True, default=list)
+    geocoding_config = JSONField(blank=True, null=True)
     geography_column_type = TextChoicesField(
         choices_enum=GeographyTypes,
         default=GeographyTypes.POSTCODE,
@@ -1620,11 +1624,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         loaders = await self.get_loaders()
 
-        if (
-            self.geocoding_config
-            and isinstance(self.geocoding_config, list)
-            and len(self.geocoding_config) > 0
-        ):
+        if self.geocoding_config and isinstance(self.geocoding_config, dict):
             await asyncio.gather(
                 *[
                     geocoding_config.import_record(record, self, data_type, loaders)
