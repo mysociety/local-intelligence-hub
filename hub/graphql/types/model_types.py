@@ -705,6 +705,9 @@ class AnalyticalAreaType(Enum):
     admin_district = "admin_district"
     admin_county = "admin_county"
     admin_ward = "admin_ward"
+    msoa = "msoa"
+    lsoa = "lsoa"
+    postcode = "postcode"
     european_electoral_region = "european_electoral_region"
     country = "country"
 
@@ -749,7 +752,7 @@ class Analytics:
     def imported_data_count_by_area(
         self,
         analytical_area_type: AnalyticalAreaType,
-        layer_ids: Optional[List[str]],
+        layer_ids: Optional[List[str]] = [],
     ) -> List[GroupedDataCount]:
         data = self.imported_data_count_by_area(
             postcode_io_key=analytical_area_type.value,
@@ -762,10 +765,34 @@ class Analytics:
         ]
 
     @strawberry_django.field
+    def imported_data_count_of_areas(
+        self,
+        analytical_area_type: AnalyticalAreaType,
+        layer_ids: Optional[List[str]] = [],
+    ) -> int:
+        data = self.imported_data_count_by_area(
+            postcode_io_key=analytical_area_type.value,
+            layer_ids=layer_ids,
+        )
+        return max(len([d for d in data if d.get("count", 0) > 0]) or 0, 0)
+
+    @strawberry_django.field
+    def imported_data_count_unlocated(self) -> int:
+        return self.imported_data_count_unlocated()
+
+    @strawberry_django.field
+    def imported_data_count_located(self) -> int:
+        return self.imported_data_count_located()
+
+    @strawberry_django.field
+    def imported_data_geocoding_rate(self) -> float:
+        return self.imported_data_geocoding_rate()
+
+    @strawberry_django.field
     def imported_data_by_area(
         self,
         analytical_area_type: AnalyticalAreaType,
-        layer_ids: Optional[List[str]],
+        layer_ids: Optional[List[str]] = [],
     ) -> List[GroupedData]:
         data = self.imported_data_by_area(
             postcode_io_key=analytical_area_type.value,

@@ -43,6 +43,7 @@ import { contentEditableMutation } from '@/lib/html'
 import { formatCrmNames } from '@/lib/utils'
 import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
+import { interpolateRdYlGn } from 'd3-scale-chromatic'
 import { formatRelative } from 'date-fns'
 import parse from 'html-react-parser'
 import { AlertCircle, ExternalLink } from 'lucide-react'
@@ -143,6 +144,15 @@ const GET_UPDATE_CONFIG = gql`
         sendEmail
       }
       importedDataCount
+      importedDataGeocodingRate
+      regionCount: importedDataCountOfAreas(
+        analyticalAreaType: european_electoral_region
+      )
+      constituencyCount: importedDataCountOfAreas(
+        analyticalAreaType: parliamentary_constituency
+      )
+      ladCount: importedDataCountOfAreas(analyticalAreaType: admin_district)
+      wardCount: importedDataCountOfAreas(analyticalAreaType: admin_ward)
       fieldDefinitions {
         label
         value
@@ -251,6 +261,7 @@ export default function InspectExternalDataSource({
       }
     )
   }
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-7">
       <header className="flex flex-row justify-between gap-8">
@@ -302,6 +313,24 @@ export default function InspectExternalDataSource({
               <h2 className="text-hMd">Imported records</h2>
               <div className="text-hXlg">
                 {format(',')(source.importedDataCount || 0)}
+              </div>
+              <div>
+                Located in {pluralize('region', source.regionCount, true)},{' '}
+                {pluralize('constituency', source.constituencyCount, true)},{' '}
+                {pluralize('local authority', source.ladCount, true)}, and{' '}
+                {pluralize('ward', source.wardCount, true)}.{' '}
+                {/* Un-geolocated count: */}
+                <span
+                  style={{
+                    // linear interpolation based on d3
+                    color: interpolateRdYlGn(
+                      source.importedDataGeocodingRate / 100
+                    ),
+                  }}
+                >
+                  Geocoding success rate of{' '}
+                  {(source.importedDataGeocodingRate || 0).toFixed(0)}%
+                </span>
               </div>
               <p className="text-meepGray-400">
                 Import data from this {formatCrmNames(source.crmType)} into
