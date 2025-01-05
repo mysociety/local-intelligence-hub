@@ -155,8 +155,8 @@ async def import_area_data(
 
     for item in source.geocoding_config.get("components", []):
         parent_area = area
-        literal_lih_area_type__code = item.get("lih_area_type__code", None)
-        literal_mapit_type = item.get("mapit_type", None)
+        literal_lih_area_type__code = item.get("metdata", {}).get("lih_area_type__code", None)
+        literal_mapit_type = item.get("metdata", {}).get("mapit_type", None)
         area_set = "LIH" if literal_lih_area_type__code is not None else "MapIt"
         area_types = literal_lih_area_type__code or literal_mapit_type
         literal_area_field = item.get("field", None)
