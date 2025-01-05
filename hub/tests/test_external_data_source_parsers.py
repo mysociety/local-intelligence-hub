@@ -134,10 +134,13 @@ class TestMultiLevelGeocoding(TestCase):
             geocoding_config={
                 "type": ExternalDataSource.GeographyTypes.AREA,
                 "components": [
-                    {"field": "council", "metadata": { "lih_area_type__code": ["STC", "DIS"] }},
-                    {"field": "ward", "metadata": { "lih_area_type__code": "WD23" }}
-                ]
-            }
+                    {
+                        "field": "council",
+                        "metadata": {"lih_area_type__code": ["STC", "DIS"]},
+                    },
+                    {"field": "ward", "metadata": {"lih_area_type__code": "WD23"}},
+                ],
+            },
         )
 
     def test_geocoding_test_rig_is_valid(self):
@@ -183,7 +186,9 @@ class TestMultiLevelGeocoding(TestCase):
                 try:
                     try:
                         if d.json["ward"] is None:
-                            self.assertIsNone(d.postcode_data, "None shouldn't geocode.")
+                            self.assertIsNone(
+                                d.postcode_data, "None shouldn't geocode."
+                            )
                             continue
                         elif d.json["expected_area_gss"] is None:
                             self.assertIsNone(
@@ -212,7 +217,9 @@ class TestMultiLevelGeocoding(TestCase):
                     print(e)
                     print("Geocoding failed:", d.id, json.dumps(d.json, indent=4))
                     print("--Geocode data:", d.id, json.dumps(d.geocode_data, indent=4))
-                    print("--Postcode data:", d.id, json.dumps(d.postcode_data, indent=4))
+                    print(
+                        "--Postcode data:", d.id, json.dumps(d.postcode_data, indent=4)
+                    )
                     raise
             except TypeError as e:
                 print(e)
@@ -231,9 +238,12 @@ class TestMultiLevelGeocoding(TestCase):
             "components": [
                 {
                     "field": "council",
-                    "metadata": { "mapit_type": mapit_types.MAPIT_COUNCIL_TYPES },
+                    "metadata": {"mapit_type": mapit_types.MAPIT_COUNCIL_TYPES},
                 },
-                {"field": "ward", "metadata": { "mapit_type": mapit_types.MAPIT_WARD_TYPES}},
+                {
+                    "field": "ward",
+                    "metadata": {"mapit_type": mapit_types.MAPIT_WARD_TYPES},
+                },
             ],
         }
         self.source.save()

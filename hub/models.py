@@ -1097,15 +1097,15 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     def uses_valid_geocoding_config(self):
         # TODO: Could replace this with a Pydantic schema or something
         return (
-            self.geocoding_config is not None and
-            isinstance(self.geocoding_config, dict) and
-            self.geocoding_config.get("type", None) is not None
+            self.geocoding_config is not None
+            and isinstance(self.geocoding_config, dict)
+            and self.geocoding_config.get("type", None) is not None
             and self.geocoding_config.get("type", None) in self.GeographyTypes.values
             and self.geocoding_config.get("components", None) is not None
             and isinstance(self.geocoding_config.get("components", None), list)
             and len(self.geocoding_config.get("components", [])) > 0
         ) == True
-        
+
     geography_column_type = TextChoicesField(
         choices_enum=GeographyTypes,
         default=GeographyTypes.POSTCODE,

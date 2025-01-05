@@ -65,7 +65,7 @@ async def import_record(
     data_type: "DataType",
     loaders: "Loaders",
 ):
-    from hub.models import GenericData, Geocoder, ExternalDataSource
+    from hub.models import ExternalDataSource, GenericData, Geocoder
 
     update_data = get_update_data(source, record)
     id = source.get_record_id(record)
@@ -155,7 +155,9 @@ async def import_area_data(
 
     for item in source.geocoding_config.get("components", []):
         parent_area = area
-        literal_lih_area_type__code = item.get("metadata", {}).get("lih_area_type__code", None)
+        literal_lih_area_type__code = item.get("metadata", {}).get(
+            "lih_area_type__code", None
+        )
         literal_mapit_type = item.get("metadata", {}).get("mapit_type", None)
         area_set = "LIH" if literal_lih_area_type__code is not None else "MAPIT"
         area_types = literal_lih_area_type__code or literal_mapit_type
