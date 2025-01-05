@@ -66,6 +66,7 @@ const TEST_DATA_SOURCE = gql`
       geographyColumn
       geographyColumnType
       geocodingConfig
+      usesValidGeocodingConfig
       healthcheck
       predefinedColumnNames
       defaultDataType

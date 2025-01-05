@@ -904,7 +904,7 @@ class BaseDataSource(Analytics):
     last_update: auto
     geography_column: auto
     geography_column_type: auto
-    geocoding_config: Optional[JSON]
+    geocoding_config: JSON
     postcode_field: auto
     first_name_field: auto
     last_name_field: auto
@@ -931,6 +931,10 @@ class BaseDataSource(Analytics):
     allow_updates: bool = attr_field()
     default_data_type: Optional[str] = attr_field()
     defaults: JSON = attr_field()
+
+    @strawberry_django.field
+    def uses_valid_geocoding_config(self) -> bool:
+        return self.uses_valid_geocoding_config()
 
     @strawberry_django.field
     def is_import_scheduled(self: models.ExternalDataSource, info: Info) -> bool:

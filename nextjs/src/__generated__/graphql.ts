@@ -145,6 +145,7 @@ export type ActionNetworkSource = Analytics & {
   titleField?: Maybe<Scalars['String']['output']>
   updateMapping?: Maybe<Array<AutoUpdateConfig>>
   updateProgress?: Maybe<BatchJobProgress>
+  usesValidGeocodingConfig: Scalars['Boolean']['output']
   webhookHealthcheck: Scalars['Boolean']['output']
   webhookUrl: Scalars['String']['output']
 }
@@ -207,6 +208,7 @@ export type ActionNetworkSourceInput = {
   endTimeField?: InputMaybe<Scalars['String']['input']>
   firstNameField?: InputMaybe<Scalars['String']['input']>
   fullNameField?: InputMaybe<Scalars['String']['input']>
+  geocodingConfig?: InputMaybe<Scalars['JSON']['input']>
   geographyColumn?: InputMaybe<Scalars['String']['input']>
   geographyColumnType?: InputMaybe<GeographyTypes>
   groupSlug: Scalars['String']['input']
@@ -295,6 +297,7 @@ export type AirtableSource = Analytics & {
   titleField?: Maybe<Scalars['String']['output']>
   updateMapping?: Maybe<Array<AutoUpdateConfig>>
   updateProgress?: Maybe<BatchJobProgress>
+  usesValidGeocodingConfig: Scalars['Boolean']['output']
   webhookHealthcheck: Scalars['Boolean']['output']
   webhookUrl: Scalars['String']['output']
 }
@@ -359,6 +362,7 @@ export type AirtableSourceInput = {
   endTimeField?: InputMaybe<Scalars['String']['input']>
   firstNameField?: InputMaybe<Scalars['String']['input']>
   fullNameField?: InputMaybe<Scalars['String']['input']>
+  geocodingConfig?: InputMaybe<Scalars['JSON']['input']>
   geographyColumn?: InputMaybe<Scalars['String']['input']>
   geographyColumnType?: InputMaybe<GeographyTypes>
   id?: InputMaybe<Scalars['UUID']['input']>
@@ -435,7 +439,7 @@ export type AnalyticsImportedDataCountForConstituency2024Args = {
   gss: Scalars['String']['input']
 }
 
-/** Area(id, mapit_id, mapit_type, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
+/** Area(id, mapit_id, mapit_type, mapit_generation_low, mapit_generation_high, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
 export type Area = {
   __typename?: 'Area'
   areaType: AreaType
@@ -457,37 +461,37 @@ export type Area = {
   samplePostcode?: Maybe<PostcodesIoResult>
 }
 
-/** Area(id, mapit_id, mapit_type, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
+/** Area(id, mapit_id, mapit_type, mapit_generation_low, mapit_generation_high, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
 export type AreaDataArgs = {
   filters?: InputMaybe<CommonDataLoaderFilter>
 }
 
-/** Area(id, mapit_id, mapit_type, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
+/** Area(id, mapit_id, mapit_type, mapit_generation_low, mapit_generation_high, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
 export type AreaDatumArgs = {
   filters?: InputMaybe<CommonDataLoaderFilter>
 }
 
-/** Area(id, mapit_id, mapit_type, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
+/** Area(id, mapit_id, mapit_type, mapit_generation_low, mapit_generation_high, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
 export type AreaGenericDataForHubArgs = {
   hostname: Scalars['String']['input']
 }
 
-/** Area(id, mapit_id, mapit_type, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
+/** Area(id, mapit_id, mapit_type, mapit_generation_low, mapit_generation_high, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
 export type AreaPeopleArgs = {
   filters?: InputMaybe<PersonFilter>
 }
 
-/** Area(id, mapit_id, mapit_type, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
+/** Area(id, mapit_id, mapit_type, mapit_generation_low, mapit_generation_high, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
 export type AreaPersonArgs = {
   filters?: InputMaybe<PersonFilter>
 }
 
-/** Area(id, mapit_id, mapit_type, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
+/** Area(id, mapit_id, mapit_type, mapit_generation_low, mapit_generation_high, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
 export type AreaPointArgs = {
   withParentData?: Scalars['Boolean']['input']
 }
 
-/** Area(id, mapit_id, mapit_type, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
+/** Area(id, mapit_id, mapit_type, mapit_generation_low, mapit_generation_high, gss, name, mapit_all_names, area_type, geometry, polygon, point) */
 export type AreaPolygonArgs = {
   withParentData?: Scalars['Boolean']['input']
 }
@@ -822,6 +826,7 @@ export type EditableGoogleSheetsSource = Analytics & {
   titleField?: Maybe<Scalars['String']['output']>
   updateMapping?: Maybe<Array<AutoUpdateConfig>>
   updateProgress?: Maybe<BatchJobProgress>
+  usesValidGeocodingConfig: Scalars['Boolean']['output']
   webhookHealthcheck: Scalars['Boolean']['output']
   webhookUrl: Scalars['String']['output']
 }
@@ -885,6 +890,7 @@ export type EditableGoogleSheetsSourceInput = {
   endTimeField?: InputMaybe<Scalars['String']['input']>
   firstNameField?: InputMaybe<Scalars['String']['input']>
   fullNameField?: InputMaybe<Scalars['String']['input']>
+  geocodingConfig?: InputMaybe<Scalars['JSON']['input']>
   geographyColumn?: InputMaybe<Scalars['String']['input']>
   geographyColumnType?: InputMaybe<GeographyTypes>
   id?: InputMaybe<Scalars['UUID']['input']>
@@ -1067,6 +1073,7 @@ export type ExternalDataSource = Analytics & {
   titleField?: Maybe<Scalars['String']['output']>
   updateMapping?: Maybe<Array<AutoUpdateConfig>>
   updateProgress?: Maybe<BatchJobProgress>
+  usesValidGeocodingConfig: Scalars['Boolean']['output']
   webhookHealthcheck: Scalars['Boolean']['output']
   webhookUrl: Scalars['String']['output']
 }
@@ -1183,6 +1190,7 @@ export type ExternalDataSourceInput = {
   endTimeField?: InputMaybe<Scalars['String']['input']>
   firstNameField?: InputMaybe<Scalars['String']['input']>
   fullNameField?: InputMaybe<Scalars['String']['input']>
+  geocodingConfig?: InputMaybe<Scalars['JSON']['input']>
   geographyColumn?: InputMaybe<Scalars['String']['input']>
   geographyColumnType?: InputMaybe<GeographyTypes>
   id?: InputMaybe<Scalars['UUID']['input']>
@@ -1266,6 +1274,8 @@ export enum GeoJsonTypes {
 export enum GeographyTypes {
   Address = 'ADDRESS',
   AdminDistrict = 'ADMIN_DISTRICT',
+  Area = 'AREA',
+  Coordinates = 'COORDINATES',
   ParliamentaryConstituency = 'PARLIAMENTARY_CONSTITUENCY',
   ParliamentaryConstituency_2024 = 'PARLIAMENTARY_CONSTITUENCY_2024',
   Postcode = 'POSTCODE',
@@ -1471,6 +1481,7 @@ export type MailChimpSourceInput = {
   endTimeField?: InputMaybe<Scalars['String']['input']>
   firstNameField?: InputMaybe<Scalars['String']['input']>
   fullNameField?: InputMaybe<Scalars['String']['input']>
+  geocodingConfig?: InputMaybe<Scalars['JSON']['input']>
   geographyColumn?: InputMaybe<Scalars['String']['input']>
   geographyColumnType?: InputMaybe<GeographyTypes>
   id?: InputMaybe<Scalars['UUID']['input']>
@@ -1560,6 +1571,7 @@ export type MailchimpSource = Analytics & {
   titleField?: Maybe<Scalars['String']['output']>
   updateMapping?: Maybe<Array<AutoUpdateConfig>>
   updateProgress?: Maybe<BatchJobProgress>
+  usesValidGeocodingConfig: Scalars['Boolean']['output']
   webhookHealthcheck: Scalars['Boolean']['output']
   webhookUrl: Scalars['String']['output']
 }
@@ -2500,6 +2512,7 @@ export type SharedDataSource = Analytics & {
   startTimeField?: Maybe<Scalars['String']['output']>
   titleField?: Maybe<Scalars['String']['output']>
   updateProgress?: Maybe<BatchJobProgress>
+  usesValidGeocodingConfig: Scalars['Boolean']['output']
 }
 
 /**
@@ -2680,6 +2693,7 @@ export type TicketTailorSource = Analytics & {
   titleField?: Maybe<Scalars['String']['output']>
   updateMapping?: Maybe<Array<AutoUpdateConfig>>
   updateProgress?: Maybe<BatchJobProgress>
+  usesValidGeocodingConfig: Scalars['Boolean']['output']
   webhookHealthcheck: Scalars['Boolean']['output']
   webhookUrl: Scalars['String']['output']
 }
@@ -2742,6 +2756,7 @@ export type TicketTailorSourceInput = {
   endTimeField?: InputMaybe<Scalars['String']['input']>
   firstNameField?: InputMaybe<Scalars['String']['input']>
   fullNameField?: InputMaybe<Scalars['String']['input']>
+  geocodingConfig?: InputMaybe<Scalars['JSON']['input']>
   geographyColumn?: InputMaybe<Scalars['String']['input']>
   geographyColumnType?: InputMaybe<GeographyTypes>
   id?: InputMaybe<Scalars['UUID']['input']>
@@ -3051,6 +3066,7 @@ export type GetSourceMappingQuery = {
     geographyColumn?: string | null
     geographyColumnType: GeographyTypes
     geocodingConfig: any
+    usesValidGeocodingConfig: boolean
     postcodeField?: string | null
     firstNameField?: string | null
     lastNameField?: string | null
@@ -3086,6 +3102,7 @@ export type TestDataSourceQuery = {
     geographyColumn?: string | null
     geographyColumnType: GeographyTypes
     geocodingConfig: any
+    usesValidGeocodingConfig: boolean
     healthcheck: boolean
     predefinedColumnNames: boolean
     defaultDataType?: string | null
@@ -3155,6 +3172,7 @@ export type AutoUpdateCreationReviewQuery = {
     geographyColumn?: string | null
     geographyColumnType: GeographyTypes
     geocodingConfig: any
+    usesValidGeocodingConfig: boolean
     dataType: DataSourceType
     crmType: CrmType
     autoImportEnabled: boolean
@@ -3207,6 +3225,7 @@ export type ExternalDataSourceInspectPageQuery = {
     geographyColumn?: string | null
     geographyColumnType: GeographyTypes
     geocodingConfig: any
+    usesValidGeocodingConfig: boolean
     postcodeField?: string | null
     firstNameField?: string | null
     lastNameField?: string | null
@@ -4659,6 +4678,8 @@ export type UpdateExternalDataSourceMutation = {
     name: string
     geographyColumn?: string | null
     geographyColumnType: GeographyTypes
+    geocodingConfig: any
+    usesValidGeocodingConfig: boolean
     postcodeField?: string | null
     firstNameField?: string | null
     lastNameField?: string | null
@@ -6182,6 +6203,10 @@ export const GetSourceMappingDocument = {
                 },
                 {
                   kind: 'Field',
+                  name: { kind: 'Name', value: 'usesValidGeocodingConfig' },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'postcodeField' },
                 },
                 {
@@ -6287,6 +6312,10 @@ export const TestDataSourceDocument = {
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'geocodingConfig' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'usesValidGeocodingConfig' },
                 },
                 { kind: 'Field', name: { kind: 'Name', value: 'healthcheck' } },
                 {
@@ -6550,6 +6579,10 @@ export const AutoUpdateCreationReviewDocument = {
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'geocodingConfig' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'usesValidGeocodingConfig' },
                 },
                 { kind: 'Field', name: { kind: 'Name', value: 'dataType' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'crmType' } },
@@ -6917,6 +6950,10 @@ export const ExternalDataSourceInspectPageDocument = {
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'geocodingConfig' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'usesValidGeocodingConfig' },
                 },
                 {
                   kind: 'Field',
@@ -12967,6 +13004,14 @@ export const UpdateExternalDataSourceDocument = {
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'geographyColumnType' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'geocodingConfig' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'usesValidGeocodingConfig' },
                 },
                 {
                   kind: 'Field',

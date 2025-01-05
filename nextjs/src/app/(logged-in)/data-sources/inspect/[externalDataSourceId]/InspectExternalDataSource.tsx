@@ -1,12 +1,4 @@
 'use client'
-import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
-import { format } from 'd3-format'
-import { formatRelative } from 'date-fns'
-import { AlertCircle, ExternalLink } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import pluralize from 'pluralize'
-import { toast } from 'sonner'
-
 import {
   DataSourceType,
   DeleteUpdateConfigMutation,
@@ -14,6 +6,7 @@ import {
   ExternalDataSourceInput,
   ExternalDataSourceInspectPageQuery,
   ExternalDataSourceInspectPageQueryVariables,
+  FieldDefinition,
   ProcrastinateJobStatus,
   UpdateExternalDataSourceMutation,
   UpdateExternalDataSourceMutationVariables,
@@ -43,11 +36,20 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
+import { Textarea } from '@/components/ui/textarea'
 import { externalDataSourceOptions } from '@/lib/data'
 import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/lib/graphql/mutations'
 import { contentEditableMutation } from '@/lib/html'
 import { formatCrmNames } from '@/lib/utils'
+import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
+import { format } from 'd3-format'
+import { formatRelative } from 'date-fns'
 import parse from 'html-react-parser'
+import { AlertCircle, ExternalLink } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import pluralize from 'pluralize'
+import { useState } from 'react'
+import { toast } from 'sonner'
 import { CREATE_MAP_REPORT } from '../../../reports/ReportList/CreateReportCard'
 import { ManageSourceSharing } from './ManageSourceSharing'
 import importData from './importData'
@@ -98,6 +100,7 @@ const GET_UPDATE_CONFIG = gql`
       geographyColumn
       geographyColumnType
       geocodingConfig
+      usesValidGeocodingConfig
       postcodeField
       firstNameField
       lastNameField
@@ -440,7 +443,7 @@ export default function InspectExternalDataSource({
               <UpdateExternalDataSourceFields
                 crmType={source.crmType}
                 fieldDefinitions={source.fieldDefinitions}
-                allowGeocodingConfigChange={!source.geocodingConfig}
+                allowGeocodingConfigChange={!source.usesValidGeocodingConfig}
                 initialData={{
                   geographyColumn: source.geographyColumn,
                   geographyColumnType: source.geographyColumnType,
@@ -460,6 +463,12 @@ export default function InspectExternalDataSource({
                   canDisplayPointField: source.canDisplayPointField,
                 }}
                 dataType={source.dataType}
+                onSubmit={updateMutation}
+              />
+              <UpdateGecodingConfig
+                externalDataSourceId={externalDataSourceId}
+                geocodingConfig={source.geocodingConfig}
+                fieldDefinitions={source.fieldDefinitions}
                 onSubmit={updateMutation}
               />
             </section>
@@ -644,7 +653,7 @@ export default function InspectExternalDataSource({
                   refreshFieldDefinitions={() => {
                     refetch()
                   }}
-                  allowGeocodingConfigChange={!source.geocodingConfig}
+                  allowGeocodingConfigChange={!source.usesValidGeocodingConfig}
                   externalDataSourceId={source.id}
                   initialData={{
                     // Trim out the __typenames
@@ -726,6 +735,61 @@ export default function InspectExternalDataSource({
       )}
     </div>
   )
+
+  function UpdateGecodingConfig({
+    externalDataSourceId,
+    geocodingConfig,
+    fieldDefinitions,
+    onSubmit,
+  }: {
+    externalDataSourceId: string
+    geocodingConfig: any
+    fieldDefinitions: FieldDefinition[] | null | undefined
+    onSubmit: (
+      data: ExternalDataSourceInput,
+      e?: React.BaseSyntheticEvent<object, any, any> | undefined
+    ) => void
+  }) {
+    const [newGeocodingConfig, setGeocodingConfig] = useState(
+      geocodingConfig ? JSON.stringify(geocodingConfig, null, 2) : ''
+    )
+    return (
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="outline">Edit geocoding config</Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogDescription>
+              Only play with this if you know what you are doing.
+              <Textarea
+                value={newGeocodingConfig}
+                onChange={(t) => {
+                  const val = t.target.value
+                  setGeocodingConfig(val)
+                }}
+              />
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                try {
+                  const parsed = JSON.parse(newGeocodingConfig)
+                  onSubmit({ geocodingConfig: parsed })
+                } catch {
+                  onSubmit({ geocodingConfig: null })
+                }
+              }}
+            >
+              Save
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    )
+  }
 
   function updateMutation(
     data: ExternalDataSourceInput,

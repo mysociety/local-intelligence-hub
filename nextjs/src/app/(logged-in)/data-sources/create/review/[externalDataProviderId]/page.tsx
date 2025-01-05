@@ -28,6 +28,7 @@ const GET_UPDATE_CONFIG = gql`
       geographyColumn
       geographyColumnType
       geocodingConfig
+      usesValidGeocodingConfig
       dataType
       crmType
       autoImportEnabled

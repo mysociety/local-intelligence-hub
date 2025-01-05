@@ -262,6 +262,7 @@ class ExternalDataSourceInput:
     organisation: auto
     geography_column: auto
     geography_column_type: auto
+    geocoding_config: Optional[strawberry.scalars.JSON]
     postcode_field: auto
     first_name_field: auto
     last_name_field: auto

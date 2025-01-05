@@ -44,6 +44,7 @@ const GET_UPDATE_CONFIG = gql`
       geographyColumn
       geographyColumnType
       geocodingConfig
+      usesValidGeocodingConfig
       postcodeField
       firstNameField
       lastNameField
