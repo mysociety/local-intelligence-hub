@@ -1,5 +1,6 @@
 import logging
 import re
+from enum import Enum
 from typing import TYPE_CHECKING
 
 from django.conf import settings
@@ -28,6 +29,22 @@ def find_config_item(source: "ExternalDataSource", key: str, value, default=None
         lambda item: item.get(key, None) == value,
         default,
     )
+
+
+# enum of geocoders: postcodes_io, mapbox, google
+class Geocoder(Enum):
+    POSTCODES_IO = "postcodes_io"
+    FINDTHATPOSTCODE = "findthatpostcode"
+    MAPBOX = "mapbox"
+    GOOGLE = "google"
+    AREA_GEOCODER_V2 = "AREA_GEOCODER_V2"
+    ADDRESS_GEOCODER_V2 = "ADDRESS_GEOCODER_V2"
+    COORDINATE_GEOCODER_V1 = "COORDINATE_GEOCODER_V1"
+
+
+LATEST_AREA_GEOCODER = Geocoder.AREA_GEOCODER_V2
+LATEST_ADDRESS_GEOCODER = Geocoder.ADDRESS_GEOCODER_V2
+LATEST_COORDINATE_GEOCODER = Geocoder.COORDINATE_GEOCODER_V1
 
 
 def get_config_item_value(
@@ -64,10 +81,29 @@ async def import_record(
     data_type: "DataType",
     loaders: "Loaders",
 ):
-    from hub.models import ExternalDataSource, GenericData, Geocoder
+    from hub.models import ExternalDataSource, GenericData
 
-    update_data = get_update_data(source, record)
     id = source.get_record_id(record)
+    update_data = get_update_data(source, record)
+    update_data["geocode_data"] = update_data.get("geocode_data", {})
+    update_data["geocode_data"]["config"] = source.geocoding_config
+
+    # Try to identify the appropriate geocoder
+    geocoder: Geocoder = None
+    geocoding_config_type = source.geocoding_config.get("type", None)
+    importer_fn = None
+    if geocoding_config_type == ExternalDataSource.GeographyTypes.AREA:
+        geocoder = LATEST_AREA_GEOCODER
+        importer_fn = import_area_data
+    elif geocoding_config_type == ExternalDataSource.GeographyTypes.ADDRESS:
+        geocoder = LATEST_ADDRESS_GEOCODER
+        importer_fn = import_address_data
+    elif geocoding_config_type == ExternalDataSource.GeographyTypes.COORDINATES:
+        geocoder = LATEST_COORDINATE_GEOCODER
+        importer_fn = import_coordinate_data
+    else:
+        logger.debug(source.geocoding_config)
+        raise ValueError("geocoding_config is not a valid type")
 
     # check if geocoding_config and dependent fields are the same; if so, skip geocoding
     try:
@@ -86,6 +122,8 @@ async def import_record(
             and are_dicts_equal(
                 generic_data.geocode_data["config"], source.geocoding_config
             )
+            # Add geocoding code versions are the same
+            and generic_data.geocoder == geocoder.value
         ):
             # Then, if so, check if the data has changed
             geocoding_field_values = set()
@@ -112,21 +150,8 @@ async def import_record(
     except GenericData.DoesNotExist:
         # logger.debug("Generic Data doesn't exist, no equality check to be done", id)
         pass
-    update_data["geocode_data"] = update_data.get("geocode_data", {})
-    update_data["geocode_data"]["config"] = source.geocoding_config
-    update_data["geocode_data"]["skipped"] = False
-    update_data["geocoder"] = Geocoder.GEOCODING_CONFIG.value
 
-    geocoding_config_type = source.geocoding_config.get("type", None)
-    if geocoding_config_type == ExternalDataSource.GeographyTypes.AREA:
-        importer_fn = import_area_data
-    elif geocoding_config_type == ExternalDataSource.GeographyTypes.ADDRESS:
-        importer_fn = import_address_data
-    elif geocoding_config_type == ExternalDataSource.GeographyTypes.COORDINATES:
-        importer_fn = import_coordinate_data
-    else:
-        logger.debug(source.geocoding_config)
-        raise ValueError("geocoding_config is not a valid type")
+    update_data["geocode_data"]["skipped"] = False
 
     return await importer_fn(
         record=record,
@@ -144,7 +169,9 @@ async def import_area_data(
     loaders: "Loaders",
     update_data: dict,
 ):
-    from hub.models import Area, GenericData, Geocoder
+    from hub.models import Area, GenericData
+
+    update_data["geocoder"] = LATEST_AREA_GEOCODER.value
 
     # Filter down geographies by the config
     parent_area = None
@@ -393,7 +420,9 @@ async def import_address_data(
 
     Used to batch-import data.
     """
-    from hub.models import GenericData, Geocoder
+    from hub.models import GenericData
+
+    update_data["geocoder"] = LATEST_ADDRESS_GEOCODER.value
 
     point = None
     address_data = None
@@ -546,7 +575,9 @@ async def import_coordinate_data(
     loaders: "Loaders",
     update_data: dict,
 ):
-    from hub.models import GenericData, Geocoder
+    from hub.models import GenericData
+
+    update_data["geocoder"] = LATEST_COORDINATE_GEOCODER.value
 
     steps = []
 

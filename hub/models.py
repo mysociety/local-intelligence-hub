@@ -5,7 +5,6 @@ import json
 import math
 import uuid
 from datetime import datetime, timedelta, timezone
-from enum import Enum
 from typing import List, Optional, Self, Type, TypedDict, Union
 from urllib.parse import urlencode, urljoin
 
@@ -90,15 +89,6 @@ from utils.py import batched, ensure_list, get, is_maybe_id
 User = get_user_model()
 
 logger = get_simple_debug_logger(__name__)
-
-
-# enum of geocoders: postcodes_io, mapbox, google
-class Geocoder(Enum):
-    POSTCODES_IO = "postcodes_io"
-    FINDTHATPOSTCODE = "findthatpostcode"
-    MAPBOX = "mapbox"
-    GOOGLE = "google"
-    GEOCODING_CONFIG = "geocoding_config"
 
 
 class Organisation(models.Model):
@@ -783,9 +773,7 @@ class GenericData(CommonData):
     public_url = models.URLField(max_length=2000, blank=True, null=True)
     social_url = models.URLField(max_length=2000, blank=True, null=True)
     geocode_data = JSONField(blank=True, null=True)
-    geocoder = models.CharField(
-        max_length=1000, blank=True, null=True, default=Geocoder.POSTCODES_IO.value
-    )
+    geocoder = models.CharField(max_length=1000, blank=True, null=True)
     address = models.CharField(max_length=1000, blank=True, null=True)
     title = models.CharField(max_length=1000, blank=True, null=True)
     description = models.TextField(max_length=3000, blank=True, null=True)
@@ -1607,6 +1595,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         Members doesn't mean members, it's actually generic records.
         Copy data to this database for use in dashboarding features.
         """
+
+        from hub.data_imports.geocoding_config import Geocoder
 
         if not members:
             logger.error("import_many called with 0 records")
