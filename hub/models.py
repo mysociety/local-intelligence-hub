@@ -1104,7 +1104,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             and self.geocoding_config.get("components", None) is not None
             and isinstance(self.geocoding_config.get("components", None), list)
             and len(self.geocoding_config.get("components", [])) > 0
-        ) == True
+        ) is True
 
     geography_column_type = TextChoicesField(
         choices_enum=GeographyTypes,

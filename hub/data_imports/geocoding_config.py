@@ -7,7 +7,6 @@ from django.contrib.gis.geos import Point
 from django.db.models import Q
 
 from asgiref.sync import sync_to_async
-from benedict import benedict
 
 from hub.data_imports.utils import get_update_data
 from utils import google_maps, mapit_types
@@ -159,7 +158,6 @@ async def import_area_data(
             "lih_area_type__code", None
         )
         literal_mapit_type = item.get("metadata", {}).get("mapit_type", None)
-        area_set = "LIH" if literal_lih_area_type__code is not None else "MAPIT"
         area_types = literal_lih_area_type__code or literal_mapit_type
         literal_area_field = item.get("field", None)
         raw_area_value = str(source.get_record_field(record, literal_area_field))
@@ -277,7 +275,7 @@ async def import_area_data(
 
         step = {
             "type": "sql_area_matching",
-            f"area_types": parsed_area_types,
+            "area_types": parsed_area_types,
             "result": "failed" if area is None else "success",
             "search_term": raw_area_value,
             "data": (
