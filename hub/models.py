@@ -1092,7 +1092,20 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
         AREA = "AREA", "Area"
 
-    geocoding_config = JSONField(blank=True, null=True)
+    geocoding_config = JSONField(blank=False, null=False, default=dict)
+
+    def uses_valid_geocoding_config(self):
+        # TODO: Could replace this with a Pydantic schema or something
+        return (
+            self.geocoding_config is not None and
+            isinstance(self.geocoding_config, dict) and
+            self.geocoding_config.get("type", None) is not None
+            and self.geocoding_config.get("type", None) in self.GeographyTypes.values
+            and self.geocoding_config.get("components", None) is not None
+            and isinstance(self.geocoding_config.get("components", None), list)
+            and len(self.geocoding_config.get("components", [])) > 0
+        ) == True
+        
     geography_column_type = TextChoicesField(
         choices_enum=GeographyTypes,
         default=GeographyTypes.POSTCODE,
@@ -1624,7 +1637,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         loaders = await self.get_loaders()
 
-        if self.geocoding_config and isinstance(self.geocoding_config, dict):
+        if self.uses_valid_geocoding_config():
             await asyncio.gather(
                 *[
                     geocoding_config.import_record(record, self, data_type, loaders)

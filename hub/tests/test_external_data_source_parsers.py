@@ -133,12 +133,10 @@ class TestMultiLevelGeocoding(TestCase):
             data=cls.fixture.copy(),
             geocoding_config={
                 "type": ExternalDataSource.GeographyTypes.AREA,
-                "components": {
-                    "area_columns": [
-                        {"field": "council", "metadata": { "lih_area_type__code": ["STC", "DIS"] }},
-                        {"field": "ward", "metadata": { "lih_area_type__code": "WD23" }}
-                    ]
-                }
+                "components": [
+                    {"field": "council", "metadata": { "lih_area_type__code": ["STC", "DIS"] }},
+                    {"field": "ward", "metadata": { "lih_area_type__code": "WD23" }}
+                ]
             }
         )
 
@@ -183,33 +181,40 @@ class TestMultiLevelGeocoding(TestCase):
         for d in self.data:
             try:
                 try:
-                    if d.json["ward"] is None:
-                        self.assertIsNone(d.postcode_data, "None shouldn't geocode.")
-                        continue
-                    elif d.json["expected_area_gss"] is None:
-                        self.assertIsNone(
-                            d.postcode_data, "Expect MapIt to have failed."
-                        )
-                        continue
-                    elif d.json["expected_area_gss"] is not None:
-                        self.assertEqual(
-                            d.geocode_data["data"]["area_fields"][
-                                d.json["expected_area_type_code"]
-                            ],
-                            d.json["expected_area_gss"],
-                        )
-                        self.assertFalse(
-                            d.geocode_data["skipped"], "Geocoding should be done."
-                        )
-                        self.assertIsNotNone(d.postcode_data)
-                        self.assertGreaterEqual(
-                            len(d.geocode_data["steps"]),
-                            3,
-                            "Geocoding outcomes should be debuggable, for future development.",
-                        )
-                except KeyError:
-                    raise AssertionError("Expected geocoding data was missing.")
-            except AssertionError as e:
+                    try:
+                        if d.json["ward"] is None:
+                            self.assertIsNone(d.postcode_data, "None shouldn't geocode.")
+                            continue
+                        elif d.json["expected_area_gss"] is None:
+                            self.assertIsNone(
+                                d.postcode_data, "Expect MapIt to have failed."
+                            )
+                            continue
+                        elif d.json["expected_area_gss"] is not None:
+                            self.assertEqual(
+                                d.geocode_data["data"]["area_fields"][
+                                    d.json["expected_area_type_code"]
+                                ],
+                                d.json["expected_area_gss"],
+                            )
+                            self.assertFalse(
+                                d.geocode_data["skipped"], "Geocoding should be done."
+                            )
+                            self.assertIsNotNone(d.postcode_data)
+                            self.assertGreaterEqual(
+                                len(d.geocode_data["steps"]),
+                                3,
+                                "Geocoding outcomes should be debuggable, for future development.",
+                            )
+                    except KeyError:
+                        raise AssertionError("Expected geocoding data was missing.")
+                except AssertionError as e:
+                    print(e)
+                    print("Geocoding failed:", d.id, json.dumps(d.json, indent=4))
+                    print("--Geocode data:", d.id, json.dumps(d.geocode_data, indent=4))
+                    print("--Postcode data:", d.id, json.dumps(d.postcode_data, indent=4))
+                    raise
+            except TypeError as e:
                 print(e)
                 print("Geocoding failed:", d.id, json.dumps(d.json, indent=4))
                 print("--Geocode data:", d.id, json.dumps(d.geocode_data, indent=4))

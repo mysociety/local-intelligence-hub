@@ -155,9 +155,9 @@ async def import_area_data(
 
     for item in source.geocoding_config.get("components", []):
         parent_area = area
-        literal_lih_area_type__code = item.get("metdata", {}).get("lih_area_type__code", None)
-        literal_mapit_type = item.get("metdata", {}).get("mapit_type", None)
-        area_set = "LIH" if literal_lih_area_type__code is not None else "MapIt"
+        literal_lih_area_type__code = item.get("metadata", {}).get("lih_area_type__code", None)
+        literal_mapit_type = item.get("metadata", {}).get("mapit_type", None)
+        area_set = "LIH" if literal_lih_area_type__code is not None else "MAPIT"
         area_types = literal_lih_area_type__code or literal_mapit_type
         literal_area_field = item.get("field", None)
         raw_area_value = str(source.get_record_field(record, literal_area_field))
@@ -275,7 +275,7 @@ async def import_area_data(
 
         step = {
             "type": "sql_area_matching",
-            f"{area_set}_area_types": parsed_area_types,
+            f"area_types": parsed_area_types,
             "result": "failed" if area is None else "success",
             "search_term": raw_area_value,
             "data": (
