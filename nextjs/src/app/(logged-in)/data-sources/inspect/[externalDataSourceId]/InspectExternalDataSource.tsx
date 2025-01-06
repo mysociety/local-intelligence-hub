@@ -23,6 +23,7 @@ import { UpdateExternalDataSourceFields } from '@/components/UpdateExternalDataS
 import { UpdateMappingForm } from '@/components/UpdateMappingForm'
 import { AirtableLogo } from '@/components/logos/AirtableLogo'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { AlertButton } from '@/components/ui/alert-button'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,15 +32,15 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { Textarea } from '@/components/ui/textarea'
 import { externalDataSourceOptions } from '@/lib/data'
 import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/lib/graphql/mutations'
 import { contentEditableMutation } from '@/lib/html'
+import { toastPromise } from '@/lib/toast'
 import { formatCrmNames } from '@/lib/utils'
 import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
@@ -53,7 +54,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { CREATE_MAP_REPORT } from '../../../reports/ReportList/CreateReportCard'
 import { ManageSourceSharing } from './ManageSourceSharing'
-import importData from './importData'
+import importData, { cancelImport } from './importData'
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {
@@ -340,24 +341,59 @@ export default function InspectExternalDataSource({
                   : ''}
                 .
               </p>
-              <Button
-                disabled={source.importProgress?.inQueue}
-                onClick={() => importData(client, externalDataSourceId)}
-              >
-                {!source.importProgress?.inQueue ? (
-                  'Import all data'
-                ) : (
-                  <span className="flex flex-row gap-2 items-center">
-                    <LoadingIcon size={'18'} />
-                    <span>
-                      {source.importProgress?.status ===
-                      ProcrastinateJobStatus.Doing
-                        ? 'Importing...'
-                        : 'Scheduled'}
+
+              <div className="flex flex-row align-baseline gap-2">
+                <Button
+                  disabled={source.importProgress?.inQueue}
+                  onClick={() => {
+                    importData(client, externalDataSourceId)
+                  }}
+                >
+                  {!source.importProgress?.inQueue ||
+                  source.importProgress?.status ===
+                    ProcrastinateJobStatus.Failed ||
+                  source.importProgress?.status ===
+                    ProcrastinateJobStatus.Cancelled ? (
+                    'Import all data'
+                  ) : (
+                    <span className="flex flex-row gap-2 items-center">
+                      <LoadingIcon size={'18'} />
+                      <span>
+                        {source.importProgress?.inQueue ||
+                        source.importProgress?.status ===
+                          ProcrastinateJobStatus.Doing
+                          ? 'Importing...'
+                          : 'Scheduled'}
+                      </span>
                     </span>
-                  </span>
+                  )}
+                </Button>
+
+                {source.importProgress?.inQueue && (
+                  <Button
+                    onClick={() => {
+                      toastPromise(
+                        cancelImport(
+                          client,
+                          externalDataSourceId,
+                          source.importProgress?.id || ''
+                        ),
+                        {
+                          loading: 'Cancelling...',
+                          success: () => {
+                            refetch()
+                            return 'Cancelled'
+                          },
+                          error: 'Failed to cancel',
+                        }
+                      )
+                    }}
+                  >
+                    Cancel import
+                  </Button>
                 )}
-              </Button>
+              </div>
+
               {source.importProgress?.status !== 'todo' ? (
                 <BatchJobProgressReport
                   batchJobProgress={source.importProgress}
@@ -728,37 +764,53 @@ export default function InspectExternalDataSource({
                 <code>{source.connectionDetails.apiKey}</code>
               </div>
             ) : null}
-            <AlertDialog>
-              <AlertDialogTrigger>
-                <Button variant="destructive" asChild={true}>
-                  <span>Permanently delete</span>
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                  <AlertDialogDescription className="text-base">
-                    This action cannot be undone. This will permanently delete
-                    this data source connect from Mapped.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel
-                    className={buttonVariants({ variant: 'outline' })}
-                  >
-                    Cancel
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => {
-                      del()
-                    }}
-                    className={buttonVariants({ variant: 'destructive' })}
-                  >
-                    Confirm delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+
+            <div className="flex flex-row align-baseline gap-2">
+              <AlertButton
+                buttonLabel="Permanently delete"
+                title="Are you sure you want to delete this data source?"
+                children={
+                  'This action cannot be undone. This will permanently delete this data source connect from Mapped.'
+                }
+                onConfirm={del}
+                confirmLabel="Confirm delete"
+              />
+              {/*  */}
+              <AlertButton
+                buttonLabel="Remove all records from Mapped"
+                title="Are you sure you want to remove this data source's records on Mapped?"
+                children={
+                  'This action cannot be undone. This will permanently remove this data from Mapped. The data will NOT be deleted from the third party system.'
+                }
+                confirmLabel="Confirm remove records from Mapped"
+                onConfirm={() => {
+                  toastPromise(
+                    client.mutate({
+                      mutation: gql`
+                        mutation DeleteRecords($externalDataSourceId: String!) {
+                          deleteAllRecords(
+                            externalDataSourceId: $externalDataSourceId
+                          ) {
+                            id
+                          }
+                        }
+                      `,
+                      variables: {
+                        externalDataSourceId,
+                      },
+                    }),
+                    {
+                      loading: 'Deleting all records...',
+                      success: () => {
+                        refetch()
+                        return 'Deleted all records'
+                      },
+                      error: 'Failed to delete',
+                    }
+                  )
+                }}
+              />
+            </div>
           </section>
         </>
       )}

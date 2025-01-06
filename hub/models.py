@@ -1337,11 +1337,19 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         jobs = self.event_log_queryset().filter(args__request_id=request_id).all()
         status = "todo"
 
+        number_of_jobs_ahead_in_queue = (
+            ProcrastinateJob.objects.filter(id__lt=parent_job.id)
+            .filter(status__in=["todo", "doing"])
+            .count()
+        )
+
         if any([job.status == "doing" for job in jobs]):
             status = "doing"
         elif any([job.status == "failed" for job in jobs]):
             status = "failed"
         elif all([job.status == "succeeded" for job in jobs]):
+            status = "succeeded"
+        elif number_of_jobs_ahead_in_queue <= 0:
             status = "succeeded"
 
         total = 0
@@ -1359,12 +1367,6 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             statuses.get("succeeded", 0)
             + statuses.get("failed", 0)
             + statuses.get("doing", 0)
-        )
-
-        number_of_jobs_ahead_in_queue = (
-            ProcrastinateJob.objects.filter(id__lt=parent_job.id)
-            .filter(status__in=["todo", "doing"])
-            .count()
         )
 
         time_started = (
@@ -1839,7 +1841,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             "Update many not implemented for this data source type."
         )
 
-    def get_record_id(self, record):
+    def get_record_id(self, record) -> Optional[Union[str, int]]:
         """
         Get the ID for a record.
         """
@@ -2691,7 +2693,7 @@ class LocalJSONSource(ExternalDataSource):
         ]
 
     def get_record_id(self, record: dict):
-        return record[self.id_field]
+        return record.get(self.id_field, None)
 
     async def fetch_one(self, member_id):
         return self.df[self.df[self.id_field] == member_id].to_dict(orient="records")[0]
@@ -2833,7 +2835,7 @@ class AirtableSource(ExternalDataSource):
         return itertools.chain.from_iterable(self.table.iterate())
 
     def get_record_id(self, record):
-        return record["id"]
+        return record.get("id", None)
 
     def get_record_field(self, record, field, field_type=None):
         d = record["fields"].get(str(field), None)
@@ -3122,7 +3124,7 @@ class MailchimpSource(ExternalDataSource):
         return False
 
     def get_record_id(self, record):
-        return record["id"]
+        return record.get("id", None)
 
     def get_record_field(self, record, field: str, field_type=None):
         field_options = [

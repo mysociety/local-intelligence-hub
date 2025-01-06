@@ -284,4 +284,12 @@ geocoding_cases = [
         "expected_area_type_code": "WD23",
         "expected_area_gss": "E05014252",
     },
+    # Failed again
+    {
+        "id": "West LancashireBurscough Bridge & Rufford",
+        "ward": "Burscough Bridge & Rufford",
+        "council": "West Lancashire",
+        "expected_area_type_code": "WD23",
+        "expected_area_gss": "E05014930",
+    },
 ]

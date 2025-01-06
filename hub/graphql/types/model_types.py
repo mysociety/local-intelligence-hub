@@ -49,6 +49,7 @@ class ProcrastinateJobStatus(Enum):
     doing = "doing"  #: A worker is running the job
     succeeded = "succeeded"  #: The job ended successfully
     failed = "failed"  #: The job ended with an error
+    cancelled = "cancelled"  #: The job was cancelled
 
 
 @strawberry_django.filters.filter(
