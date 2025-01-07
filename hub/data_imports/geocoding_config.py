@@ -252,7 +252,7 @@ async def import_area_data(
             ]
 
         # always try a code
-        or_statement_area_text_matcher = Q(gss__iexact=raw_area_value.upper().upper())
+        or_statement_area_text_matcher = Q(gss__iexact=raw_area_value)
 
         # matrix of strings and suffixes
         for value in list(set(search_values)):
