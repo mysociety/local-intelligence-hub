@@ -3,7 +3,7 @@
     "name":"constituency_age_distribution",
     "label":"Constituency age distribution",
     "description":"Distribution of the ages of the constituents of each constituency.",
-    "data_type":"integer",
+    "data_type":"percent",
     "is_range":true,
     "category":"place",
     "subcategory":null,
@@ -27,6 +27,8 @@
     "do_not_delete":true,
     "file_type":"excel",
     "area_type":"WMC23",
+    "delete_first": true,
+    "multiply_percentage": true,
     "data_types": [
       {
         "name":"ages_0_15",
@@ -196,7 +198,7 @@
     "name":"constituency_housing_tenure",
     "label":"Housing Tenure",
     "description":"",
-    "data_type":"float",
+    "data_type":"percent",
     "is_range":true,
     "category":"place",
     "subcategory":null,
@@ -220,6 +222,8 @@
     "do_not_delete":true,
     "file_type":"excel",
     "area_type":"WMC23",
+    "multiply_percentage": true,
+    "delete_first": true,
     "data_types": [
       {
         "name":"housing_tenure_outright",
@@ -369,7 +373,7 @@
     "default_value":10,
     "comparators":"numerical",
     "exclude_countries":["Scotland", "Northern Ireland"],
-    "unit_type":"percentage",
+    "unit_type":"integer",
     "unit_distribution":"people_in_area",
     "fill_blanks":false,
     "is_public":true,
@@ -380,6 +384,7 @@
     "file_type":"csv",
     "area_type":"WMC23",
     "constituency_col":"Post-2019 Westminster Parliamentary constituencies Code",
+    "delete_first": true,
     "data_types": [
       {
         "name":"constituency_commute_method_bus",
