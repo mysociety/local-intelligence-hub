@@ -21,8 +21,8 @@ export default function Footer() {
         </Link>
       </div>
       <Link
-        href="/"
-        className="text-muted font-IBMPlexMono text-[15px] tracking-[-0.3px] leading-[150%]"
+        href="/privacy"
+        className="font-IBMPlexMono text-[15px] tracking-[-0.3px] leading-[150%]"
       >
         Privacy policy
       </Link>

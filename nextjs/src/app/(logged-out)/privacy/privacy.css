@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+nav {
+  @apply !relative;
+}
+
+h1 {
+  @apply text-3xl font-bold;
+}
+
+h2 {
+  @apply text-2xl font-bold;
+}
+
+h1,
+h2,
+p,
+ol {
+  @apply mb-2;
+}
+
+strong {
+  @apply font-bold;
+}
+
+ol {
+  @apply pl-8 list-decimal;
+}

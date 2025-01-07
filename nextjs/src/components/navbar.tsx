@@ -195,6 +195,13 @@ export default function Navbar({ isLoggedIn }: NavbarProps) {
                           About
                         </NavigationMenuLink>
                       </Link>
+                      <Link href="/privacy" legacyBehavior passHref>
+                        <NavigationMenuLink
+                          className={navigationMenuTriggerStyle()}
+                        >
+                          Privacy
+                        </NavigationMenuLink>
+                      </Link>
                     </NavigationMenuItem>
                   </NavigationMenuList>
                 </NavigationMenu>
