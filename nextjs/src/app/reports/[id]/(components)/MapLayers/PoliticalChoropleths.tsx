@@ -32,22 +32,21 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   boundaryType,
   tileset,
 }) => {
-  // Show the layer only if the report is set to show the boundary type
+  // Show the layer only if the report is set to show the boundary type and the VisualisationType is choropleth
   const visibility =
-    report.displayOptions?.dataVisualisation?.boundaryType === boundaryType
+    report.displayOptions?.dataVisualisation?.boundaryType === boundaryType &&
+    report.displayOptions?.dataVisualisation?.showDataVisualisation?.choropleth
       ? 'visible'
       : 'none'
-
   const { data: dataByBoundary } = useDataByBoundary({ report, boundaryType })
+
+  const boundaryNameVisibility =
+    visibility === 'visible' && report.displayOptions?.display.showBoundaryNames
+      ? 'visible'
+      : 'none'
   const map = useLoadedMap()
   const [selectedBoundary, setSelectedBoundary] = useAtom(selectedBoundaryAtom)
   useClickOnBoundaryEvents(visibility === 'visible' ? tileset : null)
-
-  useEffect(() => {
-    if (visibility === 'none') {
-      setSelectedBoundary(null)
-    }
-  }, [visibility])
 
   // When the map is loaded and we have the data, add the data to the boundaries
   useEffect(() => {
@@ -79,16 +78,19 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
         promoteId={tileset.promoteId}
       >
         {/* Fill of the boundary */}
-        <Layer
-          beforeId="road-simple"
-          id={`${tileset.mapboxSourceId}-fill`}
-          source={tileset.mapboxSourceId}
-          source-layer={tileset.sourceLayerId}
-          type="fill"
-          filter={getChoroplethFillFilter(dataByBoundary, tileset)}
-          paint={getChoroplethFill(dataByBoundary, visibility === 'visible')}
-          //layout={{ visibility: delayedVisibility }}
-        />
+
+        <>
+          <Layer
+            beforeId="road-simple"
+            id={`${tileset.mapboxSourceId}-fill`}
+            source={tileset.mapboxSourceId}
+            source-layer={tileset.sourceLayerId}
+            type="fill"
+            filter={getChoroplethFillFilter(dataByBoundary, tileset)}
+            paint={getChoroplethFill(dataByBoundary, visibility === 'visible')}
+          />
+        </>
+
         {/* Border of the boundary */}
         <Layer
           beforeId={PLACEHOLDER_LAYER_ID_CHOROPLETH}
@@ -111,9 +113,14 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           type="line"
           paint={getSelectedChoroplethEdge()}
           filter={['==', ['get', tileset.promoteId], selectedBoundary]}
-          layout={{ visibility, 'line-join': 'round', 'line-round-limit': 0.1 }}
+          layout={{
+            visibility,
+            'line-join': 'round',
+            'line-round-limit': 0.1,
+          }}
         />
       </Source>
+
       <Source
         id={`${tileset.mapboxSourceId}-area-count`}
         type="geojson"
@@ -124,17 +131,15 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           type="symbol"
           layout={{
             ...getAreaCountLayout(dataByBoundary),
-            visibility,
+            visibility: boundaryNameVisibility,
           }}
           paint={{
             'text-opacity': [
               'interpolate',
               ['exponential', 1],
               ['zoom'],
-              //
               7.5,
               0,
-              //
               7.8,
               1,
             ],
@@ -143,12 +148,13 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
             'text-halo-width': 1.5,
           }}
         />
+
         <Layer
           id={`${tileset.mapboxSourceId}-area-label`}
           type="symbol"
           layout={{
             ...getAreaLabelLayout(dataByBoundary),
-            visibility,
+            visibility: boundaryNameVisibility,
           }}
           paint={{
             'text-color': 'white',
@@ -156,10 +162,8 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
               'interpolate',
               ['exponential', 1],
               ['zoom'],
-              //
               7.5,
               0,
-              //
               7.8,
               1,
             ],
