@@ -448,5 +448,209 @@
         "data_col":"Work mainly at or from home"
       }
     ]
+  },
+  {
+    "name":"constituency_disability_status",
+    "label":"Disability under the Equality Act",
+    "description":"",
+    "data_type":"percent",
+    "is_range":false,
+    "category":"place",
+    "subcategory":null,
+    "release_date":"May 2024",
+    "source_label":"Data from ONS.",
+    "source":"https://www.ons.gov.uk/filters/f7dcc756-f4bc-4dcb-9302-2f6def224390/dimensions",
+    "source_type":"csv",
+    "data_url":null,
+    "table":"areadata",
+    "default_value":10,
+    "comparators":"numerical",
+    "exclude_countries":["Scotland", "Northern Ireland"],
+    "unit_type":"percentage",
+    "unit_distribution":"people_in_area",
+    "fill_blanks":false,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"2024_disability_status_percentage.csv",
+    "uses_gss":true,
+    "file_type":"csv",
+    "area_type":"WMC23",
+    "constituency_col":"Post-2019 Westminster Parliamentary constituencies Code",
+    "multiply_percentage": true,
+    "delete_first": true,
+    "data_types": [
+      {
+        "name":"constituency_disability_status",
+        "label":"Disabled under the Equality Act",
+        "data_col":"Disabled under the Equality Act"
+      }
+    ]
+  },
+  {
+    "name":"constituency_current_occupation",
+    "label":"Current Occupation",
+    "description":"",
+    "data_type":"percent",
+    "is_range":true,
+    "category":"place",
+    "subcategory":null,
+    "release_date":"May 2024",
+    "source_label":"Data from ONS.",
+    "source":"https://www.ons.gov.uk/filters/f7dcc756-f4bc-4dcb-9302-2f6def224390/dimensions",
+    "source_type":"csv",
+    "data_url":null,
+    "table":"areadata",
+    "default_value":10,
+    "comparators":"numerical",
+    "exclude_countries":["Scotland", "Northern Ireland"],
+    "unit_type":"percentage",
+    "unit_distribution":"people_in_area",
+    "fill_blanks":false,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"2024_occupation_percentage.csv",
+    "uses_gss":true,
+    "file_type":"csv",
+    "area_type":"WMC23",
+    "constituency_col":"Post-2019 Westminster Parliamentary constituencies Code",
+    "multiply_percentage": true,
+    "delete_first": true,
+    "data_types": [
+      {
+        "name":"constituency_current_occupation_manager",
+        "label":"Managers, directors and senior officials",
+        "data_col":"1. Managers, directors and senior officials"
+      },
+      {
+        "name":"constituency_current_occupation_",
+        "label":"Driving a car or van",
+        "data_col":"Driving a car or van"
+      },
+      {
+        "name":"constituency_current_occupation_professional",
+        "label":"Professional occupations",
+        "data_col":"2. Professional occupations"
+      },
+      {
+        "name":"constituency_current_occupation_assoc_professional",
+        "label":"Associate professional and technical occupations",
+        "data_col":"3. Associate professional and technical occupations"
+      },
+      {
+        "name":"constituency_current_occupation_admin",
+        "label":"Administrative and secretarial occupations",
+        "data_col":"4. Administrative and secretarial occupations"
+      },
+      {
+        "name":"constituency_current_occupation_trades",
+        "label":"Skilled trades occupations",
+        "data_col":"5. Skilled trades occupations"
+      },
+      {
+        "name":"constituency_current_occupation_caring",
+        "label":"Caring, leisure and other service occupations",
+        "data_col":"6. Caring, leisure and other service occupations"
+      },
+      {
+        "name":"constituency_current_occupation_sales",
+        "label":"Sales and customer service occupations",
+        "data_col":"7. Sales and customer service occupations"
+      },
+      {
+        "name":"constituency_current_occupation_process",
+        "label":"Process, plant and machine operatives",
+        "data_col":"8. Process, plant and machine operatives"
+      },
+      {
+        "name":"constituency_current_occupation_elementary",
+        "label":"Elementary occupations",
+        "data_col":"9. Elementary occupations"
+      },
+      {
+        "name":"constituency_current_occupation_na",
+        "label":"Does not apply",
+        "data_col":"Does not apply"
+      }
+    ]
+  },
+  {
+    "name":"constituency_current_industry",
+    "label":"Current Industry",
+    "description":"",
+    "data_type":"percent",
+    "is_range":true,
+    "category":"place",
+    "subcategory":null,
+    "release_date":"May 2024",
+    "source_label":"Data from ONS.",
+    "source":"https://www.ons.gov.uk/filters/f7dcc756-f4bc-4dcb-9302-2f6def224390/dimensions",
+    "source_type":"csv",
+    "data_url":null,
+    "table":"areadata",
+    "default_value":10,
+    "comparators":"numerical",
+    "exclude_countries":["Scotland", "Northern Ireland"],
+    "unit_type":"percentage",
+    "unit_distribution":"people_in_area",
+    "fill_blanks":false,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"2024_industry_percentage.csv",
+    "uses_gss":true,
+    "file_type":"csv",
+    "area_type":"WMC23",
+    "constituency_col":"Post-2019 Westminster Parliamentary constituencies Code",
+    "multiply_percentage": true,
+    "delete_first": true,
+    "data_types": [
+      {
+        "name":"constituency_current_industry_agriculture",
+        "label":"Agriculture, energy and water",
+        "data_col":"A, B, D, E Agriculture, energy and water"
+      },
+      {
+        "name":"constituency_current_industry_manufacturing",
+        "label":"Manufacturing",
+        "data_col":"C Manufacturing"
+      },
+      {
+        "name":"constituency_current_industry_construction",
+        "label":"Construction",
+        "data_col":"F Construction"
+      },
+      {
+        "name":"constituency_current_industry_distribution",
+        "label":"Distribution, hotels and restaurants",
+        "data_col":"G, I Distribution, hotels and restaurants"
+      },
+      {
+        "name":"constituency_current_industry_transport",
+        "label":"Transport and communication",
+        "data_col":"H, J Transport and communication"
+      },
+      {
+        "name":"constituency_current_industry_financial",
+        "label":"Financial, real estate, professional and administrative activities",
+        "data_col":"K, L, M, N Financial, real estate, professional and administrative activities"
+      },
+      {
+        "name":"constituency_current_industry_public_admin",
+        "label":"Public administration, education and health",
+        "data_col":"O, P, Q Public administration, education and health"
+      },
+      {
+        "name":"constituency_current_industry_other",
+        "label":"Other",
+        "data_col":"R, S, T, U Other"
+      },
+      {
+        "name":"constituency_current_industry_na",
+        "label":"Does not apply",
+        "data_col":"Does not apply"
+      }
+    ]
   }
 ]
