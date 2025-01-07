@@ -10,6 +10,7 @@ import strawberry
 import strawberry_django
 from asgiref.sync import async_to_sync
 from graphql import GraphQLError
+from procrastinate.contrib.django.models import ProcrastinateJob
 from strawberry import auto
 from strawberry.field_extensions import InputMutationExtension
 from strawberry.types.info import Info
@@ -20,6 +21,7 @@ from hub import models
 from hub.graphql.types import model_types
 from hub.graphql.utils import graphql_type_to_dict
 from hub.models import BatchRequest
+from hub.permissions import user_can_manage_source
 
 logger = logging.getLogger(__name__)
 
@@ -253,6 +255,45 @@ async def import_all(
     return ExternalDataSourceAction(id=request_id, external_data_source=data_source)
 
 
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def cancel_import(
+    info: Info, external_data_source_id: str, request_id: str
+) -> ExternalDataSourceAction:
+    data_source: models.ExternalDataSource = models.ExternalDataSource.objects.get(
+        id=external_data_source_id
+    )
+    # Confirm user has access to this source
+    user = get_current_user(info)
+    assert user_can_manage_source(user, data_source)
+    # Update all remaining procrastinate jobs, cancel them
+    ProcrastinateJob.objects.filter(
+        args__external_data_source_id=external_data_source_id,
+        status__in=["todo", "doing"],
+        args__request_id=request_id,
+    ).update(status="cancelled")
+    BatchRequest.objects.filter(id=request_id).update(status="cancelled")
+    #
+    return ExternalDataSourceAction(id=request_id, external_data_source=data_source)
+
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def delete_all_records(
+    info: Info, external_data_source_id: str
+) -> model_types.ExternalDataSource:
+    data_source = models.ExternalDataSource.objects.get(id=external_data_source_id)
+    # Confirm user has access to this source
+    user = get_current_user(info)
+    assert user_can_manage_source(user, data_source)
+    # Don't import more records, since we want to wipe 'em
+    ProcrastinateJob.objects.filter(
+        args__external_data_source_id=external_data_source_id,
+        status__in=["todo", "doing"],
+    ).update(status="cancelled")
+    # Delete all data
+    data_source.get_import_data().all().delete()
+    return models.ExternalDataSource.objects.get(id=external_data_source_id)
+
+
 @strawberry_django.input(models.ExternalDataSource, partial=True)
 class ExternalDataSourceInput:
     id: auto
@@ -262,6 +303,7 @@ class ExternalDataSourceInput:
     organisation: auto
     geography_column: auto
     geography_column_type: auto
+    geocoding_config: Optional[strawberry.scalars.JSON]
     postcode_field: auto
     first_name_field: auto
     last_name_field: auto

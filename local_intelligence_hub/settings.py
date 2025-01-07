@@ -234,8 +234,10 @@ NON_LOGIN_URLS = (
 # Application definition
 
 INSTALLED_APPS = [
+    "django.contrib.gis",
     "django.contrib.admin",
     "django.contrib.auth",
+    "django.contrib.postgres",
     "polymorphic",
     "django.contrib.contenttypes",
     "django.contrib.sessions",

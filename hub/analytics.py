@@ -24,6 +24,22 @@ class Analytics:
         gss: Optional[str]
         external_data: dict
 
+    def imported_data_count_located(self) -> int:
+        return (
+            self.get_analytics_queryset().filter(postcode_data__isnull=False).count()
+            or 0
+        )
+
+    def imported_data_count_unlocated(self) -> int:
+        return self.get_analytics_queryset().filter(postcode_data=None).count() or 0
+
+    def imported_data_geocoding_rate(self) -> float:
+        located = self.imported_data_count_located()
+        total = self.imported_data_count()
+        if total == 0:
+            return 0
+        return (located / total) * 100
+
     # TODO: Rename to e.g. row_count_by_political_boundary
     def imported_data_count_by_area(
         self,

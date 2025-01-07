@@ -1,12 +1,4 @@
 'use client'
-import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
-import { format } from 'd3-format'
-import { formatRelative } from 'date-fns'
-import { AlertCircle, ExternalLink } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import pluralize from 'pluralize'
-import { toast } from 'sonner'
-
 import {
   DataSourceType,
   DeleteUpdateConfigMutation,
@@ -14,6 +6,7 @@ import {
   ExternalDataSourceInput,
   ExternalDataSourceInspectPageQuery,
   ExternalDataSourceInspectPageQueryVariables,
+  FieldDefinition,
   ProcrastinateJobStatus,
   UpdateExternalDataSourceMutation,
   UpdateExternalDataSourceMutationVariables,
@@ -30,6 +23,7 @@ import { UpdateExternalDataSourceFields } from '@/components/UpdateExternalDataS
 import { UpdateMappingForm } from '@/components/UpdateMappingForm'
 import { AirtableLogo } from '@/components/logos/AirtableLogo'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { AlertButton } from '@/components/ui/alert-button'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,19 +32,29 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
+import { Textarea } from '@/components/ui/textarea'
 import { externalDataSourceOptions } from '@/lib/data'
 import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/lib/graphql/mutations'
 import { contentEditableMutation } from '@/lib/html'
+import { toastPromise } from '@/lib/toast'
 import { formatCrmNames } from '@/lib/utils'
+import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
+import { format } from 'd3-format'
+import { interpolateRdYlGn } from 'd3-scale-chromatic'
+import { formatRelative } from 'date-fns'
 import parse from 'html-react-parser'
+import { AlertCircle, ExternalLink } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import pluralize from 'pluralize'
+import { useState } from 'react'
+import { toast } from 'sonner'
 import { CREATE_MAP_REPORT } from '../../../reports/ReportList/CreateReportCard'
 import { ManageSourceSharing } from './ManageSourceSharing'
-import importData from './importData'
+import importData, { cancelImport } from './importData'
 
 const GET_UPDATE_CONFIG = gql`
   query ExternalDataSourceInspectPage($ID: ID!) {
@@ -97,6 +101,8 @@ const GET_UPDATE_CONFIG = gql`
       webhookHealthcheck
       geographyColumn
       geographyColumnType
+      geocodingConfig
+      usesValidGeocodingConfig
       postcodeField
       firstNameField
       lastNameField
@@ -139,6 +145,15 @@ const GET_UPDATE_CONFIG = gql`
         sendEmail
       }
       importedDataCount
+      importedDataGeocodingRate
+      regionCount: importedDataCountOfAreas(
+        analyticalAreaType: european_electoral_region
+      )
+      constituencyCount: importedDataCountOfAreas(
+        analyticalAreaType: parliamentary_constituency
+      )
+      ladCount: importedDataCountOfAreas(analyticalAreaType: admin_district)
+      wardCount: importedDataCountOfAreas(analyticalAreaType: admin_ward)
       fieldDefinitions {
         label
         value
@@ -201,9 +216,6 @@ export default function InspectExternalDataSource({
 
   const source = data?.externalDataSource
 
-  const allowMapping =
-    source?.dataType == DataSourceType.Member && source.allowUpdates
-
   const crmInfo = source?.crmType
     ? externalDataSourceOptions[source?.crmType]
     : undefined
@@ -250,6 +262,7 @@ export default function InspectExternalDataSource({
       }
     )
   }
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-7">
       <header className="flex flex-row justify-between gap-8">
@@ -302,6 +315,24 @@ export default function InspectExternalDataSource({
               <div className="text-hXlg">
                 {format(',')(source.importedDataCount || 0)}
               </div>
+              <div>
+                Located in {pluralize('region', source.regionCount, true)},{' '}
+                {pluralize('constituency', source.constituencyCount, true)},{' '}
+                {pluralize('local authority', source.ladCount, true)}, and{' '}
+                {pluralize('ward', source.wardCount, true)}.{' '}
+                {/* Un-geolocated count: */}
+                <span
+                  style={{
+                    // linear interpolation based on d3
+                    color: interpolateRdYlGn(
+                      source.importedDataGeocodingRate / 100
+                    ),
+                  }}
+                >
+                  Geocoding success rate of{' '}
+                  {(source.importedDataGeocodingRate || 0).toFixed(0)}%
+                </span>
+              </div>
               <p className="text-meepGray-400">
                 Import data from this {formatCrmNames(source.crmType)} into
                 Mapped for use in reports
@@ -310,24 +341,59 @@ export default function InspectExternalDataSource({
                   : ''}
                 .
               </p>
-              <Button
-                disabled={source.importProgress?.inQueue}
-                onClick={() => importData(client, externalDataSourceId)}
-              >
-                {!source.importProgress?.inQueue ? (
-                  'Import all data'
-                ) : (
-                  <span className="flex flex-row gap-2 items-center">
-                    <LoadingIcon size={'18'} />
-                    <span>
-                      {source.importProgress?.status ===
-                      ProcrastinateJobStatus.Doing
-                        ? 'Importing...'
-                        : 'Scheduled'}
+
+              <div className="flex flex-row align-baseline gap-2">
+                <Button
+                  disabled={source.importProgress?.inQueue}
+                  onClick={() => {
+                    importData(client, externalDataSourceId)
+                  }}
+                >
+                  {!source.importProgress?.inQueue ||
+                  source.importProgress?.status ===
+                    ProcrastinateJobStatus.Failed ||
+                  source.importProgress?.status ===
+                    ProcrastinateJobStatus.Cancelled ? (
+                    'Import all data'
+                  ) : (
+                    <span className="flex flex-row gap-2 items-center">
+                      <LoadingIcon size={'18'} />
+                      <span>
+                        {source.importProgress?.inQueue ||
+                        source.importProgress?.status ===
+                          ProcrastinateJobStatus.Doing
+                          ? 'Importing...'
+                          : 'Scheduled'}
+                      </span>
                     </span>
-                  </span>
+                  )}
+                </Button>
+
+                {source.importProgress?.inQueue && (
+                  <Button
+                    onClick={() => {
+                      toastPromise(
+                        cancelImport(
+                          client,
+                          externalDataSourceId,
+                          source.importProgress?.id || ''
+                        ),
+                        {
+                          loading: 'Cancelling...',
+                          success: () => {
+                            refetch()
+                            return 'Cancelled'
+                          },
+                          error: 'Failed to cancel',
+                        }
+                      )
+                    }}
+                  >
+                    Cancel import
+                  </Button>
                 )}
-              </Button>
+              </div>
+
               {source.importProgress?.status !== 'todo' ? (
                 <BatchJobProgressReport
                   batchJobProgress={source.importProgress}
@@ -442,6 +508,7 @@ export default function InspectExternalDataSource({
               <UpdateExternalDataSourceFields
                 crmType={source.crmType}
                 fieldDefinitions={source.fieldDefinitions}
+                allowGeocodingConfigChange={!source.usesValidGeocodingConfig}
                 initialData={{
                   geographyColumn: source.geographyColumn,
                   geographyColumnType: source.geographyColumnType,
@@ -461,6 +528,12 @@ export default function InspectExternalDataSource({
                   canDisplayPointField: source.canDisplayPointField,
                 }}
                 dataType={source.dataType}
+                onSubmit={updateMutation}
+              />
+              <UpdateGecodingConfig
+                externalDataSourceId={externalDataSourceId}
+                geocodingConfig={source.geocodingConfig}
+                fieldDefinitions={source.fieldDefinitions}
                 onSubmit={updateMutation}
               />
             </section>
@@ -496,14 +569,20 @@ export default function InspectExternalDataSource({
                     <p className="text-meepGray-400">
                       <span className="align-middle">
                         Pull Mapped data into your {crmInfo?.name || 'database'}{' '}
-                        based on each record
-                        {"'"}s
                       </span>
-                      <DataSourceFieldLabel
-                        className="align-middle"
-                        label={source.geographyColumnType}
-                        crmType={source.crmType}
-                      />
+                      {!source.geocodingConfig && (
+                        <>
+                          <span>
+                            based on each record
+                            {"'"}s
+                          </span>
+                          <DataSourceFieldLabel
+                            className="align-middle"
+                            label={source.geographyColumnType}
+                            crmType={source.crmType}
+                          />
+                        </>
+                      )}
                     </p>
                     <div className="space-y-4">
                       {!source.updateProgress?.inQueue ? (
@@ -633,12 +712,14 @@ export default function InspectExternalDataSource({
                   after changing these settings.
                 </p>
                 <UpdateMappingForm
-                  allowMapping={allowMapping}
+                  allowMapping={true}
                   crmType={source.crmType}
                   fieldDefinitions={source.fieldDefinitions}
                   refreshFieldDefinitions={() => {
                     refetch()
                   }}
+                  allowGeocodingConfigChange={!source.usesValidGeocodingConfig}
+                  externalDataSourceId={source.id}
                   initialData={{
                     // Trim out the __typenames
                     geographyColumn: source?.geographyColumn,
@@ -683,42 +764,113 @@ export default function InspectExternalDataSource({
                 <code>{source.connectionDetails.apiKey}</code>
               </div>
             ) : null}
-            <AlertDialog>
-              <AlertDialogTrigger>
-                <Button variant="destructive" asChild={true}>
-                  <span>Permanently delete</span>
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                  <AlertDialogDescription className="text-base">
-                    This action cannot be undone. This will permanently delete
-                    this data source connect from Mapped.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel
-                    className={buttonVariants({ variant: 'outline' })}
-                  >
-                    Cancel
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => {
-                      del()
-                    }}
-                    className={buttonVariants({ variant: 'destructive' })}
-                  >
-                    Confirm delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+
+            <div className="flex flex-row align-baseline gap-2">
+              <AlertButton
+                buttonLabel="Permanently delete"
+                title="Are you sure you want to delete this data source?"
+                children={
+                  'This action cannot be undone. This will permanently delete this data source connect from Mapped.'
+                }
+                onConfirm={del}
+                confirmLabel="Confirm delete"
+              />
+              {/*  */}
+              <AlertButton
+                buttonLabel="Remove all records from Mapped"
+                title="Are you sure you want to remove this data source's records on Mapped?"
+                children={
+                  'This action cannot be undone. This will permanently remove this data from Mapped. The data will NOT be deleted from the third party system.'
+                }
+                confirmLabel="Confirm remove records from Mapped"
+                onConfirm={() => {
+                  toastPromise(
+                    client.mutate({
+                      mutation: gql`
+                        mutation DeleteRecords($externalDataSourceId: String!) {
+                          deleteAllRecords(
+                            externalDataSourceId: $externalDataSourceId
+                          ) {
+                            id
+                          }
+                        }
+                      `,
+                      variables: {
+                        externalDataSourceId,
+                      },
+                    }),
+                    {
+                      loading: 'Deleting all records...',
+                      success: () => {
+                        refetch()
+                        return 'Deleted all records'
+                      },
+                      error: 'Failed to delete',
+                    }
+                  )
+                }}
+              />
+            </div>
           </section>
         </>
       )}
     </div>
   )
+
+  function UpdateGecodingConfig({
+    externalDataSourceId,
+    geocodingConfig,
+    fieldDefinitions,
+    onSubmit,
+  }: {
+    externalDataSourceId: string
+    geocodingConfig: any
+    fieldDefinitions: FieldDefinition[] | null | undefined
+    onSubmit: (
+      data: ExternalDataSourceInput,
+      e?: React.BaseSyntheticEvent<object, any, any> | undefined
+    ) => void
+  }) {
+    const [newGeocodingConfig, setGeocodingConfig] = useState(
+      geocodingConfig ? JSON.stringify(geocodingConfig, null, 2) : ''
+    )
+    return (
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="outline">Edit geocoding config</Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogDescription>
+              Only play with this if you know what you are doing.
+              <Textarea
+                value={newGeocodingConfig}
+                onChange={(t) => {
+                  const val = t.target.value
+                  setGeocodingConfig(val)
+                }}
+              />
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                try {
+                  const parsed = JSON.parse(newGeocodingConfig)
+                  onSubmit({ geocodingConfig: parsed })
+                } catch {
+                  onSubmit({ geocodingConfig: null })
+                }
+              }}
+            >
+              Save
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    )
+  }
 
   function updateMutation(
     data: ExternalDataSourceInput,

@@ -49,6 +49,7 @@ class ProcrastinateJobStatus(Enum):
     doing = "doing"  #: A worker is running the job
     succeeded = "succeeded"  #: The job ended successfully
     failed = "failed"  #: The job ended with an error
+    cancelled = "cancelled"  #: The job was cancelled
 
 
 @strawberry_django.filters.filter(
@@ -701,6 +702,9 @@ class AnalyticalAreaType(Enum):
     admin_district = "admin_district"
     admin_county = "admin_county"
     admin_ward = "admin_ward"
+    msoa = "msoa"
+    lsoa = "lsoa"
+    postcode = "postcode"
     european_electoral_region = "european_electoral_region"
     country = "country"
 
@@ -745,7 +749,7 @@ class Analytics:
     def imported_data_count_by_area(
         self,
         analytical_area_type: AnalyticalAreaType,
-        layer_ids: Optional[List[str]],
+        layer_ids: Optional[List[str]] = [],
     ) -> List[GroupedDataCount]:
         data = self.imported_data_count_by_area(
             postcode_io_key=analytical_area_type.value,
@@ -758,10 +762,34 @@ class Analytics:
         ]
 
     @strawberry_django.field
+    def imported_data_count_of_areas(
+        self,
+        analytical_area_type: AnalyticalAreaType,
+        layer_ids: Optional[List[str]] = [],
+    ) -> int:
+        data = self.imported_data_count_by_area(
+            postcode_io_key=analytical_area_type.value,
+            layer_ids=layer_ids,
+        )
+        return max(len([d for d in data if d.get("count", 0) > 0]) or 0, 0)
+
+    @strawberry_django.field
+    def imported_data_count_unlocated(self) -> int:
+        return self.imported_data_count_unlocated()
+
+    @strawberry_django.field
+    def imported_data_count_located(self) -> int:
+        return self.imported_data_count_located()
+
+    @strawberry_django.field
+    def imported_data_geocoding_rate(self) -> float:
+        return self.imported_data_geocoding_rate()
+
+    @strawberry_django.field
     def imported_data_by_area(
         self,
         analytical_area_type: AnalyticalAreaType,
-        layer_ids: Optional[List[str]],
+        layer_ids: Optional[List[str]] = [],
     ) -> List[GroupedData]:
         data = self.imported_data_by_area(
             postcode_io_key=analytical_area_type.value,
@@ -900,6 +928,7 @@ class BaseDataSource(Analytics):
     last_update: auto
     geography_column: auto
     geography_column_type: auto
+    geocoding_config: JSON
     postcode_field: auto
     first_name_field: auto
     last_name_field: auto
@@ -926,6 +955,10 @@ class BaseDataSource(Analytics):
     allow_updates: bool = attr_field()
     default_data_type: Optional[str] = attr_field()
     defaults: JSON = attr_field()
+
+    @strawberry_django.field
+    def uses_valid_geocoding_config(self) -> bool:
+        return self.uses_valid_geocoding_config()
 
     @strawberry_django.field
     def is_import_scheduled(self: models.ExternalDataSource, info: Info) -> bool:

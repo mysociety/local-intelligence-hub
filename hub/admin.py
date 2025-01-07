@@ -6,6 +6,8 @@ from hub.models import (
     AreaData,
     DataSet,
     DataType,
+    ExternalDataSource,
+    GenericData,
     Membership,
     Organisation,
     Person,
@@ -262,3 +264,28 @@ class MembershipAdmin(admin.ModelAdmin):
     inline = [
         OrganisationInline,
     ]
+
+
+# External data source
+@admin.register(ExternalDataSource)
+class ExternalDataSourceAdmin(admin.ModelAdmin):
+    list_display = ("name", "orgname")
+
+    search_fields = ("name", "orgname")
+
+    def orgname(self, obj):
+        return obj.organisation.name
+
+    orgname.admin_order_field = "author"  # Allows column order sorting
+    orgname.short_description = "Author Name"  # Renames column head
+
+
+# Generic data
+@admin.register(GenericData)
+class GenericDataAdmin(admin.ModelAdmin):
+    list_display = ("name", "source", "value")
+
+    search_fields = ("name", "source", "value")
+
+    def source(self, obj):
+        return obj.data_type.data_set.external_data_source.name
