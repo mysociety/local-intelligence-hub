@@ -326,7 +326,7 @@ class BaseImportFromDataFrameCommand(BaseAreaImportCommand):
                     else:
                         defaults = {"data": self.get_row_data(row, conf)}
 
-                    area_data, created = AreaData.objects.get_or_create(
+                    area_data, created = AreaData.objects.update_or_create(
                         data_type=self.data_types[name],
                         area=area,
                         defaults=defaults,
