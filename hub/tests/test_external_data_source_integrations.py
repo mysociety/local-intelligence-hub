@@ -375,7 +375,7 @@ class TestExternalDataSource:
             [
                 models.ExternalDataSource.CUDRecord(
                     postcode="E10 6EF",
-                    email=f"gg{randint(0, 1000)}rardd@gmail.com",
+                    email=f"hj{randint(0, 1000)}rardd@gmail.com",
                     data=(
                         {
                             "addr1": "123 Colchester Rd",
@@ -389,7 +389,7 @@ class TestExternalDataSource:
                 ),
                 models.ExternalDataSource.CUDRecord(
                     postcode="E5 0AA",
-                    email=f"ag{randint(0, 1000)}rwefw@gmail.com",
+                    email=f"kl{randint(0, 1000)}rwefw@gmail.com",
                     data=(
                         {
                             "addr1": "Millfields Rd",
