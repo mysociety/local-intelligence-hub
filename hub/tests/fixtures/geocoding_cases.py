@@ -52,7 +52,7 @@ geocoding_cases = [
         "id": "6",
         "council": "Gwynedd",
         "ward": "Brithdir and Llanfachreth, Ganllwyd, Llanelltyd",
-        "expected_area_type_code": "WD23",  # TODO: actually it's a UTE, which
+        "expected_area_type_code": "WD23",
         "expected_area_gss": "W05001514",
     },
     # Isle of Anglesey		Canolbarth Mon
@@ -61,7 +61,7 @@ geocoding_cases = [
         "id": "7",
         "council": "Isle of Anglesey",
         "ward": "Canolbarth Mon",
-        "expected_area_type_code": "WD23",  # TODO: actually a UTE
+        "expected_area_type_code": "WD23",
         "expected_area_gss": "W05001496",
     },
     # Denbighshire		Rhyl T┼À Newydd
@@ -71,7 +71,7 @@ geocoding_cases = [
         "id": "8",
         "council": "Denbighshire",
         "ward": "Rhyl T┼À Newydd",
-        "expected_area_type_code": "WD23",  # TODO: actually a UTE
+        "expected_area_type_code": "WD23",
         "expected_area_gss": "W05001354",
     },
     # Swansea		B├┤n-y-maen
@@ -82,7 +82,7 @@ geocoding_cases = [
         "id": "9",
         "council": "Swansea",
         "ward": "B├┤n-y-maen",
-        "expected_area_type_code": "WD23",  # TODO: actually a UTE
+        "expected_area_type_code": "WD23",
         "expected_area_gss": "W05001040",
     },
     # Gwynedd		Pendraw'r Llan
@@ -92,7 +92,7 @@ geocoding_cases = [
         "id": "10",
         "council": "Gwynedd",
         "ward": "Pendraw'r Llan",
-        "expected_area_type_code": "WD23",  # TODO: actually a UTE
+        "expected_area_type_code": "WD23",
         "expected_area_gss": "W05001556",
     },
     # Gwynedd		Tre-garth a Mynydd Llandyg├íi
@@ -102,7 +102,7 @@ geocoding_cases = [
         "id": "542",
         "council": "Gwynedd",
         "ward": "Tre-garth a Mynydd Llandyg├íi",
-        "expected_area_type_code": "WD23",  # TODO: actually a UTE
+        "expected_area_type_code": "WD23",
         "expected_area_gss": "W05001563",
     },
     # A bunch of wards with the same name, should all point to different things
