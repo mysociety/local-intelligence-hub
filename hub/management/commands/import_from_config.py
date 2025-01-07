@@ -4,7 +4,7 @@ from django.conf import settings
 
 import pandas as pd
 
-from hub.models import DataSet
+from hub.models import AreaData, DataSet
 
 from .base_importers import BaseImportFromDataFrameCommand
 
@@ -92,6 +92,11 @@ class Command(BaseImportFromDataFrameCommand):
         else:
             self.multiply_percentage = False
 
+        if row.get("delete_first"):
+            self.delete_first = True
+        else:
+            self.delete_first = False
+
         defaults = {}
 
         comparators = row.get("comparators", None)
@@ -150,6 +155,11 @@ class Command(BaseImportFromDataFrameCommand):
 
         return value
 
+    def initial_delete(self, conf):
+        AreaData.objects.filter(
+            data_type__name=conf["name"], area__area_type__code=self.area_type
+        ).delete()
+
     def handle(
         self,
         quiet=False,
@@ -159,8 +169,13 @@ class Command(BaseImportFromDataFrameCommand):
         **options,
     ):
 
+        initial_delete_done = False
         configs = self.get_configs(import_name)
         for conf in configs:
             self.setup(conf["name"], conf)
+
+            if not initial_delete_done and self.delete_first:
+                self.initial_delete(conf)
+                initial_delete_done = True
 
             super().handle(quiet, skip_new_areatype_conversion, *args, **options)
