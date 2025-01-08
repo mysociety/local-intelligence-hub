@@ -11,6 +11,8 @@ export const MAP_REPORT_LAYERS_SUMMARY = gql`
     layers {
       id
       name
+      inspectorType
+      inspectorConfig
       sharingPermission {
         visibilityRecordDetails
         visibilityRecordCoordinates

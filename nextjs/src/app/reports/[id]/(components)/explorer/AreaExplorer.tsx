@@ -4,6 +4,7 @@ import {
   AreaLayerDataQuery,
   AreaLayerDataQueryVariables,
   DataSourceType,
+  InspectorDisplayType,
   MapLayer,
 } from '@/__generated__/graphql'
 import { DataSourceIcon } from '@/components/DataSourceIcon'
@@ -14,7 +15,7 @@ import { gql, useQuery } from '@apollo/client'
 import { LucideLink } from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import useReportUiHelpers from '../../useReportUiHelpers'
 import { useReport } from '../ReportProvider'
@@ -135,26 +136,6 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
     }
   )
 
-  const displayData = useMemo(() => {
-    const allData =
-      data.data?.genericDataFromSourceAboutArea.map((d) => d.json) || []
-    if (layer.source.dataType === DataSourceType.AreaStats) {
-      // Create a single object with all numeric keys added up
-      const summedData = allData.reduce((acc, curr) => {
-        Object.keys(curr).forEach((key) => {
-          const value = safeParseAsNumber(curr[key])
-          if (typeof value === 'number') {
-            acc[key] = (acc[key] || 0) + value
-          }
-        })
-        return acc
-      }, {})
-      return summedData
-    } else {
-      return allData
-    }
-  }, [data, layer])
-
   return (
     <div className="flex flex-col gap-2 pt-4">
       <div className="text-hSm text-white">{layer.name}</div>
@@ -163,21 +144,37 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
           <div className="text-meepGray-400">
             <LoadingIcon size={'32px'} />
           </div>
-        ) : data.error || !data.data?.genericDataFromSourceAboutArea ? (
+        ) : data.error || !data.data ? (
           <div className="text-xl text-meepGray-400 text-center py-12 px-2">
             No data available for this area
           </div>
         ) : (
           <div className="text-meepGray-400">
-            {/* {layer.inspectorType === InspectorDisplayType.Table ? ( */}
-            <TableDisplay data={displayData} config={layer.inspectorConfig} />
-            {/* ) : layer.inspectorType === InspectorDisplayType.ElectionResult ? (
-              <ElectionResultsDisplay data={data.data.genericDataForArea} config={layer.inspectorConfig} />
+            {layer.inspectorType === InspectorDisplayType.Table ? (
+              <TableDisplay
+                data={
+                  layer.source.dataType === DataSourceType.AreaStats
+                    ? [data.data?.summary]
+                    : data.data?.points.map((p) => p.json)
+                }
+                config={layer.inspectorConfig}
+              />
+            ) : layer.inspectorType === InspectorDisplayType.ElectionResult ? (
+              <ElectionResultsDisplay
+                data={data.data?.row || data.data?.summary}
+                config={layer.inspectorConfig}
+              />
             ) : layer.inspectorType === InspectorDisplayType.BigNumber ? (
-              <BigNumberDisplay data={data.data.genericDataForArea} config={layer.inspectorConfig} />
+              <BigNumberDisplay
+                data={data.data?.row || data.data?.summary}
+                config={layer.inspectorConfig}
+              />
             ) : (
-              <ListDisplay data={data.data.genericDataForArea} config={layer.inspectorConfig} />
-            )} */}
+              <ListDisplay
+                data={data.data?.points.map((p) => p.json)}
+                config={layer.inspectorConfig}
+              />
+            )}
           </div>
         )}
         <div className="text-meepGray-400 text-sm flex flex-row items-center gap-1">
@@ -209,12 +206,27 @@ function safeParseAsNumber(value: any): number | null {
 
 const AREA_LAYER_DATA = gql`
   query AreaLayerData($gss: String!, $externalDataSource: String!) {
-    genericDataFromSourceAboutArea(gss: $gss, sourceId: $externalDataSource) {
-      json
-    }
-    genericDataSummaryFromSourceAboutArea(
+    # collect point data
+    points: genericDataFromSourceAboutArea(
       gss: $gss
       sourceId: $externalDataSource
+      points: true
+    ) {
+      json
+    }
+    # collate area data up to this GSS code
+    summary: genericDataSummaryFromSourceAboutArea(
+      gss: $gss
+      sourceId: $externalDataSource
+      rollup: true
+      points: false
+    )
+    # For specific pieces of data for this GSS code
+    row: genericDataSummaryFromSourceAboutArea(
+      gss: $gss
+      sourceId: $externalDataSource
+      rollup: false
+      points: false
     )
   }
 `
@@ -223,7 +235,7 @@ function ElectionResultsDisplay({
   data,
   config,
 }: {
-  data: AreaLayerDataQuery['genericDataFromSourceAboutArea'][]
+  data: AreaLayerDataQuery['summary'][]
   config: {
     voteCountFields: string[]
   }
@@ -242,7 +254,7 @@ function BigNumberDisplay({
   data,
   config,
 }: {
-  data: AreaLayerDataQuery['genericDataFromSourceAboutArea'][]
+  data: AreaLayerDataQuery['summary'][]
   config: {
     columns: string[]
   }
@@ -254,7 +266,7 @@ function ListDisplay({
   data,
   config,
 }: {
-  data: AreaLayerDataQuery['genericDataFromSourceAboutArea'][]
+  data: AreaLayerDataQuery['points']
   config: {
     columns: string[]
   }

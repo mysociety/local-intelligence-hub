@@ -1509,18 +1509,29 @@ def generic_data_by_external_data_source(
     )
 
 def __get_points_for_area_and_external_data_source(
-    external_data_source: models.ExternalDataSource, gss: str
+    external_data_source: models.ExternalDataSource, gss: str, points: bool = True, rollup: bool = True
 ) -> List[GenericData]:
     area = models.Area.objects.get(gss=gss)
     data_source_records = external_data_source.get_import_data()
-    filters = Q(point__within=area.polygon)
-    postcode_io_key = lih_to_postcodes_io_key_map.get(area.area_type.code, None)
-    if postcode_io_key:
-        filters |= Q(**{f"postcode_data__codes__{postcode_io_key.value}": area.gss})
+
+    filters = Q()
+
+    if points:
+        filters |= Q(point__within=area.polygon)
+
+    if rollup:
+        # Find all data related to this area or within it — e.g. wards that share this council GSS
+        postcode_io_key = lih_to_postcodes_io_key_map.get(area.area_type.code, None)
+        if postcode_io_key:
+            filters |= Q(**{f"postcode_data__codes__{postcode_io_key.value}": area.gss})
+    else:
+        # Find only data specifically related to this GSS area — not about its children
+        filters |= Q(area__gss=area.gss)
+
     return data_source_records.filter(filters)
 
 @strawberry_django.field()
-def generic_data_from_source_about_area(info: Info, source_id: str, gss: str) -> List[GenericData]:
+def generic_data_from_source_about_area(info: Info, source_id: str, gss: str, points: bool = True, rollup: bool = True) -> List[GenericData]:
     user = get_current_user(info)
     # Check user can access the external data source
     external_data_source = models.ExternalDataSource.objects.get(pk=source_id)
@@ -1530,12 +1541,12 @@ def generic_data_from_source_about_area(info: Info, source_id: str, gss: str) ->
     ):
         raise ValueError(f"User {user} does not have permission to view this external data source's data")
     
-    qs = __get_points_for_area_and_external_data_source(external_data_source, gss)
+    qs = __get_points_for_area_and_external_data_source(external_data_source, gss, points, rollup)
 
     return qs
 
 @strawberry_django.field()
-def generic_data_summary_from_source_about_area(info: Info, source_id: str, gss: str) -> JSON:
+def generic_data_summary_from_source_about_area(info: Info, source_id: str, gss: str, points: bool = True, rollup: bool = True) -> JSON:
     user = get_current_user(info)
     # Check user can access the external data source
     external_data_source = models.ExternalDataSource.objects.get(pk=source_id)
@@ -1545,7 +1556,7 @@ def generic_data_summary_from_source_about_area(info: Info, source_id: str, gss:
     ):
         raise ValueError(f"User {user} does not have permission to view this external data source's data")
 
-    qs = __get_points_for_area_and_external_data_source(external_data_source, gss)
+    qs = __get_points_for_area_and_external_data_source(external_data_source, gss, points, rollup)
 
     # ingest the .json data into a pandas dataframe
     df = pd.DataFrame([record.json for record in qs])
