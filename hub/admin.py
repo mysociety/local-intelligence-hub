@@ -274,7 +274,7 @@ class ExternalDataSourceAdmin(admin.ModelAdmin):
     search_fields = ("name", "orgname")
 
     def orgname(self, obj):
-        return obj.organisation.name
+        return obj.organisation.name if obj and obj.organisation else "None"
 
     orgname.admin_order_field = "author"  # Allows column order sorting
     orgname.short_description = "Author Name"  # Renames column head
