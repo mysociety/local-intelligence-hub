@@ -1,8 +1,11 @@
 import json
+import os
 
 from django.conf import settings
 
 import pandas as pd
+import requests
+from jsonpath_ng import jsonpath, parse
 
 from hub.models import AreaData, DataSet
 
@@ -66,6 +69,7 @@ class Command(BaseImportFromDataFrameCommand):
         self.cons_col = row["constituency_col"]
         self.data_file = settings.BASE_DIR / "data" / row["data_file"]
         self.file_type = row["file_type"]
+        self.jsonpath_expression = row.get("jsonpath_expression", "$")  # default to root element
         self.area_type = row["area_type"]
         self.header_row = row.get("header_row")
         self.sheet = row.get("sheet")
@@ -140,6 +144,22 @@ class Command(BaseImportFromDataFrameCommand):
             if self.header_row:
                 kwargs["header"] = int(self.header_row)
             df = pd.read_excel(self.data_file, **kwargs)
+        elif self.file_type == "json":
+            contents = self.get_file_contents(self.data_file)
+            try:
+                tree = json.loads(contents)
+            except json.JSONDecodeError:
+                self.stderr.write(f"Invalid JSON file: {self.data_file}")
+                return None
+            matches = parse(self.jsonpath_expression).find(tree)
+            if len(matches) == 1:  # jsonpath expression pointed to a single item
+                items = matches[0]
+            elif len(matches) > 1:  # jsonpath expression matched multiple items, assume the user wants a list of them
+                items = [match.value for match in matches]
+            else:
+                self.stderr.write(f"JSONPath expression {self.jsonpath_expression} returned no matches on {self.data_file}")
+                return None
+            df = pd.DataFrame(items)
         else:
             self.stderr.write(f"Unknown file type: {self.file_type}")
             return None
@@ -147,6 +167,28 @@ class Command(BaseImportFromDataFrameCommand):
         if type(self.get_cons_col()) != int:
             df = df.astype({self.get_cons_col(): "str"})
         return df
+
+    def get_file_contents(self, url_or_path):
+        if os.path.isfile(url_or_path):
+            try:
+                with open(url_or_path, 'r', encoding='utf-8') as file:
+                    return file.read()
+            except Exception as e:
+                self.stderr.write(f"Error reading local file {url_or_path}: {e}")
+                return ""
+
+        elif url_or_path.startswith('http://') or url_or_path.startswith('https://'):
+            try:
+                response = requests.get(url_or_path)
+                response.raise_for_status()
+                return response.text
+            except requests.RequestException as e:
+                print(f"Error reading remote file {url_or_path}: {e}")
+                return ""
+
+        else:
+            self.stderr.write(f"Unknown url_or_path passed to get_file_contents: {url_or_path}")
+            return ""
 
     def get_row_data(self, row, conf):
         value = super().get_row_data(row, conf)
