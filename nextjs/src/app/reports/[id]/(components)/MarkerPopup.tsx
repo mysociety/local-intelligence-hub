@@ -43,61 +43,54 @@ const MarkerPopup: React.FC = () => {
         }
         latitude={(selectedSourceMarker.geometry as Point)?.coordinates[1] || 0}
         closeOnClick={false}
-        className="
-        [&>.mapboxgl-popup-tip]:!border-t-transparent 
-          [&>.mapboxgl-popup-content]:p-2 
-          [&>.mapboxgl-popup-content]:overflow-auto 
-          [&>.mapboxgl-popup-content]:w-[150px] 
-          [&>.mapboxgl-popup-content]:!bg-meepGray-800 
-          [&>.mapboxgl-popup-content]:!border 
-          [&>.mapboxgl-popup-content]:!shadow-md
-          [&>.mapboxgl-popup-content]:!rounded-[4px]
-          "
         closeButton={true}
         closeOnMove={true}
         onClose={() => setSelectedSourceMarker(null)}
         anchor="bottom"
         offset={[0, -10] as any}
       >
-        {selectedPointLoading ? (
-          <div className="font-IBMPlexMono p-2 space-y-1">
-            <div className="-space-y-1">
-              <div className="text-meepGray-400">LOADING</div>
+        <div className="relative z-10 rounded-lg w-48 p-2 bg-[#1f2229]/50  ">
+          <div className=" backdrop-blur-[2px] rounded-lg p-4 absolute top-0 left-0 w-full h-full -z-10 border border-meepGray-600"></div>
+          {selectedPointLoading ? (
+            <div className="font-IBMPlexMono p-2 space-y-1 ">
+              <div className="-space-y-1">
+                <div className="text-meepGray-400">LOADING</div>
+              </div>
             </div>
-          </div>
-        ) : (
-          <>
-            <div className="font-IBMPlexSans p-2 space-y-2 bg-meepGray-800 text-white">
-              {!!selectedPointData?.importedDataGeojsonPoint?.properties
-                ?.name && (
-                <div className="-space-y-1 flex flex-row items-center justify-between">
-                  <p className="text-base font-medium">
-                    {
-                      selectedPointData?.importedDataGeojsonPoint.properties
-                        .name
-                    }
-                  </p>
-                  <UserIcon className="w-5 h-5 stroke-meepGray-200 stroke-1" />
-                </div>
-              )}
-
-              {!!selectedPointData?.importedDataGeojsonPoint?.properties
-                ?.postcodeData?.postcode && (
-                <div className="-space-y-1">
-                  <div className="text-meepGray-400 font-IBMPlexMono mb-1">
-                    POSTCODE
+          ) : (
+            <>
+              <div className="font-IBMPlexSans p-2 space-y-2 text-white  ">
+                {!!selectedPointData?.importedDataGeojsonPoint?.properties
+                  ?.name && (
+                  <div className="-space-y-1 flex flex-row items-center justify-between">
+                    <p className="text-base font-medium">
+                      {
+                        selectedPointData?.importedDataGeojsonPoint.properties
+                          .name
+                      }
+                    </p>
+                    <UserIcon className="w-5 h-5 stroke-meepGray-200 stroke-1" />
                   </div>
-                  <pre>
-                    {
-                      selectedPointData?.importedDataGeojsonPoint.properties
-                        .postcodeData.postcode
-                    }
-                  </pre>
-                </div>
-              )}
-            </div>
-          </>
-        )}
+                )}
+
+                {!!selectedPointData?.importedDataGeojsonPoint?.properties
+                  ?.postcodeData?.postcode && (
+                  <div className="-space-y-1">
+                    <div className="text-meepGray-400 font-IBMPlexMono mb-1">
+                      POSTCODE
+                    </div>
+                    <pre>
+                      {
+                        selectedPointData?.importedDataGeojsonPoint.properties
+                          .postcodeData.postcode
+                      }
+                    </pre>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </Popup>
     </ErrorBoundary>
   )
