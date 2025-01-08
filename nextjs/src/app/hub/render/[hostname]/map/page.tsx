@@ -1,7 +1,6 @@
 'use client'
 
 import { useQuery } from '@apollo/client'
-import { Provider as JotaiProvider } from 'jotai'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import React, { useState } from 'react'
 import { MapProvider } from 'react-map-gl'
@@ -44,25 +43,23 @@ export default function Page(props: { params: Params }) {
   const [postcode, setPostcode] = useState('')
 
   return (
-    <JotaiProvider>
-      <HubRenderContextProvider hostname={props.params.hostname}>
-        <Root
-          renderCSS={false}
-          fullScreen={true}
-          navLinks={hub.data?.hubByHostname?.navLinks || []}
-        >
-          <MapProvider>
-            <PageContent
-              {...props}
-              isDesktop={isDesktop}
-              hub={hub.data}
-              postcode={postcode}
-              setPostcode={setPostcode}
-            />
-          </MapProvider>
-        </Root>
-      </HubRenderContextProvider>
-    </JotaiProvider>
+    <HubRenderContextProvider hostname={props.params.hostname}>
+      <Root
+        renderCSS={false}
+        fullScreen={true}
+        navLinks={hub.data?.hubByHostname?.navLinks || []}
+      >
+        <MapProvider>
+          <PageContent
+            {...props}
+            isDesktop={isDesktop}
+            hub={hub.data}
+            postcode={postcode}
+            setPostcode={setPostcode}
+          />
+        </MapProvider>
+      </Root>
+    </HubRenderContextProvider>
   )
 }
 

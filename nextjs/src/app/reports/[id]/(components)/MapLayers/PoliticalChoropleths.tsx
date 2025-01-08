@@ -1,6 +1,5 @@
 import { AnalyticalAreaType } from '@/__generated__/graphql'
-import { useLoadedMap } from '@/lib/map'
-import { useAtom } from 'jotai'
+import { useExplorerState, useLoadedMap } from '@/lib/map'
 import React, { useEffect } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
@@ -10,15 +9,12 @@ import {
   getAreaLabelLayout,
   getChoroplethEdge,
   getChoroplethFill,
-  getChoroplethFillFilter,
   getSelectedChoroplethEdge,
 } from '../../mapboxStyles'
 import { MapReportExtended } from '../../reportContext'
 import { Tileset } from '../../types'
 import useDataByBoundary from '../../useDataByBoundary'
-import useClickOnBoundaryEvents, {
-  selectedBoundaryAtom,
-} from '../../useSelectBoundary'
+import useClickOnBoundaryEvents from '../../useSelectBoundary'
 import { PLACEHOLDER_LAYER_ID_CHOROPLETH } from '../ReportPage'
 
 interface PoliticalChoroplethsProps {
@@ -45,7 +41,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
       ? 'visible'
       : 'none'
   const map = useLoadedMap()
-  const [selectedBoundary, setSelectedBoundary] = useAtom(selectedBoundaryAtom)
+  const [explorer, setExplorer] = useExplorerState()
   useClickOnBoundaryEvents(visibility === 'visible' ? tileset : null)
 
   // When the map is loaded and we have the data, add the data to the boundaries
@@ -86,7 +82,6 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
             source={tileset.mapboxSourceId}
             source-layer={tileset.sourceLayerId}
             type="fill"
-            filter={getChoroplethFillFilter(dataByBoundary, tileset)}
             paint={getChoroplethFill(dataByBoundary, visibility === 'visible')}
           />
         </>
@@ -112,7 +107,13 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           source-layer={tileset.sourceLayerId}
           type="line"
           paint={getSelectedChoroplethEdge()}
-          filter={['==', ['get', tileset.promoteId], selectedBoundary]}
+          filter={[
+            '==',
+            ['get', tileset.promoteId],
+            explorer.entity === 'area'
+              ? explorer.id
+              : 'sOmE iMpOsSiBle iD tHaT wIlL uPdAtE mApBoX',
+          ]}
           layout={{
             visibility,
             'line-join': 'round',

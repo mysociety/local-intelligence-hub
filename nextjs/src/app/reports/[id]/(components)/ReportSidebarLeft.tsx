@@ -40,7 +40,7 @@ export function ReportSidebarLeft() {
         >
           <TabsList
             className="w-full justify-start text-white rounded-none px-4
-          border border-b-meepGray-800 pt-4 pb-0 h-fit flex gap-4"
+            border border-b-meepGray-800 pt-4 pb-0 h-fit flex gap-4"
           >
             <TabsTrigger
               value="data-sources"

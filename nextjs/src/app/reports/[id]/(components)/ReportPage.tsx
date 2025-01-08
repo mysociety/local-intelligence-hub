@@ -2,9 +2,9 @@
 
 import LocalisedMap from '@/components/LocalisedMap'
 import { PlaceholderLayer } from '@/components/PlaceholderLayer'
-import { ConstituenciesPanel } from './ConstituenciesPanel'
 import PoliticalChoropleths from './MapLayers/PoliticalChoropleths'
 import ReportMapMarkers from './MapLayers/ReportMapMarkers'
+import ReportDisplaySettings from './ReportDisplaySettings'
 import { useReport } from './ReportProvider'
 
 export const PLACEHOLDER_LAYER_ID_CHOROPLETH = 'choropleths'
@@ -44,7 +44,9 @@ export default function ReportPage() {
         </LocalisedMap>
       </div>
       <aside className="absolute top-0 right-0 p-5 w-[400px] h-full">
-        <ConstituenciesPanel />
+        <span className="pointer-events-auto">
+          <ReportDisplaySettings />
+        </span>
       </aside>
     </div>
   )

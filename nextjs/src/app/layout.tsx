@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import dynamic from 'next/dynamic'
 import NextTopLoader from 'nextjs-toploader'
+import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { Suspense } from 'react'
 
 import { ApolloWrapper } from '@/components/ApolloWrapper'
@@ -23,19 +24,21 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <ApolloWrapper>
-      <html lang="en">
-        <PHProvider>
-          <body>
-            <Suspense>
-              <PostHogPageView />
-            </Suspense>
-            <NextTopLoader />
-            {children}
-          </body>
-        </PHProvider>
-      </html>
-    </ApolloWrapper>
+    <NuqsAdapter>
+      <ApolloWrapper>
+        <html lang="en">
+          <PHProvider>
+            <body>
+              <Suspense>
+                <PostHogPageView />
+              </Suspense>
+              <NextTopLoader />
+              {children}
+            </body>
+          </PHProvider>
+        </html>
+      </ApolloWrapper>
+    </NuqsAdapter>
   )
 }
 

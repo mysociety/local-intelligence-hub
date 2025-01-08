@@ -14,12 +14,13 @@ import {
 import { currentOrganisationIdAtom } from '@/lib/organisation'
 
 import { SidebarProvider } from '@/components/ui/sidebar'
+import { useSidebarLeftState } from '@/lib/map'
 import { merge } from 'lodash'
-import ReportDisplaySettings from './(components)/ReportDisplaySettings'
 import ReportNavbar from './(components)/ReportNavbar'
 import ReportPage from './(components)/ReportPage'
 import ReportProvider from './(components)/ReportProvider'
 import { ReportSidebarLeft } from './(components)/ReportSidebarLeft'
+import { ReportSidebarRight } from './(components)/ReportSidebarRight'
 import { GET_MAP_REPORT } from './gql_queries'
 import { getPoliticalTilesetsByCountry } from './politicalTilesets'
 import { defaultReportConfig, MapReportExtended } from './reportContext'
@@ -28,7 +29,17 @@ type Params = {
   id: string
 }
 
-export default function Page({ params: { id } }: { params: Params }) {
+export default function Page(props: { params: Params }) {
+  return (
+    // Wrap the whole report tree in a Jotai provider to allow for global state
+    // that does not spill over to other reports
+    <JotaiProvider key={props.params.id}>
+      <SelfContainedContext {...props} />
+    </JotaiProvider>
+  )
+}
+
+function SelfContainedContext({ params: { id } }: { params: Params }) {
   const router = useRouter()
   const report = useQuery<GetMapReportQuery, GetMapReportQueryVariables>(
     GET_MAP_REPORT,
@@ -48,6 +59,8 @@ export default function Page({ params: { id } }: { params: Params }) {
     }
   }, [orgId, report, router])
 
+  const leftSidebar = useSidebarLeftState()
+
   // Really important to check if the report is null before rendering the page
   // The ReportProvider component needs to be able to provide a report to its children
   if (!report.data?.mapReport) return null
@@ -60,23 +73,22 @@ export default function Page({ params: { id } }: { params: Params }) {
   ) as unknown as MapReportExtended
 
   return (
-    <JotaiProvider key={id}>
-      <MapProvider>
-        <ReportProvider report={mapReport}>
-          <SidebarProvider
-            style={
-              {
-                '--sidebar-width': '360px',
-              } as React.CSSProperties
-            }
-          >
-            <ReportNavbar />
-            <ReportSidebarLeft />
-            <ReportDisplaySettings />
-            <ReportPage />
-          </SidebarProvider>
-        </ReportProvider>
-      </MapProvider>
-    </JotaiProvider>
+    <MapProvider>
+      <ReportProvider report={mapReport}>
+        <SidebarProvider
+          style={
+            {
+              '--sidebar-width': '360px',
+            } as React.CSSProperties
+          }
+          open={leftSidebar.state}
+        >
+          <ReportNavbar />
+          <ReportSidebarLeft />
+          <ReportPage />
+        </SidebarProvider>
+        <ReportSidebarRight />
+      </ReportProvider>
+    </MapProvider>
   )
 }

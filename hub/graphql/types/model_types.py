@@ -1293,7 +1293,9 @@ def public_map_report(info: Info, org_slug: str, report_slug: str) -> models.Map
 
 
 @strawberry_django.field()
-def area_by_gss(gss: str, analytical_area_type: AnalyticalAreaType) -> models.Area:
+def area_by_gss(
+    gss: str, analytical_area_type: Optional[AnalyticalAreaType] = None
+) -> models.Area:
     qs = models.Area.objects.all()
     if analytical_area_type:
         area_type_filter = postcodeIOKeyAreaTypeLookup[analytical_area_type]
