@@ -1,5 +1,6 @@
-import { LegendThreshold } from '@visx/legend'
-import { scaleThreshold } from '@visx/scale'
+import { LegendOrdinal } from '@visx/legend'
+import { scaleOrdinal } from '@visx/scale'
+import { interpolateBlues } from 'd3-scale-chromatic'
 import useDataByBoundary from '../../useDataByBoundary'
 import { useReport } from '../ReportProvider'
 
@@ -27,29 +28,38 @@ export default function ReportMapChoroplethLegend() {
       ? 'visible'
       : 'none'
 
-  const { data: dataByBoundary } = useDataByBoundary({ report, boundaryType })
+  const { data: dataByBoundary, loading } = useDataByBoundary({
+    report,
+    boundaryType,
+  })
   // Get min and max counts
-  const minCount = Math.min(
-    ...dataByBoundary.map((d) => d.count || 0).filter((count) => count > 0)
+  const minCount = Math.floor(
+    Math.min(
+      ...dataByBoundary.map((d) => d.count || 0).filter((count) => count > 0)
+    )
   )
-  const maxCount = Math.max(...dataByBoundary.map((d) => d.count))
+  const maxCount = Math.ceil(Math.max(...dataByBoundary.map((d) => d.count)))
 
-  // Create array of 5 evenly spaced values
-  const step = (maxCount - minCount) / 4
-  const domain = [
-    minCount,
-    minCount + step,
-    minCount + 2 * step,
-    minCount + 3 * step,
-    maxCount,
-  ]
+  // Calculate difference and determine how many steps we need
+  const difference = maxCount - minCount
+  const numberOfSteps = Math.min(5, difference + 1)
+
+  // Create domain array with appropriate number of steps
+  const domain = Array.from({ length: numberOfSteps }, (_, i) =>
+    Math.round(minCount + i * (difference / (numberOfSteps - 1 || 1)))
+  )
 
   //Legend scale
-  const thresholdScale = scaleThreshold({
+  const ordinalScale = scaleOrdinal({
     domain,
-    range: ['#CCEEF7', '#99DCEE', '#66CBE6', '#33BBE0', '#00A8D5'],
+    range: Array.from({ length: numberOfSteps }, (_, i) =>
+      interpolateBlues(i / (numberOfSteps - 1 || 1))
+    ).reverse(),
   })
-  const legendGlyphSize = 14
+
+  if (loading) {
+    return <div></div>
+  }
 
   return (
     <div
@@ -58,18 +68,16 @@ export default function ReportMapChoroplethLegend() {
       <div className="bg-meepGray-950 text-white rounded-md p-4 shadow-lg flex flex-col gap-4">
         <p>{selectedDataSource?.name}</p>
 
-        <LegendThreshold
-          scale={thresholdScale}
+        <LegendOrdinal
+          scale={ordinalScale}
           direction="row"
           itemDirection="column"
-          labelMargin="6px 20px 0 0"
+          labelMargin="6px 0 0 0"
           shapeMargin={0}
-          labelAlign="end"
           shapeWidth={70}
           shapeHeight={10}
-          labelDelimiter="-"
           className="text-meepGray-400 text-xs flex flex-col items-start"
-        ></LegendThreshold>
+        ></LegendOrdinal>
       </div>
     </div>
   )
