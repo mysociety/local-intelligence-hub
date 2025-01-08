@@ -1549,12 +1549,20 @@ def generic_data_summary_from_source_about_area(info: Info, source_id: str, gss:
 
     # ingest the .json data into a pandas dataframe
     df = pd.DataFrame([record.json for record in qs])
-    # convert any string columns with digits to floats
+    # convert any stringified numbers to floats
     for column in df:
-        # if isinstance(df[column].dtypes, str):
-        if any(char.isdecimal() for char in df[column]):
+        if any(df[column].apply(check_numeric)):
             df[column] = df[column].astype(float)
+    # remove columns that are of string type
+    df = df.select_dtypes(exclude=["object", "string"])
     # summarise the data in a single dictionary, with summed values for each column
     summary = df.sum().to_dict()
 
     return summary
+
+def check_numeric(x):
+    try:
+        float(x)
+        return True
+    except:
+        return False
