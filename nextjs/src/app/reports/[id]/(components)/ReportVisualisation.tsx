@@ -11,7 +11,11 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { startCase } from 'lodash'
 import React, { useState } from 'react'
-import { VisualisationLabels, VisualisationType } from '../reportContext'
+import {
+  AggregationOperation,
+  VisualisationLabels,
+  VisualisationType,
+} from '../reportContext'
 import useDataByBoundary from '../useDataByBoundary'
 import CollapsibleSection from './CollapsibleSection'
 import { UpdateConfigProps } from './ReportConfiguration'
@@ -191,6 +195,50 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
               </div>
             )}
           </>
+        )}
+
+        {/* aggregation option */}
+        {selectedDataSource?.source.dataType === 'AREA_STATS' && (
+          <div>
+            <Select
+              onValueChange={(value) =>
+                updateVisualisationConfig({
+                  aggregationOperation: value as AggregationOperation,
+                })
+              }
+              value={
+                dataVisualisation.aggregationOperation ||
+                AggregationOperation.Sum
+              }
+            >
+              <Label
+                htmlFor="select-vis-type"
+                className="text-white text-sm font-medium"
+              >
+                Aggregation operation
+              </Label>
+              <SelectTrigger
+                id="select-vis-type"
+                className="w-full border-meepGray-100 text-meepGray-100 mt-2 font-medium"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.keys(AggregationOperation).map((operation) => (
+                  <SelectItem
+                    className="font-medium"
+                    key={operation}
+                    value={operation}
+                  >
+                    {startCase(operation)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-meepGray-400 text-sm font-normal mb-3 mt-3">
+              Choose how to handle numeric data when aggregating.
+            </p>
+          </div>
         )}
       </div>
     </CollapsibleSection>

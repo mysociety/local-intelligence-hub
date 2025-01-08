@@ -1374,7 +1374,6 @@ export enum GeographyTypes {
 export type GroupedData = {
   __typename?: 'GroupedData';
   areaData?: Maybe<Area>;
-  areaType?: Maybe<Scalars['String']['output']>;
   areaTypeFilter?: Maybe<AreaTypeFilter>;
   gss?: Maybe<Scalars['String']['output']>;
   gssArea?: Maybe<Area>;

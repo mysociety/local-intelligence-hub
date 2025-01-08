@@ -14,6 +14,11 @@ export const VisualisationLabels: Record<VisualisationType, string> = {
   [VisualisationType.Choropleth]: 'Colour shading by category',
 }
 
+export enum AggregationOperation {
+  Sum = 'Sum',
+  Mean = 'Mean',
+}
+
 export enum Palette {
   Blue = 'blue',
 }
@@ -27,6 +32,7 @@ export interface ReportConfig {
   dataVisualisation: {
     boundaryType?: AnalyticalAreaType
     visualisationType?: VisualisationType
+    aggregationOperation?: AggregationOperation
     palette?: Palette
     dataSource?: MapLayer['id']
     dataSourceField?: string
@@ -46,6 +52,7 @@ export const defaultReportConfig: ReportConfig = {
   dataVisualisation: {
     boundaryType: AnalyticalAreaType.ParliamentaryConstituency_2024,
     visualisationType: VisualisationType.Choropleth,
+    aggregationOperation: AggregationOperation.Sum,
     palette: Palette.Blue,
     showDataVisualisation: {
       [VisualisationType.Choropleth]: true, // Default to Choropleth

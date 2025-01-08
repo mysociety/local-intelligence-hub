@@ -6,13 +6,13 @@ import {
   MapReportStatsByAreaQueryVariables,
 } from '@/__generated__/graphql'
 import { useQuery } from '@apollo/client'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useReport } from './(components)/ReportProvider'
 import {
   MAP_REPORT_COUNT_BY_AREA,
   MAP_REPORT_STATS_BY_AREA,
 } from './gql_queries'
-import { MapReportExtended } from './reportContext'
+import { AggregationOperation, MapReportExtended } from './reportContext'
 import { ENABLED_ANALYTICAL_AREA_TYPES } from './types'
 
 export type DataByBoundary =
@@ -78,60 +78,83 @@ const useDataByBoundary = ({
 
   let fieldNames: string[] | undefined
 
-  if (queryForCounts) {
-    return {
-      data: countsByBoundary?.mapReport.importedDataCountByArea || [],
-      loading,
-    }
-  } else if (queryForAreaStats) {
-    const rawData = externalStatsByBoundary?.mapReport.importedDataByArea
-    const data = rawData && processNumericFieldsInDataSource(rawData)
-    fieldNames = data && getNumericFieldsFromDataSource(data)
-
-    // Data source logic
-    // TODO: later here is where we do arithmetic operations with data from multiple sources
-    const dataSourceField =
-      report?.displayOptions?.dataVisualisation?.dataSourceField
-
-    // The added count field is the value of the dataSourceField
-    // The mapbox layer code expects a field called "count" to visualise numeric data
-    if (data && dataSourceField) {
-      const dataWithCounts = data.map((row) => {
-        const value = row.importedData[dataSourceField]
-        return {
-          ...row,
-          count: value,
-        }
-      }) as DataByBoundary
-
-      // Delete rows where the import geocoding has failed (no GSS code)
-      const filteredDataWithCounts = dataWithCounts.filter(
-        (row) => row.gss !== null && row.count > 0
-      )
-
-      // Sum the counts for each GSS code. This allows us traverse boundary types using the
-      // same data source and have the counts summed up for the GSS codes
-      const summedByGss = filteredDataWithCounts.reduce((acc, row) => {
-        const existing = acc.find((item) => item.gss === row.gss)
-        if (existing) {
-          existing.count += row.count
-        } else {
-          acc.push({ ...row })
-        }
-        return acc
-      }, [] as DataByBoundary)
-
+  return useMemo(() => {
+    if (queryForCounts) {
       return {
-        data: summedByGss,
-        fieldNames,
+        data: countsByBoundary?.mapReport.importedDataCountByArea || [],
         loading,
       }
-    } else {
-      return { fieldNames, data: [], loading }
-    }
-  }
+    } else if (queryForAreaStats) {
+      const rawData = externalStatsByBoundary?.mapReport.importedDataByArea
+      const data = rawData && processNumericFieldsInDataSource(rawData)
+      fieldNames = data && getNumericFieldsFromDataSource(data)
 
-  return { data: [], loading }
+      // Data source logic
+      // TODO: later here is where we do arithmetic operations with data from multiple sources
+      const dataSourceField =
+        report?.displayOptions?.dataVisualisation?.dataSourceField
+
+      // The added count field is the value of the dataSourceField
+      // The mapbox layer code expects a field called "count" to visualise numeric data
+      if (data && dataSourceField) {
+        const dataWithCounts = data.map((row) => {
+          const value = row.importedData[dataSourceField]
+          return {
+            ...row,
+            count: value,
+          }
+        }) as DataByBoundary
+
+        // Delete rows where the import geocoding has failed (no GSS code)
+        const filteredDataWithCounts = dataWithCounts.filter(
+          (row) => row.gss !== null && row.count > 0
+        )
+
+        // Sum the counts for each GSS code. This allows us traverse boundary types using the
+        // same data source and have the counts summed up for the GSS codes
+        const operation =
+          report?.displayOptions?.dataVisualisation?.aggregationOperation ||
+          AggregationOperation.Sum
+        const summedByGss = filteredDataWithCounts.reduce((acc, row) => {
+          const existing = acc.find((item) => item.gss === row.gss)
+          const allItems = filteredDataWithCounts.filter(
+            (item) => item.gss === row.gss
+          )
+          if (existing) {
+            switch (operation) {
+              case AggregationOperation.Mean:
+                existing.count = (existing.count + row.count) / allItems.length
+                break
+              case AggregationOperation.Sum:
+              default:
+                existing.count += row.count
+                break
+            }
+          } else {
+            acc.push({ ...row })
+          }
+          return acc
+        }, [] as DataByBoundary)
+
+        return {
+          data: summedByGss,
+          fieldNames,
+          loading,
+        }
+      } else {
+        return { fieldNames, data: [], loading }
+      }
+    }
+
+    return { data: [], loading }
+  }, [
+    queryForCounts,
+    countsByBoundary,
+    queryForAreaStats,
+    externalStatsByBoundary,
+    loading,
+    report,
+  ])
 }
 
 export default useDataByBoundary
