@@ -4369,6 +4369,8 @@ class MapReport(Report, Analytics):
         icon_image: Optional[str] = None
         mapbox_paint: Optional[dict] = {}
         mapbox_layout: Optional[dict] = {}
+        inspector_type: Optional[str] = "table"
+        inspector_config: Optional[dict] = {}
         visible: Optional[bool] = True
         """
         filter: ORM filter dict for GenericData objects like { "json__status": "Published" }

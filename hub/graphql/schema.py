@@ -5,6 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 
 import strawberry
 import strawberry_django
+from strawberry.scalars import JSON
 from gqlauth.core.middlewares import JwtSchema
 from gqlauth.core.types_ import GQLAuthError
 from gqlauth.user import arg_mutations as auth_mutations
@@ -116,6 +117,9 @@ class Query(UserQueries):
     generic_data_by_external_data_source: List[model_types.GenericData] = (
         model_types.generic_data_by_external_data_source
     )
+    
+    generic_data_from_source_about_area: List[model_types.GenericData] = model_types.generic_data_from_source_about_area
+    generic_data_summary_from_source_about_area: JSON = model_types.generic_data_summary_from_source_about_area
 
     @strawberry.field
     def test_data_source(

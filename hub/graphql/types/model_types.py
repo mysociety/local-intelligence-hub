@@ -6,6 +6,7 @@ from typing import List, Optional, Union
 
 from django.db.models import Q
 from django.http import HttpRequest
+import pandas as pd
 
 import procrastinate.contrib.django.models
 import strawberry
@@ -37,6 +38,8 @@ from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
+
+from utils.geo_reference import lih_to_postcodes_io_key_map, AnalyticalAreaType
 
 logger = logging.getLogger(__name__)
 
@@ -695,20 +698,6 @@ class MapReportMemberFeature(PointFeature):
         return None
 
 
-@strawberry.enum
-class AnalyticalAreaType(Enum):
-    parliamentary_constituency = "parliamentary_constituency"
-    parliamentary_constituency_2024 = "parliamentary_constituency_2024"
-    admin_district = "admin_district"
-    admin_county = "admin_county"
-    admin_ward = "admin_ward"
-    msoa = "msoa"
-    lsoa = "lsoa"
-    postcode = "postcode"
-    european_electoral_region = "european_electoral_region"
-    country = "country"
-
-
 @strawberry.type
 class AreaTypeFilter:
     lih_area_type: Optional[str] = None
@@ -739,7 +728,6 @@ postcodeIOKeyAreaTypeLookup = {
     AnalyticalAreaType.european_electoral_region: AreaTypeFilter(lih_area_type="EER"),
     AnalyticalAreaType.european_electoral_region: AreaTypeFilter(lih_area_type="CTRY"),
 }
-
 
 @strawberry.interface
 class Analytics:
@@ -1207,18 +1195,28 @@ class Report:
     def get_queryset(cls, queryset, info, **kwargs):
         user = get_current_user(info)
         return queryset.filter(organisation__members__user=user.id)
+    
+
+@strawberry.enum
+class InspectorDisplayType(Enum):
+    election_result = "election_result"
+    big_number = "big_number"
+    table = "table"
+    list = "list"
 
 
 @strawberry.type
 class MapLayer:
     id: str = dict_key_field()
     name: str = dict_key_field()
-    type: str = dict_key_field("events")
+    type: str = dict_key_field(default="events")
     visible: Optional[bool] = dict_key_field()
     custom_marker_text: Optional[str] = dict_key_field()
     icon_image: Optional[str] = dict_key_field()
     mapbox_paint: Optional[JSON] = dict_key_field()
     mapbox_layout: Optional[JSON] = dict_key_field()
+    inspector_type: InspectorDisplayType = dict_key_field(default=InspectorDisplayType.table)
+    inspector_config: Optional[JSON] = dict_key_field()
 
     @strawberry_django.field
     def is_shared_source(self, info: Info) -> bool:
@@ -1509,3 +1507,54 @@ def generic_data_by_external_data_source(
     return models.GenericData.objects.filter(
         data_type__data_set__external_data_source=external_data_source
     )
+
+def __get_points_for_area_and_external_data_source(
+    external_data_source: models.ExternalDataSource, gss: str
+) -> List[GenericData]:
+    area = models.Area.objects.get(gss=gss)
+    data_source_records = external_data_source.get_import_data()
+    filters = Q(point__within=area.polygon)
+    postcode_io_key = lih_to_postcodes_io_key_map.get(area.area_type.code, None)
+    if postcode_io_key:
+        filters |= Q(**{f"postcode_data__codes__{postcode_io_key.value}": area.gss})
+    return data_source_records.filter(filters)
+
+@strawberry_django.field()
+def generic_data_from_source_about_area(info: Info, source_id: str, gss: str) -> List[GenericData]:
+    user = get_current_user(info)
+    # Check user can access the external data source
+    external_data_source = models.ExternalDataSource.objects.get(pk=source_id)
+    permissions = models.ExternalDataSource.user_permissions(user, external_data_source)
+    if not permissions.get("can_display_points") or not permissions.get(
+        "can_display_details"
+    ):
+        raise ValueError(f"User {user} does not have permission to view this external data source's data")
+    
+    qs = __get_points_for_area_and_external_data_source(external_data_source, gss)
+
+    return qs
+
+@strawberry_django.field()
+def generic_data_summary_from_source_about_area(info: Info, source_id: str, gss: str) -> JSON:
+    user = get_current_user(info)
+    # Check user can access the external data source
+    external_data_source = models.ExternalDataSource.objects.get(pk=source_id)
+    permissions = models.ExternalDataSource.user_permissions(user, external_data_source)
+    if not permissions.get("can_display_points") or not permissions.get(
+        "can_display_details"
+    ):
+        raise ValueError(f"User {user} does not have permission to view this external data source's data")
+
+    qs = __get_points_for_area_and_external_data_source(external_data_source, gss)
+
+    # ingest the .json data into a pandas dataframe
+    df = pd.DataFrame([record.json for record in qs])
+    # convert any string columns with digits to floats
+    for column in df:
+        # if isinstance(df[column].dtypes, str):
+        if any(char.isdecimal() for char in df[column]):
+            df[column] = df[column].astype(float)
+    # summarise the data in a single dictionary, with summed values for each column
+    summary = df.sum().to_dict()
+
+    return summary

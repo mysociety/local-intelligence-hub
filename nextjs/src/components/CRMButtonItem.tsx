@@ -31,10 +31,12 @@ export function CRMSelection({
   displayCount?: boolean
 }) {
   return (
-    <div className="flex flex-row items-center gap-2 text-left w-full">
-      <DataSourceIcon crmType={source.crmType} className="w-5" />
-      <div>
-        <div className="text-meepGray-100">{source.name}</div>
+    <div className="flex flex-row items-center gap-2 text-left w-full overflow-ellipsis text-nowrap">
+      <DataSourceIcon crmType={source.crmType} className="w-5 flex-shrink-0" />
+      <div className="overflow-ellipsis text-nowrap">
+        <div className="text-meepGray-100 text-nowrap text-ellipsis">
+          {source.name}
+        </div>
         {!!source?.importedDataCount && displayCount && (
           <div className="text-meepGray-300  text-xs">
             {format(',')(source?.importedDataCount)}{' '}
