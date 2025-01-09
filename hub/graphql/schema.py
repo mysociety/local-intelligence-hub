@@ -11,7 +11,6 @@ from gqlauth.user import arg_mutations as auth_mutations
 from gqlauth.user.queries import UserQueries
 from graphql import GraphQLError
 from strawberry.extensions import QueryDepthLimiter
-from strawberry.scalars import JSON
 from strawberry.types import ExecutionContext
 from strawberry_django import mutations as django_mutations
 from strawberry_django.optimizer import DjangoOptimizerExtension

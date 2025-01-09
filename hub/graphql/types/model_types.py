@@ -1614,7 +1614,7 @@ def generic_data_summary_from_source_about_area(
 
     if len(summary_dict.keys()) <= 0:
         return None
-    
+
     fptp_majority = None
     try:
         fptp_majority = summary.nlargest(1).values[0] - summary.nlargest(2).values[1]
@@ -1627,8 +1627,8 @@ def generic_data_summary_from_source_about_area(
             min=summary.min(),
             max=summary.max(),
             total=summary.sum(),
-            fptp_majority=fptp_majority
-        )
+            fptp_majority=fptp_majority,
+        ),
     )
 
 
