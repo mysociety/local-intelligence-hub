@@ -761,6 +761,13 @@ class GenericData(CommonData):
     last_update = models.DateTimeField(auto_now=True)
     point = PointField(srid=4326, blank=True, null=True)
     polygon = MultiPolygonField(srid=4326, blank=True, null=True)
+    area = models.ForeignKey(
+        "Area",
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="generic_data",
+    )
     postcode_data = JSONField(blank=True, null=True)
     postcode = models.CharField(max_length=1000, blank=True, null=True)
     first_name = models.CharField(max_length=300, blank=True, null=True)
@@ -4369,6 +4376,8 @@ class MapReport(Report, Analytics):
         icon_image: Optional[str] = None
         mapbox_paint: Optional[dict] = {}
         mapbox_layout: Optional[dict] = {}
+        inspector_type: Optional[str] = "table"
+        inspector_config: Optional[dict] = {}
         visible: Optional[bool] = True
         """
         filter: ORM filter dict for GenericData objects like { "json__status": "Published" }

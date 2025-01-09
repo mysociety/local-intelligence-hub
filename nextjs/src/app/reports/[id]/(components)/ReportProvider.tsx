@@ -3,11 +3,20 @@
 import {
   DeleteMapReportMutation,
   DeleteMapReportMutationVariables,
+  Exact,
+  MapLayerInput,
+  MapReportInput,
   UpdateMapReportMutation,
   UpdateMapReportMutationVariables,
 } from '@/__generated__/graphql'
 import { toastPromise } from '@/lib/toast'
-import { FetchResult, useApolloClient } from '@apollo/client'
+import {
+  ApolloCache,
+  DefaultContext,
+  FetchResult,
+  MutationUpdaterFunction,
+  useApolloClient,
+} from '@apollo/client'
 import { useSetAtom } from 'jotai'
 import { merge, pick } from 'lodash'
 import { useRouter } from 'next/navigation'
@@ -25,6 +34,15 @@ interface ReportProviderProps {
   children: ReactNode
 }
 
+export type OptimisticMutationUpdateMapLayers = MutationUpdaterFunction<
+  UpdateMapReportMutation,
+  Exact<{
+    input: MapReportInput
+  }>,
+  DefaultContext,
+  ApolloCache<any>
+>
+
 const ReportProvider = ({ report, children }: ReportProviderProps) => {
   const router = useRouter()
   const client = useApolloClient()
@@ -37,7 +55,10 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
 
   // If the report has only one layer, set it as the data source
   useEffect(() => {
-    if (report.layers.length === 1) {
+    if (
+      report.layers.length === 1 &&
+      !report.displayOptions?.dataVisualisation?.dataSource
+    ) {
       updateReport({
         displayOptions: {
           dataVisualisation: {
@@ -48,11 +69,14 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
     }
   }, [report.layers])
 
-  function updateReport(payload: {
-    name?: string
-    displayOptions?: Partial<ReportConfig>
-    layers?: any[]
-  }) {
+  function updateReport(
+    payload: {
+      name?: string
+      displayOptions?: Partial<ReportConfig>
+      layers?: any[]
+    },
+    optimisticMutation?: OptimisticMutationUpdateMapLayers
+  ) {
     const input: any = pick(merge({}, report, payload), [
       'id',
       'name',
@@ -70,6 +94,7 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
       variables: {
         input,
       },
+      update: optimisticMutation,
     })
     toastPromise(update, {
       loading: 'Saving...',
@@ -123,6 +148,29 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
     )
   }
 
+  function updateLayer(
+    layerId: string,
+    updates: Partial<MapLayerInput>,
+    optimisticMutation?: OptimisticMutationUpdateMapLayers
+  ) {
+    const nextLayers = report.layers.map((l) => ({
+      id: l.id,
+      name: l.name,
+      source: l.source?.id,
+      inspectorConfig: l.inspectorConfig,
+      inspectorType: l.inspectorType,
+      mapboxLayout: l.mapboxLayout,
+      mapboxPaint: l.mapboxPaint,
+      ...(l.id === layerId ? updates : {}),
+    }))
+    updateReport(
+      {
+        layers: nextLayers,
+      },
+      optimisticMutation
+    )
+  }
+
   return (
     <ReportContext.Provider
       value={{
@@ -130,6 +178,7 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
         deleteReport,
         refreshReportData,
         updateReport,
+        updateLayer,
         dataLoading,
         setDataLoading,
       }}

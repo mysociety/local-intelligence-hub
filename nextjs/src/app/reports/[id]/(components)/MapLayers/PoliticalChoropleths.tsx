@@ -1,6 +1,5 @@
 import { AnalyticalAreaType } from '@/__generated__/graphql'
-import { useLoadedMap } from '@/lib/map'
-import { useAtom } from 'jotai'
+import { useExplorerState, useLoadedMap } from '@/lib/map'
 import React, { useEffect } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
@@ -10,15 +9,12 @@ import {
   getAreaLabelLayout,
   getChoroplethEdge,
   getChoroplethFill,
-  getChoroplethFillFilter,
   getSelectedChoroplethEdge,
 } from '../../mapboxStyles'
 import { MapReportExtended } from '../../reportContext'
 import { Tileset } from '../../types'
 import useDataByBoundary from '../../useDataByBoundary'
-import useClickOnBoundaryEvents, {
-  selectedBoundaryAtom,
-} from '../../useSelectBoundary'
+import useClickOnBoundaryEvents from '../../useSelectBoundary'
 import { PLACEHOLDER_LAYER_ID_CHOROPLETH } from '../ReportPage'
 
 interface PoliticalChoroplethsProps {
@@ -33,7 +29,10 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   tileset,
 }) => {
   // Show the layer only if the report is set to show the boundary type and the VisualisationType is choropleth
-  const visibility =
+  const borderVisibility = report.displayOptions?.display.showBorders
+    ? 'visible'
+    : 'none'
+  const shaderVisibility =
     report.displayOptions?.dataVisualisation?.boundaryType === boundaryType &&
     report.displayOptions?.dataVisualisation?.showDataVisualisation?.choropleth
       ? 'visible'
@@ -41,12 +40,19 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   const { data: dataByBoundary } = useDataByBoundary({ report, boundaryType })
 
   const boundaryNameVisibility =
-    visibility === 'visible' && report.displayOptions?.display.showBoundaryNames
+    shaderVisibility === 'visible' &&
+    report.displayOptions?.display.showBoundaryNames
       ? 'visible'
       : 'none'
+
+  const areasVisible =
+    borderVisibility === 'visible' || shaderVisibility === 'visible'
+      ? 'visible'
+      : 'none'
+
   const map = useLoadedMap()
-  const [selectedBoundary, setSelectedBoundary] = useAtom(selectedBoundaryAtom)
-  useClickOnBoundaryEvents(visibility === 'visible' ? tileset : null)
+  const [explorer, setExplorer] = useExplorerState()
+  useClickOnBoundaryEvents(areasVisible === 'visible' ? tileset : null)
 
   // When the map is loaded and we have the data, add the data to the boundaries
   useEffect(() => {
@@ -86,8 +92,11 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
             source={tileset.mapboxSourceId}
             source-layer={tileset.sourceLayerId}
             type="fill"
-            filter={getChoroplethFillFilter(dataByBoundary, tileset)}
-            paint={getChoroplethFill(dataByBoundary, visibility === 'visible')}
+            paint={getChoroplethFill(
+              dataByBoundary,
+              report.displayOptions,
+              shaderVisibility === 'visible'
+            )}
           />
         </>
 
@@ -98,7 +107,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           source={tileset.mapboxSourceId}
           source-layer={tileset.sourceLayerId}
           type="line"
-          paint={getChoroplethEdge(visibility === 'visible')}
+          paint={getChoroplethEdge(borderVisibility === 'visible')}
           layout={{
             'line-join': 'round',
             'line-round-limit': 0.1,
@@ -112,9 +121,15 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           source-layer={tileset.sourceLayerId}
           type="line"
           paint={getSelectedChoroplethEdge()}
-          filter={['==', ['get', tileset.promoteId], selectedBoundary]}
+          filter={[
+            '==',
+            ['get', tileset.promoteId],
+            explorer.entity === 'area'
+              ? explorer.id
+              : 'sOmE iMpOsSiBle iD tHaT wIlL uPdAtE mApBoX',
+          ]}
           layout={{
-            visibility,
+            visibility: areasVisible,
             'line-join': 'round',
             'line-round-limit': 0.1,
           }}

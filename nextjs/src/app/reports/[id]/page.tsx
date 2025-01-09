@@ -13,22 +13,37 @@ import {
 } from '@/__generated__/graphql'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
 
-import { SidebarProvider } from '@/components/ui/sidebar'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { layerEditorStateAtom, useSidebarLeftState } from '@/lib/map'
 import { merge } from 'lodash'
-import ReportDisplaySettings from './(components)/ReportDisplaySettings'
+import ReportMapChoroplethLegend from './(components)/MapLayers/ReportMapChoroplethLegend'
 import ReportNavbar from './(components)/ReportNavbar'
 import ReportPage from './(components)/ReportPage'
 import ReportProvider from './(components)/ReportProvider'
-import { ReportSidebarLeft } from './(components)/ReportSidebarLeft'
+import {
+  LEFT_SIDEBAR_WIDTH,
+  ReportSidebarLeft,
+} from './(components)/ReportSidebarLeft'
+import { ReportSidebarRight } from './(components)/ReportSidebarRight'
 import { GET_MAP_REPORT } from './gql_queries'
 import { getPoliticalTilesetsByCountry } from './politicalTilesets'
-import { defaultReportConfig, MapReportExtended } from './reportContext'
+import { MapReportExtended, defaultReportConfig } from './reportContext'
 
 type Params = {
   id: string
 }
 
-export default function Page({ params: { id } }: { params: Params }) {
+export default function Page(props: { params: Params }) {
+  return (
+    // Wrap the whole report tree in a Jotai provider to allow for global state
+    // that does not spill over to other reports
+    <JotaiProvider key={props.params.id}>
+      <SelfContainedContext {...props} />
+    </JotaiProvider>
+  )
+}
+
+function SelfContainedContext({ params: { id } }: { params: Params }) {
   const router = useRouter()
   const report = useQuery<GetMapReportQuery, GetMapReportQueryVariables>(
     GET_MAP_REPORT,
@@ -48,6 +63,10 @@ export default function Page({ params: { id } }: { params: Params }) {
     }
   }, [orgId, report, router])
 
+  const leftSidebar = useSidebarLeftState()
+
+  const layerEditorState = useAtomValue(layerEditorStateAtom)
+
   // Really important to check if the report is null before rendering the page
   // The ReportProvider component needs to be able to provide a report to its children
   if (!report.data?.mapReport) return null
@@ -60,23 +79,32 @@ export default function Page({ params: { id } }: { params: Params }) {
   ) as unknown as MapReportExtended
 
   return (
-    <JotaiProvider key={id}>
-      <MapProvider>
-        <ReportProvider report={mapReport}>
-          <SidebarProvider
-            style={
-              {
-                '--sidebar-width': '360px',
-              } as React.CSSProperties
-            }
-          >
-            <ReportNavbar />
-            <ReportSidebarLeft />
-            <ReportDisplaySettings />
+    <MapProvider>
+      <ReportProvider report={mapReport}>
+        <SidebarProvider
+          style={
+            {
+              '--sidebar-width': `${
+                layerEditorState.open
+                  ? LEFT_SIDEBAR_WIDTH * 2
+                  : LEFT_SIDEBAR_WIDTH
+              }px`,
+            } as React.CSSProperties
+          }
+          className="bg-meepGray-800"
+          open={leftSidebar.state}
+        >
+          <ReportNavbar />
+          <ReportSidebarLeft />
+          <SidebarInset className="pointer-events-none relative">
             <ReportPage />
-          </SidebarProvider>
-        </ReportProvider>
-      </MapProvider>
-    </JotaiProvider>
+            <span className="pointer-events-auto">
+              <ReportMapChoroplethLegend />
+            </span>
+          </SidebarInset>
+        </SidebarProvider>
+        <ReportSidebarRight />
+      </ReportProvider>
+    </MapProvider>
   )
 }

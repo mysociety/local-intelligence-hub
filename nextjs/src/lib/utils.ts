@@ -20,3 +20,10 @@ export function formatCrmNames(input: string): string {
       return 'database'
   }
 }
+
+export function allKeysFromAllData(data: any[]): string[] {
+  const arr = Array.isArray(data) ? data : [data]
+  return arr.reduce((acc, d) => {
+    return acc.concat(d ? Object.keys(d) : [])
+  }, [] as string[])
+}

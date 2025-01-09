@@ -1,54 +1,52 @@
 import { scaleLinear, scaleSequential } from 'd3-scale'
-import { interpolateBlues } from 'd3-scale-chromatic'
+import { max, min } from 'lodash'
 import {
   FillLayerSpecification,
   LineLayerSpecification,
   SymbolLayerSpecification,
 } from 'mapbox-gl'
+import { ReportConfig, getReportPalette } from './reportContext'
 import { Tileset } from './types'
 import { DataByBoundary } from './useDataByBoundary'
 
 export function getChoroplethFill(
-  data: { count: number }[],
+  dataByBoundary: DataByBoundary,
+  displayOptions: ReportConfig,
   visible?: boolean
 ): FillLayerSpecification['paint'] {
-  let min =
-    data.reduce(
-      (min, p) => (p?.count! < min ? p?.count! : min),
-      data?.[0]?.count!
-    ) || 0
-  let max =
-    data.reduce(
-      (max, p) => (p?.count! > max ? p?.count! : max),
-      data?.[0]?.count!
-    ) || 1
+  // Get min and max counts
+  let minCount = min(dataByBoundary.map((d) => d.count || 0)) || 0
+  let maxCount = max(dataByBoundary.map((d) => d.count || 0)) || 1
 
-  // Ensure min and max are different to fix interpolation errors
-  if (min === max) {
-    if (min >= 1) {
-      min = min - 1
+  // ensure minCount and maxCount are different
+  if (minCount === maxCount) {
+    if (minCount >= 1) {
+      minCount = minCount - 0.1
     } else {
-      max = max + 1
+      maxCount = maxCount + 0.1
     }
   }
 
-  // Uses 0-1 for easy interpolation
-  // go from 0-100% and return real numbers
-  const legendScale = scaleLinear().domain([0, 1]).range([min, max])
+  const interpolator = getReportPalette(displayOptions)
 
-  // Map real numbers to colours
+  // Legend scale
   const colourScale = scaleSequential()
-    .domain([min, max])
-    .interpolator(interpolateBlues)
-    .interpolator((t) => interpolateBlues(1 - t))
+    .domain([minCount, maxCount])
+    .interpolator(interpolator)
 
-  let steps = Math.min(max, 30) // Max 30 steps
-  steps = Math.max(steps, 3) // Min 3 steps (for valid Mapbox fill-color rule)
-  const colourStops = new Array(Math.floor(steps))
+  // Define 30 stops of colour
+  let steps = 30
+
+  // Now turn each i into an associated number in the range min-max:
+  const stepsToDomainTransformer = scaleLinear()
+    .domain([0, steps])
+    .range([minCount, maxCount])
+
+  const colourStops = new Array(steps)
     .fill(0)
-    .map((_, i) => i / steps)
-    .map((n) => {
-      return [legendScale(n), colourScale(legendScale(n))]
+    .map((_, step) => {
+      const count = stepsToDomainTransformer(step)
+      return [count, colourScale(count)]
     })
     .flat()
 
@@ -132,6 +130,7 @@ export function getAreaGeoJSON(data: DataByBoundary) {
         geometry: d.gssArea?.point?.geometry! as GeoJSON.Point,
         properties: {
           count: d.count,
+          formattedCount: d.formattedCount,
           label: d.label,
         },
       })),
@@ -171,7 +170,7 @@ export const getAreaCountLayout = (
 
   return {
     'symbol-spacing': 1000,
-    'text-field': ['get', 'count'],
+    'text-field': ['get', 'formattedCount'],
     'text-size': [
       'interpolate',
       ['linear'],

@@ -2,7 +2,6 @@
 
 import LocalisedMap from '@/components/LocalisedMap'
 import { PlaceholderLayer } from '@/components/PlaceholderLayer'
-import { ConstituenciesPanel } from './ConstituenciesPanel'
 import PoliticalChoropleths from './MapLayers/PoliticalChoropleths'
 import ReportMapMarkers from './MapLayers/ReportMapMarkers'
 import { useReport } from './ReportProvider'
@@ -43,9 +42,6 @@ export default function ReportPage() {
           <ReportMapMarkers />
         </LocalisedMap>
       </div>
-      <aside className="absolute top-0 right-0 p-5 w-[400px] h-full">
-        <ConstituenciesPanel />
-      </aside>
     </div>
   )
 }

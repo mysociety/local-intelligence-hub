@@ -1,6 +1,8 @@
-import { LegendOrdinal } from '@visx/legend'
-import { scaleOrdinal } from '@visx/scale'
-import { interpolateBlues } from 'd3-scale-chromatic'
+import { DataSourceIcon } from '@/components/DataSourceIcon'
+import { format } from 'd3-format'
+import { scaleLinear, scaleSequential } from 'd3-scale'
+import { max, min } from 'lodash'
+import { getReportPalette } from '../../reportContext'
 import useDataByBoundary from '../../useDataByBoundary'
 import { useReport } from '../ReportProvider'
 
@@ -12,14 +14,13 @@ export default function ReportMapChoroplethLegend() {
     politicalBoundaries,
     displayOptions: { dataVisualisation },
   } = report
+  const displayOptions = report.displayOptions
 
   const dataSourceId = dataVisualisation?.dataSource
   const dataSourceField = dataVisualisation?.dataSourceField
-  const selectedDataSource = layers.find((layer) => layer.id === dataSourceId)
-  const selectedBoundaryLabel = politicalBoundaries.find(
-    (boundary) => boundary.boundaryType === dataVisualisation?.boundaryType
-  )?.label
-  const color = dataVisualisation?.palette
+  const selectedDataSource = layers.find(
+    (layer) => layer.source.id === dataSourceId
+  )
   const boundaryType = dataVisualisation?.boundaryType
 
   const visibility =
@@ -32,29 +33,47 @@ export default function ReportMapChoroplethLegend() {
     report,
     boundaryType,
   })
+
   // Get min and max counts
-  const minCount = Math.floor(
-    Math.min(
-      ...dataByBoundary.map((d) => d.count || 0).filter((count) => count > 0)
-    )
-  )
-  const maxCount = Math.ceil(Math.max(...dataByBoundary.map((d) => d.count)))
+  let minCount = min(dataByBoundary.map((d) => d.count || 0)) || 0
+  let maxCount = max(dataByBoundary.map((d) => d.count || 0)) || 1
 
-  // Calculate difference and determine how many steps we need
+  //
   const difference = maxCount - minCount
-  const numberOfSteps = Math.min(5, difference + 1)
+  let isPercentage = false
+  let formatStr = ',.2r'
+  if (difference < 2) {
+    formatStr = '.0%'
+    isPercentage = true
+  }
 
-  // Create domain array with appropriate number of steps
-  const domain = Array.from({ length: numberOfSteps }, (_, i) =>
-    Math.round(minCount + i * (difference / (numberOfSteps - 1 || 1)))
-  )
+  // ensure minCount and maxCount are different
+  if (minCount === maxCount) {
+    if (minCount >= 1) {
+      minCount = minCount - 0.1
+    } else {
+      maxCount = maxCount + 0.1
+    }
+  }
 
-  //Legend scale
-  const ordinalScale = scaleOrdinal({
-    domain,
-    range: Array.from({ length: numberOfSteps }, (_, i) =>
-      interpolateBlues(i / (numberOfSteps - 1 || 1))
-    ).reverse(),
+  const interpolator = getReportPalette(displayOptions)
+
+  // Legend scale
+  const colourScale = scaleSequential()
+    .domain([minCount, maxCount])
+    .interpolator(interpolator)
+
+  // Define 30 stops of colour
+  let steps = isPercentage ? 5 : 7
+
+  // Now turn each i into an associated number in the range min-max:
+  const stepsToDomainTransformer = scaleLinear()
+    .domain([0, steps])
+    .range([minCount, maxCount])
+
+  const colourStops = new Array(steps).fill(0).map((_, step) => {
+    const count = stepsToDomainTransformer(step)
+    return [count, colourScale(count)]
   })
 
   if (loading) {
@@ -63,21 +82,49 @@ export default function ReportMapChoroplethLegend() {
 
   return (
     <div
-      className={`p-4 absolute bottom-10 transition-all duration-300 -z-10 ${visibility === 'visible' ? 'left-full' : '-left-[200%]'}`}
+      className={`p-4 absolute bottom-12 transition-all duration-300 left-0 ${visibility === 'visible' ? 'block' : 'hidden'}`}
     >
       <div className="bg-meepGray-950 text-white rounded-md p-4 shadow-lg flex flex-col gap-4">
-        <p>{selectedDataSource?.name}</p>
-
-        <LegendOrdinal
+        <div>
+          <div>{dataSourceField}</div>
+          <div className="text-sm flex flex-row items-center gap-1">
+            <DataSourceIcon
+              crmType={selectedDataSource?.source.crmType}
+              className="w-4 h-4"
+            />{' '}
+            <span className="font-500">{selectedDataSource?.name}</span>
+          </div>
+        </div>
+        <div className="flex flex-row items-center">
+          {colourStops.map((stop, i) => {
+            return (
+              <div
+                key={i}
+                className="basis-0 min-w-0 flex-shrink-0 grow flex flex-col"
+              >
+                <div
+                  className="h-4"
+                  style={{
+                    backgroundColor: String(stop[1]),
+                  }}
+                ></div>
+                <div className="text-xs text-center px-2">
+                  {format(formatStr)(Number(stop[0]))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        {/* <LegendOrdinal
           scale={ordinalScale}
           direction="row"
           itemDirection="column"
           labelMargin="6px 0 0 0"
           shapeMargin={0}
-          shapeWidth={70}
+          shapeWidth={50}
           shapeHeight={10}
           className="text-meepGray-400 text-xs flex flex-col items-start"
-        ></LegendOrdinal>
+        /> */}
       </div>
     </div>
   )

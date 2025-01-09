@@ -4,9 +4,10 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Union
 
-from django.db.models import Q
+from django.db.models import F, Q
 from django.http import HttpRequest
 
+import pandas as pd
 import procrastinate.contrib.django.models
 import strawberry
 import strawberry_django
@@ -37,6 +38,11 @@ from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
+from utils.geo_reference import (
+    AnalyticalAreaType,
+    area_to_postcode_io_filter,
+    lih_to_postcodes_io_key_map,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -577,7 +583,8 @@ class GroupedDataCount:
     # Provide filter if gss code is not unique (e.g. WMC and WMC23 constituencies)
     area_type_filter: Optional["AreaTypeFilter"] = None
     gss: Optional[str]
-    count: int
+    count: float
+    formatted_count: Optional[str]
     area_data: Optional[strawberry.Private[Area]] = None
 
     @strawberry_django.field
@@ -693,20 +700,6 @@ class MapReportMemberFeature(PointFeature):
         if self.properties and self.properties.postcode:
             return await electoral_commision_postcode_lookup(self.properties.postcode)
         return None
-
-
-@strawberry.enum
-class AnalyticalAreaType(Enum):
-    parliamentary_constituency = "parliamentary_constituency"
-    parliamentary_constituency_2024 = "parliamentary_constituency_2024"
-    admin_district = "admin_district"
-    admin_county = "admin_county"
-    admin_ward = "admin_ward"
-    msoa = "msoa"
-    lsoa = "lsoa"
-    postcode = "postcode"
-    european_electoral_region = "european_electoral_region"
-    country = "country"
 
 
 @strawberry.type
@@ -1209,16 +1202,29 @@ class Report:
         return queryset.filter(organisation__members__user=user.id)
 
 
+@strawberry.enum
+class InspectorDisplayType(Enum):
+    BigNumber = "BigNumber"
+    ElectionResult = "ElectionResult"
+    List = "List"
+    Properties = "Properties"
+    Table = "Table"
+
+
 @strawberry.type
 class MapLayer:
     id: str = dict_key_field()
     name: str = dict_key_field()
-    type: str = dict_key_field("events")
+    type: str = dict_key_field(default="events")
     visible: Optional[bool] = dict_key_field()
     custom_marker_text: Optional[str] = dict_key_field()
     icon_image: Optional[str] = dict_key_field()
     mapbox_paint: Optional[JSON] = dict_key_field()
     mapbox_layout: Optional[JSON] = dict_key_field()
+    inspector_type: Optional[InspectorDisplayType] = dict_key_field(
+        default=InspectorDisplayType.Table
+    )
+    inspector_config: Optional[JSON] = dict_key_field()
 
     @strawberry_django.field
     def is_shared_source(self, info: Info) -> bool:
@@ -1293,7 +1299,9 @@ def public_map_report(info: Info, org_slug: str, report_slug: str) -> models.Map
 
 
 @strawberry_django.field()
-def area_by_gss(gss: str, analytical_area_type: AnalyticalAreaType) -> models.Area:
+def area_by_gss(
+    gss: str, analytical_area_type: Optional[AnalyticalAreaType] = None
+) -> models.Area:
     qs = models.Area.objects.all()
     if analytical_area_type:
         area_type_filter = postcodeIOKeyAreaTypeLookup[analytical_area_type]
@@ -1507,3 +1515,263 @@ def generic_data_by_external_data_source(
     return models.GenericData.objects.filter(
         data_type__data_set__external_data_source=external_data_source
     )
+
+
+def __get_points_for_area_and_external_data_source(
+    external_data_source: models.ExternalDataSource,
+    gss: str,
+    points: bool = True,
+    rollup: bool = True,
+) -> List[GenericData]:
+    area = models.Area.objects.get(gss=gss)
+    data_source_records = external_data_source.get_import_data()
+
+    filters = Q()
+
+    if points:
+        filters |= Q(point__within=area.polygon)
+
+    if rollup:
+        # Find all data related to this area or within it — e.g. wards that share this council GSS
+        postcode_io_key = area_to_postcode_io_filter(area)
+        if postcode_io_key is None:
+            postcode_io_key = lih_to_postcodes_io_key_map.get(area.area_type.code, None)
+        if postcode_io_key:
+            print(gss, postcode_io_key)
+            filters |= Q(**{f"postcode_data__codes__{postcode_io_key.value}": area.gss})
+    else:
+        # Find only data specifically related to this GSS area — not about its children
+        filters |= Q(area__gss=area.gss)
+
+    return data_source_records.filter(filters)
+
+
+@strawberry_django.field()
+def generic_data_from_source_about_area(
+    info: Info, source_id: str, gss: str, points: bool = True, rollup: bool = True
+) -> List[GenericData]:
+    user = get_current_user(info)
+    # Check user can access the external data source
+    external_data_source = models.ExternalDataSource.objects.get(pk=source_id)
+    permissions = models.ExternalDataSource.user_permissions(user, external_data_source)
+    if not permissions.get("can_display_points") or not permissions.get(
+        "can_display_details"
+    ):
+        raise ValueError(
+            f"User {user} does not have permission to view this external data source's data"
+        )
+
+    qs = __get_points_for_area_and_external_data_source(
+        external_data_source, gss, points, rollup
+    )
+
+    return qs
+
+
+@strawberry.type
+class DataSummaryMetadata:
+    min: float
+    max: float
+    total: float
+    fptp_majority: Optional[float]
+
+
+@strawberry.type
+class DataSummary:
+    aggregated: JSON
+    metadata: DataSummaryMetadata
+
+
+@strawberry_django.field()
+def generic_data_summary_from_source_about_area(
+    info: Info, source_id: str, gss: str, points: bool = True, rollup: bool = True
+) -> Optional[DataSummary]:
+    user = get_current_user(info)
+    # Check user can access the external data source
+    external_data_source = models.ExternalDataSource.objects.get(pk=source_id)
+    permissions = models.ExternalDataSource.user_permissions(user, external_data_source)
+    if not permissions.get("can_display_points") or not permissions.get(
+        "can_display_details"
+    ):
+        raise ValueError(
+            f"User {user} does not have permission to view this external data source's data"
+        )
+
+    qs = __get_points_for_area_and_external_data_source(
+        external_data_source, gss, points, rollup
+    )
+
+    # ingest the .json data into a pandas dataframe
+    df = pd.DataFrame([record.json for record in qs])
+    # convert any stringified numbers to floats
+    for column in df:
+        if any(df[column].apply(check_numeric)):
+            df[column] = df[column].astype(float)
+    # remove columns that are of string type
+    df = df.select_dtypes(exclude=["object", "string"])
+    # summarise the data in a single dictionary, with summed values for each column
+    summary = df.sum()
+    summary_dict = summary.to_dict()
+
+    if len(summary_dict.keys()) <= 0:
+        return None
+
+    fptp_majority = None
+    try:
+        fptp_majority = summary.nlargest(1).values[0] - summary.nlargest(2).values[1]
+    except Exception:
+        pass
+
+    return DataSummary(
+        aggregated=summary_dict,
+        metadata=DataSummaryMetadata(
+            min=summary.min(),
+            max=summary.max(),
+            total=summary.sum(),
+            fptp_majority=fptp_majority,
+        ),
+    )
+
+
+def check_numeric(x):
+    try:
+        float(x)
+        return True
+    except Exception:
+        return False
+
+
+@strawberry_django.field()
+def choropleth_data_for_source(
+    info: Info,
+    source_id: str,
+    analytical_area_key: AnalyticalAreaType,
+    # Field could be a column name or a Pandas formulaic expression
+    field: str,
+) -> List[GroupedDataCount]:
+    # Check user can access the external data source
+    user = get_current_user(info)
+    external_data_source = models.ExternalDataSource.objects.get(pk=source_id)
+    permissions = models.ExternalDataSource.user_permissions(user, external_data_source)
+    if not permissions.get("can_display_points") or not permissions.get(
+        "can_display_details"
+    ):
+        raise ValueError(
+            f"User {user} does not have permission to view this external data source's data"
+        )
+
+    # Get the required data for the source
+    qs = (
+        external_data_source.get_import_data()
+        .filter(postcode_data__codes__isnull=False)
+        .annotate(
+            label=F(f"postcode_data__{analytical_area_key.value}"),
+            gss=F(f"postcode_data__codes__{analytical_area_key.value}"),
+        )
+        .values("json", "label", "gss")
+    )
+
+    # ingest the .json data into a pandas dataframe so we can do analytics
+    df = pd.DataFrame([record for record in qs])
+
+    # Break the json column into separate columns for each key
+    df = df.join(pd.json_normalize(df["json"]))
+
+    # Remove the json column
+    df = df.drop(columns=["json"])
+
+    # ...
+
+    if (
+        external_data_source.data_type
+        == models.ExternalDataSource.DataSourceType.AREA_STATS
+    ):
+        # Convert any stringified JSON numbers to floats
+        for column in df:
+            if any(df[column].apply(check_numeric)):
+                df[column] = df[column].replace("", 0)
+                df[column] = df[column].astype(float)
+
+        # You end up with something like:
+        """
+                        json
+          gss    label  Ref Lab Con LDem
+        0 E10001 Bucks  1   2   3   4
+        1 E10002 Herts  2   3   4   5
+        2 E10003 Beds   3   4   5   6
+        """
+
+        # Group by the postcode_io level that we want to
+        # Aggregation will be by summing the values in the field, excluding 'label'
+        df_sum = df.drop(columns=["label"]).groupby("gss").sum().reset_index()
+
+        # Calculate the mode for the 'label' column
+        df_mode = df.groupby("gss")["label"].agg(lambda x: x.mode()[0]).reset_index()
+
+        # Merge the summed DataFrame with the mode DataFrame
+        df = pd.merge(df_sum, df_mode, on="gss")
+
+        # Add a "maximum" column that figures out the biggest numerical value in each row
+        numerical_columns = df.select_dtypes(include="number").columns
+        df["max_votes"] = df[numerical_columns].max(axis=1)
+
+        # Calculate the second-highest value in each row
+        df["runnerup_votes"] = df[numerical_columns].apply(
+            lambda row: row.nlargest(2).iloc[-1], axis=1
+        )
+
+        # Now fetch the requested series from the dataframe
+        # If the field is a column name, we can just return that column
+        if field in df.columns:
+            df["count"] = df[field]
+        # If the field is a formula, we need to evaluate it
+        else:
+            df["count"] = df.eval(field, target=df)
+
+        # Check if count is between 0 and 1: if so, it's a percentage
+        is_percentage = df["count"].between(0, 2).all() or False
+
+        # Convert DF to GroupedDataCount(label=label, gss=gss, count=count) list
+        return [
+            GroupedDataCount(
+                label=row.label,
+                gss=row.gss,
+                count=row.count,
+                formatted_count=(
+                    (
+                        # pretty percentage
+                        f"{row.count:.0%}"
+                    )
+                    if is_percentage
+                    else (
+                        # comma-separated integer
+                        f"{row.count:,.0f}"
+                    )
+                ),
+            )
+            for row in df.itertuples()
+        ]
+    else:
+        # Simple count of data points per area
+
+        # Count the number of rows per GSS
+        df_count = (
+            df.drop(columns=["label"]).groupby("gss").size().reset_index(name="count")
+        )
+
+        # Calculate the mode for the 'label' column
+        df_mode = df.groupby("gss")["label"].agg(lambda x: x.mode()[0]).reset_index()
+
+        # Merge the summed DataFrame with the mode DataFrame
+        df = pd.merge(df_count, df_mode, on="gss")
+
+        # Convert DF to GroupedDataCount(label=label, gss=gss, count=count) list
+        return [
+            GroupedDataCount(
+                label=row.label,
+                gss=row.gss,
+                count=row.count,
+                formatted_count=f"{row.count:,.0f}",
+            )
+            for row in df.itertuples()
+        ]
