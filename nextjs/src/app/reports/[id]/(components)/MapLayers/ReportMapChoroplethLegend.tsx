@@ -2,6 +2,7 @@ import { DataSourceIcon } from '@/components/DataSourceIcon'
 import { LegendOrdinal } from '@visx/legend'
 import { scaleOrdinal } from '@visx/scale'
 import { format } from 'd3-format'
+import { max, min } from 'lodash'
 import { getReportPalette } from '../../reportContext'
 import useDataByBoundary from '../../useDataByBoundary'
 import { useReport } from '../ReportProvider'
@@ -32,13 +33,10 @@ export default function ReportMapChoroplethLegend() {
     report,
     boundaryType,
   })
+
   // Get min and max counts
-  const minCount = Math.floor(
-    Math.min(
-      ...dataByBoundary.map((d) => d.count || 0).filter((count) => count > 0)
-    )
-  )
-  const maxCount = Math.ceil(Math.max(...dataByBoundary.map((d) => d.count)))
+  const minCount = min(dataByBoundary.map((d) => d.count || 0)) || 0
+  const maxCount = max(dataByBoundary.map((d) => d.count || 0)) || 1
 
   // Calculate difference and determine how many steps we need
   const difference = maxCount - minCount

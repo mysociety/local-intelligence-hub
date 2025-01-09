@@ -1,5 +1,5 @@
 import { scaleLinear, scaleSequential } from 'd3-scale'
-import { isInteger } from 'lodash'
+import { isInteger, max, min } from 'lodash'
 import {
   FillLayerSpecification,
   LineLayerSpecification,
@@ -10,46 +10,37 @@ import { Tileset } from './types'
 import { DataByBoundary } from './useDataByBoundary'
 
 export function getChoroplethFill(
-  data: { count: number }[],
+  dataByBoundary: DataByBoundary,
   displayOptions: ReportConfig,
   visible?: boolean
 ): FillLayerSpecification['paint'] {
-  let min =
-    data.reduce(
-      (min, p) => (p?.count! < min ? p?.count! : min),
-      data?.[0]?.count!
-    ) || 0
-  let max =
-    data.reduce(
-      (max, p) => (p?.count! > max ? p?.count! : max),
-      data?.[0]?.count!
-    ) || 1
+  // Get min and max counts
+  let minCount = min(dataByBoundary.map((d) => d.count || 0)) || 0
+  let maxCount = max(dataByBoundary.map((d) => d.count || 0)) || 1
 
-  // Ensure min and max are different to fix interpolation errors
-  if (min === max) {
-    if (min >= 1) {
-      min = min - 1
+  // ensure minCount and maxCount are different
+  if (minCount === maxCount) {
+    if (minCount >= 1) {
+      minCount = minCount - 0.1
     } else {
-      max = max + 1
+      maxCount = maxCount + 0.1
     }
   }
 
-  // Uses 0-1 for easy interpolation
-  // go from 0-100% and return real numbers
-  const legendScale = scaleLinear().domain([0, 1]).range([min, max])
+  const interpolator = getReportPalette(displayOptions)
 
-  // Map real numbers to colours
-  const colourScale = scaleSequential()
-    .domain([min, max])
-    .interpolator(getReportPalette(displayOptions))
+  // Legend scale
+  const scale = scaleSequential()
+    .domain([minCount, maxCount])
+    .interpolator(interpolator)
 
-  let steps = Math.min(max, 30) // Max 30 steps
-  steps = Math.floor(Math.max(steps, 3)) // Min 3 steps (for valid Mapbox fill-color rule)
+  // Must be minimum 3 for mapbox
+  let steps = Math.max(30, Math.min(maxCount, 30))
   const colourStops = new Array(steps)
     .fill(0)
     .map((_, i) => i / steps)
     .map((n) => {
-      return [legendScale(n), colourScale(legendScale(n))]
+      return [n, scale(n)]
     })
     .flat()
 
