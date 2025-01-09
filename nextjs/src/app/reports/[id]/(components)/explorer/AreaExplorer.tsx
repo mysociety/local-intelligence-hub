@@ -11,6 +11,7 @@ import { DataSourceIcon } from '@/components/DataSourceIcon'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ExplorerState } from '@/lib/map'
 import { allKeysFromAllData } from '@/lib/utils'
 import { gql, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
@@ -21,12 +22,10 @@ import queryString from 'query-string'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import trigramSimilarity from 'trigram-similarity'
-import useReportUiHelpers from '../../useReportUiHelpers'
 import { useReport } from '../ReportProvider'
 import { TableDisplay } from '../dashboard/TableDisplay'
 
 export function AreaExplorer({ gss }: { gss: string }) {
-  const { userJourneyHelpers, updateUserJourneyHelpers } = useReportUiHelpers()
   const [selectedTab, setSelectedTab] = useState('summary')
 
   // Query area details
@@ -105,7 +104,11 @@ export function AreaExplorer({ gss }: { gss: string }) {
     // add GSS code to URL
     const newURL = queryString.stringifyUrl({
       url: currentURL,
-      query: { gss, entity: 'area', showExplorer: true },
+      query: {
+        id: gss,
+        entity: 'area',
+        showExplorer: true,
+      } satisfies ExplorerState,
     })
     // copy to clipboard
     navigator.clipboard.writeText(newURL)

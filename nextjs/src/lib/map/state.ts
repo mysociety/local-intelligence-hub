@@ -29,6 +29,8 @@ export function useExplorerState() {
   return [state, setState, toggle] as const
 }
 
+export type ExplorerState = ReturnType<typeof useExplorerState>[0]
+
 export function useViewState() {
   return useQueryState('view', parseAsString)
 }

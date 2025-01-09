@@ -1,7 +1,11 @@
 'use client'
 
 import { BACKEND_URL } from '@/env'
-import { selectedSourceMarkerAtom, useLoadedMap } from '@/lib/map'
+import {
+  selectedSourceMarkerAtom,
+  useExplorerState,
+  useLoadedMap,
+} from '@/lib/map'
 import { useAtom } from 'jotai'
 import { MapMouseEvent } from 'mapbox-gl'
 import { useEffect } from 'react'
@@ -27,6 +31,7 @@ export function MembersListPointMarkers({
   const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(
     selectedSourceMarkerAtom
   )
+  const [state, set, showExplorer] = useExplorerState()
 
   useEffect(
     function selectMarker() {
@@ -51,6 +56,11 @@ export function MembersListPointMarkers({
         const feature = event.features?.[0]
         if (feature?.properties?.id) {
           setSelectedSourceMarker(feature)
+          set({
+            entity: 'record',
+            id: feature.properties.id,
+            showExplorer: true,
+          })
         }
       }
 
