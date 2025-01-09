@@ -1,21 +1,23 @@
-import { useQuery } from '@apollo/client'
+import {
+  ExternalDataSourceInspectPageQuery,
+  ExternalDataSourceInspectPageQueryVariables,
+  MapReportLayerGeoJsonPointQuery,
+  MapReportLayerGeoJsonPointQueryVariables,
+} from '@/__generated__/graphql'
+import { dataTypeIcons } from '@/lib/data'
+import { selectedSourceMarkerAtom } from '@/lib/map'
+import { gql, useQuery } from '@apollo/client'
 import { Point } from 'geojson'
 import { useAtom } from 'jotai'
 import { ErrorBoundary } from 'next/dist/client/components/error-boundary'
 import React from 'react'
 import { Popup } from 'react-map-gl'
-
-import {
-  MapReportLayerGeoJsonPointQuery,
-  MapReportLayerGeoJsonPointQueryVariables,
-} from '@/__generated__/graphql'
-import { selectedSourceMarkerAtom } from '@/lib/map'
-
-import { UserIcon } from 'lucide-react'
 import { MAP_REPORT_LAYER_POINT } from '../gql_queries'
 import useMarkerAnalytics from '../useMarkerAnalytics'
 
-const MarkerPopup: React.FC = () => {
+const MarkerPopup: React.FC<{ externalDataSourceId: string }> = ({
+  externalDataSourceId,
+}) => {
   /* Get the analytics data for the report */
   const analytics = useMarkerAnalytics()
 
@@ -32,6 +34,20 @@ const MarkerPopup: React.FC = () => {
       genericDataId: String(selectedSourceMarker?.properties?.id),
     },
   })
+
+  const { loading, data: dataTypeData } = useQuery<
+    ExternalDataSourceInspectPageQuery,
+    ExternalDataSourceInspectPageQueryVariables
+  >(GET_DATA_TYPE, {
+    variables: {
+      ID: externalDataSourceId,
+    },
+    pollInterval: 5000,
+  })
+
+  const dataType = dataTypeData?.externalDataSource.dataType
+
+  const IconComponent = dataType ? dataTypeIcons[dataType]?.icon : null
 
   if (!selectedSourceMarker?.properties?.id) return null
   return (
@@ -69,7 +85,9 @@ const MarkerPopup: React.FC = () => {
                           .name
                       }
                     </p>
-                    <UserIcon className="w-5 h-5 stroke-meepGray-200 stroke-1" />
+                    {IconComponent && (
+                      <IconComponent className="w-5 h-5 text-meepGray-400" />
+                    )}
                   </div>
                 )}
 
@@ -97,3 +115,13 @@ const MarkerPopup: React.FC = () => {
 }
 
 export default MarkerPopup
+
+const GET_DATA_TYPE = gql`
+  query ExternalDataSourceInspectPage($ID: ID!) {
+    externalDataSource(pk: $ID) {
+      id
+      name
+      dataType
+    }
+  }
+`
