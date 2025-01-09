@@ -3,7 +3,6 @@ import {
   RecordExplorerSummaryQueryVariables,
 } from '@/__generated__/graphql'
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ExplorerState } from '@/lib/map'
 import { gql, useQuery } from '@apollo/client'
 import { LucideLink } from 'lucide-react'
@@ -60,7 +59,7 @@ export function RecordExplorer({ id }: { id: string }) {
           </div>
         </>
       </SidebarHeader>
-      <Tabs
+      {/* <Tabs
         defaultValue="summary"
         className="w-full"
         onValueChange={setSelectedTab}
@@ -78,12 +77,12 @@ export function RecordExplorer({ id }: { id: string }) {
           value="summary"
           className="pb-24 divide-y divide-meepGray-800"
         >
-          <section className="flex flex-col gap-2 pt-4">
+          <section className="flex flex-col gap-2 px-4">
             <div className="text-hSm text-white">Contact</div>
             <div className="flex flex-col gap-2"></div>
           </section>
         </TabsContent>
-      </Tabs>
+      </Tabs> */}
     </SidebarContent>
   )
 
