@@ -39,15 +39,14 @@ const CollapsibleSection: React.FC<Props> = ({ children, id, title }) => {
       open={!!thisSectionOpen}
     >
       <CollapsibleTrigger asChild>
-        <div className="flex flex-row gap-2 items-center my-3 cursor-pointer">
+        <div className="flex flex-row gap-2 items-start my-3 cursor-pointer">
+          <h3 className="text-white font-medium">{title}</h3>
           <TriangleDownIcon
             className={clsx(
-              'h-4 w-4 text-white transition[-rotate-180] duration-700',
+              'mt-1 h-4 w-4 text-white transition[-rotate-180] duration-700',
               thisSectionOpen ? '' : 'rotate-180'
             )}
           />
-
-          <h3 className="text-white font-medium">{title}</h3>
         </div>
       </CollapsibleTrigger>
 

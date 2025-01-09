@@ -1537,7 +1537,6 @@ def __get_points_for_area_and_external_data_source(
         if postcode_io_key is None:
             postcode_io_key = lih_to_postcodes_io_key_map.get(area.area_type.code, None)
         if postcode_io_key:
-            print(gss, postcode_io_key)
             filters |= Q(**{f"postcode_data__codes__{postcode_io_key.value}": area.gss})
     else:
         # Find only data specifically related to this GSS area — not about its children
@@ -1605,7 +1604,8 @@ def generic_data_summary_from_source_about_area(
     df = pd.DataFrame([record.json for record in qs])
     # convert any stringified numbers to floats
     for column in df:
-        if any(df[column].apply(check_numeric)):
+        if all(df[column].apply(check_numeric)):
+            df[column] = df[column].replace("", 0)
             df[column] = df[column].astype(float)
     # remove columns that are of string type
     df = df.select_dtypes(exclude=["object", "string"])
@@ -1635,6 +1635,8 @@ def generic_data_summary_from_source_about_area(
 
 def check_numeric(x):
     try:
+        if x == "" or x is None:
+            return True
         float(x)
         return True
     except Exception:
@@ -1647,7 +1649,8 @@ def choropleth_data_for_source(
     source_id: str,
     analytical_area_key: AnalyticalAreaType,
     # Field could be a column name or a Pandas formulaic expression
-    field: str,
+    # or, if not provided, a count of records
+    field: Optional[str],
 ) -> List[GroupedDataCount]:
     # Check user can access the external data source
     user = get_current_user(info)
@@ -1685,10 +1688,11 @@ def choropleth_data_for_source(
     if (
         external_data_source.data_type
         == models.ExternalDataSource.DataSourceType.AREA_STATS
+        and field is not None
     ):
         # Convert any stringified JSON numbers to floats
         for column in df:
-            if any(df[column].apply(check_numeric)):
+            if all(df[column].apply(check_numeric)):
                 df[column] = df[column].replace("", 0)
                 df[column] = df[column].astype(float)
 
@@ -1706,7 +1710,13 @@ def choropleth_data_for_source(
         df_sum = df.drop(columns=["label"]).groupby("gss").sum().reset_index()
 
         # Calculate the mode for the 'label' column
-        df_mode = df.groupby("gss")["label"].agg(lambda x: x.mode()[0]).reset_index()
+        def get_mode(series):
+            try:
+                return series.mode()[0]
+            except KeyError:
+                return None
+
+        df_mode = df.groupby("gss")["label"].agg(get_mode).reset_index()
 
         # Merge the summed DataFrame with the mode DataFrame
         df = pd.merge(df_sum, df_mode, on="gss")
@@ -1760,7 +1770,13 @@ def choropleth_data_for_source(
         )
 
         # Calculate the mode for the 'label' column
-        df_mode = df.groupby("gss")["label"].agg(lambda x: x.mode()[0]).reset_index()
+        def get_mode(series):
+            try:
+                return series.mode()[0]
+            except KeyError:
+                return None
+
+        df_mode = df.groupby("gss")["label"].agg(get_mode).reset_index()
 
         # Merge the summed DataFrame with the mode DataFrame
         df = pd.merge(df_count, df_mode, on="gss")
