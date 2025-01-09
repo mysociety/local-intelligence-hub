@@ -310,6 +310,12 @@
 }
 
 /* Mapbox */
+.hover-only-popup *,
+.hover-only-popup > *,
+.hover-only-popup > * > * {
+  pointer-events: none !important;
+}
+
 .mapboxgl-popup-close-button {
   /* Improve built-in popup close button spacing */
   padding-right: 0.25rem;
