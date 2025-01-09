@@ -727,7 +727,7 @@ postcodeIOKeyAreaTypeLookup = {
         mapit_area_types=["LBO", "UTA", "COI", "LGD", "MTD", "DIS", "NMD"]
     ),
     AnalyticalAreaType.admin_county: AreaTypeFilter(mapit_area_types=["CTY"]),
-    AnalyticalAreaType.admin_ward: AreaTypeFilter(mapit_area_types="WD23"),
+    AnalyticalAreaType.admin_ward: AreaTypeFilter(lih_area_type="WD23"),
     AnalyticalAreaType.european_electoral_region: AreaTypeFilter(lih_area_type="EER"),
     AnalyticalAreaType.european_electoral_region: AreaTypeFilter(lih_area_type="CTRY"),
 }

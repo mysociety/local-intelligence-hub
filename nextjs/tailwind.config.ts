@@ -104,6 +104,7 @@ const config = {
           '600': 'hsl(var(--meep-gray-600))',
           '700': 'hsl(var(--meep-gray-700))',
           '800': 'hsl(var(--meep-gray-800))',
+          '950': 'hsl(var(--meep-gray-950))',
         },
         buttonText: 'hsl(var(--button-text))',
         labour: 'hsl(var(--labour))',

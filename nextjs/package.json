@@ -58,6 +58,7 @@
     "@tanstack/react-table": "^8.13.2",
     "@tohuhono/puck-rich-text": "^0.8.1",
     "@uidotdev/usehooks": "^2.4.1",
+    "@visx/visx": "^3.12.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.0",
     "cmdk": "^0.2.1",
