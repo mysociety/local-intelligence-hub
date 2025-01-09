@@ -583,7 +583,7 @@ class GroupedDataCount:
     # Provide filter if gss code is not unique (e.g. WMC and WMC23 constituencies)
     area_type_filter: Optional["AreaTypeFilter"] = None
     gss: Optional[str]
-    count: int
+    count: float
     area_data: Optional[strawberry.Private[Area]] = None
 
     @strawberry_django.field
@@ -1682,7 +1682,6 @@ def choropleth_data_for_source(
         if any(df[column].apply(check_numeric)):
             df[column] = df[column].replace("", 0)
             df[column] = df[column].astype(float)
-            # handle "could not convert string to float: ''" error
 
     # I'm expecting to end up with something like:
     '''
@@ -1693,11 +1692,22 @@ def choropleth_data_for_source(
     2 E10003 Beds   3   4   5   6
     '''
 
-    print(df)
-
     # Group by the postcode_io level that we want to
-    # Aggregation will be by summing the values in the field
-    df = df.groupby("gss").sum().reset_index()
+    # Aggregation will be by summing the values in the field, excluding 'label'
+    df_sum = df.drop(columns=['label']).groupby("gss").sum().reset_index()
+
+    # Calculate the mode for the 'label' column
+    df_mode = df.groupby("gss")['label'].agg(lambda x: x.mode()[0]).reset_index()
+
+    # Merge the summed DataFrame with the mode DataFrame
+    df = pd.merge(df_sum, df_mode, on='gss')
+
+    # Add a "maximum" column that figures out the biggest numerical value in each row
+    numerical_columns = df.select_dtypes(include='number').columns
+    df['largest_vote'] = df[numerical_columns].max(axis=1)
+
+    # Calculate the second-highest value in each row
+    df['second_largest_vote'] = df[numerical_columns].apply(lambda row: row.nlargest(2).iloc[-1], axis=1)
 
     # Now fetch the requested series from the dataframe
     # If the field is a column name, we can just return that column
@@ -1705,10 +1715,10 @@ def choropleth_data_for_source(
         df["count"] = df[field]
     # If the field is a formula, we need to evaluate it
     else:
-        df["count"] = df.eval(field)
+        df["count"] = df.eval(field, target=df)
 
     # Print the DF with only the columns we need: gss, label, count
-    print(df[["label", "gss", "count"]])
+    print(df[["gss", "label", "count"]])
         
     # Convert DF to GroupedDataCount(label=label, gss=gss, count=count) list
     return [GroupedDataCount(label=row.label, gss=row.gss, count=row.count) for row in df.itertuples()]
