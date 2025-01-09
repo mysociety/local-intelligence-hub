@@ -1732,11 +1732,15 @@ def choropleth_data_for_source(
             gss=row.gss,
             count=row.count,
             formatted_count=(
-                # pretty percentage
-                f"{row.count:.0%}"
-            ) if is_percentage else (
-                # comma-separated integer
-                f"{row.count:,.0f}"
+                (
+                    # pretty percentage
+                    f"{row.count:.0%}"
+                )
+                if is_percentage
+                else (
+                    # comma-separated integer
+                    f"{row.count:,.0f}"
+                )
             ),
         )
         for row in df.itertuples()
