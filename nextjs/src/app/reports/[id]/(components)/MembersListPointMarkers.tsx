@@ -10,7 +10,7 @@ import MarkerPopup from './MarkerPopup'
 import { PLACEHOLDER_LAYER_ID_MARKERS } from './ReportPage'
 export const DEFAULT_MARKER_COLOUR = '#678DE3'
 
-const MIN_MEMBERS_ZOOM = 15
+const MIN_MEMBERS_ZOOM = 14
 
 export function MembersListPointMarkers({
   externalDataSourceId,
