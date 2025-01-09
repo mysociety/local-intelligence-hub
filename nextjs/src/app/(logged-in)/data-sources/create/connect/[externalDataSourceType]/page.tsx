@@ -3,7 +3,6 @@
 import { FetchResult, gql, useLazyQuery, useMutation } from '@apollo/client'
 import { useAtomValue } from 'jotai'
 import { camelCase } from 'lodash'
-import { Building, Calendar, Pin, Quote, User, Users } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { FieldPath, FormProvider, useForm } from 'react-hook-form'
@@ -49,6 +48,7 @@ import { locationTypeOptions } from '@/lib/location'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { toastPromise } from '@/lib/toast'
 
+import { dataTypeIcons } from '@/lib/data'
 import { formatCrmNames } from '@/lib/utils'
 import { CreateAutoUpdateFormContext } from '../../NewExternalDataSourceWrapper'
 
@@ -689,6 +689,12 @@ export default function Page({
   }
 
   if (currentSource?.testDataSource?.healthcheck) {
+    const dataTypes = Object.entries(dataTypeIcons).map(([key, value]) => ({
+      value: key,
+      label: value.label,
+      icon: value.icon,
+    }))
+
     return (
       <div className="space-y-6">
         <h1 className="text-hLg">Connection successful</h1>
@@ -742,48 +748,17 @@ export default function Page({
                           <SelectContent>
                             <SelectGroup>
                               <SelectLabel>Type of data source</SelectLabel>
-                              <SelectItem value={DataSourceType.Member}>
-                                <div className="flex flex-row gap-2 items-center">
-                                  <User className="w-4 text-meepGray-300" />{' '}
-                                  People
-                                </div>
-                              </SelectItem>
-                              <SelectItem value={DataSourceType.AreaStats}>
-                                <div className="flex flex-row gap-2 items-center">
-                                  <User className="w-4 text-meepGray-300" />{' '}
-                                  Area Stats
-                                </div>
-                              </SelectItem>
-                              <SelectItem value={DataSourceType.Group}>
-                                <div className="flex flex-row gap-2 items-center">
-                                  <Users className="w-4 text-meepGray-300" />{' '}
-                                  Group
-                                </div>
-                              </SelectItem>
-                              <SelectItem value={DataSourceType.Event}>
-                                <div className="flex flex-row gap-2 items-center">
-                                  <Calendar className="w-4 text-meepGray-300" />{' '}
-                                  Events
-                                </div>
-                              </SelectItem>
-                              <SelectItem value={DataSourceType.Story}>
-                                <div className="flex flex-row gap-2 items-center">
-                                  <Quote className="w-4 text-meepGray-300" />{' '}
-                                  Stories
-                                </div>
-                              </SelectItem>
-                              <SelectItem value={DataSourceType.Location}>
-                                <div className="flex flex-row gap-2 items-center">
-                                  <Building className="w-4 text-meepGray-300" />{' '}
-                                  Locations
-                                </div>
-                              </SelectItem>
-                              <SelectItem value={DataSourceType.Other}>
-                                <div className="flex flex-row gap-2 items-center">
-                                  <Pin className="w-4 text-meepGray-300" />{' '}
-                                  Other
-                                </div>
-                              </SelectItem>
+                              {dataTypes.map((dataType) => (
+                                <SelectItem
+                                  key={dataType.value}
+                                  value={dataType.value}
+                                >
+                                  <div className="flex flex-row gap-2 items-center">
+                                    <dataType.icon className="w-4 text-meepGray-300" />{' '}
+                                    {dataType.label}
+                                  </div>
+                                </SelectItem>
+                              ))}
                             </SelectGroup>
                           </SelectContent>
                         </Select>
@@ -793,6 +768,7 @@ export default function Page({
                   )}
                 />
               )}
+
               {!currentSource?.testDataSource?.predefinedColumnNames && (
                 <div className="grid grid-cols-2 gap-4 w-full">
                   <FormField
