@@ -21,6 +21,7 @@ import queryString from 'query-string'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import trigramSimilarity from 'trigram-similarity'
+import CollapsibleSection from '../CollapsibleSection'
 import { useReport } from '../ReportProvider'
 import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
 import { TableDisplay } from '../dashboard/TableDisplay'
@@ -152,79 +153,76 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
     AREA_LAYER_DATA,
     {
       variables: { gss, externalDataSource: layer?.source?.id },
-      skip: !layer?.source?.id,
+      skip: !layer?.source?.id || !gss,
     }
   )
 
   return (
-    <div className="flex flex-col gap-2 pt-4">
-      <div className="text-hSm text-white">{layer.name}</div>
-      <div className="flex flex-col gap-2">
-        {data.loading ? (
-          <div className="text-meepGray-400">
-            <LoadingIcon size={'32px'} />
-          </div>
-        ) : data.error || !data.data ? (
-          <div className="text-xl text-meepGray-400 text-center py-12 px-2">
-            No data available for this area
-          </div>
-        ) : (
-          <div className="text-meepGray-400">
-            {layer.inspectorType === InspectorDisplayType.Properties ? (
-              <PropertiesDisplay
-                data={
-                  // If we're looking at an area with no single data point, use the summary data
-                  (!data.data?.row || !Object.keys(data.data.row).length) &&
-                  data.data?.summary?.aggregated
-                    ? data.data?.summary?.aggregated
-                    : // Else we're looking at something that has a single data point
-                      data.data?.row?.aggregated &&
-                        Object.keys(data.data.row).length > 0 &&
-                        data.data?.points?.length
-                      ? // if we have point data, use this so we can display string values
-                        data.data?.points[0].json
-                      : // else use the summary data
-                        data.data?.row?.aggregated ||
-                        data.data?.summary?.aggregated
-                }
-                config={layer.inspectorConfig}
-              />
-            ) : layer.inspectorType === InspectorDisplayType.Table ? (
-              <TableDisplay
-                data={
-                  layer.source.dataType === DataSourceType.AreaStats
-                    ? [data.data?.summary?.aggregated]
-                    : data.data?.points.map((p) => p.json)
-                }
-                config={layer.inspectorConfig}
-              />
-            ) : layer.inspectorType === InspectorDisplayType.ElectionResult ? (
-              <ElectionResultsDisplay
-                data={data.data?.row || data.data?.summary}
-                config={layer.inspectorConfig}
-              />
-            ) : layer.inspectorType === InspectorDisplayType.BigNumber ? (
-              <BigNumberDisplay
-                data={
-                  data.data?.row?.aggregated || data.data?.summary?.aggregated
-                }
-                config={layer.inspectorConfig}
-              />
-            ) : (
-              <ListDisplay
-                data={data.data?.points.map((p) => p.json)}
-                config={layer.inspectorConfig}
-              />
-            )}
-          </div>
-        )}
-        <div className="text-meepGray-400 text-sm flex flex-row items-center gap-1">
-          Source:{' '}
-          <DataSourceIcon crmType={layer.source.crmType} className="w-5 h-5" />{' '}
-          {layer.source.name}
+    <CollapsibleSection title={layer.name} id={layer.id}>
+      {data.loading ? (
+        <div className="text-meepGray-400">
+          <LoadingIcon size={'32px'} />
         </div>
+      ) : data.error || !data.data ? (
+        <div className="text-xl text-meepGray-400 text-center py-12 px-2">
+          No data available for this area
+        </div>
+      ) : (
+        <div className="text-meepGray-400">
+          {layer.inspectorType === InspectorDisplayType.Properties ? (
+            <PropertiesDisplay
+              data={
+                // If we're looking at an area with no single data point, use the summary data
+                (!data.data?.row || !Object.keys(data.data.row).length) &&
+                data.data?.summary?.aggregated
+                  ? data.data?.summary?.aggregated
+                  : // Else we're looking at something that has a single data point
+                    data.data?.row?.aggregated &&
+                      Object.keys(data.data.row).length > 0 &&
+                      data.data?.points?.length
+                    ? // if we have point data, use this so we can display string values
+                      data.data?.points[0].json
+                    : // else use the summary data
+                      data.data?.row?.aggregated ||
+                      data.data?.summary?.aggregated
+              }
+              config={layer.inspectorConfig}
+            />
+          ) : layer.inspectorType === InspectorDisplayType.Table ? (
+            <TableDisplay
+              data={
+                layer.source.dataType === DataSourceType.AreaStats
+                  ? [data.data?.summary?.aggregated]
+                  : data.data?.points.map((p) => p.json)
+              }
+              config={layer.inspectorConfig}
+            />
+          ) : layer.inspectorType === InspectorDisplayType.ElectionResult ? (
+            <ElectionResultsDisplay
+              data={data.data?.row || data.data?.summary}
+              config={layer.inspectorConfig}
+            />
+          ) : layer.inspectorType === InspectorDisplayType.BigNumber ? (
+            <BigNumberDisplay
+              data={
+                data.data?.row?.aggregated || data.data?.summary?.aggregated
+              }
+              config={layer.inspectorConfig}
+            />
+          ) : (
+            <ListDisplay
+              data={data.data?.points.map((p) => p.json)}
+              config={layer.inspectorConfig}
+            />
+          )}
+        </div>
+      )}
+      <div className="text-meepGray-400 text-sm flex flex-row items-center gap-1">
+        Source:{' '}
+        <DataSourceIcon crmType={layer.source.crmType} className="w-5 h-5" />{' '}
+        {layer.source.name}
       </div>
-    </div>
+    </CollapsibleSection>
   )
 }
 

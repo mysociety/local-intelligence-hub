@@ -27,10 +27,7 @@ const useDataByBoundary = ({
       boundaryType: boundaryType!,
       field: report?.displayOptions.dataVisualisation.dataSourceField!,
     },
-    skip:
-      !report?.displayOptions.dataVisualisation.dataSource ||
-      !boundaryType ||
-      !report?.displayOptions.dataVisualisation.dataSourceField,
+    skip: !report?.displayOptions.dataVisualisation.dataSource || !boundaryType,
   })
 
   return { ...query, data: query.data?.choroplethDataForSource || [] }
