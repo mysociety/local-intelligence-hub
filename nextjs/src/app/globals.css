@@ -319,14 +319,11 @@
 .mapboxgl-popup-content {
   background-color: transparent !important;
   box-shadow: none !important;
-  
 }
 
 .mapboxgl-popup-tip {
   border-top-color: transparent !important;
 }
-
-
 
 .CollapsibleContent {
   overflow: hidden;
