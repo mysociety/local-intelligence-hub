@@ -13,6 +13,8 @@ export const MAP_REPORT_LAYERS_SUMMARY = gql`
       name
       inspectorType
       inspectorConfig
+      mapboxPaint
+      mapboxLayout
       sharingPermission {
         visibilityRecordDetails
         visibilityRecordCoordinates

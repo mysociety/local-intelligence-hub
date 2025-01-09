@@ -13,11 +13,14 @@ import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { allKeysFromAllData } from '@/lib/utils'
 import { gql, useQuery } from '@apollo/client'
+import { format } from 'd3-format'
+import { sum } from 'lodash'
 import { LucideLink } from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import trigramSimilarity from 'trigram-similarity'
 import useReportUiHelpers from '../../useReportUiHelpers'
 import { useReport } from '../ReportProvider'
 import { TableDisplay } from '../dashboard/TableDisplay'
@@ -156,16 +159,17 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
                 data={
                   // If we're looking at an area with no single data point, use the summary data
                   (!data.data?.row || !Object.keys(data.data.row).length) &&
-                  data.data?.summary
-                    ? data.data?.summary
+                  data.data?.summary?.aggregated
+                    ? data.data?.summary?.aggregated
                     : // Else we're looking at something that has a single data point
-                      data.data?.row &&
+                      data.data?.row?.aggregated &&
                         Object.keys(data.data.row).length > 0 &&
                         data.data?.points?.length
                       ? // if we have point data, use this so we can display string values
                         data.data?.points[0].json
                       : // else use the summary data
-                        data.data?.row || data.data?.summary
+                        data.data?.row?.aggregated ||
+                        data.data?.summary?.aggregated
                 }
                 config={layer.inspectorConfig}
               />
@@ -173,7 +177,7 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
               <TableDisplay
                 data={
                   layer.source.dataType === DataSourceType.AreaStats
-                    ? [data.data?.summary]
+                    ? [data.data?.summary?.aggregated]
                     : data.data?.points.map((p) => p.json)
                 }
                 config={layer.inspectorConfig}
@@ -185,7 +189,9 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
               />
             ) : layer.inspectorType === InspectorDisplayType.BigNumber ? (
               <BigNumberDisplay
-                data={data.data?.row || data.data?.summary}
+                data={
+                  data.data?.row?.aggregated || data.data?.summary?.aggregated
+                }
                 config={layer.inspectorConfig}
               />
             ) : (
@@ -229,24 +235,37 @@ const AREA_LAYER_DATA = gql`
     points: genericDataFromSourceAboutArea(
       gss: $gss
       sourceId: $externalDataSource
-      points: true
     ) {
       json
     }
-    # collate area data up to this GSS code
+    # rolled up area data up to this GSS code
     summary: genericDataSummaryFromSourceAboutArea(
       gss: $gss
       sourceId: $externalDataSource
-      rollup: true
       points: false
-    )
-    # For specific pieces of data for this GSS code
+    ) {
+      aggregated
+      metadata {
+        min
+        max
+        total
+        fptpMajority
+      }
+    }
+    # for specific pieces of data for this GSS code
     row: genericDataSummaryFromSourceAboutArea(
       gss: $gss
       sourceId: $externalDataSource
       rollup: false
       points: false
-    )
+    ) {
+      aggregated
+      metadata {
+        min
+        max
+        total
+      }
+    }
   }
 `
 
@@ -284,19 +303,126 @@ function ElectionResultsDisplay({
   data,
   config,
 }: {
-  data: AreaLayerDataQuery['summary'][]
+  data: AreaLayerDataQuery['summary']
   config: {
     voteCountFields: string[]
   }
 }) {
-  // {/* Option:
-  //   - UK political election result
-  //     - so infer party colours
-  //     - display FPTP majority
-  //     - total votes
-  //   - [ ] select vote count fields: Con, Grn, Lab, Oth, ...
-  // */}
-  return <div>Election results</div>
+  if (!data?.aggregated) {
+    return (
+      <div className="text-xl text-meepGray-400 text-center py-12 px-2">
+        No election data available
+      </div>
+    )
+  }
+
+  const total =
+    data?.metadata.total || sum(Object.values(data?.aggregated || {})) || 0
+
+  return (
+    <div>
+      <div className="grid grid-cols-2 gap-4 my-4">
+        {/* Total votes */}
+        <div className="flex flex-col gap-1">
+          <div className="text-xs uppercase text-meepGray-400">Majority</div>
+          <div className="text-2xl text-white">
+            {data?.metadata.fptpMajority
+              ? format(',.0f')(data?.metadata.fptpMajority)
+              : '???'}
+          </div>
+        </div>
+        <div className="flex flex-col gap-1">
+          <div className="text-xs uppercase text-meepGray-400">Total votes</div>
+          <div className="text-2xl text-white">
+            {data?.metadata.total
+              ? format(',.0f')(data?.metadata.total)
+              : '???'}
+          </div>
+        </div>
+      </div>
+      <div>
+        {Object.entries(data?.aggregated || {})
+          .filter(([_, n]) => (n as number) >= 1)
+          .sort(([, a], [, b]) => (b as number) - (a as number))
+          .map(([party, votes]) => {
+            const percent = format('.0%')((votes as number) / total)
+            return (
+              <div key={party} className="flex flex-col gap-2 my-2">
+                {/* Bar with relative progress */}
+                <div className="flex flex-col gap-1 w-full">
+                  <div className="flex flex-row justify-between items-center text-xs">
+                    <div className="text-white">{party}</div>
+                    <div className="flex flex-row gap-2 items-center">
+                      <span>
+                        {format(',.0f')(votes as number)}{' '}
+                        {pluralize('vote', votes as number)}
+                      </span>
+                      <span className="text-white">{percent}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-row gap-2 items-center">
+                    <div
+                      className="h-[15px] rounded"
+                      style={{
+                        width: percent,
+                        backgroundColor: guessPartyColour(party),
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+      </div>
+    </div>
+  )
+}
+
+function guessPartyColour(key: string) {
+  // trigramSimilarity each party name to the keys in the map
+  // return the colour of the most similar party
+  const similarities = Object.keys(partyColourMap)
+    .map((partyKey) => ({
+      partyKey,
+      // @ts-ignore
+      similarity: key === partyKey ? 1 : trigramSimilarity(key, partyKey),
+    }))
+    .sort((a, b) => b.similarity - a.similarity)
+
+  const guessedPartyKey = similarities[0].partyKey
+
+  console.log(
+    'Guessing party colour for',
+    key,
+    'as',
+    guessedPartyKey,
+    similarities
+  )
+
+  // @ts-ignore
+  return partyColourMap[guessedPartyKey] || partyColourMap.Other
+}
+
+const partyColourMap = {
+  Conservative: '#0087DC',
+  Con: '#0087DC',
+  Labour: '#DC241f',
+  Lab: '#DC241f',
+  LibDem: '#FAA61A',
+  LDem: '#FAA61A',
+  SNP: '#FFF95D',
+  Green: '#6AB023',
+  Grn: '#6AB023',
+  'Plaid Cymru': '#008142',
+  PC: '#008142',
+  UKIP: '#70147A',
+  Brexit: '#12B6CF',
+  Independent: 'gray',
+  Ind: 'gray',
+  Reform: '#12B6CF',
+  Ref: '#12B6CF',
+  Other: 'gray',
+  Oth: 'gray',
 }
 
 function BigNumberDisplay({

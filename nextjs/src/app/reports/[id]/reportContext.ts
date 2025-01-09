@@ -1,9 +1,11 @@
 import {
   AnalyticalAreaType,
   MapLayer,
+  MapLayerInput,
   MapReport,
 } from '@/__generated__/graphql'
 import { createContext } from 'react'
+import { OptimisticMutationUpdateMapLayers } from './(components)/ReportProvider'
 import { PoliticalTileset } from './politicalTilesets'
 
 export enum VisualisationType {
@@ -68,6 +70,11 @@ interface ReportContextProps {
     displayOptions?: Partial<ReportConfig>
     layers?: any[]
   }) => void
+  updateLayer: (
+    layerId: string,
+    layer: Partial<MapLayerInput>,
+    optimisticUpdate?: OptimisticMutationUpdateMapLayers
+  ) => void
   refreshReportData: () => void
   dataLoading: boolean
   setDataLoading: (loading: boolean) => void
@@ -77,6 +84,7 @@ const ReportContext = createContext<ReportContextProps>({
   report: {} as MapReportExtended,
   deleteReport: () => {},
   updateReport: () => {},
+  updateLayer: () => {},
   refreshReportData: () => {},
   dataLoading: false,
   setDataLoading: () => {},

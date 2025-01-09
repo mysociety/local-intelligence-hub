@@ -73,6 +73,8 @@ export const MAP_REPORT_LAYER_ANALYTICS = gql`
       layers {
         id
         name
+        mapboxPaint
+        mapboxLayout
         source {
           id
           dataType
@@ -182,6 +184,10 @@ export const UPDATE_MAP_REPORT = gql`
           id
           name
         }
+        inspectorType
+        inspectorConfig
+        mapboxPaint
+        mapboxLayout
       }
     }
   }

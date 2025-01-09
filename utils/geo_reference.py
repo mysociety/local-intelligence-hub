@@ -1,10 +1,14 @@
-
 # Provides a map from postcodes.io area type to Local Intelligence Hub
 # area types, or mapit types if LIH is misaligned.
 
 
 from enum import Enum
+from typing import TYPE_CHECKING
+
 import strawberry
+
+if TYPE_CHECKING:
+    from hub.models import Area
 
 
 @strawberry.enum
@@ -20,6 +24,7 @@ class AnalyticalAreaType(Enum):
     european_electoral_region = "european_electoral_region"
     country = "country"
 
+
 lih_to_postcodes_io_key_map = {
     "WMC": AnalyticalAreaType.parliamentary_constituency,
     "WMC23": AnalyticalAreaType.parliamentary_constituency_2024,
@@ -30,3 +35,12 @@ lih_to_postcodes_io_key_map = {
     "EER": AnalyticalAreaType.european_electoral_region,
     "CTRY": AnalyticalAreaType.country,
 }
+
+
+def area_to_postcode_io_filter(area: "Area"):
+    if area.mapit_type in ["LBO", "UTA", "COI", "LGD", "MTD", "DIS", "NMD"]:
+        return AnalyticalAreaType.admin_district
+    elif area.mapit_type in ["CTY"]:
+        return AnalyticalAreaType.admin_county
+    else:
+        return lih_to_postcodes_io_key_map.get(area.area_type.code, None)

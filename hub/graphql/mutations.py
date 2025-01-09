@@ -13,8 +13,8 @@ from graphql import GraphQLError
 from procrastinate.contrib.django.models import ProcrastinateJob
 from strawberry import auto
 from strawberry.field_extensions import InputMutationExtension
-from strawberry.types.info import Info
 from strawberry.scalars import JSON
+from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import IsAuthenticated
 
@@ -58,8 +58,10 @@ class MapLayerInput:
     source: str
     visible: Optional[bool] = True
     custom_marker_text: Optional[str] = None
-    inspector_type: model_types.InspectorDisplayType = None
+    inspector_type: Optional[str] = None
     inspector_config: Optional[JSON] = None
+    mapbox_paint: Optional[JSON] = None
+    mapbox_layout: Optional[JSON] = None
 
 
 @strawberry_django.input(models.MapReport, partial=True)

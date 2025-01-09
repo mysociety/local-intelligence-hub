@@ -14,16 +14,19 @@ import {
 import { currentOrganisationIdAtom } from '@/lib/organisation'
 
 import { SidebarProvider } from '@/components/ui/sidebar'
-import { useSidebarLeftState } from '@/lib/map'
+import { layerEditorStateAtom, useSidebarLeftState } from '@/lib/map'
 import { merge } from 'lodash'
 import ReportNavbar from './(components)/ReportNavbar'
 import ReportPage from './(components)/ReportPage'
 import ReportProvider from './(components)/ReportProvider'
-import { ReportSidebarLeft } from './(components)/ReportSidebarLeft'
+import {
+  LEFT_SIDEBAR_WIDTH,
+  ReportSidebarLeft,
+} from './(components)/ReportSidebarLeft'
 import { ReportSidebarRight } from './(components)/ReportSidebarRight'
 import { GET_MAP_REPORT } from './gql_queries'
 import { getPoliticalTilesetsByCountry } from './politicalTilesets'
-import { defaultReportConfig, MapReportExtended } from './reportContext'
+import { MapReportExtended, defaultReportConfig } from './reportContext'
 
 type Params = {
   id: string
@@ -61,6 +64,8 @@ function SelfContainedContext({ params: { id } }: { params: Params }) {
 
   const leftSidebar = useSidebarLeftState()
 
+  const layerEditorState = useAtomValue(layerEditorStateAtom)
+
   // Really important to check if the report is null before rendering the page
   // The ReportProvider component needs to be able to provide a report to its children
   if (!report.data?.mapReport) return null
@@ -78,9 +83,14 @@ function SelfContainedContext({ params: { id } }: { params: Params }) {
         <SidebarProvider
           style={
             {
-              '--sidebar-width': '360px',
+              '--sidebar-width': `${
+                layerEditorState.open
+                  ? LEFT_SIDEBAR_WIDTH * 2
+                  : LEFT_SIDEBAR_WIDTH
+              }px`,
             } as React.CSSProperties
           }
+          className="bg-meepGray-800"
           open={leftSidebar.state}
         >
           <ReportNavbar />

@@ -761,7 +761,13 @@ class GenericData(CommonData):
     last_update = models.DateTimeField(auto_now=True)
     point = PointField(srid=4326, blank=True, null=True)
     polygon = MultiPolygonField(srid=4326, blank=True, null=True)
-    area = models.ForeignKey("Area", blank=True, null=True, on_delete=models.SET_NULL, related_name="generic_data")
+    area = models.ForeignKey(
+        "Area",
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="generic_data",
+    )
     postcode_data = JSONField(blank=True, null=True)
     postcode = models.CharField(max_length=1000, blank=True, null=True)
     first_name = models.CharField(max_length=300, blank=True, null=True)

@@ -6,8 +6,8 @@ from typing import List, Optional, Union
 
 from django.db.models import Q
 from django.http import HttpRequest
-import pandas as pd
 
+import pandas as pd
 import procrastinate.contrib.django.models
 import strawberry
 import strawberry_django
@@ -38,8 +38,11 @@ from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
-
-from utils.geo_reference import lih_to_postcodes_io_key_map, AnalyticalAreaType
+from utils.geo_reference import (
+    AnalyticalAreaType,
+    area_to_postcode_io_filter,
+    lih_to_postcodes_io_key_map,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -729,6 +732,7 @@ postcodeIOKeyAreaTypeLookup = {
     AnalyticalAreaType.european_electoral_region: AreaTypeFilter(lih_area_type="CTRY"),
 }
 
+
 @strawberry.interface
 class Analytics:
     imported_data_count: int = fn_field()
@@ -1195,15 +1199,15 @@ class Report:
     def get_queryset(cls, queryset, info, **kwargs):
         user = get_current_user(info)
         return queryset.filter(organisation__members__user=user.id)
-    
+
 
 @strawberry.enum
 class InspectorDisplayType(Enum):
-    election_result = "election_result"
-    big_number = "big_number"
-    table = "table"
-    list = "list"
-    properties = "properties"
+    BigNumber = "BigNumber"
+    ElectionResult = "ElectionResult"
+    List = "List"
+    Properties = "Properties"
+    Table = "Table"
 
 
 @strawberry.type
@@ -1216,7 +1220,9 @@ class MapLayer:
     icon_image: Optional[str] = dict_key_field()
     mapbox_paint: Optional[JSON] = dict_key_field()
     mapbox_layout: Optional[JSON] = dict_key_field()
-    inspector_type: InspectorDisplayType = dict_key_field(default=InspectorDisplayType.table)
+    inspector_type: Optional[InspectorDisplayType] = dict_key_field(
+        default=InspectorDisplayType.Table
+    )
     inspector_config: Optional[JSON] = dict_key_field()
 
     @strawberry_django.field
@@ -1509,8 +1515,12 @@ def generic_data_by_external_data_source(
         data_type__data_set__external_data_source=external_data_source
     )
 
+
 def __get_points_for_area_and_external_data_source(
-    external_data_source: models.ExternalDataSource, gss: str, points: bool = True, rollup: bool = True
+    external_data_source: models.ExternalDataSource,
+    gss: str,
+    points: bool = True,
+    rollup: bool = True,
 ) -> List[GenericData]:
     area = models.Area.objects.get(gss=gss)
     data_source_records = external_data_source.get_import_data()
@@ -1522,8 +1532,11 @@ def __get_points_for_area_and_external_data_source(
 
     if rollup:
         # Find all data related to this area or within it — e.g. wards that share this council GSS
-        postcode_io_key = lih_to_postcodes_io_key_map.get(area.area_type.code, None)
+        postcode_io_key = area_to_postcode_io_filter(area)
+        if postcode_io_key is None:
+            postcode_io_key = lih_to_postcodes_io_key_map.get(area.area_type.code, None)
         if postcode_io_key:
+            print(gss, postcode_io_key)
             filters |= Q(**{f"postcode_data__codes__{postcode_io_key.value}": area.gss})
     else:
         # Find only data specifically related to this GSS area — not about its children
@@ -1531,8 +1544,11 @@ def __get_points_for_area_and_external_data_source(
 
     return data_source_records.filter(filters)
 
+
 @strawberry_django.field()
-def generic_data_from_source_about_area(info: Info, source_id: str, gss: str, points: bool = True, rollup: bool = True) -> List[GenericData]:
+def generic_data_from_source_about_area(
+    info: Info, source_id: str, gss: str, points: bool = True, rollup: bool = True
+) -> List[GenericData]:
     user = get_current_user(info)
     # Check user can access the external data source
     external_data_source = models.ExternalDataSource.objects.get(pk=source_id)
@@ -1540,14 +1556,35 @@ def generic_data_from_source_about_area(info: Info, source_id: str, gss: str, po
     if not permissions.get("can_display_points") or not permissions.get(
         "can_display_details"
     ):
-        raise ValueError(f"User {user} does not have permission to view this external data source's data")
-    
-    qs = __get_points_for_area_and_external_data_source(external_data_source, gss, points, rollup)
+        raise ValueError(
+            f"User {user} does not have permission to view this external data source's data"
+        )
+
+    qs = __get_points_for_area_and_external_data_source(
+        external_data_source, gss, points, rollup
+    )
 
     return qs
 
+
+@strawberry.type
+class DataSummaryMetadata:
+    min: float
+    max: float
+    total: float
+    fptp_majority: Optional[float]
+
+
+@strawberry.type
+class DataSummary:
+    aggregated: JSON
+    metadata: DataSummaryMetadata
+
+
 @strawberry_django.field()
-def generic_data_summary_from_source_about_area(info: Info, source_id: str, gss: str, points: bool = True, rollup: bool = True) -> JSON:
+def generic_data_summary_from_source_about_area(
+    info: Info, source_id: str, gss: str, points: bool = True, rollup: bool = True
+) -> Optional[DataSummary]:
     user = get_current_user(info)
     # Check user can access the external data source
     external_data_source = models.ExternalDataSource.objects.get(pk=source_id)
@@ -1555,9 +1592,13 @@ def generic_data_summary_from_source_about_area(info: Info, source_id: str, gss:
     if not permissions.get("can_display_points") or not permissions.get(
         "can_display_details"
     ):
-        raise ValueError(f"User {user} does not have permission to view this external data source's data")
+        raise ValueError(
+            f"User {user} does not have permission to view this external data source's data"
+        )
 
-    qs = __get_points_for_area_and_external_data_source(external_data_source, gss, points, rollup)
+    qs = __get_points_for_area_and_external_data_source(
+        external_data_source, gss, points, rollup
+    )
 
     # ingest the .json data into a pandas dataframe
     df = pd.DataFrame([record.json for record in qs])
@@ -1568,13 +1609,32 @@ def generic_data_summary_from_source_about_area(info: Info, source_id: str, gss:
     # remove columns that are of string type
     df = df.select_dtypes(exclude=["object", "string"])
     # summarise the data in a single dictionary, with summed values for each column
-    summary = df.sum().to_dict()
+    summary = df.sum()
+    summary_dict = summary.to_dict()
 
-    return summary
+    if len(summary_dict.keys()) <= 0:
+        return None
+    
+    fptp_majority = None
+    try:
+        fptp_majority = summary.nlargest(1).values[0] - summary.nlargest(2).values[1]
+    except Exception:
+        pass
+
+    return DataSummary(
+        aggregated=summary_dict,
+        metadata=DataSummaryMetadata(
+            min=summary.min(),
+            max=summary.max(),
+            total=summary.sum(),
+            fptp_majority=fptp_majority
+        )
+    )
+
 
 def check_numeric(x):
     try:
         float(x)
         return True
-    except:
+    except Exception:
         return False

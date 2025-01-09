@@ -23,6 +23,8 @@ const ReportMapMarkers: React.FC = () => {
         <MembersListPointMarkers
           key={layer?.source?.id || index}
           index={index}
+          mapboxPaint={layer.mapboxPaint || {}}
+          mapboxLayout={layer.mapboxLayout || {}}
           externalDataSourceId={layer?.source?.id}
         />
       ))}

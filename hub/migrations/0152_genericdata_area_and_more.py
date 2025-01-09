@@ -23,9 +23,11 @@ def backfill_areas_to_generic_data(apps, schema_editor):
         area=None,
         geocode_data__data__area_fields__isnull=False,
         # i.e. it has been geocoded successfully
-        postcode_data__isnull=False
+        postcode_data__isnull=False,
     ):
-        area_fields: dict = generic_data.geocode_data.get("data", {}).get("area_fields", {})
+        area_fields: dict = generic_data.geocode_data.get("data", {}).get(
+            "area_fields", {}
+        )
         if len(area_fields.keys()) > 0:
             area_type, gss = area_fields.popitem()
             area = Area.objects.filter(gss=gss).first()
@@ -62,7 +64,5 @@ class Migration(migrations.Migration):
             name="geocoder",
             field=models.CharField(blank=True, max_length=1000, null=True),
         ),
-        migrations.RunPython(
-            code=backfill_areas_to_generic_data
-        )
+        migrations.RunPython(code=backfill_areas_to_generic_data),
     ]

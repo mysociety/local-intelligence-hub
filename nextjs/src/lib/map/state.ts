@@ -40,3 +40,15 @@ export function useSidebarLeftState() {
   const toggle = () => set((s) => !s)
   return { toggle, state, set }
 }
+
+export const layerEditorStateAtom = atom<
+  | {
+      open: false
+    }
+  | {
+      open: true
+      layerId: string
+    }
+>({
+  open: false,
+})

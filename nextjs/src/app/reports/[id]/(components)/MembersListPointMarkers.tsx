@@ -8,14 +8,20 @@ import { useEffect } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import MarkerPopup from './MarkerPopup'
 import { PLACEHOLDER_LAYER_ID_MARKERS } from './ReportPage'
+
 const MIN_MEMBERS_ZOOM = 8
+export const DEFAULT_MARKER_COLOUR = '#678DE3'
 
 export function MembersListPointMarkers({
   externalDataSourceId,
   index,
+  mapboxPaint,
+  mapboxLayout,
 }: {
   externalDataSourceId: string
   index: number
+  mapboxPaint?: any
+  mapboxLayout?: any
 }) {
   const mapbox = useLoadedMap()
   const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(
@@ -83,8 +89,10 @@ export function MembersListPointMarkers({
             type="circle"
             paint={{
               'circle-radius': 8,
-              'circle-color': '#678DE3',
+              'circle-color': DEFAULT_MARKER_COLOUR,
+              ...(mapboxPaint || {}),
             }}
+            layout={mapboxLayout}
             minzoom={MIN_MEMBERS_ZOOM}
             {...(selectedSourceMarker?.properties?.id
               ? {
@@ -106,7 +114,9 @@ export function MembersListPointMarkers({
             paint={{
               'circle-radius': 8,
               'circle-color': '#678DE3',
+              ...(mapboxPaint || {}),
             }}
+            layout={mapboxLayout}
             minzoom={MIN_MEMBERS_ZOOM}
             {...(selectedSourceMarker?.properties?.id
               ? {
@@ -130,7 +140,9 @@ export function MembersListPointMarkers({
             paint={{
               'circle-radius': 10,
               'circle-color': '#678DE3',
+              ...(mapboxPaint || {}),
             }}
+            layout={mapboxLayout}
             minzoom={MIN_MEMBERS_ZOOM}
             filter={['==', selectedSourceMarker.properties.id, ['get', 'id']]}
           />
