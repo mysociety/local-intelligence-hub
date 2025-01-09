@@ -584,6 +584,7 @@ class GroupedDataCount:
     area_type_filter: Optional["AreaTypeFilter"] = None
     gss: Optional[str]
     count: float
+    formatted_count: Optional[str]
     area_data: Optional[strawberry.Private[Area]] = None
 
     @strawberry_django.field
@@ -1721,8 +1722,22 @@ def choropleth_data_for_source(
     else:
         df["count"] = df.eval(field, target=df)
 
+    # Check if count is between 0 and 1: if so, it's a percentage
+    is_percentage = df["count"].between(0, 2).all()
+
     # Convert DF to GroupedDataCount(label=label, gss=gss, count=count) list
     return [
-        GroupedDataCount(label=row.label, gss=row.gss, count=row.count)
+        GroupedDataCount(
+            label=row.label,
+            gss=row.gss,
+            count=row.count,
+            formatted_count=(
+                # pretty percentage
+                f"{row.count:.0%}"
+            ) if is_percentage else (
+                # comma-separated integer
+                f"{row.count:,.0f}"
+            ),
+        )
         for row in df.itertuples()
     ]

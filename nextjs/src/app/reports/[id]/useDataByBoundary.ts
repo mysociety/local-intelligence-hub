@@ -1,6 +1,5 @@
 import {
   AnalyticalAreaType,
-  MapReportCountByAreaQuery,
   MapReportStatsByAreaQuery,
   SourceStatsByBoundaryQuery,
   SourceStatsByBoundaryQueryVariables,
@@ -9,7 +8,7 @@ import { gql, useQuery } from '@apollo/client'
 import { MapReportExtended } from './reportContext'
 
 export type DataByBoundary =
-  MapReportCountByAreaQuery['mapReport']['importedDataCountByArea']
+  SourceStatsByBoundaryQuery['choroplethDataForSource']
 export type ExternalDataByBoundary =
   MapReportStatsByAreaQuery['mapReport']['importedDataByArea']
 
@@ -54,6 +53,7 @@ const CHOROPLETH_STATS_FOR_SOURCE = gql`
       label
       gss
       count
+      formattedCount
       gssArea {
         point {
           type

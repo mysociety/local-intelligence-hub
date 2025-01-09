@@ -1,5 +1,5 @@
 import { scaleLinear, scaleSequential } from 'd3-scale'
-import { isInteger, max, min } from 'lodash'
+import { max, min } from 'lodash'
 import {
   FillLayerSpecification,
   LineLayerSpecification,
@@ -30,17 +30,23 @@ export function getChoroplethFill(
   const interpolator = getReportPalette(displayOptions)
 
   // Legend scale
-  const scale = scaleSequential()
+  const colourScale = scaleSequential()
     .domain([minCount, maxCount])
     .interpolator(interpolator)
 
-  // Must be minimum 3 for mapbox
-  let steps = Math.max(30, Math.min(maxCount, 30))
+  // Define 30 stops of colour
+  let steps = 30
+
+  // Now turn each i into an associated number in the range min-max:
+  const stepsToDomainTransformer = scaleLinear()
+    .domain([0, steps])
+    .range([minCount, maxCount])
+
   const colourStops = new Array(steps)
     .fill(0)
-    .map((_, i) => i / steps)
-    .map((n) => {
-      return [n, scale(n)]
+    .map((_, step) => {
+      const count = stepsToDomainTransformer(step)
+      return [count, colourScale(count)]
     })
     .flat()
 
@@ -123,7 +129,8 @@ export function getAreaGeoJSON(data: DataByBoundary) {
         type: 'Feature',
         geometry: d.gssArea?.point?.geometry! as GeoJSON.Point,
         properties: {
-          count: isInteger(d.count) ? d.count : d.count.toFixed(1),
+          count: d.count,
+          formattedCount: d.formattedCount,
           label: d.label,
         },
       })),
@@ -163,7 +170,7 @@ export const getAreaCountLayout = (
 
   return {
     'symbol-spacing': 1000,
-    'text-field': ['get', 'count'],
+    'text-field': ['get', 'formattedCount'],
     'text-size': [
       'interpolate',
       ['linear'],

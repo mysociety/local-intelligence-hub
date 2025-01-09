@@ -1,7 +1,6 @@
 import { DataSourceIcon } from '@/components/DataSourceIcon'
-import { LegendOrdinal } from '@visx/legend'
-import { scaleOrdinal } from '@visx/scale'
 import { format } from 'd3-format'
+import { scaleLinear, scaleSequential } from 'd3-scale'
 import { max, min } from 'lodash'
 import { getReportPalette } from '../../reportContext'
 import useDataByBoundary from '../../useDataByBoundary'
@@ -15,6 +14,7 @@ export default function ReportMapChoroplethLegend() {
     politicalBoundaries,
     displayOptions: { dataVisualisation },
   } = report
+  const displayOptions = report.displayOptions
 
   const dataSourceId = dataVisualisation?.dataSource
   const dataSourceField = dataVisualisation?.dataSourceField
@@ -35,29 +35,45 @@ export default function ReportMapChoroplethLegend() {
   })
 
   // Get min and max counts
-  const minCount = min(dataByBoundary.map((d) => d.count || 0)) || 0
-  const maxCount = max(dataByBoundary.map((d) => d.count || 0)) || 1
+  let minCount = min(dataByBoundary.map((d) => d.count || 0)) || 0
+  let maxCount = max(dataByBoundary.map((d) => d.count || 0)) || 1
 
-  // Calculate difference and determine how many steps we need
+  //
   const difference = maxCount - minCount
-
-  const numberOfSteps = 8
-  let formatStr = ',.1r'
-  if (difference < 1) {
-    formatStr = '.1%'
+  let isPercentage = false
+  let formatStr = ',.2r'
+  if (difference < 2) {
+    formatStr = '.0%'
+    isPercentage = true
   }
-  const domain = Array.from({ length: numberOfSteps }, (_, i) =>
-    format(formatStr)(minCount + i * (difference / (numberOfSteps - 1)))
-  )
 
-  const interpolator = getReportPalette(report.displayOptions)
+  // ensure minCount and maxCount are different
+  if (minCount === maxCount) {
+    if (minCount >= 1) {
+      minCount = minCount - 0.1
+    } else {
+      maxCount = maxCount + 0.1
+    }
+  }
+
+  const interpolator = getReportPalette(displayOptions)
 
   // Legend scale
-  const ordinalScale = scaleOrdinal({
-    domain,
-    range: Array.from({ length: numberOfSteps }, (_, i) =>
-      interpolator(i / (numberOfSteps - 1 || 1))
-    ),
+  const colourScale = scaleSequential()
+    .domain([minCount, maxCount])
+    .interpolator(interpolator)
+
+  // Define 30 stops of colour
+  let steps = isPercentage ? 5 : 7
+
+  // Now turn each i into an associated number in the range min-max:
+  const stepsToDomainTransformer = scaleLinear()
+    .domain([0, steps])
+    .range([minCount, maxCount])
+
+  const colourStops = new Array(steps).fill(0).map((_, step) => {
+    const count = stepsToDomainTransformer(step)
+    return [count, colourScale(count)]
   })
 
   if (loading) {
@@ -79,7 +95,27 @@ export default function ReportMapChoroplethLegend() {
             <span className="font-500">{selectedDataSource?.name}</span>
           </div>
         </div>
-        <LegendOrdinal
+        <div className="flex flex-row items-center">
+          {colourStops.map((stop, i) => {
+            return (
+              <div
+                key={i}
+                className="basis-0 min-w-0 flex-shrink-0 grow flex flex-col"
+              >
+                <div
+                  className="h-4"
+                  style={{
+                    backgroundColor: stop[1],
+                  }}
+                ></div>
+                <div className="text-xs text-center">
+                  {format(formatStr)(stop[0])}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        {/* <LegendOrdinal
           scale={ordinalScale}
           direction="row"
           itemDirection="column"
@@ -88,7 +124,7 @@ export default function ReportMapChoroplethLegend() {
           shapeWidth={50}
           shapeHeight={10}
           className="text-meepGray-400 text-xs flex flex-col items-start"
-        ></LegendOrdinal>
+        /> */}
       </div>
     </div>
   )
