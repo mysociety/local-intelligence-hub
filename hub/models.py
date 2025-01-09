@@ -3,6 +3,7 @@ import hashlib
 import itertools
 import json
 import math
+import threading
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Self, Type, TypedDict, Union
@@ -3776,7 +3777,14 @@ class EditableGoogleSheetsSource(ExternalDataSource):
         if credentials and credentials.expired and credentials.refresh_token:
             logger.info(f"Refreshing Google token for source {self}")
             credentials.refresh(GoogleRequest())
-            self.oauth_credentials = json.dumps(
+
+            # Update instance in thread because:
+            # a. self.save() doesn't work in an async context
+            # b. async_to_sync(self.asave)() doesn't work in an async context
+            # c. making this function async, to allow `await self.asave()`,
+            #    makes downstream code too complicated.
+            source_id = self.id
+            oauth_credentials = json.dumps(
                 {
                     "access_token": credentials.token,
                     "refresh_token": credentials.refresh_token,
@@ -3786,9 +3794,18 @@ class EditableGoogleSheetsSource(ExternalDataSource):
                     "expiry": credentials.expiry.isoformat(),
                 }
             )
-            # Can't save here as this property is used in async contexts
-            # Instead, save() is called after fetch_many and update_many
-            # TODO: Make this not a hack!
+
+            def thread_fn():
+                EditableGoogleSheetsSource.objects.filter(id=source_id).update(
+                    oauth_credentials=oauth_credentials
+                )
+
+            thread = threading.Thread(target=thread_fn)
+            thread.start()
+            thread.join()
+
+            # Save the new credentials on the current in-memory instance
+            self.oauth_credentials = oauth_credentials
         return googleapiclient.discovery.build("sheets", "v4", credentials=credentials)
 
     @property
@@ -3859,9 +3876,6 @@ class EditableGoogleSheetsSource(ExternalDataSource):
 
     async def fetch_many(self, id_list: list[str]):
         row_numbers = self.fetch_row_numbers_for_ids(id_list)
-        # Save the instance here as credentials may have been refreshed
-        # Can't do it in `def api` because of async complexity
-        await self.asave()
         if not row_numbers:
             return []
         return self.get_rows(row_numbers)
@@ -3997,9 +4011,6 @@ class EditableGoogleSheetsSource(ExternalDataSource):
             spreadsheetId=self.spreadsheet_id,
             body={"valueInputOption": "USER_ENTERED", "data": value_ranges},
         ).execute()
-        # Save the instance here as credentials may have been refreshed
-        # Can't do it in `def api` because of async complexity
-        await self.asave()
 
     def webhook_healthcheck(self):
         message = self.check_webhook_errors()
