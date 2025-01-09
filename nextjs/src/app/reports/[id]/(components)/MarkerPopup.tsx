@@ -1,16 +1,15 @@
+import {
+  MapReportLayerGeoJsonPointQuery,
+  MapReportLayerGeoJsonPointQueryVariables,
+} from '@/__generated__/graphql'
+import { dataTypeIcons } from '@/lib/data'
+import { selectedSourceMarkerAtom } from '@/lib/map'
 import { useQuery } from '@apollo/client'
 import { Point } from 'geojson'
 import { useAtom } from 'jotai'
 import { ErrorBoundary } from 'next/dist/client/components/error-boundary'
 import React from 'react'
 import { Popup } from 'react-map-gl'
-
-import {
-  MapReportLayerGeoJsonPointQuery,
-  MapReportLayerGeoJsonPointQueryVariables,
-} from '@/__generated__/graphql'
-import { selectedSourceMarkerAtom } from '@/lib/map'
-
 import { MAP_REPORT_LAYER_POINT } from '../gql_queries'
 import useMarkerAnalytics from '../useMarkerAnalytics'
 
@@ -32,6 +31,12 @@ const MarkerPopup: React.FC = () => {
     },
   })
 
+  const dataType =
+    selectedPointData?.importedDataGeojsonPoint?.properties?.dataType.dataSet
+      .externalDataSource.dataType
+
+  const IconComponent = dataType ? dataTypeIcons[dataType]?.icon : null
+
   if (!selectedSourceMarker?.properties?.id) return null
   return (
     <ErrorBoundary errorComponent={() => <></>}>
@@ -42,96 +47,56 @@ const MarkerPopup: React.FC = () => {
         }
         latitude={(selectedSourceMarker.geometry as Point)?.coordinates[1] || 0}
         closeOnClick={false}
-        className="text-black [&>.mapboxgl-popup-content]:p-0 [&>.mapboxgl-popup-content]:overflow-auto w-[150px] [&>.mapboxgl-popup-tip]:!border-t-meepGray-200"
         closeButton={true}
         closeOnMove={true}
         onClose={() => setSelectedSourceMarker(null)}
         anchor="bottom"
-        offset={[0, -35] as any}
+        offset={[0, -10] as any}
       >
-        {selectedPointLoading ? (
-          <div className="font-IBMPlexMono p-2 space-y-1 bg-white">
-            <div className="-space-y-1">
-              <div className="text-meepGray-400">LOADING</div>
+        <div className="relative z-10 rounded-lg w-48 p-2 bg-[#1f2229]/70  ">
+          <div className=" backdrop-blur-[3px] rounded-lg p-4 absolute top-0 left-0 w-full h-full -z-10 border border-meepGray-600"></div>
+          {selectedPointLoading ? (
+            <div className="font-IBMPlexMono p-2 space-y-1 ">
+              <div className="-space-y-1">
+                <div className="text-meepGray-400">LOADING</div>
+              </div>
             </div>
-          </div>
-        ) : (
-          <>
-            <div className="font-IBMPlexMono p-2 space-y-1 bg-white">
-              {!!selectedPointData?.importedDataGeojsonPoint?.properties
-                ?.name && (
-                <div className="-space-y-1">
-                  <div className="text-meepGray-400">NAME</div>
-                  <div>
-                    {
-                      selectedPointData?.importedDataGeojsonPoint.properties
-                        .name
-                    }
+          ) : (
+            <>
+              <div className="font-IBMPlexSans p-2 space-y-2 text-white  ">
+                {!!selectedPointData?.importedDataGeojsonPoint?.properties
+                  ?.name && (
+                  <div className="-space-y-1 flex flex-row items-center justify-between">
+                    <p className="text-base font-medium">
+                      {
+                        selectedPointData?.importedDataGeojsonPoint.properties
+                          .name
+                      }
+                    </p>
+                    {IconComponent && (
+                      <IconComponent className="w-5 h-5 text-meepGray-400" />
+                    )}
                   </div>
-                </div>
-              )}
-              {!!selectedPointData?.importedDataGeojsonPoint?.properties
-                ?.postcodeData?.postcode && (
-                <div className="-space-y-1">
-                  <div className="text-meepGray-400">POSTCODE</div>
-                  <pre>
-                    {
-                      selectedPointData?.importedDataGeojsonPoint.properties
-                        .postcodeData.postcode
-                    }
-                  </pre>
-                </div>
-              )}
-            </div>
-            {(analytics.data?.mapReport.layers.length || 0) > 1 && (
-              <footer className="pb-2 px-2 text-meepGray-400 font-IBMPlexMono text-xs">
-                From{' '}
-                {
-                  selectedPointData?.importedDataGeojsonPoint?.properties
-                    ?.dataType.dataSet.externalDataSource.name
-                }
-              </footer>
-            )}
-            <footer className="flex-divide-x bg-meepGray-200 text-meepGray-500 flex flex-row justify-around w-full py-1 px-2 text-center">
-              {!!selectedPointData?.importedDataGeojsonPoint?.properties
-                ?.phone && (
-                <a
-                  href={`tel:${selectedPointData?.importedDataGeojsonPoint?.properties?.phone}`}
-                  target="_blank"
-                >
-                  Call
-                </a>
-              )}
-              {!!selectedPointData?.importedDataGeojsonPoint?.properties
-                ?.phone && (
-                <a
-                  href={`sms:${selectedPointData?.importedDataGeojsonPoint?.properties?.phone}`}
-                  target="_blank"
-                >
-                  SMS
-                </a>
-              )}
-              {!!selectedPointData?.importedDataGeojsonPoint?.properties
-                ?.email && (
-                <a
-                  href={`mailto:${selectedPointData?.importedDataGeojsonPoint?.properties.email}`}
-                  target="_blank"
-                >
-                  Email
-                </a>
-              )}
-              {!!selectedPointData?.importedDataGeojsonPoint?.properties
-                ?.remoteUrl && (
-                <a
-                  href={`${selectedPointData?.importedDataGeojsonPoint?.properties?.remoteUrl}`}
-                  target="_blank"
-                >
-                  Link
-                </a>
-              )}
-            </footer>
-          </>
-        )}
+                )}
+
+                {!!selectedPointData?.importedDataGeojsonPoint?.properties
+                  ?.postcodeData?.postcode && (
+                  <div className="-space-y-1">
+                    <div className="text-meepGray-400 font-IBMPlexMono mb-1">
+                      POSTCODE
+                    </div>
+                    <pre>
+                      {
+                        selectedPointData?.importedDataGeojsonPoint.properties
+                          .postcodeData.postcode
+                      }
+                    </pre>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </Popup>
     </ErrorBoundary>
   )

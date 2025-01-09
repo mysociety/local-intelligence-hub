@@ -1,4 +1,8 @@
-import { CrmType, GetMemberListQuery } from '@/__generated__/graphql'
+import {
+  CrmType,
+  DataSourceType,
+  GetMemberListQuery,
+} from '@/__generated__/graphql'
 import { ActionNetworkIcon } from '@/components/logos/ActionNetworkIcon'
 import { ActionNetworkLogo } from '@/components/logos/ActionNetworkLogo'
 import { AirtableIcon } from '@/components/logos/AirtableIcon'
@@ -9,6 +13,15 @@ import { MailchimpIcon } from '@/components/logos/MailchimpIcon'
 import { MailchimpLogo } from '@/components/logos/MailchimpLogo'
 import { TicketTailorIcon } from '@/components/logos/TicketTailorIcon'
 import { TicketTailorLogo } from '@/components/logos/TicketTailorLogo'
+import {
+  CalendarDays,
+  FlagTriangleRight,
+  LineChart,
+  MapPinIcon,
+  Newspaper,
+  UserIcon,
+  UsersIcon,
+} from 'lucide-react'
 
 export const externalDataSourceOptions: Record<
   CrmType,
@@ -106,3 +119,40 @@ export type SourcePath =
 export type SourceOption =
   | GetMemberListQuery['myOrganisations'][0]['sharingPermissionsFromOtherOrgs'][0]['externalDataSource']
   | GetMemberListQuery['myOrganisations'][0]['externalDataSources'][0]
+
+export const dataTypeIcons: Record<
+  DataSourceType,
+  {
+    icon: typeof UserIcon
+    label: string
+  }
+> = {
+  [DataSourceType.Member]: {
+    icon: UserIcon,
+    label: 'Member',
+  },
+  [DataSourceType.Location]: {
+    icon: MapPinIcon,
+    label: 'Location',
+  },
+  [DataSourceType.AreaStats]: {
+    icon: LineChart,
+    label: 'Area Stats',
+  },
+  [DataSourceType.Event]: {
+    icon: CalendarDays,
+    label: 'Event',
+  },
+  [DataSourceType.Group]: {
+    icon: UsersIcon,
+    label: 'Group',
+  },
+  [DataSourceType.Story]: {
+    icon: Newspaper,
+    label: 'Story',
+  },
+  [DataSourceType.Other]: {
+    icon: FlagTriangleRight,
+    label: 'Other',
+  },
+}

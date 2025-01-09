@@ -313,6 +313,16 @@
 .mapboxgl-popup-close-button {
   /* Improve built-in popup close button spacing */
   padding-right: 0.25rem;
+  opacity: 0;
+}
+
+.mapboxgl-popup-content {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.mapboxgl-popup-tip {
+  border-top-color: transparent !important;
 }
 
 .CollapsibleContent {
