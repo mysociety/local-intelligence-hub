@@ -2484,7 +2484,7 @@ export type QueryAreaArgs = {
 
 export type QueryChoroplethDataForSourceArgs = {
   analyticalAreaKey: AnalyticalAreaType;
-  field: Scalars['String']['input'];
+  field?: InputMaybe<Scalars['String']['input']>;
   sourceId: Scalars['String']['input'];
 };
 
