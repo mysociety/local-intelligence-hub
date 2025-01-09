@@ -65,8 +65,8 @@ const MarkerPopup: React.FC<{ externalDataSourceId: string }> = ({
         anchor="bottom"
         offset={[0, -10] as any}
       >
-        <div className="relative z-10 rounded-lg w-48 p-2 bg-[#1f2229]/60  ">
-          <div className=" backdrop-blur-[2px] rounded-lg p-4 absolute top-0 left-0 w-full h-full -z-10 border border-meepGray-600"></div>
+        <div className="relative z-10 rounded-lg w-48 p-2 bg-[#1f2229]/70  ">
+          <div className=" backdrop-blur-[3px] rounded-lg p-4 absolute top-0 left-0 w-full h-full -z-10 border border-meepGray-600"></div>
           {selectedPointLoading ? (
             <div className="font-IBMPlexMono p-2 space-y-1 ">
               <div className="-space-y-1">
