@@ -11,18 +11,18 @@ import { DataSourceIcon } from '@/components/DataSourceIcon'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ExplorerState } from '@/lib/map'
-import { allKeysFromAllData } from '@/lib/utils'
+import { ExplorerState, useLoadedMap } from '@/lib/map'
 import { gql, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
 import { sum } from 'lodash'
 import { LucideLink } from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import trigramSimilarity from 'trigram-similarity'
 import { useReport } from '../ReportProvider'
+import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
 import { TableDisplay } from '../dashboard/TableDisplay'
 
 export function AreaExplorer({ gss }: { gss: string }) {
@@ -36,6 +36,17 @@ export function AreaExplorer({ gss }: { gss: string }) {
     variables: { gss },
     skip: !gss,
   })
+
+  const mapbox = useLoadedMap()
+
+  useEffect(() => {
+    if (areaData.data?.area?.fitBounds) {
+      mapbox.current?.fitBounds(areaData.data.area.fitBounds as any, {
+        padding: 100,
+      })
+      console.log('Fit bounds', mapbox.current, areaData.data?.area?.fitBounds)
+    }
+  }, [gss, areaData.data, mapbox, mapbox.loaded, mapbox.current])
 
   const report = useReport()
 
@@ -125,6 +136,8 @@ const classes = {
 const AREA_EXPLORER_SUMMARY = gql`
   query AreaExplorerSummary($gss: String!) {
     area(gss: $gss) {
+      id
+      fitBounds
       name
       areaType {
         name
@@ -215,23 +228,6 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
   )
 }
 
-function safeParseAsNumber(value: any): number | null {
-  try {
-    if (typeof value === 'number') {
-      return value
-    }
-    if (typeof value === 'string') {
-      const parsed = parseFloat(value)
-      if (!isNaN(parsed)) {
-        return parsed
-      }
-    }
-    return null
-  } catch (e) {
-    return null
-  }
-}
-
 const AREA_LAYER_DATA = gql`
   query AreaLayerData($gss: String!, $externalDataSource: String!) {
     # collect point data
@@ -271,36 +267,6 @@ const AREA_LAYER_DATA = gql`
     }
   }
 `
-
-function PropertiesDisplay({
-  data,
-  config,
-}: {
-  data: any
-  config: {
-    columns: string[]
-  }
-}) {
-  const cols: string[] = useMemo(() => {
-    return config?.columns || allKeysFromAllData(data)
-  }, [config, data])
-
-  return (
-    <div className="flex flex-col gap-2 my-2">
-      {cols.map((column) => {
-        const value = data[column]
-        return (
-          <div key={column} className="flex flex-col gap-0">
-            <div className="text-meepGray-400 uppercase text-xs">{column}</div>
-            <div className="text-white">
-              {safeParseAsNumber(value) || value || 'N/A'}
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
 
 function ElectionResultsDisplay({
   data,

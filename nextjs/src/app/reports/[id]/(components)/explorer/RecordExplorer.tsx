@@ -2,16 +2,23 @@ import {
   RecordExplorerSummaryQuery,
   RecordExplorerSummaryQueryVariables,
 } from '@/__generated__/graphql'
+import { DataSourceIcon } from '@/components/DataSourceIcon'
+import { Button } from '@/components/ui/button'
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
-import { ExplorerState } from '@/lib/map'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ExplorerState, useExplorerState, useLoadedMap } from '@/lib/map'
 import { gql, useQuery } from '@apollo/client'
 import { LucideLink } from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
+import { exploreArea } from './utils'
 
 export function RecordExplorer({ id }: { id: string }) {
+  const [explorerState, setExplorerState] = useExplorerState()
+
   const [selectedTab, setSelectedTab] = useState('summary')
 
   // Query area details
@@ -24,6 +31,54 @@ export function RecordExplorer({ id }: { id: string }) {
   })
 
   const record = data.data?.import?.record
+
+  const mapbox = useLoadedMap()
+
+  useEffect(() => {
+    if (data.data?.import?.geometry) {
+      mapbox.current?.flyTo({
+        center: data.data.import.geometry.coordinates as [number, number],
+        zoom: 14,
+      })
+      console.log("Fly to")
+    }
+  }, [data, mapbox])
+
+  const contactOptions = [
+    {
+      value: record?.phone,
+      url: `tel:${record?.phone}`,
+      label: 'Copy phone number',
+      onClick: () => {
+        navigator.clipboard.writeText(record?.phone!)
+        toast.success('Phone number copied to clipboard')
+      },
+    },
+    {
+      value: record?.email,
+      url: `mailto:${record?.email}`,
+      label: 'Copy email address',
+      onClick: () => {
+        navigator.clipboard.writeText(record?.email!)
+        toast.success('Email address copied to clipboard')
+      },
+    },
+    {
+      value: record?.remoteUrl,
+      url: record?.remoteUrl,
+      label: (
+        <>
+          <DataSourceIcon
+            crmType={record?.dataType.dataSet.externalDataSource.crmType}
+          />{' '}
+          Open profile in {record?.dataType.dataSet.externalDataSource.crmType}
+        </>
+      ),
+      onClick: () => {
+        window.open(record?.remoteUrl, '_blank')
+      },
+    },
+  ].filter((d) => !!d.value)
 
   return (
     <SidebarContent className="bg-meepGray-600 overflow-x-hidden">
@@ -43,23 +98,51 @@ export function RecordExplorer({ id }: { id: string }) {
             ) : data.error || !record ? (
               <span className="text-meepGray-400">???</span>
             ) : (
-              <>
-                <span>
-                  {record.title ||
-                    record.fullName ||
-                    `${record.firstName} ${record.lastName}`}
-                </span>
-                <LucideLink
-                  onClick={copyUrl}
-                  className="ml-auto text-meepGray-400 hover:text-meepGray-200 cursor-pointer"
-                  size={16}
-                />
-              </>
+              <div className="w-full">
+                <div className="flex flex-row gap-2 w-full items-center">
+                  <span>
+                    {record.title ||
+                      record.fullName ||
+                      `${record.firstName} ${record.lastName}`}
+                  </span>
+                  <LucideLink
+                    onClick={copyUrl}
+                    className="ml-auto text-meepGray-400 hover:text-meepGray-200 cursor-pointer"
+                    size={16}
+                  />
+                </div>
+                {record.postcodeData && (
+                  <div className="mt-2 text-base text-meepGray-400">
+                    in{' '}
+                    <span className="text-meepGray-300">
+                      <span
+                        className="cursor-pointer hover:underline"
+                        onClick={() =>
+                          exploreArea(record.postcodeData?.codes.adminWard!)
+                        }
+                      >
+                        {record.postcodeData.adminWard}
+                      </span>
+                      ,{' '}
+                      <span
+                        className="cursor-pointer hover:underline"
+                        onClick={() =>
+                          exploreArea(record.postcodeData?.codes.adminDistrict!)
+                        }
+                      >
+                        {record.postcodeData.adminDistrict}
+                      </span>
+                      ,{' '}
+                      <span>{record.postcodeData.europeanElectoralRegion}</span>
+                    </span>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </>
       </SidebarHeader>
-      {/* <Tabs
+      <Tabs
         defaultValue="summary"
         className="w-full"
         onValueChange={setSelectedTab}
@@ -77,12 +160,33 @@ export function RecordExplorer({ id }: { id: string }) {
           value="summary"
           className="pb-24 divide-y divide-meepGray-800"
         >
-          <section className="flex flex-col gap-2 px-4">
-            <div className="text-hSm text-white">Contact</div>
-            <div className="flex flex-col gap-2"></div>
+          {/* Contact deets */}
+          {!!contactOptions.length && (
+            <section className="flex flex-col gap-2 px-4 py-4">
+              <div className="text-hSm text-white">Contact</div>
+              <div className="flex flex-col gap-2">
+                {contactOptions.map((contact, i) => (
+                  <Button
+                    key={i}
+                    onClick={contact.onClick}
+                    className="text-white"
+                  >
+                    {contact.label}
+                  </Button>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Raw data */}
+          <section className="flex flex-col gap-2 px-4 py-4">
+            <div className="text-hSm text-white">Info</div>
+            <div className="flex flex-col gap-2">
+              <PropertiesDisplay data={record?.json} />
+            </div>
           </section>
         </TabsContent>
-      </Tabs> */}
+      </Tabs>
     </SidebarContent>
   )
 
@@ -114,6 +218,10 @@ const RECORD_EXPLORER_SUMMARY = gql`
   query RecordExplorerSummary($id: String!) {
     import: importedDataGeojsonPoint(genericDataId: $id) {
       id
+      geometry {
+        type
+        coordinates
+      }
       record: properties {
         id
         dataType {
@@ -134,6 +242,15 @@ const RECORD_EXPLORER_SUMMARY = gql`
           }
         }
         postcode
+        postcodeData {
+          adminWard
+          adminDistrict
+          europeanElectoralRegion
+          codes {
+            adminWard
+            adminDistrict
+          }
+        }
         title
         firstName
         lastName
@@ -146,6 +263,7 @@ const RECORD_EXPLORER_SUMMARY = gql`
         address
         description
         json
+        remoteUrl
       }
     }
   }
