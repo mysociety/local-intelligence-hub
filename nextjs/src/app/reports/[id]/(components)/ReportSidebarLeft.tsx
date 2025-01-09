@@ -9,6 +9,7 @@ import { useDebounce } from '@uidotdev/usehooks'
 import { useState } from 'react'
 import useReportUiHelpers from '../useReportUiHelpers'
 import InactivateOnLoading from './InactivateOnLoading'
+import ReportMapChoroplethLegend from './MapLayers/ReportMapChoroplethLegend'
 import ReportConfiguration from './ReportConfiguration'
 import { ReportDataSources } from './ReportDataSources'
 import { NAVBAR_HEIGHT } from './ReportNavbar'
@@ -84,6 +85,8 @@ export function ReportSidebarLeft() {
             </InactivateOnLoading>
           </TabsContent>
         </Tabs>
+        {/* TODO: Probably shouldn't go here but requires least amount of changes for now */}
+        <ReportMapChoroplethLegend />
       </SidebarContent>
     </Sidebar>
   )
