@@ -123,6 +123,9 @@ class Query(UserQueries):
     generic_data_summary_from_source_about_area: Optional[model_types.DataSummary] = (
         model_types.generic_data_summary_from_source_about_area
     )
+    choropleth_data_for_source: List[model_types.GroupedDataCount] = (
+        model_types.choropleth_data_for_source
+    )
 
     @strawberry.field
     def test_data_source(

@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Union
 
-from django.db.models import Q
+from django.db.models import Q, F
 from django.http import HttpRequest
 
 import pandas as pd
@@ -1638,3 +1638,77 @@ def check_numeric(x):
         return True
     except Exception:
         return False
+
+
+@strawberry_django.field()
+def choropleth_data_for_source(
+    info: Info,
+    source_id: str,
+    analytical_area_key: AnalyticalAreaType,
+    # Field could be a column name or a Pandas formulaic expression
+    field: str,
+) -> Optional[GroupedDataCount]:
+    # Check user can access the external data source
+    user = get_current_user(info)
+    external_data_source = models.ExternalDataSource.objects.get(pk=source_id)
+    permissions = models.ExternalDataSource.user_permissions(user, external_data_source)
+    if not permissions.get("can_display_points") or not permissions.get(
+        "can_display_details"
+    ):
+        raise ValueError(
+            f"User {user} does not have permission to view this external data source's data"
+        )
+
+    # Get the required data for the source
+    qs = external_data_source.get_import_data()\
+        .filter(postcode_data__codes__isnull=False)\
+        .annotate(
+            label=F(f"postcode_data__{analytical_area_key.value}"),
+            gss=F(f"postcode_data__codes__{analytical_area_key.value}"),
+        )\
+        .values("json", "label", "gss")
+    
+    # ingest the .json data into a pandas dataframe so we can do analytics
+    df = pd.DataFrame([record for record in qs])
+
+    # Break the json column into separate columns for each key
+    df = df.join(pd.json_normalize(df["json"]))
+
+    # Remove the json column
+    df = df.drop(columns=["json"])
+
+    # Convert any stringified JSON numbers to floats
+    for column in df:
+        if any(df[column].apply(check_numeric)):
+            df[column] = df[column].replace("", 0)
+            df[column] = df[column].astype(float)
+            # handle "could not convert string to float: ''" error
+
+    # I'm expecting to end up with something like:
+    '''
+                    json
+      gss    label  Ref Lab Con LDem
+    0 E10001 Bucks  1   2   3   4
+    1 E10002 Herts  2   3   4   5
+    2 E10003 Beds   3   4   5   6
+    '''
+
+    print(df)
+
+    # Group by the postcode_io level that we want to
+    # Aggregation will be by summing the values in the field
+    df = df.groupby("gss").sum().reset_index()
+
+    # Now fetch the requested series from the dataframe
+    # If the field is a column name, we can just return that column
+    if field in df.columns:
+        df["count"] = df[field]
+    # If the field is a formula, we need to evaluate it
+    else:
+        df["count"] = df.eval(field)
+
+    # Print the DF with only the columns we need: gss, label, count
+    print(df[["label", "gss", "count"]])
+        
+    # Convert DF to GroupedDataCount(label=label, gss=gss, count=count) list
+    return [GroupedDataCount(label=row.label, gss=row.gss, count=row.count) for row in df.itertuples()]
