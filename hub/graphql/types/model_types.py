@@ -1647,7 +1647,8 @@ def choropleth_data_for_source(
     source_id: str,
     analytical_area_key: AnalyticalAreaType,
     # Field could be a column name or a Pandas formulaic expression
-    field: str,
+    # or, if not provided, a count of records
+    field: Optional[str],
 ) -> List[GroupedDataCount]:
     # Check user can access the external data source
     user = get_current_user(info)
@@ -1685,6 +1686,7 @@ def choropleth_data_for_source(
     if (
         external_data_source.data_type
         == models.ExternalDataSource.DataSourceType.AREA_STATS
+        and field is not None
     ):
         # Convert any stringified JSON numbers to floats
         for column in df:
