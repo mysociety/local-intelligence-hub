@@ -1682,7 +1682,10 @@ def choropleth_data_for_source(
 
     # ...
 
-    if external_data_source.data_type == models.ExternalDataSource.DataSourceType.AREA_STATS:
+    if (
+        external_data_source.data_type
+        == models.ExternalDataSource.DataSourceType.AREA_STATS
+    ):
         # Convert any stringified JSON numbers to floats
         for column in df:
             if any(df[column].apply(check_numeric)):
@@ -1752,7 +1755,9 @@ def choropleth_data_for_source(
         # Simple count of data points per area
 
         # Count the number of rows per GSS
-        df_count = df.drop(columns=["label"]).groupby("gss").size().reset_index(name="count")
+        df_count = (
+            df.drop(columns=["label"]).groupby("gss").size().reset_index(name="count")
+        )
 
         # Calculate the mode for the 'label' column
         df_mode = df.groupby("gss")["label"].agg(lambda x: x.mode()[0]).reset_index()
@@ -1766,7 +1771,7 @@ def choropleth_data_for_source(
                 label=row.label,
                 gss=row.gss,
                 count=row.count,
-                formatted_count=f"{row.count:,.0f}"
+                formatted_count=f"{row.count:,.0f}",
             )
             for row in df.itertuples()
         ]
