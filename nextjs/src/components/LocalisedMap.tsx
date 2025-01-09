@@ -1,8 +1,11 @@
+import { useReport } from '@/app/reports/[id]/(components)/ReportProvider'
 import { BACKEND_URL } from '@/env'
 import { authenticationHeaders } from '@/lib/auth'
+import { useExplorerState } from '@/lib/map'
 import { RequestTransformFunction } from 'mapbox-gl'
 import React from 'react'
 import Map from 'react-map-gl'
+import { mapMouseHandler } from './report/mapMouseHandler'
 
 interface LocalisedMapProps {
   children?: React.ReactNode
@@ -25,6 +28,9 @@ const LocalisedMap: React.FC<LocalisedMapProps> = ({
   initViewCountry = 'uk',
   mapKey,
 }) => {
+  const report = useReport()
+  const explorer = useExplorerState()
+
   return (
     <Map
       key={mapKey || Math.random().toString()}
@@ -38,6 +44,7 @@ const LocalisedMap: React.FC<LocalisedMapProps> = ({
           : `mapbox://styles/commonknowledge/cm4cjnvff01mx01sdcmpbfuz5${process.env.NODE_ENV !== 'production' ? '/draft' : ''}`
       }
       transformRequest={mapboxTransformRequest}
+      onClick={mapMouseHandler(report, explorer)}
     >
       {children}
     </Map>

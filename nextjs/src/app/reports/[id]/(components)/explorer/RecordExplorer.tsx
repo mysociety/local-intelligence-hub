@@ -26,7 +26,7 @@ export function RecordExplorer({ id }: { id: string }) {
     RecordExplorerSummaryQuery,
     RecordExplorerSummaryQueryVariables
   >(RECORD_EXPLORER_SUMMARY, {
-    variables: { id },
+    variables: { id: String(id) },
     skip: !id,
   })
 
@@ -40,7 +40,7 @@ export function RecordExplorer({ id }: { id: string }) {
         center: data.data.import.geometry.coordinates as [number, number],
         zoom: 14,
       })
-      console.log("Fly to")
+      console.log('Fly to')
     }
   }, [data, mapbox])
 

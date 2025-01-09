@@ -1,11 +1,7 @@
 'use client'
 
 import { BACKEND_URL } from '@/env'
-import {
-  selectedSourceMarkerAtom,
-  useExplorerState,
-  useLoadedMap,
-} from '@/lib/map'
+import { selectedSourceMarkerAtom, useLoadedMap } from '@/lib/map'
 import { useAtom } from 'jotai'
 import { MapMouseEvent } from 'mapbox-gl'
 import { useEffect } from 'react'
@@ -31,7 +27,6 @@ export function MembersListPointMarkers({
   const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(
     selectedSourceMarkerAtom
   )
-  const [state, set, showExplorer] = useExplorerState()
 
   const layerId = `${externalDataSourceId}-marker`
 
@@ -48,7 +43,6 @@ export function MembersListPointMarkers({
       }
 
       const handleMouseLeave = (event: MapMouseEvent) => {
-        console.log('handleMouseLeave', event)
         setSelectedSourceMarker(null)
       }
 
@@ -59,27 +53,13 @@ export function MembersListPointMarkers({
         }
       }
 
-      const handleClick = (event: MapMouseEvent) => {
-        const feature = event.features?.[0]
-        if (feature?.properties?.id) {
-          setSelectedSourceMarker(feature)
-          set({
-            entity: 'record',
-            id: feature.properties.id,
-            showExplorer: true,
-          })
-        }
-      }
-
       map.on('mouseover', layerId, handleMouseOver)
       map.on('mouseleave', layerId, handleMouseLeave)
-      map.on('click', layerId, handleClick)
       map.on('touchstart', layerId, handleTouchStart)
 
       return () => {
         map.off('mouseover', layerId, handleMouseOver)
         map.off('mouseleave', layerId, handleMouseLeave)
-        map.off('click', layerId, handleClick)
         map.off('touchstart', layerId, handleTouchStart)
       }
     },

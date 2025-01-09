@@ -14,7 +14,7 @@ import {
 import { MapReportExtended } from '../../reportContext'
 import { Tileset } from '../../types'
 import useDataByBoundary from '../../useDataByBoundary'
-import useClickOnBoundaryEvents from '../../useSelectBoundary'
+import useHoverOverBoundaryEvents from '../../useSelectBoundary'
 import { PLACEHOLDER_LAYER_ID_CHOROPLETH } from '../ReportPage'
 
 interface PoliticalChoroplethsProps {
@@ -52,7 +52,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
 
   const map = useLoadedMap()
   const [explorer, setExplorer] = useExplorerState()
-  useClickOnBoundaryEvents(areasVisible === 'visible' ? tileset : null)
+  useHoverOverBoundaryEvents(areasVisible === 'visible' ? tileset : null)
 
   // When the map is loaded and we have the data, add the data to the boundaries
   useEffect(() => {
