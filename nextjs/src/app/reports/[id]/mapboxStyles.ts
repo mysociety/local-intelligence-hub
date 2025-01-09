@@ -5,14 +5,14 @@ import {
   LineLayerSpecification,
   SymbolLayerSpecification,
 } from 'mapbox-gl'
-import { PALETTE, Palette } from './reportContext'
+import { ReportConfig, getReportPalette } from './reportContext'
 import { Tileset } from './types'
 import { DataByBoundary } from './useDataByBoundary'
 
 export function getChoroplethFill(
   data: { count: number }[],
-  visible?: boolean,
-  palette: Palette = Palette.Blue
+  displayOptions: ReportConfig,
+  visible?: boolean
 ): FillLayerSpecification['paint'] {
   let min =
     data.reduce(
@@ -41,7 +41,7 @@ export function getChoroplethFill(
   // Map real numbers to colours
   const colourScale = scaleSequential()
     .domain([min, max])
-    .interpolator(PALETTE[palette].interpolator)
+    .interpolator(getReportPalette(displayOptions))
 
   let steps = Math.min(max, 30) // Max 30 steps
   steps = Math.floor(Math.max(steps, 3)) // Min 3 steps (for valid Mapbox fill-color rule)

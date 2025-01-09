@@ -85,6 +85,16 @@ export const PALETTE: Record<
   },
 }
 
+export function getReportPalette(displayOptions: ReportConfig) {
+  const interpolator =
+    PALETTE[displayOptions.dataVisualisation.palette || Palette.Blue]
+      .interpolator
+  if (displayOptions.dataVisualisation.paletteReversed) {
+    return (t: number) => interpolator(1 - t)
+  }
+  return interpolator
+}
+
 export type MapReportExtended = Omit<MapReport, 'displayOptions'> & {
   displayOptions: ReportConfig
   politicalBoundaries: PoliticalTileset[]
@@ -95,6 +105,7 @@ export interface ReportConfig {
     boundaryType?: AnalyticalAreaType
     visualisationType?: VisualisationType
     palette?: Palette
+    paletteReversed?: boolean
     dataSource?: MapLayer['id']
     dataSourceField?: string
     showDataVisualisation?: Record<VisualisationType, boolean>
@@ -115,6 +126,7 @@ export const defaultReportConfig: ReportConfig = {
     boundaryType: AnalyticalAreaType.ParliamentaryConstituency_2024,
     visualisationType: VisualisationType.Choropleth,
     palette: Palette.Blue,
+    paletteReversed: false,
     showDataVisualisation: {
       [VisualisationType.Choropleth]: true, // Default to Choropleth
     },

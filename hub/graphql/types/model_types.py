@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Union
 
-from django.db.models import Q, F
+from django.db.models import F, Q
 from django.http import HttpRequest
 
 import pandas as pd
@@ -1647,7 +1647,7 @@ def choropleth_data_for_source(
     analytical_area_key: AnalyticalAreaType,
     # Field could be a column name or a Pandas formulaic expression
     field: str,
-) -> Optional[GroupedDataCount]:
+) -> List[GroupedDataCount]:
     # Check user can access the external data source
     user = get_current_user(info)
     external_data_source = models.ExternalDataSource.objects.get(pk=source_id)
@@ -1660,14 +1660,16 @@ def choropleth_data_for_source(
         )
 
     # Get the required data for the source
-    qs = external_data_source.get_import_data()\
-        .filter(postcode_data__codes__isnull=False)\
+    qs = (
+        external_data_source.get_import_data()
+        .filter(postcode_data__codes__isnull=False)
         .annotate(
             label=F(f"postcode_data__{analytical_area_key.value}"),
             gss=F(f"postcode_data__codes__{analytical_area_key.value}"),
-        )\
+        )
         .values("json", "label", "gss")
-    
+    )
+
     # ingest the .json data into a pandas dataframe so we can do analytics
     df = pd.DataFrame([record for record in qs])
 
@@ -1684,30 +1686,32 @@ def choropleth_data_for_source(
             df[column] = df[column].astype(float)
 
     # I'm expecting to end up with something like:
-    '''
+    """
                     json
       gss    label  Ref Lab Con LDem
     0 E10001 Bucks  1   2   3   4
     1 E10002 Herts  2   3   4   5
     2 E10003 Beds   3   4   5   6
-    '''
+    """
 
     # Group by the postcode_io level that we want to
     # Aggregation will be by summing the values in the field, excluding 'label'
-    df_sum = df.drop(columns=['label']).groupby("gss").sum().reset_index()
+    df_sum = df.drop(columns=["label"]).groupby("gss").sum().reset_index()
 
     # Calculate the mode for the 'label' column
-    df_mode = df.groupby("gss")['label'].agg(lambda x: x.mode()[0]).reset_index()
+    df_mode = df.groupby("gss")["label"].agg(lambda x: x.mode()[0]).reset_index()
 
     # Merge the summed DataFrame with the mode DataFrame
-    df = pd.merge(df_sum, df_mode, on='gss')
+    df = pd.merge(df_sum, df_mode, on="gss")
 
     # Add a "maximum" column that figures out the biggest numerical value in each row
-    numerical_columns = df.select_dtypes(include='number').columns
-    df['max_votes'] = df[numerical_columns].max(axis=1)
+    numerical_columns = df.select_dtypes(include="number").columns
+    df["max_votes"] = df[numerical_columns].max(axis=1)
 
     # Calculate the second-highest value in each row
-    df['runnerup_votes'] = df[numerical_columns].apply(lambda row: row.nlargest(2).iloc[-1], axis=1)
+    df["runnerup_votes"] = df[numerical_columns].apply(
+        lambda row: row.nlargest(2).iloc[-1], axis=1
+    )
 
     # Now fetch the requested series from the dataframe
     # If the field is a column name, we can just return that column
@@ -1716,6 +1720,9 @@ def choropleth_data_for_source(
     # If the field is a formula, we need to evaluate it
     else:
         df["count"] = df.eval(field, target=df)
-        
+
     # Convert DF to GroupedDataCount(label=label, gss=gss, count=count) list
-    return [GroupedDataCount(label=row.label, gss=row.gss, count=row.count) for row in df.itertuples()]
+    return [
+        GroupedDataCount(label=row.label, gss=row.gss, count=row.count)
+        for row in df.itertuples()
+    ]

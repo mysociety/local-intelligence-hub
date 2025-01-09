@@ -68,6 +68,8 @@ const documents = {
     "\n  mutation UpdateMapReport($input: MapReportInput!) {\n    updateMapReport(data: $input) {\n      id\n      name\n      displayOptions\n      layers {\n        id\n        name\n        source {\n          id\n          name\n        }\n        inspectorType\n        inspectorConfig\n        mapboxPaint\n        mapboxLayout\n      }\n    }\n  }\n": types.UpdateMapReportDocument,
     "\n  mutation DeleteMapReport($id: IDObject!) {\n    deleteMapReport(data: $id) {\n      id\n    }\n  }\n": types.DeleteMapReportDocument,
     "\n  query GetMapReportName($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n    }\n  }\n": types.GetMapReportNameDocument,
+    "\n  query SourceStatsByBoundary(\n    $sourceId: String!\n    $boundaryType: AnalyticalAreaType!\n    $field: String!\n  ) {\n    choroplethDataForSource(\n      sourceId: $sourceId\n      analyticalAreaKey: $boundaryType\n      field: $field\n    ) {\n      label\n      gss\n      count\n      gssArea {\n        point {\n          type\n          geometry {\n            type\n            coordinates\n          }\n        }\n      }\n    }\n  }\n": types.SourceStatsByBoundaryDocument,
+    "\n  query SourceMetadata($sourceId: ID!) {\n    externalDataSource(pk: $sourceId) {\n      fieldDefinitions {\n        externalId\n        value\n        label\n      }\n    }\n  }\n": types.SourceMetadataDocument,
     "\n  mutation WebhookRefresh($ID: String!) {\n    refreshWebhooks(externalDataSourceId: $ID) {\n      id\n      hasWebhooks\n      automatedWebhooks\n      webhookHealthcheck\n    }\n  }\n": types.WebhookRefreshDocument,
     "\n  fragment DataSourceCard on ExternalDataSource {\n    id\n    name\n    dataType\n    crmType\n    automatedWebhooks\n    autoImportEnabled\n    autoUpdateEnabled\n    updateMapping {\n      source\n      sourcePath\n      destinationColumn\n    }\n    jobs(pagination: { limit: 10 }) {\n      lastEventAt\n      status\n    }\n    sharingPermissions {\n      id\n      organisation {\n        id\n        name\n      }\n    }\n  }\n": types.DataSourceCardFragmentDoc,
     "\n  query ExternalDataSourceExternalDataSourceCard($ID: ID!) {\n    externalDataSource(pk: $ID) {\n      ...DataSourceCard\n    }\n  }\n  \n": types.ExternalDataSourceExternalDataSourceCardDocument,
@@ -325,6 +327,14 @@ export function gql(source: "\n  mutation DeleteMapReport($id: IDObject!) {\n   
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  query GetMapReportName($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  query GetMapReportName($id: ID!) {\n    mapReport(pk: $id) {\n      id\n      name\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query SourceStatsByBoundary(\n    $sourceId: String!\n    $boundaryType: AnalyticalAreaType!\n    $field: String!\n  ) {\n    choroplethDataForSource(\n      sourceId: $sourceId\n      analyticalAreaKey: $boundaryType\n      field: $field\n    ) {\n      label\n      gss\n      count\n      gssArea {\n        point {\n          type\n          geometry {\n            type\n            coordinates\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query SourceStatsByBoundary(\n    $sourceId: String!\n    $boundaryType: AnalyticalAreaType!\n    $field: String!\n  ) {\n    choroplethDataForSource(\n      sourceId: $sourceId\n      analyticalAreaKey: $boundaryType\n      field: $field\n    ) {\n      label\n      gss\n      count\n      gssArea {\n        point {\n          type\n          geometry {\n            type\n            coordinates\n          }\n        }\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query SourceMetadata($sourceId: ID!) {\n    externalDataSource(pk: $sourceId) {\n      fieldDefinitions {\n        externalId\n        value\n        label\n      }\n    }\n  }\n"): (typeof documents)["\n  query SourceMetadata($sourceId: ID!) {\n    externalDataSource(pk: $sourceId) {\n      fieldDefinitions {\n        externalId\n        value\n        label\n      }\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

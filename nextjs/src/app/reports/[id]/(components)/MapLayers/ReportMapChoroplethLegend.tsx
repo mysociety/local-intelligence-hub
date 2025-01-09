@@ -1,7 +1,8 @@
 import { DataSourceIcon } from '@/components/DataSourceIcon'
 import { LegendOrdinal } from '@visx/legend'
 import { scaleOrdinal } from '@visx/scale'
-import { Palette, PALETTE } from '../../reportContext'
+import { format } from 'd3-format'
+import { getReportPalette } from '../../reportContext'
 import useDataByBoundary from '../../useDataByBoundary'
 import { useReport } from '../ReportProvider'
 
@@ -16,11 +17,9 @@ export default function ReportMapChoroplethLegend() {
 
   const dataSourceId = dataVisualisation?.dataSource
   const dataSourceField = dataVisualisation?.dataSourceField
-  const selectedDataSource = layers.find((layer) => layer.id === dataSourceId)
-  const selectedBoundaryLabel = politicalBoundaries.find(
-    (boundary) => boundary.boundaryType === dataVisualisation?.boundaryType
-  )?.label
-  const color = dataVisualisation?.palette
+  const selectedDataSource = layers.find(
+    (layer) => layer.source.id === dataSourceId
+  )
   const boundaryType = dataVisualisation?.boundaryType
 
   const visibility =
@@ -43,18 +42,19 @@ export default function ReportMapChoroplethLegend() {
 
   // Calculate difference and determine how many steps we need
   const difference = maxCount - minCount
-  const numberOfSteps = Math.min(5, difference + 1)
 
-  // Create domain array with appropriate number of steps
+  const numberOfSteps = 8
+  let formatStr = ',.1r'
+  if (difference < 1) {
+    formatStr = '.1%'
+  }
   const domain = Array.from({ length: numberOfSteps }, (_, i) =>
-    Math.round(minCount + i * (difference / (numberOfSteps - 1 || 1)))
+    format(formatStr)(minCount + i * (difference / (numberOfSteps - 1)))
   )
 
-  const interpolator =
-    PALETTE[report.displayOptions.dataVisualisation.palette || Palette.Blue]
-      .interpolator
+  const interpolator = getReportPalette(report.displayOptions)
 
-  //Legend scale
+  // Legend scale
   const ordinalScale = scaleOrdinal({
     domain,
     range: Array.from({ length: numberOfSteps }, (_, i) =>
@@ -87,7 +87,7 @@ export default function ReportMapChoroplethLegend() {
           itemDirection="column"
           labelMargin="6px 0 0 0"
           shapeMargin={0}
-          shapeWidth={70}
+          shapeWidth={50}
           shapeHeight={10}
           className="text-meepGray-400 text-xs flex flex-col items-start"
         ></LegendOrdinal>

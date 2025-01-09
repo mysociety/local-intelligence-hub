@@ -11,7 +11,7 @@ import {
   getChoroplethFill,
   getSelectedChoroplethEdge,
 } from '../../mapboxStyles'
-import { MapReportExtended, Palette } from '../../reportContext'
+import { MapReportExtended } from '../../reportContext'
 import { Tileset } from '../../types'
 import useDataByBoundary from '../../useDataByBoundary'
 import useClickOnBoundaryEvents from '../../useSelectBoundary'
@@ -94,8 +94,8 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
             type="fill"
             paint={getChoroplethFill(
               dataByBoundary,
-              shaderVisibility === 'visible',
-              report.displayOptions?.dataVisualisation?.palette || Palette.Blue
+              report.displayOptions,
+              shaderVisibility === 'visible'
             )}
           />
         </>

@@ -1,9 +1,11 @@
 import { CRMSelection } from '@/components/CRMButtonItem'
+import { Textarea } from '@/components/ui/textarea'
 import pluralize from 'pluralize'
 import React, { useState } from 'react'
 import { PALETTE, VisualisationType } from '../reportContext'
-import useDataByBoundary from '../useDataByBoundary'
+import { useSourceMetadata } from '../useSourceMetadata'
 import { EditorSelect } from './EditorSelect'
+import { EditorSwitch } from './EditorSwitch'
 import { UpdateConfigProps } from './ReportConfiguration'
 import { useReport } from './ReportProvider'
 
@@ -16,11 +18,6 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
     politicalBoundaries,
     displayOptions: { dataVisualisation },
   } = report
-
-  const { fieldNames } = useDataByBoundary({
-    report,
-    boundaryType: dataVisualisation?.boundaryType,
-  })
 
   const [checkedTypes, setCheckedTypes] = useState<Record<string, boolean>>(
     () =>
@@ -63,11 +60,14 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
   }
   const dataSourceId = dataVisualisation?.dataSource
   const dataSourceField = dataVisualisation?.dataSourceField
-  const selectedDataSource = layers.find((layer) => layer.id === dataSourceId)
+  const selectedDataSource = layers.find(
+    (layer) => layer.source.id === dataSourceId
+  )
   const selectedBoundaryLabel = politicalBoundaries.find(
     (boundary) => boundary.boundaryType === dataVisualisation?.boundaryType
   )?.label
-  const isLoading = !fieldNames || fieldNames.length === 0
+
+  const sourceMetadata = useSourceMetadata(dataSourceId)
 
   return (
     <div className="flex flex-col gap-3 py-4">
@@ -91,7 +91,7 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
                     className="max-w-36 truncate"
                   />
                 ),
-                value: layer.id,
+                value: layer.source.id,
               }))}
               onChange={(dataSource) =>
                 updateVisualisationConfig({ dataSource })
@@ -103,18 +103,37 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
             label="Colour by"
             // explainer={`Which field from your data source will be visualised?`}
             value={dataSourceField}
-            options={fieldNames || []}
+            options={
+              sourceMetadata.data?.externalDataSource.fieldDefinitions?.map(
+                (d) => ({
+                  label: d.label,
+                  value: d.value,
+                })
+              ) || []
+            }
             onChange={(dataSourceField) =>
               updateVisualisationConfig({ dataSourceField })
             }
             disabled={
-              isLoading || selectedDataSource?.source.dataType !== 'AREA_STATS'
+              sourceMetadata.loading ||
+              selectedDataSource?.source.dataType !== 'AREA_STATS'
             }
             disabledMessage={
               selectedDataSource?.source.dataType !== 'AREA_STATS'
                 ? `Count of records per area`
                 : undefined
             }
+          />
+
+          <h2 className="text-meepGray-400 text-sm mb-0">
+            Write a custom colour-by formula
+          </h2>
+          <Textarea
+            value={dataSourceField}
+            onChange={(e) => {
+              updateVisualisationConfig({ dataSourceField: e.target.value })
+            }}
+            className="bg-meepGray-950 rounded text-white"
           />
 
           <EditorSelect
@@ -130,6 +149,15 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
               updateVisualisationConfig({
                 palette: palette as keyof typeof PALETTE,
               })
+            }}
+          />
+
+          <EditorSwitch
+            label="Invert fill"
+            explainer={`Reverse the colour scale`}
+            value={dataVisualisation?.paletteReversed || false}
+            onChange={(paletteReversed) => {
+              updateVisualisationConfig({ paletteReversed })
             }}
           />
         </>
