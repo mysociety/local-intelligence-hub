@@ -136,7 +136,7 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
     AREA_LAYER_DATA,
     {
       variables: { gss, externalDataSource: layer?.source?.id },
-      skip: !layer?.source?.id,
+      skip: !layer?.source?.id || !gss,
     }
   )
 
