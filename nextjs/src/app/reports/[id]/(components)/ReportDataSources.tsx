@@ -105,12 +105,10 @@ export function ReportDataSources() {
           }
           onChange={(d) => updateBoundaryType(d as AnalyticalAreaType)}
           value={dataVisualisation?.boundaryType}
-          options={politicalBoundaries
-            .sort((a, b) => a.label.localeCompare(b.label))
-            .map((boundary) => ({
-              label: boundary.label,
-              value: boundary.boundaryType,
-            }))}
+          options={politicalBoundaries.map((boundary) => ({
+            label: boundary.label,
+            value: boundary.boundaryType,
+          }))}
         />
 
         <EditorSwitch

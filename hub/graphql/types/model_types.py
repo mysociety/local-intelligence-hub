@@ -1680,68 +1680,93 @@ def choropleth_data_for_source(
     # Remove the json column
     df = df.drop(columns=["json"])
 
-    # Convert any stringified JSON numbers to floats
-    for column in df:
-        if any(df[column].apply(check_numeric)):
-            df[column] = df[column].replace("", 0)
-            df[column] = df[column].astype(float)
+    # ...
 
-    # I'm expecting to end up with something like:
-    """
-                    json
-      gss    label  Ref Lab Con LDem
-    0 E10001 Bucks  1   2   3   4
-    1 E10002 Herts  2   3   4   5
-    2 E10003 Beds   3   4   5   6
-    """
+    if external_data_source.data_type == models.ExternalDataSource.DataSourceType.AREA_STATS:
+        # Convert any stringified JSON numbers to floats
+        for column in df:
+            if any(df[column].apply(check_numeric)):
+                df[column] = df[column].replace("", 0)
+                df[column] = df[column].astype(float)
 
-    # Group by the postcode_io level that we want to
-    # Aggregation will be by summing the values in the field, excluding 'label'
-    df_sum = df.drop(columns=["label"]).groupby("gss").sum().reset_index()
+        # You end up with something like:
+        """
+                        json
+          gss    label  Ref Lab Con LDem
+        0 E10001 Bucks  1   2   3   4
+        1 E10002 Herts  2   3   4   5
+        2 E10003 Beds   3   4   5   6
+        """
 
-    # Calculate the mode for the 'label' column
-    df_mode = df.groupby("gss")["label"].agg(lambda x: x.mode()[0]).reset_index()
+        # Group by the postcode_io level that we want to
+        # Aggregation will be by summing the values in the field, excluding 'label'
+        df_sum = df.drop(columns=["label"]).groupby("gss").sum().reset_index()
 
-    # Merge the summed DataFrame with the mode DataFrame
-    df = pd.merge(df_sum, df_mode, on="gss")
+        # Calculate the mode for the 'label' column
+        df_mode = df.groupby("gss")["label"].agg(lambda x: x.mode()[0]).reset_index()
 
-    # Add a "maximum" column that figures out the biggest numerical value in each row
-    numerical_columns = df.select_dtypes(include="number").columns
-    df["max_votes"] = df[numerical_columns].max(axis=1)
+        # Merge the summed DataFrame with the mode DataFrame
+        df = pd.merge(df_sum, df_mode, on="gss")
 
-    # Calculate the second-highest value in each row
-    df["runnerup_votes"] = df[numerical_columns].apply(
-        lambda row: row.nlargest(2).iloc[-1], axis=1
-    )
+        # Add a "maximum" column that figures out the biggest numerical value in each row
+        numerical_columns = df.select_dtypes(include="number").columns
+        df["max_votes"] = df[numerical_columns].max(axis=1)
 
-    # Now fetch the requested series from the dataframe
-    # If the field is a column name, we can just return that column
-    if field in df.columns:
-        df["count"] = df[field]
-    # If the field is a formula, we need to evaluate it
-    else:
-        df["count"] = df.eval(field, target=df)
-
-    # Check if count is between 0 and 1: if so, it's a percentage
-    is_percentage = df["count"].between(0, 2).all()
-
-    # Convert DF to GroupedDataCount(label=label, gss=gss, count=count) list
-    return [
-        GroupedDataCount(
-            label=row.label,
-            gss=row.gss,
-            count=row.count,
-            formatted_count=(
-                (
-                    # pretty percentage
-                    f"{row.count:.0%}"
-                )
-                if is_percentage
-                else (
-                    # comma-separated integer
-                    f"{row.count:,.0f}"
-                )
-            ),
+        # Calculate the second-highest value in each row
+        df["runnerup_votes"] = df[numerical_columns].apply(
+            lambda row: row.nlargest(2).iloc[-1], axis=1
         )
-        for row in df.itertuples()
-    ]
+
+        # Now fetch the requested series from the dataframe
+        # If the field is a column name, we can just return that column
+        if field in df.columns:
+            df["count"] = df[field]
+        # If the field is a formula, we need to evaluate it
+        else:
+            df["count"] = df.eval(field, target=df)
+
+        # Check if count is between 0 and 1: if so, it's a percentage
+        is_percentage = df["count"].between(0, 2).all() or False
+
+        # Convert DF to GroupedDataCount(label=label, gss=gss, count=count) list
+        return [
+            GroupedDataCount(
+                label=row.label,
+                gss=row.gss,
+                count=row.count,
+                formatted_count=(
+                    (
+                        # pretty percentage
+                        f"{row.count:.0%}"
+                    )
+                    if is_percentage
+                    else (
+                        # comma-separated integer
+                        f"{row.count:,.0f}"
+                    )
+                ),
+            )
+            for row in df.itertuples()
+        ]
+    else:
+        # Simple count of data points per area
+
+        # Count the number of rows per GSS
+        df_count = df.drop(columns=["label"]).groupby("gss").size().reset_index(name="count")
+
+        # Calculate the mode for the 'label' column
+        df_mode = df.groupby("gss")["label"].agg(lambda x: x.mode()[0]).reset_index()
+
+        # Merge the summed DataFrame with the mode DataFrame
+        df = pd.merge(df_count, df_mode, on="gss")
+
+        # Convert DF to GroupedDataCount(label=label, gss=gss, count=count) list
+        return [
+            GroupedDataCount(
+                label=row.label,
+                gss=row.gss,
+                count=row.count,
+                formatted_count=f"{row.count:,.0f}"
+            )
+            for row in df.itertuples()
+        ]

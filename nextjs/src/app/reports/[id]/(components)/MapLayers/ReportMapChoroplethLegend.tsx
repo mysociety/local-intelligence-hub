@@ -105,11 +105,11 @@ export default function ReportMapChoroplethLegend() {
                 <div
                   className="h-4"
                   style={{
-                    backgroundColor: stop[1],
+                    backgroundColor: String(stop[1]),
                   }}
                 ></div>
-                <div className="text-xs text-center">
-                  {format(formatStr)(stop[0])}
+                <div className="text-xs text-center px-2">
+                  {format(formatStr)(Number(stop[0]))}
                 </div>
               </div>
             )
