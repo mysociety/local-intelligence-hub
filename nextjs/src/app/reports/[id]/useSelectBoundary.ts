@@ -1,15 +1,12 @@
 'use client'
-import { isConstituencyPanelOpenAtom, useLoadedMap } from '@/lib/map'
-import { atom, useAtom, useSetAtom } from 'jotai'
+import { useExplorerState, useLoadedMap } from '@/lib/map'
 import { useEffect } from 'react'
 import { Tileset } from './types'
 
-export const selectedBoundaryAtom = atom<string | null>(null)
-
 const useClickOnBoundaryEvents = (tileset?: Tileset | null) => {
   const { loadedMap } = useLoadedMap()
-  const [selectedBoundary, setSelectedBoundary] = useAtom(selectedBoundaryAtom)
-  const setIsConstituencyPanelOpen = useSetAtom(isConstituencyPanelOpenAtom)
+  const [explorer, setDetail] = useExplorerState()
+  const selectedBoundary = explorer.entity === 'area' ? explorer.id : null
 
   useEffect(
     function selectConstituency() {
@@ -33,12 +30,10 @@ const useClickOnBoundaryEvents = (tileset?: Tileset | null) => {
               if (id) {
                 // If already selected boundary, deselect it
                 if (selectedBoundary === id) {
-                  setSelectedBoundary(null)
-                  setIsConstituencyPanelOpen(false)
+                  setDetail({ entity: '', id: null, showExplorer: false })
                   return
                 } else {
-                  setSelectedBoundary(id)
-                  setIsConstituencyPanelOpen(true)
+                  setDetail({ entity: 'area', id, showExplorer: true })
                 }
               }
             }
@@ -48,13 +43,7 @@ const useClickOnBoundaryEvents = (tileset?: Tileset | null) => {
         }
       })
     },
-    [
-      loadedMap,
-      tileset,
-      selectedBoundary,
-      setSelectedBoundary,
-      setIsConstituencyPanelOpen,
-    ]
+    [loadedMap, tileset, explorer, setDetail]
   )
 }
 

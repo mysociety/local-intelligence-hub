@@ -126,7 +126,7 @@ export function SourcePathSelector({
                 {sources ? <SourceList /> : <LoadingIcon />}
               </div>
               <div id={scrollElId} className="col-span-3 overflow-y-auto">
-                <SourceListDetails />
+                <SourceListExplorers />
               </div>
             </>
           )}
@@ -177,7 +177,7 @@ export function SourcePathSelector({
     )
   }
 
-  function SourceListDetails() {
+  function SourceListExplorers() {
     return (
       <div className="grid gap-12">
         {/* Full list of sources and fields */}

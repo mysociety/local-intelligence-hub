@@ -101,18 +101,20 @@ class TestOwnSources(Setup, TestCase):
     # Test graphQL query for aggregates
     def test_aggregate_data_count(self):
         query = """
-            query MapReportLayerGeoJSONPoint($sourceId: ID!) {
-              sharedDataSource(pk: $sourceId) {
-                id
-                importedDataCountByArea(
-                    analyticalAreaType: european_electoral_region
-                    layerIds: ["testlayer"]
-                ) {
+            query SourceStatsByBoundary(
+              $sourceId: String!
+            ) {
+                choroplethDataForSource(
+                    sourceId: $sourceId
+                    analyticalAreaKey: european_electoral_region
+                    field: ""
+                )
+                {
                   gss
                   count
+                  formattedCount
                 }
               }
-            }
         """
 
         res = self.client.post(
@@ -126,12 +128,11 @@ class TestOwnSources(Setup, TestCase):
         result = res.json()
 
         print(result)
-        print(result)
 
         self.assertIsNone(result.get("errors", None))
         self.assertEqual(
-            [{"gss": "XXX", "count": 1}],
-            result["data"]["sharedDataSource"]["importedDataCountByArea"],
+            [{"gss": "XXX", "count": 1, "formattedCount": "1"}],
+            result["data"]["choroplethDataForSource"],
         )
 
     # Test graphQL query for geojson point
@@ -244,18 +245,20 @@ class TestFullSharing(Setup, TestCase):
 
     def test_aggregate_data_count(self):
         query = """
-            query MapReportLayerGeoJSONPoint($sourceId: ID!) {
-              sharedDataSource(pk: $sourceId) {
-                id
-                importedDataCountByArea(
-                    analyticalAreaType: european_electoral_region
-                    layerIds: ["testlayer"]
-                ) {
+            query SourceStatsByBoundary(
+              $sourceId: String!
+            ) {
+                choroplethDataForSource(
+                    sourceId: $sourceId
+                    analyticalAreaKey: european_electoral_region
+                    field: ""
+                )
+                {
                   gss
                   count
+                  formattedCount
                 }
               }
-            }
         """
 
         res = self.client.post(
@@ -268,10 +271,12 @@ class TestFullSharing(Setup, TestCase):
         )
         result = res.json()
 
+        print(result)
+
         self.assertIsNone(result.get("errors", None))
         self.assertEqual(
-            [{"gss": "XXX", "count": 1}],
-            result["data"]["sharedDataSource"]["importedDataCountByArea"],
+            [{"gss": "XXX", "count": 1, "formattedCount": "1"}],
+            result["data"]["choroplethDataForSource"],
         )
 
     def test_generic_data_visibility(self):
@@ -382,18 +387,20 @@ class TestLocationOnlySharing(Setup, TestCase):
 
     def test_aggregate_data_count(self):
         query = """
-            query MapReportLayerGeoJSONPoint($sourceId: ID!) {
-              sharedDataSource(pk: $sourceId) {
-                id
-                importedDataCountByArea(
-                    analyticalAreaType: european_electoral_region
-                    layerIds: ["testlayer"]
-                ) {
+            query SourceStatsByBoundary(
+              $sourceId: String!
+            ) {
+                choroplethDataForSource(
+                    sourceId: $sourceId
+                    analyticalAreaKey: european_electoral_region
+                    field: ""
+                )
+                {
                   gss
                   count
+                  formattedCount
                 }
               }
-            }
         """
 
         res = self.client.post(
@@ -406,10 +413,12 @@ class TestLocationOnlySharing(Setup, TestCase):
         )
         result = res.json()
 
-        self.assertIsNone(result.get("errors", None))
-        self.assertEqual(
-            [{"gss": "XXX", "count": 1}],
-            result["data"]["sharedDataSource"]["importedDataCountByArea"],
+        print(result)
+
+        self.assertIsNone(result.get("data", None))
+        self.assertIn(
+            "User otheruser does not have permission to view this external data source's data",
+            str(result["errors"]),
         )
 
     def test_vector_tiles_visibility(self):
@@ -517,18 +526,20 @@ class TestAggregateOnlySharing(Setup, TestCase):
 
     def test_aggregate_data_count(self):
         query = """
-            query MapReportLayerGeoJSONPoint($sourceId: ID!) {
-              sharedDataSource(pk: $sourceId) {
-                id
-                importedDataCountByArea(
-                    analyticalAreaType: european_electoral_region
-                    layerIds: ["testlayer"]
-                ) {
+            query SourceStatsByBoundary(
+              $sourceId: String!
+            ) {
+                choroplethDataForSource(
+                    sourceId: $sourceId
+                    analyticalAreaKey: european_electoral_region
+                    field: ""
+                )
+                {
                   gss
                   count
+                  formattedCount
                 }
               }
-            }
         """
 
         res = self.client.post(
@@ -541,10 +552,12 @@ class TestAggregateOnlySharing(Setup, TestCase):
         )
         result = res.json()
 
-        self.assertIsNone(result.get("errors", None))
-        self.assertEqual(
-            [{"gss": "XXX", "count": 1}],
-            result["data"]["sharedDataSource"]["importedDataCountByArea"],
+        print(result)
+
+        self.assertIsNone(result.get("data", None))
+        self.assertIn(
+            "User otheruser does not have permission to view this external data source's data",
+            str(result["errors"]),
         )
 
     def test_vector_tiles_visibility(self):
@@ -640,24 +653,29 @@ class TestNoSharing(Setup, TestCase):
 
     def test_aggregate_data_count(self):
         query = """
-            query MapReportLayerGeoJSONPoint($sourceId: ID!) {
-              sharedDataSource(pk: $sourceId) {
-                id
-                importedDataCountByArea(
-                    analyticalAreaType: european_electoral_region
-                ) {
+            query SourceStatsByBoundary(
+              $sourceId: String!
+            ) {
+                choroplethDataForSource(
+                    sourceId: $sourceId
+                    analyticalAreaKey: european_electoral_region
+                    field: ""
+                )
+                {
                   gss
                   count
+                  formattedCount
                 }
               }
-            }
         """
 
         res = self.client.post(
             reverse("graphql"),
             content_type="application/json",
             data={"query": query, "variables": {"sourceId": str(self.source.id)}},
-            headers={"Authorization": f"JWT {self.token}"},
+            headers={
+                "Authorization": f"JWT {self.token}",
+            },
         )
         result = res.json()
 
@@ -727,23 +745,27 @@ class TestLoggedOutUserForUnsharedSource(Setup, TestCase):
 
     def test_aggregate_data_count(self):
         query = """
-            query MapReportLayerGeoJSONPoint($sourceId: ID!) {
-              sharedDataSource(pk: $sourceId) {
-                id
-                importedDataCountByArea(
-                    analyticalAreaType: european_electoral_region
-                ) {
+            query SourceStatsByBoundary(
+              $sourceId: String!
+            ) {
+                choroplethDataForSource(
+                    sourceId: $sourceId
+                    analyticalAreaKey: european_electoral_region
+                    field: ""
+                )
+                {
                   gss
                   count
+                  formattedCount
                 }
               }
-            }
         """
 
         res = self.client.post(
             reverse("graphql"),
             content_type="application/json",
             data={"query": query, "variables": {"sourceId": str(self.source.id)}},
+            headers={},
         )
         result = res.json()
 
@@ -824,23 +846,27 @@ class TestLoggedOutUserForSharedSource(Setup, TestCase):
 
     def test_aggregate_data_count(self):
         query = """
-            query MapReportLayerGeoJSONPoint($sourceId: ID!) {
-              sharedDataSource(pk: $sourceId) {
-                id
-                importedDataCountByArea(
-                    analyticalAreaType: european_electoral_region
-                ) {
+            query SourceStatsByBoundary(
+              $sourceId: String!
+            ) {
+                choroplethDataForSource(
+                    sourceId: $sourceId
+                    analyticalAreaKey: european_electoral_region
+                    field: ""
+                )
+                {
                   gss
                   count
+                  formattedCount
                 }
               }
-            }
         """
 
         res = self.client.post(
             reverse("graphql"),
             content_type="application/json",
             data={"query": query, "variables": {"sourceId": str(self.source.id)}},
+            headers={},
         )
         result = res.json()
 
@@ -912,28 +938,37 @@ class TestLoggedOutUserForPublicSource(Setup, TestCase):
         Logged out users can't access the sharedDataSource graphql query
         """
         query = """
-            query MapReportLayerGeoJSONPoint($sourceId: ID!) {
-              sharedDataSource(pk: $sourceId) {
-                id
-                importedDataCountByArea(
-                    analyticalAreaType: european_electoral_region
-                ) {
+            query SourceStatsByBoundary(
+              $sourceId: String!
+            ) {
+                choroplethDataForSource(
+                    sourceId: $sourceId
+                    analyticalAreaKey: european_electoral_region
+                    field: ""
+                )
+                {
                   gss
                   count
+                  formattedCount
                 }
               }
-            }
         """
 
         res = self.client.post(
             reverse("graphql"),
             content_type="application/json",
             data={"query": query, "variables": {"sourceId": str(self.source.id)}},
+            headers={},
         )
         result = res.json()
 
-        self.assertIsNotNone(result.get("errors", None))
-        self.assertIsNone(result["data"])
+        print(result)
+
+        self.assertIsNone(result.get("errors", None))
+        self.assertEqual(
+            [{"gss": "XXX", "count": 1, "formattedCount": "1"}],
+            result["data"]["choroplethDataForSource"],
+        )
 
     def test_generic_data_visibility(self):
         """
@@ -1039,17 +1074,20 @@ class TestLoggedInUserForPublicSource(Setup, TestCase):
         """
 
         query = """
-            query MapReportLayerGeoJSONPoint($sourceId: ID!) {
-              sharedDataSource(pk: $sourceId) {
-                id
-                importedDataCountByArea(
-                    analyticalAreaType: european_electoral_region
-                ) {
+            query SourceStatsByBoundary(
+              $sourceId: String!
+            ) {
+                choroplethDataForSource(
+                    sourceId: $sourceId
+                    analyticalAreaKey: european_electoral_region
+                    field: ""
+                )
+                {
                   gss
                   count
+                  formattedCount
                 }
               }
-            }
         """
 
         res = self.client.post(
@@ -1062,8 +1100,13 @@ class TestLoggedInUserForPublicSource(Setup, TestCase):
         )
         result = res.json()
 
-        self.assertIsNotNone(result.get("errors", None))
-        self.assertIsNone(result.get("data", None))
+        print(result)
+
+        self.assertIsNone(result.get("errors", None))
+        self.assertEqual(
+            [{"gss": "XXX", "count": 1, "formattedCount": "1"}],
+            result["data"]["choroplethDataForSource"],
+        )
 
     def test_generic_data_visibility(self):
         query = """

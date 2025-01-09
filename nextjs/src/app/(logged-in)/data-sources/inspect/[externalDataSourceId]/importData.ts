@@ -54,3 +54,23 @@ export default function importData(
     error: `Couldn't schedule data import`,
   })
 }
+
+export function cancelImport(
+  client: ApolloClient<any>,
+  externalDataSourceId: string,
+  requestId: string
+) {
+  return client.mutate({
+    mutation: gql`
+      mutation CancelImport($id: String!, $requestId: String!) {
+        cancelImport(externalDataSourceId: $id, requestId: $requestId) {
+          id
+        }
+      }
+    `,
+    variables: {
+      id: externalDataSourceId,
+      requestId,
+    },
+  })
+}

@@ -117,6 +117,16 @@ class Query(UserQueries):
         model_types.generic_data_by_external_data_source
     )
 
+    generic_data_from_source_about_area: List[model_types.GenericData] = (
+        model_types.generic_data_from_source_about_area
+    )
+    generic_data_summary_from_source_about_area: Optional[model_types.DataSummary] = (
+        model_types.generic_data_summary_from_source_about_area
+    )
+    choropleth_data_for_source: List[model_types.GroupedDataCount] = (
+        model_types.choropleth_data_for_source
+    )
+
     @strawberry.field
     def test_data_source(
         self,
@@ -181,6 +191,12 @@ class Mutation:
     )
 
     import_all: mutation_types.ExternalDataSourceAction = mutation_types.import_all
+    cancel_import: mutation_types.ExternalDataSourceAction = (
+        mutation_types.cancel_import
+    )
+    delete_all_records: model_types.ExternalDataSource = (
+        mutation_types.delete_all_records
+    )
 
     create_map_report: model_types.MapReport = mutation_types.create_map_report
     update_map_report: model_types.MapReport = django_mutations.update(

@@ -7,6 +7,8 @@ export const UPDATE_EXTERNAL_DATA_SOURCE = gql`
       name
       geographyColumn
       geographyColumnType
+      geocodingConfig
+      usesValidGeocodingConfig
       postcodeField
       firstNameField
       lastNameField
