@@ -23,7 +23,7 @@ export function formatCrmNames(input: string): string {
 
 export function allKeysFromAllData(data: any[]): string[] {
   const allKeys: Record<string, boolean> = {}
-  for (const item of data) {
+  for (const item of data || []) {
     for (const key of Object.keys(item)) {
       allKeys[key] = true
     }
