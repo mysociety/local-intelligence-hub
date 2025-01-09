@@ -15,17 +15,17 @@ const DataSourcesList: React.FC = () => {
 
   return (
     <>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-0">
         {dataSources?.data?.layers?.map(
           (layer, index) =>
             layer?.source && (
               <div
                 key={layer?.source?.id || index}
-                className="flex gap-2 items-center"
+                className="flex gap-0 items-center"
               >
                 <Button
-                  className="border-l-4 bg-meepGray-800 hover:bg-black p-3 text-sm flex flex-row items-center gap-2 text-left 
-                  justify-start overflow-hidden text-nowrap text-ellipsis h-14 w-full"
+                  className="bg-transparent hover:bg-meepGray-800 text-sm flex flex-row items-center gap-0 text-left 
+                  justify-start overflow-hidden text-nowrap text-ellipsis h-11 w-full -ml-2"
                   style={{
                     borderColor:
                       layer.mapboxPaint?.['circle-color'] ||

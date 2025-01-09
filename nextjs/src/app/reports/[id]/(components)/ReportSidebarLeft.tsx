@@ -12,7 +12,6 @@ import { useEffect, useState } from 'react'
 import useReportUiHelpers from '../useReportUiHelpers'
 import { DataSourceEditor } from './DataSourceEditor'
 import InactivateOnLoading from './InactivateOnLoading'
-import ReportMapChoroplethLegend from './MapLayers/ReportMapChoroplethLegend'
 import ReportConfiguration from './ReportConfiguration'
 import { ReportDataSources } from './ReportDataSources'
 import { NAVBAR_HEIGHT } from './ReportNavbar'
@@ -28,12 +27,12 @@ export const LEFT_SIDEBAR_WIDTH = 350
 export function ReportSidebarLeft() {
   const { userJourneyHelpers, updateUserJourneyHelpers } = useReportUiHelpers()
   const { dataLoading: undebouncedDataLoading } = useReport()
-  const [selectedTab, setSelectedTab] = useState('data-sources')
+  const [selectedTab, setSelectedTab] = useState('layers')
   const [layerEditorState, setLayerEditorState] = useAtom(layerEditorStateAtom)
   const dataLoading = useDebounce(undebouncedDataLoading, 300)
 
   useEffect(() => {
-    if (selectedTab !== 'data-sources') {
+    if (selectedTab !== 'layers') {
       setLayerEditorState({ open: false })
     }
   }, [selectedTab])
@@ -55,7 +54,7 @@ export function ReportSidebarLeft() {
       >
         <SidebarContent className="bg-meepGray-600">
           <Tabs
-            defaultValue="data-sources"
+            defaultValue="layers"
             className="w-full"
             onValueChange={setSelectedTab}
           >
@@ -64,17 +63,17 @@ export function ReportSidebarLeft() {
               border border-b-meepGray-800 pt-4 pb-0 h-fit flex gap-4"
             >
               <TabsTrigger
-                value="data-sources"
+                value="layers"
                 className={classes.tabsTrigger}
                 disabled={dataLoading}
               >
-                Data Sources {}
+                Layers
               </TabsTrigger>
 
               <HoverCard
                 open={
                   userJourneyHelpers?.visualiseYourData.open &&
-                  selectedTab === 'data-sources'
+                  selectedTab === 'layers'
                 }
                 onOpenChange={() =>
                   updateUserJourneyHelpers('visualiseYourData', false)
@@ -82,11 +81,11 @@ export function ReportSidebarLeft() {
               >
                 <HoverCardTrigger>
                   <TabsTrigger
-                    value="configuration"
+                    value="data visualisation"
                     className={classes.tabsTrigger}
                     disabled={dataLoading}
                   >
-                    Configuration
+                    Data visualisation
                   </TabsTrigger>
                 </HoverCardTrigger>
                 <HoverCardContent align="start" className="font-normal">
@@ -94,12 +93,10 @@ export function ReportSidebarLeft() {
                 </HoverCardContent>
               </HoverCard>
             </TabsList>
-            <TabsContent value="data-sources" className="px-4 pb-24">
-              <InactivateOnLoading>
-                <ReportDataSources />
-              </InactivateOnLoading>
+            <TabsContent value="layers" className="px-4 pb-24">
+              <ReportDataSources />
             </TabsContent>
-            <TabsContent value="configuration" className="px-4 pb-24">
+            <TabsContent value="data visualisation" className="px-4 pb-24">
               <InactivateOnLoading>
                 <ReportConfiguration />
               </InactivateOnLoading>

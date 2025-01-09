@@ -1,16 +1,17 @@
 import { scaleLinear, scaleSequential } from 'd3-scale'
-import { interpolateBlues } from 'd3-scale-chromatic'
 import {
   FillLayerSpecification,
   LineLayerSpecification,
   SymbolLayerSpecification,
 } from 'mapbox-gl'
+import { PALETTE, Palette } from './reportContext'
 import { Tileset } from './types'
 import { DataByBoundary } from './useDataByBoundary'
 
 export function getChoroplethFill(
   data: { count: number }[],
-  visible?: boolean
+  visible?: boolean,
+  palette: Palette = Palette.Blue
 ): FillLayerSpecification['paint'] {
   let min =
     data.reduce(
@@ -39,11 +40,10 @@ export function getChoroplethFill(
   // Map real numbers to colours
   const colourScale = scaleSequential()
     .domain([min, max])
-    .interpolator(interpolateBlues)
-    .interpolator((t) => interpolateBlues(1 - t))
+    .interpolator(PALETTE[palette].interpolator)
 
   let steps = Math.min(max, 30) // Max 30 steps
-  steps = Math.max(steps, 3) // Min 3 steps (for valid Mapbox fill-color rule)
+  steps = Math.floor(Math.max(steps, 3)) // Min 3 steps (for valid Mapbox fill-color rule)
   const colourStops = new Array(steps)
     .fill(0)
     .map((_, i) => i / steps)
@@ -131,7 +131,7 @@ export function getAreaGeoJSON(data: DataByBoundary) {
         type: 'Feature',
         geometry: d.gssArea?.point?.geometry! as GeoJSON.Point,
         properties: {
-          count: d.count,
+          count: d.count.toFixed(1),
           label: d.label,
         },
       })),

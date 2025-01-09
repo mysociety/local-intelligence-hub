@@ -1,6 +1,6 @@
 import { LegendOrdinal } from '@visx/legend'
 import { scaleOrdinal } from '@visx/scale'
-import { interpolateBlues } from 'd3-scale-chromatic'
+import { Palette, PALETTE } from '../../reportContext'
 import useDataByBoundary from '../../useDataByBoundary'
 import { useReport } from '../ReportProvider'
 
@@ -49,12 +49,16 @@ export default function ReportMapChoroplethLegend() {
     Math.round(minCount + i * (difference / (numberOfSteps - 1 || 1)))
   )
 
+  const interpolator =
+    PALETTE[report.displayOptions.dataVisualisation.palette || Palette.Blue]
+      .interpolator
+
   //Legend scale
   const ordinalScale = scaleOrdinal({
     domain,
     range: Array.from({ length: numberOfSteps }, (_, i) =>
-      interpolateBlues(i / (numberOfSteps - 1 || 1))
-    ).reverse(),
+      interpolator(i / (numberOfSteps - 1 || 1))
+    ),
   })
 
   if (loading) {
@@ -63,7 +67,7 @@ export default function ReportMapChoroplethLegend() {
 
   return (
     <div
-      className={`p-4 absolute bottom-10 transition-all duration-300 -z-10 ${visibility === 'visible' ? 'left-full' : '-left-[200%]'}`}
+      className={`p-4 absolute bottom-12 transition-all duration-300 left-0 ${visibility === 'visible' ? 'block' : 'hidden'}`}
     >
       <div className="bg-meepGray-950 text-white rounded-md p-4 shadow-lg flex flex-col gap-4">
         <p>{selectedDataSource?.name}</p>

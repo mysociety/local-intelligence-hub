@@ -13,9 +13,10 @@ import {
 } from '@/__generated__/graphql'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
 
-import { SidebarProvider } from '@/components/ui/sidebar'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { layerEditorStateAtom, useSidebarLeftState } from '@/lib/map'
 import { merge } from 'lodash'
+import ReportMapChoroplethLegend from './(components)/MapLayers/ReportMapChoroplethLegend'
 import ReportNavbar from './(components)/ReportNavbar'
 import ReportPage from './(components)/ReportPage'
 import ReportProvider from './(components)/ReportProvider'
@@ -95,7 +96,12 @@ function SelfContainedContext({ params: { id } }: { params: Params }) {
         >
           <ReportNavbar />
           <ReportSidebarLeft />
-          <ReportPage />
+          <SidebarInset className="pointer-events-none relative">
+            <ReportPage />
+            <span className="pointer-events-auto">
+              <ReportMapChoroplethLegend />
+            </span>
+          </SidebarInset>
         </SidebarProvider>
         <ReportSidebarRight />
       </ReportProvider>

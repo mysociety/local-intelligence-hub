@@ -4,6 +4,17 @@ import {
   MapLayerInput,
   MapReport,
 } from '@/__generated__/graphql'
+import {
+  interpolateBlues,
+  interpolateBrBG,
+  interpolateGreens,
+  interpolateInferno,
+  interpolateOranges,
+  interpolatePurples,
+  interpolateRdYlBu,
+  interpolateRdYlGn,
+  interpolateReds,
+} from 'd3-scale-chromatic'
 import { createContext } from 'react'
 import { OptimisticMutationUpdateMapLayers } from './(components)/ReportProvider'
 import { PoliticalTileset } from './politicalTilesets'
@@ -18,6 +29,60 @@ export const VisualisationLabels: Record<VisualisationType, string> = {
 
 export enum Palette {
   Blue = 'blue',
+  Red = 'Red',
+  Purple = 'Purple',
+  Orange = 'Orange',
+  Green = 'Green',
+  Inferno = 'Inferno',
+  DivergentRedGreen = 'DivergentRedGreen',
+  DivergentBlueRed = 'DivergentBlueRed',
+  DivergentBrBg = 'DivergentBrBg',
+}
+
+export const PALETTE: Record<
+  Palette,
+  {
+    label: string
+    interpolator: (t: number) => string
+  }
+> = {
+  [Palette.Blue]: {
+    label: 'Blue',
+    // Reversed so that black is the lowest value
+    interpolator: (t) => interpolateBlues(1 - t),
+  },
+  [Palette.Red]: {
+    label: 'Red',
+    interpolator: (t) => interpolateReds(1 - t),
+  },
+  [Palette.Purple]: {
+    label: 'Purple',
+    interpolator: (t) => interpolatePurples(1 - t),
+  },
+  [Palette.Orange]: {
+    label: 'Orange',
+    interpolator: (t) => interpolateOranges(1 - t),
+  },
+  [Palette.Green]: {
+    label: 'Green',
+    interpolator: (t) => interpolateGreens(1 - t),
+  },
+  [Palette.Inferno]: {
+    label: 'Inferno',
+    interpolator: interpolateInferno,
+  },
+  [Palette.DivergentRedGreen]: {
+    label: 'Red/Green',
+    interpolator: interpolateRdYlGn,
+  },
+  [Palette.DivergentBlueRed]: {
+    label: 'Blue/Red',
+    interpolator: interpolateRdYlBu,
+  },
+  [Palette.DivergentBrBg]: {
+    label: 'Brown/Beige',
+    interpolator: interpolateBrBG,
+  },
 }
 
 export type MapReportExtended = Omit<MapReport, 'displayOptions'> & {
@@ -35,6 +100,7 @@ export interface ReportConfig {
     showDataVisualisation?: Record<VisualisationType, boolean>
   }
   display: {
+    showBorders?: boolean
     showStreetDetails?: boolean
     showMPs?: boolean
     showLastElectionData?: boolean
@@ -54,6 +120,7 @@ export const defaultReportConfig: ReportConfig = {
     },
   },
   display: {
+    showBorders: true,
     showStreetDetails: false,
     showPostcodeLabels: false,
     showMPs: false,
