@@ -4,6 +4,7 @@ import pluralize from 'pluralize'
 import { DataSourceType } from '@/__generated__/graphql'
 import { SourceOption } from '@/lib/data'
 
+import { twMerge } from 'tailwind-merge'
 import { DataSourceIcon } from './DataSourceIcon'
 
 function dataTypeRecordLabel(dataType: DataSourceType) {
@@ -24,14 +25,21 @@ function dataTypeRecordLabel(dataType: DataSourceType) {
 export function CRMSelection({
   source,
   isShared,
+  className,
   displayCount = true,
 }: {
   isShared?: boolean
   source: SourceOption
   displayCount?: boolean
+  className?: string
 }) {
   return (
-    <div className="flex flex-row items-center gap-2 text-left">
+    <div
+      className={twMerge(
+        'flex flex-row items-center gap-2 text-left',
+        className
+      )}
+    >
       <DataSourceIcon
         crmType={source.crmType}
         className="w-5 flex-shrink-0 -ml-1"

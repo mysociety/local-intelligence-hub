@@ -1,4 +1,4 @@
-import { startCase } from 'lodash'
+import { CRMSelection } from '@/components/CRMButtonItem'
 import pluralize from 'pluralize'
 import React, { useState } from 'react'
 import { PALETTE, VisualisationType } from '../reportContext'
@@ -84,7 +84,13 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
               // explainer={`Select which data will populate your ${selectedBoundaryLabel}`}
               value={dataSourceId}
               options={layers.map((layer) => ({
-                label: startCase(layer.name),
+                label: (
+                  <CRMSelection
+                    source={layer.source}
+                    displayCount={false}
+                    className="max-w-36 truncate"
+                  />
+                ),
                 value: layer.id,
               }))}
               onChange={(dataSource) =>

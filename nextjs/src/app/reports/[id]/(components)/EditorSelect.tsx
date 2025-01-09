@@ -16,7 +16,7 @@ export function EditorSelect({
   ...fieldProps
 }: {
   value?: string
-  options: string[] | { label: string; value: string }[]
+  options: string[] | { label: any; value: string }[]
   onChange: (value: string) => void
   disabled?: boolean
   disabledMessage?: string

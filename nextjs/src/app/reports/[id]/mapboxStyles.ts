@@ -1,4 +1,5 @@
 import { scaleLinear, scaleSequential } from 'd3-scale'
+import { isInteger } from 'lodash'
 import {
   FillLayerSpecification,
   LineLayerSpecification,
@@ -131,7 +132,7 @@ export function getAreaGeoJSON(data: DataByBoundary) {
         type: 'Feature',
         geometry: d.gssArea?.point?.geometry! as GeoJSON.Point,
         properties: {
-          count: d.count.toFixed(1),
+          count: isInteger(d.count) ? d.count : d.count.toFixed(1),
           label: d.label,
         },
       })),

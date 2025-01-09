@@ -1,3 +1,4 @@
+import { DataSourceIcon } from '@/components/DataSourceIcon'
 import { LegendOrdinal } from '@visx/legend'
 import { scaleOrdinal } from '@visx/scale'
 import { Palette, PALETTE } from '../../reportContext'
@@ -70,8 +71,16 @@ export default function ReportMapChoroplethLegend() {
       className={`p-4 absolute bottom-12 transition-all duration-300 left-0 ${visibility === 'visible' ? 'block' : 'hidden'}`}
     >
       <div className="bg-meepGray-950 text-white rounded-md p-4 shadow-lg flex flex-col gap-4">
-        <p>{selectedDataSource?.name}</p>
-
+        <div>
+          <div>{dataSourceField}</div>
+          <div className="text-sm flex flex-row items-center gap-1">
+            <DataSourceIcon
+              crmType={selectedDataSource?.source.crmType}
+              className="w-4 h-4"
+            />{' '}
+            <span className="font-500">{selectedDataSource?.name}</span>
+          </div>
+        </div>
         <LegendOrdinal
           scale={ordinalScale}
           direction="row"
