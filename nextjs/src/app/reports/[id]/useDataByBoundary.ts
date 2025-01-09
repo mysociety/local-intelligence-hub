@@ -1,6 +1,5 @@
 import {
   AnalyticalAreaType,
-  MapReportStatsByAreaQuery,
   SourceStatsByBoundaryQuery,
   SourceStatsByBoundaryQueryVariables,
 } from '@/__generated__/graphql'
@@ -9,8 +8,6 @@ import { MapReportExtended } from './reportContext'
 
 export type DataByBoundary =
   SourceStatsByBoundaryQuery['choroplethDataForSource']
-export type ExternalDataByBoundary =
-  MapReportStatsByAreaQuery['mapReport']['importedDataByArea']
 
 const useDataByBoundary = ({
   report,
