@@ -204,10 +204,8 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
             />
           ) : layer.inspectorType === InspectorDisplayType.BigNumber ? (
             <BigNumberDisplay
-              data={
-                data.data?.row?.aggregated || data.data?.summary?.aggregated
-              }
-              config={layer.inspectorConfig}
+              count={data.data?.points.length}
+              dataType={layer.source.dataType}
             />
           ) : (
             <ListDisplay
@@ -385,15 +383,20 @@ const partyColourMap = {
 }
 
 function BigNumberDisplay({
-  data,
-  config,
+  count,
+  dataType,
 }: {
-  data: AreaLayerDataQuery['summary'][]
-  config: {
-    columns: string[]
-  }
+  count: number
+  dataType: DataSourceType
 }) {
-  return <div>Big number</div>
+  return (
+    <div className="py-2">
+      <div className="uppercase text-xs text-meepGray-400">
+        {pluralize(dataType || 'record', 2)}
+      </div>
+      <div className="text-white text-3xl">{format(',')(count)}</div>
+    </div>
+  )
 }
 
 function ListDisplay({
