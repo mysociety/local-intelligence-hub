@@ -1,4 +1,3 @@
-import { allKeysFromAllData } from '@/lib/utils'
 import { useMemo } from 'react'
 
 export function PropertiesDisplay({
@@ -11,7 +10,21 @@ export function PropertiesDisplay({
   }
 }) {
   const cols: string[] = useMemo(() => {
-    return config?.columns || allKeysFromAllData(data)
+    if (config?.columns) {
+      return config.columns
+    } else if (data) {
+      const keys = new Set<string>()
+      for (const item of Array.isArray(data) ? data : [data]) {
+        if (item) {
+          for (const key of Object.keys(item)) {
+            keys.add(String(key))
+          }
+        }
+      }
+      return Array.from(keys)
+    } else {
+      return []
+    }
   }, [config, data])
 
   return (
