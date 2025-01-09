@@ -1541,6 +1541,7 @@ export enum InspectorDisplayType {
   BigNumber = 'big_number',
   ElectionResult = 'election_result',
   List = 'list',
+  Properties = 'properties',
   Table = 'table'
 }
 

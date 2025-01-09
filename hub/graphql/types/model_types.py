@@ -1203,6 +1203,7 @@ class InspectorDisplayType(Enum):
     big_number = "big_number"
     table = "table"
     list = "list"
+    properties = "properties"
 
 
 @strawberry.type

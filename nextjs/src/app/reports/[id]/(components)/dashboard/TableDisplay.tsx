@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { allKeysFromAllData } from '@/lib/utils'
 import { useMemo } from 'react'
 
 export function TableDisplay({
@@ -95,11 +96,4 @@ export function TableDisplay({
       </Table>
     </div>
   )
-}
-
-function allKeysFromAllData(data: any[]): string[] {
-  const arr = Array.isArray(data) ? data : [data]
-  return arr.reduce((acc, d) => {
-    return acc.concat(Object.keys(d))
-  }, [] as string[])
 }

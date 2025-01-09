@@ -11,11 +11,12 @@ import { DataSourceIcon } from '@/components/DataSourceIcon'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { allKeysFromAllData } from '@/lib/utils'
 import { gql, useQuery } from '@apollo/client'
 import { LucideLink } from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import useReportUiHelpers from '../../useReportUiHelpers'
 import { useReport } from '../ReportProvider'
@@ -150,7 +151,25 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
           </div>
         ) : (
           <div className="text-meepGray-400">
-            {layer.inspectorType === InspectorDisplayType.Table ? (
+            {layer.inspectorType === InspectorDisplayType.Properties ? (
+              <PropertiesDisplay
+                data={
+                  // If we're looking at an area with no single data point, use the summary data
+                  (!data.data?.row || !Object.keys(data.data.row).length) &&
+                  data.data?.summary
+                    ? data.data?.summary
+                    : // Else we're looking at something that has a single data point
+                      data.data?.row &&
+                        Object.keys(data.data.row).length > 0 &&
+                        data.data?.points?.length
+                      ? // if we have point data, use this so we can display string values
+                        data.data?.points[0].json
+                      : // else use the summary data
+                        data.data?.row || data.data?.summary
+                }
+                config={layer.inspectorConfig}
+              />
+            ) : layer.inspectorType === InspectorDisplayType.Table ? (
               <TableDisplay
                 data={
                   layer.source.dataType === DataSourceType.AreaStats
@@ -230,6 +249,36 @@ const AREA_LAYER_DATA = gql`
     )
   }
 `
+
+function PropertiesDisplay({
+  data,
+  config,
+}: {
+  data: any
+  config: {
+    columns: string[]
+  }
+}) {
+  const cols: string[] = useMemo(() => {
+    return config?.columns || allKeysFromAllData(data)
+  }, [config, data])
+
+  return (
+    <div className="flex flex-col gap-2 my-2">
+      {cols.map((column) => {
+        const value = data[column]
+        return (
+          <div key={column} className="flex flex-col gap-0">
+            <div className="text-meepGray-400 uppercase text-xs">{column}</div>
+            <div className="text-white">
+              {safeParseAsNumber(value) || value || 'N/A'}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 function ElectionResultsDisplay({
   data,
