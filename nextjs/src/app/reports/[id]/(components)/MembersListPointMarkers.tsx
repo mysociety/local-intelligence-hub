@@ -136,7 +136,7 @@ export function MembersListPointMarkers({
           />
         )}
       </Source>
-      <MarkerPopup externalDataSourceId={externalDataSourceId} />
+      <MarkerPopup />
     </>
   )
 }

@@ -55,9 +55,13 @@ export const MAP_REPORT_LAYER_POINT = gql`
         json
         remoteUrl
         dataType {
+          id
           dataSet {
+            id
             externalDataSource {
+              id
               name
+              dataType
             }
           }
         }
