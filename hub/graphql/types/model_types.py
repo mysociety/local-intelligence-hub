@@ -1537,7 +1537,6 @@ def __get_points_for_area_and_external_data_source(
         if postcode_io_key is None:
             postcode_io_key = lih_to_postcodes_io_key_map.get(area.area_type.code, None)
         if postcode_io_key:
-            print(gss, postcode_io_key)
             filters |= Q(**{f"postcode_data__codes__{postcode_io_key.value}": area.gss})
     else:
         # Find only data specifically related to this GSS area — not about its children
