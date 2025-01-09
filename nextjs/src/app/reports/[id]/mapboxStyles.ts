@@ -44,7 +44,7 @@ export function getChoroplethFill(
 
   let steps = Math.min(max, 30) // Max 30 steps
   steps = Math.max(steps, 3) // Min 3 steps (for valid Mapbox fill-color rule)
-  const colourStops = new Array(steps)
+  const colourStops = new Array(Math.floor(steps))
     .fill(0)
     .map((_, i) => i / steps)
     .map((n) => {

@@ -8,7 +8,8 @@ import { useEffect } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import MarkerPopup from './MarkerPopup'
 import { PLACEHOLDER_LAYER_ID_MARKERS } from './ReportPage'
-const MIN_MEMBERS_ZOOM = 8
+
+const MIN_MEMBERS_ZOOM = 15
 
 export function MembersListPointMarkers({
   externalDataSourceId,
