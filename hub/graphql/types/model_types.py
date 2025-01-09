@@ -1605,7 +1605,8 @@ def generic_data_summary_from_source_about_area(
     df = pd.DataFrame([record.json for record in qs])
     # convert any stringified numbers to floats
     for column in df:
-        if any(df[column].apply(check_numeric)):
+        if all(df[column].apply(check_numeric)):
+            df[column] = df[column].replace("", 0)
             df[column] = df[column].astype(float)
     # remove columns that are of string type
     df = df.select_dtypes(exclude=["object", "string"])
@@ -1635,6 +1636,8 @@ def generic_data_summary_from_source_about_area(
 
 def check_numeric(x):
     try:
+        if x == "" or x is None:
+            return True
         float(x)
         return True
     except Exception:
@@ -1690,7 +1693,7 @@ def choropleth_data_for_source(
     ):
         # Convert any stringified JSON numbers to floats
         for column in df:
-            if any(df[column].apply(check_numeric)):
+            if all(df[column].apply(check_numeric)):
                 df[column] = df[column].replace("", 0)
                 df[column] = df[column].astype(float)
 
@@ -1708,7 +1711,13 @@ def choropleth_data_for_source(
         df_sum = df.drop(columns=["label"]).groupby("gss").sum().reset_index()
 
         # Calculate the mode for the 'label' column
-        df_mode = df.groupby("gss")["label"].agg(lambda x: x.mode()[0]).reset_index()
+        def get_mode(series):
+            try:
+                return series.mode()[0]
+            except KeyError:
+                return None
+
+        df_mode = df.groupby("gss")["label"].agg(get_mode).reset_index()
 
         # Merge the summed DataFrame with the mode DataFrame
         df = pd.merge(df_sum, df_mode, on="gss")
@@ -1762,7 +1771,13 @@ def choropleth_data_for_source(
         )
 
         # Calculate the mode for the 'label' column
-        df_mode = df.groupby("gss")["label"].agg(lambda x: x.mode()[0]).reset_index()
+        def get_mode(series):
+            try:
+                return series.mode()[0]
+            except KeyError:
+                return None
+
+        df_mode = df.groupby("gss")["label"].agg(get_mode).reset_index()
 
         # Merge the summed DataFrame with the mode DataFrame
         df = pd.merge(df_count, df_mode, on="gss")
