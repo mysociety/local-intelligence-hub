@@ -51,6 +51,7 @@ export function ReportDataSources() {
 
         {Object.values(VisualisationType).map((type) => (
           <EditorSwitch
+            key={type}
             label={
               <span className="flex flex-row items-center gap-1 w-full">
                 <LucidePaintbrush className="w-5 h-5 text-meepGray-400" />
