@@ -391,14 +391,6 @@ function guessPartyColour(key: string) {
 
   const guessedPartyKey = similarities[0].partyKey
 
-  console.log(
-    'Guessing party colour for',
-    key,
-    'as',
-    guessedPartyKey,
-    similarities
-  )
-
   // @ts-ignore
   return partyColourMap[guessedPartyKey] || partyColourMap.Other
 }
