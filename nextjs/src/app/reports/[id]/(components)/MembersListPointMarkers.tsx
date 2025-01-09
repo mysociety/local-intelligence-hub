@@ -28,6 +28,8 @@ export function MembersListPointMarkers({
     selectedSourceMarkerAtom
   )
 
+  const layerId = `${externalDataSourceId}-marker`
+
   useEffect(
     function selectMarker() {
       const map = mapbox.loadedMap
@@ -40,6 +42,10 @@ export function MembersListPointMarkers({
         }
       }
 
+      const handleMouseLeave = (event: MapMouseEvent) => {
+        setSelectedSourceMarker(null)
+      }
+
       const handleTouchStart = (event: mapboxgl.MapTouchEvent) => {
         const feature = event.features?.[0]
         if (feature?.properties?.id) {
@@ -47,26 +53,17 @@ export function MembersListPointMarkers({
         }
       }
 
-      const handleClick = (event: MapMouseEvent) => {
-        const feature = event.features?.[0]
-        if (feature?.properties?.id) {
-          setSelectedSourceMarker(feature)
-        }
-      }
-
-      const layerId = `${externalDataSourceId}-marker`
-
       map.on('mouseover', layerId, handleMouseOver)
-      map.on('click', layerId, handleClick)
+      map.on('mouseleave', layerId, handleMouseLeave)
       map.on('touchstart', layerId, handleTouchStart)
 
       return () => {
         map.off('mouseover', layerId, handleMouseOver)
-        map.off('click', layerId, handleClick)
+        map.off('mouseleave', layerId, handleMouseLeave)
         map.off('touchstart', layerId, handleTouchStart)
       }
     },
-    [mapbox.loadedMap, externalDataSourceId, setSelectedSourceMarker]
+    [layerId, mapbox.loadedMap, externalDataSourceId, setSelectedSourceMarker]
   )
 
   return (
@@ -80,73 +77,20 @@ export function MembersListPointMarkers({
         ).toString()}
         minzoom={MIN_MEMBERS_ZOOM}
       >
-        {index <= 1 ? (
-          <Layer
-            beforeId={PLACEHOLDER_LAYER_ID_MARKERS}
-            id={`${externalDataSourceId}-marker`}
-            source={externalDataSourceId}
-            source-layer={'generic_data'}
-            type="circle"
-            paint={{
-              'circle-radius': 8,
-              'circle-color': DEFAULT_MARKER_COLOUR,
-              ...(mapboxPaint || {}),
-            }}
-            layout={mapboxLayout}
-            minzoom={MIN_MEMBERS_ZOOM}
-            {...(selectedSourceMarker?.properties?.id
-              ? {
-                  filter: [
-                    '!=',
-                    selectedSourceMarker?.properties?.id,
-                    ['get', 'id'],
-                  ],
-                }
-              : {})}
-          />
-        ) : (
-          <Layer
-            beforeId={PLACEHOLDER_LAYER_ID_MARKERS}
-            id={`${externalDataSourceId}-marker`}
-            source={externalDataSourceId}
-            source-layer={'generic_data'}
-            type="circle"
-            paint={{
-              'circle-radius': 8,
-              'circle-color': '#678DE3',
-              ...(mapboxPaint || {}),
-            }}
-            layout={mapboxLayout}
-            minzoom={MIN_MEMBERS_ZOOM}
-            {...(selectedSourceMarker?.properties?.id
-              ? {
-                  filter: [
-                    '!=',
-                    selectedSourceMarker?.properties?.id,
-                    ['get', 'id'],
-                  ],
-                }
-              : {})}
-          />
-        )}
-
-        {!!selectedSourceMarker?.properties?.id && (
-          <Layer
-            beforeId={PLACEHOLDER_LAYER_ID_MARKERS}
-            id={`${externalDataSourceId}-marker-selected`}
-            source={externalDataSourceId}
-            source-layer={'generic_data'}
-            type="circle"
-            paint={{
-              'circle-radius': 10,
-              'circle-color': '#678DE3',
-              ...(mapboxPaint || {}),
-            }}
-            layout={mapboxLayout}
-            minzoom={MIN_MEMBERS_ZOOM}
-            filter={['==', selectedSourceMarker.properties.id, ['get', 'id']]}
-          />
-        )}
+        <Layer
+          beforeId={PLACEHOLDER_LAYER_ID_MARKERS}
+          id={layerId}
+          source={externalDataSourceId}
+          source-layer={'generic_data'}
+          type="circle"
+          paint={{
+            'circle-radius': 8,
+            'circle-color': DEFAULT_MARKER_COLOUR,
+            ...(mapboxPaint || {}),
+          }}
+          layout={mapboxLayout}
+          minzoom={MIN_MEMBERS_ZOOM}
+        />
       </Source>
       <MarkerPopup />
     </>

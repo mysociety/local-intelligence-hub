@@ -52,6 +52,7 @@ const MarkerPopup: React.FC = () => {
         onClose={() => setSelectedSourceMarker(null)}
         anchor="bottom"
         offset={[0, -10] as any}
+        className="hover-only-popup"
       >
         <div className="relative z-10 rounded-lg w-48 p-2 bg-[#1f2229]/70  ">
           <div className=" backdrop-blur-[3px] rounded-lg p-4 absolute top-0 left-0 w-full h-full -z-10 border border-meepGray-600"></div>

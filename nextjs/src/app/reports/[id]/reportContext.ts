@@ -141,7 +141,7 @@ export const defaultReportConfig: ReportConfig = {
     showBoundaryNames: true,
   },
 }
-interface ReportContextProps {
+export interface ReportContextProps {
   report: MapReportExtended
   deleteReport: () => void
   updateReport: (payload: {

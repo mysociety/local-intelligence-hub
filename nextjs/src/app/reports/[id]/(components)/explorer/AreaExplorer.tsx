@@ -11,23 +11,22 @@ import { DataSourceIcon } from '@/components/DataSourceIcon'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { allKeysFromAllData } from '@/lib/utils'
+import { ExplorerState, useLoadedMap } from '@/lib/map'
 import { gql, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
 import { sum } from 'lodash'
 import { LucideLink } from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import trigramSimilarity from 'trigram-similarity'
-import useReportUiHelpers from '../../useReportUiHelpers'
 import CollapsibleSection from '../CollapsibleSection'
 import { useReport } from '../ReportProvider'
+import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
 import { TableDisplay } from '../dashboard/TableDisplay'
 
 export function AreaExplorer({ gss }: { gss: string }) {
-  const { userJourneyHelpers, updateUserJourneyHelpers } = useReportUiHelpers()
   const [selectedTab, setSelectedTab] = useState('summary')
 
   // Query area details
@@ -38,6 +37,17 @@ export function AreaExplorer({ gss }: { gss: string }) {
     variables: { gss },
     skip: !gss,
   })
+
+  const mapbox = useLoadedMap()
+
+  useEffect(() => {
+    if (areaData.data?.area?.fitBounds) {
+      mapbox.current?.fitBounds(areaData.data.area.fitBounds as any, {
+        padding: 100,
+      })
+      console.log('Fit bounds', mapbox.current, areaData.data?.area?.fitBounds)
+    }
+  }, [gss, areaData.data, mapbox, mapbox.loaded, mapbox.current])
 
   const report = useReport()
 
@@ -106,7 +116,11 @@ export function AreaExplorer({ gss }: { gss: string }) {
     // add GSS code to URL
     const newURL = queryString.stringifyUrl({
       url: currentURL,
-      query: { gss, entity: 'area', showExplorer: true },
+      query: {
+        id: gss,
+        entity: 'area',
+        showExplorer: true,
+      } satisfies ExplorerState,
     })
     // copy to clipboard
     navigator.clipboard.writeText(newURL)
@@ -123,6 +137,8 @@ const classes = {
 const AREA_EXPLORER_SUMMARY = gql`
   query AreaExplorerSummary($gss: String!) {
     area(gss: $gss) {
+      id
+      fitBounds
       name
       areaType {
         name
@@ -188,10 +204,8 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
             />
           ) : layer.inspectorType === InspectorDisplayType.BigNumber ? (
             <BigNumberDisplay
-              data={
-                data.data?.row?.aggregated || data.data?.summary?.aggregated
-              }
-              config={layer.inspectorConfig}
+              count={data.data?.points.length}
+              dataType={layer.source.dataType}
             />
           ) : (
             <ListDisplay
@@ -208,23 +222,6 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
       </div>
     </CollapsibleSection>
   )
-}
-
-function safeParseAsNumber(value: any): number | null {
-  try {
-    if (typeof value === 'number') {
-      return value
-    }
-    if (typeof value === 'string') {
-      const parsed = parseFloat(value)
-      if (!isNaN(parsed)) {
-        return parsed
-      }
-    }
-    return null
-  } catch (e) {
-    return null
-  }
 }
 
 const AREA_LAYER_DATA = gql`
@@ -266,36 +263,6 @@ const AREA_LAYER_DATA = gql`
     }
   }
 `
-
-function PropertiesDisplay({
-  data,
-  config,
-}: {
-  data: any
-  config: {
-    columns: string[]
-  }
-}) {
-  const cols: string[] = useMemo(() => {
-    return config?.columns || allKeysFromAllData(data)
-  }, [config, data])
-
-  return (
-    <div className="flex flex-col gap-2 my-2">
-      {cols.map((column) => {
-        const value = data[column]
-        return (
-          <div key={column} className="flex flex-col gap-0">
-            <div className="text-meepGray-400 uppercase text-xs">{column}</div>
-            <div className="text-white">
-              {safeParseAsNumber(value) || value || 'N/A'}
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
 
 function ElectionResultsDisplay({
   data,
@@ -416,15 +383,20 @@ const partyColourMap = {
 }
 
 function BigNumberDisplay({
-  data,
-  config,
+  count,
+  dataType,
 }: {
-  data: AreaLayerDataQuery['summary'][]
-  config: {
-    columns: string[]
-  }
+  count: number
+  dataType: DataSourceType
 }) {
-  return <div>Big number</div>
+  return (
+    <div className="py-2">
+      <div className="uppercase text-xs text-meepGray-400">
+        {pluralize(dataType || 'record', 2)}
+      </div>
+      <div className="text-white text-3xl">{format(',')(count)}</div>
+    </div>
+  )
 }
 
 function ListDisplay({
