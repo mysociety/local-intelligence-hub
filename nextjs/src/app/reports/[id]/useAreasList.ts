@@ -18,7 +18,7 @@ export function useAreasList(tileset: Tileset | null) {
     const checkSource = () => {
       const source = map.loadedMap?.getSource(tileset.mapboxSourceId)
       if (source) {
-        const features = map.loadedMap.querySourceFeatures(
+        const features = map.loadedMap?.querySourceFeatures(
           tileset.mapboxSourceId,
           {
             sourceLayer: tileset.sourceLayerId,
@@ -27,12 +27,13 @@ export function useAreasList(tileset: Tileset | null) {
 
         const uniqueAreas = Array.from(
           new Set(
-            features.map((f) => f.properties?.[tileset.promoteId] ?? null)
+            features?.map((f) => f.properties?.[tileset.promoteId] ?? null) ??
+              []
           )
         )
           .map((gss) => ({
             gss,
-            name: features.find(
+            name: features?.find(
               (f) => f.properties?.[tileset.promoteId] === gss
             )?.properties?.[tileset.labelId],
           }))
