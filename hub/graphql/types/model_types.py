@@ -1723,12 +1723,29 @@ def choropleth_data_for_source(
 
         # Add a "maximum" column that figures out the biggest numerical value in each row
         numerical_columns = df.select_dtypes(include="number").columns
-        df["max_votes"] = df[numerical_columns].max(axis=1)
+        try:
+            df["first"] = df[numerical_columns].max(axis=1)
 
-        # Calculate the second-highest value in each row
-        df["runnerup_votes"] = df[numerical_columns].apply(
-            lambda row: row.nlargest(2).iloc[-1], axis=1
-        )
+            # Calculate the second-highest value in each row
+            df["second"] = df[numerical_columns].apply(
+                lambda row: row.nlargest(2).iloc[-1], axis=1
+            )
+
+            df["third"] = df[numerical_columns].apply(
+                lambda row: row.nlargest(3).iloc[-1], axis=1
+            )
+
+            df["last"] = df[numerical_columns].min(axis=1)
+
+            df["total"] = df[numerical_columns].sum(axis=1)
+
+            df["count"] = df[numerical_columns].count(axis=1)
+
+            df["mean"] = df[numerical_columns].mean(axis=1)
+
+            df["median"] = df[numerical_columns].median(axis=1)
+        except IndexError:
+            pass
 
         # Now fetch the requested series from the dataframe
         # If the field is a column name, we can just return that column
