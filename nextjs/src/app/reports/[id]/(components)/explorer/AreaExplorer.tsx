@@ -241,10 +241,14 @@ const AREA_LAYER_DATA = gql`
     ) {
       aggregated
       metadata {
-        min
-        max
+        first
+        second
+        third
+        last
         total
-        fptpMajority
+        count
+        mean
+        median
       }
     }
     # for specific pieces of data for this GSS code
@@ -256,9 +260,14 @@ const AREA_LAYER_DATA = gql`
     ) {
       aggregated
       metadata {
-        min
-        max
+        first
+        second
+        third
+        last
         total
+        count
+        mean
+        median
       }
     }
   }
@@ -291,8 +300,8 @@ function ElectionResultsDisplay({
         <div className="flex flex-col gap-1">
           <div className="text-xs uppercase text-meepGray-400">Majority</div>
           <div className="text-2xl text-white">
-            {data?.metadata.fptpMajority
-              ? format(',.0f')(data?.metadata.fptpMajority)
+            {!!data?.metadata.first && !!data?.metadata.second
+              ? format(',.0f')(data?.metadata.first - data?.metadata.second)
               : '???'}
           </div>
         </div>
