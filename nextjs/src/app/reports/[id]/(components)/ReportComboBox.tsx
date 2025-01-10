@@ -20,32 +20,32 @@ import {
 import { cn } from '@/lib/utils'
 import { gql } from '@apollo/client'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect } from 'react'
 import { useAreasList } from '../useAreasList'
 import { useReport } from './ReportProvider'
 
 export default function ReportDashboardConsSelector() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [searchQuery, setSearchQuery] = React.useState('')
 
   const [open, setOpen] = React.useState(false)
   const [value, setValue] = React.useState('')
-  const [searchQuery, setSearchQuery] = React.useState('')
 
   const { report } = useReport()
   const boundaryType = report.displayOptions?.dataVisualisation?.boundaryType
-
-  console.log('boundaryType:', boundaryType)
-
   const tileset = report.politicalBoundaries.find(
     (boundary) => boundary.boundaryType === boundaryType
   )?.tileset
-  console.log('tileset:', tileset)
+
+  const selectedBoundaryLabel = report.politicalBoundaries.find(
+    (boundary) => boundary.boundaryType === boundaryType
+  )?.label
 
   const areas = useAreasList(tileset ?? null)
-  console.log('areas:', areas)
 
   // Get the area ID from URL params
-  React.useEffect(() => {
+  useEffect(() => {
     const entity = searchParams.get('entity')
     const id = searchParams.get('id')
 
@@ -73,53 +73,52 @@ export default function ReportDashboardConsSelector() {
     router.push(`?${params.toString()}`)
   }
 
-  //  // Keyboard shortcuts
-  //   useEffect(() => {
-  //     const down = (e: KeyboardEvent) => {
-  //       if (e.key === 'Backspace' && (e.metaKey || e.ctrlKey)) {
-  //         e.preventDefault()
+  function handleFiltering(searchQuery: string) {
+    const search = searchQuery.toLowerCase().trim()
+    return areas
+      .filter((area) => area.name.toLowerCase().includes(search))
+      .sort((a, b) => a.name.localeCompare(b.name)) // Optional: sort alphabetically
+  }
 
-  //         setSelectedBoundary(null)
-  //       }
-  //       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-  //         e.preventDefault()
-  //         setOpen((open) => !open)
-  //       }
-  //     }
-  //     document.addEventListener('keydown', down)
-  //     return () => document.removeEventListener('keydown', down)
-  //   }, [])
+  function handleClear() {
+    setValue('')
+    setSearchQuery('')
+  }
 
-  //   useEffect(() => {
-  //     if (selectedBoundary) {
-  //       const gssAreaID = getGSSAreaIDfromGSS(selectedBoundary)
-  //       if (gssAreaID) {
-  //         setValue(gssAreaID)
-  //       }
-  //     }
-  //     if (!selectedBoundary) {
-  //       setValue('')
-  //     }
-  //   }, [selectedBoundary])
+  // Keyboard shortcuts
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === 'Backspace' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+
+        handleClear()
+      }
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        setOpen((open) => !open)
+      }
+    }
+    document.addEventListener('keydown', down)
+    return () => document.removeEventListener('keydown', down)
+  }, [])
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <div className="flex  gap-1 items-center">
+      <div className="flex gap-1 items-center">
         <PopoverTrigger asChild>
           <Button
             variant="ghost"
             role="combobox"
             aria-expanded={open}
-            className=" justify-between text-sm font-normal w-full hover:bg-meepGray-800 text-opacity-80 "
+            className=" justify-between text-sm font-normal w-full hover:bg-meepGray-800 text-opacity-80 gap-1 "
           >
-            <Locate className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-
-            <div className="flex items-center gap-1">
-              <span className="truncate =">
-                {value ? value : 'Select Constituency'}
-              </span>
-            </div>
-            {!value && <div className="text-xs text-meepGray-400">CMD+K</div>}
+            <Locate
+              className={`h-4 w-4 shrink-0 opacity-50 ${value ? 'fill-meepGray-400' : 'fill-transparent'}`}
+            />
+            {/* <div className="text-xs text-meepGray-400 truncate w-12">
+              {value ? value : 'CMD+K'}
+              CMD+K
+            </div> */}
           </Button>
         </PopoverTrigger>
 
@@ -139,32 +138,39 @@ export default function ReportDashboardConsSelector() {
         )} */}
       </div>
 
-      <PopoverContent className="w-full  p-0" align="end">
+      <PopoverContent className="w-[310px]  p-0" align="end">
         <Command>
           <CommandInput
-            placeholder="Search constituencies..."
+            placeholder={`Search ${selectedBoundaryLabel}`}
             value={searchQuery}
             onValueChange={setSearchQuery}
           />
           <CommandList>
-            <CommandEmpty>No constituency found.</CommandEmpty>
+            <CommandEmpty>
+              <p>No {selectedBoundaryLabel} found.</p>
+              <p className="text-xs text-meepGray-400 px-4 mt-1">
+                Adjust the <span className="underline">border type</span> option
+                in the left sidebar to see other areas.
+              </p>
+            </CommandEmpty>
             <CommandGroup>
-              {areas.map((area) => (
+              {handleFiltering(searchQuery).map((area) => (
                 <CommandItem
                   key={area.gss}
-                  value={area.gss}
-                  onSelect={handleSelect}
+                  value={area.name}
+                  onSelect={(currentValue) => {
+                    setValue(area.name)
+                    setOpen(false)
+                    handleSelect(area.gss)
+                  }}
                 >
                   <Check
                     className={cn(
                       'mr-2 h-4 w-4',
-                      value === area.gss ? 'opacity-100' : 'opacity-0'
+                      value === area.name ? 'opacity-100' : 'opacity-0'
                     )}
                   />
                   {area.name}
-                  {/* <span className="text-xs text-brandBlue ml-2">
-                    {area.count > 0 && ` ${area.count}`}
-                  </span> */}
                 </CommandItem>
               ))}
             </CommandGroup>
