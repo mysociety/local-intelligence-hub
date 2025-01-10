@@ -7,6 +7,7 @@ import { atom, useAtomValue } from 'jotai'
 import { PanelLeft, PanelRight } from 'lucide-react'
 import Link from 'next/link'
 import { MappedIcon } from '../../../../components/icons/MappedIcon'
+import ReportComboBox from './ReportComboBox'
 
 // You can set the title & href of the top left icon link based on route & context
 export const navbarTitleAtom = atom('')
@@ -40,12 +41,15 @@ export default function ReportNavbar() {
             onClick={leftSidebar.toggle}
             className="text-meepGray-400 w-4 h-4 cursor-pointer"
           />{' '}
-          {!!explorer.id && !!explorer.entity && (
-            <PanelRight
-              onClick={rightSidebarToggle}
-              className="text-meepGray-400 w-4 h-4 cursor-pointer ml-auto"
-            />
-          )}
+          <div className="flex flex-row items-center gap-2 ml-auto">
+            <ReportComboBox />
+            {!!explorer.id && !!explorer.entity && (
+              <PanelRight
+                onClick={rightSidebarToggle}
+                className="text-meepGray-400 w-4 h-4 cursor-pointer"
+              />
+            )}
+          </div>
         </div>
       </section>
       <section className="flex space-x-4"> </section>
