@@ -16,12 +16,6 @@ const useDataByBoundary = ({
   report?: MapReportExtended | undefined
   boundaryType?: AnalyticalAreaType
 }) => {
-  console.log({
-    dataSource: report?.displayOptions?.dataVisualisation?.dataSource,
-    dataSourceField: report?.displayOptions?.dataVisualisation?.dataSourceField,
-    boundaryType,
-  })
-
   const query = useQuery<
     SourceStatsByBoundaryQuery,
     SourceStatsByBoundaryQueryVariables
