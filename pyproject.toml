@@ -63,6 +63,7 @@ django-codemirror2 = "^0.2"
 wagtail-color-panel = "^1.5.0"
 dateparser = "^1.2.0"
 phonenumbers = "8.13.51"
+numexpr = "^2.10.2"
 
 [tool.poetry.dev-dependencies]
 django-debug-toolbar = "^4.3"
