@@ -7,7 +7,10 @@ from typing import List, Optional, Union
 from django.db.models import F, Q
 from django.http import HttpRequest
 
+import numexpr as ne
 import pandas as pd
+
+pd.core.computation.ops.MATHOPS = (*pd.core.computation.ops.MATHOPS, "where")
 import procrastinate.contrib.django.models
 import strawberry
 import strawberry_django
@@ -1753,7 +1756,12 @@ def choropleth_data_for_source(
             df["count"] = df[field]
         # If the field is a formula, we need to evaluate it
         else:
-            df["count"] = df.eval(field, target=df)
+            try:
+                df["count"] = df.eval(field)
+            except ValueError:
+                # In case "where" is used, which pandas doesn't support
+                # https://github.com/pandas-dev/pandas/issues/34834
+                df["count"] = ne.evaluate(field, local_dict=df)
 
         # Check if count is between 0 and 1: if so, it's a percentage
         is_percentage = df["count"].between(0, 2).all() or False
