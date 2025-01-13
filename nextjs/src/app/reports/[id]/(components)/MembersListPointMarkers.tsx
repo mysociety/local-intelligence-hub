@@ -10,7 +10,8 @@ import MarkerPopup from './MarkerPopup'
 import { PLACEHOLDER_LAYER_ID_MARKERS } from './ReportPage'
 export const DEFAULT_MARKER_COLOUR = '#678DE3'
 
-const MIN_MEMBERS_ZOOM = 14
+const MEMBERS_LOAD_ZOOM = 8
+const MIN_MEMBERS_DISPLAY_ZOOM = 10
 
 export function MembersListPointMarkers({
   externalDataSourceId,
@@ -75,7 +76,8 @@ export function MembersListPointMarkers({
           `/tiles/external-data-source/${externalDataSourceId}/tiles.json`,
           BACKEND_URL
         ).toString()}
-        minzoom={MIN_MEMBERS_ZOOM}
+        minzoom={MEMBERS_LOAD_ZOOM}
+        maxzoom={MEMBERS_LOAD_ZOOM}
       >
         <Layer
           beforeId={PLACEHOLDER_LAYER_ID_MARKERS}
@@ -89,7 +91,7 @@ export function MembersListPointMarkers({
             ...(mapboxPaint || {}),
           }}
           layout={mapboxLayout}
-          minzoom={MIN_MEMBERS_ZOOM}
+          minzoom={MIN_MEMBERS_DISPLAY_ZOOM}
         />
       </Source>
       <MarkerPopup />
