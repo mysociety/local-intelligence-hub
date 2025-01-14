@@ -17,6 +17,7 @@ import {
   MutationUpdaterFunction,
   useApolloClient,
 } from '@apollo/client'
+import { produce } from 'immer'
 import { useSetAtom } from 'jotai'
 import { merge, pick } from 'lodash'
 import { useRouter } from 'next/navigation'
@@ -170,6 +171,21 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
       optimisticMutation
     )
   }
+
+  useEffect(() => {
+    // Always ensure that the choropleth has a data source
+    if (
+      !!report.layers.length &&
+      !report.displayOptions?.dataVisualisation?.dataSource
+    ) {
+      updateReport(
+        produce(report, (draft) => {
+          draft.displayOptions.dataVisualisation.dataSource =
+            report.layers[0].id
+        })
+      )
+    }
+  }, [report])
 
   return (
     <ReportContext.Provider

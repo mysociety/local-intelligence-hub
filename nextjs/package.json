@@ -72,6 +72,7 @@
     "graphql": "^16.8.1",
     "html-react-parser": "^5.2.1",
     "iframe-resizer-react": "^1.1.0",
+    "immer": "^10.1.1",
     "jotai": "^2.7.1",
     "jotai-effect": "^0.6.0",
     "jotai-location": "^0.5.4",
