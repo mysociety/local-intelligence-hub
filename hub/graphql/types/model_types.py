@@ -1664,7 +1664,7 @@ def choropleth_data_for_source(
     analytical_area_key: AnalyticalAreaType,
     # Field could be a column name or a Pandas formulaic expression
     # or, if not provided, a count of records
-    field: Optional[str],
+    field: Optional[str] = None,
 ) -> List[GroupedDataCount]:
     # Check user can access the external data source
     user = get_current_user(info)

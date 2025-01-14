@@ -25,7 +25,7 @@ const useDataByBoundary = ({
     variables: {
       sourceId: report?.displayOptions.dataVisualisation.dataSource!,
       boundaryType: boundaryType!,
-      field: report?.displayOptions.dataVisualisation.dataSourceField!,
+      field: report?.displayOptions.dataVisualisation.dataSourceField! || '',
     },
     skip: !report?.displayOptions.dataVisualisation.dataSource || !boundaryType,
   })
