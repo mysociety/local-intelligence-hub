@@ -9,8 +9,6 @@ from django.http import HttpRequest
 
 import numexpr as ne
 import pandas as pd
-
-pd.core.computation.ops.MATHOPS = (*pd.core.computation.ops.MATHOPS, "where")
 import procrastinate.contrib.django.models
 import strawberry
 import strawberry_django
@@ -46,6 +44,8 @@ from utils.geo_reference import (
     area_to_postcode_io_filter,
     lih_to_postcodes_io_key_map,
 )
+
+pd.core.computation.ops.MATHOPS = (*pd.core.computation.ops.MATHOPS, "where")
 
 logger = logging.getLogger(__name__)
 
