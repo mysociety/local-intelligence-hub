@@ -4,6 +4,7 @@ import {
   MapLayerInput,
   MapReport,
 } from '@/__generated__/graphql'
+import { StarredState } from '@/lib/map'
 import {
   interpolateBlues,
   interpolateBrBG,
@@ -119,6 +120,7 @@ export interface ReportConfig {
     boundaryOutlines?: AnalyticalAreaType[]
     showBoundaryNames?: boolean
   }
+  starred?: StarredState[]
 }
 
 export const defaultReportConfig: ReportConfig = {
@@ -140,6 +142,7 @@ export const defaultReportConfig: ReportConfig = {
     boundaryOutlines: [AnalyticalAreaType.ParliamentaryConstituency_2024],
     showBoundaryNames: true,
   },
+  starred: [],
 }
 export interface ReportContextProps {
   report: MapReportExtended
