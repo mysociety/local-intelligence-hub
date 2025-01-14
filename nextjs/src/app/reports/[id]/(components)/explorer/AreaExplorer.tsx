@@ -8,6 +8,13 @@ import {
   MapLayer,
 } from '@/__generated__/graphql'
 import { DataSourceIcon } from '@/components/DataSourceIcon'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -82,7 +89,7 @@ export function AreaExplorer({ gss }: { gss: string }) {
               ? pluralize(areaData.data?.area?.areaType.name, 1)
               : 'Area'}
           </div>
-
+          <AreaExplorerBreadcrumbs area={areaData.data?.area} />
           <div className="text-hMd flex flex-row gap-2 w-full items-center">
             {areaData.loading ? (
               <span className="text-meepGray-400">Loading...</span>
@@ -177,6 +184,12 @@ const AREA_EXPLORER_SUMMARY = gql`
       areaType {
         name
         description
+      }
+      samplePostcode {
+        parliamentaryConstituency2024
+        adminWard
+        adminDistrict
+        europeanElectoralRegion
       }
     }
   }
@@ -298,15 +311,6 @@ const AREA_LAYER_DATA = gql`
         mean
         median
       }
-      postcodeData {
-        adminWard
-        adminDistrict
-        europeanElectoralRegion
-        codes {
-          adminWard
-          adminDistrict
-        }
-      }
     }
     # for specific pieces of data for this GSS code
     row: genericDataSummaryFromSourceAboutArea(
@@ -325,15 +329,6 @@ const AREA_LAYER_DATA = gql`
         count
         mean
         median
-      }
-      postcodeData {
-        adminWard
-        adminDistrict
-        europeanElectoralRegion
-        codes {
-          adminWard
-          adminDistrict
-        }
       }
     }
   }
@@ -486,5 +481,70 @@ function ListDisplay({
   return (
     // Display a simple table of the data using ShadCDN
     null
+  )
+}
+
+function AreaExplorerBreadcrumbs({
+  area,
+}: {
+  area: AreaExplorerSummaryQuery['area']
+}) {
+  let {
+    parliamentaryConstituency2024,
+    adminWard,
+    adminDistrict,
+    europeanElectoralRegion,
+  } = area?.samplePostcode || {}
+
+  console.log(
+    parliamentaryConstituency2024,
+    adminWard,
+    adminDistrict,
+    europeanElectoralRegion
+  )
+  return (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/">Area</BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        {europeanElectoralRegion && (
+          <>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/components">
+                {europeanElectoralRegion}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+          </>
+        )}
+        {adminDistrict && (
+          <>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/components">
+                {adminDistrict}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+          </>
+        )}
+        {parliamentaryConstituency2024 && (
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/components">
+              {parliamentaryConstituency2024}
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+        )}
+        {adminWard && (
+          <>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/components">{adminWard}</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+          </>
+        )}
+      </BreadcrumbList>
+    </Breadcrumb>
   )
 }
