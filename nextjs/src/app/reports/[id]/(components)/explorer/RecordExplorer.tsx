@@ -6,13 +6,20 @@ import { DataSourceIcon } from '@/components/DataSourceIcon'
 import { Button } from '@/components/ui/button'
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ExplorerState, useExplorerState, useLoadedMap } from '@/lib/map'
+import {
+  ExplorerState,
+  StarredState,
+  useExplorerState,
+  useLoadedMap,
+} from '@/lib/map'
 import { gql, useQuery } from '@apollo/client'
-import { LucideLink } from 'lucide-react'
+import { LucideLink, Star } from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import useStarredItems from '../../useStarredItems'
+import { useReport } from '../ReportProvider'
 import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
 import { exploreArea } from './utils'
 
@@ -80,6 +87,30 @@ export function RecordExplorer({ id }: { id: string }) {
     },
   ].filter((d) => !!d.value)
 
+  const report = useReport()
+  const isStarred = report.report.displayOptions.starred?.some(
+    (item) => item.id === record?.id
+  )
+  const { addStarredItem, removeStarredItem } = useStarredItems()
+  const starredItemData: StarredState = {
+    id: record?.id || '',
+    entity: 'record',
+    showExplorer: true,
+    name:
+      record?.title ||
+      record?.fullName ||
+      `${record?.firstName} ${record?.lastName}`,
+    icon: record?.dataType.dataSet.externalDataSource.dataType,
+  }
+
+  function toggleStarred() {
+    if (isStarred) {
+      removeStarredItem(starredItemData.id)
+    } else {
+      addStarredItem(starredItemData)
+    }
+  }
+
   return (
     <SidebarContent className="bg-meepGray-600 overflow-x-hidden">
       <SidebarHeader className="!text-white p-4 mb-0">
@@ -100,16 +131,27 @@ export function RecordExplorer({ id }: { id: string }) {
             ) : (
               <div className="w-full">
                 <div className="flex flex-row gap-2 w-full items-center">
-                  <span>
+                  <span className="mr-auto">
                     {record.title ||
                       record.fullName ||
                       `${record.firstName} ${record.lastName}`}
                   </span>
-                  <LucideLink
-                    onClick={copyUrl}
-                    className="ml-auto text-meepGray-400 hover:text-meepGray-200 cursor-pointer"
-                    size={16}
-                  />
+                  <div className="flex flex-row gap-2 items-center">
+                    <Star
+                      onClick={toggleStarred}
+                      className={`ml-auto text-meepGray-400 cursor-pointer ${
+                        isStarred
+                          ? 'fill-meepGray-400 hover:text-meepGray-200 hover:fill-meepGray-600'
+                          : 'fill-transparent hover:text-white hover:fill-white'
+                      }`}
+                      size={16}
+                    />
+                    <LucideLink
+                      onClick={copyUrl}
+                      className="ml-auto text-meepGray-400 hover:text-meepGray-200 cursor-pointer"
+                      size={16}
+                    />
+                  </div>
                 </div>
                 {record.postcodeData && (
                   <div className="mt-2 text-base text-meepGray-400">

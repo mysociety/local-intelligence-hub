@@ -16,6 +16,7 @@ import ReportConfiguration from './ReportConfiguration'
 import { ReportDataSources } from './ReportDataSources'
 import { NAVBAR_HEIGHT } from './ReportNavbar'
 import { useReport } from './ReportProvider'
+import ReportStarredItems from './ReportStarredItems'
 
 const classes = {
   tabsTrigger:
@@ -92,6 +93,10 @@ export function ReportSidebarLeft() {
                   Click on "Configuration" to visualise your data
                 </HoverCardContent>
               </HoverCard>
+
+              <TabsTrigger value="starred" className={classes.tabsTrigger}>
+                Starred
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="layers" className="px-4 pb-24">
               <ReportDataSources />
@@ -100,6 +105,9 @@ export function ReportSidebarLeft() {
               <InactivateOnLoading>
                 <ReportConfiguration />
               </InactivateOnLoading>
+            </TabsContent>
+            <TabsContent value="starred" className="px-4 pb-24">
+              <ReportStarredItems />
             </TabsContent>
           </Tabs>
         </SidebarContent>

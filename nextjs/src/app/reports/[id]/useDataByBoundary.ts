@@ -15,9 +15,7 @@ const useDataByBoundary = ({
 }: {
   report?: MapReportExtended | undefined
   boundaryType?: AnalyticalAreaType
-  // Source fields are the numeric data columns from the external data source
-  getSourceFieldNames?: boolean
-}): { data: DataByBoundary; fieldNames?: string[]; loading?: boolean } => {
+}) => {
   const query = useQuery<
     SourceStatsByBoundaryQuery,
     SourceStatsByBoundaryQueryVariables
