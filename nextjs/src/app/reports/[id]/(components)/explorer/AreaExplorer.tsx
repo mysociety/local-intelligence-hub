@@ -1,4 +1,5 @@
 import {
+  AnalyticalAreaType,
   AreaExplorerSummaryQuery,
   AreaExplorerSummaryQueryVariables,
   AreaLayerDataQuery,
@@ -18,14 +19,19 @@ import {
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ExplorerState, StarredState, useLoadedMap } from '@/lib/map'
+import {
+  ExplorerState,
+  StarredState,
+  useExplorerState,
+  useLoadedMap,
+} from '@/lib/map'
 import { gql, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
 import { sum } from 'lodash'
 import { LucideLink, Star } from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import trigramSimilarity from 'trigram-similarity'
 import useStarredItems from '../../useStarredItems'
@@ -44,8 +50,6 @@ export function AreaExplorer({ gss }: { gss: string }) {
     variables: { gss },
     skip: !gss,
   })
-
-  console.log(areaData.data)
 
   const mapbox = useLoadedMap()
 
@@ -84,11 +88,6 @@ export function AreaExplorer({ gss }: { gss: string }) {
     <SidebarContent className="bg-meepGray-600 overflow-x-hidden">
       <SidebarHeader className="!text-white p-4 mb-0">
         <>
-          <div className="text-xs labels-condensed text-meepGray-400 uppercase">
-            {areaData.data?.area?.areaType.name
-              ? pluralize(areaData.data?.area?.areaType.name, 1)
-              : 'Area'}
-          </div>
           <AreaExplorerBreadcrumbs area={areaData.data?.area} />
           <div className="text-hMd flex flex-row gap-2 w-full items-center">
             {areaData.loading ? (
@@ -190,22 +189,15 @@ const AREA_EXPLORER_SUMMARY = gql`
         adminWard
         adminDistrict
         europeanElectoralRegion
+        codes {
+          adminWard
+          adminDistrict
+          parliamentaryConstituency2024
+        }
       }
     }
   }
 `
-
-// const AREA_HEIRARCHY = gql`
-//   query genericDataFromSourceAboutArea
-//   ($gss: String!, $sourceId: String!) {
-//     postcodeData {
-//       adminWard
-//       adminDistrict
-//       europeanElectoralRegion
-//       parliamentaryConstituency2024
-
-//   }
-// `
 
 function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
   const data = useQuery<AreaLayerDataQuery, AreaLayerDataQueryVariables>(
@@ -215,8 +207,6 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
       skip: !layer?.source?.id || !gss,
     }
   )
-
-  console.log(data.data)
 
   return (
     <CollapsibleSection title={layer.name} id={layer.id}>
@@ -489,61 +479,104 @@ function AreaExplorerBreadcrumbs({
 }: {
   area: AreaExplorerSummaryQuery['area']
 }) {
-  let {
-    parliamentaryConstituency2024,
-    adminWard,
-    adminDistrict,
+  const [explorerState, setExplorerState] = useExplorerState()
+
+  const { updateReport } = useReport()
+
+  const {
     europeanElectoralRegion,
+    parliamentaryConstituency2024,
+    adminDistrict,
+    adminWard,
+    codes,
   } = area?.samplePostcode || {}
 
-  console.log(
-    parliamentaryConstituency2024,
-    adminWard,
-    adminDistrict,
-    europeanElectoralRegion
-  )
+  const selectedAreaType = area?.areaType?.name
+  console.log(selectedAreaType)
+
+  const areaTypeMapping = {
+    europeanElectoralRegion: {
+      value: europeanElectoralRegion,
+      code: undefined,
+      type: AnalyticalAreaType.EuropeanElectoralRegion,
+    },
+    adminDistrict: {
+      value: adminDistrict,
+      code: codes?.adminDistrict,
+      type: AnalyticalAreaType.AdminDistrict,
+    },
+    parliamentaryConstituency2024: {
+      value: parliamentaryConstituency2024,
+      code: codes?.parliamentaryConstituency2024,
+      type: AnalyticalAreaType.ParliamentaryConstituency_2024,
+    },
+  }
+
+  // Define breadcrumb hierarchies for different area types
+  const breadcrumbConfigs = {
+    'Single Tier Councils': [areaTypeMapping.europeanElectoralRegion],
+    '2023 Parliamentary Constituency': [
+      areaTypeMapping.europeanElectoralRegion,
+      areaTypeMapping.adminDistrict,
+    ],
+    Wards: [
+      areaTypeMapping.europeanElectoralRegion,
+      areaTypeMapping.adminDistrict,
+      areaTypeMapping.parliamentaryConstituency2024,
+    ],
+  }
+
+  const activeBreadcrumbs =
+    breadcrumbConfigs[selectedAreaType as keyof typeof breadcrumbConfigs] || []
+
+  function handleBreadcrumbClick(crumb: {
+    value: any
+    code: string
+    type: AnalyticalAreaType
+  }) {
+    setExplorerState({
+      id: crumb.code,
+      entity: 'area',
+      showExplorer: true,
+    })
+
+    updateReport({
+      displayOptions: {
+        dataVisualisation: {
+          boundaryType: crumb.type,
+        },
+      },
+    })
+  }
+
   return (
     <Breadcrumb>
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/">Area</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        {europeanElectoralRegion && (
-          <>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/components">
-                {europeanElectoralRegion}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-          </>
+      <BreadcrumbList className="text-meepGray-400">
+        {activeBreadcrumbs.map(
+          (crumb, index) =>
+            crumb.value && (
+              <Fragment key={index}>
+                <BreadcrumbItem>
+                  <BreadcrumbLink
+                    className="max-w-28 truncate cursor-pointer"
+                    onClick={() =>
+                      handleBreadcrumbClick({
+                        value: crumb.value,
+                        code: crumb.code || '',
+                        type: crumb.type,
+                      })
+                    }
+                  >
+                    {crumb.value}
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+              </Fragment>
+            )
         )}
-        {adminDistrict && (
-          <>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/components">
-                {adminDistrict}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-          </>
-        )}
-        {parliamentaryConstituency2024 && (
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/components">
-              {parliamentaryConstituency2024}
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-        )}
-        {adminWard && (
-          <>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/components">{adminWard}</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-          </>
-        )}
+        <div className="text-xs labels-condensed text-meepGray-200 uppercase">
+          {selectedAreaType ? pluralize(selectedAreaType, 1) : 'Area'}
+        </div>
       </BreadcrumbList>
     </Breadcrumb>
   )
