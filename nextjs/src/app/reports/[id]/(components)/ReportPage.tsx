@@ -2,6 +2,8 @@
 
 import LocalisedMap from '@/components/LocalisedMap'
 import { PlaceholderLayer } from '@/components/PlaceholderLayer'
+import { LoadingIcon } from '@/components/ui/loadingIcon'
+import useDataByBoundary from '../useDataByBoundary'
 import PoliticalChoropleths from './MapLayers/PoliticalChoropleths'
 import ReportMapMarkers from './MapLayers/ReportMapMarkers'
 import { useReport } from './ReportProvider'
@@ -16,9 +18,19 @@ export default function ReportPage() {
     (boundary) => boundary.boundaryType === boundaryType
   )?.tileset
 
+  const { loading: politicalChoroplethsLoading } = useDataByBoundary({
+    report,
+    boundaryType,
+  })
+
   return (
     <div className="absolute w-[-webkit-fill-available] h-full flex flex-row pointer-events-none">
       <div className="w-full h-full pointer-events-auto">
+        {politicalChoroplethsLoading && (
+          <div className="absolute bottom-12 right-0 z-10 p-4">
+            <LoadingIcon size={'50'} />
+          </div>
+        )}
         <LocalisedMap
           showStreetDetails={report.displayOptions?.display?.showStreetDetails}
           initViewCountry="uk"

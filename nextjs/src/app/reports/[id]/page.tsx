@@ -15,7 +15,7 @@ import { currentOrganisationIdAtom } from '@/lib/organisation'
 
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { layerEditorStateAtom, useSidebarLeftState } from '@/lib/map'
-import { merge } from 'lodash'
+import { cloneDeep, merge } from 'lodash'
 import ReportMapChoroplethLegend from './(components)/MapLayers/ReportMapChoroplethLegend'
 import ReportNavbar from './(components)/ReportNavbar'
 import ReportPage from './(components)/ReportPage'
@@ -72,7 +72,7 @@ function SelfContainedContext({ params: { id } }: { params: Params }) {
   if (!report.data?.mapReport) return null
   const mapReport = merge(
     {
-      displayOptions: defaultReportConfig,
+      displayOptions: cloneDeep(defaultReportConfig), // prevent changing the defaults
       politicalBoundaries: getPoliticalTilesetsByCountry('uk'),
     },
     report.data.mapReport

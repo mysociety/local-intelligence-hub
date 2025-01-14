@@ -26,15 +26,11 @@ export function ReportDataSources() {
     politicalBoundaries,
   } = report
 
-  const [checkedTypes, setCheckedTypes] = useState<Record<string, boolean>>(
-    () =>
-      Object.values(VisualisationType).reduce(
-        (acc, type) => ({
-          ...acc,
-          [type]: type === dataVisualisation?.visualisationType,
-        }),
-        {}
-      )
+  const [checkedTypes, setCheckedTypes] = useState<
+    Record<VisualisationType, boolean>
+  >(
+    dataVisualisation?.showDataVisualisation ||
+      ({} as Record<VisualisationType, boolean>)
   )
 
   return (

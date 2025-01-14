@@ -9,8 +9,6 @@ from django.http import HttpRequest
 
 import numexpr as ne
 import pandas as pd
-
-pd.core.computation.ops.MATHOPS = (*pd.core.computation.ops.MATHOPS, "where")
 import procrastinate.contrib.django.models
 import strawberry
 import strawberry_django
@@ -46,6 +44,8 @@ from utils.geo_reference import (
     area_to_postcode_io_filter,
     lih_to_postcodes_io_key_map,
 )
+
+pd.core.computation.ops.MATHOPS = (*pd.core.computation.ops.MATHOPS, "where")
 
 logger = logging.getLogger(__name__)
 
@@ -1572,10 +1572,14 @@ def generic_data_from_source_about_area(
 
 @strawberry.type
 class DataSummaryMetadata:
-    min: float
-    max: float
-    total: float
-    fptp_majority: Optional[float]
+    first: Optional[float]
+    second: Optional[float]
+    third: Optional[float]
+    last: Optional[float]
+    total: Optional[float]
+    count: Optional[float]
+    mean: Optional[float]
+    median: Optional[float]
 
 
 @strawberry.type
@@ -1619,19 +1623,26 @@ def generic_data_summary_from_source_about_area(
     if len(summary_dict.keys()) <= 0:
         return None
 
-    fptp_majority = None
-    try:
-        fptp_majority = summary.nlargest(1).values[0] - summary.nlargest(2).values[1]
-    except Exception:
-        pass
+    first = summary.nlargest(1).iloc[-1]
+    second = summary.nlargest(2).iloc[-1]
+    third = summary.nlargest(3).iloc[-1]
+    last = summary.nsmallest(1).iloc[-1]
+    total = summary.sum()
+    count = summary.count()
+    mean = summary.mean()
+    median = summary.median()
 
     return DataSummary(
         aggregated=summary_dict,
         metadata=DataSummaryMetadata(
-            min=summary.min(),
-            max=summary.max(),
-            total=summary.sum(),
-            fptp_majority=fptp_majority,
+            first=first,
+            second=second,
+            third=third,
+            last=last,
+            total=total,
+            count=count,
+            mean=mean,
+            median=median,
         ),
     )
 
