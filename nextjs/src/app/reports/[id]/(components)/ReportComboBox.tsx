@@ -17,17 +17,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { useExplorerState } from '@/lib/map'
 import { cn } from '@/lib/utils'
 import { gql } from '@apollo/client'
-import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
 import { useAreasList } from '../useAreasList'
 import { useReport } from './ReportProvider'
 
 export default function ReportDashboardConsSelector() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = React.useState('')
+  const [explorerState, setExplorerState] = useExplorerState()
 
   const [open, setOpen] = React.useState(false)
   const [value, setValue] = React.useState('')
@@ -46,8 +45,8 @@ export default function ReportDashboardConsSelector() {
 
   // Get the area ID from URL params
   useEffect(() => {
-    const entity = searchParams.get('entity')
-    const id = searchParams.get('id')
+    const entity = explorerState.entity
+    const id = explorerState.id
 
     if (entity === 'area' && id) {
       const area = areas.find((area) => area.gss === id)
@@ -55,7 +54,7 @@ export default function ReportDashboardConsSelector() {
         setValue(area.name)
       }
     }
-  }, [searchParams, areas])
+  }, [explorerState, areas])
 
   const handleSelect = (value: string) => {
     const valueUpper = value.toUpperCase()
@@ -63,14 +62,11 @@ export default function ReportDashboardConsSelector() {
     setValue(area?.name ?? '')
     setOpen(false)
 
-    // Create new URLSearchParams object with current params
-    const params = new URLSearchParams(searchParams)
-    params.set('entity', 'area')
-    params.set('id', valueUpper)
-    params.set('showExplorer', 'true')
-
-    // Update the URL
-    router.push(`?${params.toString()}`)
+    setExplorerState({
+      entity: 'area',
+      id: valueUpper,
+      showExplorer: true,
+    })
   }
 
   function handleFiltering(searchQuery: string) {
