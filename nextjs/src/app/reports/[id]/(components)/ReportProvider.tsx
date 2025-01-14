@@ -9,6 +9,7 @@ import {
   UpdateMapReportMutation,
   UpdateMapReportMutationVariables,
 } from '@/__generated__/graphql'
+import { useSidebarLeftState } from '@/lib/map'
 import { toastPromise } from '@/lib/toast'
 import {
   ApolloCache,
@@ -21,7 +22,7 @@ import { produce } from 'immer'
 import { useSetAtom } from 'jotai'
 import { merge, pick } from 'lodash'
 import { useRouter } from 'next/navigation'
-import { ReactNode, useContext, useEffect, useState } from 'react'
+import { ReactNode, useContext, useEffect, useRef, useState } from 'react'
 import toSpaceCase from 'to-space-case'
 import { DELETE_MAP_REPORT, UPDATE_MAP_REPORT } from '../gql_queries'
 import ReportContext, {
@@ -186,6 +187,18 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
       )
     }
   }, [report])
+
+  const leftSidebarState = useSidebarLeftState()
+
+  const autoOpenedSidebar = useRef(false)
+
+  useEffect(() => {
+    // If there are no layers, open the left sidepanel
+    if (!report.layers.length && !autoOpenedSidebar.current) {
+      leftSidebarState.set(true)
+      autoOpenedSidebar.current = true
+    }
+  }, [report.layers, autoOpenedSidebar])
 
   return (
     <ReportContext.Provider
