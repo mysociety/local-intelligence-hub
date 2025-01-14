@@ -7,21 +7,18 @@ import { dataTypeIcons } from '@/lib/data'
 import { StarFilledIcon } from '@radix-ui/react-icons'
 import { useReport } from './ReportProvider'
 export default function ReportStarredItems() {
-  const { report, updateReport } = useReport()
-  const starredList = report?.displayOptions?.starred || []
   return (
     <div className="flex flex-col gap-2 text-white">
       <span className="text-md font-medium mt-2 mb-3">Starred</span>
-      <StarredItemsList starredItems={starredList} />
+      <StarredItemsList />
     </div>
   )
 }
 
-export function StarredItemsList({
-  starredItems,
-}: {
-  starredItems: StarredState[]
-}) {
+export function StarredItemsList() {
+  const { report, updateReport } = useReport()
+  const starredItems = report?.displayOptions?.starred || []
+
   const [explorerState, setExplorerState] = useExplorerState()
   const { removeStarredItem } = useStarredItems()
 
@@ -45,7 +42,7 @@ export function StarredItemsList({
         starredItems?.map((item) => (
           <div
             key={item.id}
-            className="flex cursor-pointer hover:bg-meepGray-800 items-center justify-between p-2 rounded-md text-sm group"
+            className="flex cursor-pointer hover:bg-meepGray-500 items-center justify-between p-2 rounded-md text-sm group"
             onClick={() => handleStarredItemClick(item)}
           >
             <div className="flex items-center gap-2 ">
