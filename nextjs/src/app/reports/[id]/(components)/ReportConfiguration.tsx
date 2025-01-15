@@ -12,18 +12,15 @@ export interface UpdateConfigProps {
 
 const ReportConfiguration: React.FC = () => {
   const { report, updateReport } = useReport()
-  const dataVisualisation = report.displayOptions.dataVisualisation
 
   const updateVisualisationConfig = (
     configItems: Partial<ReportConfig['dataVisualisation']>
   ) => {
-    updateReport({
-      displayOptions: {
-        dataVisualisation: {
-          ...dataVisualisation,
-          ...configItems,
-        },
-      },
+    updateReport((draft) => {
+      draft.displayOptions.dataVisualisation = {
+        ...draft.displayOptions.dataVisualisation,
+        ...configItems,
+      }
     })
   }
 

@@ -952,6 +952,10 @@ class BaseDataSource(Analytics):
     default_data_type: Optional[str] = attr_field()
     defaults: JSON = attr_field()
 
+    field_definitions: Optional[List[FieldDefinition]] = strawberry_django.field(
+        resolver=lambda self: self.field_definitions()
+    )
+
     @strawberry_django.field
     def uses_valid_geocoding_config(self) -> bool:
         return self.uses_valid_geocoding_config()
@@ -1048,9 +1052,6 @@ class ExternalDataSource(BaseDataSource):
     update_mapping: Optional[List["AutoUpdateConfig"]]
     auto_update_enabled: auto
     auto_import_enabled: auto
-    field_definitions: Optional[List[FieldDefinition]] = strawberry_django.field(
-        resolver=lambda self: self.field_definitions()
-    )
     remote_name: Optional[str] = fn_field()
     remote_url: Optional[str] = fn_field()
     healthcheck: bool = fn_field()
@@ -1218,6 +1219,7 @@ class InspectorDisplayType(Enum):
 class MapLayer:
     id: str = dict_key_field()
     name: str = dict_key_field()
+    source: str = dict_key_field()
     type: str = dict_key_field(default="events")
     visible: Optional[bool] = dict_key_field()
     custom_marker_text: Optional[str] = dict_key_field()
@@ -1248,7 +1250,7 @@ class MapLayer:
         ).first()
 
     @strawberry_django.field
-    def source(self, info: Info) -> SharedDataSource:
+    def source_data(self, info: Info) -> SharedDataSource:
         # Set in MapReport GraphQL type
         if self.get("cached_source"):
             return self.get("cached_source")

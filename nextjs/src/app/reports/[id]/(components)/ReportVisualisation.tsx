@@ -2,8 +2,8 @@ import { CRMSelection } from '@/components/CRMButtonItem'
 import { Textarea } from '@/components/ui/textarea'
 import pluralize from 'pluralize'
 import React, { useState } from 'react'
+import { POLITICAL_BOUNDARIES } from '../politicalTilesets'
 import { PALETTE, VisualisationType } from '../reportContext'
-import { useSourceMetadata } from '../useSourceMetadata'
 import { EditorSelect } from './EditorSelect'
 import { EditorSwitch } from './EditorSwitch'
 import { UpdateConfigProps } from './ReportConfiguration'
@@ -15,7 +15,6 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
   const { report, updateReport } = useReport()
   const {
     layers,
-    politicalBoundaries,
     displayOptions: { dataVisualisation },
   } = report
 
@@ -30,44 +29,18 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
       )
   )
 
-  const handleSwitchChange = (type: VisualisationType, checked: boolean) => {
-    setCheckedTypes((prev) => ({
-      ...prev,
-      [type]: checked,
-    }))
-
-    updateReport({
-      displayOptions: {
-        ...report.displayOptions,
-        dataVisualisation: {
-          ...report.displayOptions.dataVisualisation,
-          showDataVisualisation: {
-            ...Object.values(VisualisationType).reduce(
-              (acc, visType) => {
-                acc[visType] =
-                  report.displayOptions.dataVisualisation
-                    ?.showDataVisualisation?.[visType] ?? false
-                return acc
-              },
-              {} as Record<VisualisationType, boolean>
-            ),
-            [type]: checked,
-          },
-          visualisationType: checked ? type : undefined,
-        },
-      },
-    })
-  }
   const dataSourceId = dataVisualisation?.dataSource
   const dataSourceField = dataVisualisation?.dataSourceField
   const selectedDataSource = layers.find(
-    (layer) => layer.source.id === dataSourceId
+    (layer) => layer.source === dataSourceId
   )
-  const selectedBoundaryLabel = politicalBoundaries.find(
+  const selectedBoundaryLabel = POLITICAL_BOUNDARIES.find(
     (boundary) => boundary.boundaryType === dataVisualisation?.boundaryType
   )?.label
 
-  const sourceMetadata = useSourceMetadata(dataSourceId)
+  const sourceMetadata = report.layers.find(
+    (layer) => layer.source === dataSourceId
+  )
 
   return (
     <div className="flex flex-col gap-3 py-4">
@@ -86,12 +59,12 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
               options={layers.map((layer) => ({
                 label: (
                   <CRMSelection
-                    source={layer.source}
+                    source={layer.sourceData}
                     displayCount={false}
                     className="max-w-36 truncate"
                   />
                 ),
-                value: layer.source.id,
+                value: layer.source,
               }))}
               onChange={(dataSource) =>
                 updateVisualisationConfig({ dataSource })
@@ -104,22 +77,20 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
             // explainer={`Which field from your data source will be visualised?`}
             value={dataSourceField}
             options={
-              sourceMetadata.data?.externalDataSource.fieldDefinitions?.map(
-                (d) => ({
-                  label: d.label,
-                  value: d.value,
-                })
-              ) || []
+              sourceMetadata?.sourceData.fieldDefinitions?.map((d) => ({
+                label: d.label,
+                value: d.value,
+              })) || []
             }
             onChange={(dataSourceField) =>
               updateVisualisationConfig({ dataSourceField })
             }
             disabled={
-              sourceMetadata.loading ||
-              selectedDataSource?.source.dataType !== 'AREA_STATS'
+              !sourceMetadata ||
+              selectedDataSource?.sourceData.dataType !== 'AREA_STATS'
             }
             disabledMessage={
-              selectedDataSource?.source.dataType !== 'AREA_STATS'
+              selectedDataSource?.sourceData.dataType !== 'AREA_STATS'
                 ? `Count of records per area`
                 : undefined
             }

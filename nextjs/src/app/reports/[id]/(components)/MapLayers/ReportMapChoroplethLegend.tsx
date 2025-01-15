@@ -11,7 +11,6 @@ export default function ReportMapChoroplethLegend() {
 
   const {
     layers,
-    politicalBoundaries,
     displayOptions: { dataVisualisation },
   } = report
   const displayOptions = report.displayOptions
@@ -19,7 +18,7 @@ export default function ReportMapChoroplethLegend() {
   const dataSourceId = dataVisualisation?.dataSource
   const dataSourceField = dataVisualisation?.dataSourceField
   const selectedDataSource = layers.find(
-    (layer) => layer.source.id === dataSourceId
+    (layer) => layer.source === dataSourceId
   )
   const boundaryType = dataVisualisation?.boundaryType
 
@@ -89,7 +88,7 @@ export default function ReportMapChoroplethLegend() {
           <div>{dataSourceField}</div>
           <div className="text-sm flex flex-row items-center gap-1">
             <DataSourceIcon
-              crmType={selectedDataSource?.source.crmType}
+              crmType={selectedDataSource?.sourceData.crmType}
               className="w-4 h-4"
             />{' '}
             <span className="font-500">{selectedDataSource?.name}</span>

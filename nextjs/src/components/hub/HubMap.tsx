@@ -153,7 +153,7 @@ export function HubMap({
           layers?.map((layer, index) => (
             <HubPointMarkers
               beforeId="PLACEHOLDER_MARKERS"
-              key={layer.source.id}
+              key={layer.source}
               index={index}
               layer={layer}
             />

@@ -1,15 +1,12 @@
 'use client'
 
-import { gql, useFragment, useQuery } from '@apollo/client'
+import { gql, useQuery } from '@apollo/client'
 import { Check, ChevronsUpDown, Plus, RefreshCcw } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
-import {
-  GetMemberListQuery,
-  MapReportLayersSummaryFragment,
-} from '@/__generated__/graphql'
+import { GetMemberListQuery } from '@/__generated__/graphql'
 import { Button } from '@/components/ui/button'
 import {
   Command,
@@ -33,27 +30,22 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { SourceOption } from '@/lib/data'
-import { MAP_REPORT_LAYERS_SUMMARY } from '@/lib/map'
 import { cn } from '@/lib/utils'
 
 import { useReport } from '@/app/reports/[id]/(components)/ReportProvider'
 import { CRMSelection } from '@/components/CRMButtonItem'
 import { FormField } from '@/components/ui/form'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
-
-type Source = {
-  name: string
-  id: string
-}
+import { AddSourcePayload } from '../reportContext'
 
 export function AddMapLayerButton({
   addLayer,
   filter,
 }: {
-  addLayer(layer: Source): void
+  addLayer(layer: AddSourcePayload): void
   filter?: (s: SourceOption) => boolean
 }) {
-  const form = useForm<{ source?: Source }>()
+  const form = useForm<{ source?: AddSourcePayload }>()
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
@@ -112,26 +104,18 @@ export function MapLayerSelector({
   onChange,
   filter,
 }: {
-  value?: Source
-  onChange: (value: Source) => void
+  value?: AddSourcePayload
+  onChange: (value: AddSourcePayload) => void
   filter?: (s: SourceOption) => boolean
 }) {
   const [open, setOpen] = useState(false)
   const { report } = useReport()
-  const dataSources = useQuery<GetMemberListQuery>(MEMBER_LISTS, {
+  const dataSources = useQuery<GetMemberListQuery>(LIST_OF_SOURCES, {
     variables: {
       currentOrganisationId: report.organisation.id,
     },
   })
   const router = useRouter()
-  const layers = useFragment<MapReportLayersSummaryFragment>({
-    fragment: MAP_REPORT_LAYERS_SUMMARY,
-    fragmentName: 'MapReportLayersSummary',
-    from: {
-      __typename: 'MapReport',
-      id: report.id,
-    },
-  })
 
   const useableSources = useMemo(() => {
     const data: Array<SourceOption> = [
@@ -184,8 +168,8 @@ export function MapLayerSelector({
           <CommandGroup>
             {useableSources.map((source) => {
               const alreadySelected = source.id === value
-              const alreadyUsed = layers.data?.layers?.some(
-                (sL) => sL?.source?.id === source.id
+              const alreadyUsed = report.layers?.some(
+                (sL) => sL?.source === source.id
               )
               return (
                 <CommandItem
@@ -244,7 +228,7 @@ export function MapLayerSelector({
   )
 }
 
-const MEMBER_LISTS = gql`
+const LIST_OF_SOURCES = gql`
   query GetMemberList($currentOrganisationId: ID!) {
     myOrganisations(filters: { id: $currentOrganisationId }) {
       externalDataSources {

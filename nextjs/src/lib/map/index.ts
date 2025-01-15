@@ -1,50 +1,9 @@
 'use client'
 
-import { gql } from '@apollo/client'
 import ColorHash from 'color-hash'
 import { MapRef } from 'react-map-gl/dist/esm/mapbox/create-ref'
 
 var colorHash = new ColorHash()
-
-export const MAP_REPORT_LAYERS_SUMMARY = gql`
-  fragment MapReportLayersSummary on MapReport {
-    layers {
-      id
-      name
-      inspectorType
-      inspectorConfig
-      mapboxPaint
-      mapboxLayout
-      sharingPermission {
-        visibilityRecordDetails
-        visibilityRecordCoordinates
-        organisation {
-          name
-        }
-      }
-      source {
-        id
-        name
-        isImportScheduled
-        importedDataCount
-        crmType
-        dataType
-        organisation {
-          name
-        }
-      }
-    }
-  }
-`
-
-export const MAP_REPORT_FRAGMENT = gql`
-  fragment MapReportPage on MapReport {
-    id
-    name
-    ...MapReportLayersSummary
-  }
-  ${MAP_REPORT_LAYERS_SUMMARY}
-`
 
 export const layerColour = (index: any, id?: any) => {
   const arr = ['hsl(222, 69%, 65%)', 'hsl(305, 50%, 48%)']

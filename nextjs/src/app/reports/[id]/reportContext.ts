@@ -1,8 +1,10 @@
 import {
   AnalyticalAreaType,
+  DataSourceType,
   MapLayer,
   MapLayerInput,
   MapReport,
+  MapReportInput,
 } from '@/__generated__/graphql'
 import {
   interpolateBlues,
@@ -15,9 +17,9 @@ import {
   interpolateRdYlGn,
   interpolateReds,
 } from 'd3-scale-chromatic'
+import { WritableDraft } from 'immer'
 import { createContext } from 'react'
 import { OptimisticMutationUpdateMapLayers } from './(components)/ReportProvider'
-import { PoliticalTileset } from './politicalTilesets'
 
 export enum VisualisationType {
   Choropleth = 'choropleth',
@@ -97,7 +99,6 @@ export function getReportPalette(displayOptions: ReportConfig) {
 
 export type MapReportExtended = Omit<MapReport, 'displayOptions'> & {
   displayOptions: ReportConfig
-  politicalBoundaries: PoliticalTileset[]
 }
 
 export interface ReportConfig {
@@ -141,14 +142,20 @@ export const defaultReportConfig: ReportConfig = {
     showBoundaryNames: true,
   },
 }
+
+export type AddSourcePayload = {
+  name: string
+  id: string
+  dataType: DataSourceType
+}
+
 export interface ReportContextProps {
   report: MapReportExtended
   deleteReport: () => void
-  updateReport: (payload: {
-    name?: string
-    displayOptions?: Partial<ReportConfig>
-    layers?: any[]
-  }) => void
+  updateReport: (
+    editedOutput: (draft: WritableDraft<MapReportInput>) => void,
+    optimisticMutation?: OptimisticMutationUpdateMapLayers
+  ) => void
   updateLayer: (
     layerId: string,
     layer: Partial<MapLayerInput>,
@@ -157,6 +164,8 @@ export interface ReportContextProps {
   refreshReportData: () => void
   dataLoading: boolean
   setDataLoading: (loading: boolean) => void
+  removeDataSource: (layerId: string) => void
+  addDataSource: (layer: AddSourcePayload) => void
 }
 
 const ReportContext = createContext<ReportContextProps>({
@@ -167,6 +176,8 @@ const ReportContext = createContext<ReportContextProps>({
   refreshReportData: () => {},
   dataLoading: false,
   setDataLoading: () => {},
+  removeDataSource: () => {},
+  addDataSource: () => {},
 })
 
 export default ReportContext

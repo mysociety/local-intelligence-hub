@@ -13,6 +13,7 @@ import {
 } from '@/__generated__/graphql'
 import { currentOrganisationIdAtom } from '@/lib/organisation'
 
+import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { layerEditorStateAtom, useSidebarLeftState } from '@/lib/map'
 import { cloneDeep, merge } from 'lodash'
@@ -26,7 +27,6 @@ import {
 } from './(components)/ReportSidebarLeft'
 import { ReportSidebarRight } from './(components)/ReportSidebarRight'
 import { GET_MAP_REPORT } from './gql_queries'
-import { getPoliticalTilesetsByCountry } from './politicalTilesets'
 import { MapReportExtended, defaultReportConfig } from './reportContext'
 
 type Params = {
@@ -47,7 +47,7 @@ function SelfContainedContext({ params: { id } }: { params: Params }) {
   const router = useRouter()
   const report = useQuery<GetMapReportQuery, GetMapReportQueryVariables>(
     GET_MAP_REPORT,
-    { variables: { id } }
+    { variables: { id }, errorPolicy: 'all' }
   )
   const orgId = useAtomValue(currentOrganisationIdAtom)
 
@@ -69,14 +69,22 @@ function SelfContainedContext({ params: { id } }: { params: Params }) {
 
   // Really important to check if the report is null before rendering the page
   // The ReportProvider component needs to be able to provide a report to its children
-  if (!report.data?.mapReport) return null
+  if (!report.data?.mapReport) {
+    return (
+      <div className="flex items-center justify-center h-screen w-full">
+        <div className="text-meepGray-400 text-2xl font-semibold -translate-y-1/2">
+          <LoadingIcon />
+        </div>
+      </div>
+    )
+  }
+
   const mapReport = merge(
     {
       displayOptions: cloneDeep(defaultReportConfig), // prevent changing the defaults
-      politicalBoundaries: getPoliticalTilesetsByCountry('uk'),
     },
     report.data.mapReport
-  ) as unknown as MapReportExtended
+  ) as MapReportExtended
 
   return (
     <MapProvider>

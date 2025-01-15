@@ -152,8 +152,8 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
   const data = useQuery<AreaLayerDataQuery, AreaLayerDataQueryVariables>(
     AREA_LAYER_DATA,
     {
-      variables: { gss, externalDataSource: layer?.source?.id },
-      skip: !layer?.source?.id || !gss,
+      variables: { gss, externalDataSource: layer?.source },
+      skip: !layer?.source || !gss,
     }
   )
 
@@ -191,7 +191,7 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
           ) : layer.inspectorType === InspectorDisplayType.Table ? (
             <TableDisplay
               data={
-                layer.source.dataType === DataSourceType.AreaStats
+                layer.sourceData.dataType === DataSourceType.AreaStats
                   ? [data.data?.summary?.aggregated]
                   : data.data?.points.map((p) => p.json)
               }
@@ -205,7 +205,7 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
           ) : layer.inspectorType === InspectorDisplayType.BigNumber ? (
             <BigNumberDisplay
               count={data.data?.points.length}
-              dataType={layer.source.dataType}
+              dataType={layer.sourceData.dataType}
             />
           ) : (
             <ListDisplay
@@ -217,8 +217,11 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
       )}
       <div className="text-meepGray-400 text-sm flex flex-row items-center gap-1">
         Source:{' '}
-        <DataSourceIcon crmType={layer.source.crmType} className="w-5 h-5" />{' '}
-        {layer.source.name}
+        <DataSourceIcon
+          crmType={layer.sourceData.crmType}
+          className="w-5 h-5"
+        />{' '}
+        {layer.sourceData.name}
       </div>
     </CollapsibleSection>
   )
