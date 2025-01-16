@@ -2,8 +2,6 @@
 
 import { gql } from '@apollo/client'
 
-import { MAP_REPORT_FRAGMENT } from '@/lib/map'
-
 export const MAP_REPORT_LAYER_POINT = gql`
   query MapReportLayerGeoJSONPoint($genericDataId: String!) {
     importedDataGeojsonPoint(genericDataId: $genericDataId) {
@@ -50,7 +48,8 @@ export const MAP_REPORT_LAYER_ANALYTICS = gql`
         name
         mapboxPaint
         mapboxLayout
-        source {
+        source
+        sourceData {
           id
           dataType
           organisation {
@@ -74,10 +73,66 @@ export const GET_MAP_REPORT = gql`
         slug
         name
       }
-      ...MapReportPage
+      layers {
+        id
+        name
+        inspectorType
+        inspectorConfig
+        mapboxPaint
+        mapboxLayout
+        sharingPermission {
+          visibilityRecordDetails
+          visibilityRecordCoordinates
+          organisation {
+            name
+          }
+        }
+        source
+        sourceData {
+          id
+          name
+          isImportScheduled
+          importedDataCount
+          idField
+          crmType
+          dataType
+          organisation {
+            name
+          }
+          fieldDefinitions {
+            externalId
+            value
+            label
+          }
+        }
+      }
     }
   }
-  ${MAP_REPORT_FRAGMENT}
+`
+
+// Keep this fragment trim
+// so that updates return fast
+export const PATCH_MAP_REPORT = gql`
+  mutation PatchMapReport($patch: JSON!, $reportId: String!) {
+    patchMapReportDisplayOptions(patch: $patch, reportId: $reportId) {
+      id
+      name
+      displayOptions
+      layers {
+        id
+        name
+        source
+        sourceData {
+          id
+          name
+        }
+        inspectorType
+        inspectorConfig
+        mapboxPaint
+        mapboxLayout
+      }
+    }
+  }
 `
 
 // Keep this fragment trim
@@ -91,7 +146,8 @@ export const UPDATE_MAP_REPORT = gql`
       layers {
         id
         name
-        source {
+        source
+        sourceData {
           id
           name
         }

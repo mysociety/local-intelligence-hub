@@ -5,9 +5,8 @@ import {
   LucidePaintbrush,
   LucideType,
 } from 'lucide-react'
-import { useState } from 'react'
-import { ReportConfig, VisualisationType } from '../reportContext'
-import useDataSources from '../useDataSources'
+import { POLITICAL_BOUNDARIES } from '../politicalTilesets'
+import { VisualisationType } from '../reportContext'
 import { AddMapLayerButton } from './AddDataSourceButton'
 import DataSourcesList from './DataSourcesList'
 import { EditorSelect } from './EditorSelect'
@@ -15,23 +14,18 @@ import { EditorSwitch } from './EditorSwitch'
 import { useReport } from './ReportProvider'
 
 export function ReportDataSources() {
-  const { addDataSource } = useDataSources()
-  const { updateReport, report } = useReport()
+  const { updateReport, report, addDataSource } = useReport()
 
   const {
     displayOptions: {
-      display: { showStreetDetails, showBoundaryNames } = {},
+      display: {
+        showStreetDetails,
+        showBoundaryNames,
+        showDataVisualisation,
+      } = {},
       dataVisualisation,
     },
-    politicalBoundaries,
   } = report
-
-  const [checkedTypes, setCheckedTypes] = useState<
-    Record<VisualisationType, boolean>
-  >(
-    dataVisualisation?.showDataVisualisation ||
-      ({} as Record<VisualisationType, boolean>)
-  )
 
   return (
     <div className="space-y-8 py-4">
@@ -55,8 +49,12 @@ export function ReportDataSources() {
               </span>
             }
             labelClassName="text-white"
-            value={checkedTypes[type]}
-            onChange={(checked) => handleSwitchChange(type, checked)}
+            value={showDataVisualisation}
+            onChange={(checked) => {
+              updateReport((draft) => {
+                draft.displayOptions.display.showDataVisualisation = checked
+              })
+            }}
           />
         ))}
 
@@ -70,8 +68,8 @@ export function ReportDataSources() {
           labelClassName="text-white"
           value={showBoundaryNames}
           onChange={(showBoundaryNames: boolean) => {
-            updateReport({
-              displayOptions: { display: { showBoundaryNames } },
+            updateReport((draft) => {
+              draft.displayOptions.display.showBoundaryNames = showBoundaryNames
             })
           }}
         />
@@ -86,8 +84,8 @@ export function ReportDataSources() {
           labelClassName="text-white"
           value={report.displayOptions.display.showBorders}
           onChange={(showBorders: boolean) => {
-            updateReport({
-              displayOptions: { display: { showBorders } },
+            updateReport((draft) => {
+              draft.displayOptions.display.showBorders = showBorders
             })
           }}
         />
@@ -102,7 +100,7 @@ export function ReportDataSources() {
           }
           onChange={(d) => updateBoundaryType(d as AnalyticalAreaType)}
           value={dataVisualisation?.boundaryType}
-          options={politicalBoundaries.map((boundary) => ({
+          options={POLITICAL_BOUNDARIES.map((boundary) => ({
             label: boundary.label,
             value: boundary.boundaryType,
           }))}
@@ -118,8 +116,8 @@ export function ReportDataSources() {
           labelClassName="text-white"
           value={showStreetDetails}
           onChange={(showStreetDetails: boolean) => {
-            updateReport({
-              displayOptions: { display: { showStreetDetails } },
+            updateReport((draft) => {
+              draft.displayOptions.display.showStreetDetails = showStreetDetails
             })
           }}
         />
@@ -127,51 +125,9 @@ export function ReportDataSources() {
     </div>
   )
 
-  function updateVisualisationConfig(
-    configItems: Partial<ReportConfig['dataVisualisation']>
-  ) {
-    updateReport({
-      displayOptions: {
-        dataVisualisation: {
-          ...dataVisualisation,
-          ...configItems,
-        },
-      },
-    })
-  }
-
   function updateBoundaryType(boundaryType: AnalyticalAreaType) {
-    updateVisualisationConfig({
-      boundaryType,
-    })
-  }
-
-  function handleSwitchChange(type: VisualisationType, checked: boolean) {
-    setCheckedTypes((prev) => ({
-      ...prev,
-      [type]: checked,
-    }))
-
-    updateReport({
-      displayOptions: {
-        ...report.displayOptions,
-        dataVisualisation: {
-          ...report.displayOptions.dataVisualisation,
-          showDataVisualisation: {
-            ...Object.values(VisualisationType).reduce(
-              (acc, visType) => {
-                acc[visType] =
-                  report.displayOptions.dataVisualisation
-                    ?.showDataVisualisation?.[visType] ?? false
-                return acc
-              },
-              {} as Record<VisualisationType, boolean>
-            ),
-            [type]: checked,
-          },
-          visualisationType: checked ? type : undefined,
-        },
-      },
+    updateReport((draft) => {
+      draft.displayOptions.dataVisualisation.boundaryType = boundaryType
     })
   }
 }

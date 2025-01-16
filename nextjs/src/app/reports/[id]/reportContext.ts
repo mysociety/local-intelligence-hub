@@ -1,10 +1,10 @@
 import {
   AnalyticalAreaType,
-  MapLayer,
+  DataSourceType,
   MapLayerInput,
   MapReport,
 } from '@/__generated__/graphql'
-import { StarredState } from '@/lib/map'
+import { StarredState, starredStateResolver } from '@/lib/map'
 import {
   interpolateBlues,
   interpolateBrBG,
@@ -16,9 +16,9 @@ import {
   interpolateRdYlGn,
   interpolateReds,
 } from 'd3-scale-chromatic'
+import { WritableDraft } from 'immer'
 import { createContext } from 'react'
-import { OptimisticMutationUpdateMapLayers } from './(components)/ReportProvider'
-import { PoliticalTileset } from './politicalTilesets'
+import * as z from 'zod'
 
 export enum VisualisationType {
   Choropleth = 'choropleth',
@@ -98,30 +98,35 @@ export function getReportPalette(displayOptions: ReportConfig) {
 
 export type MapReportExtended = Omit<MapReport, 'displayOptions'> & {
   displayOptions: ReportConfig
-  politicalBoundaries: PoliticalTileset[]
 }
 
-export interface ReportConfig {
-  dataVisualisation: {
-    boundaryType?: AnalyticalAreaType
-    visualisationType?: VisualisationType
-    palette?: Palette
-    paletteReversed?: boolean
-    dataSource?: MapLayer['id']
-    dataSourceField?: string
-    showDataVisualisation?: Record<VisualisationType, boolean>
-  }
-  display: {
-    showBorders?: boolean
-    showStreetDetails?: boolean
-    showMPs?: boolean
-    showLastElectionData?: boolean
-    showPostcodeLabels?: boolean
-    boundaryOutlines?: AnalyticalAreaType[]
-    showBoundaryNames?: boolean
-  }
-  starred?: StarredState[]
-}
+export const reportConfigTypeChecker = z.object({
+  dataVisualisation: z.object({
+    boundaryType: z.nativeEnum(AnalyticalAreaType).optional(),
+    visualisationType: z.nativeEnum(VisualisationType).optional(),
+    palette: z.nativeEnum(Palette).optional(),
+    paletteReversed: z.boolean().optional(),
+    dataSource: z.string().optional(),
+    dataSourceField: z.string().optional(),
+    showDataVisualisation: z
+      .record(z.boolean())
+      .optional()
+      .describe('Deprecated'),
+  }),
+  display: z.object({
+    showDataVisualisation: z.boolean().optional(),
+    showBorders: z.boolean().optional(),
+    showStreetDetails: z.boolean().optional(),
+    showMPs: z.boolean().optional(),
+    showLastElectionData: z.boolean().optional(),
+    showPostcodeLabels: z.boolean().optional(),
+    boundaryOutlines: z.array(z.nativeEnum(AnalyticalAreaType)).optional(),
+    showBoundaryNames: z.boolean().optional(),
+  }),
+  starred: z.array(starredStateResolver),
+})
+
+export type ReportConfig = z.infer<typeof reportConfigTypeChecker>
 
 export const defaultReportConfig: ReportConfig = {
   dataVisualisation: {
@@ -129,11 +134,9 @@ export const defaultReportConfig: ReportConfig = {
     visualisationType: VisualisationType.Choropleth,
     palette: Palette.Blue,
     paletteReversed: false,
-    showDataVisualisation: {
-      [VisualisationType.Choropleth]: true, // Default to Choropleth
-    },
   },
   display: {
+    showDataVisualisation: true,
     showBorders: true,
     showStreetDetails: false,
     showPostcodeLabels: false,
@@ -144,22 +147,32 @@ export const defaultReportConfig: ReportConfig = {
   },
   starred: [],
 }
+
+export type AddSourcePayload = {
+  name: string
+  id: string
+  dataType: DataSourceType
+}
+
 export interface ReportContextProps {
   report: MapReportExtended
   deleteReport: () => void
-  updateReport: (payload: {
-    name?: string
-    displayOptions?: Partial<ReportConfig>
-    layers?: any[]
-  }) => void
-  updateLayer: (
-    layerId: string,
-    layer: Partial<MapLayerInput>,
-    optimisticUpdate?: OptimisticMutationUpdateMapLayers
+  updateReport: (
+    editedOutput: (
+      draft: WritableDraft<
+        Omit<MapReportExtended, 'layers'> & { layers: MapLayerInput[] }
+      >
+    ) => void
   ) => void
+  updateLayer: (layerId: string, layer: Partial<MapLayerInput>) => void
   refreshReportData: () => void
   dataLoading: boolean
   setDataLoading: (loading: boolean) => void
+  removeDataSource: (layerId: string) => void
+  addDataSource: (layer: AddSourcePayload) => void
+  addStarredItem(starredItemData: StarredState): void
+  removeStarredItem(itemId: string): void
+  clearAllStarredItems(): void
 }
 
 const ReportContext = createContext<ReportContextProps>({
@@ -170,6 +183,11 @@ const ReportContext = createContext<ReportContextProps>({
   refreshReportData: () => {},
   dataLoading: false,
   setDataLoading: () => {},
+  removeDataSource: () => {},
+  addDataSource: () => {},
+  addStarredItem: () => {},
+  removeStarredItem: () => {},
+  clearAllStarredItems: () => {},
 })
 
 export default ReportContext

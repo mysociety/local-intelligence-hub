@@ -6,6 +6,7 @@ from typing import List, Optional
 
 from django.utils.timezone import now
 
+import jsonpatch
 import strawberry
 import strawberry_django
 from asgiref.sync import async_to_sync
@@ -588,3 +589,18 @@ async def add_member(
     member_id = source.get_record_id(member)
     await source.import_many([member_id])
     return True
+
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def patch_map_report_display_options(
+    info: Info, report_id: str, patch: JSON
+) -> models.MapReport:
+    # Check permissions
+    map_report = models.MapReport.objects.get(id=report_id)
+    if not map_report.organisation.members.filter(user=get_current_user(info)).exists():
+        raise PermissionError("You do not have permission to update this data source.")
+    # Apply the patch
+    new_display_options = jsonpatch.apply_patch(map_report.display_options, patch)
+    map_report.display_options = new_display_options
+    map_report.save()
+    return map_report
