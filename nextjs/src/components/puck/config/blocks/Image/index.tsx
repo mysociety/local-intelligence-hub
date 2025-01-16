@@ -5,8 +5,12 @@ export type ImageProps = {
   url: string
   alt?: string
   caption?: string
+  widthValue?: number
+  widthUnit?: '%' | 'px'
+  heightValue?: number
+  heightUnit?: '%' | 'px'
+  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down'
 }
-
 const FileUploadField = ({
   name,
   id,
@@ -153,11 +157,60 @@ export const Image: ComponentConfig<ImageProps> = {
       type: 'textarea',
       label: 'Caption',
     },
+    widthValue: {
+      type: 'number',
+      label: 'Width Value',
+    },
+    widthUnit: {
+      type: 'select',
+      label: 'Width Unit',
+      options: [
+        { label: '%', value: '%' },
+        { label: 'px', value: 'px' },
+      ],
+    },
+    heightValue: {
+      type: 'number',
+      label: 'Height Value',
+    },
+    heightUnit: {
+      type: 'select',
+      label: 'Height Unit',
+      options: [
+        { label: '%', value: '%' },
+        { label: 'px', value: 'px' },
+      ],
+    },
+    objectFit: {
+      type: 'select',
+      label: 'Object Fit',
+      options: [
+        { label: 'Cover', value: 'cover' },
+        { label: 'Contain', value: 'contain' },
+        { label: 'Fill', value: 'fill' },
+        { label: 'None', value: 'none' },
+        { label: 'Scale Down', value: 'scale-down' },
+      ],
+    },
   },
-  render: ({ url, alt, caption }) => {
+  render: ({
+    url,
+    alt,
+    caption,
+    widthValue,
+    widthUnit,
+    heightValue,
+    heightUnit,
+    objectFit,
+  }) => {
+    const width =
+      widthValue !== undefined ? `${widthValue}${widthUnit}` : '100%'
+    const height =
+      heightValue !== undefined ? `${heightValue}${heightUnit}` : '200px'
+
     const containerStyle = {
-      width: '100%',
-      height: '200px',
+      width,
+      height,
       backgroundColor: url ? 'transparent' : '#d3d3d3',
       display: 'flex',
       justifyContent: 'center',
@@ -166,20 +219,18 @@ export const Image: ComponentConfig<ImageProps> = {
       marginBottom: '25px',
     }
 
+    const imgStyle = {
+      objectFit: objectFit || 'cover',
+      width: '100%',
+      height: '100%',
+      borderRadius: '8px',
+    }
+
     return (
       <figure>
         <div style={containerStyle}>
           {url ? (
-            <img
-              src={url}
-              alt={alt || 'Image'}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                borderRadius: '8px',
-              }}
-            />
+            <img src={url} alt={alt || 'Image'} style={imgStyle} />
           ) : (
             <span
               style={{ color: '#888', fontSize: '14px', alignSelf: 'center' }}

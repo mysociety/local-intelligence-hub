@@ -12,7 +12,7 @@ import {
   UpdateMapReportMutation,
   UpdateMapReportMutationVariables,
 } from '@/__generated__/graphql'
-import { useSidebarLeftState } from '@/lib/map'
+import { StarredState, useSidebarLeftState } from '@/lib/map'
 import { prepareMapReportForInput } from '@/lib/map/mapReportUpdate'
 import { toastPromise } from '@/lib/toast'
 import { FetchResult, useApolloClient } from '@apollo/client'
@@ -140,6 +140,9 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
         setDataLoading,
         removeDataSource,
         addDataSource,
+        addStarredItem,
+        removeStarredItem,
+        clearAllStarredItems,
       }}
     >
       {children}
@@ -308,6 +311,32 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
               : InspectorDisplayType.BigNumber,
         })
       }
+    })
+  }
+
+  function addStarredItem(starredItemData: StarredState) {
+    updateReport((draft) => {
+      if (
+        !draft.displayOptions.starred.find(
+          (item) => item.id === starredItemData.id
+        )
+      ) {
+        draft.displayOptions.starred.push(starredItemData)
+      }
+    })
+  }
+
+  function removeStarredItem(itemId: string) {
+    updateReport((draft) => {
+      draft.displayOptions.starred = draft.displayOptions.starred.filter(
+        (item) => item.id !== itemId
+      )
+    })
+  }
+
+  function clearAllStarredItems() {
+    updateReport((draft) => {
+      draft.displayOptions.starred = []
     })
   }
 }

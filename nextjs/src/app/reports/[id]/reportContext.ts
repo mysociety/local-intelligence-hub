@@ -4,6 +4,7 @@ import {
   MapLayerInput,
   MapReport,
 } from '@/__generated__/graphql'
+import { StarredState, starredStateResolver } from '@/lib/map'
 import {
   interpolateBlues,
   interpolateBrBG,
@@ -122,6 +123,7 @@ export const reportConfigTypeChecker = z.object({
     boundaryOutlines: z.array(z.nativeEnum(AnalyticalAreaType)).optional(),
     showBoundaryNames: z.boolean().optional(),
   }),
+  starred: z.array(starredStateResolver),
 })
 
 export type ReportConfig = z.infer<typeof reportConfigTypeChecker>
@@ -143,6 +145,7 @@ export const defaultReportConfig: ReportConfig = {
     boundaryOutlines: [AnalyticalAreaType.ParliamentaryConstituency_2024],
     showBoundaryNames: true,
   },
+  starred: [],
 }
 
 export type AddSourcePayload = {
@@ -167,6 +170,9 @@ export interface ReportContextProps {
   setDataLoading: (loading: boolean) => void
   removeDataSource: (layerId: string) => void
   addDataSource: (layer: AddSourcePayload) => void
+  addStarredItem(starredItemData: StarredState): void
+  removeStarredItem(itemId: string): void
+  clearAllStarredItems(): void
 }
 
 const ReportContext = createContext<ReportContextProps>({
@@ -180,6 +186,9 @@ const ReportContext = createContext<ReportContextProps>({
   setDataLoading: () => {},
   removeDataSource: () => {},
   addDataSource: () => {},
+  addStarredItem: () => {},
+  removeStarredItem: () => {},
+  clearAllStarredItems: () => {},
 })
 
 export default ReportContext

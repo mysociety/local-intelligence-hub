@@ -11,11 +11,11 @@ import { DataSourceIcon } from '@/components/DataSourceIcon'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ExplorerState, useLoadedMap } from '@/lib/map'
+import { ExplorerState, StarredState, useLoadedMap } from '@/lib/map'
 import { gql, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
 import { sum } from 'lodash'
-import { LucideLink } from 'lucide-react'
+import { LucideLink, Star } from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
 import { useEffect, useState } from 'react'
@@ -25,7 +25,6 @@ import CollapsibleSection from '../CollapsibleSection'
 import { useReport } from '../ReportProvider'
 import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
 import { TableDisplay } from '../dashboard/TableDisplay'
-
 export function AreaExplorer({ gss }: { gss: string }) {
   const [selectedTab, setSelectedTab] = useState('summary')
 
@@ -38,6 +37,8 @@ export function AreaExplorer({ gss }: { gss: string }) {
     skip: !gss,
   })
 
+  console.log(areaData.data)
+
   const mapbox = useLoadedMap()
 
   useEffect(() => {
@@ -45,11 +46,31 @@ export function AreaExplorer({ gss }: { gss: string }) {
       mapbox.current?.fitBounds(areaData.data.area.fitBounds as any, {
         padding: 100,
       })
-      console.log('Fit bounds', mapbox.current, areaData.data?.area?.fitBounds)
     }
   }, [gss, areaData.data, mapbox, mapbox.loaded, mapbox.current])
 
   const report = useReport()
+  const isStarred = report.report.displayOptions.starred?.some(
+    (item) => item.id === gss
+  )
+  const { addStarredItem, removeStarredItem } = report
+  const starredItemData: StarredState = {
+    id: gss || '',
+    entity: 'area',
+    showExplorer: true,
+    name: areaData.data?.area?.name || '',
+  }
+
+  function toggleStarred() {
+    if (isStarred) {
+      removeStarredItem(starredItemData.id)
+    } else {
+      addStarredItem(starredItemData)
+    }
+  }
+
+  const politicalBoundaries =
+    report.report.displayOptions.dataVisualisation?.boundaryType
 
   return (
     <SidebarContent className="bg-meepGray-600 overflow-x-hidden">
@@ -60,6 +81,7 @@ export function AreaExplorer({ gss }: { gss: string }) {
               ? pluralize(areaData.data?.area?.areaType.name, 1)
               : 'Area'}
           </div>
+
           <div className="text-hMd flex flex-row gap-2 w-full items-center">
             {areaData.loading ? (
               <span className="text-meepGray-400">Loading...</span>
@@ -67,12 +89,23 @@ export function AreaExplorer({ gss }: { gss: string }) {
               <span className="text-meepGray-400">???</span>
             ) : (
               <>
-                <span>{areaData.data?.area?.name}</span>
-                <LucideLink
-                  onClick={copyAreaURL}
-                  className="ml-auto text-meepGray-400 hover:text-meepGray-200 cursor-pointer"
-                  size={16}
-                />
+                <span className="mr-auto">{areaData.data?.area?.name}</span>
+                <div className="flex flex-row gap-2 items-center">
+                  <Star
+                    onClick={toggleStarred}
+                    className={`ml-auto text-meepGray-400 cursor-pointer ${
+                      isStarred
+                        ? 'fill-meepGray-400 hover:text-meepGray-200 hover:fill-meepGray-600'
+                        : 'fill-transparent hover:text-white hover:fill-white'
+                    }`}
+                    size={16}
+                  />
+                  <LucideLink
+                    onClick={copyAreaURL}
+                    className="ml-auto text-meepGray-400 hover:text-meepGray-200 cursor-pointer"
+                    size={16}
+                  />
+                </div>
               </>
             )}
           </div>
@@ -148,6 +181,18 @@ const AREA_EXPLORER_SUMMARY = gql`
   }
 `
 
+// const AREA_HEIRARCHY = gql`
+//   query genericDataFromSourceAboutArea
+//   ($gss: String!, $sourceId: String!) {
+//     postcodeData {
+//       adminWard
+//       adminDistrict
+//       europeanElectoralRegion
+//       parliamentaryConstituency2024
+
+//   }
+// `
+
 function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
   const data = useQuery<AreaLayerDataQuery, AreaLayerDataQueryVariables>(
     AREA_LAYER_DATA,
@@ -156,6 +201,8 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
       skip: !layer?.source || !gss,
     }
   )
+
+  console.log(data.data)
 
   return (
     <CollapsibleSection title={layer.name} id={layer.id}>
