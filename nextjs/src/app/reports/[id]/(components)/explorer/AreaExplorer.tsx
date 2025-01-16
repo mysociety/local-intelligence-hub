@@ -560,12 +560,8 @@ function AreaExplorerBreadcrumbs({
       showExplorer: true,
     })
 
-    updateReport({
-      displayOptions: {
-        dataVisualisation: {
-          boundaryType: crumb.type,
-        },
-      },
+    updateReport((draft) => {
+      draft.displayOptions.dataVisualisation.boundaryType = crumb.type
     })
   }
 
