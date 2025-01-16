@@ -6,7 +6,7 @@ import {
   LucideType,
 } from 'lucide-react'
 import { POLITICAL_BOUNDARIES } from '../politicalTilesets'
-import { ReportConfig, VisualisationType } from '../reportContext'
+import { VisualisationType } from '../reportContext'
 import { AddMapLayerButton } from './AddDataSourceButton'
 import DataSourcesList from './DataSourcesList'
 import { EditorSelect } from './EditorSelect'
@@ -125,20 +125,9 @@ export function ReportDataSources() {
     </div>
   )
 
-  function updateVisualisationConfig(
-    configItems: Partial<ReportConfig['dataVisualisation']>
-  ) {
-    updateReport((draft) => {
-      draft.displayOptions.dataVisualisation = {
-        ...draft.displayOptions.dataVisualisation,
-        ...configItems,
-      }
-    })
-  }
-
   function updateBoundaryType(boundaryType: AnalyticalAreaType) {
-    updateVisualisationConfig({
-      boundaryType,
+    updateReport((draft) => {
+      draft.displayOptions.dataVisualisation.boundaryType = boundaryType
     })
   }
 }

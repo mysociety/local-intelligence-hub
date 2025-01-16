@@ -6,12 +6,9 @@ import { POLITICAL_BOUNDARIES } from '../politicalTilesets'
 import { PALETTE } from '../reportContext'
 import { EditorSelect } from './EditorSelect'
 import { EditorSwitch } from './EditorSwitch'
-import { UpdateConfigProps } from './ReportConfiguration'
 import { useReport } from './ReportProvider'
 
-const ReportVisualisation: React.FC<UpdateConfigProps> = ({
-  updateVisualisationConfig,
-}) => {
+const ReportVisualisation: React.FC = () => {
   const { report, updateReport } = useReport()
   const {
     layers,
@@ -53,7 +50,11 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
               ),
               value: layer.source,
             }))}
-            onChange={(dataSource) => updateVisualisationConfig({ dataSource })}
+            onChange={(dataSource) =>
+              updateReport((draft) => {
+                draft.displayOptions.dataVisualisation.dataSource = dataSource
+              })
+            }
           />
         )}
 
@@ -73,7 +74,10 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
               })) || []
           }
           onChange={(dataSourceField) =>
-            updateVisualisationConfig({ dataSourceField })
+            updateReport((draft) => {
+              draft.displayOptions.dataVisualisation.dataSourceField =
+                dataSourceField
+            })
           }
           disabled={
             !sourceMetadata ||
@@ -91,9 +95,12 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
         </h2>
         <Textarea
           value={dataSourceField}
-          onChange={(e) => {
-            updateVisualisationConfig({ dataSourceField: e.target.value })
-          }}
+          onChange={(e) =>
+            updateReport((draft) => {
+              draft.displayOptions.dataVisualisation.dataSourceField =
+                e.target.value
+            })
+          }
           className="bg-meepGray-950 rounded text-white"
         />
 
@@ -106,20 +113,24 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
             value,
             // TODO: display the palette
           }))}
-          onChange={(palette) => {
-            updateVisualisationConfig({
-              palette: palette as keyof typeof PALETTE,
+          onChange={(palette) =>
+            updateReport((draft) => {
+              draft.displayOptions.dataVisualisation.palette =
+                palette as keyof typeof PALETTE
             })
-          }}
+          }
         />
 
         <EditorSwitch
           label="Invert fill"
           explainer={`Reverse the colour scale`}
           value={dataVisualisation?.paletteReversed || false}
-          onChange={(paletteReversed) => {
-            updateVisualisationConfig({ paletteReversed })
-          }}
+          onChange={(paletteReversed) =>
+            updateReport((draft) => {
+              draft.displayOptions.dataVisualisation.paletteReversed =
+                paletteReversed
+            })
+          }
         />
       </>
     </div>
