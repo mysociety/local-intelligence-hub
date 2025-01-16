@@ -179,7 +179,6 @@ const ReportContext = createContext<ReportContextProps>({
   report: {} as MapReportExtended,
   deleteReport: () => {},
   updateReport: () => {},
-  // patchReportDisplayOptions: () => {},
   updateLayer: () => {},
   refreshReportData: () => {},
   dataLoading: false,
