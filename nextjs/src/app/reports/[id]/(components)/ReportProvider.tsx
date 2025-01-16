@@ -6,7 +6,6 @@ import {
   DeleteMapReportMutationVariables,
   InspectorDisplayType,
   MapLayerInput,
-  MapReportInput,
   PatchMapReportMutation,
   PatchMapReportMutationVariables,
   UpdateMapReportMutation,
@@ -146,7 +145,11 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
   )
 
   function updateReport(
-    editedOutput: (draft: WritableDraft<MapReportInput>) => void
+    editedOutput: (
+      draft: WritableDraft<
+        Omit<MapReportExtended, 'layers'> & { layers: MapLayerInput[] }
+      >
+    ) => void
   ) {
     const updatedReport = produce(report, editedOutput)
     // Split out displayOptions and handle them separately
@@ -154,11 +157,14 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
     // Handle displayOptions using patch
     patchReportDisplayOptions(newDisplayOptions)
     // Handle report DB field updates using update
-    const newReportInput = prepareMapReportForInput(newReport)
-    updateReportDBFields(newReportInput)
+    updateReportDBFields(newReport)
   }
 
-  function updateReportDBFields(newReport: MapReportInput) {
+  function updateReportDBFields(
+    newReport: Omit<MapReportExtended, 'layers' | 'displayOptions'> & {
+      layers: MapLayerInput[]
+    }
+  ) {
     const { displayOptions, ...oldReport } = report
     if (isEqual(oldReport, newReport)) return
     const input = prepareMapReportForInput(newReport)
