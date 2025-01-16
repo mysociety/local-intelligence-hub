@@ -4,6 +4,7 @@ import {
   DataSourceType,
   DeleteMapReportMutation,
   DeleteMapReportMutationVariables,
+  GetMapReportQuery,
   InspectorDisplayType,
   MapLayerInput,
   PatchMapReportMutation,
@@ -18,7 +19,7 @@ import { FetchResult, useApolloClient } from '@apollo/client'
 import * as jsonpatch from 'fast-json-patch'
 import { WritableDraft, produce } from 'immer'
 import { useSetAtom } from 'jotai'
-import { isEqual } from 'lodash'
+import { cloneDeep, isEqual, merge } from 'lodash'
 import { useRouter } from 'next/navigation'
 import { ReactNode, useContext, useEffect, useRef, useState } from 'react'
 import toSpaceCase from 'to-space-case'
@@ -32,13 +33,13 @@ import ReportContext, {
   AddSourcePayload,
   MapReportExtended,
   ReportConfig,
-  VisualisationType,
+  defaultReportConfig,
   reportConfigTypeChecker,
 } from '../reportContext'
 import { navbarTitleAtom } from './ReportNavbar'
 
 interface ReportProviderProps {
-  report: MapReportExtended
+  report: GetMapReportQuery['mapReport']
   children: ReactNode
 }
 
@@ -49,6 +50,13 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
   const [dataLoading, setDataLoading] = useState(false)
   const leftSidebarState = useSidebarLeftState()
   const autoOpenedSidebar = useRef(false)
+
+  const reportWithDefaults = merge(
+    {
+      displayOptions: cloneDeep(defaultReportConfig), // prevent changing the defaults
+    },
+    report
+  ) as MapReportExtended
 
   useEffect(() => {
     setNavbarTitle(report.name)
@@ -69,11 +77,6 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
       updateReport((draft) => {
         draft.displayOptions.dataVisualisation.dataSource =
           layerPreferrablyNotAreaStat.source
-        // Enable the choropleth if it wasn't manually disabled
-        draft.displayOptions.dataVisualisation.showDataVisualisation = draft
-          .displayOptions.dataVisualisation.showDataVisualisation || {
-          [VisualisationType.Choropleth]: true,
-        }
       })
     }
   }, [report.layers.map((l) => l.id)])
@@ -128,11 +131,10 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
   return (
     <ReportContext.Provider
       value={{
-        report,
+        report: reportWithDefaults,
         deleteReport,
         refreshReportData,
         updateReport,
-        // patchReportDisplayOptions,
         updateLayer,
         dataLoading,
         setDataLoading,
@@ -151,7 +153,7 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
       >
     ) => void
   ) {
-    const updatedReport = produce(report, editedOutput)
+    const updatedReport = produce(reportWithDefaults, editedOutput)
     // Split out displayOptions and handle them separately
     const { displayOptions: newDisplayOptions, ...newReport } = updatedReport
     // Handle displayOptions using patch
@@ -234,8 +236,6 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
         }
       },
       error: `Couldn't save report`,
-    }).finally(() => {
-      refreshReportData()
     })
   }
 
@@ -263,11 +263,7 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
     // TODO: This should refresh only queries that are used by the report
     toastPromise(
       client.refetchQueries({
-        include: [
-          'GetMapReport',
-          'MapReportLayerAnalytics',
-          'GetConstituencyData',
-        ],
+        include: ['GetMapReport', 'MapReportLayerAnalytics'],
       }),
       {
         loading: 'Refreshing report data...',

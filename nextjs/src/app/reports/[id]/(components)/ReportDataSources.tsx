@@ -5,7 +5,6 @@ import {
   LucidePaintbrush,
   LucideType,
 } from 'lucide-react'
-import { useState } from 'react'
 import { POLITICAL_BOUNDARIES } from '../politicalTilesets'
 import { ReportConfig, VisualisationType } from '../reportContext'
 import { AddMapLayerButton } from './AddDataSourceButton'
@@ -19,17 +18,14 @@ export function ReportDataSources() {
 
   const {
     displayOptions: {
-      display: { showStreetDetails, showBoundaryNames } = {},
+      display: {
+        showStreetDetails,
+        showBoundaryNames,
+        showDataVisualisation,
+      } = {},
       dataVisualisation,
     },
   } = report
-
-  const [checkedTypes, setCheckedTypes] = useState<
-    Record<VisualisationType, boolean>
-  >(
-    dataVisualisation?.showDataVisualisation ||
-      ({} as Record<VisualisationType, boolean>)
-  )
 
   return (
     <div className="space-y-8 py-4">
@@ -53,8 +49,12 @@ export function ReportDataSources() {
               </span>
             }
             labelClassName="text-white"
-            value={checkedTypes[type]}
-            onChange={(checked) => handleSwitchChange(type, checked)}
+            value={showDataVisualisation}
+            onChange={(checked) => {
+              updateReport((draft) => {
+                draft.displayOptions.display.showDataVisualisation = checked
+              })
+            }}
           />
         ))}
 
@@ -139,25 +139,6 @@ export function ReportDataSources() {
   function updateBoundaryType(boundaryType: AnalyticalAreaType) {
     updateVisualisationConfig({
       boundaryType,
-    })
-  }
-
-  function handleSwitchChange(type: VisualisationType, checked: boolean) {
-    setCheckedTypes((prev) => ({
-      ...prev,
-      [type]: checked,
-    }))
-
-    updateReport((draft) => {
-      draft.displayOptions.dataVisualisation.showDataVisualisation = draft
-        .displayOptions.dataVisualisation.showDataVisualisation || {
-        [VisualisationType.Choropleth]: false,
-      }
-      draft.displayOptions.dataVisualisation.showDataVisualisation[type] =
-        checked
-      draft.displayOptions.dataVisualisation.visualisationType = checked
-        ? type
-        : undefined
     })
   }
 }

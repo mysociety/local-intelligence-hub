@@ -16,7 +16,6 @@ import { currentOrganisationIdAtom } from '@/lib/organisation'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { layerEditorStateAtom, useSidebarLeftState } from '@/lib/map'
-import { cloneDeep, merge } from 'lodash'
 import ReportMapChoroplethLegend from './(components)/MapLayers/ReportMapChoroplethLegend'
 import ReportNavbar from './(components)/ReportNavbar'
 import ReportPage from './(components)/ReportPage'
@@ -27,7 +26,6 @@ import {
 } from './(components)/ReportSidebarLeft'
 import { ReportSidebarRight } from './(components)/ReportSidebarRight'
 import { GET_MAP_REPORT } from './gql_queries'
-import { MapReportExtended, defaultReportConfig } from './reportContext'
 
 type Params = {
   id: string
@@ -79,16 +77,9 @@ function SelfContainedContext({ params: { id } }: { params: Params }) {
     )
   }
 
-  const mapReport = merge(
-    {
-      displayOptions: cloneDeep(defaultReportConfig), // prevent changing the defaults
-    },
-    report.data.mapReport
-  ) as MapReportExtended
-
   return (
     <MapProvider>
-      <ReportProvider report={mapReport}>
+      <ReportProvider report={report.data.mapReport}>
         <SidebarProvider
           style={
             {

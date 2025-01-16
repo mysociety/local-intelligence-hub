@@ -3,7 +3,6 @@ import {
   DataSourceType,
   MapLayerInput,
   MapReport,
-  MapReportInput,
 } from '@/__generated__/graphql'
 import {
   interpolateBlues,
@@ -108,9 +107,13 @@ export const reportConfigTypeChecker = z.object({
     paletteReversed: z.boolean().optional(),
     dataSource: z.string().optional(),
     dataSourceField: z.string().optional(),
-    showDataVisualisation: z.record(z.boolean()).optional(),
+    showDataVisualisation: z
+      .record(z.boolean())
+      .optional()
+      .describe('Deprecated'),
   }),
   display: z.object({
+    showDataVisualisation: z.boolean().optional(),
     showBorders: z.boolean().optional(),
     showStreetDetails: z.boolean().optional(),
     showMPs: z.boolean().optional(),
@@ -129,11 +132,9 @@ export const defaultReportConfig: ReportConfig = {
     visualisationType: VisualisationType.Choropleth,
     palette: Palette.Blue,
     paletteReversed: false,
-    showDataVisualisation: {
-      [VisualisationType.Choropleth]: true, // Default to Choropleth
-    },
   },
   display: {
+    showDataVisualisation: true,
     showBorders: true,
     showStreetDetails: false,
     showPostcodeLabels: false,
@@ -154,11 +155,12 @@ export interface ReportContextProps {
   report: MapReportExtended
   deleteReport: () => void
   updateReport: (
-    editedOutput: (draft: WritableDraft<MapReportInput>) => void
+    editedOutput: (
+      draft: WritableDraft<
+        Omit<MapReportExtended, 'layers'> & { layers: MapLayerInput[] }
+      >
+    ) => void
   ) => void
-  // patchReportDisplayOptions: (
-  //   editedOutput: (draft: WritableDraft<ReportConfig>) => void
-  // ) => void
   updateLayer: (layerId: string, layer: Partial<MapLayerInput>) => void
   refreshReportData: () => void
   dataLoading: boolean

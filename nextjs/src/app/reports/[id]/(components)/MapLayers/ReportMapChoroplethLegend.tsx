@@ -24,7 +24,7 @@ export default function ReportMapChoroplethLegend() {
 
   const visibility =
     report.displayOptions?.dataVisualisation?.boundaryType === boundaryType &&
-    report.displayOptions?.dataVisualisation?.showDataVisualisation?.choropleth
+    report.displayOptions?.display?.showDataVisualisation
       ? 'visible'
       : 'none'
 

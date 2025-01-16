@@ -34,7 +34,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
     : 'none'
   const shaderVisibility =
     report.displayOptions?.dataVisualisation?.boundaryType === boundaryType &&
-    report.displayOptions?.dataVisualisation?.showDataVisualisation?.choropleth
+    report.displayOptions?.display?.showDataVisualisation
       ? 'visible'
       : 'none'
   const { data: dataByBoundary } = useDataByBoundary({ report, boundaryType })
