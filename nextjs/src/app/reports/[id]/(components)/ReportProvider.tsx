@@ -19,7 +19,7 @@ import { FetchResult, useApolloClient } from '@apollo/client'
 import * as jsonpatch from 'fast-json-patch'
 import { WritableDraft, produce } from 'immer'
 import { useSetAtom } from 'jotai'
-import { cloneDeep, isEqual, merge } from 'lodash'
+import { capitalize, cloneDeep, isEqual, merge } from 'lodash'
 import { useRouter } from 'next/navigation'
 import { ReactNode, useContext, useEffect, useRef, useState } from 'react'
 import toSpaceCase from 'to-space-case'
@@ -235,7 +235,18 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
       success: () => {
         return {
           title: 'Report saved',
-          description: `Updated ${Object.keys(newReportConfig).map(toSpaceCase).join(', ')}`,
+          description:
+            // Print out JSON patch changes in a human readable format, using spaceCase
+            patch
+              .map((p) => {
+                const { op, path } = p
+                const changedDataPath = path
+                  .split('/')
+                  .map(toSpaceCase)
+                  .join(' -> ')
+                return `${capitalize(op)} ${changedDataPath}`
+              })
+              .join(', ') || 'No changes',
         }
       },
       error: `Couldn't save report`,
