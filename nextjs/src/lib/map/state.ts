@@ -1,4 +1,4 @@
-import { DataSourceType } from '@/__generated__/graphql'
+import { AnalyticalAreaType, DataSourceType } from '@/__generated__/graphql'
 import { atom, useAtom } from 'jotai'
 import { MapboxGeoJSONFeature } from 'mapbox-gl'
 import {
@@ -33,6 +33,12 @@ export function useExplorerState() {
 export type ExplorerSuite = ReturnType<typeof useExplorerState>
 
 export type ExplorerState = ReturnType<typeof useExplorerState>[0]
+
+export type ExplorerAreaBreadCrumbMapping = {
+  value: string | undefined
+  code: string | undefined
+  type: AnalyticalAreaType
+}
 
 export type StarredState = ExplorerState & {
   name: string

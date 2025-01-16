@@ -20,6 +20,7 @@ import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
+  ExplorerAreaBreadCrumbMapping,
   ExplorerState,
   StarredState,
   useExplorerState,
@@ -81,9 +82,6 @@ export function AreaExplorer({ gss }: { gss: string }) {
     }
   }
 
-  const politicalBoundaries =
-    report.report.displayOptions.dataVisualisation?.boundaryType
-
   return (
     <SidebarContent className="bg-meepGray-600 overflow-x-hidden">
       <SidebarHeader className="!text-white p-4 mb-0">
@@ -138,7 +136,11 @@ export function AreaExplorer({ gss }: { gss: string }) {
         >
           {report.report.layers?.map((layer) => (
             <div key={layer.id} className="my-4 px-4">
-              <AreaLayerData layer={layer} gss={gss} />
+              <AreaLayerData
+                layer={layer}
+                gss={gss}
+                areaName={areaData.data?.area?.name || ''}
+              />
             </div>
           )) || (
             <div className="text-xl text-meepGray-400 text-center py-12 px-2">
@@ -199,7 +201,15 @@ const AREA_EXPLORER_SUMMARY = gql`
   }
 `
 
-function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
+function AreaLayerData({
+  layer,
+  gss,
+  areaName,
+}: {
+  layer: MapLayer
+  gss: string
+  areaName: string
+}) {
   const data = useQuery<AreaLayerDataQuery, AreaLayerDataQueryVariables>(
     AREA_LAYER_DATA,
     {
@@ -247,6 +257,8 @@ function AreaLayerData({ layer, gss }: { layer: MapLayer; gss: string }) {
                   : data.data?.points.map((p) => p.json)
               }
               config={layer.inspectorConfig}
+              title={layer.name}
+              areaName={areaName}
             />
           ) : layer.inspectorType === InspectorDisplayType.ElectionResult ? (
             <ElectionResultsDisplay
@@ -283,6 +295,8 @@ const AREA_LAYER_DATA = gql`
       sourceId: $externalDataSource
     ) {
       json
+      id
+      postcode
     }
     # rolled up area data up to this GSS code
     summary: genericDataSummaryFromSourceAboutArea(
@@ -492,9 +506,11 @@ function AreaExplorerBreadcrumbs({
   } = area?.samplePostcode || {}
 
   const selectedAreaType = area?.areaType?.name
-  console.log(selectedAreaType)
 
-  const areaTypeMapping = {
+  const ExplorerAreaBreadCrumbMapping: Record<
+    string,
+    ExplorerAreaBreadCrumbMapping
+  > = {
     europeanElectoralRegion: {
       value: europeanElectoralRegion,
       code: undefined,
@@ -514,15 +530,17 @@ function AreaExplorerBreadcrumbs({
 
   // Define breadcrumb hierarchies for different area types
   const breadcrumbConfigs = {
-    'Single Tier Councils': [areaTypeMapping.europeanElectoralRegion],
+    'Single Tier Councils': [
+      ExplorerAreaBreadCrumbMapping.europeanElectoralRegion,
+    ],
     '2023 Parliamentary Constituency': [
-      areaTypeMapping.europeanElectoralRegion,
-      areaTypeMapping.adminDistrict,
+      ExplorerAreaBreadCrumbMapping.europeanElectoralRegion,
+      ExplorerAreaBreadCrumbMapping.adminDistrict,
     ],
     Wards: [
-      areaTypeMapping.europeanElectoralRegion,
-      areaTypeMapping.adminDistrict,
-      areaTypeMapping.parliamentaryConstituency2024,
+      ExplorerAreaBreadCrumbMapping.europeanElectoralRegion,
+      ExplorerAreaBreadCrumbMapping.adminDistrict,
+      ExplorerAreaBreadCrumbMapping.parliamentaryConstituency2024,
     ],
   }
 
