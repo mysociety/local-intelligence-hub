@@ -4,23 +4,19 @@ import {
   DataSourceType,
   DeleteMapReportMutation,
   DeleteMapReportMutationVariables,
-  Exact,
   InspectorDisplayType,
   MapLayerInput,
   MapReportInput,
+  PatchMapReportMutation,
+  PatchMapReportMutationVariables,
   UpdateMapReportMutation,
   UpdateMapReportMutationVariables,
 } from '@/__generated__/graphql'
 import { useSidebarLeftState } from '@/lib/map'
-import { createMapReportUpdate } from '@/lib/map/mapReportUpdate'
+import { prepareMapReportForInput } from '@/lib/map/mapReportUpdate'
 import { toastPromise } from '@/lib/toast'
-import {
-  ApolloCache,
-  DefaultContext,
-  FetchResult,
-  MutationUpdaterFunction,
-  useApolloClient,
-} from '@apollo/client'
+import { FetchResult, useApolloClient } from '@apollo/client'
+import * as jsonpatch from 'fast-json-patch'
 import { WritableDraft, produce } from 'immer'
 import { useSetAtom } from 'jotai'
 import { isEqual } from 'lodash'
@@ -28,11 +24,17 @@ import { useRouter } from 'next/navigation'
 import { ReactNode, useContext, useEffect, useRef, useState } from 'react'
 import toSpaceCase from 'to-space-case'
 import { v4 } from 'uuid'
-import { DELETE_MAP_REPORT, UPDATE_MAP_REPORT } from '../gql_queries'
+import {
+  DELETE_MAP_REPORT,
+  PATCH_MAP_REPORT,
+  UPDATE_MAP_REPORT,
+} from '../gql_queries'
 import ReportContext, {
   AddSourcePayload,
   MapReportExtended,
+  ReportConfig,
   VisualisationType,
+  reportConfigTypeChecker,
 } from '../reportContext'
 import { navbarTitleAtom } from './ReportNavbar'
 
@@ -40,15 +42,6 @@ interface ReportProviderProps {
   report: MapReportExtended
   children: ReactNode
 }
-
-export type OptimisticMutationUpdateMapLayers = MutationUpdaterFunction<
-  UpdateMapReportMutation,
-  Exact<{
-    input: MapReportInput
-  }>,
-  DefaultContext,
-  ApolloCache<any>
->
 
 const ReportProvider = ({ report, children }: ReportProviderProps) => {
   const router = useRouter()
@@ -98,10 +91,16 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
           !!l.sourceData.fieldDefinitions?.length
       )
       if (layer) {
-        updateReport((draft) => {
-          draft.displayOptions.dataVisualisation.dataSourceField =
-            layer.sourceData.fieldDefinitions?.[0].value
-        })
+        const idField = layer.sourceData.idField
+        const field = layer.sourceData.fieldDefinitions?.filter(
+          (f) => f.value !== idField
+        )[0].value
+        if (field) {
+          updateReport((draft) => {
+            draft.displayOptions.dataVisualisation.dataSourceField =
+              layer.sourceData.fieldDefinitions?.[0].value
+          })
+        }
       }
     }
   }, [report.layers.map((l) => l.id)])
@@ -134,6 +133,7 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
         deleteReport,
         refreshReportData,
         updateReport,
+        // patchReportDisplayOptions,
         updateLayer,
         dataLoading,
         setDataLoading,
@@ -146,12 +146,27 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
   )
 
   function updateReport(
-    editedOutput: (draft: WritableDraft<MapReportInput>) => void,
-    optimisticMutation?: OptimisticMutationUpdateMapLayers
+    editedOutput: (draft: WritableDraft<MapReportInput>) => void
   ) {
     const updatedReport = produce(report, editedOutput)
-    if (isEqual(report, updatedReport)) return
-    const input = createMapReportUpdate(updatedReport)
+    // Split out displayOptions and handle them separately
+    const { displayOptions: newDisplayOptions, ...newReport } = updatedReport
+    // Handle displayOptions using patch
+    patchReportDisplayOptions(newDisplayOptions)
+    // Handle report DB field updates using update
+    const newReportInput = prepareMapReportForInput(newReport)
+    updateReportDBFields(newReportInput)
+  }
+
+  function updateReportDBFields(newReport: MapReportInput) {
+    const { displayOptions, ...oldReport } = report
+    if (isEqual(oldReport, newReport)) return
+    const input = prepareMapReportForInput(newReport)
+    if (!Object.keys(input).length) {
+      console.warn('No changes to report')
+      return
+    }
+
     const update = client.mutate<
       UpdateMapReportMutation,
       UpdateMapReportMutationVariables
@@ -160,7 +175,6 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
       variables: {
         input,
       },
-      update: optimisticMutation,
     })
     toastPromise(update, {
       loading: 'Saving...',
@@ -168,6 +182,49 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
         return {
           title: 'Report saved',
           description: `Updated ${Object.keys(input).map(toSpaceCase).join(', ')}`,
+        }
+      },
+      error: `Couldn't save report`,
+    }).finally(() => {
+      refreshReportData()
+    })
+  }
+
+  function patchReportDisplayOptions(__newReportConfig: ReportConfig) {
+    const {
+      data: newReportConfig,
+      success,
+      error,
+    } = reportConfigTypeChecker.safeParse(__newReportConfig)
+    if (!success || error || !newReportConfig) {
+      console.error('Invalid report config', error)
+      return
+    }
+    if (isEqual(report.displayOptions, newReportConfig)) {
+      console.warn('No changes to report')
+      return
+    }
+    const patch = jsonpatch.compare(report.displayOptions, newReportConfig)
+    if (!patch.length) {
+      console.warn('No changes to report')
+      return
+    }
+    const update = client.mutate<
+      PatchMapReportMutation,
+      PatchMapReportMutationVariables
+    >({
+      mutation: PATCH_MAP_REPORT,
+      variables: {
+        patch,
+        reportId: report.id,
+      },
+    })
+    toastPromise(update, {
+      loading: 'Saving...',
+      success: () => {
+        return {
+          title: 'Report saved',
+          description: `Updated ${Object.keys(newReportConfig).map(toSpaceCase).join(', ')}`,
         }
       },
       error: `Couldn't save report`,
@@ -214,17 +271,13 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
     )
   }
 
-  function updateLayer(
-    layerId: string,
-    updates: Partial<MapLayerInput>,
-    optimisticMutation?: OptimisticMutationUpdateMapLayers
-  ) {
+  function updateLayer(layerId: string, updates: Partial<MapLayerInput>) {
     updateReport((draft) => {
       const layer = draft.layers?.find((l) => l.id === layerId)
       if (layer) {
         Object.assign(layer, updates)
       }
-    }, optimisticMutation)
+    })
   }
 
   function removeDataSource(sourceId: string) {

@@ -957,6 +957,11 @@ class BaseDataSource(Analytics):
     )
 
     @strawberry_django.field
+    def id_field(self) -> Optional[str]:
+        if hasattr(self, "id_field"):
+            return self.id_field
+
+    @strawberry_django.field
     def uses_valid_geocoding_config(self) -> bool:
         return self.uses_valid_geocoding_config()
 
@@ -1281,7 +1286,7 @@ class SharingPermission:
 
 
 @strawberry_django.type(models.MapReport)
-class MapReport(Report, Analytics):
+class MapReport(Report):
     display_options: JSON
 
     @strawberry_django.field
@@ -1692,6 +1697,10 @@ def choropleth_data_for_source(
 
     # ingest the .json data into a pandas dataframe so we can do analytics
     df = pd.DataFrame([record for record in qs])
+
+    # if length of dataframe is 0, return an empty list
+    if len(df) <= 0:
+        return []
 
     # Break the json column into separate columns for each key
     df = df.join(pd.json_normalize(df["json"]))

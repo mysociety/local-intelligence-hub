@@ -77,10 +77,15 @@ const ReportVisualisation: React.FC<UpdateConfigProps> = ({
             // explainer={`Which field from your data source will be visualised?`}
             value={dataSourceField}
             options={
-              sourceMetadata?.sourceData.fieldDefinitions?.map((d) => ({
-                label: d.label,
-                value: d.value,
-              })) || []
+              sourceMetadata?.sourceData.fieldDefinitions
+                ?.filter(
+                  // no ID fields
+                  (d) => d.value !== sourceMetadata.sourceData.idField
+                )
+                .map((d) => ({
+                  label: d.label,
+                  value: d.value,
+                })) || []
             }
             onChange={(dataSourceField) =>
               updateVisualisationConfig({ dataSourceField })

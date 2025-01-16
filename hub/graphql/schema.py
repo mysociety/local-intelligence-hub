@@ -202,6 +202,7 @@ class Mutation:
     update_map_report: model_types.MapReport = django_mutations.update(
         mutation_types.MapReportInput, extensions=[IsAuthenticated()]
     )
+    patch_map_report_display_options: model_types.MapReport = mutation_types.patch_map_report_display_options
     delete_map_report: model_types.MapReport = django_mutations.delete(
         mutation_types.IDObject, extensions=[IsAuthenticated()]
     )

@@ -1,7 +1,6 @@
 import {
   AnalyticalAreaType,
   DataSourceType,
-  MapLayer,
   MapLayerInput,
   MapReport,
   MapReportInput,
@@ -19,7 +18,7 @@ import {
 } from 'd3-scale-chromatic'
 import { WritableDraft } from 'immer'
 import { createContext } from 'react'
-import { OptimisticMutationUpdateMapLayers } from './(components)/ReportProvider'
+import * as z from 'zod'
 
 export enum VisualisationType {
   Choropleth = 'choropleth',
@@ -101,26 +100,28 @@ export type MapReportExtended = Omit<MapReport, 'displayOptions'> & {
   displayOptions: ReportConfig
 }
 
-export interface ReportConfig {
-  dataVisualisation: {
-    boundaryType?: AnalyticalAreaType
-    visualisationType?: VisualisationType
-    palette?: Palette
-    paletteReversed?: boolean
-    dataSource?: MapLayer['id']
-    dataSourceField?: string
-    showDataVisualisation?: Record<VisualisationType, boolean>
-  }
-  display: {
-    showBorders?: boolean
-    showStreetDetails?: boolean
-    showMPs?: boolean
-    showLastElectionData?: boolean
-    showPostcodeLabels?: boolean
-    boundaryOutlines?: AnalyticalAreaType[]
-    showBoundaryNames?: boolean
-  }
-}
+export const reportConfigTypeChecker = z.object({
+  dataVisualisation: z.object({
+    boundaryType: z.nativeEnum(AnalyticalAreaType).optional(),
+    visualisationType: z.nativeEnum(VisualisationType).optional(),
+    palette: z.nativeEnum(Palette).optional(),
+    paletteReversed: z.boolean().optional(),
+    dataSource: z.string().optional(),
+    dataSourceField: z.string().optional(),
+    showDataVisualisation: z.record(z.boolean()).optional(),
+  }),
+  display: z.object({
+    showBorders: z.boolean().optional(),
+    showStreetDetails: z.boolean().optional(),
+    showMPs: z.boolean().optional(),
+    showLastElectionData: z.boolean().optional(),
+    showPostcodeLabels: z.boolean().optional(),
+    boundaryOutlines: z.array(z.nativeEnum(AnalyticalAreaType)).optional(),
+    showBoundaryNames: z.boolean().optional(),
+  }),
+})
+
+export type ReportConfig = z.infer<typeof reportConfigTypeChecker>
 
 export const defaultReportConfig: ReportConfig = {
   dataVisualisation: {
@@ -153,14 +154,12 @@ export interface ReportContextProps {
   report: MapReportExtended
   deleteReport: () => void
   updateReport: (
-    editedOutput: (draft: WritableDraft<MapReportInput>) => void,
-    optimisticMutation?: OptimisticMutationUpdateMapLayers
+    editedOutput: (draft: WritableDraft<MapReportInput>) => void
   ) => void
-  updateLayer: (
-    layerId: string,
-    layer: Partial<MapLayerInput>,
-    optimisticUpdate?: OptimisticMutationUpdateMapLayers
-  ) => void
+  // patchReportDisplayOptions: (
+  //   editedOutput: (draft: WritableDraft<ReportConfig>) => void
+  // ) => void
+  updateLayer: (layerId: string, layer: Partial<MapLayerInput>) => void
   refreshReportData: () => void
   dataLoading: boolean
   setDataLoading: (loading: boolean) => void
@@ -172,6 +171,7 @@ const ReportContext = createContext<ReportContextProps>({
   report: {} as MapReportExtended,
   deleteReport: () => {},
   updateReport: () => {},
+  // patchReportDisplayOptions: () => {},
   updateLayer: () => {},
   refreshReportData: () => {},
   dataLoading: false,

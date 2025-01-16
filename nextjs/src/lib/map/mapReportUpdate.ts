@@ -3,8 +3,8 @@ import { MapReportExtended } from '@/app/reports/[id]/reportContext'
 import { omit } from 'lodash'
 import omitDeep from 'omit-deep-lodash'
 
-export function createMapReportUpdate(
-  report: MapReportExtended | MapReportInput
+export function prepareMapReportForInput(
+  report: Partial<MapReportExtended | MapReportInput>
 ): MapReportInput {
   report = omit(report, ['organisation'])
   // Remove isSharedSource, sharingPermission, sourceData from layers

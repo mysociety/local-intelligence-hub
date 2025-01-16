@@ -93,6 +93,7 @@ export const GET_MAP_REPORT = gql`
           name
           isImportScheduled
           importedDataCount
+          idField
           crmType
           dataType
           organisation {
@@ -104,6 +105,31 @@ export const GET_MAP_REPORT = gql`
             label
           }
         }
+      }
+    }
+  }
+`
+
+// Keep this fragment trim
+// so that updates return fast
+export const PATCH_MAP_REPORT = gql`
+  mutation PatchMapReport($patch: JSON!, $reportId: String!) {
+    patchMapReportDisplayOptions(patch: $patch, reportId: $reportId) {
+      id
+      name
+      displayOptions
+      layers {
+        id
+        name
+        source
+        sourceData {
+          id
+          name
+        }
+        inspectorType
+        inspectorConfig
+        mapboxPaint
+        mapboxLayout
       }
     }
   }
