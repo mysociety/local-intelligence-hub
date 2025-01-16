@@ -32,7 +32,13 @@ export default function ReportNavbar() {
         </Link>
         <div
           className="text-white text-lg font-bold font-IBMPlexSans text-nowrap overflow-ellipsis"
-          {...contentEditableMutation(updateReport, 'name', 'Untitled Report')}
+          {...contentEditableMutation(
+            (name) =>
+              updateReport((d) => {
+                d.name = name
+              }),
+            'Untitled Report'
+          )}
         >
           {title}
         </div>

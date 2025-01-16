@@ -35,7 +35,6 @@ import queryString from 'query-string'
 import { Fragment, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import trigramSimilarity from 'trigram-similarity'
-import useStarredItems from '../../useStarredItems'
 import CollapsibleSection from '../CollapsibleSection'
 import { useReport } from '../ReportProvider'
 import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
@@ -66,7 +65,7 @@ export function AreaExplorer({ gss }: { gss: string }) {
   const isStarred = report.report.displayOptions.starred?.some(
     (item) => item.id === gss
   )
-  const { addStarredItem, removeStarredItem } = useStarredItems()
+  const { addStarredItem, removeStarredItem } = report
   const starredItemData: StarredState = {
     id: gss || '',
     entity: 'area',
@@ -213,8 +212,8 @@ function AreaLayerData({
   const data = useQuery<AreaLayerDataQuery, AreaLayerDataQueryVariables>(
     AREA_LAYER_DATA,
     {
-      variables: { gss, externalDataSource: layer?.source?.id },
-      skip: !layer?.source?.id || !gss,
+      variables: { gss, externalDataSource: layer?.source },
+      skip: !layer?.source || !gss,
     }
   )
 
@@ -252,7 +251,7 @@ function AreaLayerData({
           ) : layer.inspectorType === InspectorDisplayType.Table ? (
             <TableDisplay
               data={
-                layer.source.dataType === DataSourceType.AreaStats
+                layer.sourceData.dataType === DataSourceType.AreaStats
                   ? [data.data?.summary?.aggregated]
                   : data.data?.points.map((p) => p.json)
               }
@@ -268,7 +267,7 @@ function AreaLayerData({
           ) : layer.inspectorType === InspectorDisplayType.BigNumber ? (
             <BigNumberDisplay
               count={data.data?.points.length}
-              dataType={layer.source.dataType}
+              dataType={layer.sourceData.dataType}
             />
           ) : (
             <ListDisplay
@@ -280,8 +279,11 @@ function AreaLayerData({
       )}
       <div className="text-meepGray-400 text-sm flex flex-row items-center gap-1">
         Source:{' '}
-        <DataSourceIcon crmType={layer.source.crmType} className="w-5 h-5" />{' '}
-        {layer.source.name}
+        <DataSourceIcon
+          crmType={layer.sourceData.crmType}
+          className="w-5 h-5"
+        />{' '}
+        {layer.sourceData.name}
       </div>
     </CollapsibleSection>
   )

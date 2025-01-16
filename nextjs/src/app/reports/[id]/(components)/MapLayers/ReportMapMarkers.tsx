@@ -14,18 +14,18 @@ const ReportMapMarkers: React.FC = () => {
 
   if (!analytics.data) return null
   const memberListSources = analytics.data.mapReport.layers.filter((layer) =>
-    pointSourceTypes.includes(layer.source.dataType)
+    pointSourceTypes.includes(layer.sourceData.dataType)
   )
 
   return (
     <div>
       {memberListSources.map((layer, index) => (
         <MembersListPointMarkers
-          key={layer?.source?.id || index}
+          key={layer?.source || index}
           index={index}
           mapboxPaint={layer.mapboxPaint || {}}
           mapboxLayout={layer.mapboxLayout || {}}
-          externalDataSourceId={layer?.source?.id}
+          externalDataSourceId={layer?.source}
         />
       ))}
     </div>

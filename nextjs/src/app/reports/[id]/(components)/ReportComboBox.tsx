@@ -19,8 +19,8 @@ import {
 } from '@/components/ui/popover'
 import { useExplorerState } from '@/lib/map'
 import { cn } from '@/lib/utils'
-import { gql } from '@apollo/client'
 import { useEffect } from 'react'
+import { POLITICAL_BOUNDARIES } from '../politicalTilesets'
 import { useAreasList } from '../useAreasList'
 import { useReport } from './ReportProvider'
 
@@ -33,11 +33,11 @@ export default function ReportDashboardConsSelector() {
 
   const { report } = useReport()
   const boundaryType = report.displayOptions?.dataVisualisation?.boundaryType
-  const tileset = report.politicalBoundaries.find(
+  const tileset = POLITICAL_BOUNDARIES.find(
     (boundary) => boundary.boundaryType === boundaryType
   )?.tileset
 
-  const selectedBoundaryLabel = report.politicalBoundaries.find(
+  const selectedBoundaryLabel = POLITICAL_BOUNDARIES.find(
     (boundary) => boundary.boundaryType === boundaryType
   )?.label
 
@@ -176,56 +176,3 @@ export default function ReportDashboardConsSelector() {
     </Popover>
   )
 }
-
-// Same query from TopConstituencies
-const CONSTITUENCY_STATS_OVERVIEW = gql`
-  query ConstituencyStatsOverview(
-    $reportID: ID!
-    $analyticalAreaType: AnalyticalAreaType!
-    $layerIds: [String!]!
-  ) {
-    mapReport(pk: $reportID) {
-      id
-      importedDataCountByConstituency: importedDataCountByArea(
-        analyticalAreaType: $analyticalAreaType
-        layerIds: $layerIds
-      ) {
-        label
-        gss
-        count
-        gssArea {
-          id
-          name
-          fitBounds
-          mp: person(filters: { personType: "MP" }) {
-            id
-            name
-            photo {
-              url
-            }
-            party: personDatum(filters: { dataType_Name: "party" }) {
-              name: data
-            }
-          }
-          lastElection {
-            stats {
-              date
-              majority
-              electorate
-              firstPartyResult {
-                party
-                shade
-                votes
-              }
-              secondPartyResult {
-                party
-                shade
-                votes
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`

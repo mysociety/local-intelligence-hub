@@ -16,7 +16,7 @@ export const mapMouseHandler =
     // First, try to find a point source feature
     const pointSourceFeatures = features.filter((f) =>
       report.report.layers.some((l) => {
-        return l.source.id === f.source
+        return l.source === f.source
       })
     )
 

@@ -271,8 +271,7 @@ export default function InspectExternalDataSource({
           <h1
             className="text-hLg"
             {...contentEditableMutation(
-              updateMutation,
-              'name',
+              (name) => updateMutation({ name }),
               'Untitled Data Source'
             )}
           >

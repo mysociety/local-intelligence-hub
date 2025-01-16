@@ -3,7 +3,6 @@ import { ComponentConfig } from '@measured/puck'
 export type GridRowProps = {
   columns: string
 }
-
 export const GridRow: ComponentConfig<GridRowProps> = {
   label: 'GridRow',
   fields: {
@@ -25,16 +24,19 @@ export const GridRow: ComponentConfig<GridRowProps> = {
 
     return (
       <div
-        className={`grid ${
+        className={`grid gap-[25px] mb-[25px] ${
           columnCount === 4
-            ? 'lg:grid-cols-4 sm:grid-cols-2 grid-cols-1'
+            ? 'lg:grid-cols-4 sm:grid-cols-2'
             : columnCount === 3
-              ? 'sm:grid-cols-2 lg:grid-cols-3'
-              : 'sm:grid-cols-2'
-        } gap-[25px] mb-[25px]`}
+              ? 'lg:grid-cols-3 sm:grid-cols-2'
+              : 'lg:grid-cols-2 sm:grid-cols-2'
+        }`}
+        style={{ gridAutoRows: 'minmax(100px, auto)' }}
       >
         {Array.from({ length: columnCount }).map((_, idx) => (
-          <div key={idx}>{renderDropZone({ zone: `Col-${idx + 1}` })}</div>
+          <div key={idx} className="flex flex-col gap-[25px] h-full">
+            {renderDropZone({ zone: `Col-${idx + 1}` })}
+          </div>
         ))}
       </div>
     )

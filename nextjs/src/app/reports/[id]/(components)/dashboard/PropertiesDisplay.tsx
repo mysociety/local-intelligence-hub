@@ -35,7 +35,7 @@ export function PropertiesDisplay({
           <div key={column} className="flex flex-col gap-0">
             <div className="text-meepGray-400 uppercase text-xs">{column}</div>
             <div className="text-white">
-              {safeParseAsNumber(value) || value || 'N/A'}
+              {String(safeParseAsNumber(value) || value || 'N/A')}
             </div>
           </div>
         )

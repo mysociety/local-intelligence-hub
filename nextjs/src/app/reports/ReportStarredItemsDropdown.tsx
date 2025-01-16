@@ -6,7 +6,7 @@ import {
 } from '@/components/ui/popover'
 import { StarFilledIcon } from '@radix-ui/react-icons'
 import React, { useState } from 'react'
-import ReportStarredItems from './[id]/(components)/ReportStarredItems'
+import { StarredItemsList } from './[id]/(components)/ReportStarredItems'
 
 const ReportStarredItemsDropdown: React.FC = () => {
   const [open, setOpen] = useState(false)
@@ -27,7 +27,7 @@ const ReportStarredItemsDropdown: React.FC = () => {
 
       <PopoverContent className="w-[310px]  p-0" align="end">
         <div className="p-2 ">
-          <ReportStarredItems />
+          <StarredItemsList />
         </div>
       </PopoverContent>
     </Popover>

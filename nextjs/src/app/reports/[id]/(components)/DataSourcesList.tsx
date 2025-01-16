@@ -2,25 +2,23 @@
 import { CRMSelection } from '@/components/CRMButtonItem'
 import { Button } from '@/components/ui/button'
 import { layerEditorStateAtom } from '@/lib/map'
-import { useApolloClient } from '@apollo/client'
 import { useAtom } from 'jotai'
 import React from 'react'
-import useDataSources from '../useDataSources'
 import { DEFAULT_MARKER_COLOUR } from './MembersListPointMarkers'
+import { useReport } from './ReportProvider'
 
 const DataSourcesList: React.FC = () => {
-  const client = useApolloClient()
-  const { dataSources, removeDataSource } = useDataSources()
+  const { report } = useReport()
   const [layerEditorState, setLayerEditorState] = useAtom(layerEditorStateAtom)
 
   return (
     <>
       <div className="flex flex-col gap-0">
-        {dataSources?.data?.layers?.map(
+        {report.layers.map(
           (layer, index) =>
-            layer?.source && (
+            layer?.sourceData && (
               <div
-                key={layer?.source?.id || index}
+                key={layer?.sourceData.id || index}
                 className="flex gap-0 items-center"
               >
                 <Button
@@ -47,7 +45,7 @@ const DataSourcesList: React.FC = () => {
                 >
                   <CRMSelection
                     // @ts-ignore: Property 'id' is optional in type 'DeepPartialObject - a silly Fragment typing
-                    source={layer.source}
+                    source={layer.sourceData}
                     isShared={!!layer.sharingPermission}
                   />
                 </Button>

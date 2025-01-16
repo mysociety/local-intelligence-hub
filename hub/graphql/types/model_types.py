@@ -952,6 +952,15 @@ class BaseDataSource(Analytics):
     default_data_type: Optional[str] = attr_field()
     defaults: JSON = attr_field()
 
+    field_definitions: Optional[List[FieldDefinition]] = strawberry_django.field(
+        resolver=lambda self: self.field_definitions()
+    )
+
+    @strawberry_django.field
+    def id_field(self) -> Optional[str]:
+        if hasattr(self, "id_field"):
+            return self.id_field
+
     @strawberry_django.field
     def uses_valid_geocoding_config(self) -> bool:
         return self.uses_valid_geocoding_config()
@@ -1048,9 +1057,6 @@ class ExternalDataSource(BaseDataSource):
     update_mapping: Optional[List["AutoUpdateConfig"]]
     auto_update_enabled: auto
     auto_import_enabled: auto
-    field_definitions: Optional[List[FieldDefinition]] = strawberry_django.field(
-        resolver=lambda self: self.field_definitions()
-    )
     remote_name: Optional[str] = fn_field()
     remote_url: Optional[str] = fn_field()
     healthcheck: bool = fn_field()
@@ -1218,6 +1224,7 @@ class InspectorDisplayType(Enum):
 class MapLayer:
     id: str = dict_key_field()
     name: str = dict_key_field()
+    source: str = dict_key_field()
     type: str = dict_key_field(default="events")
     visible: Optional[bool] = dict_key_field()
     custom_marker_text: Optional[str] = dict_key_field()
@@ -1248,7 +1255,7 @@ class MapLayer:
         ).first()
 
     @strawberry_django.field
-    def source(self, info: Info) -> SharedDataSource:
+    def source_data(self, info: Info) -> SharedDataSource:
         # Set in MapReport GraphQL type
         if self.get("cached_source"):
             return self.get("cached_source")
@@ -1279,7 +1286,7 @@ class SharingPermission:
 
 
 @strawberry_django.type(models.MapReport)
-class MapReport(Report, Analytics):
+class MapReport(Report):
     display_options: JSON
 
     @strawberry_django.field
@@ -1664,7 +1671,7 @@ def choropleth_data_for_source(
     analytical_area_key: AnalyticalAreaType,
     # Field could be a column name or a Pandas formulaic expression
     # or, if not provided, a count of records
-    field: Optional[str],
+    field: Optional[str] = None,
 ) -> List[GroupedDataCount]:
     # Check user can access the external data source
     user = get_current_user(info)
@@ -1690,6 +1697,10 @@ def choropleth_data_for_source(
 
     # ingest the .json data into a pandas dataframe so we can do analytics
     df = pd.DataFrame([record for record in qs])
+
+    # if length of dataframe is 0, return an empty list
+    if len(df) <= 0:
+        return []
 
     # Break the json column into separate columns for each key
     df = df.join(pd.json_normalize(df["json"]))
