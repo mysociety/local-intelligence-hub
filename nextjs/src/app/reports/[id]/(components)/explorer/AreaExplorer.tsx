@@ -277,7 +277,7 @@ function AreaLayerData({
           )}
         </div>
       )}
-      <div className="text-meepGray-400 text-sm flex flex-row items-center gap-1">
+      <div className="text-meepGray-400 text-sm flex flex-row items-center gap-1 mt-2">
         Source:{' '}
         <DataSourceIcon
           crmType={layer.sourceData.crmType}
