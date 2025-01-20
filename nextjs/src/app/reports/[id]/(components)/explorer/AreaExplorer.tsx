@@ -37,13 +37,12 @@ export function AreaExplorer({ gss }: { gss: string }) {
     skip: !gss,
   })
 
-  console.log(areaData.data)
-
   const mapbox = useLoadedMap()
 
   useEffect(() => {
     if (areaData.data?.area?.fitBounds) {
-      mapbox.current?.fitBounds(areaData.data.area.fitBounds as any, {
+      // use loadedMap to get the current map as useMap() hook returns undefined when not a direct descendant of MapProvider
+      mapbox.loadedMap?.fitBounds(areaData.data.area.fitBounds as any, {
         padding: 100,
       })
     }
