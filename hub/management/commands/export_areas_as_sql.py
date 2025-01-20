@@ -40,15 +40,7 @@ class Command(BaseCommand):
     without causing primary key conflicts.
     """
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-a",
-            "--all-names",
-            action="store_true",
-            help="Fetch alternative names from MapIt",
-        )
-
-    def handle(self, all_names: bool = False, *args, **options):
+    def handle(self, *args, **options):
         print("Exporting areas and area types from current database to data/areas.psql")
         count = 0
         output_file: Path = settings.BASE_DIR / "data" / "areas.psql"
@@ -101,6 +93,8 @@ class Command(BaseCommand):
             if column.name in table_config.output_column_templates:
                 template = table_config.output_column_templates[column.name]
                 value = self.template_output_value(template, row, columns)
+            elif row[i] is None:
+                value = "NULL"
             else:
                 # output the value as a string, cast to the correct type in postgres
                 value = f"'{self.escape_sql_string(row[i])}'::{column.type_display}"

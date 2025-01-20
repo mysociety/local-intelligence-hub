@@ -43,7 +43,6 @@ echo '';
 echo 'Downloading LIH data...';
 echo '';
 echo '------------------------------------';
-python manage.py import_wards
 python manage.py import_areas
 python manage.py import_regions
 python manage.py import_mps

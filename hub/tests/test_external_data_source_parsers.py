@@ -1,5 +1,4 @@
 import json
-import os
 import subprocess
 from datetime import datetime, timezone
 from unittest import skipIf
@@ -13,7 +12,7 @@ from hub.tests.fixtures.geocoding_cases import geocoding_cases
 from hub.validation import validate_and_format_phone_number
 from utils import mapit_types
 
-ignore_geocoding_tests = os.getenv("RUN_GEOCODING_TESTS") != "1"
+ignore_geocoding_tests = False  # os.getenv("RUN_GEOCODING_TESTS") != "1"
 
 
 class TestDateFieldParer(TestCase):

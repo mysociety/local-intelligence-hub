@@ -33,4 +33,18 @@ boundary_types = [
         "area_type": "Electoral Ward",
         "description": "Electoral wards",
     },
+    {
+        "mapit_type": ["OLG"],
+        "name": "Lower Super Output Areas",
+        "code": "LSOA",
+        "area_type": "Lower Super Output Area",
+        "description": "Lower Super Output Areas",
+    },
+    {
+        "mapit_type": ["OMG"],
+        "name": "Middle Super Output Areas",
+        "code": "MSOA",
+        "area_type": "Middle Super Output Area",
+        "description": "Middle Super Output Areas",
+    },
 ]

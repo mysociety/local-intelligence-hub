@@ -336,65 +336,10 @@ async def import_area_data(
             geocoding_data["area_fields"][area.area_type.code] = area.gss
             update_data["geocode_data"].update({"data": geocoding_data})
     if area is not None:
-        sample_point = area.polygon.centroid
-
-        # get postcodeIO result for area.coordinates
-        try:
-            postcode_data: PostcodesIOResult = await loaders[
-                "postcodesIOFromPoint"
-            ].load(sample_point)
-        except Exception as e:
-            logger.error(f"Failed to get postcode data for {sample_point}: {e}")
-            postcode_data = None
-
-        steps.append(
-            {
-                "task": "postcode_from_area_coordinates",
-                "service": Geocoder.POSTCODES_IO.value,
-                "result": "failed" if postcode_data is None else "success",
-            }
-        )
-
-        # Try a few other backup strategies (example postcode, another geocoder)
-        # to get postcodes.io data
-        if postcode_data is None:
-            postcode = await get_example_postcode_from_area_gss(area.gss)
-            steps.append(
-                {
-                    "task": "postcode_from_area",
-                    "service": Geocoder.FINDTHATPOSTCODE.value,
-                    "result": "failed" if postcode is None else "success",
-                }
-            )
-            if postcode is not None:
-                postcode_data = await loaders["postcodesIO"].load(postcode)
-                steps.append(
-                    {
-                        "task": "data_from_postcode",
-                        "service": Geocoder.POSTCODES_IO.value,
-                        "result": ("failed" if postcode_data is None else "success"),
-                    }
-                )
-        if postcode_data is None:
-            postcode = await get_postcode_from_coords_ftp(sample_point)
-            steps.append(
-                {
-                    "task": "postcode_from_area_coordinates",
-                    "service": Geocoder.FINDTHATPOSTCODE.value,
-                    "result": "failed" if postcode is None else "success",
-                }
-            )
-            if postcode is not None:
-                postcode_data = await loaders["postcodesIO"].load(postcode)
-                steps.append(
-                    {
-                        "task": "data_from_postcode",
-                        "service": Geocoder.POSTCODES_IO.value,
-                        "result": ("failed" if postcode_data is None else "success"),
-                    }
-                )
-
+        postcode_data = await get_postcode_data_for_area(area, loaders, steps)
         update_data["postcode_data"] = postcode_data
+        update_data["area"] = area
+        update_data["point"] = area.point
     else:
         # Reset geocoding data
         update_data["postcode_data"] = None
@@ -405,6 +350,67 @@ async def import_area_data(
     await GenericData.objects.aupdate_or_create(
         data_type=data_type, data=source.get_record_id(record), defaults=update_data
     )
+
+
+async def get_postcode_data_for_area(area, loaders, steps):
+    sample_point = area.polygon.centroid
+    # get postcodeIO result for area.coordinates
+    try:
+        postcode_data: PostcodesIOResult = await loaders["postcodesIOFromPoint"].load(
+            sample_point
+        )
+    except Exception as e:
+        logger.error(f"Failed to get postcode data for {sample_point}: {e}")
+        postcode_data = None
+
+    steps.append(
+        {
+            "task": "postcode_from_area_coordinates",
+            "service": Geocoder.POSTCODES_IO.value,
+            "result": "failed" if postcode_data is None else "success",
+        }
+    )
+
+    # Try a few other backup strategies (example postcode, another geocoder)
+    # to get postcodes.io data
+    if postcode_data is None:
+        postcode = await get_example_postcode_from_area_gss(area.gss)
+        steps.append(
+            {
+                "task": "postcode_from_area",
+                "service": Geocoder.FINDTHATPOSTCODE.value,
+                "result": "failed" if postcode is None else "success",
+            }
+        )
+        if postcode is not None:
+            postcode_data = await loaders["postcodesIO"].load(postcode)
+            steps.append(
+                {
+                    "task": "data_from_postcode",
+                    "service": Geocoder.POSTCODES_IO.value,
+                    "result": ("failed" if postcode_data is None else "success"),
+                }
+            )
+    if postcode_data is None:
+        postcode = await get_postcode_from_coords_ftp(sample_point)
+        steps.append(
+            {
+                "task": "postcode_from_area_coordinates",
+                "service": Geocoder.FINDTHATPOSTCODE.value,
+                "result": "failed" if postcode is None else "success",
+            }
+        )
+        if postcode is not None:
+            postcode_data = await loaders["postcodesIO"].load(postcode)
+            steps.append(
+                {
+                    "task": "data_from_postcode",
+                    "service": Geocoder.POSTCODES_IO.value,
+                    "result": ("failed" if postcode_data is None else "success"),
+                }
+            )
+
+    return postcode_data
 
 
 async def import_address_data(

@@ -69,9 +69,6 @@ export function AreaExplorer({ gss }: { gss: string }) {
     }
   }
 
-  const politicalBoundaries =
-    report.report.displayOptions.dataVisualisation?.boundaryType
-
   return (
     <SidebarContent className="bg-meepGray-600 overflow-x-hidden">
       <SidebarHeader className="!text-white p-4 mb-0">

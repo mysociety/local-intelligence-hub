@@ -1,6 +1,13 @@
-import { AnalyticalAreaType } from '@/__generated__/graphql'
-import { useExplorerState, useLoadedMap } from '@/lib/map'
-import React, { useEffect } from 'react'
+import { MapBounds } from '@/__generated__/graphql'
+import {
+  MapLoader,
+  useActiveTileset,
+  useExplorerState,
+  useLoadedMap,
+  useMapBounds,
+} from '@/lib/map'
+import { debounce } from 'lodash'
+import React, { Fragment, useEffect } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
 import {
@@ -11,6 +18,7 @@ import {
   getChoroplethFill,
   getSelectedChoroplethEdge,
 } from '../../mapboxStyles'
+import { BoundaryType } from '../../politicalTilesets'
 import { MapReportExtended } from '../../reportContext'
 import { Tileset } from '../../types'
 import useDataByBoundary from '../../useDataByBoundary'
@@ -18,15 +26,15 @@ import useHoverOverBoundaryEvents from '../../useSelectBoundary'
 import { PLACEHOLDER_LAYER_ID_CHOROPLETH } from '../ReportPage'
 
 interface PoliticalChoroplethsProps {
-  tileset: Tileset
+  tilesets: Tileset[]
   report: MapReportExtended
-  boundaryType: AnalyticalAreaType
+  boundaryType: BoundaryType
 }
 
 const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   report,
   boundaryType,
-  tileset,
+  tilesets,
 }) => {
   // Show the layer only if the report is set to show the boundary type and the VisualisationType is choropleth
   const borderVisibility = report.displayOptions?.display.showBorders
@@ -37,7 +45,19 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
     report.displayOptions?.display?.showDataVisualisation
       ? 'visible'
       : 'none'
-  const { data: dataByBoundary } = useDataByBoundary({ report, boundaryType })
+
+  const [mapBounds, setMapBounds] = useMapBounds()
+  const { activeTileset, setActiveTileset } = useActiveTileset(boundaryType)
+  const useDataByBoundaryResult = useDataByBoundary({
+    report,
+    tileset: activeTileset,
+  })
+  const { data, fetchMore } = useDataByBoundaryResult
+  console.log(
+    'PoliticalChoropleths.useDataByBoundaryResult',
+    useDataByBoundaryResult
+  )
+  const dataByBoundary = data?.choroplethDataForSource || []
 
   const boundaryNameVisibility =
     shaderVisibility === 'visible' &&
@@ -52,143 +72,184 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
 
   const map = useLoadedMap()
   const [explorer, setExplorer] = useExplorerState()
-  useHoverOverBoundaryEvents(areasVisible === 'visible' ? tileset : null)
+  useHoverOverBoundaryEvents(areasVisible === 'visible' ? activeTileset : null)
+
+  useEffect(() => {
+    const onMoveEnd = debounce(() => {
+      const zoom = map.loadedMap?.getZoom() || 0
+      const tileset = tilesets.filter(
+        (t) => zoom >= t.minZoom && zoom <= t.maxZoom
+      )[0]
+      setActiveTileset(tileset)
+      setMapBounds(getMapBounds(map))
+    }, 500)
+    if (tilesets.length > 0 && map.loadedMap) {
+      map.loadedMap.on('moveend', onMoveEnd)
+    }
+    return () => {
+      map.loadedMap?.off('moveend', onMoveEnd)
+    }
+  }, [map.loaded, tilesets])
 
   // When the map is loaded and we have the data, add the data to the boundaries
   useEffect(() => {
     if (map.loaded && dataByBoundary) {
-      // If the currently selected dataSource is of type "MEMBER",
-      // we need to add the count to the mapbox layer
       addCountByGssToMapboxLayer(
         dataByBoundary,
-        tileset.mapboxSourceId,
-        tileset.sourceLayerId,
+        activeTileset.mapboxSourceId,
+        activeTileset.sourceLayerId,
         map.loadedMap
       )
-
-      // If the currently selected boundary is of type "AREA_STATS"
-      // we need to get the chosen dataSourecField
-      // and add the area stats to the mapbox layer
     }
-  }, [map.loaded, dataByBoundary, report])
+  }, [map.loaded, activeTileset, dataByBoundary, report])
 
   if (!map.loaded) return null
-  if (!dataByBoundary || !tileset) return null
+  if (!data || !tilesets) return null
 
   return (
     <>
-      <Source
-        id={tileset.mapboxSourceId}
-        type="vector"
-        url={`mapbox://${tileset.mapboxSourceId}`}
-        promoteId={tileset.promoteId}
-      >
-        {/* Fill of the boundary */}
+      {tilesets.map((tileset) => (
+        <Fragment key={tileset.mapboxSourceId}>
+          <Source
+            id={tileset.mapboxSourceId}
+            type="vector"
+            url={`mapbox://${tileset.mapboxSourceId}`}
+            promoteId={tileset.promoteId}
+            minzoom={tileset.minZoom}
+            maxzoom={tileset.maxZoom}
+          >
+            {/* Fill of the boundary */}
 
-        <>
-          <Layer
-            beforeId="road-simple"
-            id={`${tileset.mapboxSourceId}-fill`}
-            source={tileset.mapboxSourceId}
-            source-layer={tileset.sourceLayerId}
-            type="fill"
-            paint={getChoroplethFill(
-              dataByBoundary,
-              report.displayOptions,
-              shaderVisibility === 'visible'
-            )}
-          />
-        </>
+            <>
+              <Layer
+                beforeId="road-simple"
+                id={`${tileset.mapboxSourceId}-fill`}
+                source={tileset.mapboxSourceId}
+                source-layer={tileset.sourceLayerId}
+                type="fill"
+                paint={getChoroplethFill(
+                  dataByBoundary,
+                  report.displayOptions,
+                  shaderVisibility === 'visible'
+                )}
+                minzoom={tileset.minZoom}
+                maxzoom={tileset.maxZoom}
+              />
+            </>
 
-        {/* Border of the boundary */}
-        <Layer
-          beforeId={PLACEHOLDER_LAYER_ID_CHOROPLETH}
-          id={`${tileset.mapboxSourceId}-line`}
-          source={tileset.mapboxSourceId}
-          source-layer={tileset.sourceLayerId}
-          type="line"
-          paint={getChoroplethEdge(borderVisibility === 'visible')}
-          layout={{
-            'line-join': 'round',
-            'line-round-limit': 0.1,
-          }}
-        />
-        {/* Border of the selected boundary  */}
-        <Layer
-          beforeId={PLACEHOLDER_LAYER_ID_CHOROPLETH}
-          id={`${tileset.mapboxSourceId}-selected`}
-          source={tileset.mapboxSourceId}
-          source-layer={tileset.sourceLayerId}
-          type="line"
-          paint={getSelectedChoroplethEdge()}
-          filter={[
-            '==',
-            ['get', tileset.promoteId],
-            explorer.entity === 'area'
-              ? explorer.id
-              : 'sOmE iMpOsSiBle iD tHaT wIlL uPdAtE mApBoX',
-          ]}
-          layout={{
-            visibility: areasVisible,
-            'line-join': 'round',
-            'line-round-limit': 0.1,
-          }}
-        />
-      </Source>
+            {/* Border of the boundary */}
+            <Layer
+              beforeId={PLACEHOLDER_LAYER_ID_CHOROPLETH}
+              id={`${tileset.mapboxSourceId}-line`}
+              source={tileset.mapboxSourceId}
+              source-layer={tileset.sourceLayerId}
+              type="line"
+              paint={getChoroplethEdge(borderVisibility === 'visible')}
+              layout={{
+                'line-join': 'round',
+                'line-round-limit': 0.1,
+              }}
+              minzoom={tileset.minZoom}
+              maxzoom={tileset.maxZoom}
+            />
+            {/* Border of the selected boundary  */}
+            <Layer
+              beforeId={PLACEHOLDER_LAYER_ID_CHOROPLETH}
+              id={`${tileset.mapboxSourceId}-selected`}
+              source={tileset.mapboxSourceId}
+              source-layer={tileset.sourceLayerId}
+              type="line"
+              paint={getSelectedChoroplethEdge()}
+              filter={[
+                '==',
+                ['get', tileset.promoteId],
+                explorer.entity === 'area'
+                  ? explorer.id
+                  : 'sOmE iMpOsSiBle iD tHaT wIlL uPdAtE mApBoX',
+              ]}
+              layout={{
+                visibility: areasVisible,
+                'line-join': 'round',
+                'line-round-limit': 0.1,
+              }}
+            />
+          </Source>
 
-      <Source
-        id={`${tileset.mapboxSourceId}-area-count`}
-        type="geojson"
-        data={getAreaGeoJSON(dataByBoundary)}
-      >
-        <Layer
-          id={`${tileset.mapboxSourceId}-area-count`}
-          type="symbol"
-          layout={{
-            ...getAreaCountLayout(dataByBoundary),
-            visibility: boundaryNameVisibility,
-          }}
-          paint={{
-            'text-opacity': [
-              'interpolate',
-              ['exponential', 1],
-              ['zoom'],
-              7.5,
-              0,
-              7.8,
-              1,
-            ],
-            'text-color': 'white',
-            'text-halo-color': '#24262b',
-            'text-halo-width': 1.5,
-          }}
-        />
+          <Source
+            id={`${tileset.mapboxSourceId}-area-count`}
+            type="geojson"
+            data={getAreaGeoJSON(dataByBoundary)}
+          >
+            <Layer
+              id={`${tileset.mapboxSourceId}-area-count`}
+              type="symbol"
+              layout={{
+                ...getAreaCountLayout(dataByBoundary),
+                visibility: boundaryNameVisibility,
+              }}
+              paint={{
+                'text-opacity': [
+                  'interpolate',
+                  ['exponential', 1],
+                  ['zoom'],
+                  7.5,
+                  0,
+                  7.8,
+                  1,
+                ],
+                'text-color': 'white',
+                'text-halo-color': '#24262b',
+                'text-halo-width': 1.5,
+              }}
+              minzoom={tileset.minZoom}
+              maxzoom={tileset.maxZoom}
+            />
 
-        <Layer
-          id={`${tileset.mapboxSourceId}-area-label`}
-          type="symbol"
-          layout={{
-            ...getAreaLabelLayout(dataByBoundary),
-            visibility: boundaryNameVisibility,
-          }}
-          paint={{
-            'text-color': 'white',
-            'text-opacity': [
-              'interpolate',
-              ['exponential', 1],
-              ['zoom'],
-              7.5,
-              0,
-              7.8,
-              1,
-            ],
-            'text-halo-color': '#24262b',
-            'text-halo-width': 1.5,
-          }}
-        />
-      </Source>
+            <Layer
+              id={`${tileset.mapboxSourceId}-area-label`}
+              type="symbol"
+              layout={{
+                ...getAreaLabelLayout(dataByBoundary),
+                visibility: boundaryNameVisibility,
+              }}
+              paint={{
+                'text-color': 'white',
+                'text-opacity': [
+                  'interpolate',
+                  ['exponential', 1],
+                  ['zoom'],
+                  7.5,
+                  0,
+                  7.8,
+                  1,
+                ],
+                'text-halo-color': '#24262b',
+                'text-halo-width': 1.5,
+              }}
+              minzoom={tileset.minZoom}
+              maxzoom={tileset.maxZoom}
+            />
+          </Source>
+        </Fragment>
+      ))}
     </>
   )
+}
+
+const getMapBounds = (map: MapLoader): MapBounds | null => {
+  if (!map.loadedMap) {
+    return null
+  }
+  const mapBounds = map.loadedMap.getBounds()
+  if (!mapBounds) {
+    return null
+  }
+  return {
+    west: mapBounds.getWest(),
+    east: mapBounds.getEast(),
+    north: mapBounds.getNorth(),
+    south: mapBounds.getSouth(),
+  }
 }
 
 export default PoliticalChoropleths

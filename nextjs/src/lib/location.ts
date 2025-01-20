@@ -25,4 +25,8 @@ export const locationTypeOptions = [
     value: GeographyTypes.ParliamentaryConstituency_2024,
     label: 'Constituency (2024)',
   },
+  {
+    value: GeographyTypes.OutputArea,
+    label: 'Output Area',
+  },
 ]
