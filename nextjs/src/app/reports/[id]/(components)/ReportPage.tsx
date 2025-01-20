@@ -31,6 +31,9 @@ export default function ReportPage() {
 
   const [mapBounds] = useMapBounds()
 
+  // Fetch more data when the map bounds change
+  // This has to be here for the loading indicator to work
+  // (fetchMore only triggers loading: true in its local hook)
   useEffect(() => {
     if (activeTileset.useBoundsInDataQuery) {
       fetchMore({

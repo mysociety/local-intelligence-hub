@@ -7,7 +7,8 @@ import {
   useMapBounds,
 } from '@/lib/map'
 import { debounce } from 'lodash'
-import React, { Fragment, useEffect } from 'react'
+import { FillLayerSpecification } from 'mapbox-gl'
+import React, { Fragment, useEffect, useState } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
 import {
@@ -46,17 +47,17 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
       ? 'visible'
       : 'none'
 
-  const [mapBounds, setMapBounds] = useMapBounds()
+  // Store the choropleth fills when they are calculated for a layer
+  // to avoid flicker when zooming in and out.
+  const [fillsByLayer, setFillsByLayer] = useState<
+    Record<string, FillLayerSpecification['paint']>
+  >({})
+
   const { activeTileset, setActiveTileset } = useActiveTileset(boundaryType)
-  const useDataByBoundaryResult = useDataByBoundary({
+  const { data } = useDataByBoundary({
     report,
     tileset: activeTileset,
   })
-  const { data, fetchMore } = useDataByBoundaryResult
-  console.log(
-    'PoliticalChoropleths.useDataByBoundaryResult',
-    useDataByBoundaryResult
-  )
   const dataByBoundary = data?.choroplethDataForSource || []
 
   const boundaryNameVisibility =
@@ -74,6 +75,8 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   const [explorer, setExplorer] = useExplorerState()
   useHoverOverBoundaryEvents(areasVisible === 'visible' ? activeTileset : null)
 
+  // Update map bounds and active tileset on pan/zoom
+  const [, setMapBounds] = useMapBounds()
   useEffect(() => {
     const onMoveEnd = debounce(() => {
       const zoom = map.loadedMap?.getZoom() || 0
@@ -100,8 +103,16 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
         activeTileset.sourceLayerId,
         map.loadedMap
       )
+      // Calculate the choropleth fill for the layer and store it,
+      // to reduce flicker when zooming between layers
+      const fill = getChoroplethFill(
+        dataByBoundary,
+        report.displayOptions,
+        shaderVisibility === 'visible'
+      )
+      setFillsByLayer({ ...fillsByLayer, [activeTileset.mapboxSourceId]: fill })
     }
-  }, [map.loaded, activeTileset, dataByBoundary, report])
+  }, [map.loaded, activeTileset, data, report])
 
   if (!map.loaded) return null
   if (!data || !tilesets) return null
@@ -127,11 +138,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
                 source={tileset.mapboxSourceId}
                 source-layer={tileset.sourceLayerId}
                 type="fill"
-                paint={getChoroplethFill(
-                  dataByBoundary,
-                  report.displayOptions,
-                  shaderVisibility === 'visible'
-                )}
+                paint={fillsByLayer[tileset.mapboxSourceId] || {}}
                 minzoom={tileset.minZoom}
                 maxzoom={tileset.maxZoom}
               />
@@ -179,6 +186,8 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
             id={`${tileset.mapboxSourceId}-area-count`}
             type="geojson"
             data={getAreaGeoJSON(dataByBoundary)}
+            minzoom={tileset.minZoom}
+            maxzoom={tileset.maxZoom}
           >
             <Layer
               id={`${tileset.mapboxSourceId}-area-count`}

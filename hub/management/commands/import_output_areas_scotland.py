@@ -22,7 +22,7 @@ class Command(BaseCommand):
         filepath: Path = settings.BASE_DIR / "data" / "output_areas_scotland.geojson"
         if not filepath.exists():
             print(
-                """GeoJSON not found. Download from here: 
+                """GeoJSON not found. Download from here:
                   https://www.nrscotland.gov.uk/media/uwdpx4hn/output-area-2022-mhw.zip
                   Extract and convert to GeoJSON using ogr2ogr:
                       ogr2ogr -of geojson -s_srs EPSG:27700 -t_srs EPSG:4326 output_areas_scotland.geojson OutputArea2022_MHW.shp
