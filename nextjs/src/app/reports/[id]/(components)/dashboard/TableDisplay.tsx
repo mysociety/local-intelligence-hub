@@ -1,5 +1,6 @@
 import {
   ColumnDef,
+  Table as TableType,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -88,59 +89,18 @@ export function TableDisplay({
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="max-h-[20vh] overflow-y-auto bg-meepGray-700 rounded-md">
-        {table.getRowModel().rows.map((row) => {
-          console.log(
-            'Row cells:',
-            row.getVisibleCells().map((cell) => cell.column.id)
-          )
-          const nameCell = row
-            .getVisibleCells()
-            .find(
-              (cell) => cell.column.id === 'name' || cell.column.id === 'Name'
-            )
-          const postcodeCell = row
-            .getVisibleCells()
-            .find(
-              (cell) =>
-                cell.column.id === 'postcode' ||
-                cell.column.id === 'Postcode' ||
-                cell.column.id === 'POSTCODE'
-            )
-          return (
-            <div
-              key={row.id}
-              data-state={row.getIsSelected() && 'selected'}
-              onClick={() => handleRowClick(row.original)}
-            >
-              {nameCell && (
-                <div
-                  key={nameCell.id}
-                  className="text-meepGray-200 justify-between flex font-mono text-sm hover:bg-meepGray-800 p-2 cursor-pointer border-b border-meepGray-800"
-                >
-                  {flexRender(
-                    nameCell.column.columnDef.cell,
-                    nameCell.getContext()
-                  )}
-                  {postcodeCell && (
-                    <span className="text-meepGray-400 font-mono text-sm">
-                      {flexRender(
-                        postcodeCell.column.columnDef.cell,
-                        postcodeCell.getContext()
-                      )}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
+    <>
       {data.length > 0 && (
         <Dialog>
           <DialogTrigger className="w-full mt-2">
-            <Button className="w-full">Open full table</Button>
+            <Button className="w-full h-60 overflow-hidden items-start bg-meepGray-800 hover:bg-meepGray-700 relative text-left">
+              <TableComponent table={table} />
+              <div className="w-full h-full absolute top-0 left-0 bg-gradient-to-b from-transparent to-meepGray-800 items-center justify-center flex">
+                <p className="bg-meepGray-600 p-2 rounded-full font-mono text-sm hover:bg-meepGray-500">
+                  Open full table
+                </p>
+              </div>
+            </Button>
           </DialogTrigger>
           <DialogContent className="max-h-[90vh] w-[96vw] max-w-screen overflow-y-auto">
             <DialogHeader>
@@ -156,59 +116,64 @@ export function TableDisplay({
                 </div>
               </DialogTitle>
               <DialogDescription>
-                <Table>
-                  <TableHeader className="text-meepGray-400 font-mono uppercase">
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <TableRow key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => {
-                          return (
-                            <TableHead key={header.id}>
-                              {header.isPlaceholder
-                                ? null
-                                : flexRender(
-                                    header.column.columnDef.header,
-                                    header.getContext()
-                                  )}
-                            </TableHead>
-                          )
-                        })}
-                      </TableRow>
-                    ))}
-                  </TableHeader>
-                  <TableBody className="text-meepGray-400 font-mono">
-                    {table.getRowModel().rows?.length ? (
-                      table.getRowModel().rows.map((row) => (
-                        <TableRow
-                          key={row.id}
-                          data-state={row.getIsSelected() && 'selected'}
-                        >
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id}>
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell
-                          colSpan={dataTableColumns.length}
-                          className="h-24 text-center"
-                        >
-                          No results.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                <TableComponent table={table} />
               </DialogDescription>
             </DialogHeader>
           </DialogContent>
         </Dialog>
       )}
-    </div>
+    </>
+  )
+}
+
+interface DataTableProps<TData> {
+  table: TableType<TData>
+}
+
+function TableComponent<TData>({ table }: DataTableProps<TData>) {
+  return (
+    <Table>
+      <TableHeader className="text-meepGray-400 font-mono uppercase">
+        {table.getHeaderGroups().map((headerGroup) => (
+          <TableRow key={headerGroup.id}>
+            {headerGroup.headers.map((header) => (
+              <TableHead key={header.id}>
+                {header.isPlaceholder
+                  ? null
+                  : flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+              </TableHead>
+            ))}
+          </TableRow>
+        ))}
+      </TableHeader>
+      <TableBody className="text-meepGray-400 font-mono">
+        {table.getRowModel().rows?.length ? (
+          table.getRowModel().rows.map((row) => (
+            <TableRow
+              key={row.id}
+              data-state={row.getIsSelected() && 'selected'}
+            >
+              {row.getVisibleCells().map((cell) => (
+                <TableCell key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))
+        ) : (
+          <TableRow>
+            <TableCell
+              colSpan={table.getAllColumns().length}
+              className="h-24 text-center"
+            >
+              No results.
+            </TableCell>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
   )
 }
