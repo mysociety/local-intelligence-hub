@@ -72,6 +72,8 @@ const uk: PoliticalTileset[] = [
   },
 ]
 
+export const POLITICAL_BOUNDARIES = uk
+
 export function getPoliticalTilesetsByCountry(
   country: AvailableCountries
 ): PoliticalTileset[] {

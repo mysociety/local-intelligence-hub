@@ -28,26 +28,18 @@ export function HubPointMarkers({
 
   useEffect(
     function selectMarker() {
-      mapbox.loadedMap?.on(
-        'mouseover',
-        `${layer.source.id}-marker`,
-        (event) => {
-          const canvas = mapbox.loadedMap?.getCanvas()
-          if (!canvas) return
-          canvas.style.cursor = 'pointer'
-        }
-      )
-      mapbox.loadedMap?.on(
-        'mouseleave',
-        `${layer.source.id}-marker`,
-        (event) => {
-          const canvas = mapbox.loadedMap?.getCanvas()
-          if (!canvas) return
-          canvas.style.cursor = ''
-        }
-      )
+      mapbox.loadedMap?.on('mouseover', `${layer.source}-marker`, (event) => {
+        const canvas = mapbox.loadedMap?.getCanvas()
+        if (!canvas) return
+        canvas.style.cursor = 'pointer'
+      })
+      mapbox.loadedMap?.on('mouseleave', `${layer.source}-marker`, (event) => {
+        const canvas = mapbox.loadedMap?.getCanvas()
+        if (!canvas) return
+        canvas.style.cursor = ''
+      })
       if (layer.type === 'events' || layer.type === 'groups') {
-        mapbox.loadedMap?.on('click', `${layer.source.id}-marker`, (event) => {
+        mapbox.loadedMap?.on('click', `${layer.source}-marker`, (event) => {
           const feature = event.features?.[0]
           if (feature?.properties?.id) {
             if (layer.type === 'events') {
@@ -59,7 +51,7 @@ export function HubPointMarkers({
         })
       }
     },
-    [mapbox.loadedMap, layer.source.id]
+    [mapbox.loadedMap, layer.source]
   )
 
   // @ts-ignore
@@ -69,10 +61,10 @@ export function HubPointMarkers({
     <>
       {layer.type === 'members' ? (
         <Source
-          id={layer.source.id}
+          id={layer.source}
           type="geojson"
           data={new URL(
-            `/tiles/external-data-source/${layer.source.id}/geojson`,
+            `/tiles/external-data-source/${layer.source}/geojson`,
             BACKEND_URL
           ).toString()}
           cluster={true}
@@ -83,10 +75,10 @@ export function HubPointMarkers({
           }}
         >
           <Layer
-            id={`${layer.source.id}-cluster`}
+            id={`${layer.source}-cluster`}
             beforeId={beforeId}
             type="circle"
-            source={layer.source.id}
+            source={layer.source}
             filter={['has', 'sum']}
             paint={{
               'circle-color': 'rgba(24, 164, 127, 0.80)',
@@ -102,10 +94,10 @@ export function HubPointMarkers({
             }}
           />
           <Layer
-            id={`${layer.source.id}-cluster-count`}
+            id={`${layer.source}-cluster-count`}
             beforeId={beforeId}
             type="symbol"
-            source={layer.source.id}
+            source={layer.source}
             filter={['has', 'sum']}
             layout={{
               'text-field': ['get', 'sum'],
@@ -114,10 +106,10 @@ export function HubPointMarkers({
             }}
           />
           <Layer
-            id={`${layer.source.id}-circle`}
+            id={`${layer.source}-circle`}
             beforeId={beforeId}
             type="circle"
-            source={layer.source.id}
+            source={layer.source}
             filter={['all', ['!', ['has', 'sum']], ['>', ['get', 'count'], 1]]}
             paint={{
               'circle-color': 'rgba(24, 164, 127, 0.80)',
@@ -133,10 +125,10 @@ export function HubPointMarkers({
             }}
           />
           <Layer
-            id={`${layer.source.id}-circle-count`}
+            id={`${layer.source}-circle-count`}
             beforeId={beforeId}
             type="symbol"
-            source={layer.source.id}
+            source={layer.source}
             filter={['all', ['!', ['has', 'sum']], ['>', ['get', 'count'], 1]]}
             layout={{
               'text-field': ['get', 'count'],
@@ -146,8 +138,8 @@ export function HubPointMarkers({
           />
           <Layer
             beforeId={beforeId}
-            id={`${layer.source.id}-marker`}
-            source={layer.source.id}
+            id={`${layer.source}-marker`}
+            source={layer.source}
             type="symbol"
             filter={['all', ['!', ['has', 'sum']], ['==', ['get', 'count'], 1]]}
             layout={{
@@ -165,17 +157,17 @@ export function HubPointMarkers({
         </Source>
       ) : (
         <Source
-          id={layer.source.id}
+          id={layer.source}
           type="vector"
           url={new URL(
-            `/tiles/external-data-source/${context.hostname}/${layer.source.id}/tiles.json`,
+            `/tiles/external-data-source/${context.hostname}/${layer.source}/tiles.json`,
             BACKEND_URL
           ).toString()}
         >
           <Layer
             beforeId={beforeId}
-            id={`${layer.source.id}-marker`}
-            source={layer.source.id}
+            id={`${layer.source}-marker`}
+            source={layer.source}
             source-layer={'generic_data'}
             type="symbol"
             layout={{

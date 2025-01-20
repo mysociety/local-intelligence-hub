@@ -15,7 +15,8 @@ export const GET_HUB_MAP_DATA = gql`
         type
         visible
         iconImage
-        source {
+        source
+        sourceData {
           id
         }
         mapboxPaint

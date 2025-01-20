@@ -19,7 +19,6 @@ import pluralize from 'pluralize'
 import queryString from 'query-string'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import useStarredItems from '../../useStarredItems'
 import { useReport } from '../ReportProvider'
 import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
 import { exploreArea, formatPostalAddresses } from './utils'
@@ -122,7 +121,7 @@ export function RecordExplorer({ id }: { id: string }) {
   const isStarred = report.report.displayOptions.starred?.some(
     (item) => item.id === record?.id
   )
-  const { addStarredItem, removeStarredItem } = useStarredItems()
+  const { addStarredItem, removeStarredItem } = report
   const starredItemData: StarredState = {
     id: record?.id || '',
     entity: 'record',

@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { ExplorerState, StarredState, useExplorerState } from '@/lib/map'
 import { MapPinIcon, X } from 'lucide-react'
-import useStarredItems from '../useStarredItems'
 
 import { dataTypeIcons } from '@/lib/data'
 import { StarFilledIcon } from '@radix-ui/react-icons'
@@ -16,11 +15,10 @@ export default function ReportStarredItems() {
 }
 
 export function StarredItemsList() {
-  const { report, updateReport } = useReport()
+  const { report, removeStarredItem } = useReport()
   const starredItems = report?.displayOptions?.starred || []
 
   const [explorerState, setExplorerState] = useExplorerState()
-  const { removeStarredItem } = useStarredItems()
 
   function handleStarredItemClick(item: ExplorerState) {
     const entity = item.entity
