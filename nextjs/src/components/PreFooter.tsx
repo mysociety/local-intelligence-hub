@@ -1,5 +1,6 @@
+import { LocalIntelligenceHubLogo } from './logos/LocalIntelligenceHubLogo'
+import { MySocietyLogo } from './logos/MySocietyLogo'
 import TemplateCard from './marketing/TemplateCard'
-
 export default function PreFooter() {
   return (
     <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
@@ -10,6 +11,15 @@ export default function PreFooter() {
         link="https://commonknowledge.coop/"
         isExternalLink={true}
       />
+      <TemplateCard
+        heading="Thanks to My Society's Local Intelligence Hub"
+        description="Mapped is built on top of My Society's open source Local Intelligence Hub."
+        link="https://github.com/mysociety/local-intelligence-hub"
+        highlighted={true}
+        logo={[<MySocietyLogo key="1" />, <LocalIntelligenceHubLogo key="1" />]}
+        isExternalLink={true}
+      />
+
       <TemplateCard
         highlighted={true}
         heading="Support us"

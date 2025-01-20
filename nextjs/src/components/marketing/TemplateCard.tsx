@@ -17,8 +17,9 @@ interface TemplateCardProps {
   link: string
   tag?: string
   labels?: ReactNode
-  highlighted: boolean // Add highlighted prop
+  highlighted: boolean
   isExternalLink?: boolean
+  logo?: ReactNode | ReactNode[]
 }
 
 const TemplateCard: React.FC<TemplateCardProps> = ({
@@ -29,6 +30,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
   tag,
   highlighted,
   labels,
+  logo,
 }) => {
   return (
     <>
@@ -44,8 +46,21 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
             <CardDescription className="text-sm text-meepGray-400 line-clamp-4">
               {description}
             </CardDescription>
+            {logo &&
+              (Array.isArray(logo) ? (
+                <div className="flex flex-row items-center gap-4">
+                  {logo.map((item, index) => (
+                    <div key={index} className="pt-4">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="w-6 h-6">{logo}</div>
+              ))}{' '}
             <div className="pt-4">{labels}</div>
           </CardHeader>
+
           {tag && (
             <CardFooter className="pt-6">
               <div
