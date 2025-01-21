@@ -5,15 +5,16 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
+import { Separator } from '@/components/ui/separator'
 import clsx from 'clsx'
 import { format } from 'd3-format'
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { lowerCase, max, min } from 'lodash'
-import { LucideChevronDown } from 'lucide-react'
+import { Calculator, LucideChevronDown, PaintBucket } from 'lucide-react'
 import pluralize from 'pluralize'
 import { useState } from 'react'
 import { POLITICAL_BOUNDARIES } from '../../politicalTilesets'
-import { getReportPalette } from '../../reportContext'
+import { PALETTE, getReportPalette } from '../../reportContext'
 import useDataByBoundary from '../../useDataByBoundary'
 import { EditorSelect } from '../EditorSelect'
 import { useReport } from '../ReportProvider'
@@ -85,7 +86,7 @@ export default function ReportMapChoroplethLegend() {
 
   const colourStops = new Array(steps).fill(0).map((_, step) => {
     const count = stepsToDomainTransformer(step)
-    return [count, colourScale(count)]
+    return [count, colourScale(count)] as [number, string]
   })
 
   const sourceMetadata = report.layers.find(
@@ -103,9 +104,9 @@ export default function ReportMapChoroplethLegend() {
       <Collapsible
         open={legendOpen}
         onOpenChange={setLegendOpen}
-        className="bg-meepGray-950 text-white rounded-md shadow-lg flex flex-col w-72 border border-meepGray-600"
+        className="bg-meepGray-950 text-white rounded-md shadow-lg flex flex-col border border-meepGray-600"
       >
-        <CollapsibleTrigger className="flex text-white hover:text-meepGray-200 justify-between border-meepGray-600 p-4 items-center transition-all duration-300">
+        <CollapsibleTrigger className="flex gap-2 text-white hover:text-meepGray-200 justify-between border-meepGray-600 p-4 items-center transition-all duration-300">
           Legend
           <LucideChevronDown
             className={clsx(
@@ -115,100 +116,94 @@ export default function ReportMapChoroplethLegend() {
           />
         </CollapsibleTrigger>
         <CollapsibleContent className="CollapsibleContent">
-          <div className="flex flex-col gap-4 p-4 border-t border-meepGray-600">
+          <div className="flex  gap-4 p-4 border-t border-meepGray-600">
             <div className="flex flex-col gap-2">
-              <EditorSelect
-                label=""
-                // explainer={`Select which data will populate your ${selectedBoundaryLabel}`}
-                value={dataSourceId}
-                options={layers.map((layer) => ({
-                  label: (
-                    <CRMSelection
-                      source={layer.sourceData}
-                      displayCount={false}
-                      className=" truncate"
-                    />
-                  ),
-                  value: layer.source,
-                }))}
-                onChange={(dataSource) =>
-                  updateReport((draft) => {
-                    draft.displayOptions.dataVisualisation.dataSource =
-                      dataSource
-                  })
-                }
-              />
-              <div className="flex flex-row items-center py-2">
-                {colourStops.map((stop, i) => {
-                  return (
-                    <div
-                      key={i}
-                      className="basis-0 min-w-0 flex-shrink-0 grow flex flex-col"
-                    >
-                      <div
-                        className="h-4"
-                        style={{
-                          backgroundColor: String(stop[1]),
-                        }}
-                      ></div>
-                      <div className="text-xs text-center px-2">
-                        {format(formatStr)(Number(stop[0]))}
-                      </div>
-                    </div>
-                  )
-                })}
+              <div className="flex flex-row items-center gap-2">
+                <EditorSelect
+                  // explainer={`Select which data will populate your ${selectedBoundaryLabel}`}
+                  value={dataSourceId}
+                  options={layers.map((layer) => ({
+                    label: (
+                      <CRMSelection
+                        source={layer.sourceData}
+                        displayCount={false}
+                        className=" truncate"
+                      />
+                    ),
+                    value: layer.source,
+                  }))}
+                  onChange={(dataSource) =>
+                    updateReport((draft) => {
+                      draft.displayOptions.dataVisualisation.dataSource =
+                        dataSource
+                    })
+                  }
+                  className="w-full"
+                />
+                <Separator orientation="vertical" />
+                <EditorSelect
+                  icon={
+                    <Calculator className="w-5 h-5 text-meepGray-400 hover:text-meepGray-100" />
+                  }
+                  // explainer={`Which field from your data source will be visualised?`}
+                  value={dataSourceField || '__COUNT__'}
+                  options={[
+                    {
+                      label: `Count of ${lowerCase(pluralize(selectedDataSource?.sourceData.dataType || 'record', 2))}`,
+                      value: '__COUNT__',
+                    },
+                    ...(sourceMetadata?.sourceData.fieldDefinitions
+                      ?.filter(
+                        // no ID fields
+                        (d) => d.value !== sourceMetadata.sourceData.idField
+                      )
+                      .map((d) => ({
+                        label: d.label,
+                        value: d.value,
+                      })) || []),
+                  ]}
+                  onChange={(dataSourceField) =>
+                    updateReport((draft) => {
+                      draft.displayOptions.dataVisualisation.dataSourceField =
+                        dataSourceField
+                    })
+                  }
+                  disabled={!sourceMetadata}
+                  disabledMessage={
+                    selectedDataSource?.sourceData.dataType !== 'AREA_STATS'
+                      ? `Count of ${lowerCase(pluralize(selectedDataSource?.sourceData.dataType || 'record', 2))}`
+                      : undefined
+                  }
+                />
+                <EditorSelect
+                  icon={
+                    <PaintBucket className="w-5 h-5 stroke text-meepGray-400 hover:text-meepGray-100" />
+                  }
+                  // explainer={`Select the boundary type to visualise your data`}
+                  value={dataVisualisation?.palette}
+                  options={Object.entries(PALETTE).map(([value, res]) => ({
+                    label: res.label,
+                    value,
+                    // TODO: display the palette
+                  }))}
+                  onChange={(palette) =>
+                    updateReport((draft) => {
+                      draft.displayOptions.dataVisualisation.palette =
+                        palette as keyof typeof PALETTE
+                    })
+                  }
+                />
               </div>
-
-              {/* <LegendOrdinal
-          scale={ordinalScale}
-          direction="row"
-          itemDirection="column"
-          labelMargin="6px 0 0 0"
-          shapeMargin={0}
-          shapeWidth={50}
-          shapeHeight={10}
-          className="text-meepGray-400 text-xs flex flex-col items-start"
-            /> */}
-
-              <EditorSelect
-                label="Colour by"
-                // explainer={`Which field from your data source will be visualised?`}
-                value={dataSourceField || '__COUNT__'}
-                options={[
-                  {
-                    label: `Count of ${lowerCase(pluralize(selectedDataSource?.sourceData.dataType || 'record', 2))}`,
-                    value: '__COUNT__',
-                  },
-                  ...(sourceMetadata?.sourceData.fieldDefinitions
-                    ?.filter(
-                      // no ID fields
-                      (d) => d.value !== sourceMetadata.sourceData.idField
-                    )
-                    .map((d) => ({
-                      label: d.label,
-                      value: d.value,
-                    })) || []),
-                ]}
-                onChange={(dataSourceField) =>
-                  updateReport((draft) => {
-                    draft.displayOptions.dataVisualisation.dataSourceField =
-                      dataSourceField
-                  })
-                }
-                disabled={!sourceMetadata}
-                disabledMessage={
-                  selectedDataSource?.sourceData.dataType !== 'AREA_STATS'
-                    ? `Count of ${lowerCase(pluralize(selectedDataSource?.sourceData.dataType || 'record', 2))}`
-                    : undefined
-                }
-              />
+              <ColourStops colourStops={colourStops} formatStr={formatStr} />
             </div>
-
-            <div className="flex flex-col gap-2 bg-meepGray-600  rounded-md"></div>
+          </div>
+          <div className="flex flex-col gap-2 bg-meepGray-600   p-4">
             {/* LegendSettings */}
+            <p className="text-sm font-mono uppercase text-meepGray-400">
+              Map political boundary
+            </p>
             <EditorSelect
               className="-my-2"
-              label="Border type"
               onChange={(d) => updateBoundaryType(d as AnalyticalAreaType)}
               value={dataVisualisation?.boundaryType}
               options={POLITICAL_BOUNDARIES.map((boundary) => ({
@@ -227,4 +222,35 @@ export default function ReportMapChoroplethLegend() {
       draft.displayOptions.dataVisualisation.boundaryType = boundaryType
     })
   }
+}
+
+function ColourStops({
+  colourStops,
+  formatStr,
+}: {
+  colourStops: [number, string][]
+  formatStr: string
+}) {
+  return (
+    <div className="flex flex-row items-center py-2">
+      {colourStops.map((stop, i) => {
+        return (
+          <div
+            key={i}
+            className="basis-0 min-w-0 flex-shrink-0 grow flex flex-col"
+          >
+            <div
+              className="h-4"
+              style={{
+                backgroundColor: String(stop[1]),
+              }}
+            ></div>
+            <div className="text-xs text-center px-2">
+              {format(formatStr)(Number(stop[0]))}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
 }

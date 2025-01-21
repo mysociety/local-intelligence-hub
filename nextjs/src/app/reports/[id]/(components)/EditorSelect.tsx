@@ -10,6 +10,7 @@ import { EditorField, EditorFieldProps } from './EditorField'
 export function EditorSelect({
   value,
   options,
+  icon,
   onChange,
   disabled,
   disabledMessage,
@@ -17,6 +18,7 @@ export function EditorSelect({
 }: {
   value?: string
   options: string[] | { label?: any; value: string }[]
+  icon?: React.ReactNode
   onChange: (value: string) => void
   disabled?: boolean
   disabledMessage?: string
@@ -24,11 +26,14 @@ export function EditorSelect({
   return (
     <EditorField {...fieldProps}>
       <Select onValueChange={onChange} value={value} disabled={disabled}>
-        <SelectTrigger className="border-none text-meepGray-100 font-medium p-0 my-0 text-left">
+        <SelectTrigger
+          className="border-none text-meepGray-100 font-medium p-0 my-0 text-left"
+          {...(!!icon ? { hideIcon: true } : {})}
+        >
           {!!disabled && !!disabledMessage ? (
             disabledMessage
           ) : (
-            <SelectValue className="my-0 py-0" />
+            <>{!icon ? <SelectValue className="my-0 py-0" /> : icon}</>
           )}
         </SelectTrigger>
         <SelectContent>

@@ -37,7 +37,7 @@ export function EditorField({
 }
 
 export interface EditorFieldProps {
-  label: any
+  label?: any
   explainer?: any
   children?: any
   labelClassName?: string
