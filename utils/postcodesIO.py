@@ -109,14 +109,16 @@ async def enrich_postcodes_io_result(
 
     from hub.models import Area
 
+    # Add output_area and correct msoa and lsoa results (postcodes.io doesn't use up-to-date boundaries)
     point = create_point(latitude=result["latitude"], longitude=result["longitude"])
-    output_area = await Area.objects.filter(
-        area_type__code="OA21", polygon__contains=point
-    ).afirst()
+    for area_code, result_key in [("OA21", "output_area"), ("MSOA", "msoa"), ("LSOA", "lsoa")]:
+        output_area = await Area.objects.filter(
+            area_type__code=area_code, polygon__contains=point
+        ).afirst()
 
-    if output_area:
-        result["output_area"] = output_area.name
-        result["codes"]["output_area"] = output_area.gss
+        if output_area:
+            result[result_key] = output_area.name
+            result["codes"][result_key] = output_area.gss
 
     return result
 

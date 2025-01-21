@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 from datetime import datetime, timezone
 from unittest import skipIf
@@ -12,7 +13,7 @@ from hub.tests.fixtures.geocoding_cases import geocoding_cases
 from hub.validation import validate_and_format_phone_number
 from utils import mapit_types
 
-ignore_geocoding_tests = False  # os.getenv("RUN_GEOCODING_TESTS") != "1"
+ignore_geocoding_tests = os.getenv("RUN_GEOCODING_TESTS") != "1"
 
 
 class TestDateFieldParer(TestCase):
@@ -346,7 +347,7 @@ class TestComplexAddressGeocoding(TestCase):
                 },
                 {
                     "id": "3",
-                    "venue_name": "Sainsbury's",
+                    "venue_name": "Sainsbury's Local",
                     "address": "Gordon Street",
                     "expected_postcode": "G1 3RS",
                 },
@@ -368,7 +369,7 @@ class TestComplexAddressGeocoding(TestCase):
                     "id": "6",
                     "venue_name": "Glasgow City Council Chambers",
                     "address": None,
-                    "expected_postcode": "G2 5AF",
+                    "expected_postcode": "G2 1DU", # Checked on Google Maps 2025-01-21
                 },
                 {
                     "id": "7",
