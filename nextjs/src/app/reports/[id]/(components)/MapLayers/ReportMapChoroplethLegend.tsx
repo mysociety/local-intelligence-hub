@@ -99,12 +99,12 @@ export default function ReportMapChoroplethLegend() {
 
   return (
     <div
-      className={`p-4 absolute top-12 transition-all duration-300 left-0 ${visibility === 'visible' ? 'block' : 'hidden'}`}
+      className={`p-4 absolute top-12 transition-all duration-300 left-0  ${visibility === 'visible' ? 'block' : 'hidden'}`}
     >
       <Collapsible
         open={legendOpen}
         onOpenChange={setLegendOpen}
-        className="bg-meepGray-950 text-white rounded-md shadow-lg flex flex-col border border-meepGray-600"
+        className=" bg-[#1f2229]/90 text-white rounded-md shadow-lg flex flex-col border border-meepGray-600 backdrop-blur-[5px]"
       >
         <CollapsibleTrigger className="flex gap-2 text-white hover:text-meepGray-200 justify-between border-meepGray-600 p-4 items-center transition-all duration-300">
           Legend
