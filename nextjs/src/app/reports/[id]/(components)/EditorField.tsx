@@ -17,14 +17,16 @@ export function EditorField({
         )}
         onClick={onClick}
       >
-        <div
-          className={twMerge(
-            'text-sm  text-meepGray-400 w-[200px]',
-            labelClassName
-          )}
-        >
-          {label}
-        </div>
+        {!!label && (
+          <div
+            className={twMerge(
+              'text-sm  text-meepGray-400 w-[200px]',
+              labelClassName
+            )}
+          >
+            {label}
+          </div>
+        )}
         {children}
       </div>
       {!!explainer && (
