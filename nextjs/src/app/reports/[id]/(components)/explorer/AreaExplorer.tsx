@@ -86,6 +86,7 @@ export function AreaExplorer({ gss }: { gss: string }) {
     <SidebarContent className="bg-meepGray-600 overflow-x-hidden h-full">
       <SidebarHeader className="!text-white p-4 mb-0">
         <>
+          <AreaExplorerBreadcrumbs area={areaData.data?.area} />
           <div className="text-hMd flex flex-row gap-2 w-full items-center">
             {areaData.loading ? (
               <span className="text-meepGray-400">Loading...</span>
