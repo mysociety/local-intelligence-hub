@@ -11,6 +11,30 @@ export type PoliticalTileset = {
 
 const uk: PoliticalTileset[] = [
   {
+    boundaryType: AnalyticalAreaType.EuropeanElectoralRegion,
+    label: 'European Electoral Regions',
+    tileset: {
+      name: 'European Electoral Regions',
+      singular: 'European Electoral Region',
+      mapboxSourceId: 'commonknowledge.awsfhx20',
+      sourceLayerId: 'European_Electoral_Regions_De-bxyqod',
+      promoteId: 'eer18cd',
+      labelId: 'eer18nm',
+    },
+  },
+  {
+    boundaryType: AnalyticalAreaType.AdminDistrict,
+    label: 'Local Authority Districts',
+    tileset: {
+      name: 'Local Authority Districts',
+      singular: 'Local Authority District',
+      mapboxSourceId: 'commonknowledge.2p1squ75',
+      sourceLayerId: 'lads_2023geo',
+      promoteId: 'LAD23CD',
+      labelId: 'LAD23NM',
+    },
+  },
+  {
     boundaryType: AnalyticalAreaType.ParliamentaryConstituency_2024,
     label: 'Parliamentary Constituencies',
     tileset: {
@@ -46,30 +70,6 @@ const uk: PoliticalTileset[] = [
   //     labelId: 'CTRY23NM',
   //   },
   // },
-  {
-    boundaryType: AnalyticalAreaType.EuropeanElectoralRegion,
-    label: 'European Electoral Regions',
-    tileset: {
-      name: 'European Electoral Regions',
-      singular: 'European Electoral Region',
-      mapboxSourceId: 'commonknowledge.awsfhx20',
-      sourceLayerId: 'European_Electoral_Regions_De-bxyqod',
-      promoteId: 'eer18cd',
-      labelId: 'eer18nm',
-    },
-  },
-  {
-    boundaryType: AnalyticalAreaType.AdminDistrict,
-    label: 'Local Authority Districts',
-    tileset: {
-      name: 'Local Authority Districts',
-      singular: 'Local Authority District',
-      mapboxSourceId: 'commonknowledge.2p1squ75',
-      sourceLayerId: 'lads_2023geo',
-      promoteId: 'LAD23CD',
-      labelId: 'LAD23NM',
-    },
-  },
 ]
 
 export const POLITICAL_BOUNDARIES = uk
