@@ -1,3 +1,4 @@
+import { CommonKnowledgeLogo } from './logos/CommonKnowledgeLogo'
 import { LocalIntelligenceHubLogo } from './logos/LocalIntelligenceHubLogo'
 import { MySocietyLogo } from './logos/MySocietyLogo'
 import TemplateCard from './marketing/TemplateCard'
@@ -14,10 +15,18 @@ export default function PreFooter() {
       <TemplateCard
         heading="Thanks to My Society's Local Intelligence Hub"
         description="Mapped is built on top of My Society's open source Local Intelligence Hub."
-        link="https://github.com/mysociety/local-intelligence-hub"
         highlighted={true}
-        logo={[<MySocietyLogo key="1" />, <LocalIntelligenceHubLogo key="1" />]}
-        isExternalLink={true}
+        logo={[
+          { content: <MySocietyLogo />, url: 'https://www.mysociety.org' },
+          {
+            content: <LocalIntelligenceHubLogo />,
+            url: 'https://github.com/mysociety/local-intelligence-hub',
+          },
+          {
+            content: <CommonKnowledgeLogo />,
+            url: 'https://github.com/commonknowledge/mapped',
+          },
+        ]}
       />
 
       <TemplateCard
