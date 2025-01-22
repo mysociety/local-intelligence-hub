@@ -9,6 +9,7 @@ import {
   MapLayer,
 } from '@/__generated__/graphql'
 import { DataSourceIcon } from '@/components/DataSourceIcon'
+import { DataSourceTypeIcon } from '@/components/icons/DataSourceType'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -27,8 +28,8 @@ import {
 } from '@/lib/map'
 import { gql, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
-import { sum } from 'lodash'
-import { LucideLink, Star, TargetIcon } from 'lucide-react'
+import { capitalize, sum } from 'lodash'
+import { LucideLink, MapPinIcon, Star, TargetIcon } from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
 import { Fragment, useState } from 'react'
@@ -228,28 +229,26 @@ function AreaLayerData({
           {layer.inspectorType === InspectorDisplayType.Properties ? (
             <PropertiesDisplay
               data={
-                // If we're looking at an area with no single data point, use the summary data
-                (!data.data?.row || !Object.keys(data.data.row).length) &&
-                data.data?.summary?.aggregated
-                  ? data.data?.summary?.aggregated
-                  : // Else we're looking at something that has a single data point
-                    data.data?.row?.aggregated &&
-                      Object.keys(data.data.row).length > 0 &&
-                      data.data?.points?.length
-                    ? // if we have point data, use this so we can display string values
-                      data.data?.points[0].json
-                    : // else use the summary data
-                      data.data?.row?.aggregated ||
-                      data.data?.summary?.aggregated
+                // If it's area stats, prefer summary, then indirectly, then directly data
+                // Otherwise prefer directlyAndIndirectly, then summary
+                layer.sourceData.dataType === DataSourceType.AreaStats
+                  ? data.data?.summary?.aggregated ||
+                    data.data?.directAndIndirectlyRelated?.[0]?.json ||
+                    data.data?.directlyRelated?.[0]?.json
+                  : data.data?.directAndIndirectlyRelated?.[0]?.json
               }
               config={layer.inspectorConfig}
             />
           ) : layer.inspectorType === InspectorDisplayType.Table ? (
             <TableDisplay
               data={
+                // If it's area stats, prefer summary, then indirectly, then directly data
+                // Otherwise prefer directlyAndIndirectly, then summary
                 layer.sourceData.dataType === DataSourceType.AreaStats
-                  ? [data.data?.summary?.aggregated]
-                  : data.data?.points.map((p) => p.json)
+                  ? data.data?.summary?.aggregated ||
+                    data.data?.directAndIndirectlyRelated?.[0]?.json ||
+                    data.data?.directlyRelated?.[0]?.json
+                  : data.data?.directAndIndirectlyRelated?.[0]?.json
               }
               config={layer.inspectorConfig}
               title={layer.name}
@@ -257,17 +256,25 @@ function AreaLayerData({
             />
           ) : layer.inspectorType === InspectorDisplayType.ElectionResult ? (
             <ElectionResultsDisplay
-              data={data.data?.row || data.data?.summary}
+              data={
+                // If it's area stats, prefer summary, then indirectly, then directly data
+                // Otherwise prefer directlyAndIndirectly, then summary
+                layer.sourceData.dataType === DataSourceType.AreaStats
+                  ? data.data?.summary?.aggregated ||
+                    data.data?.directAndIndirectlyRelated?.[0]?.json ||
+                    data.data?.directlyRelated?.[0]?.json
+                  : data.data?.directAndIndirectlyRelated?.[0]?.json
+              }
               config={layer.inspectorConfig}
             />
           ) : layer.inspectorType === InspectorDisplayType.BigNumber ? (
             <BigNumberDisplay
-              count={data.data?.points.length}
+              count={data.data?.directAndIndirectlyRelated?.length}
               dataType={layer.sourceData.dataType}
             />
           ) : (
             <ListDisplay
-              data={data.data?.points}
+              data={data.data?.directAndIndirectlyRelated}
               config={layer.inspectorConfig}
               dataType={layer.sourceData.dataType}
             />
@@ -289,9 +296,11 @@ function AreaLayerData({
 const AREA_LAYER_DATA = gql`
   query AreaLayerData($gss: String!, $externalDataSource: String!) {
     # collect point data
-    points: genericDataFromSourceAboutArea(
+    directlyRelated: genericDataFromSourceAboutArea(
       gss: $gss
       sourceId: $externalDataSource
+      rollup: false
+      points: false
     ) {
       json
       id
@@ -305,30 +314,31 @@ const AREA_LAYER_DATA = gql`
       title
       publicUrl
     }
-    # rolled up area data up to this GSS code
+    # collect point data
+    directAndIndirectlyRelated: genericDataFromSourceAboutArea(
+      gss: $gss
+      sourceId: $externalDataSource
+      points: true
+      rollup: true
+    ) {
+      json
+      id
+      startTime
+      postcode
+      date
+      description
+      fullName
+      lastName
+      firstName
+      title
+      publicUrl
+    }
+    # aggregate statistics about any data related to this area
     summary: genericDataSummaryFromSourceAboutArea(
       gss: $gss
       sourceId: $externalDataSource
-      points: false
-    ) {
-      aggregated
-      metadata {
-        first
-        second
-        third
-        last
-        total
-        count
-        mean
-        median
-      }
-    }
-    # for specific pieces of data for this GSS code
-    row: genericDataSummaryFromSourceAboutArea(
-      gss: $gss
-      sourceId: $externalDataSource
-      rollup: false
-      points: false
+      rollup: true
+      points: true
     ) {
       aggregated
       metadata {
@@ -485,13 +495,15 @@ function ListDisplay({
   config,
   dataType,
 }: {
-  data: AreaLayerDataQuery['points']
+  data: AreaLayerDataQuery['directAndIndirectlyRelated']
   config: {
     columns: string[]
   }
   dataType: DataSourceType
 }) {
-  function getListValuesBasedOnDataType(item: any) {
+  function getListValuesBasedOnDataType(
+    item: AreaLayerDataQuery['directAndIndirectlyRelated'][0]
+  ) {
     type ListValues = {
       primary: string[]
       secondary: string[]
