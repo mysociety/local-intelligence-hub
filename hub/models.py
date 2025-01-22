@@ -887,7 +887,11 @@ class Area(models.Model):
 
     @classmethod
     def get_by_name(cls, name, area_type="WMC"):
-        return cls.objects.filter(name__iexact=name, area_type__code=area_type).order_by("-mapit_generation_high").first()
+        return (
+            cls.objects.filter(name__iexact=name, area_type__code=area_type)
+            .order_by("-mapit_generation_high")
+            .first()
+        )
 
     def fit_bounds(self):
         """
