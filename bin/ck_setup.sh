@@ -40,11 +40,17 @@ echo "Done"
 echo '';
 echo '------------------------------------';
 echo '';
+echo 'Importing areas...';
+echo '';
+echo '------------------------------------';
+./bin/import_areas_full.sh
+
+echo '';
+echo '------------------------------------';
+echo '';
 echo 'Downloading LIH data...';
 echo '';
 echo '------------------------------------';
-python manage.py import_areas
-python manage.py import_regions
 python manage.py import_mps
 
 echo '';

@@ -1,3 +1,5 @@
+import time
+import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -40,10 +42,19 @@ class Command(BaseCommand):
     without causing primary key conflicts.
     """
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "-o",
+            "--overwrite",
+            action="store_true",
+            help="Replace existing output file.",
+        )
+
+    def handle(self, overwrite, *args, **options):
         print("Exporting areas and area types from current database to data/areas.psql")
         count = 0
-        output_file: Path = settings.BASE_DIR / "data" / "areas.psql"
+        filename = "areas.psql" if overwrite else f"areas.{time.time()}.psql"
+        output_file: Path = settings.BASE_DIR / "data" / filename
         with output_file.open("w", encoding="utf8") as f:
             for table_config in TABLES:
                 rows, columns = self.do_query(table_config)
@@ -55,7 +66,18 @@ class Command(BaseCommand):
                         f"INSERT INTO {table_config.table_name} ({column_names}) VALUES ({output_values});\n"
                     )
                     count += 1
-        print(f"Exported {count} rows to data/areas.psql")
+        print(f"Exported {count} rows to data/{filename}")
+
+        zip_filename = f"{filename}.zip"
+        zip_file: Path = settings.BASE_DIR / "data" / zip_filename
+        zip = zipfile.ZipFile(zip_file, "w", zipfile.ZIP_DEFLATED)
+        zip.write(output_file)
+        zip.close()
+
+        print(f"Compressed {count} rows to data/{zip_filename}")
+        print(
+            f"Upload to MinIO with `mc cp data/{filename} [ALIAS]/data/areas.psql.zip"
+        )
 
     def do_query(
         self, table_config: TableConfig

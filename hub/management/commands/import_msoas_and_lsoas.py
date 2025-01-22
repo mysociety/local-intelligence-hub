@@ -74,7 +74,7 @@ class Command(BaseCommand):
         code_property = f"{property_prefix}CD"
         name_property = f"{property_prefix}NM"
         gss = area["properties"][code_property]
-        name = area['properties'][name_property]
+        name = area["properties"][name_property]
 
         geom_already_loaded = Area.objects.filter(
             gss=gss, polygon__isnull=False
@@ -103,9 +103,7 @@ class Command(BaseCommand):
 
         if geom is not None:
             geos = json.dumps(geom["geometry"])
-            polygon = GEOSGeometry(
-                geos
-            )
+            polygon = GEOSGeometry(geos)
             if isinstance(polygon, Polygon):
                 polygon = MultiPolygon([polygon])
 

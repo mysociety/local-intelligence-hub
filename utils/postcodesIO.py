@@ -111,7 +111,11 @@ async def enrich_postcodes_io_result(
 
     # Add output_area and correct msoa and lsoa results (postcodes.io doesn't use up-to-date boundaries)
     point = create_point(latitude=result["latitude"], longitude=result["longitude"])
-    for area_code, result_key in [("OA21", "output_area"), ("MSOA", "msoa"), ("LSOA", "lsoa")]:
+    for area_code, result_key in [
+        ("OA21", "output_area"),
+        ("MSOA", "msoa"),
+        ("LSOA", "lsoa"),
+    ]:
         output_area = await Area.objects.filter(
             area_type__code=area_code, polygon__contains=point
         ).afirst()
