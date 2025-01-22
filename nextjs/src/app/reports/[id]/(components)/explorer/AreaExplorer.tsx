@@ -505,49 +505,61 @@ function ListDisplay({
     item: AreaLayerDataQuery['directAndIndirectlyRelated'][0]
   ) {
     type ListValues = {
-      primary: string[]
-      secondary: string[]
+      primary: any[]
+      secondary: any[]
     }
 
     switch (dataType) {
       case DataSourceType.Member:
         return {
-          primary: [item.firstName || item.lastName || item.fullName],
+          primary: [
+            item.firstName ||
+              item.lastName ||
+              item.fullName ||
+              item.id ||
+              `Unnamed ${capitalize(dataType)}`,
+          ],
           secondary: [item.postcode],
         } satisfies ListValues
       case DataSourceType.Event: {
         return {
           primary: [item.title],
-          secondary: [item.startTime || item.date || item.postcode],
+          secondary: [
+            item.startTime ||
+              item.date ||
+              item.postcode ||
+              item.id ||
+              `Unnamed ${capitalize(dataType)}`,
+          ],
         } satisfies ListValues
       }
       case DataSourceType.Group: {
         return {
-          primary: [item.name],
+          primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
           secondary: [item.date],
         } satisfies ListValues
       }
       case DataSourceType.AreaStats: {
         return {
-          primary: [item.name],
+          primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
           secondary: [item.date],
         } satisfies ListValues
       }
       case DataSourceType.Location: {
         return {
-          primary: [item.name],
+          primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
           secondary: [item.date],
         } satisfies ListValues
       }
       case DataSourceType.Other: {
         return {
-          primary: [item.name],
+          primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
           secondary: [item.date],
         } satisfies ListValues
       }
       case DataSourceType.Story: {
         return {
-          primary: [item.name],
+          primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
           secondary: [item.date],
         } satisfies ListValues
       }
@@ -565,7 +577,7 @@ function ListDisplay({
         return (
           <div
             key={item.id}
-            className={`text-meepGray-200 justify-between flex font-mono text-sm hover:bg-meepGray-800 p-2 cursor-pointer border-b border-meepGray-800 ${
+            className={`text-meepGray-200 justify-start flex gap-1 font-mono text-sm hover:bg-meepGray-800 p-2 cursor-pointer border-b border-meepGray-800 ${
               isActive ? 'bg-white text-meepGray-800 hover:bg-white' : ''
             }`}
             onClick={() => {
@@ -581,8 +593,14 @@ function ListDisplay({
               )
             }}
           >
+            <DataSourceTypeIcon
+              dataType={
+                dataType === DataSourceType.AreaStats ? undefined : dataType
+              }
+              defaultIcon={MapPinIcon}
+            />
             <div className="flex flex-col gap-1">{primary}</div>
-            <div className="flex flex-col gap-1 text-meepGray-400">
+            <div className="ml-auto flex flex-col gap-1 text-meepGray-400">
               {secondary}
             </div>
           </div>
