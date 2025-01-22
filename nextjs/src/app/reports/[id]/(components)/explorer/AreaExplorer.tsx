@@ -506,11 +506,11 @@ function ListDisplay({
   }
   dataType: DataSourceType
 }) {
+  const explorer = useExplorer()
+
   if (!data || !data.length) {
     return <div className="text-meepGray-400 py-2">No data available</div>
   }
-
-  const explorer = useExplorer()
 
   return (
     <div className="bg-meepGray-700 rounded-md max-h-[30vh] overflow-y-auto">
@@ -568,11 +568,12 @@ function BigRecord({
   }
   dataType: DataSourceType
 }) {
+  const explorer = useExplorer()
+
   if (!item) {
     return <div className="text-meepGray-400 py-2">No data available</div>
   }
 
-  const explorer = useExplorer()
   const { primary, secondary } = getListValuesBasedOnDataType(item, dataType)
   const isActive = explorer.isValidEntity(explorer.state)
 
