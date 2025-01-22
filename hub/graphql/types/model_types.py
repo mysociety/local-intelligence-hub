@@ -1715,9 +1715,7 @@ def choropleth_data_for_source(
     # check that field is in DF
     field_is_set = field and field is not None and len(field)
     is_explicit_row_count = field_is_set and field == "__COUNT__"
-    is_valid_statistical_field = (
-        field_is_set and not is_explicit_row_count and field in df.columns
-    )
+    is_valid_statistical_field = field_is_set and not is_explicit_row_count
     is_valid_row_counter = is_explicit_row_count or not field_is_set
 
     if is_valid_statistical_field:
