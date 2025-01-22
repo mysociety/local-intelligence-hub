@@ -1232,9 +1232,7 @@ class MapLayer:
     icon_image: Optional[str] = dict_key_field()
     mapbox_paint: Optional[JSON] = dict_key_field()
     mapbox_layout: Optional[JSON] = dict_key_field()
-    inspector_type: Optional[str] = dict_key_field(
-        default=InspectorDisplayType.Table
-    )
+    inspector_type: Optional[str] = dict_key_field(default=InspectorDisplayType.Table)
     inspector_config: Optional[JSON] = dict_key_field()
 
     @strawberry_django.field

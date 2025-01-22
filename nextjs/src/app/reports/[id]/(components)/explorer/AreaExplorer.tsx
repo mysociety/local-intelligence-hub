@@ -28,7 +28,7 @@ import {
 } from '@/lib/map'
 import { gql, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
-import { capitalize, sum } from 'lodash'
+import { sum } from 'lodash'
 import { LucideLink, MapPinIcon, Star, TargetIcon } from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
@@ -222,9 +222,7 @@ function AreaLayerData({
           <LoadingIcon size={'32px'} />
         </div>
       ) : data.error || !data.data ? (
-        <div className="text-xl text-meepGray-400 py-8">
-          No data available for this area
-        </div>
+        <div className="text-meepGray-400 py-2">No data available</div>
       ) : (
         <div className="text-meepGray-400">
           {layer.inspectorType === InspectorDisplayType.Properties ? (
@@ -317,6 +315,7 @@ const AREA_LAYER_DATA = gql`
       postcode
       date
       description
+      name
       fullName
       lastName
       firstName
@@ -336,6 +335,7 @@ const AREA_LAYER_DATA = gql`
       postcode
       date
       description
+      name
       fullName
       lastName
       firstName
@@ -625,21 +625,18 @@ function getListValuesBasedOnDataType(
   }
 
   const humanReadableDataType = toSpaceCase(dataType)
+  const noun = dataType ? toSpaceCase(dataType) : 'record'
+  const unnamedRecordName = `Unnamed ${toSpaceCase(noun)}`
 
   switch (dataType) {
     case DataSourceType.Member:
       return {
-        primary: [
-          item.firstName ||
-            item.lastName ||
-            item.fullName ||
-            `Unnamed ${capitalize(dataType)}`,
-        ],
+        primary: [item.name || unnamedRecordName],
         secondary: [item.postcode || humanReadableDataType],
       } satisfies ListValues
     case DataSourceType.Event: {
       return {
-        primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
+        primary: [item.name || unnamedRecordName],
         secondary: [
           item.startTime || item.date || item.postcode || humanReadableDataType,
         ],
@@ -647,31 +644,31 @@ function getListValuesBasedOnDataType(
     }
     case DataSourceType.Group: {
       return {
-        primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
+        primary: [item.name || unnamedRecordName],
         secondary: [item.date || humanReadableDataType],
       } satisfies ListValues
     }
     case DataSourceType.AreaStats: {
       return {
-        primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
+        primary: [item.name || unnamedRecordName],
         secondary: [item.date || humanReadableDataType],
       } satisfies ListValues
     }
     case DataSourceType.Location: {
       return {
-        primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
+        primary: [item.name || unnamedRecordName],
         secondary: [item.date || humanReadableDataType],
       } satisfies ListValues
     }
     case DataSourceType.Other: {
       return {
-        primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
+        primary: [item.name || unnamedRecordName],
         secondary: [item.date || humanReadableDataType],
       } satisfies ListValues
     }
     case DataSourceType.Story: {
       return {
-        primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
+        primary: [item.name || unnamedRecordName],
         secondary: [item.date || humanReadableDataType],
       } satisfies ListValues
     }
