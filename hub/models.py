@@ -800,16 +800,18 @@ class GenericData(CommonData):
 
     @property
     def name(self) -> Optional[str]:
-        if self.full_name:
-            return self.full_name
-        elif self.first_name and self.last_name:
-            return f"{self.first_name} {self.last_name}"
-        elif self.first_name:
-            return self.first_name
-        elif self.last_name:
-            return self.last_name
-        elif self.title:
-            return self.title
+        full_name = (
+            self.full_name if self.full_name and len(self.full_name) > 0 else None
+        )
+        merged_name = f"{self.first_name} {self.last_name}".strip()
+        # pick whichever is longer
+        resolved_name = (
+            full_name if len(full_name or "") > len(merged_name or "") else merged_name
+        )
+
+        for option in [resolved_name, self.first_name, self.last_name, self.title]:
+            if option and len(option) > 0:
+                return option
 
         return None
 

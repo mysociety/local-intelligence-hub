@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button'
 import { ExplorerState, StarredState, useExplorer } from '@/lib/map'
 import { MapPinIcon, X } from 'lucide-react'
 
-import { dataTypeIcons } from '@/lib/data'
+import { DataSourceTypeIcon } from '@/components/icons/DataSourceType'
 import { StarFilledIcon } from '@radix-ui/react-icons'
 import { useReport } from './ReportProvider'
 export default function ReportStarredItems() {
@@ -66,11 +66,18 @@ export function StarredItemsList() {
   )
 }
 
-function StarredItemIcon({ starredItem }: { starredItem: StarredState }) {
-  const Icon = starredItem.icon
-    ? dataTypeIcons[starredItem.icon].icon
-    : starredItem.entity === 'area'
-      ? MapPinIcon
-      : StarFilledIcon
-  return <Icon className="w-4 h-4 text-meepGray-400 fill-meepGray-400" /> //
+function StarredItemIcon({
+  starredItem,
+  className,
+}: {
+  starredItem: StarredState
+  className?: string
+}) {
+  return (
+    <DataSourceTypeIcon
+      dataType={starredItem.icon}
+      defaultIcon={starredItem.entity === 'area' ? MapPinIcon : StarFilledIcon}
+      className={className}
+    />
+  )
 }
