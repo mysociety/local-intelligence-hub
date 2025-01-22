@@ -288,14 +288,22 @@ function AreaLayerData({
           )}
         </div>
       )}
-      <div className="text-meepGray-400 text-sm flex flex-row items-center gap-1 mt-2">
+      <a
+        className="text-meepGray-400 text-sm flex flex-row items-center gap-1 mt-2"
+        {...(!!layer.sourceData.remoteUrl && {
+          href: layer.sourceData.remoteUrl,
+          target: '_blank',
+        })}
+      >
         Source:{' '}
         <DataSourceIcon
           crmType={layer.sourceData.crmType}
           className="w-5 h-5"
         />{' '}
-        {layer.sourceData.name}
-      </div>
+        <span className="underline hover:text-meepGray-300">
+          {layer.sourceData.name}
+        </span>
+      </a>
     </CollapsibleSection>
   )
 }

@@ -951,6 +951,11 @@ class BaseDataSource(Analytics):
     allow_updates: bool = attr_field()
     default_data_type: Optional[str] = attr_field()
     defaults: JSON = attr_field()
+    auto_update_enabled: auto
+    auto_import_enabled: auto
+    remote_name: Optional[str] = fn_field()
+    remote_url: Optional[str] = fn_field()
+    healthcheck: bool = fn_field()
 
     field_definitions: Optional[List[FieldDefinition]] = strawberry_django.field(
         resolver=lambda self: self.field_definitions()
@@ -1055,11 +1060,6 @@ class ExternalDataSource(BaseDataSource):
         strawberry_django_dataloaders.fields.auto_dataloader_field()
     )
     update_mapping: Optional[List["AutoUpdateConfig"]]
-    auto_update_enabled: auto
-    auto_import_enabled: auto
-    remote_name: Optional[str] = fn_field()
-    remote_url: Optional[str] = fn_field()
-    healthcheck: bool = fn_field()
     orgs_with_access: List[Organisation]
 
     @strawberry_django.field
