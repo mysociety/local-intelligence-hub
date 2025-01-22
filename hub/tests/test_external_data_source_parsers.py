@@ -114,7 +114,7 @@ class TestMultiLevelGeocoding(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        subprocess.call("bin/import_areas_seed.sh")
+        subprocess.call("bin/import_areas_into_test_db.sh")
 
         for d in cls.fixture:
             if d["expected_area_gss"] is not None:
@@ -347,9 +347,9 @@ class TestComplexAddressGeocoding(TestCase):
                 },
                 {
                     "id": "3",
-                    "venue_name": "Sainsbury's",
+                    "venue_name": "Sainsbury's Local",
                     "address": "Gordon Street",
-                    "expected_postcode": "G1 3PE",
+                    "expected_postcode": "G1 3RS",  # Checked on Google Maps 2025-01-22
                 },
                 {
                     # Special case: "online"
@@ -369,7 +369,7 @@ class TestComplexAddressGeocoding(TestCase):
                     "id": "6",
                     "venue_name": "Glasgow City Council Chambers",
                     "address": None,
-                    "expected_postcode": "G2 5AF",
+                    "expected_postcode": "G2 1DU",  # Checked on Google Maps 2025-01-21
                 },
                 {
                     "id": "7",

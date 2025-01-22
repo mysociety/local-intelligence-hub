@@ -1,4 +1,5 @@
 import { DataSourceIcon } from '@/components/DataSourceIcon'
+import { useActiveTileset } from '@/lib/map'
 import { format } from 'd3-format'
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { max, min } from 'lodash'
@@ -28,10 +29,13 @@ export default function ReportMapChoroplethLegend() {
       ? 'visible'
       : 'none'
 
-  const { data: dataByBoundary, loading } = useDataByBoundary({
+  const { activeTileset } = useActiveTileset(boundaryType)
+
+  const { loading, data } = useDataByBoundary({
     report,
-    boundaryType,
+    tileset: activeTileset,
   })
+  const dataByBoundary = data?.choroplethDataForSource || []
 
   // Get min and max counts
   let minCount = min(dataByBoundary.map((d) => d.count || 0)) || 0

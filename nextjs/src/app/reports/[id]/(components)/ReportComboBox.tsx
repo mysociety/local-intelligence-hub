@@ -33,15 +33,11 @@ export default function ReportDashboardConsSelector() {
 
   const { report } = useReport()
   const boundaryType = report.displayOptions?.dataVisualisation?.boundaryType
-  const tileset = POLITICAL_BOUNDARIES.find(
-    (boundary) => boundary.boundaryType === boundaryType
-  )?.tileset
-
   const selectedBoundaryLabel = POLITICAL_BOUNDARIES.find(
     (boundary) => boundary.boundaryType === boundaryType
   )?.label
 
-  const areas = useAreasList(tileset ?? null)
+  const areas = useAreasList(boundaryType)
 
   // Get the area ID from URL params
   useEffect(() => {

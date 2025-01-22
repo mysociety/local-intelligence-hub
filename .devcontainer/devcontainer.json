@@ -46,7 +46,7 @@
             "previewLimit": 50,
             "server": "db",
             "port": 5432,
-            "database": "local-intelligence",
+            "database": "postgres",
             "username": "postgres",
             "password": "password"
           }

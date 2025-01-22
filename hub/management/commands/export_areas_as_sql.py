@@ -1,3 +1,4 @@
+import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -40,18 +41,11 @@ class Command(BaseCommand):
     without causing primary key conflicts.
     """
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-a",
-            "--all-names",
-            action="store_true",
-            help="Fetch alternative names from MapIt",
-        )
-
-    def handle(self, all_names: bool = False, *args, **options):
+    def handle(self, *args, **options):
         print("Exporting areas and area types from current database to data/areas.psql")
         count = 0
-        output_file: Path = settings.BASE_DIR / "data" / "areas.psql"
+        filename = "areas.psql"
+        output_file: Path = settings.BASE_DIR / "data" / filename
         with output_file.open("w", encoding="utf8") as f:
             for table_config in TABLES:
                 rows, columns = self.do_query(table_config)
@@ -63,7 +57,18 @@ class Command(BaseCommand):
                         f"INSERT INTO {table_config.table_name} ({column_names}) VALUES ({output_values});\n"
                     )
                     count += 1
-        print(f"Exported {count} rows to data/areas.psql")
+        print(f"Exported {count} rows to data/{filename}")
+
+        zip_filename = f"{filename}.zip"
+        zip_file: Path = settings.BASE_DIR / "data" / zip_filename
+        zip = zipfile.ZipFile(zip_file, "w", zipfile.ZIP_DEFLATED)
+        zip.write(output_file, arcname=filename)
+        zip.close()
+
+        print(f"Compressed {count} rows to data/{zip_filename}")
+        print(
+            f"Upload to MinIO with `mc cp data/{filename} [ALIAS]/data/areas.psql.zip"
+        )
 
     def do_query(
         self, table_config: TableConfig
@@ -101,6 +106,8 @@ class Command(BaseCommand):
             if column.name in table_config.output_column_templates:
                 template = table_config.output_column_templates[column.name]
                 value = self.template_output_value(template, row, columns)
+            elif row[i] is None:
+                value = "NULL"
             else:
                 # output the value as a string, cast to the correct type in postgres
                 value = f"'{self.escape_sql_string(row[i])}'::{column.type_display}"

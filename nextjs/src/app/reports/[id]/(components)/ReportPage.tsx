@@ -3,6 +3,8 @@
 import LocalisedMap from '@/components/LocalisedMap'
 import { PlaceholderLayer } from '@/components/PlaceholderLayer'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
+import { useActiveTileset, useMapBounds } from '@/lib/map'
+import { useEffect } from 'react'
 import { POLITICAL_BOUNDARIES } from '../politicalTilesets'
 import useDataByBoundary from '../useDataByBoundary'
 import PoliticalChoropleths from './MapLayers/PoliticalChoropleths'
@@ -15,19 +17,34 @@ export const PLACEHOLDER_LAYER_ID_MARKERS = 'markers'
 export default function ReportPage() {
   const { report } = useReport()
   const boundaryType = report.displayOptions?.dataVisualisation?.boundaryType
-  const tileset = POLITICAL_BOUNDARIES.find(
+  const tilesets = POLITICAL_BOUNDARIES.find(
     (boundary) => boundary.boundaryType === boundaryType
-  )?.tileset
+  )?.tilesets
 
-  const { loading: politicalChoroplethsLoading } = useDataByBoundary({
+  const { activeTileset } = useActiveTileset(boundaryType)
+
+  const { loading, fetchMore } = useDataByBoundary({
     report,
-    boundaryType,
+    tileset: activeTileset,
   })
+
+  const [mapBounds] = useMapBounds()
+
+  // Fetch more data when the map bounds change
+  // This has to be here for the loading indicator to work
+  // (fetchMore only triggers loading: true in its local hook)
+  useEffect(() => {
+    if (activeTileset.useBoundsInDataQuery) {
+      fetchMore({
+        variables: { mapBounds },
+      })
+    }
+  }, [mapBounds, report?.displayOptions.dataVisualisation, activeTileset])
 
   return (
     <div className="absolute w-[-webkit-fill-available] h-full flex flex-row pointer-events-none">
       <div className="w-full h-full pointer-events-auto">
-        {politicalChoroplethsLoading && (
+        {loading && (
           <div className="absolute bottom-12 right-0 z-10 p-4">
             <LoadingIcon size={'50'} />
           </div>
@@ -38,18 +55,14 @@ export default function ReportPage() {
           mapKey={report.id}
         >
           <PlaceholderLayer id={PLACEHOLDER_LAYER_ID_CHOROPLETH} />
-          {/* We load and populate all available political boundaries first, then toggle their visibility later.
-          This prevents re-rendering and re-initialisting the layers and re-calculating stats when a user
-          just wants to change the visible boundary type */}
-          {tileset && boundaryType && (
+          {tilesets && tilesets.length && boundaryType && (
             <PoliticalChoropleths
-              key={`${boundaryType}-${tileset.mapboxSourceId}`}
+              key={`${boundaryType}-${tilesets[0].mapboxSourceId}`}
               report={report}
               boundaryType={boundaryType}
-              tileset={tileset}
+              tilesets={tilesets}
             />
           )}
-          {/* ))} */}
           <PlaceholderLayer id={PLACEHOLDER_LAYER_ID_MARKERS} />
           <ReportMapMarkers />
         </LocalisedMap>

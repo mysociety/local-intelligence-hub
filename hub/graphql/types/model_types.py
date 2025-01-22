@@ -4,7 +4,11 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Union
 
+from django.contrib.gis.db.models import Union as GisUnion
+from django.contrib.gis.geos import Polygon
 from django.db.models import F, Q
+from django.db.models.fields import FloatField
+from django.db.models.functions import Cast
 from django.http import HttpRequest
 
 import numexpr as ne
@@ -48,6 +52,7 @@ from utils.geo_reference import (
 pd.core.computation.ops.MATHOPS = (*pd.core.computation.ops.MATHOPS, "where")
 
 logger = logging.getLogger(__name__)
+pd.core.computation.ops.MATHOPS = (*pd.core.computation.ops.MATHOPS, "where")
 
 
 # Ideally we'd just import this from the library (procrastinate.jobs.Status) but
@@ -734,6 +739,9 @@ postcodeIOKeyAreaTypeLookup = {
     AnalyticalAreaType.admin_ward: AreaTypeFilter(lih_area_type="WD23"),
     AnalyticalAreaType.european_electoral_region: AreaTypeFilter(lih_area_type="EER"),
     AnalyticalAreaType.european_electoral_region: AreaTypeFilter(lih_area_type="CTRY"),
+    AnalyticalAreaType.msoa: AreaTypeFilter(lih_area_type="MSOA"),
+    AnalyticalAreaType.lsoa: AreaTypeFilter(lih_area_type="LSOA"),
+    AnalyticalAreaType.output_area: AreaTypeFilter(lih_area_type="OA21"),
 }
 
 
@@ -1663,6 +1671,14 @@ def check_numeric(x):
         return False
 
 
+@strawberry.input
+class MapBounds:
+    north: float
+    east: float
+    south: float
+    west: float
+
+
 @strawberry.enum
 class ChoroplethMode(Enum):
     Count = "Count"
@@ -1679,6 +1695,7 @@ def choropleth_data_for_source(
     # or, if not provided, a count of records
     mode: Optional[ChoroplethMode] = ChoroplethMode.Count,
     field: Optional[str] = None,
+    map_bounds: Optional[MapBounds] = None,
     formula: Optional[str] = None,
 ) -> List[GroupedDataCount]:
     # Check user can access the external data source
@@ -1699,9 +1716,32 @@ def choropleth_data_for_source(
         .annotate(
             label=F(f"postcode_data__{analytical_area_key.value}"),
             gss=F(f"postcode_data__codes__{analytical_area_key.value}"),
+            latitude=Cast("postcode_data__latitude", output_field=FloatField()),
+            longitude=Cast("postcode_data__longitude", output_field=FloatField()),
         )
-        .values("json", "label", "gss")
     )
+
+    if map_bounds:
+        area_type_filter = postcodeIOKeyAreaTypeLookup[analytical_area_key]
+        bbox_coords = (
+            (map_bounds.west, map_bounds.north),  # Top left
+            (map_bounds.east, map_bounds.north),  # Top right
+            (map_bounds.east, map_bounds.south),  # Bottom right
+            (map_bounds.west, map_bounds.south),  # Bottom left
+            (map_bounds.west, map_bounds.north),  # Back to start to close polygon
+        )
+        bbox = Polygon(bbox_coords, srid=4326)
+        areas = models.Area.objects.filter(**area_type_filter.query_filter).filter(
+            point__within=bbox
+        )
+        combined_area = areas.aggregate(union=GisUnion("polygon"))["union"]
+        # all geocoded GenericData should have `point` set
+        qs = qs.filter(point__within=combined_area or bbox)
+
+    qs = qs.values("json", "label", "gss")
+
+    if not qs:
+        return []
 
     # ingest the .json data into a pandas dataframe so we can do analytics
     df = pd.DataFrame([record for record in qs])
@@ -1731,7 +1771,37 @@ def choropleth_data_for_source(
     if mode is ChoroplethMode.Formula and not is_valid_formula:
         raise ValueError("Formula is invalid")
 
-    if is_valid_field or is_valid_formula:
+    if is_row_count:
+        # Simple count of data points per area
+
+        # Count the number of rows per GSS
+        df_count = (
+            df.drop(columns=["label"]).groupby("gss").size().reset_index(name="count")
+        )
+
+        # Calculate the mode for the 'label' column
+        def get_mode(series):
+            try:
+                return series.mode()[0]
+            except KeyError:
+                return None
+
+        df_mode = df.groupby("gss")["label"].agg(get_mode).reset_index()
+
+        # Merge the summed DataFrame with the mode DataFrame
+        df = pd.merge(df_count, df_mode, on="gss")
+
+        # Convert DF to GroupedDataCount(label=label, gss=gss, count=count) list
+        return [
+            GroupedDataCount(
+                label=row.label,
+                gss=row.gss,
+                count=row.count,
+                formatted_count=f"{row.count:,.0f}",
+            )
+            for row in df.itertuples()
+        ]
+    elif is_valid_field or is_valid_formula:
         # Convert any stringified JSON numbers to floats
         for column in df:
             if all(df[column].apply(check_numeric)):
@@ -1825,35 +1895,6 @@ def choropleth_data_for_source(
             )
             for row in df.itertuples()
         ]
-    elif is_row_count:
-        # Simple count of data points per area
 
-        # Count the number of rows per GSS
-        df_count = (
-            df.drop(columns=["label"]).groupby("gss").size().reset_index(name="count")
-        )
-
-        # Calculate the mode for the 'label' column
-        def get_mode(series):
-            try:
-                return series.mode()[0]
-            except KeyError:
-                return None
-
-        df_mode = df.groupby("gss")["label"].agg(get_mode).reset_index()
-
-        # Merge the summed DataFrame with the mode DataFrame
-        df = pd.merge(df_count, df_mode, on="gss")
-
-        # Convert DF to GroupedDataCount(label=label, gss=gss, count=count) list
-        return [
-            GroupedDataCount(
-                label=row.label,
-                gss=row.gss,
-                count=row.count,
-                formatted_count=f"{row.count:,.0f}",
-            )
-            for row in df.itertuples()
-        ]
     else:
         raise ValueError("Incorrect configuration for choropleth")

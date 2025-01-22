@@ -57,14 +57,15 @@ class Command(BaseCommand):
     def import_area(self, area, area_type, all_names):
         area_details = self.mapit_client.area_details(area["id"]) if all_names else {}
 
-        if "gss" not in area["codes"]:
+        gss = area["codes"].get("gss") or area["codes"].get("ons")
+        if not gss:
             # logger.debug(f"no gss code for {area['id']}")
             return
 
         geom = None
         try:
             geom_already_loaded = Area.objects.filter(
-                gss=area["codes"]["gss"], polygon__isnull=False
+                gss=gss, polygon__isnull=False
             ).exists()
             if geom_already_loaded:
                 # Only fetch geometry data if required, to speed things up
@@ -77,19 +78,19 @@ class Command(BaseCommand):
                     "type": "Feature",
                     "geometry": geom,
                     "properties": {
-                        "PCON13CD": area["codes"]["gss"],
+                        "PCON13CD": gss,
                         "name": area["name"],
                         "type": area_type.code,
                         "mapit_type": area["type"],
                     },
                 }
                 geom_str = json.dumps(geom)
-        except mapit.NotFoundException:  # pragma: no cover
+        except (mapit.NotFoundException, mapit.BadRequestException):  # pragma: no cover
             print(f"could not find mapit area for {area['name']}")
             geom = None
 
         a, created = Area.objects.update_or_create(
-            gss=area["codes"]["gss"],
+            gss=gss,
             area_type=area_type,
             defaults={
                 "mapit_id": area["id"],

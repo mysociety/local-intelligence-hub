@@ -14,13 +14,14 @@ export function addCountByGssToMapboxLayer(
   if (!mapbox?.loaded) throw new Error('loaded map is required')
   if (!sourceLayerId) throw new Error('sourceLayerId is required')
 
-  // Remove previously set data from all areas
-  mapbox?.removeFeatureState({
-    source: mapboxSourceId,
-    sourceLayer: sourceLayerId,
-  })
-
   setTimeout(() => {
+    // Remove previously set data from all areas
+    if (mapbox?.getSource(mapboxSourceId)) {
+      mapbox.removeFeatureState({
+        source: mapboxSourceId,
+        sourceLayer: sourceLayerId,
+      })
+    }
     data.forEach((d) => {
       if (!d.gss) return
       try {

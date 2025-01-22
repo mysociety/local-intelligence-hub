@@ -2,6 +2,7 @@ import { AnalyticalAreaType } from '@/__generated__/graphql'
 import { LayerProps } from 'react-map-gl'
 
 export type Tileset = {
+  analyticalAreaType: AnalyticalAreaType
   name: string
   singular: string
   mapboxSourceId: string
@@ -13,12 +14,7 @@ export type Tileset = {
     'type' | 'url' | 'id' | 'paint' | 'layout'
   >
   downloadUrl?: string
+  minZoom: number
+  maxZoom: number
+  useBoundsInDataQuery?: boolean
 }
-export const ENABLED_ANALYTICAL_AREA_TYPES = [
-  AnalyticalAreaType.ParliamentaryConstituency_2024,
-  AnalyticalAreaType.AdminWard,
-  AnalyticalAreaType.AdminDistrict,
-  AnalyticalAreaType.AdminCounty,
-  AnalyticalAreaType.EuropeanElectoralRegion,
-  AnalyticalAreaType.Country,
-]

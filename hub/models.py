@@ -897,12 +897,11 @@ class Area(models.Model):
 
     @classmethod
     def get_by_name(cls, name, area_type="WMC"):
-        try:
-            area = cls.objects.get(name__iexact=name, area_type__code=area_type)
-        except cls.DoesNotExist:
-            area = None
-
-        return area
+        return (
+            cls.objects.filter(name__iexact=name, area_type__code=area_type)
+            .order_by("-mapit_generation_high")
+            .first()
+        )
 
     def fit_bounds(self):
         """
@@ -1097,6 +1096,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             "Coordinates",
         )
         AREA = "AREA", "Area"
+        OUTPUT_AREA = "OUTPUT_AREA", "Census output area"
 
     geocoding_config = JSONField(blank=False, null=False, default=dict)
 
@@ -1720,6 +1720,51 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
                 update_data = {
                     **structured_data,
+                    "area": ward,
+                    "point": ward.point,
+                    "postcode_data": postcode_data,
+                }
+
+                return await GenericData.objects.aupdate_or_create(
+                    data_type=data_type,
+                    data=self.get_record_id(record),
+                    defaults=update_data,
+                )
+
+            await asyncio.gather(*[create_import_record(record) for record in data])
+            logger.info(f"Imported {len(data)} records from {self}")
+        elif (
+            self.geography_column
+            and self.geography_column_type == self.GeographyTypes.OUTPUT_AREA
+        ):
+
+            async def create_import_record(record):
+                structured_data = get_update_data(self, record)
+                gss = self.get_record_field(record, self.geography_column)
+                output_area = await Area.objects.filter(
+                    area_type__code="OA21",
+                    gss=gss,
+                ).afirst()
+                if output_area:
+                    postcode_data: PostcodesIOResult = (
+                        await geocoding_config.get_postcode_data_for_area(
+                            output_area, loaders, []
+                        )
+                    )
+                    if postcode_data:
+                        # override lat/lng based output_area with known output area
+                        postcode_data.output_area = output_area.name
+                        postcode_data.codes.output_area = gss
+                else:
+                    logger.warning(
+                        f"Could not find output area for record {self.get_record_id(record)} and gss {gss}"
+                    )
+                    postcode_data = None
+
+                update_data = {
+                    **structured_data,
+                    "area": output_area,
+                    "point": output_area.point,
                     "postcode_data": postcode_data,
                 }
 

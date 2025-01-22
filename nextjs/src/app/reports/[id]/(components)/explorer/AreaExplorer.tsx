@@ -1,5 +1,4 @@
 import {
-  AnalyticalAreaType,
   AreaExplorerSummaryQuery,
   AreaExplorerSummaryQueryVariables,
   AreaLayerDataQuery,
@@ -36,6 +35,7 @@ import { Fragment, useState } from 'react'
 import { toast } from 'sonner'
 import toSpaceCase from 'to-space-case'
 import trigramSimilarity from 'trigram-similarity'
+import { BoundaryType } from '../../politicalTilesets'
 import CollapsibleSection from '../CollapsibleSection'
 import { useReport } from '../ReportProvider'
 import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
@@ -710,17 +710,17 @@ function AreaExplorerBreadcrumbs({
     europeanElectoralRegion: {
       value: europeanElectoralRegion,
       code: undefined,
-      type: AnalyticalAreaType.EuropeanElectoralRegion,
+      type: BoundaryType.EUROPEAN_ELECTORAL_REGIONS,
     },
     adminDistrict: {
       value: adminDistrict,
       code: codes?.adminDistrict,
-      type: AnalyticalAreaType.AdminDistrict,
+      type: BoundaryType.LOCAL_AUTHORITIES,
     },
     parliamentaryConstituency2024: {
       value: parliamentaryConstituency2024,
       code: codes?.parliamentaryConstituency2024,
-      type: AnalyticalAreaType.ParliamentaryConstituency_2024,
+      type: BoundaryType.PARLIAMENTARY_CONSTITUENCIES,
     },
   }
 
@@ -746,7 +746,7 @@ function AreaExplorerBreadcrumbs({
   function handleBreadcrumbClick(crumb: {
     value: any
     code: string
-    type: AnalyticalAreaType
+    type: BoundaryType
   }) {
     explorer.select(
       {

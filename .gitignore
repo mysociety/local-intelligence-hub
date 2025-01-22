@@ -7,9 +7,8 @@ __pycache__
 .coverage
 .media
 data/**/*
-!data/areas.psql.zip
 !data/.gitkeep
-!data/areas.psql.zip
+!data/areas_minimal.psql.zip
 .next
 
 conf/env
