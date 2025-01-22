@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { ExplorerState, StarredState, useExplorerState } from '@/lib/map'
+import { ExplorerState, StarredState, useExplorer } from '@/lib/map'
 import { MapPinIcon, X } from 'lucide-react'
 
 import { dataTypeIcons } from '@/lib/data'
@@ -18,7 +18,7 @@ export function StarredItemsList() {
   const { report, removeStarredItem } = useReport()
   const starredItems = report?.displayOptions?.starred || []
 
-  const [explorerState, setExplorerState] = useExplorerState()
+  const explorer = useExplorer()
 
   function handleStarredItemClick(item: ExplorerState) {
     const entity = item.entity
@@ -26,11 +26,16 @@ export function StarredItemsList() {
 
     // this is reloading the page for some reason so i'm using the setExplorerState hook
     // exploreArea(id)
-    setExplorerState({
-      entity,
-      id,
-      showExplorer: true,
-    })
+    explorer.select(
+      {
+        entity,
+        id,
+        showExplorer: true,
+      },
+      {
+        bringIntoView: true,
+      }
+    )
   }
   return (
     <div>

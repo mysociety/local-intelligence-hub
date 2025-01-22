@@ -2,7 +2,7 @@ import { MapBounds } from '@/__generated__/graphql'
 import {
   MapLoader,
   useActiveTileset,
-  useExplorerState,
+  useExplorer,
   useLoadedMap,
   useMapBounds,
 } from '@/lib/map'
@@ -72,7 +72,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
       : 'none'
 
   const map = useLoadedMap()
-  const [explorer, setExplorer] = useExplorerState()
+  const explorer = useExplorer()
   useHoverOverBoundaryEvents(areasVisible === 'visible' ? activeTileset : null)
 
   // Update map bounds and active tileset on pan/zoom
@@ -130,20 +130,16 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
             maxzoom={tileset.maxZoom}
           >
             {/* Fill of the boundary */}
-
-            <>
-              <Layer
-                beforeId="road-simple"
-                id={`${tileset.mapboxSourceId}-fill`}
-                source={tileset.mapboxSourceId}
-                source-layer={tileset.sourceLayerId}
-                type="fill"
-                paint={fillsByLayer[tileset.mapboxSourceId] || {}}
-                minzoom={tileset.minZoom}
-                maxzoom={tileset.maxZoom}
-              />
-            </>
-
+            <Layer
+              beforeId="road-simple"
+              id={`${tileset.mapboxSourceId}-fill`}
+              source={tileset.mapboxSourceId}
+              source-layer={tileset.sourceLayerId}
+              type="fill"
+              paint={fillsByLayer[tileset.mapboxSourceId] || {}}
+              minzoom={tileset.minZoom}
+              maxzoom={tileset.maxZoom}
+            />
             {/* Border of the boundary */}
             <Layer
               beforeId={PLACEHOLDER_LAYER_ID_CHOROPLETH}
@@ -156,8 +152,6 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
                 'line-join': 'round',
                 'line-round-limit': 0.1,
               }}
-              minzoom={tileset.minZoom}
-              maxzoom={tileset.maxZoom}
             />
             {/* Border of the selected boundary  */}
             <Layer
@@ -170,8 +164,8 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
               filter={[
                 '==',
                 ['get', tileset.promoteId],
-                explorer.entity === 'area'
-                  ? explorer.id
+                explorer.state.entity === 'area'
+                  ? explorer.state.id
                   : 'sOmE iMpOsSiBle iD tHaT wIlL uPdAtE mApBoX',
               ]}
               layout={{
@@ -181,7 +175,6 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
               }}
             />
           </Source>
-
           <Source
             id={`${tileset.mapboxSourceId}-area-count`}
             type="geojson"

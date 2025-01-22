@@ -3,10 +3,7 @@ import { ExplorerSuite } from '@/lib/map'
 import { MapMouseEvent } from 'mapbox-gl'
 
 export const mapMouseHandler =
-  (
-    report: ReportContextProps,
-    [explorerState, setExplorerState]: ExplorerSuite
-  ) =>
+  (report: ReportContextProps, explorer: ExplorerSuite) =>
   (e: MapMouseEvent) => {
     // Handle clicking at the top level, because each individual click handler doesn't take into account that the click might be caught by the other one
     const features = e.target.queryRenderedFeatures(e.point)
@@ -21,24 +18,28 @@ export const mapMouseHandler =
     )
 
     const selectedRecord =
-      explorerState.entity === 'record' ? explorerState.id : null
+      explorer.state.entity === 'record' ? explorer.state.id : null
 
     for (const feature of pointSourceFeatures) {
       if (feature.properties?.id) {
         if (selectedRecord === feature.properties?.id) {
-          setExplorerState({
-            entity: '',
-            id: null,
-            showExplorer: false,
-          })
+          explorer.clear()
           // console.log('Deselected point source feature', feature)
           return
         } else {
-          setExplorerState({
-            entity: 'record',
-            id: feature.properties?.id,
-            showExplorer: true,
-          })
+          explorer.select(
+            {
+              entity: 'record',
+              id: feature.properties?.id,
+              showExplorer: true,
+            },
+            {
+              // Don't pan the map because the user's already
+              // looking at the point source feature
+              // and that'd be a jarring UX
+              bringIntoView: false,
+            }
+          )
           // If that worked, we're done
           // console.log('Clicked on point source feature', feature)
           return
@@ -52,7 +53,7 @@ export const mapMouseHandler =
     )
 
     const selectedBoundary =
-      explorerState.entity === 'area' ? explorerState.id : null
+      explorer.state.entity === 'area' ? explorer.state.id : null
 
     for (const feature of areaSourceFeatures) {
       // Handle area click
@@ -60,15 +61,19 @@ export const mapMouseHandler =
       if (id) {
         // If already selected boundary, deselect it
         if (selectedBoundary === id) {
-          setExplorerState({
-            entity: '',
-            id: null,
-            showExplorer: false,
-          })
+          explorer.clear()
           // console.log('Deselected area', feature)
           return
         } else {
-          setExplorerState({ entity: 'area', id, showExplorer: true })
+          explorer.select(
+            { entity: 'area', id, showExplorer: true },
+            {
+              // Don't pan the map because the user's already
+              // looking at the point source feature
+              // and that'd be a jarring UX
+              bringIntoView: false,
+            }
+          )
           // console.log('Selected area', feature)
           return
         }
