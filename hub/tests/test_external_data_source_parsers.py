@@ -349,7 +349,7 @@ class TestComplexAddressGeocoding(TestCase):
                     "id": "3",
                     "venue_name": "Sainsbury's",
                     "address": "Gordon Street",
-                    "expected_postcode": "G1 3RS",
+                    "expected_postcode": "G1 3PE",
                 },
                 {
                     # Special case: "online"
