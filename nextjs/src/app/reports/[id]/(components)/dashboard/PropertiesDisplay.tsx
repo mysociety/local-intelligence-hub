@@ -1,62 +1,104 @@
-import { useMemo } from 'react'
+import React from 'react'
+import { twMerge } from 'tailwind-merge'
+import { formatKey, formatValue, isEmptyValue } from './utils'
 
 export function PropertiesDisplay({
   data,
-  config,
 }: {
   data: any
   config?: {
     columns?: string[]
   }
 }) {
-  const cols: string[] = useMemo(() => {
-    if (config?.columns) {
-      return config.columns
-    } else if (data) {
-      const keys = new Set<string>()
-      for (const item of Array.isArray(data) ? data : [data]) {
-        if (item) {
-          for (const key of Object.keys(item)) {
-            keys.add(String(key))
-          }
-        }
-      }
-      return Array.from(keys)
-    } else {
-      return []
-    }
-  }, [config, data])
+  const indentLevel = 0
 
   return (
-    <div className="flex flex-col gap-2 my-2">
-      {cols.map((column) => {
-        const value = data[column]
-        return (
-          <div key={column} className="flex flex-col gap-0">
-            <div className="text-meepGray-400 uppercase text-xs">{column}</div>
-            <div className="text-white">
-              {String(safeParseAsNumber(value) || value || 'N/A')}
-            </div>
-          </div>
-        )
-      })}
+    <div className="flex flex-col gap-2">
+      <FormatValue data={data} indentLevel={indentLevel} />
     </div>
   )
 }
 
-export function safeParseAsNumber(value: any): number | null {
-  try {
-    if (typeof value === 'number') {
-      return value
-    }
-    if (typeof value === 'string') {
-      const parsed = parseFloat(value)
-      if (!isNaN(parsed)) {
-        return parsed
-      }
-    }
+function FormatValue({
+  data,
+  indentLevel = 0,
+}: {
+  data: any
+  indentLevel?: number
+}) {
+  if (data === null || data === undefined) {
+    // Nothing
     return null
-  } catch (e) {
-    return null
+  } else if (typeof data === 'string' || typeof data === 'number') {
+    // Raw value
+    return <span>{formatValue(data)}</span>
+  } else if (Array.isArray(data)) {
+    // Array; indented
+    return (
+      <ul style={{ marginLeft: `${indentLevel * 1}rem` }}>
+        {data.filter(isEmptyValue).map((item, index) => (
+          <li key={index}>
+            <FormatValue data={item} />
+          </li>
+        ))}
+      </ul>
+    )
+  } else if (
+    data !== null &&
+    typeof data === 'object' &&
+    data.constructor === Object
+  ) {
+    // Nested property list; indented
+    return (
+      <div
+        className="space-y-3"
+        style={{ marginLeft: `${indentLevel * 1}rem` }}
+      >
+        {Object.entries(data || {})
+          .filter(([key, value]) => !isEmptyValue(value))
+          .map(([key, value]) => (
+            <KeyContainer
+              key={key}
+              title={key}
+              titleClassName={isObject(value) ? 'mb-3' : ''}
+              children={
+                <FormatValue data={value} indentLevel={indentLevel + 1} />
+              }
+            />
+          ))}
+      </div>
+    )
   }
+
+  return <pre>{JSON.stringify(data, null, 2)}</pre>
+}
+
+function isObject(data: any): data is Record<string, any> {
+  return (
+    data !== null && typeof data === 'object' && data.constructor === Object
+  )
+}
+
+function KeyContainer({
+  title,
+  titleClassName,
+  children,
+}: {
+  title: React.ReactNode
+  titleClassName?: string
+  children: React.ReactNode
+}) {
+  return (
+    <section className="flex flex-col">
+      <header
+        className={twMerge(
+          'text-meepGray-200 uppercase text-xs',
+          titleClassName
+        )}
+      >
+        {typeof title === 'string' ? formatKey(title) : title}
+      </header>
+      <div className="text-white">{children}</div>
+    </section>
+  )
 }

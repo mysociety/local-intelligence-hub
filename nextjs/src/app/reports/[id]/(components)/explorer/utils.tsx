@@ -20,3 +20,19 @@ export function exploreRecord(id: string) {
 
   window.location.search = queryString.stringify(params)
 }
+
+export function formatPostalAddresses(postalAddresses: any[]): string[] {
+  if (!Array.isArray(postalAddresses)) return []
+
+  return postalAddresses.map((address) => {
+    const formattedAddress = [
+      ...(address.address_lines || []),
+      address.locality?.trim(),
+      address.postal_code,
+    ]
+      .filter(Boolean)
+      .join('\n')
+
+    return formattedAddress
+  })
+}

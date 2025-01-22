@@ -13,6 +13,7 @@ import {
   useLoadedMap,
 } from '@/lib/map'
 import { gql, useQuery } from '@apollo/client'
+import { omit } from 'lodash'
 import { LucideLink, Star } from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
@@ -20,7 +21,7 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useReport } from '../ReportProvider'
 import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
-import { exploreArea } from './utils'
+import { exploreArea, formatPostalAddresses } from './utils'
 
 export function RecordExplorer({ id }: { id: string }) {
   const [explorerState, setExplorerState] = useExplorerState()
@@ -37,6 +38,36 @@ export function RecordExplorer({ id }: { id: string }) {
   })
 
   const record = data.data?.import?.record
+  const crmType = record?.dataType?.dataSet?.externalDataSource?.crmType
+  let recordJson = record?.json || {}
+
+  // Define fields to omit based on CRM type
+  const fieldsToOmit: Record<string, string[]> = {
+    actionnetwork: [
+      '_links',
+      'identifiers',
+      'created_date',
+      'modified_date',
+      'phone_numbers',
+      'email_addresses',
+      'languages_spoken',
+    ],
+  }
+
+  const omittedFields = fieldsToOmit[crmType ?? ''] || []
+  let filteredData: Record<string, any> = omit(recordJson, omittedFields)
+
+  // If CRM type is "actionnetwork", format postal_addresses field
+  if (crmType === 'actionnetwork' && recordJson?.postal_addresses) {
+    const formattedAddress = formatPostalAddresses(recordJson.postal_addresses)
+
+    if (formattedAddress) {
+      filteredData = {
+        ...omit(filteredData, ['postal_addresses']),
+        Address: formattedAddress,
+      }
+    }
+  }
 
   const mapbox = useLoadedMap()
 
@@ -223,7 +254,7 @@ export function RecordExplorer({ id }: { id: string }) {
           <section className="flex flex-col gap-2 px-4 py-4">
             <div className="text-hSm text-white">Info</div>
             <div className="flex flex-col gap-2">
-              <PropertiesDisplay data={record?.json} />
+              <PropertiesDisplay data={filteredData} />
             </div>
           </section>
         </TabsContent>

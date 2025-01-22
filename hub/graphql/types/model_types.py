@@ -1700,6 +1700,7 @@ def choropleth_data_for_source(
 
     # if length of dataframe is 0, return an empty list
     if len(df) <= 0:
+        logger.debug("No data found for this source")
         return []
 
     # Break the json column into separate columns for each key
@@ -1708,13 +1709,16 @@ def choropleth_data_for_source(
     # Remove the json column
     df = df.drop(columns=["json"])
 
-    # ...
+    # Choropleth mode
+    # TODO: maybe make this explicit via an argument?
+    # is_data_source_statistical = external_data_source.data_type == models.ExternalDataSource.DataSourceType.AREA_STATS
+    # check that field is in DF
+    field_is_set = field and field is not None and len(field)
+    is_explicit_row_count = field_is_set and field == "__COUNT__"
+    is_valid_statistical_field = field_is_set and not is_explicit_row_count
+    is_valid_row_counter = is_explicit_row_count or not field_is_set
 
-    if (
-        external_data_source.data_type
-        == models.ExternalDataSource.DataSourceType.AREA_STATS
-        and field is not None
-    ):
+    if is_valid_statistical_field:
         # Convert any stringified JSON numbers to floats
         for column in df:
             if all(df[column].apply(check_numeric)):
@@ -1808,7 +1812,7 @@ def choropleth_data_for_source(
             )
             for row in df.itertuples()
         ]
-    else:
+    elif is_valid_row_counter:
         # Simple count of data points per area
 
         # Count the number of rows per GSS
@@ -1838,3 +1842,5 @@ def choropleth_data_for_source(
             )
             for row in df.itertuples()
         ]
+    else:
+        raise ValueError("Incorrect configuration for choropleth")
