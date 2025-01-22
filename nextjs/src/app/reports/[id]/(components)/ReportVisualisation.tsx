@@ -1,3 +1,4 @@
+import { ChoroplethMode } from '@/__generated__/graphql'
 import { CRMSelection } from '@/components/CRMButtonItem'
 import { Textarea } from '@/components/ui/textarea'
 import { lowerCase } from 'lodash'
@@ -16,6 +17,7 @@ const ReportVisualisation: React.FC = () => {
     displayOptions: { dataVisualisation },
   } = report
   const dataSourceId = dataVisualisation?.dataSource
+  const choroplethMode = dataVisualisation?.choroplethMode
   const dataSourceField = dataVisualisation?.dataSourceField
   const selectedDataSource = layers.find(
     (layer) => layer.source === dataSourceId
@@ -60,51 +62,69 @@ const ReportVisualisation: React.FC = () => {
         )}
 
         <EditorSelect
-          label="Colour by"
-          // explainer={`Which field from your data source will be visualised?`}
-          value={dataSourceField || '__COUNT__'}
-          options={[
-            {
-              label: `Count of ${lowerCase(pluralize(selectedDataSource?.sourceData.dataType || 'record', 2))}`,
-              value: '__COUNT__',
-            },
-            ...(sourceMetadata?.sourceData.fieldDefinitions
-              ?.filter(
-                // no ID fields
-                (d) => d.value !== sourceMetadata.sourceData.idField
-              )
-              .map((d) => ({
-                label: d.label,
-                value: d.value,
-              })) || []),
-          ]}
-          onChange={(dataSourceField) =>
+          label="Choropleth mode"
+          // explainer={`Select the boundary type to visualise your data`}
+          value={choroplethMode}
+          options={Object.keys(ChoroplethMode).map((value) => ({
+            label: value,
+            value,
+          }))}
+          onChange={(palette) =>
             updateReport((draft) => {
-              draft.displayOptions.dataVisualisation.dataSourceField =
-                dataSourceField
+              draft.displayOptions.dataVisualisation.choroplethMode =
+                palette as ChoroplethMode
             })
-          }
-          disabled={!sourceMetadata}
-          disabledMessage={
-            selectedDataSource?.sourceData.dataType !== 'AREA_STATS'
-              ? `Count of ${lowerCase(pluralize(selectedDataSource?.sourceData.dataType || 'record', 2))}`
-              : undefined
           }
         />
 
-        <h2 className="text-meepGray-400 text-sm mb-0">
-          Write a custom colour-by formula
-        </h2>
-        <Textarea
-          value={dataSourceField}
-          onChange={(e) =>
-            updateReport((draft) => {
-              draft.displayOptions.dataVisualisation.dataSourceField =
-                e.target.value
-            })
-          }
-          className="bg-meepGray-950 rounded text-white"
-        />
+        {choroplethMode === ChoroplethMode.Field && (
+          <EditorSelect
+            label="Colour by"
+            // explainer={`Which field from your data source will be visualised?`}
+            value={dataSourceField}
+            options={[
+              ...(sourceMetadata?.sourceData.fieldDefinitions
+                ?.filter(
+                  // no ID fields
+                  (d) => d.value !== sourceMetadata.sourceData.idField
+                )
+                .map((d) => ({
+                  label: d.label,
+                  value: d.value,
+                })) || []),
+            ]}
+            onChange={(dataSourceField) =>
+              updateReport((draft) => {
+                draft.displayOptions.dataVisualisation.dataSourceField =
+                  dataSourceField
+              })
+            }
+            disabled={!sourceMetadata}
+            disabledMessage={
+              selectedDataSource?.sourceData.dataType !== 'AREA_STATS'
+                ? `Count of ${lowerCase(pluralize(selectedDataSource?.sourceData.dataType || 'record', 2))}`
+                : undefined
+            }
+          />
+        )}
+
+        {choroplethMode === ChoroplethMode.Formula && (
+          <>
+            <h2 className="text-meepGray-400 text-sm mb-0">
+              Write a custom colour-by formula
+            </h2>
+            <Textarea
+              value={dataSourceField}
+              onChange={(e) =>
+                updateReport((draft) => {
+                  draft.displayOptions.dataVisualisation.dataSourceField =
+                    e.target.value
+                })
+              }
+              className="bg-meepGray-950 rounded text-white"
+            />
+          </>
+        )}
 
         <EditorSelect
           label="Fill"
