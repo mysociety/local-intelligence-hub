@@ -23,24 +23,25 @@ import {
   ExplorerAreaBreadCrumbMapping,
   ExplorerState,
   StarredState,
-  useExplorerState,
-  useLoadedMap,
+  useExplorer,
 } from '@/lib/map'
 import { gql, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
 import { sum } from 'lodash'
-import { LucideLink, Star } from 'lucide-react'
+import { LucideLink, Star, TargetIcon } from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useState } from 'react'
 import { toast } from 'sonner'
 import trigramSimilarity from 'trigram-similarity'
 import CollapsibleSection from '../CollapsibleSection'
 import { useReport } from '../ReportProvider'
 import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
 import { TableDisplay } from '../dashboard/TableDisplay'
+
 export function AreaExplorer({ gss }: { gss: string }) {
   const [selectedTab, setSelectedTab] = useState('summary')
+  const explorer = useExplorer()
 
   // Query area details
   const areaData = useQuery<
@@ -50,17 +51,6 @@ export function AreaExplorer({ gss }: { gss: string }) {
     variables: { gss },
     skip: !gss,
   })
-
-  const mapbox = useLoadedMap()
-
-  useEffect(() => {
-    if (areaData.data?.area?.fitBounds) {
-      // use loadedMap to get the current map as useMap() hook returns undefined when not a direct descendant of MapProvider
-      mapbox.loadedMap?.fitBounds(areaData.data.area.fitBounds as any, {
-        padding: 100,
-      })
-    }
-  }, [gss, areaData.data, mapbox, mapbox.loaded, mapbox.current])
 
   const report = useReport()
   const isStarred = report.report.displayOptions.starred?.some(
@@ -109,6 +99,11 @@ export function AreaExplorer({ gss }: { gss: string }) {
                     onClick={copyAreaURL}
                     className="ml-auto text-meepGray-400 hover:text-meepGray-200 cursor-pointer"
                     size={16}
+                  />
+                  <TargetIcon
+                    className="ml-auto text-meepGray-400 hover:text-meepGray-200 cursor-pointer"
+                    size={16}
+                    onClick={explorer.zoom}
                   />
                 </div>
               </>
@@ -547,14 +542,13 @@ function ListDisplay({
     }
   }
 
-  const [explorerState, setExplorerState] = useExplorerState()
+  const explorer = useExplorer()
 
   return (
     <div className="bg-meepGray-700 rounded-md max-h-[30vh] overflow-y-auto">
       {data?.map((item: any) => {
         const { primary, secondary } = getListValuesBasedOnDataType(item)
-        const isActive =
-          explorerState.entity === 'record' && explorerState.id === item.id
+        const isActive = explorer.isValidEntity(explorer.state)
 
         return (
           <div
@@ -563,11 +557,16 @@ function ListDisplay({
               isActive ? 'bg-white text-meepGray-800 hover:bg-white' : ''
             }`}
             onClick={() => {
-              setExplorerState({
-                entity: 'record',
-                id: item.id,
-                showExplorer: true,
-              })
+              explorer.select(
+                {
+                  entity: 'record',
+                  id: item.id,
+                  showExplorer: true,
+                },
+                {
+                  bringIntoView: true,
+                }
+              )
             }}
           >
             <div className="flex flex-col gap-1">{primary}</div>
@@ -586,7 +585,7 @@ function AreaExplorerBreadcrumbs({
 }: {
   area: AreaExplorerSummaryQuery['area']
 }) {
-  const [explorerState, setExplorerState] = useExplorerState()
+  const explorer = useExplorer()
 
   const { updateReport } = useReport()
 
@@ -645,11 +644,16 @@ function AreaExplorerBreadcrumbs({
     code: string
     type: AnalyticalAreaType
   }) {
-    setExplorerState({
-      id: crumb.code,
-      entity: 'area',
-      showExplorer: true,
-    })
+    explorer.select(
+      {
+        id: crumb.code,
+        entity: 'area',
+        showExplorer: true,
+      },
+      {
+        bringIntoView: true,
+      }
+    )
 
     updateReport((draft) => {
       draft.displayOptions.dataVisualisation.boundaryType = crumb.type

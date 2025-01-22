@@ -1,11 +1,11 @@
 import { Sidebar, SidebarProvider } from '@/components/ui/sidebar'
-import { useExplorerState } from '@/lib/map'
+import { useExplorer } from '@/lib/map'
 import { NAVBAR_HEIGHT } from './ReportNavbar'
 import { AreaExplorer } from './explorer/AreaExplorer'
 import { RecordExplorer } from './explorer/RecordExplorer'
 
 export function ReportSidebarRight() {
-  const [explorer, setExplorer] = useExplorerState()
+  const explorer = useExplorer()
 
   return (
     <SidebarProvider
@@ -14,7 +14,9 @@ export function ReportSidebarRight() {
           '--sidebar-width': '360px',
         } as React.CSSProperties
       }
-      open={!!explorer.entity && !!explorer.id && !!explorer.showExplorer}
+      open={
+        explorer.isValidEntity(explorer.state) && explorer.state.showExplorer
+      }
     >
       <Sidebar
         style={{
@@ -23,11 +25,11 @@ export function ReportSidebarRight() {
         className="border border-r-meepGray-800"
         side="right"
       >
-        {!!explorer.id ? (
-          explorer.entity === 'area' ? (
-            <AreaExplorer gss={explorer.id} />
+        {explorer.isValidEntity(explorer.state) ? (
+          explorer.state.entity === 'area' ? (
+            <AreaExplorer gss={explorer.state.id} />
           ) : (
-            <RecordExplorer id={explorer.id} />
+            <RecordExplorer id={explorer.state.id} />
           )
         ) : (
           <div>

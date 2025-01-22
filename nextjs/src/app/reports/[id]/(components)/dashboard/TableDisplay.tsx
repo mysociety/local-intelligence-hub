@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/dialog'
 
 import { Button } from '@/components/ui/button'
-import { useExplorerState } from '@/lib/map'
+import { useExplorer } from '@/lib/map'
 import { allKeysFromAllData } from '@/lib/utils'
 import { useMemo } from 'react'
 
@@ -42,8 +42,6 @@ export function TableDisplay({
   title: string
   areaName: string
 }) {
-  const [_, setExplorerState] = useExplorerState()
-
   const cols: string[] = useMemo(() => {
     console.log('Raw data:', data)
     const columns = config?.columns || allKeysFromAllData(data)
@@ -79,14 +77,6 @@ export function TableDisplay({
     columns: dataTableColumns,
     getCoreRowModel: getCoreRowModel(),
   })
-
-  const handleRowClick = (row: any) => {
-    setExplorerState({
-      entity: 'record',
-      id: row.id,
-      showExplorer: true,
-    })
-  }
 
   return (
     <>
@@ -131,6 +121,21 @@ interface DataTableProps<TData> {
 }
 
 function TableComponent<TData>({ table }: DataTableProps<TData>) {
+  const explorer = useExplorer()
+
+  const handleRowClick = (id: any) => {
+    explorer.select(
+      {
+        entity: 'record',
+        id: String(id),
+        showExplorer: true,
+      },
+      {
+        bringIntoView: true,
+      }
+    )
+  }
+
   return (
     <Table>
       <TableHeader className="text-meepGray-400 font-mono uppercase">
@@ -155,6 +160,7 @@ function TableComponent<TData>({ table }: DataTableProps<TData>) {
             <TableRow
               key={row.id}
               data-state={row.getIsSelected() && 'selected'}
+              onClick={(d) => handleRowClick(row.id)}
             >
               {row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.id}>
