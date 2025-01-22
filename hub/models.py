@@ -803,13 +803,21 @@ class GenericData(CommonData):
         full_name = (
             self.full_name if self.full_name and len(self.full_name) > 0 else None
         )
-        merged_name = f"{self.first_name} {self.last_name}".strip()
-        # pick whichever is longer
-        resolved_name = (
-            full_name if len(full_name or "") > len(merged_name or "") else merged_name
+
+        merged_name = (
+            f"{self.first_name} {self.last_name}".strip()
+            if self.first_name
+            and self.last_name
+            and len(self.first_name) > 0
+            and len(self.last_name) > 0
+            else None
         )
 
-        for option in [resolved_name, self.first_name, self.last_name, self.title]:
+        # pick whichever is longer
+        if full_name and merged_name:
+            full_name = sorted([full_name, merged_name], key=len, reverse=True)[0]
+
+        for option in [full_name, self.first_name, self.last_name, self.title]:
             if option and len(option) > 0:
                 return option
 
