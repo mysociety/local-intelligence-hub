@@ -184,7 +184,7 @@ var makeChart = function() {
             layout: {
                 padding: {
                     // Some extra padding for the data labels.
-                    right: 30
+                    right: 35
                 }
             },
             scales: {
@@ -196,6 +196,9 @@ var makeChart = function() {
                     }
                 },
                 [primaryAxis]: {
+                    ticks: {
+                        autoSkip: false
+                    },
                     grid: {
                         display: false
                     }
@@ -247,8 +250,30 @@ var makeChart = function() {
 }
 
 var extractLabelsFromTable = function($table) {
+    var max_label_length = 28
     return $table.find('tbody tr').map(function(){
-        return $(this).find('th').text().trim()
+        var $l = $(this).find('th').text().trim()
+        // When labels are too long, they disappear off the edge of the chart.
+        // So, if this is a long label, split it into an array of shorter ones,
+        // which Chart.js will render on multiple lines.
+        if ($l.length > max_label_length) {
+            var bits = $l.split(' ')
+            var $lines = []
+            var $new_l = ''
+            bits.forEach((b) => {
+                if (($new_l.length + b.length + 1) > max_label_length) {
+                    $lines.push($new_l)
+                    $new_l = b + " "
+                } else {
+                    $new_l += b + " "
+                }
+            })
+            $lines.push($new_l)
+            $l = $lines
+        }
+        // Return this as an array as they get flattened out so we need an
+        // array of arrays for the multi line lables to work.
+        return [$l]
     }).get()
 }
 
