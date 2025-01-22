@@ -2,7 +2,7 @@ import ReportActions from '@/app/reports/[id]/(components)/ReportActions'
 import { useReport } from '@/app/reports/[id]/(components)/ReportProvider'
 
 import { contentEditableMutation } from '@/lib/html'
-import { useExplorerState, useSidebarLeftState } from '@/lib/map'
+import { useExplorer, useSidebarLeftState } from '@/lib/map'
 import { atom, useAtomValue } from 'jotai'
 import { PanelLeft, PanelRight } from 'lucide-react'
 import Link from 'next/link'
@@ -18,7 +18,7 @@ export default function ReportNavbar() {
   const title = useAtomValue(navbarTitleAtom)
   const { updateReport } = useReport()
   const leftSidebar = useSidebarLeftState()
-  const [explorer, setExplorer, rightSidebarToggle] = useExplorerState()
+  const explorer = useExplorer()
 
   return (
     <nav
@@ -51,9 +51,9 @@ export default function ReportNavbar() {
           <div className="flex flex-row items-center gap-0 ml-auto">
             <ReportComboBox />
             <ReportStarredItemsDropdown />
-            {!!explorer.id && !!explorer.entity && (
+            {!!explorer.isValidEntity(explorer.state) && (
               <PanelRight
-                onClick={rightSidebarToggle}
+                onClick={explorer.show}
                 className="text-meepGray-400 w-4 h-4 cursor-pointer ml-3"
               />
             )}

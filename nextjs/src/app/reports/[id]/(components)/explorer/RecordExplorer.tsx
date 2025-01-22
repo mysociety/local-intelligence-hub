@@ -6,26 +6,19 @@ import { DataSourceIcon } from '@/components/DataSourceIcon'
 import { Button } from '@/components/ui/button'
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  ExplorerState,
-  StarredState,
-  useExplorerState,
-  useLoadedMap,
-} from '@/lib/map'
+import { ExplorerState, StarredState, useExplorer } from '@/lib/map'
 import { gql, useQuery } from '@apollo/client'
 import { omit } from 'lodash'
-import { LucideLink, Star } from 'lucide-react'
+import { LucideLink, Star, TargetIcon } from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { useReport } from '../ReportProvider'
 import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
 import { exploreArea, formatPostalAddresses } from './utils'
 
 export function RecordExplorer({ id }: { id: string }) {
-  const [explorerState, setExplorerState] = useExplorerState()
-
   const [selectedTab, setSelectedTab] = useState('summary')
 
   // Query area details
@@ -69,17 +62,7 @@ export function RecordExplorer({ id }: { id: string }) {
     }
   }
 
-  const mapbox = useLoadedMap()
-
-  useEffect(() => {
-    if (data.data?.import?.geometry) {
-      mapbox.current?.flyTo({
-        center: data.data.import.geometry.coordinates as [number, number],
-        zoom: 14,
-      })
-      console.log('Fly to')
-    }
-  }, [data, mapbox])
+  const explorer = useExplorer()
 
   const contactOptions = [
     {
@@ -180,6 +163,11 @@ export function RecordExplorer({ id }: { id: string }) {
                       onClick={copyUrl}
                       className="ml-auto text-meepGray-400 hover:text-meepGray-200 cursor-pointer"
                       size={16}
+                    />
+                    <TargetIcon
+                      className="ml-auto text-meepGray-400 hover:text-meepGray-200 cursor-pointer"
+                      size={16}
+                      onClick={explorer.zoom}
                     />
                   </div>
                 </div>
