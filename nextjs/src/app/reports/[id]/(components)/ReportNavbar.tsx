@@ -53,7 +53,7 @@ export default function ReportNavbar() {
             <ReportStarredItemsDropdown />
             {!!explorer.isValidEntity(explorer.state) && (
               <PanelRight
-                onClick={explorer.show}
+                onClick={explorer.toggle}
                 className="text-meepGray-400 w-4 h-4 cursor-pointer ml-3"
               />
             )}
