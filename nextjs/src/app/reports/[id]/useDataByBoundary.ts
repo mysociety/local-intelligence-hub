@@ -23,7 +23,9 @@ const useDataByBoundary = ({
     variables: {
       sourceId: report?.displayOptions.dataVisualisation.dataSource!,
       boundaryType: boundaryType!,
-      field: report?.displayOptions.dataVisualisation.dataSourceField! || '',
+      mode: report?.displayOptions.dataVisualisation.choroplethMode,
+      field: report?.displayOptions.dataVisualisation.dataSourceField,
+      formula: report?.displayOptions.dataVisualisation.formula,
     },
     skip: !report?.displayOptions.dataVisualisation.dataSource || !boundaryType,
   })
@@ -35,12 +37,16 @@ const CHOROPLETH_STATS_FOR_SOURCE = gql`
   query SourceStatsByBoundary(
     $sourceId: String!
     $boundaryType: AnalyticalAreaType!
-    $field: String!
+    $mode: ChoroplethMode
+    $field: String
+    $formula: String
   ) {
     choroplethDataForSource(
       sourceId: $sourceId
       analyticalAreaKey: $boundaryType
+      mode: $mode
       field: $field
+      formula: $formula
     ) {
       label
       gss
