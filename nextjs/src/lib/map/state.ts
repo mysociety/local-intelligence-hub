@@ -59,6 +59,14 @@ export const starredStateResolver = explorerStateResolver.extend({
 
 export type StarredState = z.infer<typeof starredStateResolver>
 
+export const visiblePropertiesResolver = explorerStateResolver.extend({
+  visibleProperties: z.array(z.string()).optional(),
+})
+
+export type VisiblePropertiesState = z.infer<typeof visiblePropertiesResolver>
+
+export type VisibleProperties = z.infer<typeof visiblePropertiesResolver>
+
 export function useViewState() {
   return useQueryState('view', parseAsString)
 }

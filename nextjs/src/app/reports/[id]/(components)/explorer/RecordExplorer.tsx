@@ -13,8 +13,9 @@ import {
   useLoadedMap,
 } from '@/lib/map'
 import { gql, useQuery } from '@apollo/client'
+import clsx from 'clsx'
 import { omit } from 'lodash'
-import { LucideLink, Star } from 'lucide-react'
+import { LucideLink, Pencil, Star } from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
 import { useEffect, useState } from 'react'
@@ -141,6 +142,8 @@ export function RecordExplorer({ id }: { id: string }) {
     }
   }
 
+  const [editingProperties, setEditingProperties] = useState(false)
+
   return (
     <SidebarContent className="bg-meepGray-600 overflow-x-hidden">
       <SidebarHeader className="!text-white p-4 mb-0">
@@ -252,9 +255,23 @@ export function RecordExplorer({ id }: { id: string }) {
 
           {/* Raw data */}
           <section className="flex flex-col gap-2 px-4 py-4">
-            <div className="text-hSm text-white">Info</div>
+            <div className="flex flex-row justify-between gap-2 items-center">
+              <div className="text-hSm text-white">Info</div>
+              <Pencil
+                className={clsx(
+                  'w-4 h-4 text-meepGray-400 cursor-pointer',
+                  editingProperties ? 'fill-white' : 'fill-transparent'
+                )}
+                onClick={() => setEditingProperties(!editingProperties)}
+              />
+            </div>
+
             <div className="flex flex-col gap-2">
-              <PropertiesDisplay data={filteredData} />
+              <PropertiesDisplay
+                data={filteredData}
+                editing={editingProperties}
+                setEditing={setEditingProperties}
+              />
             </div>
           </section>
         </TabsContent>
