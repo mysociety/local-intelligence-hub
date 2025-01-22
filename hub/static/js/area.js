@@ -247,6 +247,8 @@ var makeChart = function() {
 }
 
 var extractLabelsFromTable = function($table) {
+    // if you set this too small, e.g 20 then labels that are split into more than 3 lines
+    // will not be displayed. I do not know why.
     var max_label_length = 30
     return $table.find('tbody tr').map(function(){
         var $l = $(this).find('th').text().trim()
