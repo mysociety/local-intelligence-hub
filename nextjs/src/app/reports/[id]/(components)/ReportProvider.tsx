@@ -5,14 +5,17 @@ import {
   DeleteMapReportMutation,
   DeleteMapReportMutationVariables,
   GetMapReportQuery,
-  InspectorDisplayType,
   MapLayerInput,
   PatchMapReportMutation,
   PatchMapReportMutationVariables,
   UpdateMapReportMutation,
   UpdateMapReportMutationVariables,
 } from '@/__generated__/graphql'
-import { StarredState, useSidebarLeftState } from '@/lib/map'
+import {
+  InspectorDisplayType,
+  StarredState,
+  useSidebarLeftState,
+} from '@/lib/map'
 import { prepareMapReportForInput } from '@/lib/map/mapReportUpdate'
 import { toastPromise } from '@/lib/toast'
 import { FetchResult, useApolloClient } from '@apollo/client'

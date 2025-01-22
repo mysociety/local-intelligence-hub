@@ -1561,14 +1561,6 @@ export type IdObject = {
   id: Scalars['String']['input'];
 };
 
-export enum InspectorDisplayType {
-  BigNumber = 'BigNumber',
-  ElectionResult = 'ElectionResult',
-  List = 'List',
-  Properties = 'Properties',
-  Table = 'Table'
-}
-
 export type IntFilterLookup = {
   contains?: InputMaybe<Scalars['Int']['input']>;
   endsWith?: InputMaybe<Scalars['Int']['input']>;
@@ -1769,7 +1761,7 @@ export type MapLayer = {
   iconImage?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   inspectorConfig?: Maybe<Scalars['JSON']['output']>;
-  inspectorType?: Maybe<InspectorDisplayType>;
+  inspectorType?: Maybe<Scalars['String']['output']>;
   isSharedSource: Scalars['Boolean']['output'];
   mapboxLayout?: Maybe<Scalars['JSON']['output']>;
   mapboxPaint?: Maybe<Scalars['JSON']['output']>;
@@ -3458,7 +3450,7 @@ export type GetMapReportQueryVariables = Exact<{
 }>;
 
 
-export type GetMapReportQuery = { __typename?: 'Query', mapReport: { __typename?: 'MapReport', id: any, name: string, slug: string, displayOptions: any, organisation: { __typename?: 'Organisation', id: string, slug: string, name: string }, layers: Array<{ __typename?: 'MapLayer', id: string, name: string, inspectorType?: InspectorDisplayType | null, inspectorConfig?: any | null, mapboxPaint?: any | null, mapboxLayout?: any | null, source: string, sharingPermission?: { __typename?: 'SharingPermission', visibilityRecordDetails?: boolean | null, visibilityRecordCoordinates?: boolean | null, organisation: { __typename?: 'PublicOrganisation', name: string } } | null, sourceData: { __typename?: 'SharedDataSource', id: any, name: string, isImportScheduled: boolean, importedDataCount: number, idField?: string | null, crmType: CrmType, dataType: DataSourceType, organisation: { __typename?: 'PublicOrganisation', name: string }, fieldDefinitions?: Array<{ __typename?: 'FieldDefinition', externalId?: string | null, value: string, label?: string | null }> | null } }> } };
+export type GetMapReportQuery = { __typename?: 'Query', mapReport: { __typename?: 'MapReport', id: any, name: string, slug: string, displayOptions: any, organisation: { __typename?: 'Organisation', id: string, slug: string, name: string }, layers: Array<{ __typename?: 'MapLayer', id: string, name: string, inspectorType?: string | null, inspectorConfig?: any | null, mapboxPaint?: any | null, mapboxLayout?: any | null, source: string, sharingPermission?: { __typename?: 'SharingPermission', visibilityRecordDetails?: boolean | null, visibilityRecordCoordinates?: boolean | null, organisation: { __typename?: 'PublicOrganisation', name: string } } | null, sourceData: { __typename?: 'SharedDataSource', id: any, name: string, isImportScheduled: boolean, importedDataCount: number, idField?: string | null, crmType: CrmType, dataType: DataSourceType, organisation: { __typename?: 'PublicOrganisation', name: string }, fieldDefinitions?: Array<{ __typename?: 'FieldDefinition', externalId?: string | null, value: string, label?: string | null }> | null } }> } };
 
 export type PatchMapReportMutationVariables = Exact<{
   patch: Scalars['JSON']['input'];
@@ -3466,14 +3458,14 @@ export type PatchMapReportMutationVariables = Exact<{
 }>;
 
 
-export type PatchMapReportMutation = { __typename?: 'Mutation', patchMapReportDisplayOptions: { __typename?: 'MapReport', id: any, name: string, displayOptions: any, layers: Array<{ __typename?: 'MapLayer', id: string, name: string, source: string, inspectorType?: InspectorDisplayType | null, inspectorConfig?: any | null, mapboxPaint?: any | null, mapboxLayout?: any | null, sourceData: { __typename?: 'SharedDataSource', id: any, name: string } }> } };
+export type PatchMapReportMutation = { __typename?: 'Mutation', patchMapReportDisplayOptions: { __typename?: 'MapReport', id: any, name: string, displayOptions: any, layers: Array<{ __typename?: 'MapLayer', id: string, name: string, source: string, inspectorType?: string | null, inspectorConfig?: any | null, mapboxPaint?: any | null, mapboxLayout?: any | null, sourceData: { __typename?: 'SharedDataSource', id: any, name: string } }> } };
 
 export type UpdateMapReportMutationVariables = Exact<{
   input: MapReportInput;
 }>;
 
 
-export type UpdateMapReportMutation = { __typename?: 'Mutation', updateMapReport: { __typename?: 'MapReport', id: any, name: string, displayOptions: any, layers: Array<{ __typename?: 'MapLayer', id: string, name: string, source: string, inspectorType?: InspectorDisplayType | null, inspectorConfig?: any | null, mapboxPaint?: any | null, mapboxLayout?: any | null, sourceData: { __typename?: 'SharedDataSource', id: any, name: string } }> } };
+export type UpdateMapReportMutation = { __typename?: 'Mutation', updateMapReport: { __typename?: 'MapReport', id: any, name: string, displayOptions: any, layers: Array<{ __typename?: 'MapLayer', id: string, name: string, source: string, inspectorType?: string | null, inspectorConfig?: any | null, mapboxPaint?: any | null, mapboxLayout?: any | null, sourceData: { __typename?: 'SharedDataSource', id: any, name: string } }> } };
 
 export type DeleteMapReportMutationVariables = Exact<{
   id: IdObject;

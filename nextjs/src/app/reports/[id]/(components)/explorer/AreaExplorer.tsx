@@ -5,7 +5,6 @@ import {
   AreaLayerDataQuery,
   AreaLayerDataQueryVariables,
   DataSourceType,
-  InspectorDisplayType,
   MapLayer,
 } from '@/__generated__/graphql'
 import { DataSourceIcon } from '@/components/DataSourceIcon'
@@ -23,6 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   ExplorerAreaBreadCrumbMapping,
   ExplorerState,
+  InspectorDisplayType,
   StarredState,
   useExplorer,
 } from '@/lib/map'
@@ -34,6 +34,7 @@ import pluralize from 'pluralize'
 import queryString from 'query-string'
 import { Fragment, useState } from 'react'
 import { toast } from 'sonner'
+import toSpaceCase from 'to-space-case'
 import trigramSimilarity from 'trigram-similarity'
 import CollapsibleSection from '../CollapsibleSection'
 import { useReport } from '../ReportProvider'
@@ -221,7 +222,7 @@ function AreaLayerData({
           <LoadingIcon size={'32px'} />
         </div>
       ) : data.error || !data.data ? (
-        <div className="text-xl text-meepGray-400 text-center py-12 px-2">
+        <div className="text-xl text-meepGray-400 py-8">
           No data available for this area
         </div>
       ) : (
@@ -272,12 +273,20 @@ function AreaLayerData({
               count={data.data?.directAndIndirectlyRelated?.length}
               dataType={layer.sourceData.dataType}
             />
-          ) : (
+          ) : layer.inspectorType === InspectorDisplayType.BigRecord ? (
+            <BigRecord
+              item={data.data?.directAndIndirectlyRelated?.[0]}
+              config={layer.inspectorConfig}
+              dataType={layer.sourceData.dataType}
+            />
+          ) : layer.inspectorType === InspectorDisplayType.List ? (
             <ListDisplay
               data={data.data?.directAndIndirectlyRelated}
               config={layer.inspectorConfig}
               dataType={layer.sourceData.dataType}
             />
+          ) : (
+            JSON.stringify(data.data)
           )}
         </div>
       )}
@@ -359,17 +368,13 @@ function ElectionResultsDisplay({
   data,
   config,
 }: {
-  data: AreaLayerDataQuery['summary']
+  data?: AreaLayerDataQuery['summary']
   config: {
     voteCountFields: string[]
   }
 }) {
-  if (!data?.aggregated) {
-    return (
-      <div className="text-xl text-meepGray-400 text-center py-12 px-2">
-        No election data available
-      </div>
-    )
+  if (!data || !data?.aggregated) {
+    return <div className="text-meepGray-400 py-2">No data available</div>
   }
 
   const total =
@@ -474,7 +479,7 @@ const partyColourMap = {
 }
 
 function BigNumberDisplay({
-  count,
+  count = 0,
   dataType,
 }: {
   count: number
@@ -495,75 +500,14 @@ function ListDisplay({
   config,
   dataType,
 }: {
-  data: AreaLayerDataQuery['directAndIndirectlyRelated']
+  data?: AreaLayerDataQuery['directAndIndirectlyRelated']
   config: {
     columns: string[]
   }
   dataType: DataSourceType
 }) {
-  function getListValuesBasedOnDataType(
-    item: AreaLayerDataQuery['directAndIndirectlyRelated'][0]
-  ) {
-    type ListValues = {
-      primary: any[]
-      secondary: any[]
-    }
-
-    switch (dataType) {
-      case DataSourceType.Member:
-        return {
-          primary: [
-            item.firstName ||
-              item.lastName ||
-              item.fullName ||
-              item.id ||
-              `Unnamed ${capitalize(dataType)}`,
-          ],
-          secondary: [item.postcode],
-        } satisfies ListValues
-      case DataSourceType.Event: {
-        return {
-          primary: [item.title],
-          secondary: [
-            item.startTime ||
-              item.date ||
-              item.postcode ||
-              item.id ||
-              `Unnamed ${capitalize(dataType)}`,
-          ],
-        } satisfies ListValues
-      }
-      case DataSourceType.Group: {
-        return {
-          primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
-          secondary: [item.date],
-        } satisfies ListValues
-      }
-      case DataSourceType.AreaStats: {
-        return {
-          primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
-          secondary: [item.date],
-        } satisfies ListValues
-      }
-      case DataSourceType.Location: {
-        return {
-          primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
-          secondary: [item.date],
-        } satisfies ListValues
-      }
-      case DataSourceType.Other: {
-        return {
-          primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
-          secondary: [item.date],
-        } satisfies ListValues
-      }
-      case DataSourceType.Story: {
-        return {
-          primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
-          secondary: [item.date],
-        } satisfies ListValues
-      }
-    }
+  if (!data || !data.length) {
+    return <div className="text-meepGray-400 py-2">No data available</div>
   }
 
   const explorer = useExplorer()
@@ -571,7 +515,10 @@ function ListDisplay({
   return (
     <div className="bg-meepGray-700 rounded-md max-h-[30vh] overflow-y-auto">
       {data?.map((item: any) => {
-        const { primary, secondary } = getListValuesBasedOnDataType(item)
+        const { primary, secondary } = getListValuesBasedOnDataType(
+          item,
+          dataType
+        )
         const isActive = explorer.isValidEntity(explorer.state)
 
         return (
@@ -608,6 +555,127 @@ function ListDisplay({
       })}
     </div>
   )
+}
+
+function BigRecord({
+  item,
+  config,
+  dataType,
+}: {
+  item?: AreaLayerDataQuery['directAndIndirectlyRelated'][0]
+  config: {
+    columns: string[]
+  }
+  dataType: DataSourceType
+}) {
+  if (!item) {
+    return <div className="text-meepGray-400 py-2">No data available</div>
+  }
+
+  const explorer = useExplorer()
+  const { primary, secondary } = getListValuesBasedOnDataType(item, dataType)
+  const isActive = explorer.isValidEntity(explorer.state)
+
+  return (
+    <div
+      className="justify-start items-center flex gap-1 cursor-pointer pt-1 pb-2"
+      onClick={() => {
+        explorer.select(
+          {
+            entity: 'record',
+            id: item.id,
+            showExplorer: true,
+          },
+          {
+            bringIntoView: true,
+          }
+        )
+      }}
+    >
+      <div className="inline-flex justify-center items-center w-11 h-11 bg-primary border rounded-full">
+        <DataSourceTypeIcon
+          dataType={
+            dataType === DataSourceType.AreaStats ? undefined : dataType
+          }
+          defaultIcon={MapPinIcon}
+          className="w-6 h-6"
+        />
+      </div>
+      <div>
+        <div className="text-white text-base flex flex-col gap-1">
+          {primary}
+        </div>
+        {!!secondary && (
+          <div className="ml-auto flex flex-col gap-1 text-meepGray-400 uppercase text-sm">
+            {secondary}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function getListValuesBasedOnDataType(
+  item: AreaLayerDataQuery['directAndIndirectlyRelated'][0],
+  dataType: DataSourceType
+) {
+  type ListValues = {
+    primary: any[]
+    secondary: any[]
+  }
+
+  const humanReadableDataType = toSpaceCase(dataType)
+
+  switch (dataType) {
+    case DataSourceType.Member:
+      return {
+        primary: [
+          item.firstName ||
+            item.lastName ||
+            item.fullName ||
+            `Unnamed ${capitalize(dataType)}`,
+        ],
+        secondary: [item.postcode || humanReadableDataType],
+      } satisfies ListValues
+    case DataSourceType.Event: {
+      return {
+        primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
+        secondary: [
+          item.startTime || item.date || item.postcode || humanReadableDataType,
+        ],
+      } satisfies ListValues
+    }
+    case DataSourceType.Group: {
+      return {
+        primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
+        secondary: [item.date || humanReadableDataType],
+      } satisfies ListValues
+    }
+    case DataSourceType.AreaStats: {
+      return {
+        primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
+        secondary: [item.date || humanReadableDataType],
+      } satisfies ListValues
+    }
+    case DataSourceType.Location: {
+      return {
+        primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
+        secondary: [item.date || humanReadableDataType],
+      } satisfies ListValues
+    }
+    case DataSourceType.Other: {
+      return {
+        primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
+        secondary: [item.date || humanReadableDataType],
+      } satisfies ListValues
+    }
+    case DataSourceType.Story: {
+      return {
+        primary: [item.title || item.id || `Unnamed ${capitalize(dataType)}`],
+        secondary: [item.date || humanReadableDataType],
+      } satisfies ListValues
+    }
+  }
 }
 
 function AreaExplorerBreadcrumbs({

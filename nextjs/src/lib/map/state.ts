@@ -196,3 +196,12 @@ export const layerEditorStateAtom = atom<
 >({
   open: false,
 })
+
+export enum InspectorDisplayType {
+  BigNumber = 'BigNumber',
+  BigRecord = 'BigRecord',
+  ElectionResult = 'ElectionResult',
+  List = 'List',
+  Properties = 'Properties',
+  Table = 'Table',
+}
