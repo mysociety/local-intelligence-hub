@@ -248,7 +248,28 @@ var makeChart = function() {
 
 var extractLabelsFromTable = function($table) {
     return $table.find('tbody tr').map(function(){
-        return $(this).find('th').text().trim()
+        var $l = $(this).find('th').text().trim()
+        // there is only really room in the chart for 30 characters so if the label
+        // is longer we need to split it into chunks at word boundaries. chartjs renders
+        // an array label as multuple lines.
+        if ($l.length > 30) {
+            var bits = $l.split(' ')
+            var $lines = []
+            var $new_l = ''
+            bits.forEach((b) => {
+                if (($new_l.length + b.length + 1) > 30) {
+                    $lines.push($new_l)
+                    $new_l = b + " "
+                } else {
+                    $new_l += b + " "
+                }
+            })
+            $lines.push($new_l)
+            $l = $lines
+        }
+        // return this as an array as they get flattened out so we need an array of arrays
+        // for the multi line lables to work
+        return [$l]
     }).get()
 }
 
