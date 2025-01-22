@@ -42,18 +42,10 @@ class Command(BaseCommand):
     without causing primary key conflicts.
     """
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-o",
-            "--overwrite",
-            action="store_true",
-            help="Replace existing output file.",
-        )
-
-    def handle(self, overwrite, *args, **options):
+    def handle(self, *args, **options):
         print("Exporting areas and area types from current database to data/areas.psql")
         count = 0
-        filename = "areas.psql" if overwrite else f"areas.{time.time()}.psql"
+        filename = "areas.psql"
         output_file: Path = settings.BASE_DIR / "data" / filename
         with output_file.open("w", encoding="utf8") as f:
             for table_config in TABLES:
@@ -71,7 +63,7 @@ class Command(BaseCommand):
         zip_filename = f"{filename}.zip"
         zip_file: Path = settings.BASE_DIR / "data" / zip_filename
         zip = zipfile.ZipFile(zip_file, "w", zipfile.ZIP_DEFLATED)
-        zip.write(output_file)
+        zip.write(output_file, arcname=filename)
         zip.close()
 
         print(f"Compressed {count} rows to data/{zip_filename}")
