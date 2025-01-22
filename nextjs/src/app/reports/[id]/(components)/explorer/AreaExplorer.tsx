@@ -5,10 +5,10 @@ import {
   AreaLayerDataQuery,
   AreaLayerDataQueryVariables,
   DataSourceType,
-  InspectorDisplayType,
   MapLayer,
 } from '@/__generated__/graphql'
 import { DataSourceIcon } from '@/components/DataSourceIcon'
+import { DataSourceTypeIcon } from '@/components/icons/DataSourceType'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -22,25 +22,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   ExplorerAreaBreadCrumbMapping,
   ExplorerState,
+  InspectorDisplayType,
   StarredState,
-  useExplorerState,
-  useLoadedMap,
+  useExplorer,
 } from '@/lib/map'
 import { gql, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
 import { sum } from 'lodash'
-import { LucideLink, Star } from 'lucide-react'
+import { LucideLink, MapPinIcon, Star, TargetIcon } from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useState } from 'react'
 import { toast } from 'sonner'
+import toSpaceCase from 'to-space-case'
 import trigramSimilarity from 'trigram-similarity'
 import CollapsibleSection from '../CollapsibleSection'
 import { useReport } from '../ReportProvider'
 import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
 import { TableDisplay } from '../dashboard/TableDisplay'
+
 export function AreaExplorer({ gss }: { gss: string }) {
   const [selectedTab, setSelectedTab] = useState('summary')
+  const explorer = useExplorer()
 
   // Query area details
   const areaData = useQuery<
@@ -50,17 +53,6 @@ export function AreaExplorer({ gss }: { gss: string }) {
     variables: { gss },
     skip: !gss,
   })
-
-  const mapbox = useLoadedMap()
-
-  useEffect(() => {
-    if (areaData.data?.area?.fitBounds) {
-      // use loadedMap to get the current map as useMap() hook returns undefined when not a direct descendant of MapProvider
-      mapbox.loadedMap?.fitBounds(areaData.data.area.fitBounds as any, {
-        padding: 100,
-      })
-    }
-  }, [gss, areaData.data, mapbox, mapbox.loaded, mapbox.current])
 
   const report = useReport()
   const isStarred = report.report.displayOptions.starred?.some(
@@ -86,6 +78,7 @@ export function AreaExplorer({ gss }: { gss: string }) {
     <SidebarContent className="bg-meepGray-600 overflow-x-hidden h-full">
       <SidebarHeader className="!text-white p-4 mb-0">
         <>
+          <AreaExplorerBreadcrumbs area={areaData.data?.area} />
           <div className="text-hMd flex flex-row gap-2 w-full items-center">
             {areaData.loading ? (
               <span className="text-meepGray-400">Loading...</span>
@@ -108,6 +101,11 @@ export function AreaExplorer({ gss }: { gss: string }) {
                     onClick={copyAreaURL}
                     className="ml-auto text-meepGray-400 hover:text-meepGray-200 cursor-pointer"
                     size={16}
+                  />
+                  <TargetIcon
+                    className="ml-auto text-meepGray-400 hover:text-meepGray-200 cursor-pointer"
+                    size={16}
+                    onClick={explorer.zoom}
                   />
                 </div>
               </>
@@ -224,36 +222,32 @@ function AreaLayerData({
           <LoadingIcon size={'32px'} />
         </div>
       ) : data.error || !data.data ? (
-        <div className="text-xl text-meepGray-400 text-center py-12 px-2">
-          No data available for this area
-        </div>
+        <div className="text-meepGray-400 py-2">No data available</div>
       ) : (
         <div className="text-meepGray-400">
           {layer.inspectorType === InspectorDisplayType.Properties ? (
             <PropertiesDisplay
               data={
-                // If we're looking at an area with no single data point, use the summary data
-                (!data.data?.row || !Object.keys(data.data.row).length) &&
-                data.data?.summary?.aggregated
-                  ? data.data?.summary?.aggregated
-                  : // Else we're looking at something that has a single data point
-                    data.data?.row?.aggregated &&
-                      Object.keys(data.data.row).length > 0 &&
-                      data.data?.points?.length
-                    ? // if we have point data, use this so we can display string values
-                      data.data?.points[0].json
-                    : // else use the summary data
-                      data.data?.row?.aggregated ||
-                      data.data?.summary?.aggregated
+                // If it's area stats, prefer summary, then indirectly, then directly data
+                // Otherwise prefer directlyAndIndirectly, then summary
+                layer.sourceData.dataType === DataSourceType.AreaStats
+                  ? data.data?.summary?.aggregated ||
+                    data.data?.directAndIndirectlyRelated?.[0]?.json ||
+                    data.data?.directlyRelated?.[0]?.json
+                  : data.data?.directAndIndirectlyRelated?.[0]?.json
               }
               config={layer.inspectorConfig}
             />
           ) : layer.inspectorType === InspectorDisplayType.Table ? (
             <TableDisplay
               data={
+                // If it's area stats, prefer summary, then indirectly, then directly data
+                // Otherwise prefer directlyAndIndirectly, then summary
                 layer.sourceData.dataType === DataSourceType.AreaStats
-                  ? [data.data?.summary?.aggregated]
-                  : data.data?.points.map((p) => p.json)
+                  ? data.data?.summary?.aggregated ||
+                    data.data?.directAndIndirectlyRelated?.[0]?.json ||
+                    data.data?.directlyRelated?.[0]?.json
+                  : data.data?.directAndIndirectlyRelated?.[0]?.json
               }
               config={layer.inspectorConfig}
               title={layer.name}
@@ -261,31 +255,55 @@ function AreaLayerData({
             />
           ) : layer.inspectorType === InspectorDisplayType.ElectionResult ? (
             <ElectionResultsDisplay
-              data={data.data?.row || data.data?.summary}
+              data={
+                // If it's area stats, prefer summary, then indirectly, then directly data
+                // Otherwise prefer directlyAndIndirectly, then summary
+                layer.sourceData.dataType === DataSourceType.AreaStats
+                  ? data.data?.summary?.aggregated ||
+                    data.data?.directAndIndirectlyRelated?.[0]?.json ||
+                    data.data?.directlyRelated?.[0]?.json
+                  : data.data?.directAndIndirectlyRelated?.[0]?.json
+              }
               config={layer.inspectorConfig}
             />
           ) : layer.inspectorType === InspectorDisplayType.BigNumber ? (
             <BigNumberDisplay
-              count={data.data?.points.length}
+              count={data.data?.directAndIndirectlyRelated?.length}
               dataType={layer.sourceData.dataType}
             />
-          ) : (
-            <ListDisplay
-              data={data.data?.points}
+          ) : layer.inspectorType === InspectorDisplayType.BigRecord ? (
+            <BigRecord
+              item={data.data?.directAndIndirectlyRelated?.[0]}
               config={layer.inspectorConfig}
               dataType={layer.sourceData.dataType}
             />
+          ) : layer.inspectorType === InspectorDisplayType.List ? (
+            <ListDisplay
+              data={data.data?.directAndIndirectlyRelated}
+              config={layer.inspectorConfig}
+              dataType={layer.sourceData.dataType}
+            />
+          ) : (
+            JSON.stringify(data.data)
           )}
         </div>
       )}
-      <div className="text-meepGray-400 text-sm flex flex-row items-center gap-1 mt-2">
+      <a
+        className="text-meepGray-400 text-sm flex flex-row items-center gap-1 mt-2"
+        {...(!!layer.sourceData.remoteUrl && {
+          href: layer.sourceData.remoteUrl,
+          target: '_blank',
+        })}
+      >
         Source:{' '}
         <DataSourceIcon
           crmType={layer.sourceData.crmType}
           className="w-5 h-5"
         />{' '}
-        {layer.sourceData.name}
-      </div>
+        <span className="underline hover:text-meepGray-300">
+          {layer.sourceData.name}
+        </span>
+      </a>
     </CollapsibleSection>
   )
 }
@@ -293,9 +311,11 @@ function AreaLayerData({
 const AREA_LAYER_DATA = gql`
   query AreaLayerData($gss: String!, $externalDataSource: String!) {
     # collect point data
-    points: genericDataFromSourceAboutArea(
+    directlyRelated: genericDataFromSourceAboutArea(
       gss: $gss
       sourceId: $externalDataSource
+      rollup: false
+      points: false
     ) {
       json
       id
@@ -303,36 +323,39 @@ const AREA_LAYER_DATA = gql`
       postcode
       date
       description
+      name
       fullName
       lastName
       firstName
       title
       publicUrl
     }
-    # rolled up area data up to this GSS code
+    # collect point data
+    directAndIndirectlyRelated: genericDataFromSourceAboutArea(
+      gss: $gss
+      sourceId: $externalDataSource
+      points: true
+      rollup: true
+    ) {
+      json
+      id
+      startTime
+      postcode
+      date
+      description
+      name
+      fullName
+      lastName
+      firstName
+      title
+      publicUrl
+    }
+    # aggregate statistics about any data related to this area
     summary: genericDataSummaryFromSourceAboutArea(
       gss: $gss
       sourceId: $externalDataSource
-      points: false
-    ) {
-      aggregated
-      metadata {
-        first
-        second
-        third
-        last
-        total
-        count
-        mean
-        median
-      }
-    }
-    # for specific pieces of data for this GSS code
-    row: genericDataSummaryFromSourceAboutArea(
-      gss: $gss
-      sourceId: $externalDataSource
-      rollup: false
-      points: false
+      rollup: true
+      points: true
     ) {
       aggregated
       metadata {
@@ -353,17 +376,13 @@ function ElectionResultsDisplay({
   data,
   config,
 }: {
-  data: AreaLayerDataQuery['summary']
+  data?: AreaLayerDataQuery['summary']
   config: {
     voteCountFields: string[]
   }
 }) {
-  if (!data?.aggregated) {
-    return (
-      <div className="text-xl text-meepGray-400 text-center py-12 px-2">
-        No election data available
-      </div>
-    )
+  if (!data || !data?.aggregated) {
+    return <div className="text-meepGray-400 py-2">No data available</div>
   }
 
   const total =
@@ -468,7 +487,7 @@ const partyColourMap = {
 }
 
 function BigNumberDisplay({
-  count,
+  count = 0,
   dataType,
 }: {
   count: number
@@ -489,88 +508,54 @@ function ListDisplay({
   config,
   dataType,
 }: {
-  data: AreaLayerDataQuery['points']
+  data?: AreaLayerDataQuery['directAndIndirectlyRelated']
   config: {
     columns: string[]
   }
   dataType: DataSourceType
 }) {
-  function getListValuesBasedOnDataType(item: any) {
-    type ListValues = {
-      primary: string[]
-      secondary: string[]
-    }
+  const explorer = useExplorer()
 
-    switch (dataType) {
-      case DataSourceType.Member:
-        return {
-          primary: [item.firstName || item.lastName || item.fullName],
-          secondary: [item.postcode],
-        } satisfies ListValues
-      case DataSourceType.Event: {
-        return {
-          primary: [item.title],
-          secondary: [item.startTime || item.date || item.postcode],
-        } satisfies ListValues
-      }
-      case DataSourceType.Group: {
-        return {
-          primary: [item.name],
-          secondary: [item.date],
-        } satisfies ListValues
-      }
-      case DataSourceType.AreaStats: {
-        return {
-          primary: [item.name],
-          secondary: [item.date],
-        } satisfies ListValues
-      }
-      case DataSourceType.Location: {
-        return {
-          primary: [item.name],
-          secondary: [item.date],
-        } satisfies ListValues
-      }
-      case DataSourceType.Other: {
-        return {
-          primary: [item.name],
-          secondary: [item.date],
-        } satisfies ListValues
-      }
-      case DataSourceType.Story: {
-        return {
-          primary: [item.name],
-          secondary: [item.date],
-        } satisfies ListValues
-      }
-    }
+  if (!data || !data.length) {
+    return <div className="text-meepGray-400 py-2">No data available</div>
   }
-
-  const [explorerState, setExplorerState] = useExplorerState()
 
   return (
     <div className="bg-meepGray-700 rounded-md max-h-[30vh] overflow-y-auto">
       {data?.map((item: any) => {
-        const { primary, secondary } = getListValuesBasedOnDataType(item)
-        const isActive =
-          explorerState.entity === 'record' && explorerState.id === item.id
+        const { primary, secondary } = getListValuesBasedOnDataType(
+          item,
+          dataType
+        )
+        const isActive = explorer.isValidEntity(explorer.state)
 
         return (
           <div
             key={item.id}
-            className={`text-meepGray-200 justify-between flex font-mono text-sm hover:bg-meepGray-800 p-2 cursor-pointer border-b border-meepGray-800 ${
+            className={`text-meepGray-200 justify-start flex gap-1 font-mono text-sm hover:bg-meepGray-800 p-2 cursor-pointer border-b border-meepGray-800 ${
               isActive ? 'bg-white text-meepGray-800 hover:bg-white' : ''
             }`}
             onClick={() => {
-              setExplorerState({
-                entity: 'record',
-                id: item.id,
-                showExplorer: true,
-              })
+              explorer.select(
+                {
+                  entity: 'record',
+                  id: item.id,
+                  showExplorer: true,
+                },
+                {
+                  bringIntoView: true,
+                }
+              )
             }}
           >
+            <DataSourceTypeIcon
+              dataType={
+                dataType === DataSourceType.AreaStats ? undefined : dataType
+              }
+              defaultIcon={MapPinIcon}
+            />
             <div className="flex flex-col gap-1">{primary}</div>
-            <div className="flex flex-col gap-1 text-meepGray-400">
+            <div className="ml-auto flex flex-col gap-1 text-meepGray-400">
               {secondary}
             </div>
           </div>
@@ -580,12 +565,131 @@ function ListDisplay({
   )
 }
 
+function BigRecord({
+  item,
+  config,
+  dataType,
+}: {
+  item?: AreaLayerDataQuery['directAndIndirectlyRelated'][0]
+  config: {
+    columns: string[]
+  }
+  dataType: DataSourceType
+}) {
+  const explorer = useExplorer()
+
+  if (!item) {
+    return <div className="text-meepGray-400 py-2">No data available</div>
+  }
+
+  const { primary, secondary } = getListValuesBasedOnDataType(item, dataType)
+  const isActive = explorer.isValidEntity(explorer.state)
+
+  return (
+    <div
+      className="justify-start items-center flex gap-1 cursor-pointer pt-1 pb-2"
+      onClick={() => {
+        explorer.select(
+          {
+            entity: 'record',
+            id: item.id,
+            showExplorer: true,
+          },
+          {
+            bringIntoView: true,
+          }
+        )
+      }}
+    >
+      <div className="inline-flex justify-center items-center w-11 h-11 bg-primary border rounded-full">
+        <DataSourceTypeIcon
+          dataType={
+            dataType === DataSourceType.AreaStats ? undefined : dataType
+          }
+          defaultIcon={MapPinIcon}
+          className="w-6 h-6"
+        />
+      </div>
+      <div>
+        <div className="text-white text-base flex flex-col gap-1">
+          {primary}
+        </div>
+        {!!secondary && (
+          <div className="ml-auto flex flex-col gap-1 text-meepGray-400 uppercase text-sm">
+            {secondary}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function getListValuesBasedOnDataType(
+  item: AreaLayerDataQuery['directAndIndirectlyRelated'][0],
+  dataType: DataSourceType
+) {
+  type ListValues = {
+    primary: any[]
+    secondary: any[]
+  }
+
+  const humanReadableDataType = toSpaceCase(dataType)
+  const noun = dataType ? toSpaceCase(dataType) : 'record'
+  const unnamedRecordName = `Unnamed ${toSpaceCase(noun)}`
+
+  switch (dataType) {
+    case DataSourceType.Member:
+      return {
+        primary: [item.name || unnamedRecordName],
+        secondary: [item.postcode || humanReadableDataType],
+      } satisfies ListValues
+    case DataSourceType.Event: {
+      return {
+        primary: [item.name || unnamedRecordName],
+        secondary: [
+          item.startTime || item.date || item.postcode || humanReadableDataType,
+        ],
+      } satisfies ListValues
+    }
+    case DataSourceType.Group: {
+      return {
+        primary: [item.name || unnamedRecordName],
+        secondary: [item.date || humanReadableDataType],
+      } satisfies ListValues
+    }
+    case DataSourceType.AreaStats: {
+      return {
+        primary: [item.name || unnamedRecordName],
+        secondary: [item.date || humanReadableDataType],
+      } satisfies ListValues
+    }
+    case DataSourceType.Location: {
+      return {
+        primary: [item.name || unnamedRecordName],
+        secondary: [item.date || humanReadableDataType],
+      } satisfies ListValues
+    }
+    case DataSourceType.Other: {
+      return {
+        primary: [item.name || unnamedRecordName],
+        secondary: [item.date || humanReadableDataType],
+      } satisfies ListValues
+    }
+    case DataSourceType.Story: {
+      return {
+        primary: [item.name || unnamedRecordName],
+        secondary: [item.date || humanReadableDataType],
+      } satisfies ListValues
+    }
+  }
+}
+
 function AreaExplorerBreadcrumbs({
   area,
 }: {
   area: AreaExplorerSummaryQuery['area']
 }) {
-  const [explorerState, setExplorerState] = useExplorerState()
+  const explorer = useExplorer()
 
   const { updateReport } = useReport()
 
@@ -644,11 +748,16 @@ function AreaExplorerBreadcrumbs({
     code: string
     type: AnalyticalAreaType
   }) {
-    setExplorerState({
-      id: crumb.code,
-      entity: 'area',
-      showExplorer: true,
-    })
+    explorer.select(
+      {
+        id: crumb.code,
+        entity: 'area',
+        showExplorer: true,
+      },
+      {
+        bringIntoView: true,
+      }
+    )
 
     updateReport((draft) => {
       draft.displayOptions.dataVisualisation.boundaryType = crumb.type

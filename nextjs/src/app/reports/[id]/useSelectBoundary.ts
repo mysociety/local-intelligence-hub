@@ -1,11 +1,10 @@
 'use client'
-import { useExplorerState, useLoadedMap } from '@/lib/map'
+import { useLoadedMap } from '@/lib/map'
 import { useEffect } from 'react'
 import { Tileset } from './types'
 
 const useHoverOverBoundaryEvents = (tileset?: Tileset | null) => {
   const { loadedMap } = useLoadedMap()
-  const [explorer, setDetail] = useExplorerState()
 
   useEffect(
     function selectConstituency() {
@@ -21,7 +20,7 @@ const useHoverOverBoundaryEvents = (tileset?: Tileset | null) => {
         canvas.style.cursor = ''
       })
     },
-    [loadedMap, tileset, explorer, setDetail]
+    [loadedMap, tileset]
   )
 }
 

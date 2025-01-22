@@ -19,6 +19,10 @@ export function PropertiesDisplay({
 }) {
   const indentLevel = 0
 
+  if (data === null || data === undefined) {
+    return <div className="text-meepGray-400 py-2">No data available</div>
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <FormatValue

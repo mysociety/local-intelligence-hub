@@ -1,7 +1,7 @@
 import { useReport } from '@/app/reports/[id]/(components)/ReportProvider'
 import { BACKEND_URL } from '@/env'
 import { authenticationHeaders } from '@/lib/auth'
-import { useExplorerState } from '@/lib/map'
+import { useExplorer } from '@/lib/map'
 import { RequestTransformFunction } from 'mapbox-gl'
 import React from 'react'
 import Map from 'react-map-gl'
@@ -29,7 +29,7 @@ const LocalisedMap: React.FC<LocalisedMapProps> = ({
   mapKey,
 }) => {
   const report = useReport()
-  const explorer = useExplorerState()
+  const explorer = useExplorer()
 
   return (
     <Map

@@ -1,5 +1,6 @@
 import {
   AnalyticalAreaType,
+  ChoroplethMode,
   DataSourceType,
   MapLayerInput,
   MapReport,
@@ -112,7 +113,12 @@ export const reportConfigTypeChecker = z.object({
     palette: z.nativeEnum(Palette).optional(),
     paletteReversed: z.boolean().optional(),
     dataSource: z.string().optional(),
+    choroplethMode: z
+      .nativeEnum(ChoroplethMode)
+      .optional()
+      .default(ChoroplethMode.Count),
     dataSourceField: z.string().optional(),
+    formula: z.string().optional(),
     showDataVisualisation: z
       .record(z.boolean())
       .optional()
@@ -138,6 +144,7 @@ export const defaultReportConfig: ReportConfig = {
   dataVisualisation: {
     boundaryType: AnalyticalAreaType.ParliamentaryConstituency_2024,
     visualisationType: VisualisationType.Choropleth,
+    choroplethMode: ChoroplethMode.Count,
     palette: Palette.Blue,
     paletteReversed: false,
   },

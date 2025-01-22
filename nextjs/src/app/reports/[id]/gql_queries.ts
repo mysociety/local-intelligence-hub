@@ -96,6 +96,7 @@ export const GET_MAP_REPORT = gql`
           idField
           crmType
           dataType
+          remoteUrl
           organisation {
             name
           }

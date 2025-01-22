@@ -5,7 +5,6 @@ import {
   DeleteMapReportMutation,
   DeleteMapReportMutationVariables,
   GetMapReportQuery,
-  InspectorDisplayType,
   MapLayerInput,
   PatchMapReportMutation,
   PatchMapReportMutationVariables,
@@ -13,6 +12,7 @@ import {
   UpdateMapReportMutationVariables,
 } from '@/__generated__/graphql'
 import {
+  InspectorDisplayType,
   StarredState,
   VisiblePropertiesState,
   useSidebarLeftState,

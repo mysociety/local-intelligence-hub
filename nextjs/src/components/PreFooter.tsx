@@ -1,4 +1,4 @@
-import { CommonKnowledgeLogo } from './logos/CommonKnowledgeLogo'
+import { GitHubLogo } from './logos/GitHubLogo'
 import { LocalIntelligenceHubLogo } from './logos/LocalIntelligenceHubLogo'
 import { MySocietyLogo } from './logos/MySocietyLogo'
 import TemplateCard from './marketing/TemplateCard'
@@ -22,10 +22,6 @@ export default function PreFooter() {
             content: <LocalIntelligenceHubLogo />,
             url: 'https://github.com/mysociety/local-intelligence-hub',
           },
-          {
-            content: <CommonKnowledgeLogo />,
-            url: 'https://github.com/commonknowledge/mapped',
-          },
         ]}
       />
 
@@ -42,6 +38,14 @@ export default function PreFooter() {
         description="We’d love to hear from you if you have feedback and requests for similar tools, or if you’d like to collaborate with us on a project."
         link="mailto:hello@commonknowledge.coop"
         isExternalLink={true}
+      />
+      <TemplateCard
+        heading="Check out the code"
+        description="Open sourced on Github under the GNU Affero GPL license"
+        highlighted={true}
+        isExternalLink={true}
+        link="https://github.com/commonknowledge/mapped"
+        logo={[{ content: <GitHubLogo /> }]}
       />
     </div>
   )

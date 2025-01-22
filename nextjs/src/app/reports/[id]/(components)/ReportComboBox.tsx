@@ -17,7 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { useExplorerState } from '@/lib/map'
+import { useExplorer } from '@/lib/map'
 import { cn } from '@/lib/utils'
 import { useEffect } from 'react'
 import { POLITICAL_BOUNDARIES } from '../politicalTilesets'
@@ -26,7 +26,7 @@ import { useReport } from './ReportProvider'
 
 export default function ReportDashboardConsSelector() {
   const [searchQuery, setSearchQuery] = React.useState('')
-  const [explorerState, setExplorerState] = useExplorerState()
+  const explorer = useExplorer()
 
   const [open, setOpen] = React.useState(false)
   const [value, setValue] = React.useState('')
@@ -45,8 +45,8 @@ export default function ReportDashboardConsSelector() {
 
   // Get the area ID from URL params
   useEffect(() => {
-    const entity = explorerState.entity
-    const id = explorerState.id
+    const entity = explorer.state.entity
+    const id = explorer.state.id
 
     if (entity === 'area' && id) {
       const area = areas.find((area) => area.gss === id)
@@ -54,7 +54,7 @@ export default function ReportDashboardConsSelector() {
         setValue(area.name)
       }
     }
-  }, [explorerState, areas])
+  }, [explorer.state, areas])
 
   const handleSelect = (value: string) => {
     const valueUpper = value.toUpperCase()
@@ -62,11 +62,16 @@ export default function ReportDashboardConsSelector() {
     setValue(area?.name ?? '')
     setOpen(false)
 
-    setExplorerState({
-      entity: 'area',
-      id: valueUpper,
-      showExplorer: true,
-    })
+    explorer.select(
+      {
+        entity: 'area',
+        id: valueUpper,
+        showExplorer: true,
+      },
+      {
+        bringIntoView: true,
+      }
+    )
   }
 
   function handleFiltering(searchQuery: string) {

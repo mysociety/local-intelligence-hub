@@ -1,5 +1,5 @@
 import { AnalyticalAreaType } from '@/__generated__/graphql'
-import { useExplorerState, useLoadedMap } from '@/lib/map'
+import { useExplorer, useLoadedMap } from '@/lib/map'
 import React, { useEffect } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
@@ -51,7 +51,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
       : 'none'
 
   const map = useLoadedMap()
-  const [explorer, setExplorer] = useExplorerState()
+  const explorer = useExplorer()
   useHoverOverBoundaryEvents(areasVisible === 'visible' ? tileset : null)
 
   // When the map is loaded and we have the data, add the data to the boundaries
@@ -124,8 +124,8 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           filter={[
             '==',
             ['get', tileset.promoteId],
-            explorer.entity === 'area'
-              ? explorer.id
+            explorer.state.entity === 'area'
+              ? explorer.state.id
               : 'sOmE iMpOsSiBle iD tHaT wIlL uPdAtE mApBoX',
           ]}
           layout={{
