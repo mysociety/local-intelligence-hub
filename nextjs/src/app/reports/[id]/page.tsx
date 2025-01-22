@@ -1,10 +1,10 @@
 'use client'
 
 import { useQuery } from '@apollo/client'
-import { Provider as JotaiProvider, useAtomValue } from 'jotai'
+import { Provider as JotaiProvider, useAtom, useAtomValue } from 'jotai'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { MapProvider } from 'react-map-gl'
 
 import {
@@ -62,8 +62,18 @@ function SelfContainedContext({ params: { id } }: { params: Params }) {
   }, [orgId, report, router])
 
   const leftSidebar = useSidebarLeftState()
+  const [layerEditorState, setLayerEditorState] = useAtom(layerEditorStateAtom)
 
-  const layerEditorState = useAtomValue(layerEditorStateAtom)
+  const numLayers = report.data?.mapReport?.layers?.length ?? 0
+  const prevNumLayers = useRef(numLayers)
+
+  // Close the secondary sidebar if a layer is removed
+  useEffect(() => {
+    if (prevNumLayers.current > numLayers) {
+      setLayerEditorState({ open: false })
+    }
+    prevNumLayers.current = numLayers
+  }, [numLayers, setLayerEditorState])
 
   // Really important to check if the report is null before rendering the page
   // The ReportProvider component needs to be able to provide a report to its children
