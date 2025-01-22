@@ -53,6 +53,12 @@ export type ExplorerSuite = ReturnType<typeof useExplorerState>
 
 export type ExplorerState = ReturnType<typeof useExplorerState>[0]
 
+export type ExplorerAreaBreadCrumbMapping = {
+  value: string | undefined
+  code: string | undefined
+  type: BoundaryType
+}
+
 export const starredStateResolver = explorerStateResolver.extend({
   name: z.string().optional(),
   icon: z.nativeEnum(DataSourceType).optional(),

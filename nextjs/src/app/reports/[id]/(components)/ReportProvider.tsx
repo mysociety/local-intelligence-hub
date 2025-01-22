@@ -82,7 +82,7 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
   }, [report.layers.map((l) => l.id)])
 
   useEffect(() => {
-    // When a data source is picked, auto-select a field
+    // When a data source is picked, ensure the field is something workable
     if (
       report.displayOptions?.dataVisualisation?.dataSource &&
       !report.displayOptions?.dataVisualisation?.dataSourceField
@@ -92,7 +92,12 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
           l.source === report.displayOptions.dataVisualisation.dataSource &&
           !!l.sourceData.fieldDefinitions?.length
       )
-      if (layer) {
+      if (
+        layer &&
+        // I.e. it's about aggregation, not about counting
+        layer.sourceData.dataType === DataSourceType.AreaStats
+        // TODO: add config option for "count of points" to make this explicit
+      ) {
         const idField = layer.sourceData.idField
         const field = layer.sourceData.fieldDefinitions?.filter(
           (f) => f.value !== idField

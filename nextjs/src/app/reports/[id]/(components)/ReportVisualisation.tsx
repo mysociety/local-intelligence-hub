@@ -1,5 +1,6 @@
 import { CRMSelection } from '@/components/CRMButtonItem'
 import { Textarea } from '@/components/ui/textarea'
+import { lowerCase } from 'lodash'
 import pluralize from 'pluralize'
 import React from 'react'
 import { POLITICAL_BOUNDARIES } from '../politicalTilesets'
@@ -61,9 +62,13 @@ const ReportVisualisation: React.FC = () => {
         <EditorSelect
           label="Colour by"
           // explainer={`Which field from your data source will be visualised?`}
-          value={dataSourceField}
-          options={
-            sourceMetadata?.sourceData.fieldDefinitions
+          value={dataSourceField || '__COUNT__'}
+          options={[
+            {
+              label: `Count of ${lowerCase(pluralize(selectedDataSource?.sourceData.dataType || 'record', 2))}`,
+              value: '__COUNT__',
+            },
+            ...(sourceMetadata?.sourceData.fieldDefinitions
               ?.filter(
                 // no ID fields
                 (d) => d.value !== sourceMetadata.sourceData.idField
@@ -71,21 +76,18 @@ const ReportVisualisation: React.FC = () => {
               .map((d) => ({
                 label: d.label,
                 value: d.value,
-              })) || []
-          }
+              })) || []),
+          ]}
           onChange={(dataSourceField) =>
             updateReport((draft) => {
               draft.displayOptions.dataVisualisation.dataSourceField =
                 dataSourceField
             })
           }
-          disabled={
-            !sourceMetadata ||
-            selectedDataSource?.sourceData.dataType !== 'AREA_STATS'
-          }
+          disabled={!sourceMetadata}
           disabledMessage={
             selectedDataSource?.sourceData.dataType !== 'AREA_STATS'
-              ? `Count of records per area`
+              ? `Count of ${lowerCase(pluralize(selectedDataSource?.sourceData.dataType || 'record', 2))}`
               : undefined
           }
         />
