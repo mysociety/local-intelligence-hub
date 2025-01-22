@@ -1,6 +1,5 @@
 'use client'
 
-import { SourceStatsByBoundaryQuery } from '@/__generated__/graphql'
 import LocalisedMap from '@/components/LocalisedMap'
 import { PlaceholderLayer } from '@/components/PlaceholderLayer'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
@@ -38,23 +37,9 @@ export default function ReportPage() {
     if (activeTileset.useBoundsInDataQuery) {
       fetchMore({
         variables: { mapBounds },
-        updateQuery(previousData, { fetchMoreResult }) {
-          const dataByGss: Record<
-            string,
-            SourceStatsByBoundaryQuery['choroplethDataForSource'][0]
-          > = {}
-          const allData = [
-            ...(previousData?.choroplethDataForSource || []),
-            ...(fetchMoreResult?.choroplethDataForSource || []),
-          ]
-          for (const d of allData) {
-            dataByGss[d.gss || ''] = d
-          }
-          return { choroplethDataForSource: Object.values(dataByGss) }
-        },
       })
     }
-  }, [mapBounds, activeTileset])
+  }, [mapBounds, report?.displayOptions.dataVisualisation, activeTileset])
 
   return (
     <div className="absolute w-[-webkit-fill-available] h-full flex flex-row pointer-events-none">

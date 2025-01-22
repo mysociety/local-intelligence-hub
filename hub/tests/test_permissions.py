@@ -107,7 +107,7 @@ class TestOwnSources(Setup, TestCase):
                 choroplethDataForSource(
                     sourceId: $sourceId
                     analyticalAreaKey: european_electoral_region
-                    field: ""
+                    mode: Count
                 )
                 {
                   gss
@@ -251,7 +251,7 @@ class TestFullSharing(Setup, TestCase):
                 choroplethDataForSource(
                     sourceId: $sourceId
                     analyticalAreaKey: european_electoral_region
-                    field: ""
+                    mode: Count
                 )
                 {
                   gss
@@ -393,7 +393,7 @@ class TestLocationOnlySharing(Setup, TestCase):
                 choroplethDataForSource(
                     sourceId: $sourceId
                     analyticalAreaKey: european_electoral_region
-                    field: ""
+                    mode: Count
                 )
                 {
                   gss
@@ -532,7 +532,7 @@ class TestAggregateOnlySharing(Setup, TestCase):
                 choroplethDataForSource(
                     sourceId: $sourceId
                     analyticalAreaKey: european_electoral_region
-                    field: ""
+                    mode: Count
                 )
                 {
                   gss
@@ -659,7 +659,7 @@ class TestNoSharing(Setup, TestCase):
                 choroplethDataForSource(
                     sourceId: $sourceId
                     analyticalAreaKey: european_electoral_region
-                    field: ""
+                    mode: Count
                 )
                 {
                   gss
@@ -751,7 +751,7 @@ class TestLoggedOutUserForUnsharedSource(Setup, TestCase):
                 choroplethDataForSource(
                     sourceId: $sourceId
                     analyticalAreaKey: european_electoral_region
-                    field: ""
+                    mode: Count
                 )
                 {
                   gss
@@ -852,7 +852,7 @@ class TestLoggedOutUserForSharedSource(Setup, TestCase):
                 choroplethDataForSource(
                     sourceId: $sourceId
                     analyticalAreaKey: european_electoral_region
-                    field: ""
+                    mode: Count
                 )
                 {
                   gss
@@ -944,7 +944,7 @@ class TestLoggedOutUserForPublicSource(Setup, TestCase):
                 choroplethDataForSource(
                     sourceId: $sourceId
                     analyticalAreaKey: european_electoral_region
-                    field: ""
+                    mode: Count
                 )
                 {
                   gss
@@ -1080,7 +1080,7 @@ class TestLoggedInUserForPublicSource(Setup, TestCase):
                 choroplethDataForSource(
                     sourceId: $sourceId
                     analyticalAreaKey: european_electoral_region
-                    field: ""
+                    mode: Count
                 )
                 {
                   gss

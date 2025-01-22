@@ -959,6 +959,11 @@ class BaseDataSource(Analytics):
     allow_updates: bool = attr_field()
     default_data_type: Optional[str] = attr_field()
     defaults: JSON = attr_field()
+    auto_update_enabled: auto
+    auto_import_enabled: auto
+    remote_name: Optional[str] = fn_field()
+    remote_url: Optional[str] = fn_field()
+    healthcheck: bool = fn_field()
 
     field_definitions: Optional[List[FieldDefinition]] = strawberry_django.field(
         resolver=lambda self: self.field_definitions()
@@ -1063,11 +1068,6 @@ class ExternalDataSource(BaseDataSource):
         strawberry_django_dataloaders.fields.auto_dataloader_field()
     )
     update_mapping: Optional[List["AutoUpdateConfig"]]
-    auto_update_enabled: auto
-    auto_import_enabled: auto
-    remote_name: Optional[str] = fn_field()
-    remote_url: Optional[str] = fn_field()
-    healthcheck: bool = fn_field()
     orgs_with_access: List[Organisation]
 
     @strawberry_django.field
@@ -1222,6 +1222,7 @@ class Report:
 @strawberry.enum
 class InspectorDisplayType(Enum):
     BigNumber = "BigNumber"
+    BigRecord = "BigRecord"
     ElectionResult = "ElectionResult"
     List = "List"
     Properties = "Properties"
@@ -1239,9 +1240,7 @@ class MapLayer:
     icon_image: Optional[str] = dict_key_field()
     mapbox_paint: Optional[JSON] = dict_key_field()
     mapbox_layout: Optional[JSON] = dict_key_field()
-    inspector_type: Optional[InspectorDisplayType] = dict_key_field(
-        default=InspectorDisplayType.Table
-    )
+    inspector_type: Optional[str] = dict_key_field(default=InspectorDisplayType.Table)
     inspector_config: Optional[JSON] = dict_key_field()
 
     @strawberry_django.field
@@ -1680,6 +1679,13 @@ class MapBounds:
     west: float
 
 
+@strawberry.enum
+class ChoroplethMode(Enum):
+    Count = "Count"
+    Field = "Field"
+    Formula = "Formula"
+
+
 @strawberry_django.field()
 def choropleth_data_for_source(
     info: Info,
@@ -1687,8 +1693,10 @@ def choropleth_data_for_source(
     analytical_area_key: AnalyticalAreaType,
     # Field could be a column name or a Pandas formulaic expression
     # or, if not provided, a count of records
+    mode: Optional[ChoroplethMode] = ChoroplethMode.Count,
     field: Optional[str] = None,
     map_bounds: Optional[MapBounds] = None,
+    formula: Optional[str] = None,
 ) -> List[GroupedDataCount]:
     # Check user can access the external data source
     user = get_current_user(info)
@@ -1728,7 +1736,7 @@ def choropleth_data_for_source(
         )
         combined_area = areas.aggregate(union=GisUnion("polygon"))["union"]
         # all geocoded GenericData should have `point` set
-        qs = qs.filter(point__within=combined_area)
+        qs = qs.filter(point__within=combined_area or bbox)
 
     qs = qs.values("json", "label", "gss")
 
@@ -1753,12 +1761,47 @@ def choropleth_data_for_source(
     # TODO: maybe make this explicit via an argument?
     # is_data_source_statistical = external_data_source.data_type == models.ExternalDataSource.DataSourceType.AREA_STATS
     # check that field is in DF
-    field_is_set = field and field is not None and len(field)
-    is_explicit_row_count = field_is_set and field == "__COUNT__"
-    is_valid_statistical_field = field_is_set and not is_explicit_row_count
-    is_valid_row_counter = is_explicit_row_count or not field_is_set
+    is_valid_field = field and field is not None and len(field) and field in df.columns
+    is_row_count = mode is ChoroplethMode.Count
+    is_valid_formula = formula and formula is not None and len(formula)
 
-    if is_valid_statistical_field:
+    if mode is ChoroplethMode.Field and not is_valid_field:
+        raise ValueError("Field not found in data source")
+
+    if mode is ChoroplethMode.Formula and not is_valid_formula:
+        raise ValueError("Formula is invalid")
+
+    if is_row_count:
+        # Simple count of data points per area
+
+        # Count the number of rows per GSS
+        df_count = (
+            df.drop(columns=["label"]).groupby("gss").size().reset_index(name="count")
+        )
+
+        # Calculate the mode for the 'label' column
+        def get_mode(series):
+            try:
+                return series.mode()[0]
+            except KeyError:
+                return None
+
+        df_mode = df.groupby("gss")["label"].agg(get_mode).reset_index()
+
+        # Merge the summed DataFrame with the mode DataFrame
+        df = pd.merge(df_count, df_mode, on="gss")
+
+        # Convert DF to GroupedDataCount(label=label, gss=gss, count=count) list
+        return [
+            GroupedDataCount(
+                label=row.label,
+                gss=row.gss,
+                count=row.count,
+                formatted_count=f"{row.count:,.0f}",
+            )
+            for row in df.itertuples()
+        ]
+    elif is_valid_field or is_valid_formula:
         # Convert any stringified JSON numbers to floats
         for column in df:
             if all(df[column].apply(check_numeric)):
@@ -1818,16 +1861,16 @@ def choropleth_data_for_source(
 
         # Now fetch the requested series from the dataframe
         # If the field is a column name, we can just return that column
-        if field in df.columns:
+        if is_valid_field:
             df["count"] = df[field]
         # If the field is a formula, we need to evaluate it
-        else:
+        elif is_valid_formula:
             try:
-                df["count"] = df.eval(field)
+                df["count"] = df.eval(formula)
             except ValueError:
                 # In case "where" is used, which pandas doesn't support
                 # https://github.com/pandas-dev/pandas/issues/34834
-                df["count"] = ne.evaluate(field, local_dict=df)
+                df["count"] = ne.evaluate(formula, local_dict=df)
 
         # Check if count is between 0 and 1: if so, it's a percentage
         is_percentage = df["count"].between(0, 2).all() or False
@@ -1852,35 +1895,6 @@ def choropleth_data_for_source(
             )
             for row in df.itertuples()
         ]
-    elif is_valid_row_counter:
-        # Simple count of data points per area
 
-        # Count the number of rows per GSS
-        df_count = (
-            df.drop(columns=["label"]).groupby("gss").size().reset_index(name="count")
-        )
-
-        # Calculate the mode for the 'label' column
-        def get_mode(series):
-            try:
-                return series.mode()[0]
-            except KeyError:
-                return None
-
-        df_mode = df.groupby("gss")["label"].agg(get_mode).reset_index()
-
-        # Merge the summed DataFrame with the mode DataFrame
-        df = pd.merge(df_count, df_mode, on="gss")
-
-        # Convert DF to GroupedDataCount(label=label, gss=gss, count=count) list
-        return [
-            GroupedDataCount(
-                label=row.label,
-                gss=row.gss,
-                count=row.count,
-                formatted_count=f"{row.count:,.0f}",
-            )
-            for row in df.itertuples()
-        ]
     else:
         raise ValueError("Incorrect configuration for choropleth")

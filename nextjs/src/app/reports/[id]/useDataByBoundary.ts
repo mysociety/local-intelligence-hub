@@ -26,6 +26,8 @@ const useDataByBoundary = ({
   // If mapBounds is required, send dummy empty bounds on the first request
   // Skipping the first query means that fetchMore() doesn't work
   // fetchMore() is required to add data to the map when the user pans/zooms
+  // Passing the actual mapBounds with useMapBounds() here resets the query
+  // on every pan, which creates flicker and poor performance
   const mapBounds = tileset.useBoundsInDataQuery
     ? { east: 0, west: 0, north: 0, south: 0 }
     : null
@@ -38,7 +40,9 @@ const useDataByBoundary = ({
     variables: {
       sourceId: report?.displayOptions.dataVisualisation.dataSource!,
       analyticalAreaType: analyticalAreaType!,
-      field: report?.displayOptions.dataVisualisation.dataSourceField!,
+      mode: report?.displayOptions.dataVisualisation.choroplethMode,
+      field: report?.displayOptions.dataVisualisation.dataSourceField,
+      formula: report?.displayOptions.dataVisualisation.formula,
       mapBounds,
     },
     skip:
@@ -52,13 +56,17 @@ const CHOROPLETH_STATS_FOR_SOURCE = gql`
   query SourceStatsByBoundary(
     $sourceId: String!
     $analyticalAreaType: AnalyticalAreaType!
-    $field: String!
+    $mode: ChoroplethMode
+    $field: String
+    $formula: String
     $mapBounds: MapBounds
   ) {
     choroplethDataForSource(
       sourceId: $sourceId
       analyticalAreaKey: $analyticalAreaType
+      mode: $mode
       field: $field
+      formula: $formula
       mapBounds: $mapBounds
     ) {
       label

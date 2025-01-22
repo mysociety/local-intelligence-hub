@@ -349,7 +349,7 @@ class TestComplexAddressGeocoding(TestCase):
                     "id": "3",
                     "venue_name": "Sainsbury's Local",
                     "address": "Gordon Street",
-                    "expected_postcode": "G1 3RS",
+                    "expected_postcode": "G1 3RS",  # Checked on Google Maps 2025-01-22
                 },
                 {
                     # Special case: "online"
