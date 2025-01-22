@@ -45,14 +45,11 @@ export function TableDisplay({
   const [_, setExplorerState] = useExplorerState()
 
   const cols: string[] = useMemo(() => {
-    console.log('Raw data:', data)
     const columns = config?.columns || allKeysFromAllData(data)
-    console.log('Generated columns:', columns)
     return columns
   }, [config, data])
 
   const dataTableColumns = useMemo(() => {
-    console.log('Creating table columns from:', cols)
     if (cols.length === 0) {
       const firstItem = data[0]
       if (firstItem) {
