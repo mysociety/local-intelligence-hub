@@ -27,13 +27,19 @@ export function EditorSelect({
     <EditorField {...fieldProps}>
       <Select onValueChange={onChange} value={value} disabled={disabled}>
         <SelectTrigger
-          className="border-none text-meepGray-100 font-medium p-0 my-0 text-left"
+          className="w-full border-none text-meepGray-100 font-medium p-0 my-0 text-left truncate"
           {...(!!icon ? { hideIcon: true } : {})}
         >
           {!!disabled && !!disabledMessage ? (
             disabledMessage
           ) : (
-            <>{!icon ? <SelectValue className="my-0 py-0" /> : icon}</>
+            <>
+              {!icon ? (
+                <SelectValue className="my-0 py-0 max-w-[220px]" />
+              ) : (
+                icon
+              )}
+            </>
           )}
         </SelectTrigger>
         <SelectContent>
@@ -41,7 +47,7 @@ export function EditorSelect({
             const label = typeof key === 'object' ? key.label : key
             const value = typeof key === 'object' ? key.value : key
             return (
-              <SelectItem className="font-medium" key={value} value={value}>
+              <SelectItem className="font-medium " key={value} value={value}>
                 {label}
               </SelectItem>
             )

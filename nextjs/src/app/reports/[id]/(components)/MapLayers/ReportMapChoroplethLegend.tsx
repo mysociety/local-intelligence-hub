@@ -1,4 +1,4 @@
-import { AnalyticalAreaType } from '@/__generated__/graphql'
+import { AnalyticalAreaType, ChoroplethMode } from '@/__generated__/graphql'
 import { CRMSelection } from '@/components/CRMButtonItem'
 import { Button } from '@/components/ui/button'
 import {
@@ -12,13 +12,7 @@ import clsx from 'clsx'
 import { format } from 'd3-format'
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { lowerCase, max, min } from 'lodash'
-import {
-  Calculator,
-  LucideChevronDown,
-  PaintBucket,
-  Radical,
-  X,
-} from 'lucide-react'
+import { LucideChevronDown, PaintBucket, Radical } from 'lucide-react'
 import pluralize from 'pluralize'
 import { useState } from 'react'
 import { POLITICAL_BOUNDARIES } from '../../politicalTilesets'
@@ -30,7 +24,6 @@ import { useReport } from '../ReportProvider'
 export default function ReportMapChoroplethLegend() {
   const { report, updateReport } = useReport()
   const [legendOpen, setLegendOpen] = useState(true)
-  const [formulaOpen, setFormulaOpen] = useState(false)
   const [formulaSet, setFormulaSet] = useState(false)
   const {
     layers,
@@ -44,6 +37,10 @@ export default function ReportMapChoroplethLegend() {
     (layer) => layer.source === dataSourceId
   )
   const boundaryType = dataVisualisation?.boundaryType
+  const choroplethMode = dataVisualisation?.choroplethMode
+  const [selectedChoroplethMode, setSelectedChoroplethMode] = useState(
+    ChoroplethMode.Count
+  )
 
   const visibility =
     report.displayOptions?.dataVisualisation?.boundaryType === boundaryType &&
@@ -130,7 +127,7 @@ export default function ReportMapChoroplethLegend() {
         <CollapsibleContent className="CollapsibleContent ">
           <div className="flex w-full gap-4 p-4 border-t border-meepGray-600">
             <div className="flex flex-col gap-2 w-full">
-              <div className="flex flex-row items-center gap-2">
+              <div className="flex flex-row items-center gap-2 ">
                 <EditorSelect
                   // explainer={`Select which data will populate your ${selectedBoundaryLabel}`}
                   value={dataSourceId}
@@ -153,41 +150,6 @@ export default function ReportMapChoroplethLegend() {
                   className="w-full"
                 />
                 <Separator orientation="vertical" />
-                <EditorSelect
-                  icon={
-                    <Calculator className="w-5 h-5 text-meepGray-400 hover:text-meepGray-100" />
-                  }
-                  // explainer={`Which field from your data source will be visualised?`}
-                  value={dataSourceField || '__COUNT__'}
-                  options={[
-                    {
-                      label: `Count of ${lowerCase(pluralize(selectedDataSource?.sourceData.dataType || 'record', 2))}`,
-                      value: '__COUNT__',
-                    },
-                    ...(sourceMetadata?.sourceData.fieldDefinitions
-                      ?.filter(
-                        // no ID fields
-                        (d) => d.value !== sourceMetadata.sourceData.idField
-                      )
-                      .map((d) => ({
-                        label: d.label,
-                        value: d.value,
-                      })) || []),
-                  ]}
-                  onChange={(dataSourceField) => {
-                    updateReport((draft) => {
-                      draft.displayOptions.dataVisualisation.dataSourceField =
-                        dataSourceField
-                    })
-                    setFormulaSet(false)
-                  }}
-                  disabled={!sourceMetadata}
-                  disabledMessage={
-                    selectedDataSource?.sourceData.dataType !== 'AREA_STATS'
-                      ? `Count of ${lowerCase(pluralize(selectedDataSource?.sourceData.dataType || 'record', 2))}`
-                      : undefined
-                  }
-                />
 
                 <EditorSelect
                   icon={
@@ -209,48 +171,22 @@ export default function ReportMapChoroplethLegend() {
                 />
               </div>
               <ColourStops colourStops={colourStops} formatStr={formatStr} />
-              <div className="flex flex-row justify-center items-center gap-1 text-xs font-mono text-meepGray-200 ">
-                {formulaSet ? (
-                  <div className="flex flex-row gap-1 bg-meepGray-600 px-2 py-0.5 rounded-full">
-                    <Radical className="w-4 h-4 text-green-400" />
 
-                    <p className="text-xs font-mono">{dataSourceField}</p>
-                    <X
-                      className="w-4 h-4 cursor-pointer text-meepGray-400 hover:text-meepGray-100"
-                      onClick={() => {
-                        setFormulaSet(false)
-                        setFormulaOpen(false)
-                        updateReport((draft) => {
-                          draft.displayOptions.dataVisualisation.dataSourceField =
-                            '__COUNT__'
-                        })
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex flex-row items-center gap-1">
-                    <p className="">{dataSourceField}</p>
-                    <div
-                      className={clsx(
-                        'bg-transparent text-meepGray-400 hover:text-meepGray-100 p-1',
-                        formulaOpen ? 'bg-meepGray-600 text-white' : '',
-                        formulaSet ? ' text-green-600' : ''
-                      )}
-                      onClick={() => setFormulaOpen(!formulaOpen)}
-                    >
-                      <Radical className="w-4 h-4" />
-                    </div>
-                  </div>
-                )}
-              </div>
-              {formulaOpen ? (
-                <CustomFormula
+              <DisplayingSection
+                formulaSet={formulaSet}
+                dataSourceField={dataSourceField || ''}
+                setFormulaSet={setFormulaSet}
+                choroplethMode={choroplethMode}
+                sourceMetadata={sourceMetadata}
+                selectedDataSource={selectedDataSource}
+              />
+              {choroplethMode === ChoroplethMode.Formula && (
+                <FormulaConfig
+                  setFormulaSet={setFormulaSet}
                   sourceMetadata={sourceMetadata}
                   dataSourceField={dataSourceField || ''}
-                  setFormulaSet={setFormulaSet}
-                  setFormulaOpen={setFormulaOpen}
                 />
-              ) : null}
+              )}
             </div>
           </div>
           <div className="flex flex-col gap-2 bg-meepGray-600   p-4">
@@ -312,17 +248,120 @@ function ColourStops({
     </div>
   )
 }
+function DisplayingSection({
+  formulaSet,
+  dataSourceField,
+  setFormulaSet,
 
-function CustomFormula({
+  choroplethMode,
+  sourceMetadata,
+  selectedDataSource,
+}: {
+  formulaSet: boolean
+  dataSourceField: string
+  setFormulaSet: (set: boolean) => void
+
+  choroplethMode: ChoroplethMode
+  sourceMetadata: any
+  selectedDataSource: any
+}) {
+  const { report, updateReport } = useReport()
+  const displayConfig = [
+    {
+      value: ChoroplethMode.Count,
+      content: null,
+    },
+    {
+      value: ChoroplethMode.Field,
+      content: (
+        <>
+          <div className="flex flex-row items-center gap-1 text-xs text-center px-3  bg-meepGray-600 rounded-full">
+            <EditorSelect
+              // explainer={`Which field from your data source will be visualised?`}
+              value={dataSourceField}
+              options={[
+                {
+                  label: `Count of ${lowerCase(pluralize(selectedDataSource?.sourceData.dataType || 'record', 2))}`,
+                  value: '__COUNT__',
+                },
+                ...(sourceMetadata?.sourceData.fieldDefinitions
+                  ?.filter(
+                    // no ID fields
+                    (d: any) => d.value !== sourceMetadata.sourceData.idField
+                  )
+                  .map((d: any) => ({
+                    label: d.label,
+                    value: d.value,
+                  })) || []),
+              ]}
+              onChange={(dataSourceField) => {
+                updateReport((draft) => {
+                  draft.displayOptions.dataVisualisation.dataSourceField =
+                    dataSourceField
+                })
+                setFormulaSet(false)
+              }}
+              disabled={!sourceMetadata}
+              disabledMessage={
+                selectedDataSource?.sourceData.dataType !== 'AREA_STATS'
+                  ? `Count of ${lowerCase(pluralize(selectedDataSource?.sourceData.dataType || 'record', 2))}`
+                  : undefined
+              }
+            />
+          </div>
+        </>
+      ),
+    },
+    {
+      value: ChoroplethMode.Formula,
+      content: null,
+    },
+  ]
+
+  return (
+    <div className="flex flex-row justify-center items-center gap-1 text-xs font-mono text-meepGray-200 ">
+      <div className="flex flex-col items-center gap-1 text-xs text-center px-2">
+        <EditorSelect
+          label="Displaying"
+          value={choroplethMode}
+          options={Object.keys(ChoroplethMode).map((value) => ({
+            label: value,
+            value,
+          }))}
+          onChange={(option) => {
+            console.log('option', option)
+            if (
+              option === ChoroplethMode.Count ||
+              option === ChoroplethMode.Field
+            ) {
+              updateReport((draft) => {
+                draft.displayOptions.dataVisualisation.dataSourceField =
+                  '__COUNT__'
+                draft.displayOptions.dataVisualisation.choroplethMode =
+                  option as ChoroplethMode
+              })
+            } else {
+              updateReport((draft) => {
+                draft.displayOptions.dataVisualisation.choroplethMode =
+                  option as ChoroplethMode
+              })
+            }
+          }}
+        />
+        {displayConfig.find((d) => d.value === choroplethMode)?.content}
+      </div>
+    </div>
+  )
+}
+
+function FormulaConfig({
   sourceMetadata,
   dataSourceField,
   setFormulaSet,
-  setFormulaOpen,
 }: {
   sourceMetadata: any
   dataSourceField: string
   setFormulaSet: (set: boolean) => void
-  setFormulaOpen: (set: boolean) => void
 }) {
   const [editing, setEditing] = useState(true)
   const [inputText, setInputText] = useState(dataSourceField)
@@ -339,16 +378,17 @@ function CustomFormula({
 
   function handleSave() {
     if (editing) {
+      setFormulaSet(true)
+      setEditing(false)
       updateReport((draft) => {
         draft.displayOptions.dataVisualisation.dataSourceField = inputText
       })
-      setFormulaSet(true)
-      setEditing(false)
     } else {
       setEditing(true)
     }
   }
 
+  //hardcoded fields for now
   const metadataFields = [
     { label: 'Count', value: 'count' },
     { label: 'Mean', value: 'mean' },
@@ -376,19 +416,6 @@ function CustomFormula({
               Edit
             </p>
           )}
-        </div>
-        <div
-          className=" justify-end items-center cursor-pointer hover:text-red-500"
-          onClick={() => {
-            setFormulaSet(false)
-            setFormulaOpen(false)
-            updateReport((draft) => {
-              draft.displayOptions.dataVisualisation.dataSourceField =
-                '__COUNT__'
-            })
-          }}
-        >
-          <p>Remove</p>
         </div>
       </div>
       <Textarea
