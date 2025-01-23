@@ -184,7 +184,7 @@ var makeChart = function() {
             layout: {
                 padding: {
                     // Some extra padding for the data labels.
-                    right: 30
+                    right: 35
                 }
             },
             scales: {
@@ -196,6 +196,9 @@ var makeChart = function() {
                     }
                 },
                 [primaryAxis]: {
+                    ticks: {
+                        autoSkip: false
+                    },
                     grid: {
                         display: false
                     }
@@ -247,14 +250,12 @@ var makeChart = function() {
 }
 
 var extractLabelsFromTable = function($table) {
-    // if you set this too small, e.g 20 then labels that are split into more than 3 lines
-    // will not be displayed. I do not know why.
-    var max_label_length = 30
+    var max_label_length = 20
     return $table.find('tbody tr').map(function(){
         var $l = $(this).find('th').text().trim()
-        // there is only really room in the chart for 30 characters so if the label
-        // is longer we need to split it into chunks at word boundaries. chartjs renders
-        // an array label as multuple lines.
+        // When labels are too long, they disappear off the edge of the chart.
+        // So, if this is a long label, split it into an array of shorter ones,
+        // which Chart.js will render on multiple lines.
         if ($l.length > max_label_length) {
             var bits = $l.split(' ')
             var $lines = []
@@ -270,8 +271,8 @@ var extractLabelsFromTable = function($table) {
             $lines.push($new_l)
             $l = $lines
         }
-        // return this as an array as they get flattened out so we need an array of arrays
-        // for the multi line lables to work
+        // Return this as an array as they get flattened out so we need an
+        // array of arrays for the multi line lables to work.
         return [$l]
     }).get()
 }
