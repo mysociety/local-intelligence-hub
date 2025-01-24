@@ -23,6 +23,7 @@ from strawberry import auto
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
+from utils.postcode import get_postcode_data_for_gss
 from wagtail.models import Site
 
 from hub import models
@@ -582,7 +583,8 @@ class Area:
     async def sample_postcode(
         self, info: Info[HubDataLoaderContext]
     ) -> Optional[PostcodesIOResult]:
-        return await info.context.area_coordinate_loader.load(self.point)
+        return await get_postcode_data_for_gss(self.gss)
+        # return await info.context.area_coordinate_loader.load(self.point)
 
 
 @strawberry.type

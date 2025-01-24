@@ -189,7 +189,6 @@ async def get_bulk_postcode_geo(postcodes) -> list[PostcodesIOResult]:
 
 
 async def get_postcode_io_via_ftp_coord(point: Point):
-    print("get_postcode_io_via_ftp_coord", point)
     from utils.findthatpostcode import get_postcode_from_coords_ftp
 
     postcode = await get_postcode_from_coords_ftp(point)
@@ -198,7 +197,7 @@ async def get_postcode_io_via_ftp_coord(point: Point):
 
 
 @async_batch_and_aggregate(settings.POSTCODES_IO_BATCH_MAXIMUM)
-async def get_bulk_postcode_geo_from_coords(coordinates: list[Point], radius=150):
+async def get_bulk_postcode_geo_from_coords(coordinates: list[Point], radius=300):
     coords = [
         {
             "longitude": coord.x,
