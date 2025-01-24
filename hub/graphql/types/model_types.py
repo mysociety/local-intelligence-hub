@@ -23,7 +23,6 @@ from strawberry import auto
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
-from utils.postcode import get_postcode_data_for_gss
 from wagtail.models import Site
 
 from hub import models
@@ -49,6 +48,7 @@ from utils.geo_reference import (
     area_to_postcode_io_filter,
     lih_to_postcodes_io_key_map,
 )
+from utils.postcode import get_postcode_data_for_gss
 
 pd.core.computation.ops.MATHOPS = (*pd.core.computation.ops.MATHOPS, "where")
 
