@@ -188,6 +188,15 @@ async def get_bulk_postcode_geo(postcodes) -> list[PostcodesIOResult]:
     return results
 
 
+async def get_postcode_io_via_ftp_coord(point: Point):
+    print("get_postcode_io_via_ftp_coord", point)
+    from utils.findthatpostcode import get_postcode_from_coords_ftp
+
+    postcode = await get_postcode_from_coords_ftp(point)
+    if postcode:
+        return await get_postcode_geo(postcode)
+
+
 @async_batch_and_aggregate(settings.POSTCODES_IO_BATCH_MAXIMUM)
 async def get_bulk_postcode_geo_from_coords(coordinates: list[Point], radius=150):
     coords = [
@@ -225,13 +234,21 @@ async def get_bulk_postcode_geo_from_coords(coordinates: list[Point], radius=150
                 for geo in result
                 if geo["query"] == coord
             ),
-            None,
+            dict(type="failed", coords=coord),
         )
         for coord in coords
     ]
 
     # add EER codes and ensure _2024 column is present if Postcodes.IO have removed it
     for index, result in enumerate(results):
+        if (
+            result is not None
+            and result.get("type", None) == "failed"
+            and result.get("coords", None)
+        ):
+            result = await get_postcode_io_via_ftp_coord(
+                Point(x=result["coords"]["longitude"], y=result["coords"]["latitude"])
+            )
         if result is not None:
             results[index] = await enrich_postcodes_io_result(result)
 

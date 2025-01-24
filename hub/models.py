@@ -2638,7 +2638,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         external_data_source: Union["ExternalDataSource", str],
     ) -> DataPermissions:
         if external_data_source is None:
-            logger.debug("No source provided, returning default permissions")
+            # logger.debug("No source provided, returning default permissions")
             return cls.DataPermissions(
                 can_display_points=False,
                 can_display_details=False,
@@ -2654,7 +2654,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         permissions: cls.DataPermissions = source.default_data_permissions()
 
         if user is None or not user.is_authenticated:
-            logger.debug("No user provided, returning default permissions")
+            # logger.debug("No user provided, returning default permissions")
             return permissions
 
         # Check for cached permissions on this source
@@ -2666,7 +2666,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         # If cached permissions exist, look for this user's permissions
         elif permissions_dict.get(user_id, None) is not None:
-            logger.debug("User provided, returning cached permissions")
+            # logger.debug("User provided, returning cached permissions")
             return permissions_dict[user_id]
 
         # Calculate permissions for this source
@@ -2711,7 +2711,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         perms = permissions_dict[user_id]
 
-        logger.debug(f"Calculated new user permissions for user {user}: {perms}")
+        # logger.debug(f"Calculated new user permissions for user {user}: {perms}")
         return perms
 
     def filter(self, filter: dict) -> dict:
