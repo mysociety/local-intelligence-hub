@@ -16,7 +16,18 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+import {
+  Carousel,
+  CarouselApi,
+  CarouselContent,
+  CarouselItem,
+} from '@/components/ui/carousel'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -29,16 +40,25 @@ import {
 import { gql, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
 import { sum } from 'lodash'
-import { LucideLink, MapPinIcon, Star, TargetIcon } from 'lucide-react'
+import {
+  ArrowLeft,
+  ArrowRight,
+  LucideLink,
+  MapPinIcon,
+  PencilIcon,
+  Star,
+  TargetIcon,
+} from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import toSpaceCase from 'to-space-case'
 import trigramSimilarity from 'trigram-similarity'
 import { BoundaryType } from '../../politicalTilesets'
 import CollapsibleSection from '../CollapsibleSection'
 import { EditorSelect } from '../EditorSelect'
+import { EditorSwitch } from '../EditorSwitch'
 import { useReport } from '../ReportProvider'
 import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
 import { TableDisplay } from '../dashboard/TableDisplay'
@@ -201,7 +221,7 @@ const AREA_EXPLORER_SUMMARY = gql`
 `
 
 enum DataDisplayModes {
-  Summary = 'Summary',
+  Aggregated = 'Aggregated',
   RawData = 'RawData',
 }
 
@@ -214,6 +234,8 @@ function AreaLayerData({
   gss: string
   areaName: string
 }) {
+  const explorer = useExplorer()
+
   const [areaQueryMode, setAreaQueryMode] = useState<AreaQueryMode>(
     layer.sourceData.dataType === DataSourceType.AreaStats
       ? AreaQueryMode.AreaOrChildren
@@ -221,7 +243,7 @@ function AreaLayerData({
   )
   const [dataDisplayMode, setDataDisplayMode] = useState<DataDisplayModes>(
     layer.sourceData.dataType === DataSourceType.AreaStats
-      ? DataDisplayModes.Summary
+      ? DataDisplayModes.Aggregated
       : DataDisplayModes.RawData
   )
 
@@ -237,34 +259,58 @@ function AreaLayerData({
     }
   )
 
+  const { updateLayer } = useReport()
+
   return (
-    <CollapsibleSection title={layer.name} id={layer.id}>
-      <EditorSelect
-        label={'Data search mode'}
-        value={areaQueryMode}
-        options={
-          Object.keys(AreaQueryMode).map((key) => ({
-            value: AreaQueryMode[key as keyof typeof AreaQueryMode],
-            label: toSpaceCase(
-              AreaQueryMode[key as keyof typeof AreaQueryMode]
-            ),
-          })) || []
-        }
-        onChange={(value) => setAreaQueryMode(value as AreaQueryMode)}
-      />
-      <EditorSelect
-        label={'Data display mode'}
-        value={dataDisplayMode}
-        options={
-          Object.keys(DataDisplayModes).map((key) => ({
-            value: DataDisplayModes[key as keyof typeof DataDisplayModes],
-            label: toSpaceCase(
-              DataDisplayModes[key as keyof typeof DataDisplayModes]
-            ),
-          })) || []
-        }
-        onChange={(value) => setDataDisplayMode(value as DataDisplayModes)}
-      />
+    <CollapsibleSection
+      title={layer.name}
+      id={layer.id}
+      actions={
+        // Dropdown with these two editor select options
+        <Popover>
+          <PopoverTrigger>
+            <PencilIcon className="w-3 h-3 text-meepGray-200 cursor-pointer hover:text-meepGray-300" />
+          </PopoverTrigger>
+          <PopoverContent>
+            <EditorSelect
+              label={'Display style'}
+              value={layer.inspectorType || InspectorDisplayType.Table}
+              options={Object.keys(InspectorDisplayType)}
+              onChange={(value) => {
+                updateLayer(layer.id, { inspectorType: value })
+              }}
+            />
+            <EditorSelect
+              label={'Data fetching'}
+              value={areaQueryMode}
+              options={
+                Object.keys(AreaQueryMode).map((key) => ({
+                  value: AreaQueryMode[key as keyof typeof AreaQueryMode],
+                  label: toSpaceCase(
+                    AreaQueryMode[key as keyof typeof AreaQueryMode]
+                  ),
+                })) || []
+              }
+              onChange={(value) => setAreaQueryMode(value as AreaQueryMode)}
+            />
+            <EditorSwitch
+              label="Aggregate data"
+              explainer={
+                dataDisplayMode === DataDisplayModes.Aggregated
+                  ? 'Toggle off to show full data for all found records.'
+                  : 'Toggle on to show aggregated numerical data for this area.'
+              }
+              value={dataDisplayMode === DataDisplayModes.Aggregated}
+              onChange={(value) =>
+                setDataDisplayMode(
+                  value ? DataDisplayModes.Aggregated : DataDisplayModes.RawData
+                )
+              }
+            />
+          </PopoverContent>
+        </Popover>
+      }
+    >
       {data.loading ? (
         <div className="text-meepGray-400">
           <LoadingIcon size={'32px'} />
@@ -274,18 +320,32 @@ function AreaLayerData({
       ) : (
         <div className="text-meepGray-400">
           {layer.inspectorType === InspectorDisplayType.Properties ? (
-            <PropertiesDisplay
-              data={
-                dataDisplayMode === DataDisplayModes.Summary
-                  ? data.data?.summary?.aggregated
-                  : data.data?.data?.[0]?.json
-              }
-              config={layer.inspectorConfig}
-            />
+            dataDisplayMode === DataDisplayModes.Aggregated ? (
+              <PropertiesDisplay
+                data={data.data?.summary?.aggregated}
+                config={layer.inspectorConfig}
+              />
+            ) : // There's a list of data
+            data.data.data.length > 1 ||
+              // There's only one data item, but it's not the current area
+              (!!data.data.data.length &&
+                !data.data.data.some(
+                  (d) => d.area?.gss === explorer.state.id
+                )) ? (
+              <RelatedDataCarousel data={data.data.data} />
+            ) : !!data.data?.data?.length ? (
+              // There's only one data item, and it's the current area
+              <PropertiesDisplay
+                data={data.data?.data?.[0]?.json}
+                config={layer.inspectorConfig}
+              />
+            ) : (
+              <div className="text-meepGray-400 py-2">No data available</div>
+            )
           ) : layer.inspectorType === InspectorDisplayType.Table ? (
             <TableDisplay
               data={
-                dataDisplayMode === DataDisplayModes.Summary
+                dataDisplayMode === DataDisplayModes.Aggregated
                   ? data.data?.summary?.aggregated
                   : data.data?.data
               }
@@ -296,7 +356,7 @@ function AreaLayerData({
           ) : layer.inspectorType === InspectorDisplayType.ElectionResult ? (
             <ElectionResultsDisplay
               data={
-                dataDisplayMode === DataDisplayModes.Summary
+                dataDisplayMode === DataDisplayModes.Aggregated
                   ? data.data?.summary?.aggregated
                   : data.data?.data?.[0]?.json
               }
@@ -305,7 +365,7 @@ function AreaLayerData({
           ) : layer.inspectorType === InspectorDisplayType.BigNumber ? (
             <BigNumberDisplay
               count={
-                dataDisplayMode === DataDisplayModes.Summary
+                dataDisplayMode === DataDisplayModes.Aggregated
                   ? data.data?.summary?.aggregated
                   : data.data?.data?.length
               }
@@ -369,10 +429,11 @@ const AREA_LAYER_DATA = gql`
       name
       publicUrl
       area {
+        id
         gss
+        name
         areaType {
           name
-          code
         }
       }
     }
@@ -396,6 +457,74 @@ const AREA_LAYER_DATA = gql`
     }
   }
 `
+
+function RelatedDataCarousel({ data }: { data: AreaLayerDataQuery['data'] }) {
+  const explorer = useExplorer()
+  const [api, setApi] = useState<CarouselApi>()
+  const [currentIndex, setCurrentIndex] = useState<number>(1)
+  useEffect(() => {
+    api?.on('settle', (slides) => {
+      const index = slides.slidesInView()[0] || 0
+      setCurrentIndex(index + 1)
+    })
+  }, [api])
+
+  return (
+    <>
+      {api && (
+        <div className="flex flex-row gap-2 items-center justify-start text-sm mb-2">
+          <ArrowLeft
+            onClick={() => api.scrollPrev()}
+            className="w-4 h-4 cursor-pointer text-meepGray-400 hover:text-meepGray-300"
+          />
+          <ArrowRight
+            onClick={() => api.scrollNext()}
+            className="w-4 h-4 cursor-pointer text-meepGray-400 hover:text-meepGray-300"
+          />
+          <span className="pointer-events-none select-none">
+            Record <span>{currentIndex}</span> of {data.length}
+          </span>
+        </div>
+      )}
+      <Carousel setApi={setApi} className="">
+        <CarouselContent className="-ml-2">
+          {data.map((item) => (
+            <CarouselItem key={item.id} className="pl-2 basis-full">
+              {
+                // Isn't the current area
+                item.area?.gss !== explorer.state.id && (
+                  // Place name + link
+                  <div className="text-sm mb-2">
+                    Record for{' '}
+                    <span
+                      className="text-meepGray-400 hover:text-meepGray-300 cursor-pointer underline"
+                      onClick={() => {
+                        explorer.select(
+                          {
+                            entity: 'area',
+                            id: item.area?.gss || '',
+                            showExplorer: true,
+                          },
+                          {
+                            bringIntoView: true,
+                          }
+                        )
+                      }}
+                    >
+                      {item.area?.name} (
+                      {pluralize(item.area?.areaType.name || 'area', 1)})
+                    </span>
+                  </div>
+                )
+              }
+              <PropertiesDisplay data={item.json} />
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+      </Carousel>
+    </>
+  )
+}
 
 function ElectionResultsDisplay({
   data,

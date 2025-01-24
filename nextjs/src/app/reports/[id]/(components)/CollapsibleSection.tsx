@@ -12,11 +12,17 @@ interface Props {
   id: string
   title: string
   children: React.ReactNode
+  actions?: React.ReactNode
 }
 
 const collapsibleSectionsAtom = atom<{ [key: string]: boolean }>({})
 
-const CollapsibleSection: React.FC<Props> = ({ children, id, title }) => {
+const CollapsibleSection: React.FC<Props> = ({
+  children,
+  id,
+  title,
+  actions,
+}) => {
   const [sections, setSections] = useAtom(collapsibleSectionsAtom)
   const thisSectionOpen = sections[id] === undefined ? true : !!sections[id]
 
@@ -38,21 +44,26 @@ const CollapsibleSection: React.FC<Props> = ({ children, id, title }) => {
       onOpenChange={toggleSection}
       open={!!thisSectionOpen}
     >
-      <CollapsibleTrigger asChild>
-        <div className="flex flex-row gap-2 items-start my-3 cursor-pointer">
-          <h3 className="text-white font-medium">{title}</h3>
-          <TriangleDownIcon
-            className={clsx(
-              'mt-1 h-4 w-4 text-white transition[-rotate-180] duration-700',
-              thisSectionOpen ? '' : 'rotate-180'
-            )}
-          />
+      <div>
+        <div className="flex flex-row gap-2 items-end my-3 cursor-pointer">
+          <CollapsibleTrigger asChild className="mr-auto">
+            <h3 className="text-white font-medium mr-2 gap-2 flex flex-row">
+              {title}
+              <TriangleDownIcon
+                className={clsx(
+                  'mt-1 h-4 w-4 text-white mr-auto',
+                  thisSectionOpen ? '' : 'rotate-180'
+                )}
+              />
+            </h3>
+          </CollapsibleTrigger>
+          {actions}
         </div>
-      </CollapsibleTrigger>
 
-      <CollapsibleContent className="CollapsibleContent">
-        {children}
-      </CollapsibleContent>
+        <CollapsibleContent className="CollapsibleContent">
+          {children}
+        </CollapsibleContent>
+      </div>
     </Collapsible>
   )
 }
