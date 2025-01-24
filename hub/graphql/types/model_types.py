@@ -1,4 +1,5 @@
 import itertools
+import locale
 import logging
 from datetime import datetime
 from enum import Enum
@@ -1717,8 +1718,10 @@ def check_numeric(x):
     try:
         if x == "" or x is None:
             return True
-        float(x)
-        return True
+        var = locale.atof(x)
+        var = float(var)
+        # check type is numeric
+        return isinstance(var, (int, float))
     except Exception:
         return False
 
