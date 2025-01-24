@@ -3164,6 +3164,9 @@ class MailchimpSource(ExternalDataSource):
         help_text="The unique identifier for the Mailchimp list.",
     )
 
+    def remote_url(self):
+        return f"https://admin.mailchimp.com/audience/contacts?id={self.list_id}"
+
     @classmethod
     def get_deduplication_field_names(self) -> list[str]:
         return ["list_id", "api_key"]
@@ -3482,6 +3485,9 @@ class ActionNetworkSource(ExternalDataSource):
 
     group_slug = models.CharField(max_length=100)
     api_key = EncryptedCharField(max_length=250)
+
+    def remote_url(self):
+        return f"https://actionnetwork.org/groups/{self.group_slug}/manage"
 
     @classmethod
     def get_deduplication_field_names(self) -> list[str]:
@@ -4346,6 +4352,9 @@ class TicketTailorSource(ExternalDataSource):
     )
 
     api_key = EncryptedCharField(max_length=250)
+
+    def remote_url(self) -> str:
+        return "https://www.tickettailor.com/dashboard"
 
     @classmethod
     def get_deduplication_field_names(self) -> list[str]:
