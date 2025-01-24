@@ -3,6 +3,7 @@ import {
   AreaExplorerSummaryQueryVariables,
   AreaLayerDataQuery,
   AreaLayerDataQueryVariables,
+  AreaQueryMode,
   DataSourceType,
   MapLayer,
 } from '@/__generated__/graphql'
@@ -37,6 +38,7 @@ import toSpaceCase from 'to-space-case'
 import trigramSimilarity from 'trigram-similarity'
 import { BoundaryType } from '../../politicalTilesets'
 import CollapsibleSection from '../CollapsibleSection'
+import { EditorSelect } from '../EditorSelect'
 import { useReport } from '../ReportProvider'
 import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
 import { TableDisplay } from '../dashboard/TableDisplay'
@@ -198,6 +200,11 @@ const AREA_EXPLORER_SUMMARY = gql`
   }
 `
 
+enum DataDisplayModes {
+  Summary = 'Summary',
+  RawData = 'RawData',
+}
+
 function AreaLayerData({
   layer,
   gss,
@@ -207,16 +214,57 @@ function AreaLayerData({
   gss: string
   areaName: string
 }) {
+  const [areaQueryMode, setAreaQueryMode] = useState<AreaQueryMode>(
+    layer.sourceData.dataType === DataSourceType.AreaStats
+      ? AreaQueryMode.AreaOrChildren
+      : AreaQueryMode.PointsWithin
+  )
+  const [dataDisplayMode, setDataDisplayMode] = useState<DataDisplayModes>(
+    layer.sourceData.dataType === DataSourceType.AreaStats
+      ? DataDisplayModes.Summary
+      : DataDisplayModes.RawData
+  )
+
   const data = useQuery<AreaLayerDataQuery, AreaLayerDataQueryVariables>(
     AREA_LAYER_DATA,
     {
-      variables: { gss, externalDataSource: layer?.source },
+      variables: {
+        gss,
+        externalDataSource: layer?.source,
+        mode: areaQueryMode,
+      },
       skip: !layer?.source || !gss,
     }
   )
 
   return (
     <CollapsibleSection title={layer.name} id={layer.id}>
+      <EditorSelect
+        label={'Data search mode'}
+        value={areaQueryMode}
+        options={
+          Object.keys(AreaQueryMode).map((key) => ({
+            value: AreaQueryMode[key as keyof typeof AreaQueryMode],
+            label: toSpaceCase(
+              AreaQueryMode[key as keyof typeof AreaQueryMode]
+            ),
+          })) || []
+        }
+        onChange={(value) => setAreaQueryMode(value as AreaQueryMode)}
+      />
+      <EditorSelect
+        label={'Data display mode'}
+        value={dataDisplayMode}
+        options={
+          Object.keys(DataDisplayModes).map((key) => ({
+            value: DataDisplayModes[key as keyof typeof DataDisplayModes],
+            label: toSpaceCase(
+              DataDisplayModes[key as keyof typeof DataDisplayModes]
+            ),
+          })) || []
+        }
+        onChange={(value) => setDataDisplayMode(value as DataDisplayModes)}
+      />
       {data.loading ? (
         <div className="text-meepGray-400">
           <LoadingIcon size={'32px'} />
@@ -228,10 +276,8 @@ function AreaLayerData({
           {layer.inspectorType === InspectorDisplayType.Properties ? (
             <PropertiesDisplay
               data={
-                // If it's area stats, prefer summary, then indirectly, then directly data
-                // Otherwise prefer directlyAndIndirectly, then summary
-                layer.sourceData.dataType === DataSourceType.AreaStats
-                  ? data.data?.summary?.aggregated || data.data?.data?.[0]?.json
+                dataDisplayMode === DataDisplayModes.Summary
+                  ? data.data?.summary?.aggregated
                   : data.data?.data?.[0]?.json
               }
               config={layer.inspectorConfig}
@@ -239,11 +285,9 @@ function AreaLayerData({
           ) : layer.inspectorType === InspectorDisplayType.Table ? (
             <TableDisplay
               data={
-                // If it's area stats, prefer summary, then indirectly, then directly data
-                // Otherwise prefer directlyAndIndirectly, then summary
-                layer.sourceData.dataType === DataSourceType.AreaStats
-                  ? data.data?.summary?.aggregated || data.data?.data?.[0]?.json
-                  : data.data?.data?.[0]?.json
+                dataDisplayMode === DataDisplayModes.Summary
+                  ? data.data?.summary?.aggregated
+                  : data.data?.data
               }
               config={layer.inspectorConfig}
               title={layer.name}
@@ -252,17 +296,19 @@ function AreaLayerData({
           ) : layer.inspectorType === InspectorDisplayType.ElectionResult ? (
             <ElectionResultsDisplay
               data={
-                // If it's area stats, prefer summary, then indirectly, then directly data
-                // Otherwise prefer directlyAndIndirectly, then summary
-                layer.sourceData.dataType === DataSourceType.AreaStats
-                  ? data.data?.summary?.aggregated || data.data?.data?.[0]?.json
+                dataDisplayMode === DataDisplayModes.Summary
+                  ? data.data?.summary?.aggregated
                   : data.data?.data?.[0]?.json
               }
               config={layer.inspectorConfig}
             />
           ) : layer.inspectorType === InspectorDisplayType.BigNumber ? (
             <BigNumberDisplay
-              count={data.data?.data?.length}
+              count={
+                dataDisplayMode === DataDisplayModes.Summary
+                  ? data.data?.summary?.aggregated
+                  : data.data?.data?.length
+              }
               dataType={layer.sourceData.dataType}
             />
           ) : layer.inspectorType === InspectorDisplayType.BigRecord ? (
@@ -324,6 +370,10 @@ const AREA_LAYER_DATA = gql`
       publicUrl
       area {
         gss
+        areaType {
+          name
+          code
+        }
       }
     }
     # aggregate statistics about any data related to this area
