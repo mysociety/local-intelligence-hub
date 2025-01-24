@@ -44,8 +44,6 @@ const EXTERNAL_DATA_SOURCE_NAME = gql`
       name
       crmType
       dataType
-      name
-      remoteUrl
     }
   }
 `

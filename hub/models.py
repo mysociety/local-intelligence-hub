@@ -1367,6 +1367,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             status = "failed"
         elif all([job.status == "succeeded" for job in jobs]):
             status = "succeeded"
+        elif all([job.status == "todo" for job in jobs]):
+            status = "todo"
         elif number_of_jobs_ahead_in_queue <= 0:
             status = "succeeded"
 
@@ -2844,7 +2846,11 @@ class AirtableSource(ExternalDataSource):
 
     @cached_property
     def schema(self) -> AirtableTableSchema:
-        return self.table.schema()
+        try:
+            return self.table.schema()
+        except Exception as e:
+            logger.error(f"Couldn't get AirTable schema: {e}")
+            raise BadCredentialsError()
 
     def remote_url(self) -> str:
         return f"https://airtable.com/{self.base_id}/{self.table_id}?blocks=hide"
@@ -2867,7 +2873,7 @@ class AirtableSource(ExternalDataSource):
                 description=field.description,
                 external_id=field.id,
             )
-            for field in self.table.schema().fields
+            for field in self.schema.fields
         ]
 
     def remote_name(self):
@@ -3756,6 +3762,10 @@ class ActionNetworkSource(ExternalDataSource):
             )
         )
 
+class BadCredentialsError(Exception):
+    def __init__(self, *args):
+        # The front-end depends on the message here
+        super().__init__("Bad credentials")
 
 class EditableGoogleSheetsSource(ExternalDataSource):
     """
@@ -3830,8 +3840,12 @@ class EditableGoogleSheetsSource(ExternalDataSource):
             json.loads(self.oauth_credentials)
         )
         if credentials and credentials.expired and credentials.refresh_token:
-            logger.info(f"Refreshing Google token for source {self}")
-            credentials.refresh(GoogleRequest())
+            logger.info(f"Refreshing Google token for source {self.id}")
+            try:
+                credentials.refresh(GoogleRequest())
+            except Exception as e:
+                logger.error(f"Could not get credentials for EditableGoogleSheetsSource {self.id}: {e}")
+                raise BadCredentialsError()
 
             # Update instance in thread because:
             # a. self.save() doesn't work in an async context
@@ -3869,7 +3883,11 @@ class EditableGoogleSheetsSource(ExternalDataSource):
 
     @cached_property
     def spreadsheet(self):
-        return self.spreadsheets.get(spreadsheetId=self.spreadsheet_id).execute()
+        try:
+            return self.spreadsheets.get(spreadsheetId=self.spreadsheet_id).execute()
+        except Exception as e:
+            logger.error(f"Could not get credentials for EditableGoogleSheetsSource {self.id}: {e}")
+            raise BadCredentialsError()
 
     @property
     def sheet(self):
