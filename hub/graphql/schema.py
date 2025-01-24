@@ -149,13 +149,20 @@ class Query(UserQueries):
 
     @strawberry.field
     async def google_sheets_oauth_credentials(
-        self, info: strawberry.types.Info, redirect_success_url: str, external_data_source_id: Optional[str]
+        self,
+        info: strawberry.types.Info,
+        redirect_success_url: str,
+        external_data_source_id: Optional[str],
     ) -> str:
-        credentials = models.EditableGoogleSheetsSource.redirect_success_to_oauth_credentials(
-            redirect_success_url
+        credentials = (
+            models.EditableGoogleSheetsSource.redirect_success_to_oauth_credentials(
+                redirect_success_url
+            )
         )
         if external_data_source_id:
-            await models.EditableGoogleSheetsSource.objects.filter(id=external_data_source_id).aupdate(oauth_credentials=credentials)
+            await models.EditableGoogleSheetsSource.objects.filter(
+                id=external_data_source_id
+            ).aupdate(oauth_credentials=credentials)
         return credentials
 
 

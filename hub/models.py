@@ -3294,7 +3294,7 @@ class MailchimpSource(ExternalDataSource):
             ),
             self.FieldDefinition(label="Zip", value="ADDRESS.zip", editable=False),
         ]
-        merge_fields = self.client.lists.merge_fields.all(self.list_id, get_all=True)
+        merge_fields = self.get_merge_fields()
         for field in merge_fields["merge_fields"]:
             if field["tag"] not in ["ADDRESS", "PHONE", "FNAME", "LNAME"]:
                 fields.append(
@@ -3305,6 +3305,13 @@ class MailchimpSource(ExternalDataSource):
                     )
                 )
         return fields
+
+    def get_merge_fields(self):
+        try:
+            return self.client.lists.merge_fields.all(self.list_id, get_all=True)
+        except Exception as e:
+            logger.error(f"Could not get Mailchimp merge fields: {e}")
+            raise BadCredentialsError()
 
     async def fetch_all(self):
         # Fetches all members in a list and returns their email addresses
@@ -3486,11 +3493,18 @@ class ActionNetworkSource(ExternalDataSource):
         return client
 
     def healthcheck(self):
-        # Checks if the Mailchimp list is accessible
-        list = self.client.get_custom_fields()
-        if list is not None:
+        # Checks if the Action Network list is accessible
+        fields = self.get_custom_fields()
+        if fields is not None:
             return True
         return False
+
+    def get_custom_fields(self):
+        try:
+            return self.client.get_custom_fields()
+        except Exception as e:
+            logger.error(f"Could not get Action Network custom fields: {e}")
+            raise BadCredentialsError()
 
     # https://actionnetwork.org/docs/v2/#resources
     def get_record_id(self, record):
@@ -3590,7 +3604,7 @@ class ActionNetworkSource(ExternalDataSource):
                 editable=False,
             ),
         ]
-        custom_fields = self.client.get_custom_fields()
+        custom_fields = self.get_custom_fields()
         for field in custom_fields["action_network:custom_fields"]:
             name = field["name"]
             fields.append(
@@ -3762,10 +3776,12 @@ class ActionNetworkSource(ExternalDataSource):
             )
         )
 
+
 class BadCredentialsError(Exception):
     def __init__(self, *args):
         # The front-end depends on the message here
         super().__init__("Bad credentials")
+
 
 class EditableGoogleSheetsSource(ExternalDataSource):
     """
@@ -3844,7 +3860,9 @@ class EditableGoogleSheetsSource(ExternalDataSource):
             try:
                 credentials.refresh(GoogleRequest())
             except Exception as e:
-                logger.error(f"Could not get credentials for EditableGoogleSheetsSource {self.id}: {e}")
+                logger.error(
+                    f"Could not get credentials for EditableGoogleSheetsSource {self.id}: {e}"
+                )
                 raise BadCredentialsError()
 
             # Update instance in thread because:
@@ -3886,7 +3904,9 @@ class EditableGoogleSheetsSource(ExternalDataSource):
         try:
             return self.spreadsheets.get(spreadsheetId=self.spreadsheet_id).execute()
         except Exception as e:
-            logger.error(f"Could not get credentials for EditableGoogleSheetsSource {self.id}: {e}")
+            logger.error(
+                f"Could not get credentials for EditableGoogleSheetsSource {self.id}: {e}"
+            )
             raise BadCredentialsError()
 
     @property

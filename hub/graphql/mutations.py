@@ -464,10 +464,9 @@ def update_external_data_source(
     source.save()
     return source
 
+
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
-def update_external_data_source_api_key(
-    info: Info, id: str, api_key: str
-) -> bool:
+def update_external_data_source_api_key(info: Info, id: str, api_key: str) -> bool:
     source = models.ExternalDataSource.objects.get(id=id)
     if not source.organisation.members.filter(user=get_current_user(info)).exists():
         raise PermissionError("You do not have permission to update this data source.")

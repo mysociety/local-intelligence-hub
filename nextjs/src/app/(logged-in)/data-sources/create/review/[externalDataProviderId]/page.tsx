@@ -51,9 +51,9 @@ const GET_UPDATE_CONFIG = gql`
 `
 
 export default function Page({
-  params: { externalDataSourceId },
+  params: { externalDataProviderId },
 }: {
-  params: { externalDataSourceId: string }
+  params: { externalDataProviderId: string }
 }) {
   const router = useRouter()
   const context = useContext(CreateAutoUpdateFormContext)
@@ -67,7 +67,7 @@ export default function Page({
     AutoUpdateCreationReviewQueryVariables
   >(GET_UPDATE_CONFIG, {
     variables: {
-      ID: externalDataSourceId,
+      ID: externalDataProviderId,
     },
   })
 
@@ -147,7 +147,7 @@ export default function Page({
           </div>
           <div>
             <TriggerUpdateButton
-              id={externalDataSourceId}
+              id={externalDataProviderId}
               className="w-full"
               variant="reverse"
             />
