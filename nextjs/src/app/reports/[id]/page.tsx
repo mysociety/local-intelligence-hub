@@ -76,7 +76,7 @@ function SelfContainedContext({ params: { id } }: { params: Params }) {
   }, [numLayers, setLayerEditorState])
 
   const rootError = report.error?.graphQLErrors.find(
-    (e) => e.path?.[0] === 'mapReport'
+    (e) => e.path && e.path.length === 1 && e.path?.[0] === 'mapReport'
   )
   const reportDoesNotExist = rootError?.message.includes(
     'matching query does not exist'
