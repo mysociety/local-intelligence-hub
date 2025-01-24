@@ -664,6 +664,7 @@ class GenericData(CommonData):
     public_url: auto
     description: auto
     image: auto
+    area: Optional[Area]
 
     postcode: auto
     remote_url: str = fn_field()
@@ -682,7 +683,7 @@ class GenericData(CommonData):
         return list(models.Area.objects.filter(polygon__contains=self.point))
 
     @strawberry_django.field
-    def area(self, area_type: str, info: Info) -> Optional[Area]:
+    def area_from_point(self, area_type: str, info: Info) -> Optional[Area]:
         if self.point is None:
             return None
 
@@ -1534,37 +1535,53 @@ def generic_data_by_external_data_source(
     )
 
 
-def __get_points_for_area_and_external_data_source(
+# enum for OLAP
+@strawberry.enum
+class AreaQueryMode(Enum):
+    POINTS_WITHIN = "POINTS_WITHIN"
+    AREA = "AREA"
+    AREA_OR_CHILDREN = "AREA_OR_CHILDREN"
+    AREA_OR_PARENTS = "AREA_OR_PARENTS"
+
+
+def __get_generic_data_for_area_and_external_data_source(
     external_data_source: models.ExternalDataSource,
     gss: str,
-    points: bool = True,
-    rollup: bool = True,
+    mode: AreaQueryMode,
 ) -> List[GenericData]:
     area = models.Area.objects.get(gss=gss)
     data_source_records = external_data_source.get_import_data()
 
     filters = Q()
 
-    if points:
-        filters |= Q(point__within=area.polygon)
+    if mode is AreaQueryMode.POINTS_WITHIN:
+        # We filter on area=None so we don't pick up statistical area data
+        # since a super-area may have a point within this area, skewing the results
+        filters = Q(point__within=area.polygon) & Q(area=None)
 
-    if rollup:
-        # Find all data related to this area or within it — e.g. wards that share this council GSS
-        postcode_io_key = area_to_postcode_io_filter(area)
-        if postcode_io_key is None:
-            postcode_io_key = lih_to_postcodes_io_key_map.get(area.area_type.code, None)
-        if postcode_io_key:
-            filters |= Q(**{f"postcode_data__codes__{postcode_io_key.value}": area.gss})
-    else:
+    elif mode is AreaQueryMode.AREA:
         # Find only data specifically related to this GSS area — not about its children
-        filters |= Q(area__gss=area.gss)
+        filters = Q(area__gss=area.gss)
+
+    elif mode is AreaQueryMode.AREA_OR_CHILDREN:
+        filters = Q(area__gss=area.gss)
+        # Or find GenericData tagged with area that is fully contained by this area's polygon
+        filters |= Q(area__polygon__within=area.polygon)
+
+    elif mode is AreaQueryMode.AREA_OR_PARENTS:
+        filters = Q(area__gss=area.gss)
+        # Or find GenericData tagged with area that fully contains this area's polygon
+        filters |= Q(area__polygon__contains=area.polygon)
+
+    else:
+        raise ValueError(f"Unknown AreaQueryMode: {mode}")
 
     return data_source_records.filter(filters)
 
 
 @strawberry_django.field()
 def generic_data_from_source_about_area(
-    info: Info, source_id: str, gss: str, points: bool = True, rollup: bool = True
+    info: Info, source_id: str, gss: str, mode: AreaQueryMode = AreaQueryMode.AREA
 ) -> List[GenericData]:
     user = get_current_user(info)
     # Check user can access the external data source
@@ -1577,8 +1594,8 @@ def generic_data_from_source_about_area(
             f"User {user} does not have permission to view this external data source's data"
         )
 
-    qs = __get_points_for_area_and_external_data_source(
-        external_data_source, gss, points, rollup
+    qs = __get_generic_data_for_area_and_external_data_source(
+        external_data_source, gss, mode
     )
 
     return qs
@@ -1604,7 +1621,7 @@ class DataSummary:
 
 @strawberry_django.field()
 def generic_data_summary_from_source_about_area(
-    info: Info, source_id: str, gss: str, points: bool = True, rollup: bool = True
+    info: Info, source_id: str, gss: str, mode: AreaQueryMode = AreaQueryMode.AREA
 ) -> Optional[DataSummary]:
     user = get_current_user(info)
     # Check user can access the external data source
@@ -1617,8 +1634,8 @@ def generic_data_summary_from_source_about_area(
             f"User {user} does not have permission to view this external data source's data"
         )
 
-    qs = __get_points_for_area_and_external_data_source(
-        external_data_source, gss, points, rollup
+    qs = __get_generic_data_for_area_and_external_data_source(
+        external_data_source, gss, mode
     )
 
     # ingest the .json data into a pandas dataframe

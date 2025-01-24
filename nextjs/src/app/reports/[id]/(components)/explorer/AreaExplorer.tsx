@@ -231,10 +231,8 @@ function AreaLayerData({
                 // If it's area stats, prefer summary, then indirectly, then directly data
                 // Otherwise prefer directlyAndIndirectly, then summary
                 layer.sourceData.dataType === DataSourceType.AreaStats
-                  ? data.data?.summary?.aggregated ||
-                    data.data?.directAndIndirectlyRelated?.[0]?.json ||
-                    data.data?.directlyRelated?.[0]?.json
-                  : data.data?.directAndIndirectlyRelated?.[0]?.json
+                  ? data.data?.summary?.aggregated || data.data?.data?.[0]?.json
+                  : data.data?.data?.[0]?.json
               }
               config={layer.inspectorConfig}
             />
@@ -244,10 +242,8 @@ function AreaLayerData({
                 // If it's area stats, prefer summary, then indirectly, then directly data
                 // Otherwise prefer directlyAndIndirectly, then summary
                 layer.sourceData.dataType === DataSourceType.AreaStats
-                  ? data.data?.summary?.aggregated ||
-                    data.data?.directAndIndirectlyRelated?.[0]?.json ||
-                    data.data?.directlyRelated?.[0]?.json
-                  : data.data?.directAndIndirectlyRelated?.[0]?.json
+                  ? data.data?.summary?.aggregated || data.data?.data?.[0]?.json
+                  : data.data?.data?.[0]?.json
               }
               config={layer.inspectorConfig}
               title={layer.name}
@@ -259,27 +255,25 @@ function AreaLayerData({
                 // If it's area stats, prefer summary, then indirectly, then directly data
                 // Otherwise prefer directlyAndIndirectly, then summary
                 layer.sourceData.dataType === DataSourceType.AreaStats
-                  ? data.data?.summary?.aggregated ||
-                    data.data?.directAndIndirectlyRelated?.[0]?.json ||
-                    data.data?.directlyRelated?.[0]?.json
-                  : data.data?.directAndIndirectlyRelated?.[0]?.json
+                  ? data.data?.summary?.aggregated || data.data?.data?.[0]?.json
+                  : data.data?.data?.[0]?.json
               }
               config={layer.inspectorConfig}
             />
           ) : layer.inspectorType === InspectorDisplayType.BigNumber ? (
             <BigNumberDisplay
-              count={data.data?.directAndIndirectlyRelated?.length}
+              count={data.data?.data?.length}
               dataType={layer.sourceData.dataType}
             />
           ) : layer.inspectorType === InspectorDisplayType.BigRecord ? (
             <BigRecord
-              item={data.data?.directAndIndirectlyRelated?.[0]}
+              item={data.data?.data?.[0]}
               config={layer.inspectorConfig}
               dataType={layer.sourceData.dataType}
             />
           ) : layer.inspectorType === InspectorDisplayType.List ? (
             <ListDisplay
-              data={data.data?.directAndIndirectlyRelated}
+              data={data.data?.data}
               config={layer.inspectorConfig}
               dataType={layer.sourceData.dataType}
             />
@@ -309,13 +303,16 @@ function AreaLayerData({
 }
 
 const AREA_LAYER_DATA = gql`
-  query AreaLayerData($gss: String!, $externalDataSource: String!) {
+  query AreaLayerData(
+    $gss: String!
+    $externalDataSource: String!
+    $mode: AreaQueryMode
+  ) {
     # collect point data
-    directlyRelated: genericDataFromSourceAboutArea(
+    data: genericDataFromSourceAboutArea(
       gss: $gss
       sourceId: $externalDataSource
-      rollup: false
-      points: false
+      mode: $mode
     ) {
       json
       id
@@ -324,38 +321,16 @@ const AREA_LAYER_DATA = gql`
       date
       description
       name
-      fullName
-      lastName
-      firstName
-      title
       publicUrl
-    }
-    # collect point data
-    directAndIndirectlyRelated: genericDataFromSourceAboutArea(
-      gss: $gss
-      sourceId: $externalDataSource
-      points: true
-      rollup: true
-    ) {
-      json
-      id
-      startTime
-      postcode
-      date
-      description
-      name
-      fullName
-      lastName
-      firstName
-      title
-      publicUrl
+      area {
+        gss
+      }
     }
     # aggregate statistics about any data related to this area
     summary: genericDataSummaryFromSourceAboutArea(
       gss: $gss
       sourceId: $externalDataSource
-      rollup: true
-      points: true
+      mode: $mode
     ) {
       aggregated
       metadata {
@@ -508,7 +483,7 @@ function ListDisplay({
   config,
   dataType,
 }: {
-  data?: AreaLayerDataQuery['directAndIndirectlyRelated']
+  data?: AreaLayerDataQuery['data']
   config: {
     columns: string[]
   }
@@ -570,7 +545,7 @@ function BigRecord({
   config,
   dataType,
 }: {
-  item?: AreaLayerDataQuery['directAndIndirectlyRelated'][0]
+  item?: AreaLayerDataQuery['data'][0]
   config: {
     columns: string[]
   }
@@ -625,7 +600,7 @@ function BigRecord({
 }
 
 function getListValuesBasedOnDataType(
-  item: AreaLayerDataQuery['directAndIndirectlyRelated'][0],
+  item: AreaLayerDataQuery['data'][0],
   dataType: DataSourceType
 ) {
   type ListValues = {
