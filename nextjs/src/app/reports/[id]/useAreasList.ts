@@ -10,7 +10,7 @@ interface Area {
 export function useAreasList(boundaryType: BoundaryType | undefined) {
   const map = useLoadedMap()
   const [areas, setAreas] = useState<Area[]>([])
-  const { activeTileset: tileset } = useActiveTileset(boundaryType)
+  const tileset = useActiveTileset(boundaryType)
 
   useEffect(() => {
     if (!map.loaded || !tileset || !map.loadedMap) return

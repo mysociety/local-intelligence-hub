@@ -21,7 +21,7 @@ export default function ReportPage() {
     (boundary) => boundary.boundaryType === boundaryType
   )?.tilesets
 
-  const { activeTileset } = useActiveTileset(boundaryType)
+  const activeTileset = useActiveTileset(boundaryType)
 
   const { loading, fetchMore } = useDataByBoundary({
     report,
