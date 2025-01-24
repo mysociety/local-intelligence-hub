@@ -59,7 +59,13 @@ function FormatValue({
         style={{ marginLeft: `${indentLevel * 1}rem` }}
       >
         {Object.entries(data || {})
-          .filter(([key, value]) => !isEmptyValue(value))
+          .filter(([key, value]) => {
+            return (
+              !isEmptyValue(value) &&
+              // remove stuff added by Apollo
+              key !== '__typename'
+            )
+          })
           .map(([key, value]) => (
             <KeyContainer
               key={key}

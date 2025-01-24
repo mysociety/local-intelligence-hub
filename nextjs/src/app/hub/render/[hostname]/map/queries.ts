@@ -115,7 +115,7 @@ export const GET_EVENT_DATA = gql`
     importedDataGeojsonPoint(genericDataId: $eventId) {
       properties {
         ...EventFragment
-        constituency: area(areaType: "WMC23") {
+        constituency: area {
           ...ConstituencyViewFragment
           # List of events
           genericDataForHub(hostname: $hostname) {
