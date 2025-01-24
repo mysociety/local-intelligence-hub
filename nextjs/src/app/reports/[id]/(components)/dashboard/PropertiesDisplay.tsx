@@ -1,6 +1,6 @@
 import React from 'react'
 import { twMerge } from 'tailwind-merge'
-import { formatKey, formatValue, isEmptyValue } from './utils'
+import { formatKey, isEmptyValue } from './utils'
 
 export function PropertiesDisplay({
   data,
@@ -35,7 +35,7 @@ function FormatValue({
     return null
   } else if (typeof data === 'string' || typeof data === 'number') {
     // Raw value
-    return <span>{formatValue(data)}</span>
+    return <span>{data}</span>
   } else if (Array.isArray(data)) {
     // Array; indented
     return (
