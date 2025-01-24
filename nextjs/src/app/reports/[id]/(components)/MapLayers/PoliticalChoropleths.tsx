@@ -5,6 +5,7 @@ import {
   useExplorer,
   useLoadedMap,
   useMapBounds,
+  useMapZoom,
 } from '@/lib/map'
 import { debounce } from 'lodash'
 import { FillLayerSpecification } from 'mapbox-gl'
@@ -53,7 +54,8 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
     Record<string, FillLayerSpecification['paint']>
   >({})
 
-  const { activeTileset, setActiveTileset } = useActiveTileset(boundaryType)
+  const [, setMapZoom] = useMapZoom()
+  const activeTileset = useActiveTileset(boundaryType)
   const { data } = useDataByBoundary({
     report,
     tileset: activeTileset,
@@ -80,19 +82,16 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   useEffect(() => {
     const onMoveEnd = debounce(() => {
       const zoom = map.loadedMap?.getZoom() || 0
-      const tileset = tilesets.filter(
-        (t) => zoom >= t.minZoom && zoom <= t.maxZoom
-      )[0]
-      setActiveTileset(tileset)
+      setMapZoom(zoom)
       setMapBounds(getMapBounds(map))
     }, 500)
-    if (tilesets.length > 0 && map.loadedMap) {
+    if (map.loadedMap) {
       map.loadedMap.on('moveend', onMoveEnd)
     }
     return () => {
       map.loadedMap?.off('moveend', onMoveEnd)
     }
-  }, [map.loaded, tilesets])
+  }, [map.loaded])
 
   // When the map is loaded and we have the data, add the data to the boundaries
   useEffect(() => {

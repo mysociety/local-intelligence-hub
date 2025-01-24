@@ -1,5 +1,6 @@
 'use client'
 import {
+  CrmType,
   DataSourceType,
   DeleteUpdateConfigMutation,
   DeleteUpdateConfigMutationVariables,
@@ -50,9 +51,10 @@ import parse from 'html-react-parser'
 import { AlertCircle, ExternalLink } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import pluralize from 'pluralize'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { CREATE_MAP_REPORT } from '../../../reports/ReportList/CreateReportCard'
+import ExternalDataSourceBadCredentials from './ExternalDataSourceBadCredentials'
 import { ManageSourceSharing } from './ManageSourceSharing'
 import importData, { cancelImport } from './importData'
 
@@ -188,30 +190,59 @@ export default function InspectExternalDataSource({
   externalDataSourceId,
   name,
   dataType,
-  remoteUrl,
   crmType,
 }: {
   externalDataSourceId: string
-  name?: string
+  name: string
   dataType?: DataSourceType
-  remoteUrl?: string | null
-  crmType?: string
+  crmType: string
 }) {
   const router = useRouter()
   const client = useApolloClient()
+  const [pollInterval, setPollInterval] = useState<number | undefined>(
+    undefined
+  )
 
-  const { loading, data, refetch } = useQuery<
+  const { loading, data, refetch, error } = useQuery<
     ExternalDataSourceInspectPageQuery,
     ExternalDataSourceInspectPageQueryVariables
   >(GET_UPDATE_CONFIG, {
     variables: {
       ID: externalDataSourceId,
     },
-    pollInterval: 5000,
+    pollInterval,
+    notifyOnNetworkStatusChange: true,
   })
 
-  if (!loading && !data?.externalDataSource) {
-    return <h2>Couldn{"'"}t find this data source</h2>
+  // Begin polling on successful datasource query
+  useEffect(() => {
+    if (data?.externalDataSource) {
+      setPollInterval(5000)
+    }
+  }, [data])
+
+  const notFound = !loading && !data?.externalDataSource
+  if (error || notFound) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto space-y-7">
+        <header className="flex flex-row justify-between gap-8">
+          <div className="w-full">
+            <h1 className="text-hLg mb-4">
+              {name} ({formatCrmNames(crmType)})
+            </h1>
+            {String(error).includes('Bad credentials') ? (
+              <ExternalDataSourceBadCredentials
+                id={externalDataSourceId}
+                crmType={crmType}
+                onUpdateCredentials={refetch}
+              />
+            ) : (
+              <p>Couldn{"'"}t find this data source</p>
+            )}
+          </div>
+        </header>
+      </div>
+    )
   }
 
   const source = data?.externalDataSource
@@ -286,14 +317,17 @@ export default function InspectExternalDataSource({
             <span>&nbsp;&#x2022;&nbsp;</span>
             {crmInfo?.name || crmType}
           </div>
-          {!!remoteUrl && (
-            <a href={remoteUrl} className="text-meepGray-300 underline text-sm">
-              Visit URL: {remoteUrl} <ExternalLink />
+          {!!source?.remoteUrl && (
+            <a
+              href={source.remoteUrl}
+              className="text-meepGray-300 underline text-sm"
+            >
+              Visit URL: {source.remoteUrl} <ExternalLink />
             </a>
           )}
         </div>
         <div>
-          {crmType === 'AirtableSource' && (
+          {crmType === CrmType.Airtable && (
             <div className="inline-flex rounded-xl bg-meepGray-700 px-10 py-6 overflow-hidden flex-row items-center justify-center">
               <AirtableLogo className="w-full" />
             </div>
@@ -340,7 +374,6 @@ export default function InspectExternalDataSource({
                   : ''}
                 .
               </p>
-
               <div className="flex flex-row align-baseline gap-2">
                 <Button
                   disabled={source.importProgress?.inQueue}
@@ -392,7 +425,6 @@ export default function InspectExternalDataSource({
                   </Button>
                 )}
               </div>
-
               {source.importProgress?.status !== 'todo' ? (
                 <BatchJobProgressReport
                   batchJobProgress={source.importProgress}
@@ -410,7 +442,6 @@ export default function InspectExternalDataSource({
                     ahead of this one in the queue
                   </div>
                 )}
-
               {source.importProgress?.sendEmail &&
                 (source?.importProgress?.status === 'todo' ||
                   source?.importProgress?.status === 'doing') && (

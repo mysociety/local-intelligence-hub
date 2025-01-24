@@ -51,6 +51,10 @@ import { toastPromise } from '@/lib/toast'
 import { dataTypeIcons } from '@/lib/data'
 import { formatCrmNames } from '@/lib/utils'
 import { CreateAutoUpdateFormContext } from '../../NewExternalDataSourceWrapper'
+import {
+  GOOGLE_SHEETS_OAUTH_CREDENTIALS,
+  GOOGLE_SHEETS_OAUTH_URL,
+} from './oauthQueries'
 
 const TEST_DATA_SOURCE = gql`
   query TestDataSource($input: CreateExternalDataSourceInput!) {
@@ -75,18 +79,6 @@ const TEST_DATA_SOURCE = gql`
       defaults
       oauthCredentials
     }
-  }
-`
-
-const GOOGLE_SHEETS_OAUTH_URL = gql`
-  query GoogleSheetsOauthUrl($redirectUrl: String!) {
-    googleSheetsOauthUrl(redirectUrl: $redirectUrl)
-  }
-`
-
-const GOOGLE_SHEETS_OAUTH_CREDENTIALS = gql`
-  query GoogleSheetsOauthCredentials($redirectSuccessUrl: String!) {
-    googleSheetsOauthCredentials(redirectSuccessUrl: $redirectSuccessUrl)
   }
 `
 
@@ -174,10 +166,22 @@ export default function Page({
 
   useEffect(() => {
     // The presence of these URL parameters indicates an OAuth redirect
-    // back from Google. Convert these into oauth_credentials using
-    // the GoogleSheetsOauthCredentialsQuery, then save the
-    // credentials in the form object.
+    // back from Google.
     if (searchParams.get('state') && searchParams.get('code')) {
+      // The presence of this session key indicates an OAuth journey
+      // that started from an existing data source. Google does not accept
+      // dynamic redirect URLs, so this page has to handle both cases.
+      if (sessionStorage.existingDataSourceOAuthRedirect) {
+        const url = new URL(sessionStorage.existingDataSourceOAuthRedirect)
+        url.searchParams.set('state', searchParams.get('state')!)
+        url.searchParams.set('code', searchParams.get('code')!)
+        url.searchParams.set('scope', searchParams.get('scope')!)
+        window.location.href = url.toString()
+        return
+      }
+      // Convert the URL parameters into oauth_credentials using
+      // the GoogleSheetsOauthCredentialsQuery, then save the
+      // credentials in the form object.
       toastPromise(
         googleSheetsOauthCredentials({
           variables: { redirectSuccessUrl: window.location.href },

@@ -29,7 +29,7 @@ export default function ReportMapChoroplethLegend() {
       ? 'visible'
       : 'none'
 
-  const { activeTileset } = useActiveTileset(boundaryType)
+  const activeTileset = useActiveTileset(boundaryType)
 
   const { loading, data } = useDataByBoundary({
     report,

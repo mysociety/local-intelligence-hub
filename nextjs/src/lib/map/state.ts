@@ -3,7 +3,6 @@ import {
   BoundaryType,
   POLITICAL_BOUNDARIES,
 } from '@/app/reports/[id]/politicalTilesets'
-import { Tileset } from '@/app/reports/[id]/types'
 import { atom, useAtom } from 'jotai'
 import { MapboxGeoJSONFeature } from 'mapbox-gl'
 import { parseAsString, useQueryState, useQueryStates } from 'nuqs'
@@ -23,7 +22,7 @@ export const mapHasLoaded = atom(false)
 export const isDataConfigOpenAtom = atom(false)
 export const selectedSourceMarkerAtom = atom<MapboxGeoJSONFeature | null>(null)
 export const boundsAtom = atom<MapBounds | null>(null)
-export const activeTilesetAtom = atom<Tileset | null>(null)
+export const zoomAtom = atom<number>(0)
 
 export const EXPLORER_ENTITY_TYPES = ['area', 'record', ''] as const
 
@@ -188,23 +187,23 @@ export function useMapBounds() {
   return useAtom(boundsAtom)
 }
 
-export function useActiveTileset(boundaryType: BoundaryType | undefined) {
-  const [activeTileset, setActiveTileset] = useAtom(activeTilesetAtom)
-  if (activeTileset) {
-    return {
-      activeTileset,
-      setActiveTileset,
-    }
-  }
+export function useMapZoom() {
+  return useAtom(zoomAtom)
+}
 
-  // Fallback to the first tileset for the current BoundaryType
+export function useActiveTileset(boundaryType: BoundaryType | undefined) {
+  const [zoom] = useMapZoom()
+
   const politicalTileset =
     POLITICAL_BOUNDARIES.find((t) => t.boundaryType === boundaryType) ||
     POLITICAL_BOUNDARIES[0]
-  return {
-    activeTileset: politicalTileset.tilesets[0],
-    setActiveTileset,
-  }
+
+  const tileset = politicalTileset.tilesets.filter(
+    (t) => zoom >= t.minZoom && zoom <= t.maxZoom
+  )[0]
+
+  // Fallback to the first tileset for the current BoundaryType
+  return tileset || politicalTileset.tilesets[0]
 }
 
 const sidebarLeftStateAtom = atom(false)

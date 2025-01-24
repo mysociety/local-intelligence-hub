@@ -148,12 +148,22 @@ class Query(UserQueries):
         return models.EditableGoogleSheetsSource.authorization_url(redirect_url)
 
     @strawberry.field
-    def google_sheets_oauth_credentials(
-        self, info: strawberry.types.Info, redirect_success_url: str
+    async def google_sheets_oauth_credentials(
+        self,
+        info: strawberry.types.Info,
+        redirect_success_url: str,
+        external_data_source_id: Optional[str],
     ) -> str:
-        return models.EditableGoogleSheetsSource.redirect_success_to_oauth_credentials(
-            redirect_success_url
+        credentials = (
+            models.EditableGoogleSheetsSource.redirect_success_to_oauth_credentials(
+                redirect_success_url
+            )
         )
+        if external_data_source_id:
+            await models.EditableGoogleSheetsSource.objects.filter(
+                id=external_data_source_id
+            ).aupdate(oauth_credentials=credentials)
+        return credentials
 
 
 @strawberry.type
@@ -173,6 +183,9 @@ class Mutation:
     )
     update_external_data_source: model_types.ExternalDataSource = (
         mutation_types.update_external_data_source
+    )
+    update_external_data_source_api_key: bool = (
+        mutation_types.update_external_data_source_api_key
     )
     delete_external_data_source: model_types.ExternalDataSource = (
         django_mutations.delete(mutation_types.IDObject, extensions=[IsAuthenticated()])

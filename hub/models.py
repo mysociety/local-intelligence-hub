@@ -1367,6 +1367,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             status = "failed"
         elif all([job.status == "succeeded" for job in jobs]):
             status = "succeeded"
+        elif all([job.status == "todo" for job in jobs]):
+            status = "todo"
         elif number_of_jobs_ahead_in_queue <= 0:
             status = "succeeded"
 
@@ -2844,7 +2846,11 @@ class AirtableSource(ExternalDataSource):
 
     @cached_property
     def schema(self) -> AirtableTableSchema:
-        return self.table.schema()
+        try:
+            return self.table.schema()
+        except Exception as e:
+            logger.error(f"Couldn't get AirTable schema: {e}")
+            raise BadCredentialsError()
 
     def remote_url(self) -> str:
         return f"https://airtable.com/{self.base_id}/{self.table_id}?blocks=hide"
@@ -2867,7 +2873,7 @@ class AirtableSource(ExternalDataSource):
                 description=field.description,
                 external_id=field.id,
             )
-            for field in self.table.schema().fields
+            for field in self.schema.fields
         ]
 
     def remote_name(self):
@@ -3288,7 +3294,7 @@ class MailchimpSource(ExternalDataSource):
             ),
             self.FieldDefinition(label="Zip", value="ADDRESS.zip", editable=False),
         ]
-        merge_fields = self.client.lists.merge_fields.all(self.list_id, get_all=True)
+        merge_fields = self.get_merge_fields()
         for field in merge_fields["merge_fields"]:
             if field["tag"] not in ["ADDRESS", "PHONE", "FNAME", "LNAME"]:
                 fields.append(
@@ -3299,6 +3305,13 @@ class MailchimpSource(ExternalDataSource):
                     )
                 )
         return fields
+
+    def get_merge_fields(self):
+        try:
+            return self.client.lists.merge_fields.all(self.list_id, get_all=True)
+        except Exception as e:
+            logger.error(f"Could not get Mailchimp merge fields: {e}")
+            raise BadCredentialsError()
 
     async def fetch_all(self):
         # Fetches all members in a list and returns their email addresses
@@ -3480,11 +3493,18 @@ class ActionNetworkSource(ExternalDataSource):
         return client
 
     def healthcheck(self):
-        # Checks if the Mailchimp list is accessible
-        list = self.client.get_custom_fields()
-        if list is not None:
+        # Checks if the Action Network list is accessible
+        fields = self.get_custom_fields()
+        if fields is not None:
             return True
         return False
+
+    def get_custom_fields(self):
+        try:
+            return self.client.get_custom_fields()
+        except Exception as e:
+            logger.error(f"Could not get Action Network custom fields: {e}")
+            raise BadCredentialsError()
 
     # https://actionnetwork.org/docs/v2/#resources
     def get_record_id(self, record):
@@ -3584,7 +3604,7 @@ class ActionNetworkSource(ExternalDataSource):
                 editable=False,
             ),
         ]
-        custom_fields = self.client.get_custom_fields()
+        custom_fields = self.get_custom_fields()
         for field in custom_fields["action_network:custom_fields"]:
             name = field["name"]
             fields.append(
@@ -3757,6 +3777,12 @@ class ActionNetworkSource(ExternalDataSource):
         )
 
 
+class BadCredentialsError(Exception):
+    def __init__(self, *args):
+        # The front-end depends on the message here
+        super().__init__("Bad credentials")
+
+
 class EditableGoogleSheetsSource(ExternalDataSource):
     """
     An editable Google Sheet
@@ -3830,8 +3856,14 @@ class EditableGoogleSheetsSource(ExternalDataSource):
             json.loads(self.oauth_credentials)
         )
         if credentials and credentials.expired and credentials.refresh_token:
-            logger.info(f"Refreshing Google token for source {self}")
-            credentials.refresh(GoogleRequest())
+            logger.info(f"Refreshing Google token for source {self.id}")
+            try:
+                credentials.refresh(GoogleRequest())
+            except Exception as e:
+                logger.error(
+                    f"Could not get credentials for EditableGoogleSheetsSource {self.id}: {e}"
+                )
+                raise BadCredentialsError()
 
             # Update instance in thread because:
             # a. self.save() doesn't work in an async context
@@ -3869,7 +3901,13 @@ class EditableGoogleSheetsSource(ExternalDataSource):
 
     @cached_property
     def spreadsheet(self):
-        return self.spreadsheets.get(spreadsheetId=self.spreadsheet_id).execute()
+        try:
+            return self.spreadsheets.get(spreadsheetId=self.spreadsheet_id).execute()
+        except Exception as e:
+            logger.error(
+                f"Could not get credentials for EditableGoogleSheetsSource {self.id}: {e}"
+            )
+            raise BadCredentialsError()
 
     @property
     def sheet(self):
