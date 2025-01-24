@@ -19,6 +19,7 @@ const ReportVisualisation: React.FC = () => {
   const dataSourceId = dataVisualisation?.dataSource
   const choroplethMode = dataVisualisation?.choroplethMode
   const dataSourceField = dataVisualisation?.dataSourceField
+  const formula = dataVisualisation?.formula
   const selectedDataSource = layers.find(
     (layer) => layer.source === dataSourceId
   )
@@ -114,10 +115,10 @@ const ReportVisualisation: React.FC = () => {
               Write a custom colour-by formula
             </h2>
             <Textarea
-              value={dataSourceField}
+              value={formula}
               onChange={(e) =>
                 updateReport((draft) => {
-                  draft.displayOptions.dataVisualisation.dataSourceField =
+                  draft.displayOptions.dataVisualisation.formula =
                     e.target.value
                 })
               }
