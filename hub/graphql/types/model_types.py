@@ -1544,6 +1544,8 @@ class AreaQueryMode(Enum):
     AREA = "AREA"
     AREA_OR_CHILDREN = "AREA_OR_CHILDREN"
     AREA_OR_PARENTS = "AREA_OR_PARENTS"
+    # This mode is used to find overlapping areas in the same way the current choropleth API works
+    OVERLAPPING = "OVERLAPPING"
 
 
 def __get_generic_data_for_area_and_external_data_source(
@@ -1568,12 +1570,43 @@ def __get_generic_data_for_area_and_external_data_source(
     elif mode is AreaQueryMode.AREA_OR_CHILDREN:
         filters = Q(area__gss=area.gss)
         # Or find GenericData tagged with area that is fully contained by this area's polygon
-        filters |= Q(area__polygon__within=area.polygon)
+        postcode_io_key = area_to_postcode_io_filter(area)
+        if postcode_io_key is None:
+            postcode_io_key = lih_to_postcodes_io_key_map.get(area.area_type.code, None)
+        if postcode_io_key:
+            subclause = Q()
+            # See if there's a matched postcode data field for this area
+            subclause &= Q(
+                **{f"postcode_data__codes__{postcode_io_key.value}": area.gss}
+            )
+            # And see if the area is SMALLER than the current area — i.e. a child
+            subclause &= Q(area__polygon__within=area.polygon)
+            filters |= subclause
 
     elif mode is AreaQueryMode.AREA_OR_PARENTS:
         filters = Q(area__gss=area.gss)
         # Or find GenericData tagged with area that fully contains this area's polygon
-        filters |= Q(area__polygon__contains=area.polygon)
+        postcode_io_key = area_to_postcode_io_filter(area)
+        if postcode_io_key is None:
+            postcode_io_key = lih_to_postcodes_io_key_map.get(area.area_type.code, None)
+        if postcode_io_key:
+            subclause = Q()
+            # See if there's a matched postcode data field for this area
+            subclause &= Q(
+                **{f"postcode_data__codes__{postcode_io_key.value}": area.gss}
+            )
+            # And see if the area is LARGER than the current area — i.e. a parent
+            subclause &= Q(area__polygon__contains=area.polygon)
+            filters |= subclause
+
+    elif mode is AreaQueryMode.OVERLAPPING:
+        filters = Q(area__gss=area.gss)
+        # Or find GenericData tagged with area that overlaps this area's polygon
+        postcode_io_key = area_to_postcode_io_filter(area)
+        if postcode_io_key is None:
+            postcode_io_key = lih_to_postcodes_io_key_map.get(area.area_type.code, None)
+        if postcode_io_key:
+            filters |= Q(**{f"postcode_data__codes__{postcode_io_key.value}": area.gss})
 
     else:
         raise ValueError(f"Unknown AreaQueryMode: {mode}")

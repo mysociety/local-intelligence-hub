@@ -562,6 +562,7 @@ export enum AreaQueryMode {
   Area = 'AREA',
   AreaOrChildren = 'AREA_OR_CHILDREN',
   AreaOrParents = 'AREA_OR_PARENTS',
+  Overlapping = 'OVERLAPPING',
   PointsWithin = 'POINTS_WITHIN'
 }
 
