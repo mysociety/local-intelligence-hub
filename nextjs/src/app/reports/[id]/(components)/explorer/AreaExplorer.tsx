@@ -355,11 +355,7 @@ function AreaLayerData({
             />
           ) : layer.inspectorType === InspectorDisplayType.ElectionResult ? (
             <ElectionResultsDisplay
-              data={
-                dataDisplayMode === DataDisplayModes.Aggregated
-                  ? data.data?.summary?.aggregated
-                  : data.data?.data?.[0]?.json
-              }
+              data={data.data?.summary}
               config={layer.inspectorConfig}
             />
           ) : layer.inspectorType === InspectorDisplayType.BigNumber ? (
