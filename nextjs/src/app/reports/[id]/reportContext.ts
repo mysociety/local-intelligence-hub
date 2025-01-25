@@ -109,7 +109,7 @@ export enum DataDisplayMode {
 const explorerDisplaySchema = z.object({
   id: z.string().uuid().default(uuid.v4),
   layerId: z.string().uuid(),
-  name: z.string(),
+  name: z.string().optional(),
   displayType: z.nativeEnum(InspectorDisplayType),
   areaQueryMode: z.nativeEnum(AreaQueryMode).optional(),
   dataDisplayMode: z.nativeEnum(DataDisplayMode).optional(),
@@ -119,7 +119,7 @@ export type IExplorerDisplay = z.infer<typeof explorerDisplaySchema>
 
 export const viewSchema = z.object({
   id: z.string().uuid().default(uuid.v4),
-  name: z.string().default('New view'),
+  name: z.string().optional(),
   type: z.nativeEnum(ViewType),
   description: z.string().optional(),
   icon: z.string().optional(),
@@ -196,7 +196,10 @@ export type ViewConfig = z.infer<typeof viewUnionSchema>
 // Make a version of the ViewConfig type which is generic so that providing <ViewType> asserts the union type:
 export type SpecificViewConfig<ViewType> = ViewConfig & { type: ViewType }
 
+const CURRENT_MIGRATION_VERSION = '2025-01-25'
+
 export const displayOptionsSchema = z.object({
+  version: z.string().default(CURRENT_MIGRATION_VERSION),
   starred: z.record(z.string().uuid(), starredSchema).default({}),
   areaExplorer: z
     .object({

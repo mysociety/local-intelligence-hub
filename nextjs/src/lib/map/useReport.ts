@@ -23,7 +23,7 @@ import ReportContext, {
 import { StarredState, StarredStateUnique, starId } from '@/lib/map'
 import { prepareMapReportForInput } from '@/lib/map/mapReportUpdate'
 import { toastPromise } from '@/lib/toast'
-import { FetchResult, useApolloClient } from '@apollo/client'
+import { ApolloClient, FetchResult, useApolloClient } from '@apollo/client'
 import * as jsonpatch from 'fast-json-patch'
 import { WritableDraft, produce } from 'immer'
 import { capitalize, isEqual } from 'lodash'
@@ -41,7 +41,7 @@ export const useReport = () => {
     report,
     ...restOfReport,
     deleteReport,
-    refreshReportData,
+    refreshReportData: () => refreshReportData(client),
     updateReport,
     addStarredItem,
     removeStarredItem,
@@ -76,21 +76,15 @@ export const useReport = () => {
   ) {
     const { displayOptions, ...oldReport } = report
     if (isEqual(oldReport, newReport)) return
+
     const input = prepareMapReportForInput(newReport)
     if (!Object.keys(input).length) {
       console.warn('No changes to report')
       return
     }
 
-    const update = client.mutate<
-      UpdateMapReportMutation,
-      UpdateMapReportMutationVariables
-    >({
-      mutation: UPDATE_MAP_REPORT,
-      variables: {
-        input,
-      },
-    })
+    const update = updateMapReport({ input }, client)
+
     toastPromise(update, {
       loading: 'Saving...',
       success: () => {
@@ -101,7 +95,7 @@ export const useReport = () => {
       },
       error: `Couldn't save report`,
     }).finally(() => {
-      refreshReportData()
+      refreshReportData(client)
     })
   }
 
@@ -177,20 +171,6 @@ export const useReport = () => {
     })
   }
 
-  function refreshReportData() {
-    // TODO: This should refresh only queries that are used by the report
-    toastPromise(
-      client.refetchQueries({
-        include: ['GetMapReport', 'MapReportLayerAnalytics'],
-      }),
-      {
-        loading: 'Refreshing report data...',
-        success: 'Report data updated',
-        error: `Couldn't refresh report data`,
-      }
-    )
-  }
-
   function addStarredItem(starredItemData: StarredState) {
     updateReport((draft) => {
       const id = starId(starredItemData)
@@ -250,4 +230,31 @@ export const useReport = () => {
       }
     })
   }
+}
+
+export function updateMapReport(
+  variables: UpdateMapReportMutationVariables,
+  client: ApolloClient<object>
+) {
+  return client.mutate<
+    UpdateMapReportMutation,
+    UpdateMapReportMutationVariables
+  >({
+    mutation: UPDATE_MAP_REPORT,
+    variables,
+  })
+}
+
+export function refreshReportData(client: ApolloClient<any>) {
+  // TODO: This should refresh only queries that are used by the report
+  toastPromise(
+    client.refetchQueries({
+      include: ['GetMapReport', 'MapReportLayerAnalytics'],
+    }),
+    {
+      loading: 'Refreshing report data...',
+      success: 'Report data updated',
+      error: `Couldn't refresh report data`,
+    }
+  )
 }

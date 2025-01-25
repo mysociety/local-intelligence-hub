@@ -2,9 +2,16 @@
 
 import { GetMapReportQuery } from '@/__generated__/graphql'
 import { useSidebarLeftState } from '@/lib/map'
+import { migrateDisplayOptions } from '@/lib/map/displayOptionsMigrations/migrate'
+import { prepareMapReportForInput } from '@/lib/map/mapReportUpdate'
+import { refreshReportData, updateMapReport } from '@/lib/map/useReport'
+import { toastPromise } from '@/lib/toast'
+import { useApolloClient } from '@apollo/client'
 import { useSetAtom } from 'jotai'
+import { isEqual } from 'lodash'
 import { ReactNode, useEffect, useMemo, useRef } from 'react'
-import ReportContext, { displayOptionsSchema } from '../reportContext'
+import toSpaceCase from 'to-space-case'
+import ReportContext, { MapReportExtended } from '../reportContext'
 import { navbarTitleAtom } from './ReportNavbar'
 
 interface ReportProviderProps {
@@ -13,20 +20,40 @@ interface ReportProviderProps {
 }
 
 const ReportProvider = ({
-  __unvalidatedReport: { displayOptions, ...__report },
+  __unvalidatedReport,
   children,
 }: ReportProviderProps) => {
   const setNavbarTitle = useSetAtom(navbarTitleAtom)
+  const client = useApolloClient()
 
   // Parse the report config and merge it with the default config
-  const parsed = useMemo(() => {
-    return displayOptionsSchema.strict().parse(displayOptions)
-  }, [displayOptions])
+  const { displayOptions, ...oldReport } = __unvalidatedReport
+  const report = useMemo((): MapReportExtended => {
+    return {
+      ...oldReport,
+      displayOptions: migrateDisplayOptions(__unvalidatedReport),
+    }
+  }, [__unvalidatedReport])
 
-  const report = {
-    ...__report,
-    displayOptions: parsed,
-  }
+  useEffect(() => {
+    if (!isEqual(displayOptions, report.displayOptions)) {
+      console.log('Migrating display options')
+      const input = prepareMapReportForInput(report)
+      const update = updateMapReport({ input }, client)
+      toastPromise(update, {
+        loading: 'Saving...',
+        success: () => {
+          return {
+            title: 'Report saved',
+            description: `Updated ${Object.keys(input).map(toSpaceCase).join(', ')}`,
+          }
+        },
+        error: `Couldn't save report`,
+      }).finally(() => {
+        refreshReportData(client)
+      })
+    }
+  }, [report.name])
 
   useEffect(() => {
     setNavbarTitle(report.name)
@@ -42,8 +69,6 @@ const ReportProvider = ({
       autoOpenedSidebar.current = true
     }
   }, [report.layers, autoOpenedSidebar])
-
-  return <pre>{JSON.stringify(parsed, null, 2)}</pre>
 
   return (
     <ReportContext.Provider value={{ report }}>
