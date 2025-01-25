@@ -1,5 +1,5 @@
 import ReportActions from '@/app/reports/[id]/(components)/ReportActions'
-import { useReport } from '@/app/reports/[id]/(components)/ReportProvider'
+import { useReport } from '@/lib/map/useReport'
 
 import { contentEditableMutation } from '@/lib/html'
 import { useExplorer, useSidebarLeftState } from '@/lib/map'

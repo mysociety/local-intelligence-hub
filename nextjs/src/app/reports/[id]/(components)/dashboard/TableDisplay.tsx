@@ -31,23 +31,19 @@ import { useMemo } from 'react'
 
 export function TableDisplay({
   data,
-  config,
   title,
   areaName,
 }: {
   data: any[]
-  config: {
-    columns?: string[]
-  }
   title: string
   areaName: string
 }) {
   const cols: string[] = useMemo(() => {
     console.log('Raw data:', data)
-    const columns = config?.columns || allKeysFromAllData(data)
+    const columns = allKeysFromAllData(data)
     console.log('Generated columns:', columns)
     return columns
-  }, [config, data])
+  }, [data])
 
   const dataTableColumns = useMemo(() => {
     console.log('Creating table columns from:', cols)

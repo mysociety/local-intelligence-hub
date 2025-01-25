@@ -1,8 +1,8 @@
 import { LoadingIcon } from '@/components/ui/loadingIcon'
+import { useReport } from '@/lib/map/useReport'
 import { useDebounce } from '@uidotdev/usehooks'
 import clsx from 'clsx'
 import React from 'react'
-import { useReport } from './ReportProvider'
 
 export default function InactivateOnLoading({
   children,

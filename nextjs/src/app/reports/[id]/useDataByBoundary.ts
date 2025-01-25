@@ -2,8 +2,9 @@ import {
   SourceStatsByBoundaryQuery,
   SourceStatsByBoundaryQueryVariables,
 } from '@/__generated__/graphql'
+import { useReport } from '@/lib/map/useReport'
 import { QueryResult, gql, useQuery } from '@apollo/client'
-import { MapReportExtended } from './reportContext'
+import { IMapOptions } from './reportContext'
 import { Tileset } from './types'
 
 export type DataByBoundary =
@@ -15,14 +16,19 @@ type SourceStatsByBoundaryQueryResult = QueryResult<
 >
 
 const useDataByBoundary = ({
-  report,
+  mapOptions,
   tileset,
 }: {
-  report: MapReportExtended
+  mapOptions?: IMapOptions
   tileset: Tileset
   // Source fields are the numeric data columns from the external data source
   getSourceFieldNames?: boolean
 }): SourceStatsByBoundaryQueryResult => {
+  const report = useReport()
+  const sourceId = report.report.layers.find(
+    (l) => l.id === mapOptions?.choropleth.layerId
+  )?.source
+
   // If mapBounds is required, send dummy empty bounds on the first request
   // Skipping the first query means that fetchMore() doesn't work
   // fetchMore() is required to add data to the map when the user pans/zooms
@@ -38,16 +44,14 @@ const useDataByBoundary = ({
     SourceStatsByBoundaryQueryVariables
   >(CHOROPLETH_STATS_FOR_SOURCE, {
     variables: {
-      sourceId: report?.displayOptions.dataVisualisation.dataSource!,
+      sourceId: sourceId!,
       analyticalAreaType: analyticalAreaType!,
-      mode: report?.displayOptions.dataVisualisation.choroplethMode,
-      field: report?.displayOptions.dataVisualisation.dataSourceField,
-      formula: report?.displayOptions.dataVisualisation.formula,
+      mode: mapOptions?.choropleth.mode,
+      field: mapOptions?.choropleth.field,
+      formula: mapOptions?.choropleth.formula,
       mapBounds,
     },
-    skip:
-      !report?.displayOptions.dataVisualisation.dataSource ||
-      !analyticalAreaType,
+    skip: !mapOptions || !sourceId || !analyticalAreaType,
     notifyOnNetworkStatusChange: true, // required to mark loading: true on fetchMore()
   })
 }

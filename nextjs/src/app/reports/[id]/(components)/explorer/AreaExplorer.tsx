@@ -5,7 +5,6 @@ import {
   AreaLayerDataQueryVariables,
   AreaQueryMode,
   DataSourceType,
-  MapLayer,
 } from '@/__generated__/graphql'
 import { DataSourceIcon } from '@/components/DataSourceIcon'
 import { DataSourceTypeIcon } from '@/components/icons/DataSourceType'
@@ -30,13 +29,15 @@ import {
 } from '@/components/ui/popover'
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { InspectorDisplayType } from '@/lib/explorer'
 import {
   ExplorerAreaBreadCrumbMapping,
   ExplorerState,
-  InspectorDisplayType,
   StarredState,
   useExplorer,
 } from '@/lib/map'
+import { useReport } from '@/lib/map/useReport'
+import { useView } from '@/lib/map/useView'
 import { gql, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
 import { sum } from 'lodash'
@@ -56,10 +57,14 @@ import { toast } from 'sonner'
 import toSpaceCase from 'to-space-case'
 import trigramSimilarity from 'trigram-similarity'
 import { BoundaryType } from '../../politicalTilesets'
+import {
+  DataDisplayMode,
+  IExplorerDisplay,
+  ViewType,
+} from '../../reportContext'
 import CollapsibleSection from '../CollapsibleSection'
 import { EditorSelect } from '../EditorSelect'
 import { EditorSwitch } from '../EditorSwitch'
-import { useReport } from '../ReportProvider'
 import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
 import { TableDisplay } from '../dashboard/TableDisplay'
 
@@ -77,23 +82,12 @@ export function AreaExplorer({ gss }: { gss: string }) {
   })
 
   const report = useReport()
-  const isStarred = report.report.displayOptions.starred?.some(
-    (item) => item.id === gss
-  )
   const { addStarredItem, removeStarredItem } = report
   const starredItemData: StarredState = {
     id: gss || '',
     entity: 'area',
     showExplorer: true,
     name: areaData.data?.area?.name || '',
-  }
-
-  function toggleStarred() {
-    if (isStarred) {
-      removeStarredItem(starredItemData.id)
-    } else {
-      addStarredItem(starredItemData)
-    }
   }
 
   return (
@@ -111,9 +105,9 @@ export function AreaExplorer({ gss }: { gss: string }) {
                 <span className="mr-auto">{areaData.data?.area?.name}</span>
                 <div className="flex flex-row gap-2 items-center">
                   <Star
-                    onClick={toggleStarred}
+                    onClick={() => report.toggleStarred(starredItemData)}
                     className={`ml-auto text-meepGray-400 cursor-pointer ${
-                      isStarred
+                      report.isStarred(starredItemData)
                         ? 'fill-meepGray-400 hover:text-meepGray-200 hover:fill-meepGray-600'
                         : 'fill-transparent hover:text-white hover:fill-white'
                     }`}
@@ -153,10 +147,12 @@ export function AreaExplorer({ gss }: { gss: string }) {
           value="summary"
           className="pb-24 divide-y divide-meepGray-800"
         >
-          {report.report.layers?.map((layer) => (
-            <div key={layer.id} className="my-4 px-4">
-              <AreaLayerData
-                layer={layer}
+          {Object.values(
+            report.report.displayOptions.areaExplorer.displays
+          )?.map((display) => (
+            <div key={display.id} className="my-4 px-4">
+              <AreaDisplay
+                display={display}
                 gss={gss}
                 areaName={areaData.data?.area?.name || ''}
               />
@@ -220,51 +216,38 @@ const AREA_EXPLORER_SUMMARY = gql`
   }
 `
 
-enum DataDisplayModes {
-  Aggregated = 'Aggregated',
-  RawData = 'RawData',
-}
-
-function AreaLayerData({
-  layer,
+function AreaDisplay({
+  display,
   gss,
   areaName,
 }: {
-  layer: MapLayer
+  display: IExplorerDisplay
   gss: string
   areaName: string
 }) {
   const explorer = useExplorer()
-
-  const [areaQueryMode, setAreaQueryMode] = useState<AreaQueryMode>(
-    layer.sourceData.dataType === DataSourceType.AreaStats
-      ? AreaQueryMode.AreaOrChildren
-      : AreaQueryMode.PointsWithin
-  )
-  const [dataDisplayMode, setDataDisplayMode] = useState<DataDisplayModes>(
-    layer.sourceData.dataType === DataSourceType.AreaStats
-      ? DataDisplayModes.Aggregated
-      : DataDisplayModes.RawData
-  )
+  const report = useReport()
+  const layer = report.report.layers.find((l) => l.id === display.layerId)
+  const sourceId = layer?.source
 
   const data = useQuery<AreaLayerDataQuery, AreaLayerDataQueryVariables>(
     AREA_LAYER_DATA,
     {
       variables: {
         gss,
-        externalDataSource: layer?.source,
-        mode: areaQueryMode,
+        externalDataSource: sourceId!,
+        mode: display.areaQueryMode,
       },
-      skip: !layer?.source || !gss,
+      skip: !sourceId || !gss,
     }
   )
 
-  const { updateLayer } = useReport()
+  const { updateReport } = useReport()
 
   return (
     <CollapsibleSection
-      title={layer.name}
-      id={layer.id}
+      title={display.name}
+      id={display.id}
       actions={
         // Dropdown with these two editor select options
         <Popover>
@@ -274,15 +257,19 @@ function AreaLayerData({
           <PopoverContent>
             <EditorSelect
               label={'Display style'}
-              value={layer.inspectorType || InspectorDisplayType.Table}
+              value={display.displayType || InspectorDisplayType.Table}
               options={Object.keys(InspectorDisplayType)}
               onChange={(value) => {
-                updateLayer(layer.id, { inspectorType: value })
+                updateReport((draft) => {
+                  draft.displayOptions.areaExplorer.displays[
+                    display.id
+                  ].displayType = value as InspectorDisplayType
+                })
               }}
             />
             <EditorSelect
               label={'Data fetching'}
-              value={areaQueryMode}
+              value={display.areaQueryMode}
               options={
                 Object.keys(AreaQueryMode).map((key) => ({
                   value: AreaQueryMode[key as keyof typeof AreaQueryMode],
@@ -291,119 +278,128 @@ function AreaLayerData({
                   ),
                 })) || []
               }
-              onChange={(value) => setAreaQueryMode(value as AreaQueryMode)}
+              onChange={(value) => {
+                updateReport((draft) => {
+                  draft.displayOptions.areaExplorer.displays[
+                    display.id
+                  ].areaQueryMode = value as AreaQueryMode
+                })
+              }}
             />
             <EditorSwitch
               label="Aggregate data"
               explainer={
-                dataDisplayMode === DataDisplayModes.Aggregated
+                display.dataDisplayMode === DataDisplayMode.Aggregated
                   ? 'Toggle off to show full data for all found records.'
                   : 'Toggle on to show aggregated numerical data for this area.'
               }
-              value={dataDisplayMode === DataDisplayModes.Aggregated}
+              value={display.dataDisplayMode === DataDisplayMode.Aggregated}
               onChange={(value) =>
-                setDataDisplayMode(
-                  value ? DataDisplayModes.Aggregated : DataDisplayModes.RawData
-                )
+                updateReport((draft) => {
+                  draft.displayOptions.areaExplorer.displays[
+                    display.id
+                  ].dataDisplayMode = value
+                    ? DataDisplayMode.Aggregated
+                    : DataDisplayMode.RawData
+                })
               }
             />
           </PopoverContent>
         </Popover>
       }
     >
-      {data.loading ? (
-        <div className="text-meepGray-400">
-          <LoadingIcon size={'32px'} />
-        </div>
-      ) : data.error || !data.data ? (
+      {!layer ? (
         <div className="text-meepGray-400 py-2">No data available</div>
       ) : (
-        <div className="text-meepGray-400">
-          {layer.inspectorType === InspectorDisplayType.Properties ? (
-            dataDisplayMode === DataDisplayModes.Aggregated ? (
-              <PropertiesDisplay
-                data={data.data?.summary?.aggregated}
-                config={layer.inspectorConfig}
-              />
-            ) : // There's a list of data
-            data.data.data.length > 1 ||
-              // There's only one data item, but it's not the current area
-              (!!data.data.data.length &&
-                !data.data.data.some(
-                  (d) => d.area?.gss === explorer.state.id
-                )) ? (
-              <RelatedDataCarousel data={data.data.data} />
-            ) : !!data.data?.data?.length ? (
-              // There's only one data item, and it's the current area
-              <PropertiesDisplay
-                data={data.data?.data?.[0]?.json}
-                config={layer.inspectorConfig}
-              />
-            ) : (
-              <div className="text-meepGray-400 py-2">No data available</div>
-            )
-          ) : layer.inspectorType === InspectorDisplayType.Table ? (
-            <TableDisplay
-              data={
-                dataDisplayMode === DataDisplayModes.Aggregated
-                  ? data.data?.summary?.aggregated
-                  : data.data?.data
-              }
-              config={layer.inspectorConfig}
-              title={layer.name}
-              areaName={areaName}
-            />
-          ) : layer.inspectorType === InspectorDisplayType.ElectionResult ? (
-            <ElectionResultsDisplay
-              data={
-                dataDisplayMode === DataDisplayModes.Aggregated
-                  ? data.data?.summary?.aggregated
-                  : data.data?.data?.[0]?.json
-              }
-              config={layer.inspectorConfig}
-            />
-          ) : layer.inspectorType === InspectorDisplayType.BigNumber ? (
-            <BigNumberDisplay
-              count={
-                dataDisplayMode === DataDisplayModes.Aggregated
-                  ? data.data?.summary?.aggregated
-                  : data.data?.data?.length
-              }
-              dataType={layer.sourceData.dataType}
-            />
-          ) : layer.inspectorType === InspectorDisplayType.BigRecord ? (
-            <BigRecord
-              item={data.data?.data?.[0]}
-              config={layer.inspectorConfig}
-              dataType={layer.sourceData.dataType}
-            />
-          ) : layer.inspectorType === InspectorDisplayType.List ? (
-            <ListDisplay
-              data={data.data?.data}
-              config={layer.inspectorConfig}
-              dataType={layer.sourceData.dataType}
-            />
+        <>
+          {data.loading ? (
+            <div className="text-meepGray-400">
+              <LoadingIcon size={'32px'} />
+            </div>
+          ) : data.error || !data.data ? (
+            <div className="text-meepGray-400 py-2">No data available</div>
           ) : (
-            JSON.stringify(data.data)
+            <div className="text-meepGray-400">
+              {display.displayType === InspectorDisplayType.Properties ? (
+                display.dataDisplayMode === DataDisplayMode.Aggregated ? (
+                  <PropertiesDisplay data={data.data?.summary?.aggregated} />
+                ) : // There's a list of data
+                data.data.data.length > 1 ||
+                  // There's only one data item, but it's not the current area
+                  (!!data.data.data.length &&
+                    !data.data.data.some(
+                      (d) => d.area?.gss === explorer.state.id
+                    )) ? (
+                  <RelatedDataCarousel data={data.data.data} />
+                ) : !!data.data?.data?.length ? (
+                  // There's only one data item, and it's the current area
+                  <PropertiesDisplay data={data.data?.data?.[0]?.json} />
+                ) : (
+                  <div className="text-meepGray-400 py-2">
+                    No data available
+                  </div>
+                )
+              ) : display.displayType === InspectorDisplayType.Table ? (
+                <TableDisplay
+                  data={
+                    display.dataDisplayMode === DataDisplayMode.Aggregated
+                      ? data.data?.summary?.aggregated
+                      : data.data?.data
+                  }
+                  title={display.name}
+                  areaName={areaName}
+                />
+              ) : display.displayType ===
+                InspectorDisplayType.ElectionResult ? (
+                <ElectionResultsDisplay
+                  data={
+                    display.dataDisplayMode === DataDisplayMode.Aggregated
+                      ? data.data?.summary?.aggregated
+                      : data.data?.data?.[0]?.json
+                  }
+                />
+              ) : display.displayType === InspectorDisplayType.BigNumber ? (
+                <BigNumberDisplay
+                  count={
+                    display.dataDisplayMode === DataDisplayMode.Aggregated
+                      ? data.data?.summary?.aggregated
+                      : data.data?.data?.length
+                  }
+                  dataType={layer.sourceData.dataType}
+                />
+              ) : display.displayType === InspectorDisplayType.BigRecord ? (
+                <BigRecord
+                  item={data.data?.data?.[0]}
+                  dataType={layer.sourceData.dataType}
+                />
+              ) : display.displayType === InspectorDisplayType.List ? (
+                <ListDisplay
+                  data={data.data?.data}
+                  dataType={layer.sourceData.dataType}
+                />
+              ) : (
+                JSON.stringify(data.data)
+              )}
+            </div>
           )}
-        </div>
+          <a
+            className="text-meepGray-400 text-sm flex flex-row items-center gap-1 mt-2"
+            {...(!!layer.sourceData.remoteUrl && {
+              href: layer.sourceData.remoteUrl,
+              target: '_blank',
+            })}
+          >
+            Source:{' '}
+            <DataSourceIcon
+              crmType={layer.sourceData.crmType}
+              className="w-5 h-5"
+            />{' '}
+            <span className="underline hover:text-meepGray-300">
+              {layer.sourceData.name}
+            </span>
+          </a>
+        </>
       )}
-      <a
-        className="text-meepGray-400 text-sm flex flex-row items-center gap-1 mt-2"
-        {...(!!layer.sourceData.remoteUrl && {
-          href: layer.sourceData.remoteUrl,
-          target: '_blank',
-        })}
-      >
-        Source:{' '}
-        <DataSourceIcon
-          crmType={layer.sourceData.crmType}
-          className="w-5 h-5"
-        />{' '}
-        <span className="underline hover:text-meepGray-300">
-          {layer.sourceData.name}
-        </span>
-      </a>
     </CollapsibleSection>
   )
 }
@@ -528,12 +524,8 @@ function RelatedDataCarousel({ data }: { data: AreaLayerDataQuery['data'] }) {
 
 function ElectionResultsDisplay({
   data,
-  config,
 }: {
   data?: AreaLayerDataQuery['summary']
-  config: {
-    voteCountFields: string[]
-  }
 }) {
   if (!data || !data?.aggregated) {
     return <div className="text-meepGray-400 py-2">No data available</div>
@@ -659,13 +651,9 @@ function BigNumberDisplay({
 
 function ListDisplay({
   data,
-  config,
   dataType,
 }: {
   data?: AreaLayerDataQuery['data']
-  config: {
-    columns: string[]
-  }
   dataType: DataSourceType
 }) {
   const explorer = useExplorer()
@@ -721,13 +709,9 @@ function ListDisplay({
 
 function BigRecord({
   item,
-  config,
   dataType,
 }: {
   item?: AreaLayerDataQuery['data'][0]
-  config: {
-    columns: string[]
-  }
   dataType: DataSourceType
 }) {
   const explorer = useExplorer()
@@ -844,8 +828,7 @@ function AreaExplorerBreadcrumbs({
   area: AreaExplorerSummaryQuery['area']
 }) {
   const explorer = useExplorer()
-
-  const { updateReport } = useReport()
+  const mapView = useView(ViewType.Map)
 
   const {
     europeanElectoralRegion,
@@ -913,8 +896,8 @@ function AreaExplorerBreadcrumbs({
       }
     )
 
-    updateReport((draft) => {
-      draft.displayOptions.dataVisualisation.boundaryType = crumb.type
+    mapView.updateView((draft) => {
+      draft.mapOptions.choropleth.boundaryType = crumb.type
     })
   }
 

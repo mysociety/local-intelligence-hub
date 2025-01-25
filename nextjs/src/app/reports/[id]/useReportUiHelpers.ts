@@ -1,5 +1,5 @@
+import { useReport } from '@/lib/map/useReport'
 import { useEffect, useState } from 'react'
-import { useReport } from './(components)/ReportProvider'
 
 const HELPER_TIMEOUT = 3000
 

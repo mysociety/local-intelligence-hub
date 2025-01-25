@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-import { useReport } from './ReportProvider'
+import { useReport } from '@/lib/map/useReport'
 
 const ReportActions: React.FC = () => {
   const { report, deleteReport, refreshReportData } = useReport()

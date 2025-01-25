@@ -1,7 +1,7 @@
-import { useReport } from '@/app/reports/[id]/(components)/ReportProvider'
 import { BACKEND_URL } from '@/env'
 import { authenticationHeaders } from '@/lib/auth'
 import { useExplorer } from '@/lib/map'
+import { useReport } from '@/lib/map/useReport'
 import { RequestTransformFunction } from 'mapbox-gl'
 import React from 'react'
 import Map from 'react-map-gl'

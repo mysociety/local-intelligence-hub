@@ -5,7 +5,9 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { InspectorDisplayType, layerEditorStateAtom } from '@/lib/map'
+import { InspectorDisplayType } from '@/lib/explorer'
+import { layerEditorStateAtom } from '@/lib/map'
+import { useReport } from '@/lib/map/useReport'
 import { useApolloClient } from '@apollo/client'
 import { useAtom } from 'jotai'
 import { ArrowRight, LucideX } from 'lucide-react'
@@ -14,7 +16,6 @@ import { useState } from 'react'
 import { EditorColourPicker } from './EditorColourPicker'
 import { EditorSelect } from './EditorSelect'
 import { DEFAULT_MARKER_COLOUR } from './MembersListPointMarkers'
-import { useReport } from './ReportProvider'
 
 export function DataSourceEditor() {
   const { report } = useReport()
@@ -121,7 +122,7 @@ function StyleTab({ layerId }: { layerId: string }) {
 
 function DataTab({ layerId }: { layerId: string }) {
   const client = useApolloClient()
-  const { report, removeDataSource } = useReport()
+  const { report, removeLayer } = useReport()
   const layer = report.layers?.find((l) => l?.id === layerId)!
 
   return (
@@ -196,7 +197,7 @@ function DataTab({ layerId }: { layerId: string }) {
       <Button
         className="ml-1"
         onClick={() => {
-          removeDataSource(layer?.source!)
+          removeLayer(layer?.id)
         }}
         variant="destructive"
       >

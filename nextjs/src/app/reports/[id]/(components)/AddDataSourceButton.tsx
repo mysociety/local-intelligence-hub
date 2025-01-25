@@ -32,10 +32,10 @@ import {
 import { SourceOption } from '@/lib/data'
 import { cn } from '@/lib/utils'
 
-import { useReport } from '@/app/reports/[id]/(components)/ReportProvider'
 import { CRMSelection } from '@/components/CRMButtonItem'
 import { FormField } from '@/components/ui/form'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
+import { useReport } from '@/lib/map/useReport'
 import { AddSourcePayload } from '../reportContext'
 
 export function AddMapLayerButton({

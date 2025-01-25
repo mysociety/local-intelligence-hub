@@ -18,11 +18,11 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { useExplorer } from '@/lib/map'
+import { useReport } from '@/lib/map/useReport'
 import { cn } from '@/lib/utils'
 import { useEffect } from 'react'
 import { POLITICAL_BOUNDARIES } from '../politicalTilesets'
 import { useAreasList } from '../useAreasList'
-import { useReport } from './ReportProvider'
 
 export default function ReportDashboardConsSelector() {
   const [searchQuery, setSearchQuery] = React.useState('')

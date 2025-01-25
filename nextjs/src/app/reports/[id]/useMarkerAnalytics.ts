@@ -2,8 +2,8 @@ import {
   MapReportLayerAnalyticsQuery,
   MapReportLayerAnalyticsQueryVariables,
 } from '@/__generated__/graphql'
+import { useReport } from '@/lib/map/useReport'
 import { useQuery } from '@apollo/client'
-import { useReport } from './(components)/ReportProvider'
 import { MAP_REPORT_LAYER_ANALYTICS } from './gql_queries'
 
 const useMarkerAnalytics = () => {

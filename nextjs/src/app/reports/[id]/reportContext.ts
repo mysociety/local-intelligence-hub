@@ -1,11 +1,11 @@
 import {
-  AnalyticalAreaType,
+  AreaQueryMode,
   ChoroplethMode,
   DataSourceType,
-  MapLayerInput,
-  MapReport,
+  GetMapReportQuery,
 } from '@/__generated__/graphql'
-import { StarredState, starredStateResolver } from '@/lib/map'
+import { InspectorDisplayType } from '@/lib/explorer'
+import { starredSchema } from '@/lib/map'
 import {
   interpolateBlues,
   interpolateBrBG,
@@ -17,17 +17,14 @@ import {
   interpolateRdYlGn,
   interpolateReds,
 } from 'd3-scale-chromatic'
-import { WritableDraft } from 'immer'
 import { createContext } from 'react'
+import * as uuid from 'uuid'
 import * as z from 'zod'
 import { BoundaryType } from './politicalTilesets'
 
-export enum VisualisationType {
-  Choropleth = 'choropleth',
-}
-
-export const VisualisationLabels: Record<VisualisationType, string> = {
-  [VisualisationType.Choropleth]: 'Colour shading by category',
+export enum ViewType {
+  Map = 'Map',
+  Table = 'Table',
 }
 
 export enum Palette {
@@ -88,73 +85,139 @@ export const PALETTE: Record<
   },
 }
 
-export function getReportPalette(displayOptions: ReportConfig) {
+export function getReportPalette(mapOptions: IMapOptions) {
   const interpolator =
-    PALETTE[displayOptions.dataVisualisation.palette || Palette.Blue]
-      .interpolator
-  if (displayOptions.dataVisualisation.paletteReversed) {
+    PALETTE[mapOptions.choropleth?.palette || Palette.Blue].interpolator
+  if (mapOptions.choropleth?.isPaletteReversed) {
     return (t: number) => interpolator(1 - t)
   }
   return interpolator
 }
 
-export type MapReportExtended = Omit<MapReport, 'displayOptions'> & {
-  displayOptions: ReportConfig
+export type MapReportExtended = Omit<
+  GetMapReportQuery['mapReport'],
+  'displayOptions'
+> & {
+  displayOptions: IDisplayOptions
 }
 
-export const reportConfigTypeChecker = z.object({
-  dataVisualisation: z.object({
-    boundaryType: z.nativeEnum(BoundaryType).optional(),
-    visualisationType: z.nativeEnum(VisualisationType).optional(),
-    palette: z.nativeEnum(Palette).optional(),
-    paletteReversed: z.boolean().optional(),
-    dataSource: z.string().optional(),
-    choroplethMode: z
-      .nativeEnum(ChoroplethMode)
-      .optional()
-      .default(ChoroplethMode.Count),
-    dataSourceField: z.string().optional(),
-    formula: z.string().optional(),
-    showDataVisualisation: z
-      .record(z.boolean())
-      .optional()
-      .describe('Deprecated'),
-  }),
-  display: z.object({
-    showDataVisualisation: z.boolean().optional(),
-    showBorders: z.boolean().optional(),
-    showStreetDetails: z.boolean().optional(),
-    showMPs: z.boolean().optional(),
-    showLastElectionData: z.boolean().optional(),
-    showPostcodeLabels: z.boolean().optional(),
-    boundaryOutlines: z.array(z.nativeEnum(AnalyticalAreaType)).optional(),
-    showBoundaryNames: z.boolean().optional(),
-  }),
-  starred: z.array(starredStateResolver),
+export enum DataDisplayMode {
+  Aggregated = 'Aggregated',
+  RawData = 'RawData',
+}
+
+const explorerDisplaySchema = z.object({
+  id: z.string().uuid().default(uuid.v4),
+  layerId: z.string().uuid(),
+  name: z.string(),
+  displayType: z.nativeEnum(InspectorDisplayType),
+  areaQueryMode: z.nativeEnum(AreaQueryMode).optional(),
+  dataDisplayMode: z.nativeEnum(DataDisplayMode).optional(),
 })
 
-export type ReportConfig = z.infer<typeof reportConfigTypeChecker>
+export type IExplorerDisplay = z.infer<typeof explorerDisplaySchema>
 
-export const defaultReportConfig: ReportConfig = {
-  dataVisualisation: {
-    boundaryType: BoundaryType.PARLIAMENTARY_CONSTITUENCIES,
-    visualisationType: VisualisationType.Choropleth,
-    choroplethMode: ChoroplethMode.Count,
-    palette: Palette.Blue,
-    paletteReversed: false,
-  },
-  display: {
-    showDataVisualisation: true,
-    showBorders: true,
-    showStreetDetails: false,
-    showPostcodeLabels: false,
-    showMPs: false,
-    showLastElectionData: false,
-    boundaryOutlines: [AnalyticalAreaType.ParliamentaryConstituency_2024],
-    showBoundaryNames: true,
-  },
-  starred: [],
-}
+export const viewSchema = z.object({
+  id: z.string().uuid().default(uuid.v4),
+  name: z.string().default('New view'),
+  type: z.nativeEnum(ViewType),
+  description: z.string().optional(),
+  icon: z.string().optional(),
+  colour: z.string().optional(),
+})
+
+const mapLayerSchema = z.object({
+  // TODO: these could all be a union of simple or conditional styling
+  id: z.string().uuid().default(uuid.v4).describe('View layer ID'),
+  layerId: z
+    .string()
+    .uuid()
+    .describe('Reference to the report layer ID that it gets its data from'),
+  colour: z
+    .string()
+    .optional()
+    .describe('Standard colour for markers, highlighting, and so on.'),
+  markerSize: z.number().optional().describe('Size of markers in pixels.'),
+})
+
+const mapOptionsSchema = z.object({
+  choropleth: z
+    .object({
+      boundaryType: z
+        .nativeEnum(BoundaryType)
+        .default(BoundaryType.PARLIAMENTARY_CONSTITUENCIES)
+        .optional(),
+      palette: z.nativeEnum(Palette).default(Palette.Inferno),
+      isPaletteReversed: z.boolean().optional(),
+      layerId: z.string().uuid().optional(),
+      mode: z
+        .nativeEnum(ChoroplethMode)
+        .optional()
+        .default(ChoroplethMode.Count),
+      field: z.string().optional(),
+      formula: z.string().optional(),
+    })
+    .optional()
+    .default({}),
+  display: z
+    .object({
+      choropleth: z.boolean().optional().default(true),
+      borders: z.boolean().optional().default(true),
+      streetDetails: z.boolean().optional(),
+      boundaryNames: z.boolean().optional().default(true),
+    })
+    .default({}),
+  layers: z
+    .record(z.string().uuid().describe('View layer ID'), mapLayerSchema)
+    .default({}),
+})
+
+export type IMapOptions = z.infer<typeof mapOptionsSchema>
+
+const tableOptionsSchema = z.object({})
+
+export const mapViewSchema = viewSchema.extend({
+  type: z.literal(ViewType.Map),
+  mapOptions: mapOptionsSchema,
+})
+
+export const tableViewSchema = viewSchema.extend({
+  type: z.literal(ViewType.Table),
+  tableOptions: tableOptionsSchema,
+})
+
+export const viewUnionSchema = z.discriminatedUnion('type', [
+  mapViewSchema,
+  tableViewSchema,
+])
+
+export type ViewConfig = z.infer<typeof viewUnionSchema>
+
+// Make a version of the ViewConfig type which is generic so that providing <ViewType> asserts the union type:
+export type SpecificViewConfig<ViewType> = ViewConfig & { type: ViewType }
+
+export const displayOptionsSchema = z.object({
+  starred: z.record(z.string().uuid(), starredSchema).default({}),
+  areaExplorer: z
+    .object({
+      displays: z.record(z.string().uuid(), explorerDisplaySchema).default({}),
+    })
+    .default({}),
+  recordExplorer: z
+    .object({
+      includeProperties: z
+        .array(z.string())
+        .optional()
+        .describe('List of properties to show in the record explorer.'),
+    })
+    .default({}),
+  views: z.record(z.string().uuid(), viewUnionSchema).default({}),
+})
+
+export type IDisplayOptions = z.infer<typeof displayOptionsSchema>
+
+export const defaultIDisplayOptions: IDisplayOptions =
+  displayOptionsSchema.parse({})
 
 export type AddSourcePayload = {
   name: string
@@ -164,38 +227,10 @@ export type AddSourcePayload = {
 
 export interface ReportContextProps {
   report: MapReportExtended
-  deleteReport: () => void
-  updateReport: (
-    editedOutput: (
-      draft: WritableDraft<
-        Omit<MapReportExtended, 'layers'> & { layers: MapLayerInput[] }
-      >
-    ) => void
-  ) => void
-  updateLayer: (layerId: string, layer: Partial<MapLayerInput>) => void
-  refreshReportData: () => void
-  dataLoading: boolean
-  setDataLoading: (loading: boolean) => void
-  removeDataSource: (layerId: string) => void
-  addDataSource: (layer: AddSourcePayload) => void
-  addStarredItem(starredItemData: StarredState): void
-  removeStarredItem(itemId: string): void
-  clearAllStarredItems(): void
 }
 
 const ReportContext = createContext<ReportContextProps>({
   report: {} as MapReportExtended,
-  deleteReport: () => {},
-  updateReport: () => {},
-  updateLayer: () => {},
-  refreshReportData: () => {},
-  dataLoading: false,
-  setDataLoading: () => {},
-  removeDataSource: () => {},
-  addDataSource: () => {},
-  addStarredItem: () => {},
-  removeStarredItem: () => {},
-  clearAllStarredItems: () => {},
 })
 
 export default ReportContext

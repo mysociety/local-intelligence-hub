@@ -6,8 +6,8 @@ import { useAtom } from 'jotai'
 import { MapMouseEvent } from 'mapbox-gl'
 import { useEffect } from 'react'
 import { Layer, Source } from 'react-map-gl'
+import { PLACEHOLDER_LAYER_ID_MARKERS } from './MapView'
 import MarkerPopup from './MarkerPopup'
-import { PLACEHOLDER_LAYER_ID_MARKERS } from './ReportPage'
 export const DEFAULT_MARKER_COLOUR = '#678DE3'
 
 const MEMBERS_LOAD_ZOOM = 8

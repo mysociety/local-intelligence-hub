@@ -1,6 +1,7 @@
 import { ChoroplethMode } from '@/__generated__/graphql'
 import { CRMSelection } from '@/components/CRMButtonItem'
 import { Textarea } from '@/components/ui/textarea'
+import { useReport } from '@/lib/map/useReport'
 import { lowerCase } from 'lodash'
 import pluralize from 'pluralize'
 import React from 'react'
@@ -8,7 +9,6 @@ import { POLITICAL_BOUNDARIES } from '../politicalTilesets'
 import { PALETTE } from '../reportContext'
 import { EditorSelect } from './EditorSelect'
 import { EditorSwitch } from './EditorSwitch'
-import { useReport } from './ReportProvider'
 
 const ReportVisualisation: React.FC = () => {
   const { report, updateReport } = useReport()
