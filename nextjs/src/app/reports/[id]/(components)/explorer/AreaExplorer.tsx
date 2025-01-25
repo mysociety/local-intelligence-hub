@@ -356,11 +356,7 @@ function AreaLayerData({
             />
           ) : layer.inspectorType === InspectorDisplayType.BigNumber ? (
             <BigNumberDisplay
-              count={
-                dataDisplayMode === DataDisplayModes.Aggregated
-                  ? data.data?.summary?.aggregated
-                  : data.data?.data?.length
-              }
+              count={data.data?.data?.length}
               dataType={layer.sourceData.dataType}
             />
           ) : layer.inspectorType === InspectorDisplayType.BigRecord ? (
