@@ -237,14 +237,10 @@ function AreaLayerData({
   const explorer = useExplorer()
 
   const [areaQueryMode, setAreaQueryMode] = useState<AreaQueryMode>(
-    layer.sourceData.dataType === DataSourceType.AreaStats
-      ? AreaQueryMode.AreaOrChildren
-      : AreaQueryMode.PointsWithin
+    AreaQueryMode.Overlapping
   )
   const [dataDisplayMode, setDataDisplayMode] = useState<DataDisplayModes>(
-    layer.sourceData.dataType === DataSourceType.AreaStats
-      ? DataDisplayModes.Aggregated
-      : DataDisplayModes.RawData
+    DataDisplayModes.RawData
   )
 
   const data = useQuery<AreaLayerDataQuery, AreaLayerDataQueryVariables>(
