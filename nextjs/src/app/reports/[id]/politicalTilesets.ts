@@ -13,6 +13,29 @@ export enum BoundaryType {
   CENSUS_OUTPUT_AREAS = 'census_output_areas',
 }
 
+export function dbAreaTypeToBoundaryType(id: string): BoundaryType | undefined {
+  const boundaryType = BoundaryType[id as keyof typeof BoundaryType]
+  if (boundaryType) {
+    return boundaryType
+  }
+  switch (id) {
+    case 'WMC23': // Westminster Parliamentary Constituencies
+      return BoundaryType.PARLIAMENTARY_CONSTITUENCIES
+    case 'STC': // Local Authority Districts
+    case 'DIS': // Local Authority Districts
+      return BoundaryType.LOCAL_AUTHORITIES
+    case 'WD23': // Wards
+      return BoundaryType.WARDS
+    case 'EER':
+      return BoundaryType.EUROPEAN_ELECTORAL_REGIONS
+    // All census area types should become census output areas
+    case 'MSOA':
+    case 'LSOA':
+    case 'OA21':
+      return BoundaryType.CENSUS_OUTPUT_AREAS
+  }
+}
+
 export type PoliticalTileset = {
   boundaryType: BoundaryType
   label: string

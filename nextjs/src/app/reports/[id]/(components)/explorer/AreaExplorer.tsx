@@ -56,7 +56,7 @@ import { Fragment, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import toSpaceCase from 'to-space-case'
 import trigramSimilarity from 'trigram-similarity'
-import { BoundaryType } from '../../politicalTilesets'
+import { BoundaryType, dbAreaTypeToBoundaryType } from '../../politicalTilesets'
 import {
   DataDisplayMode,
   IExplorerDisplay,
@@ -80,6 +80,20 @@ export function AreaExplorer({ gss }: { gss: string }) {
     variables: { gss },
     skip: !gss,
   })
+
+  const boundaryType = areaData.data?.area?.areaType.code
+    ? dbAreaTypeToBoundaryType(areaData.data?.area?.areaType.code)
+    : undefined
+
+  const mapView = useView(ViewType.Map)
+
+  useEffect(() => {
+    if (boundaryType) {
+      mapView.updateView((draft) => {
+        draft.mapOptions.choropleth.boundaryType = boundaryType
+      })
+    }
+  }, [areaData, boundaryType])
 
   const report = useReport()
   const { addStarredItem, removeStarredItem } = report
@@ -200,6 +214,7 @@ const AREA_EXPLORER_SUMMARY = gql`
       areaType {
         name
         description
+        code
       }
       samplePostcode {
         parliamentaryConstituency2024
@@ -899,10 +914,6 @@ function AreaExplorerBreadcrumbs({
         bringIntoView: true,
       }
     )
-
-    mapView.updateView((draft) => {
-      draft.mapOptions.choropleth.boundaryType = crumb.type
-    })
   }
 
   return (

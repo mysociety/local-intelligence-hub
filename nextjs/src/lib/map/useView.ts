@@ -1,15 +1,16 @@
 import { SpecificViewConfig, ViewType } from '@/app/reports/[id]/reportContext'
 import { useReport } from '@/lib/map/useReport'
-import { WritableDraft, produce } from 'immer'
+import { produce } from 'immer'
 import { parseAsString, useQueryState } from 'nuqs'
 
-export function useView<HookVT extends ViewType>(desiredViewType?: HookVT) {
+export function useView<HookVT extends ViewType = any>(
+  desiredViewType?: HookVT
+) {
   const [userSelectedCurrentViewId, setCurrentViewId] = useQueryState(
     'view',
     parseAsString
   )
   const { report, updateReport } = useReport()
-  console.log({ report })
   const currentView = userSelectedCurrentViewId
     ? report.displayOptions.views[userSelectedCurrentViewId]
     : Object.values(report.displayOptions.views).filter((view) =>
@@ -31,13 +32,11 @@ export function useView<HookVT extends ViewType>(desiredViewType?: HookVT) {
     updateView,
   }
 
-  function updateView(
-    cb: (draft: WritableDraft<SpecificViewConfig<HookVT>>) => void
-  ) {
-    if (specifiedTypeCurrentView) {
-      updateReport((draft) =>
-        produce(draft.displayOptions.views[specifiedTypeCurrentView.id], cb)
-      )
-    }
+  function updateView(cb: (draft: SpecificViewConfig<HookVT>) => void) {
+    updateReport((draft) => {
+      if (currentView) {
+        draft.displayOptions.views[currentViewId] = produce(currentView, cb)
+      }
+    })
   }
 }
