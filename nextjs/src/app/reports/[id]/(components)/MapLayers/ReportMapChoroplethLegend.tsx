@@ -1,4 +1,8 @@
-import { AnalyticalAreaType, ChoroplethMode } from '@/__generated__/graphql'
+import {
+  AnalyticalAreaType,
+  ChoroplethMode,
+  DataSummaryMetadata,
+} from '@/__generated__/graphql'
 import { CRMSelection } from '@/components/CRMButtonItem'
 import { Button } from '@/components/ui/button'
 import {
@@ -33,6 +37,7 @@ export default function ReportMapChoroplethLegend() {
 
   const dataSourceId = dataVisualisation?.dataSource
   const dataSourceField = dataVisualisation?.dataSourceField
+  const formula = dataVisualisation?.formula
   const selectedDataSource = layers.find(
     (layer) => layer.source === dataSourceId
   )
@@ -184,7 +189,7 @@ export default function ReportMapChoroplethLegend() {
                 <FormulaConfig
                   setFormulaSet={setFormulaSet}
                   sourceMetadata={sourceMetadata}
-                  dataSourceField={dataSourceField || ''}
+                  formula={formula || ''}
                 />
               )}
             </div>
@@ -355,25 +360,22 @@ function DisplayingSection({
 }
 
 function FormulaConfig({
+  formula,
   sourceMetadata,
-  dataSourceField,
   setFormulaSet,
 }: {
+  formula: string
   sourceMetadata: any
-  dataSourceField: string
   setFormulaSet: (set: boolean) => void
 }) {
-  const [editing, setEditing] = useState(true)
-  const [inputText, setInputText] = useState(dataSourceField)
+  const [inputText, setInputText] = useState(formula)
   const { report, updateReport } = useReport()
 
-  const availableFields = [
-    { label: 'Count of records', value: '__COUNT__' },
-    ...(sourceMetadata?.sourceData.fieldDefinitions || []),
-  ]
+  const editingEmpty = !inputText
+  const [editing, setEditing] = useState(editingEmpty)
 
-  function handleFieldInsert(field: string) {
-    setInputText((prev) => prev + `${field}`)
+  function handleVariableInsert(variable: string) {
+    setInputText((prev) => prev + `${variable}`)
   }
 
   function handleSave() {
@@ -381,7 +383,7 @@ function FormulaConfig({
       setFormulaSet(true)
       setEditing(false)
       updateReport((draft) => {
-        draft.displayOptions.dataVisualisation.dataSourceField = inputText
+        draft.displayOptions.dataVisualisation.formula = inputText
       })
     } else {
       setEditing(true)
@@ -389,15 +391,18 @@ function FormulaConfig({
   }
 
   //hardcoded fields for now
-  const metadataFields = [
-    { label: 'Count', value: 'count' },
-    { label: 'Mean', value: 'mean' },
-    { label: 'Median', value: 'median' },
-    { label: 'Total', value: 'total' },
+  const metadataFields: {
+    label: string
+    value: keyof DataSummaryMetadata
+  }[] = [
     { label: 'First', value: 'first' },
     { label: 'Second', value: 'second' },
     { label: 'Third', value: 'third' },
     { label: 'Last', value: 'last' },
+    { label: 'Total', value: 'total' },
+    { label: 'Count', value: 'count' },
+    { label: 'Mean', value: 'mean' },
+    { label: 'Median', value: 'median' },
   ]
 
   return (
@@ -428,18 +433,18 @@ function FormulaConfig({
         {editing && (
           <>
             <p className="text-xs font-mono text-meepGray-400">
-              Available fields
+              Available variables
             </p>
             <div className="flex flex-wrap gap-1 w-full">
-              {metadataFields.map((field) => (
+              {metadataFields.map((variable) => (
                 <Button
-                  key={field.value}
+                  key={variable.value}
                   variant="outline"
                   size="sm"
-                  onClick={() => handleFieldInsert(field.value)}
+                  onClick={() => handleVariableInsert(variable.value)}
                   className="shrink-0"
                 >
-                  {field.label}
+                  {variable.label}
                 </Button>
               ))}
             </div>
