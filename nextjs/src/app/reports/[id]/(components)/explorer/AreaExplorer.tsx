@@ -344,98 +344,89 @@ function AreaDisplay({
         </Popover>
       }
     >
-      {!layer ? (
+      {data.loading ? (
+        <div className="text-meepGray-400">
+          <LoadingIcon size={'32px'} />
+        </div>
+      ) : data.error || !data.data ? (
         <div className="text-meepGray-400 py-2">No data available</div>
       ) : (
-        <>
-          {data.loading ? (
-            <div className="text-meepGray-400">
-              <LoadingIcon size={'32px'} />
-            </div>
-          ) : data.error || !data.data ? (
-            <div className="text-meepGray-400 py-2">No data available</div>
+        <div className="text-meepGray-400">
+          {display.displayType === InspectorDisplayType.Properties ? (
+            display.dataDisplayMode === DataDisplayMode.Aggregated ? (
+              <PropertiesDisplay data={data.data?.summary?.aggregated} />
+            ) : // There's a list of data
+            data.data.data.length > 1 ||
+              // There's only one data item, but it's not the current area
+              (!!data.data.data.length &&
+                !data.data.data.some(
+                  (d) => d.area?.gss === explorer.state.id
+                )) ? (
+              <RelatedDataCarousel data={data.data.data} />
+            ) : !!data.data?.data?.length ? (
+              // There's only one data item, and it's the current area
+              <PropertiesDisplay data={data.data?.data?.[0]?.json} />
+            ) : (
+              <div className="text-meepGray-400 py-2">No data available</div>
+            )
+          ) : display.displayType === InspectorDisplayType.Table ? (
+            <TableDisplay
+              data={
+                display.dataDisplayMode === DataDisplayMode.Aggregated
+                  ? data.data?.summary?.aggregated
+                  : data.data?.data
+              }
+              title={display.name || layer.name}
+              areaName={areaName}
+            />
+          ) : display.displayType === InspectorDisplayType.ElectionResult ? (
+            <ElectionResultsDisplay
+              data={
+                display.dataDisplayMode === DataDisplayMode.Aggregated
+                  ? data.data?.summary?.aggregated
+                  : data.data?.data?.[0]?.json
+              }
+            />
+          ) : display.displayType === InspectorDisplayType.BigNumber ? (
+            <BigNumberDisplay
+              count={
+                display.dataDisplayMode === DataDisplayMode.Aggregated
+                  ? data.data?.summary?.aggregated
+                  : data.data?.data?.length
+              }
+              dataType={layer.sourceData.dataType}
+            />
+          ) : display.displayType === InspectorDisplayType.BigRecord ? (
+            <BigRecord
+              item={data.data?.data?.[0]}
+              dataType={layer.sourceData.dataType}
+            />
+          ) : display.displayType === InspectorDisplayType.List ? (
+            <ListDisplay
+              data={data.data?.data}
+              dataType={layer.sourceData.dataType}
+            />
           ) : (
-            <div className="text-meepGray-400">
-              {display.displayType === InspectorDisplayType.Properties ? (
-                display.dataDisplayMode === DataDisplayMode.Aggregated ? (
-                  <PropertiesDisplay data={data.data?.summary?.aggregated} />
-                ) : // There's a list of data
-                data.data.data.length > 1 ||
-                  // There's only one data item, but it's not the current area
-                  (!!data.data.data.length &&
-                    !data.data.data.some(
-                      (d) => d.area?.gss === explorer.state.id
-                    )) ? (
-                  <RelatedDataCarousel data={data.data.data} />
-                ) : !!data.data?.data?.length ? (
-                  // There's only one data item, and it's the current area
-                  <PropertiesDisplay data={data.data?.data?.[0]?.json} />
-                ) : (
-                  <div className="text-meepGray-400 py-2">
-                    No data available
-                  </div>
-                )
-              ) : display.displayType === InspectorDisplayType.Table ? (
-                <TableDisplay
-                  data={
-                    display.dataDisplayMode === DataDisplayMode.Aggregated
-                      ? data.data?.summary?.aggregated
-                      : data.data?.data
-                  }
-                  title={display.name || layer.name}
-                  areaName={areaName}
-                />
-              ) : display.displayType ===
-                InspectorDisplayType.ElectionResult ? (
-                <ElectionResultsDisplay
-                  data={
-                    display.dataDisplayMode === DataDisplayMode.Aggregated
-                      ? data.data?.summary?.aggregated
-                      : data.data?.data?.[0]?.json
-                  }
-                />
-              ) : display.displayType === InspectorDisplayType.BigNumber ? (
-                <BigNumberDisplay
-                  count={
-                    display.dataDisplayMode === DataDisplayMode.Aggregated
-                      ? data.data?.summary?.aggregated
-                      : data.data?.data?.length
-                  }
-                  dataType={layer.sourceData.dataType}
-                />
-              ) : display.displayType === InspectorDisplayType.BigRecord ? (
-                <BigRecord
-                  item={data.data?.data?.[0]}
-                  dataType={layer.sourceData.dataType}
-                />
-              ) : display.displayType === InspectorDisplayType.List ? (
-                <ListDisplay
-                  data={data.data?.data}
-                  dataType={layer.sourceData.dataType}
-                />
-              ) : (
-                JSON.stringify(data.data)
-              )}
-            </div>
+            JSON.stringify(data.data)
           )}
-          <a
-            className="text-meepGray-400 text-sm flex flex-row items-center gap-1 mt-2"
-            {...(!!layer.sourceData.remoteUrl && {
-              href: layer.sourceData.remoteUrl,
-              target: '_blank',
-            })}
-          >
-            Source:{' '}
-            <DataSourceIcon
-              crmType={layer.sourceData.crmType}
-              className="w-5 h-5"
-            />{' '}
-            <span className="underline hover:text-meepGray-300">
-              {layer.sourceData.name}
-            </span>
-          </a>
-        </>
+        </div>
       )}
+      <a
+        className="text-meepGray-400 text-sm flex flex-row items-center gap-1 mt-2"
+        {...(!!layer.sourceData.remoteUrl && {
+          href: layer.sourceData.remoteUrl,
+          target: '_blank',
+        })}
+      >
+        Source:{' '}
+        <DataSourceIcon
+          crmType={layer.sourceData.crmType}
+          className="w-5 h-5"
+        />{' '}
+        <span className="underline hover:text-meepGray-300">
+          {layer.sourceData.name}
+        </span>
+      </a>
     </CollapsibleSection>
   )
 }
