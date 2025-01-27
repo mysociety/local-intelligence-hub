@@ -1,3 +1,4 @@
+import { MapReport } from '@/__generated__/graphql'
 import {
   IDisplayOptions,
   IExplorerDisplay,
@@ -14,11 +15,14 @@ function starId(starredState: any): string {
   return `ENTITY:${starredState.entity}::ID:${starredState.id}`
 }
 
-export function migration0001(oldReport: any) {
-  return produce(oldReport, (draft: any) => {
+/**
+ * Move dataVisualisation and display to views[0].mapOptions.
+ */
+export function migration0001(oldReport: MapReport) {
+  return produce(oldReport, (draft) => {
     // Move dataVisualisation and display to views[0].mapOptions
     const viewId = v4()
-    draft = {
+    const newDisplayOptions = {
       version: VERSION,
       starred: oldReport.displayOptions.starred.reduce(
         (acc: any, star: any) => {
@@ -71,10 +75,14 @@ export function migration0001(oldReport: any) {
             layers: oldReport.layers.reduce(
               (acc: any, layer: any) => {
                 const id = v4()
-                acc[id] = {
-                  id,
-                  layerId: layer.id,
-                  colour: layer.mapboxPaint?.['circle-color'],
+                const colour = layer.mapboxPaint?.['circle-color']
+                if (colour) {
+                  // Only include layers with custom config
+                  acc[id] = {
+                    id,
+                    layerId: layer.id,
+                    colour,
+                  }
                 }
                 return acc
               },
@@ -87,6 +95,9 @@ export function migration0001(oldReport: any) {
         },
       },
     }
-    return draft
+    return {
+      ...draft,
+      displayOptions: newDisplayOptions,
+    }
   })
 }

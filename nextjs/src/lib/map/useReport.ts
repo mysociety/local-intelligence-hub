@@ -138,11 +138,13 @@ export const useReport = () => {
             patch
               .map((p) => {
                 const { op, path } = p
-                const changedDataPath = path
-                  .split('/')
-                  .map(toSpaceCase)
-                  .join(' -> ')
-                return `${capitalize(op)} ${changedDataPath}`
+                const changedDataPath = path.split('/').map(toSpaceCase).pop()
+                // .join(' -> ')
+                const humanReadableOp = op
+                  .replace('replace', 'Updated')
+                  .replace('add', 'Added')
+                  .replace('remove', 'Reset')
+                return `${capitalize(humanReadableOp)} ${changedDataPath}`
               })
               .join(', ') || 'No changes',
         }

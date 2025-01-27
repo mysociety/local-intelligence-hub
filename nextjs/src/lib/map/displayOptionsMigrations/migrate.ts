@@ -1,16 +1,17 @@
+import { MapReport } from '@/__generated__/graphql'
 import {
   displayOptionsSchema,
-  IDisplayOptions,
+  MapReportExtended,
 } from '@/app/reports/[id]/reportContext'
 import { migration0001 } from './migrations/0001'
 
-const MIGRATION_FOR_VERSION_LOOKUP: Record<string, (old: unknown) => any> = {
+const MIGRATION_FOR_VERSION_LOOKUP: Record<string, (old: MapReport) => any> = {
   FIRST: migration0001,
 }
 
-export function migrateDisplayOptions(oldReport: unknown): IDisplayOptions {
+export function migrateDisplayOptions(oldReport: MapReport): MapReportExtended {
   if (!oldReport || typeof oldReport !== 'object') {
-    console.log(oldReport)
+    console.log({ oldReport })
     throw new Error('Invalid display options')
   }
   if (
@@ -24,7 +25,10 @@ export function migrateDisplayOptions(oldReport: unknown): IDisplayOptions {
     const newDisplayOptions = displayOptionsSchema
       .strict()
       .parse(oldReport.displayOptions)
-    return newDisplayOptions
+    return {
+      ...oldReport,
+      displayOptions: newDisplayOptions,
+    }
   } catch (e) {
     // Migration required
     const version = String((oldReport.displayOptions as any).version || 'FIRST')

@@ -3,34 +3,40 @@ import { useReport } from '@/lib/map/useReport'
 import { WritableDraft, produce } from 'immer'
 import { parseAsString, useQueryState } from 'nuqs'
 
-export function useView<HookVT extends ViewType>(currentViewType?: HookVT) {
-  const [currentViewId, setCurrentViewId] = useQueryState('view', parseAsString)
+export function useView<HookVT extends ViewType>(desiredViewType?: HookVT) {
+  const [userSelectedCurrentViewId, setCurrentViewId] = useQueryState(
+    'view',
+    parseAsString
+  )
   const { report, updateReport } = useReport()
-  const currentView = currentViewId
-    ? report.displayOptions.views[currentViewId]
-    : Object.values(report.displayOptions.views)[0]
+  console.log({ report })
+  const currentView = userSelectedCurrentViewId
+    ? report.displayOptions.views[userSelectedCurrentViewId]
+    : Object.values(report.displayOptions.views).filter((view) =>
+        desiredViewType ? view.type === desiredViewType : true
+      )[0]
+  const currentViewId = userSelectedCurrentViewId || currentView?.id
+  const specifiedTypeCurrentView = (
+    desiredViewType
+      ? currentView?.type === desiredViewType
+        ? currentView
+        : undefined
+      : currentView
+  ) as SpecificViewConfig<HookVT> | undefined
 
   return {
     currentViewId,
     setCurrentViewId,
-    currentView: (currentViewType
-      ? currentView?.type === currentViewType
-        ? currentView
-        : undefined
-      : currentView) as SpecificViewConfig<HookVT> | undefined,
+    currentView: specifiedTypeCurrentView,
     updateView,
   }
 
   function updateView(
     cb: (draft: WritableDraft<SpecificViewConfig<HookVT>>) => void
   ) {
-    if (
-      !!currentViewId &&
-      !!currentView &&
-      (!currentViewType || currentViewType === currentView.type)
-    ) {
+    if (specifiedTypeCurrentView) {
       updateReport((draft) =>
-        produce(draft.displayOptions.views[currentViewId], cb)
+        produce(draft.displayOptions.views[specifiedTypeCurrentView.id], cb)
       )
     }
   }

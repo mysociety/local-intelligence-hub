@@ -173,7 +173,7 @@ export type ExplorerAreaBreadCrumbMapping = {
 }
 
 export const starredSchema = explorerStateSchema.extend({
-  id: z.string().uuid(),
+  id: z.string(),
   name: z.string().optional(),
   icon: z.nativeEnum(DataSourceType).optional(),
 })

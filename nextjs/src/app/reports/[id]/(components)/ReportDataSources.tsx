@@ -6,7 +6,7 @@ import {
   LucidePaintbrush,
   LucideType,
 } from 'lucide-react'
-import { BoundaryType, POLITICAL_BOUNDARIES } from '../politicalTilesets'
+import { POLITICAL_BOUNDARIES } from '../politicalTilesets'
 import { ViewType } from '../reportContext'
 import { AddMapLayerButton } from './AddDataSourceButton'
 import DataSourcesList from './DataSourcesList'
@@ -92,7 +92,8 @@ export function ReportDataSources() {
           }))}
           onChange={(d) => {
             mapView.updateView((draft) => {
-              draft.mapOptions.choropleth.boundaryType = d as BoundaryType
+              // console.log({ draft })
+              // draft.mapOptions.choropleth.boundaryType = d as BoundaryType
             })
           }}
         />

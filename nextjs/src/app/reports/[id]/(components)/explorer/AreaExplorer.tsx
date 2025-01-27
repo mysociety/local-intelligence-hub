@@ -244,9 +244,13 @@ function AreaDisplay({
 
   const { updateReport } = useReport()
 
+  if (!layer) {
+    return
+  }
+
   return (
     <CollapsibleSection
-      title={display.name}
+      title={display.name || layer.name}
       id={display.id}
       actions={
         // Dropdown with these two editor select options
@@ -346,7 +350,7 @@ function AreaDisplay({
                       ? data.data?.summary?.aggregated
                       : data.data?.data
                   }
-                  title={display.name}
+                  title={display.name || layer.name}
                   areaName={areaName}
                 />
               ) : display.displayType ===

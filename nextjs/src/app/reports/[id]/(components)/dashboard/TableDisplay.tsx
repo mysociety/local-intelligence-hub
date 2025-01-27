@@ -34,10 +34,14 @@ export function TableDisplay({
   title,
   areaName,
 }: {
-  data: any[]
+  data?: any[]
   title: string
   areaName: string
 }) {
+  if (!data || !data.length) {
+    return <div className="text-meepGray-400 py-2">No data available</div>
+  }
+
   const cols: string[] = useMemo(() => {
     console.log('Raw data:', data)
     const columns = allKeysFromAllData(data)

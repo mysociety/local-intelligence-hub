@@ -200,7 +200,7 @@ const CURRENT_MIGRATION_VERSION = '2025-01-25'
 
 export const displayOptionsSchema = z.object({
   version: z.string().default(CURRENT_MIGRATION_VERSION),
-  starred: z.record(z.string().uuid(), starredSchema).default({}),
+  starred: z.record(z.string(), starredSchema).default({}),
   areaExplorer: z
     .object({
       displays: z.record(z.string().uuid(), explorerDisplaySchema).default({}),
