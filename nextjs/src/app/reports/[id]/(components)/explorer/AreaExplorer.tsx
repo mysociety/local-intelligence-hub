@@ -329,6 +329,26 @@ function AreaDisplay({
                 })
               }
             />
+            {display.displayType === InspectorDisplayType.BigNumber &&
+              display.dataDisplayMode === DataDisplayMode.Aggregated && (
+                <EditorSelect
+                  label={'Displayed field'}
+                  value={display.bigNumberField}
+                  options={Object.keys(
+                    data.data?.summary?.aggregated || {}
+                  ).map((key) => ({
+                    value: key,
+                    label: key,
+                  }))}
+                  onChange={(value) => {
+                    updateReport((draft) => {
+                      draft.displayOptions.areaExplorer.displays[
+                        display.id
+                      ].bigNumberField = value
+                    })
+                  }}
+                />
+              )}
             <EditorSelect
               label={'Type of data'}
               explainer={"Change the data's type for display purposes."}
@@ -407,11 +427,19 @@ function AreaDisplay({
           ) : display.displayType === InspectorDisplayType.BigNumber ? (
             <BigNumberDisplay
               count={
-                display.dataDisplayMode === DataDisplayMode.Aggregated
-                  ? data.data?.summary?.aggregated
+                display.dataDisplayMode === DataDisplayMode.Aggregated &&
+                display.bigNumberField
+                  ? data.data?.summary?.aggregated[display.bigNumberField] ||
+                    '???'
                   : data.data?.data?.length
               }
               dataType={display.dataSourceType || layer.sourceData.dataType}
+              label={
+                display.dataDisplayMode === DataDisplayMode.Aggregated &&
+                display.bigNumberField
+                  ? display.bigNumberField
+                  : undefined
+              }
             />
           ) : display.displayType === InspectorDisplayType.BigRecord ? (
             <BigRecord
@@ -679,15 +707,23 @@ const partyColourMap = {
 function BigNumberDisplay({
   count = 0,
   dataType,
+  label,
 }: {
   count: number
-  dataType: DataSourceType
+  dataType?: DataSourceType
+  label?: string
 }) {
   return (
     <div className="py-2">
-      <div className="uppercase text-xs text-meepGray-400">
-        {pluralize(dataType || 'record', 2)}
-      </div>
+      {!!(dataType || label) && (
+        <div className="uppercase text-xs text-meepGray-400">
+          {label
+            ? label
+            : dataType
+              ? pluralize(toSpaceCase(dataType) || 'record', 2)
+              : null}
+        </div>
+      )}
       <div className="text-white text-3xl">{format(',')(count)}</div>
     </div>
   )

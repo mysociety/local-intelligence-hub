@@ -121,6 +121,7 @@ export const explorerDisplaySchema = z.object({
     .nativeEnum(DataSourceType)
     .optional()
     .describe('Ask the display to present the data as if it was another type.'),
+  bigNumberField: z.string().optional(),
 })
 
 export type IExplorerDisplay = z.infer<typeof explorerDisplaySchema>
