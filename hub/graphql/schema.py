@@ -152,7 +152,7 @@ class Query(UserQueries):
         self,
         info: strawberry.types.Info,
         redirect_success_url: str,
-        external_data_source_id: Optional[str],
+        external_data_source_id: Optional[str] = None,
     ) -> str:
         credentials = (
             models.EditableGoogleSheetsSource.redirect_success_to_oauth_credentials(
