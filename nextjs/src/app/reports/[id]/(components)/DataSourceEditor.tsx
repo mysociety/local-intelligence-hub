@@ -69,8 +69,10 @@ export function DataSourceEditor() {
 
 function StyleTab({ layerId }: { layerId: string }) {
   const { report, updateLayer } = useReport()
-  const dataLayer = report.layers?.find((l) => l?.id === layerId)!
   const view = useView(ViewType.Map)
+  const viewLayersForReportLayer = Object.values(
+    view.currentView?.mapOptions.layers || {}
+  ).filter((layer) => layer.layerId === layerId)
 
   return (
     <>
@@ -82,49 +84,47 @@ function StyleTab({ layerId }: { layerId: string }) {
       </header>
       {/* Point config */}
       <div className="divide-y divide-meepGray-600 border-y border-meepGray-600 mt-4">
-        {Object.values(view.currentView?.mapOptions.layers || {}).map(
-          (viewLayer) => (
-            <div className="pt-4 pb-6">
-              <section className="px-4">
-                <header className="text-white flex flex-row items-center justify-between">
-                  <h4
-                    {...contentEditableMutation((value) => {
-                      view.updateView((draft) => {
-                        draft.mapOptions.layers[viewLayer.id].name = value
-                      })
-                    })}
-                  >
-                    {viewLayer.name ||
-                      `Marker layer ${viewLayer.id.substring(0, 4)}`}
-                  </h4>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive"
-                    onClick={() => {
-                      view.updateView((draft) => {
-                        delete draft.mapOptions.layers[viewLayer.id]
-                      })
-                    }}
-                  >
-                    Remove
-                  </Button>
-                </header>
-                <EditorColourPicker
-                  label="Marker colour"
-                  value={viewLayer.colour || DEFAULT_MARKER_COLOUR}
-                  onChange={(value) => {
-                    if (value !== DEFAULT_MARKER_COLOUR) {
-                      view.updateView((draft) => {
-                        draft.mapOptions.layers[viewLayer.id].colour = value
-                      })
-                    }
+        {viewLayersForReportLayer.map((viewLayer) => (
+          <div className="pt-4 pb-6">
+            <section className="px-4">
+              <header className="text-white flex flex-row items-center justify-between">
+                <h4
+                  {...contentEditableMutation((value) => {
+                    view.updateView((draft) => {
+                      draft.mapOptions.layers[viewLayer.id].name = value
+                    })
+                  })}
+                >
+                  {viewLayer.name ||
+                    `Marker layer ${viewLayer.id.substring(0, 4)}`}
+                </h4>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive"
+                  onClick={() => {
+                    view.updateView((draft) => {
+                      delete draft.mapOptions.layers[viewLayer.id]
+                    })
                   }}
-                />
-              </section>
-            </div>
-          )
-        )}
+                >
+                  Remove
+                </Button>
+              </header>
+              <EditorColourPicker
+                label="Marker colour"
+                value={viewLayer.colour || DEFAULT_MARKER_COLOUR}
+                onChange={(value) => {
+                  if (value !== DEFAULT_MARKER_COLOUR) {
+                    view.updateView((draft) => {
+                      draft.mapOptions.layers[viewLayer.id].colour = value
+                    })
+                  }
+                }}
+              />
+            </section>
+          </div>
+        ))}
       </div>
       <Button
         variant="ghost"
