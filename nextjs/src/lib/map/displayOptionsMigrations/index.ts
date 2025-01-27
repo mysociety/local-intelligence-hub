@@ -1,7 +1,10 @@
-import { MapReportExtended, ViewType } from '@/app/reports/[id]/reportContext'
+import {
+  MapReportWithTypedJSON,
+  ViewType,
+} from '@/app/reports/[id]/reportContext'
 import { produce } from 'immer'
 
-export function cleanUpLayerReferences(__report: MapReportExtended) {
+export function cleanUpLayerReferences(__report: MapReportWithTypedJSON) {
   return produce(__report, (draft) => {
     // Remove any layer references that don't exist
     const layerIds = draft.layers.map((l) => l.id)

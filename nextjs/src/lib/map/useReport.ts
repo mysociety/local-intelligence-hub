@@ -17,7 +17,7 @@ import {
 import ReportContext, {
   AddSourcePayload,
   IDisplayOptions,
-  MapReportExtended,
+  MapReportWithTypedJSON,
   displayOptionsSchema,
 } from '@/app/reports/[id]/reportContext'
 import { StarredState, StarredStateUnique, starId } from '@/lib/map'
@@ -56,21 +56,25 @@ export const useReport = () => {
   function updateReport(
     editedOutput: (
       draft: WritableDraft<
-        Omit<MapReportExtended, 'layers'> & { layers: MapLayerInput[] }
+        Omit<MapReportWithTypedJSON, 'layers'> & { layers: MapLayerInput[] }
       >
     ) => void
   ) {
     const updatedReport = produce(report, editedOutput)
     // Split out displayOptions and handle them separately
     const { displayOptions: newDisplayOptions, ...newReport } = updatedReport
-    // Handle displayOptions using patch
-    patchReportDisplayOptions(newDisplayOptions)
-    // Handle report DB field updates using update
-    updateReportDBFields(newReport)
+    if (newDisplayOptions) {
+      // Handle displayOptions using patch
+      patchReportDisplayOptions(newDisplayOptions)
+    }
+    if (newReport) {
+      // Handle report DB field updates using update
+      updateReportDBFields(newReport)
+    }
   }
 
   function updateReportDBFields(
-    newReport: Omit<MapReportExtended, 'layers' | 'displayOptions'> & {
+    newReport: Omit<MapReportWithTypedJSON, 'layers' | 'displayOptions'> & {
       layers: MapLayerInput[]
     }
   ) {

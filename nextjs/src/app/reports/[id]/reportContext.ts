@@ -94,7 +94,7 @@ export function getReportPalette(mapOptions: IMapOptions) {
   return interpolator
 }
 
-export type MapReportExtended = Omit<
+export type MapReportWithTypedJSON = Omit<
   GetMapReportQuery['mapReport'],
   'displayOptions'
 > & {
@@ -229,11 +229,11 @@ export type AddSourcePayload = {
 }
 
 export interface ReportContextProps {
-  report: MapReportExtended
+  report: MapReportWithTypedJSON
 }
 
 const ReportContext = createContext<ReportContextProps>({
-  report: {} as MapReportExtended,
+  report: {} as MapReportWithTypedJSON,
 })
 
 export default ReportContext
