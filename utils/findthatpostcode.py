@@ -4,7 +4,7 @@ from django.contrib.gis.geos import Point
 import httpx
 
 
-async def get_postcode_from_coords_ftp(point: Point):
+async def get_postcode_from_coords_ftp(point: Point) -> str | None:
     try:
         async with httpx.AsyncClient(
             timeout=httpx.Timeout(settings.ASYNC_CLIENT_TIMEOUT_SECONDS)

@@ -1,15 +1,16 @@
-import { useLoadedMap } from '@/lib/map'
+import { useActiveTileset, useLoadedMap } from '@/lib/map'
 import { useEffect, useState } from 'react'
-import { Tileset } from './types'
+import { BoundaryType } from './politicalTilesets'
 
 interface Area {
   gss: string
   name: string
 }
 
-export function useAreasList(tileset: Tileset | null) {
+export function useAreasList(boundaryType: BoundaryType | undefined) {
   const map = useLoadedMap()
   const [areas, setAreas] = useState<Area[]>([])
+  const tileset = useActiveTileset(boundaryType)
 
   useEffect(() => {
     if (!map.loaded || !tileset || !map.loadedMap) return

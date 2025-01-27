@@ -3,7 +3,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import React from 'react'
 import { twMerge } from 'tailwind-merge'
 import { useReport } from '../ReportProvider'
-import { formatKey, formatValue, isEmptyValue } from './utils'
+import { formatKey, isEmptyValue } from './utils'
 
 export function PropertiesDisplay({
   data,
@@ -54,7 +54,7 @@ function FormatValue({
     return null
   } else if (typeof data === 'string' || typeof data === 'number') {
     // Raw value
-    return <span>{formatValue(data)}</span>
+    return <span>{data}</span>
   } else if (Array.isArray(data)) {
     // Array; indented
 
@@ -85,9 +85,9 @@ function FormatValue({
         {Object.entries(data || {})
           .filter(([key, value]) => {
             return (
-              editing ||
-              visibleProperties.length === 0 ||
-              visibleProperties.some((prop) => prop.id === key)
+              !isEmptyValue(value) &&
+              // remove stuff added by Apollo
+              key !== '__typename'
             )
           })
           .map(([key, value]) => (

@@ -1,4 +1,8 @@
-import { AnalyticalAreaType, DataSourceType } from '@/__generated__/graphql'
+import { DataSourceType, MapBounds } from '@/__generated__/graphql'
+import {
+  BoundaryType,
+  POLITICAL_BOUNDARIES,
+} from '@/app/reports/[id]/politicalTilesets'
 import { atom, useAtom } from 'jotai'
 import { MapboxGeoJSONFeature } from 'mapbox-gl'
 import { parseAsString, useQueryState, useQueryStates } from 'nuqs'
@@ -17,6 +21,8 @@ import { createNuqsParserFromZodResolver } from '../parsers'
 export const mapHasLoaded = atom(false)
 export const isDataConfigOpenAtom = atom(false)
 export const selectedSourceMarkerAtom = atom<MapboxGeoJSONFeature | null>(null)
+export const boundsAtom = atom<MapBounds | null>(null)
+export const zoomAtom = atom<number>(0)
 
 export const EXPLORER_ENTITY_TYPES = ['area', 'record', ''] as const
 
@@ -163,7 +169,7 @@ const GET_AREA_GEO = gql`
 export type ExplorerAreaBreadCrumbMapping = {
   value: string | undefined
   code: string | undefined
-  type: AnalyticalAreaType
+  type: BoundaryType
 }
 
 export const starredStateResolver = explorerStateResolver.extend({
@@ -183,6 +189,29 @@ export type VisibleProperties = z.infer<typeof visiblePropertiesResolver>
 
 export function useViewState() {
   return useQueryState('view', parseAsString)
+}
+
+export function useMapBounds() {
+  return useAtom(boundsAtom)
+}
+
+export function useMapZoom() {
+  return useAtom(zoomAtom)
+}
+
+export function useActiveTileset(boundaryType: BoundaryType | undefined) {
+  const [zoom] = useMapZoom()
+
+  const politicalTileset =
+    POLITICAL_BOUNDARIES.find((t) => t.boundaryType === boundaryType) ||
+    POLITICAL_BOUNDARIES[0]
+
+  const tileset = politicalTileset.tilesets.filter(
+    (t) => zoom >= t.minZoom && zoom <= t.maxZoom
+  )[0]
+
+  // Fallback to the first tileset for the current BoundaryType
+  return tileset || politicalTileset.tilesets[0]
 }
 
 const sidebarLeftStateAtom = atom(false)

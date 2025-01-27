@@ -28,6 +28,7 @@ class Codes:
     msoa: str
     lau2: str
     pfa: str
+    output_area: Optional[str]
 
 
 @dataclass
@@ -59,6 +60,7 @@ class PostcodesIOResult:
     codes: Codes
     admin_county: Optional[str] = None
     ced: Optional[str] = None
+    output_area: Optional[str] = None
 
 
 @dataclass
@@ -79,16 +81,49 @@ class PostcodesIOBulkResult:
     result: List[ResultElement]
 
 
-def ensure_parliamentary_constituency_2024_present(
+async def enrich_postcodes_io_result(
     result: PostcodesIOResult | None,
 ) -> PostcodesIOResult | None:
     """
-    Ensure compatible with our data if Postcodes.IO remove their _2024 column
+    1. Add legacy `parliamentary_constituency_2024` key
+    2. Add EER code (not in postcodes.io)
+    3. Add output_area (not in postcodes.io)
     """
     if not result:
         return None
+
     if "parliamentary_constituency_2024" not in result:
         result["parliamentary_constituency_2024"] = result["parliamentary_constituency"]
+
+    result["codes"]["european_electoral_region"] = next(
+        filter(lambda eer: eer["label"] == result["european_electoral_region"], EERs),
+        {},
+    ).get("code", None)
+
+    # Ensure output_area keys exist
+    result["output_area"] = None
+    result["codes"]["output_area"] = None
+
+    if not result["latitude"] or not result["longitude"]:
+        return result
+
+    from hub.models import Area
+
+    # Add output_area and correct msoa and lsoa results (postcodes.io doesn't use up-to-date boundaries)
+    point = create_point(latitude=result["latitude"], longitude=result["longitude"])
+    for area_code, result_key in [
+        ("OA21", "output_area"),
+        ("MSOA", "msoa"),
+        ("LSOA", "lsoa"),
+    ]:
+        output_area = await Area.objects.filter(
+            area_type__code=area_code, polygon__contains=point
+        ).afirst()
+
+        if output_area:
+            result[result_key] = output_area.name
+            result["codes"][result_key] = output_area.gss
+
     return result
 
 
@@ -103,15 +138,10 @@ async def get_postcode_geo(postcode: str) -> PostcodesIOResult:
     data = response.json()
     status = get(data, "status")
     result: PostcodesIOResult = get(data, "result")
-    ensure_parliamentary_constituency_2024_present(result)
+    await enrich_postcodes_io_result(result)
 
     if status != 200 or result is None:
         raise Exception(f"Failed to geocode postcode: {postcode}.")
-
-    result["codes"]["european_electoral_region"] = next(
-        filter(lambda eer: eer["label"] == result["european_electoral_region"], EERs),
-        {},
-    ).get("code", None)
 
     return result
 
@@ -153,20 +183,21 @@ async def get_bulk_postcode_geo(postcodes) -> list[PostcodesIOResult]:
     # add EER codes and ensure _2024 column is present if Postcodes.IO have removed it
     for index, result in enumerate(results):
         if result is not None:
-            results[index] = ensure_parliamentary_constituency_2024_present(result)
-            results[index]["codes"]["european_electoral_region"] = next(
-                filter(
-                    lambda eer: eer["label"] == result["european_electoral_region"],
-                    EERs,
-                ),
-                {},
-            ).get("code", None)
+            results[index] = await enrich_postcodes_io_result(result)
 
     return results
 
 
+async def get_postcode_io_via_ftp_coord(point: Point):
+    from utils.findthatpostcode import get_postcode_from_coords_ftp
+
+    postcode = await get_postcode_from_coords_ftp(point)
+    if postcode:
+        return await get_postcode_geo(postcode)
+
+
 @async_batch_and_aggregate(settings.POSTCODES_IO_BATCH_MAXIMUM)
-async def get_bulk_postcode_geo_from_coords(coordinates: list[Point], radius=150):
+async def get_bulk_postcode_geo_from_coords(coordinates: list[Point], radius=300):
     coords = [
         {
             "longitude": coord.x,
@@ -202,22 +233,23 @@ async def get_bulk_postcode_geo_from_coords(coordinates: list[Point], radius=150
                 for geo in result
                 if geo["query"] == coord
             ),
-            None,
+            dict(type="failed", coords=coord),
         )
         for coord in coords
     ]
 
     # add EER codes and ensure _2024 column is present if Postcodes.IO have removed it
     for index, result in enumerate(results):
+        if (
+            result is not None
+            and result.get("type", None) == "failed"
+            and result.get("coords", None)
+        ):
+            result = await get_postcode_io_via_ftp_coord(
+                Point(x=result["coords"]["longitude"], y=result["coords"]["latitude"])
+            )
         if result is not None:
-            results[index] = ensure_parliamentary_constituency_2024_present(result)
-            results[index]["codes"]["european_electoral_region"] = next(
-                filter(
-                    lambda eer: eer["label"] == result["european_electoral_region"],
-                    EERs,
-                ),
-                {},
-            ).get("code", None)
+            results[index] = await enrich_postcodes_io_result(result)
 
     return results
 
@@ -237,12 +269,12 @@ async def bulk_coordinate_geo(coordinates):
     if status != 200 or result is None:
         raise Exception(f"Failed to bulk geocode coordinates: {payload}")
 
-    result = ensure_parliamentary_constituency_2024_present(result)
+    result = await enrich_postcodes_io_result(result)
 
     return result
 
 
-def coordinates_geo(latitude: float, longitude: float):
+async def coordinates_geo(latitude: float, longitude: float):
     response = requests.get(
         f"{settings.POSTCODES_IO_URL}/postcodes?lon={longitude}&lat={latitude}"
     )
@@ -255,7 +287,7 @@ def coordinates_geo(latitude: float, longitude: float):
             f"Failed to get postcode for coordinates: lon={longitude}&lat={latitude}."
         )
 
-    result = ensure_parliamentary_constituency_2024_present(result[0])
+    result = await enrich_postcodes_io_result(result[0])
 
     return result
 

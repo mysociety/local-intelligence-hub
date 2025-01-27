@@ -1,11 +1,10 @@
-import { AnalyticalAreaType } from '@/__generated__/graphql'
 import {
   LucideBoxSelect,
   LucideMap,
   LucidePaintbrush,
   LucideType,
 } from 'lucide-react'
-import { POLITICAL_BOUNDARIES } from '../politicalTilesets'
+import { BoundaryType, POLITICAL_BOUNDARIES } from '../politicalTilesets'
 import { VisualisationType } from '../reportContext'
 import { AddMapLayerButton } from './AddDataSourceButton'
 import DataSourcesList from './DataSourcesList'
@@ -98,7 +97,7 @@ export function ReportDataSources() {
               <span className="text-white">Border type</span>
             </span>
           }
-          onChange={(d) => updateBoundaryType(d as AnalyticalAreaType)}
+          onChange={(d) => updateBoundaryType(d as BoundaryType)}
           value={dataVisualisation?.boundaryType}
           options={POLITICAL_BOUNDARIES.map((boundary) => ({
             label: boundary.label,
@@ -125,7 +124,7 @@ export function ReportDataSources() {
     </div>
   )
 
-  function updateBoundaryType(boundaryType: AnalyticalAreaType) {
+  function updateBoundaryType(boundaryType: BoundaryType) {
     updateReport((draft) => {
       draft.displayOptions.dataVisualisation.boundaryType = boundaryType
     })

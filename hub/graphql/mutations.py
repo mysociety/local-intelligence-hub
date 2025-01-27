@@ -422,8 +422,12 @@ def create_external_data_source(
         source, created = creator_fn()
 
         if created:
-            request_id = str(uuid.uuid4())
-            async_to_sync(source.schedule_import_all)(request_id)
+            batch_request = BatchRequest.objects.create(user=get_current_user(info))
+            request_id = str(batch_request.id)
+            requested_at = now().isoformat()
+            async_to_sync(source.schedule_import_all)(
+                requested_at=requested_at, request_id=request_id
+            )
             return CreateExternalDataSourceOutput(code=200, errors=[], result=source)
 
         user = get_current_user(info)
@@ -459,6 +463,16 @@ def update_external_data_source(
         setattr(source, key, value)
     source.save()
     return source
+
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def update_external_data_source_api_key(info: Info, id: str, api_key: str) -> bool:
+    source = models.ExternalDataSource.objects.get(id=id)
+    if not source.organisation.members.filter(user=get_current_user(info)).exists():
+        raise PermissionError("You do not have permission to update this data source.")
+    source.api_key = api_key
+    source.save()
+    return True
 
 
 @strawberry_django.input(models.SharingPermission, partial=True)

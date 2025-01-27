@@ -1,8 +1,4 @@
-import {
-  AnalyticalAreaType,
-  ChoroplethMode,
-  DataSummaryMetadata,
-} from '@/__generated__/graphql'
+import { ChoroplethMode, DataSummaryMetadata } from '@/__generated__/graphql'
 import { CRMSelection } from '@/components/CRMButtonItem'
 import { Button } from '@/components/ui/button'
 import {
@@ -12,6 +8,7 @@ import {
 } from '@/components/ui/collapsible'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
+import { useActiveTileset } from '@/lib/map'
 import clsx from 'clsx'
 import { format } from 'd3-format'
 import { scaleLinear, scaleSequential } from 'd3-scale'
@@ -19,7 +16,7 @@ import { lowerCase, max, min } from 'lodash'
 import { LucideChevronDown, PaintBucket, Radical } from 'lucide-react'
 import pluralize from 'pluralize'
 import { useState } from 'react'
-import { POLITICAL_BOUNDARIES } from '../../politicalTilesets'
+import { BoundaryType, POLITICAL_BOUNDARIES } from '../../politicalTilesets'
 import { PALETTE, getReportPalette } from '../../reportContext'
 import useDataByBoundary from '../../useDataByBoundary'
 import { EditorSelect } from '../EditorSelect'
@@ -53,10 +50,13 @@ export default function ReportMapChoroplethLegend() {
       ? 'visible'
       : 'none'
 
-  const { data: dataByBoundary, loading } = useDataByBoundary({
+  const activeTileset = useActiveTileset(boundaryType)
+
+  const { loading, data } = useDataByBoundary({
     report,
-    boundaryType,
+    tileset: activeTileset,
   })
+  const dataByBoundary = data?.choroplethDataForSource || []
 
   // Get min and max counts
   let minCount = min(dataByBoundary.map((d) => d.count || 0)) || 0
@@ -201,7 +201,7 @@ export default function ReportMapChoroplethLegend() {
             </p>
             <EditorSelect
               className="-my-2"
-              onChange={(d) => updateBoundaryType(d as AnalyticalAreaType)}
+              onChange={(d) => updateBoundaryType(d as BoundaryType)}
               value={dataVisualisation?.boundaryType}
               options={POLITICAL_BOUNDARIES.map((boundary) => ({
                 label: boundary.label,
@@ -214,7 +214,7 @@ export default function ReportMapChoroplethLegend() {
     </div>
   )
 
-  function updateBoundaryType(boundaryType: AnalyticalAreaType) {
+  function updateBoundaryType(boundaryType: BoundaryType) {
     updateReport((draft) => {
       draft.displayOptions.dataVisualisation.boundaryType = boundaryType
     })

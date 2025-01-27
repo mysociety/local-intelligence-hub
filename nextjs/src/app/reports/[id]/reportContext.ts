@@ -25,6 +25,7 @@ import {
 import { WritableDraft } from 'immer'
 import { createContext } from 'react'
 import * as z from 'zod'
+import { BoundaryType } from './politicalTilesets'
 
 export enum VisualisationType {
   Choropleth = 'choropleth',
@@ -108,7 +109,7 @@ export type MapReportExtended = Omit<MapReport, 'displayOptions'> & {
 
 export const reportConfigTypeChecker = z.object({
   dataVisualisation: z.object({
-    boundaryType: z.nativeEnum(AnalyticalAreaType).optional(),
+    boundaryType: z.nativeEnum(BoundaryType).optional(),
     visualisationType: z.nativeEnum(VisualisationType).optional(),
     palette: z.nativeEnum(Palette).optional(),
     paletteReversed: z.boolean().optional(),
@@ -142,7 +143,7 @@ export type ReportConfig = z.infer<typeof reportConfigTypeChecker>
 
 export const defaultReportConfig: ReportConfig = {
   dataVisualisation: {
-    boundaryType: AnalyticalAreaType.ParliamentaryConstituency_2024,
+    boundaryType: BoundaryType.PARLIAMENTARY_CONSTITUENCIES,
     visualisationType: VisualisationType.Choropleth,
     choroplethMode: ChoroplethMode.Count,
     palette: Palette.Blue,

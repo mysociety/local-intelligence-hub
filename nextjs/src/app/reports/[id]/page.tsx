@@ -75,6 +75,31 @@ function SelfContainedContext({ params: { id } }: { params: Params }) {
     prevNumLayers.current = numLayers
   }, [numLayers, setLayerEditorState])
 
+  const rootError = report.error?.graphQLErrors.find(
+    (e) => e.path && e.path.length === 1 && e.path?.[0] === 'mapReport'
+  )
+  const reportDoesNotExist = rootError?.message.includes(
+    'matching query does not exist'
+  )
+
+  if (rootError) {
+    // redirect
+    if (reportDoesNotExist) {
+      router.push('/reports')
+      return null
+    }
+
+    return (
+      <div className="flex items-center justify-center h-screen w-full">
+        <div className="text-meepGray-400 text-2xl font-semibold">
+          {rootError.message.includes('matching query does not exist')
+            ? 'Report not found'
+            : 'There was a problem loading this report.'}
+        </div>
+      </div>
+    )
+  }
+
   // Really important to check if the report is null before rendering the page
   // The ReportProvider component needs to be able to provide a report to its children
   if (!report.data?.mapReport) {

@@ -897,12 +897,11 @@ class Area(models.Model):
 
     @classmethod
     def get_by_name(cls, name, area_type="WMC"):
-        try:
-            area = cls.objects.get(name__iexact=name, area_type__code=area_type)
-        except cls.DoesNotExist:
-            area = None
-
-        return area
+        return (
+            cls.objects.filter(name__iexact=name, area_type__code=area_type)
+            .order_by("-mapit_generation_high")
+            .first()
+        )
 
     def fit_bounds(self):
         """
@@ -1097,6 +1096,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             "Coordinates",
         )
         AREA = "AREA", "Area"
+        OUTPUT_AREA = "OUTPUT_AREA", "Census output area"
 
     geocoding_config = JSONField(blank=False, null=False, default=dict)
 
@@ -1367,6 +1367,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             status = "failed"
         elif all([job.status == "succeeded" for job in jobs]):
             status = "succeeded"
+        elif all([job.status == "todo" for job in jobs]):
+            status = "todo"
         elif number_of_jobs_ahead_in_queue <= 0:
             status = "succeeded"
 
@@ -1720,6 +1722,51 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
                 update_data = {
                     **structured_data,
+                    "area": ward,
+                    "point": ward.point,
+                    "postcode_data": postcode_data,
+                }
+
+                return await GenericData.objects.aupdate_or_create(
+                    data_type=data_type,
+                    data=self.get_record_id(record),
+                    defaults=update_data,
+                )
+
+            await asyncio.gather(*[create_import_record(record) for record in data])
+            logger.info(f"Imported {len(data)} records from {self}")
+        elif (
+            self.geography_column
+            and self.geography_column_type == self.GeographyTypes.OUTPUT_AREA
+        ):
+
+            async def create_import_record(record):
+                structured_data = get_update_data(self, record)
+                gss = self.get_record_field(record, self.geography_column)
+                output_area = await Area.objects.filter(
+                    area_type__code="OA21",
+                    gss=gss,
+                ).afirst()
+                if output_area:
+                    postcode_data: PostcodesIOResult = (
+                        await geocoding_config.get_postcode_data_for_area(
+                            output_area, loaders, []
+                        )
+                    )
+                    if postcode_data:
+                        # override lat/lng based output_area with known output area
+                        postcode_data.output_area = output_area.name
+                        postcode_data.codes.output_area = gss
+                else:
+                    logger.warning(
+                        f"Could not find output area for record {self.get_record_id(record)} and gss {gss}"
+                    )
+                    postcode_data = None
+
+                update_data = {
+                    **structured_data,
+                    "area": output_area,
+                    "point": output_area.point,
                     "postcode_data": postcode_data,
                 }
 
@@ -2593,7 +2640,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         external_data_source: Union["ExternalDataSource", str],
     ) -> DataPermissions:
         if external_data_source is None:
-            logger.debug("No source provided, returning default permissions")
+            # logger.debug("No source provided, returning default permissions")
             return cls.DataPermissions(
                 can_display_points=False,
                 can_display_details=False,
@@ -2609,7 +2656,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         permissions: cls.DataPermissions = source.default_data_permissions()
 
         if user is None or not user.is_authenticated:
-            logger.debug("No user provided, returning default permissions")
+            # logger.debug("No user provided, returning default permissions")
             return permissions
 
         # Check for cached permissions on this source
@@ -2621,7 +2668,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         # If cached permissions exist, look for this user's permissions
         elif permissions_dict.get(user_id, None) is not None:
-            logger.debug("User provided, returning cached permissions")
+            # logger.debug("User provided, returning cached permissions")
             return permissions_dict[user_id]
 
         # Calculate permissions for this source
@@ -2666,7 +2713,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         perms = permissions_dict[user_id]
 
-        logger.debug(f"Calculated new user permissions for user {user}: {perms}")
+        # logger.debug(f"Calculated new user permissions for user {user}: {perms}")
         return perms
 
     def filter(self, filter: dict) -> dict:
@@ -2799,7 +2846,11 @@ class AirtableSource(ExternalDataSource):
 
     @cached_property
     def schema(self) -> AirtableTableSchema:
-        return self.table.schema()
+        try:
+            return self.table.schema()
+        except Exception as e:
+            logger.error(f"Couldn't get AirTable schema: {e}")
+            raise BadCredentialsError()
 
     def remote_url(self) -> str:
         return f"https://airtable.com/{self.base_id}/{self.table_id}?blocks=hide"
@@ -2822,7 +2873,7 @@ class AirtableSource(ExternalDataSource):
                 description=field.description,
                 external_id=field.id,
             )
-            for field in self.table.schema().fields
+            for field in self.schema.fields
         ]
 
     def remote_name(self):
@@ -3113,6 +3164,9 @@ class MailchimpSource(ExternalDataSource):
         help_text="The unique identifier for the Mailchimp list.",
     )
 
+    def remote_url(self):
+        return f"https://admin.mailchimp.com/audience/contacts?id={self.list_id}"
+
     @classmethod
     def get_deduplication_field_names(self) -> list[str]:
         return ["list_id", "api_key"]
@@ -3243,7 +3297,7 @@ class MailchimpSource(ExternalDataSource):
             ),
             self.FieldDefinition(label="Zip", value="ADDRESS.zip", editable=False),
         ]
-        merge_fields = self.client.lists.merge_fields.all(self.list_id, get_all=True)
+        merge_fields = self.get_merge_fields()
         for field in merge_fields["merge_fields"]:
             if field["tag"] not in ["ADDRESS", "PHONE", "FNAME", "LNAME"]:
                 fields.append(
@@ -3254,6 +3308,13 @@ class MailchimpSource(ExternalDataSource):
                     )
                 )
         return fields
+
+    def get_merge_fields(self):
+        try:
+            return self.client.lists.merge_fields.all(self.list_id, get_all=True)
+        except Exception as e:
+            logger.error(f"Could not get Mailchimp merge fields: {e}")
+            raise BadCredentialsError()
 
     async def fetch_all(self):
         # Fetches all members in a list and returns their email addresses
@@ -3425,6 +3486,9 @@ class ActionNetworkSource(ExternalDataSource):
     group_slug = models.CharField(max_length=100)
     api_key = EncryptedCharField(max_length=250)
 
+    def remote_url(self):
+        return f"https://actionnetwork.org/groups/{self.group_slug}/manage"
+
     @classmethod
     def get_deduplication_field_names(self) -> list[str]:
         return ["api_key"]
@@ -3435,11 +3499,18 @@ class ActionNetworkSource(ExternalDataSource):
         return client
 
     def healthcheck(self):
-        # Checks if the Mailchimp list is accessible
-        list = self.client.get_custom_fields()
-        if list is not None:
+        # Checks if the Action Network list is accessible
+        fields = self.get_custom_fields()
+        if fields is not None:
             return True
         return False
+
+    def get_custom_fields(self):
+        try:
+            return self.client.get_custom_fields()
+        except Exception as e:
+            logger.error(f"Could not get Action Network custom fields: {e}")
+            raise BadCredentialsError()
 
     # https://actionnetwork.org/docs/v2/#resources
     def get_record_id(self, record):
@@ -3539,7 +3610,7 @@ class ActionNetworkSource(ExternalDataSource):
                 editable=False,
             ),
         ]
-        custom_fields = self.client.get_custom_fields()
+        custom_fields = self.get_custom_fields()
         for field in custom_fields["action_network:custom_fields"]:
             name = field["name"]
             fields.append(
@@ -3712,6 +3783,12 @@ class ActionNetworkSource(ExternalDataSource):
         )
 
 
+class BadCredentialsError(Exception):
+    def __init__(self, *args):
+        # The front-end depends on the message here
+        super().__init__("Bad credentials")
+
+
 class EditableGoogleSheetsSource(ExternalDataSource):
     """
     An editable Google Sheet
@@ -3785,8 +3862,14 @@ class EditableGoogleSheetsSource(ExternalDataSource):
             json.loads(self.oauth_credentials)
         )
         if credentials and credentials.expired and credentials.refresh_token:
-            logger.info(f"Refreshing Google token for source {self}")
-            credentials.refresh(GoogleRequest())
+            logger.info(f"Refreshing Google token for source {self.id}")
+            try:
+                credentials.refresh(GoogleRequest())
+            except Exception as e:
+                logger.error(
+                    f"Could not get credentials for EditableGoogleSheetsSource {self.id}: {e}"
+                )
+                raise BadCredentialsError()
 
             # Update instance in thread because:
             # a. self.save() doesn't work in an async context
@@ -3824,7 +3907,13 @@ class EditableGoogleSheetsSource(ExternalDataSource):
 
     @cached_property
     def spreadsheet(self):
-        return self.spreadsheets.get(spreadsheetId=self.spreadsheet_id).execute()
+        try:
+            return self.spreadsheets.get(spreadsheetId=self.spreadsheet_id).execute()
+        except Exception as e:
+            logger.error(
+                f"Could not get credentials for EditableGoogleSheetsSource {self.id}: {e}"
+            )
+            raise BadCredentialsError()
 
     @property
     def sheet(self):
@@ -4263,6 +4352,9 @@ class TicketTailorSource(ExternalDataSource):
     )
 
     api_key = EncryptedCharField(max_length=250)
+
+    def remote_url(self) -> str:
+        return "https://www.tickettailor.com/dashboard"
 
     @classmethod
     def get_deduplication_field_names(self) -> list[str]:
