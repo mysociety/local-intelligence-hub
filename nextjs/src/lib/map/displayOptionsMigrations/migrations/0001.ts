@@ -1,4 +1,4 @@
-import { MapReport } from '@/__generated__/graphql'
+import { GetMapReportQuery } from '@/__generated__/graphql'
 import {
   IDisplayOptions,
   IExplorerDisplay,
@@ -18,7 +18,7 @@ function starId(starredState: any): string {
 /**
  * Move dataVisualisation and display to views[0].mapOptions.
  */
-export function migration0001(oldReport: MapReport) {
+export function migration0001(oldReport: GetMapReportQuery['mapReport']) {
   return produce(oldReport, (draft) => {
     // Move dataVisualisation and display to views[0].mapOptions
     const viewId = v4()
@@ -72,7 +72,7 @@ export function migration0001(oldReport: MapReport) {
               streetDetails: oldReport.displayOptions.display.showStreetDetails,
               boundaryNames: oldReport.displayOptions.display.showBoundaryNames,
             },
-            layers: oldReport.layers.reduce(
+            layers: oldReport.layers?.reduce(
               (acc: any, layer: any) => {
                 const id = v4()
                 const colour = layer.mapboxPaint?.['circle-color']

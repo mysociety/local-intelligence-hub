@@ -94,10 +94,12 @@ export function getReportPalette(mapOptions: IMapOptions) {
   return interpolator
 }
 
-export type MapReportWithTypedJSON = Omit<
+export type MapReportWithoutJSON = Omit<
   GetMapReportQuery['mapReport'],
   'displayOptions'
-> & {
+>
+
+export type MapReportWithTypedJSON = MapReportWithoutJSON & {
   displayOptions: IDisplayOptions
 }
 
@@ -106,12 +108,17 @@ export enum DataDisplayMode {
   RawData = 'RawData',
 }
 
-const explorerDisplaySchema = z.object({
+export const explorerDisplaySchema = z.object({
   id: z.string().uuid().default(uuid.v4),
   layerId: z.string().uuid(),
   name: z.string().optional(),
-  displayType: z.nativeEnum(InspectorDisplayType),
-  areaQueryMode: z.nativeEnum(AreaQueryMode).optional(),
+  displayType: z
+    .nativeEnum(InspectorDisplayType)
+    .default(InspectorDisplayType.Properties),
+  areaQueryMode: z
+    .nativeEnum(AreaQueryMode)
+    .optional()
+    .default(AreaQueryMode.Overlapping),
   dataDisplayMode: z.nativeEnum(DataDisplayMode).optional(),
 })
 

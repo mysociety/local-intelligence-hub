@@ -4,8 +4,7 @@ import { GetMapReportQuery } from '@/__generated__/graphql'
 import { useSidebarLeftState } from '@/lib/map'
 import { cleanUpLayerReferences } from '@/lib/map/displayOptionsMigrations'
 import { migrateDisplayOptions } from '@/lib/map/displayOptionsMigrations/migrate'
-import { prepareMapReportForInput } from '@/lib/map/mapReportUpdate'
-import { refreshReportData, updateMapReport } from '@/lib/map/useReport'
+import { refreshReportData, useReport } from '@/lib/map/useReport'
 import { toastPromise } from '@/lib/toast'
 import { useApolloClient } from '@apollo/client'
 import { useSetAtom } from 'jotai'
@@ -25,6 +24,7 @@ const ReportProvider = ({
 }: ReportProviderProps) => {
   const setNavbarTitle = useSetAtom(navbarTitleAtom)
   const client = useApolloClient()
+  const report = useReport()
 
   // Parse the report config and merge it with the default config
 
@@ -37,8 +37,7 @@ const ReportProvider = ({
       !isEqual(__unvalidatedReport.displayOptions, updatedReport.displayOptions)
     ) {
       console.log('Migrating display options')
-      const input = prepareMapReportForInput(updatedReport)
-      const update = updateMapReport({ input }, client)
+      const update = report.updateReport(updatedReport)
       toastPromise(update, {
         loading: 'Updating...',
         success: 'Updated report',

@@ -18,6 +18,7 @@ import ReportContext, {
   AddSourcePayload,
   IDisplayOptions,
   MapReportWithTypedJSON,
+  MapReportWithoutJSON,
   displayOptionsSchema,
 } from '@/app/reports/[id]/reportContext'
 import { StarredState, StarredStateUnique, starId } from '@/lib/map'
@@ -31,6 +32,8 @@ import { useRouter } from 'next/navigation'
 import { useContext } from 'react'
 import toSpaceCase from 'to-space-case'
 import { v4 } from 'uuid'
+import { InspectorDisplayType } from '../explorer'
+import { cleanUpLayerReferences } from './displayOptionsMigrations'
 
 export const useReport = () => {
   const { report, ...restOfReport } = useContext(ReportContext)
@@ -53,7 +56,7 @@ export const useReport = () => {
     toggleStarred,
   }
 
-  function updateReport(
+  async function updateReport(
     editedOutput: (
       draft: WritableDraft<
         Omit<MapReportWithTypedJSON, 'layers'> & { layers: MapLayerInput[] }
@@ -63,13 +66,14 @@ export const useReport = () => {
     const updatedReport = produce(report, editedOutput)
     // Split out displayOptions and handle them separately
     const { displayOptions: newDisplayOptions, ...newReport } = updatedReport
-    if (newDisplayOptions) {
-      // Handle displayOptions using patch
-      patchReportDisplayOptions(newDisplayOptions)
-    }
     if (newReport) {
       // Handle report DB field updates using update
-      updateReportDBFields(newReport)
+      // and await it, so that patches can be applied to the new `layer` object
+      await updateReportDBFields(newReport)
+    }
+    if (newDisplayOptions) {
+      // Handle displayOptions using patch
+      await patchReportDisplayOptions(newDisplayOptions, newReport)
     }
   }
 
@@ -89,7 +93,7 @@ export const useReport = () => {
 
     const update = updateMapReport({ input }, client)
 
-    toastPromise(update, {
+    return toastPromise(update, {
       loading: 'Saving...',
       success: () => {
         return {
@@ -103,12 +107,22 @@ export const useReport = () => {
     })
   }
 
-  function patchReportDisplayOptions(__newIDisplayOptions: IDisplayOptions) {
+  function patchReportDisplayOptions(
+    __newIDisplayOptions: IDisplayOptions,
+    reportContext: MapReportWithoutJSON
+  ) {
+    // Do this to remove any layer references that don't exist
+    const newReport = cleanUpLayerReferences({
+      ...reportContext,
+      displayOptions: __newIDisplayOptions,
+    })
+    // Then run it through the schema to validate + add defaults
     const {
       data: newIDisplayOptions,
       success,
       error,
-    } = displayOptionsSchema.safeParse(__newIDisplayOptions)
+    } = displayOptionsSchema.safeParse(newReport.displayOptions)
+    //
     if (!success || error || !newIDisplayOptions) {
       console.error('Invalid report config', error)
       return
@@ -117,6 +131,7 @@ export const useReport = () => {
       console.warn('No changes to report')
       return
     }
+    // Then prep the patch and run the mutation
     const patch = jsonpatch.compare(report.displayOptions, newIDisplayOptions)
     if (!patch.length) {
       console.warn('No changes to report')
@@ -132,7 +147,7 @@ export const useReport = () => {
         reportId: report.id,
       },
     })
-    toastPromise(update, {
+    return toastPromise(update, {
       loading: 'Saving...',
       success: () => {
         return {
@@ -218,21 +233,29 @@ export const useReport = () => {
     })
   }
 
-  function removeLayer(sourceId: string) {
+  function removeLayer(layerId: string) {
     updateReport((draft) => {
-      draft.layers = draft.layers?.filter((l) => l.source !== sourceId)
+      draft.layers = draft.layers?.filter((l) => l.id !== layerId)
     })
   }
 
   function addLayer(source: AddSourcePayload) {
     updateReport((draft) => {
       if (!draft.layers?.find((l) => l.source === source.id)) {
+        const layerId = v4()
         draft.layers = draft.layers || []
         draft.layers.push({
-          id: v4(),
+          id: layerId,
           name: source.name,
           source: source.id,
         })
+        // Also add a default display to the areaExplorer
+        const displayId = v4()
+        draft.displayOptions.areaExplorer.displays[displayId] = {
+          id: displayId,
+          layerId,
+          displayType: InspectorDisplayType.Properties,
+        }
       }
     })
   }
