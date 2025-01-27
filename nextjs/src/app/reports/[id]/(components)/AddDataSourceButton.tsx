@@ -58,7 +58,7 @@ export function AddMapLayerButton({
     <Dialog open={open} onOpenChange={(o) => setOpen(o)}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" className="text-meepGray-400">
-          <Plus className="w-4" /> add data source
+          <Plus className="w-4" /> add layer
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
@@ -71,7 +71,7 @@ export function AddMapLayerButton({
           })}
         >
           <DialogHeader>
-            <DialogTitle>Add a data source</DialogTitle>
+            <DialogTitle>Add a layer</DialogTitle>
             <DialogDescription>
               Select a data source from your org or one that{"'"}s been shared
               with you.
@@ -91,7 +91,7 @@ export function AddMapLayerButton({
             />
           </div>
           <DialogFooter>
-            <Button type="submit">Add Data Source</Button>
+            <Button type="submit">Add layer</Button>
           </DialogFooter>
         </form>
       </DialogContent>

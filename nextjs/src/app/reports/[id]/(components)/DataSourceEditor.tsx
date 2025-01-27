@@ -201,7 +201,7 @@ function DataTab({ layerId }: { layerId: string }) {
         }}
         variant="destructive"
       >
-        Remove data source
+        Remove layer
       </Button>
     </div>
   )
