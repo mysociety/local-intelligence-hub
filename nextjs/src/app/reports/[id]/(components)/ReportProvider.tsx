@@ -14,7 +14,6 @@ import {
 import {
   InspectorDisplayType,
   StarredState,
-  VisiblePropertiesState,
   useSidebarLeftState,
 } from '@/lib/map'
 import { prepareMapReportForInput } from '@/lib/map/mapReportUpdate'
@@ -152,9 +151,6 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
         addStarredItem,
         removeStarredItem,
         clearAllStarredItems,
-        addVisibleProperty,
-        removeVisibleProperty,
-        clearAllVisiblePropertiesForThisRecord,
       }}
     >
       {children}
@@ -360,36 +356,6 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
   function clearAllStarredItems() {
     updateReport((draft) => {
       draft.displayOptions.starred = []
-    })
-  }
-
-  function addVisibleProperty(property: VisiblePropertiesState) {
-    updateReport((draft) => {
-      if (
-        !draft.displayOptions.visibleProperties.find(
-          (item) => item.id === property.id
-        )
-      ) {
-        draft.displayOptions.visibleProperties.push(property)
-      }
-    })
-  }
-
-  function removeVisibleProperty(propertyId: string) {
-    updateReport((draft) => {
-      draft.displayOptions.visibleProperties =
-        draft.displayOptions.visibleProperties.filter(
-          (item) => item.id !== propertyId
-        )
-    })
-  }
-
-  function clearAllVisiblePropertiesForThisRecord(recordId: string) {
-    updateReport((draft) => {
-      draft.displayOptions.visibleProperties =
-        draft.displayOptions.visibleProperties.filter(
-          (item) => item.id !== recordId
-        )
     })
   }
 }

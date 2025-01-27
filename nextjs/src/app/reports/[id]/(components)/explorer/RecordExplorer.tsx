@@ -8,9 +8,8 @@ import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ExplorerState, StarredState, useExplorer } from '@/lib/map'
 import { gql, useQuery } from '@apollo/client'
-import clsx from 'clsx'
 import { omit } from 'lodash'
-import { LucideLink, Pencil, Star, TargetIcon } from 'lucide-react'
+import { LucideLink, Star, TargetIcon } from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
 import { useState } from 'react'
@@ -124,8 +123,6 @@ export function RecordExplorer({ id }: { id: string }) {
       addStarredItem(starredItemData)
     }
   }
-
-  const [editingProperties, setEditingProperties] = useState(false)
 
   return (
     <SidebarContent className="bg-meepGray-600 overflow-x-hidden">
@@ -245,21 +242,10 @@ export function RecordExplorer({ id }: { id: string }) {
           <section className="flex flex-col gap-2 px-4 py-4">
             <div className="flex flex-row justify-between gap-2 items-center">
               <div className="text-hSm text-white">Info</div>
-              <Pencil
-                className={clsx(
-                  'w-4 h-4 text-meepGray-400 cursor-pointer',
-                  editingProperties ? 'fill-white' : 'fill-transparent'
-                )}
-                onClick={() => setEditingProperties(!editingProperties)}
-              />
             </div>
 
             <div className="flex flex-col gap-2">
-              <PropertiesDisplay
-                data={filteredData}
-                editing={editingProperties}
-                setEditing={setEditingProperties}
-              />
+              <PropertiesDisplay data={filteredData} />
             </div>
           </section>
         </TabsContent>

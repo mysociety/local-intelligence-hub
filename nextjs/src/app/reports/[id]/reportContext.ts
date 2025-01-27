@@ -5,12 +5,7 @@ import {
   MapLayerInput,
   MapReport,
 } from '@/__generated__/graphql'
-import {
-  StarredState,
-  VisiblePropertiesState,
-  starredStateResolver,
-  visiblePropertiesResolver,
-} from '@/lib/map'
+import { StarredState, starredStateResolver } from '@/lib/map'
 import {
   interpolateBlues,
   interpolateBrBG,
@@ -136,7 +131,6 @@ export const reportConfigTypeChecker = z.object({
     showBoundaryNames: z.boolean().optional(),
   }),
   starred: z.array(starredStateResolver),
-  visibleProperties: z.array(visiblePropertiesResolver),
 })
 
 export type ReportConfig = z.infer<typeof reportConfigTypeChecker>
@@ -160,7 +154,6 @@ export const defaultReportConfig: ReportConfig = {
     showBoundaryNames: true,
   },
   starred: [],
-  visibleProperties: [],
 }
 
 export type AddSourcePayload = {
@@ -188,9 +181,6 @@ export interface ReportContextProps {
   addStarredItem(starredItemData: StarredState): void
   removeStarredItem(itemId: string): void
   clearAllStarredItems(): void
-  addVisibleProperty(property: VisiblePropertiesState): void
-  removeVisibleProperty(property: string): void
-  clearAllVisiblePropertiesForThisRecord(recordId: string): void
 }
 
 const ReportContext = createContext<ReportContextProps>({
@@ -206,9 +196,6 @@ const ReportContext = createContext<ReportContextProps>({
   addStarredItem: () => {},
   removeStarredItem: () => {},
   clearAllStarredItems: () => {},
-  addVisibleProperty: () => {},
-  removeVisibleProperty: () => {},
-  clearAllVisiblePropertiesForThisRecord: () => {},
 })
 
 export default ReportContext
