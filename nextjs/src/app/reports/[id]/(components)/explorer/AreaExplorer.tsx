@@ -42,7 +42,7 @@ import { useReport } from '@/lib/map/useReport'
 import { useView } from '@/lib/map/useView'
 import { gql, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
-import { sum } from 'lodash'
+import { cloneDeep, sum } from 'lodash'
 import {
   ArrowLeft,
   ArrowRight,
@@ -58,11 +58,13 @@ import { Fragment, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import toSpaceCase from 'to-space-case'
 import trigramSimilarity from 'trigram-similarity'
+import { v4 } from 'uuid'
 import { BoundaryType, dbAreaTypeToBoundaryType } from '../../politicalTilesets'
 import {
   DataDisplayMode,
   IExplorerDisplay,
   ViewType,
+  explorerDisplaySchema,
 } from '../../reportContext'
 import CollapsibleSection from '../CollapsibleSection'
 import { EditorSelect } from '../EditorSelect'
@@ -365,6 +367,21 @@ function AreaDisplay({
                 })
               }}
             />
+            <hr className="mt-4 my-2" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                updateReport((draft) => {
+                  const id = v4()
+                  draft.displayOptions.areaExplorer.displays[id] =
+                    explorerDisplaySchema.parse(cloneDeep(display))
+                  draft.displayOptions.areaExplorer.displays[id].id = id
+                })
+              }}
+            >
+              Duplicate
+            </Button>
             <Button
               variant="ghost"
               size="sm"
