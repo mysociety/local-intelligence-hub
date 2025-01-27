@@ -13,11 +13,11 @@ import clsx from 'clsx'
 import { format } from 'd3-format'
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { lowerCase, max, min } from 'lodash'
-import { LucideChevronDown, PaintBucket, Radical } from 'lucide-react'
+import { Calculator, LucideChevronDown, Radical } from 'lucide-react'
 import pluralize from 'pluralize'
 import { useState } from 'react'
 import { BoundaryType, POLITICAL_BOUNDARIES } from '../../politicalTilesets'
-import { PALETTE, getReportPalette } from '../../reportContext'
+import { getReportPalette } from '../../reportContext'
 import useDataByBoundary from '../../useDataByBoundary'
 import { EditorSelect } from '../EditorSelect'
 import { useReport } from '../ReportProvider'
@@ -132,48 +132,63 @@ export default function ReportMapChoroplethLegend() {
         <CollapsibleContent className="CollapsibleContent ">
           <div className="flex w-full gap-4 p-4 border-t border-meepGray-600">
             <div className="flex flex-col gap-2 w-full">
-              <div className="flex flex-row items-center gap-2 ">
-                <EditorSelect
-                  // explainer={`Select which data will populate your ${selectedBoundaryLabel}`}
-                  value={dataSourceId}
-                  options={layers.map((layer) => ({
-                    label: (
-                      <CRMSelection
-                        source={layer.sourceData}
-                        displayCount={false}
-                        className=" truncate"
-                      />
-                    ),
-                    value: layer.source,
-                  }))}
-                  onChange={(dataSource) =>
-                    updateReport((draft) => {
-                      draft.displayOptions.dataVisualisation.dataSource =
-                        dataSource
-                    })
-                  }
-                  className="w-full"
-                />
-                <Separator orientation="vertical" />
-
-                <EditorSelect
-                  icon={
-                    <PaintBucket className="w-5 h-5 stroke text-meepGray-400 hover:text-meepGray-100" />
-                  }
-                  // explainer={`Select the boundary type to visualise your data`}
-                  value={dataVisualisation?.palette}
-                  options={Object.entries(PALETTE).map(([value, res]) => ({
-                    label: res.label,
-                    value,
-                    // TODO: display the palette
-                  }))}
-                  onChange={(palette) =>
-                    updateReport((draft) => {
-                      draft.displayOptions.dataVisualisation.palette =
-                        palette as keyof typeof PALETTE
-                    })
-                  }
-                />
+              <div className="flex flex-row items-center gap-2 w-full">
+                <div className="flex-1 min-w-0">
+                  <EditorSelect
+                    value={dataSourceId}
+                    options={layers.map((layer) => ({
+                      label: (
+                        <CRMSelection
+                          source={layer.sourceData}
+                          displayCount={false}
+                          className="truncate"
+                        />
+                      ),
+                      value: layer.source,
+                    }))}
+                    onChange={(dataSource) =>
+                      updateReport((draft) => {
+                        draft.displayOptions.dataVisualisation.dataSource =
+                          dataSource
+                      })
+                    }
+                    className="w-full"
+                  />
+                </div>
+                <div className="flex flex-row items-center gap-2 flex-shrink-0">
+                  <Separator orientation="vertical" />
+                  <EditorSelect
+                    icon={
+                      <Calculator className="w-5 h-5 text-meepGray-400 hover:text-meepGray-100" />
+                    }
+                    value={choroplethMode}
+                    options={Object.entries(ChoroplethMode).map(
+                      ([value, res]) => ({
+                        label: res,
+                        value,
+                      })
+                    )}
+                    onChange={(option) => {
+                      console.log('option', option)
+                      if (
+                        option === ChoroplethMode.Count ||
+                        option === ChoroplethMode.Field
+                      ) {
+                        updateReport((draft) => {
+                          draft.displayOptions.dataVisualisation.dataSourceField =
+                            '__COUNT__'
+                          draft.displayOptions.dataVisualisation.choroplethMode =
+                            option as ChoroplethMode
+                        })
+                      } else {
+                        updateReport((draft) => {
+                          draft.displayOptions.dataVisualisation.choroplethMode =
+                            option as ChoroplethMode
+                        })
+                      }
+                    }}
+                  />
+                </div>
               </div>
               <ColourStops colourStops={colourStops} formatStr={formatStr} />
 
