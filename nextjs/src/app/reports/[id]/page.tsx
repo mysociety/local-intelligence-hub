@@ -123,6 +123,7 @@ function LoadedReportPage({ params: { id } }: { params: Params }) {
   }, [numLayers, setLayerEditorState])
 
   const view = useView()
+  const mapView = useView(ViewType.Map)
 
   return (
     <MapProvider>
@@ -141,8 +142,8 @@ function LoadedReportPage({ params: { id } }: { params: Params }) {
       >
         <ReportNavbar />
         <ReportSidebarLeft />
-        {view.currentView?.type === ViewType.Map ? (
-          <MapView mapView={view.currentView} />
+        {mapView.currentView ? (
+          <MapView mapView={mapView.currentView} />
         ) : (
           <div className="flex items-center justify-center h-full w-full">
             <div className="text-meepGray-400 text-2xl font-semibold">

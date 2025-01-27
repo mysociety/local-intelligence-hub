@@ -130,7 +130,7 @@ export const viewSchema = z.object({
   colour: z.string().optional(),
 })
 
-const mapLayerSchema = z.object({
+export const mapLayerSchema = z.object({
   // TODO: these could all be a union of simple or conditional styling
   id: z.string().uuid().default(uuid.v4).describe('View layer ID'),
   name: z.string().optional().describe('Name of the map marker layer'),

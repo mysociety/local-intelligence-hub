@@ -1,7 +1,9 @@
 import { GetMapReportQuery } from '@/__generated__/graphql'
 import {
+  explorerDisplaySchema,
   IDisplayOptions,
   IExplorerDisplay,
+  mapLayerSchema,
   SpecificViewConfig,
   ViewType,
 } from '@/app/reports/[id]/reportContext'
@@ -35,11 +37,11 @@ export function migration0001(oldReport: GetMapReportQuery['mapReport']) {
         displays: oldReport.layers.reduce(
           (acc: any, layer: any) => {
             const id = v4()
-            acc[id] = {
+            acc[id] = explorerDisplaySchema.parse({
               id,
               layerId: layer.id,
               displayType: layer.inspectorType as InspectorDisplayType,
-            } satisfies IExplorerDisplay
+            }) satisfies IExplorerDisplay
             return acc
           },
           {} as Record<string, IDisplayOptions['areaExplorer']['displays'][0]>
@@ -76,11 +78,11 @@ export function migration0001(oldReport: GetMapReportQuery['mapReport']) {
               (acc: any, layer: any) => {
                 const id = v4()
                 const colour = layer.mapboxPaint?.['circle-color'] || undefined
-                acc[id] = {
+                acc[id] = mapLayerSchema.parse({
                   id,
                   layerId: layer.id,
                   colour,
-                }
+                })
                 return acc
               },
               {} as Record<

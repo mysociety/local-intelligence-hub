@@ -85,7 +85,7 @@ function StyleTab({ layerId }: { layerId: string }) {
       {/* Point config */}
       <div className="divide-y divide-meepGray-600 border-y border-meepGray-600 mt-4">
         {viewLayersForReportLayer.map((viewLayer) => (
-          <div className="pt-4 pb-6">
+          <div key={viewLayer.id} className="pt-4 pb-6">
             <section className="px-4">
               <header className="text-white flex flex-row items-center justify-between">
                 <h4

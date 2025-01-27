@@ -10,7 +10,6 @@ import { useAtom } from 'jotai'
 import { useEffect, useState } from 'react'
 import useReportUiHelpers from '../useReportUiHelpers'
 import { DataSourceEditor } from './DataSourceEditor'
-import InactivateOnLoading from './InactivateOnLoading'
 import { ReportDataSources } from './ReportDataSources'
 import { NAVBAR_HEIGHT } from './ReportNavbar'
 import ReportStarredItems from './ReportStarredItems'
@@ -93,11 +92,9 @@ export function ReportSidebarLeft() {
               <ReportDataSources />
             </TabsContent>
             <TabsContent value="data visualisation" className="px-4 pb-24">
-              <InactivateOnLoading>
-                <div className="flex flex-col gap-2">
-                  <ReportVisualisation />
-                </div>
-              </InactivateOnLoading>
+              <div className="flex flex-col gap-2">
+                <ReportVisualisation />
+              </div>
             </TabsContent>
             <TabsContent value="starred" className="px-4 pb-24">
               <ReportStarredItems />

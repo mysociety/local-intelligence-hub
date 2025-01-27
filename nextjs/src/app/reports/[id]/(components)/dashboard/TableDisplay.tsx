@@ -38,21 +38,19 @@ export function TableDisplay({
   title: string
   areaName: string
 }) {
-  if (!data || !data.length) {
-    return <div className="text-meepGray-400 py-2">No data available</div>
-  }
+  const d = data || []
 
   const cols: string[] = useMemo(() => {
-    console.log('Raw data:', data)
-    const columns = allKeysFromAllData(data)
+    console.log('Raw data:', d)
+    const columns = allKeysFromAllData(d)
     console.log('Generated columns:', columns)
     return columns
-  }, [data])
+  }, [data, d])
 
   const dataTableColumns = useMemo(() => {
     console.log('Creating table columns from:', cols)
     if (cols.length === 0) {
-      const firstItem = data[0]
+      const firstItem = d[0]
       if (firstItem) {
         return Object.keys(firstItem).map(
           (col) =>
@@ -70,13 +68,17 @@ export function TableDisplay({
           accessorKey: col,
         }) satisfies ColumnDef<any>
     )
-  }, [cols, data])
+  }, [cols, data, d])
 
   const table = useReactTable({
-    data: data,
+    data: d,
     columns: dataTableColumns,
     getCoreRowModel: getCoreRowModel(),
   })
+
+  if (!data || !data.length) {
+    return <div className="text-meepGray-400 py-2">No data available</div>
+  }
 
   return (
     <>

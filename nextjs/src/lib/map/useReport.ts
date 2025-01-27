@@ -22,6 +22,8 @@ import ReportContext, {
   MapReportWithoutJSON,
   ViewType,
   displayOptionsSchema,
+  explorerDisplaySchema,
+  mapLayerSchema,
 } from '@/app/reports/[id]/reportContext'
 import { StarredState, StarredStateUnique, starId } from '@/lib/map'
 import { prepareMapReportForInput } from '@/lib/map/mapReportUpdate'
@@ -34,7 +36,6 @@ import { useRouter } from 'next/navigation'
 import { useContext } from 'react'
 import toSpaceCase from 'to-space-case'
 import { v4 } from 'uuid'
-import { InspectorDisplayType } from '../explorer'
 import { cleanUpLayerReferences } from './displayOptionsMigrations'
 
 export const useReport = () => {
@@ -252,11 +253,11 @@ export const useReport = () => {
       })
       // Also add a default display to the areaExplorer
       const displayId = v4()
-      draft.displayOptions.areaExplorer.displays[displayId] = {
-        id: displayId,
-        layerId,
-        displayType: InspectorDisplayType.Properties,
-      }
+      draft.displayOptions.areaExplorer.displays[displayId] =
+        explorerDisplaySchema.parse({
+          id: displayId,
+          layerId,
+        })
       // And add a marker layer to any map views
       Object.values(draft.displayOptions.views).forEach((view) => {
         if (
@@ -264,10 +265,10 @@ export const useReport = () => {
           source.dataType !== DataSourceType.AreaStats
         ) {
           const mapLayerId = v4()
-          view.mapOptions.layers[mapLayerId] = {
+          view.mapOptions.layers[mapLayerId] = mapLayerSchema.parse({
             id: mapLayerId,
             layerId,
-          }
+          })
         }
       })
     })
