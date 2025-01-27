@@ -6,6 +6,7 @@ import { useView } from '@/lib/map/useView'
 import { lowerCase } from 'lodash'
 import pluralize from 'pluralize'
 import React from 'react'
+import toSpaceCase from 'to-space-case'
 import { POLITICAL_BOUNDARIES } from '../politicalTilesets'
 import { PALETTE, ViewType } from '../reportContext'
 import { EditorSelect } from './EditorSelect'
@@ -57,9 +58,9 @@ const ReportVisualisation: React.FC = () => {
           label="Choropleth mode"
           // explainer={`Select the boundary type to visualise your data`}
           value={view.currentView?.mapOptions?.choropleth.mode}
-          options={Object.keys(ChoroplethMode).map((value) => ({
-            label: value,
+          options={Object.entries(ChoroplethMode).map(([key, value]) => ({
             value,
+            label: toSpaceCase(key),
           }))}
           onChange={(palette) =>
             view.updateView((draft) => {
@@ -122,7 +123,7 @@ const ReportVisualisation: React.FC = () => {
           // explainer={`Select the boundary type to visualise your data`}
           value={view.currentView?.mapOptions?.choropleth.palette}
           options={Object.entries(PALETTE).map(([value, res]) => ({
-            label: res.label,
+            label: toSpaceCase(res.label),
             value,
             // TODO: display the palette
           }))}

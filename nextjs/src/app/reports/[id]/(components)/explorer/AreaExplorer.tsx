@@ -282,7 +282,12 @@ function AreaDisplay({
             <EditorSelect
               label={'Display style'}
               value={display.displayType || InspectorDisplayType.Table}
-              options={Object.keys(InspectorDisplayType)}
+              options={Object.entries(InspectorDisplayType).map(
+                ([key, value]) => ({
+                  value: value,
+                  label: toSpaceCase(value),
+                })
+              )}
               onChange={(value) => {
                 updateReport((draft) => {
                   draft.displayOptions.areaExplorer.displays[
@@ -294,14 +299,10 @@ function AreaDisplay({
             <EditorSelect
               label={'Data fetching'}
               value={display.areaQueryMode}
-              options={
-                Object.keys(AreaQueryMode).map((key) => ({
-                  value: AreaQueryMode[key as keyof typeof AreaQueryMode],
-                  label: toSpaceCase(
-                    AreaQueryMode[key as keyof typeof AreaQueryMode]
-                  ),
-                })) || []
-              }
+              options={Object.entries(AreaQueryMode).map(([key, value]) => ({
+                value: value,
+                label: toSpaceCase(value),
+              }))}
               onChange={(value) => {
                 updateReport((draft) => {
                   draft.displayOptions.areaExplorer.displays[
@@ -327,6 +328,22 @@ function AreaDisplay({
                     : DataDisplayMode.RawData
                 })
               }
+            />
+            <EditorSelect
+              label={'Type of data'}
+              explainer={"Change the data's type for display purposes."}
+              value={layer.sourceData.dataType || display.dataSourceType}
+              options={Object.entries(DataSourceType).map(([key, value]) => ({
+                value: value,
+                label: toSpaceCase(value),
+              }))}
+              onChange={(value) => {
+                updateReport((draft) => {
+                  draft.displayOptions.areaExplorer.displays[
+                    display.id
+                  ].dataSourceType = value as DataSourceType
+                })
+              }}
             />
             <Button
               variant="ghost"
@@ -394,17 +411,17 @@ function AreaDisplay({
                   ? data.data?.summary?.aggregated
                   : data.data?.data?.length
               }
-              dataType={layer.sourceData.dataType}
+              dataType={display.dataSourceType || layer.sourceData.dataType}
             />
           ) : display.displayType === InspectorDisplayType.BigRecord ? (
             <BigRecord
               item={data.data?.data?.[0]}
-              dataType={layer.sourceData.dataType}
+              dataType={display.dataSourceType || layer.sourceData.dataType}
             />
           ) : display.displayType === InspectorDisplayType.List ? (
             <ListDisplay
               data={data.data?.data}
-              dataType={layer.sourceData.dataType}
+              dataType={display.dataSourceType || layer.sourceData.dataType}
             />
           ) : (
             JSON.stringify(data.data)
