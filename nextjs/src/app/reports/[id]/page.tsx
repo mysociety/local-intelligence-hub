@@ -149,6 +149,7 @@ function LoadedReportPage({ params: { id } }: { params: Params }) {
             <div className="text-meepGray-400 text-2xl font-semibold">
               {`View type "${view.currentView?.type}" not implemented`}
             </div>
+            <pre>{JSON.stringify(view.currentView, null, 2)}</pre>
           </div>
         )}
       </SidebarProvider>

@@ -134,6 +134,8 @@ export const viewSchema = z.object({
   colour: z.string().optional(),
 })
 
+export type IView = z.infer<typeof viewSchema>
+
 export const mapLayerSchema = z.object({
   // TODO: these could all be a union of simple or conditional styling
   id: z.string().uuid().default(uuid.v4).describe('View layer ID'),
@@ -154,15 +156,11 @@ const mapOptionsSchema = z.object({
     .object({
       boundaryType: z
         .nativeEnum(BoundaryType)
-        .default(BoundaryType.PARLIAMENTARY_CONSTITUENCIES)
-        .optional(),
+        .default(BoundaryType.PARLIAMENTARY_CONSTITUENCIES),
       palette: z.nativeEnum(Palette).default(Palette.Inferno),
       isPaletteReversed: z.boolean().optional(),
       layerId: z.string().uuid().optional(),
-      mode: z
-        .nativeEnum(ChoroplethMode)
-        .default(ChoroplethMode.Count)
-        .optional(),
+      mode: z.nativeEnum(ChoroplethMode).default(ChoroplethMode.Count),
       field: z.string().optional(),
       formula: z.string().optional(),
     })
@@ -170,10 +168,10 @@ const mapOptionsSchema = z.object({
     .default({}),
   display: z
     .object({
-      choropleth: z.boolean().default(true).optional(),
-      borders: z.boolean().default(true).optional(),
+      choropleth: z.boolean().default(true),
+      borders: z.boolean().default(true),
+      boundaryNames: z.boolean().default(true),
       streetDetails: z.boolean().optional(),
-      boundaryNames: z.boolean().default(true).optional(),
     })
     .default({}),
   layers: z
@@ -187,12 +185,12 @@ const tableOptionsSchema = z.object({})
 
 export const mapViewSchema = viewSchema.extend({
   type: z.literal(ViewType.Map),
-  mapOptions: mapOptionsSchema,
+  mapOptions: mapOptionsSchema.default({}),
 })
 
 export const tableViewSchema = viewSchema.extend({
   type: z.literal(ViewType.Table),
-  tableOptions: tableOptionsSchema,
+  tableOptions: tableOptionsSchema.default({}),
 })
 
 export const viewUnionSchema = z.discriminatedUnion('type', [
@@ -206,6 +204,8 @@ export type ViewConfig = z.infer<typeof viewUnionSchema>
 export type SpecificViewConfig<ViewType> = ViewConfig & { type: ViewType }
 
 const CURRENT_MIGRATION_VERSION = '2025-01-25'
+
+const defaultViewId = uuid.v4()
 
 export const displayOptionsSchema = z.object({
   version: z.string().default(CURRENT_MIGRATION_VERSION),
@@ -223,7 +223,19 @@ export const displayOptionsSchema = z.object({
         .describe('List of properties to show in the record explorer.'),
     })
     .default({}),
-  views: z.record(z.string().uuid(), viewUnionSchema).default({}),
+  views: z
+    .record(z.string().uuid(), viewUnionSchema)
+    .refine(
+      (data) => Object.keys(data).length > 0,
+      'Required at least one view required'
+    )
+    .default({
+      [defaultViewId]: viewUnionSchema.parse({
+        id: defaultViewId,
+        type: ViewType.Map,
+        mapOptions: mapOptionsSchema.parse({}),
+      }),
+    }),
 })
 
 export type IDisplayOptions = z.infer<typeof displayOptionsSchema>

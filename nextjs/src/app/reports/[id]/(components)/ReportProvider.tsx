@@ -37,7 +37,9 @@ const ReportProvider = ({
       !isEqual(__unvalidatedReport.displayOptions, updatedReport.displayOptions)
     ) {
       console.log('Migrating display options')
-      const update = report.updateReport(updatedReport)
+      const update = report.updateReport((d) => {
+        d.displayOptions = updatedReport.displayOptions
+      })
       toastPromise(update, {
         loading: 'Updating...',
         success: 'Updated report',
