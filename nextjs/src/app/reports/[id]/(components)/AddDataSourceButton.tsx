@@ -82,7 +82,7 @@ export function AddMapLayerButton({
               control={form.control}
               name="source"
               render={({ field }) => (
-                <MapLayerSelector
+                <DataSourceSelector
                   value={field.value}
                   onChange={field.onChange}
                   filter={filter}
@@ -99,7 +99,7 @@ export function AddMapLayerButton({
   )
 }
 
-export function MapLayerSelector({
+export function DataSourceSelector({
   value,
   onChange,
   filter,

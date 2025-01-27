@@ -15,6 +15,7 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+import { Button } from '@/components/ui/button'
 import {
   Carousel,
   CarouselApi,
@@ -30,6 +31,7 @@ import {
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { InspectorDisplayType } from '@/lib/explorer'
+import { contentEditableMutation } from '@/lib/html'
 import {
   ExplorerAreaBreadCrumbMapping,
   ExplorerState,
@@ -67,6 +69,7 @@ import { EditorSelect } from '../EditorSelect'
 import { EditorSwitch } from '../EditorSwitch'
 import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
 import { TableDisplay } from '../dashboard/TableDisplay'
+import { DisplayCreator } from './AreaExplorerDisplayCreator'
 
 export function AreaExplorer({ gss }: { gss: string }) {
   const [selectedTab, setSelectedTab] = useState('summary')
@@ -157,25 +160,22 @@ export function AreaExplorer({ gss }: { gss: string }) {
             Summary
           </TabsTrigger>
         </TabsList>
-        <TabsContent
-          value="summary"
-          className="pb-24 divide-y divide-meepGray-800"
-        >
-          {Object.values(
-            report.report.displayOptions.areaExplorer.displays
-          )?.map((display) => (
-            <div key={display.id} className="my-4 px-4">
-              <AreaDisplay
-                display={display}
-                gss={gss}
-                areaName={areaData.data?.area?.name || ''}
-              />
-            </div>
-          )) || (
-            <div className="text-xl text-meepGray-400 text-center py-12 px-2">
-              No summary data available
-            </div>
-          )}
+        <TabsContent value="summary" className="pb-24">
+          <div className="divide-y divide-meepGray-800 border-b border-meepGray-800">
+            {Object.values(
+              report.report.displayOptions.areaExplorer.displays
+            )?.map((display) => (
+              <div key={display.id} className="my-4 px-4">
+                <AreaDisplay
+                  display={display}
+                  gss={gss}
+                  areaName={areaData.data?.area?.name || ''}
+                />
+              </div>
+            ))}
+          </div>
+          {/* Button opens prompt, select layer, creates display: */}
+          <DisplayCreator />
         </TabsContent>
       </Tabs>
     </SidebarContent>
@@ -266,6 +266,11 @@ function AreaDisplay({
   return (
     <CollapsibleSection
       title={display.name || layer.name}
+      titleProps={contentEditableMutation((d) => {
+        updateReport((draft) => {
+          draft.displayOptions.areaExplorer.displays[display.id].name = d
+        })
+      })}
       id={display.id}
       actions={
         // Dropdown with these two editor select options
@@ -323,6 +328,18 @@ function AreaDisplay({
                 })
               }
             />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive"
+              onClick={() => {
+                updateReport((draft) => {
+                  delete draft.displayOptions.areaExplorer.displays[display.id]
+                })
+              }}
+            >
+              Remove
+            </Button>
           </PopoverContent>
         </Popover>
       }

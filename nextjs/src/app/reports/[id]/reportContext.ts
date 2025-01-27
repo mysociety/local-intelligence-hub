@@ -114,12 +114,8 @@ export const explorerDisplaySchema = z.object({
   name: z.string().optional(),
   displayType: z
     .nativeEnum(InspectorDisplayType)
-    .default(InspectorDisplayType.Properties)
-    .optional(),
-  areaQueryMode: z
-    .nativeEnum(AreaQueryMode)
-    .default(AreaQueryMode.Overlapping)
-    .optional(),
+    .default(InspectorDisplayType.Properties),
+  areaQueryMode: z.nativeEnum(AreaQueryMode).default(AreaQueryMode.Overlapping),
   dataDisplayMode: z.nativeEnum(DataDisplayMode).optional(),
 })
 
