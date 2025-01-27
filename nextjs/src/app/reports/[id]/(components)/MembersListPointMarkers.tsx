@@ -12,24 +12,25 @@ export const DEFAULT_MARKER_COLOUR = '#678DE3'
 
 const MEMBERS_LOAD_ZOOM = 8
 const MIN_MEMBERS_DISPLAY_ZOOM = 10
+export const EXTERNAL_DATA_SOURCE_MAPBOX_SOURCE_ID_PREFIX =
+  'mapped-external-data-source'
 
 export function MembersListPointMarkers({
+  mapLayerId,
   externalDataSourceId,
-  index,
   mapboxPaint,
-  mapboxLayout,
 }: {
+  mapLayerId: string
   externalDataSourceId: string
-  index: number
   mapboxPaint?: any
-  mapboxLayout?: any
 }) {
   const mapbox = useLoadedMap()
   const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(
     selectedSourceMarkerAtom
   )
 
-  const layerId = `${externalDataSourceId}-marker`
+  const mapboxLayerId = `${mapLayerId}-marker`
+  const mapboxSourceId = `${mapLayerId}-${EXTERNAL_DATA_SOURCE_MAPBOX_SOURCE_ID_PREFIX}`
 
   useEffect(
     function selectMarker() {
@@ -54,23 +55,28 @@ export function MembersListPointMarkers({
         }
       }
 
-      map.on('mouseover', layerId, handleMouseOver)
-      map.on('mouseleave', layerId, handleMouseLeave)
-      map.on('touchstart', layerId, handleTouchStart)
+      map.on('mouseover', mapboxLayerId, handleMouseOver)
+      map.on('mouseleave', mapboxLayerId, handleMouseLeave)
+      map.on('touchstart', mapboxLayerId, handleTouchStart)
 
       return () => {
-        map.off('mouseover', layerId, handleMouseOver)
-        map.off('mouseleave', layerId, handleMouseLeave)
-        map.off('touchstart', layerId, handleTouchStart)
+        map.off('mouseover', mapboxLayerId, handleMouseOver)
+        map.off('mouseleave', mapboxLayerId, handleMouseLeave)
+        map.off('touchstart', mapboxLayerId, handleTouchStart)
       }
     },
-    [layerId, mapbox.loadedMap, externalDataSourceId, setSelectedSourceMarker]
+    [
+      mapboxLayerId,
+      mapbox.loadedMap,
+      externalDataSourceId,
+      setSelectedSourceMarker,
+    ]
   )
 
   return (
     <>
       <Source
-        id={externalDataSourceId}
+        id={mapboxSourceId}
         type="vector"
         url={new URL(
           `/tiles/external-data-source/${externalDataSourceId}/tiles.json`,
@@ -81,8 +87,8 @@ export function MembersListPointMarkers({
       >
         <Layer
           beforeId={PLACEHOLDER_LAYER_ID_MARKERS}
-          id={layerId}
-          source={externalDataSourceId}
+          id={mapboxLayerId}
+          source={mapboxSourceId}
           source-layer={'generic_data'}
           type="circle"
           paint={{
@@ -90,7 +96,6 @@ export function MembersListPointMarkers({
             'circle-color': DEFAULT_MARKER_COLOUR,
             ...(mapboxPaint || {}),
           }}
-          layout={mapboxLayout}
           minzoom={MIN_MEMBERS_DISPLAY_ZOOM}
         />
       </Source>

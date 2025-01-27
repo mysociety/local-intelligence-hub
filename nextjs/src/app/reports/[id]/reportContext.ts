@@ -114,11 +114,12 @@ export const explorerDisplaySchema = z.object({
   name: z.string().optional(),
   displayType: z
     .nativeEnum(InspectorDisplayType)
-    .default(InspectorDisplayType.Properties),
+    .default(InspectorDisplayType.Properties)
+    .optional(),
   areaQueryMode: z
     .nativeEnum(AreaQueryMode)
-    .optional()
-    .default(AreaQueryMode.Overlapping),
+    .default(AreaQueryMode.Overlapping)
+    .optional(),
   dataDisplayMode: z.nativeEnum(DataDisplayMode).optional(),
 })
 
@@ -136,6 +137,7 @@ export const viewSchema = z.object({
 const mapLayerSchema = z.object({
   // TODO: these could all be a union of simple or conditional styling
   id: z.string().uuid().default(uuid.v4).describe('View layer ID'),
+  name: z.string().optional().describe('Name of the map marker layer'),
   layerId: z
     .string()
     .uuid()
@@ -159,8 +161,8 @@ const mapOptionsSchema = z.object({
       layerId: z.string().uuid().optional(),
       mode: z
         .nativeEnum(ChoroplethMode)
-        .optional()
-        .default(ChoroplethMode.Count),
+        .default(ChoroplethMode.Count)
+        .optional(),
       field: z.string().optional(),
       formula: z.string().optional(),
     })
@@ -168,10 +170,10 @@ const mapOptionsSchema = z.object({
     .default({}),
   display: z
     .object({
-      choropleth: z.boolean().optional().default(true),
-      borders: z.boolean().optional().default(true),
+      choropleth: z.boolean().default(true).optional(),
+      borders: z.boolean().default(true).optional(),
       streetDetails: z.boolean().optional(),
-      boundaryNames: z.boolean().optional().default(true),
+      boundaryNames: z.boolean().default(true).optional(),
     })
     .default({}),
   layers: z

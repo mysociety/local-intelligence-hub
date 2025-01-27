@@ -75,14 +75,11 @@ export function migration0001(oldReport: GetMapReportQuery['mapReport']) {
             layers: oldReport.layers?.reduce(
               (acc: any, layer: any) => {
                 const id = v4()
-                const colour = layer.mapboxPaint?.['circle-color']
-                if (colour) {
-                  // Only include layers with custom config
-                  acc[id] = {
-                    id,
-                    layerId: layer.id,
-                    colour,
-                  }
+                const colour = layer.mapboxPaint?.['circle-color'] || undefined
+                acc[id] = {
+                  id,
+                  layerId: layer.id,
+                  colour,
                 }
                 return acc
               },

@@ -1,31 +1,38 @@
 'use client'
-import { DataSourceType } from '@/__generated__/graphql'
 import useMapMarkerImages from '@/components/useMapMarkerImages'
+import { useReport } from '@/lib/map/useReport'
+import { useView } from '@/lib/map/useView'
 import React from 'react'
-import useMarkerAnalytics from '../../useMarkerAnalytics'
-import { MembersListPointMarkers } from '../MembersListPointMarkers'
+import { ViewType } from '../../reportContext'
+import {
+  DEFAULT_MARKER_COLOUR,
+  MembersListPointMarkers,
+} from '../MembersListPointMarkers'
 
 const ReportMapMarkers: React.FC = () => {
-  const analytics = useMarkerAnalytics()
+  const report = useReport()
+  const view = useView(ViewType.Map)
   useMapMarkerImages()
 
-  // TODO: Get clarity on what the pointSourceTypes are
-  const pointSourceTypes = [DataSourceType.Member, DataSourceType.Location]
-
-  if (!analytics.data) return null
-  const memberListSources = analytics.data.mapReport.layers.filter((layer) =>
-    pointSourceTypes.includes(layer.sourceData.dataType)
+  const memberListSources = Object.values(
+    view.currentView?.mapOptions.layers || {}
   )
+    .map((ml) => ({
+      ...ml,
+      sourceId: report.report.layers.find((l) => l.id === ml.layerId)?.source,
+    }))
+    .filter((ml) => !!ml.sourceId)
 
   return (
     <div>
-      {memberListSources.map((layer, index) => (
+      {memberListSources.map((mapLayer) => (
         <MembersListPointMarkers
-          key={layer?.source || index}
-          index={index}
-          mapboxPaint={layer.mapboxPaint || {}}
-          mapboxLayout={layer.mapboxLayout || {}}
-          externalDataSourceId={layer?.source}
+          key={mapLayer.id}
+          mapLayerId={mapLayer.id}
+          externalDataSourceId={mapLayer.sourceId!}
+          mapboxPaint={{
+            'circle-color': mapLayer.colour || DEFAULT_MARKER_COLOUR,
+          }}
         />
       ))}
     </div>

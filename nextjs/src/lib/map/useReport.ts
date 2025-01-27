@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  DataSourceType,
   DeleteMapReportMutation,
   DeleteMapReportMutationVariables,
   MapLayerInput,
@@ -19,6 +20,7 @@ import ReportContext, {
   IDisplayOptions,
   MapReportWithTypedJSON,
   MapReportWithoutJSON,
+  ViewType,
   displayOptionsSchema,
 } from '@/app/reports/[id]/reportContext'
 import { StarredState, StarredStateUnique, starId } from '@/lib/map'
@@ -241,22 +243,33 @@ export const useReport = () => {
 
   function addLayer(source: AddSourcePayload) {
     updateReport((draft) => {
-      if (!draft.layers?.find((l) => l.source === source.id)) {
-        const layerId = v4()
-        draft.layers = draft.layers || []
-        draft.layers.push({
-          id: layerId,
-          name: source.name,
-          source: source.id,
-        })
-        // Also add a default display to the areaExplorer
-        const displayId = v4()
-        draft.displayOptions.areaExplorer.displays[displayId] = {
-          id: displayId,
-          layerId,
-          displayType: InspectorDisplayType.Properties,
-        }
+      const layerId = v4()
+      draft.layers = draft.layers || []
+      draft.layers.push({
+        id: layerId,
+        name: source.name,
+        source: source.id,
+      })
+      // Also add a default display to the areaExplorer
+      const displayId = v4()
+      draft.displayOptions.areaExplorer.displays[displayId] = {
+        id: displayId,
+        layerId,
+        displayType: InspectorDisplayType.Properties,
       }
+      // And add a marker layer to any map views
+      Object.values(draft.displayOptions.views).forEach((view) => {
+        if (
+          view.type === ViewType.Map &&
+          source.dataType !== DataSourceType.AreaStats
+        ) {
+          const mapLayerId = v4()
+          view.mapOptions.layers[mapLayerId] = {
+            id: mapLayerId,
+            layerId,
+          }
+        }
+      })
     })
   }
 }

@@ -1,20 +1,21 @@
-import { DataSourceType } from '@/__generated__/graphql'
 import importData from '@/app/(logged-in)/data-sources/inspect/[externalDataSourceId]/importData'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { LoadingIcon } from '@/components/ui/loadingIcon'
 import { SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { InspectorDisplayType } from '@/lib/explorer'
+import { contentEditableMutation } from '@/lib/html'
 import { layerEditorStateAtom } from '@/lib/map'
 import { useReport } from '@/lib/map/useReport'
+import { useView } from '@/lib/map/useView'
 import { useApolloClient } from '@apollo/client'
 import { useAtom } from 'jotai'
-import { ArrowRight, LucideX } from 'lucide-react'
+import { ArrowRight, LucideX, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
+import { v4 } from 'uuid'
+import { ViewType } from '../reportContext'
 import { EditorColourPicker } from './EditorColourPicker'
-import { EditorSelect } from './EditorSelect'
 import { DEFAULT_MARKER_COLOUR } from './MembersListPointMarkers'
 
 export function DataSourceEditor() {
@@ -68,55 +69,81 @@ export function DataSourceEditor() {
 
 function StyleTab({ layerId }: { layerId: string }) {
   const { report, updateLayer } = useReport()
-  const layer = report.layers?.find((l) => l?.id === layerId)!
+  const dataLayer = report.layers?.find((l) => l?.id === layerId)!
+  const view = useView(ViewType.Map)
 
   return (
-    <div className="divide-y divide-meepGray-600 py-1">
-      {/* Inspector config */}
-      <section className="my-4 px-4">
-        <header className="my-4">
-          <h4 className="font-semibold text-white text-sm">Explorer</h4>
-          <p className="text-meepGray-400 text-sm pt-2">
-            Choose how data should display in the Inspector panel.
-          </p>
-        </header>
-
-        <EditorSelect
-          label={'Display style'}
-          value={layer.inspectorType || InspectorDisplayType.Table}
-          options={Object.keys(InspectorDisplayType)}
-          onChange={(value) => {
-            updateLayer(layerId, { inspectorType: value })
-          }}
-        />
-      </section>
-
+    <>
+      <header className="px-4 mt-4">
+        <h4 className="font-semibold text-white text-sm">Map markers</h4>
+        <p className="text-meepGray-400 text-sm pt-2">
+          Choose how data should display on the map.
+        </p>
+      </header>
       {/* Point config */}
-      {layer.sourceData?.dataType !== DataSourceType.AreaStats && (
-        <section className="my-4 px-4">
-          <header className="my-4">
-            <h4 className="font-semibold text-white text-sm">Map markers</h4>
-            <p className="text-meepGray-400 text-sm pt-2">
-              Choose how data should display on the map.
-            </p>
-          </header>
-          <EditorColourPicker
-            label="Marker colour"
-            value={layer.mapboxPaint?.['circle-color'] || DEFAULT_MARKER_COLOUR}
-            onChange={(value) => {
-              if (value !== DEFAULT_MARKER_COLOUR) {
-                updateLayer(layerId, {
-                  mapboxPaint: {
-                    ...layer.mapboxPaint,
-                    'circle-color': value,
-                  },
-                })
-              }
-            }}
-          />
-        </section>
-      )}
-    </div>
+      <div className="divide-y divide-meepGray-600 border-y border-meepGray-600 mt-4">
+        {Object.values(view.currentView?.mapOptions.layers || {}).map(
+          (viewLayer) => (
+            <div className="pt-4 pb-6">
+              <section className="px-4">
+                <header className="text-white flex flex-row items-center justify-between">
+                  <h4
+                    {...contentEditableMutation((value) => {
+                      view.updateView((draft) => {
+                        draft.mapOptions.layers[viewLayer.id].name = value
+                      })
+                    })}
+                  >
+                    {viewLayer.name ||
+                      `Marker layer ${viewLayer.id.substring(0, 4)}`}
+                  </h4>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                    onClick={() => {
+                      view.updateView((draft) => {
+                        delete draft.mapOptions.layers[viewLayer.id]
+                      })
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </header>
+                <EditorColourPicker
+                  label="Marker colour"
+                  value={viewLayer.colour || DEFAULT_MARKER_COLOUR}
+                  onChange={(value) => {
+                    if (value !== DEFAULT_MARKER_COLOUR) {
+                      view.updateView((draft) => {
+                        draft.mapOptions.layers[viewLayer.id].colour = value
+                      })
+                    }
+                  }}
+                />
+              </section>
+            </div>
+          )
+        )}
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-meepGray-400 my-2"
+        onClick={() => {
+          view.updateView((draft) => {
+            const id = v4()
+            draft.mapOptions.layers[id] = {
+              id,
+              layerId,
+            }
+          })
+        }}
+      >
+        <Plus className="w-4" />
+        add new map marker layer
+      </Button>
+    </>
   )
 }
 
