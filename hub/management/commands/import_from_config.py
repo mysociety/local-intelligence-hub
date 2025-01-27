@@ -8,6 +8,11 @@ from hub.models import AreaData, DataSet
 
 from .base_importers import BaseImportFromDataFrameCommand
 
+YELLOW = "\033[33m"
+RED = "\033[31m"
+GREEN = "\033[32m"
+NOBOLD = "\033[0m"
+
 
 class Command(BaseImportFromDataFrameCommand):
     help = "Import based on config"
@@ -38,7 +43,13 @@ class Command(BaseImportFromDataFrameCommand):
         super().add_arguments(parser)
 
         parser.add_argument(
-            "--import_name", action="store", required=True, help="Name of import to run"
+            "--import_name", action="store", help="Name of import to run"
+        )
+
+        parser.add_argument(
+            "--list_imports",
+            action="store_true",
+            help="List available imports and status",
         )
 
     def get_configs(self, import_name):
@@ -59,6 +70,33 @@ class Command(BaseImportFromDataFrameCommand):
                         confs.append(conf)
 
         return confs
+
+    def list_all_imports(self):
+        configs = []
+        with open(self.json_config_file) as config:
+            c = json.load(config)
+            for conf in c:
+                data = {
+                    "name": conf["name"],
+                    "label": conf["label"],
+                }
+
+                try:
+                    ds = DataSet.objects.get(name=conf["name"])
+                    data["state"] = (
+                        f"{GREEN}Imported{NOBOLD} {ds.last_update.date().isoformat()}"
+                    )
+                except DataSet.DoesNotExist:
+                    data_file = settings.BASE_DIR / "data" / conf["data_file"]
+                    if data_file.exists():
+                        data["state"] = f"{YELLOW}Not imported, file available{NOBOLD}"
+                    else:
+                        data["state"] = f"{RED}Not imported, file missing{NOBOLD}"
+
+                configs.append(data)
+
+        for conf in configs:
+            self.stdout.write(f"{conf['name']} ({conf['state']}) - {conf['label']}")
 
     def setup(self, import_name, row):
         self.message = f"Importing {row['label']}"
@@ -165,9 +203,16 @@ class Command(BaseImportFromDataFrameCommand):
         quiet=False,
         skip_new_areatype_conversion=False,
         import_name=None,
+        list_imports=False,
         *args,
         **options,
     ):
+
+        if list_imports:
+            self.list_all_imports()
+        elif import_name is None:
+            self.stderr.write("Either import_name or list_imports required")
+            return
 
         initial_delete_done = False
         configs = self.get_configs(import_name)
