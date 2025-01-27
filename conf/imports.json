@@ -877,5 +877,93 @@
         "data_col":"Bad or very bad health"
       }
     ]
+  },
+  {
+    "name":"constituency_main_language",
+    "label":"Main Language",
+    "description":"",
+    "data_type":"percent",
+    "is_range":true,
+    "category":"place",
+    "subcategory":null,
+    "release_date":"May 2024",
+    "source_label":"Data from ONS.",
+    "source":"https://www.ons.gov.uk/filters/f7dcc756-f4bc-4dcb-9302-2f6def224390/dimensions",
+    "source_type":"csv",
+    "data_url":null,
+    "table":"areadata",
+    "default_value":10,
+    "comparators":"numerical",
+    "exclude_countries":["Scotland", "Northern Ireland"],
+    "unit_type":"percentage",
+    "unit_distribution":"people_in_area",
+    "fill_blanks":false,
+    "is_public":true,
+    "is_filterable":true,
+    "is_shadeable":true,
+    "data_file":"2024_main_language_percentage.csv",
+    "uses_gss":true,
+    "file_type":"csv",
+    "area_type":"WMC23",
+    "constituency_col":"Post-2019 Westminster Parliamentary constituencies Code",
+    "multiply_percentage": true,
+    "delete_first": true,
+    "data_types": [
+      {
+        "name":"constituency_language_english_welsh",
+        "label":"English or Welsh",
+        "data_col":"English or Welsh"
+      },
+      {
+        "name":"constituency_language_other_uk",
+        "label":"Any other UK languages",
+        "data_col":"Any other UK languages"
+      },
+      {
+        "name":"constituency_language_african",
+        "label":"African languages",
+        "data_col":"African languages"
+      },
+      {
+        "name":"constituency_language_asian",
+        "label":"Asian languages",
+        "data_col":"Asian languages"
+      },
+      {
+        "name":"constituency_language_european_eu",
+        "label":"European languages (EU)",
+        "data_col":"European languages (EU)"
+      },
+      {
+        "name":"constituency_language_north_south_american",
+        "label":"North or South American languages",
+        "data_col":"North or South American languages"
+      },
+      {
+        "name":"constituency_language_oceanic",
+        "label":"Oceanic or Australian languages",
+        "data_col":"Oceanic or Australian languages"
+      },
+      {
+        "name":"constituency_language_other",
+        "label":"Any other languages",
+        "data_col":"Any other languages"
+      },
+      {
+        "name":"constituency_language_other_european_noe_eu",
+        "label":"Other European languages (non-EU)",
+        "data_col":"Other European languages (non-EU)"
+      },
+      {
+        "name":"constituency_language_sign",
+        "label":"Sign and supported languages",
+        "data_col":"Sign and supported languages"
+      },
+      {
+        "name":"constituency_language_na",
+        "label":"Does not apply",
+        "data_col":"Does not apply"
+      }
+    ]
   }
 ]
