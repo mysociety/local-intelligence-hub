@@ -1,44 +1,92 @@
 'use client'
 
-import { GetMapReportQuery } from '@/__generated__/graphql'
+import {
+  Exact,
+  GetMapReportQuery,
+  MapLayerInput,
+  PatchMapReportMutation,
+  PatchMapReportMutationVariables,
+  Scalars,
+  UpdateMapReportMutation,
+  UpdateMapReportMutationVariables,
+} from '@/__generated__/graphql'
 import { useSidebarLeftState } from '@/lib/map'
 import { cleanUpLayerReferences } from '@/lib/map/displayOptionsMigrations'
 import { migrateDisplayOptions } from '@/lib/map/displayOptionsMigrations/migrate'
-import { refreshReportData, useReport } from '@/lib/map/useReport'
+import { prepareMapReportForInput } from '@/lib/map/mapReportUpdate'
+import { refreshReportData } from '@/lib/map/useReport'
 import { toastPromise } from '@/lib/toast'
-import { useApolloClient } from '@apollo/client'
+import { ApolloClient, QueryResult, useApolloClient } from '@apollo/client'
+import jsonpatch from 'fast-json-patch'
+import { WritableDraft, produce } from 'immer'
 import { useSetAtom } from 'jotai'
-import { flow, isEqual } from 'lodash'
+import { capitalize, isEqual } from 'lodash'
 import { ReactNode, useEffect, useRef } from 'react'
-import ReportContext, { displayOptionsSchema } from '../reportContext'
+import toSpaceCase from 'to-space-case'
+import { PATCH_MAP_REPORT, UPDATE_MAP_REPORT } from '../gql_queries'
+import ReportContext, {
+  IDisplayOptions,
+  MapReportWithTypedJSON,
+  displayOptionsMigrator,
+} from '../reportContext'
 import { navbarTitleAtom } from './ReportNavbar'
 
 interface ReportProviderProps {
-  __unvalidatedReport: GetMapReportQuery['mapReport']
+  query: QueryResult<
+    GetMapReportQuery,
+    Exact<{
+      id: Scalars['ID']['input']
+    }>
+  >
   children: ReactNode
 }
 
-const ReportProvider = ({
-  __unvalidatedReport,
-  children,
-}: ReportProviderProps) => {
+const ReportProvider = ({ query, children }: ReportProviderProps) => {
+  const queriedReport = query.data?.mapReport
   const setNavbarTitle = useSetAtom(navbarTitleAtom)
   const client = useApolloClient()
-  const report = useReport()
-
-  // Parse the report config and merge it with the default config
 
   useEffect(() => {
-    const updatedReport = flow([migrateDisplayOptions, cleanUpLayerReferences])(
-      __unvalidatedReport
-    )
+    if (queriedReport) {
+      setNavbarTitle(queriedReport?.name)
+    }
+  }, [queriedReport?.name])
+
+  const leftSidebarState = useSidebarLeftState()
+  const autoOpenedSidebar = useRef(false)
+
+  useEffect(() => {
+    // If there are no layers, open the left sidepanel
+    if (!queriedReport?.layers.length && !autoOpenedSidebar.current) {
+      leftSidebarState.set(true)
+      autoOpenedSidebar.current = true
+    }
+  }, [query.data, queriedReport, autoOpenedSidebar])
+
+  const displayOptionsParser = displayOptionsMigrator.safeParse(
+    queriedReport?.displayOptions
+  )
+
+  const report: MapReportWithTypedJSON | undefined = queriedReport
+    ? displayOptionsParser.data
+      ? {
+          ...queriedReport,
+          displayOptions: displayOptionsParser.data,
+        }
+      : undefined
+    : undefined
+
+  useEffect(() => {
+    if (!queriedReport) return
+    const migratedReport = migrateDisplayOptions(queriedReport)
+    const cleanedUpReport = cleanUpLayerReferences(migratedReport)
 
     if (
-      !isEqual(__unvalidatedReport.displayOptions, updatedReport.displayOptions)
+      !isEqual(queriedReport.displayOptions, cleanedUpReport.displayOptions)
     ) {
-      console.log('Migrating display options')
-      const update = report.updateReport((d) => {
-        d.displayOptions = updatedReport.displayOptions
+      console.log('Saving display options', { cleanedUpReport })
+      const update = updateReport((d) => {
+        d.displayOptions = cleanedUpReport.displayOptions
       })
       toastPromise(update, {
         loading: 'Updating...',
@@ -48,50 +96,186 @@ const ReportProvider = ({
         refreshReportData(client)
       })
     }
-  }, [__unvalidatedReport])
+  }, [queriedReport])
 
-  useEffect(() => {
-    setNavbarTitle(__unvalidatedReport.name)
-  }, [__unvalidatedReport.name])
-
-  const leftSidebarState = useSidebarLeftState()
-  const autoOpenedSidebar = useRef(false)
-
-  useEffect(() => {
-    // If there are no layers, open the left sidepanel
-    if (!__unvalidatedReport.layers.length && !autoOpenedSidebar.current) {
-      leftSidebarState.set(true)
-      autoOpenedSidebar.current = true
-    }
-  }, [__unvalidatedReport.layers, autoOpenedSidebar])
-
-  if (!__unvalidatedReport) {
+  if (!queriedReport) {
     return null
   }
 
-  const parse = displayOptionsSchema.safeParse(
-    __unvalidatedReport.displayOptions
-  )
-  if (!parse.success) {
+  if (!report || !displayOptionsParser.success) {
     return (
       <div className="overflow-auto max-w-3xl mx-auto items-center justify-center h-full text-white">
         <h1 className="text-3xl font-bold">Report error</h1>
         <p className="text-lg">This report has an invalid configuration.</p>
         <pre className="text-sm text-gray-400 mt-4">
-          {JSON.stringify(parse.error, null, 2)}
+          {JSON.stringify(displayOptionsParser?.error, null, 2)}
         </pre>
         <pre className="text-sm text-gray-400 mt-4">
-          {JSON.stringify(__unvalidatedReport.displayOptions, null, 2)}
+          {JSON.stringify(queriedReport?.displayOptions, null, 2)}
         </pre>
       </div>
     )
   }
 
   return (
-    <ReportContext.Provider value={{ report: __unvalidatedReport }}>
+    <ReportContext.Provider value={{ report, updateReport }}>
       {children}
     </ReportContext.Provider>
   )
+
+  async function updateReport(
+    cb: (
+      draft: WritableDraft<
+        Omit<MapReportWithTypedJSON, 'layers'> & { layers: MapLayerInput[] }
+      >
+    ) => void,
+    retryCount: number = 0
+  ) {
+    if (!report || !queriedReport || (!!retryCount && retryCount >= 3)) return
+    const updatedReport = produce(report, cb)
+    // Split out displayOptions and handle them separately
+    const { displayOptions: newDisplayOptions, ...newReport } = updatedReport
+    if (newReport) {
+      // Handle report DB field updates using update
+      // and await it, so that patches can be applied to the new `layer` object
+      await updateReportDBFields(newReport)
+    }
+    if (newDisplayOptions) {
+      // Handle displayOptions using patch
+      await patchReportDisplayOptions(newDisplayOptions, queriedReport)
+    }
+  }
+
+  function updateReportDBFields(
+    newReport: Omit<MapReportWithTypedJSON, 'layers' | 'displayOptions'> & {
+      layers: MapLayerInput[]
+    }
+  ) {
+    if (!report) return
+    const { displayOptions, ...oldReport } = report
+    if (isEqual(oldReport, newReport)) return
+
+    const input = prepareMapReportForInput(newReport)
+    if (!Object.keys(input).length) {
+      console.warn('No changes to report')
+      return
+    }
+
+    const update = updateMapReport({ input }, client)
+
+    return toastPromise(update, {
+      loading: 'Saving...',
+      success: () => {
+        return {
+          title: 'Report saved',
+          description: `Updated ${Object.keys(input).map(toSpaceCase).join(', ')}`,
+        }
+      },
+      error: `Couldn't save report`,
+    }).finally(() => {
+      refreshReportData(client)
+    })
+  }
+
+  async function patchReportDisplayOptions(
+    inputDisplayOptions: IDisplayOptions,
+    reportObjectForDiffingAgainst: GetMapReportQuery['mapReport'],
+    retryCount: number = 0
+  ) {
+    if (!reportObjectForDiffingAgainst || (!!retryCount && retryCount >= 3))
+      return
+    // Validate + make self-consistent
+    // using displayOptionsMigrator's transform operations
+    const {
+      data: validatedDisplayOptions,
+      success,
+      error,
+    } = displayOptionsMigrator.safeParse(inputDisplayOptions)
+    if (!success || error || !validatedDisplayOptions) {
+      console.error('Invalid report config', error)
+      return
+    }
+    // Remove any layer references that don't exist
+    const newReport = cleanUpLayerReferences({
+      ...reportObjectForDiffingAgainst,
+      displayOptions: validatedDisplayOptions,
+    })
+    // Then prep the patch that would be applied to report.displayOptions in the DB
+    const patch = jsonpatch.compare(
+      reportObjectForDiffingAgainst.displayOptions,
+      newReport.displayOptions
+    )
+    if (!patch.length) {
+      console.warn('No patches to apply')
+      return
+    }
+    try {
+      // Mutate
+      const update = client.mutate<
+        PatchMapReportMutation,
+        PatchMapReportMutationVariables
+      >({
+        mutation: PATCH_MAP_REPORT,
+        variables: {
+          patch,
+          reportId: reportObjectForDiffingAgainst.id,
+        },
+        optimisticResponse: {
+          __typename: 'Mutation',
+          patchMapReportDisplayOptions: {
+            __typename: 'MapReport',
+            ...reportObjectForDiffingAgainst,
+            displayOptions: newReport.displayOptions,
+          },
+        },
+      })
+      return toastPromise(update, {
+        loading: 'Saving...',
+        success: () => {
+          return {
+            title: 'Report saved',
+            description:
+              // Print out JSON patch changes in a human readable format, using spaceCase
+              patch
+                .map((p) => {
+                  const { op, path } = p
+                  const changedDataPath = path.split('/').map(toSpaceCase).pop()
+                  const humanReadableOp = op
+                    .replace('replace', 'Set')
+                    .replace('add', 'Set')
+                    .replace('remove', 'Reset')
+                  return `${capitalize(humanReadableOp)} ${changedDataPath}`
+                })
+                .join(', ') || 'No changes',
+          }
+        },
+        error: `Couldn't save report`,
+      })
+    } catch (e) {
+      // Something's gone wrong; the displayOptions object is out of sync with the client
+      // so refetch the report and try making a new patch.
+      // Up to three attempts.
+      const res = await query.refetch()
+      patchReportDisplayOptions(
+        inputDisplayOptions,
+        res.data?.mapReport,
+        retryCount + 1
+      )
+    }
+  }
+
+  function updateMapReport(
+    variables: UpdateMapReportMutationVariables,
+    client: ApolloClient<object>
+  ) {
+    return client.mutate<
+      UpdateMapReportMutation,
+      UpdateMapReportMutationVariables
+    >({
+      mutation: UPDATE_MAP_REPORT,
+      variables,
+    })
+  }
 }
 
 export default ReportProvider

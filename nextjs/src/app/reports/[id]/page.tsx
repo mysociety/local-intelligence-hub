@@ -26,8 +26,9 @@ import {
   ReportSidebarLeft,
 } from './(components)/ReportSidebarLeft'
 import { ReportSidebarRight } from './(components)/ReportSidebarRight'
+import { TableView } from './(components)/TableView'
 import { GET_MAP_REPORT } from './gql_queries'
-import { ViewType } from './reportContext'
+import { SpecificViewConfig, ViewType } from './reportContext'
 
 type Params = {
   id: string
@@ -89,7 +90,7 @@ function QueryContext({ params: { id } }: { params: Params }) {
   }
 
   return (
-    <ReportProvider __unvalidatedReport={report.data.mapReport}>
+    <ReportProvider query={report}>
       <LoadedReportPage {...{ params: { id } }} />
     </ReportProvider>
   )
@@ -99,6 +100,7 @@ function LoadedReportPage({ params: { id } }: { params: Params }) {
   const report = useReport()
   const orgId = useAtomValue(currentOrganisationIdAtom)
   const router = useRouter()
+  const view = useView()
 
   // TODO: Implement multi tenancy at the database level
   // TODO: Move this logic to middleware (add orgIds as a custom data array on the user's JWT)
@@ -114,16 +116,20 @@ function LoadedReportPage({ params: { id } }: { params: Params }) {
   const numLayers = report.report?.layers?.length ?? 0
   const prevNumLayers = useRef(numLayers)
 
-  // Close the secondary sidebar if a layer is removed
   useEffect(() => {
+    // Close the secondary sidebar if a layer is removed
     if (prevNumLayers.current > numLayers) {
       setLayerEditorState({ open: false })
     }
     prevNumLayers.current = numLayers
   }, [numLayers, setLayerEditorState])
 
-  const view = useView()
-  const mapView = useView(ViewType.Map)
+  useEffect(() => {
+    // if the view doesn't exist, remove the view query param
+    if (!view?.currentView) {
+      view?.reset()
+    }
+  }, [view])
 
   return (
     <MapProvider>
@@ -142,12 +148,18 @@ function LoadedReportPage({ params: { id } }: { params: Params }) {
       >
         <ReportNavbar />
         <ReportSidebarLeft />
-        {mapView.currentView ? (
-          <MapView mapView={mapView.currentView} />
+        {view.currentView?.type === ViewType.Map ? (
+          <MapView
+            mapView={view.currentView as SpecificViewConfig<ViewType.Map>}
+          />
+        ) : view.currentView?.type === ViewType.Table ? (
+          <TableView
+            tableView={view.currentView as SpecificViewConfig<ViewType.Table>}
+          />
         ) : (
-          <div className="flex items-center justify-center h-full w-full">
+          <div className="flex items-center justify-center h-screen w-full">
             <div className="text-meepGray-400 text-2xl font-semibold">
-              {`View type "${view.currentView?.type}" not implemented`}
+              {`View not implemented`}
             </div>
             <pre>{JSON.stringify(view.currentView, null, 2)}</pre>
           </div>

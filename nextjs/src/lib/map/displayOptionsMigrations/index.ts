@@ -4,16 +4,17 @@ import {
 } from '@/app/reports/[id]/reportContext'
 import { produce } from 'immer'
 
-export function cleanUpLayerReferences(__report: MapReportWithTypedJSON) {
-  return produce(__report, (draft) => {
-    // Remove any layer references that don't exist
+export function cleanUpLayerReferences(migratedReport: MapReportWithTypedJSON) {
+  return produce(migratedReport, (draft) => {
+    // 1. Check that report layer IDs and references are synced up
     const layerIds = draft.layers.map((l) => l.id)
-    // check areaExplorer
+    // 1.1. Area explorer layers
     draft.displayOptions.areaExplorer.displays = Object.fromEntries(
       Object.entries(draft.displayOptions.areaExplorer.displays).filter(
         ([k, v]) => (v.layerId ? layerIds.includes(v.layerId) : true)
       )
     )
+    // 1.2. View layers
     for (const view of Object.values(draft.displayOptions.views)) {
       if (view.type === ViewType.Map) {
         // check views with mapOptions with layers configured

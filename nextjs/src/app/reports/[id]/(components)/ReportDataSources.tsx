@@ -37,7 +37,7 @@ export function ReportDataSources() {
             </span>
           }
           labelClassName="text-white"
-          value={mapView.currentView?.mapOptions?.display.choropleth}
+          value={mapView.currentViewOfType?.mapOptions?.display.choropleth}
           onChange={(checked) => {
             mapView.updateView((draft) => {
               draft.mapOptions.display.choropleth = checked
@@ -53,7 +53,7 @@ export function ReportDataSources() {
             </span>
           }
           labelClassName="text-white"
-          value={mapView.currentView?.mapOptions?.display.boundaryNames}
+          value={mapView.currentViewOfType?.mapOptions?.display.boundaryNames}
           onChange={(showBoundaryNames: boolean) => {
             mapView.updateView((draft) => {
               draft.mapOptions.display.boundaryNames = showBoundaryNames
@@ -69,7 +69,7 @@ export function ReportDataSources() {
             </span>
           }
           labelClassName="text-white"
-          value={mapView.currentView?.mapOptions?.display.borders}
+          value={mapView.currentViewOfType?.mapOptions?.display.borders}
           onChange={(showBorders: boolean) => {
             mapView.updateView((draft) => {
               draft.mapOptions.display.borders = showBorders
@@ -85,7 +85,7 @@ export function ReportDataSources() {
               <span className="text-white">Border type</span>
             </span>
           }
-          value={mapView.currentView?.mapOptions?.choropleth.boundaryType}
+          value={mapView.currentViewOfType?.mapOptions?.choropleth.boundaryType}
           options={POLITICAL_BOUNDARIES.map((boundary) => ({
             label: boundary.label,
             value: boundary.boundaryType,
@@ -105,7 +105,7 @@ export function ReportDataSources() {
             </span>
           }
           labelClassName="text-white"
-          value={mapView.currentView?.mapOptions?.display.streetDetails}
+          value={mapView.currentViewOfType?.mapOptions?.display.streetDetails}
           onChange={(showStreetDetails: boolean) => {
             mapView.updateView((draft) => {
               draft.mapOptions.display.streetDetails = showStreetDetails

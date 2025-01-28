@@ -71,7 +71,7 @@ function StyleTab({ layerId }: { layerId: string }) {
   const { report, updateLayer } = useReport()
   const view = useView(ViewType.Map)
   const viewLayersForReportLayer = Object.values(
-    view.currentView?.mapOptions.layers || {}
+    view.currentViewOfType?.mapOptions.layers || {}
   ).filter((layer) => layer.layerId === layerId)
 
   return (

@@ -16,12 +16,13 @@ const ReportVisualisation: React.FC = () => {
   const report = useReport()
   const view = useView(ViewType.Map)
   const choroplethLayer = report.report.layers.find(
-    (layer) => layer.id === view.currentView?.mapOptions?.choropleth.layerId
+    (layer) =>
+      layer.id === view.currentViewOfType?.mapOptions?.choropleth.layerId
   )
   const selectedBoundaryLabel = POLITICAL_BOUNDARIES.find(
     (boundary) =>
       boundary.boundaryType ===
-      view.currentView?.mapOptions.choropleth.boundaryType
+      view.currentViewOfType?.mapOptions.choropleth.boundaryType
   )?.label
 
   return (
@@ -35,7 +36,7 @@ const ReportVisualisation: React.FC = () => {
         {report.report.layers.length && (
           <EditorSelect
             label="Layer"
-            value={view.currentView?.mapOptions?.choropleth.layerId}
+            value={view.currentViewOfType?.mapOptions?.choropleth.layerId}
             options={report.report.layers.map((layer) => ({
               value: layer.id,
               label: (
@@ -57,7 +58,7 @@ const ReportVisualisation: React.FC = () => {
         <EditorSelect
           label="Choropleth mode"
           // explainer={`Select the boundary type to visualise your data`}
-          value={view.currentView?.mapOptions?.choropleth.mode}
+          value={view.currentViewOfType?.mapOptions?.choropleth.mode}
           options={Object.entries(ChoroplethMode).map(([key, value]) => ({
             value,
             label: toSpaceCase(key),
@@ -69,12 +70,12 @@ const ReportVisualisation: React.FC = () => {
           }
         />
 
-        {view.currentView?.mapOptions.choropleth.mode ===
+        {view.currentViewOfType?.mapOptions.choropleth.mode ===
           ChoroplethMode.Field && (
           <EditorSelect
             label="Colour by"
             // explainer={`Which field from your data source will be visualised?`}
-            value={view.currentView?.mapOptions?.choropleth.field}
+            value={view.currentViewOfType?.mapOptions?.choropleth.field}
             options={[
               ...(choroplethLayer?.sourceData.fieldDefinitions
                 ?.filter(
@@ -100,14 +101,14 @@ const ReportVisualisation: React.FC = () => {
           />
         )}
 
-        {view.currentView?.mapOptions.choropleth.mode ===
+        {view.currentViewOfType?.mapOptions.choropleth.mode ===
           ChoroplethMode.Formula && (
           <>
             <h2 className="text-meepGray-400 text-sm mb-0">
               Write a custom colour-by formula
             </h2>
             <Textarea
-              value={view.currentView?.mapOptions?.choropleth.formula}
+              value={view.currentViewOfType?.mapOptions?.choropleth.formula}
               onChange={(e) =>
                 view.updateView((draft) => {
                   draft.mapOptions.choropleth.formula = e.target.value
@@ -121,7 +122,7 @@ const ReportVisualisation: React.FC = () => {
         <EditorSelect
           label="Fill"
           // explainer={`Select the boundary type to visualise your data`}
-          value={view.currentView?.mapOptions?.choropleth.palette}
+          value={view.currentViewOfType?.mapOptions?.choropleth.palette}
           options={Object.entries(PALETTE).map(([value, res]) => ({
             label: toSpaceCase(res.label),
             value,
@@ -138,7 +139,9 @@ const ReportVisualisation: React.FC = () => {
         <EditorSwitch
           label="Invert fill"
           explainer={`Reverse the colour scale`}
-          value={view.currentView?.mapOptions?.choropleth.isPaletteReversed}
+          value={
+            view.currentViewOfType?.mapOptions?.choropleth.isPaletteReversed
+          }
           onChange={(paletteReversed) =>
             view.updateView((draft) => {
               draft.mapOptions.choropleth.isPaletteReversed = paletteReversed

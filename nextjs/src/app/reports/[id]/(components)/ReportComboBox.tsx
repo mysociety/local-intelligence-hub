@@ -33,7 +33,8 @@ export default function ReportDashboardConsSelector() {
   const [value, setValue] = React.useState('')
 
   const view = useView(ViewType.Map)
-  const boundaryType = view.currentView?.mapOptions.choropleth?.boundaryType
+  const boundaryType =
+    view.currentViewOfType?.mapOptions.choropleth?.boundaryType
   const selectedBoundaryLabel = POLITICAL_BOUNDARIES.find(
     (boundary) => boundary.boundaryType === boundaryType
   )?.label

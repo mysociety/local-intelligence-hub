@@ -20,13 +20,15 @@ function starId(starredState: any): string {
 /**
  * Move dataVisualisation and display to views[0].mapOptions.
  */
-export function migration0001(oldReport: GetMapReportQuery['mapReport']) {
-  return produce(oldReport, (draft) => {
+export function migration0001(
+  unmigratedReport: GetMapReportQuery['mapReport']
+) {
+  return produce(unmigratedReport, (draft) => {
     // Move dataVisualisation and display to views[0].mapOptions
     const viewId = v4()
     const newDisplayOptions = {
       version: VERSION,
-      starred: oldReport.displayOptions.starred.reduce(
+      starred: unmigratedReport.displayOptions.starred.reduce(
         (acc: any, star: any) => {
           acc[starId(star)] = star
           return acc
@@ -34,7 +36,7 @@ export function migration0001(oldReport: GetMapReportQuery['mapReport']) {
         {} as Record<string, IDisplayOptions['starred'][0]>
       ),
       areaExplorer: {
-        displays: oldReport.layers.reduce(
+        displays: unmigratedReport.layers.reduce(
           (acc: any, layer: any) => {
             const id = v4()
             acc[id] = explorerDisplaySchema.parse({
@@ -54,27 +56,35 @@ export function migration0001(oldReport: GetMapReportQuery['mapReport']) {
           mapOptions: {
             choropleth: {
               boundaryType:
-                oldReport.displayOptions.dataVisualisation.boundaryType,
-              palette: oldReport.displayOptions.dataVisualisation.palette,
+                unmigratedReport.displayOptions.dataVisualisation.boundaryType,
+              palette:
+                unmigratedReport.displayOptions.dataVisualisation.palette,
               isPaletteReversed:
-                oldReport.displayOptions.dataVisualisation.paletteReversed,
-              layerId: oldReport.layers.find(
+                unmigratedReport.displayOptions.dataVisualisation
+                  .paletteReversed,
+              layerId: unmigratedReport.layers.find(
                 (l: any) =>
                   l.source ===
-                  oldReport.displayOptions.dataVisualisation.dataSource
+                  unmigratedReport.displayOptions.dataVisualisation.dataSource
               )?.id,
-              field: oldReport.displayOptions.dataVisualisation.dataSourceField,
-              mode: oldReport.displayOptions.dataVisualisation.choroplethMode,
-              formula: oldReport.displayOptions.dataVisualisation.formula,
+              field:
+                unmigratedReport.displayOptions.dataVisualisation
+                  .dataSourceField,
+              mode: unmigratedReport.displayOptions.dataVisualisation
+                .choroplethMode,
+              formula:
+                unmigratedReport.displayOptions.dataVisualisation.formula,
             },
             display: {
               choropleth:
-                oldReport.displayOptions.display.showDataVisualisation,
-              borders: oldReport.displayOptions.display.showBorders,
-              streetDetails: oldReport.displayOptions.display.showStreetDetails,
-              boundaryNames: oldReport.displayOptions.display.showBoundaryNames,
+                unmigratedReport.displayOptions.display.showDataVisualisation,
+              borders: unmigratedReport.displayOptions.display.showBorders,
+              streetDetails:
+                unmigratedReport.displayOptions.display.showStreetDetails,
+              boundaryNames:
+                unmigratedReport.displayOptions.display.showBoundaryNames,
             },
-            layers: oldReport.layers?.reduce(
+            layers: unmigratedReport.layers?.reduce(
               (acc: any, layer: any) => {
                 const id = v4()
                 const colour = layer.mapboxPaint?.['circle-color'] || undefined
@@ -94,9 +104,6 @@ export function migration0001(oldReport: GetMapReportQuery['mapReport']) {
         },
       },
     }
-    return {
-      ...draft,
-      displayOptions: newDisplayOptions,
-    }
+    draft.displayOptions = newDisplayOptions
   })
 }

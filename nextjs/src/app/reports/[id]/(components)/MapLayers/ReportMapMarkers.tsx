@@ -15,7 +15,7 @@ const ReportMapMarkers: React.FC = () => {
   useMapMarkerImages()
 
   const memberListSources = Object.values(
-    view.currentView?.mapOptions.layers || {}
+    view.currentViewOfType?.mapOptions.layers || {}
   )
     .map((ml) => ({
       ...ml,

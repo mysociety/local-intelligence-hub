@@ -3,6 +3,7 @@ import {
   MapReportWithTypedJSON,
   displayOptionsSchema,
 } from '@/app/reports/[id]/reportContext'
+import { produce } from 'immer'
 import { migration0001 } from './migrations/0001'
 
 const MIGRATION_FOR_VERSION_LOOKUP: Record<
@@ -13,30 +14,26 @@ const MIGRATION_FOR_VERSION_LOOKUP: Record<
 }
 
 export function migrateDisplayOptions(
-  oldReport: GetMapReportQuery['mapReport']
-): Partial<MapReportWithTypedJSON> {
-  if (!oldReport || typeof oldReport !== 'object') {
-    console.log({ oldReport })
-    throw new Error('Invalid display options')
-  }
-  if (
-    !('displayOptions' in oldReport) ||
-    !oldReport.displayOptions ||
-    typeof oldReport.displayOptions !== 'object'
-  ) {
-    throw new Error('Invalid display options')
-  }
-  try {
-    const newDisplayOptions = displayOptionsSchema
-      .strict()
-      .parse(oldReport.displayOptions)
-    return {
-      ...oldReport,
-      displayOptions: newDisplayOptions,
+  maybeUnmigratedReport: GetMapReportQuery['mapReport']
+): MapReportWithTypedJSON {
+  return produce(maybeUnmigratedReport, (draft) => {
+    if (!maybeUnmigratedReport || typeof maybeUnmigratedReport !== 'object') {
+      console.log({ maybeUnmigratedReport })
+      throw new Error('Invalid report')
     }
-  } catch (e) {
-    // Migration required
-    const version = String((oldReport.displayOptions as any).version || 'FIRST')
-    return MIGRATION_FOR_VERSION_LOOKUP[version]?.(oldReport)
-  }
+    try {
+      // First try parsing. If it works straightforwardly, no migrations are required.
+      const newDisplayOptions = displayOptionsSchema
+        .strict()
+        .parse(maybeUnmigratedReport.displayOptions || {})
+      draft.displayOptions = newDisplayOptions
+    } catch (e) {
+      const unmigratedReport = maybeUnmigratedReport
+      // If the parser fails, then a migration required. Look at the version for clues as to which patch to apply.
+      const version = String(
+        (unmigratedReport.displayOptions as any).version || 'FIRST'
+      )
+      draft = MIGRATION_FOR_VERSION_LOOKUP[version]?.(unmigratedReport)
+    }
+  })
 }

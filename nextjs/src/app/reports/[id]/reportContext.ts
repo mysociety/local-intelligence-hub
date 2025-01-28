@@ -3,6 +3,7 @@ import {
   ChoroplethMode,
   DataSourceType,
   GetMapReportQuery,
+  MapLayerInput,
 } from '@/__generated__/graphql'
 import { InspectorDisplayType } from '@/lib/explorer'
 import { starredSchema } from '@/lib/map'
@@ -17,6 +18,7 @@ import {
   interpolateRdYlGn,
   interpolateReds,
 } from 'd3-scale-chromatic'
+import { WritableDraft } from 'immer'
 import { createContext } from 'react'
 import * as uuid from 'uuid'
 import * as z from 'zod'
@@ -288,10 +290,20 @@ export type AddSourcePayload = {
 
 export interface ReportContextProps {
   report: MapReportWithTypedJSON
+  updateReport: (
+    cb: (
+      draft: WritableDraft<
+        Omit<MapReportWithTypedJSON, 'layers'> & {
+          layers: MapLayerInput[]
+        }
+      >
+    ) => void
+  ) => Promise<void>
 }
 
 const ReportContext = createContext<ReportContextProps>({
   report: {} as MapReportWithTypedJSON,
+  updateReport: async () => {},
 })
 
 export default ReportContext
