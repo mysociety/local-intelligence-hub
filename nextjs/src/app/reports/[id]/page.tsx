@@ -153,9 +153,15 @@ function LoadedReportPage({ params: { id } }: { params: Params }) {
             mapView={view.currentView as SpecificViewConfig<ViewType.Map>}
           />
         ) : view.currentView?.type === ViewType.Table ? (
-          <TableView
-            tableView={view.currentView as SpecificViewConfig<ViewType.Table>}
-          />
+          // <TableView
+          //   tableView={view.currentView as SpecificViewConfig<ViewType.Table>}
+          // />
+          <div className="flex items-center justify-center h-screen w-full">
+            <div className="text-meepGray-400 text-2xl font-semibold">
+              {`View not implemented`}
+            </div>
+            <pre>{JSON.stringify(view.currentView, null, 2)}</pre>
+          </div>
         ) : (
           <div className="flex items-center justify-center h-screen w-full">
             <div className="text-meepGray-400 text-2xl font-semibold">
