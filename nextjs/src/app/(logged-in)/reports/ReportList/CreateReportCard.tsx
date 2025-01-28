@@ -9,7 +9,7 @@ import {
   CreateMapReportMutation,
   CreateMapReportMutationVariables,
 } from '@/__generated__/graphql'
-import { defaultReportConfig } from '@/app/reports/[id]/reportContext'
+import { defaultIDisplayOptions } from '@/app/reports/[id]/reportContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -43,7 +43,7 @@ export function CreateReportCard() {
           data: {
             name: new Date().toISOString(),
             organisation: { set: currentOrganisationId },
-            displayOptions: defaultReportConfig,
+            displayOptions: defaultIDisplayOptions,
           },
         },
       }),

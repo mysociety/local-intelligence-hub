@@ -2,11 +2,11 @@
 import { CRMSelection } from '@/components/CRMButtonItem'
 import { Button } from '@/components/ui/button'
 import { layerEditorStateAtom } from '@/lib/map'
+import { useReport } from '@/lib/map/useReport'
 import { useAtom } from 'jotai'
 import { PencilIcon } from 'lucide-react'
 import React from 'react'
 import { DEFAULT_MARKER_COLOUR } from './MembersListPointMarkers'
-import { useReport } from './ReportProvider'
 
 const DataSourcesList: React.FC = () => {
   const { report } = useReport()

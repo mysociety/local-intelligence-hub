@@ -1,11 +1,11 @@
 import { MapLayerInput, MapReportInput } from '@/__generated__/graphql'
-import { MapReportExtended } from '@/app/reports/[id]/reportContext'
+import { MapReportWithTypedJSON } from '@/app/reports/[id]/reportContext'
 import { omit } from 'lodash'
 import omitDeep from 'omit-deep-lodash'
 
 export function prepareMapReportForInput(
   report: Partial<
-    | (Omit<MapReportExtended, 'layers' | 'displayOptions'> & {
+    | (Omit<MapReportWithTypedJSON, 'layers' | 'displayOptions'> & {
         layers: MapLayerInput[]
       })
     | MapReportInput

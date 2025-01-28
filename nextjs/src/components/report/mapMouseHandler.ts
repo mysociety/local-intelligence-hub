@@ -1,3 +1,4 @@
+import { EXTERNAL_DATA_SOURCE_MAPBOX_SOURCE_ID_PREFIX } from '@/app/reports/[id]/(components)/MembersListPointMarkers'
 import { ReportContextProps } from '@/app/reports/[id]/reportContext'
 import { ExplorerSuite } from '@/lib/map'
 import { MapMouseEvent } from 'mapbox-gl'
@@ -12,9 +13,7 @@ export const mapMouseHandler =
 
     // First, try to find a point source feature
     const pointSourceFeatures = features.filter((f) =>
-      report.report.layers.some((l) => {
-        return l.source === f.source
-      })
+      f.source?.includes(EXTERNAL_DATA_SOURCE_MAPBOX_SOURCE_ID_PREFIX)
     )
 
     const selectedRecord =

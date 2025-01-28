@@ -17,30 +17,34 @@ export function useAreasList(boundaryType: BoundaryType | undefined) {
 
     // Add a listener for when the source becomes available
     const checkSource = () => {
-      const source = map.loadedMap?.getSource(tileset.mapboxSourceId)
-      if (source) {
-        const features = map.loadedMap?.querySourceFeatures(
-          tileset.mapboxSourceId,
-          {
-            sourceLayer: tileset.sourceLayerId,
-          }
-        )
-
-        const uniqueAreas = Array.from(
-          new Set(
-            features?.map((f) => f.properties?.[tileset.promoteId] ?? null) ??
-              []
+      try {
+        const source = map.loadedMap?.getSource?.(tileset.mapboxSourceId)
+        if (source) {
+          const features = map.loadedMap?.querySourceFeatures(
+            tileset.mapboxSourceId,
+            {
+              sourceLayer: tileset.sourceLayerId,
+            }
           )
-        )
-          .map((gss) => ({
-            gss,
-            name: features?.find(
-              (f) => f.properties?.[tileset.promoteId] === gss
-            )?.properties?.[tileset.labelId],
-          }))
-          .filter((area) => area.gss)
 
-        setAreas(uniqueAreas)
+          const uniqueAreas = Array.from(
+            new Set(
+              features?.map((f) => f.properties?.[tileset.promoteId] ?? null) ??
+                []
+            )
+          )
+            .map((gss) => ({
+              gss,
+              name: features?.find(
+                (f) => f.properties?.[tileset.promoteId] === gss
+              )?.properties?.[tileset.labelId],
+            }))
+            .filter((area) => area.gss)
+
+          setAreas(uniqueAreas)
+        }
+      } catch (e) {
+        console.error(e)
       }
     }
 

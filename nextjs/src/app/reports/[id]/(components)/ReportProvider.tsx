@@ -1,201 +1,169 @@
 'use client'
 
 import {
-  DataSourceType,
-  DeleteMapReportMutation,
-  DeleteMapReportMutationVariables,
+  Exact,
   GetMapReportQuery,
   MapLayerInput,
   PatchMapReportMutation,
   PatchMapReportMutationVariables,
+  Scalars,
   UpdateMapReportMutation,
   UpdateMapReportMutationVariables,
 } from '@/__generated__/graphql'
-import {
-  InspectorDisplayType,
-  StarredState,
-  useSidebarLeftState,
-} from '@/lib/map'
+import { useSidebarLeftState } from '@/lib/map'
+import { cleanUpLayerReferences } from '@/lib/map/displayOptionsMigrations'
+import { migrateDisplayOptions } from '@/lib/map/displayOptionsMigrations/migrate'
 import { prepareMapReportForInput } from '@/lib/map/mapReportUpdate'
+import { refreshReportData } from '@/lib/map/useReport'
 import { toastPromise } from '@/lib/toast'
-import { FetchResult, useApolloClient } from '@apollo/client'
-import * as jsonpatch from 'fast-json-patch'
+import { ApolloClient, QueryResult, useApolloClient } from '@apollo/client'
+import jsonpatch from 'fast-json-patch'
 import { WritableDraft, produce } from 'immer'
 import { useSetAtom } from 'jotai'
-import { capitalize, cloneDeep, isEqual, merge } from 'lodash'
-import { useRouter } from 'next/navigation'
-import { ReactNode, useContext, useEffect, useRef, useState } from 'react'
+import { capitalize, isEqual } from 'lodash'
+import { ReactNode, useEffect, useRef } from 'react'
 import toSpaceCase from 'to-space-case'
-import { v4 } from 'uuid'
-import {
-  DELETE_MAP_REPORT,
-  PATCH_MAP_REPORT,
-  UPDATE_MAP_REPORT,
-} from '../gql_queries'
+import { PATCH_MAP_REPORT, UPDATE_MAP_REPORT } from '../gql_queries'
 import ReportContext, {
-  AddSourcePayload,
-  MapReportExtended,
-  ReportConfig,
-  defaultReportConfig,
-  reportConfigTypeChecker,
+  IDisplayOptions,
+  MapReportWithTypedJSON,
+  displayOptionsMigrator,
 } from '../reportContext'
 import { navbarTitleAtom } from './ReportNavbar'
 
 interface ReportProviderProps {
-  report: GetMapReportQuery['mapReport']
+  query: QueryResult<
+    GetMapReportQuery,
+    Exact<{
+      id: Scalars['ID']['input']
+    }>
+  >
   children: ReactNode
 }
 
-const ReportProvider = ({ report, children }: ReportProviderProps) => {
-  const router = useRouter()
-  const client = useApolloClient()
+const ReportProvider = ({ query, children }: ReportProviderProps) => {
+  const queriedReport = query.data?.mapReport
   const setNavbarTitle = useSetAtom(navbarTitleAtom)
-  const [dataLoading, setDataLoading] = useState(false)
+  const client = useApolloClient()
+
+  useEffect(() => {
+    if (queriedReport) {
+      setNavbarTitle(queriedReport?.name)
+    }
+  }, [queriedReport?.name])
+
   const leftSidebarState = useSidebarLeftState()
   const autoOpenedSidebar = useRef(false)
 
-  const reportWithDefaults = merge(
-    {
-      displayOptions: cloneDeep(defaultReportConfig), // prevent changing the defaults
-    },
-    report
-  ) as MapReportExtended
-
-  useEffect(() => {
-    setNavbarTitle(report.name)
-  }, [report.name])
-
-  useEffect(() => {
-    // Always ensure that the choropleth has a data source
-    if (
-      !!report.layers.length &&
-      !report.displayOptions?.dataVisualisation?.dataSource
-    ) {
-      const layerPreferrablyNotAreaStat = report.layers.slice().sort((a, b) => {
-        if (a.sourceData.dataType === DataSourceType.AreaStats) return 1
-        if (b.sourceData.dataType === DataSourceType.AreaStats) return -1
-        return 0
-      })[0]
-
-      updateReport((draft) => {
-        draft.displayOptions.dataVisualisation.dataSource =
-          layerPreferrablyNotAreaStat.source
-      })
-    }
-  }, [report.layers.map((l) => l.id)])
-
-  useEffect(() => {
-    // When a data source is picked, ensure the field is something workable
-    if (
-      report.displayOptions?.dataVisualisation?.dataSource &&
-      !report.displayOptions?.dataVisualisation?.dataSourceField
-    ) {
-      const layer = report.layers.find(
-        (l) =>
-          l.source === report.displayOptions.dataVisualisation.dataSource &&
-          !!l.sourceData.fieldDefinitions?.length
-      )
-      if (
-        layer &&
-        // I.e. it's about aggregation, not about counting
-        layer.sourceData.dataType === DataSourceType.AreaStats
-        // TODO: add config option for "count of points" to make this explicit
-      ) {
-        const idField = layer.sourceData.idField
-        const field = layer.sourceData.fieldDefinitions?.filter(
-          (f) => f.value !== idField
-        )[0].value
-        if (field) {
-          updateReport((draft) => {
-            draft.displayOptions.dataVisualisation.dataSourceField =
-              layer.sourceData.fieldDefinitions?.[0].value
-          })
-        }
-      }
-    }
-  }, [report.layers.map((l) => l.id)])
-
   useEffect(() => {
     // If there are no layers, open the left sidepanel
-    if (!report.layers.length && !autoOpenedSidebar.current) {
+    if (!queriedReport?.layers.length && !autoOpenedSidebar.current) {
       leftSidebarState.set(true)
       autoOpenedSidebar.current = true
     }
-  }, [report.layers, autoOpenedSidebar])
+  }, [query.data, queriedReport, autoOpenedSidebar])
+
+  const displayOptionsParser = displayOptionsMigrator.safeParse(
+    queriedReport?.displayOptions
+  )
+
+  const report: MapReportWithTypedJSON | undefined = queriedReport
+    ? displayOptionsParser.data
+      ? {
+          ...queriedReport,
+          displayOptions: displayOptionsParser.data,
+        }
+      : undefined
+    : undefined
 
   useEffect(() => {
-    // If the layer has been deleted, remove it from the choropleth
-    const sourceIds = report.layers.map((l) => l.source)
-    const choroplethSourceId =
-      report.displayOptions?.dataVisualisation?.dataSource
-    if (choroplethSourceId && !sourceIds.includes(choroplethSourceId)) {
-      updateReport((draft) => {
-        draft.displayOptions.dataVisualisation.dataSource = undefined
-        draft.displayOptions.dataVisualisation.dataSourceField = undefined
+    if (!queriedReport) return
+    const migratedReport = migrateDisplayOptions(queriedReport)
+    const cleanedUpReport = cleanUpLayerReferences(migratedReport)
+
+    if (
+      !isEqual(queriedReport.displayOptions, cleanedUpReport.displayOptions)
+    ) {
+      console.log('Saving display options', { cleanedUpReport })
+      const update = updateReport((d) => {
+        d.displayOptions = cleanedUpReport.displayOptions
+      })
+      toastPromise(update, {
+        loading: 'Updating...',
+        success: 'Updated report',
+        error: `Couldn't save report`,
+      }).finally(() => {
+        refreshReportData(client)
       })
     }
-  }, [report.layers.map((l) => l.id)])
+  }, [queriedReport])
+
+  if (!queriedReport) {
+    return null
+  }
+
+  if (!report || !displayOptionsParser.success) {
+    return (
+      <div className="overflow-auto max-w-3xl mx-auto items-center justify-center h-full text-white">
+        <h1 className="text-3xl font-bold">Report error</h1>
+        <p className="text-lg">This report has an invalid configuration.</p>
+        <pre className="text-sm text-gray-400 mt-4">
+          {JSON.stringify(displayOptionsParser?.error, null, 2)}
+        </pre>
+        <pre className="text-sm text-gray-400 mt-4">
+          {JSON.stringify(queriedReport?.displayOptions, null, 2)}
+        </pre>
+      </div>
+    )
+  }
 
   return (
-    <ReportContext.Provider
-      value={{
-        report: reportWithDefaults,
-        deleteReport,
-        refreshReportData,
-        updateReport,
-        updateLayer,
-        dataLoading,
-        setDataLoading,
-        removeDataSource,
-        addDataSource,
-        addStarredItem,
-        removeStarredItem,
-        clearAllStarredItems,
-      }}
-    >
+    <ReportContext.Provider value={{ report, updateReport }}>
       {children}
     </ReportContext.Provider>
   )
 
-  function updateReport(
-    editedOutput: (
+  async function updateReport(
+    cb: (
       draft: WritableDraft<
-        Omit<MapReportExtended, 'layers'> & { layers: MapLayerInput[] }
+        Omit<MapReportWithTypedJSON, 'layers'> & { layers: MapLayerInput[] }
       >
-    ) => void
+    ) => void,
+    retryCount: number = 0
   ) {
-    const updatedReport = produce(reportWithDefaults, editedOutput)
+    if (!report || !queriedReport || (!!retryCount && retryCount >= 3)) return
+    const updatedReport = produce(report, cb)
     // Split out displayOptions and handle them separately
     const { displayOptions: newDisplayOptions, ...newReport } = updatedReport
-    // Handle displayOptions using patch
-    patchReportDisplayOptions(newDisplayOptions)
-    // Handle report DB field updates using update
-    updateReportDBFields(newReport)
+    if (newReport) {
+      // Handle report DB field updates using update
+      // and await it, so that patches can be applied to the new `layer` object
+      await updateReportDBFields(newReport)
+    }
+    if (newDisplayOptions) {
+      // Handle displayOptions using patch
+      await patchReportDisplayOptions(newDisplayOptions, queriedReport)
+    }
   }
 
   function updateReportDBFields(
-    newReport: Omit<MapReportExtended, 'layers' | 'displayOptions'> & {
+    newReport: Omit<MapReportWithTypedJSON, 'layers' | 'displayOptions'> & {
       layers: MapLayerInput[]
     }
   ) {
+    if (!report) return
     const { displayOptions, ...oldReport } = report
     if (isEqual(oldReport, newReport)) return
+
     const input = prepareMapReportForInput(newReport)
     if (!Object.keys(input).length) {
       console.warn('No changes to report')
       return
     }
 
-    const update = client.mutate<
-      UpdateMapReportMutation,
-      UpdateMapReportMutationVariables
-    >({
-      mutation: UPDATE_MAP_REPORT,
-      variables: {
-        input,
-      },
-    })
-    toastPromise(update, {
+    const update = updateMapReport({ input }, client)
+
+    return toastPromise(update, {
       loading: 'Saving...',
       success: () => {
         return {
@@ -205,160 +173,109 @@ const ReportProvider = ({ report, children }: ReportProviderProps) => {
       },
       error: `Couldn't save report`,
     }).finally(() => {
-      refreshReportData()
+      refreshReportData(client)
     })
   }
 
-  function patchReportDisplayOptions(__newReportConfig: ReportConfig) {
+  async function patchReportDisplayOptions(
+    inputDisplayOptions: IDisplayOptions,
+    reportObjectForDiffingAgainst: GetMapReportQuery['mapReport'],
+    retryCount: number = 0
+  ) {
+    if (!reportObjectForDiffingAgainst || (!!retryCount && retryCount >= 3))
+      return
+    // Validate + make self-consistent
+    // using displayOptionsMigrator's transform operations
     const {
-      data: newReportConfig,
+      data: validatedDisplayOptions,
       success,
       error,
-    } = reportConfigTypeChecker.safeParse(__newReportConfig)
-    if (!success || error || !newReportConfig) {
+    } = displayOptionsMigrator.safeParse(inputDisplayOptions)
+    if (!success || error || !validatedDisplayOptions) {
       console.error('Invalid report config', error)
       return
     }
-    if (isEqual(report.displayOptions, newReportConfig)) {
-      console.warn('No changes to report')
-      return
-    }
-    const patch = jsonpatch.compare(report.displayOptions, newReportConfig)
-    if (!patch.length) {
-      console.warn('No changes to report')
-      return
-    }
-    const update = client.mutate<
-      PatchMapReportMutation,
-      PatchMapReportMutationVariables
-    >({
-      mutation: PATCH_MAP_REPORT,
-      variables: {
-        patch,
-        reportId: report.id,
-      },
+    // Remove any layer references that don't exist
+    const newReport = cleanUpLayerReferences({
+      ...reportObjectForDiffingAgainst,
+      displayOptions: validatedDisplayOptions,
     })
-    toastPromise(update, {
-      loading: 'Saving...',
-      success: () => {
-        return {
-          title: 'Report saved',
-          description:
-            // Print out JSON patch changes in a human readable format, using spaceCase
-            patch
-              .map((p) => {
-                const { op, path } = p
-                const changedDataPath = path
-                  .split('/')
-                  .map(toSpaceCase)
-                  .join(' -> ')
-                return `${capitalize(op)} ${changedDataPath}`
-              })
-              .join(', ') || 'No changes',
-        }
-      },
-      error: `Couldn't save report`,
-    })
-  }
-
-  function deleteReport() {
-    const deleteMutation = client.mutate<
-      DeleteMapReportMutation,
-      DeleteMapReportMutationVariables
-    >({
-      mutation: DELETE_MAP_REPORT,
-      variables: {
-        id: { id: report.id },
-      },
-    })
-    toastPromise(deleteMutation, {
-      loading: 'Deleting...',
-      success: (d: FetchResult) => {
-        router.push('/reports')
-        return 'Deleted report'
-      },
-      error: `Couldn't delete report`,
-    })
-  }
-
-  function refreshReportData() {
-    // TODO: This should refresh only queries that are used by the report
-    toastPromise(
-      client.refetchQueries({
-        include: ['GetMapReport', 'MapReportLayerAnalytics'],
-      }),
-      {
-        loading: 'Refreshing report data...',
-        success: 'Report data updated',
-        error: `Couldn't refresh report data`,
-      }
+    // Then prep the patch that would be applied to report.displayOptions in the DB
+    const patch = jsonpatch.compare(
+      reportObjectForDiffingAgainst.displayOptions,
+      newReport.displayOptions
     )
-  }
-
-  function updateLayer(layerId: string, updates: Partial<MapLayerInput>) {
-    updateReport((draft) => {
-      const layer = draft.layers?.find((l) => l.id === layerId)
-      if (layer) {
-        Object.assign(layer, updates)
-      }
-    })
-  }
-
-  function removeDataSource(sourceId: string) {
-    updateReport((draft) => {
-      // change layers, remove sourceId
-      draft.layers = draft.layers?.filter((l) => l.source !== sourceId)
-      // remove from choropleth
-      if (draft.displayOptions.dataVisualisation.dataSource === sourceId) {
-        draft.displayOptions.dataVisualisation.dataSource = undefined
-        draft.displayOptions.dataVisualisation.dataSourceField = undefined
-      }
-    })
-  }
-
-  function addDataSource(source: AddSourcePayload) {
-    updateReport((draft) => {
-      if (!draft.layers?.find((l) => l.source === source.id)) {
-        draft.layers = draft.layers || []
-        draft.layers.push({
-          id: v4(),
-          name: source.name,
-          source: source.id,
-          inspectorType:
-            source.dataType === DataSourceType.AreaStats
-              ? InspectorDisplayType.Properties
-              : InspectorDisplayType.BigNumber,
-        })
-      }
-    })
-  }
-
-  function addStarredItem(starredItemData: StarredState) {
-    updateReport((draft) => {
-      if (
-        !draft.displayOptions.starred.find(
-          (item) => item.id === starredItemData.id
-        )
-      ) {
-        draft.displayOptions.starred.push(starredItemData)
-      }
-    })
-  }
-
-  function removeStarredItem(itemId: string) {
-    updateReport((draft) => {
-      draft.displayOptions.starred = draft.displayOptions.starred.filter(
-        (item) => item.id !== itemId
+    if (!patch.length) {
+      console.warn('No patches to apply')
+      return
+    }
+    try {
+      // Mutate
+      const update = client.mutate<
+        PatchMapReportMutation,
+        PatchMapReportMutationVariables
+      >({
+        mutation: PATCH_MAP_REPORT,
+        variables: {
+          patch,
+          reportId: reportObjectForDiffingAgainst.id,
+        },
+        optimisticResponse: {
+          __typename: 'Mutation',
+          patchMapReportDisplayOptions: {
+            __typename: 'MapReport',
+            ...reportObjectForDiffingAgainst,
+            displayOptions: newReport.displayOptions,
+          },
+        },
+      })
+      return toastPromise(update, {
+        loading: 'Saving...',
+        success: () => {
+          return {
+            title: 'Report saved',
+            description:
+              // Print out JSON patch changes in a human readable format, using spaceCase
+              patch
+                .map((p) => {
+                  const { op, path } = p
+                  const changedDataPath = path.split('/').map(toSpaceCase).pop()
+                  const humanReadableOp = op
+                    .replace('replace', 'Set')
+                    .replace('add', 'Set')
+                    .replace('remove', 'Reset')
+                  return `${capitalize(humanReadableOp)} ${changedDataPath}`
+                })
+                .join(', ') || 'No changes',
+          }
+        },
+        error: `Couldn't save report`,
+      })
+    } catch (e) {
+      // Something's gone wrong; the displayOptions object is out of sync with the client
+      // so refetch the report and try making a new patch.
+      // Up to three attempts.
+      const res = await query.refetch()
+      patchReportDisplayOptions(
+        inputDisplayOptions,
+        res.data?.mapReport,
+        retryCount + 1
       )
-    })
+    }
   }
 
-  function clearAllStarredItems() {
-    updateReport((draft) => {
-      draft.displayOptions.starred = []
+  function updateMapReport(
+    variables: UpdateMapReportMutationVariables,
+    client: ApolloClient<object>
+  ) {
+    return client.mutate<
+      UpdateMapReportMutation,
+      UpdateMapReportMutationVariables
+    >({
+      mutation: UPDATE_MAP_REPORT,
+      variables,
     })
   }
 }
 
 export default ReportProvider
-export const useReport = () => useContext(ReportContext)

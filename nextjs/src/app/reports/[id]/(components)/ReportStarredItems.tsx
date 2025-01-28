@@ -3,8 +3,8 @@ import { ExplorerState, StarredState, useExplorer } from '@/lib/map'
 import { MapPinIcon, X } from 'lucide-react'
 
 import { DataSourceTypeIcon } from '@/components/icons/DataSourceType'
+import { useReport } from '@/lib/map/useReport'
 import { StarFilledIcon } from '@radix-ui/react-icons'
-import { useReport } from './ReportProvider'
 export default function ReportStarredItems() {
   return (
     <div className="flex flex-col gap-2 text-white">
@@ -39,10 +39,10 @@ export function StarredItemsList() {
   }
   return (
     <div>
-      {starredItems?.length === 0 ? (
+      {Object.keys(starredItems)?.length === 0 ? (
         <div className="text-gray-400 ">No starred items yet</div>
       ) : (
-        starredItems?.map((item) => (
+        Object.values(starredItems)?.map((item) => (
           <div
             key={item.id}
             className="flex cursor-pointer hover:bg-meepGray-500 items-center justify-between p-2 rounded-md text-sm group"
@@ -53,7 +53,7 @@ export function StarredItemsList() {
               <span>{item.name}</span>
             </div>
             <Button
-              onClick={() => removeStarredItem(item.id)}
+              onClick={() => removeStarredItem(item)}
               variant="ghost"
               className="text-meepGray-200 p-0 h-3 opacity-40"
             >

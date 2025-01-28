@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ExplorerState, StarredState, useExplorer } from '@/lib/map'
+import { useReport } from '@/lib/map/useReport'
 import { gql, useQuery } from '@apollo/client'
 import { omit } from 'lodash'
 import { LucideLink, Star, TargetIcon } from 'lucide-react'
@@ -14,7 +15,6 @@ import pluralize from 'pluralize'
 import queryString from 'query-string'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { useReport } from '../ReportProvider'
 import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
 import { exploreArea, formatPostalAddresses } from './utils'
 
@@ -101,10 +101,7 @@ export function RecordExplorer({ id }: { id: string }) {
   ].filter((d) => !!d.value)
 
   const report = useReport()
-  const isStarred = report.report.displayOptions.starred?.some(
-    (item) => item.id === record?.id
-  )
-  const { addStarredItem, removeStarredItem } = report
+  const { isStarred, toggleStarred } = report
   const starredItemData: StarredState = {
     id: record?.id || '',
     entity: 'record',
@@ -114,14 +111,6 @@ export function RecordExplorer({ id }: { id: string }) {
       record?.fullName ||
       `${record?.firstName} ${record?.lastName}`,
     icon: record?.dataType.dataSet.externalDataSource.dataType,
-  }
-
-  function toggleStarred() {
-    if (isStarred) {
-      removeStarredItem(starredItemData.id)
-    } else {
-      addStarredItem(starredItemData)
-    }
   }
 
   return (
@@ -151,9 +140,9 @@ export function RecordExplorer({ id }: { id: string }) {
                   </span>
                   <div className="flex flex-row gap-2 items-center">
                     <Star
-                      onClick={toggleStarred}
+                      onClick={() => toggleStarred(starredItemData)}
                       className={`ml-auto text-meepGray-400 cursor-pointer ${
-                        isStarred
+                        isStarred(starredItemData)
                           ? 'fill-meepGray-400 hover:text-meepGray-200 hover:fill-meepGray-600'
                           : 'fill-transparent hover:text-white hover:fill-white'
                       }`}

@@ -1,10 +1,10 @@
+import { useReport } from '@/lib/map/useReport'
 import { useEffect, useState } from 'react'
-import { useReport } from './(components)/ReportProvider'
 
 const HELPER_TIMEOUT = 3000
 
 const useReportUiHelpers = () => {
-  const { report, dataLoading } = useReport()
+  const { report } = useReport()
   const [userJourneyHelpers, setUserJourneyHelpers] = useState<{
     visualiseYourData: {
       triggered: boolean
@@ -21,9 +21,8 @@ const useReportUiHelpers = () => {
   useEffect(() => {
     // Reset the user journey helper if there are no layers
     if (
-      dataLoading ||
-      (report.layers.length === 0 &&
-        userJourneyHelpers?.visualiseYourData.triggered)
+      report.layers.length === 0 &&
+      userJourneyHelpers?.visualiseYourData.triggered
     ) {
       setUserJourneyHelpers({
         ...userJourneyHelpers,
@@ -36,8 +35,7 @@ const useReportUiHelpers = () => {
     // Trigger the user journey helper when the first layer is added
     else if (
       report.layers.length === 1 &&
-      !userJourneyHelpers?.visualiseYourData.triggered &&
-      !dataLoading
+      !userJourneyHelpers?.visualiseYourData.triggered
     ) {
       setTimeout(() => {
         setUserJourneyHelpers({
@@ -58,7 +56,7 @@ const useReportUiHelpers = () => {
         })
       }, HELPER_TIMEOUT)
     }
-  }, [report.layers, dataLoading])
+  }, [report.layers])
 
   function updateUserJourneyHelpers(
     key: keyof typeof userJourneyHelpers,

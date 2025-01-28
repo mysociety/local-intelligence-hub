@@ -5,7 +5,7 @@ import {
 } from '@/app/reports/[id]/politicalTilesets'
 import { atom, useAtom } from 'jotai'
 import { MapboxGeoJSONFeature } from 'mapbox-gl'
-import { parseAsString, useQueryState, useQueryStates } from 'nuqs'
+import { useQueryStates } from 'nuqs'
 import { z } from 'zod'
 
 import {
@@ -30,7 +30,7 @@ const entityResolver = z.enum(EXPLORER_ENTITY_TYPES).optional().default('')
 const idResolver = z.string().optional().default('')
 const showExplorerResolver = z.boolean().optional().default(false)
 
-export const explorerStateResolver = z.object({
+export const explorerStateSchema = z.object({
   entity: entityResolver,
   id: idResolver,
   showExplorer: showExplorerResolver,
@@ -172,15 +172,18 @@ export type ExplorerAreaBreadCrumbMapping = {
   type: BoundaryType
 }
 
-export const starredStateResolver = explorerStateResolver.extend({
+export const starredSchema = explorerStateSchema.extend({
+  id: z.string(),
   name: z.string().optional(),
   icon: z.nativeEnum(DataSourceType).optional(),
 })
 
-export type StarredState = z.infer<typeof starredStateResolver>
+export type StarredState = z.infer<typeof starredSchema>
 
-export function useViewState() {
-  return useQueryState('view', parseAsString)
+export type StarredStateUnique = Pick<StarredState, 'entity' | 'id'>
+
+export function starId(starredState: StarredStateUnique): string {
+  return `ENTITY:${starredState.entity}::ID:${starredState.id}`
 }
 
 export function useMapBounds() {
@@ -225,12 +228,3 @@ export const layerEditorStateAtom = atom<
 >({
   open: false,
 })
-
-export enum InspectorDisplayType {
-  BigNumber = 'BigNumber',
-  BigRecord = 'BigRecord',
-  ElectionResult = 'ElectionResult',
-  List = 'List',
-  Properties = 'Properties',
-  Table = 'Table',
-}

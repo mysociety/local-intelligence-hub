@@ -1,40 +1,43 @@
 import { DataSourceIcon } from '@/components/DataSourceIcon'
 import { useActiveTileset } from '@/lib/map'
+import { useReport } from '@/lib/map/useReport'
 import { format } from 'd3-format'
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { max, min } from 'lodash'
-import { getReportPalette } from '../../reportContext'
+import { IMapOptions, getReportPalette } from '../../reportContext'
 import useDataByBoundary from '../../useDataByBoundary'
-import { useReport } from '../ReportProvider'
 
-export default function ReportMapChoroplethLegend() {
+export default function ReportMapChoroplethLegend({
+  mapOptions,
+}: {
+  mapOptions: IMapOptions
+}) {
   const { report } = useReport()
 
-  const {
-    layers,
-    displayOptions: { dataVisualisation },
-  } = report
-  const displayOptions = report.displayOptions
+  const { layers } = report
 
-  const dataSourceId = dataVisualisation?.dataSource
-  const dataSourceField = dataVisualisation?.dataSourceField
+  const dataSourceId = report.layers.find(
+    (layer) => layer.id === mapOptions?.choropleth.layerId
+  )?.source
+  const dataSourceField = mapOptions?.choropleth.field
   const selectedDataSource = layers.find(
     (layer) => layer.source === dataSourceId
   )
-  const boundaryType = dataVisualisation?.boundaryType
+  const boundaryType = mapOptions?.choropleth.boundaryType
 
   const visibility =
-    report.displayOptions?.dataVisualisation?.boundaryType === boundaryType &&
-    report.displayOptions?.display?.showDataVisualisation
+    mapOptions?.choropleth.boundaryType === boundaryType &&
+    mapOptions?.display.choropleth
       ? 'visible'
       : 'none'
 
   const activeTileset = useActiveTileset(boundaryType)
 
   const { loading, data } = useDataByBoundary({
-    report,
+    mapOptions: mapOptions,
     tileset: activeTileset,
   })
+
   const dataByBoundary = data?.choroplethDataForSource || []
 
   // Get min and max counts
@@ -59,7 +62,7 @@ export default function ReportMapChoroplethLegend() {
     }
   }
 
-  const interpolator = getReportPalette(displayOptions)
+  const interpolator = getReportPalette(mapOptions)
 
   // Legend scale
   const colourScale = scaleSequential()
