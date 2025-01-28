@@ -26,7 +26,7 @@ import {
   ReportSidebarLeft,
 } from './(components)/ReportSidebarLeft'
 import { ReportSidebarRight } from './(components)/ReportSidebarRight'
-import { TableView } from './(components)/TableView'
+// import { TableView } from './(components)/TableView'
 import { GET_MAP_REPORT } from './gql_queries'
 import { SpecificViewConfig, ViewType } from './reportContext'
 

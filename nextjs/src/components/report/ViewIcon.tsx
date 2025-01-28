@@ -43,6 +43,6 @@ export const dataTypeDisplay: Record<
     icon: LucideTable,
     defaultName: 'Table',
     type: ViewType.Table,
-    enabled: true,
+    enabled: false,
   },
 }
