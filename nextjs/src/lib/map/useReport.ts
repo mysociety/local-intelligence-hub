@@ -44,6 +44,7 @@ export const useReport = () => {
     addLayer,
     isStarred,
     toggleStarred,
+    getLayer,
   }
 
   function deleteReport() {
@@ -143,6 +144,11 @@ export const useReport = () => {
         }
       })
     })
+  }
+
+  function getLayer(reportLayerId?: string) {
+    if (!reportLayerId) return null
+    return report.layers.find((layer) => layer.id === reportLayerId)
   }
 }
 

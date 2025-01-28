@@ -28,7 +28,7 @@ export default function MapView({
   const activeTileset = useActiveTileset(boundaryType)
 
   const { loading, fetchMore } = useDataByBoundary({
-    mapOptions: mapView.mapOptions,
+    view: mapView,
     tileset: activeTileset,
   })
 
@@ -63,7 +63,7 @@ export default function MapView({
             {tilesets && tilesets.length && boundaryType && (
               <PoliticalChoropleths
                 key={`${boundaryType}-${tilesets[0].mapboxSourceId}`}
-                mapOptions={mapView.mapOptions}
+                view={mapView}
                 boundaryType={boundaryType}
                 tilesets={tilesets}
               />
@@ -74,7 +74,7 @@ export default function MapView({
         </div>
       </div>
       <span className="pointer-events-auto">
-        <ReportMapChoroplethLegend mapOptions={mapView.mapOptions} />
+        <ReportMapChoroplethLegend />
       </span>
     </>
   )

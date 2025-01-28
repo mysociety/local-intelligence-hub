@@ -152,6 +152,7 @@ export const mapLayerSchema = z.object({
     .optional()
     .describe('Standard colour for markers, highlighting, and so on.'),
   markerSize: z.number().optional().describe('Size of markers in pixels.'),
+  visible: z.boolean().optional().default(true),
 })
 
 const mapOptionsSchema = z.object({

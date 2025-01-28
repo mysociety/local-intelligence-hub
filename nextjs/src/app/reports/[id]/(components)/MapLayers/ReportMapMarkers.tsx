@@ -32,6 +32,7 @@ const ReportMapMarkers: React.FC = () => {
           externalDataSourceId={mapLayer.sourceId!}
           mapboxPaint={{
             'circle-color': mapLayer.colour || DEFAULT_MARKER_COLOUR,
+            'circle-opacity': mapLayer.visible ? 1 : 0,
           }}
         />
       ))}

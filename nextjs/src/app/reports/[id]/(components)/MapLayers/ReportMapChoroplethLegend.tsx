@@ -6,56 +6,59 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
+import { IconToggle } from '@/components/ui/icon-toggle'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
+import { contentEditableMutation } from '@/lib/html'
 import { useActiveTileset } from '@/lib/map'
+import { useReport } from '@/lib/map/useReport'
+import { useView } from '@/lib/map/useView'
+import { BorderSolidIcon } from '@radix-ui/react-icons'
 import clsx from 'clsx'
 import { format } from 'd3-format'
 import { scaleLinear, scaleSequential } from 'd3-scale'
-import { lowerCase, max, min } from 'lodash'
-import { Calculator, LucideChevronDown, Radical } from 'lucide-react'
-import pluralize from 'pluralize'
+import { useAtomValue } from 'jotai'
+import keyboardKey from 'keyboard-key'
+import { max, min } from 'lodash'
+import {
+  AlertOctagonIcon,
+  LucideBoxSelect,
+  LucideChevronDown,
+  LucideEye,
+  LucideEyeOff,
+  LucideMap,
+  LucideType,
+  Radical,
+} from 'lucide-react'
 import { useState } from 'react'
+import { twMerge } from 'tailwind-merge'
+import toSpaceCase from 'to-space-case'
 import { BoundaryType, POLITICAL_BOUNDARIES } from '../../politicalTilesets'
-import { getReportPalette } from '../../reportContext'
-import useDataByBoundary from '../../useDataByBoundary'
+import { ViewType, getReportPalette } from '../../reportContext'
+import useDataByBoundary, {
+  choroplethErrorsAtom,
+} from '../../useDataByBoundary'
+import { EditorField, EditorFieldProps } from '../EditorField'
 import { EditorSelect } from '../EditorSelect'
-import { useReport } from '../ReportProvider'
+import { DEFAULT_MARKER_COLOUR } from '../MembersListPointMarkers'
 
 export default function ReportMapChoroplethLegend() {
-  const { report, updateReport } = useReport()
+  const reportManager = useReport()
+  const viewManager = useView(ViewType.Map)
   const [legendOpen, setLegendOpen] = useState(true)
-  const [formulaSet, setFormulaSet] = useState(false)
-  const {
-    layers,
-    displayOptions: { dataVisualisation },
-  } = report
-  const displayOptions = report.displayOptions
 
-  const dataSourceId = dataVisualisation?.dataSource
-  const dataSourceField = dataVisualisation?.dataSourceField
-  const formula = dataVisualisation?.formula
-  const selectedDataSource = layers.find(
-    (layer) => layer.source === dataSourceId
+  const activeTileset = useActiveTileset(
+    viewManager.currentViewOfType?.mapOptions.choropleth.boundaryType
   )
-  const boundaryType = dataVisualisation?.boundaryType
-  const choroplethMode = dataVisualisation?.choroplethMode
-  const [selectedChoroplethMode, setSelectedChoroplethMode] = useState(
-    ChoroplethMode.Count
-  )
-
-  const visibility =
-    mapOptions?.choropleth.boundaryType === boundaryType &&
-    mapOptions?.display.choropleth
-      ? 'visible'
-      : 'none'
-
-  const activeTileset = useActiveTileset(boundaryType)
 
   const { loading, data } = useDataByBoundary({
-    mapOptions: mapOptions,
+    view: viewManager.currentViewOfType,
     tileset: activeTileset,
   })
+
+  if (!viewManager.currentViewOfType) {
+    return null
+  }
 
   const dataByBoundary = data?.choroplethDataForSource || []
 
@@ -81,7 +84,9 @@ export default function ReportMapChoroplethLegend() {
     }
   }
 
-  const interpolator = getReportPalette(mapOptions)
+  const interpolator = getReportPalette(
+    viewManager.currentViewOfType?.mapOptions
+  )
 
   // Legend scale
   const colourScale = scaleSequential()
@@ -101,28 +106,22 @@ export default function ReportMapChoroplethLegend() {
     return [count, colourScale(count)] as [number, string]
   })
 
-  const sourceMetadata = report.layers.find(
-    (layer) => layer.source === dataSourceId
+  const choroplethLayer = reportManager.getLayer(
+    viewManager.currentViewOfType.mapOptions.choropleth.layerId
   )
 
-  if (loading) {
-    return <div></div>
-  }
-
   return (
-    <div
-      className={`p-4 absolute top-12 transition-all duration-300 left-0  ${visibility === 'visible' ? 'block' : 'hidden'}`}
-    >
+    <div className={`p-4 absolute top-12 transition-all duration-300 left-0`}>
       <Collapsible
         open={legendOpen}
         onOpenChange={setLegendOpen}
         className={clsx(
-          ' bg-[#1f2229]/90 text-white rounded-md shadow-lg flex flex-col border border-meepGray-600 backdrop-blur-[5px]',
-          legendOpen ? 'w-72' : 'w-auto'
+          ' bg-[#1f2229]/60 text-white rounded-md shadow-lg flex flex-col border border-meepGray-600 backdrop-blur-[5px] ',
+          'w-72'
         )}
       >
-        <CollapsibleTrigger className="flex gap-2 text-white hover:text-meepGray-200 justify-between border-meepGray-600 p-4 items-center transition-all duration-300">
-          Legend
+        <CollapsibleTrigger className="font-medium flex gap-2 text-white hover:text-meepGray-200 justify-between border-meepGray-600 px-4 py-3 items-center transition-all duration-300">
+          <b>Legend</b>
           <LucideChevronDown
             className={clsx(
               'w-5 h-5  transition-all duration-300',
@@ -130,14 +129,90 @@ export default function ReportMapChoroplethLegend() {
             )}
           />
         </CollapsibleTrigger>
-        <CollapsibleContent className="CollapsibleContent ">
-          <div className="flex w-full gap-4 p-4 border-t border-meepGray-600">
-            <div className="flex flex-col gap-2 w-full">
-              <div className="flex flex-row items-center gap-2 w-full">
-                <div className="flex-1 min-w-0">
+        <CollapsibleContent className="CollapsibleContent divide-y divide-meepGray-600">
+          <div
+            {...contentEditableMutation((text) => {
+              viewManager.updateView((draft) => {
+                draft.description = text
+              })
+            }, '')}
+            className={twMerge(
+              'px-4 pb-3 text-sm',
+              viewManager.currentViewOfType.description
+                ? 'text-meepGray-200'
+                : 'text-meepGray-400'
+            )}
+          >
+            {viewManager.currentViewOfType.description ||
+              'Add a description for this view...'}
+          </div>
+
+          {Object.values(viewManager.currentViewOfType?.mapOptions.layers).map(
+            (l) => (
+              <section key={l.id}>
+                <MapToggleField
+                  className="px-4 py-3"
+                  iconComponent={({ className }: { className?: string }) => {
+                    return (
+                      <div
+                        className={twMerge(
+                          'w-3 h-3 rounded-full shrink-0 grow-0',
+                          l.visible ? 'opacity-100' : 'opacity-75',
+                          className
+                        )}
+                        style={{
+                          backgroundColor: l.colour || DEFAULT_MARKER_COLOUR,
+                        }}
+                      />
+                    )
+                  }}
+                  label={l.name || reportManager.getLayer(l.layerId)?.name}
+                  labelClassName="w-full"
+                  value={l.visible}
+                  onChange={(display) => {
+                    viewManager.updateView((draft) => {
+                      draft.mapOptions.layers[l.id].visible = !!display
+                    })
+                  }}
+                />
+              </section>
+            )
+          )}
+
+          <section className="flex flex-col gap-2 px-4 py-3">
+            <p
+              className={twMerge(
+                'text-sm font-medium flex flex-row items-center justify-between gap-2',
+                viewManager.currentViewOfType?.mapOptions.display.choropleth
+                  ? 'text-white'
+                  : 'text-meepGray-400'
+              )}
+            >
+              Map shading
+              <MapToggle
+                onChange={() => {
+                  viewManager.updateView((draft) => {
+                    draft.mapOptions.display.choropleth =
+                      !draft.mapOptions.display.choropleth
+                  })
+                }}
+                value={
+                  !!viewManager.currentViewOfType?.mapOptions.display.choropleth
+                }
+              />
+            </p>
+
+            {viewManager.currentViewOfType?.mapOptions.display.choropleth && (
+              <>
+                <div className="flex flex-col gap-2 w-full">
                   <EditorSelect
-                    value={dataSourceId}
-                    options={layers.map((layer) => ({
+                    value={
+                      viewManager.currentViewOfType?.mapOptions.choropleth
+                        .layerId
+                    }
+                    className={'w-full'}
+                    options={reportManager.report.layers.map((layer) => ({
+                      value: layer.id,
                       label: (
                         <CRMSelection
                           source={layer.sourceData}
@@ -145,96 +220,202 @@ export default function ReportMapChoroplethLegend() {
                           className="truncate"
                         />
                       ),
-                      value: layer.source,
                     }))}
-                    onChange={(dataSource) =>
-                      updateReport((draft) => {
-                        draft.displayOptions.dataVisualisation.dataSource =
-                          dataSource
+                    onChange={(layerId) =>
+                      viewManager.updateView((draft) => {
+                        draft.mapOptions.choropleth.layerId = layerId
                       })
                     }
-                    className="w-full"
-                  />
-                </div>
-                <div className="flex flex-row items-center gap-2 flex-shrink-0">
-                  <Separator orientation="vertical" />
-                  <EditorSelect
-                    icon={
-                      <Calculator className="w-5 h-5 text-meepGray-400 hover:text-meepGray-100" />
-                    }
-                    value={choroplethMode}
-                    options={Object.entries(ChoroplethMode).map(
-                      ([value, res]) => ({
-                        label: res,
-                        value,
-                      })
+                    valueClassName={twMerge(
+                      !viewManager.currentViewOfType?.mapOptions.display
+                        .choropleth
+                        ? '!text-meepGray-500'
+                        : ''
                     )}
-                    onChange={(option) => {
-                      console.log('option', option)
-                      if (
-                        option === ChoroplethMode.Count ||
-                        option === ChoroplethMode.Field
-                      ) {
-                        updateReport((draft) => {
-                          draft.displayOptions.dataVisualisation.dataSourceField =
-                            '__COUNT__'
-                          draft.displayOptions.dataVisualisation.choroplethMode =
-                            option as ChoroplethMode
-                        })
-                      } else {
-                        updateReport((draft) => {
-                          draft.displayOptions.dataVisualisation.choroplethMode =
-                            option as ChoroplethMode
-                        })
-                      }
-                    }}
                   />
                 </div>
-              </div>
-              <ColourStops colourStops={colourStops} formatStr={formatStr} />
+                <ColourStops colourStops={colourStops} formatStr={formatStr} />
 
-              <DisplayingSection
-                formulaSet={formulaSet}
-                dataSourceField={dataSourceField || ''}
-                setFormulaSet={setFormulaSet}
-                choroplethMode={choroplethMode}
-                sourceMetadata={sourceMetadata}
-                selectedDataSource={selectedDataSource}
-              />
-              {choroplethMode === ChoroplethMode.Formula && (
-                <FormulaConfig
-                  setFormulaSet={setFormulaSet}
-                  sourceMetadata={sourceMetadata}
-                  formula={formula || ''}
+                <EditorSelect
+                  // iconComponent={LucidePaintRoller}
+                  label={'Displaying'}
+                  labelClassName="w-[100px]"
+                  value={
+                    viewManager.currentViewOfType?.mapOptions.choropleth.mode
+                  }
+                  options={Object.keys(ChoroplethMode).map((value) => ({
+                    value,
+                    label: toSpaceCase(value),
+                  }))}
+                  onChange={(option) => {
+                    viewManager.updateView((draft) => {
+                      draft.mapOptions.choropleth.mode =
+                        option as ChoroplethMode
+                    })
+                  }}
                 />
-              )}
-            </div>
-          </div>
-          <div className="flex flex-col gap-2 bg-meepGray-600   p-4">
-            {/* LegendSettings */}
-            <p className="text-sm font-mono uppercase text-meepGray-400">
-              Map political boundary
+
+                {viewManager.currentViewOfType?.mapOptions.choropleth.mode ===
+                  ChoroplethMode.Formula && <FormulaConfig />}
+
+                {viewManager.currentViewOfType?.mapOptions.choropleth.mode ===
+                  ChoroplethMode.Field && (
+                  <EditorSelect
+                    label="Displayed field"
+                    labelClassName="w-[100px]"
+                    value={
+                      viewManager.currentViewOfType?.mapOptions.choropleth.field
+                    }
+                    options={[
+                      ...(choroplethLayer?.sourceData.fieldDefinitions
+                        ?.filter(
+                          // no ID fields
+                          (d: any) =>
+                            d.value !== choroplethLayer.sourceData.idField
+                        )
+                        .map((d: any) => ({
+                          label: d.label,
+                          value: d.value,
+                        })) || []),
+                    ]}
+                    onChange={(dataSourceField) => {
+                      viewManager.updateView((draft) => {
+                        draft.mapOptions.choropleth.field = dataSourceField
+                      })
+                    }}
+                    disabled={!choroplethLayer?.sourceData.fieldDefinitions}
+                  />
+                )}
+              </>
+            )}
+          </section>
+
+          <section className="flex flex-col gap-2 px-4 py-3">
+            <p className="text-sm font-medium flex flex-row justify-between items-center">
+              Political boundaries
             </p>
+
             <EditorSelect
-              className="-my-2"
-              onChange={(d) => updateBoundaryType(d as BoundaryType)}
-              value={dataVisualisation?.boundaryType}
+              iconComponent={LucideBoxSelect}
+              // label={'Boundaries'}
+              labelClassName="w-auto"
+              value={
+                viewManager.currentViewOfType?.mapOptions?.choropleth
+                  .boundaryType
+              }
               options={POLITICAL_BOUNDARIES.map((boundary) => ({
                 label: boundary.label,
                 value: boundary.boundaryType,
               }))}
+              onChange={(d) => {
+                viewManager.updateView((draft) => {
+                  draft.mapOptions.choropleth.boundaryType = d as BoundaryType
+                })
+              }}
             />
-          </div>
+
+            {viewManager.currentViewOfType?.mapOptions?.display.choropleth && (
+              <MapToggleField
+                iconComponent={LucideType}
+                label="Place labels"
+                value={
+                  viewManager.currentViewOfType?.mapOptions?.display
+                    .boundaryNames
+                }
+                onChange={(showBoundaryNames) => {
+                  viewManager.updateView((draft) => {
+                    draft.mapOptions.display.boundaryNames = !!showBoundaryNames
+                  })
+                }}
+              />
+            )}
+
+            <MapToggleField
+              iconComponent={BorderSolidIcon}
+              label="Borders"
+              value={viewManager.currentViewOfType?.mapOptions?.display.borders}
+              onChange={(bool) => {
+                viewManager.updateView((draft) => {
+                  draft.mapOptions.display.borders = !!bool
+                })
+              }}
+            />
+          </section>
+
+          <section className="flex flex-col gap-2 px-4 py-3">
+            {/* LegendSettings */}
+            <p className="text-sm font-medium">Base map layers</p>
+
+            <MapToggleField
+              iconComponent={LucideMap}
+              label={'Street details'}
+              labelClassName="text-white"
+              value={
+                viewManager.currentViewOfType?.mapOptions?.display.streetDetails
+              }
+              onChange={(showStreetDetails) => {
+                viewManager.updateView((draft) => {
+                  draft.mapOptions.display.streetDetails = showStreetDetails
+                })
+              }}
+            />
+          </section>
         </CollapsibleContent>
       </Collapsible>
     </div>
   )
+}
 
-  function updateBoundaryType(boundaryType: BoundaryType) {
-    updateReport((draft) => {
-      draft.displayOptions.dataVisualisation.boundaryType = boundaryType
-    })
-  }
+function MapToggleField({
+  value,
+  onChange,
+  ...props
+}: EditorFieldProps & MapToggleProps) {
+  return (
+    <EditorField
+      {...props}
+      className={twMerge(
+        'h-auto',
+        value ? 'text-meepGray-200' : 'text-meepGray-400',
+        props.className
+      )}
+      onClick={() => onChange(!value)}
+      labelClassName={twMerge(
+        'w-[100px] truncate',
+        value ? 'text-meepGray-200' : 'text-meepGray-400',
+        props.labelClassName
+      )}
+      iconClassName={twMerge(
+        value ? 'text-meepGray-200' : 'text-meepGray-400',
+        props.iconClassName
+      )}
+    >
+      <div className="ml-auto h-auto">
+        <MapToggle value={value} onChange={onChange} />
+      </div>
+    </EditorField>
+  )
+}
+
+interface MapToggleProps {
+  value?: boolean
+  onChange: (value?: boolean) => void
+}
+
+function MapToggle({ value, onChange }: MapToggleProps) {
+  return (
+    <IconToggle
+      className="p-0 bg-transparent group h-auto"
+      on={
+        <LucideEye className="w-4 h-4 text-meepGray-400 group-hover:text-meepGray-200" />
+      }
+      off={<LucideEyeOff className="w-4 h-4 text-meepGray-500" />}
+      onChange={() => {
+        onChange(!value)
+      }}
+      value={value}
+    />
+  )
 }
 
 function ColourStops({
@@ -269,123 +450,17 @@ function ColourStops({
     </div>
   )
 }
-function DisplayingSection({
-  formulaSet,
-  dataSourceField,
-  setFormulaSet,
 
-  choroplethMode,
-  sourceMetadata,
-  selectedDataSource,
-}: {
-  formulaSet: boolean
-  dataSourceField: string
-  setFormulaSet: (set: boolean) => void
-
-  choroplethMode: ChoroplethMode
-  sourceMetadata: any
-  selectedDataSource: any
-}) {
-  const { report, updateReport } = useReport()
-  const displayConfig = [
-    {
-      value: ChoroplethMode.Count,
-      content: null,
-    },
-    {
-      value: ChoroplethMode.Field,
-      content: (
-        <>
-          <div className="flex flex-row items-center gap-1 text-xs text-center px-3  bg-meepGray-600 rounded-full">
-            <EditorSelect
-              // explainer={`Which field from your data source will be visualised?`}
-              value={dataSourceField}
-              options={[
-                {
-                  label: `Count of ${lowerCase(pluralize(selectedDataSource?.sourceData.dataType || 'record', 2))}`,
-                  value: '__COUNT__',
-                },
-                ...(sourceMetadata?.sourceData.fieldDefinitions
-                  ?.filter(
-                    // no ID fields
-                    (d: any) => d.value !== sourceMetadata.sourceData.idField
-                  )
-                  .map((d: any) => ({
-                    label: d.label,
-                    value: d.value,
-                  })) || []),
-              ]}
-              onChange={(dataSourceField) => {
-                updateReport((draft) => {
-                  draft.displayOptions.dataVisualisation.dataSourceField =
-                    dataSourceField
-                })
-                setFormulaSet(false)
-              }}
-              disabled={!sourceMetadata}
-              disabledMessage={
-                selectedDataSource?.sourceData.dataType !== 'AREA_STATS'
-                  ? `Count of ${lowerCase(pluralize(selectedDataSource?.sourceData.dataType || 'record', 2))}`
-                  : undefined
-              }
-            />
-          </div>
-        </>
-      ),
-    },
-    {
-      value: ChoroplethMode.Formula,
-      content: null,
-    },
-  ]
-
-  return (
-    <div className="flex flex-row justify-center items-center gap-1 text-xs font-mono text-meepGray-200 ">
-      <div className="flex flex-col items-center gap-1 text-xs text-center px-2">
-        <EditorSelect
-          label="Displaying"
-          value={choroplethMode}
-          options={Object.keys(ChoroplethMode).map((value) => ({
-            label: value,
-            value,
-          }))}
-          onChange={(option) => {
-            console.log('option', option)
-            if (
-              option === ChoroplethMode.Count ||
-              option === ChoroplethMode.Field
-            ) {
-              updateReport((draft) => {
-                draft.displayOptions.dataVisualisation.dataSourceField =
-                  '__COUNT__'
-                draft.displayOptions.dataVisualisation.choroplethMode =
-                  option as ChoroplethMode
-              })
-            } else {
-              updateReport((draft) => {
-                draft.displayOptions.dataVisualisation.choroplethMode =
-                  option as ChoroplethMode
-              })
-            }
-          }}
-        />
-        {displayConfig.find((d) => d.value === choroplethMode)?.content}
-      </div>
-    </div>
+function FormulaConfig() {
+  const viewManager = useView(ViewType.Map)
+  const choroplethErrors = useAtomValue(choroplethErrorsAtom)
+  const [inputText, setInputText] = useState(
+    viewManager.currentViewOfType?.mapOptions.choropleth.formula || ''
   )
-}
 
-function FormulaConfig({
-  formula,
-  sourceMetadata,
-  setFormulaSet,
-}: {
-  formula: string
-  sourceMetadata: any
-  setFormulaSet: (set: boolean) => void
-}) {
-  const [inputText, setInputText] = useState(formula)
-  const { report, updateReport } = useReport()
+  if (!viewManager.currentViewOfType) {
+    return null
+  }
 
   const editingEmpty = !inputText
   const [editing, setEditing] = useState(editingEmpty)
@@ -394,12 +469,11 @@ function FormulaConfig({
     setInputText((prev) => prev + `${variable}`)
   }
 
-  function handleSave() {
+  function handleSaveFormula() {
     if (editing) {
-      setFormulaSet(true)
       setEditing(false)
-      updateReport((draft) => {
-        draft.displayOptions.dataVisualisation.formula = inputText
+      viewManager.updateView((draft) => {
+        draft.mapOptions.choropleth.formula = inputText
       })
     } else {
       setEditing(true)
@@ -421,13 +495,15 @@ function FormulaConfig({
     { label: 'Median', value: 'median' },
   ]
 
+  const choroplethError = choroplethErrors[viewManager.currentViewOfType.id]
+
   return (
     <div className=" text-xs font-mono text-meepGray-400 w-full flex flex-col gap-2 border-t border-meepGray-600 mt-2">
       <div className="flex items-center gap-1 pt-1">
         <Radical className="w-3 h-3" />
         Custom Formula
         <Separator orientation="vertical" className="ml-2" />
-        <div onClick={handleSave} className="p-1 cursor-pointer ">
+        <div onClick={handleSaveFormula} className="p-1 cursor-pointer ">
           {editing ? (
             <p className="text-xs font-mono text-green-600 hover:text-green-500">
               Save
@@ -442,9 +518,23 @@ function FormulaConfig({
       <Textarea
         value={inputText}
         onChange={(e) => setInputText(e.target.value)}
+        onKeyDown={(e) => {
+          const key = keyboardKey.getCode(e)
+          if (key === keyboardKey.Enter) {
+            handleSaveFormula()
+          }
+        }}
         className="bg-meepGray-800 rounded font-mono text-meepGray-200"
         disabled={!editing}
       />
+      {choroplethErrors[viewManager.currentViewOfType.id] && (
+        <pre className="flex flex-row items-center justify-start gap-2 text-xs text-red-500 font-mono">
+          <AlertOctagonIcon className="w-4 h-4" />
+          {typeof choroplethError === 'string'
+            ? choroplethError
+            : choroplethError?.message}
+        </pre>
+      )}
       <div className="flex flex-col gap-2 ">
         {editing && (
           <>

@@ -1,6 +1,5 @@
 import React from 'react'
 import { twMerge } from 'tailwind-merge'
-import { useReport } from '../ReportProvider'
 import { formatKey, isEmptyValue } from './utils'
 
 export function PropertiesDisplay({
@@ -31,8 +30,6 @@ function FormatValue({
   data: any
   indentLevel?: number
 }) {
-  const { report } = useReport()
-
   if (data === null || data === undefined) {
     // Nothing
     return null
