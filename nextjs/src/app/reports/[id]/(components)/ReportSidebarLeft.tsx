@@ -6,17 +6,14 @@ import {
 import { Sidebar, SidebarContent } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { layerEditorStateAtom } from '@/lib/map'
-import { useDebounce } from '@uidotdev/usehooks'
 import { useAtom } from 'jotai'
 import { useEffect, useState } from 'react'
 import useReportUiHelpers from '../useReportUiHelpers'
 import { DataSourceEditor } from './DataSourceEditor'
-import InactivateOnLoading from './InactivateOnLoading'
-import ReportConfiguration from './ReportConfiguration'
 import { ReportDataSources } from './ReportDataSources'
 import { NAVBAR_HEIGHT } from './ReportNavbar'
-import { useReport } from './ReportProvider'
 import ReportStarredItems from './ReportStarredItems'
+import ReportVisualisation from './ReportVisualisation'
 
 const classes = {
   tabsTrigger:
@@ -27,10 +24,8 @@ export const LEFT_SIDEBAR_WIDTH = 350
 
 export function ReportSidebarLeft() {
   const { userJourneyHelpers, updateUserJourneyHelpers } = useReportUiHelpers()
-  const { dataLoading: undebouncedDataLoading } = useReport()
   const [selectedTab, setSelectedTab] = useState('layers')
   const [layerEditorState, setLayerEditorState] = useAtom(layerEditorStateAtom)
-  const dataLoading = useDebounce(undebouncedDataLoading, 300)
 
   useEffect(() => {
     if (selectedTab !== 'layers') {
@@ -63,11 +58,7 @@ export function ReportSidebarLeft() {
               className="w-full justify-start text-white rounded-none px-4
               border border-b-meepGray-800 pt-4 pb-0 h-fit flex gap-4"
             >
-              <TabsTrigger
-                value="layers"
-                className={classes.tabsTrigger}
-                disabled={dataLoading}
-              >
+              <TabsTrigger value="layers" className={classes.tabsTrigger}>
                 Layers
               </TabsTrigger>
 
@@ -84,7 +75,6 @@ export function ReportSidebarLeft() {
                   <TabsTrigger
                     value="data visualisation"
                     className={classes.tabsTrigger}
-                    disabled={dataLoading}
                   >
                     Data visualisation
                   </TabsTrigger>
@@ -102,9 +92,9 @@ export function ReportSidebarLeft() {
               <ReportDataSources />
             </TabsContent>
             <TabsContent value="data visualisation" className="px-4 pb-24">
-              <InactivateOnLoading>
-                <ReportConfiguration />
-              </InactivateOnLoading>
+              <div className="flex flex-col gap-2">
+                <ReportVisualisation />
+              </div>
             </TabsContent>
             <TabsContent value="starred" className="px-4 pb-24">
               <ReportStarredItems />

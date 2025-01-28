@@ -1,3 +1,5 @@
+import { useReport } from '@/lib/map/useReport'
+import { useView } from '@/lib/map/useView'
 import {
   LucideBoxSelect,
   LucideMap,
@@ -5,57 +7,43 @@ import {
   LucideType,
 } from 'lucide-react'
 import { BoundaryType, POLITICAL_BOUNDARIES } from '../politicalTilesets'
-import { VisualisationType } from '../reportContext'
+import { ViewType } from '../reportContext'
 import { AddMapLayerButton } from './AddDataSourceButton'
 import DataSourcesList from './DataSourcesList'
 import { EditorSelect } from './EditorSelect'
 import { EditorSwitch } from './EditorSwitch'
-import { useReport } from './ReportProvider'
 
 export function ReportDataSources() {
-  const { updateReport, report, addDataSource } = useReport()
-
-  const {
-    displayOptions: {
-      display: {
-        showStreetDetails,
-        showBoundaryNames,
-        showDataVisualisation,
-      } = {},
-      dataVisualisation,
-    },
-  } = report
+  const { addLayer } = useReport()
+  const mapView = useView(ViewType.Map)
 
   return (
     <div className="space-y-8 py-4">
       <section className="flex flex-col gap-3">
-        <h2 className="font-semibold text-white text-sm">Data sources</h2>
+        <h2 className="font-semibold text-white text-sm">Data layers</h2>
         <DataSourcesList />
         <div className="flex gap-2 items-center mt-1">
-          <AddMapLayerButton addLayer={addDataSource} />
+          <AddMapLayerButton addLayer={addLayer} />
         </div>
       </section>
       <section className="flex flex-col gap-3">
         <h2 className="font-semibold text-white text-sm">Base layers</h2>
 
-        {Object.values(VisualisationType).map((type) => (
-          <EditorSwitch
-            key={type}
-            label={
-              <span className="flex flex-row items-center gap-1 w-full">
-                <LucidePaintbrush className="w-5 h-5 text-meepGray-400" />
-                <span className="text-white">Data visualisation</span>
-              </span>
-            }
-            labelClassName="text-white"
-            value={showDataVisualisation}
-            onChange={(checked) => {
-              updateReport((draft) => {
-                draft.displayOptions.display.showDataVisualisation = checked
-              })
-            }}
-          />
-        ))}
+        <EditorSwitch
+          label={
+            <span className="flex flex-row items-center gap-1 w-full">
+              <LucidePaintbrush className="w-5 h-5 text-meepGray-400" />
+              <span className="text-white">Choropleth</span>
+            </span>
+          }
+          labelClassName="text-white"
+          value={mapView.currentViewOfType?.mapOptions?.display.choropleth}
+          onChange={(checked) => {
+            mapView.updateView((draft) => {
+              draft.mapOptions.display.choropleth = checked
+            })
+          }}
+        />
 
         <EditorSwitch
           label={
@@ -65,10 +53,10 @@ export function ReportDataSources() {
             </span>
           }
           labelClassName="text-white"
-          value={showBoundaryNames}
+          value={mapView.currentViewOfType?.mapOptions?.display.boundaryNames}
           onChange={(showBoundaryNames: boolean) => {
-            updateReport((draft) => {
-              draft.displayOptions.display.showBoundaryNames = showBoundaryNames
+            mapView.updateView((draft) => {
+              draft.mapOptions.display.boundaryNames = showBoundaryNames
             })
           }}
         />
@@ -81,10 +69,10 @@ export function ReportDataSources() {
             </span>
           }
           labelClassName="text-white"
-          value={report.displayOptions.display.showBorders}
+          value={mapView.currentViewOfType?.mapOptions?.display.borders}
           onChange={(showBorders: boolean) => {
-            updateReport((draft) => {
-              draft.displayOptions.display.showBorders = showBorders
+            mapView.updateView((draft) => {
+              draft.mapOptions.display.borders = showBorders
             })
           }}
         />
@@ -97,12 +85,16 @@ export function ReportDataSources() {
               <span className="text-white">Border type</span>
             </span>
           }
-          onChange={(d) => updateBoundaryType(d as BoundaryType)}
-          value={dataVisualisation?.boundaryType}
+          value={mapView.currentViewOfType?.mapOptions?.choropleth.boundaryType}
           options={POLITICAL_BOUNDARIES.map((boundary) => ({
             label: boundary.label,
             value: boundary.boundaryType,
           }))}
+          onChange={(d) => {
+            mapView.updateView((draft) => {
+              draft.mapOptions.choropleth.boundaryType = d as BoundaryType
+            })
+          }}
         />
 
         <EditorSwitch
@@ -113,20 +105,14 @@ export function ReportDataSources() {
             </span>
           }
           labelClassName="text-white"
-          value={showStreetDetails}
+          value={mapView.currentViewOfType?.mapOptions?.display.streetDetails}
           onChange={(showStreetDetails: boolean) => {
-            updateReport((draft) => {
-              draft.displayOptions.display.showStreetDetails = showStreetDetails
+            mapView.updateView((draft) => {
+              draft.mapOptions.display.streetDetails = showStreetDetails
             })
           }}
         />
       </section>
     </div>
   )
-
-  function updateBoundaryType(boundaryType: BoundaryType) {
-    updateReport((draft) => {
-      draft.displayOptions.dataVisualisation.boundaryType = boundaryType
-    })
-  }
 }

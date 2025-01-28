@@ -5,13 +5,13 @@ import {
   LineLayerSpecification,
   SymbolLayerSpecification,
 } from 'mapbox-gl'
-import { ReportConfig, getReportPalette } from './reportContext'
+import { IMapOptions, getReportPalette } from './reportContext'
 import { Tileset } from './types'
 import { DataByBoundary } from './useDataByBoundary'
 
 export function getChoroplethFill(
   dataByBoundary: DataByBoundary,
-  displayOptions: ReportConfig,
+  mapOptions: IMapOptions,
   visible?: boolean
 ): FillLayerSpecification['paint'] {
   // Get min and max counts
@@ -27,7 +27,7 @@ export function getChoroplethFill(
     }
   }
 
-  const interpolator = getReportPalette(displayOptions)
+  const interpolator = getReportPalette(mapOptions)
 
   // Legend scale
   const colourScale = scaleSequential()

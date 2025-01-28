@@ -45,17 +45,18 @@ export default function ReportMapChoroplethLegend() {
   )
 
   const visibility =
-    report.displayOptions?.dataVisualisation?.boundaryType === boundaryType &&
-    report.displayOptions?.display?.showDataVisualisation
+    mapOptions?.choropleth.boundaryType === boundaryType &&
+    mapOptions?.display.choropleth
       ? 'visible'
       : 'none'
 
   const activeTileset = useActiveTileset(boundaryType)
 
   const { loading, data } = useDataByBoundary({
-    report,
+    mapOptions: mapOptions,
     tileset: activeTileset,
   })
+
   const dataByBoundary = data?.choroplethDataForSource || []
 
   // Get min and max counts
@@ -80,7 +81,7 @@ export default function ReportMapChoroplethLegend() {
     }
   }
 
-  const interpolator = getReportPalette(displayOptions)
+  const interpolator = getReportPalette(mapOptions)
 
   // Legend scale
   const colourScale = scaleSequential()

@@ -31,25 +31,23 @@ import { useMemo } from 'react'
 
 export function TableDisplay({
   data,
-  config,
   title,
   areaName,
 }: {
-  data: any[]
-  config: {
-    columns?: string[]
-  }
+  data?: any[]
   title: string
   areaName: string
 }) {
+  const d = data || []
+
   const cols: string[] = useMemo(() => {
-    const columns = config?.columns || allKeysFromAllData(data)
+    const columns = allKeysFromAllData(d)
     return columns
-  }, [config, data])
+  }, [data, d])
 
   const dataTableColumns = useMemo(() => {
     if (cols.length === 0) {
-      const firstItem = data[0]
+      const firstItem = d[0]
       if (firstItem) {
         return Object.keys(firstItem).map(
           (col) =>
@@ -67,13 +65,17 @@ export function TableDisplay({
           accessorKey: col,
         }) satisfies ColumnDef<any>
     )
-  }, [cols, data])
+  }, [cols, data, d])
 
   const table = useReactTable({
-    data: data,
+    data: d,
     columns: dataTableColumns,
     getCoreRowModel: getCoreRowModel(),
   })
+
+  if (!data || !data.length) {
+    return <div className="text-meepGray-400 py-2">No data available</div>
+  }
 
   return (
     <>

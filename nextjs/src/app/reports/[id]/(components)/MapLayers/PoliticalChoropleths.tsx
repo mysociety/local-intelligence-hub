@@ -21,30 +21,28 @@ import {
   getSelectedChoroplethEdge,
 } from '../../mapboxStyles'
 import { BoundaryType } from '../../politicalTilesets'
-import { MapReportExtended } from '../../reportContext'
+import { IMapOptions } from '../../reportContext'
 import { Tileset } from '../../types'
 import useDataByBoundary from '../../useDataByBoundary'
 import useHoverOverBoundaryEvents from '../../useSelectBoundary'
-import { PLACEHOLDER_LAYER_ID_CHOROPLETH } from '../ReportPage'
+import { PLACEHOLDER_LAYER_ID_CHOROPLETH } from '../MapView'
 
 interface PoliticalChoroplethsProps {
   tilesets: Tileset[]
-  report: MapReportExtended
+  mapOptions: IMapOptions
   boundaryType: BoundaryType
 }
 
 const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
-  report,
+  mapOptions,
   boundaryType,
   tilesets,
 }) => {
   // Show the layer only if the report is set to show the boundary type and the VisualisationType is choropleth
-  const borderVisibility = report.displayOptions?.display.showBorders
-    ? 'visible'
-    : 'none'
+  const borderVisibility = mapOptions.display.borders ? 'visible' : 'none'
   const shaderVisibility =
-    report.displayOptions?.dataVisualisation?.boundaryType === boundaryType &&
-    report.displayOptions?.display?.showDataVisualisation
+    mapOptions.choropleth?.boundaryType === boundaryType &&
+    mapOptions.display?.choropleth
       ? 'visible'
       : 'none'
 
@@ -57,14 +55,13 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   const [, setMapZoom] = useMapZoom()
   const activeTileset = useActiveTileset(boundaryType)
   const { data } = useDataByBoundary({
-    report,
+    mapOptions,
     tileset: activeTileset,
   })
   const dataByBoundary = data?.choroplethDataForSource || []
 
   const boundaryNameVisibility =
-    shaderVisibility === 'visible' &&
-    report.displayOptions?.display.showBoundaryNames
+    shaderVisibility === 'visible' && mapOptions.display.boundaryNames
       ? 'visible'
       : 'none'
 
@@ -106,12 +103,12 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
       // to reduce flicker when zooming between layers
       const fill = getChoroplethFill(
         dataByBoundary,
-        report.displayOptions,
+        mapOptions,
         shaderVisibility === 'visible'
       )
       setFillsByLayer({ ...fillsByLayer, [activeTileset.mapboxSourceId]: fill })
     }
-  }, [map.loaded, activeTileset, data, report])
+  }, [map.loaded, activeTileset, data, mapOptions])
 
   if (!map.loaded) return null
   if (!data || !tilesets) return null

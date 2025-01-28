@@ -18,11 +18,12 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { useExplorer } from '@/lib/map'
+import { useView } from '@/lib/map/useView'
 import { cn } from '@/lib/utils'
 import { useEffect } from 'react'
 import { POLITICAL_BOUNDARIES } from '../politicalTilesets'
+import { ViewType } from '../reportContext'
 import { useAreasList } from '../useAreasList'
-import { useReport } from './ReportProvider'
 
 export default function ReportDashboardConsSelector() {
   const [searchQuery, setSearchQuery] = React.useState('')
@@ -31,8 +32,9 @@ export default function ReportDashboardConsSelector() {
   const [open, setOpen] = React.useState(false)
   const [value, setValue] = React.useState('')
 
-  const { report } = useReport()
-  const boundaryType = report.displayOptions?.dataVisualisation?.boundaryType
+  const view = useView(ViewType.Map)
+  const boundaryType =
+    view.currentViewOfType?.mapOptions.choropleth?.boundaryType
   const selectedBoundaryLabel = POLITICAL_BOUNDARIES.find(
     (boundary) => boundary.boundaryType === boundaryType
   )?.label
