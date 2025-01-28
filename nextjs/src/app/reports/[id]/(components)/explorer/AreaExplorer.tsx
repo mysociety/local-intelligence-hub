@@ -62,20 +62,43 @@ import { v4 } from 'uuid'
 import { BoundaryType, dbAreaTypeToBoundaryType } from '../../politicalTilesets'
 import {
   DataDisplayMode,
+  explorerDisplaySchema,
   IExplorerDisplay,
   ViewType,
-  explorerDisplaySchema,
 } from '../../reportContext'
 import CollapsibleSection from '../CollapsibleSection'
-import { EditorSelect } from '../EditorSelect'
-import { EditorSwitch } from '../EditorSwitch'
 import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
 import { TableDisplay } from '../dashboard/TableDisplay'
+import { EditorSelect } from '../EditorSelect'
+import { EditorSwitch } from '../EditorSwitch'
 import { DisplayCreator } from './AreaExplorerDisplayCreator'
+
+import {
+  closestCenter,
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import { restrictToParentElement } from '@dnd-kit/modifiers'
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 export function AreaExplorer({ gss }: { gss: string }) {
   const [selectedTab, setSelectedTab] = useState('summary')
   const explorer = useExplorer()
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 100,
+      },
+    })
+  )
 
   // Query area details
   const areaData = useQuery<
@@ -164,17 +187,55 @@ export function AreaExplorer({ gss }: { gss: string }) {
         </TabsList>
         <TabsContent value="summary" className="pb-24">
           <div className="divide-y divide-meepGray-800 border-b border-meepGray-800">
-            {Object.values(
-              report.report.displayOptions.areaExplorer.displays
-            )?.map((display) => (
-              <div key={display.id} className="my-4 px-4">
-                <AreaDisplay
-                  display={display}
-                  gss={gss}
-                  areaName={areaData.data?.area?.name || ''}
-                />
-              </div>
-            ))}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              modifiers={[restrictToParentElement]}
+              onDragEnd={({ active, over }) => {
+                if (!!over && active.id !== over.id) {
+                  report.updateReport((draft) => {
+                    const oldIndex =
+                      draft.displayOptions.areaExplorer.displaySortOrder.indexOf(
+                        String(active.id)
+                      )
+                    const newIndex =
+                      draft.displayOptions.areaExplorer.displaySortOrder.indexOf(
+                        String(over.id)
+                      )
+                    draft.displayOptions.areaExplorer.displaySortOrder =
+                      arrayMove(
+                        draft.displayOptions.areaExplorer.displaySortOrder,
+                        oldIndex,
+                        newIndex
+                      )
+                  })
+                }
+              }}
+            >
+              <SortableContext
+                items={
+                  report.report.displayOptions.areaExplorer.displaySortOrder
+                }
+                strategy={verticalListSortingStrategy}
+              >
+                {report.report.displayOptions.areaExplorer.displaySortOrder
+                  .map(
+                    (displayId) =>
+                      report.report.displayOptions.areaExplorer.displays[
+                        displayId
+                      ]
+                  )
+                  .filter(Boolean)
+                  .map((display) => (
+                    <SortableAreaDisplay
+                      key={display.id}
+                      display={display}
+                      gss={gss}
+                      areaName={areaData.data?.area?.name}
+                    />
+                  ))}
+              </SortableContext>
+            </DndContext>
           </div>
           {/* Button opens prompt, select layer, creates display: */}
           <DisplayCreator />
@@ -232,6 +293,36 @@ const AREA_EXPLORER_SUMMARY = gql`
     }
   }
 `
+
+function SortableAreaDisplay({
+  display,
+  gss,
+  areaName,
+}: {
+  display: IExplorerDisplay
+  gss: string
+  areaName?: string
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: display.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  return (
+    <div
+      className="py-1 px-4 bg-meepGray-600"
+      style={style}
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+    >
+      <AreaDisplay display={display} gss={gss} areaName={areaName || ''} />
+    </div>
+  )
+}
 
 function AreaDisplay({
   display,
@@ -473,22 +564,22 @@ function AreaDisplay({
           )}
         </div>
       )}
-      <a
-        className="text-meepGray-400 text-sm flex flex-row items-center gap-1 mt-2"
-        {...(!!layer.sourceData.remoteUrl && {
-          href: layer.sourceData.remoteUrl,
-          target: '_blank',
-        })}
-      >
+      <span className="text-meepGray-400 text-sm flex flex-row items-center gap-1 mt-2">
         Source:{' '}
         <DataSourceIcon
           crmType={layer.sourceData.crmType}
           className="w-5 h-5"
         />{' '}
-        <span className="underline hover:text-meepGray-300">
+        <a
+          className="underline hover:text-meepGray-300"
+          {...(!!layer.sourceData.remoteUrl && {
+            href: layer.sourceData.remoteUrl,
+            target: '_blank',
+          })}
+        >
           {layer.sourceData.name}
-        </span>
-      </a>
+        </a>
+      </span>
     </CollapsibleSection>
   )
 }

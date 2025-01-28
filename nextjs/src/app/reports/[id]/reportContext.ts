@@ -214,6 +214,12 @@ export const displayOptionsSchema = z.object({
   areaExplorer: z
     .object({
       displays: z.record(z.string().uuid(), explorerDisplaySchema).default({}),
+      displaySortOrder: z
+        .array(z.string().uuid())
+        .describe(
+          'List of display IDs to manage sort order. Separated from display dictionary to avoid JSON patch array operation problems.'
+        )
+        .default([]),
     })
     .default({}),
   recordExplorer: z
@@ -237,7 +243,37 @@ export const displayOptionsSchema = z.object({
         mapOptions: mapOptionsSchema.parse({}),
       }),
     }),
+  viewSortOrder: z
+    .array(z.string().uuid())
+    .describe(
+      'List of view IDs to manage sort order. Separated from view dictionary to avoid JSON patch array operation problems.'
+    )
+    .default([]),
 })
+
+export const displayOptionsMigrator = displayOptionsSchema.transform((data) => {
+  // Ensure displaySortOrder includes all displays
+  const displayIds = Object.keys(data.areaExplorer.displays)
+  data.areaExplorer.displaySortOrder = cleanupSortOrder(
+    data.areaExplorer.displaySortOrder,
+    displayIds
+  )
+  // Ensure viewSortOrder includes all views
+  const viewIds = Object.keys(data.views)
+  data.viewSortOrder = cleanupSortOrder(data.viewSortOrder, viewIds)
+  return data
+})
+
+function cleanupSortOrder(array: string[], extantIds: string[]) {
+  return Array.from(
+    new Set([
+      // Kick out values that no longer exist
+      ...array.filter((id) => extantIds.includes(id)),
+      // And bring in values that do exist
+      ...extantIds.filter((id) => !array.includes(id)),
+    ])
+  )
+}
 
 export type IDisplayOptions = z.infer<typeof displayOptionsSchema>
 
