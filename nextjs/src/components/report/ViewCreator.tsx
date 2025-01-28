@@ -25,11 +25,9 @@ import { ViewIcon, dataTypeDisplay } from './ViewIcon'
 
 export function ViewCreator() {
   const report = useReport()
-  const id = v4()
   const form = useForm<ViewConfig>({
     resolver: zodResolver(viewUnionSchema),
     defaultValues: {
-      id,
       type: ViewType.Map,
     },
   })
@@ -37,14 +35,14 @@ export function ViewCreator() {
   const view = useView()
 
   function submit() {
-    console.log('submit', form.getValues())
+    const id = v4()
     report.updateReport((draft) => {
       draft.displayOptions.views[id] = viewUnionSchema.parse({
         id,
         type: form.getValues('type'),
       })
     })
-    setTimeout(() => view.setCurrentViewId(id), 1000)
+    setTimeout(() => view.setCurrentViewId(id), 50)
   }
 
   return (
@@ -91,14 +89,7 @@ export function ViewCreator() {
             />
           </div>
           <DialogFooter>
-            <Button
-              type="submit"
-              onClick={() => {
-                submit()
-              }}
-            >
-              Create view
-            </Button>
+            <Button type="submit">Create view</Button>
           </DialogFooter>
         </form>
       </DialogContent>
