@@ -32,12 +32,7 @@ import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { InspectorDisplayType } from '@/lib/explorer'
 import { contentEditableMutation } from '@/lib/html'
-import {
-  ExplorerAreaBreadCrumbMapping,
-  ExplorerState,
-  StarredState,
-  useExplorer,
-} from '@/lib/map'
+import { ExplorerAreaBreadCrumbMapping } from '@/lib/map'
 import { useReport } from '@/lib/map/useReport'
 import { useView } from '@/lib/map/useView'
 import { gql, useQuery } from '@apollo/client'
@@ -64,6 +59,7 @@ import {
   DataDisplayMode,
   explorerDisplaySchema,
   IExplorerDisplay,
+  StarredState,
   ViewType,
 } from '../../reportContext'
 import CollapsibleSection from '../CollapsibleSection'
@@ -73,6 +69,7 @@ import { EditorSelect } from '../EditorSelect'
 import { EditorSwitch } from '../EditorSwitch'
 import { DisplayCreator } from './AreaExplorerDisplayCreator'
 
+import { ExplorerState, useExplorer } from '@/lib/map/useExplorer'
 import {
   closestCenter,
   DndContext,
@@ -115,13 +112,13 @@ export function AreaExplorer({ gss }: { gss: string }) {
 
   const mapView = useView(ViewType.Map)
 
-  useEffect(() => {
-    if (boundaryType) {
-      mapView.updateView((draft) => {
-        draft.mapOptions.choropleth.boundaryType = boundaryType
-      })
-    }
-  }, [areaData, boundaryType])
+  // useEffect(() => {
+  //   if (boundaryType) {
+  //     mapView.updateView((draft) => {
+  //       draft.mapOptions.choropleth.boundaryType = boundaryType
+  //     })
+  //   }
+  // }, [areaData, boundaryType])
 
   const report = useReport()
   const { addStarredItem, removeStarredItem } = report

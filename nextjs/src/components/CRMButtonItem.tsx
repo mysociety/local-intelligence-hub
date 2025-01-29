@@ -40,10 +40,7 @@ export function CRMSelection({
         className
       )}
     >
-      <DataSourceIcon
-        crmType={source.crmType}
-        className="w-5 flex-shrink-0 -ml-1"
-      />
+      <DataSourceIcon crmType={source.crmType} className="w-5 flex-shrink-0 " />
       <div className="truncate w-full">
         <div className="text-meepGray-100">{source.name}</div>
         {!!source?.importedDataCount && displayCount && (

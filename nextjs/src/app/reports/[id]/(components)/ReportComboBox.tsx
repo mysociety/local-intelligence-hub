@@ -17,7 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { useExplorer } from '@/lib/map'
+import { useExplorer } from '@/lib/map/useExplorer'
 import { useView } from '@/lib/map/useView'
 import { cn } from '@/lib/utils'
 import { useEffect } from 'react'

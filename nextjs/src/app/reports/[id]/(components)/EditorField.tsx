@@ -7,24 +7,30 @@ export function EditorField({
   labelClassName,
   onClick,
   className,
+  iconClassName,
+  iconComponent: IconComponent,
 }: EditorFieldProps) {
   return (
-    <div className={className}>
-      <div
-        className={twMerge(
-          'flex flex-row items-center gap-2',
-          onClick && 'cursor-pointer'
+    <div
+      className={twMerge(onClick && 'cursor-pointer', className)}
+      onClick={onClick}
+    >
+      <div className={twMerge('flex flex-row items-center gap-2')}>
+        {!!(IconComponent || label) && (
+          <span
+            className={twMerge(
+              'flex flex-row items-center gap-2 text-sm text-white w-[200px]',
+              labelClassName
+            )}
+          >
+            {IconComponent && (
+              <IconComponent
+                className={twMerge('w-5 h-5 text-meepGray-200', iconClassName)}
+              />
+            )}
+            {!!label && <div>{label}</div>}
+          </span>
         )}
-        onClick={onClick}
-      >
-        <div
-          className={twMerge(
-            'text-sm  text-meepGray-400 w-[200px]',
-            labelClassName
-          )}
-        >
-          {label}
-        </div>
         {children}
       </div>
       {!!explainer && (
@@ -35,10 +41,12 @@ export function EditorField({
 }
 
 export interface EditorFieldProps {
-  label: any
+  label?: any
   explainer?: any
   children?: any
   labelClassName?: string
   className?: string
   onClick?: () => void
+  iconComponent?: React.FC<{ className?: string }>
+  iconClassName?: string
 }

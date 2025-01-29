@@ -595,8 +595,8 @@ class GroupedDataCount:
     area_type_filter: Optional["AreaTypeFilter"] = None
     gss: Optional[str]
     count: float
-    columns: Optional[List[str]]
-    row: Optional[JSON]
+    columns: Optional[List[str]] = None
+    row: Optional[JSON] = None
     formatted_count: Optional[str]
     area_data: Optional[strawberry.Private[Area]] = None
 

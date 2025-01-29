@@ -1,10 +1,11 @@
 import { Button } from '@/components/ui/button'
-import { ExplorerState, StarredState, useExplorer } from '@/lib/map'
+import { ExplorerState, useExplorer } from '@/lib/map/useExplorer'
 import { MapPinIcon, X } from 'lucide-react'
 
 import { DataSourceTypeIcon } from '@/components/icons/DataSourceType'
 import { useReport } from '@/lib/map/useReport'
 import { StarFilledIcon } from '@radix-ui/react-icons'
+import { StarredState } from '../reportContext'
 export default function ReportStarredItems() {
   return (
     <div className="flex flex-col gap-2 text-white">

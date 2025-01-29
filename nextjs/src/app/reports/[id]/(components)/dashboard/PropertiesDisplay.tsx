@@ -38,6 +38,7 @@ function FormatValue({
     return <span>{data}</span>
   } else if (Array.isArray(data)) {
     // Array; indented
+
     return (
       <ul style={{ marginLeft: `${indentLevel * 1}rem` }}>
         {data.filter(isEmptyValue).map((item, index) => (
@@ -67,14 +68,15 @@ function FormatValue({
             )
           })
           .map(([key, value]) => (
-            <KeyContainer
-              key={key}
-              title={key}
-              titleClassName={isObject(value) ? 'mb-3' : ''}
-              children={
-                <FormatValue data={value} indentLevel={indentLevel + 1} />
-              }
-            />
+            <div key={key} className="flex justify-between gap-2">
+              <KeyContainer
+                title={key}
+                titleClassName={isObject(value) ? 'mb-3' : ''}
+                children={
+                  <FormatValue data={value} indentLevel={indentLevel + 1} />
+                }
+              />
+            </div>
           ))}
       </div>
     )
@@ -93,13 +95,15 @@ function KeyContainer({
   title,
   titleClassName,
   children,
+  className,
 }: {
   title: React.ReactNode
   titleClassName?: string
   children: React.ReactNode
+  className?: string
 }) {
   return (
-    <section className="flex flex-col">
+    <section className={twMerge('flex flex-col', className)}>
       <header
         className={twMerge(
           'text-meepGray-200 uppercase text-xs',

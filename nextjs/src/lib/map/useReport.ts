@@ -14,11 +14,13 @@ import {
 } from '@/app/reports/[id]/gql_queries'
 import ReportContext, {
   AddSourcePayload,
+  StarredState,
+  StarredStateUnique,
   ViewType,
   explorerDisplaySchema,
   mapLayerSchema,
+  starId,
 } from '@/app/reports/[id]/reportContext'
-import { StarredState, StarredStateUnique, starId } from '@/lib/map'
 import { toastPromise } from '@/lib/toast'
 import { ApolloClient, FetchResult, useApolloClient } from '@apollo/client'
 import { useRouter } from 'next/navigation'
@@ -44,6 +46,7 @@ export const useReport = () => {
     addLayer,
     isStarred,
     toggleStarred,
+    getLayer,
   }
 
   function deleteReport() {
@@ -144,6 +147,11 @@ export const useReport = () => {
       })
     })
   }
+
+  function getLayer(reportLayerId?: string) {
+    if (!reportLayerId) return null
+    return report.layers.find((layer) => layer.id === reportLayerId)
+  }
 }
 
 export function updateMapReport(
@@ -163,7 +171,7 @@ export function refreshReportData(client: ApolloClient<any>) {
   // TODO: This should refresh only queries that are used by the report
   toastPromise(
     client.refetchQueries({
-      include: ['GetMapReport', 'MapReportLayerAnalytics'],
+      include: ['GetMapReport'],
     }),
     {
       loading: 'Refreshing report data...',

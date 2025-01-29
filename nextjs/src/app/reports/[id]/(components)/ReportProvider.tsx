@@ -131,8 +131,8 @@ const ReportProvider = ({ query, children }: ReportProviderProps) => {
     ) => void,
     retryCount: number = 0
   ) {
-    if (!report || !queriedReport || (!!retryCount && retryCount >= 3)) return
-    const updatedReport = produce(report, cb)
+    if (!queriedReport || (!!retryCount && retryCount >= 3)) return
+    const updatedReport = produce(report || queriedReport, cb)
     // Split out displayOptions and handle them separately
     const { displayOptions: newDisplayOptions, ...newReport } = updatedReport
     if (newReport) {
@@ -196,9 +196,13 @@ const ReportProvider = ({ query, children }: ReportProviderProps) => {
       return
     }
     // Remove any layer references that don't exist
-    const newReport = cleanUpLayerReferences({
+    const migratedReport = migrateDisplayOptions({
       ...reportObjectForDiffingAgainst,
       displayOptions: validatedDisplayOptions,
+    })
+    const newReport = cleanUpLayerReferences({
+      ...reportObjectForDiffingAgainst,
+      displayOptions: migratedReport.displayOptions,
     })
     // Then prep the patch that would be applied to report.displayOptions in the DB
     const patch = jsonpatch.compare(

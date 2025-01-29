@@ -1,5 +1,5 @@
 import { Sidebar, SidebarProvider } from '@/components/ui/sidebar'
-import { useExplorer } from '@/lib/map'
+import { useExplorer } from '@/lib/map/useExplorer'
 import { NAVBAR_HEIGHT } from './ReportNavbar'
 import { AreaExplorer } from './explorer/AreaExplorer'
 import { RecordExplorer } from './explorer/RecordExplorer'

@@ -6,7 +6,7 @@ import { DataSourceIcon } from '@/components/DataSourceIcon'
 import { Button } from '@/components/ui/button'
 import { SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ExplorerState, StarredState, useExplorer } from '@/lib/map'
+import { ExplorerState, useExplorer } from '@/lib/map/useExplorer'
 import { useReport } from '@/lib/map/useReport'
 import { gql, useQuery } from '@apollo/client'
 import { omit } from 'lodash'
@@ -15,6 +15,7 @@ import pluralize from 'pluralize'
 import queryString from 'query-string'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { StarredState } from '../../reportContext'
 import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
 import { exploreArea, formatPostalAddresses } from './utils'
 
@@ -229,7 +230,10 @@ export function RecordExplorer({ id }: { id: string }) {
 
           {/* Raw data */}
           <section className="flex flex-col gap-2 px-4 py-4">
-            <div className="text-hSm text-white">Info</div>
+            <div className="flex flex-row justify-between gap-2 items-center">
+              <div className="text-hSm text-white">Info</div>
+            </div>
+
             <div className="flex flex-col gap-2">
               <PropertiesDisplay data={filteredData} />
             </div>

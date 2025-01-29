@@ -2,11 +2,11 @@ import { MapBounds } from '@/__generated__/graphql'
 import {
   MapLoader,
   useActiveTileset,
-  useExplorer,
   useLoadedMap,
   useMapBounds,
   useMapZoom,
 } from '@/lib/map'
+import { useExplorer } from '@/lib/map/useExplorer'
 import { debounce } from 'lodash'
 import { FillLayerSpecification } from 'mapbox-gl'
 import React, { Fragment, useEffect, useState } from 'react'
@@ -21,7 +21,7 @@ import {
   getSelectedChoroplethEdge,
 } from '../../mapboxStyles'
 import { BoundaryType } from '../../politicalTilesets'
-import { IMapOptions } from '../../reportContext'
+import { SpecificViewConfig, ViewType } from '../../reportContext'
 import { Tileset } from '../../types'
 import useDataByBoundary from '../../useDataByBoundary'
 import useHoverOverBoundaryEvents from '../../useSelectBoundary'
@@ -29,20 +29,20 @@ import { PLACEHOLDER_LAYER_ID_CHOROPLETH } from '../MapView'
 
 interface PoliticalChoroplethsProps {
   tilesets: Tileset[]
-  mapOptions: IMapOptions
+  view: SpecificViewConfig<ViewType.Map>
   boundaryType: BoundaryType
 }
 
 const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
-  mapOptions,
+  view,
   boundaryType,
   tilesets,
 }) => {
   // Show the layer only if the report is set to show the boundary type and the VisualisationType is choropleth
-  const borderVisibility = mapOptions.display.borders ? 'visible' : 'none'
+  const borderVisibility = view.mapOptions.display.borders ? 'visible' : 'none'
   const shaderVisibility =
-    mapOptions.choropleth?.boundaryType === boundaryType &&
-    mapOptions.display?.choropleth
+    view.mapOptions.choropleth?.boundaryType === boundaryType &&
+    view.mapOptions.display?.choropleth
       ? 'visible'
       : 'none'
 
@@ -55,13 +55,13 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   const [, setMapZoom] = useMapZoom()
   const activeTileset = useActiveTileset(boundaryType)
   const { data } = useDataByBoundary({
-    mapOptions,
+    view,
     tileset: activeTileset,
   })
   const dataByBoundary = data?.choroplethDataForSource || []
 
   const boundaryNameVisibility =
-    shaderVisibility === 'visible' && mapOptions.display.boundaryNames
+    shaderVisibility === 'visible' && view.mapOptions.display.boundaryNames
       ? 'visible'
       : 'none'
 
@@ -103,15 +103,15 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
       // to reduce flicker when zooming between layers
       const fill = getChoroplethFill(
         dataByBoundary,
-        mapOptions,
-        shaderVisibility === 'visible'
+        view.mapOptions,
+        !!data && shaderVisibility === 'visible'
       )
       setFillsByLayer({ ...fillsByLayer, [activeTileset.mapboxSourceId]: fill })
     }
-  }, [map.loaded, activeTileset, data, mapOptions])
+  }, [map.loaded, activeTileset, data, view.mapOptions])
 
   if (!map.loaded) return null
-  if (!data || !tilesets) return null
+  if (!tilesets) return null
 
   return (
     <>

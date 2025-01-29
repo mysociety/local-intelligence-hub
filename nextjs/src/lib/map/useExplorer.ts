@@ -24,6 +24,12 @@ const entityParser = createNuqsParserFromZodResolver(entityResolver)
 const idParser = createNuqsParserFromZodResolver(idResolver)
 const showExplorerParser = createNuqsParserFromZodResolver(showExplorerResolver)
 
+export const explorerStateSchema = z.object({
+  entity: entityResolver,
+  id: idResolver,
+  showExplorer: showExplorerResolver,
+})
+
 export function useExplorer() {
   const [state, setState] = useQueryStates(
     {

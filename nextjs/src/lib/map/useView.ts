@@ -6,7 +6,7 @@ import {
 import { useReport } from '@/lib/map/useReport'
 import { produce } from 'immer'
 import { useQueryState } from 'nuqs'
-import { useExplorer } from './state'
+import { useExplorer } from './useExplorer'
 
 export function useView<HookVT extends ViewType = any>(
   desiredViewType?: HookVT
@@ -21,15 +21,15 @@ export function useView<HookVT extends ViewType = any>(
   )
   const explorer = useExplorer()
 
-  const currentView: ViewConfig | null = userSelectedCurrentViewId
+  const currentView: ViewConfig | undefined = userSelectedCurrentViewId
     ? report.displayOptions.views[userSelectedCurrentViewId]
     : report.displayOptions.views[report.displayOptions.viewSortOrder[0]]
 
   const currentViewOfType = desiredViewType
     ? currentView && currentView.type === desiredViewType
       ? (currentView as SpecificViewConfig<HookVT>)
-      : null
-    : null
+      : undefined
+    : undefined
 
   return {
     currentView,

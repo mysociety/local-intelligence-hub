@@ -1,4 +1,5 @@
 import {
+  AnalyticalAreaType,
   AreaQueryMode,
   ChoroplethMode,
   DataSourceType,
@@ -6,7 +7,7 @@ import {
   MapLayerInput,
 } from '@/__generated__/graphql'
 import { InspectorDisplayType } from '@/lib/explorer'
-import { starredSchema } from '@/lib/map'
+import { explorerStateSchema } from '@/lib/map/useExplorer'
 import {
   interpolateBlues,
   interpolateBrBG,
@@ -87,6 +88,17 @@ export const PALETTE: Record<
   },
 }
 
+export function getReportInterpolatorFromPalette(
+  palette: Palette,
+  isReversed?: boolean
+) {
+  const interpolator = PALETTE[palette].interpolator
+  if (isReversed) {
+    return (t: number) => interpolator(1 - t)
+  }
+  return interpolator
+}
+
 export function getReportPalette(mapOptions: IMapOptions) {
   const interpolator =
     PALETTE[mapOptions.choropleth?.palette || Palette.Blue].interpolator
@@ -152,6 +164,7 @@ export const mapLayerSchema = z.object({
     .optional()
     .describe('Standard colour for markers, highlighting, and so on.'),
   markerSize: z.number().optional().describe('Size of markers in pixels.'),
+  visible: z.boolean().default(true),
 })
 
 const mapOptionsSchema = z.object({
@@ -184,7 +197,32 @@ const mapOptionsSchema = z.object({
 
 export type IMapOptions = z.infer<typeof mapOptionsSchema>
 
-const tableOptionsSchema = z.object({})
+export enum TableGroupByMode {
+  // 'None' = 'None',
+  'Area' = 'Area',
+}
+
+const tableOptionsSchema = z.object({
+  layerId: z.string().uuid().optional(),
+  sorting: z
+    .array(
+      // ColumnSort
+      z.object({
+        id: z.string(),
+        desc: z.boolean(),
+      })
+    )
+    .optional()
+    .default([]),
+  groupBy: z
+    .object({
+      mode: z.nativeEnum(TableGroupByMode).default(TableGroupByMode.Area),
+      area: z
+        .nativeEnum(AnalyticalAreaType)
+        .default(AnalyticalAreaType.ParliamentaryConstituency),
+    })
+    .default({}),
+})
 
 export const mapViewSchema = viewSchema.extend({
   type: z.literal(ViewType.Map),
@@ -209,6 +247,20 @@ export type SpecificViewConfig<ViewType> = ViewConfig & { type: ViewType }
 const CURRENT_MIGRATION_VERSION = '2025-01-25'
 
 const defaultViewId = uuid.v4()
+
+export const starredSchema = explorerStateSchema.extend({
+  id: z.string(),
+  name: z.string().optional(),
+  icon: z.nativeEnum(DataSourceType).optional(),
+})
+
+export type StarredState = z.infer<typeof starredSchema>
+
+export type StarredStateUnique = Pick<StarredState, 'entity' | 'id'>
+
+export function starId(starredState: StarredStateUnique): string {
+  return `ENTITY:${starredState.entity}::ID:${starredState.id}`
+}
 
 export const displayOptionsSchema = z.object({
   version: z.string().default(CURRENT_MIGRATION_VERSION),

@@ -1,11 +1,11 @@
-import { GetMapReportQuery } from '@/__generated__/graphql'
+import { AreaQueryMode, GetMapReportQuery } from '@/__generated__/graphql'
 import {
-  explorerDisplaySchema,
   IDisplayOptions,
   IExplorerDisplay,
-  mapLayerSchema,
   SpecificViewConfig,
   ViewType,
+  explorerDisplaySchema,
+  mapLayerSchema,
 } from '@/app/reports/[id]/reportContext'
 import { InspectorDisplayType } from '@/lib/explorer'
 import { produce } from 'immer'
@@ -42,7 +42,10 @@ export function migration0001(
             acc[id] = explorerDisplaySchema.parse({
               id,
               layerId: layer.id,
-              displayType: layer.inspectorType as InspectorDisplayType,
+              displayType:
+                (layer.inspectorType as InspectorDisplayType) ||
+                InspectorDisplayType.Properties,
+              areaQueryMode: AreaQueryMode.Overlapping,
             }) satisfies IExplorerDisplay
             return acc
           },
