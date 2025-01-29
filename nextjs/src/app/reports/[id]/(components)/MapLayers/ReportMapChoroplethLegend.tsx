@@ -127,7 +127,10 @@ export default function ReportMapChoroplethLegend() {
                     )
                   }}
                   label={l.name || reportManager.getLayer(l.layerId)?.name}
-                  labelClassName="w-full"
+                  labelClassName={twMerge(
+                    'w-full font-medium',
+                    l.visible ? 'text-white' : 'text-meepGray-400'
+                  )}
                   value={l.visible}
                   onChange={(display) => {
                     viewManager.updateView((draft) => {
