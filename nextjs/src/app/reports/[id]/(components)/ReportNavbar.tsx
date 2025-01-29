@@ -10,7 +10,8 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu'
 import { contentEditableMutation } from '@/lib/html'
-import { useExplorer, useSidebarLeftState } from '@/lib/map'
+import { useSidebarLeftState } from '@/lib/map'
+import { useExplorer } from '@/lib/map/useExplorer'
 import { useView } from '@/lib/map/useView'
 import {
   closestCenter,

@@ -14,11 +14,13 @@ import {
 } from '@/app/reports/[id]/gql_queries'
 import ReportContext, {
   AddSourcePayload,
+  StarredState,
+  StarredStateUnique,
   ViewType,
   explorerDisplaySchema,
   mapLayerSchema,
+  starId,
 } from '@/app/reports/[id]/reportContext'
-import { StarredState, StarredStateUnique, starId } from '@/lib/map'
 import { toastPromise } from '@/lib/toast'
 import { ApolloClient, FetchResult, useApolloClient } from '@apollo/client'
 import { useRouter } from 'next/navigation'

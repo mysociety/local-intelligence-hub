@@ -6,7 +6,7 @@ import {
 import { useReport } from '@/lib/map/useReport'
 import { produce } from 'immer'
 import { useQueryState } from 'nuqs'
-import { useExplorer } from './state'
+import { useExplorer } from './useExplorer'
 
 export function useView<HookVT extends ViewType = any>(
   desiredViewType?: HookVT

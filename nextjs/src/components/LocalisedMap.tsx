@@ -1,9 +1,12 @@
 import { BACKEND_URL } from '@/env'
 import { authenticationHeaders } from '@/lib/auth'
-import { useExplorer } from '@/lib/map'
+import { useMapBounds, useMapZoom } from '@/lib/map'
+import { useExplorer } from '@/lib/map/useExplorer'
 import { useReport } from '@/lib/map/useReport'
+import bboxPolygon from '@turf/bbox-polygon'
+import center from '@turf/center'
 import { RequestTransformFunction } from 'mapbox-gl'
-import React from 'react'
+import React, { useMemo } from 'react'
 import Map from 'react-map-gl'
 import { mapMouseHandler } from './report/mapMouseHandler'
 
@@ -30,12 +33,33 @@ const LocalisedMap: React.FC<LocalisedMapProps> = ({
 }) => {
   const report = useReport()
   const explorer = useExplorer()
+  const [zoom, _] = useMapZoom()
+  const [mapBounds, __] = useMapBounds()
+
+  const longLatFromMapBounds = useMemo(() => {
+    if (!mapBounds) return null
+    return center(
+      bboxPolygon([
+        mapBounds.east,
+        mapBounds.north,
+        mapBounds.west,
+        mapBounds.south,
+      ])
+    ).geometry.coordinates
+  }, [mapBounds])
 
   return (
     <Map
       key={mapKey || Math.random().toString()}
       initialViewState={{
         ...INITIAL_VIEW_STATES[initViewCountry],
+        zoom: zoom || INITIAL_VIEW_STATES[initViewCountry].zoom,
+        longitude:
+          longLatFromMapBounds?.[0] ||
+          INITIAL_VIEW_STATES[initViewCountry].longitude,
+        latitude:
+          longLatFromMapBounds?.[1] ||
+          INITIAL_VIEW_STATES[initViewCountry].latitude,
       }}
       mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
       mapStyle={

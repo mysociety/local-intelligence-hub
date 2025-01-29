@@ -6,7 +6,7 @@ import {
   MapLayerInput,
 } from '@/__generated__/graphql'
 import { InspectorDisplayType } from '@/lib/explorer'
-import { starredSchema } from '@/lib/map'
+import { explorerStateSchema } from '@/lib/map/useExplorer'
 import {
   interpolateBlues,
   interpolateBrBG,
@@ -221,6 +221,20 @@ export type SpecificViewConfig<ViewType> = ViewConfig & { type: ViewType }
 const CURRENT_MIGRATION_VERSION = '2025-01-25'
 
 const defaultViewId = uuid.v4()
+
+export const starredSchema = explorerStateSchema.extend({
+  id: z.string(),
+  name: z.string().optional(),
+  icon: z.nativeEnum(DataSourceType).optional(),
+})
+
+export type StarredState = z.infer<typeof starredSchema>
+
+export type StarredStateUnique = Pick<StarredState, 'entity' | 'id'>
+
+export function starId(starredState: StarredStateUnique): string {
+  return `ENTITY:${starredState.entity}::ID:${starredState.id}`
+}
 
 export const displayOptionsSchema = z.object({
   version: z.string().default(CURRENT_MIGRATION_VERSION),

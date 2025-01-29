@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/dialog'
 
 import { Button } from '@/components/ui/button'
-import { useExplorer } from '@/lib/map'
+import { useExplorer } from '@/lib/map/useExplorer'
 import { allKeysFromAllData } from '@/lib/utils'
 import { useMemo } from 'react'
 

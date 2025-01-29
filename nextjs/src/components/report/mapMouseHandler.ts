@@ -1,6 +1,6 @@
 import { EXTERNAL_DATA_SOURCE_MAPBOX_SOURCE_ID_PREFIX } from '@/app/reports/[id]/(components)/MembersListPointMarkers'
 import { ReportContextProps } from '@/app/reports/[id]/reportContext'
-import { ExplorerSuite } from '@/lib/map'
+import { ExplorerSuite } from '@/lib/map/useExplorer'
 import { MapMouseEvent } from 'mapbox-gl'
 
 export const mapMouseHandler =
