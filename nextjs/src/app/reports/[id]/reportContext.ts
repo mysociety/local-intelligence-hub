@@ -1,4 +1,5 @@
 import {
+  AnalyticalAreaType,
   AreaQueryMode,
   ChoroplethMode,
   DataSourceType,
@@ -163,7 +164,7 @@ export const mapLayerSchema = z.object({
     .optional()
     .describe('Standard colour for markers, highlighting, and so on.'),
   markerSize: z.number().optional().describe('Size of markers in pixels.'),
-  visible: z.boolean().default(true).optional(),
+  visible: z.boolean().default(true),
 })
 
 const mapOptionsSchema = z.object({
@@ -196,7 +197,32 @@ const mapOptionsSchema = z.object({
 
 export type IMapOptions = z.infer<typeof mapOptionsSchema>
 
-const tableOptionsSchema = z.object({})
+export enum TableGroupByMode {
+  // 'None' = 'None',
+  'Area' = 'Area',
+}
+
+const tableOptionsSchema = z.object({
+  layerId: z.string().uuid().optional(),
+  sorting: z
+    .array(
+      // ColumnSort
+      z.object({
+        id: z.string(),
+        desc: z.boolean(),
+      })
+    )
+    .optional()
+    .default([]),
+  groupBy: z
+    .object({
+      mode: z.nativeEnum(TableGroupByMode).default(TableGroupByMode.Area),
+      area: z
+        .nativeEnum(AnalyticalAreaType)
+        .default(AnalyticalAreaType.ParliamentaryConstituency),
+    })
+    .default({}),
+})
 
 export const mapViewSchema = viewSchema.extend({
   type: z.literal(ViewType.Map),

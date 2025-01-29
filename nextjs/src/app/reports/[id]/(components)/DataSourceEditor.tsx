@@ -14,7 +14,7 @@ import { ArrowRight, LucideX, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { v4 } from 'uuid'
-import { ViewType } from '../reportContext'
+import { ViewType, mapLayerSchema } from '../reportContext'
 import { EditorColourPicker } from './EditorColourPicker'
 import { DEFAULT_MARKER_COLOUR } from './MembersListPointMarkers'
 
@@ -68,7 +68,6 @@ export function DataSourceEditor() {
 }
 
 function StyleTab({ layerId }: { layerId: string }) {
-  const { report, updateLayer } = useReport()
   const view = useView(ViewType.Map)
   const viewLayersForReportLayer = Object.values(
     view.currentViewOfType?.mapOptions.layers || {}
@@ -133,10 +132,10 @@ function StyleTab({ layerId }: { layerId: string }) {
         onClick={() => {
           view.updateView((draft) => {
             const id = v4()
-            draft.mapOptions.layers[id] = {
+            draft.mapOptions.layers[id] = mapLayerSchema.parse({
               id,
               layerId,
-            }
+            })
           })
         }}
       >

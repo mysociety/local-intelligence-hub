@@ -595,6 +595,8 @@ class GroupedDataCount:
     area_type_filter: Optional["AreaTypeFilter"] = None
     gss: Optional[str]
     count: float
+    columns: Optional[List[str]] = None
+    row: Optional[JSON] = None
     formatted_count: Optional[str]
     area_data: Optional[strawberry.Private[Area]] = None
 
@@ -1739,6 +1741,7 @@ class ChoroplethMode(Enum):
     Count = "Count"
     Field = "Field"
     Formula = "Formula"
+    Table = "Table"
 
 
 @strawberry_django.field()
@@ -1819,6 +1822,7 @@ def choropleth_data_for_source(
     is_valid_field = field and field is not None and len(field) and field in df.columns
     is_row_count = mode is ChoroplethMode.Count
     is_valid_formula = formula and formula is not None and len(formula)
+    is_table = mode is ChoroplethMode.Table
 
     if mode is ChoroplethMode.Field and not is_valid_field:
         raise ValueError("Field not found in data source")
@@ -1856,7 +1860,7 @@ def choropleth_data_for_source(
             )
             for row in df.itertuples()
         ]
-    elif is_valid_field or is_valid_formula:
+    elif is_valid_field or is_valid_formula or is_table:
         # Convert any stringified JSON numbers to floats
         for column in df:
             if all(df[column].apply(check_numeric)):
@@ -1936,6 +1940,8 @@ def choropleth_data_for_source(
                 label=row.label,
                 gss=row.gss,
                 count=row.count,
+                columns=df.columns.to_list() if is_table else None,
+                row=row if is_table else None,
                 formatted_count=(
                     (
                         # pretty percentage

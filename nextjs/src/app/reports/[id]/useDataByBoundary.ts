@@ -87,7 +87,7 @@ const useDataByBoundary = ({
   return query
 }
 
-const CHOROPLETH_STATS_FOR_SOURCE = gql`
+export const CHOROPLETH_STATS_FOR_SOURCE = gql`
   query SourceStatsByBoundary(
     $sourceId: String!
     $analyticalAreaType: AnalyticalAreaType!
@@ -108,6 +108,8 @@ const CHOROPLETH_STATS_FOR_SOURCE = gql`
       gss
       count
       formattedCount
+      row
+      columns
       gssArea {
         point {
           type

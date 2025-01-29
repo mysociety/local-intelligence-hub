@@ -242,10 +242,14 @@ export default function ReportMapChoroplethLegend() {
                   value={
                     viewManager.currentViewOfType?.mapOptions.choropleth.mode
                   }
-                  options={Object.keys(ChoroplethMode).map((value) => ({
-                    value,
-                    label: toSpaceCase(value),
-                  }))}
+                  options={Object.values(ChoroplethMode)
+                    .filter((k) => {
+                      return k !== ChoroplethMode.Table
+                    })
+                    .map((value) => ({
+                      value,
+                      label: toSpaceCase(value),
+                    }))}
                   onChange={(option) => {
                     viewManager.updateView((draft) => {
                       draft.mapOptions.choropleth.mode =

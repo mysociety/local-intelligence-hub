@@ -1,5 +1,5 @@
 import { ViewType } from '@/app/reports/[id]/reportContext'
-import { LucideMapPin, LucideTable, Square } from 'lucide-react'
+import { LucideMapPin, Square, Table2 } from 'lucide-react'
 import { twMerge } from 'tailwind-merge'
 
 export function ViewIcon({
@@ -14,14 +14,7 @@ export function ViewIcon({
     ? dataTypeDisplay[viewType]?.icon || DefaultIcon
     : DefaultIcon
   if (!Icon) return null
-  return (
-    <Icon
-      className={twMerge(
-        'w-4 h-4 text-meepGray-400 fill-meepGray-400',
-        className
-      )}
-    />
-  )
+  return <Icon className={twMerge('w-4 h-4 text-meepGray-400', className)} />
 }
 
 export const dataTypeDisplay: Record<
@@ -40,9 +33,9 @@ export const dataTypeDisplay: Record<
     enabled: true,
   },
   [ViewType.Table]: {
-    icon: LucideTable,
+    icon: Table2,
     defaultName: 'Table',
     type: ViewType.Table,
-    enabled: false,
+    enabled: true,
   },
 }
