@@ -76,7 +76,7 @@ export default function ReportMapChoroplethLegend() {
         open={legendOpen}
         onOpenChange={setLegendOpen}
         className={clsx(
-          ' bg-[#1f2229]/60 text-white rounded-md shadow-lg flex flex-col border border-meepGray-600 backdrop-blur-[5px] ',
+          ' bg-[#1f2229]/90 text-white rounded-md shadow-lg flex flex-col border border-meepGray-600 backdrop-blur-[5px] ',
           'w-72'
         )}
       >
