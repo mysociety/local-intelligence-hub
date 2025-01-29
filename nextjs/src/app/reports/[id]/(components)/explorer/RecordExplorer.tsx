@@ -229,7 +229,10 @@ export function RecordExplorer({ id }: { id: string }) {
 
           {/* Raw data */}
           <section className="flex flex-col gap-2 px-4 py-4">
-            <div className="text-hSm text-white">Info</div>
+            <div className="flex flex-row justify-between gap-2 items-center">
+              <div className="text-hSm text-white">Info</div>
+            </div>
+
             <div className="flex flex-col gap-2">
               <PropertiesDisplay data={filteredData} />
             </div>

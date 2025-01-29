@@ -3,7 +3,7 @@
 import { BACKEND_URL } from '@/env'
 import { selectedSourceMarkerAtom, useLoadedMap } from '@/lib/map'
 import { useAtom } from 'jotai'
-import { MapMouseEvent } from 'mapbox-gl'
+import { MapMouseEvent, PaintSpecification } from 'mapbox-gl'
 import { useEffect } from 'react'
 import { Layer, Source } from 'react-map-gl'
 import { PLACEHOLDER_LAYER_ID_MARKERS } from './MapView'
@@ -22,7 +22,7 @@ export function MembersListPointMarkers({
 }: {
   mapLayerId: string
   externalDataSourceId: string
-  mapboxPaint?: any
+  mapboxPaint?: PaintSpecification
 }) {
   const mapbox = useLoadedMap()
   const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(

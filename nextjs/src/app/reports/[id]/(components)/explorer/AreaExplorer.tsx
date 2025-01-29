@@ -115,13 +115,13 @@ export function AreaExplorer({ gss }: { gss: string }) {
 
   const mapView = useView(ViewType.Map)
 
-  useEffect(() => {
-    if (boundaryType) {
-      mapView.updateView((draft) => {
-        draft.mapOptions.choropleth.boundaryType = boundaryType
-      })
-    }
-  }, [areaData, boundaryType])
+  // useEffect(() => {
+  //   if (boundaryType) {
+  //     mapView.updateView((draft) => {
+  //       draft.mapOptions.choropleth.boundaryType = boundaryType
+  //     })
+  //   }
+  // }, [areaData, boundaryType])
 
   const report = useReport()
   const { addStarredItem, removeStarredItem } = report

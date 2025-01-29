@@ -3,8 +3,10 @@ import {
   SourceStatsByBoundaryQueryVariables,
 } from '@/__generated__/graphql'
 import { useReport } from '@/lib/map/useReport'
-import { QueryResult, gql, useQuery } from '@apollo/client'
-import { IMapOptions } from './reportContext'
+import { ApolloError, QueryResult, gql, useQuery } from '@apollo/client'
+import { atom, useSetAtom } from 'jotai'
+import { useEffect } from 'react'
+import { SpecificViewConfig, ViewType } from './reportContext'
 import { Tileset } from './types'
 
 export type DataByBoundary =
@@ -15,18 +17,27 @@ type SourceStatsByBoundaryQueryResult = QueryResult<
   SourceStatsByBoundaryQueryVariables
 >
 
+export const choroplethErrorsAtom = atom<
+  Record<
+    // viewID
+    string,
+    // Error payload
+    string | ApolloError | undefined
+  >
+>({})
+
 const useDataByBoundary = ({
-  mapOptions,
+  view,
   tileset,
 }: {
-  mapOptions?: IMapOptions
+  view?: SpecificViewConfig<ViewType.Map> | null
   tileset: Tileset
   // Source fields are the numeric data columns from the external data source
   getSourceFieldNames?: boolean
 }): SourceStatsByBoundaryQueryResult => {
   const report = useReport()
   const sourceId = report.report.layers.find(
-    (l) => l.id === mapOptions?.choropleth.layerId
+    (l) => l.id === view?.mapOptions.choropleth.layerId
   )?.source
 
   // If mapBounds is required, send dummy empty bounds on the first request
@@ -39,21 +50,41 @@ const useDataByBoundary = ({
     : null
   const analyticalAreaType = tileset.analyticalAreaType
 
-  return useQuery<
+  const query = useQuery<
     SourceStatsByBoundaryQuery,
     SourceStatsByBoundaryQueryVariables
   >(CHOROPLETH_STATS_FOR_SOURCE, {
     variables: {
       sourceId: sourceId!,
       analyticalAreaType: analyticalAreaType!,
-      mode: mapOptions?.choropleth.mode,
-      field: mapOptions?.choropleth.field,
-      formula: mapOptions?.choropleth.formula,
+      mode: view?.mapOptions?.choropleth.mode,
+      field: view?.mapOptions?.choropleth.field,
+      formula: view?.mapOptions?.choropleth.formula,
       mapBounds,
     },
-    skip: !mapOptions || !sourceId || !analyticalAreaType,
+    skip: !view?.mapOptions || !sourceId || !analyticalAreaType,
     notifyOnNetworkStatusChange: true, // required to mark loading: true on fetchMore()
   })
+
+  const setChoroplethErrors = useSetAtom(choroplethErrorsAtom)
+
+  useEffect(() => {
+    if (view?.id) {
+      if (query.error) {
+        setChoroplethErrors((prev) => ({
+          ...prev,
+          [view?.id!]: query.error,
+        }))
+      } else {
+        setChoroplethErrors((prev) => {
+          const { [view?.id!]: _, ...rest } = prev
+          return rest
+        })
+      }
+    }
+  }, [view, query])
+
+  return query
 }
 
 const CHOROPLETH_STATS_FOR_SOURCE = gql`
