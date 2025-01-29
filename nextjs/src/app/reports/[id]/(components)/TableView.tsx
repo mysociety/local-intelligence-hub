@@ -37,8 +37,10 @@ import {
 } from '@/components/ui/table'
 import { useExplorer } from '@/lib/map/useExplorer'
 import { useView } from '@/lib/map/useView'
-import { ArrowUpDown, LucideBoxSelect, Settings2 } from 'lucide-react'
+import { ArrowUpDown, LucideBoxSelect, Settings2, Star } from 'lucide-react'
+import pluralize from 'pluralize'
 import { useMemo } from 'react'
+import { twMerge } from 'tailwind-merge'
 import toSpaceCase from 'to-space-case'
 import { EditorSelect } from './EditorSelect'
 
@@ -56,7 +58,7 @@ export function TableView({
       <div>
         <Popover>
           <PopoverTrigger asChild>
-            <Button className="flex flex-row gap-2">
+            <Button className="flex flex-row gap-2 bg-meepGray-800 text-sm text-meepGray-300">
               <Settings2 className="h-4 w-4" /> Configure
             </Button>
           </PopoverTrigger>
@@ -175,7 +177,12 @@ function TableDisplay({
               accessorFn: (row) => row['gss'],
               header: ({ column }) => {
                 return (
-                  <div className={'font-semibold text-md'}>
+                  <div
+                    className={twMerge(
+                      'font-semibold text-md',
+                      column.getIsPinned() ? 'w-[200px]' : ''
+                    )}
+                  >
                     <Button
                       variant="ghost"
                       onClick={() =>
@@ -190,7 +197,18 @@ function TableDisplay({
               },
               cell: ({ row, column }) => (
                 // Render the label key with a href to the gss key
-                <div className={'font-semibold text-md'}>
+                <div
+                  className={twMerge(
+                    'font-semibold text-md flex flex-row gap-2 items-center justify-start truncate',
+                    column.getIsPinned() ? 'w-[250px]' : ''
+                  )}
+                >
+                  {report.isStarred({
+                    entity: 'area',
+                    id: row.getValue('gss'),
+                  }) ? (
+                    <Star className="h-4 w-4 text-meepGray-300 shrink-0 grow-0" />
+                  ) : undefined}
                   {row.getValue('label')}
                 </div>
               ),
@@ -223,7 +241,7 @@ function TableDisplay({
         left: ['groupBy'],
       },
       pagination: {
-        pageSize: 20,
+        pageSize: 10,
       },
     },
     // onColumnFiltersChange: setColumnFilters,
@@ -240,91 +258,110 @@ function TableDisplay({
   })
 
   return (
-    <div className="rounded-md border">
-      {data.loading ? (
-        <div className="h-24 py-24 flex items-center justify-center">
-          <LoadingIcon />
+    <>
+      {!data.loading && !!data.data && (
+        <div className="my-4">
+          <h1 className="text-hMd">
+            {pluralize(
+              // area type
+              toSpaceCase(tableView.tableOptions.groupBy.area),
+              data.data.choroplethDataForSource.length,
+              true
+            )}
+          </h1>
         </div>
-      ) : (
-        <>
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead
-                        key={header.id}
-                        className={
-                          header.column.getIsPinned()
-                            ? 'sticky left-0 bg-meepGray-950'
-                            : ''
-                        }
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
-                    )
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
-                    onClick={() => {
-                      explorer.select({
-                        entity: 'area',
-                        id: row.getValue('gss'),
-                        showExplorer: true,
-                      })
-                    }}
-                    className="group hover:bg-meepGray-800 cursor-pointer"
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell
-                        key={cell.id}
-                        className={
-                          cell.column.getIsPinned()
-                            ? 'sticky left-0 bg-meepGray-950 group-hover:bg-meepGray-800'
-                            : ''
-                        }
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    No results.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-          {table.getRowModel().rows?.length ? (
-            <div className="px-2 pb-4 pt-2">
-              <DataTablePagination table={table} />
-            </div>
-          ) : null}
-        </>
       )}
-    </div>
+      <div>
+        {data.loading ? (
+          <div className="h-24 py-24 flex items-center justify-center">
+            <LoadingIcon />
+          </div>
+        ) : (
+          <>
+            <Table
+              style={{
+                height: '66%',
+              }}
+              className="overflow-y-auto"
+            >
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      return (
+                        <TableHead
+                          key={header.id}
+                          className={
+                            header.column.getIsPinned()
+                              ? 'sticky left-0 bg-meepGray-950'
+                              : ''
+                          }
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </TableHead>
+                      )
+                    })}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && 'selected'}
+                      onClick={() => {
+                        explorer.select({
+                          entity: 'area',
+                          id: row.getValue('gss'),
+                          showExplorer: true,
+                        })
+                      }}
+                      className="group hover:bg-meepGray-800 cursor-pointer"
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell
+                          key={cell.id}
+                          className={
+                            cell.column.getIsPinned()
+                              ? 'sticky left-0 bg-meepGray-950 group-hover:bg-meepGray-800'
+                              : ''
+                          }
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      No results.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+            {table.getRowModel().rows?.length ? (
+              <div className="px-2 pb-4 pt-2">
+                <DataTablePagination table={table} />
+              </div>
+            ) : null}
+          </>
+        )}
+      </div>
+    </>
   )
 }
 
