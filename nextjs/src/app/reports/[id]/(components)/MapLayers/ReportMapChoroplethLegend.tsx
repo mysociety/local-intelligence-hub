@@ -47,6 +47,12 @@ export default function ReportMapChoroplethLegend() {
   const viewManager = useView(ViewType.Map)
   const [legendOpen, setLegendOpen] = useState(true)
 
+  const boundaryHierarchy = POLITICAL_BOUNDARIES.find(
+    (b) =>
+      b.boundaryType ===
+      viewManager.currentViewOfType?.mapOptions?.choropleth.boundaryType
+  )
+
   const activeTileset = useActiveTileset(
     viewManager.currentViewOfType?.mapOptions.choropleth.boundaryType
   )
@@ -313,6 +319,56 @@ export default function ReportMapChoroplethLegend() {
                 })
               }}
             />
+
+            {(boundaryHierarchy?.tilesets?.length || 0) > 1 &&
+              boundaryHierarchy?.tilesets.map((tileset) => (
+                <MapToggleField
+                  className="ml-4"
+                  key={tileset.labelId}
+                  label={
+                    <>
+                      {tileset.name}
+                      {/* {viewManager.currentViewOfType?.mapOptions.choropleth
+                        .lockedOnAnalyticalAreaType ===
+                      tileset.analyticalAreaType ? (
+                        <div className="font-mono uppercase text-xs text-meepGray-400 flex flex-row gap-1">
+                          <LucideLock className="w-3 h-3 text-meepGray-400" />{' '}
+                          <span>Locked on</span>
+                        </div>
+                      ) : undefined} */}
+                    </>
+                  }
+                  labelClassName="w-full"
+                  value={
+                    tileset.analyticalAreaType ===
+                    activeTileset.analyticalAreaType
+                    // viewManager.currentViewOfType?.mapOptions.choropleth
+                    //   .lockedOnAnalyticalAreaType
+                    //   ? viewManager.currentViewOfType?.mapOptions.choropleth
+                    //       .lockedOnAnalyticalAreaType ===
+                    //     tileset.analyticalAreaType
+                    //   : tileset.analyticalAreaType ===
+                    //     activeTileset.analyticalAreaType
+                  }
+                  onChange={(bool) => {
+                    // viewManager.updateView((draft) => {
+                    //   if (
+                    //     draft.mapOptions.choropleth
+                    //       .lockedOnAnalyticalAreaType ===
+                    //     tileset.analyticalAreaType
+                    //   ) {
+                    //     // unset it
+                    //     delete draft.mapOptions.choropleth
+                    //       .lockedOnAnalyticalAreaType
+                    //   } else {
+                    //     // set it
+                    //     draft.mapOptions.choropleth.lockedOnAnalyticalAreaType =
+                    //       tileset.analyticalAreaType
+                    //   }
+                    // })
+                  }}
+                />
+              ))}
 
             {viewManager.currentViewOfType?.mapOptions?.display.choropleth && (
               <MapToggleField
