@@ -514,12 +514,12 @@ function FormulaConfig() {
     viewManager.currentViewOfType?.mapOptions.choropleth.formula || ''
   )
 
+  const editingEmpty = !inputText
+  const [editing, setEditing] = useState(editingEmpty)
+
   if (!viewManager.currentViewOfType) {
     return null
   }
-
-  const editingEmpty = !inputText
-  const [editing, setEditing] = useState(editingEmpty)
 
   function handleVariableInsert(variable: string) {
     setInputText((prev) => prev + `${variable}`)
