@@ -34,12 +34,17 @@ import { useState } from 'react'
 import { twMerge } from 'tailwind-merge'
 import toSpaceCase from 'to-space-case'
 import { BoundaryType, POLITICAL_BOUNDARIES } from '../../politicalTilesets'
-import { ViewType, getReportPalette } from '../../reportContext'
+import {
+  Palette,
+  ViewType,
+  getReportInterpolatorFromPalette,
+} from '../../reportContext'
 import useDataByBoundary, {
   choroplethErrorsAtom,
 } from '../../useDataByBoundary'
 import { EditorField, EditorFieldProps } from '../EditorField'
 import { EditorSelect } from '../EditorSelect'
+import { EditorSwitch } from '../EditorSwitch'
 import { DEFAULT_MARKER_COLOUR } from '../MembersListPointMarkers'
 
 export default function ReportMapChoroplethLegend() {
@@ -57,60 +62,9 @@ export default function ReportMapChoroplethLegend() {
     viewManager.currentViewOfType?.mapOptions.choropleth.boundaryType
   )
 
-  const { loading, data } = useDataByBoundary({
-    view: viewManager.currentViewOfType,
-    tileset: activeTileset,
-  })
-
   if (!viewManager.currentViewOfType) {
     return null
   }
-
-  const dataByBoundary = data?.choroplethDataForSource || []
-
-  // Get min and max counts
-  let minCount = min(dataByBoundary.map((d) => d.count || 0)) || 0
-  let maxCount = max(dataByBoundary.map((d) => d.count || 0)) || 1
-
-  //
-  const difference = maxCount - minCount
-  let isPercentage = false
-  let formatStr = ',.2r'
-  if (difference < 2) {
-    formatStr = '.0%'
-    isPercentage = true
-  }
-
-  // ensure minCount and maxCount are different
-  if (minCount === maxCount) {
-    if (minCount >= 1) {
-      minCount = minCount - 0.1
-    } else {
-      maxCount = maxCount + 0.1
-    }
-  }
-
-  const interpolator = getReportPalette(
-    viewManager.currentViewOfType?.mapOptions
-  )
-
-  // Legend scale
-  const colourScale = scaleSequential()
-    .domain([minCount, maxCount])
-    .interpolator(interpolator)
-
-  // Define 30 stops of colour
-  let steps = isPercentage ? 5 : 7
-
-  // Now turn each i into an associated number in the range min-max:
-  const stepsToDomainTransformer = scaleLinear()
-    .domain([0, steps])
-    .range([minCount, maxCount])
-
-  const colourStops = new Array(steps).fill(0).map((_, step) => {
-    const count = stepsToDomainTransformer(step)
-    return [count, colourScale(count)] as [number, string]
-  })
 
   const choroplethLayer = reportManager.getLayer(
     viewManager.currentViewOfType.mapOptions.choropleth.layerId
@@ -240,7 +194,46 @@ export default function ReportMapChoroplethLegend() {
                     )}
                   />
                 </div>
-                <ColourStops colourStops={colourStops} formatStr={formatStr} />
+
+                <EditorSelect
+                  // iconComponent={LucidePaintRoller}
+                  // label={'Displaying'}
+                  labelClassName="w-[100px]"
+                  value={
+                    viewManager.currentViewOfType?.mapOptions.choropleth.palette
+                  }
+                  options={Object.values(Palette).map((value) => ({
+                    value,
+                    label: (
+                      <ColourStops
+                        key={value}
+                        palette={value}
+                        reversePalette={
+                          viewManager.currentViewOfType?.mapOptions.choropleth
+                            .isPaletteReversed
+                        }
+                      />
+                    ),
+                  }))}
+                  onChange={(option) => {
+                    viewManager.updateView((draft) => {
+                      draft.mapOptions.choropleth.palette = option as Palette
+                    })
+                  }}
+                />
+
+                <EditorSwitch
+                  label="Reverse palette"
+                  value={
+                    viewManager.currentViewOfType?.mapOptions.choropleth
+                      .isPaletteReversed
+                  }
+                  onChange={(bool) => {
+                    viewManager.updateView((draft) => {
+                      draft.mapOptions.choropleth.isPaletteReversed = !!bool
+                    })
+                  }}
+                />
 
                 <EditorSelect
                   // iconComponent={LucidePaintRoller}
@@ -475,12 +468,67 @@ function MapToggle({ value, onChange }: MapToggleProps) {
 }
 
 function ColourStops({
-  colourStops,
-  formatStr,
+  palette,
+  reversePalette,
 }: {
-  colourStops: [number, string][]
-  formatStr: string
+  palette: Palette
+  reversePalette?: boolean
 }) {
+  const viewManager = useView(ViewType.Map)
+
+  const activeTileset = useActiveTileset(
+    viewManager.currentViewOfType?.mapOptions.choropleth.boundaryType
+  )
+
+  const { loading, data } = useDataByBoundary({
+    view: viewManager.currentViewOfType,
+    tileset: activeTileset,
+  })
+
+  const dataByBoundary = data?.choroplethDataForSource || []
+
+  // Get min and max counts
+  let minCount = min(dataByBoundary.map((d) => d.count || 0)) || 0
+  let maxCount = max(dataByBoundary.map((d) => d.count || 0)) || 1
+
+  //
+  const difference = maxCount - minCount
+  let isPercentage = false
+  let formatStr = ',.2r'
+  if (difference < 2) {
+    formatStr = '.0%'
+    isPercentage = true
+  }
+
+  // ensure minCount and maxCount are different
+  if (minCount === maxCount) {
+    if (minCount >= 1) {
+      minCount = minCount - 0.1
+    } else {
+      maxCount = maxCount + 0.1
+    }
+  }
+
+  const interpolator = getReportInterpolatorFromPalette(palette, reversePalette)
+
+  // Legend scale
+  const colourScale = scaleSequential()
+    .domain([minCount, maxCount])
+    .interpolator(interpolator)
+
+  // Define 30 stops of colour
+  let steps = isPercentage ? 5 : 7
+
+  // Now turn each i into an associated number in the range min-max:
+  const stepsToDomainTransformer = scaleLinear()
+    .domain([0, steps])
+    .range([minCount, maxCount])
+
+  const colourStops = new Array(steps).fill(0).map((_, step) => {
+    const count = stepsToDomainTransformer(step)
+    return [count, colourScale(count)] as [number, string]
+  })
+
   return (
     <div className="flex flex-col  items-center justify-center">
       <div className="flex flex-row items-center py-1 w-full">

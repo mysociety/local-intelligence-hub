@@ -87,6 +87,17 @@ export const PALETTE: Record<
   },
 }
 
+export function getReportInterpolatorFromPalette(
+  palette: Palette,
+  isReversed?: boolean
+) {
+  const interpolator = PALETTE[palette].interpolator
+  if (isReversed) {
+    return (t: number) => interpolator(1 - t)
+  }
+  return interpolator
+}
+
 export function getReportPalette(mapOptions: IMapOptions) {
   const interpolator =
     PALETTE[mapOptions.choropleth?.palette || Palette.Blue].interpolator
