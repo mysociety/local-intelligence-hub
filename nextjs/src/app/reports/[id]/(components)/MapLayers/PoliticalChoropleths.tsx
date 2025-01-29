@@ -2,11 +2,11 @@ import { MapBounds } from '@/__generated__/graphql'
 import {
   MapLoader,
   useActiveTileset,
-  useExplorer,
   useLoadedMap,
   useMapBounds,
   useMapZoom,
 } from '@/lib/map'
+import { useExplorer } from '@/lib/map/useExplorer'
 import { debounce } from 'lodash'
 import { FillLayerSpecification } from 'mapbox-gl'
 import React, { Fragment, useEffect, useState } from 'react'

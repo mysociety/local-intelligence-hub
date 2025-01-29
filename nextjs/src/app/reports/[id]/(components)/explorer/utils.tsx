@@ -1,4 +1,4 @@
-import { ExplorerState } from '@/lib/map'
+import { ExplorerState } from '@/lib/map/useExplorer'
 import queryString from 'query-string'
 
 export function exploreArea(gss: string) {
