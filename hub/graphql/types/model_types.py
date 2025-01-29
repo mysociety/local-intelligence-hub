@@ -5,6 +5,8 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Union
 
+import numpy as np
+
 from django.contrib.gis.db.models import Union as GisUnion
 from django.contrib.gis.geos import Polygon
 from django.db.models import F, Q
@@ -1895,25 +1897,16 @@ def choropleth_data_for_source(
         # Add a "maximum" column that figures out the biggest numerical value in each row
         numerical_columns = df.select_dtypes(include="number").columns
         try:
-            df["first"] = df[numerical_columns].max(axis=1)
-
-            # Calculate the second-highest value in each row
-            df["second"] = df[numerical_columns].apply(
-                lambda row: row.nlargest(2).iloc[-1], axis=1
-            )
-
-            df["third"] = df[numerical_columns].apply(
-                lambda row: row.nlargest(3).iloc[-1], axis=1
-            )
-
-            df["last"] = df[numerical_columns].min(axis=1)
+            # Convert selected columns to numpy array for faster operations
+            values = df[numerical_columns].values
+            df["first"] = values.max(axis=1)
+            df["second"] = np.partition(values, -2, axis=1)[:, -2]
+            df["third"] = np.partition(values, -3, axis=1)[:, -3]
+            df["last"] = values.min(axis=1)
 
             df["total"] = df[numerical_columns].sum(axis=1)
-
             df["count"] = df[numerical_columns].count(axis=1)
-
             df["mean"] = df[numerical_columns].mean(axis=1)
-
             df["median"] = df[numerical_columns].median(axis=1)
         except IndexError:
             pass

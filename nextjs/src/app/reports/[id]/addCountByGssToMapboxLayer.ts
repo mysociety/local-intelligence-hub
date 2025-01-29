@@ -15,27 +15,31 @@ export function addCountByGssToMapboxLayer(
   if (!sourceLayerId) throw new Error('sourceLayerId is required')
 
   setTimeout(() => {
-    // Remove previously set data from all areas
-    if (mapbox?.getSource(mapboxSourceId)) {
-      mapbox.removeFeatureState({
-        source: mapboxSourceId,
-        sourceLayer: sourceLayerId,
-      })
-    }
-    data.forEach((d) => {
-      if (!d.gss) return
-      try {
-        mapbox?.setFeatureState(
-          {
-            source: mapboxSourceId,
-            sourceLayer: sourceLayerId,
-            id: d.gss,
-          },
-          d
-        )
-      } catch (e) {
-        console.error(e)
+    try {
+      // Remove previously set data from all areas
+      if (mapbox?.getSource(mapboxSourceId)) {
+        mapbox.removeFeatureState({
+          source: mapboxSourceId,
+          sourceLayer: sourceLayerId,
+        })
       }
-    })
+      data.forEach((d) => {
+        if (!d.gss) return
+        try {
+          mapbox?.setFeatureState(
+            {
+              source: mapboxSourceId,
+              sourceLayer: sourceLayerId,
+              id: d.gss,
+            },
+            d
+          )
+        } catch (e) {
+          console.error(e)
+        }
+      })
+    } catch (e: any) {
+      console.warn(e.message)
+    }
   }, MAPBOX_LOAD_INTERVAL + 50)
 }
