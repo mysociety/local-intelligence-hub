@@ -57,30 +57,30 @@ import { v4 } from 'uuid'
 import { BoundaryType, dbAreaTypeToBoundaryType } from '../../politicalTilesets'
 import {
   DataDisplayMode,
-  explorerDisplaySchema,
   IExplorerDisplay,
   StarredState,
   ViewType,
+  explorerDisplaySchema,
 } from '../../reportContext'
 import CollapsibleSection from '../CollapsibleSection'
-import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
-import { TableDisplay } from '../dashboard/TableDisplay'
 import { EditorSelect } from '../EditorSelect'
 import { EditorSwitch } from '../EditorSwitch'
+import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
+import { TableDisplay } from '../dashboard/TableDisplay'
 import { DisplayCreator } from './AreaExplorerDisplayCreator'
 
 import { ExplorerState, useExplorer } from '@/lib/map/useExplorer'
 import {
-  closestCenter,
   DndContext,
   PointerSensor,
+  closestCenter,
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
 import { restrictToParentElement } from '@dnd-kit/modifiers'
 import {
-  arrayMove,
   SortableContext,
+  arrayMove,
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
@@ -442,7 +442,7 @@ function AreaDisplay({
             <EditorSelect
               label={'Type of data'}
               explainer={"Change the data's type for display purposes."}
-              value={layer.sourceData.dataType || display.dataSourceType}
+              value={display.dataSourceType || layer.sourceData.dataType}
               options={Object.entries(DataSourceType).map(([key, value]) => ({
                 value: value,
                 label: toSpaceCase(value),
