@@ -235,7 +235,7 @@ const tableOptionsSchema = z.object({
       mode: z.nativeEnum(TableGroupByMode).default(TableGroupByMode.Area),
       area: z
         .nativeEnum(AnalyticalAreaType)
-        .default(AnalyticalAreaType.ParliamentaryConstituency),
+        .default(AnalyticalAreaType.ParliamentaryConstituency_2024),
     })
     .default({}),
 })

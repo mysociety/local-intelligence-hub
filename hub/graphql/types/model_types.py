@@ -5,8 +5,6 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Union
 
-import numpy as np
-
 from django.contrib.gis.db.models import Union as GisUnion
 from django.contrib.gis.geos import Polygon
 from django.db.models import F, Q
@@ -15,6 +13,7 @@ from django.db.models.functions import Cast
 from django.http import HttpRequest
 
 import numexpr as ne
+import numpy as np
 import pandas as pd
 import procrastinate.contrib.django.models
 import strawberry
