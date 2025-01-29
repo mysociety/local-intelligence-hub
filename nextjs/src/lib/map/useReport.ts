@@ -169,7 +169,7 @@ export function refreshReportData(client: ApolloClient<any>) {
   // TODO: This should refresh only queries that are used by the report
   toastPromise(
     client.refetchQueries({
-      include: ['GetMapReport', 'MapReportLayerAnalytics'],
+      include: ['GetMapReport'],
     }),
     {
       loading: 'Refreshing report data...',

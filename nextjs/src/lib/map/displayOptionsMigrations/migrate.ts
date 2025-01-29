@@ -33,7 +33,8 @@ export function migrateDisplayOptions(
       const version = String(
         (unmigratedReport.displayOptions as any).version || 'FIRST'
       )
-      draft = MIGRATION_FOR_VERSION_LOOKUP[version]?.(unmigratedReport)
+      draft.displayOptions =
+        MIGRATION_FOR_VERSION_LOOKUP[version]?.(unmigratedReport).displayOptions
     }
   })
 }

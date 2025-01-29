@@ -131,8 +131,8 @@ const ReportProvider = ({ query, children }: ReportProviderProps) => {
     ) => void,
     retryCount: number = 0
   ) {
-    if (!report || !queriedReport || (!!retryCount && retryCount >= 3)) return
-    const updatedReport = produce(report, cb)
+    if (!queriedReport || (!!retryCount && retryCount >= 3)) return
+    const updatedReport = produce(report || queriedReport, cb)
     // Split out displayOptions and handle them separately
     const { displayOptions: newDisplayOptions, ...newReport } = updatedReport
     if (newReport) {
