@@ -45,7 +45,7 @@ export function MembersListPointMarkers({
 
       const handleMouseOver = (event: MapMouseEvent) => {
         const feature = event.features?.[0]
-        if (feature?.properties?.id) {
+        if (feature?.properties?.id && mapLayerConfig?.visible) {
           setSelectedSourceMarker(feature)
         }
       }
@@ -56,7 +56,7 @@ export function MembersListPointMarkers({
 
       const handleTouchStart = (event: mapboxgl.MapTouchEvent) => {
         const feature = event.features?.[0]
-        if (feature?.properties?.id) {
+        if (feature?.properties?.id && mapLayerConfig?.visible) {
           setSelectedSourceMarker(feature)
         }
       }
