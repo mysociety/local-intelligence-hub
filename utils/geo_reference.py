@@ -36,6 +36,7 @@ lih_to_postcodes_io_key_map = {
     "EER": AnalyticalAreaType.european_electoral_region,
     "CTRY": AnalyticalAreaType.country,
     "OA21": AnalyticalAreaType.output_area,
+    "PC": AnalyticalAreaType.postcode,
 }
 
 

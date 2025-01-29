@@ -53,6 +53,7 @@ import { useRouter } from 'next/navigation'
 import pluralize from 'pluralize'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import toSpaceCase from 'to-space-case'
 import { CREATE_MAP_REPORT } from '../../../reports/ReportList/CreateReportCard'
 import ExternalDataSourceBadCredentials from './ExternalDataSourceBadCredentials'
 import { ManageSourceSharing } from './ManageSourceSharing'
@@ -312,7 +313,7 @@ export default function InspectExternalDataSource({
             {dataType === DataSourceType.Member
               ? 'Membership list'
               : dataType
-                ? pluralize(dataType.toLowerCase())
+                ? pluralize(toSpaceCase(dataType.toLowerCase()))
                 : 'Data source'}
             <span>&nbsp;&#x2022;&nbsp;</span>
             {crmInfo?.name || crmType}
