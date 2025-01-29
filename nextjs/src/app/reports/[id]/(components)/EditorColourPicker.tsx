@@ -8,6 +8,7 @@ import { LucideChevronsUpDown } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { HexColorPicker } from 'react-colorful'
 import { EditorField } from './EditorField'
+import { DEFAULT_MARKER_COLOUR } from './MembersListPointMarkers'
 
 export function EditorColourPicker({
   label,
@@ -38,9 +39,27 @@ export function EditorColourPicker({
           />
         </PopoverTrigger>
         <PopoverContent>
-          <HexColorPicker color={value} onChange={setNewColor} />
+          <div className="flex flex-row gap-1 mb-1">
+            {PRESET_COLOURS.map((color) => (
+              <div
+                key={color}
+                className="rounded-md grow h-6 cursor-pointer"
+                style={{ background: color }}
+                onClick={() => setNewColor(color)}
+              />
+            ))}
+          </div>
+          <HexColorPicker
+            color={value}
+            onChange={setNewColor}
+            style={{
+              width: '100%',
+            }}
+          />
         </PopoverContent>
       </Popover>
     </EditorField>
   )
 }
+
+const PRESET_COLOURS = [DEFAULT_MARKER_COLOUR, '#FDE047', '#F87171', '#4ADE80']

@@ -163,9 +163,25 @@ export const mapLayerSchema = z.object({
     .string()
     .optional()
     .describe('Standard colour for markers, highlighting, and so on.'),
+  circleRadius: z
+    .number()
+    .min(1)
+    .max(30)
+    .default(6)
+    .optional()
+    .describe('Size of markers in pixels.'),
+  minZoom: z
+    .number()
+    .min(1)
+    .max(24)
+    .default(10)
+    .optional()
+    .describe('Minimum zoom level to show markers.'),
   markerSize: z.number().optional().describe('Size of markers in pixels.'),
   visible: z.boolean().default(true),
 })
+
+export type IMapLayer = z.infer<typeof mapLayerSchema>
 
 const mapOptionsSchema = z.object({
   choropleth: z

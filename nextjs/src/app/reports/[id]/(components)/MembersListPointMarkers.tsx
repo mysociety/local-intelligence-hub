@@ -1,29 +1,35 @@
 'use client'
 
+import { DataSourceType } from '@/__generated__/graphql'
 import { BACKEND_URL } from '@/env'
 import { selectedSourceMarkerAtom, useLoadedMap } from '@/lib/map'
+import { useReport } from '@/lib/map/useReport'
 import { useAtom } from 'jotai'
-import { MapMouseEvent, PaintSpecification } from 'mapbox-gl'
+import { MapMouseEvent } from 'mapbox-gl'
 import { useEffect } from 'react'
 import { Layer, Source } from 'react-map-gl'
+import { IMapLayer } from '../reportContext'
 import { PLACEHOLDER_LAYER_ID_MARKERS } from './MapView'
 import MarkerPopup from './MarkerPopup'
 export const DEFAULT_MARKER_COLOUR = '#678DE3'
 
 const MEMBERS_LOAD_ZOOM = 8
-const MIN_MEMBERS_DISPLAY_ZOOM = 10
+export const MIN_MEMBERS_DISPLAY_ZOOM = 10
 export const EXTERNAL_DATA_SOURCE_MAPBOX_SOURCE_ID_PREFIX =
   'mapped-external-data-source'
 
 export function MembersListPointMarkers({
   mapLayerId,
   externalDataSourceId,
-  mapboxPaint,
+  dataSourceType,
+  mapLayerConfig,
 }: {
   mapLayerId: string
   externalDataSourceId: string
-  mapboxPaint?: PaintSpecification
+  dataSourceType?: DataSourceType
+  mapLayerConfig?: IMapLayer
 }) {
+  const report = useReport()
   const mapbox = useLoadedMap()
   const [selectedSourceMarker, setSelectedSourceMarker] = useAtom(
     selectedSourceMarkerAtom
@@ -92,11 +98,23 @@ export function MembersListPointMarkers({
           source-layer={'generic_data'}
           type="circle"
           paint={{
-            'circle-radius': 8,
-            'circle-color': DEFAULT_MARKER_COLOUR,
-            ...(mapboxPaint || {}),
+            'circle-color': mapLayerConfig?.colour || DEFAULT_MARKER_COLOUR,
+            'circle-opacity': mapLayerConfig?.visible ? 1 : 0,
+            'circle-radius': mapLayerConfig?.circleRadius || 5,
           }}
-          minzoom={MIN_MEMBERS_DISPLAY_ZOOM}
+          minzoom={mapLayerConfig?.minZoom || MIN_MEMBERS_DISPLAY_ZOOM}
+        />
+        <Layer
+          beforeId={PLACEHOLDER_LAYER_ID_MARKERS}
+          id={`${mapboxLayerId}-icon`}
+          source={mapboxSourceId}
+          source-layer={'generic_data'}
+          type="symbol"
+          layout={{
+            'icon-image': dataSourceType,
+            'icon-size': (mapLayerConfig?.circleRadius || 5) / 24,
+          }}
+          minzoom={mapLayerConfig?.minZoom || MIN_MEMBERS_DISPLAY_ZOOM}
         />
       </Source>
       <MarkerPopup />

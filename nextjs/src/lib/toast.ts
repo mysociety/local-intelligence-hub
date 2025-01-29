@@ -7,14 +7,17 @@ type ToastMessage = {
 export async function toastPromise<T>(
   promise: Promise<T>,
   options: {
-    loading?: string | ToastMessage
-    success?: string | ToastMessage | ((d: T) => string | ToastMessage)
-    error?: string | ToastMessage | ((e: any) => string | ToastMessage)
+    loading?: string | ToastMessage | false
+    success?: string | ToastMessage | ((d: T) => string | ToastMessage | false)
+    error?: string | ToastMessage | ((e: any) => string | ToastMessage | false)
   }
 ) {
   return new Promise<T>(async (resolve, reject) => {
     let id: any
-    if (typeof options.loading === 'string') {
+    if (typeof options.loading === 'boolean' && !options.loading) {
+      // Do nothing
+      // toast.dismiss(id)
+    } else if (typeof options.loading === 'string') {
       id = toast.loading(options.loading)
     } else {
       id = toast.loading(options.loading?.title || 'Loading')
@@ -28,7 +31,10 @@ export async function toastPromise<T>(
       if (typeof success === 'string') {
         toast.success(success, { id })
       } else {
-        if (!success) {
+        if (typeof success === 'boolean' && !success) {
+          // Do nothing
+          toast.dismiss(id)
+        } else if (!success) {
           toast.success('Success', { id })
         } else {
           const { title, ...rest } = success
@@ -39,7 +45,10 @@ export async function toastPromise<T>(
     } catch (e) {
       const error =
         typeof options.error === 'function' ? options.error(e) : options.error
-      if (typeof error === 'string') {
+      if (typeof error === 'boolean' && !error) {
+        // Do nothing
+        toast.dismiss(id)
+      } else if (typeof error === 'string') {
         toast.error(error, { id })
       } else {
         if (!error) {

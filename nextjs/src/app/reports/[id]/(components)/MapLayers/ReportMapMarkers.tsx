@@ -4,10 +4,7 @@ import { useReport } from '@/lib/map/useReport'
 import { useView } from '@/lib/map/useView'
 import React from 'react'
 import { ViewType } from '../../reportContext'
-import {
-  DEFAULT_MARKER_COLOUR,
-  MembersListPointMarkers,
-} from '../MembersListPointMarkers'
+import { MembersListPointMarkers } from '../MembersListPointMarkers'
 
 const ReportMapMarkers: React.FC = () => {
   const report = useReport()
@@ -25,17 +22,18 @@ const ReportMapMarkers: React.FC = () => {
 
   return (
     <div>
-      {memberListSources.map((mapLayer) => (
-        <MembersListPointMarkers
-          key={mapLayer.id}
-          mapLayerId={mapLayer.id}
-          externalDataSourceId={mapLayer.sourceId!}
-          mapboxPaint={{
-            'circle-color': mapLayer.colour || DEFAULT_MARKER_COLOUR,
-            'circle-opacity': mapLayer.visible ? 1 : 0,
-          }}
-        />
-      ))}
+      {memberListSources.map((mapLayer) => {
+        const layer = report.getLayer(mapLayer.layerId)
+        return (
+          <MembersListPointMarkers
+            key={mapLayer.id}
+            mapLayerId={mapLayer.id}
+            externalDataSourceId={mapLayer.sourceId!}
+            dataSourceType={layer?.sourceData.dataType}
+            mapLayerConfig={mapLayer}
+          />
+        )
+      })}
     </div>
   )
 }

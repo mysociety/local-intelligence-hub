@@ -20,7 +20,7 @@ import { ApolloClient, QueryResult, useApolloClient } from '@apollo/client'
 import jsonpatch from 'fast-json-patch'
 import { WritableDraft, produce } from 'immer'
 import { useSetAtom } from 'jotai'
-import { capitalize, isEqual } from 'lodash'
+import { isEqual } from 'lodash'
 import { ReactNode, useEffect, useRef } from 'react'
 import toSpaceCase from 'to-space-case'
 import { PATCH_MAP_REPORT, UPDATE_MAP_REPORT } from '../gql_queries'
@@ -234,24 +234,25 @@ const ReportProvider = ({ query, children }: ReportProviderProps) => {
         },
       })
       return toastPromise(update, {
-        loading: 'Saving...',
+        loading: false,
         success: () => {
-          return {
-            title: 'Report saved',
-            description:
-              // Print out JSON patch changes in a human readable format, using spaceCase
-              patch
-                .map((p) => {
-                  const { op, path } = p
-                  const changedDataPath = path.split('/').map(toSpaceCase).pop()
-                  const humanReadableOp = op
-                    .replace('replace', 'Set')
-                    .replace('add', 'Set')
-                    .replace('remove', 'Reset')
-                  return `${capitalize(humanReadableOp)} ${changedDataPath}`
-                })
-                .join(', ') || 'No changes',
-          }
+          return false
+          // return {
+          //   title: 'Report saved',
+          //   description:
+          //     // Print out JSON patch changes in a human readable format, using spaceCase
+          //     patch
+          //       .map((p) => {
+          //         const { op, path } = p
+          //         const changedDataPath = path.split('/').map(toSpaceCase).pop()
+          //         const humanReadableOp = op
+          //           .replace('replace', 'Set')
+          //           .replace('add', 'Set')
+          //           .replace('remove', 'Reset')
+          //         return `${capitalize(humanReadableOp)} ${changedDataPath}`
+          //       })
+          //       .join(', ') || 'No changes',
+          // }
         },
         error: `Couldn't save report`,
       })
