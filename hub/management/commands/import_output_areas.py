@@ -88,7 +88,7 @@ class Command(BaseCommand):
             # Transform the geometry
             polygon.transform(transform)
 
-            geom["geometry"] = polygon.json
+            geom["geometry"] = json.loads(polygon.json)
 
             a.geometry = json.dumps(geom)
             a.polygon = polygon

@@ -584,8 +584,11 @@ class Area:
     async def sample_postcode(
         self, info: Info[HubDataLoaderContext]
     ) -> Optional[PostcodesIOResult]:
-        return await get_postcode_data_for_gss(self.gss)
-        # return await info.context.area_coordinate_loader.load(self.point)
+        try:
+            return await get_postcode_data_for_gss(self.gss)
+        except Exception as e:
+            logger.error(f"Failed to get sample postcode for gss {self.gss}: {e}")
+            return None
 
 
 @strawberry.type
@@ -749,6 +752,7 @@ postcodeIOKeyAreaTypeLookup = {
     AnalyticalAreaType.lsoa: AreaTypeFilter(lih_area_type="LSOA"),
     AnalyticalAreaType.output_area: AreaTypeFilter(lih_area_type="OA21"),
     AnalyticalAreaType.postcode: AreaTypeFilter(lih_area_type="PC"),
+    AnalyticalAreaType.postcode_area: AreaTypeFilter(lih_area_type="PCA"),
 }
 
 

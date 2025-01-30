@@ -11,6 +11,7 @@ export enum BoundaryType {
   EUROPEAN_ELECTORAL_REGIONS = 'european_electoral_region',
   LOCAL_AUTHORITIES = 'admin_district',
   CENSUS_OUTPUT_AREAS = 'census_output_areas',
+  POSTCODES = 'postcodes',
 }
 
 export function dbAreaTypeToBoundaryType(id: string): BoundaryType | undefined {
@@ -28,6 +29,12 @@ export function dbAreaTypeToBoundaryType(id: string): BoundaryType | undefined {
       return BoundaryType.WARDS
     case 'EER':
       return BoundaryType.EUROPEAN_ELECTORAL_REGIONS
+    // All postcode area types should become postcode boundaries
+    case 'PC':
+    case 'PCS':
+    case 'PCD':
+    case 'PCA':
+      return BoundaryType.POSTCODES
     // All census area types should become census output areas
     case 'MSOA':
     case 'LSOA':
@@ -165,6 +172,34 @@ const uk: PoliticalTileset[] = [
         maxZoom: 14,
         useBoundsInDataQuery: true,
       },
+    ],
+  },
+  {
+    label: 'Postcodes',
+    boundaryType: BoundaryType.POSTCODES,
+    tilesets: [
+      {
+        analyticalAreaType: AnalyticalAreaType.PostcodeArea,
+        name: 'Postcode Areas',
+        singular: 'Postcode Area',
+        mapboxSourceId: 'commonknowledge.postcode_areas',
+        sourceLayerId: 'postcode_areas',
+        promoteId: 'code',
+        labelId: 'name',
+        minZoom: 0,
+        maxZoom: 10,
+      },
+      {
+        analyticalAreaType: AnalyticalAreaType.PostcodeDistrict,
+        name: 'Postcode Districts',
+        singular: 'Postcode District',
+        mapboxSourceId: 'commonknowledge.postcode_districts',
+        sourceLayerId: 'postcode_districts',
+        promoteId: 'code',
+        labelId: 'name',
+        minZoom: 10,
+        maxZoom: 13,
+      },
       {
         analyticalAreaType: AnalyticalAreaType.Postcode,
         name: 'Postcodes',
@@ -173,7 +208,7 @@ const uk: PoliticalTileset[] = [
         sourceLayerId: 'postcodes',
         promoteId: 'POSTCODE',
         labelId: 'POSTCODE',
-        minZoom: 14,
+        minZoom: 13,
         maxZoom: MAX_VALID_ZOOM,
         useBoundsInDataQuery: true,
       },

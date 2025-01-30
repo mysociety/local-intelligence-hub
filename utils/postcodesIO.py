@@ -88,6 +88,7 @@ async def enrich_postcodes_io_result(
     1. Add legacy `parliamentary_constituency_2024` key
     2. Add EER code (not in postcodes.io)
     3. Add output_area (not in postcodes.io)
+    4. Add postcode_area (not in postcodes.io)
     """
     if not result:
         return None
@@ -115,11 +116,12 @@ async def enrich_postcodes_io_result(
         ("OA21", "output_area"),
         ("MSOA", "msoa"),
         ("LSOA", "lsoa"),
+        ("PCA", "postcode_area"),
+        ("PCD", "postcode_district"),
     ]:
         output_area = await Area.objects.filter(
             area_type__code=area_code, polygon__contains=point
         ).afirst()
-
         if output_area:
             result[result_key] = output_area.name
             result["codes"][result_key] = output_area.gss
