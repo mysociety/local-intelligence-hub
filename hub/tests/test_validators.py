@@ -1,4 +1,3 @@
-import os
 from unittest.mock import Mock
 
 from django.core.exceptions import ValidationError

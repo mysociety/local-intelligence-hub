@@ -1,4 +1,3 @@
-import itertools
 import locale
 import logging
 from datetime import datetime

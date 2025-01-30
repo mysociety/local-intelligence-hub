@@ -9,7 +9,6 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Self, Type, TypedDict, Union
 from urllib.parse import urlencode, urljoin
 
-from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractBaseUser
