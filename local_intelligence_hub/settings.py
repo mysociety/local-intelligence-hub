@@ -574,6 +574,11 @@ if ENVIRONMENT == "production":
 
 
 MINIO_STORAGE_ENDPOINT = env("MINIO_STORAGE_ENDPOINT")
+MINIO_ACCESS_KEY = env("MINIO_STORAGE_ACCESS_KEY")
+MINIO_SECRET_KEY = env("MINIO_STORAGE_SECRET_KEY")
+MINIO_STORAGE_MEDIA_BUCKET_NAME = env("MINIO_STORAGE_MEDIA_BUCKET_NAME")
+MINIO_STATIC_FILES_BUCKET = env("MINIO_STORAGE_STATIC_BUCKET_NAME")
+
 if MINIO_STORAGE_ENDPOINT is not False:
     INSTALLED_APPS += [
         "django_minio_backend.apps.DjangoMinioBackendConfig",
@@ -592,14 +597,11 @@ if MINIO_STORAGE_ENDPOINT is not False:
     # MINIO_EXTERNAL_ENDPOINT = "external-minio.your-company.co.uk"  # Default is same as MINIO_ENDPOINT
     # MINIO_EXTERNAL_ENDPOINT_USE_HTTPS = True  # Default is same as MINIO_USE_HTTPS
     # MINIO_REGION = 'us-east-1'  # Default is set to None
-    MINIO_ACCESS_KEY = env("MINIO_STORAGE_ACCESS_KEY")
-    MINIO_SECRET_KEY = env("MINIO_STORAGE_SECRET_KEY")
     MINIO_USE_HTTPS = True
     MINIO_URL_EXPIRY_HOURS = timedelta(
         days=1
     )  # Default is 7 days (longest) if not defined
     MINIO_CONSISTENCY_CHECK_ON_START = True
-    MINIO_STORAGE_MEDIA_BUCKET_NAME = env("MINIO_STORAGE_MEDIA_BUCKET_NAME")
     MINIO_PRIVATE_BUCKETS = [
         MINIO_STORAGE_MEDIA_BUCKET_NAME,
     ]
@@ -609,10 +611,9 @@ if MINIO_STORAGE_ENDPOINT is not False:
         # MINIO_STORAGE_PUBLIC_MEDIA_BUCKET_NAME
     ]
     MINIO_POLICY_HOOKS: List[Tuple[str, dict]] = []
-    MINIO_MEDIA_FILES_BUCKET = MINIO_STORAGE_MEDIA_BUCKET_NAME  # replacement for MEDIA_ROOT
-    MINIO_STATIC_FILES_BUCKET = env(
-        "MINIO_STORAGE_STATIC_BUCKET_NAME"
-    )  # replacement for STATIC_ROOT
+    MINIO_MEDIA_FILES_BUCKET = (
+        MINIO_STORAGE_MEDIA_BUCKET_NAME  # replacement for MEDIA_ROOT
+    )
     MINIO_BUCKET_CHECK_ON_SAVE = (
         True  # Default: True // Creates bucket if missing, then save
     )

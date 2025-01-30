@@ -2913,13 +2913,33 @@ class UploadedCSVSource(ExternalDataSource):
 
     @cached_property
     def df(self):
-        # file_text = io.StringIO(file.read().decode('utf-8')), delimiter=self.delimiter)
-        return pd.read_csv(
-            self.spreadsheet_file.path,
-            sep=self.delimiter,
-            # Read in chunks
-            low_memory=True,
-        ).set_index(self.id_field, drop=False)
+        df = None
+        if settings.MINIO_STORAGE_ENDPOINT:
+            # file_text = io.StringIO(file.read().decode('utf-8')), delimiter=self.delimiter)
+            s3_file_location = f"s3://{settings.MINIO_STORAGE_MEDIA_BUCKET_NAME}/{self.spreadsheet_file.name}"
+            df = pd.read_csv(
+                s3_file_location,
+                storage_options={
+                    "key": settings.MINIO_ACCESS_KEY,
+                    "secret": settings.MINIO_SECRET_KEY,
+                    "client_kwargs": {
+                        "endpoint_url": f"https://{settings.MINIO_ENDPOINT}"
+                    },
+                },
+                sep=self.delimiter,
+                # Read in chunks
+                low_memory=True,
+            )
+        else:
+            df = pd.read_csv(
+                self.spreadsheet_file.path,
+                sep=self.delimiter,
+                # Read in chunks
+                low_memory=True,
+            )
+        if df is None:
+            raise ValueError("Could not load CSV file")
+        return df.set_index(self.id_field, drop=False)
 
     def get_columns_from_file(self):
         return self.df.columns.tolist()
