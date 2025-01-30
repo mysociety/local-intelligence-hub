@@ -99,14 +99,7 @@ export type ActionNetworkSource = Analytics & {
   importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
-  importedDataCountByConstituency: Array<GroupedDataCount>;
-  importedDataCountByConstituency2024: Array<GroupedDataCount>;
-  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
-  importedDataCountByCouncil: Array<GroupedDataCount>;
-  importedDataCountByWard: Array<GroupedDataCount>;
   importedDataCountForArea?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
   importedDataCountLocated: Scalars['Int']['output'];
   importedDataCountOfAreas: Scalars['Int']['output'];
   importedDataCountUnlocated: Scalars['Int']['output'];
@@ -158,26 +151,8 @@ export type ActionNetworkSourceImportedDataCountByAreaArgs = {
 
 
 /** An Action Network member list. */
-export type ActionNetworkSourceImportedDataCountByConstituencyBySourceArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** An Action Network member list. */
 export type ActionNetworkSourceImportedDataCountForAreaArgs = {
   analyticalAreaType: AnalyticalAreaType;
-  gss: Scalars['String']['input'];
-};
-
-
-/** An Action Network member list. */
-export type ActionNetworkSourceImportedDataCountForConstituencyArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** An Action Network member list. */
-export type ActionNetworkSourceImportedDataCountForConstituency2024Args = {
   gss: Scalars['String']['input'];
 };
 
@@ -270,14 +245,7 @@ export type AirtableSource = Analytics & {
   importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
-  importedDataCountByConstituency: Array<GroupedDataCount>;
-  importedDataCountByConstituency2024: Array<GroupedDataCount>;
-  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
-  importedDataCountByCouncil: Array<GroupedDataCount>;
-  importedDataCountByWard: Array<GroupedDataCount>;
   importedDataCountForArea?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
   importedDataCountLocated: Scalars['Int']['output'];
   importedDataCountOfAreas: Scalars['Int']['output'];
   importedDataCountUnlocated: Scalars['Int']['output'];
@@ -330,26 +298,8 @@ export type AirtableSourceImportedDataCountByAreaArgs = {
 
 
 /** An Airtable table. */
-export type AirtableSourceImportedDataCountByConstituencyBySourceArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** An Airtable table. */
 export type AirtableSourceImportedDataCountForAreaArgs = {
   analyticalAreaType: AnalyticalAreaType;
-  gss: Scalars['String']['input'];
-};
-
-
-/** An Airtable table. */
-export type AirtableSourceImportedDataCountForConstituencyArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** An Airtable table. */
-export type AirtableSourceImportedDataCountForConstituency2024Args = {
   gss: Scalars['String']['input'];
 };
 
@@ -427,14 +377,7 @@ export type Analytics = {
   importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
-  importedDataCountByConstituency: Array<GroupedDataCount>;
-  importedDataCountByConstituency2024: Array<GroupedDataCount>;
-  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
-  importedDataCountByCouncil: Array<GroupedDataCount>;
-  importedDataCountByWard: Array<GroupedDataCount>;
   importedDataCountForArea?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
   importedDataCountLocated: Scalars['Int']['output'];
   importedDataCountOfAreas: Scalars['Int']['output'];
   importedDataCountUnlocated: Scalars['Int']['output'];
@@ -454,23 +397,8 @@ export type AnalyticsImportedDataCountByAreaArgs = {
 };
 
 
-export type AnalyticsImportedDataCountByConstituencyBySourceArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
 export type AnalyticsImportedDataCountForAreaArgs = {
   analyticalAreaType: AnalyticalAreaType;
-  gss: Scalars['String']['input'];
-};
-
-
-export type AnalyticsImportedDataCountForConstituencyArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-export type AnalyticsImportedDataCountForConstituency2024Args = {
   gss: Scalars['String']['input'];
 };
 
@@ -874,14 +802,7 @@ export type EditableGoogleSheetsSource = Analytics & {
   importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
-  importedDataCountByConstituency: Array<GroupedDataCount>;
-  importedDataCountByConstituency2024: Array<GroupedDataCount>;
-  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
-  importedDataCountByCouncil: Array<GroupedDataCount>;
-  importedDataCountByWard: Array<GroupedDataCount>;
   importedDataCountForArea?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
   importedDataCountLocated: Scalars['Int']['output'];
   importedDataCountOfAreas: Scalars['Int']['output'];
   importedDataCountUnlocated: Scalars['Int']['output'];
@@ -935,26 +856,8 @@ export type EditableGoogleSheetsSourceImportedDataCountByAreaArgs = {
 
 
 /** An editable Google Sheet */
-export type EditableGoogleSheetsSourceImportedDataCountByConstituencyBySourceArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** An editable Google Sheet */
 export type EditableGoogleSheetsSourceImportedDataCountForAreaArgs = {
   analyticalAreaType: AnalyticalAreaType;
-  gss: Scalars['String']['input'];
-};
-
-
-/** An editable Google Sheet */
-export type EditableGoogleSheetsSourceImportedDataCountForConstituencyArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** An editable Google Sheet */
-export type EditableGoogleSheetsSourceImportedDataCountForConstituency2024Args = {
   gss: Scalars['String']['input'];
 };
 
@@ -1141,14 +1044,7 @@ export type ExternalDataSource = Analytics & {
   importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
-  importedDataCountByConstituency: Array<GroupedDataCount>;
-  importedDataCountByConstituency2024: Array<GroupedDataCount>;
-  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
-  importedDataCountByCouncil: Array<GroupedDataCount>;
-  importedDataCountByWard: Array<GroupedDataCount>;
   importedDataCountForArea?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
   importedDataCountLocated: Scalars['Int']['output'];
   importedDataCountOfAreas: Scalars['Int']['output'];
   importedDataCountUnlocated: Scalars['Int']['output'];
@@ -1212,38 +1108,8 @@ export type ExternalDataSourceImportedDataCountByAreaArgs = {
  * E.g. Google Sheet or an Action Network table.
  * This class is to be subclassed by specific data source types.
  */
-export type ExternalDataSourceImportedDataCountByConstituencyBySourceArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/**
- * A third-party data source that can be read and optionally written back to.
- * E.g. Google Sheet or an Action Network table.
- * This class is to be subclassed by specific data source types.
- */
 export type ExternalDataSourceImportedDataCountForAreaArgs = {
   analyticalAreaType: AnalyticalAreaType;
-  gss: Scalars['String']['input'];
-};
-
-
-/**
- * A third-party data source that can be read and optionally written back to.
- * E.g. Google Sheet or an Action Network table.
- * This class is to be subclassed by specific data source types.
- */
-export type ExternalDataSourceImportedDataCountForConstituencyArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/**
- * A third-party data source that can be read and optionally written back to.
- * E.g. Google Sheet or an Action Network table.
- * This class is to be subclassed by specific data source types.
- */
-export type ExternalDataSourceImportedDataCountForConstituency2024Args = {
   gss: Scalars['String']['input'];
 };
 
@@ -1432,20 +1298,6 @@ export type GroupedDataCount = {
   gssArea?: Maybe<Area>;
   label?: Maybe<Scalars['String']['output']>;
   row?: Maybe<Scalars['JSON']['output']>;
-};
-
-export type GroupedDataCountWithBreakdown = {
-  __typename?: 'GroupedDataCountWithBreakdown';
-  areaData?: Maybe<Area>;
-  areaTypeFilter?: Maybe<AreaTypeFilter>;
-  columns?: Maybe<Array<Scalars['String']['output']>>;
-  count: Scalars['Float']['output'];
-  formattedCount?: Maybe<Scalars['String']['output']>;
-  gss?: Maybe<Scalars['String']['output']>;
-  gssArea?: Maybe<Area>;
-  label?: Maybe<Scalars['String']['output']>;
-  row?: Maybe<Scalars['JSON']['output']>;
-  sources: Array<GroupedDataCount>;
 };
 
 /**
@@ -1673,14 +1525,7 @@ export type MailchimpSource = Analytics & {
   importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
-  importedDataCountByConstituency: Array<GroupedDataCount>;
-  importedDataCountByConstituency2024: Array<GroupedDataCount>;
-  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
-  importedDataCountByCouncil: Array<GroupedDataCount>;
-  importedDataCountByWard: Array<GroupedDataCount>;
   importedDataCountForArea?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
   importedDataCountLocated: Scalars['Int']['output'];
   importedDataCountOfAreas: Scalars['Int']['output'];
   importedDataCountUnlocated: Scalars['Int']['output'];
@@ -1734,26 +1579,8 @@ export type MailchimpSourceImportedDataCountByAreaArgs = {
 
 
 /** A Mailchimp list. */
-export type MailchimpSourceImportedDataCountByConstituencyBySourceArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** A Mailchimp list. */
 export type MailchimpSourceImportedDataCountForAreaArgs = {
   analyticalAreaType: AnalyticalAreaType;
-  gss: Scalars['String']['input'];
-};
-
-
-/** A Mailchimp list. */
-export type MailchimpSourceImportedDataCountForConstituencyArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** A Mailchimp list. */
-export type MailchimpSourceImportedDataCountForConstituency2024Args = {
   gss: Scalars['String']['input'];
 };
 
@@ -2735,14 +2562,7 @@ export type SharedDataSource = Analytics & {
   importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
-  importedDataCountByConstituency: Array<GroupedDataCount>;
-  importedDataCountByConstituency2024: Array<GroupedDataCount>;
-  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
-  importedDataCountByCouncil: Array<GroupedDataCount>;
-  importedDataCountByWard: Array<GroupedDataCount>;
   importedDataCountForArea?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
   importedDataCountLocated: Scalars['Int']['output'];
   importedDataCountOfAreas: Scalars['Int']['output'];
   importedDataCountUnlocated: Scalars['Int']['output'];
@@ -2797,38 +2617,8 @@ export type SharedDataSourceImportedDataCountByAreaArgs = {
  * E.g. Google Sheet or an Action Network table.
  * This class is to be subclassed by specific data source types.
  */
-export type SharedDataSourceImportedDataCountByConstituencyBySourceArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/**
- * A third-party data source that can be read and optionally written back to.
- * E.g. Google Sheet or an Action Network table.
- * This class is to be subclassed by specific data source types.
- */
 export type SharedDataSourceImportedDataCountForAreaArgs = {
   analyticalAreaType: AnalyticalAreaType;
-  gss: Scalars['String']['input'];
-};
-
-
-/**
- * A third-party data source that can be read and optionally written back to.
- * E.g. Google Sheet or an Action Network table.
- * This class is to be subclassed by specific data source types.
- */
-export type SharedDataSourceImportedDataCountForConstituencyArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/**
- * A third-party data source that can be read and optionally written back to.
- * E.g. Google Sheet or an Action Network table.
- * This class is to be subclassed by specific data source types.
- */
-export type SharedDataSourceImportedDataCountForConstituency2024Args = {
   gss: Scalars['String']['input'];
 };
 
@@ -2931,14 +2721,7 @@ export type TicketTailorSource = Analytics & {
   importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
-  importedDataCountByConstituency: Array<GroupedDataCount>;
-  importedDataCountByConstituency2024: Array<GroupedDataCount>;
-  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
-  importedDataCountByCouncil: Array<GroupedDataCount>;
-  importedDataCountByWard: Array<GroupedDataCount>;
   importedDataCountForArea?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
   importedDataCountLocated: Scalars['Int']['output'];
   importedDataCountOfAreas: Scalars['Int']['output'];
   importedDataCountUnlocated: Scalars['Int']['output'];
@@ -2990,26 +2773,8 @@ export type TicketTailorSourceImportedDataCountByAreaArgs = {
 
 
 /** Ticket Tailor box office */
-export type TicketTailorSourceImportedDataCountByConstituencyBySourceArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** Ticket Tailor box office */
 export type TicketTailorSourceImportedDataCountForAreaArgs = {
   analyticalAreaType: AnalyticalAreaType;
-  gss: Scalars['String']['input'];
-};
-
-
-/** Ticket Tailor box office */
-export type TicketTailorSourceImportedDataCountForConstituencyArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** Ticket Tailor box office */
-export type TicketTailorSourceImportedDataCountForConstituency2024Args = {
   gss: Scalars['String']['input'];
 };
 
