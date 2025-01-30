@@ -1128,10 +1128,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                                     "properties": {
                                         "lih_area_type__code": {
                                             "oneOf": [
-                                                { "type": "string"},
+                                                {"type": "string"},
                                                 {
                                                     "type": "array",
-                                                    "items": { "type": "string" },
+                                                    "items": {"type": "string"},
                                                 },
                                             ]
                                         }
@@ -1142,10 +1142,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                                     "properties": {
                                         "mapit_type": {
                                             "oneOf": [
-                                                { "type": "string" },
+                                                {"type": "string"},
                                                 {
                                                     "type": "array",
-                                                    "items": { "type": "string" },
+                                                    "items": {"type": "string"},
                                                 },
                                             ]
                                         }
@@ -1153,7 +1153,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                                 },
                             ]
                         },
-                    }
+                    },
                 },
             },
         },
