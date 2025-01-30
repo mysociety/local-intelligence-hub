@@ -578,7 +578,6 @@ MINIO_PRIVATE_BUCKET = env("MINIO_PRIVATE_BUCKET")
 MINIO_PUBLIC_BUCKET = env("MINIO_PUBLIC_BUCKET")
 if MINIO_STORAGE_ENDPOINT is not False:
     INSTALLED_APPS += [
-        "django_minio_backend",
         "django_minio_backend.apps.DjangoMinioBackendConfig",
     ]
     DEFAULT_FILE_STORAGE = "django_minio_backend.models.MinioBackend"
