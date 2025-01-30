@@ -1122,17 +1122,38 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         "type": {"type": "string"},
                         "value": {"type": "string"},
                         "metadata": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": {
-                                "oneOf": [
-                                    {"type": "string"},
-                                    {"type": "array", "items": {"type": "string"}},
-                                ]
-                            },
+                            "oneOf": [
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "lih_area_type__code": {
+                                            "oneOf": [
+                                                { "type": "string"},
+                                                {
+                                                    "type": "array",
+                                                    "items": { "type": "string" },
+                                                },
+                                            ]
+                                        }
+                                    },
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "mapit_type": {
+                                            "oneOf": [
+                                                { "type": "string" },
+                                                {
+                                                    "type": "array",
+                                                    "items": { "type": "string" },
+                                                },
+                                            ]
+                                        }
+                                    },
+                                },
+                            ]
                         },
-                    },
-                    "additionalProperties": True,
+                    }
                 },
             },
         },
