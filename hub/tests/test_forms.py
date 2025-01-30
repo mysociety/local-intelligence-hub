@@ -21,7 +21,9 @@ class TestSafeFileField(TestCase):
 
         f = get_uploaded_file(get_extras_file("sample.jpg"))
 
-        with self.assertRaisesRegex(ValidationError, "File extension “jpg” is not allowed"):
+        with self.assertRaisesRegex(
+            ValidationError, "File extension “jpg” is not allowed"
+        ):
             field.clean(f)
 
     def test_invalid_content_type(self):

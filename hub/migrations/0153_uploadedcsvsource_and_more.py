@@ -4,6 +4,7 @@ import django.contrib.postgres.fields
 from django.db import migrations, models
 import django.db.models.deletion
 import hub.restricted_file_field.fields
+import django_jsonform.models.fields
 
 
 class Migration(migrations.Migration):
@@ -50,12 +51,28 @@ class Migration(migrations.Migration):
             },
             bases=("hub.externaldatasource",),
         ),
-        migrations.RenameModel(
-            old_name="LocalJSONSource",
-            new_name="DatabaseJSONSource",
-        ),
-        migrations.AlterModelOptions(
-            name="databasejsonsource",
+        # Disable due to bugs
+        migrations.CreateModel(
+            name="DatabaseJSONSource",
+            fields=[
+                (
+                    "externaldatasource_ptr",
+                    models.OneToOneField(
+                        auto_created=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        parent_link=True,
+                        primary_key=True,
+                        serialize=False,
+                        to="hub.externaldatasource",
+                    ),
+                ),
+                (
+                    "data",
+                    django_jsonform.models.fields.JSONField(blank=True, default=list),
+                ),
+                ("id_field", models.CharField(default="id", max_length=250)),
+            ],
             options={"verbose_name": "Database JSON source"},
+            bases=("hub.externaldatasource",),
         ),
     ]
