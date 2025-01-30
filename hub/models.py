@@ -494,7 +494,7 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
         "type": "array",
         "items": {
             "type": "dict",
-            "keys": {"title": {"type": "string"}, "shader": {"type": "string"}},
+            "properties": {"title": {"type": "string"}, "shader": {"type": "string"}},
         },
     }
 
@@ -783,7 +783,7 @@ class GenericData(CommonData):
     end_time = models.DateTimeField(blank=True, null=True)
     public_url = models.URLField(max_length=2000, blank=True, null=True)
     social_url = models.URLField(max_length=2000, blank=True, null=True)
-    geocode_data = JSONField(blank=True, null=True)
+    geocode_data = models.JSONField(blank=True, null=True)
     geocoder = models.CharField(max_length=1000, blank=True, null=True)
     address = models.CharField(max_length=1000, blank=True, null=True)
     title = models.CharField(max_length=1000, blank=True, null=True)
@@ -1101,7 +1101,46 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         AREA = "AREA", "Area"
         OUTPUT_AREA = "OUTPUT_AREA", "Census output area"
 
-    geocoding_config = JSONField(blank=False, null=False, default=dict)
+    GEOCODING_CONFIG_SCHEMA = {
+        "type": "object",
+        "properties": {
+            "type": {
+                "type": "string",
+                "enum": [
+                    GeographyTypes.ADDRESS,
+                    GeographyTypes.POSTCODE,
+                    GeographyTypes.COORDINATES,
+                    GeographyTypes.AREA,
+                ],
+                "default": GeographyTypes.AREA,
+            },
+            "components": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "field": {"type": "string"},
+                        "type": {"type": "string"},
+                        "value": {"type": "string"},
+                        "metadata": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": {
+                                "oneOf": [
+                                    {"type": "string"},
+                                    {"type": "array", "items": {"type": "string"}},
+                                ]
+                            },
+                        },
+                    },
+                    "additionalProperties": True,
+                },
+            },
+        },
+    }
+    geocoding_config = JSONField(
+        blank=False, null=False, default=dict, schema=GEOCODING_CONFIG_SCHEMA
+    )
 
     def uses_valid_geocoding_config(self):
         # TODO: Could replace this with a Pydantic schema or something
@@ -1227,10 +1266,21 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         external_id: Optional[str]
         editable: Optional[bool] = True
 
-    fields = JSONField(blank=True, null=True, default=list)
     # Auto-updates
-
-    update_mapping = JSONField(blank=True, null=True, default=list)
+    UPDATE_MAPPING_SCHEMA = {
+        "type": "array",
+        "items": {
+            "type": "dict",
+            "properties": {
+                "source": {"type": "string"},
+                "source_path": {"type": "string"},
+                "destination_column": {"type": "string"},
+            },
+        },
+    }
+    update_mapping = JSONField(
+        blank=True, null=True, default=list, schema=UPDATE_MAPPING_SCHEMA
+    )
     auto_update_enabled = models.BooleanField(default=False, blank=True)
     # Auto-import
     auto_import_enabled = models.BooleanField(default=False, blank=True)
@@ -1509,7 +1559,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         Get the fields for the data source.
         """
-        return ensure_list(self.fields)
+        raise NotImplementedError(
+            "Field definitions not implemented for this data source."
+        )
 
     def remote_name(self) -> Optional[str]:
         """
@@ -2810,7 +2862,7 @@ class UploadedCSVSource(ExternalDataSource):
     A media URL
     """
 
-    crm_type = "UploadedCSV"
+    crm_type = "uploadedcsv"
     has_webhooks = False
     automated_webhooks = False
     introspect_fields = True
@@ -3193,16 +3245,11 @@ class Report(PolymorphicModel):
         Organisation, on_delete=models.CASCADE, related_name="reports"
     )
     name = models.CharField(max_length=250)
-    slug = models.SlugField(max_length=250, unique=True)
+    slug = models.SlugField(max_length=250, unique=True, default=uuid.uuid4)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(auto_now=True)
     public = models.BooleanField(default=False, blank=True)
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
