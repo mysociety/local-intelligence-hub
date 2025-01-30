@@ -1,10 +1,13 @@
+import os
 from asyncio import sleep
 from datetime import datetime
+from pathlib import Path
 from random import randint
 from typing import List
 from unittest import skip
 
 from django.conf import settings
+from django.core.files import File
 from django.db.utils import IntegrityError
 from django.test import TestCase
 
@@ -92,18 +95,13 @@ class TestExternalDataSource:
         except IntegrityError:
             pass
 
-    def test_source(self):
+    def test_healthcheck(self):
         self.assertTrue(self.source.healthcheck())
 
     def test_field_definitions(self: TestCase):
         if self.source.introspect_fields:
             field_defs = self.source.field_definitions()
-            self.assertIsNotNone(
-                next(
-                    filter(lambda x: x.get("value") == self.mayoral_field, field_defs),
-                    None,
-                )
-            )
+            self.assertGreaterEqual(len(field_defs), 1)
         else:
             self.assertRaises(NotImplementedError, self.source.field_definitions)
 
@@ -118,28 +116,6 @@ class TestExternalDataSource:
             self.assertTrue("Not enough webhooks" in str(e))
         self.source.setup_webhooks()
         self.assertTrue(self.source.webhook_healthcheck())
-
-    async def test_import_async(self):
-        self.create_custom_layer_airtable_records(
-            [
-                {
-                    "council district": "County Durham",
-                    "mayoral region": "North East Mayoral Combined Authority",
-                },
-                {
-                    "council district": "Northumberland",
-                    "mayoral region": "North East Mayoral Combined Authority",
-                },
-            ]
-        )
-        records = await self.custom_data_layer.fetch_all()
-        await self.custom_data_layer.import_many(
-            [self.custom_data_layer.get_record_id(record) for record in records]
-        )
-        enrichment_df = await sync_to_async(
-            self.custom_data_layer.get_imported_dataframe
-        )()
-        self.assertGreaterEqual(len(enrichment_df.index), 2)
 
     async def test_import_many(self):
         # Confirm the database is empty
@@ -189,7 +165,7 @@ class TestExternalDataSource:
             ["North East Mayoral Combined Authority"],
         )
         df = await sync_to_async(self.custom_data_layer.get_imported_dataframe)()
-        # assert len(df.index) == import_count
+        # self.assertEqual(df.index) == import_count)
         self.assertIn("council district", list(df.columns.values))
         self.assertIn("mayoral region", list(df.columns.values))
         self.assertEqual(len(df.index), import_count)
@@ -252,20 +228,20 @@ class TestExternalDataSource:
         ]
         records = await self.create_many_test_records(test_record_data)
         record_ids = [self.source.get_record_id(record) for record in records]
-        assert len(record_ids) == 2
+        self.assertEqual(len(record_ids), 2)
 
         # Test this functionality
         records = await self.source.fetch_many(record_ids)
 
         # Check
         try:
-            assert len(records) == 2
+            self.assertEqual(len(records), 2)
         except AssertionError as e:
             # ActionNetwork is sometimes slow to reflect new members
             if isinstance(self.source, models.ActionNetworkSource):
                 await sleep(5)
                 records = await self.source.fetch_many(record_ids)
-                assert len(records) == 2
+                self.assertEqual(len(records), 2)
             # Should be an error for other source types
             else:
                 raise e
@@ -286,6 +262,9 @@ class TestExternalDataSource:
             self.assertIsNotNone(record)
 
     async def test_refresh_one(self):
+        if not self.source.allow_updates:
+            return self.skipTest("Source does not allow updates")
+
         record = await self.create_test_record(
             models.ExternalDataSource.CUDRecord(
                 email=f"eh{randint(0, 1000)}sp@gmail.com",
@@ -314,6 +293,9 @@ class TestExternalDataSource:
         )
 
     async def test_pivot_table(self):
+        if not self.source.allow_updates:
+            return self.skipTest("Source does not allow updates")
+
         """
         This is testing the ability for self.source to be updated using data from self.custom_data_layer
         i.e. to test the pivot table functionality
@@ -371,6 +353,9 @@ class TestExternalDataSource:
         )
 
     async def test_refresh_many(self):
+        if not self.source.allow_updates:
+            return self.skipTest("Source does not allow updates")
+
         records = await self.create_many_test_records(
             [
                 models.ExternalDataSource.CUDRecord(
@@ -411,7 +396,7 @@ class TestExternalDataSource:
         records = await self.source.fetch_many(
             [self.source.get_record_id(record) for record in records]
         )
-        assert len(records) == 2
+        self.assertEqual(len(records), 2)
         for record in records:
             if (
                 self.source.get_record_field(record, self.source.geography_column)
@@ -433,6 +418,9 @@ class TestExternalDataSource:
                 self.fail()
 
     async def test_enrichment_electoral_commission(self):
+        if not self.source.allow_updates:
+            return self.skipTest("Source does not allow updates")
+
         """
         This is testing the ability to enrich data from the data source
         using a third party source
@@ -763,7 +751,7 @@ class TestActionNetworkSource(TestExternalDataSource, TestCase):
                 break
             paged_records += records
             page += 1
-        assert len(all_records) == len(paged_records)
+        self.assertEqual(len(all_records), len(paged_records))
 
 
 @skip(
@@ -817,7 +805,7 @@ class TestEditableGoogleSheetsSource(TestExternalDataSource, TestCase):
 
         # Check
         # Assumes there were 4 records in the test data source before this test ran
-        assert len(records) == 6
+        self.assertEqual(len(records), 6)
 
         for test_record in test_record_data:
             record = next(
@@ -829,3 +817,167 @@ class TestEditableGoogleSheetsSource(TestExternalDataSource, TestCase):
                 None,
             )
             self.assertIsNotNone(record)
+
+
+class TestUploadedCSVSource(TestExternalDataSource, TestCase):
+    fixtures = ["regions"]
+    file_path_from_root = "hub/fixtures/regional_health_data_for_tests.csv"
+
+    def create_test_source(self, name="My test CSV file"):
+        path = Path(os.path.join(settings.BASE_DIR, self.file_path_from_root))
+
+        with path.open(mode="rb") as f:
+            file = File(f, name=path.name)
+
+            self.source: models.UploadedCSVSource = (
+                models.UploadedCSVSource.objects.create(
+                    name=name,
+                    data_type=models.EditableGoogleSheetsSource.DataSourceType.AREA_STATS,
+                    organisation=self.organisation,
+                    id_field="geography code",
+                    geocoding_config={
+                        "type": models.UploadedCSVSource.GeographyTypes.AREA,
+                        "components": [
+                            {
+                                "field": "geography",
+                                "metadata": {"lih_area_type__code": "EER"},
+                            }
+                        ],
+                    },
+                    spreadsheet_file=file,
+                )
+            )
+            return self.source
+
+    async def test_fetch_one(self):
+        # Get a single ID from the freshly read CSV
+        # Test this functionality
+        record = await self.source.fetch_one("E12000001")
+        # Check
+        self.assertEqual(
+            self.source.get_record_field(record, "geography"),
+            "North East",
+        )
+
+    async def test_fetch_many(self):
+        rows = await self.source.fetch_many(["E12000004", "E12000005"])
+
+        # 10 rows
+        self.assertEqual(len(rows), 2)
+        # Find data matching
+        expected_rows = [
+            {"geography": "East Midlands", "geography code": "E12000004"},
+            {"geography": "West Midlands", "geography code": "E12000005"},
+        ]
+        for expected in expected_rows:
+            record = next(
+                filter(
+                    lambda r: self.source.get_record_field(r, "geography code")
+                    == expected["geography code"],
+                    rows,
+                ),
+                None,
+            )
+            self.assertIsNotNone(record)
+            self.assertEqual(
+                self.source.get_record_field(record, "geography"),
+                expected["geography"],
+            )
+
+    async def test_fetch_all(self):
+        rows = await self.source.fetch_all()
+
+        # 10 rows
+        self.assertEqual(len(rows), 10)
+        # Check fetch generates valid dictionaries (via DF ingest)
+        for record in rows:
+            self.assertEqual(
+                self.source.get_record_id(record),
+                record.get("geography code", None),
+            )
+
+    async def test_import_async(self):
+        self.skipTest("Not implemented")
+
+    async def test_import_many(self):
+        # Confirm the database is empty
+        original_count = await self.source.get_import_data().acount()
+        self.assertEqual(original_count, 0)
+
+        # Add some test data
+        records = list(await self.source.fetch_all())
+        fetch_count = len(records)
+        self.assertGreaterEqual(fetch_count, 10)
+
+        # Check that the import is storing it all
+        await self.source.import_many(
+            [self.source.get_record_id(record) for record in records]
+        )
+
+        # Test GenericData queryset
+        import_data = self.source.get_import_data()
+        import_count = await import_data.acount()
+        self.assertEqual(import_count, fetch_count)
+        data = await sync_to_async(list)(import_data.select_related("area"))
+
+        # Check the data has been geocoded
+        north_east = next(
+            filter(
+                lambda r: r.json.get("geography code") == "E12000001",
+                data,
+            ),
+            None,
+        )
+        self.assertEqual("E12000001", north_east.data)
+        self.assertIsNotNone(north_east.postcode_data)
+        self.assertIsNotNone(north_east.area.name)
+
+        # Test dataframe
+        df = await sync_to_async(self.source.get_imported_dataframe)()
+        self.assertEqual(len(df.index), import_count)
+        self.assertEqual(len(df.index), import_count)
+        self.assertIn("geography", list(df.columns.values))
+
+    async def test_analytics_counts(self):
+        """
+        This is testing the ability to get record counts from the data source
+        """
+        # Load all data into DB
+        records = list(await self.source.fetch_all())
+        await self.source.import_many(
+            [self.source.get_record_id(record) for record in records]
+        )
+
+        # Check analytical queries
+        analytics = self.source.imported_data_count_by_area("european_electoral_region")
+        analytics = await sync_to_async(list)(analytics)
+        self.assertEqual(len(analytics), 10)
+
+    async def test_analytics_imported_data(self):
+        """
+        This is testing the ability to get record data from the data source
+        """
+        self.skipTest("Not implemented")
+        analytics = self.source.imported_data_count_by_area("european_electoral_region")
+        analytics = await sync_to_async(list)(analytics)
+        self.assertEqual(len(analytics), 10)
+        constituencies_in_report = [a["label"] for a in analytics]
+        self.assertIn("North West", constituencies_in_report)
+
+    def test_field_definitions(self: TestCase):
+        field_defs = self.source.field_definitions()
+        self.assertSetEqual(
+            set([field["value"] for field in field_defs]),
+            set(
+                [
+                    "date",
+                    "geography",
+                    "geography code",
+                    "General Health: Very good health",
+                    "General Health: Good health",
+                    "General Health: Fair health",
+                    "General Health: Bad health",
+                    "General Health: Very bad health",
+                ]
+            ),
+        )

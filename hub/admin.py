@@ -13,6 +13,7 @@ from hub.models import (
     Person,
     PersonData,
     Report,
+    UploadedCSVSource,
     User,
     UserProperties,
 )
@@ -269,6 +270,20 @@ class MembershipAdmin(admin.ModelAdmin):
 # External data source
 @admin.register(ExternalDataSource)
 class ExternalDataSourceAdmin(admin.ModelAdmin):
+    list_display = ("name", "orgname")
+
+    search_fields = ("name", "orgname")
+
+    def orgname(self, obj):
+        return obj.organisation.name if obj and obj.organisation else "None"
+
+    orgname.admin_order_field = "author"  # Allows column order sorting
+    orgname.short_description = "Author Name"  # Renames column head
+
+
+# External data source
+@admin.register(UploadedCSVSource)
+class UploadedCSVSourceAdmin(admin.ModelAdmin):
     list_display = ("name", "orgname")
 
     search_fields = ("name", "orgname")

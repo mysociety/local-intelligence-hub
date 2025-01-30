@@ -5,6 +5,7 @@ import {
   DataSourceType,
   GetMapReportQuery,
   MapLayerInput,
+  MapReportInput,
 } from '@/__generated__/graphql'
 import { InspectorDisplayType } from '@/lib/explorer'
 import { explorerStateSchema } from '@/lib/map/useExplorer'
@@ -117,6 +118,13 @@ export type MapReportWithTypedJSON = MapReportWithoutJSON & {
   displayOptions: IDisplayOptions
 }
 
+export type MapReportInputWithTypedJSON = Omit<
+  MapReportInput,
+  'displayOptions'
+> & {
+  displayOptions: IDisplayOptions
+}
+
 export enum DataDisplayMode {
   Aggregated = 'Aggregated',
   RawData = 'RawData',
@@ -196,7 +204,6 @@ const mapOptionsSchema = z.object({
       field: z.string().optional(),
       formula: z.string().optional(),
     })
-    .optional()
     .default({}),
   display: z
     .object({

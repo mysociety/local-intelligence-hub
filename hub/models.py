@@ -14,6 +14,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.gis.db.models import MultiPolygonField, PointField
 from django.contrib.gis.geos import Point
+from django.contrib.postgres.fields import ArrayField
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -66,6 +67,7 @@ from hub.enrichment.sources import builtin_mapping_sources
 from hub.fields import EncryptedCharField, EncryptedTextField
 from hub.filters import Filter
 from hub.parsons.action_network.action_network import ActionNetwork
+from hub.restricted_file_field.fields import SafeFileField
 from hub.tasks import (
     import_all,
     import_many,
@@ -491,7 +493,7 @@ class DataSet(TypeMixin, ShaderMixin, models.Model):
         "type": "array",
         "items": {
             "type": "dict",
-            "keys": {"title": {"type": "string"}, "shader": {"type": "string"}},
+            "properties": {"title": {"type": "string"}, "shader": {"type": "string"}},
         },
     }
 
@@ -780,7 +782,7 @@ class GenericData(CommonData):
     end_time = models.DateTimeField(blank=True, null=True)
     public_url = models.URLField(max_length=2000, blank=True, null=True)
     social_url = models.URLField(max_length=2000, blank=True, null=True)
-    geocode_data = JSONField(blank=True, null=True)
+    geocode_data = models.JSONField(blank=True, null=True)
     geocoder = models.CharField(max_length=1000, blank=True, null=True)
     address = models.CharField(max_length=1000, blank=True, null=True)
     title = models.CharField(max_length=1000, blank=True, null=True)
@@ -1098,7 +1100,67 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         AREA = "AREA", "Area"
         OUTPUT_AREA = "OUTPUT_AREA", "Census output area"
 
-    geocoding_config = JSONField(blank=False, null=False, default=dict)
+    GEOCODING_CONFIG_SCHEMA = {
+        "type": "object",
+        "properties": {
+            "type": {
+                "type": "string",
+                "enum": [
+                    GeographyTypes.ADDRESS,
+                    GeographyTypes.POSTCODE,
+                    GeographyTypes.COORDINATES,
+                    GeographyTypes.AREA,
+                ],
+                "default": GeographyTypes.AREA,
+            },
+            "components": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "field": {"type": "string"},
+                        "type": {"type": "string"},
+                        "value": {"type": "string"},
+                        "metadata": {
+                            "oneOf": [
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "lih_area_type__code": {
+                                            "oneOf": [
+                                                {"type": "string"},
+                                                {
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                },
+                                            ]
+                                        }
+                                    },
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "mapit_type": {
+                                            "oneOf": [
+                                                {"type": "string"},
+                                                {
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                },
+                                            ]
+                                        }
+                                    },
+                                },
+                            ]
+                        },
+                    },
+                },
+            },
+        },
+    }
+    geocoding_config = JSONField(
+        blank=False, null=False, default=dict, schema=GEOCODING_CONFIG_SCHEMA
+    )
 
     def uses_valid_geocoding_config(self):
         # TODO: Could replace this with a Pydantic schema or something
@@ -1224,10 +1286,21 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         external_id: Optional[str]
         editable: Optional[bool] = True
 
-    fields = JSONField(blank=True, null=True, default=list)
     # Auto-updates
-
-    update_mapping = JSONField(blank=True, null=True, default=list)
+    UPDATE_MAPPING_SCHEMA = {
+        "type": "array",
+        "items": {
+            "type": "dict",
+            "properties": {
+                "source": {"type": "string"},
+                "source_path": {"type": "string"},
+                "destination_column": {"type": "string"},
+            },
+        },
+    }
+    update_mapping = JSONField(
+        blank=True, null=True, default=list, schema=UPDATE_MAPPING_SCHEMA
+    )
     auto_update_enabled = models.BooleanField(default=False, blank=True)
     # Auto-import
     auto_import_enabled = models.BooleanField(default=False, blank=True)
@@ -1506,7 +1579,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         Get the fields for the data source.
         """
-        return ensure_list(self.fields)
+        raise NotImplementedError(
+            "Field definitions not implemented for this data source."
+        )
 
     def remote_name(self) -> Optional[str]:
         """
@@ -1950,6 +2025,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             {
                 **(d.postcode_data if d.postcode_data else {}),
                 **(d.json if d.json else {}),
+                "__mapped_id": d.data,
             }
             for d in self.get_import_data()
         ]
@@ -2723,12 +2799,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         raise NotImplementedError("Lookup not implemented for this data source type.")
 
 
-class LocalJSONSource(ExternalDataSource):
-    """
-    A test table.
-    """
-
-    crm_type = "test"
+class DatabaseJSONSource(ExternalDataSource):
+    crm_type = "DatabaseJSONSource"
     has_webhooks = False
     automated_webhooks = False
     introspect_fields = False
@@ -2737,7 +2809,7 @@ class LocalJSONSource(ExternalDataSource):
     id_field = models.CharField(max_length=250, default="id")
 
     class Meta:
-        verbose_name = "Test source"
+        verbose_name = "Database JSON source"
 
     @classmethod
     def get_deduplication_field_names(self) -> list[str]:
@@ -2748,7 +2820,7 @@ class LocalJSONSource(ExternalDataSource):
 
     @cached_property
     def df(self):
-        return pd.DataFrame(self.data).set_index(self.id_field)
+        return pd.DataFrame(self.data).set_index(self.id_field, drop=False)
 
     def field_definitions(self):
         # get all keys from self.data
@@ -2761,10 +2833,10 @@ class LocalJSONSource(ExternalDataSource):
         return record.get(self.id_field, None)
 
     async def fetch_one(self, member_id):
-        return self.df[self.df[self.id_field] == member_id].to_dict(orient="records")[0]
+        return self.df[member_id].to_dict(orient="records")[0]
 
     async def fetch_many(self, id_list: list[str]):
-        return self.df[self.df[self.id_field].isin(id_list)].to_dict(orient="records")
+        return self.df[id_list].to_dict(orient="records")
 
     async def fetch_all(self):
         return self.df.to_dict(orient="records")
@@ -2782,7 +2854,7 @@ class LocalJSONSource(ExternalDataSource):
             {**record, **data} if record[self.id_field] == id else record
             for record in self.data
         ]
-        self.save()
+        await self.asave()
 
     async def update_many(self, mapped_records, **kwargs):
         for mapped_record in mapped_records:
@@ -2803,6 +2875,90 @@ class LocalJSONSource(ExternalDataSource):
         self.data.extend([record["data"] for record in records])
         self.save()
         return records
+
+
+class UploadedCSVSource(ExternalDataSource):
+    """
+    A media URL
+    """
+
+    crm_type = "uploadedcsv"
+    has_webhooks = False
+    automated_webhooks = False
+    introspect_fields = True
+    allow_updates = False
+    default_data_type = ExternalDataSource.DataSourceType.AREA_STATS
+
+    # User provided
+    spreadsheet_file = SafeFileField(
+        upload_to="uploaded_data_sources", allowed_extensions=("csv",)
+    )
+    id_field = models.TextField()
+    delimiter = models.TextField(default=",", blank=True)
+
+    # Pandas report on columns
+    # TODO: replace this with DataTypes: https://linear.app/commonknowledge/issue/MAP-871/design-for-describing-data-source-data-types-entities
+    columns = ArrayField(models.TextField(), default=list, blank=True)
+
+    class Meta:
+        verbose_name = "Uploaded CSV file"
+
+    @classmethod
+    def get_deduplication_field_names(self) -> list[str]:
+        return ["spreadsheet_file"]
+
+    def healthcheck(self):
+        # Check if file exists in Django
+        return self.spreadsheet_file.storage.exists(self.spreadsheet_file.name)
+
+    @cached_property
+    def df(self):
+        # file_text = io.StringIO(file.read().decode('utf-8')), delimiter=self.delimiter)
+        return pd.read_csv(
+            self.spreadsheet_file.path,
+            sep=self.delimiter,
+            # Read in chunks
+            low_memory=True,
+        ).set_index(self.id_field, drop=False)
+
+    def get_columns_from_file(self):
+        return self.df.columns.tolist()
+
+    async def import_many(self, members):
+        await super().import_many(members)
+
+    def field_definitions(self):
+        return [self.FieldDefinition(label=col, value=col) for col in self.columns]
+
+    def get_record_id(self, record: dict):
+        return record.get(self.id_field, None)
+
+    async def fetch_one(self, member_id):
+        return self.df[self.df[self.id_field] == member_id].to_dict(orient="records")[0]
+
+    async def fetch_many(self, id_list: list[str]):
+        return self.df[self.df[self.id_field].isin(id_list)].to_dict(orient="records")
+
+    async def fetch_all(self):
+        return self.df.to_dict(orient="records")
+
+    def get_record_field(self, record, field, field_type=None):
+        return get(record, field)
+
+    def get_record_dict(self, record):
+        return record
+
+
+# Signal that materialises columns to the database
+@receiver(models.signals.post_save, sender=UploadedCSVSource)
+def materialise_columns(sender, instance, created, **kwargs):
+    if (
+        created
+        and instance.spreadsheet_file
+        and (instance.columns is None or len(instance.columns) <= 0)
+    ):
+        instance.columns = instance.get_columns_from_file()
+        instance.save()
 
 
 class AirtableSource(ExternalDataSource):
@@ -3109,16 +3265,11 @@ class Report(PolymorphicModel):
         Organisation, on_delete=models.CASCADE, related_name="reports"
     )
     name = models.CharField(max_length=250)
-    slug = models.SlugField(max_length=250, unique=True)
+    slug = models.SlugField(max_length=250, unique=True, default=uuid.uuid4)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(auto_now=True)
     public = models.BooleanField(default=False, blank=True)
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name

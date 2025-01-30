@@ -1,4 +1,3 @@
-import itertools
 import locale
 import logging
 from datetime import datetime
@@ -860,6 +859,7 @@ class CrmType(Enum):
     actionnetwork = "actionnetwork"
     tickettailor = "tickettailor"
     editablegooglesheets = "editablegooglesheets"
+    uploadedcsv = "uploadedcsv"
 
 
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
@@ -1076,6 +1076,7 @@ class ExternalDataSource(BaseDataSource):
         "ActionNetworkSource",
         "EditableGoogleSheetsSource",
         "TicketTailorSource",
+        "UploadedCSVSource",
     ]:
         instance = self.get_real_instance()
         return instance
@@ -1111,6 +1112,12 @@ class AirtableSource(ExternalDataSource):
     api_key: str
     base_id: str
     table_id: str
+
+
+@strawberry_django.type(models.UploadedCSVSource)
+class UploadedCSVSource(ExternalDataSource):
+    spreadsheet_file: str
+    delimiter: auto
 
 
 @strawberry_django.type(models.MailchimpSource)
