@@ -9,11 +9,13 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Self, Type, TypedDict, Union
 from urllib.parse import urlencode, urljoin
 
+from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.gis.db.models import MultiPolygonField, PointField
 from django.contrib.gis.geos import Point
+from django.contrib.postgres.fields import ArrayField
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -66,6 +68,7 @@ from hub.enrichment.sources import builtin_mapping_sources
 from hub.fields import EncryptedCharField, EncryptedTextField
 from hub.filters import Filter
 from hub.parsons.action_network.action_network import ActionNetwork
+from hub.restricted_file_field.fields import SafeFileField
 from hub.tasks import (
     import_all,
     import_many,
@@ -1950,6 +1953,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             {
                 **(d.postcode_data if d.postcode_data else {}),
                 **(d.json if d.json else {}),
+                "__mapped_id": d.data,
             }
             for d in self.get_import_data()
         ]
@@ -2723,12 +2727,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         raise NotImplementedError("Lookup not implemented for this data source type.")
 
 
-class LocalJSONSource(ExternalDataSource):
-    """
-    A test table.
-    """
-
-    crm_type = "test"
+class DatabaseJSONSource(ExternalDataSource):
+    crm_type = "DatabaseJSONSource"
     has_webhooks = False
     automated_webhooks = False
     introspect_fields = False
@@ -2737,7 +2737,7 @@ class LocalJSONSource(ExternalDataSource):
     id_field = models.CharField(max_length=250, default="id")
 
     class Meta:
-        verbose_name = "Test source"
+        verbose_name = "Database JSON source"
 
     @classmethod
     def get_deduplication_field_names(self) -> list[str]:
@@ -2748,7 +2748,7 @@ class LocalJSONSource(ExternalDataSource):
 
     @cached_property
     def df(self):
-        return pd.DataFrame(self.data).set_index(self.id_field)
+        return pd.DataFrame(self.data).set_index(self.id_field, drop=False)
 
     def field_definitions(self):
         # get all keys from self.data
@@ -2761,10 +2761,10 @@ class LocalJSONSource(ExternalDataSource):
         return record.get(self.id_field, None)
 
     async def fetch_one(self, member_id):
-        return self.df[self.df[self.id_field] == member_id].to_dict(orient="records")[0]
+        return self.df[member_id].to_dict(orient="records")[0]
 
     async def fetch_many(self, id_list: list[str]):
-        return self.df[self.df[self.id_field].isin(id_list)].to_dict(orient="records")
+        return self.df[id_list].to_dict(orient="records")
 
     async def fetch_all(self):
         return self.df.to_dict(orient="records")
@@ -2782,7 +2782,7 @@ class LocalJSONSource(ExternalDataSource):
             {**record, **data} if record[self.id_field] == id else record
             for record in self.data
         ]
-        self.save()
+        await self.asave()
 
     async def update_many(self, mapped_records, **kwargs):
         for mapped_record in mapped_records:
@@ -2803,6 +2803,90 @@ class LocalJSONSource(ExternalDataSource):
         self.data.extend([record["data"] for record in records])
         self.save()
         return records
+
+
+class UploadedCSVSource(ExternalDataSource):
+    """
+    A media URL
+    """
+
+    crm_type = "UploadedCSV"
+    has_webhooks = False
+    automated_webhooks = False
+    introspect_fields = True
+    allow_updates = False
+    default_data_type = ExternalDataSource.DataSourceType.AREA_STATS
+
+    # User provided
+    spreadsheet_file = SafeFileField(
+        upload_to="uploaded_data_sources", allowed_extensions=("csv",)
+    )
+    id_field = models.TextField()
+    delimiter = models.TextField(default=",", blank=True)
+
+    # Pandas report on columns
+    # TODO: replace this with DataTypes: https://linear.app/commonknowledge/issue/MAP-871/design-for-describing-data-source-data-types-entities
+    columns = ArrayField(models.TextField(), default=list, blank=True)
+
+    class Meta:
+        verbose_name = "Uploaded CSV file"
+
+    @classmethod
+    def get_deduplication_field_names(self) -> list[str]:
+        return ["spreadsheet_file"]
+
+    def healthcheck(self):
+        # Check if file exists in Django
+        return self.spreadsheet_file.storage.exists(self.spreadsheet_file.name)
+
+    @cached_property
+    def df(self):
+        # file_text = io.StringIO(file.read().decode('utf-8')), delimiter=self.delimiter)
+        return pd.read_csv(
+            self.spreadsheet_file.path,
+            sep=self.delimiter,
+            # Read in chunks
+            low_memory=True,
+        ).set_index(self.id_field, drop=False)
+
+    def get_columns_from_file(self):
+        return self.df.columns.tolist()
+
+    async def import_many(self, members):
+        await super().import_many(members)
+
+    def field_definitions(self):
+        return [self.FieldDefinition(label=col, value=col) for col in self.columns]
+
+    def get_record_id(self, record: dict):
+        return record.get(self.id_field, None)
+
+    async def fetch_one(self, member_id):
+        return self.df[self.df[self.id_field] == member_id].to_dict(orient="records")[0]
+
+    async def fetch_many(self, id_list: list[str]):
+        return self.df[self.df[self.id_field].isin(id_list)].to_dict(orient="records")
+
+    async def fetch_all(self):
+        return self.df.to_dict(orient="records")
+
+    def get_record_field(self, record, field, field_type=None):
+        return get(record, field)
+
+    def get_record_dict(self, record):
+        return record
+
+
+# Signal that materialises columns to the database
+@receiver(models.signals.post_save, sender=UploadedCSVSource)
+def materialise_columns(sender, instance, created, **kwargs):
+    if (
+        created
+        and instance.spreadsheet_file
+        and (instance.columns is None or len(instance.columns) <= 0)
+    ):
+        instance.columns = instance.get_columns_from_file()
+        instance.save()
 
 
 class AirtableSource(ExternalDataSource):
