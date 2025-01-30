@@ -1,7 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from ..forms import SafeFileField
+from hub.restricted_file_field.forms import SafeFileField
+
 from .utils import get_extras_file, get_uploaded_file
 
 
