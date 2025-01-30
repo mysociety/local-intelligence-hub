@@ -27,9 +27,9 @@ env = environ.Env(
     MINIO_STORAGE_ACCESS_KEY=(str, ""),
     MINIO_STORAGE_SECRET_KEY=(str, ""),
     MINIO_STORAGE_MEDIA_BUCKET_NAME=(str, "media"),
+    MINIO_STORAGE_PUBLIC_MEDIA_BUCKET_NAME=(str, "public"),
     MINIO_STORAGE_STATIC_BUCKET_NAME=(str, "static"),
-    MINIO_PRIVATE_BUCKET=(str, "mapped-private"),
-    MINIO_PUBLIC_BUCKET=(str, "mapped-public"),
+    MINIO_PRIVATE_UPLOADS_BUCKET=(str, "mapped-private"),
     MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET=(bool, True),
     MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET=(bool, True),
     EMAIL_BACKEND=(str, "django.core.mail.backends.console.EmailBackend"),
@@ -574,8 +574,6 @@ if ENVIRONMENT == "production":
 
 
 MINIO_STORAGE_ENDPOINT = env("MINIO_STORAGE_ENDPOINT")
-MINIO_PRIVATE_BUCKET = env("MINIO_PRIVATE_BUCKET")
-MINIO_PUBLIC_BUCKET = env("MINIO_PUBLIC_BUCKET")
 if MINIO_STORAGE_ENDPOINT is not False:
     INSTALLED_APPS += [
         "django_minio_backend.apps.DjangoMinioBackendConfig",
@@ -601,16 +599,17 @@ if MINIO_STORAGE_ENDPOINT is not False:
         days=1
     )  # Default is 7 days (longest) if not defined
     MINIO_CONSISTENCY_CHECK_ON_START = True
+    MINIO_STORAGE_MEDIA_BUCKET_NAME = env("MINIO_STORAGE_MEDIA_BUCKET_NAME")
     MINIO_PRIVATE_BUCKETS = [
-        MINIO_PRIVATE_BUCKET,
+        MINIO_STORAGE_MEDIA_BUCKET_NAME,
     ]
+    # MINIO_STORAGE_PUBLIC_MEDIA_BUCKET_NAME = env("MINIO_STORAGE_PUBLIC_MEDIA_BUCKET_NAME")
     MINIO_PUBLIC_BUCKETS = [
-        MINIO_PUBLIC_BUCKET,
+        # No public media as yet
+        # MINIO_STORAGE_PUBLIC_MEDIA_BUCKET_NAME
     ]
     MINIO_POLICY_HOOKS: List[Tuple[str, dict]] = []
-    MINIO_MEDIA_FILES_BUCKET = env(
-        "MINIO_STORAGE_MEDIA_BUCKET_NAME"
-    )  # replacement for MEDIA_ROOT
+    MINIO_MEDIA_FILES_BUCKET = MINIO_STORAGE_MEDIA_BUCKET_NAME  # replacement for MEDIA_ROOT
     MINIO_STATIC_FILES_BUCKET = env(
         "MINIO_STORAGE_STATIC_BUCKET_NAME"
     )  # replacement for STATIC_ROOT
