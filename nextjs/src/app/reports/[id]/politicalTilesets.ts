@@ -92,13 +92,13 @@ const uk: PoliticalTileset[] = [
   //   },
   // },
   {
-    label: 'European Electoral Regions',
+    label: 'UK Nations & Regions',
     boundaryType: BoundaryType.EUROPEAN_ELECTORAL_REGIONS,
     tilesets: [
       {
         analyticalAreaType: AnalyticalAreaType.EuropeanElectoralRegion,
-        name: 'European Electoral Regions',
-        singular: 'European Electoral Region',
+        name: 'UK Nations & Regions',
+        singular: 'UK Nations & Region',
         mapboxSourceId: 'commonknowledge.awsfhx20',
         sourceLayerId: 'European_Electoral_Regions_De-bxyqod',
         promoteId: 'eer18cd',
