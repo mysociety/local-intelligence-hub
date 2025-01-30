@@ -581,7 +581,6 @@ if MINIO_STORAGE_ENDPOINT is not False:
         "django_minio_backend.apps.DjangoMinioBackendConfig",
     ]
     DEFAULT_FILE_STORAGE = "django_minio_backend.models.MinioBackend"
-    MINIO_MEDIA_FILES_BUCKET = "mapped-media"
     # # STATICFILES_STORAGE = "minio_storage.storage.MinioStaticStorage"
     # MINIO_STORAGE_ACCESS_KEY = env("MINIO_STORAGE_ACCESS_KEY")
     # MINIO_STORAGE_SECRET_KEY = env("MINIO_STORAGE_SECRET_KEY")
