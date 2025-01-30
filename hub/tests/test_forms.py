@@ -24,7 +24,7 @@ class TestSafeFileField(TestCase):
         with self.assertRaises(ValidationError) as err_info:
             field.clean(f)
 
-        assert err_info.value.error_list[0].code == "invalid_extension"
+        self.assertEqual(err_info.value.error_list[0].code, "invalid_extension")
 
     def test_invalid_content_type(self):
         field = SafeFileField(allowed_extensions=("jpg",), allow_empty_file=True)
@@ -34,4 +34,4 @@ class TestSafeFileField(TestCase):
         with self.assertRaises(ValidationError) as err_info:
             field.clean(f)
 
-        assert err_info.value.error_list[0].code == "invalid_content_type"
+        self.assertEqual(err_info.value.error_list[0].code, "invalid_content_type")

@@ -165,7 +165,7 @@ class TestExternalDataSource:
             ["North East Mayoral Combined Authority"],
         )
         df = await sync_to_async(self.custom_data_layer.get_imported_dataframe)()
-        # assert len(df.index) == import_count
+        # self.assertEqual(df.index) == import_count)
         self.assertIn("council district", list(df.columns.values))
         self.assertIn("mayoral region", list(df.columns.values))
         self.assertEqual(len(df.index), import_count)
@@ -228,20 +228,20 @@ class TestExternalDataSource:
         ]
         records = await self.create_many_test_records(test_record_data)
         record_ids = [self.source.get_record_id(record) for record in records]
-        assert len(record_ids) == 2
+        self.assertEqual(len(record_ids), 2)
 
         # Test this functionality
         records = await self.source.fetch_many(record_ids)
 
         # Check
         try:
-            assert len(records) == 2
+            self.assertEqual(len(records), 2)
         except AssertionError as e:
             # ActionNetwork is sometimes slow to reflect new members
             if isinstance(self.source, models.ActionNetworkSource):
                 await sleep(5)
                 records = await self.source.fetch_many(record_ids)
-                assert len(records) == 2
+                self.assertEqual(len(records), 2)
             # Should be an error for other source types
             else:
                 raise e
@@ -396,7 +396,7 @@ class TestExternalDataSource:
         records = await self.source.fetch_many(
             [self.source.get_record_id(record) for record in records]
         )
-        assert len(records) == 2
+        self.assertEqual(len(records), 2)
         for record in records:
             if (
                 self.source.get_record_field(record, self.source.geography_column)
@@ -751,7 +751,7 @@ class TestActionNetworkSource(TestExternalDataSource, TestCase):
                 break
             paged_records += records
             page += 1
-        assert len(all_records) == len(paged_records)
+        self.assertEqual(len(all_records), len(paged_records))
 
 
 @skip(
@@ -805,7 +805,7 @@ class TestEditableGoogleSheetsSource(TestExternalDataSource, TestCase):
 
         # Check
         # Assumes there were 4 records in the test data source before this test ran
-        assert len(records) == 6
+        self.assertEqual(len(records), 6)
 
         for test_record in test_record_data:
             record = next(
@@ -934,7 +934,7 @@ class TestUploadedCSVSource(TestExternalDataSource, TestCase):
 
         # Test dataframe
         df = await sync_to_async(self.source.get_imported_dataframe)()
-        assert len(df.index) == import_count
+        self.assertEqual(len(df.index), import_count)
         self.assertEqual(len(df.index), import_count)
         self.assertIn("geography", list(df.columns.values))
 
