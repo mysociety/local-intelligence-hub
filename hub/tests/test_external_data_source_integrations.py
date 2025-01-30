@@ -515,7 +515,9 @@ class TestExternalDataSource:
             [self.source.get_record_id(record) for record in records]
         )
         # check analytics
-        analytics = self.source.imported_data_count_by_constituency()
+        analytics = self.source.imported_data_count_by_area(
+            "parliamentary_constituency"
+        )
         analytics = await sync_to_async(list)(analytics)
         self.assertGreaterEqual(len(analytics), 2)
         constituencies_in_report = [a["label"] for a in analytics]
