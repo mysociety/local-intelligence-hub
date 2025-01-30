@@ -965,21 +965,21 @@ django-compressor = ">=1.3"
 libsass = ">=0.7.0,<1"
 
 [[package]]
-name = "django-minio-storage"
-version = "0.5.7"
-description = "Django file storage using the minio python client"
+name = "django-minio-backend"
+version = "3.8.0"
+description = "The django-minio-backend provides a wrapper around the MinIO Python Library."
 optional = false
-python-versions = ">=3.8"
+python-versions = "*"
 groups = ["main"]
 markers = "python_version >= \"3.12\""
 files = [
-    {file = "django-minio-storage-0.5.7.tar.gz", hash = "sha256:9e499600340b7a7a4bc86063f54218631b65bc46dee9d2faf578f17ebc2a6d92"},
-    {file = "django_minio_storage-0.5.7-py3-none-any.whl", hash = "sha256:2e36b4f3c44c83a124e7b811e19c502cbeab77149bc7c73763e901b1948737bb"},
+    {file = "django_minio_backend-3.8.0-py3-none-any.whl", hash = "sha256:1e5aa883d1df2694843ab79c9646af3a5d79aa1712732128e0d84e441d8d5057"},
+    {file = "django_minio_backend-3.8.0.tar.gz", hash = "sha256:67425eed262d64425beb25183980dac1abf7285af8f68c444a2f820cf0b120d7"},
 ]
 
 [package.dependencies]
-django = ">=3.2"
-minio = ">=7.1.16"
+Django = ">=4.2"
+minio = ">=7.2.8"
 
 [[package]]
 name = "django-modelcluster"
@@ -4177,4 +4177,4 @@ wand = ["Wand (>=0.6,<1.0)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">3.11,<=3.12.3"
-content-hash = "2f2efd07a4ee42773b56e485e1ec8cccfd1425e4c8a30d470cd1cdb476658d7d"
+content-hash = "5ebbff541e53ae02ee9533cfe337193e17215ced0a6bd58c75831b33508d4cd1"
