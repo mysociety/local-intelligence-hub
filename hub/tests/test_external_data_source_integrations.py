@@ -100,7 +100,8 @@ class TestExternalDataSource:
 
     def test_field_definitions(self: TestCase):
         if self.source.introspect_fields:
-            field_defs = self.source.field_definitions()
+            self.source.refresh_field_definitions()
+            field_defs = self.source.field_definitions
             self.assertGreaterEqual(len(field_defs), 1)
         else:
             self.assertRaises(NotImplementedError, self.source.field_definitions)
@@ -965,7 +966,8 @@ class TestUploadedCSVSource(TestExternalDataSource, TestCase):
         self.assertIn("North West", constituencies_in_report)
 
     def test_field_definitions(self: TestCase):
-        field_defs = self.source.field_definitions()
+        self.source.refresh_field_definitions()
+        field_defs = self.source.field_definitions
         self.assertSetEqual(
             set([field["value"] for field in field_defs]),
             set(

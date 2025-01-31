@@ -907,9 +907,13 @@ class BaseDataSource(Analytics):
     remote_url: Optional[str] = fn_field()
     healthcheck: bool = fn_field()
 
-    field_definitions: Optional[List[FieldDefinition]] = strawberry_django.field(
-        resolver=lambda self: self.field_definitions()
-    )
+    @strawberry_django.field
+    def field_definitions(
+        self, refresh_from_source: bool = False
+    ) -> Optional[List[FieldDefinition]]:
+        if refresh_from_source or not self.field_definitions:
+            self.refresh_field_definitions()
+        return self.field_definitions
 
     @strawberry_django.field
     def id_field(self) -> Optional[str]:

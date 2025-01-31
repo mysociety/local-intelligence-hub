@@ -157,7 +157,7 @@ const GET_UPDATE_CONFIG = gql`
       )
       ladCount: importedDataCountOfAreas(analyticalAreaType: admin_district)
       wardCount: importedDataCountOfAreas(analyticalAreaType: admin_ward)
-      fieldDefinitions {
+      fieldDefinitions(refreshFromSource: true) {
         label
         value
         description
