@@ -1761,9 +1761,9 @@ def choropleth_data_for_source(
     # TODO: maybe make this explicit via an argument?
     # is_data_source_statistical = external_data_source.data_type == models.ExternalDataSource.DataSourceType.AREA_STATS
     # check that field is in DF
-    is_valid_field = field and field is not None and len(field) and field in df.columns
+    is_valid_field = mode is ChoroplethMode.Field and field and field is not None and len(field) and field in df.columns
     is_row_count = mode is ChoroplethMode.Count
-    is_valid_formula = formula and formula is not None and len(formula)
+    is_valid_formula = mode is ChoroplethMode.Formula and formula and formula is not None and len(formula)
     is_table = mode is ChoroplethMode.Table
 
     if mode is ChoroplethMode.Field and not is_valid_field:
@@ -1872,6 +1872,7 @@ def choropleth_data_for_source(
                 # In case "where" is used, which pandas doesn't support
                 # https://github.com/pandas-dev/pandas/issues/34834
                 df["count"] = ne.evaluate(formula, local_dict=df)
+            
 
         # Check if count is between 0 and 1: if so, it's a percentage
         is_percentage = df["count"].between(0, 2).all() or False
