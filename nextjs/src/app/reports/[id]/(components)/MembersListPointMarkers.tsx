@@ -99,8 +99,10 @@ export function MembersListPointMarkers({
           type="circle"
           paint={{
             'circle-color': mapLayerConfig?.colour || DEFAULT_MARKER_COLOUR,
-            'circle-opacity': mapLayerConfig?.visible ? 1 : 0,
             'circle-radius': mapLayerConfig?.circleRadius || 5,
+          }}
+          layout={{
+            visibility: mapLayerConfig?.visible ? 'visible' : 'none',
           }}
           minzoom={mapLayerConfig?.minZoom || MIN_MEMBERS_DISPLAY_ZOOM}
         />
@@ -113,6 +115,7 @@ export function MembersListPointMarkers({
           layout={{
             'icon-image': dataSourceType,
             'icon-size': (mapLayerConfig?.circleRadius || 5) / 24,
+            visibility: mapLayerConfig?.visible ? 'visible' : 'none',
           }}
           minzoom={mapLayerConfig?.minZoom || MIN_MEMBERS_DISPLAY_ZOOM}
         />
