@@ -1,4 +1,3 @@
-import locale
 import logging
 from datetime import datetime
 from enum import Enum
@@ -24,6 +23,7 @@ from strawberry import auto
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
+from utils.statistics import attempt_interpret_series_as_float
 from wagtail.models import Site
 
 from hub import models
@@ -1623,9 +1623,7 @@ def generic_data_summary_from_source_about_area(
     df = pd.DataFrame([record.json for record in qs])
     # convert any stringified numbers to floats
     for column in df:
-        if all(df[column].apply(check_numeric)):
-            df[column] = df[column].replace("", 0)
-            df[column] = df[column].astype(float)
+        df[column] = attempt_interpret_series_as_float(df[column])
     # remove columns that are of string type
     df = df.select_dtypes(exclude=["object", "string"])
     # summarise the data in a single dictionary, with summed values for each column
@@ -1657,18 +1655,6 @@ def generic_data_summary_from_source_about_area(
             median=median,
         ),
     )
-
-
-def check_numeric(x):
-    try:
-        if x == "" or x is None:
-            return True
-        var = locale.atof(x)
-        var = float(var)
-        # check type is numeric
-        return isinstance(var, (int, float))
-    except Exception:
-        return False
 
 
 @strawberry.input
@@ -1817,9 +1803,7 @@ def choropleth_data_for_source(
     elif is_valid_field or is_valid_formula or is_table:
         # Convert any stringified JSON numbers to floats
         for column in df:
-            if all(df[column].apply(check_numeric)):
-                df[column] = df[column].replace("", 0)
-                df[column] = df[column].astype(float)
+            df[column] = attempt_interpret_series_as_float(df[column])
 
         # You end up with something like:
         """
