@@ -8,7 +8,7 @@ from django.test import TestCase
 
 from asgiref.sync import async_to_sync
 
-from hub.models import Area, ExternalDataSource, LocalJSONSource
+from hub.models import Area, DatabaseJSONSource, ExternalDataSource
 from hub.tests.fixtures.geocoding_cases import geocoding_cases
 from hub.validation import validate_and_format_phone_number
 from utils import mapit_types
@@ -42,7 +42,7 @@ class TestDateFieldParer(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.source = LocalJSONSource.objects.create(
+        cls.source = DatabaseJSONSource.objects.create(
             name="date_test",
             id_field="id",
             start_time_field="date",
@@ -76,7 +76,7 @@ class TestPhoneFieldParser(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.source = LocalJSONSource.objects.create(
+        cls.source = DatabaseJSONSource.objects.create(
             name="phone_test",
             id_field="id",
             phone_field="phone",
@@ -127,7 +127,7 @@ class TestMultiLevelGeocoding(TestCase):
                     )
                     cls.fixture.pop(index_of_data)
 
-        cls.source = LocalJSONSource.objects.create(
+        cls.source = DatabaseJSONSource.objects.create(
             name="geo_test",
             id_field="id",
             data=cls.fixture.copy(),
@@ -329,7 +329,7 @@ class TestMultiLevelGeocoding(TestCase):
 class TestComplexAddressGeocoding(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.source = LocalJSONSource.objects.create(
+        cls.source = DatabaseJSONSource.objects.create(
             name="address_test",
             id_field="id",
             data=[
@@ -465,7 +465,7 @@ class TestComplexAddressGeocoding(TestCase):
 class TestCoordinateGeocoding(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.source = LocalJSONSource.objects.create(
+        cls.source = DatabaseJSONSource.objects.create(
             name="coordinates_test",
             id_field="id",
             data=[

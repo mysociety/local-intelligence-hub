@@ -1,4 +1,3 @@
-import itertools
 import locale
 import logging
 from datetime import datetime
@@ -823,71 +822,6 @@ class Analytics:
         area_type_filter = postcodeIOKeyAreaTypeLookup[analytical_area_type]
         return GroupedDataCount(**res[0], area_type_filter=area_type_filter)
 
-    @strawberry_django.field
-    def imported_data_count_by_constituency(self) -> List[GroupedDataCount]:
-        data = self.imported_data_count_by_constituency()
-        return [GroupedDataCount(**datum, area_type="WMC") for datum in data]
-
-    @strawberry_django.field
-    def imported_data_count_by_constituency_2024(self) -> List[GroupedDataCount]:
-        data = self.imported_data_count_by_constituency_2024()
-        return [GroupedDataCount(**datum, area_type="WMC23") for datum in data]
-
-    @strawberry_django.field
-    def imported_data_count_by_council(self) -> List[GroupedDataCount]:
-        data = self.imported_data_count_by_council()
-        return [GroupedDataCount(**datum) for datum in data]
-
-    @strawberry_django.field
-    def imported_data_count_by_ward(self) -> List[GroupedDataCount]:
-        data = self.imported_data_count_by_ward()
-        return [GroupedDataCount(**datum) for datum in data]
-
-    @strawberry_django.field
-    def imported_data_count_by_constituency_by_source(
-        self, info: Info, gss: str
-    ) -> List[GroupedDataCountWithBreakdown]:
-        results = self.imported_data_count_by_constituency_by_source()
-        return_data = []
-        for gss, group in itertools.groupby(results, lambda x: x["gss"]):
-            if gss:
-                group = list(group)
-                if len(group) > 0:
-                    return_data.append(
-                        GroupedDataCountWithBreakdown(
-                            label=group[0].get("label"),
-                            count=sum([source.get("count", 0) for source in group]),
-                            gss=gss,
-                            sources=[
-                                GroupedDataCountForSource(
-                                    **source,
-                                    area_type="WMC",
-                                    gss=gss,
-                                )
-                                for source in group
-                            ],
-                        )
-                    )
-        return return_data
-
-    @strawberry_django.field
-    def imported_data_count_for_constituency(
-        self, info: Info, gss: str
-    ) -> Optional[GroupedDataCount]:
-        res = self.imported_data_count_by_constituency(gss=gss)
-        if len(res) == 0:
-            return None
-        return GroupedDataCount(**res[0], area_type="WMC")
-
-    @strawberry_django.field
-    def imported_data_count_for_constituency_2024(
-        self, info: Info, gss: str
-    ) -> Optional[GroupedDataCount]:
-        res = self.imported_data_count_by_constituency_2024(gss=gss)
-        if len(res) == 0:
-            return None
-        return GroupedDataCount(**res[0], area_type="WMC23")
-
 
 @strawberry.type
 class BatchJobProgress:
@@ -926,6 +860,7 @@ class CrmType(Enum):
     actionnetwork = "actionnetwork"
     tickettailor = "tickettailor"
     editablegooglesheets = "editablegooglesheets"
+    uploadedcsv = "uploadedcsv"
 
 
 @strawberry_django.type(models.ExternalDataSource, filters=ExternalDataSourceFilter)
@@ -1142,6 +1077,7 @@ class ExternalDataSource(BaseDataSource):
         "ActionNetworkSource",
         "EditableGoogleSheetsSource",
         "TicketTailorSource",
+        "UploadedCSVSource",
     ]:
         instance = self.get_real_instance()
         return instance
@@ -1177,6 +1113,12 @@ class AirtableSource(ExternalDataSource):
     api_key: str
     base_id: str
     table_id: str
+
+
+@strawberry_django.type(models.UploadedCSVSource)
+class UploadedCSVSource(ExternalDataSource):
+    spreadsheet_file: str
+    delimiter: auto
 
 
 @strawberry_django.type(models.MailchimpSource)
@@ -1820,9 +1762,20 @@ def choropleth_data_for_source(
     # TODO: maybe make this explicit via an argument?
     # is_data_source_statistical = external_data_source.data_type == models.ExternalDataSource.DataSourceType.AREA_STATS
     # check that field is in DF
-    is_valid_field = field and field is not None and len(field) and field in df.columns
+    is_valid_field = (
+        mode is ChoroplethMode.Field
+        and field
+        and field is not None
+        and len(field)
+        and field in df.columns
+    )
     is_row_count = mode is ChoroplethMode.Count
-    is_valid_formula = formula and formula is not None and len(formula)
+    is_valid_formula = (
+        mode is ChoroplethMode.Formula
+        and formula
+        and formula is not None
+        and len(formula)
+    )
     is_table = mode is ChoroplethMode.Table
 
     if mode is ChoroplethMode.Field and not is_valid_field:

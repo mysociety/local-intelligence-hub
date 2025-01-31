@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import json
 from datetime import timedelta
 from pathlib import Path
+from typing import List, Tuple
 
 import environ
 import posthog
@@ -26,7 +27,9 @@ env = environ.Env(
     MINIO_STORAGE_ACCESS_KEY=(str, ""),
     MINIO_STORAGE_SECRET_KEY=(str, ""),
     MINIO_STORAGE_MEDIA_BUCKET_NAME=(str, "media"),
+    MINIO_STORAGE_PUBLIC_MEDIA_BUCKET_NAME=(str, "public"),
     MINIO_STORAGE_STATIC_BUCKET_NAME=(str, "static"),
+    MINIO_PRIVATE_UPLOADS_BUCKET=(str, "mapped-private"),
     MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET=(bool, True),
     MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET=(bool, True),
     EMAIL_BACKEND=(str, "django.core.mail.backends.console.EmailBackend"),
@@ -100,6 +103,8 @@ env = environ.Env(
     MAILCHIMP_TCC_SERVER_PREFIX=(str, ""),
     MAILCHIMP_TCC_LIST_ID=(str, ""),
     NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=(str, ""),
+    DATA_UPLOAD_MAX_MEMORY_SIZE=(int, 2621440),
+    FILE_UPLOAD_MAX_MEMORY_SIZE=(int, 2621440),
 )
 
 environ.Env.read_env(BASE_DIR / ".env")
@@ -569,18 +574,49 @@ if ENVIRONMENT == "production":
 
 
 MINIO_STORAGE_ENDPOINT = env("MINIO_STORAGE_ENDPOINT")
+MINIO_ACCESS_KEY = env("MINIO_STORAGE_ACCESS_KEY")
+MINIO_SECRET_KEY = env("MINIO_STORAGE_SECRET_KEY")
+MINIO_STORAGE_MEDIA_BUCKET_NAME = env("MINIO_STORAGE_MEDIA_BUCKET_NAME")
+MINIO_STATIC_FILES_BUCKET = env("MINIO_STORAGE_STATIC_BUCKET_NAME")
+
 if MINIO_STORAGE_ENDPOINT is not False:
-    INSTALLED_APPS += ["minio_storage"]
-    DEFAULT_FILE_STORAGE = "minio_storage.storage.MinioMediaStorage"
-    # STATICFILES_STORAGE = "minio_storage.storage.MinioStaticStorage"
-    MINIO_STORAGE_ACCESS_KEY = env("MINIO_STORAGE_ACCESS_KEY")
-    MINIO_STORAGE_SECRET_KEY = env("MINIO_STORAGE_SECRET_KEY")
-    MINIO_STORAGE_MEDIA_BUCKET_NAME = env("MINIO_STORAGE_MEDIA_BUCKET_NAME")
-    # MINIO_STORAGE_STATIC_BUCKET_NAME = env("MINIO_STORAGE_STATIC_BUCKET_NAME")
-    MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = env(
-        "MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET"
-    )
+    INSTALLED_APPS += [
+        "django_minio_backend.apps.DjangoMinioBackendConfig",
+    ]
+    DEFAULT_FILE_STORAGE = "django_minio_backend.models.MinioBackend"
+    # # STATICFILES_STORAGE = "minio_storage.storage.MinioStaticStorage"
+    # MINIO_STORAGE_ACCESS_KEY = env("MINIO_STORAGE_ACCESS_KEY")
+    # MINIO_STORAGE_SECRET_KEY = env("MINIO_STORAGE_SECRET_KEY")
+    # MINIO_STORAGE_MEDIA_BUCKET_NAME = env("MINIO_STORAGE_MEDIA_BUCKET_NAME")
+    # # MINIO_STORAGE_STATIC_BUCKET_NAME = env("MINIO_STORAGE_STATIC_BUCKET_NAME")
+    # MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = env(
+    #     "MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET"
+    # )
     # MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET = env("MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET")
+    MINIO_ENDPOINT = MINIO_STORAGE_ENDPOINT
+    # MINIO_EXTERNAL_ENDPOINT = "external-minio.your-company.co.uk"  # Default is same as MINIO_ENDPOINT
+    # MINIO_EXTERNAL_ENDPOINT_USE_HTTPS = True  # Default is same as MINIO_USE_HTTPS
+    # MINIO_REGION = 'us-east-1'  # Default is set to None
+    MINIO_USE_HTTPS = True
+    MINIO_URL_EXPIRY_HOURS = timedelta(
+        days=1
+    )  # Default is 7 days (longest) if not defined
+    MINIO_CONSISTENCY_CHECK_ON_START = True
+    MINIO_PRIVATE_BUCKETS = [
+        MINIO_STORAGE_MEDIA_BUCKET_NAME,
+    ]
+    # MINIO_STORAGE_PUBLIC_MEDIA_BUCKET_NAME = env("MINIO_STORAGE_PUBLIC_MEDIA_BUCKET_NAME")
+    MINIO_PUBLIC_BUCKETS = [
+        # No public media as yet
+        # MINIO_STORAGE_PUBLIC_MEDIA_BUCKET_NAME
+    ]
+    MINIO_POLICY_HOOKS: List[Tuple[str, dict]] = []
+    MINIO_MEDIA_FILES_BUCKET = (
+        MINIO_STORAGE_MEDIA_BUCKET_NAME  # replacement for MEDIA_ROOT
+    )
+    MINIO_BUCKET_CHECK_ON_SAVE = (
+        True  # Default: True // Creates bucket if missing, then save
+    )
 
 CACHES = {
     "default": {
@@ -603,3 +639,6 @@ WAGTAILDOCS_EXTENSIONS = []
 WAGTAILIMAGES_IMAGE_MODEL = "hub.HubImage"
 
 PARSONS_LIMITED_DEPENDENCIES = True
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = env("DATA_UPLOAD_MAX_MEMORY_SIZE")
+FILE_UPLOAD_MAX_MEMORY_SIZE = env("FILE_UPLOAD_MAX_MEMORY_SIZE")
