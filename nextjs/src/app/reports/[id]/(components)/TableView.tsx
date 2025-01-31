@@ -116,7 +116,10 @@ function TableDisplay({
 }) {
   const report = useReport()
   const explorer = useExplorer()
-  const data = useDataByBoundary(sourceId, tableView.tableOptions.groupBy.area)
+  const data = useDataByBoundaryForTable(
+    sourceId,
+    tableView.tableOptions.groupBy.area
+  )
   const view = useView(ViewType.Table)
 
   const rows = useMemo(
@@ -365,7 +368,7 @@ function TableDisplay({
   )
 }
 
-const useDataByBoundary = (
+export const useDataByBoundaryForTable = (
   sourceId: string,
   analyticalAreaType: AnalyticalAreaType
 ) => {

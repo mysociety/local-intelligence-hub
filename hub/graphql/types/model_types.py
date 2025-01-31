@@ -12,6 +12,7 @@ from django.db.models.functions import Cast
 from django.http import HttpRequest
 
 import numexpr as ne
+import numpy as np
 import pandas as pd
 import procrastinate.contrib.django.models
 import strawberry
@@ -1761,9 +1762,20 @@ def choropleth_data_for_source(
     # TODO: maybe make this explicit via an argument?
     # is_data_source_statistical = external_data_source.data_type == models.ExternalDataSource.DataSourceType.AREA_STATS
     # check that field is in DF
-    is_valid_field = mode is ChoroplethMode.Field and field and field is not None and len(field) and field in df.columns
+    is_valid_field = (
+        mode is ChoroplethMode.Field
+        and field
+        and field is not None
+        and len(field)
+        and field in df.columns
+    )
     is_row_count = mode is ChoroplethMode.Count
-    is_valid_formula = mode is ChoroplethMode.Formula and formula and formula is not None and len(formula)
+    is_valid_formula = (
+        mode is ChoroplethMode.Formula
+        and formula
+        and formula is not None
+        and len(formula)
+    )
     is_table = mode is ChoroplethMode.Table
 
     if mode is ChoroplethMode.Field and not is_valid_field:
@@ -1837,25 +1849,16 @@ def choropleth_data_for_source(
         # Add a "maximum" column that figures out the biggest numerical value in each row
         numerical_columns = df.select_dtypes(include="number").columns
         try:
-            df["first"] = df[numerical_columns].max(axis=1)
-
-            # Calculate the second-highest value in each row
-            df["second"] = df[numerical_columns].apply(
-                lambda row: row.nlargest(2).iloc[-1], axis=1
-            )
-
-            df["third"] = df[numerical_columns].apply(
-                lambda row: row.nlargest(3).iloc[-1], axis=1
-            )
-
-            df["last"] = df[numerical_columns].min(axis=1)
+            # Convert selected columns to numpy array for faster operations
+            values = df[numerical_columns].values
+            df["first"] = values.max(axis=1)
+            df["second"] = np.partition(values, -2, axis=1)[:, -2]
+            df["third"] = np.partition(values, -3, axis=1)[:, -3]
+            df["last"] = values.min(axis=1)
 
             df["total"] = df[numerical_columns].sum(axis=1)
-
             df["count"] = df[numerical_columns].count(axis=1)
-
             df["mean"] = df[numerical_columns].mean(axis=1)
-
             df["median"] = df[numerical_columns].median(axis=1)
         except IndexError:
             pass
@@ -1872,7 +1875,6 @@ def choropleth_data_for_source(
                 # In case "where" is used, which pandas doesn't support
                 # https://github.com/pandas-dev/pandas/issues/34834
                 df["count"] = ne.evaluate(formula, local_dict=df)
-            
 
         # Check if count is between 0 and 1: if so, it's a percentage
         is_percentage = df["count"].between(0, 2).all() or False

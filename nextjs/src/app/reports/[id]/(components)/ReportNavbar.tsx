@@ -36,8 +36,9 @@ import { twMerge } from 'tailwind-merge'
 import { v4 } from 'uuid'
 import { MappedIcon } from '../../../../components/icons/MappedIcon'
 import ReportStarredItemsDropdown from '../../ReportStarredItemsDropdown'
-import { ViewConfig } from '../reportContext'
-import ReportComboBox from './ReportComboBox'
+import { ViewConfig, ViewType } from '../reportContext'
+import MapComboBox from './AreaComboBox/MapComboBox'
+import TableComboBox from './AreaComboBox/TableComboBox'
 
 // You can set the title & href of the top left icon link based on route & context
 export const navbarTitleAtom = atom('')
@@ -125,7 +126,11 @@ export default function ReportNavbar() {
             <ViewCreator />
           </div>
           <div className="flex flex-row items-center gap-0 ml-auto">
-            <ReportComboBox />
+            {viewManager.currentView.type === ViewType.Map ? (
+              <MapComboBox />
+            ) : (
+              <TableComboBox />
+            )}
             <ReportStarredItemsDropdown />
             {!!explorer.isValidEntity(explorer.state) && (
               <PanelRight

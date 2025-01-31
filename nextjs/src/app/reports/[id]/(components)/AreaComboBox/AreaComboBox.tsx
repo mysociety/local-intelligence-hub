@@ -1,9 +1,6 @@
-'use client'
-
-import { Check, Locate } from 'lucide-react'
-import * as React from 'react'
-
 import { Button } from '@/components/ui/button'
+import { Check, Locate } from 'lucide-react'
+
 import {
   Command,
   CommandEmpty,
@@ -18,29 +15,20 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { useExplorer } from '@/lib/map/useExplorer'
-import { useView } from '@/lib/map/useView'
 import { cn } from '@/lib/utils'
-import { useEffect } from 'react'
-import { POLITICAL_BOUNDARIES } from '../politicalTilesets'
-import { ViewType } from '../reportContext'
-import { useAreasList } from '../useAreasList'
-
-export default function ReportDashboardConsSelector() {
-  const [searchQuery, setSearchQuery] = React.useState('')
+import { useEffect, useState } from 'react'
+export function AreaComboBox({
+  areas,
+  selectedBoundaryLabel,
+}: {
+  areas: { name: string; gss: string }[]
+  selectedBoundaryLabel: string
+}) {
+  const [searchQuery, setSearchQuery] = useState('')
   const explorer = useExplorer()
 
-  const [open, setOpen] = React.useState(false)
-  const [value, setValue] = React.useState('')
-
-  const view = useView(ViewType.Map)
-  const boundaryType =
-    view.currentViewOfType?.mapOptions.choropleth?.boundaryType
-  const selectedBoundaryLabel = POLITICAL_BOUNDARIES.find(
-    (boundary) => boundary.boundaryType === boundaryType
-  )?.label
-
-  const areas = useAreasList(boundaryType)
-
+  const [open, setOpen] = useState(false)
+  const [value, setValue] = useState('')
   // Get the area ID from URL params
   useEffect(() => {
     const entity = explorer.state.entity
@@ -49,7 +37,7 @@ export default function ReportDashboardConsSelector() {
     if (entity === 'area' && id) {
       const area = areas.find((area) => area.gss === id)
       if (area) {
-        setValue(area.name)
+        setValue(area.gss)
       }
     }
   }, [explorer.state, areas])
@@ -57,7 +45,7 @@ export default function ReportDashboardConsSelector() {
   const handleSelect = (value: string) => {
     const valueUpper = value.toUpperCase()
     const area = areas.find((area) => area.gss === valueUpper)
-    setValue(area?.name ?? '')
+    setValue(area?.gss ?? '')
     setOpen(false)
 
     explorer.select(
@@ -158,7 +146,7 @@ export default function ReportDashboardConsSelector() {
                   key={area.gss}
                   value={area.name}
                   onSelect={(currentValue) => {
-                    setValue(area.name)
+                    setValue(area.gss)
                     setOpen(false)
                     handleSelect(area.gss)
                   }}
@@ -166,7 +154,7 @@ export default function ReportDashboardConsSelector() {
                   <Check
                     className={cn(
                       'mr-2 h-4 w-4',
-                      value === area.name ? 'opacity-100' : 'opacity-0'
+                      value === area.gss ? 'opacity-100' : 'opacity-0'
                     )}
                   />
                   {area.name}

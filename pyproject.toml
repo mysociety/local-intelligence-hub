@@ -64,6 +64,8 @@ dateparser = "^1.2.0"
 phonenumbers = "8.13.51"
 numexpr = "^2.10.2"
 jsonpatch = "^1.33"
+pyinstrument = "^5.0.1"
+numpy = "^2.2.2"
 django-minio-backend = "^3.8.0"
 s3fs = "^2024.12.0"
 
