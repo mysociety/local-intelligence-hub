@@ -73,7 +73,7 @@ export type ActionNetworkSource = Analytics & {
   autoUpdateEnabled: Scalars['Boolean']['output'];
   automatedWebhooks: Scalars['Boolean']['output'];
   canDisplayPointField?: Maybe<Scalars['String']['output']>;
-  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSource;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSourceUploadedCsvSource;
   createdAt: Scalars['DateTime']['output'];
   crmType: CrmType;
   dataType: DataSourceType;
@@ -99,14 +99,7 @@ export type ActionNetworkSource = Analytics & {
   importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
-  importedDataCountByConstituency: Array<GroupedDataCount>;
-  importedDataCountByConstituency2024: Array<GroupedDataCount>;
-  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
-  importedDataCountByCouncil: Array<GroupedDataCount>;
-  importedDataCountByWard: Array<GroupedDataCount>;
   importedDataCountForArea?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
   importedDataCountLocated: Scalars['Int']['output'];
   importedDataCountOfAreas: Scalars['Int']['output'];
   importedDataCountUnlocated: Scalars['Int']['output'];
@@ -158,26 +151,8 @@ export type ActionNetworkSourceImportedDataCountByAreaArgs = {
 
 
 /** An Action Network member list. */
-export type ActionNetworkSourceImportedDataCountByConstituencyBySourceArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** An Action Network member list. */
 export type ActionNetworkSourceImportedDataCountForAreaArgs = {
   analyticalAreaType: AnalyticalAreaType;
-  gss: Scalars['String']['input'];
-};
-
-
-/** An Action Network member list. */
-export type ActionNetworkSourceImportedDataCountForConstituencyArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** An Action Network member list. */
-export type ActionNetworkSourceImportedDataCountForConstituency2024Args = {
   gss: Scalars['String']['input'];
 };
 
@@ -245,7 +220,7 @@ export type AirtableSource = Analytics & {
   automatedWebhooks: Scalars['Boolean']['output'];
   baseId: Scalars['String']['output'];
   canDisplayPointField?: Maybe<Scalars['String']['output']>;
-  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSource;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSourceUploadedCsvSource;
   createdAt: Scalars['DateTime']['output'];
   crmType: CrmType;
   dataType: DataSourceType;
@@ -270,14 +245,7 @@ export type AirtableSource = Analytics & {
   importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
-  importedDataCountByConstituency: Array<GroupedDataCount>;
-  importedDataCountByConstituency2024: Array<GroupedDataCount>;
-  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
-  importedDataCountByCouncil: Array<GroupedDataCount>;
-  importedDataCountByWard: Array<GroupedDataCount>;
   importedDataCountForArea?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
   importedDataCountLocated: Scalars['Int']['output'];
   importedDataCountOfAreas: Scalars['Int']['output'];
   importedDataCountUnlocated: Scalars['Int']['output'];
@@ -330,26 +298,8 @@ export type AirtableSourceImportedDataCountByAreaArgs = {
 
 
 /** An Airtable table. */
-export type AirtableSourceImportedDataCountByConstituencyBySourceArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** An Airtable table. */
 export type AirtableSourceImportedDataCountForAreaArgs = {
   analyticalAreaType: AnalyticalAreaType;
-  gss: Scalars['String']['input'];
-};
-
-
-/** An Airtable table. */
-export type AirtableSourceImportedDataCountForConstituencyArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** An Airtable table. */
-export type AirtableSourceImportedDataCountForConstituency2024Args = {
   gss: Scalars['String']['input'];
 };
 
@@ -407,7 +357,7 @@ export type AirtableSourceInput = {
   updateMapping?: InputMaybe<Array<UpdateMappingItemInput>>;
 };
 
-export type AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSource = ActionNetworkSource | AirtableSource | EditableGoogleSheetsSource | MailchimpSource | TicketTailorSource;
+export type AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSourceUploadedCsvSource = ActionNetworkSource | AirtableSource | EditableGoogleSheetsSource | MailchimpSource | TicketTailorSource | UploadedCsvSource;
 
 export enum AnalyticalAreaType {
   AdminCounty = 'admin_county',
@@ -429,14 +379,7 @@ export type Analytics = {
   importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
-  importedDataCountByConstituency: Array<GroupedDataCount>;
-  importedDataCountByConstituency2024: Array<GroupedDataCount>;
-  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
-  importedDataCountByCouncil: Array<GroupedDataCount>;
-  importedDataCountByWard: Array<GroupedDataCount>;
   importedDataCountForArea?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
   importedDataCountLocated: Scalars['Int']['output'];
   importedDataCountOfAreas: Scalars['Int']['output'];
   importedDataCountUnlocated: Scalars['Int']['output'];
@@ -456,23 +399,8 @@ export type AnalyticsImportedDataCountByAreaArgs = {
 };
 
 
-export type AnalyticsImportedDataCountByConstituencyBySourceArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
 export type AnalyticsImportedDataCountForAreaArgs = {
   analyticalAreaType: AnalyticalAreaType;
-  gss: Scalars['String']['input'];
-};
-
-
-export type AnalyticsImportedDataCountForConstituencyArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-export type AnalyticsImportedDataCountForConstituency2024Args = {
   gss: Scalars['String']['input'];
 };
 
@@ -713,7 +641,8 @@ export enum CrmType {
   Airtable = 'airtable',
   Editablegooglesheets = 'editablegooglesheets',
   Mailchimp = 'mailchimp',
-  Tickettailor = 'tickettailor'
+  Tickettailor = 'tickettailor',
+  Uploadedcsv = 'uploadedcsv'
 }
 
 /** DataSet(id, name, description, label, data_type, last_update, source_label, source, source_type, data_url, release_date, is_upload, is_range, featured, order, category, subcategory, table, comparators, options, default_value, is_filterable, is_shadable, is_public, fill_blanks, exclude_countries, unit_type, unit_distribution, external_data_source) */
@@ -851,7 +780,7 @@ export type EditableGoogleSheetsSource = Analytics & {
   autoUpdateEnabled: Scalars['Boolean']['output'];
   automatedWebhooks: Scalars['Boolean']['output'];
   canDisplayPointField?: Maybe<Scalars['String']['output']>;
-  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSource;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSourceUploadedCsvSource;
   createdAt: Scalars['DateTime']['output'];
   crmType: CrmType;
   dataType: DataSourceType;
@@ -876,14 +805,7 @@ export type EditableGoogleSheetsSource = Analytics & {
   importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
-  importedDataCountByConstituency: Array<GroupedDataCount>;
-  importedDataCountByConstituency2024: Array<GroupedDataCount>;
-  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
-  importedDataCountByCouncil: Array<GroupedDataCount>;
-  importedDataCountByWard: Array<GroupedDataCount>;
   importedDataCountForArea?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
   importedDataCountLocated: Scalars['Int']['output'];
   importedDataCountOfAreas: Scalars['Int']['output'];
   importedDataCountUnlocated: Scalars['Int']['output'];
@@ -937,26 +859,8 @@ export type EditableGoogleSheetsSourceImportedDataCountByAreaArgs = {
 
 
 /** An editable Google Sheet */
-export type EditableGoogleSheetsSourceImportedDataCountByConstituencyBySourceArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** An editable Google Sheet */
 export type EditableGoogleSheetsSourceImportedDataCountForAreaArgs = {
   analyticalAreaType: AnalyticalAreaType;
-  gss: Scalars['String']['input'];
-};
-
-
-/** An editable Google Sheet */
-export type EditableGoogleSheetsSourceImportedDataCountForConstituencyArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** An editable Google Sheet */
-export type EditableGoogleSheetsSourceImportedDataCountForConstituency2024Args = {
   gss: Scalars['String']['input'];
 };
 
@@ -1118,7 +1022,7 @@ export type ExternalDataSource = Analytics & {
   autoUpdateEnabled: Scalars['Boolean']['output'];
   automatedWebhooks: Scalars['Boolean']['output'];
   canDisplayPointField?: Maybe<Scalars['String']['output']>;
-  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSource;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSourceUploadedCsvSource;
   createdAt: Scalars['DateTime']['output'];
   crmType: CrmType;
   dataType: DataSourceType;
@@ -1143,14 +1047,7 @@ export type ExternalDataSource = Analytics & {
   importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
-  importedDataCountByConstituency: Array<GroupedDataCount>;
-  importedDataCountByConstituency2024: Array<GroupedDataCount>;
-  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
-  importedDataCountByCouncil: Array<GroupedDataCount>;
-  importedDataCountByWard: Array<GroupedDataCount>;
   importedDataCountForArea?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
   importedDataCountLocated: Scalars['Int']['output'];
   importedDataCountOfAreas: Scalars['Int']['output'];
   importedDataCountUnlocated: Scalars['Int']['output'];
@@ -1214,38 +1111,8 @@ export type ExternalDataSourceImportedDataCountByAreaArgs = {
  * E.g. Google Sheet or an Action Network table.
  * This class is to be subclassed by specific data source types.
  */
-export type ExternalDataSourceImportedDataCountByConstituencyBySourceArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/**
- * A third-party data source that can be read and optionally written back to.
- * E.g. Google Sheet or an Action Network table.
- * This class is to be subclassed by specific data source types.
- */
 export type ExternalDataSourceImportedDataCountForAreaArgs = {
   analyticalAreaType: AnalyticalAreaType;
-  gss: Scalars['String']['input'];
-};
-
-
-/**
- * A third-party data source that can be read and optionally written back to.
- * E.g. Google Sheet or an Action Network table.
- * This class is to be subclassed by specific data source types.
- */
-export type ExternalDataSourceImportedDataCountForConstituencyArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/**
- * A third-party data source that can be read and optionally written back to.
- * E.g. Google Sheet or an Action Network table.
- * This class is to be subclassed by specific data source types.
- */
-export type ExternalDataSourceImportedDataCountForConstituency2024Args = {
   gss: Scalars['String']['input'];
 };
 
@@ -1434,20 +1301,6 @@ export type GroupedDataCount = {
   gssArea?: Maybe<Area>;
   label?: Maybe<Scalars['String']['output']>;
   row?: Maybe<Scalars['JSON']['output']>;
-};
-
-export type GroupedDataCountWithBreakdown = {
-  __typename?: 'GroupedDataCountWithBreakdown';
-  areaData?: Maybe<Area>;
-  areaTypeFilter?: Maybe<AreaTypeFilter>;
-  columns?: Maybe<Array<Scalars['String']['output']>>;
-  count: Scalars['Float']['output'];
-  formattedCount?: Maybe<Scalars['String']['output']>;
-  gss?: Maybe<Scalars['String']['output']>;
-  gssArea?: Maybe<Area>;
-  label?: Maybe<Scalars['String']['output']>;
-  row?: Maybe<Scalars['JSON']['output']>;
-  sources: Array<GroupedDataCount>;
 };
 
 /**
@@ -1650,7 +1503,7 @@ export type MailchimpSource = Analytics & {
   autoUpdateEnabled: Scalars['Boolean']['output'];
   automatedWebhooks: Scalars['Boolean']['output'];
   canDisplayPointField?: Maybe<Scalars['String']['output']>;
-  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSource;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSourceUploadedCsvSource;
   createdAt: Scalars['DateTime']['output'];
   crmType: CrmType;
   dataType: DataSourceType;
@@ -1675,14 +1528,7 @@ export type MailchimpSource = Analytics & {
   importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
-  importedDataCountByConstituency: Array<GroupedDataCount>;
-  importedDataCountByConstituency2024: Array<GroupedDataCount>;
-  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
-  importedDataCountByCouncil: Array<GroupedDataCount>;
-  importedDataCountByWard: Array<GroupedDataCount>;
   importedDataCountForArea?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
   importedDataCountLocated: Scalars['Int']['output'];
   importedDataCountOfAreas: Scalars['Int']['output'];
   importedDataCountUnlocated: Scalars['Int']['output'];
@@ -1736,26 +1582,8 @@ export type MailchimpSourceImportedDataCountByAreaArgs = {
 
 
 /** A Mailchimp list. */
-export type MailchimpSourceImportedDataCountByConstituencyBySourceArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** A Mailchimp list. */
 export type MailchimpSourceImportedDataCountForAreaArgs = {
   analyticalAreaType: AnalyticalAreaType;
-  gss: Scalars['String']['input'];
-};
-
-
-/** A Mailchimp list. */
-export type MailchimpSourceImportedDataCountForConstituencyArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** A Mailchimp list. */
-export type MailchimpSourceImportedDataCountForConstituency2024Args = {
   gss: Scalars['String']['input'];
 };
 
@@ -2737,14 +2565,7 @@ export type SharedDataSource = Analytics & {
   importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
-  importedDataCountByConstituency: Array<GroupedDataCount>;
-  importedDataCountByConstituency2024: Array<GroupedDataCount>;
-  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
-  importedDataCountByCouncil: Array<GroupedDataCount>;
-  importedDataCountByWard: Array<GroupedDataCount>;
   importedDataCountForArea?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
   importedDataCountLocated: Scalars['Int']['output'];
   importedDataCountOfAreas: Scalars['Int']['output'];
   importedDataCountUnlocated: Scalars['Int']['output'];
@@ -2799,38 +2620,8 @@ export type SharedDataSourceImportedDataCountByAreaArgs = {
  * E.g. Google Sheet or an Action Network table.
  * This class is to be subclassed by specific data source types.
  */
-export type SharedDataSourceImportedDataCountByConstituencyBySourceArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/**
- * A third-party data source that can be read and optionally written back to.
- * E.g. Google Sheet or an Action Network table.
- * This class is to be subclassed by specific data source types.
- */
 export type SharedDataSourceImportedDataCountForAreaArgs = {
   analyticalAreaType: AnalyticalAreaType;
-  gss: Scalars['String']['input'];
-};
-
-
-/**
- * A third-party data source that can be read and optionally written back to.
- * E.g. Google Sheet or an Action Network table.
- * This class is to be subclassed by specific data source types.
- */
-export type SharedDataSourceImportedDataCountForConstituencyArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/**
- * A third-party data source that can be read and optionally written back to.
- * E.g. Google Sheet or an Action Network table.
- * This class is to be subclassed by specific data source types.
- */
-export type SharedDataSourceImportedDataCountForConstituency2024Args = {
   gss: Scalars['String']['input'];
 };
 
@@ -2908,7 +2699,7 @@ export type TicketTailorSource = Analytics & {
   autoUpdateEnabled: Scalars['Boolean']['output'];
   automatedWebhooks: Scalars['Boolean']['output'];
   canDisplayPointField?: Maybe<Scalars['String']['output']>;
-  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSource;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSourceUploadedCsvSource;
   createdAt: Scalars['DateTime']['output'];
   crmType: CrmType;
   dataType: DataSourceType;
@@ -2933,14 +2724,7 @@ export type TicketTailorSource = Analytics & {
   importedDataByArea: Array<GroupedData>;
   importedDataCount: Scalars['Int']['output'];
   importedDataCountByArea: Array<GroupedDataCount>;
-  importedDataCountByConstituency: Array<GroupedDataCount>;
-  importedDataCountByConstituency2024: Array<GroupedDataCount>;
-  importedDataCountByConstituencyBySource: Array<GroupedDataCountWithBreakdown>;
-  importedDataCountByCouncil: Array<GroupedDataCount>;
-  importedDataCountByWard: Array<GroupedDataCount>;
   importedDataCountForArea?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency?: Maybe<GroupedDataCount>;
-  importedDataCountForConstituency2024?: Maybe<GroupedDataCount>;
   importedDataCountLocated: Scalars['Int']['output'];
   importedDataCountOfAreas: Scalars['Int']['output'];
   importedDataCountUnlocated: Scalars['Int']['output'];
@@ -2992,26 +2776,8 @@ export type TicketTailorSourceImportedDataCountByAreaArgs = {
 
 
 /** Ticket Tailor box office */
-export type TicketTailorSourceImportedDataCountByConstituencyBySourceArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** Ticket Tailor box office */
 export type TicketTailorSourceImportedDataCountForAreaArgs = {
   analyticalAreaType: AnalyticalAreaType;
-  gss: Scalars['String']['input'];
-};
-
-
-/** Ticket Tailor box office */
-export type TicketTailorSourceImportedDataCountForConstituencyArgs = {
-  gss: Scalars['String']['input'];
-};
-
-
-/** Ticket Tailor box office */
-export type TicketTailorSourceImportedDataCountForConstituency2024Args = {
   gss: Scalars['String']['input'];
 };
 
@@ -3110,6 +2876,119 @@ export type UpdateMappingItemInput = {
   destinationColumn: Scalars['String']['input'];
   source: Scalars['String']['input'];
   sourcePath: Scalars['String']['input'];
+};
+
+/** A media URL */
+export type UploadedCsvSource = Analytics & {
+  __typename?: 'UploadedCSVSource';
+  addressField?: Maybe<Scalars['String']['output']>;
+  allowUpdates: Scalars['Boolean']['output'];
+  autoImportEnabled: Scalars['Boolean']['output'];
+  autoUpdateEnabled: Scalars['Boolean']['output'];
+  automatedWebhooks: Scalars['Boolean']['output'];
+  canDisplayPointField?: Maybe<Scalars['String']['output']>;
+  connectionDetails: AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSourceUploadedCsvSource;
+  createdAt: Scalars['DateTime']['output'];
+  crmType: CrmType;
+  dataType: DataSourceType;
+  defaultDataType?: Maybe<Scalars['String']['output']>;
+  defaults: Scalars['JSON']['output'];
+  delimiter: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  descriptionField?: Maybe<Scalars['String']['output']>;
+  emailField?: Maybe<Scalars['String']['output']>;
+  endTimeField?: Maybe<Scalars['String']['output']>;
+  fieldDefinitions?: Maybe<Array<FieldDefinition>>;
+  firstNameField?: Maybe<Scalars['String']['output']>;
+  fullNameField?: Maybe<Scalars['String']['output']>;
+  geocodingConfig: Scalars['JSON']['output'];
+  geographyColumn?: Maybe<Scalars['String']['output']>;
+  geographyColumnType: GeographyTypes;
+  hasWebhooks: Scalars['Boolean']['output'];
+  healthcheck: Scalars['Boolean']['output'];
+  id: Scalars['UUID']['output'];
+  idField?: Maybe<Scalars['String']['output']>;
+  imageField?: Maybe<Scalars['String']['output']>;
+  importProgress?: Maybe<BatchJobProgress>;
+  importedDataByArea: Array<GroupedData>;
+  importedDataCount: Scalars['Int']['output'];
+  importedDataCountByArea: Array<GroupedDataCount>;
+  importedDataCountForArea?: Maybe<GroupedDataCount>;
+  importedDataCountLocated: Scalars['Int']['output'];
+  importedDataCountOfAreas: Scalars['Int']['output'];
+  importedDataCountUnlocated: Scalars['Int']['output'];
+  importedDataGeocodingRate: Scalars['Float']['output'];
+  introspectFields: Scalars['Boolean']['output'];
+  isImportScheduled: Scalars['Boolean']['output'];
+  isUpdateScheduled: Scalars['Boolean']['output'];
+  jobs: Array<QueueJob>;
+  lastImportJob?: Maybe<QueueJob>;
+  lastNameField?: Maybe<Scalars['String']['output']>;
+  lastUpdate: Scalars['DateTime']['output'];
+  lastUpdateJob?: Maybe<QueueJob>;
+  name: Scalars['String']['output'];
+  oauthCredentials?: Maybe<Scalars['String']['output']>;
+  organisation: Organisation;
+  organisationId: Scalars['String']['output'];
+  orgsWithAccess: Array<Organisation>;
+  phoneField?: Maybe<Scalars['String']['output']>;
+  postcodeField?: Maybe<Scalars['String']['output']>;
+  predefinedColumnNames: Scalars['Boolean']['output'];
+  publicUrlField?: Maybe<Scalars['String']['output']>;
+  recordUrlTemplate?: Maybe<Scalars['String']['output']>;
+  remoteName?: Maybe<Scalars['String']['output']>;
+  remoteUrl?: Maybe<Scalars['String']['output']>;
+  sharingPermissions: Array<SharingPermission>;
+  socialUrlField?: Maybe<Scalars['String']['output']>;
+  spreadsheetFile: Scalars['String']['output'];
+  startTimeField?: Maybe<Scalars['String']['output']>;
+  titleField?: Maybe<Scalars['String']['output']>;
+  updateMapping?: Maybe<Array<AutoUpdateConfig>>;
+  updateProgress?: Maybe<BatchJobProgress>;
+  usesValidGeocodingConfig: Scalars['Boolean']['output'];
+  webhookHealthcheck: Scalars['Boolean']['output'];
+  webhookUrl: Scalars['String']['output'];
+};
+
+
+/** A media URL */
+export type UploadedCsvSourceImportedDataByAreaArgs = {
+  analyticalAreaType: AnalyticalAreaType;
+  layerIds?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+
+/** A media URL */
+export type UploadedCsvSourceImportedDataCountByAreaArgs = {
+  analyticalAreaType: AnalyticalAreaType;
+  layerIds?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+
+/** A media URL */
+export type UploadedCsvSourceImportedDataCountForAreaArgs = {
+  analyticalAreaType: AnalyticalAreaType;
+  gss: Scalars['String']['input'];
+};
+
+
+/** A media URL */
+export type UploadedCsvSourceImportedDataCountOfAreasArgs = {
+  analyticalAreaType: AnalyticalAreaType;
+  layerIds?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+
+/** A media URL */
+export type UploadedCsvSourceJobsArgs = {
+  filters?: InputMaybe<QueueFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** A media URL */
+export type UploadedCsvSourceOrgsWithAccessArgs = {
+  filters?: InputMaybe<OrganisationFilters>;
 };
 
 /**
@@ -3230,7 +3109,7 @@ export type ListOrganisationsQueryVariables = Exact<{
 }>;
 
 
-export type ListOrganisationsQuery = { __typename?: 'Query', myOrganisations: Array<{ __typename?: 'Organisation', id: string, externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, crmType: CrmType, autoImportEnabled: boolean, autoUpdateEnabled: boolean, connectionDetails: { __typename?: 'ActionNetworkSource' } | { __typename?: 'AirtableSource', baseId: string, tableId: string } | { __typename?: 'EditableGoogleSheetsSource' } | { __typename?: 'MailchimpSource', apiKey: string, listId: string } | { __typename?: 'TicketTailorSource' }, jobs: Array<{ __typename?: 'QueueJob', lastEventAt: any, status: ProcrastinateJobStatus }>, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any, organisation: { __typename?: 'PublicOrganisation', id: string, name: string } }> }>, sharingPermissionsFromOtherOrgs: Array<{ __typename?: 'SharingPermission', id: any, externalDataSource: { __typename?: 'SharedDataSource', id: any, name: string, dataType: DataSourceType, crmType: CrmType, organisation: { __typename?: 'PublicOrganisation', name: string } } }> }> };
+export type ListOrganisationsQuery = { __typename?: 'Query', myOrganisations: Array<{ __typename?: 'Organisation', id: string, externalDataSources: Array<{ __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, crmType: CrmType, autoImportEnabled: boolean, autoUpdateEnabled: boolean, connectionDetails: { __typename?: 'ActionNetworkSource' } | { __typename?: 'AirtableSource', baseId: string, tableId: string } | { __typename?: 'EditableGoogleSheetsSource' } | { __typename?: 'MailchimpSource', apiKey: string, listId: string } | { __typename?: 'TicketTailorSource' } | { __typename?: 'UploadedCSVSource' }, jobs: Array<{ __typename?: 'QueueJob', lastEventAt: any, status: ProcrastinateJobStatus }>, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any, organisation: { __typename?: 'PublicOrganisation', id: string, name: string } }> }>, sharingPermissionsFromOtherOrgs: Array<{ __typename?: 'SharingPermission', id: any, externalDataSource: { __typename?: 'SharedDataSource', id: any, name: string, dataType: DataSourceType, crmType: CrmType, organisation: { __typename?: 'PublicOrganisation', name: string } } }> }> };
 
 export type GetSourceMappingQueryVariables = Exact<{
   ID: Scalars['ID']['input'];
@@ -3288,7 +3167,7 @@ export type ExternalDataSourceInspectPageQueryVariables = Exact<{
 }>;
 
 
-export type ExternalDataSourceInspectPageQuery = { __typename?: 'Query', externalDataSource: { __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, remoteUrl?: string | null, crmType: CrmType, autoImportEnabled: boolean, autoUpdateEnabled: boolean, hasWebhooks: boolean, allowUpdates: boolean, automatedWebhooks: boolean, webhookUrl: string, webhookHealthcheck: boolean, geographyColumn?: string | null, geographyColumnType: GeographyTypes, geocodingConfig: any, usesValidGeocodingConfig: boolean, postcodeField?: string | null, firstNameField?: string | null, lastNameField?: string | null, fullNameField?: string | null, emailField?: string | null, phoneField?: string | null, addressField?: string | null, titleField?: string | null, descriptionField?: string | null, imageField?: string | null, startTimeField?: string | null, endTimeField?: string | null, publicUrlField?: string | null, socialUrlField?: string | null, canDisplayPointField?: string | null, isImportScheduled: boolean, isUpdateScheduled: boolean, importedDataCount: number, importedDataGeocodingRate: number, regionCount: number, constituencyCount: number, ladCount: number, wardCount: number, connectionDetails: { __typename?: 'ActionNetworkSource', apiKey: string, groupSlug: string } | { __typename?: 'AirtableSource', apiKey: string, baseId: string, tableId: string } | { __typename?: 'EditableGoogleSheetsSource' } | { __typename?: 'MailchimpSource', apiKey: string, listId: string } | { __typename?: 'TicketTailorSource', apiKey: string }, lastImportJob?: { __typename?: 'QueueJob', id: string, lastEventAt: any, status: ProcrastinateJobStatus } | null, lastUpdateJob?: { __typename?: 'QueueJob', id: string, lastEventAt: any, status: ProcrastinateJobStatus } | null, importProgress?: { __typename?: 'BatchJobProgress', id: string, hasForecast: boolean, status: ProcrastinateJobStatus, total?: number | null, succeeded?: number | null, estimatedFinishTime?: any | null, actualFinishTime?: any | null, inQueue: boolean, numberOfJobsAheadInQueue?: number | null, sendEmail: boolean } | null, updateProgress?: { __typename?: 'BatchJobProgress', id: string, hasForecast: boolean, status: ProcrastinateJobStatus, total?: number | null, succeeded?: number | null, estimatedFinishTime?: any | null, actualFinishTime?: any | null, inQueue: boolean, numberOfJobsAheadInQueue?: number | null, sendEmail: boolean } | null, fieldDefinitions?: Array<{ __typename?: 'FieldDefinition', label?: string | null, value: string, description?: string | null, editable: boolean }> | null, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any }>, organisation: { __typename?: 'Organisation', id: string, name: string } } };
+export type ExternalDataSourceInspectPageQuery = { __typename?: 'Query', externalDataSource: { __typename?: 'ExternalDataSource', id: any, name: string, dataType: DataSourceType, remoteUrl?: string | null, crmType: CrmType, autoImportEnabled: boolean, autoUpdateEnabled: boolean, hasWebhooks: boolean, allowUpdates: boolean, automatedWebhooks: boolean, webhookUrl: string, webhookHealthcheck: boolean, geographyColumn?: string | null, geographyColumnType: GeographyTypes, geocodingConfig: any, usesValidGeocodingConfig: boolean, postcodeField?: string | null, firstNameField?: string | null, lastNameField?: string | null, fullNameField?: string | null, emailField?: string | null, phoneField?: string | null, addressField?: string | null, titleField?: string | null, descriptionField?: string | null, imageField?: string | null, startTimeField?: string | null, endTimeField?: string | null, publicUrlField?: string | null, socialUrlField?: string | null, canDisplayPointField?: string | null, isImportScheduled: boolean, isUpdateScheduled: boolean, importedDataCount: number, importedDataGeocodingRate: number, regionCount: number, constituencyCount: number, ladCount: number, wardCount: number, connectionDetails: { __typename?: 'ActionNetworkSource', apiKey: string, groupSlug: string } | { __typename?: 'AirtableSource', apiKey: string, baseId: string, tableId: string } | { __typename?: 'EditableGoogleSheetsSource' } | { __typename?: 'MailchimpSource', apiKey: string, listId: string } | { __typename?: 'TicketTailorSource', apiKey: string } | { __typename?: 'UploadedCSVSource' }, lastImportJob?: { __typename?: 'QueueJob', id: string, lastEventAt: any, status: ProcrastinateJobStatus } | null, lastUpdateJob?: { __typename?: 'QueueJob', id: string, lastEventAt: any, status: ProcrastinateJobStatus } | null, importProgress?: { __typename?: 'BatchJobProgress', id: string, hasForecast: boolean, status: ProcrastinateJobStatus, total?: number | null, succeeded?: number | null, estimatedFinishTime?: any | null, actualFinishTime?: any | null, inQueue: boolean, numberOfJobsAheadInQueue?: number | null, sendEmail: boolean } | null, updateProgress?: { __typename?: 'BatchJobProgress', id: string, hasForecast: boolean, status: ProcrastinateJobStatus, total?: number | null, succeeded?: number | null, estimatedFinishTime?: any | null, actualFinishTime?: any | null, inQueue: boolean, numberOfJobsAheadInQueue?: number | null, sendEmail: boolean } | null, fieldDefinitions?: Array<{ __typename?: 'FieldDefinition', label?: string | null, value: string, description?: string | null, editable: boolean }> | null, updateMapping?: Array<{ __typename?: 'AutoUpdateConfig', source: string, sourcePath: string, destinationColumn: string }> | null, sharingPermissions: Array<{ __typename?: 'SharingPermission', id: any }>, organisation: { __typename?: 'Organisation', id: string, name: string } } };
 
 export type DeleteUpdateConfigMutationVariables = Exact<{
   id: Scalars['String']['input'];
@@ -3811,12 +3690,13 @@ export const PublicUserDocument = {"kind":"Document","definitions":[{"kind":"Ope
       }
       const result: PossibleTypesResultData = {
   "possibleTypes": {
-    "AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSource": [
+    "AirtableSourceMailchimpSourceActionNetworkSourceEditableGoogleSheetsSourceTicketTailorSourceUploadedCSVSource": [
       "ActionNetworkSource",
       "AirtableSource",
       "EditableGoogleSheetsSource",
       "MailchimpSource",
-      "TicketTailorSource"
+      "TicketTailorSource",
+      "UploadedCSVSource"
     ],
     "Analytics": [
       "ActionNetworkSource",
@@ -3825,7 +3705,8 @@ export const PublicUserDocument = {"kind":"Document","definitions":[{"kind":"Ope
       "ExternalDataSource",
       "MailchimpSource",
       "SharedDataSource",
-      "TicketTailorSource"
+      "TicketTailorSource",
+      "UploadedCSVSource"
     ],
     "CommonData": [
       "AreaData",

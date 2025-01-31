@@ -1,4 +1,5 @@
 import {
+  ChoroplethMode,
   SourceStatsByBoundaryQuery,
   SourceStatsByBoundaryQueryVariables,
 } from '@/__generated__/graphql'
@@ -41,8 +42,8 @@ const useDataByBoundary = ({
   )?.source
 
   // If mapBounds is required, send dummy empty bounds on the first request
-  // Skipping the first query means that fetchMore() doesn't work
-  // fetchMore() is required to add data to the map when the user pans/zooms
+  // This is required for fetchMore() to work, which is used to add data to
+  // the map when the user pans/zooms
   // Passing the actual mapBounds with useMapBounds() here resets the query
   // on every pan, which creates flicker and poor performance
   const mapBounds = tileset.useBoundsInDataQuery
@@ -58,8 +59,14 @@ const useDataByBoundary = ({
       sourceId: sourceId!,
       analyticalAreaType: analyticalAreaType!,
       mode: view?.mapOptions?.choropleth.mode,
-      field: view?.mapOptions?.choropleth.field,
-      formula: view?.mapOptions?.choropleth.formula,
+      field:
+        view?.mapOptions?.choropleth.mode === ChoroplethMode.Field
+          ? view?.mapOptions?.choropleth.field
+          : undefined,
+      formula:
+        view?.mapOptions?.choropleth.mode === ChoroplethMode.Formula
+          ? view?.mapOptions?.choropleth.formula
+          : undefined,
       mapBounds,
     },
     skip: !view?.mapOptions || !sourceId || !analyticalAreaType,

@@ -41,6 +41,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { externalDataSourceOptions } from '@/lib/data'
 import { UPDATE_EXTERNAL_DATA_SOURCE } from '@/lib/graphql/mutations'
 import { contentEditableMutation } from '@/lib/html'
+import { createReportForSource } from '@/lib/map/createReportForSource'
 import { toastPromise } from '@/lib/toast'
 import { formatCrmNames } from '@/lib/utils'
 import { FetchResult, gql, useApolloClient, useQuery } from '@apollo/client'
@@ -253,20 +254,11 @@ export default function InspectExternalDataSource({
     : undefined
 
   const handleCreateReport = () => {
-    const layer = {
-      id: externalDataSourceId,
-      name,
-      source: externalDataSourceId,
-      visible: true,
-    }
-
     const variables = {
-      data: {
-        name: `Map for ${name}`,
-        displayOptions: {
-          layers: [layer],
-        },
-      },
+      data: createReportForSource(
+        source?.name || 'Untitled Data Source',
+        externalDataSourceId
+      ),
     }
 
     toast.promise(

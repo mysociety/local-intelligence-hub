@@ -17,11 +17,13 @@ import {
   CalendarDays,
   FlagTriangleRight,
   LineChart,
+  LucideFileSpreadsheet,
   MapPinIcon,
   Newspaper,
   UserIcon,
   UsersIcon,
 } from 'lucide-react'
+import { twMerge } from 'tailwind-merge'
 
 export const externalDataSourceOptions: Record<
   CrmType,
@@ -84,6 +86,28 @@ export const externalDataSourceOptions: Record<
     logo: TicketTailorLogo,
     screenshot: '/tickettailor-screenshot.png',
     supported: true,
+  },
+  [CrmType.Uploadedcsv]: {
+    key: CrmType.Uploadedcsv,
+    modelName: 'uploadedCSVSource',
+    name: 'Uploaded CSV',
+    icon: (props: any) => (
+      <LucideFileSpreadsheet
+        {...props}
+        className={twMerge('text-brandBlue', props.className)}
+      />
+    ),
+    logo: (props: any) => (
+      <div className="flex flex-col gap-2">
+        <LucideFileSpreadsheet
+          {...props}
+          className={twMerge('text-brandBlue', props.className)}
+        />
+        Upload CSV
+      </div>
+    ),
+    screenshot: '/googleSheets-screenshot.png',
+    supported: false,
   },
   // civiCRM: {
   //   key: "civi-crm",

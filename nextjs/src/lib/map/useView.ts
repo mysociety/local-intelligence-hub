@@ -21,13 +21,23 @@ export function useView<HookVT extends ViewType = any>(
   )
   const explorer = useExplorer()
 
+  const defaultViewIfNoValidID = Object.values(report.displayOptions.views)[0]
+
   const currentView: ViewConfig | undefined = userSelectedCurrentViewId
     ? report.displayOptions.views[userSelectedCurrentViewId]
-    : report.displayOptions.views[report.displayOptions.viewSortOrder[0]]
+    : report.displayOptions.views[report.displayOptions.viewSortOrder[0]] ||
+      defaultViewIfNoValidID
+
+  const defaultViewIfNoValidIDOfType = desiredViewType
+    ? defaultViewIfNoValidID.type === desiredViewType
+      ? (defaultViewIfNoValidID as SpecificViewConfig<HookVT>)
+      : undefined
+    : undefined
 
   const currentViewOfType = desiredViewType
     ? currentView && currentView.type === desiredViewType
-      ? (currentView as SpecificViewConfig<HookVT>)
+      ? (currentView as SpecificViewConfig<HookVT>) ||
+        defaultViewIfNoValidIDOfType
       : undefined
     : undefined
 
