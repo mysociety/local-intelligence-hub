@@ -1,4 +1,5 @@
 import {
+  ChoroplethMode,
   SourceStatsByBoundaryQuery,
   SourceStatsByBoundaryQueryVariables,
 } from '@/__generated__/graphql'
@@ -58,8 +59,14 @@ const useDataByBoundary = ({
       sourceId: sourceId!,
       analyticalAreaType: analyticalAreaType!,
       mode: view?.mapOptions?.choropleth.mode,
-      field: view?.mapOptions?.choropleth.field,
-      formula: view?.mapOptions?.choropleth.formula,
+      field:
+        view?.mapOptions?.choropleth.mode === ChoroplethMode.Field
+          ? view?.mapOptions?.choropleth.field
+          : undefined,
+      formula:
+        view?.mapOptions?.choropleth.mode === ChoroplethMode.Formula
+          ? view?.mapOptions?.choropleth.formula
+          : undefined,
       mapBounds,
     },
     skip: !view?.mapOptions || !sourceId || !analyticalAreaType,
