@@ -5,9 +5,16 @@ def attempt_interpret_series_as_float(df: DataFrame):
     if all(df.apply(check_numeric)):
         # Whole value replacement
         df = df.replace("", 0)
+        df = df.astype(float)
+    return df
+
+def attempt_interpret_series_as_percentage(df: DataFrame):
+    if all(df.apply(check_percentage)):
+        df = df.replace("", 0)
         # Substring replacement
         df = df.str.replace("%", "")
-        df = df.astype(float)
+        # Divide by 100
+        df = df.astype(float) / 100
     return df
 
 def check_numeric(x):
@@ -21,5 +28,12 @@ def check_numeric(x):
         var = float(var)
         # check type is numeric
         return isinstance(var, (int, float))
+    except Exception:
+        return False
+
+def check_percentage(x):
+    try:
+        if x[-1] == "%":
+            return True
     except Exception:
         return False

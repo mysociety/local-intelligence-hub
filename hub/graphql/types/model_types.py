@@ -23,7 +23,7 @@ from strawberry import auto
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
-from utils.statistics import attempt_interpret_series_as_float
+from utils.statistics import attempt_interpret_series_as_float, attempt_interpret_series_as_percentage, check_percentage
 from wagtail.models import Site
 
 from hub import models
@@ -599,6 +599,7 @@ class GroupedDataCount:
     row: Optional[JSON] = None
     formatted_count: Optional[str]
     area_data: Optional[strawberry.Private[Area]] = None
+    is_percentage: bool = False
 
     @strawberry_django.field
     async def gss_area(self, info: Info) -> Optional[Area]:
@@ -1584,14 +1585,18 @@ def generic_data_from_source_about_area(
 
 @strawberry.type
 class DataSummaryMetadata:
-    first: Optional[float]
-    second: Optional[float]
-    third: Optional[float]
-    last: Optional[float]
-    total: Optional[float]
-    count: Optional[float]
-    mean: Optional[float]
-    median: Optional[float]
+    first: Optional[float] = None
+    second: Optional[float] = None
+    third: Optional[float] = None
+    last: Optional[float] = None
+    total: Optional[float] = None
+    majority: Optional[float] = None
+    count: Optional[float] = None
+    mean: Optional[float] = None
+    median: Optional[float] = None
+    percentage_keys: Optional[List[str]] = None
+    numerical_keys: Optional[List[str]] = None
+    is_percentage: Optional[bool] = False
 
 
 @strawberry.type
@@ -1622,37 +1627,64 @@ def generic_data_summary_from_source_about_area(
     # ingest the .json data into a pandas dataframe
     df = pd.DataFrame([record.json for record in qs])
     # convert any stringified numbers to floats
+    is_percentage = False
+    percentage_keys = []
     for column in df:
-        df[column] = attempt_interpret_series_as_float(df[column])
-    # remove columns that are of string type
-    df = df.select_dtypes(exclude=["object", "string"])
+        if all(df[column].apply(check_percentage)):
+            is_percentage = True
+            percentage_keys += [str(column)]
+            df[column] = attempt_interpret_series_as_percentage(df[column])
+        else:
+            df[column] = attempt_interpret_series_as_float(df[column])
+    numerical_keys = df.select_dtypes(include="number").columns
+    # remove columns that aren't numerical_keys
+    df = df[numerical_keys]
     # summarise the data in a single dictionary, with summed values for each column
-    summary = df.sum()
+    if is_percentage:
+        summary = df.mean()
+    else:
+        summary = df.sum()
     summary_dict = summary.to_dict()
 
     if len(summary_dict.keys()) <= 0:
         return None
 
-    first = summary.nlargest(1).iloc[-1]
-    second = summary.nlargest(2).iloc[-1]
-    third = summary.nlargest(3).iloc[-1]
-    last = summary.nsmallest(1).iloc[-1]
-    total = summary.sum()
-    count = summary.count()
-    mean = summary.mean()
-    median = summary.median()
+    # Convert selected columns to numpy array for faster operations
+    summary_values = dict()
+    if not is_percentage:
+        np_values = summary.values
+        summary["first"] = np_values.max()
+        summary["second"] = np.partition(np_values, -2)[:, -2]
+        summary["third"] = np.partition(np_values, -3)[:, -3]
+        try:
+            summary["majority"] = summary["first"] - summary["second"]
+        except IndexError:
+            # In case there's only one value.
+            pass
+        summary["last"] = np_values.min()
+        summary["total"] = np_values.sum()
+        summary["count"] = np_values.count()
+        summary["mean"] = np_values.mean()
+        summary["median"] = np_values.median()
+        summary_values = summary_values.update(
+            first=summary["first"],
+            second=summary["second"],
+            majority=summary["majority"],
+            third=summary["third"],
+            last=summary["last"],
+            total=summary["total"],
+            count=summary["count"],
+            mean=summary["mean"],
+            median=summary["median"],
+        )
 
     return DataSummary(
         aggregated=summary_dict,
         metadata=DataSummaryMetadata(
-            first=first,
-            second=second,
-            third=third,
-            last=last,
-            total=total,
-            count=count,
-            mean=mean,
-            median=median,
+            **summary_values,
+            is_percentage=is_percentage,
+            percentage_keys=percentage_keys,
+            numerical_keys=numerical_keys
         ),
     )
 
@@ -1673,6 +1705,13 @@ class ChoroplethMode(Enum):
     Table = "Table"
 
 
+@strawberry.enum
+class AggregationOp(Enum):
+    Sum = "Sum"
+    Mean = "Mean"
+    Guess = "Guess"
+
+
 @strawberry_django.field()
 def choropleth_data_for_source(
     info: Info,
@@ -1684,7 +1723,9 @@ def choropleth_data_for_source(
     field: Optional[str] = None,
     map_bounds: Optional[MapBounds] = None,
     formula: Optional[str] = None,
+    aggregation_operation: AggregationOp = AggregationOp.Guess
 ) -> List[GroupedDataCount]:
+    decided_operation = aggregation_operation
     # Check user can access the external data source
     user = get_current_user(info)
     external_data_source = models.ExternalDataSource.objects.get(pk=source_id)
@@ -1770,6 +1811,7 @@ def choropleth_data_for_source(
     if mode is ChoroplethMode.Formula and not is_valid_formula:
         raise ValueError("Formula is invalid")
 
+    is_percentage = False
     if is_row_count:
         # Simple count of data points per area
 
@@ -1803,7 +1845,13 @@ def choropleth_data_for_source(
     elif is_valid_field or is_valid_formula or is_table:
         # Convert any stringified JSON numbers to floats
         for column in df:
-            df[column] = attempt_interpret_series_as_float(df[column])
+            if all(df[column].apply(check_percentage)):
+                is_percentage = True
+                if decided_operation is AggregationOp.Guess:
+                    decided_operation = AggregationOp.Mean
+                df[column] = attempt_interpret_series_as_percentage(df[column])
+            else:
+                df[column] = attempt_interpret_series_as_float(df[column])
 
         # You end up with something like:
         """
@@ -1816,7 +1864,12 @@ def choropleth_data_for_source(
 
         # Group by the postcode_io level that we want to
         # Aggregation will be by summing the values in the field, excluding 'label'
-        df_sum = df.drop(columns=["label"]).groupby("gss").sum().reset_index()
+        grouped_data = df.drop(columns=["label"]).groupby("gss")
+        match decided_operation:
+            case AggregationOp.Mean:
+                df_aggregated = grouped_data.mean().reset_index()
+            case AggregationOp.Sum | _:
+                df_aggregated = grouped_data.sum().reset_index()
 
         # Calculate the mode for the 'label' column
         def get_mode(series):
@@ -1828,22 +1881,27 @@ def choropleth_data_for_source(
         df_mode = df.groupby("gss")["label"].agg(get_mode).reset_index()
 
         # Merge the summed DataFrame with the mode DataFrame
-        df = pd.merge(df_sum, df_mode, on="gss")
+        df = pd.merge(df_aggregated, df_mode, on="gss")
 
         # Add a "maximum" column that figures out the biggest numerical value in each row
-        numerical_columns = df.select_dtypes(include="number").columns
+        numerical_keys = df.select_dtypes(include="number").columns
         try:
             # Convert selected columns to numpy array for faster operations
-            values = df[numerical_columns].values
+            values = df[numerical_keys].values
             df["first"] = values.max(axis=1)
             df["second"] = np.partition(values, -2, axis=1)[:, -2]
             df["third"] = np.partition(values, -3, axis=1)[:, -3]
+            try:
+                df["majority"] = df["first"] - df["second"]
+            except IndexError:
+                # In case there's only one value.
+                pass
             df["last"] = values.min(axis=1)
 
-            df["total"] = df[numerical_columns].sum(axis=1)
-            df["count"] = df[numerical_columns].count(axis=1)
-            df["mean"] = df[numerical_columns].mean(axis=1)
-            df["median"] = df[numerical_columns].median(axis=1)
+            df["total"] = df[numerical_keys].sum(axis=1)
+            df["count"] = df[numerical_keys].count(axis=1)
+            df["mean"] = df[numerical_keys].mean(axis=1)
+            df["median"] = df[numerical_keys].median(axis=1)
         except IndexError:
             pass
 
@@ -1860,9 +1918,6 @@ def choropleth_data_for_source(
                 # https://github.com/pandas-dev/pandas/issues/34834
                 df["count"] = ne.evaluate(formula, local_dict=df)
 
-        # Check if count is between 0 and 1: if so, it's a percentage
-        is_percentage = df["count"].between(0, 2).all() or False
-
         # Convert DF to GroupedDataCount(label=label, gss=gss, count=count) list
         return [
             GroupedDataCount(
@@ -1871,6 +1926,7 @@ def choropleth_data_for_source(
                 count=row.count,
                 columns=df.columns.to_list() if is_table else None,
                 row=row if is_table else None,
+                is_percentage=is_percentage,
                 formatted_count=(
                     (
                         # pretty percentage

@@ -37,7 +37,7 @@ import { useReport } from '@/lib/map/useReport'
 import { useView } from '@/lib/map/useView'
 import { gql, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
-import { cloneDeep, sum } from 'lodash'
+import { cloneDeep } from 'lodash'
 import {
   ArrowLeft,
   ArrowRight,
@@ -521,13 +521,29 @@ function AreaDisplay({
               title={display.name || layer.name}
               areaName={areaName}
             />
-          ) : display.displayType === InspectorDisplayType.ElectionResult ? (
+          ) : display.dataDisplayMode &&
+            display.displayType === InspectorDisplayType.ElectionResult ? (
             <ElectionResultsDisplay
-              data={
-                display.dataDisplayMode === DataDisplayMode.Aggregated
-                  ? data.data?.summary?.aggregated
-                  : data.data?.data?.[0]?.json
-              }
+              data={data.data?.summary}
+              // dataDisplayMode={DataDisplayMode.Aggregated}
+              // Only ever supply aggregated data,
+              // since raw JSON might have random string values
+              // .
+              // data={
+              //   display.dataDisplayMode === DataDisplayMode.Aggregated
+              //     ? data.data?.summary
+              //     : data.data?.summary?.metadata.numericalKeys
+              //       ? Object.fromEntries(
+              //           Object.entries(data.data?.data?.[0]?.json).filter(
+              //             ([key, value]) =>
+              //               data.data?.summary?.metadata.numericalKeys!.includes(
+              //                 key
+              //               )
+              //           )
+              //         )
+              //       : data.data?.data?.[0]?.json
+              // }
+              // dataDisplayMode={display.dataDisplayMode}
             />
           ) : display.displayType === InspectorDisplayType.BigNumber ? (
             <BigNumberDisplay
@@ -623,9 +639,13 @@ const AREA_LAYER_DATA = gql`
         third
         last
         total
+        majority
         count
         mean
         median
+        numericalKeys
+        percentageKeys
+        isPercentage
       }
     }
   }
@@ -701,63 +721,125 @@ function RelatedDataCarousel({ data }: { data: AreaLayerDataQuery['data'] }) {
 
 function ElectionResultsDisplay({
   data,
+  // dataDisplayMode,
 }: {
-  data?: AreaLayerDataQuery['summary']
+  data: AreaLayerDataQuery['summary']
+  // | {
+  //     data?: AreaLayerDataQuery['summary']
+  //     dataDisplayMode: DataDisplayMode.Aggregated
+  //   }
+  // | {
+  //     dataDisplayMode: DataDisplayMode.RawData
+  //     data: AreaLayerDataQuery['data']
+  //   }
 }) {
-  if (!data || !data?.aggregated) {
+  if (!data || !data.aggregated || !data.metadata) {
     return <div className="text-meepGray-400 py-2">No data available</div>
   }
 
-  const total =
-    data?.metadata.total || sum(Object.values(data?.aggregated || {})) || 0
+  const { total, majority, isPercentage } = data.metadata
+
+  // let metadata: {
+  //   total?: number
+  //   majority?: number
+  // }
+  // if (dataDisplayMode === DataDisplayMode.Aggregated) {
+  // const orderedNumericValues = Object.values(data.aggregated)
+  //   .map(Number)
+  //   .filter(Number.isFinite)
+  //   .sort((a, b) => b - a)
+  // const first = data.metadata.first || orderedNumericValues[0]
+  // const second = data.metadata.second || orderedNumericValues[1]
+  // metadata = {
+  //   total: data.metadata.total || sum(orderedNumericValues) || undefined,
+  //   majority: !!first && !!second ? first - second : undefined,
+  // }
+  // } else {
+  //   const orderedNumericValues = Object.values(data)
+  //     .map(Number)
+  //     .filter(Number.isFinite)
+  //     .sort((a, b) => b - a)
+  //   const first = orderedNumericValues[0]
+  //   const second = orderedNumericValues[1]
+  //   metadata = {
+  //     total: sum(orderedNumericValues) || undefined,
+  //     majority: !!first && !!second ? first - second : undefined,
+  //   }
+  // }
+
+  // const { total, majority } = metadata
+
+  const numberFormat = isPercentage ? format('.1%') : format(',.0f')
+
+  if (!isPercentage && !total) {
+    return (
+      <div className="text-meepGray-400 py-2">No numerical data available</div>
+    )
+  }
 
   return (
     <div>
-      <div className="grid grid-cols-2 gap-4 my-4">
-        {/* Total votes */}
-        <div className="flex flex-col gap-1">
-          <div className="text-xs uppercase text-meepGray-400">Majority</div>
-          <div className="text-2xl text-white">
-            {!!data?.metadata.first && !!data?.metadata.second
-              ? format(',.0f')(data?.metadata.first - data?.metadata.second)
-              : '???'}
-          </div>
+      {(!!majority || !!total) && (
+        <div className="grid grid-cols-2 gap-4 my-4">
+          {/* Total votes */}
+          {!!majority && (
+            <div className="flex flex-col gap-1">
+              <div className="text-xs uppercase text-meepGray-400">
+                Majority
+              </div>
+              <div className="text-2xl text-white">
+                {numberFormat(majority)}
+              </div>
+            </div>
+          )}
+          {!!total && (
+            <div className="flex flex-col gap-1">
+              <div className="text-xs uppercase text-meepGray-400">
+                Total votes
+              </div>
+              <div className="text-2xl text-white">{numberFormat(total)}</div>
+            </div>
+          )}
         </div>
-        <div className="flex flex-col gap-1">
-          <div className="text-xs uppercase text-meepGray-400">Total votes</div>
-          <div className="text-2xl text-white">
-            {data?.metadata.total
-              ? format(',.0f')(data?.metadata.total)
-              : '???'}
-          </div>
-        </div>
-      </div>
+      )}
       <div>
-        {Object.entries(data?.aggregated || {})
-          .filter(([_, n]) => (n as number) >= 1)
+        {Object.entries(data.aggregated || {})
+          .filter(([_, n]) => Number(n) && Number.isFinite(n))
           .sort(([, a], [, b]) => (b as number) - (a as number))
-          .map(([party, votes]) => {
-            const percent = format('.0%')((votes as number) / total)
+          .map(([key, votes]) => {
+            const guessedParty = guessParty(key)
             return (
-              <div key={party} className="flex flex-col gap-2 my-2">
+              <div key={key} className="flex flex-col gap-2 my-2">
                 {/* Bar with relative progress */}
                 <div className="flex flex-col gap-1 w-full">
                   <div className="flex flex-row justify-between items-center text-xs">
-                    <div className="text-white">{party}</div>
+                    <div className="text-white">{guessedParty.name}</div>
                     <div className="flex flex-row gap-2 items-center">
-                      <span>
-                        {format(',.0f')(votes as number)}{' '}
-                        {pluralize('vote', votes as number)}
-                      </span>
-                      <span className="text-white">{percent}</span>
+                      {!isPercentage ? (
+                        <>
+                          <span>
+                            {numberFormat(votes as number)}{' '}
+                            {pluralize('vote', votes as number)}
+                          </span>
+                          <span className="text-white">
+                            {format('.0%')((votes as number) / total!)}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-white">
+                          {numberFormat(votes as number)}{' '}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-row gap-2 items-center">
                     <div
                       className="h-[15px] rounded"
                       style={{
-                        width: percent,
-                        backgroundColor: guessPartyColour(party),
+                        width: isPercentage
+                          ? format('.0%')(votes as number)
+                          : format('.0%')((votes as number) / total!),
+                        backgroundColor: guessedParty.colour,
                       }}
                     />
                   </div>
@@ -770,22 +852,86 @@ function ElectionResultsDisplay({
   )
 }
 
-function guessPartyColour(key: string) {
+function guessParty(searchStr: string) {
   // trigramSimilarity each party name to the keys in the map
   // return the colour of the most similar party
-  const similarities = Object.keys(partyColourMap)
-    .map((partyKey) => ({
-      partyKey,
+  const similarities = partyDictionary
+    .map((party) => ({
+      party: party,
       // @ts-ignore
-      similarity: key === partyKey ? 1 : trigramSimilarity(key, partyKey),
+      similarity:
+        party.name === searchStr || party.aliases.some((a) => a === searchStr)
+          ? 1
+          : trigramSimilarity(party.name, searchStr),
     }))
     .sort((a, b) => b.similarity - a.similarity)
 
-  const guessedPartyKey = similarities[0].partyKey
-
-  // @ts-ignore
-  return partyColourMap[guessedPartyKey] || partyColourMap.Other
+  return similarities[0].party || partyOther
 }
+
+const partyOther = {
+  name: 'Other',
+  colour: 'gray',
+  aliases: ['Other', 'Oth'],
+}
+
+const partyDictionary: {
+  name: string
+  colour: string
+  aliases: string[]
+}[] = [
+  {
+    name: 'Conservative',
+    colour: '#0087DC',
+    aliases: ['Conservative', 'Con'],
+  },
+  {
+    name: 'Labour',
+    colour: '#DC241f',
+    aliases: ['Labour', 'Lab'],
+  },
+  {
+    name: 'Liberal Democrats',
+    colour: '#FAA61A',
+    aliases: ['LD', 'LDEM', 'LibDem'],
+  },
+  {
+    name: 'SNP',
+    colour: '#FFF95D',
+    aliases: ['SNP'],
+  },
+  {
+    name: 'Green',
+    colour: '#6AB023',
+    aliases: ['Green', 'Grn'],
+  },
+  {
+    name: 'Plaid Cymru',
+    colour: '#008142',
+    aliases: ['Plaid Cymru', 'PC'],
+  },
+  {
+    name: 'UKIP',
+    colour: '#70147A',
+    aliases: ['UKIP'],
+  },
+  {
+    name: 'Brexit',
+    colour: '#12B6CF',
+    aliases: ['Brexit'],
+  },
+  {
+    name: 'Independent',
+    colour: 'gray',
+    aliases: ['Independent', 'Ind'],
+  },
+  {
+    name: 'Reform',
+    colour: '#12B6CF',
+    aliases: ['Reform', 'Ref'],
+  },
+  partyOther,
+]
 
 const partyColourMap = {
   Conservative: '#0087DC',
