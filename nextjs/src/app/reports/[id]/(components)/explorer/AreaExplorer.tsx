@@ -523,28 +523,57 @@ function AreaDisplay({
             />
           ) : display.dataDisplayMode &&
             display.displayType === InspectorDisplayType.ElectionResult ? (
-            <ElectionResultsDisplay
-              data={data.data?.summary}
-              // dataDisplayMode={DataDisplayMode.Aggregated}
-              // Only ever supply aggregated data,
-              // since raw JSON might have random string values
-              // .
-              // data={
-              //   display.dataDisplayMode === DataDisplayMode.Aggregated
-              //     ? data.data?.summary
-              //     : data.data?.summary?.metadata.numericalKeys
-              //       ? Object.fromEntries(
-              //           Object.entries(data.data?.data?.[0]?.json).filter(
-              //             ([key, value]) =>
-              //               data.data?.summary?.metadata.numericalKeys!.includes(
-              //                 key
-              //               )
-              //           )
-              //         )
-              //       : data.data?.data?.[0]?.json
-              // }
-              // dataDisplayMode={display.dataDisplayMode}
-            />
+            <>
+              {/* If the data isn't about the current area, note this. */}
+              {!!data.data.data.length &&
+                !data.data.data.some((d) => d.area?.gss === gss) && (
+                  <div className="text-sm mb-2">
+                    Summarised data for{' '}
+                    {data.data.data.map((item) => (
+                      <span
+                        className="text-meepGray-400 hover:text-meepGray-300 cursor-pointer underline"
+                        onClick={() => {
+                          explorer.select(
+                            {
+                              entity: 'area',
+                              id: item.area?.gss || '',
+                              showExplorer: true,
+                            },
+                            {
+                              bringIntoView: true,
+                            }
+                          )
+                        }}
+                      >
+                        {item.area?.name} (
+                        {pluralize(item.area?.areaType.name || 'area', 1)})
+                      </span>
+                    ))}
+                  </div>
+                )}
+              <ElectionResultsDisplay
+                data={data.data?.summary}
+                // dataDisplayMode={DataDisplayMode.Aggregated}
+                // Only ever supply aggregated data,
+                // since raw JSON might have random string values
+                // .
+                // data={
+                //   display.dataDisplayMode === DataDisplayMode.Aggregated
+                //     ? data.data?.summary
+                //     : data.data?.summary?.metadata.numericalKeys
+                //       ? Object.fromEntries(
+                //           Object.entries(data.data?.data?.[0]?.json).filter(
+                //             ([key, value]) =>
+                //               data.data?.summary?.metadata.numericalKeys!.includes(
+                //                 key
+                //               )
+                //           )
+                //         )
+                //       : data.data?.data?.[0]?.json
+                // }
+                // dataDisplayMode={display.dataDisplayMode}
+              />
+            </>
           ) : display.displayType === InspectorDisplayType.BigNumber ? (
             <BigNumberDisplay
               count={
