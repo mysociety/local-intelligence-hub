@@ -51,6 +51,7 @@ from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from sentry_sdk import metrics
 from strawberry.dataloader import DataLoader
+from utils.django_json import DBJSONEncoder, PandasMappingSafeForPG
 from wagtail.admin.panels import FieldPanel, ObjectList, TabbedInterface
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
 from wagtail.models import Page, Site
@@ -690,7 +691,7 @@ class CommonData(models.Model):
     date = models.DateTimeField(blank=True, null=True)
     float = models.FloatField(blank=True, null=True)
     int = models.IntegerField(blank=True, null=True)
-    json = models.JSONField(blank=True, null=True)
+    json = models.JSONField(blank=True, null=True, encoder=DBJSONEncoder)
 
     def value(self):
         try:
@@ -2833,13 +2834,13 @@ class DatabaseJSONSource(ExternalDataSource):
         return record.get(self.id_field, None)
 
     async def fetch_one(self, member_id):
-        return self.df[member_id].to_dict(orient="records")[0]
+        return self.df[member_id].to_dict(orient="records", into=PandasMappingSafeForPG)[0]
 
     async def fetch_many(self, id_list: list[str]):
-        return self.df[id_list].to_dict(orient="records")
+        return self.df[id_list].to_dict(orient="records", into=PandasMappingSafeForPG)
 
     async def fetch_all(self):
-        return self.df.to_dict(orient="records")
+        return self.df.to_dict(orient="records", into=PandasMappingSafeForPG)
 
     def get_record_field(self, record, field, field_type=None):
         return get(record, field)
@@ -2954,13 +2955,13 @@ class UploadedCSVSource(ExternalDataSource):
         return record.get(self.id_field, None)
 
     async def fetch_one(self, member_id):
-        return self.df[self.df[self.id_field] == member_id].to_dict(orient="records")[0]
+        return self.df[self.df[self.id_field] == member_id].to_dict(orient="records", into=PandasMappingSafeForPG)[0]
 
     async def fetch_many(self, id_list: list[str]):
-        return self.df[self.df[self.id_field].isin(id_list)].to_dict(orient="records")
+        return self.df[self.df[self.id_field].isin(id_list)].to_dict(orient="records", into=PandasMappingSafeForPG)
 
     async def fetch_all(self):
-        return self.df.to_dict(orient="records")
+        return self.df.to_dict(orient="records", into=PandasMappingSafeForPG)
 
     def get_record_field(self, record, field, field_type=None):
         return get(record, field)
