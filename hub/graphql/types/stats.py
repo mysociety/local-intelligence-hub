@@ -97,9 +97,9 @@ class AggregationDefinition:
     operation: AggregationOp
 
 @strawberry.input
-class Formula:
+class CalculatedColumn:
     name: str
-    definition: str
+    expression: str
 
 '''
 An API that can handle multiple requests, but performs the same analyses:
@@ -159,9 +159,9 @@ statistics(
     mode=StatisticsReturnShape.Row,
     return_type=StatisticsReturnValue.Values,
     return_column=["reform", "labour", "distance"],
-    group_by_formula=Formula(
+    group_by_col=CalculatedColumn(
       name="distance",
-      definition="reform - labour"
+      expression="reform - labour"
     )
 )
 '''
@@ -172,8 +172,8 @@ def statistics(
     source_ids: List[str],
     # How to find data
     area_query_mode: Optional[AreaQueryMode] = AreaQueryMode.AREA,
-    # Formulas applied to each raw row
-    pre_group_by_formulas: Optional[List[Formula]] = None,
+    # CalculatedColumns applied to each raw row
+    pre_group_by_calculated_columns: Optional[List[CalculatedColumn]] = None,
     # --- Slice / dice ---
     # Area filter
     gss_codes: Optional[List[str]] = None,
@@ -185,19 +185,12 @@ def statistics(
     group_by_area: Optional[AnalyticalAreaType] = None,
     # How to aggregate the data during rollup
     aggregation_operations: Optional[List[AggregationDefinition]] = AggregationOp.Guess,
-    # Formulas applied to the rolled up rows
-    post_groupby_formulas: Optional[List[Formula]] = None,
+    # CalculatedColumns applied to the rolled up rows
+    calculated_columns: Optional[List[CalculatedColumn]] = None,
     # TODO: filter for other columns
     # --- 4. Results ---
-    # Can return:
-    # - a table of columns
-    # - a column (`count`)
-    # - a row
-    # - a single cell
-    return_shape: Optional[StatisticsReturnShape] = StatisticsReturnShape.Table,
     # Define what column values to use if StatisticsReturnValue.Values
     return_columns: Optional[List[str]] = None,
-    electoral_data: Optional[bool] = False,
 ):
     # --- Get the required data for the source ---
     qs = models.GenericData.objects.filter(data_type__data_set__external_data_source_id__in=source_ids)
@@ -319,17 +312,16 @@ def statistics(
     
     df = df.set_index("id", drop=False)
 
-    # Apply the row-level formulas
-
-    if pre_group_by_formulas:
-        for formula in pre_group_by_formulas:
-            df[formula.name] = df.eval(formula.definition)
+    # Apply the row-level cols
+    if pre_group_by_calculated_columns:
+        for col in pre_group_by_calculated_columns:
+            df[col.name] = df.eval(col.expression)
             try:
-                df[formula.name] = df.eval(formula.definition)
+                df[col.name] = df.eval(col.expression)
             except ValueError:
                 # In case "where" is used, which pandas doesn't support
                 # https://github.com/pandas-dev/pandas/issues/34834
-                df[formula.name] = ne.evaluate(formula, local_dict=df)
+                df[col.name] = ne.evaluate(col, local_dict=df)
 
     # --- Group by the groupby keys ---
     # respecting aggregation operations
@@ -340,27 +332,35 @@ def statistics(
         df = df.reset_index(drop=True).drop(columns=["id"])
 
         def get_group_by_area_properties(row):
+            # Find the key of `lih_to_postcodes_io_key_map` where the value is `group_by_area`:
+            area_type = next((k for k, v in lih_to_postcodes_io_key_map.items() if v == group_by_area), None)
+
             try:
                 return [
                     row["postcode_data"].get("codes", {}).get(group_by_area.value, None),
-                    row["postcode_data"].get(group_by_area.value, None)
+                    row["postcode_data"].get(group_by_area.value, None),
+                    area_type
                 ]
             except KeyError:
                 pass
         
         # First, add labels for the group_by_area as an index
-        df["gss"], df["area_name"] = zip(*df.apply(get_group_by_area_properties, axis=1))
+        df["gss"], df["area_name"], df["area_type"] = zip(*df.apply(get_group_by_area_properties, axis=1))
         # Make the code an index
         # df = df.set_index("group_by_code")
 
         # Narrow down the DF to just the numerical columns then
         for column in df:
-            if all(df[column].apply(check_percentage)):
-                percentage_keys += [str(column)]
-                df[column] = attempt_interpret_series_as_percentage(df[column])
-            elif all(df[column].apply(check_numeric)):
-                df[column] = attempt_interpret_series_as_float(df[column])
+            if column != "id":
+                if all(df[column].apply(check_percentage)):
+                    percentage_keys += [str(column)]
+                    df[column] = attempt_interpret_series_as_percentage(df[column])
+                elif all(df[column].apply(check_numeric)):
+                    df[column] = attempt_interpret_series_as_float(df[column])
         numerical_keys = df.select_dtypes(include="number").columns
+        # Exclude "id" from the numerical keys
+        if "id" in numerical_keys:
+            numerical_keys = numerical_keys.drop("id")
         # # remove columns that aren't numerical_keys
         # df = df[numerical_keys]
 
@@ -372,12 +372,10 @@ def statistics(
                 return series.mode()[0]
             except KeyError:
                 return None
-        df_mode = df[["area_name", "gss"]].groupby("gss").agg(get_mode)
-        print("df_mode", df_mode.index)
+        df_mode = df[["area_name", "gss", "area_type"]].groupby("gss").agg(get_mode)
 
         # Aggregate the numerical columns
         df_stats = df[numerical_keys.tolist() + ["gss"]].set_index("gss")
-        print("df_stats", df_stats.index)
         if aggregation_operations:
             agg_config = dict()
             for key in numerical_keys.tolist():
@@ -388,33 +386,47 @@ def statistics(
                         break
         else:
             agg_config = "sum"
-        print(agg_config)
         df_aggregated = df_stats.groupby("gss").agg(agg_config)
-        print("df_aggregated", df_aggregated.index)
 
         # Merge the strings and the numericals back together
         df = df_mode.join(df_aggregated, on="gss", how="left")
 
-    # Apply the groupby formulas
-    if post_groupby_formulas:
-        for formula in post_groupby_formulas:
-            df[formula.name] = df.eval(formula.definition)
+    if calculated_columns:
+        if len(numerical_keys) <= 0:
+            # Ensure we're dealing with numericals
+            for column in df:
+                if all(df[column].apply(check_percentage)):
+                    percentage_keys += [str(column)]
+                    df[column] = attempt_interpret_series_as_percentage(df[column])
+                elif all(df[column].apply(check_numeric)):
+                    df[column] = attempt_interpret_series_as_float(df[column])
+            numerical_keys = df.select_dtypes(include="number").columns
+            if "id" in numerical_keys:
+                numerical_keys = numerical_keys.drop("id")
+
+        # Provide some special variables to the col editor
+        values = df[numerical_keys].values
+        df["first"] = values.max(axis=1)
+        try:
+            df["second"] = np.partition(values, -2, axis=1)[:, -2]
+            df["majority"] = df["first"] - df["second"]
+        except IndexError:
+            pass
+        try:
+            df["third"] = np.partition(values, -3, axis=1)[:, -3]
+        except IndexError:
+            pass
+        df["total"] = values.sum(axis=1)
+
+        # Apply the groupby cols
+        for col in calculated_columns:
+            df[col.name] = df.eval(col.expression)
             try:
-                df[formula.name] = df.eval(formula.definition)
+                df[col.name] = df.eval(col.expression)
             except ValueError:
                 # In case "where" is used, which pandas doesn't support
                 # https://github.com/pandas-dev/pandas/issues/34834
-                df[formula.name] = ne.evaluate(formula, local_dict=df)
-
-    if electoral_data:
-        # TODO: `zero-size array to reduction operation maximum which has no identity`
-        values = df[numerical_keys].values
-        df["first"] = values.max(axis=1),
-        df["second"] = np.partition(values, -2, axis=1)[:, -2],
-        df["majority"] = values.max(axis=1) - np.partition(values, -2, axis=1)[:, -2],
-        df["third"] = np.partition(values, -3, axis=1)[:, -3],
-        df["last"] = values.min(axis=1),
-        df["total"] = df[numerical_keys].sum(axis=1),
+                df[col.name] = ne.evaluate(col, local_dict=df)
 
     # Return the results in the requested format
     # if return_shape is StatisticsReturnShape.Table:

@@ -1897,7 +1897,7 @@ def statistics(
     # How to find data
     area_query_mode: Optional[stats.AreaQueryMode] = stats.AreaQueryMode.AREA,
     # Formulas applied to each raw row
-    pre_group_by_formulas: Optional[List[stats.Formula]] = None,
+    pre_group_by_calculated_columns: Optional[List[stats.CalculatedColumn]] = None,
     # --- Slice / dice ---
     # Area filter
     gss_codes: Optional[List[str]] = None,
@@ -1910,18 +1910,11 @@ def statistics(
     # How to aggregate the data during rollup
     aggregation_operations: Optional[List[stats.AggregationDefinition]] = None,
     # Formulas applied to the rolled up rows
-    post_groupby_formulas: Optional[List[stats.Formula]] = None,
+    calculated_columns: Optional[List[stats.CalculatedColumn]] = None,
     # TODO: filter for other columns
     # --- 4. Results ---
-    # Can return:
-    # - a table of columns
-    # - a column (`count`)
-    # - a row
-    # - a single cell
-    return_shape: Optional[stats.StatisticsReturnShape] = stats.StatisticsReturnShape.Table,
     # Define what column values to use if StatisticsReturnValue.Values
     return_columns: Optional[List[str]] = None,
-    electoral_data: Optional[bool] = False,
 ) -> Optional[JSON]:
     print("statistics")
     user = get_current_user(info)
@@ -1931,13 +1924,11 @@ def statistics(
     return stats.statistics(
         source_ids=source_ids,
         area_query_mode=area_query_mode,
-        pre_group_by_formulas=pre_group_by_formulas,
+        pre_group_by_calculated_columns=pre_group_by_calculated_columns,
         gss_codes=gss_codes,
         map_bounds=map_bounds,
         group_by_area=group_by_area,
         aggregation_operations=aggregation_operations,
-        post_groupby_formulas=post_groupby_formulas,
-        return_shape=return_shape,
+        calculated_columns=calculated_columns,
         return_columns=return_columns,
-        electoral_data=electoral_data,
     )
