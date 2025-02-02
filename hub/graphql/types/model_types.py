@@ -1913,6 +1913,7 @@ def statistics(
     # Formulas applied to the rolled up rows
     calculated_columns: Optional[List[stats.CalculatedColumn]] = None,
     # TODO: filter for other columns
+    group_by_columns: Optional[List[stats.GroupByColumn]] = None,
     # --- 4. Results ---
     # Define what column values to use if StatisticsReturnValue.Values
     return_columns: Optional[List[str]] = None,
@@ -1929,6 +1930,7 @@ def statistics(
         gss_codes=gss_codes,
         map_bounds=map_bounds,
         group_by_area=group_by_area,
+        group_by_columns=group_by_columns,
         aggregation_operation=aggregation_operation,
         aggregation_operations=aggregation_operations,
         calculated_columns=calculated_columns,

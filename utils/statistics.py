@@ -1,4 +1,4 @@
-from pandas import DataFrame
+from pandas import DataFrame, Series
 import locale
 
 def attempt_interpret_series_as_float(df: DataFrame):
@@ -37,3 +37,9 @@ def check_percentage(x):
             return True
     except Exception:
         return False
+    
+def get_mode(series: Series):
+    try:
+        return series.mode()[0]
+    except KeyError:
+        return None

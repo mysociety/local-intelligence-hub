@@ -17,7 +17,7 @@ from django.db.models import F, Q
 import pandas as pd
 logger = logging.getLogger(__name__)
 import numexpr as ne
-from utils.statistics import attempt_interpret_series_as_float, attempt_interpret_series_as_percentage, check_percentage, check_numeric
+from utils.statistics import attempt_interpret_series_as_float, attempt_interpret_series_as_percentage, check_percentage, check_numeric, get_mode
 
 
 @strawberry.type
@@ -100,73 +100,72 @@ class AggregationDefinition:
 class CalculatedColumn:
     name: str
     expression: str
-    # Use this to enable percentage formatting and aggregation logics
-    # is_percentage: Optional[bool] = False
+    aggregation_operation: Optional[AggregationOp] = None
+
+@strawberry.input
+class GroupByColumn:
+    name: Optional[str] = None
+    column: str
     aggregation_operation: Optional[AggregationOp] = None
 
 '''
-An API that can handle multiple requests, but performs the same analyses:
-- Table: define a groupby and aggregation operation, get a table of results
-- Column: define a groupby and aggregation operation, get a table of results with just one column: `count`
-- Row: define a groupby, a filter and aggregation operation, get a row of results
-- Cell: define a groupby, a filter, a key and aggregation operation, get a single result
+# Some examples of use
 
-Example query:
+Show me the number of reform votes in each area, grouped by reform votes
+modelling swing from conservative and lab to reform:
 
-statistics(
-  # Get data specifically about 1 constituency
-    area_query_mode=AreaQueryMode.AREA,
-    group_by="constituency",
-    gss="E1000100",
-  # From this source
-    source_id="123",
-  # Returned as a table
-    mode=StatisticsReturnShape.Table
-)
-
-# Same again, but about all constituencies in Wales:
-statistics(
-    area_query_mode=AreaQueryMode.AREA_OR_CHILDREN,
-    group_by="constituency",
-    gss="W92000004",
-    source_id="123",
-    mode=StatisticsReturnShape.Table
-)
-
-# Same again, but now about only the count of data in each ward in Wales:
-statistics(
-    area_query_mode=AreaQueryMode.AREA_OR_CHILDREN,
-    group_by="ward",
-    gss="W92000004",
-    source_id="123",
-    mode=StatisticsReturnShape.Column,
-    return_type=StatisticsReturnValue.Count
-)
-
-# Now only give me the count of members in a particular ward
-statistics(
-    area_query_mode=AreaQueryMode.AREA,
-    group_by="ward",
-    gss="W92000004",
-    source_id="123",
-    mode=StatisticsReturnShape.Cell,
-    return_type=StatisticsReturnValue.Count,
-)
-
-# Now give me the reform, labour, distance between the two in wards in Yorkshire:
-statistics(
-    area_query_mode=AreaQueryMode.AREA_OR_CHILDREN,
-    group_by="ward",
-    gss="E1000100",
-    source_id="123",
-    mode=StatisticsReturnShape.Row,
-    return_type=StatisticsReturnValue.Values,
-    return_column=["reform", "labour", "distance"],
-    group_by_col=CalculatedColumn(
-      name="distance",
-      expression="reform - labour"
-    )
-)
+query SwingToReformByRegion {
+  statistics(
+    # gssCodes:"E15000005",
+    areaQueryMode: AREA_OR_CHILDREN,
+    # groupByArea: european_electoral_region,
+    groupByColumns: [
+      {
+        column: "reform",
+        aggregationOperation: "count"
+      }
+    ]
+    sourceIds: [
+      "5336849b-dea5-43cd-b973-dc507e5301af",
+      # "711400aa-f9c7-439f-9912-2dbe64c3c1cd"
+  	]
+    preGroupByCalculatedColumns: [
+      {
+        name: "conservative",
+        expression: "conservative - 0.03"
+        aggregationOperation: Mean
+      },
+      {
+        name: "labour",
+        expression: "labour - 0.03"
+        aggregationOperation: Mean
+      },
+      {
+        name: "reform",
+        expression: "reform + 0.06"
+        aggregationOperation: Mean
+      }
+    ]
+    calculatedColumns:[{
+    	name:"ref_marginality",
+      expression:"reform / second"
+      # expression:"first"
+      # expression:"reform / labour"
+    }]
+    returnColumns: [
+      "first_label",
+      "second_label",
+      "first",
+      "second",
+      # "labour",
+      "majority",
+      # "reform_swing"
+      "area_name",
+      "area_type",
+      "gss"]
+    # aggregationOperation: Mean
+  )
+}
 '''
 def statistics(
     # --- Querying + data ---
@@ -192,6 +191,7 @@ def statistics(
     # CalculatedColumns applied to the rolled up rows
     calculated_columns: Optional[List[CalculatedColumn]] = None,
     # TODO: filter for other columns
+    group_by_columns: Optional[List[GroupByColumn]] = None,
     # --- 4. Results ---
     # Define what column values to use if StatisticsReturnValue.Values
     return_columns: Optional[List[str]] = None,
@@ -374,12 +374,7 @@ def statistics(
         # df = df[numerical_keys]
 
         # Collect the mode of the string columns
-        # strings = df.select_dtypes(include="object")
-        def get_mode(series):
-            try:
-                return series.mode()[0]
-            except KeyError:
-                return None
+        # strings = df.select_dtypes(include="object"
         df_mode = df[["area_name", "gss", "area_type"]].groupby("gss").agg(get_mode)
 
         # Aggregate the numerical columns
@@ -450,13 +445,25 @@ def statistics(
                 if col.name not in numerical_keys:
                     numerical_keys += [col.name]
 
-    # Return the results in the requested format
-    # if return_shape is StatisticsReturnShape.Table:
-    if return_columns and len(return_columns) > 0:
-        if group_by_area:
-            df = df.reset_index(drop=False)
-        return df[return_columns].to_dict(orient="records")
-    return df.to_dict(orient="records")
+    # Final grouping
+    if group_by_columns and len(group_by_columns) > 0:
+        agg_config = dict()
+        for col in group_by_columns:
+            name = col.name or col.column
+            agg_config.update(**{
+                name: pd.NamedAgg(column=col.column, aggfunc=get_mode),
+                f"{name}_{col.aggregation_operation.value.lower()}": pd.NamedAgg(column=col.column, aggfunc=col.aggregation_operation.value.lower() if col.aggregation_operation and col.aggregation_operation is not AggregationOp.Guess else "sum"),
+            })
+        df = df.groupby(col.column, as_index=False).agg(**agg_config)
+        return df.to_dict(orient="records")
+    else:
+        # Return the results in the requested format
+        # if return_shape is StatisticsReturnShape.Table:
+        if return_columns and len(return_columns) > 0:
+            if group_by_area:
+                df = df.reset_index(drop=False)
+            return df[return_columns].to_dict(orient="records")
+        return df.to_dict(orient="records")
 
     # elif return_shape is StatisticsReturnShape.Row:
     #     if gss_codes is None:
