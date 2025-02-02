@@ -17,7 +17,7 @@ from django.db.models import F, Q
 import pandas as pd
 logger = logging.getLogger(__name__)
 import numexpr as ne
-from utils.statistics import attempt_interpret_series_as_float, attempt_interpret_series_as_percentage, check_percentage
+from utils.statistics import attempt_interpret_series_as_float, attempt_interpret_series_as_percentage, check_percentage, check_numeric
 
 
 @strawberry.type
@@ -202,6 +202,10 @@ def statistics(
     # --- Get the required data for the source ---
     qs = models.GenericData.objects.filter(data_type__data_set__external_data_source_id__in=source_ids)
     
+    area_type_filter = None
+    # if group_by_area:
+    #     area_type_filter = postcodeIOKeyAreaTypeLookup[group_by_area]
+
     if map_bounds:
         # area_type_filter = postcodeIOKeyAreaTypeLookup[group_by_area]
         bbox_coords = (
@@ -219,10 +223,6 @@ def statistics(
         # all geocoded GenericData should have `point` set
         qs = qs.filter(point__within=bbox)
 
-    area_type_filter = None
-    if group_by_area:
-        area_type_filter = postcodeIOKeyAreaTypeLookup[group_by_area]
-
     filters = Q()
     if gss_codes or area_type_filter:
         if gss_codes:
@@ -239,9 +239,9 @@ def statistics(
             if combined_areas:
                 # Find only data specifically related to this GSS area — not about its children
                 filters |= Q(area__gss__in=gss_codes)
-            if area_type_filter:
-                # Find only data specifically related to this area type
-                filters |= Q(**area_type_filter.fk_filter("area"))
+            # if area_type_filter:
+            #     # Find only data specifically related to this area type
+            #     filters |= Q(**area_type_filter.fk_filter("area"))
 
         elif area_query_mode is AreaQueryMode.AREA_OR_CHILDREN:
             if combined_areas:
@@ -259,8 +259,8 @@ def statistics(
                     # And see if the area is SMALLER than the current area — i.e. a child
                     subclause &= Q(area__polygon__within=combined_areas)
                     filters |= subclause
-            if area_type_filter:
-                filters |= Q(**area_type_filter.fk_filter("area"))
+            # if area_type_filter:
+            #     filters |= Q(**area_type_filter.fk_filter("area"))
 
         elif area_query_mode is AreaQueryMode.AREA_OR_PARENTS:
             if combined_areas:
@@ -278,8 +278,8 @@ def statistics(
                     # And see if the area is LARGER than the current area — i.e. a parent
                     subclause &= Q(area__polygon__contains=combined_areas)
                     filters |= subclause
-            if area_type_filter:
-                filters |= Q(**area_type_filter.fk_filter("area"))
+            # if area_type_filter:
+            #     filters |= Q(**area_type_filter.fk_filter("area"))
 
         elif area_query_mode is AreaQueryMode.OVERLAPPING:
             if gss_codes:
@@ -292,19 +292,20 @@ def statistics(
                     filters |= Q(**{f"postcode_data__codes__{postcode_io_key.value}__in": gss_codes})
             if combined_areas:
                 filters |= Q(area__polygon__contains=combined_areas)
-            if area_type_filter:
-                filters |= Q(**area_type_filter.fk_filter("area"))
+            # if area_type_filter:
+            #     filters |= Q(**area_type_filter.fk_filter("area"))
 
     data = qs.filter(filters)
 
     # --- Load the data in to a pandas dataframe ---
+    # TODO: get columns from JSON for returning clean data
     d = [
       {
         **record.json,
         "postcode_data": record.postcode_data,
         "gss": record.area.gss if record.area else None,
         "area_type": record.area.area_type.code if record.area else None,
-        "id": record.id,
+        "id": str(record.id),
       }
       for record in data
     ]
@@ -332,41 +333,63 @@ def statistics(
     percentage_keys = []
     numerical_keys = []
     if group_by_area:
+        # Get rid of ID index
+        df = df.reset_index(drop=True).drop(columns=["id"])
+
+        def get_group_by_area_properties(row):
+            try:
+                return [
+                    row["postcode_data"].get("codes", {}).get(group_by_area.value, None),
+                    row["postcode_data"].get(group_by_area.value, None)
+                ]
+            except KeyError:
+                pass
+        
+        # First, add labels for the group_by_area as an index
+        df["group_by_gss"], df["group_by_name"] = zip(*df.apply(get_group_by_area_properties, axis=1))
+        # Make the code an index
+        # df = df.set_index("group_by_code")
+
         # Narrow down the DF to just the numerical columns then
         for column in df:
             if all(df[column].apply(check_percentage)):
                 percentage_keys += [str(column)]
                 df[column] = attempt_interpret_series_as_percentage(df[column])
-            else:
+            elif all(df[column].apply(check_numeric)):
                 df[column] = attempt_interpret_series_as_float(df[column])
         numerical_keys = df.select_dtypes(include="number").columns
-        # remove columns that aren't numerical_keys
-        df = df[numerical_keys]
+        # # remove columns that aren't numerical_keys
+        # df = df[numerical_keys]
 
-        def get_group_by_code(row):
+
+        # Collect the mode of the string columns
+        # strings = df.select_dtypes(include="object")
+        def get_mode(series):
             try:
-                return row["postcode_data"].get("codes", {}).get(group_by_area.value, None)
+                return series.mode()[0]
             except KeyError:
-                pass
+                return None
+        df_mode = df[["group_by_name", "group_by_gss"]].groupby("group_by_gss").agg(get_mode)
+        print("df_mode", df_mode.index)
 
-        def get_group_by_label(row):
-            try:
-                return row["postcode_data"].get(group_by_area.value, None)
-            except KeyError:
-                pass
-        
-        # First, add labels for the group_by_area as an index
-        df["group_by_label"] = df.apply(get_group_by_label, axis=1)
-        df["group_by_code"] = df.apply(get_group_by_code, axis=1)
-        # Make the code an index
-        df = df.set_index("group_by_code")
-
-        # Now do a groupby on the group_by_code, obeying the aggregation_operations
+        # Aggregate the numerical columns
+        df_stats = df[numerical_keys.tolist() + ["group_by_gss"]].set_index("group_by_gss")
+        print("df_stats", df_stats.index)
         if aggregation_operations:
-            agg_config = [(op.column, op.operation.lower()) for op in aggregation_operations]
+            agg_config = []
+            for key in numerical_keys.tolist():
+                for op in aggregation_operations:
+                    if op.column == key:
+                        agg_config += [(key, op.operation.value.lower())]
+                        break
+                agg_config += [(key, "sum")]
         else:
-            agg_config = "count"
-        df = df.groupby("group_by_code").agg(agg_config)
+            agg_config = "sum"
+        df_aggregated = df_stats.groupby("group_by_gss").agg(agg_config)
+        print("df_aggregated", df_aggregated.index)
+
+        # Merge the strings and the numericals back together
+        df = df_mode.join(df_aggregated, on="group_by_gss", how="left")
 
     # Apply the groupby formulas
     if post_groupby_formulas:
