@@ -2,6 +2,8 @@ import {
   ChoroplethMode,
   SourceStatsByBoundaryQuery,
   SourceStatsByBoundaryQueryVariables,
+  StatisticsQuery,
+  StatisticsQueryVariables,
 } from '@/__generated__/graphql'
 import { useReport } from '@/lib/map/useReport'
 import { ApolloError, QueryResult, gql, useQuery } from '@apollo/client'
@@ -35,7 +37,7 @@ const useDataByBoundary = ({
   tileset: Tileset
   // Source fields are the numeric data columns from the external data source
   getSourceFieldNames?: boolean
-}): SourceStatsByBoundaryQueryResult => {
+}) => {
   const report = useReport()
   const sourceId = report.report.layers.find(
     (l) => l.id === view?.mapOptions.choropleth.layerId
@@ -50,6 +52,9 @@ const useDataByBoundary = ({
     ? { east: 0, west: 0, north: 0, south: 0 }
     : null
   const analyticalAreaType = tileset.analyticalAreaType
+
+  const { useAdvancedStatistics, advancedStatisticsConfig } =
+    view?.mapOptions?.choropleth || {}
 
   const query = useQuery<
     SourceStatsByBoundaryQuery,
@@ -69,9 +74,31 @@ const useDataByBoundary = ({
           : undefined,
       mapBounds,
     },
-    skip: !view?.mapOptions || !sourceId || !analyticalAreaType,
+    skip:
+      useAdvancedStatistics ||
+      !view?.mapOptions ||
+      !sourceId ||
+      !analyticalAreaType,
     notifyOnNetworkStatusChange: true, // required to mark loading: true on fetchMore()
   })
+
+  const statisticsQuery = useQuery<StatisticsQuery, StatisticsQueryVariables>(
+    STATISTICS_QUERY,
+    {
+      variables: {
+        config: {
+          ...(advancedStatisticsConfig! || {}),
+          groupByArea: analyticalAreaType!,
+          mapBounds,
+          returnColumns: ['count', 'gss', 'label'],
+        },
+      },
+      skip:
+        !useAdvancedStatistics ||
+        !advancedStatisticsConfig ||
+        !analyticalAreaType,
+    }
+  )
 
   const setChoroplethErrors = useSetAtom(choroplethErrorsAtom)
 
@@ -91,7 +118,7 @@ const useDataByBoundary = ({
     }
   }, [view, query])
 
-  return query
+  return useAdvancedStatistics ? statisticsQuery : query
 }
 
 export const CHOROPLETH_STATS_FOR_SOURCE = gql`
@@ -127,6 +154,12 @@ export const CHOROPLETH_STATS_FOR_SOURCE = gql`
         }
       }
     }
+  }
+`
+
+export const STATISTICS_QUERY = gql`
+  query Statistics($config: StatisticsConfig!) {
+    statistics(statsConfig: $config)
   }
 `
 

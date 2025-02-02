@@ -17,7 +17,7 @@ export function EditorSelect({
   valueClassName,
   ...fieldProps
 }: {
-  value?: string
+  value?: string | null
   options: string[] | { label?: any; value: string }[]
   onChange: (value: string) => void
   disabled?: boolean
@@ -26,7 +26,11 @@ export function EditorSelect({
 } & EditorFieldProps) {
   return (
     <EditorField {...fieldProps}>
-      <Select onValueChange={onChange} value={value} disabled={disabled}>
+      <Select
+        onValueChange={onChange}
+        value={value || undefined}
+        disabled={disabled}
+      >
         <SelectTrigger className="w-full border-none text-meepGray-100 font-medium p-0 my-0 h-8 text-left truncate">
           {!!disabled && !!disabledMessage ? (
             disabledMessage

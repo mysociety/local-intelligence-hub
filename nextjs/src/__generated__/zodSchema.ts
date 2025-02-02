@@ -69,6 +69,7 @@ export function ActionNetworkSourceInputSchema(): z.ZodObject<Properties<ActionN
 export function AggregationDefinitionSchema(): z.ZodObject<Properties<AggregationDefinition>> {
   return z.object({
     column: z.string(),
+    id: z.string(),
     operation: AggregationOpSchema
   })
 }
@@ -111,6 +112,7 @@ export function CalculatedColumnSchema(): z.ZodObject<Properties<CalculatedColum
   return z.object({
     aggregationOperation: AggregationOpSchema.nullish(),
     expression: z.string(),
+    id: z.string(),
     name: z.string()
   })
 }
@@ -247,6 +249,7 @@ export function GroupByColumnSchema(): z.ZodObject<Properties<GroupByColumn>> {
   return z.object({
     aggregationOperation: AggregationOpSchema.nullish(),
     column: z.string(),
+    id: z.string(),
     name: z.string().nullish()
   })
 }

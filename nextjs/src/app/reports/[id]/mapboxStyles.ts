@@ -1,5 +1,5 @@
 import { scaleLinear, scaleSequential } from 'd3-scale'
-import { max, min } from 'lodash'
+import { max } from 'lodash'
 import {
   FillLayerSpecification,
   LineLayerSpecification,
@@ -15,7 +15,7 @@ export function getChoroplethFill(
   visible?: boolean
 ): FillLayerSpecification['paint'] {
   // Get min and max counts
-  let minCount = min(dataByBoundary.map((d) => d.count || 0)) || 0
+  let minCount = 0 // min(dataByBoundary.map((d) => d.count || 0)) || 0
   let maxCount = max(dataByBoundary.map((d) => d.count || 0)) || 1
 
   // ensure minCount and maxCount are different

@@ -796,6 +796,9 @@ export default function InspectExternalDataSource({
                 }
                 onConfirm={del}
                 confirmLabel="Confirm delete"
+                buttonProps={{
+                  variant: 'destructive',
+                }}
               />
               {/*  */}
               <AlertButton
@@ -805,6 +808,9 @@ export default function InspectExternalDataSource({
                   'This action cannot be undone. This will permanently remove this data from Mapped. The data will NOT be deleted from the third party system.'
                 }
                 confirmLabel="Confirm remove records from Mapped"
+                buttonProps={{
+                  variant: 'destructive',
+                }}
                 onConfirm={() => {
                   toastPromise(
                     client.mutate({

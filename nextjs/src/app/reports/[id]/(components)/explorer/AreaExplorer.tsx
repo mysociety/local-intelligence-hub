@@ -529,26 +529,40 @@ function AreaDisplay({
                 !data.data.data.some((d) => d.area?.gss === gss) && (
                   <div className="text-sm mb-2">
                     Summarised data for{' '}
-                    {data.data.data.map((item) => (
-                      <span
-                        className="text-meepGray-400 hover:text-meepGray-300 cursor-pointer underline"
-                        onClick={() => {
-                          explorer.select(
-                            {
-                              entity: 'area',
-                              id: item.area?.gss || '',
-                              showExplorer: true,
-                            },
-                            {
-                              bringIntoView: true,
-                            }
-                          )
-                        }}
-                      >
-                        {item.area?.name} (
-                        {pluralize(item.area?.areaType.name || 'area', 1)})
-                      </span>
-                    ))}
+                    {data.data.data.length > 3
+                      ? pluralize(
+                          Array.from(
+                            new Set(
+                              data.data.data.map((d) =>
+                                d.area?.areaType.name
+                                  .replace(/[0-9]+/, '')
+                                  .toLocaleLowerCase()
+                              )
+                            )
+                          ).join(', '),
+                          data.data.data.length,
+                          true
+                        )
+                      : data.data.data.map((item) => (
+                          <span
+                            className="text-meepGray-400 hover:text-meepGray-300 cursor-pointer underline"
+                            onClick={() => {
+                              explorer.select(
+                                {
+                                  entity: 'area',
+                                  id: item.area?.gss || '',
+                                  showExplorer: true,
+                                },
+                                {
+                                  bringIntoView: true,
+                                }
+                              )
+                            }}
+                          >
+                            {item.area?.name} (
+                            {pluralize(item.area?.areaType.name || 'area', 1)})
+                          </span>
+                        ))}
                   </div>
                 )}
               <ElectionResultsDisplay

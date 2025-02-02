@@ -13,13 +13,13 @@ import { contentEditableMutation } from '@/lib/html'
 import { useActiveTileset } from '@/lib/map'
 import { useReport } from '@/lib/map/useReport'
 import { useView } from '@/lib/map/useView'
-import { BorderSolidIcon } from '@radix-ui/react-icons'
+import { BorderSolidIcon, ReloadIcon } from '@radix-ui/react-icons'
 import clsx from 'clsx'
 import { format } from 'd3-format'
 import { scaleLinear, scaleSequential } from 'd3-scale'
 import { useAtomValue } from 'jotai'
 import keyboardKey from 'keyboard-key'
-import { max, min } from 'lodash'
+import { max } from 'lodash'
 import {
   AlertOctagonIcon,
   LucideBoxSelect,
@@ -61,6 +61,11 @@ export default function ReportMapChoroplethLegend() {
   const activeTileset = useActiveTileset(
     viewManager.currentViewOfType?.mapOptions.choropleth.boundaryType
   )
+
+  const { refetch: refetchChoropleth } = useDataByBoundary({
+    view: viewManager.currentViewOfType,
+    tileset: activeTileset,
+  })
 
   if (!viewManager.currentViewOfType) {
     return null
@@ -152,6 +157,13 @@ export default function ReportMapChoroplethLegend() {
               )}
             >
               Map shading
+              <Button
+                onClick={() => refetchChoropleth()}
+                variant="ghost"
+                className="p-0 bg-transparent ml-auto hover:bg-transparent group"
+              >
+                <ReloadIcon className="w-4 h-4 text-meepGray-400 group-hover:text-meepGray-200" />
+              </Button>
               <MapToggle
                 onChange={() => {
                   viewManager.updateView((draft) => {
@@ -205,6 +217,7 @@ export default function ReportMapChoroplethLegend() {
                   value={
                     viewManager.currentViewOfType?.mapOptions.choropleth.palette
                   }
+                  valueClassName="w-full"
                   options={Object.values(Palette).map((value) => ({
                     value,
                     label: (
@@ -474,7 +487,7 @@ function MapToggle({ value, onChange }: MapToggleProps) {
   )
 }
 
-function ColourStops({
+export function ColourStops({
   palette,
   reversePalette,
 }: {
@@ -492,10 +505,13 @@ function ColourStops({
     tileset: activeTileset,
   })
 
-  const dataByBoundary = data?.choroplethDataForSource || []
+  const dataByBoundary =
+    data && 'choroplethDataForSource' in data
+      ? data?.choroplethDataForSource
+      : data?.statistics || []
 
   // Get min and max counts
-  let minCount = min(dataByBoundary.map((d) => d.count || 0)) || 0
+  let minCount = 0 // min(dataByBoundary.map((d) => d.count || 0)) || 0
   let maxCount = max(dataByBoundary.map((d) => d.count || 0)) || 1
 
   //
@@ -537,7 +553,7 @@ function ColourStops({
   })
 
   return (
-    <div className="flex flex-col  items-center justify-center">
+    <div className="flex flex-col items-center justify-center w-full">
       <div className="flex flex-row items-center py-1 w-full">
         {colourStops.map((stop, i) => {
           return (
@@ -599,11 +615,11 @@ function FormulaConfig() {
     { label: 'First', value: 'first' },
     { label: 'Second', value: 'second' },
     { label: 'Third', value: 'third' },
-    { label: 'Last', value: 'last' },
+    // { label: 'Last', value: 'last' },
     { label: 'Total', value: 'total' },
-    { label: 'Count', value: 'count' },
-    { label: 'Mean', value: 'mean' },
-    { label: 'Median', value: 'median' },
+    // { label: 'Count', value: 'count' },
+    // { label: 'Mean', value: 'mean' },
+    // { label: 'Median', value: 'median' },
   ]
 
   const choroplethError = choroplethErrors[viewManager.currentViewOfType.id]

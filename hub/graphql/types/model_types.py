@@ -1888,34 +1888,14 @@ def choropleth_data_for_source(
         raise ValueError("Incorrect configuration for choropleth")
 
 
-@strawberry.input
-class StatisticsConfig:
-    source_ids: List[str]
-    # Querying
-    gss_codes: Optional[List[str]] = None
-    area_query_mode: Optional[stats.AreaQueryMode] = None
-    map_bounds: Optional[stats.MapBounds] = None
-    # Grouping
-    group_by_area: Optional[AnalyticalAreaType] = None
-    group_by_columns: Optional[List[stats.GroupByColumn]] = None
-    # Values
-    pre_group_by_calculated_columns: Optional[List[stats.CalculatedColumn]] = None
-    calculated_columns: Optional[List[stats.CalculatedColumn]] = None
-    aggregation_operation: Optional[stats.AggregationOp] = None
-    aggregation_operations: Optional[List[stats.AggregationDefinition]] = None
-    return_columns: Optional[List[str]] = None
-
-
 def statistics(
     info: Info,
     # --- Querying + data ---
     # Pick one or more GenericData sets to blend together.
     # they're gonna all be geo-joined for now.
-    stats_config: StatisticsConfig
-) -> Optional[JSON]:
-    print("statistics")
+    stats_config: stats.StatisticsConfig
+) -> Optional[List[JSON]]:
     user = get_current_user(info)
     for source in stats_config.source_ids:
         check_user_can_view_source(user, source)
-    logger.debug("User has access to all sources")
-    return stats.statistics(**stats_config)
+    return stats.statistics(stats_config)

@@ -127,7 +127,7 @@ class Query(UserQueries):
     choropleth_data_for_source: List[model_types.GroupedDataCount] = (
         model_types.choropleth_data_for_source
     )
-    statistics: Optional[JSON] = strawberry_django.field(
+    statistics: Optional[List[JSON]] = strawberry_django.field(
         resolver=model_types.statistics,
         extensions=[IsAuthenticated()],
     )

@@ -204,7 +204,8 @@ const mapOptionsSchema = z.object({
       mode: z.nativeEnum(ChoroplethMode).default(ChoroplethMode.Count),
       field: z.string().optional(),
       formula: z.string().optional(),
-      customConfig: StatisticsConfigSchema().optional(),
+      useAdvancedStatistics: z.boolean().optional(),
+      advancedStatisticsConfig: StatisticsConfigSchema().optional(),
     })
     .default({}),
   display: z

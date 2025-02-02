@@ -8,6 +8,7 @@ import { DataSourceEditor } from './DataSourceEditor'
 import { ReportDataSources } from './ReportDataSources'
 import { NAVBAR_HEIGHT } from './ReportNavbar'
 import ReportStarredItems from './ReportStarredItems'
+import ReportStatisticsQueryConfig from './ReportStatisticsQueryConfig'
 
 const classes = {
   tabsTrigger:
@@ -58,12 +59,18 @@ export function ReportSidebarLeft() {
               <TabsTrigger value="starred" className={classes.tabsTrigger}>
                 Starred
               </TabsTrigger>
+              <TabsTrigger value="statistics" className={classes.tabsTrigger}>
+                Statistics
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="layers" className="px-4 pb-24">
               <ReportDataSources />
             </TabsContent>
             <TabsContent value="starred" className="px-4 pb-24">
               <ReportStarredItems />
+            </TabsContent>
+            <TabsContent value="statistics" className="pb-24">
+              <ReportStatisticsQueryConfig />
             </TabsContent>
           </Tabs>
         </SidebarContent>
