@@ -305,16 +305,19 @@ def statistics(
         "postcode_data": record.postcode_data,
         "gss": record.area.gss if record.area else None,
         "area_type": record.area.area_type.code if record.area else None,
+        "area_name": record.area.name if record.area else None,
         "id": str(record.id),
       }
       for record in data
     ]
   
-    df = pd.DataFrame(d).set_index("id", drop=False)
+    df = pd.DataFrame(d)
 
     if len(df) <= 0:
         logger.debug("No data found for this source")
         return None
+    
+    df = df.set_index("id", drop=False)
 
     # Apply the row-level formulas
 
@@ -346,7 +349,7 @@ def statistics(
                 pass
         
         # First, add labels for the group_by_area as an index
-        df["group_by_gss"], df["group_by_name"] = zip(*df.apply(get_group_by_area_properties, axis=1))
+        df["gss"], df["area_name"] = zip(*df.apply(get_group_by_area_properties, axis=1))
         # Make the code an index
         # df = df.set_index("group_by_code")
 
@@ -369,27 +372,28 @@ def statistics(
                 return series.mode()[0]
             except KeyError:
                 return None
-        df_mode = df[["group_by_name", "group_by_gss"]].groupby("group_by_gss").agg(get_mode)
+        df_mode = df[["area_name", "gss"]].groupby("gss").agg(get_mode)
         print("df_mode", df_mode.index)
 
         # Aggregate the numerical columns
-        df_stats = df[numerical_keys.tolist() + ["group_by_gss"]].set_index("group_by_gss")
+        df_stats = df[numerical_keys.tolist() + ["gss"]].set_index("gss")
         print("df_stats", df_stats.index)
         if aggregation_operations:
-            agg_config = []
+            agg_config = dict()
             for key in numerical_keys.tolist():
+                agg_config[key] = "sum"
                 for op in aggregation_operations:
                     if op.column == key:
-                        agg_config += [(key, op.operation.value.lower())]
+                        agg_config[key] = op.operation.value.lower()
                         break
-                agg_config += [(key, "sum")]
         else:
             agg_config = "sum"
-        df_aggregated = df_stats.groupby("group_by_gss").agg(agg_config)
+        print(agg_config)
+        df_aggregated = df_stats.groupby("gss").agg(agg_config)
         print("df_aggregated", df_aggregated.index)
 
         # Merge the strings and the numericals back together
-        df = df_mode.join(df_aggregated, on="group_by_gss", how="left")
+        df = df_mode.join(df_aggregated, on="gss", how="left")
 
     # Apply the groupby formulas
     if post_groupby_formulas:
@@ -415,6 +419,8 @@ def statistics(
     # Return the results in the requested format
     # if return_shape is StatisticsReturnShape.Table:
     if return_columns and len(return_columns) > 0:
+        if group_by_area:
+            df = df.reset_index(drop=False)
         return df[return_columns].to_dict(orient="records")
     return df.to_dict(orient="records")
 
