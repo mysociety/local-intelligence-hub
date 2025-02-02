@@ -62,7 +62,7 @@ export default function ReportMapChoroplethLegend() {
     viewManager.currentViewOfType?.mapOptions.choropleth.boundaryType
   )
 
-  const { refetch: refetchChoropleth } = useDataByBoundary({
+  const { refetch: refetchChoropleth, loading } = useDataByBoundary({
     view: viewManager.currentViewOfType,
     tileset: activeTileset,
   })
@@ -161,6 +161,7 @@ export default function ReportMapChoroplethLegend() {
                 onClick={() => refetchChoropleth()}
                 variant="ghost"
                 className="p-0 bg-transparent ml-auto hover:bg-transparent group"
+                disabled={loading}
               >
                 <ReloadIcon className="w-4 h-4 text-meepGray-400 group-hover:text-meepGray-200" />
               </Button>
@@ -508,7 +509,7 @@ export function ColourStops({
   const dataByBoundary =
     data && 'choroplethDataForSource' in data
       ? data?.choroplethDataForSource
-      : data?.statistics || []
+      : data?.statisticsForChoropleth || []
 
   // Get min and max counts
   let minCount = 0 // min(dataByBoundary.map((d) => d.count || 0)) || 0

@@ -593,14 +593,14 @@ class Area:
 
 @strawberry.type
 class GroupedDataCount:
-    label: Optional[str]
+    label: Optional[str] = None
     # Provide filter if gss code is not unique (e.g. WMC and WMC23 constituencies)
     area_type_filter: Optional[stats.AreaTypeFilter] = None
-    gss: Optional[str]
+    gss: Optional[str] = None
     count: float
     columns: Optional[List[str]] = None
     row: Optional[JSON] = None
-    formatted_count: Optional[str]
+    formatted_count: Optional[str] = None
     area_data: Optional[strawberry.Private[Area]] = None
     is_percentage: bool = False
 
@@ -1894,8 +1894,21 @@ def statistics(
     # Pick one or more GenericData sets to blend together.
     # they're gonna all be geo-joined for now.
     stats_config: stats.StatisticsConfig
-) -> Optional[List[JSON]]:
+):
     user = get_current_user(info)
     for source in stats_config.source_ids:
         check_user_can_view_source(user, source)
     return stats.statistics(stats_config)
+
+def statistics_for_choropleth(
+    info: Info,
+    # --- Querying + data ---
+    # Pick one or more GenericData sets to blend together.
+    # they're gonna all be geo-joined for now.
+    stats_config: stats.StatisticsConfig
+):
+    user = get_current_user(info)
+    for source in stats_config.source_ids:
+        check_user_can_view_source(user, source)
+    
+    return stats.statistics(stats_config, as_grouped_data=True)

@@ -130,7 +130,7 @@ export function getAreaGeoJSON(data: DataByBoundary) {
         geometry: d.gssArea?.point?.geometry! as GeoJSON.Point,
         properties: {
           count: d.count,
-          formattedCount: d.formattedCount,
+          formattedCount: d.formattedCount || d.count,
           label: d.label,
         },
       })),

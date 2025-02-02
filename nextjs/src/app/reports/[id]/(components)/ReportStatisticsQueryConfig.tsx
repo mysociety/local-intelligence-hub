@@ -6,8 +6,10 @@ import {
 import { StatisticsConfigSchema } from '@/__generated__/zodSchema'
 import { CRMSelection } from '@/components/CRMButtonItem'
 import { Button } from '@/components/ui/button'
+import { useActiveTileset } from '@/lib/map'
 import { useReport } from '@/lib/map/useReport'
 import { useView } from '@/lib/map/useView'
+import { ReloadIcon } from '@radix-ui/react-icons'
 import { cloneDeep, isEqual } from 'lodash'
 import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
@@ -15,6 +17,7 @@ import { twMerge } from 'tailwind-merge'
 import toSpaceCase from 'to-space-case'
 import { v4 } from 'uuid'
 import { ViewType } from '../reportContext'
+import useDataByBoundary from '../useDataByBoundary'
 import { EditorSelect } from './EditorSelect'
 import { EditorSwitch } from './EditorSwitch'
 import { EditorTextInput } from './EditorTextInput'
@@ -22,6 +25,13 @@ import { EditorTextInput } from './EditorTextInput'
 export default function ReportStatisticsQueryConfig() {
   const reportManager = useReport()
   const viewManager = useView(ViewType.Map)
+  const activeTileset = useActiveTileset(
+    viewManager.currentViewOfType?.mapOptions.choropleth.boundaryType
+  )
+  const { refetch: refetchChoropleth, loading } = useDataByBoundary({
+    view: viewManager.currentViewOfType,
+    tileset: activeTileset,
+  })
   if (!viewManager || !viewManager.currentViewOfType) return null
   if (
     // No layers: no stats
@@ -29,7 +39,9 @@ export default function ReportStatisticsQueryConfig() {
   ) {
     return (
       <div className="flex flex-col gap-2 text-white">
-        <span className="text-md font-medium mt-2 mb-3">Statistics</span>
+        <div className="flex flex-row justify-between">
+          <span className="text-md font-medium mt-2 mb-3">Statistics</span>
+        </div>
         <div className="space-y-2 divide-y divide-meepGray-600">
           <span className="text-meepGray-500">No layers to query</span>
         </div>
@@ -39,7 +51,17 @@ export default function ReportStatisticsQueryConfig() {
 
   return (
     <div className="flex flex-col gap-2 text-white">
-      <span className="text-md font-medium mt-2 px-4">Statistics</span>
+      <div className="flex flex-row justify-between px-4">
+        <span className="text-md font-medium mt-2 mb-3">Statistics</span>
+        <Button
+          onClick={() => refetchChoropleth()}
+          variant="ghost"
+          className="p-0 bg-transparent ml-auto hover:bg-transparent"
+          disabled={loading}
+        >
+          <ReloadIcon className="w-4 h-4 text-meepGray-400 hover:text-meepGray-200" />
+        </Button>
+      </div>
       <div className="divide-y divide-meepGray-800">
         <section className="pt-0 p-4">
           <EditorSwitch
@@ -182,6 +204,7 @@ export default function ReportStatisticsQueryConfig() {
                         name: '',
                         expression: '',
                         aggregationOperation: AggregationOp.Sum,
+                        isPercentage: false,
                       }
                     )
                   })
@@ -253,6 +276,7 @@ export default function ReportStatisticsQueryConfig() {
                         name: '',
                         expression: '',
                         aggregationOperation: AggregationOp.Sum,
+                        isPercentage: false,
                       }
                     )
                   })
@@ -303,9 +327,11 @@ function FormulaEditor({
   const viewManager = useView(ViewType.Map)
   const defaultValues = useMemo(() => {
     return {
+      id: column.id,
       name: column.name,
       expression: column.expression,
       aggregationOperation: column.aggregationOperation,
+      isPercentage: column.isPercentage,
     }
   }, [column])
   const form = useForm({
@@ -347,14 +373,18 @@ function FormulaEditor({
           form.setValue('aggregationOperation', str as AggregationOp)
         }}
       />
+      <EditorSwitch
+        label="Is percentage"
+        value={!!column.isPercentage}
+        onChange={(value) => {
+          form.setValue('isPercentage', !!value)
+        }}
+      />
       {/* DELETE */}
       <div className="flex flex-row justify-between gap-2">
         <Button
           onClick={() => {
-            onSave({
-              id: column.id,
-              ...form.getValues(),
-            })
+            onSave(form.getValues())
             form.reset()
           }}
           variant={'ghost'}

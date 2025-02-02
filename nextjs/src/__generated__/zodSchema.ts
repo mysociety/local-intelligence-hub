@@ -113,6 +113,7 @@ export function CalculatedColumnSchema(): z.ZodObject<Properties<CalculatedColum
     aggregationOperation: AggregationOpSchema.nullish(),
     expression: z.string(),
     id: z.string(),
+    isPercentage: z.boolean().default(false).nullish(),
     name: z.string()
   })
 }
@@ -250,6 +251,7 @@ export function GroupByColumnSchema(): z.ZodObject<Properties<GroupByColumn>> {
     aggregationOperation: AggregationOpSchema.nullish(),
     column: z.string(),
     id: z.string(),
+    isPercentage: z.boolean().default(false).nullish(),
     name: z.string().nullish()
   })
 }

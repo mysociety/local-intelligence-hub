@@ -131,6 +131,10 @@ class Query(UserQueries):
         resolver=model_types.statistics,
         extensions=[IsAuthenticated()],
     )
+    statistics_for_choropleth: Optional[List[model_types.GroupedDataCount]] = strawberry_django.field(
+        resolver=model_types.statistics_for_choropleth,
+        extensions=[IsAuthenticated()],
+    )
 
     @strawberry.field
     def test_data_source(

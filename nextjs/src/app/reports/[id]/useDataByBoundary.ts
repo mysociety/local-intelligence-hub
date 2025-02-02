@@ -159,7 +159,23 @@ export const CHOROPLETH_STATS_FOR_SOURCE = gql`
 
 export const STATISTICS_QUERY = gql`
   query Statistics($config: StatisticsConfig!) {
-    statistics(statsConfig: $config)
+    statisticsForChoropleth(statsConfig: $config) {
+      label
+      gss
+      count
+      formattedCount
+      row
+      columns
+      gssArea {
+        point {
+          type
+          geometry {
+            type
+            coordinates
+          }
+        }
+      }
+    }
   }
 `
 

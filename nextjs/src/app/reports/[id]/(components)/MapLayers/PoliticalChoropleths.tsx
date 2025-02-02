@@ -61,7 +61,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
   const dataByBoundary =
     data && 'choroplethDataForSource' in data
       ? data?.choroplethDataForSource
-      : data?.statistics || []
+      : data?.statisticsForChoropleth || []
 
   const boundaryNameVisibility =
     shaderVisibility === 'visible' && view.mapOptions.display.boundaryNames

@@ -103,6 +103,7 @@ class CalculatedColumn:
     name: str
     expression: str
     aggregation_operation: Optional[AggregationOp] = None
+    is_percentage: Optional[bool] = False
 
 @strawberry.input
 class GroupByColumn:
@@ -110,6 +111,7 @@ class GroupByColumn:
     name: Optional[str] = None
     column: str
     aggregation_operation: Optional[AggregationOp] = None
+    is_percentage: Optional[bool] = False
 
 
 @strawberry.input
@@ -189,7 +191,8 @@ query SwingToReformByRegion {
 }
 '''
 def statistics(
-    conf: StatisticsConfig
+    conf: StatisticsConfig,
+    as_grouped_data: bool = False,
 ):
     # --- Get the required data for the source ---
     qs = models.GenericData.objects.filter(data_type__data_set__external_data_source_id__in=conf.source_ids)
@@ -339,6 +342,8 @@ def statistics(
                 df[col.name] = ne.evaluate(col, local_dict=df)
             if col.name not in numerical_keys:
                 numerical_keys += [col.name]
+            if col.is_percentage and col.name not in percentage_keys:
+                percentage_keys += [col.name]
 
     # --- Group by the groupby keys ---
     # respecting aggregation operations
@@ -443,6 +448,8 @@ def statistics(
                     df[col.name] = ne.evaluate(col, local_dict=df)
                 if col.name not in numerical_keys:
                     numerical_keys += [col.name]
+                if col.is_percentage and col.name not in percentage_keys:
+                    percentage_keys += [col.name]
 
             # Then recalculate based on the formula, since they may've doctored the values.
             values = df[numerical_keys].values
@@ -474,15 +481,42 @@ def statistics(
                 f"{name}_{col.aggregation_operation.value.lower()}": pd.NamedAgg(column=col.column, aggfunc=col.aggregation_operation.value.lower() if col.aggregation_operation and col.aggregation_operation is not AggregationOp.Guess else "sum"),
             })
         df = df.groupby(col.column, as_index=False).agg(**agg_config)
-        return df.to_dict(orient="records")
+        d = df.to_dict(orient="records")
+        return d
     else:
         # Return the results in the requested format
         # if return_shape is StatisticsReturnShape.Table:
         if conf.return_columns and len(conf.return_columns) > 0:
             if conf.group_by_area:
                 df = df.reset_index(drop=False)
-            return df[conf.return_columns].to_dict(orient="records")
-        return df.to_dict(orient="records")
+            d = df[conf.return_columns].to_dict(orient="records")
+        else:
+            d = df.to_dict(orient="records")
+        if as_grouped_data:
+            from hub.graphql.types.model_types import GroupedDataCount
+            is_percentage = "count" in percentage_keys
+            return [
+                GroupedDataCount(
+                    row=row,
+                    gss=row.get("gss", None),
+                    label=row.get("label", None),
+                    count=row.get("count", None),
+                    formatted_count=(
+                      (
+                          # pretty percentage
+                          f"{row.get("count", 0):.0%}"
+                      )
+                      if is_percentage
+                      else (
+                          # comma-separated integer
+                          f"{row.get("count", 0):,.0f}"
+                      )
+                    ),
+                    is_percentage=is_percentage
+                )
+                for row in d
+            ]
+        return d
 
     # elif return_shape is StatisticsReturnShape.Row:
     #     if conf.gss_codes is None:
