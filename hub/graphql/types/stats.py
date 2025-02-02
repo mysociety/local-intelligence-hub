@@ -100,6 +100,9 @@ class AggregationDefinition:
 class CalculatedColumn:
     name: str
     expression: str
+    # Use this to enable percentage formatting and aggregation logics
+    # is_percentage: Optional[bool] = False
+    aggregation_operation: Optional[AggregationOp] = None
 
 '''
 An API that can handle multiple requests, but performs the same analyses:
@@ -184,8 +187,8 @@ def statistics(
     # group_by: Optional[str | List[str]] = None,
     group_by_area: Optional[AnalyticalAreaType] = None,
     # How to aggregate the data during rollup
-    aggregation_operation: Optional[AggregationOp] = AggregationOp.Guess,
-    aggregation_operations: Optional[List[AggregationDefinition]] = AggregationOp.Guess,
+    aggregation_operation: Optional[AggregationOp] = AggregationOp.Sum,
+    aggregation_operations: Optional[List[AggregationDefinition]] = None,
     # CalculatedColumns applied to the rolled up rows
     calculated_columns: Optional[List[CalculatedColumn]] = None,
     # TODO: filter for other columns
@@ -313,6 +316,23 @@ def statistics(
     
     df = df.set_index("id", drop=False)
 
+    # Format numerics
+    percentage_keys = []
+    numerical_keys = []
+    for column in df:
+        if column != "id":
+            if all(df[column].apply(check_percentage)):
+                df[column] = attempt_interpret_series_as_percentage(df[column])
+                percentage_keys += [str(column)]
+            elif all(df[column].apply(check_numeric)):
+                df[column] = attempt_interpret_series_as_float(df[column])
+                numerical_keys += [str(column)]
+    # Narrow down the DF to just the numerical columns then
+    numerical_keys = df.select_dtypes(include="number").columns.tolist()
+    # Exclude "id" from the numerical keys
+    if "id" in numerical_keys:
+        numerical_keys = numerical_keys.drop("id")
+
     # Apply the row-level cols
     if pre_group_by_calculated_columns:
         for col in pre_group_by_calculated_columns:
@@ -323,11 +343,11 @@ def statistics(
                 # In case "where" is used, which pandas doesn't support
                 # https://github.com/pandas-dev/pandas/issues/34834
                 df[col.name] = ne.evaluate(col, local_dict=df)
+            if col.name not in numerical_keys:
+                numerical_keys += [col.name]
 
     # --- Group by the groupby keys ---
     # respecting aggregation operations
-    percentage_keys = []
-    numerical_keys = []
     if group_by_area:
         # Get rid of ID index
         df = df.reset_index(drop=True).drop(columns=["id"])
@@ -350,21 +370,8 @@ def statistics(
         # Make the code an index
         # df = df.set_index("group_by_code")
 
-        # Narrow down the DF to just the numerical columns then
-        for column in df:
-            if column != "id":
-                if all(df[column].apply(check_percentage)):
-                    percentage_keys += [str(column)]
-                    df[column] = attempt_interpret_series_as_percentage(df[column])
-                elif all(df[column].apply(check_numeric)):
-                    df[column] = attempt_interpret_series_as_float(df[column])
-        numerical_keys = df.select_dtypes(include="number").columns
-        # Exclude "id" from the numerical keys
-        if "id" in numerical_keys:
-            numerical_keys = numerical_keys.drop("id")
         # # remove columns that aren't numerical_keys
         # df = df[numerical_keys]
-
 
         # Collect the mode of the string columns
         # strings = df.select_dtypes(include="object")
@@ -376,41 +383,51 @@ def statistics(
         df_mode = df[["area_name", "gss", "area_type"]].groupby("gss").agg(get_mode)
 
         # Aggregate the numerical columns
-        df_stats = df[numerical_keys.tolist() + ["gss"]].set_index("gss")
-        if aggregation_operations:
-            agg_config = dict()
-            for key in numerical_keys.tolist():
-                agg_config[key] = "sum"
+        df_stats = df[numerical_keys + ["gss"]].set_index("gss")
+        agg_config = dict()
+        if aggregation_operations and len(aggregation_operations) > 0:
+            # Per-key config
+            for key in numerical_keys:
+                if key in percentage_keys:
+                    agg_config[key] = "mean"
+                else:
+                    agg_config[key] = "sum"
                 for op in aggregation_operations:
                     if op.column == key:
                         agg_config[key] = op.operation.value.lower()
                         break
         else:
-            agg_config = aggregation_operation.lower() if aggregation_operation else "sum"
+            # Guess
+            for key in numerical_keys:
+                calculated_column = next(
+                    (col for col in pre_group_by_calculated_columns if col.name == key),
+                    None
+                ) if pre_group_by_calculated_columns and len(pre_group_by_calculated_columns) > 0 else None
+                if aggregation_operation and aggregation_operation is not AggregationOp.Guess:
+                    agg_config[key] = aggregation_operation.value.lower()
+                elif calculated_column and calculated_column.aggregation_operation and calculated_column.aggregation_operation is not AggregationOp.Guess:
+                    agg_config[key] = calculated_column.aggregation_operation.value.lower()
+                elif key in percentage_keys:
+                    agg_config[key] = "mean"
+                else:
+                    agg_config[key] = "sum"
         df_aggregated = df_stats.groupby("gss").agg(agg_config)
 
         # Merge the strings and the numericals back together
         df = df_mode.join(df_aggregated, on="gss", how="left")
 
-    if len(numerical_keys) <= 0:
-        # TODO: dedupe this code, move it to the top
-        # Ensure we're dealing with numericals
-        for column in df:
-            if all(df[column].apply(check_percentage)):
-                percentage_keys += [str(column)]
-                df[column] = attempt_interpret_series_as_percentage(df[column])
-            elif all(df[column].apply(check_numeric)):
-                df[column] = attempt_interpret_series_as_float(df[column])
-        numerical_keys = df.select_dtypes(include="number").columns
-        if "id" in numerical_keys:
-            numerical_keys = numerical_keys.drop("id")
-
-    if calculated_columns and len(numerical_keys) > 0:
+    if len(numerical_keys) > 0:
         # Provide some special variables to the col editor
         values = df[numerical_keys].values
         df["first"] = values.max(axis=1)
+        # column name of "first"
+        df["first_label"] = df[numerical_keys].idxmax(axis=1)
         try:
             df["second"] = np.partition(values, -2, axis=1)[:, -2]
+            # df["second_label"] = # TODO: get the column name of the second highst value
+            # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
+            # As above, but using numpy not pandas
+            df["second_label"] = df[numerical_keys].columns[df[numerical_keys].values.argsort()[:, -2]]
             df["majority"] = df["first"] - df["second"]
         except IndexError:
             pass
@@ -420,15 +437,18 @@ def statistics(
             pass
         df["total"] = values.sum(axis=1)
 
-        # Apply the groupby cols
-        for col in calculated_columns:
-            df[col.name] = df.eval(col.expression)
-            try:
+        # Apply formulas
+        if calculated_columns and len(calculated_columns) > 0:
+            for col in calculated_columns:
                 df[col.name] = df.eval(col.expression)
-            except ValueError:
-                # In case "where" is used, which pandas doesn't support
-                # https://github.com/pandas-dev/pandas/issues/34834
-                df[col.name] = ne.evaluate(col, local_dict=df)
+                try:
+                    df[col.name] = df.eval(col.expression)
+                except ValueError:
+                    # In case "where" is used, which pandas doesn't support
+                    # https://github.com/pandas-dev/pandas/issues/34834
+                    df[col.name] = ne.evaluate(col, local_dict=df)
+                if col.name not in numerical_keys:
+                    numerical_keys += [col.name]
 
     # Return the results in the requested format
     # if return_shape is StatisticsReturnShape.Table:
