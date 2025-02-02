@@ -435,6 +435,7 @@ def statistics(
         # Apply formulas
         if calculated_columns and len(calculated_columns) > 0:
             for col in calculated_columns:
+                print(col)
                 df[col.name] = df.eval(col.expression)
                 try:
                     df[col.name] = df.eval(col.expression)
@@ -444,6 +445,26 @@ def statistics(
                     df[col.name] = ne.evaluate(col, local_dict=df)
                 if col.name not in numerical_keys:
                     numerical_keys += [col.name]
+
+            # Then recalculate based on the formula, since they may've doctored the values.
+            values = df[numerical_keys].values
+            df["first"] = values.max(axis=1)
+            # column name of "first"
+            df["first_label"] = df[numerical_keys].idxmax(axis=1)
+            try:
+                df["second"] = np.partition(values, -2, axis=1)[:, -2]
+                # df["second_label"] = # TODO: get the column name of the second highst value
+                # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
+                # As above, but using numpy not pandas
+                df["second_label"] = df[numerical_keys].columns[df[numerical_keys].values.argsort()[:, -2]]
+                df["majority"] = df["first"] - df["second"]
+            except IndexError:
+                pass
+            try:
+                df["third"] = np.partition(values, -3, axis=1)[:, -3]
+            except IndexError:
+                pass
+            df["total"] = values.sum(axis=1)
 
     # Final grouping
     if group_by_columns and len(group_by_columns) > 0:
