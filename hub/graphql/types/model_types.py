@@ -1908,6 +1908,7 @@ def statistics(
     # group_by: Optional[str | List[str]] = None,
     group_by_area: Optional[AnalyticalAreaType] = None,
     # How to aggregate the data during rollup
+    aggregation_operation: Optional[stats.AggregationOp] = None,
     aggregation_operations: Optional[List[stats.AggregationDefinition]] = None,
     # Formulas applied to the rolled up rows
     calculated_columns: Optional[List[stats.CalculatedColumn]] = None,
@@ -1928,6 +1929,7 @@ def statistics(
         gss_codes=gss_codes,
         map_bounds=map_bounds,
         group_by_area=group_by_area,
+        aggregation_operation=aggregation_operation,
         aggregation_operations=aggregation_operations,
         calculated_columns=calculated_columns,
         return_columns=return_columns,

@@ -184,6 +184,7 @@ def statistics(
     # group_by: Optional[str | List[str]] = None,
     group_by_area: Optional[AnalyticalAreaType] = None,
     # How to aggregate the data during rollup
+    aggregation_operation: Optional[AggregationOp] = AggregationOp.Guess,
     aggregation_operations: Optional[List[AggregationDefinition]] = AggregationOp.Guess,
     # CalculatedColumns applied to the rolled up rows
     calculated_columns: Optional[List[CalculatedColumn]] = None,
@@ -385,7 +386,7 @@ def statistics(
                         agg_config[key] = op.operation.value.lower()
                         break
         else:
-            agg_config = "sum"
+            agg_config = aggregation_operation.lower() if aggregation_operation else "sum"
         df_aggregated = df_stats.groupby("gss").agg(agg_config)
 
         # Merge the strings and the numericals back together
