@@ -208,9 +208,17 @@ export type ActionNetworkSourceInput = {
   updateMapping?: InputMaybe<Array<UpdateMappingItemInput>>;
 };
 
+export type AggregationDefinition = {
+  column: Scalars['String']['input'];
+  operation: AggregationOp;
+};
+
 export enum AggregationOp {
+  Count = 'Count',
   Guess = 'Guess',
+  Max = 'Max',
   Mean = 'Mean',
+  Min = 'Min',
   Sum = 'Sum'
 }
 
@@ -1221,6 +1229,11 @@ export type FieldDefinition = {
   externalId?: Maybe<Scalars['String']['output']>;
   label?: Maybe<Scalars['String']['output']>;
   value: Scalars['String']['output'];
+};
+
+export type Formula = {
+  definition: Scalars['String']['input'];
+  name: Scalars['String']['input'];
 };
 
 /** GenericData(id, data_type, data, date, float, int, json, created_at, last_update, point, polygon, area, postcode_data, postcode, first_name, last_name, full_name, email, phone, start_time, end_time, public_url, social_url, geocode_data, geocoder, address, title, description, image, can_display_point) */
@@ -2285,6 +2298,7 @@ export type Query = {
   reports: Array<Report>;
   sharedDataSource: SharedDataSource;
   sharedDataSources: Array<SharedDataSource>;
+  statistics: Scalars['JSON']['output'];
   testDataSource: ExternalDataSource;
 };
 
@@ -2451,6 +2465,21 @@ export type QuerySharedDataSourceArgs = {
 
 export type QuerySharedDataSourcesArgs = {
   filters?: InputMaybe<ExternalDataSourceFilter>;
+};
+
+
+export type QueryStatisticsArgs = {
+  aggregationOperations?: InputMaybe<Array<AggregationDefinition>>;
+  areaQueryMode?: InputMaybe<AreaQueryMode>;
+  electoralData?: InputMaybe<Scalars['Boolean']['input']>;
+  groupByArea?: InputMaybe<AnalyticalAreaType>;
+  gssCodes?: InputMaybe<Array<Scalars['String']['input']>>;
+  mapBounds?: InputMaybe<MapBounds>;
+  postGroupbyFormulas?: InputMaybe<Array<Formula>>;
+  preGroupByFormulas?: InputMaybe<Array<Formula>>;
+  returnColumns?: InputMaybe<Array<Scalars['String']['input']>>;
+  returnShape?: InputMaybe<StatisticsReturnShape>;
+  sourceIds: Array<Scalars['String']['input']>;
 };
 
 
@@ -2678,6 +2707,13 @@ export type SharingPermissionInput = {
   visibilityRecordCoordinates?: InputMaybe<Scalars['Boolean']['input']>;
   visibilityRecordDetails?: InputMaybe<Scalars['Boolean']['input']>;
 };
+
+export enum StatisticsReturnShape {
+  Cell = 'Cell',
+  Column = 'Column',
+  Row = 'Row',
+  Table = 'Table'
+}
 
 export type StrFilterLookup = {
   contains?: InputMaybe<Scalars['String']['input']>;

@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional, Union
+from typing import List, Optional, TypedDict, Union
 
 from django.contrib.gis.db.models import Union as GisUnion
 from django.contrib.gis.geos import Polygon
@@ -9,7 +9,10 @@ from django.db.models import F, Q
 from django.db.models.fields import FloatField
 from django.db.models.functions import Cast
 from django.http import HttpRequest
+from django.contrib.auth.models import AbstractBaseUser
 
+from hub.graphql.permissions import check_user_can_view_source
+from hub.graphql.types import stats as stats
 import numexpr as ne
 import numpy as np
 import pandas as pd
@@ -592,7 +595,7 @@ class Area:
 class GroupedDataCount:
     label: Optional[str]
     # Provide filter if gss code is not unique (e.g. WMC and WMC23 constituencies)
-    area_type_filter: Optional["AreaTypeFilter"] = None
+    area_type_filter: Optional[stats.AreaTypeFilter] = None
     gss: Optional[str]
     count: float
     columns: Optional[List[str]] = None
@@ -616,7 +619,7 @@ class GroupedDataCount:
 class GroupedData:
     label: Optional[str]
     # Provide filter if gss code is not unique (e.g. WMC and WMC23 constituencies)
-    area_type_filter: Optional["AreaTypeFilter"] = None
+    area_type_filter: Optional[stats.AreaTypeFilter] = None
     gss: Optional[str]
     area_data: Optional[strawberry.Private[Area]] = None
     imported_data: Optional[JSON] = None
@@ -717,41 +720,6 @@ class MapReportMemberFeature(PointFeature):
         return None
 
 
-@strawberry.type
-class AreaTypeFilter:
-    lih_area_type: Optional[str] = None
-    mapit_area_types: Optional[list[str]] = None
-
-    @property
-    def query_filter(self) -> dict[str, str]:
-        filter = {}
-        if self.lih_area_type:
-            filter["area_type__code"] = self.lih_area_type
-        if self.mapit_area_types:
-            filter["mapit_type__in"] = self.mapit_area_types
-        return filter
-
-
-# Provides a map from postcodes.io area type to Local Intelligence Hub
-# area types, or mapit types if LIH is misaligned.
-postcodeIOKeyAreaTypeLookup = {
-    AnalyticalAreaType.parliamentary_constituency: AreaTypeFilter(lih_area_type="WMC"),
-    AnalyticalAreaType.parliamentary_constituency_2024: AreaTypeFilter(
-        lih_area_type="WMC23"
-    ),
-    AnalyticalAreaType.admin_district: AreaTypeFilter(
-        mapit_area_types=["LBO", "UTA", "COI", "LGD", "MTD", "DIS", "NMD"]
-    ),
-    AnalyticalAreaType.admin_county: AreaTypeFilter(mapit_area_types=["CTY"]),
-    AnalyticalAreaType.admin_ward: AreaTypeFilter(lih_area_type="WD23"),
-    AnalyticalAreaType.european_electoral_region: AreaTypeFilter(lih_area_type="EER"),
-    AnalyticalAreaType.european_electoral_region: AreaTypeFilter(lih_area_type="CTRY"),
-    AnalyticalAreaType.msoa: AreaTypeFilter(lih_area_type="MSOA"),
-    AnalyticalAreaType.lsoa: AreaTypeFilter(lih_area_type="LSOA"),
-    AnalyticalAreaType.output_area: AreaTypeFilter(lih_area_type="OA21"),
-}
-
-
 @strawberry.interface
 class Analytics:
     imported_data_count: int = fn_field()
@@ -766,7 +734,7 @@ class Analytics:
             postcode_io_key=analytical_area_type.value,
             layer_ids=layer_ids,
         )
-        area_type_filter = postcodeIOKeyAreaTypeLookup[analytical_area_type]
+        area_type_filter = stats.postcodeIOKeyAreaTypeLookup[analytical_area_type]
         return [
             GroupedDataCount(**datum, area_type_filter=area_type_filter)
             for datum in data
@@ -806,7 +774,7 @@ class Analytics:
             postcode_io_key=analytical_area_type.value,
             layer_ids=layer_ids,
         )
-        area_type_filter = postcodeIOKeyAreaTypeLookup[analytical_area_type]
+        area_type_filter = stats.postcodeIOKeyAreaTypeLookup[analytical_area_type]
         return [
             GroupedData(**datum, area_type_filter=area_type_filter) for datum in data
         ]
@@ -1271,7 +1239,7 @@ def area_by_gss(
 ) -> models.Area:
     qs = models.Area.objects.all()
     if analytical_area_type:
-        area_type_filter = postcodeIOKeyAreaTypeLookup[analytical_area_type]
+        area_type_filter = stats.postcodeIOKeyAreaTypeLookup[analytical_area_type]
         qs = qs.filter(**area_type_filter.query_filter)
     return qs.get(gss=gss)
 
@@ -1484,37 +1452,26 @@ def generic_data_by_external_data_source(
     )
 
 
-# enum for OLAP
-@strawberry.enum
-class AreaQueryMode(Enum):
-    POINTS_WITHIN = "POINTS_WITHIN"
-    AREA = "AREA"
-    AREA_OR_CHILDREN = "AREA_OR_CHILDREN"
-    AREA_OR_PARENTS = "AREA_OR_PARENTS"
-    # This mode is used to find overlapping areas in the same way the current choropleth API works
-    OVERLAPPING = "OVERLAPPING"
-
-
 def __get_generic_data_for_area_and_external_data_source(
     external_data_source: models.ExternalDataSource,
     gss: str,
-    mode: AreaQueryMode,
+    mode: stats.AreaQueryMode,
 ) -> List[GenericData]:
     area = models.Area.objects.get(gss=gss)
     data_source_records = external_data_source.get_import_data()
 
     filters = Q()
 
-    if mode is AreaQueryMode.POINTS_WITHIN:
+    if mode is stats.AreaQueryMode.POINTS_WITHIN:
         # We filter on area=None so we don't pick up statistical area data
         # since a super-area may have a point within this area, skewing the results
         filters = Q(point__within=area.polygon) & Q(area=None)
 
-    elif mode is AreaQueryMode.AREA:
+    elif mode is stats.AreaQueryMode.AREA:
         # Find only data specifically related to this GSS area — not about its children
         filters = Q(area__gss=area.gss)
 
-    elif mode is AreaQueryMode.AREA_OR_CHILDREN:
+    elif mode is stats.AreaQueryMode.AREA_OR_CHILDREN:
         filters = Q(area__gss=area.gss)
         # Or find GenericData tagged with area that is fully contained by this area's polygon
         postcode_io_key = area_to_postcode_io_filter(area)
@@ -1530,7 +1487,7 @@ def __get_generic_data_for_area_and_external_data_source(
             subclause &= Q(area__polygon__within=area.polygon)
             filters |= subclause
 
-    elif mode is AreaQueryMode.AREA_OR_PARENTS:
+    elif mode is stats.AreaQueryMode.AREA_OR_PARENTS:
         filters = Q(area__gss=area.gss)
         # Or find GenericData tagged with area that fully contains this area's polygon
         postcode_io_key = area_to_postcode_io_filter(area)
@@ -1546,7 +1503,7 @@ def __get_generic_data_for_area_and_external_data_source(
             subclause &= Q(area__polygon__contains=area.polygon)
             filters |= subclause
 
-    elif mode is AreaQueryMode.OVERLAPPING:
+    elif mode is stats.AreaQueryMode.OVERLAPPING:
         filters = Q(area__gss=area.gss)
         # Or find GenericData tagged with area that overlaps this area's polygon
         postcode_io_key = area_to_postcode_io_filter(area)
@@ -1556,14 +1513,14 @@ def __get_generic_data_for_area_and_external_data_source(
             filters |= Q(**{f"postcode_data__codes__{postcode_io_key.value}": area.gss})
 
     else:
-        raise ValueError(f"Unknown AreaQueryMode: {mode}")
+        raise ValueError(f"Unknown stats.AreaQueryMode: {mode}")
 
     return data_source_records.filter(filters)
 
 
 @strawberry_django.field()
 def generic_data_from_source_about_area(
-    info: Info, source_id: str, gss: str, mode: AreaQueryMode = AreaQueryMode.AREA
+    info: Info, source_id: str, gss: str, mode: stats.AreaQueryMode = stats.AreaQueryMode.AREA
 ) -> List[GenericData]:
     user = get_current_user(info)
     # Check user can access the external data source
@@ -1607,7 +1564,7 @@ class DataSummary:
 
 @strawberry_django.field()
 def generic_data_summary_from_source_about_area(
-    info: Info, source_id: str, gss: str, mode: AreaQueryMode = AreaQueryMode.AREA
+    info: Info, source_id: str, gss: str, mode: stats.AreaQueryMode = stats.AreaQueryMode.AREA
 ) -> Optional[DataSummary]:
     user = get_current_user(info)
     # Check user can access the external data source
@@ -1689,27 +1646,12 @@ def generic_data_summary_from_source_about_area(
     )
 
 
-@strawberry.input
-class MapBounds:
-    north: float
-    east: float
-    south: float
-    west: float
-
-
 @strawberry.enum
 class ChoroplethMode(Enum):
     Count = "Count"
     Field = "Field"
     Formula = "Formula"
     Table = "Table"
-
-
-@strawberry.enum
-class AggregationOp(Enum):
-    Sum = "Sum"
-    Mean = "Mean"
-    Guess = "Guess"
 
 
 @strawberry_django.field()
@@ -1721,9 +1663,9 @@ def choropleth_data_for_source(
     # or, if not provided, a count of records
     mode: Optional[ChoroplethMode] = ChoroplethMode.Count,
     field: Optional[str] = None,
-    map_bounds: Optional[MapBounds] = None,
+    map_bounds: Optional[stats.MapBounds] = None,
     formula: Optional[str] = None,
-    aggregation_operation: AggregationOp = AggregationOp.Guess
+    aggregation_operation: stats.AggregationOp = stats.AggregationOp.Guess
 ) -> List[GroupedDataCount]:
     decided_operation = aggregation_operation
     # Check user can access the external data source
@@ -1750,7 +1692,7 @@ def choropleth_data_for_source(
     )
 
     if map_bounds:
-        area_type_filter = postcodeIOKeyAreaTypeLookup[analytical_area_key]
+        area_type_filter = stats.postcodeIOKeyAreaTypeLookup[analytical_area_key]
         bbox_coords = (
             (map_bounds.west, map_bounds.north),  # Top left
             (map_bounds.east, map_bounds.north),  # Top right
@@ -1847,8 +1789,8 @@ def choropleth_data_for_source(
         for column in df:
             if all(df[column].apply(check_percentage)):
                 is_percentage = True
-                if decided_operation is AggregationOp.Guess:
-                    decided_operation = AggregationOp.Mean
+                if decided_operation is stats.AggregationOp.Guess:
+                    decided_operation = stats.AggregationOp.Mean
                 df[column] = attempt_interpret_series_as_percentage(df[column])
             else:
                 df[column] = attempt_interpret_series_as_float(df[column])
@@ -1866,9 +1808,9 @@ def choropleth_data_for_source(
         # Aggregation will be by summing the values in the field, excluding 'label'
         grouped_data = df.drop(columns=["label"]).groupby("gss")
         match decided_operation:
-            case AggregationOp.Mean:
+            case stats.AggregationOp.Mean:
                 df_aggregated = grouped_data.mean().reset_index()
-            case AggregationOp.Sum | _:
+            case stats.AggregationOp.Sum | _:
                 df_aggregated = grouped_data.sum().reset_index()
 
         # Calculate the mode for the 'label' column
@@ -1944,3 +1886,58 @@ def choropleth_data_for_source(
 
     else:
         raise ValueError("Incorrect configuration for choropleth")
+
+
+def statistics(
+    info: Info,
+    # --- Querying + data ---
+    # Pick one or more GenericData sets to blend together.
+    # they're gonna all be geo-joined for now.
+    source_ids: List[str],
+    # How to find data
+    area_query_mode: Optional[stats.AreaQueryMode] = stats.AreaQueryMode.AREA,
+    # Formulas applied to each raw row
+    pre_group_by_formulas: Optional[List[stats.Formula]] = None,
+    # --- Slice / dice ---
+    # Area filter
+    gss_codes: Optional[List[str]] = None,
+    # BBOX filter (useful for boundary types that are quite small, like OAs or postcodes)
+    map_bounds: Optional[stats.MapBounds] = None,
+    # --- Roll up ---
+    # Group by one or more keys if you fancy.
+    # group_by: Optional[str | List[str]] = None,
+    group_by_area: Optional[AnalyticalAreaType] = None,
+    # How to aggregate the data during rollup
+    aggregation_operations: Optional[List[stats.AggregationDefinition]] = None,
+    # Formulas applied to the rolled up rows
+    post_groupby_formulas: Optional[List[stats.Formula]] = None,
+    # TODO: filter for other columns
+    # --- 4. Results ---
+    # Can return:
+    # - a table of columns
+    # - a column (`count`)
+    # - a row
+    # - a single cell
+    return_shape: Optional[stats.StatisticsReturnShape] = stats.StatisticsReturnShape.Table,
+    # Define what column values to use if StatisticsReturnValue.Values
+    return_columns: Optional[List[str]] = None,
+    electoral_data: Optional[bool] = False,
+) -> Optional[JSON]:
+    print("statistics")
+    user = get_current_user(info)
+    for source in source_ids:
+        check_user_can_view_source(user, source)
+    logger.debug("User has access to all sources")
+    return stats.statistics(
+        source_ids=source_ids,
+        area_query_mode=area_query_mode,
+        pre_group_by_formulas=pre_group_by_formulas,
+        gss_codes=gss_codes,
+        map_bounds=map_bounds,
+        group_by_area=group_by_area,
+        aggregation_operations=aggregation_operations,
+        post_groupby_formulas=post_groupby_formulas,
+        return_shape=return_shape,
+        return_columns=return_columns,
+        electoral_data=electoral_data,
+    )

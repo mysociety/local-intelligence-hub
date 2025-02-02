@@ -5,6 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 
 import strawberry
 import strawberry_django
+from strawberry.scalars import JSON
 from gqlauth.core.middlewares import JwtSchema
 from gqlauth.core.types_ import GQLAuthError
 from gqlauth.user import arg_mutations as auth_mutations
@@ -125,6 +126,10 @@ class Query(UserQueries):
     )
     choropleth_data_for_source: List[model_types.GroupedDataCount] = (
         model_types.choropleth_data_for_source
+    )
+    statistics: Optional[JSON] = strawberry_django.field(
+        resolver=model_types.statistics,
+        extensions=[IsAuthenticated()],
     )
 
     @strawberry.field
