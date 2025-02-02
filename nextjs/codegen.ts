@@ -23,6 +23,19 @@ const config: CodegenConfig = {
         useExplicitTyping: true,
       },
     },
+    './src/__generated__/zodSchema.ts': {
+      // Has to be separate due to a bug in the library. https://the-guild.dev/graphql/codegen/plugins/typescript/typescript-validation-schema#:~:text=see%20example%20directory.-,Notes,-Their%20is%20currently
+      // docs: https://the-guild.dev/graphql/codegen/plugins/typescript/typescript-validation-schema
+      plugins: ['typescript-validation-schema'],
+      config: {
+        schema: 'zod',
+        importFrom: './graphql',
+        // withObjectType: true,
+        // typesPrefix: 'GQLGenerated',
+        // apolloClientVersion: 3,
+        // useExplicitTyping: true,
+      },
+    },
   },
   ignoreNoDocuments: true,
 }

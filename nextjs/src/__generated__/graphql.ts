@@ -573,6 +573,12 @@ export type BatchJobProgress = {
   total?: Maybe<Scalars['Int']['output']>;
 };
 
+export type CalculatedColumn = {
+  aggregationOperation?: InputMaybe<AggregationOp>;
+  expression: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
 export enum ChoroplethMode {
   Count = 'Count',
   Field = 'Field',
@@ -1231,11 +1237,6 @@ export type FieldDefinition = {
   value: Scalars['String']['output'];
 };
 
-export type Formula = {
-  definition: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-};
-
 /** GenericData(id, data_type, data, date, float, int, json, created_at, last_update, point, polygon, area, postcode_data, postcode, first_name, last_name, full_name, email, phone, start_time, end_time, public_url, social_url, geocode_data, geocoder, address, title, description, image, can_display_point) */
 export type GenericData = CommonData & {
   __typename?: 'GenericData';
@@ -1299,6 +1300,12 @@ export enum GeographyTypes {
   Postcode = 'POSTCODE',
   Ward = 'WARD'
 }
+
+export type GroupByColumn = {
+  aggregationOperation?: InputMaybe<AggregationOp>;
+  column: Scalars['String']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+};
 
 /** GenericData(id, data_type, data, date, float, int, json, created_at, last_update, point, polygon, area, postcode_data, postcode, first_name, last_name, full_name, email, phone, start_time, end_time, public_url, social_url, geocode_data, geocoder, address, title, description, image, can_display_point) */
 export type GroupedData = {
@@ -2298,7 +2305,7 @@ export type Query = {
   reports: Array<Report>;
   sharedDataSource: SharedDataSource;
   sharedDataSources: Array<SharedDataSource>;
-  statistics: Scalars['JSON']['output'];
+  statistics?: Maybe<Scalars['JSON']['output']>;
   testDataSource: ExternalDataSource;
 };
 
@@ -2469,17 +2476,7 @@ export type QuerySharedDataSourcesArgs = {
 
 
 export type QueryStatisticsArgs = {
-  aggregationOperations?: InputMaybe<Array<AggregationDefinition>>;
-  areaQueryMode?: InputMaybe<AreaQueryMode>;
-  electoralData?: InputMaybe<Scalars['Boolean']['input']>;
-  groupByArea?: InputMaybe<AnalyticalAreaType>;
-  gssCodes?: InputMaybe<Array<Scalars['String']['input']>>;
-  mapBounds?: InputMaybe<MapBounds>;
-  postGroupbyFormulas?: InputMaybe<Array<Formula>>;
-  preGroupByFormulas?: InputMaybe<Array<Formula>>;
-  returnColumns?: InputMaybe<Array<Scalars['String']['input']>>;
-  returnShape?: InputMaybe<StatisticsReturnShape>;
-  sourceIds: Array<Scalars['String']['input']>;
+  statsConfig: StatisticsConfig;
 };
 
 
@@ -2708,12 +2705,19 @@ export type SharingPermissionInput = {
   visibilityRecordDetails?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
-export enum StatisticsReturnShape {
-  Cell = 'Cell',
-  Column = 'Column',
-  Row = 'Row',
-  Table = 'Table'
-}
+export type StatisticsConfig = {
+  aggregationOperation?: InputMaybe<AggregationOp>;
+  aggregationOperations?: InputMaybe<Array<AggregationDefinition>>;
+  areaQueryMode?: InputMaybe<AreaQueryMode>;
+  calculatedColumns?: InputMaybe<Array<CalculatedColumn>>;
+  groupByArea?: InputMaybe<AnalyticalAreaType>;
+  groupByColumns?: InputMaybe<Array<GroupByColumn>>;
+  gssCodes?: InputMaybe<Array<Scalars['String']['input']>>;
+  mapBounds?: InputMaybe<MapBounds>;
+  preGroupByCalculatedColumns?: InputMaybe<Array<CalculatedColumn>>;
+  returnColumns?: InputMaybe<Array<Scalars['String']['input']>>;
+  sourceIds: Array<Scalars['String']['input']>;
+};
 
 export type StrFilterLookup = {
   contains?: InputMaybe<Scalars['String']['input']>;

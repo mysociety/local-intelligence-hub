@@ -7,6 +7,7 @@ import {
   MapLayerInput,
   MapReportInput,
 } from '@/__generated__/graphql'
+import { StatisticsConfigSchema } from '@/__generated__/zodSchema'
 import { InspectorDisplayType } from '@/lib/explorer'
 import { explorerStateSchema } from '@/lib/map/useExplorer'
 import {
@@ -203,6 +204,7 @@ const mapOptionsSchema = z.object({
       mode: z.nativeEnum(ChoroplethMode).default(ChoroplethMode.Count),
       field: z.string().optional(),
       formula: z.string().optional(),
+      customConfig: StatisticsConfigSchema().optional(),
     })
     .default({}),
   display: z

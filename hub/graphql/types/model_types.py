@@ -1888,51 +1888,34 @@ def choropleth_data_for_source(
         raise ValueError("Incorrect configuration for choropleth")
 
 
+@strawberry.input
+class StatisticsConfig:
+    source_ids: List[str]
+    # Querying
+    gss_codes: Optional[List[str]] = None
+    area_query_mode: Optional[stats.AreaQueryMode] = None
+    map_bounds: Optional[stats.MapBounds] = None
+    # Grouping
+    group_by_area: Optional[AnalyticalAreaType] = None
+    group_by_columns: Optional[List[stats.GroupByColumn]] = None
+    # Values
+    pre_group_by_calculated_columns: Optional[List[stats.CalculatedColumn]] = None
+    calculated_columns: Optional[List[stats.CalculatedColumn]] = None
+    aggregation_operation: Optional[stats.AggregationOp] = None
+    aggregation_operations: Optional[List[stats.AggregationDefinition]] = None
+    return_columns: Optional[List[str]] = None
+
+
 def statistics(
     info: Info,
     # --- Querying + data ---
     # Pick one or more GenericData sets to blend together.
     # they're gonna all be geo-joined for now.
-    source_ids: List[str],
-    # How to find data
-    area_query_mode: Optional[stats.AreaQueryMode] = stats.AreaQueryMode.AREA,
-    # Formulas applied to each raw row
-    pre_group_by_calculated_columns: Optional[List[stats.CalculatedColumn]] = None,
-    # --- Slice / dice ---
-    # Area filter
-    gss_codes: Optional[List[str]] = None,
-    # BBOX filter (useful for boundary types that are quite small, like OAs or postcodes)
-    map_bounds: Optional[stats.MapBounds] = None,
-    # --- Roll up ---
-    # Group by one or more keys if you fancy.
-    # group_by: Optional[str | List[str]] = None,
-    group_by_area: Optional[AnalyticalAreaType] = None,
-    # How to aggregate the data during rollup
-    aggregation_operation: Optional[stats.AggregationOp] = None,
-    aggregation_operations: Optional[List[stats.AggregationDefinition]] = None,
-    # Formulas applied to the rolled up rows
-    calculated_columns: Optional[List[stats.CalculatedColumn]] = None,
-    # TODO: filter for other columns
-    group_by_columns: Optional[List[stats.GroupByColumn]] = None,
-    # --- 4. Results ---
-    # Define what column values to use if StatisticsReturnValue.Values
-    return_columns: Optional[List[str]] = None,
+    stats_config: StatisticsConfig
 ) -> Optional[JSON]:
     print("statistics")
     user = get_current_user(info)
-    for source in source_ids:
+    for source in stats_config.source_ids:
         check_user_can_view_source(user, source)
     logger.debug("User has access to all sources")
-    return stats.statistics(
-        source_ids=source_ids,
-        area_query_mode=area_query_mode,
-        pre_group_by_calculated_columns=pre_group_by_calculated_columns,
-        gss_codes=gss_codes,
-        map_bounds=map_bounds,
-        group_by_area=group_by_area,
-        group_by_columns=group_by_columns,
-        aggregation_operation=aggregation_operation,
-        aggregation_operations=aggregation_operations,
-        calculated_columns=calculated_columns,
-        return_columns=return_columns,
-    )
+    return stats.statistics(**stats_config)
