@@ -391,19 +391,20 @@ def statistics(
         # Merge the strings and the numericals back together
         df = df_mode.join(df_aggregated, on="gss", how="left")
 
-    if calculated_columns:
-        if len(numerical_keys) <= 0:
-            # Ensure we're dealing with numericals
-            for column in df:
-                if all(df[column].apply(check_percentage)):
-                    percentage_keys += [str(column)]
-                    df[column] = attempt_interpret_series_as_percentage(df[column])
-                elif all(df[column].apply(check_numeric)):
-                    df[column] = attempt_interpret_series_as_float(df[column])
-            numerical_keys = df.select_dtypes(include="number").columns
-            if "id" in numerical_keys:
-                numerical_keys = numerical_keys.drop("id")
+    if len(numerical_keys) <= 0:
+        # TODO: dedupe this code, move it to the top
+        # Ensure we're dealing with numericals
+        for column in df:
+            if all(df[column].apply(check_percentage)):
+                percentage_keys += [str(column)]
+                df[column] = attempt_interpret_series_as_percentage(df[column])
+            elif all(df[column].apply(check_numeric)):
+                df[column] = attempt_interpret_series_as_float(df[column])
+        numerical_keys = df.select_dtypes(include="number").columns
+        if "id" in numerical_keys:
+            numerical_keys = numerical_keys.drop("id")
 
+    if calculated_columns and len(numerical_keys) > 0:
         # Provide some special variables to the col editor
         values = df[numerical_keys].values
         df["first"] = values.max(axis=1)
