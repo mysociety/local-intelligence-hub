@@ -26,7 +26,7 @@ export function allKeysFromAllData(data: any): string[] {
   const arr = Array.isArray(data) ? data : [data]
   if (arr.length === 0) return []
   const allKeys = new Set<string>()
-  for (const item of data) {
+  for (const item of arr) {
     for (const key of Object.keys(item)) {
       allKeys.add(key)
     }

@@ -103,12 +103,18 @@ const useDataByBoundary = ({
           ...(advancedStatisticsConfig! || {}),
           groupByArea: analyticalAreaType!,
           mapBounds,
-          returnColumns: ['gss', 'label'].concat(
-            view?.mapOptions?.choropleth.dataType ===
-              StatisticalDataType.Nominal
-              ? 'category'
-              : 'count'
-          ),
+          returnColumns: ['gss', 'label']
+            .concat(
+              view?.mapOptions?.choropleth.dataType ===
+                StatisticalDataType.Nominal
+                ? ['category']
+                : ['count']
+            )
+            .concat(
+              view?.mapOptions?.choropleth.advancedStatisticsDisplayField
+                ? [view?.mapOptions?.choropleth.advancedStatisticsDisplayField]
+                : []
+            ),
           // .concat(
           //   advancedStatisticsConfig?.preGroupByCalculatedColumns?.map(
           //     (c) => c.name

@@ -102,19 +102,20 @@ class AggregationOp(Enum):
     Max = "Max"
     Min = "Min"
     Count = "Count"
-    Guess = "Guess"
 
 
 @strawberry.input
 class AggregationDefinition:
-    id: str
+    # For UI purposes
+    id: Optional[str] = None
     column: str
-    operation: AggregationOp
+    operation: Optional[AggregationOp] = None
 
 
 @strawberry.input
 class CalculatedColumn:
-    id: str
+    # For UI purposes
+    id: Optional[str] = None
     name: str
     expression: str
     aggregation_operation: Optional[AggregationOp] = None
@@ -125,7 +126,8 @@ class CalculatedColumn:
 
 @strawberry.input
 class GroupByColumn:
-    id: str
+    # For UI purposes
+    id:  Optional[str] = None
     name: Optional[str] = None
     column: str
     aggregation_operation: Optional[AggregationOp] = None
@@ -263,15 +265,15 @@ def statistics(
         if conf.gss_codes:
             area_qs = models.Area.objects.filter(gss__in=conf.gss_codes)
             example_area = area_qs.first()
-            combined_areas = area_qs.aggregate(union=GisUnion("polygon"))["union"]
+            combined_areas_polygon = area_qs.aggregate(union=GisUnion("polygon"))["union"]
 
-        if combined_areas and conf.area_query_mode is AreaQueryMode.POINTS_WITHIN:
+        if combined_areas_polygon and conf.area_query_mode is AreaQueryMode.POINTS_WITHIN:
             # We filter on area=None so we don't pick up statistical area data
             # since a super-area may have a point within this area, skewing the results
-            filters |= Q(point__within=combined_areas.polygon) & Q(area=None)
+            filters |= Q(point__within=combined_areas_polygon) & Q(area=None)
 
         if conf.area_query_mode is AreaQueryMode.AREA:
-            if combined_areas:
+            if combined_areas_polygon:
                 # Find only data specifically related to this GSS area — not about its children
                 filters |= Q(area__gss__in=conf.gss_codes)
             # if area_type_filter:
@@ -279,7 +281,7 @@ def statistics(
             #     filters |= Q(**area_type_filter.fk_filter("area"))
 
         elif conf.area_query_mode is AreaQueryMode.AREA_OR_CHILDREN:
-            if combined_areas:
+            if combined_areas_polygon:
                 filters |= Q(area__gss__in=conf.gss_codes)
                 # Or find GenericData tagged with area that is fully contained by this area's polygon
                 postcode_io_key = area_to_postcode_io_filter(example_area)
@@ -296,13 +298,13 @@ def statistics(
                         }
                     )
                     # And see if the area is SMALLER than the current area — i.e. a child
-                    subclause &= Q(area__polygon__within=combined_areas)
+                    subclause &= Q(area__polygon__within=combined_areas_polygon)
                     filters |= subclause
             # if area_type_filter:
             #     filters |= Q(**area_type_filter.fk_filter("area"))
 
         elif conf.area_query_mode is AreaQueryMode.AREA_OR_PARENTS:
-            if combined_areas:
+            if combined_areas_polygon:
                 filters |= Q(area__gss__in=conf.gss_codes)
                 # Or find GenericData tagged with area that fully contains this area's polygon
                 postcode_io_key = area_to_postcode_io_filter(example_area)
@@ -319,7 +321,7 @@ def statistics(
                         }
                     )
                     # And see if the area is LARGER than the current area — i.e. a parent
-                    subclause &= Q(area__polygon__contains=combined_areas)
+                    subclause &= Q(area__polygon__contains=combined_areas_polygon)
                     filters |= subclause
             # if area_type_filter:
             #     filters |= Q(**area_type_filter.fk_filter("area"))
@@ -339,8 +341,8 @@ def statistics(
                             f"postcode_data__codes__{postcode_io_key.value}__in": conf.gss_codes
                         }
                     )
-            if combined_areas:
-                filters |= Q(area__polygon__contains=combined_areas)
+            if combined_areas_polygon:
+                filters |= Q(area__polygon__contains=combined_areas_polygon)
             # if area_type_filter:
             #     filters |= Q(**area_type_filter.fk_filter("area"))
 
@@ -383,6 +385,29 @@ def statistics(
     # Exclude "id" from the numerical keys
     if "id" in numerical_keys:
         numerical_keys = numerical_keys.drop("id")
+
+    if len(numerical_keys) > 0:
+        # Provide some special variables to the col editor
+        values = df[numerical_keys].values
+        df["first"] = values.max(axis=1)
+        # column name of "first"
+        df["first_label"] = df[numerical_keys].idxmax(axis=1)
+        try:
+            df["second"] = np.partition(values, -2, axis=1)[:, -2]
+            # df["second_label"] = # TODO: get the column name of the second highst value
+            # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
+            # As above, but using numpy not pandas
+            df["second_label"] = df[numerical_keys].columns[
+                df[numerical_keys].values.argsort()[:, -2]
+            ]
+            df["majority"] = df["first"] - df["second"]
+        except IndexError:
+            pass
+        try:
+            df["third"] = np.partition(values, -3, axis=1)[:, -3]
+        except IndexError:
+            pass
+        df["total"] = values.sum(axis=1)
 
     # Apply the row-level cols
     if pre_calcs:
@@ -470,14 +495,11 @@ def statistics(
                 )
                 if (
                     conf.aggregation_operation
-                    and conf.aggregation_operation is not AggregationOp.Guess
                 ):
                     agg_config[key] = conf.aggregation_operation.value.lower()
                 elif (
                     calculated_column
                     and calculated_column.aggregation_operation
-                    and calculated_column.aggregation_operation
-                    is not AggregationOp.Guess
                 ):
                     agg_config[key] = (
                         calculated_column.aggregation_operation.value.lower()
@@ -561,17 +583,13 @@ def statistics(
         agg_config = dict()
         for col in conf.group_by_columns:
             name = col.name or col.column
+            aggop = col.aggregation_operation or (AggregationOp.Mean if col.is_percentage else AggregationOp.Sum)
             agg_config.update(
                 **{
                     name: pd.NamedAgg(column=col.column, aggfunc=get_mode),
-                    f"{name}_{col.aggregation_operation.value.lower()}": pd.NamedAgg(
+                    f"{name}_{aggop.value.lower()}": pd.NamedAgg(
                         column=col.column,
-                        aggfunc=(
-                            col.aggregation_operation.value.lower()
-                            if col.aggregation_operation
-                            and col.aggregation_operation is not AggregationOp.Guess
-                            else "sum"
-                        ),
+                        aggfunc=aggop.value.lower()
                     ),
                 }
             )

@@ -1682,7 +1682,7 @@ def choropleth_data_for_source(
     field: Optional[str] = None,
     map_bounds: Optional[stats.MapBounds] = None,
     formula: Optional[str] = None,
-    aggregation_operation: stats.AggregationOp = stats.AggregationOp.Guess,
+    aggregation_operation: Optional[stats.AggregationOp] = None,
 ) -> List[GroupedDataCount]:
     decided_operation = aggregation_operation
     # Check user can access the external data source
@@ -1806,7 +1806,7 @@ def choropleth_data_for_source(
         for column in df:
             if all(df[column].apply(check_percentage)):
                 is_percentage = True
-                if decided_operation is stats.AggregationOp.Guess:
+                if decided_operation is None:
                     decided_operation = stats.AggregationOp.Mean
                 df[column] = attempt_interpret_series_as_percentage(df[column])
             else:
