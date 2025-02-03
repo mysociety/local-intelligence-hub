@@ -1,21 +1,25 @@
 import math
+
 from django.core.serializers.json import DjangoJSONEncoder
 
 import numpy as np
 
+
 def nan2None(obj):
     if isinstance(obj, dict):
-        return {k:nan2None(v) for k,v in obj.items()}
+        return {k: nan2None(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [nan2None(v) for v in obj]
     elif isinstance(obj, float) and math.isnan(obj):
         return None
     return obj
 
+
 class DBJSONEncoder(DjangoJSONEncoder):
     def encode(self, obj, *args, **kwargs):
         return super().encode(nan2None(obj), *args, **kwargs)
-    
+
+
 class PandasMappingSafeForPG(dict):
     @staticmethod
     def is_nan(v):

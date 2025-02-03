@@ -5,13 +5,13 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 
 import strawberry
 import strawberry_django
-from strawberry.scalars import JSON
 from gqlauth.core.middlewares import JwtSchema
 from gqlauth.core.types_ import GQLAuthError
 from gqlauth.user import arg_mutations as auth_mutations
 from gqlauth.user.queries import UserQueries
 from graphql import GraphQLError
 from strawberry.extensions import QueryDepthLimiter
+from strawberry.scalars import JSON
 from strawberry.types import ExecutionContext
 from strawberry_django import mutations as django_mutations
 from strawberry_django.optimizer import DjangoOptimizerExtension
@@ -131,9 +131,11 @@ class Query(UserQueries):
         resolver=model_types.statistics,
         extensions=[IsAuthenticated()],
     )
-    statistics_for_choropleth: Optional[List[model_types.GroupedDataCount]] = strawberry_django.field(
-        resolver=model_types.statistics_for_choropleth,
-        extensions=[IsAuthenticated()],
+    statistics_for_choropleth: Optional[List[model_types.GroupedDataCount]] = (
+        strawberry_django.field(
+            resolver=model_types.statistics_for_choropleth,
+            extensions=[IsAuthenticated()],
+        )
     )
 
     @strawberry.field

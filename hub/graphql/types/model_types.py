@@ -3,16 +3,14 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional, TypedDict, Union
 
+from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.gis.db.models import Union as GisUnion
 from django.contrib.gis.geos import Polygon
 from django.db.models import F, Q
 from django.db.models.fields import FloatField
 from django.db.models.functions import Cast
 from django.http import HttpRequest
-from django.contrib.auth.models import AbstractBaseUser
 
-from hub.graphql.permissions import check_user_can_view_source
-from hub.graphql.types import stats as stats
 import numexpr as ne
 import numpy as np
 import pandas as pd
@@ -26,7 +24,6 @@ from strawberry import auto
 from strawberry.scalars import JSON
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
-from utils.statistics import attempt_interpret_series_as_float, attempt_interpret_series_as_percentage, check_percentage
 from wagtail.models import Site
 
 from hub import models
@@ -42,6 +39,8 @@ from hub.graphql.dataloaders import (
     ReverseFKWithFiltersDataLoaderFactory,
     filterable_dataloader_resolver,
 )
+from hub.graphql.permissions import check_user_can_view_source
+from hub.graphql.types import stats as stats
 from hub.graphql.types.electoral_commission import ElectoralCommissionPostcodeLookup
 from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
@@ -53,6 +52,11 @@ from utils.geo_reference import (
     lih_to_postcodes_io_key_map,
 )
 from utils.postcode import get_postcode_data_for_gss
+from utils.statistics import (
+    attempt_interpret_series_as_float,
+    attempt_interpret_series_as_percentage,
+    check_percentage,
+)
 
 pd.core.computation.ops.MATHOPS = (*pd.core.computation.ops.MATHOPS, "where")
 
@@ -1527,7 +1531,10 @@ def __get_generic_data_for_area_and_external_data_source(
 
 @strawberry_django.field()
 def generic_data_from_source_about_area(
-    info: Info, source_id: str, gss: str, mode: stats.AreaQueryMode = stats.AreaQueryMode.AREA
+    info: Info,
+    source_id: str,
+    gss: str,
+    mode: stats.AreaQueryMode = stats.AreaQueryMode.AREA,
 ) -> List[GenericData]:
     user = get_current_user(info)
     # Check user can access the external data source
@@ -1571,7 +1578,10 @@ class DataSummary:
 
 @strawberry_django.field()
 def generic_data_summary_from_source_about_area(
-    info: Info, source_id: str, gss: str, mode: stats.AreaQueryMode = stats.AreaQueryMode.AREA
+    info: Info,
+    source_id: str,
+    gss: str,
+    mode: stats.AreaQueryMode = stats.AreaQueryMode.AREA,
 ) -> Optional[DataSummary]:
     user = get_current_user(info)
     # Check user can access the external data source
@@ -1648,7 +1658,7 @@ def generic_data_summary_from_source_about_area(
             **summary_values,
             is_percentage=is_percentage,
             percentage_keys=percentage_keys,
-            numerical_keys=numerical_keys
+            numerical_keys=numerical_keys,
         ),
     )
 
@@ -1672,7 +1682,7 @@ def choropleth_data_for_source(
     field: Optional[str] = None,
     map_bounds: Optional[stats.MapBounds] = None,
     formula: Optional[str] = None,
-    aggregation_operation: stats.AggregationOp = stats.AggregationOp.Guess
+    aggregation_operation: stats.AggregationOp = stats.AggregationOp.Guess,
 ) -> List[GroupedDataCount]:
     decided_operation = aggregation_operation
     # Check user can access the external data source
@@ -1906,7 +1916,10 @@ def statistics(
     user = get_current_user(info)
     for source in stats_config.source_ids:
         check_user_can_view_source(user, source)
-    return stats.statistics(stats_config, return_numeric_keys_only=return_numeric_keys_only)
+    return stats.statistics(
+        stats_config, return_numeric_keys_only=return_numeric_keys_only
+    )
+
 
 def statistics_for_choropleth(
     info: Info,
@@ -1920,5 +1933,10 @@ def statistics_for_choropleth(
     user = get_current_user(info)
     for source in stats_config.source_ids:
         check_user_can_view_source(user, source)
-    
-    return stats.statistics(stats_config, as_grouped_data=True, category_key=category_key, count_key=count_key)
+
+    return stats.statistics(
+        stats_config,
+        as_grouped_data=True,
+        category_key=category_key,
+        count_key=count_key,
+    )

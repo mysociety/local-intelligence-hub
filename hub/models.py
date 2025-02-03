@@ -51,7 +51,6 @@ from pyairtable import Table as AirtableTable
 from pyairtable.models.schema import TableSchema as AirtableTableSchema
 from sentry_sdk import metrics
 from strawberry.dataloader import DataLoader
-from utils.django_json import DBJSONEncoder, PandasMappingSafeForPG
 from wagtail.admin.panels import FieldPanel, ObjectList, TabbedInterface
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
 from wagtail.models import Page, Site
@@ -82,6 +81,7 @@ from hub.tasks import (
 from hub.validation import validate_and_format_phone_number
 from hub.views.mapped import ExternalDataSourceWebhook
 from utils import google_maps, google_sheets
+from utils.django_json import DBJSONEncoder, PandasMappingSafeForPG
 from utils.log import get_simple_debug_logger
 from utils.postcodesIO import (
     PostcodesIOResult,
@@ -2834,7 +2834,9 @@ class DatabaseJSONSource(ExternalDataSource):
         return record.get(self.id_field, None)
 
     async def fetch_one(self, member_id):
-        return self.df[member_id].to_dict(orient="records", into=PandasMappingSafeForPG)[0]
+        return self.df[member_id].to_dict(
+            orient="records", into=PandasMappingSafeForPG
+        )[0]
 
     async def fetch_many(self, id_list: list[str]):
         return self.df[id_list].to_dict(orient="records", into=PandasMappingSafeForPG)
@@ -2955,10 +2957,14 @@ class UploadedCSVSource(ExternalDataSource):
         return record.get(self.id_field, None)
 
     async def fetch_one(self, member_id):
-        return self.df[self.df[self.id_field] == member_id].to_dict(orient="records", into=PandasMappingSafeForPG)[0]
+        return self.df[self.df[self.id_field] == member_id].to_dict(
+            orient="records", into=PandasMappingSafeForPG
+        )[0]
 
     async def fetch_many(self, id_list: list[str]):
-        return self.df[self.df[self.id_field].isin(id_list)].to_dict(orient="records", into=PandasMappingSafeForPG)
+        return self.df[self.df[self.id_field].isin(id_list)].to_dict(
+            orient="records", into=PandasMappingSafeForPG
+        )
 
     async def fetch_all(self):
         return self.df.to_dict(orient="records", into=PandasMappingSafeForPG)

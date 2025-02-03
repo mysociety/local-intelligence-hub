@@ -1,23 +1,33 @@
-
-from enum import Enum
 import logging
+from enum import Enum
 from typing import List, Optional
-from hub import models
-import numpy as np
-import strawberry
-from utils.py import ensure_list
+
 from django.contrib.gis.db.models import Union as GisUnion
 from django.contrib.gis.geos import Polygon
+from django.db.models import F, Q
+
+import numpy as np
+import pandas as pd
+import strawberry
+
+from hub import models
 from utils.geo_reference import (
     AnalyticalAreaType,
     area_to_postcode_io_filter,
     lih_to_postcodes_io_key_map,
 )
-from django.db.models import F, Q
-import pandas as pd
+from utils.py import ensure_list
+
 logger = logging.getLogger(__name__)
 import numexpr as ne
-from utils.statistics import attempt_interpret_series_as_float, attempt_interpret_series_as_percentage, check_percentage, check_numeric, get_mode
+
+from utils.statistics import (
+    attempt_interpret_series_as_float,
+    attempt_interpret_series_as_percentage,
+    check_numeric,
+    check_percentage,
+    get_mode,
+)
 
 
 @strawberry.type
@@ -28,8 +38,8 @@ class AreaTypeFilter:
     @property
     def query_filter(self) -> dict[str, str]:
         return self.fk_filter()
-    
-    def fk_filter(self, field_name = "") -> dict[str, str]:
+
+    def fk_filter(self, field_name="") -> dict[str, str]:
         filter = {}
         prefix = f"{field_name}__" if field_name else ""
         if self.lih_area_type:
@@ -37,6 +47,7 @@ class AreaTypeFilter:
         if self.mapit_area_types:
             filter[f"{prefix}mapit_type__in"] = self.mapit_area_types
         return filter
+
 
 # Provides a map from postcodes.io area type to Local Intelligence Hub
 # area types, or mapit types if LIH is misaligned.
@@ -57,6 +68,7 @@ postcodeIOKeyAreaTypeLookup = {
     AnalyticalAreaType.output_area: AreaTypeFilter(lih_area_type="OA21"),
 }
 
+
 # enum for OLAP
 @strawberry.enum
 class AreaQueryMode(Enum):
@@ -66,6 +78,7 @@ class AreaQueryMode(Enum):
     AREA_OR_PARENTS = "AREA_OR_PARENTS"
     # This mode is used to find overlapping areas in the same way the current choropleth API works
     OVERLAPPING = "OVERLAPPING"
+
 
 @strawberry.input
 class MapBounds:
@@ -91,11 +104,13 @@ class AggregationOp(Enum):
     Count = "Count"
     Guess = "Guess"
 
+
 @strawberry.input
 class AggregationDefinition:
     id: str
     column: str
     operation: AggregationOp
+
 
 @strawberry.input
 class CalculatedColumn:
@@ -106,6 +121,7 @@ class CalculatedColumn:
     is_percentage: Optional[bool] = False
     # Useful for toggling in UI
     ignore: Optional[bool] = False
+
 
 @strawberry.input
 class GroupByColumn:
@@ -133,7 +149,8 @@ class StatisticsConfig:
     aggregation_operations: Optional[List[AggregationDefinition]] = None
     return_columns: Optional[List[str]] = None
 
-'''
+
+"""
 # Some examples of use
 
 Show me the number of reform votes in each area, grouped by reform votes
@@ -191,7 +208,9 @@ query SwingToReformByRegion {
     # aggregationOperation: Mean
   )
 }
-'''
+"""
+
+
 def statistics(
     conf: StatisticsConfig,
     as_grouped_data: bool = False,
@@ -199,12 +218,22 @@ def statistics(
     count_key: Optional[str] = None,
     return_numeric_keys_only: Optional[bool] = False,
 ):
-    pre_calcs = [c for c in conf.pre_group_by_calculated_columns if not c.ignore] if conf.pre_group_by_calculated_columns else []
-    post_calcs = [c for c in conf.calculated_columns if not c.ignore] if conf.calculated_columns else []
+    pre_calcs = (
+        [c for c in conf.pre_group_by_calculated_columns if not c.ignore]
+        if conf.pre_group_by_calculated_columns
+        else []
+    )
+    post_calcs = (
+        [c for c in conf.calculated_columns if not c.ignore]
+        if conf.calculated_columns
+        else []
+    )
 
     # --- Get the required data for the source ---
-    qs = models.GenericData.objects.filter(data_type__data_set__external_data_source_id__in=conf.source_ids)
-    
+    qs = models.GenericData.objects.filter(
+        data_type__data_set__external_data_source_id__in=conf.source_ids
+    )
+
     area_type_filter = None
     # if group_by_area:
     #     area_type_filter = postcodeIOKeyAreaTypeLookup[group_by_area]
@@ -216,7 +245,10 @@ def statistics(
             (conf.map_bounds.east, conf.map_bounds.north),  # Top right
             (conf.map_bounds.east, conf.map_bounds.south),  # Bottom right
             (conf.map_bounds.west, conf.map_bounds.south),  # Bottom left
-            (conf.map_bounds.west, conf.map_bounds.north),  # Back to start to close polygon
+            (
+                conf.map_bounds.west,
+                conf.map_bounds.north,
+            ),  # Back to start to close polygon
         )
         bbox = Polygon(bbox_coords, srid=4326)
         # areas = models.Area.objects.filter(**area_type_filter.query_filter).filter(
@@ -252,12 +284,16 @@ def statistics(
                 # Or find GenericData tagged with area that is fully contained by this area's polygon
                 postcode_io_key = area_to_postcode_io_filter(example_area)
                 if postcode_io_key is None:
-                    postcode_io_key = lih_to_postcodes_io_key_map.get(example_area.area_type.code, None)
+                    postcode_io_key = lih_to_postcodes_io_key_map.get(
+                        example_area.area_type.code, None
+                    )
                 if postcode_io_key:
                     subclause = Q()
                     # See if there's a matched postcode data field for this area
                     subclause &= Q(
-                        **{f"postcode_data__codes__{postcode_io_key.value}__in": conf.gss_codes}
+                        **{
+                            f"postcode_data__codes__{postcode_io_key.value}__in": conf.gss_codes
+                        }
                     )
                     # And see if the area is SMALLER than the current area — i.e. a child
                     subclause &= Q(area__polygon__within=combined_areas)
@@ -271,12 +307,16 @@ def statistics(
                 # Or find GenericData tagged with area that fully contains this area's polygon
                 postcode_io_key = area_to_postcode_io_filter(example_area)
                 if postcode_io_key is None:
-                    postcode_io_key = lih_to_postcodes_io_key_map.get(example_area.area_type.code, None)
+                    postcode_io_key = lih_to_postcodes_io_key_map.get(
+                        example_area.area_type.code, None
+                    )
                 if postcode_io_key:
                     subclause = Q()
                     # See if there's a matched postcode data field for this area
                     subclause &= Q(
-                        **{f"postcode_data__codes__{postcode_io_key.value}__in": conf.gss_codes}
+                        **{
+                            f"postcode_data__codes__{postcode_io_key.value}__in": conf.gss_codes
+                        }
                     )
                     # And see if the area is LARGER than the current area — i.e. a parent
                     subclause &= Q(area__polygon__contains=combined_areas)
@@ -290,9 +330,15 @@ def statistics(
                 # Or find GenericData tagged with area that overlaps this area's polygon
                 postcode_io_key = area_to_postcode_io_filter(example_area)
                 if postcode_io_key is None:
-                    postcode_io_key = lih_to_postcodes_io_key_map.get(example_area.area_type.code, None)
+                    postcode_io_key = lih_to_postcodes_io_key_map.get(
+                        example_area.area_type.code, None
+                    )
                 if postcode_io_key:
-                    filters |= Q(**{f"postcode_data__codes__{postcode_io_key.value}__in": conf.gss_codes})
+                    filters |= Q(
+                        **{
+                            f"postcode_data__codes__{postcode_io_key.value}__in": conf.gss_codes
+                        }
+                    )
             if combined_areas:
                 filters |= Q(area__polygon__contains=combined_areas)
             # if area_type_filter:
@@ -303,22 +349,22 @@ def statistics(
     # --- Load the data in to a pandas dataframe ---
     # TODO: get columns from JSON for returning clean data
     d = [
-      {
-        **record.json,
-        "postcode_data": record.postcode_data,
-        "gss": record.area.gss if record.area else None,
-        "area_type": record.area.area_type.code if record.area else None,
-        "label": record.area.name if record.area else None,
-        "id": str(record.id),
-      }
-      for record in data
+        {
+            **record.json,
+            "postcode_data": record.postcode_data,
+            "gss": record.area.gss if record.area else None,
+            "area_type": record.area.area_type.code if record.area else None,
+            "label": record.area.name if record.area else None,
+            "id": str(record.id),
+        }
+        for record in data
     ]
-  
+
     df = pd.DataFrame(d)
 
     if len(df) <= 0:
         return None
-    
+
     df = df.set_index("id", drop=False)
 
     # Format numerics
@@ -364,21 +410,32 @@ def statistics(
                 return None, None, None
 
             # Find the key of `lih_to_postcodes_io_key_map` where the value is `group_by_area`:
-            area_type = next((k for k, v in lih_to_postcodes_io_key_map.items() if v == conf.group_by_area), None)
+            area_type = next(
+                (
+                    k
+                    for k, v in lih_to_postcodes_io_key_map.items()
+                    if v == conf.group_by_area
+                ),
+                None,
+            )
 
             try:
                 return [
-                    row.get("postcode_data", {}).get("codes", {}).get(conf.group_by_area.value, None),
+                    row.get("postcode_data", {})
+                    .get("codes", {})
+                    .get(conf.group_by_area.value, None),
                     row.get("postcode_data", {}).get(conf.group_by_area.value, None),
-                    area_type
+                    area_type,
                 ]
             except Exception:
                 pass
-            
+
             return None, None, None
-        
+
         # First, add labels for the group_by_area as an index
-        df["gss"], df["label"], df["area_type"] = zip(*df.apply(get_group_by_area_properties, axis=1))
+        df["gss"], df["label"], df["area_type"] = zip(
+            *df.apply(get_group_by_area_properties, axis=1)
+        )
         # Make the code an index
         # df = df.set_index("group_by_code")
 
@@ -406,14 +463,25 @@ def statistics(
         else:
             # Guess
             for key in numerical_keys:
-                calculated_column = next(
-                    (col for col in pre_calcs if col.name == key),
-                    None
-                ) if pre_calcs and len(pre_calcs) > 0 else None
-                if conf.aggregation_operation and conf.aggregation_operation is not AggregationOp.Guess:
+                calculated_column = (
+                    next((col for col in pre_calcs if col.name == key), None)
+                    if pre_calcs and len(pre_calcs) > 0
+                    else None
+                )
+                if (
+                    conf.aggregation_operation
+                    and conf.aggregation_operation is not AggregationOp.Guess
+                ):
                     agg_config[key] = conf.aggregation_operation.value.lower()
-                elif calculated_column and calculated_column.aggregation_operation and calculated_column.aggregation_operation is not AggregationOp.Guess:
-                    agg_config[key] = calculated_column.aggregation_operation.value.lower()
+                elif (
+                    calculated_column
+                    and calculated_column.aggregation_operation
+                    and calculated_column.aggregation_operation
+                    is not AggregationOp.Guess
+                ):
+                    agg_config[key] = (
+                        calculated_column.aggregation_operation.value.lower()
+                    )
                 elif key in percentage_keys:
                     agg_config[key] = "mean"
                 else:
@@ -434,7 +502,9 @@ def statistics(
             # df["second_label"] = # TODO: get the column name of the second highst value
             # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
             # As above, but using numpy not pandas
-            df["second_label"] = df[numerical_keys].columns[df[numerical_keys].values.argsort()[:, -2]]
+            df["second_label"] = df[numerical_keys].columns[
+                df[numerical_keys].values.argsort()[:, -2]
+            ]
             df["majority"] = df["first"] - df["second"]
         except IndexError:
             pass
@@ -469,7 +539,9 @@ def statistics(
                 # df["second_label"] = # TODO: get the column name of the second highst value
                 # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
                 # As above, but using numpy not pandas
-                df["second_label"] = df[numerical_keys].columns[df[numerical_keys].values.argsort()[:, -2]]
+                df["second_label"] = df[numerical_keys].columns[
+                    df[numerical_keys].values.argsort()[:, -2]
+                ]
                 df["majority"] = df["first"] - df["second"]
             except IndexError:
                 pass
@@ -478,7 +550,7 @@ def statistics(
             except IndexError:
                 pass
             df["total"] = values.sum(axis=1)
-    
+
     if category_key:
         df["category"] = df[category_key]
     if count_key:
@@ -489,10 +561,20 @@ def statistics(
         agg_config = dict()
         for col in conf.group_by_columns:
             name = col.name or col.column
-            agg_config.update(**{
-                name: pd.NamedAgg(column=col.column, aggfunc=get_mode),
-                f"{name}_{col.aggregation_operation.value.lower()}": pd.NamedAgg(column=col.column, aggfunc=col.aggregation_operation.value.lower() if col.aggregation_operation and col.aggregation_operation is not AggregationOp.Guess else "sum"),
-            })
+            agg_config.update(
+                **{
+                    name: pd.NamedAgg(column=col.column, aggfunc=get_mode),
+                    f"{name}_{col.aggregation_operation.value.lower()}": pd.NamedAgg(
+                        column=col.column,
+                        aggfunc=(
+                            col.aggregation_operation.value.lower()
+                            if col.aggregation_operation
+                            and col.aggregation_operation is not AggregationOp.Guess
+                            else "sum"
+                        ),
+                    ),
+                }
+            )
         df = df.groupby(col.column, as_index=False).agg(**agg_config)
         d = df.to_dict(orient="records")
         return d
@@ -510,6 +592,7 @@ def statistics(
 
         if as_grouped_data:
             from hub.graphql.types.model_types import GroupedDataCount
+
             is_percentage = "count" in percentage_keys
             return [
                 GroupedDataCount(
@@ -519,17 +602,17 @@ def statistics(
                     count=row.get("count", None),
                     category=row.get("category", None),
                     formatted_count=(
-                      (
-                          # pretty percentage
-                          f"{row.get("count", 0):.0%}"
-                      )
-                      if is_percentage
-                      else (
-                          # comma-separated integer
-                          f"{row.get("count", 0):,.0f}"
-                      )
+                        (
+                            # pretty percentage
+                            f"{row.get("count", 0):.0%}"
+                        )
+                        if is_percentage
+                        else (
+                            # comma-separated integer
+                            f"{row.get("count", 0):,.0f}"
+                        )
                     ),
-                    is_percentage=is_percentage
+                    is_percentage=is_percentage,
                 )
                 for row in d
             ]

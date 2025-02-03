@@ -1,5 +1,7 @@
-from pandas import DataFrame, Series
 import locale
+
+from pandas import DataFrame, Series
+
 
 def attempt_interpret_series_as_float(df: DataFrame):
     if all(df.apply(check_numeric)):
@@ -7,6 +9,7 @@ def attempt_interpret_series_as_float(df: DataFrame):
         df = df.replace("", 0)
         df = df.astype(float)
     return df
+
 
 def attempt_interpret_series_as_percentage(df: DataFrame):
     if all(df.apply(check_percentage)):
@@ -16,6 +19,7 @@ def attempt_interpret_series_as_percentage(df: DataFrame):
         # Divide by 100
         df = df.astype(float) / 100
     return df
+
 
 def check_numeric(x):
     try:
@@ -31,13 +35,15 @@ def check_numeric(x):
     except Exception:
         return False
 
+
 def check_percentage(x):
     try:
         if x[-1] == "%":
             return True
     except Exception:
         return False
-    
+
+
 def get_mode(series: Series):
     try:
         return series.mode()[0]
