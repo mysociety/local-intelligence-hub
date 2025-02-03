@@ -33,9 +33,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { InspectorDisplayType } from '@/lib/explorer'
 import { contentEditableMutation } from '@/lib/html'
 import { ExplorerAreaBreadCrumbMapping } from '@/lib/map'
+import { ExplorerState, useExplorer } from '@/lib/map/useExplorer'
 import { useReport } from '@/lib/map/useReport'
 import { useView } from '@/lib/map/useView'
+import { allKeysFromAllData } from '@/lib/utils'
 import { gql, useQuery } from '@apollo/client'
+import {
+  DndContext,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import { restrictToParentElement } from '@dnd-kit/modifiers'
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { contrastColor } from 'contrast-color'
 import { format } from 'd3-format'
 import { cloneDeep, sum } from 'lodash'
 import {
@@ -68,24 +86,6 @@ import { EditorSwitch } from '../EditorSwitch'
 import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
 import { TableDisplay } from '../dashboard/TableDisplay'
 import { DisplayCreator } from './AreaExplorerDisplayCreator'
-
-import { ExplorerState, useExplorer } from '@/lib/map/useExplorer'
-import { allKeysFromAllData } from '@/lib/utils'
-import {
-  DndContext,
-  PointerSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
-import { restrictToParentElement } from '@dnd-kit/modifiers'
-import {
-  SortableContext,
-  arrayMove,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 
 export function AreaExplorer({ gss }: { gss: string }) {
   const [selectedTab, setSelectedTab] = useState('summary')
@@ -1012,7 +1012,7 @@ const partyDictionary: {
   },
   {
     name: 'Reform',
-    colour: '#12B6CF',
+    colour: '#6d3177', //'#12B6CF',
     aliases: ['Reform', 'Ref'],
   },
   partyOther,
