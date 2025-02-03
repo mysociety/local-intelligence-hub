@@ -1,9 +1,8 @@
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional, TypedDict, Union
+from typing import List, Optional, Union
 
-from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.gis.db.models import Union as GisUnion
 from django.contrib.gis.geos import Polygon
 from django.db.models import F, Q
@@ -799,7 +798,7 @@ class Analytics:
         )
         if len(res) == 0:
             return None
-        area_type_filter = postcodeIOKeyAreaTypeLookup[analytical_area_type]
+        area_type_filter = stats.postcodeIOKeyAreaTypeLookup[analytical_area_type]
         return GroupedDataCount(**res[0], area_type_filter=area_type_filter)
 
 

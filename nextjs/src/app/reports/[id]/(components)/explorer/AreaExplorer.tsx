@@ -675,6 +675,7 @@ function AreaDisplay({
                         )
                       : data.data.data.map((item) => (
                           <span
+                            key={item.id}
                             className="text-meepGray-400 hover:text-meepGray-300 cursor-pointer underline mr-1"
                             onClick={() => {
                               explorer.select(
@@ -1484,6 +1485,8 @@ function StatisticalCount({
             )
           )
           .map((item: any) => {
+            // TODO: make this a real key
+            const reactKey = JSON.stringify(item)
             if (display.isElectoral) {
               const key = item[groupKey]
               const party = guessParty(key) || {
@@ -1491,7 +1494,7 @@ function StatisticalCount({
                 colour: 'gray',
               }
               return (
-                <article>
+                <article key={reactKey}>
                   <div className="text-white text-3xl">{item[valueKey]}</div>
                   <div
                     className="px-2 py1 rounded-sm font-medium text-sm text-meepGray-950 capitalize inline-block"
@@ -1509,7 +1512,7 @@ function StatisticalCount({
               )
             } else {
               return (
-                <article>
+                <article key={reactKey}>
                   <div className="text-white text-3xl">{item[valueKey]}</div>
                   <div className="text-meepGray-400 text-sm">
                     {item[groupKey]}

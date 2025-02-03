@@ -4,8 +4,9 @@ from typing import List, Optional
 
 from django.contrib.gis.db.models import Union as GisUnion
 from django.contrib.gis.geos import Polygon
-from django.db.models import F, Q
+from django.db.models import Q
 
+import numexpr as ne
 import numpy as np
 import pandas as pd
 import strawberry
@@ -16,11 +17,6 @@ from utils.geo_reference import (
     area_to_postcode_io_filter,
     lih_to_postcodes_io_key_map,
 )
-from utils.py import ensure_list
-
-logger = logging.getLogger(__name__)
-import numexpr as ne
-
 from utils.statistics import (
     attempt_interpret_series_as_float,
     attempt_interpret_series_as_percentage,
@@ -28,6 +24,8 @@ from utils.statistics import (
     check_percentage,
     get_mode,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @strawberry.type
@@ -132,7 +130,7 @@ class GroupByColumn:
     aggregation_operation: Optional[AggregationOp] = None
     is_percentage: Optional[bool] = False
     # For UI purposes
-    id:  Optional[str] = None
+    id: Optional[str] = None
     # Useful for toggling in UI
     ignore: Optional[bool] = False
 
@@ -175,7 +173,7 @@ query SwingToReformByRegion {
     sourceIds: [
       "5336849b-dea5-43cd-b973-dc507e5301af",
       # "711400aa-f9c7-439f-9912-2dbe64c3c1cd"
-  	]
+    ]
     preGroupByCalculatedColumns: [
       {
         name: "conservative",
@@ -194,7 +192,7 @@ query SwingToReformByRegion {
       }
     ]
     calculatedColumns:[{
-    	name:"ref_marginality",
+      name:"ref_marginality",
       expression:"reform / second"
       # expression:"first"
       # expression:"reform / labour"
@@ -268,9 +266,14 @@ def statistics(
         if conf.gss_codes:
             area_qs = models.Area.objects.filter(gss__in=conf.gss_codes)
             example_area = area_qs.first()
-            combined_areas_polygon = area_qs.aggregate(union=GisUnion("polygon"))["union"]
+            combined_areas_polygon = area_qs.aggregate(union=GisUnion("polygon"))[
+                "union"
+            ]
 
-        if combined_areas_polygon and conf.area_query_mode is AreaQueryMode.POINTS_WITHIN:
+        if (
+            combined_areas_polygon
+            and conf.area_query_mode is AreaQueryMode.POINTS_WITHIN
+        ):
             # We filter on area=None so we don't pick up statistical area data
             # since a super-area may have a point within this area, skewing the results
             filters |= Q(point__within=combined_areas_polygon) & Q(area=None)
@@ -499,7 +502,8 @@ def statistics(
                 if (
                     calculated_column
                     and calculated_column.aggregation_operation
-                    and calculated_column.aggregation_operation is not AggregationOp.Guess
+                    and calculated_column.aggregation_operation
+                    is not AggregationOp.Guess
                 ):
                     agg_config[key] = (
                         calculated_column.aggregation_operation.value.lower()
@@ -584,20 +588,28 @@ def statistics(
         df["count"] = df[count_key]
 
     # Final grouping
-    groups = [g for g in conf.group_by_columns if not g.ignore] if conf.group_by_columns else []
+    groups = (
+        [g for g in conf.group_by_columns if not g.ignore]
+        if conf.group_by_columns
+        else []
+    )
     if groups and len(groups) > 0:
         agg_config = dict()
         for col in groups:
             name = col.name or col.column
-            aggop = col.aggregation_operation if (
-                col.aggregation_operation and col.aggregation_operation is not AggregationOp.Guess
-            ) else (AggregationOp.Mean if col.is_percentage else AggregationOp.Sum)
+            aggop = (
+                col.aggregation_operation
+                if (
+                    col.aggregation_operation
+                    and col.aggregation_operation is not AggregationOp.Guess
+                )
+                else (AggregationOp.Mean if col.is_percentage else AggregationOp.Sum)
+            )
             agg_config.update(
                 **{
                     name: pd.NamedAgg(column=col.column, aggfunc=get_mode),
                     f"{name}_{aggop.value.lower()}": pd.NamedAgg(
-                        column=col.column,
-                        aggfunc=aggop.value.lower()
+                        column=col.column, aggfunc=aggop.value.lower()
                     ),
                 }
             )
