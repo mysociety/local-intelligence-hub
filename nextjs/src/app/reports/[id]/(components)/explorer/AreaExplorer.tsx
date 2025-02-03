@@ -83,6 +83,7 @@ import { v4 } from 'uuid'
 import { BoundaryType } from '../../politicalTilesets'
 import {
   DataDisplayMode,
+  ElectionSystem,
   IExplorerDisplay,
   StarredState,
   ViewType,
@@ -397,6 +398,7 @@ function AreaDisplay({
           : {}) || {}),
         sourceIds: [sourceId!],
         gssCodes: gss ? [gss] : null,
+        groupAbsolutely: display.dataDisplayMode === DataDisplayMode.Aggregated,
       },
     },
     skip: !sourceId,
@@ -527,17 +529,39 @@ function AreaDisplay({
                 })
               }}
             />
-            <EditorSwitch
-              label="Is this electoral data?"
-              value={!!display.isElectoral}
-              onChange={(value) => {
-                updateReport((draft) => {
-                  draft.displayOptions.areaExplorer.displays[
-                    display.id
-                  ].isElectoral = value
-                })
-              }}
-            />
+            {display.displayType === InspectorDisplayType.ElectionResult ||
+            display.displayType === InspectorDisplayType.StatisticalCount ? (
+              <>
+                <EditorSwitch
+                  label="Is this electoral data?"
+                  value={!!display.isElectoral}
+                  onChange={(value) => {
+                    updateReport((draft) => {
+                      draft.displayOptions.areaExplorer.displays[
+                        display.id
+                      ].isElectoral = value
+                    })
+                  }}
+                />
+                <EditorSelect
+                  label="Election system"
+                  value={display.electionSystem || ElectionSystem.FPTP}
+                  options={Object.entries(ElectionSystem).map(
+                    ([key, value]) => ({
+                      value: value,
+                      label: toSpaceCase(value),
+                    })
+                  )}
+                  onChange={(value) => {
+                    updateReport((draft) => {
+                      draft.displayOptions.areaExplorer.displays[
+                        display.id
+                      ].electionSystem = value as ElectionSystem
+                    })
+                  }}
+                />
+              </>
+            ) : null}
             <EditorSwitch
               label="Use advanced statistics API"
               value={display.useAdvancedStatistics}
@@ -894,7 +918,7 @@ function ElectionResultsDisplay({
   data,
 }: {
   area: AreaExplorerSummaryQuery['area']
-  display: any
+  display: IExplorerDisplay
   data?: any
 }) {
   if (!data) {
@@ -914,15 +938,18 @@ function ElectionResultsDisplay({
   const [first, second, ...rest] = sorted
   const majority = first - second
 
-  const firstParty = guessParty(
-    Object.keys(data).find((key) => data[key] === first)!
-  )
+  const firstPartyKey =
+    display.electionSystem === ElectionSystem.Majority
+      ? // Find which party has > 0.5 of total
+        Object.keys(data).find((key) => data[key] >= total / 2)
+      : Object.keys(data).find((key) => data[key] === first)
+  const firstParty = firstPartyKey ? guessParty(firstPartyKey) : undefined
 
   return (
     <div>
       {(!!majority || !!total) && (
         <div className="grid grid-cols-2 gap-4 mb-4">
-          {!!firstParty && (
+          {!!firstParty ? (
             <div className="col-span-2 flex flex-row gap-1 items-center text-white">
               <span
                 className="px-2 py1 rounded-sm font-medium text-meepGray-950 capitalize"
@@ -937,6 +964,10 @@ function ElectionResultsDisplay({
                 {firstParty.name}
               </span>{' '}
               victory
+            </div>
+          ) : (
+            <div className="col-span-2 flex flex-row gap-1 items-center text-white">
+              No clear winner
             </div>
           )}
           {/* Total votes */}
@@ -1446,6 +1477,9 @@ function StatisticalCount({
   data: any[]
   display: IExplorerDisplay
 }) {
+  if (!data || !data.length) {
+    return <div className="text-meepGray-400 py-2">No data available</div>
+  }
   const grouping = display.advancedStatisticsConfig?.groupByColumns?.[0]
   if (!grouping)
     return (

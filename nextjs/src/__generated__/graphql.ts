@@ -2772,6 +2772,7 @@ export type StatisticsConfig = {
   aggregationOperations?: InputMaybe<Array<AggregationDefinition>>;
   areaQueryMode?: InputMaybe<AreaQueryMode>;
   calculatedColumns?: InputMaybe<Array<CalculatedColumn>>;
+  groupAbsolutely?: InputMaybe<Scalars['Boolean']['input']>;
   groupByArea?: InputMaybe<AnalyticalAreaType>;
   groupByColumns?: InputMaybe<Array<GroupByColumn>>;
   gssCodes?: InputMaybe<Array<Scalars['String']['input']>>;

@@ -143,6 +143,8 @@ class StatisticsConfig:
     area_query_mode: Optional[AreaQueryMode] = None
     map_bounds: Optional[MapBounds] = None
     # Grouping
+    # Group absolutely: flatten all array items down to one, without any special transforms
+    group_absolutely: Optional[bool] = False
     group_by_area: Optional[AnalyticalAreaType] = None
     group_by_columns: Optional[List[GroupByColumn]] = None
     # Values
@@ -593,6 +595,43 @@ def statistics(
         if conf.group_by_columns
         else []
     )
+    if conf.group_absolutely:
+        agg_dict = dict()
+        for col in numerical_keys:
+            col = str(col)
+            calculated_column_aggop = next(
+                (
+                    c.aggregation_operation
+                    for c in post_calcs
+                    if c.name == col
+                    and c.aggregation_operation is not AggregationOp.Guess
+                ),
+                None,
+            ) or next(
+                (
+                    c.aggregation_operation
+                    for c in pre_calcs
+                    if c.name == col
+                    and c.aggregation_operation is not AggregationOp.Guess
+                ),
+                None,
+            )
+            simple_asserted_aggop = (
+                conf.aggregation_operation
+                if (
+                    conf.aggregation_operation
+                    and conf.aggregation_operation is not AggregationOp.Guess
+                )
+                else None
+            )
+            default_aggop = (
+                AggregationOp.Mean if col in percentage_keys else AggregationOp.Sum
+            )
+            aggop = calculated_column_aggop or simple_asserted_aggop or default_aggop
+            agg_dict[col] = aggop.value.lower()
+        df_n = df[numerical_keys].reset_index().drop(columns=["id"])
+        df_agg = df_n.agg(agg_dict).to_dict()
+        return [df_agg]
     if groups and len(groups) > 0:
         agg_config = dict()
         for col in groups:
@@ -618,7 +657,6 @@ def statistics(
         return d
     else:
         # Return the results in the requested format
-        # if return_shape is StatisticsReturnShape.Table:
         if return_numeric_keys_only:
             d = df[numerical_keys].to_dict(orient="records")
         elif conf.return_columns and len(conf.return_columns) > 0:
