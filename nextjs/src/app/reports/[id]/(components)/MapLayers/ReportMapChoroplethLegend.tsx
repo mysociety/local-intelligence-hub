@@ -217,56 +217,55 @@ export default function ReportMapChoroplethLegend() {
                   </div>
                 )}
 
-                {!viewManager.currentViewOfType?.mapOptions.choropleth
+                {(!viewManager.currentViewOfType?.mapOptions.choropleth
                   .useAdvancedStatistics ||
-                  (viewManager.currentViewOfType?.mapOptions.choropleth
-                    .dataType === StatisticalDataType.Continuous && (
-                    <>
-                      <EditorSelect
-                        // iconComponent={LucidePaintRoller}
-                        // label={'Displaying'}
-                        labelClassName="w-[100px]"
-                        value={
-                          viewManager.currentViewOfType?.mapOptions.choropleth
-                            .palette
-                        }
-                        valueClassName="w-full"
-                        options={Object.values(Palette).map((value) => ({
-                          value,
-                          label: (
-                            <ColourStops
-                              key={value}
-                              palette={value}
-                              reversePalette={
-                                viewManager.currentViewOfType?.mapOptions
-                                  .choropleth.isPaletteReversed
-                              }
-                            />
-                          ),
-                        }))}
-                        onChange={(option) => {
-                          viewManager.updateView((draft) => {
-                            draft.mapOptions.choropleth.palette =
-                              option as Palette
-                          })
-                        }}
-                      />
+                  viewManager.currentViewOfType?.mapOptions.choropleth
+                    .dataType !== StatisticalDataType.Nominal) && (
+                  <>
+                    <EditorSelect
+                      // iconComponent={LucidePaintRoller}
+                      // label={'Displaying'}
+                      labelClassName="w-[100px]"
+                      value={
+                        viewManager.currentViewOfType?.mapOptions.choropleth
+                          .palette
+                      }
+                      valueClassName="w-full"
+                      options={Object.values(Palette).map((value) => ({
+                        value,
+                        label: (
+                          <ColourStops
+                            key={value}
+                            palette={value}
+                            reversePalette={
+                              viewManager.currentViewOfType?.mapOptions
+                                .choropleth.isPaletteReversed
+                            }
+                          />
+                        ),
+                      }))}
+                      onChange={(option) => {
+                        viewManager.updateView((draft) => {
+                          draft.mapOptions.choropleth.palette =
+                            option as Palette
+                        })
+                      }}
+                    />
 
-                      <EditorSwitch
-                        label="Reverse palette"
-                        value={
-                          viewManager.currentViewOfType?.mapOptions.choropleth
-                            .isPaletteReversed
-                        }
-                        onChange={(bool) => {
-                          viewManager.updateView((draft) => {
-                            draft.mapOptions.choropleth.isPaletteReversed =
-                              !!bool
-                          })
-                        }}
-                      />
-                    </>
-                  ))}
+                    <EditorSwitch
+                      label="Reverse palette"
+                      value={
+                        viewManager.currentViewOfType?.mapOptions.choropleth
+                          .isPaletteReversed
+                      }
+                      onChange={(bool) => {
+                        viewManager.updateView((draft) => {
+                          draft.mapOptions.choropleth.isPaletteReversed = !!bool
+                        })
+                      }}
+                    />
+                  </>
+                )}
 
                 {!viewManager.currentViewOfType?.mapOptions.choropleth
                   .useAdvancedStatistics && (
