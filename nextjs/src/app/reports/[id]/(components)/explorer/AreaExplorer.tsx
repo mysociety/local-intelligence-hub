@@ -836,10 +836,31 @@ function ElectionResultsDisplay({
   const [first, second, ...rest] = sorted
   const majority = first - second
 
+  const firstParty = guessParty(
+    Object.keys(data).find((key) => data[key] === first)!
+  )
+
   return (
     <div>
       {(!!majority || !!total) && (
-        <div className="grid grid-cols-2 gap-4 my-4">
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          {!!firstParty && (
+            <div className="col-span-2 flex flex-row gap-1 items-center text-white">
+              <span
+                className="px-2 py1 rounded-sm font-medium text-meepGray-950 capitalize"
+                style={{
+                  backgroundColor: firstParty.colour,
+                  color: contrastColor({
+                    bgColor: firstParty.colour,
+                    defaultColor: 'white',
+                  }),
+                }}
+              >
+                {firstParty.name}
+              </span>{' '}
+              victory
+            </div>
+          )}
           {/* Total votes */}
           {!!majority && (
             <div className="flex flex-col gap-1">
