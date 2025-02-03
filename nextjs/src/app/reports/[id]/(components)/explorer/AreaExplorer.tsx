@@ -37,7 +37,7 @@ import { useReport } from '@/lib/map/useReport'
 import { useView } from '@/lib/map/useView'
 import { gql, useQuery } from '@apollo/client'
 import { format } from 'd3-format'
-import { cloneDeep } from 'lodash'
+import { cloneDeep, sum } from 'lodash'
 import {
   ArrowLeft,
   ArrowRight,
@@ -70,6 +70,7 @@ import { TableDisplay } from '../dashboard/TableDisplay'
 import { DisplayCreator } from './AreaExplorerDisplayCreator'
 
 import { ExplorerState, useExplorer } from '@/lib/map/useExplorer'
+import { allKeysFromAllData } from '@/lib/utils'
 import {
   DndContext,
   PointerSensor,
@@ -228,7 +229,7 @@ export function AreaExplorer({ gss }: { gss: string }) {
                       key={display.id}
                       display={display}
                       gss={gss}
-                      areaName={areaData.data?.area?.name}
+                      area={areaData.data?.area}
                     />
                   ))}
               </SortableContext>
@@ -271,6 +272,7 @@ const AREA_EXPLORER_SUMMARY = gql`
       id
       fitBounds
       name
+      analyticalAreaType
       areaType {
         name
         description
@@ -294,11 +296,11 @@ const AREA_EXPLORER_SUMMARY = gql`
 function SortableAreaDisplay({
   display,
   gss,
-  areaName,
+  area,
 }: {
   display: IExplorerDisplay
   gss: string
-  areaName?: string
+  area?: AreaExplorerSummaryQuery['area']
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: display.id })
@@ -316,7 +318,7 @@ function SortableAreaDisplay({
       {...attributes}
       {...listeners}
     >
-      <AreaDisplay display={display} gss={gss} areaName={areaName || ''} />
+      <AreaDisplay display={display} gss={gss} area={area} />
     </div>
   )
 }
@@ -324,16 +326,28 @@ function SortableAreaDisplay({
 function AreaDisplay({
   display,
   gss,
-  areaName,
+  area,
 }: {
   display: IExplorerDisplay
   gss: string
-  areaName: string
+  area: AreaExplorerSummaryQuery['area']
 }) {
+  const view = useView(ViewType.Map)
   const explorer = useExplorer()
   const report = useReport()
   const layer = report.report.layers.find((l) => l.id === display.layerId)
   const sourceId = layer?.source
+
+  const relevantChoroplethConfig =
+    // Is in use
+    view.currentViewOfType?.mapOptions.choropleth.useAdvancedStatistics &&
+    // Relates to this source
+    view.currentViewOfType?.mapOptions.choropleth.advancedStatisticsConfig?.sourceIds.includes(
+      sourceId!
+    )
+      ? view.currentViewOfType?.mapOptions.choropleth
+          .advancedStatisticsConfig || {}
+      : {}
 
   const data = useQuery<AreaLayerDataQuery, AreaLayerDataQueryVariables>(
     AREA_LAYER_DATA,
@@ -342,6 +356,15 @@ function AreaDisplay({
         gss,
         externalDataSource: sourceId!,
         mode: display.areaQueryMode,
+        statsConfig: {
+          ...relevantChoroplethConfig,
+          sourceIds: [sourceId!],
+          gssCodes: [gss],
+          areaQueryMode: display.areaQueryMode,
+          groupByArea: area?.analyticalAreaType
+            ? area?.analyticalAreaType
+            : undefined,
+        },
       },
       skip: !sourceId || !gss,
     }
@@ -419,17 +442,34 @@ function AreaDisplay({
                 })
               }
             />
+            <EditorSwitch
+              // isPercentage
+              label="Is this percentage data?"
+              explainer={
+                display.isPercentage
+                  ? 'Toggle off to show raw numerical data.'
+                  : 'Toggle on to show percentage data.'
+              }
+              value={display.isPercentage}
+              onChange={(value) =>
+                updateReport((draft) => {
+                  draft.displayOptions.areaExplorer.displays[
+                    display.id
+                  ].isPercentage = value
+                })
+              }
+            />
             {display.displayType === InspectorDisplayType.BigNumber &&
               display.dataDisplayMode === DataDisplayMode.Aggregated && (
                 <EditorSelect
                   label={'Displayed field'}
                   value={display.bigNumberField}
-                  options={Object.keys(
-                    data.data?.summary?.aggregated || {}
-                  ).map((key) => ({
-                    value: key,
-                    label: key,
-                  }))}
+                  options={allKeysFromAllData(data.data?.statistics || {}).map(
+                    (key) => ({
+                      value: key,
+                      label: key,
+                    })
+                  )}
                   onChange={(value) => {
                     updateReport((draft) => {
                       draft.displayOptions.areaExplorer.displays[
@@ -496,7 +536,7 @@ function AreaDisplay({
         <div className="text-meepGray-400">
           {display.displayType === InspectorDisplayType.Properties ? (
             display.dataDisplayMode === DataDisplayMode.Aggregated ? (
-              <PropertiesDisplay data={data.data?.summary?.aggregated} />
+              <PropertiesDisplay data={data.data?.statistics?.[0]} />
             ) : // There's a list of data
             data.data.data.length > 1 ||
               // There's only one data item, but it's not the current area
@@ -515,11 +555,11 @@ function AreaDisplay({
             <TableDisplay
               data={
                 display.dataDisplayMode === DataDisplayMode.Aggregated
-                  ? data.data?.summary?.aggregated
+                  ? data.data?.statistics?.[0]
                   : data.data?.data
               }
               title={display.name || layer.name}
-              areaName={areaName}
+              context={area?.name}
             />
           ) : display.dataDisplayMode &&
             display.displayType === InspectorDisplayType.ElectionResult ? (
@@ -545,7 +585,7 @@ function AreaDisplay({
                         )
                       : data.data.data.map((item) => (
                           <span
-                            className="text-meepGray-400 hover:text-meepGray-300 cursor-pointer underline"
+                            className="text-meepGray-400 hover:text-meepGray-300 cursor-pointer underline mr-1"
                             onClick={() => {
                               explorer.select(
                                 {
@@ -565,35 +605,22 @@ function AreaDisplay({
                         ))}
                   </div>
                 )}
-              <ElectionResultsDisplay
-                data={data.data?.summary}
-                // dataDisplayMode={DataDisplayMode.Aggregated}
-                // Only ever supply aggregated data,
-                // since raw JSON might have random string values
-                // .
-                // data={
-                //   display.dataDisplayMode === DataDisplayMode.Aggregated
-                //     ? data.data?.summary
-                //     : data.data?.summary?.metadata.numericalKeys
-                //       ? Object.fromEntries(
-                //           Object.entries(data.data?.data?.[0]?.json).filter(
-                //             ([key, value]) =>
-                //               data.data?.summary?.metadata.numericalKeys!.includes(
-                //                 key
-                //               )
-                //           )
-                //         )
-                //       : data.data?.data?.[0]?.json
-                // }
-                // dataDisplayMode={display.dataDisplayMode}
-              />
+              {!area ? (
+                <LoadingIcon size={'32px'} />
+              ) : (
+                <ElectionResultsDisplay
+                  area={area}
+                  display={display}
+                  data={data.data.statistics?.[0]}
+                />
+              )}
             </>
           ) : display.displayType === InspectorDisplayType.BigNumber ? (
             <BigNumberDisplay
               count={
                 display.dataDisplayMode === DataDisplayMode.Aggregated &&
                 display.bigNumberField
-                  ? data.data?.summary?.aggregated[display.bigNumberField] ||
+                  ? data.data?.statistics?.[0]?.[display.bigNumberField] ||
                     '???'
                   : data.data?.data?.length
               }
@@ -645,6 +672,7 @@ const AREA_LAYER_DATA = gql`
     $gss: String!
     $externalDataSource: String!
     $mode: AreaQueryMode
+    $statsConfig: StatisticsConfig!
   ) {
     # collect point data
     data: genericDataFromSourceAboutArea(
@@ -669,28 +697,29 @@ const AREA_LAYER_DATA = gql`
         }
       }
     }
+    statistics(statsConfig: $statsConfig, returnNumericKeysOnly: true)
     # aggregate statistics about any data related to this area
-    summary: genericDataSummaryFromSourceAboutArea(
-      gss: $gss
-      sourceId: $externalDataSource
-      mode: $mode
-    ) {
-      aggregated
-      metadata {
-        first
-        second
-        third
-        last
-        total
-        majority
-        count
-        mean
-        median
-        numericalKeys
-        percentageKeys
-        isPercentage
-      }
-    }
+    # summary: genericDataSummaryFromSourceAboutArea(
+    #   gss: $gss
+    #   sourceId: $externalDataSource
+    #   mode: $mode
+    # ) {
+    #   aggregated
+    #   metadata {
+    #     first
+    #     second
+    #     third
+    #     last
+    #     total
+    #     majority
+    #     count
+    #     mean
+    #     median
+    #     numericalKeys
+    #     percentageKeys
+    #     isPercentage
+    #   }
+    # }
   }
 `
 
@@ -762,63 +791,50 @@ function RelatedDataCarousel({ data }: { data: AreaLayerDataQuery['data'] }) {
   )
 }
 
+// const ELECTION_RESULTS = gql`
+//   query AreaDisplayElectionResults(
+//     $gss: String!
+//     $externalDataSource: String!
+//     $mode: AreaQueryMode
+//     $analyticalAreaType: AnalyticalAreaType
+//   ) {
+//     statistics(
+//       statsConfig: {
+//         sourceIds: [$externalDataSource]
+//         gssCodes: [$gss]
+//         areaQueryMode: $mode
+//         groupByArea: $analyticalAreaType
+//       }
+//       returnNumericKeysOnly: true
+//     )
+//   }
+// `
+
 function ElectionResultsDisplay({
+  area,
+  display,
   data,
-  // dataDisplayMode,
 }: {
-  data: AreaLayerDataQuery['summary']
-  // | {
-  //     data?: AreaLayerDataQuery['summary']
-  //     dataDisplayMode: DataDisplayMode.Aggregated
-  //   }
-  // | {
-  //     dataDisplayMode: DataDisplayMode.RawData
-  //     data: AreaLayerDataQuery['data']
-  //   }
+  area: AreaExplorerSummaryQuery['area']
+  display: any
+  data?: any
 }) {
-  if (!data || !data.aggregated || !data.metadata) {
+  if (!data) {
     return <div className="text-meepGray-400 py-2">No data available</div>
   }
 
-  const { total, majority, isPercentage } = data.metadata
+  // TODO:
+  const isPercentage = display.isPercentage
 
-  // let metadata: {
-  //   total?: number
-  //   majority?: number
-  // }
-  // if (dataDisplayMode === DataDisplayMode.Aggregated) {
-  // const orderedNumericValues = Object.values(data.aggregated)
-  //   .map(Number)
-  //   .filter(Number.isFinite)
-  //   .sort((a, b) => b - a)
-  // const first = data.metadata.first || orderedNumericValues[0]
-  // const second = data.metadata.second || orderedNumericValues[1]
-  // metadata = {
-  //   total: data.metadata.total || sum(orderedNumericValues) || undefined,
-  //   majority: !!first && !!second ? first - second : undefined,
-  // }
-  // } else {
-  //   const orderedNumericValues = Object.values(data)
-  //     .map(Number)
-  //     .filter(Number.isFinite)
-  //     .sort((a, b) => b - a)
-  //   const first = orderedNumericValues[0]
-  //   const second = orderedNumericValues[1]
-  //   metadata = {
-  //     total: sum(orderedNumericValues) || undefined,
-  //     majority: !!first && !!second ? first - second : undefined,
-  //   }
-  // }
+  const percentFormat = format('.1%')
+  const floatFormat = format(',.0f')
+  const numberFormat = isPercentage ? percentFormat : floatFormat
 
-  // const { total, majority } = metadata
-
-  const numberFormat = isPercentage ? format('.1%') : format(',.0f')
-
-  if (!isPercentage && !total) {
-    return (
-      <div className="text-meepGray-400 py-2">No numerical data available</div>
-    )
-  }
+  const numericValues = Object.values(data).filter(Number).map(Number)
+  const total = sum(numericValues)
+  const sorted = numericValues.sort((a, b) => b - a)
+  const [first, second, ...rest] = sorted
+  const majority = first - second
 
   return (
     <div>
@@ -832,10 +848,15 @@ function ElectionResultsDisplay({
               </div>
               <div className="text-2xl text-white">
                 {numberFormat(majority)}
+                {!!total && !isPercentage && (
+                  <span className="text-meepGray-400 text-base ml-1">
+                    {percentFormat(majority / total)}
+                  </span>
+                )}
               </div>
             </div>
           )}
-          {!!total && (
+          {!!total && !isPercentage && (
             <div className="flex flex-col gap-1">
               <div className="text-xs uppercase text-meepGray-400">
                 Total votes
@@ -846,7 +867,7 @@ function ElectionResultsDisplay({
         </div>
       )}
       <div>
-        {Object.entries(data.aggregated || {})
+        {Object.entries(data || {})
           .filter(([_, n]) => Number(n) && Number.isFinite(n))
           .sort(([, a], [, b]) => (b as number) - (a as number))
           .map(([key, votes]) => {
@@ -865,7 +886,7 @@ function ElectionResultsDisplay({
                             {pluralize('vote', votes as number)}
                           </span>
                           <span className="text-white">
-                            {format('.0%')((votes as number) / total!)}
+                            {percentFormat((votes as number) / total!)}
                           </span>
                         </>
                       ) : (
@@ -880,8 +901,8 @@ function ElectionResultsDisplay({
                       className="h-[15px] rounded"
                       style={{
                         width: isPercentage
-                          ? format('.0%')(votes as number)
-                          : format('.0%')((votes as number) / total!),
+                          ? percentFormat(votes as number)
+                          : percentFormat((votes as number) / total!),
                         backgroundColor: guessedParty.colour,
                       }}
                     />

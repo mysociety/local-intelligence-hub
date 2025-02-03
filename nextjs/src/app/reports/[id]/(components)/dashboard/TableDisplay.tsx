@@ -32,11 +32,11 @@ import { useMemo } from 'react'
 export function TableDisplay({
   data,
   title,
-  areaName,
+  context,
 }: {
   data?: any[]
   title: string
-  areaName: string
+  context?: string
 }) {
   const d = data || []
 
@@ -94,7 +94,7 @@ export function TableDisplay({
           <DialogContent className="max-h-[90vh] w-[96vw] max-w-screen overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex gap-4 items-end">
-                {areaName}
+                {context}
                 <div className="text-meepGray-400">
                   <span className="text-meepGray-400 font-mono text-sm uppercase">
                     Data Source:

@@ -515,6 +515,10 @@ class Area:
     fit_bounds: Optional[JSON] = fn_field()
 
     @strawberry_django.field
+    def analytical_area_type(self) -> Optional[AnalyticalAreaType]:
+        return area_to_postcode_io_filter(self)
+
+    @strawberry_django.field
     async def last_election(self, info: Info) -> Optional[ConstituencyElectionResult]:
         # return self.data.get(data_type__name="last_election")
         # # Create a dataloader for this
@@ -1896,12 +1900,13 @@ def statistics(
     # --- Querying + data ---
     # Pick one or more GenericData sets to blend together.
     # they're gonna all be geo-joined for now.
-    stats_config: stats.StatisticsConfig
+    stats_config: stats.StatisticsConfig,
+    return_numeric_keys_only: Optional[bool] = False,
 ):
     user = get_current_user(info)
     for source in stats_config.source_ids:
         check_user_can_view_source(user, source)
-    return stats.statistics(stats_config)
+    return stats.statistics(stats_config, return_numeric_keys_only=return_numeric_keys_only)
 
 def statistics_for_choropleth(
     info: Info,

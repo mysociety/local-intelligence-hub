@@ -68,6 +68,12 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
       ? 'visible'
       : 'none'
 
+  const choroplethValueLabelsVisibility =
+    shaderVisibility === 'visible' &&
+    view.mapOptions.display.choroplethValueLabels
+      ? 'visible'
+      : 'none'
+
   const areasVisible =
     borderVisibility === 'visible' || shaderVisibility === 'visible'
       ? 'visible'
@@ -186,7 +192,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
               type="symbol"
               layout={{
                 ...getAreaCountLayout(dataByBoundary),
-                visibility: boundaryNameVisibility,
+                visibility: choroplethValueLabelsVisibility,
               }}
               paint={{
                 'text-opacity': [

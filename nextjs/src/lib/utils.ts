@@ -21,13 +21,15 @@ export function formatCrmNames(input: string): string {
   }
 }
 
-export function allKeysFromAllData(data: any[]): string[] {
-  if (!data || !Array.isArray(data)) return []
-  const allKeys: Record<string, boolean> = {}
+export function allKeysFromAllData(data: any): string[] {
+  if (!data) return []
+  const arr = Array.isArray(data) ? data : [data]
+  if (arr.length === 0) return []
+  const allKeys = new Set<string>()
   for (const item of data) {
     for (const key of Object.keys(item)) {
-      allKeys[key] = true
+      allKeys.add(key)
     }
   }
-  return Object.keys(allKeys)
+  return Array.from(allKeys)
 }

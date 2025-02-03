@@ -104,6 +104,8 @@ class CalculatedColumn:
     expression: str
     aggregation_operation: Optional[AggregationOp] = None
     is_percentage: Optional[bool] = False
+    # Useful for toggling in UI
+    ignore: Optional[bool] = False
 
 @strawberry.input
 class GroupByColumn:
@@ -195,7 +197,11 @@ def statistics(
     as_grouped_data: bool = False,
     category_key: Optional[str] = None,
     count_key: Optional[str] = None,
+    return_numeric_keys_only: Optional[bool] = False,
 ):
+    pre_calcs = [c for c in conf.pre_group_by_calculated_columns if not c.ignore] if conf.pre_group_by_calculated_columns else []
+    post_calcs = [c for c in conf.calculated_columns if not c.ignore] if conf.calculated_columns else []
+
     # --- Get the required data for the source ---
     qs = models.GenericData.objects.filter(data_type__data_set__external_data_source_id__in=conf.source_ids)
     
@@ -333,8 +339,8 @@ def statistics(
         numerical_keys = numerical_keys.drop("id")
 
     # Apply the row-level cols
-    if conf.pre_group_by_calculated_columns:
-        for col in conf.pre_group_by_calculated_columns:
+    if pre_calcs:
+        for col in pre_calcs:
             df[col.name] = df.eval(col.expression)
             try:
                 df[col.name] = df.eval(col.expression)
@@ -401,9 +407,9 @@ def statistics(
             # Guess
             for key in numerical_keys:
                 calculated_column = next(
-                    (col for col in conf.pre_group_by_calculated_columns if col.name == key),
+                    (col for col in pre_calcs if col.name == key),
                     None
-                ) if conf.pre_group_by_calculated_columns and len(conf.pre_group_by_calculated_columns) > 0 else None
+                ) if pre_calcs and len(pre_calcs) > 0 else None
                 if conf.aggregation_operation and conf.aggregation_operation is not AggregationOp.Guess:
                     agg_config[key] = conf.aggregation_operation.value.lower()
                 elif calculated_column and calculated_column.aggregation_operation and calculated_column.aggregation_operation is not AggregationOp.Guess:
@@ -439,8 +445,8 @@ def statistics(
         df["total"] = values.sum(axis=1)
 
         # Apply formulas
-        if conf.calculated_columns and len(conf.calculated_columns) > 0:
-            for col in conf.calculated_columns:
+        if post_calcs and len(post_calcs) > 0:
+            for col in post_calcs:
                 df[col.name] = df.eval(col.expression)
                 try:
                     df[col.name] = df.eval(col.expression)
@@ -493,12 +499,15 @@ def statistics(
     else:
         # Return the results in the requested format
         # if return_shape is StatisticsReturnShape.Table:
-        if conf.return_columns and len(conf.return_columns) > 0:
+        if return_numeric_keys_only:
+            d = df[numerical_keys].to_dict(orient="records")
+        elif conf.return_columns and len(conf.return_columns) > 0:
             if conf.group_by_area:
                 df = df.reset_index(drop=False)
             d = df[conf.return_columns].to_dict(orient="records")
         else:
             d = df.to_dict(orient="records")
+
         if as_grouped_data:
             from hub.graphql.types.model_types import GroupedDataCount
             is_percentage = "count" in percentage_keys

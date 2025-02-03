@@ -171,6 +171,7 @@ export const explorerDisplaySchema = z.object({
     .optional()
     .describe('Ask the display to present the data as if it was another type.'),
   bigNumberField: z.string().optional(),
+  isPercentage: z.boolean().optional(),
 })
 
 export type IExplorerDisplay = z.infer<typeof explorerDisplaySchema>

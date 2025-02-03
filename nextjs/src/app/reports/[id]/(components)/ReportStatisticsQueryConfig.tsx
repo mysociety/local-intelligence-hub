@@ -453,15 +453,7 @@ function FormulaEditor({
   onDelete: (c: CalculatedColumn) => void
 }) {
   const viewManager = useView(ViewType.Map)
-  const defaultValues = useMemo(() => {
-    return {
-      id: column.id,
-      name: column.name,
-      expression: column.expression,
-      aggregationOperation: column.aggregationOperation,
-      isPercentage: column.isPercentage,
-    }
-  }, [column])
+  const defaultValues = useMemo(() => cloneDeep(column), [column])
   const form = useForm({
     defaultValues,
     values: defaultValues,
@@ -471,7 +463,7 @@ function FormulaEditor({
     !isEqual(defaultValues, values) || form.formState.isDirty
   if (!viewManager || !viewManager.currentViewOfType) return null
   return (
-    <div className="p-2 pt-3 border border-meepGray-700 rounded-md relative">
+    <div className="p-2 pt-3 border border-meepGray-700 rounded-md relative space-y-2">
       <div className="uppercase text-xs text-meepGray-400 -top-2 px-1 absolute bg-meepGray-600 inline-block">
         Calculated column
       </div>
@@ -506,6 +498,13 @@ function FormulaEditor({
         value={!!values.isPercentage}
         onChange={(value) => {
           form.setValue('isPercentage', !!value)
+        }}
+      />
+      <EditorSwitch
+        label="Enabled"
+        value={!values.ignore}
+        onChange={(value) => {
+          form.setValue('ignore', !!value)
         }}
       />
       {/* DELETE */}
