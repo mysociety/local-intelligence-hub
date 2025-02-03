@@ -597,7 +597,10 @@ class GroupedDataCount:
     # Provide filter if gss code is not unique (e.g. WMC and WMC23 constituencies)
     area_type_filter: Optional[stats.AreaTypeFilter] = None
     gss: Optional[str] = None
-    count: float
+    # For numerical data
+    count: Optional[float] = None
+    # For categorical data
+    category: Optional[str] = None
     columns: Optional[List[str]] = None
     row: Optional[JSON] = None
     formatted_count: Optional[str] = None
@@ -1905,10 +1908,12 @@ def statistics_for_choropleth(
     # --- Querying + data ---
     # Pick one or more GenericData sets to blend together.
     # they're gonna all be geo-joined for now.
-    stats_config: stats.StatisticsConfig
+    stats_config: stats.StatisticsConfig,
+    category_key: Optional[str] = None,
+    count_key: Optional[str] = None,
 ):
     user = get_current_user(info)
     for source in stats_config.source_ids:
         check_user_can_view_source(user, source)
     
-    return stats.statistics(stats_config, as_grouped_data=True)
+    return stats.statistics(stats_config, as_grouped_data=True, category_key=category_key, count_key=count_key)

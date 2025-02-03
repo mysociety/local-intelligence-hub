@@ -7,12 +7,14 @@ import { TriangleDownIcon } from '@radix-ui/react-icons'
 import clsx from 'clsx'
 import { atom, useAtom } from 'jotai'
 import React from 'react'
+import { twMerge } from 'tailwind-merge'
 
 interface Props {
   id: string
   title: string
   children: React.ReactNode
   actions?: React.ReactNode
+  className?: string
   titleProps?: React.DetailedHTMLProps<
     React.HTMLAttributes<HTMLHeadingElement>,
     HTMLHeadingElement
@@ -26,6 +28,7 @@ const CollapsibleSection: React.FC<Props> = ({
   id,
   title,
   actions,
+  className,
   titleProps = {},
 }) => {
   const [sections, setSections] = useAtom(collapsibleSectionsAtom)
@@ -45,7 +48,7 @@ const CollapsibleSection: React.FC<Props> = ({
     <Collapsible
       key={id}
       defaultOpen
-      className="mb-2"
+      className={twMerge('mb-2', className)}
       onOpenChange={toggleSection}
       open={!!thisSectionOpen}
     >

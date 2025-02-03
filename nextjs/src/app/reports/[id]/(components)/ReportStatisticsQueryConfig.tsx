@@ -13,10 +13,11 @@ import { ReloadIcon } from '@radix-ui/react-icons'
 import { cloneDeep, isEqual } from 'lodash'
 import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { twMerge } from 'tailwind-merge'
 import toSpaceCase from 'to-space-case'
 import { v4 } from 'uuid'
-import { ViewType } from '../reportContext'
+import { StatisticalDataType, ViewType } from '../reportContext'
 import useDataByBoundary from '../useDataByBoundary'
 import { EditorSelect } from './EditorSelect'
 import { EditorSwitch } from './EditorSwitch'
@@ -48,6 +49,41 @@ export default function ReportStatisticsQueryConfig() {
       </div>
     )
   }
+
+  const fieldDefinitionValues =
+    reportManager.report.layers
+      .find(
+        (l) =>
+          l.source ===
+          viewManager.currentViewOfType?.mapOptions.choropleth
+            .advancedStatisticsConfig?.sourceIds[0]
+      )
+      ?.sourceData.fieldDefinitions?.map((field) => field.value) || []
+
+  const calculatedValues = [
+    'first',
+    'second',
+    'third',
+    'total',
+    'first_label',
+    'second_label',
+  ]
+
+  const userDefinedValues = (
+    viewManager.currentViewOfType?.mapOptions.choropleth
+      .advancedStatisticsConfig?.preGroupByCalculatedColumns || []
+  )
+    .concat(
+      viewManager.currentViewOfType?.mapOptions.choropleth
+        .advancedStatisticsConfig?.calculatedColumns || []
+    )
+    .map((column) => column.name)
+
+  const displayFieldOptions = [
+    ...fieldDefinitionValues,
+    ...calculatedValues,
+    ...userDefinedValues,
+  ]
 
   return (
     <div className="flex flex-col gap-2 text-white">
@@ -107,10 +143,10 @@ export default function ReportStatisticsQueryConfig() {
                     />
                   ),
                 }))}
-                onChange={(layerId) =>
+                onChange={(sourceId) =>
                   viewManager.updateView((draft) => {
                     draft.mapOptions.choropleth.advancedStatisticsConfig!.sourceIds =
-                      [layerId]
+                      [sourceId]
                   })
                 }
                 valueClassName={twMerge(
@@ -138,6 +174,7 @@ export default function ReportStatisticsQueryConfig() {
                 }}
               />
               {/* map_bounds: Optional[stats.MapBounds] = None */}
+              {/* Field defs */}
             </section>
             {/* # Grouping */}
             {/* Something for the table view */}
@@ -289,6 +326,54 @@ export default function ReportStatisticsQueryConfig() {
               <h3 className="text-md font-medium">Values</h3>
               {/* aggregation_operation: Optional[stats.AggregationOp] = None */}
               <EditorSelect
+                label="Type of data to display"
+                value={
+                  viewManager.currentViewOfType?.mapOptions.choropleth.dataType
+                }
+                options={Object.values(StatisticalDataType).map((value) => ({
+                  value: value,
+                  label: toSpaceCase(value),
+                }))}
+                onChange={(value) =>
+                  viewManager.updateView((draft) => {
+                    draft.mapOptions.choropleth.dataType =
+                      value as StatisticalDataType
+                  })
+                }
+              />
+              <EditorSelect
+                label="Display field"
+                value={
+                  viewManager.currentViewOfType?.mapOptions.choropleth
+                    .advancedStatisticsDisplayField
+                }
+                options={displayFieldOptions.map((value) => ({
+                  value: value,
+                  label: value,
+                }))}
+                onChange={(value) =>
+                  viewManager.updateView((draft) => {
+                    draft.mapOptions.choropleth.advancedStatisticsDisplayField =
+                      value
+                  })
+                }
+              />
+              {viewManager.currentViewOfType?.mapOptions.choropleth.dataType ===
+                StatisticalDataType.Nominal && (
+                <EditorSwitch
+                  label="Are these electoral parties?"
+                  value={
+                    !!viewManager.currentViewOfType.mapOptions.choropleth
+                      .isParty
+                  }
+                  onChange={(value) => {
+                    viewManager.updateView((draft) => {
+                      draft.mapOptions.choropleth.isParty = value
+                    })
+                  }}
+                />
+              )}
+              <EditorSelect
                 label="Aggregation operation"
                 value={
                   viewManager.currentViewOfType?.mapOptions.choropleth
@@ -307,6 +392,43 @@ export default function ReportStatisticsQueryConfig() {
               />
               {/* aggregation_operations: Optional[List[stats.AggregationDefinition]] = None */}
               {/* return_columns: Optional[List[str]] = None */}
+            </section>
+            <section className="space-y-5 p-4">
+              <h3 className="text-md font-medium">Variables for formulas</h3>
+              <h4 className="font-medium text-sm">
+                Direct from the data source:
+              </h4>
+              <pre className="flex flex-row flex-wrap gap-1">
+                {fieldDefinitionValues?.map((field) => (
+                  <div
+                    key={field}
+                    className="bg-meepGray-700 hover:bg-meepGray-500 px-2 py-1 rounded-md text-xs cursor-pointer"
+                    onClick={() => {
+                      navigator.clipboard.writeText(field)
+                      toast.success(`Copied '${field}' to clipboard`)
+                    }}
+                  >
+                    <span>{field}</span>
+                  </div>
+                ))}
+              </pre>
+              <h4 className="font-medium text-sm">
+                Calculated based on the data:
+              </h4>
+              <pre className="flex flex-row flex-wrap gap-1">
+                {calculatedValues.map((field) => (
+                  <div
+                    key={field}
+                    className="bg-meepGray-700 hover:bg-meepGray-500 px-2 py-1 rounded-md text-xs cursor-pointer"
+                    onClick={() => {
+                      navigator.clipboard.writeText(field)
+                      toast.success(`Copied '${field}' to clipboard`)
+                    }}
+                  >
+                    <span>{field}</span>
+                  </div>
+                ))}
+              </pre>
             </section>
           </>
         )}

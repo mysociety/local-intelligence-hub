@@ -23,6 +23,7 @@ import {
 } from 'd3-scale-chromatic'
 import { WritableDraft } from 'immer'
 import { createContext } from 'react'
+import stringToColour from 'string-to-color'
 import * as uuid from 'uuid'
 import * as z from 'zod'
 import { BoundaryType } from './politicalTilesets'
@@ -42,51 +43,76 @@ export enum Palette {
   DivergentRedGreen = 'DivergentRedGreen',
   DivergentBlueRed = 'DivergentBlueRed',
   DivergentBrBg = 'DivergentBrBg',
+  ValueStringToColour = 'ValueStringToColour',
+}
+
+export enum StatisticalDataType {
+  // Discrete = "Discrete", // integers — e.g. counts
+  Continuous = 'Continuous', // floats — e.g. measures
+  // Ordinal = "Ordinal", // the categories can be ranked from high to low
+  Nominal = 'Nominal', // the categories cannot be ranked from high to low — e.g. parties
 }
 
 export const PALETTE: Record<
   Palette,
   {
     label: string
+    dataType: StatisticalDataType
     interpolator: (t: number) => string
   }
 > = {
   [Palette.Blue]: {
     label: 'Blue',
+    dataType: StatisticalDataType.Continuous,
     // Reversed so that black is the lowest value
     interpolator: (t) => interpolateBlues(1 - t),
   },
   [Palette.Red]: {
     label: 'Red',
+    dataType: StatisticalDataType.Continuous,
     interpolator: (t) => interpolateReds(1 - t),
   },
   [Palette.Purple]: {
     label: 'Purple',
+    dataType: StatisticalDataType.Continuous,
     interpolator: (t) => interpolatePurples(1 - t),
   },
   [Palette.Orange]: {
     label: 'Orange',
+    dataType: StatisticalDataType.Continuous,
     interpolator: (t) => interpolateOranges(1 - t),
   },
   [Palette.Green]: {
     label: 'Green',
+    dataType: StatisticalDataType.Continuous,
     interpolator: (t) => interpolateGreens(1 - t),
   },
   [Palette.Inferno]: {
     label: 'Inferno',
+    dataType: StatisticalDataType.Continuous,
     interpolator: interpolateInferno,
   },
   [Palette.DivergentRedGreen]: {
     label: 'Red/Green',
+    dataType: StatisticalDataType.Continuous,
     interpolator: interpolateRdYlGn,
   },
   [Palette.DivergentBlueRed]: {
     label: 'Blue/Red',
+    dataType: StatisticalDataType.Continuous,
     interpolator: interpolateRdYlBu,
   },
   [Palette.DivergentBrBg]: {
     label: 'Brown/Beige',
+    dataType: StatisticalDataType.Continuous,
     interpolator: interpolateBrBG,
+  },
+  [Palette.ValueStringToColour]: {
+    label: 'Tableau 10',
+    dataType: StatisticalDataType.Nominal,
+    interpolator: (t: unknown) => {
+      return stringToColour(String(t))
+    },
   },
 }
 
@@ -206,6 +232,16 @@ const mapOptionsSchema = z.object({
       formula: z.string().optional(),
       useAdvancedStatistics: z.boolean().optional(),
       advancedStatisticsConfig: StatisticsConfigSchema().optional(),
+      dataType: z
+        .nativeEnum(StatisticalDataType)
+        .default(StatisticalDataType.Continuous),
+      isParty: z
+        .boolean()
+        .optional()
+        .describe(
+          'If categorical data should be interpreted using party colours.'
+        ),
+      advancedStatisticsDisplayField: z.string().optional(),
     })
     .default({}),
   display: z

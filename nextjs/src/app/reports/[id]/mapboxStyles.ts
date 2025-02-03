@@ -5,7 +5,14 @@ import {
   LineLayerSpecification,
   SymbolLayerSpecification,
 } from 'mapbox-gl'
-import { IMapOptions, getReportPalette } from './reportContext'
+import { guessParty } from './(components)/explorer/AreaExplorer'
+import {
+  IMapOptions,
+  PALETTE,
+  Palette,
+  StatisticalDataType,
+  getReportPalette,
+} from './reportContext'
 import { Tileset } from './types'
 import { DataByBoundary } from './useDataByBoundary'
 
@@ -14,52 +21,80 @@ export function getChoroplethFill(
   mapOptions: IMapOptions,
   visible?: boolean
 ): FillLayerSpecification['paint'] {
-  // Get min and max counts
-  let minCount = 0 // min(dataByBoundary.map((d) => d.count || 0)) || 0
-  let maxCount = max(dataByBoundary.map((d) => d.count || 0)) || 1
-
-  // ensure minCount and maxCount are different
-  if (minCount === maxCount) {
-    if (minCount >= 1) {
-      minCount = minCount - 0.1
+  if (mapOptions.choropleth.dataType === StatisticalDataType.Nominal) {
+    // Categorical colours
+    // @ts-ignore
+    const keys: string[] = Array.from(
+      new Set(dataByBoundary.map((d) => d.category).filter(Boolean))
+    )
+    let matches: string[] = []
+    if (mapOptions.choropleth.isParty) {
+      matches = keys.map((key) => [key!, guessParty(key!).colour]).flat()
     } else {
-      maxCount = maxCount + 0.1
+      const palette = PALETTE[Palette.ValueStringToColour]
+      matches = keys
+        .map((key) => [key, palette.interpolator(key as any)])
+        .flat()
     }
-  }
+    return {
+      // Shade the map by the count of imported data
+      'fill-color': [
+        'match',
+        ['feature-state', 'category'],
+        ...matches,
+        'rgba(0, 0, 0, 0)',
+      ],
+      'fill-opacity': visible ? 1 : 0,
+      'fill-opacity-transition': { duration: 750 },
+    }
+  } else {
+    // Get min and max counts
+    let minCount = 0 // min(dataByBoundary.map((d) => d.count || 0)) || 0
+    let maxCount = max(dataByBoundary.map((d) => d.count || 0)) || 1
 
-  const interpolator = getReportPalette(mapOptions)
+    // ensure minCount and maxCount are different
+    if (minCount === maxCount) {
+      if (minCount >= 1) {
+        minCount = minCount - 0.1
+      } else {
+        maxCount = maxCount + 0.1
+      }
+    }
 
-  // Legend scale
-  const colourScale = scaleSequential()
-    .domain([minCount, maxCount])
-    .interpolator(interpolator)
+    const interpolator = getReportPalette(mapOptions)
 
-  // Define 30 stops of colour
-  let steps = 30
+    // Legend scale
+    const colourScale = scaleSequential()
+      .domain([minCount, maxCount])
+      .interpolator(interpolator)
 
-  // Now turn each i into an associated number in the range min-max:
-  const stepsToDomainTransformer = scaleLinear()
-    .domain([0, steps])
-    .range([minCount, maxCount])
+    // Define 30 stops of colour
+    let steps = 30
 
-  const colourStops = new Array(steps)
-    .fill(0)
-    .map((_, step) => {
-      const count = stepsToDomainTransformer(step)
-      return [count, colourScale(count)]
-    })
-    .flat()
+    // Now turn each i into an associated number in the range min-max:
+    const stepsToDomainTransformer = scaleLinear()
+      .domain([0, steps])
+      .range([minCount, maxCount])
 
-  return {
-    // Shade the map by the count of imported data
-    'fill-color': [
-      'interpolate',
-      ['linear'],
-      ['to-number', ['feature-state', 'count'], 0],
-      ...colourStops,
-    ],
-    'fill-opacity': visible ? 1 : 0,
-    'fill-opacity-transition': { duration: 750 },
+    const colourStops = new Array(steps)
+      .fill(0)
+      .map((_, step) => {
+        const count = stepsToDomainTransformer(step)
+        return [count, colourScale(count)]
+      })
+      .flat()
+
+    return {
+      // Shade the map by the count of imported data
+      'fill-color': [
+        'interpolate',
+        ['linear'],
+        ['to-number', ['feature-state', 'count'], 0],
+        ...colourStops,
+      ],
+      'fill-opacity': visible ? 1 : 0,
+      'fill-opacity-transition': { duration: 750 },
+    }
   }
 }
 
@@ -130,7 +165,7 @@ export function getAreaGeoJSON(data: DataByBoundary) {
         geometry: d.gssArea?.point?.geometry! as GeoJSON.Point,
         properties: {
           count: d.count,
-          formattedCount: d.formattedCount || d.count,
+          formattedCount: d.category || d.formattedCount || d.count,
           label: d.label,
         },
       })),

@@ -9,7 +9,11 @@ import { useReport } from '@/lib/map/useReport'
 import { ApolloError, QueryResult, gql, useQuery } from '@apollo/client'
 import { atom, useSetAtom } from 'jotai'
 import { useEffect } from 'react'
-import { SpecificViewConfig, ViewType } from './reportContext'
+import {
+  SpecificViewConfig,
+  StatisticalDataType,
+  ViewType,
+} from './reportContext'
 import { Tileset } from './types'
 
 export type DataByBoundary =
@@ -86,11 +90,34 @@ const useDataByBoundary = ({
     STATISTICS_QUERY,
     {
       variables: {
+        categoryKey:
+          view?.mapOptions?.choropleth.dataType === StatisticalDataType.Nominal
+            ? view?.mapOptions?.choropleth.advancedStatisticsDisplayField
+            : undefined,
+        countKey:
+          view?.mapOptions?.choropleth.dataType ===
+          StatisticalDataType.Continuous
+            ? view?.mapOptions?.choropleth.advancedStatisticsDisplayField
+            : undefined,
         config: {
           ...(advancedStatisticsConfig! || {}),
           groupByArea: analyticalAreaType!,
           mapBounds,
-          returnColumns: ['count', 'gss', 'label'],
+          returnColumns: ['gss', 'label'].concat(
+            view?.mapOptions?.choropleth.dataType ===
+              StatisticalDataType.Nominal
+              ? 'category'
+              : 'count'
+          ),
+          // .concat(
+          //   advancedStatisticsConfig?.preGroupByCalculatedColumns?.map(
+          //     (c) => c.name
+          //   ) || []
+          // )
+          // .concat(
+          //   advancedStatisticsConfig?.calculatedColumns?.map((c) => c.name) ||
+          //     []
+          // ),
         },
       },
       skip:
@@ -142,6 +169,7 @@ export const CHOROPLETH_STATS_FOR_SOURCE = gql`
       gss
       count
       formattedCount
+      category
       row
       columns
       gssArea {
@@ -158,12 +186,21 @@ export const CHOROPLETH_STATS_FOR_SOURCE = gql`
 `
 
 export const STATISTICS_QUERY = gql`
-  query Statistics($config: StatisticsConfig!) {
-    statisticsForChoropleth(statsConfig: $config) {
+  query Statistics(
+    $config: StatisticsConfig!
+    $categoryKey: String
+    $countKey: String
+  ) {
+    statisticsForChoropleth(
+      statsConfig: $config
+      categoryKey: $categoryKey
+      countKey: $countKey
+    ) {
       label
       gss
       count
       formattedCount
+      category
       row
       columns
       gssArea {

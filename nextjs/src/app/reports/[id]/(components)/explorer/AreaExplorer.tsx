@@ -895,7 +895,7 @@ function ElectionResultsDisplay({
   )
 }
 
-function guessParty(searchStr: string) {
+export function guessParty(searchStr: string) {
   // trigramSimilarity each party name to the keys in the map
   // return the colour of the most similar party
   const similarities = partyDictionary

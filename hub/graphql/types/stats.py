@@ -193,6 +193,8 @@ query SwingToReformByRegion {
 def statistics(
     conf: StatisticsConfig,
     as_grouped_data: bool = False,
+    category_key: Optional[str] = None,
+    count_key: Optional[str] = None,
 ):
     # --- Get the required data for the source ---
     qs = models.GenericData.objects.filter(data_type__data_set__external_data_source_id__in=conf.source_ids)
@@ -470,6 +472,11 @@ def statistics(
             except IndexError:
                 pass
             df["total"] = values.sum(axis=1)
+    
+    if category_key:
+        df["category"] = df[category_key]
+    if count_key:
+        df["count"] = df[count_key]
 
     # Final grouping
     if conf.group_by_columns and len(conf.group_by_columns) > 0:
@@ -501,6 +508,7 @@ def statistics(
                     gss=row.get("gss", None),
                     label=row.get("label", None),
                     count=row.get("count", None),
+                    category=row.get("category", None),
                     formatted_count=(
                       (
                           # pretty percentage
