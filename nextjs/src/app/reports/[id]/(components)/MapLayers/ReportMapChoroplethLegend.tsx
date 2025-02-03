@@ -22,6 +22,7 @@ import keyboardKey from 'keyboard-key'
 import { max } from 'lodash'
 import {
   AlertOctagonIcon,
+  HashIcon,
   LucideBoxSelect,
   LucideChevronDown,
   LucideEye,
@@ -407,19 +408,36 @@ export default function ReportMapChoroplethLegend() {
               ))}
 
             {viewManager.currentViewOfType?.mapOptions?.display.choropleth && (
-              <MapToggleField
-                iconComponent={LucideType}
-                label="Place labels"
-                value={
-                  viewManager.currentViewOfType?.mapOptions?.display
-                    .boundaryNames
-                }
-                onChange={(showBoundaryNames) => {
-                  viewManager.updateView((draft) => {
-                    draft.mapOptions.display.boundaryNames = !!showBoundaryNames
-                  })
-                }}
-              />
+              <>
+                <MapToggleField
+                  iconComponent={HashIcon}
+                  label="Value labels"
+                  value={
+                    viewManager.currentViewOfType?.mapOptions?.display
+                      .choroplethValueLabels
+                  }
+                  onChange={(choroplethValueLabels) => {
+                    viewManager.updateView((draft) => {
+                      draft.mapOptions.display.choroplethValueLabels =
+                        !!choroplethValueLabels
+                    })
+                  }}
+                />
+                <MapToggleField
+                  iconComponent={LucideType}
+                  label="Place labels"
+                  value={
+                    viewManager.currentViewOfType?.mapOptions?.display
+                      .boundaryNames
+                  }
+                  onChange={(showBoundaryNames) => {
+                    viewManager.updateView((draft) => {
+                      draft.mapOptions.display.boundaryNames =
+                        !!showBoundaryNames
+                    })
+                  }}
+                />
+              </>
             )}
 
             <MapToggleField
