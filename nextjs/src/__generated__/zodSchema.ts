@@ -477,6 +477,7 @@ export function StatisticsConfigSchema(): z.ZodObject<Properties<StatisticsConfi
     aggregationOperations: z.array(AggregationDefinitionSchema()).nullish(),
     areaQueryMode: AreaQueryModeSchema.nullish(),
     calculatedColumns: z.array(CalculatedColumnSchema()).nullish(),
+    groupAbsolutely: z.boolean().default(false).nullish(),
     groupByArea: AnalyticalAreaTypeSchema.nullish(),
     groupByColumns: z.array(GroupByColumnSchema()).nullish(),
     gssCodes: z.array(z.string()).nullish(),

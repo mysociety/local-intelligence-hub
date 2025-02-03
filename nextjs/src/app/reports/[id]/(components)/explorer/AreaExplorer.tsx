@@ -398,6 +398,7 @@ function AreaDisplay({
           : {}) || {}),
         sourceIds: [sourceId!],
         gssCodes: gss ? [gss] : null,
+        groupAbsolutely: display.dataDisplayMode === DataDisplayMode.Aggregated,
       },
     },
     skip: !sourceId,
