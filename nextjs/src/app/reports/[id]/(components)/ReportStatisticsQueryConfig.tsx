@@ -504,7 +504,7 @@ function FormulaEditor({
         label="Enabled"
         value={!values.ignore}
         onChange={(value) => {
-          form.setValue('ignore', !!value)
+          form.setValue('ignore', !value)
         }}
       />
       {/* DELETE */}
