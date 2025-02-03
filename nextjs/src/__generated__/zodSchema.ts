@@ -69,8 +69,8 @@ export function ActionNetworkSourceInputSchema(): z.ZodObject<Properties<ActionN
 export function AggregationDefinitionSchema(): z.ZodObject<Properties<AggregationDefinition>> {
   return z.object({
     column: z.string(),
-    id: z.string(),
-    operation: AggregationOpSchema
+    id: z.string().nullish(),
+    operation: AggregationOpSchema.nullish()
   })
 }
 
@@ -112,7 +112,7 @@ export function CalculatedColumnSchema(): z.ZodObject<Properties<CalculatedColum
   return z.object({
     aggregationOperation: AggregationOpSchema.nullish(),
     expression: z.string(),
-    id: z.string(),
+    id: z.string().nullish(),
     ignore: z.boolean().default(false).nullish(),
     isPercentage: z.boolean().default(false).nullish(),
     name: z.string()
@@ -251,7 +251,8 @@ export function GroupByColumnSchema(): z.ZodObject<Properties<GroupByColumn>> {
   return z.object({
     aggregationOperation: AggregationOpSchema.nullish(),
     column: z.string(),
-    id: z.string(),
+    id: z.string().nullish(),
+    ignore: z.boolean().default(false).nullish(),
     isPercentage: z.boolean().default(false).nullish(),
     name: z.string().nullish()
   })

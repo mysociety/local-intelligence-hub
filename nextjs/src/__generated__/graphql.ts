@@ -210,13 +210,12 @@ export type ActionNetworkSourceInput = {
 
 export type AggregationDefinition = {
   column: Scalars['String']['input'];
-  id: Scalars['String']['input'];
-  operation: AggregationOp;
+  id?: InputMaybe<Scalars['String']['input']>;
+  operation?: InputMaybe<AggregationOp>;
 };
 
 export enum AggregationOp {
   Count = 'Count',
-  Guess = 'Guess',
   Max = 'Max',
   Mean = 'Mean',
   Min = 'Min',
@@ -578,7 +577,7 @@ export type BatchJobProgress = {
 export type CalculatedColumn = {
   aggregationOperation?: InputMaybe<AggregationOp>;
   expression: Scalars['String']['input'];
-  id: Scalars['String']['input'];
+  id?: InputMaybe<Scalars['String']['input']>;
   ignore?: InputMaybe<Scalars['Boolean']['input']>;
   isPercentage?: InputMaybe<Scalars['Boolean']['input']>;
   name: Scalars['String']['input'];
@@ -1309,7 +1308,8 @@ export enum GeographyTypes {
 export type GroupByColumn = {
   aggregationOperation?: InputMaybe<AggregationOp>;
   column: Scalars['String']['input'];
-  id: Scalars['String']['input'];
+  id?: InputMaybe<Scalars['String']['input']>;
+  ignore?: InputMaybe<Scalars['Boolean']['input']>;
   isPercentage?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
 };
@@ -2336,7 +2336,7 @@ export type QueryAreaArgs = {
 
 
 export type QueryChoroplethDataForSourceArgs = {
-  aggregationOperation?: AggregationOp;
+  aggregationOperation?: InputMaybe<AggregationOp>;
   analyticalAreaKey: AnalyticalAreaType;
   field?: InputMaybe<Scalars['String']['input']>;
   formula?: InputMaybe<Scalars['String']['input']>;

@@ -114,24 +114,26 @@ class AggregationDefinition:
 
 @strawberry.input
 class CalculatedColumn:
-    # For UI purposes
-    id: Optional[str] = None
     name: str
     expression: str
     aggregation_operation: Optional[AggregationOp] = None
     is_percentage: Optional[bool] = False
+    # For UI purposes
+    id: Optional[str] = None
     # Useful for toggling in UI
     ignore: Optional[bool] = False
 
 
 @strawberry.input
 class GroupByColumn:
-    # For UI purposes
-    id:  Optional[str] = None
     name: Optional[str] = None
     column: str
     aggregation_operation: Optional[AggregationOp] = None
     is_percentage: Optional[bool] = False
+    # For UI purposes
+    id:  Optional[str] = None
+    # Useful for toggling in UI
+    ignore: Optional[bool] = False
 
 
 @strawberry.input
@@ -579,9 +581,10 @@ def statistics(
         df["count"] = df[count_key]
 
     # Final grouping
-    if conf.group_by_columns and len(conf.group_by_columns) > 0:
+    groups = [g for g in conf.group_by_columns if not g.ignore] if conf.group_by_columns else []
+    if groups and len(groups) > 0:
         agg_config = dict()
-        for col in conf.group_by_columns:
+        for col in groups:
             name = col.name or col.column
             aggop = col.aggregation_operation or (AggregationOp.Mean if col.is_percentage else AggregationOp.Sum)
             agg_config.update(

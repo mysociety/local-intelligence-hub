@@ -8,8 +8,10 @@ import {
   AreaQueryMode,
   DataSourceType,
 } from '@/__generated__/graphql'
+import { StatisticsConfigSchema } from '@/__generated__/zodSchema'
 import { DataSourceIcon } from '@/components/DataSourceIcon'
 import { DataSourceTypeIcon } from '@/components/icons/DataSourceType'
+import { PopOutStatisticalQueryEditor } from '@/components/report/PopOutStatisticalQueryEditor'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -60,6 +62,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { contrastColor } from 'contrast-color'
 import { format } from 'd3-format'
+import { produce } from 'immer'
 import { cloneDeep, sum } from 'lodash'
 import {
   ArrowLeft,
@@ -72,7 +75,7 @@ import {
 } from 'lucide-react'
 import pluralize from 'pluralize'
 import queryString from 'query-string'
-import { Fragment, useEffect, useState } from 'react'
+import { CSSProperties, Fragment, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import toSpaceCase from 'to-space-case'
 import trigramSimilarity from 'trigram-similarity'
@@ -115,7 +118,7 @@ export function AreaExplorer({ gss }: { gss?: string }) {
   })
 
   const report = useReport()
-  const { addStarredItem, removeStarredItem } = report
+
   const starredItemData: StarredState = {
     id: gss || '',
     entity: 'area',
@@ -369,19 +372,31 @@ function AreaDisplay({
     }
   )
 
+  // const boundaryType =
+  //   view.currentViewOfType?.mapOptions.choropleth?.boundaryType
+  // const tilesets = POLITICAL_BOUNDARIES.find(
+  //   (boundary) => boundary.boundaryType === boundaryType
+  // )?.tilesets
+
+  // const activeTileset = useActiveTileset(boundaryType)
+
   const stats = useQuery<
     AreaDisplayStatisticsQuery,
     AreaDisplayStatisticsQueryVariables
   >(STATISTICS, {
     variables: {
       statsConfig: {
-        ...relevantChoroplethConfig,
-        sourceIds: [sourceId!],
-        gssCodes: gss ? [gss] : null,
-        areaQueryMode: display.areaQueryMode,
         groupByArea: area?.analyticalAreaType
           ? area?.analyticalAreaType
           : undefined,
+        areaQueryMode: display.areaQueryMode,
+        ...// If this display has its own config set up, use that
+        ((display.useAdvancedStatistics
+          ? display.advancedStatisticsConfig
+          : // Otherwise try to sync this display with the choropleth config
+            relevantChoroplethConfig) || {}),
+        sourceIds: [sourceId!],
+        gssCodes: gss ? [gss] : null,
       },
     },
     skip: !sourceId,
@@ -512,6 +527,40 @@ function AreaDisplay({
                 })
               }}
             />
+            <EditorSwitch
+              label="Use advanced statistics API"
+              value={display.useAdvancedStatistics}
+              onChange={(value) => {
+                updateReport((draft) => {
+                  draft.displayOptions.areaExplorer.displays[
+                    display.id
+                  ].useAdvancedStatistics = value
+                })
+              }}
+            />
+            {display.useAdvancedStatistics && !!sourceId && (
+              <PopOutStatisticalQueryEditor
+                value={
+                  display.advancedStatisticsConfig ||
+                  StatisticsConfigSchema().parse({
+                    sourceIds: [sourceId],
+                  })
+                }
+                onChange={(producer) => {
+                  updateReport((draft) => {
+                    const oldValue =
+                      draft.displayOptions.areaExplorer.displays[display.id]
+                        .advancedStatisticsConfig ||
+                      StatisticsConfigSchema().parse({
+                        sourceIds: [sourceId],
+                      })
+                    draft.displayOptions.areaExplorer.displays[
+                      display.id
+                    ].advancedStatisticsConfig = produce(oldValue, producer)
+                  })
+                }}
+              />
+            )}
             <hr className="mt-4 my-2" />
             <Button
               variant="ghost"
@@ -658,6 +707,11 @@ function AreaDisplay({
             <ListDisplay
               data={data.data?.data}
               dataType={display.dataSourceType || layer.sourceData.dataType}
+            />
+          ) : display.displayType === InspectorDisplayType.StatisticalCount ? (
+            <StatisticalCount
+              data={stats.data?.statistics || []}
+              display={display}
             />
           ) : (
             JSON.stringify(data.data)
@@ -1357,5 +1411,56 @@ function AreaExplorerBreadcrumbs({
         </div>
       </BreadcrumbList>
     </Breadcrumb>
+  )
+}
+
+function StatisticalCount({
+  data,
+  display,
+}: {
+  data: any[]
+  display: IExplorerDisplay
+}) {
+  const grouping = display.advancedStatisticsConfig?.groupByColumns?.[0]
+  if (!grouping)
+    return (
+      <div className="text-meepGray-400 py-2">No grouped data available</div>
+    )
+  const column = grouping.column
+  const groupKey = grouping.name
+  const valueKey = Object.keys(data[0]).find((key) =>
+    key.startsWith(`${groupKey}_`)
+  )
+
+  if (!groupKey || !valueKey)
+    return (
+      <div className="text-meepGray-400 py-2">No grouped data available</div>
+    )
+
+  return (
+    <div className="py-2">
+      {data
+        .slice()
+        .sort((a, b) =>
+          String(b[valueKey] || 0).localeCompare(
+            String(a[valueKey] || 0),
+            undefined,
+            {
+              numeric: true,
+              sensitivity: 'base',
+            }
+          )
+        )
+        .map((item: any) => (
+          <article>
+            <div className="text-white text-3xl">{item[valueKey]}</div>
+            <div className="text-meepGray-400 text-sm">{item[groupKey]}</div>
+          </article>
+        ))}
+      <div className="uppercase text-xs text-meepGray-400">
+        Grouped by {display.advancedStatisticsConfig?.groupByArea || ''}{' '}
+        {toSpaceCase(column)} and {grouping.aggregationOperation}
+      </div>
+    </div>
   )
 }

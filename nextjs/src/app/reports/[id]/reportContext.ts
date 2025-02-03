@@ -171,7 +171,15 @@ export const explorerDisplaySchema = z.object({
     .optional()
     .describe('Ask the display to present the data as if it was another type.'),
   bigNumberField: z.string().optional(),
+  bigNumberFields: z
+    .array(z.string())
+    .optional()
+    .describe('Use this to display multiple big fields via the same query'),
   isPercentage: z.boolean().optional(),
+  useAdvancedStatistics: z.boolean().optional(),
+  advancedStatisticsConfig: StatisticsConfigSchema()
+    .optional()
+    .describe('Configuring this will add arguments to the statistics query'),
 })
 
 export type IExplorerDisplay = z.infer<typeof explorerDisplaySchema>
