@@ -88,7 +88,7 @@ export default function ReportNavbar() {
             onClick={leftSidebar.toggle}
             className="text-meepGray-400 w-4 h-4 cursor-pointer"
           />{' '}
-          <div className="flex flex-row gap-2 items-center">
+          <div className="flex flex-row gap-2 items-center overflow-x-auto w-full">
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -163,7 +163,7 @@ function SortableViewTabItem({ view }: { view: ViewConfig }) {
       <ContextMenuTrigger asChild>
         <div
           onClick={() => viewManager.setCurrentViewId(view.id)}
-          className={'py-1'}
+          className={'py-1 truncate overflow-ellipsis overflow-hidden'}
           style={style}
           ref={setNodeRef}
           {...attributes}
@@ -177,7 +177,7 @@ function SortableViewTabItem({ view }: { view: ViewConfig }) {
                 : 'text-meepGray-400'
             )}
           >
-            <ViewIcon viewType={view.type} />
+            <ViewIcon viewType={view.type} className="shrink-0" />
             <div
               {...contentEditableMutation((name) => {
                 reportManager.updateReport((d) => {
@@ -191,6 +191,18 @@ function SortableViewTabItem({ view }: { view: ViewConfig }) {
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
+        <ContextMenuItem
+          onClick={() => {
+            reportManager.updateReport((draft) => {
+              const id = v4()
+              draft.displayOptions.views[id] = cloneDeep(view)
+              draft.displayOptions.views[id].id = id
+              draft.displayOptions.views[id].name = `${view.name} (Copy)`
+            })
+          }}
+        >
+          Duplicate
+        </ContextMenuItem>
         {Object.values(reportManager.report?.displayOptions.views || {})
           .length > 1 && (
           <ContextMenuItem
@@ -210,18 +222,6 @@ function SortableViewTabItem({ view }: { view: ViewConfig }) {
             Delete
           </ContextMenuItem>
         )}
-        <ContextMenuItem
-          onClick={() => {
-            reportManager.updateReport((draft) => {
-              const id = v4()
-              draft.displayOptions.views[id] = cloneDeep(view)
-              draft.displayOptions.views[id].id = id
-              draft.displayOptions.views[id].name = `${view.name} (Copy)`
-            })
-          }}
-        >
-          Duplicate
-        </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   )
