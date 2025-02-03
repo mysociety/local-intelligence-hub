@@ -79,11 +79,15 @@ export default function ReportStatisticsQueryConfig() {
     )
     .map((column) => column.name)
 
-  const displayFieldOptions = [
-    ...fieldDefinitionValues,
-    ...calculatedValues,
-    ...userDefinedValues,
-  ]
+  const displayFieldOptions = Array.from(
+    new Set(
+      [
+        ...fieldDefinitionValues,
+        ...calculatedValues,
+        ...userDefinedValues,
+      ].filter(Boolean)
+    )
+  )
 
   return (
     <div className="flex flex-col gap-2 text-white">
@@ -175,6 +179,79 @@ export default function ReportStatisticsQueryConfig() {
               />
               {/* map_bounds: Optional[stats.MapBounds] = None */}
               {/* Field defs */}
+            </section>
+            {/*  */}
+
+            <section className="space-y-5 p-4">
+              <h3 className="text-md font-medium">Display options</h3>
+              {/* aggregation_operation: Optional[stats.AggregationOp] = None */}
+              <EditorSelect
+                label="Type of data to display"
+                value={
+                  viewManager.currentViewOfType?.mapOptions.choropleth.dataType
+                }
+                options={Object.values(StatisticalDataType).map((value) => ({
+                  value: value,
+                  label: toSpaceCase(value),
+                }))}
+                onChange={(value) =>
+                  viewManager.updateView((draft) => {
+                    draft.mapOptions.choropleth.dataType =
+                      value as StatisticalDataType
+                  })
+                }
+              />
+              <EditorSelect
+                label="Display field"
+                value={
+                  viewManager.currentViewOfType?.mapOptions.choropleth
+                    .advancedStatisticsDisplayField
+                }
+                options={displayFieldOptions.map((value) => ({
+                  value: value,
+                  label: value,
+                }))}
+                onChange={(value) =>
+                  viewManager.updateView((draft) => {
+                    draft.mapOptions.choropleth.advancedStatisticsDisplayField =
+                      value
+                  })
+                }
+              />
+              {viewManager.currentViewOfType?.mapOptions.choropleth.dataType ===
+                StatisticalDataType.Nominal && (
+                <EditorSwitch
+                  label="Are these electoral parties?"
+                  value={
+                    !!viewManager.currentViewOfType.mapOptions.choropleth
+                      .isParty
+                  }
+                  onChange={(value) => {
+                    viewManager.updateView((draft) => {
+                      draft.mapOptions.choropleth.isParty = value
+                    })
+                  }}
+                />
+              )}
+              <EditorSelect
+                label="Aggregation operation"
+                value={
+                  viewManager.currentViewOfType?.mapOptions.choropleth
+                    .advancedStatisticsConfig?.aggregationOperation
+                }
+                options={Object.values(AggregationOp).map((value) => ({
+                  value: value,
+                  label: toSpaceCase(value),
+                }))}
+                onChange={(value) =>
+                  viewManager.updateView((draft) => {
+                    draft.mapOptions.choropleth.advancedStatisticsConfig!.aggregationOperation =
+                      value as AggregationOp
+                  })
+                }
+              />
+              {/* aggregation_operations: Optional[List[stats.AggregationDefinition]] = None */}
+              {/* return_columns: Optional[List[str]] = None */}
             </section>
             {/* # Grouping */}
             {/* Something for the table view */}
@@ -323,77 +400,6 @@ export default function ReportStatisticsQueryConfig() {
               </Button>
             </section>
             <section className="space-y-5 p-4">
-              <h3 className="text-md font-medium">Values</h3>
-              {/* aggregation_operation: Optional[stats.AggregationOp] = None */}
-              <EditorSelect
-                label="Type of data to display"
-                value={
-                  viewManager.currentViewOfType?.mapOptions.choropleth.dataType
-                }
-                options={Object.values(StatisticalDataType).map((value) => ({
-                  value: value,
-                  label: toSpaceCase(value),
-                }))}
-                onChange={(value) =>
-                  viewManager.updateView((draft) => {
-                    draft.mapOptions.choropleth.dataType =
-                      value as StatisticalDataType
-                  })
-                }
-              />
-              <EditorSelect
-                label="Display field"
-                value={
-                  viewManager.currentViewOfType?.mapOptions.choropleth
-                    .advancedStatisticsDisplayField
-                }
-                options={displayFieldOptions.map((value) => ({
-                  value: value,
-                  label: value,
-                }))}
-                onChange={(value) =>
-                  viewManager.updateView((draft) => {
-                    draft.mapOptions.choropleth.advancedStatisticsDisplayField =
-                      value
-                  })
-                }
-              />
-              {viewManager.currentViewOfType?.mapOptions.choropleth.dataType ===
-                StatisticalDataType.Nominal && (
-                <EditorSwitch
-                  label="Are these electoral parties?"
-                  value={
-                    !!viewManager.currentViewOfType.mapOptions.choropleth
-                      .isParty
-                  }
-                  onChange={(value) => {
-                    viewManager.updateView((draft) => {
-                      draft.mapOptions.choropleth.isParty = value
-                    })
-                  }}
-                />
-              )}
-              <EditorSelect
-                label="Aggregation operation"
-                value={
-                  viewManager.currentViewOfType?.mapOptions.choropleth
-                    .advancedStatisticsConfig?.aggregationOperation
-                }
-                options={Object.values(AggregationOp).map((value) => ({
-                  value: value,
-                  label: toSpaceCase(value),
-                }))}
-                onChange={(value) =>
-                  viewManager.updateView((draft) => {
-                    draft.mapOptions.choropleth.advancedStatisticsConfig!.aggregationOperation =
-                      value as AggregationOp
-                  })
-                }
-              />
-              {/* aggregation_operations: Optional[List[stats.AggregationDefinition]] = None */}
-              {/* return_columns: Optional[List[str]] = None */}
-            </section>
-            <section className="space-y-5 p-4">
               <h3 className="text-md font-medium">Variables for formulas</h3>
               <h4 className="font-medium text-sm">
                 Direct from the data source:
@@ -497,7 +503,7 @@ function FormulaEditor({
       />
       <EditorSwitch
         label="Is percentage"
-        value={!!column.isPercentage}
+        value={!!values.isPercentage}
         onChange={(value) => {
           form.setValue('isPercentage', !!value)
         }}

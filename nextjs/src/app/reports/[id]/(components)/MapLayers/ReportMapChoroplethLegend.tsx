@@ -36,6 +36,7 @@ import toSpaceCase from 'to-space-case'
 import { BoundaryType, POLITICAL_BOUNDARIES } from '../../politicalTilesets'
 import {
   Palette,
+  StatisticalDataType,
   ViewType,
   getReportInterpolatorFromPalette,
 } from '../../reportContext'
@@ -180,131 +181,152 @@ export default function ReportMapChoroplethLegend() {
 
             {viewManager.currentViewOfType?.mapOptions.display.choropleth && (
               <>
-                <div className="flex flex-col gap-2 w-full">
-                  <EditorSelect
-                    value={
-                      viewManager.currentViewOfType?.mapOptions.choropleth
-                        .layerId
-                    }
-                    className={'w-full'}
-                    options={reportManager.report.layers.map((layer) => ({
-                      value: layer.id,
-                      label: (
-                        <CRMSelection
-                          source={layer.sourceData}
-                          displayCount={false}
-                          className="truncate"
-                        />
-                      ),
-                    }))}
-                    onChange={(layerId) =>
-                      viewManager.updateView((draft) => {
-                        draft.mapOptions.choropleth.layerId = layerId
-                      })
-                    }
-                    valueClassName={twMerge(
-                      !viewManager.currentViewOfType?.mapOptions.display
-                        .choropleth
-                        ? '!text-meepGray-500'
-                        : ''
-                    )}
-                  />
-                </div>
+                {/* Advanced and hide */}
+                {!viewManager.currentViewOfType?.mapOptions.choropleth
+                  .useAdvancedStatistics && (
+                  <div className="flex flex-col gap-2 w-full">
+                    <EditorSelect
+                      value={
+                        viewManager.currentViewOfType?.mapOptions.choropleth
+                          .layerId
+                      }
+                      className={'w-full'}
+                      options={reportManager.report.layers.map((layer) => ({
+                        value: layer.id,
+                        label: (
+                          <CRMSelection
+                            source={layer.sourceData}
+                            displayCount={false}
+                            className="truncate"
+                          />
+                        ),
+                      }))}
+                      onChange={(layerId) =>
+                        viewManager.updateView((draft) => {
+                          draft.mapOptions.choropleth.layerId = layerId
+                        })
+                      }
+                      valueClassName={twMerge(
+                        !viewManager.currentViewOfType?.mapOptions.display
+                          .choropleth
+                          ? '!text-meepGray-500'
+                          : ''
+                      )}
+                    />
+                  </div>
+                )}
 
-                <EditorSelect
-                  // iconComponent={LucidePaintRoller}
-                  // label={'Displaying'}
-                  labelClassName="w-[100px]"
-                  value={
-                    viewManager.currentViewOfType?.mapOptions.choropleth.palette
-                  }
-                  valueClassName="w-full"
-                  options={Object.values(Palette).map((value) => ({
-                    value,
-                    label: (
-                      <ColourStops
-                        key={value}
-                        palette={value}
-                        reversePalette={
+                {!viewManager.currentViewOfType?.mapOptions.choropleth
+                  .useAdvancedStatistics ||
+                  (viewManager.currentViewOfType?.mapOptions.choropleth
+                    .dataType === StatisticalDataType.Continuous && (
+                    <>
+                      <EditorSelect
+                        // iconComponent={LucidePaintRoller}
+                        // label={'Displaying'}
+                        labelClassName="w-[100px]"
+                        value={
+                          viewManager.currentViewOfType?.mapOptions.choropleth
+                            .palette
+                        }
+                        valueClassName="w-full"
+                        options={Object.values(Palette).map((value) => ({
+                          value,
+                          label: (
+                            <ColourStops
+                              key={value}
+                              palette={value}
+                              reversePalette={
+                                viewManager.currentViewOfType?.mapOptions
+                                  .choropleth.isPaletteReversed
+                              }
+                            />
+                          ),
+                        }))}
+                        onChange={(option) => {
+                          viewManager.updateView((draft) => {
+                            draft.mapOptions.choropleth.palette =
+                              option as Palette
+                          })
+                        }}
+                      />
+
+                      <EditorSwitch
+                        label="Reverse palette"
+                        value={
                           viewManager.currentViewOfType?.mapOptions.choropleth
                             .isPaletteReversed
                         }
+                        onChange={(bool) => {
+                          viewManager.updateView((draft) => {
+                            draft.mapOptions.choropleth.isPaletteReversed =
+                              !!bool
+                          })
+                        }}
                       />
-                    ),
-                  }))}
-                  onChange={(option) => {
-                    viewManager.updateView((draft) => {
-                      draft.mapOptions.choropleth.palette = option as Palette
-                    })
-                  }}
-                />
+                    </>
+                  ))}
 
-                <EditorSwitch
-                  label="Reverse palette"
-                  value={
-                    viewManager.currentViewOfType?.mapOptions.choropleth
-                      .isPaletteReversed
-                  }
-                  onChange={(bool) => {
-                    viewManager.updateView((draft) => {
-                      draft.mapOptions.choropleth.isPaletteReversed = !!bool
-                    })
-                  }}
-                />
+                {!viewManager.currentViewOfType?.mapOptions.choropleth
+                  .useAdvancedStatistics && (
+                  <>
+                    <EditorSelect
+                      // iconComponent={LucidePaintRoller}
+                      label={'Displaying'}
+                      labelClassName="w-[100px]"
+                      value={
+                        viewManager.currentViewOfType?.mapOptions.choropleth
+                          .mode
+                      }
+                      options={Object.values(ChoroplethMode)
+                        .filter((k) => {
+                          return k !== ChoroplethMode.Table
+                        })
+                        .map((value) => ({
+                          value,
+                          label: toSpaceCase(value),
+                        }))}
+                      onChange={(option) => {
+                        viewManager.updateView((draft) => {
+                          draft.mapOptions.choropleth.mode =
+                            option as ChoroplethMode
+                        })
+                      }}
+                    />
 
-                <EditorSelect
-                  // iconComponent={LucidePaintRoller}
-                  label={'Displaying'}
-                  labelClassName="w-[100px]"
-                  value={
-                    viewManager.currentViewOfType?.mapOptions.choropleth.mode
-                  }
-                  options={Object.values(ChoroplethMode)
-                    .filter((k) => {
-                      return k !== ChoroplethMode.Table
-                    })
-                    .map((value) => ({
-                      value,
-                      label: toSpaceCase(value),
-                    }))}
-                  onChange={(option) => {
-                    viewManager.updateView((draft) => {
-                      draft.mapOptions.choropleth.mode =
-                        option as ChoroplethMode
-                    })
-                  }}
-                />
+                    {viewManager.currentViewOfType?.mapOptions.choropleth
+                      .mode === ChoroplethMode.Formula && <FormulaConfig />}
 
-                {viewManager.currentViewOfType?.mapOptions.choropleth.mode ===
-                  ChoroplethMode.Formula && <FormulaConfig />}
-
-                {viewManager.currentViewOfType?.mapOptions.choropleth.mode ===
-                  ChoroplethMode.Field && (
-                  <EditorSelect
-                    label="Displayed field"
-                    labelClassName="w-[100px]"
-                    value={
-                      viewManager.currentViewOfType?.mapOptions.choropleth.field
-                    }
-                    options={[
-                      ...(choroplethLayer?.sourceData.fieldDefinitions
-                        ?.filter(
-                          // no ID fields
-                          (d: any) =>
-                            d.value !== choroplethLayer.sourceData.idField
-                        )
-                        .map((d: any) => ({
-                          label: d.label,
-                          value: d.value,
-                        })) || []),
-                    ]}
-                    onChange={(dataSourceField) => {
-                      viewManager.updateView((draft) => {
-                        draft.mapOptions.choropleth.field = dataSourceField
-                      })
-                    }}
-                    disabled={!choroplethLayer?.sourceData.fieldDefinitions}
-                  />
+                    {viewManager.currentViewOfType?.mapOptions.choropleth
+                      .mode === ChoroplethMode.Field && (
+                      <EditorSelect
+                        label="Displayed field"
+                        labelClassName="w-[100px]"
+                        value={
+                          viewManager.currentViewOfType?.mapOptions.choropleth
+                            .field
+                        }
+                        options={[
+                          ...(choroplethLayer?.sourceData.fieldDefinitions
+                            ?.filter(
+                              // no ID fields
+                              (d: any) =>
+                                d.value !== choroplethLayer.sourceData.idField
+                            )
+                            .map((d: any) => ({
+                              label: d.label,
+                              value: d.value,
+                            })) || []),
+                        ]}
+                        onChange={(dataSourceField) => {
+                          viewManager.updateView((draft) => {
+                            draft.mapOptions.choropleth.field = dataSourceField
+                          })
+                        }}
+                        disabled={!choroplethLayer?.sourceData.fieldDefinitions}
+                      />
+                    )}
+                  </>
                 )}
               </>
             )}
