@@ -680,12 +680,12 @@ def statistics(
                     formatted_count=(
                         (
                             # pretty percentage
-                            f"{row.get("count", 0):.0%}"
+                            f"{row.get('count', 0):.0%}"
                         )
                         if is_percentage
                         else (
                             # comma-separated integer
-                            f"{row.get("count", 0):,.0f}"
+                            f"{row.get('count', 0):,.0f}"
                         )
                     ),
                     is_percentage=is_percentage,
