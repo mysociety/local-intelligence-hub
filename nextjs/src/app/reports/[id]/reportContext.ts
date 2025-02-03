@@ -157,6 +157,11 @@ export enum DataDisplayMode {
   RawData = 'RawData',
 }
 
+export enum ElectionSystem {
+  FPTP = 'FPTP',
+  Majority = 'Majority',
+}
+
 export const explorerDisplaySchema = z.object({
   id: z.string().uuid().default(uuid.v4),
   layerId: z.string().uuid(),
@@ -177,6 +182,7 @@ export const explorerDisplaySchema = z.object({
     .describe('Use this to display multiple big fields via the same query'),
   isPercentage: z.boolean().optional(),
   isElectoral: z.boolean().optional(),
+  electionSystem: z.nativeEnum(ElectionSystem).optional(),
   appendChoroplethStatistics: z
     .boolean()
     .optional()
