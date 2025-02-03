@@ -155,7 +155,11 @@ export const getSelectedChoroplethFillFilter = (
   return ['==', ['get', tileset.promoteId], selectedGss]
 }
 
-export function getAreaGeoJSON(data: DataByBoundary) {
+export function getAreaGeoJSON(
+  data: DataByBoundary,
+  formattedValueCb: (d: DataByBoundary[number]) => string | number = (d) =>
+    d.category || d.formattedCount || d.count || 0
+) {
   return {
     type: 'FeatureCollection',
     features: data
@@ -165,7 +169,7 @@ export function getAreaGeoJSON(data: DataByBoundary) {
         geometry: d.gssArea?.point?.geometry! as GeoJSON.Point,
         properties: {
           count: d.count,
-          formattedCount: d.category || d.formattedCount || d.count,
+          formattedCount: formattedValueCb(d),
           label: d.label,
         },
       })),
@@ -233,8 +237,8 @@ export const getAreaCountLayout = (
       12,
       [0, -1],
     ],
-    'text-allow-overlap': true,
-    'text-ignore-placement': true,
+    // 'text-allow-overlap': true,
+    // 'text-ignore-placement': true,
     'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
   }
 }

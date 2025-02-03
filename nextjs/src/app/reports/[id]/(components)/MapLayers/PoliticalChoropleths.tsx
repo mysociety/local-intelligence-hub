@@ -15,17 +15,21 @@ import { addCountByGssToMapboxLayer } from '../../addCountByGssToMapboxLayer'
 import {
   getAreaCountLayout,
   getAreaGeoJSON,
-  getAreaLabelLayout,
   getChoroplethEdge,
   getChoroplethFill,
   getSelectedChoroplethEdge,
 } from '../../mapboxStyles'
 import { BoundaryType } from '../../politicalTilesets'
-import { SpecificViewConfig, ViewType } from '../../reportContext'
+import {
+  SpecificViewConfig,
+  StatisticalDataType,
+  ViewType,
+} from '../../reportContext'
 import { Tileset } from '../../types'
 import useDataByBoundary from '../../useDataByBoundary'
 import useHoverOverBoundaryEvents from '../../useSelectBoundary'
 import { PLACEHOLDER_LAYER_ID_CHOROPLETH } from '../MapView'
+import { guessParty } from '../explorer/AreaExplorer'
 
 interface PoliticalChoroplethsProps {
   tilesets: Tileset[]
@@ -65,14 +69,10 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
 
   const boundaryNameVisibility =
     shaderVisibility === 'visible' && view.mapOptions.display.boundaryNames
-      ? 'visible'
-      : 'none'
 
   const choroplethValueLabelsVisibility =
     shaderVisibility === 'visible' &&
     view.mapOptions.display.choroplethValueLabels
-      ? 'visible'
-      : 'none'
 
   const areasVisible =
     borderVisibility === 'visible' || shaderVisibility === 'visible'
@@ -183,7 +183,26 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
           <Source
             id={`${tileset.mapboxSourceId}-area-count`}
             type="geojson"
-            data={getAreaGeoJSON(dataByBoundary)}
+            data={getAreaGeoJSON(dataByBoundary, (d) => {
+              const value =
+                (view.mapOptions.choropleth.dataType ===
+                StatisticalDataType.Nominal
+                  ? view.mapOptions.choropleth.isParty
+                    ? d.category
+                      ? guessParty(d.category).shortName
+                      : d.category
+                    : d.category || '?'
+                  : d.formattedCount || d.count || 0) || ''
+              if (boundaryNameVisibility && choroplethValueLabelsVisibility) {
+                return `${d.label}:\n${value}`
+              } else if (boundaryNameVisibility) {
+                return d.label || ''
+              } else if (choroplethValueLabelsVisibility) {
+                return value
+              } else {
+                return ''
+              }
+            })}
             minzoom={tileset.minZoom}
             maxzoom={tileset.maxZoom}
           >
@@ -192,7 +211,10 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
               type="symbol"
               layout={{
                 ...getAreaCountLayout(dataByBoundary),
-                visibility: choroplethValueLabelsVisibility,
+                visibility:
+                  choroplethValueLabelsVisibility || boundaryNameVisibility
+                    ? 'visible'
+                    : 'none',
               }}
               paint={{
                 'text-opacity': [
@@ -212,12 +234,12 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
               maxzoom={tileset.maxZoom}
             />
 
-            <Layer
+            {/* <Layer
               id={`${tileset.mapboxSourceId}-area-label`}
               type="symbol"
               layout={{
                 ...getAreaLabelLayout(dataByBoundary),
-                visibility: boundaryNameVisibility,
+                visibility: boundaryNameVisibility ? 'visible' : 'none',
               }}
               paint={{
                 'text-color': 'white',
@@ -235,7 +257,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
               }}
               minzoom={tileset.minZoom}
               maxzoom={tileset.maxZoom}
-            />
+            /> */}
           </Source>
         </Fragment>
       ))}
