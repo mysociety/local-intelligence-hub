@@ -185,8 +185,9 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
             type="geojson"
             data={getAreaGeoJSON(dataByBoundary, (d) => {
               const value =
-                (view.mapOptions.choropleth.dataType ===
-                StatisticalDataType.Nominal
+                (view.mapOptions.choropleth.useAdvancedStatistics &&
+                view.mapOptions.choropleth.dataType ===
+                  StatisticalDataType.Nominal
                   ? view.mapOptions.choropleth.isParty
                     ? d.category
                       ? guessParty(d.category).shortName
