@@ -1,4 +1,6 @@
 import {
+  AreaDisplayStatisticsQuery,
+  AreaDisplayStatisticsQueryVariables,
   AreaExplorerSummaryQuery,
   AreaExplorerSummaryQueryVariables,
   AreaLayerDataQuery,
@@ -72,7 +74,7 @@ import { toast } from 'sonner'
 import toSpaceCase from 'to-space-case'
 import trigramSimilarity from 'trigram-similarity'
 import { v4 } from 'uuid'
-import { BoundaryType, dbAreaTypeToBoundaryType } from '../../politicalTilesets'
+import { BoundaryType } from '../../politicalTilesets'
 import {
   DataDisplayMode,
   IExplorerDisplay,
@@ -87,7 +89,7 @@ import { PropertiesDisplay } from '../dashboard/PropertiesDisplay'
 import { TableDisplay } from '../dashboard/TableDisplay'
 import { DisplayCreator } from './AreaExplorerDisplayCreator'
 
-export function AreaExplorer({ gss }: { gss: string }) {
+export function AreaExplorer({ gss }: { gss?: string }) {
   const [selectedTab, setSelectedTab] = useState('summary')
   const explorer = useExplorer()
   const sensors = useSensors(
@@ -103,23 +105,9 @@ export function AreaExplorer({ gss }: { gss: string }) {
     AreaExplorerSummaryQuery,
     AreaExplorerSummaryQueryVariables
   >(AREA_EXPLORER_SUMMARY, {
-    variables: { gss },
+    variables: { gss: gss! },
     skip: !gss,
   })
-
-  const boundaryType = areaData.data?.area?.areaType.code
-    ? dbAreaTypeToBoundaryType(areaData.data?.area?.areaType.code)
-    : undefined
-
-  const mapView = useView(ViewType.Map)
-
-  // useEffect(() => {
-  //   if (boundaryType) {
-  //     mapView.updateView((draft) => {
-  //       draft.mapOptions.choropleth.boundaryType = boundaryType
-  //     })
-  //   }
-  // }, [areaData, boundaryType])
 
   const report = useReport()
   const { addStarredItem, removeStarredItem } = report
@@ -132,43 +120,49 @@ export function AreaExplorer({ gss }: { gss: string }) {
 
   return (
     <SidebarContent className="bg-meepGray-600 overflow-x-hidden h-full">
-      <SidebarHeader className="!text-white p-4 mb-0">
-        <>
-          <AreaExplorerBreadcrumbs area={areaData.data?.area} />
-          <div className="text-hMd flex flex-row gap-2 w-full items-center">
-            {areaData.loading ? (
-              <span className="text-meepGray-400">Loading...</span>
-            ) : areaData.error || !areaData.data?.area ? (
-              <span className="text-meepGray-400">???</span>
-            ) : (
-              <>
-                <span className="mr-auto">{areaData.data?.area?.name}</span>
-                <div className="flex flex-row gap-2 items-center">
-                  <Star
-                    onClick={() => report.toggleStarred(starredItemData)}
-                    className={`ml-auto text-meepGray-400 cursor-pointer ${
-                      report.isStarred(starredItemData)
-                        ? 'fill-meepGray-400 hover:text-meepGray-200 hover:fill-meepGray-600'
-                        : 'fill-transparent hover:text-white hover:fill-white'
-                    }`}
-                    size={16}
-                  />
-                  <LucideLink
-                    onClick={copyAreaURL}
-                    className="ml-auto text-meepGray-400 hover:text-meepGray-200 cursor-pointer"
-                    size={16}
-                  />
-                  <TargetIcon
-                    className="ml-auto text-meepGray-400 hover:text-meepGray-200 cursor-pointer"
-                    size={16}
-                    onClick={explorer.zoom}
-                  />
-                </div>
-              </>
-            )}
-          </div>
-        </>
-      </SidebarHeader>
+      {!!gss || areaData.data ? (
+        <SidebarHeader className="!text-white p-4 mb-0">
+          <>
+            <AreaExplorerBreadcrumbs area={areaData.data?.area} />
+            <div className="text-hMd flex flex-row gap-2 w-full items-center">
+              {areaData.loading ? (
+                <span className="text-meepGray-400">Loading...</span>
+              ) : areaData.error || !areaData.data?.area ? (
+                <span className="text-meepGray-400">???</span>
+              ) : (
+                <>
+                  <span className="mr-auto">{areaData.data?.area?.name}</span>
+                  <div className="flex flex-row gap-2 items-center">
+                    <Star
+                      onClick={() => report.toggleStarred(starredItemData)}
+                      className={`ml-auto text-meepGray-400 cursor-pointer ${
+                        report.isStarred(starredItemData)
+                          ? 'fill-meepGray-400 hover:text-meepGray-200 hover:fill-meepGray-600'
+                          : 'fill-transparent hover:text-white hover:fill-white'
+                      }`}
+                      size={16}
+                    />
+                    <LucideLink
+                      onClick={copyAreaURL}
+                      className="ml-auto text-meepGray-400 hover:text-meepGray-200 cursor-pointer"
+                      size={16}
+                    />
+                    <TargetIcon
+                      className="ml-auto text-meepGray-400 hover:text-meepGray-200 cursor-pointer"
+                      size={16}
+                      onClick={explorer.zoom}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </>
+        </SidebarHeader>
+      ) : (
+        <SidebarHeader className="!text-white p-4 mb-0">
+          <span className="text-hMd">United Kingdom</span>
+        </SidebarHeader>
+      )}
       <Tabs
         defaultValue="summary"
         className="w-full"
@@ -243,6 +237,7 @@ export function AreaExplorer({ gss }: { gss: string }) {
   )
 
   function copyAreaURL() {
+    if (!gss) return
     // clean URL
     const currentURL = window.location.href.split('?')[0]
     // add GSS code to URL
@@ -299,7 +294,7 @@ function SortableAreaDisplay({
   area,
 }: {
   display: IExplorerDisplay
-  gss: string
+  gss?: string
   area?: AreaExplorerSummaryQuery['area']
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
@@ -329,7 +324,7 @@ function AreaDisplay({
   area,
 }: {
   display: IExplorerDisplay
-  gss: string
+  gss?: string
   area: AreaExplorerSummaryQuery['area']
 }) {
   const view = useView(ViewType.Map)
@@ -353,22 +348,31 @@ function AreaDisplay({
     AREA_LAYER_DATA,
     {
       variables: {
-        gss,
+        gss: gss!,
         externalDataSource: sourceId!,
         mode: display.areaQueryMode,
-        statsConfig: {
-          ...relevantChoroplethConfig,
-          sourceIds: [sourceId!],
-          gssCodes: [gss],
-          areaQueryMode: display.areaQueryMode,
-          groupByArea: area?.analyticalAreaType
-            ? area?.analyticalAreaType
-            : undefined,
-        },
       },
-      skip: !sourceId || !gss,
+      skip: !sourceId,
     }
   )
+
+  const stats = useQuery<
+    AreaDisplayStatisticsQuery,
+    AreaDisplayStatisticsQueryVariables
+  >(STATISTICS, {
+    variables: {
+      statsConfig: {
+        ...relevantChoroplethConfig,
+        sourceIds: [sourceId!],
+        gssCodes: gss ? [gss] : null,
+        areaQueryMode: display.areaQueryMode,
+        groupByArea: area?.analyticalAreaType
+          ? area?.analyticalAreaType
+          : undefined,
+      },
+    },
+    skip: !sourceId,
+  })
 
   const { updateReport } = useReport()
 
@@ -464,7 +468,7 @@ function AreaDisplay({
                 <EditorSelect
                   label={'Displayed field'}
                   value={display.bigNumberField}
-                  options={allKeysFromAllData(data.data?.statistics || {}).map(
+                  options={allKeysFromAllData(stats.data?.statistics || {}).map(
                     (key) => ({
                       value: key,
                       label: key,
@@ -526,22 +530,22 @@ function AreaDisplay({
         </Popover>
       }
     >
-      {data.loading ? (
+      {data.loading || stats.loading ? (
         <div className="text-meepGray-400">
           <LoadingIcon size={'32px'} />
         </div>
-      ) : data.error || !data.data ? (
+      ) : (data.error || !data.data) && (stats.error || !stats.data) ? (
         <div className="text-meepGray-400 py-2">No data available</div>
       ) : (
         <div className="text-meepGray-400">
           {display.displayType === InspectorDisplayType.Properties ? (
             display.dataDisplayMode === DataDisplayMode.Aggregated ? (
-              <PropertiesDisplay data={data.data?.statistics?.[0]} />
+              <PropertiesDisplay data={stats.data?.statistics?.[0]} />
             ) : // There's a list of data
-            data.data.data.length > 1 ||
+            (!!data.data?.data?.length && data.data?.data?.length > 1) ||
               // There's only one data item, but it's not the current area
-              (!!data.data.data.length &&
-                !data.data.data.some(
+              (!!data.data?.data.length &&
+                !data.data?.data.some(
                   (d) => d.area?.gss === explorer.state.id
                 )) ? (
               <RelatedDataCarousel data={data.data.data} />
@@ -555,7 +559,7 @@ function AreaDisplay({
             <TableDisplay
               data={
                 display.dataDisplayMode === DataDisplayMode.Aggregated
-                  ? data.data?.statistics?.[0]
+                  ? stats.data?.statistics?.[0]
                   : data.data?.data
               }
               title={display.name || layer.name}
@@ -565,8 +569,8 @@ function AreaDisplay({
             display.displayType === InspectorDisplayType.ElectionResult ? (
             <>
               {/* If the data isn't about the current area, note this. */}
-              {!!data.data.data.length &&
-                !data.data.data.some((d) => d.area?.gss === gss) && (
+              {!!data.data?.data.length &&
+                !data.data?.data.some((d) => d.area?.gss === gss) && (
                   <div className="text-sm mb-2">
                     Summarised data for{' '}
                     {data.data.data.length > 3
@@ -605,13 +609,13 @@ function AreaDisplay({
                         ))}
                   </div>
                 )}
-              {!area ? (
+              {!area && explorer.isValidEntity(explorer.state) ? (
                 <LoadingIcon size={'32px'} />
               ) : (
                 <ElectionResultsDisplay
                   area={area}
                   display={display}
-                  data={data.data.statistics?.[0]}
+                  data={stats.data?.statistics?.[0]}
                 />
               )}
             </>
@@ -620,7 +624,7 @@ function AreaDisplay({
               count={
                 display.dataDisplayMode === DataDisplayMode.Aggregated &&
                 display.bigNumberField
-                  ? data.data?.statistics?.[0]?.[display.bigNumberField] ||
+                  ? stats.data?.statistics?.[0]?.[display.bigNumberField] ||
                     '???'
                   : data.data?.data?.length
               }
@@ -672,7 +676,6 @@ const AREA_LAYER_DATA = gql`
     $gss: String!
     $externalDataSource: String!
     $mode: AreaQueryMode
-    $statsConfig: StatisticsConfig!
   ) {
     # collect point data
     data: genericDataFromSourceAboutArea(
@@ -697,29 +700,12 @@ const AREA_LAYER_DATA = gql`
         }
       }
     }
+  }
+`
+
+export const STATISTICS = gql`
+  query AreaDisplayStatistics($statsConfig: StatisticsConfig!) {
     statistics(statsConfig: $statsConfig, returnNumericKeysOnly: true)
-    # aggregate statistics about any data related to this area
-    # summary: genericDataSummaryFromSourceAboutArea(
-    #   gss: $gss
-    #   sourceId: $externalDataSource
-    #   mode: $mode
-    # ) {
-    #   aggregated
-    #   metadata {
-    #     first
-    #     second
-    #     third
-    #     last
-    #     total
-    #     majority
-    #     count
-    #     mean
-    #     median
-    #     numericalKeys
-    #     percentageKeys
-    #     isPercentage
-    #   }
-    # }
   }
 `
 
@@ -954,64 +940,78 @@ export function guessParty(searchStr: string) {
   return similarities[0].party || partyOther
 }
 
-const partyOther = {
+interface PartyPayload {
+  name: string
+  shortName: string
+  colour: string
+  aliases: string[]
+}
+
+const partyOther: PartyPayload = {
   name: 'Other',
+  shortName: 'Other',
   colour: 'gray',
   aliases: ['Other', 'Oth'],
 }
 
-const partyDictionary: {
-  name: string
-  colour: string
-  aliases: string[]
-}[] = [
+const partyDictionary: PartyPayload[] = [
   {
     name: 'Conservative',
+    shortName: 'Con',
     colour: '#0087DC',
     aliases: ['Conservative', 'Con'],
   },
   {
     name: 'Labour',
+    shortName: 'Lab',
     colour: '#DC241f',
     aliases: ['Labour', 'Lab'],
   },
   {
     name: 'Liberal Democrats',
+    shortName: 'LD',
     colour: '#FAA61A',
     aliases: ['LD', 'LDEM', 'LibDem'],
   },
   {
     name: 'SNP',
+    shortName: 'SNP',
     colour: '#FFF95D',
     aliases: ['SNP'],
   },
   {
     name: 'Green',
+    shortName: 'Grn',
     colour: '#6AB023',
     aliases: ['Green', 'Grn'],
   },
   {
     name: 'Plaid Cymru',
+    shortName: 'PC',
     colour: '#008142',
     aliases: ['Plaid Cymru', 'PC'],
   },
   {
     name: 'UKIP',
+    shortName: 'UKIP',
     colour: '#70147A',
     aliases: ['UKIP'],
   },
   {
     name: 'Brexit',
+    shortName: 'Brx',
     colour: '#12B6CF',
     aliases: ['Brexit'],
   },
   {
     name: 'Independent',
+    shortName: 'Ind',
     colour: 'gray',
     aliases: ['Independent', 'Ind'],
   },
   {
     name: 'Reform',
+    shortName: 'Ref',
     colour: '#6d3177', //'#12B6CF',
     aliases: ['Reform', 'Ref'],
   },
@@ -1085,7 +1085,9 @@ function ListDisplay({
           item,
           dataType
         )
-        const isActive = explorer.isValidEntity(explorer.state)
+        const isActive =
+          explorer.isValidEntity(explorer.state) &&
+          explorer.state.id === item.id
 
         return (
           <div
@@ -1137,7 +1139,7 @@ function BigRecord({
   }
 
   const { primary, secondary } = getListValuesBasedOnDataType(item, dataType)
-  const isActive = explorer.isValidEntity(explorer.state)
+  // const isActive = explorer.isValidEntity(explorer.state)
 
   return (
     <div

@@ -14,9 +14,7 @@ export function ReportSidebarRight() {
           '--sidebar-width': '360px',
         } as React.CSSProperties
       }
-      open={
-        explorer.isValidEntity(explorer.state) && explorer.state.showExplorer
-      }
+      open={!!explorer.state.showExplorer}
     >
       <Sidebar
         style={{
@@ -32,11 +30,7 @@ export function ReportSidebarRight() {
             <RecordExplorer id={explorer.state.id} />
           )
         ) : (
-          <div>
-            <div className="text-white text-center text-hSm py-4">
-              No data to display
-            </div>
-          </div>
+          <AreaExplorer />
         )}
       </Sidebar>
     </SidebarProvider>

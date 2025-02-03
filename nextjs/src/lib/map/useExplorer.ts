@@ -33,8 +33,10 @@ export const explorerStateSchema = z.object({
 export function useExplorer() {
   const [state, setState] = useQueryStates(
     {
-      entity: entityParser,
-      id: idParser,
+      entity: entityParser
+        .withDefault('')
+        .withOptions({ clearOnDefault: true }),
+      id: idParser.withDefault('').withOptions({ clearOnDefault: true }),
       showExplorer: showExplorerParser,
     },
     {
@@ -109,9 +111,9 @@ export function useExplorer() {
   }
 
   function show() {
-    if (isValidEntity(state)) {
-      return setState((s) => ({ showExplorer: true }))
-    }
+    // if (isValidEntity(state)) {
+    return setState((s) => ({ showExplorer: true }))
+    // }
   }
 
   function hide() {

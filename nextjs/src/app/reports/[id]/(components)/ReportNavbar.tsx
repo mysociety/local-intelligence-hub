@@ -132,12 +132,12 @@ export default function ReportNavbar() {
               <TableComboBox />
             )}
             <ReportStarredItemsDropdown />
-            {!!explorer.isValidEntity(explorer.state) && (
-              <PanelRight
-                onClick={explorer.toggle}
-                className="text-meepGray-400 w-4 h-4 cursor-pointer ml-3"
-              />
-            )}
+            {/* {!!explorer.isValidEntity(explorer.state) && ( */}
+            <PanelRight
+              onClick={explorer.toggle}
+              className="text-meepGray-400 w-4 h-4 cursor-pointer ml-3"
+            />
+            {/* )} */}
           </div>
         </div>
       </section>
