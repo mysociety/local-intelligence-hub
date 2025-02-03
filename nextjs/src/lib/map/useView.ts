@@ -55,7 +55,6 @@ export function useView<HookVT extends ViewType = any>(
 
   function setCurrentViewId(id: string) {
     __setCurrentViewId(id)
-    explorer.hide()
   }
 
   function updateView(cb: (draft: SpecificViewConfig<HookVT>) => void) {
