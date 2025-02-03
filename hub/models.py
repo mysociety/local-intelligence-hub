@@ -1275,7 +1275,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             "name": self.name,
             "author": self.organisation.name,
             "description": self.description,
-            "source_paths": self.field_definitions(),
+            "source_paths": self.field_definitions,
             "external_data_source": self,
         }
 
@@ -1286,6 +1286,23 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         external_id: Optional[str]
         editable: Optional[bool] = True
 
+    FIELD_DEFINITIONS_SCHEMA = {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "properties": {
+                "value": {"type": "string", "required": True},
+                "label": {"type": "string"},
+                "description": {"type": "string"},
+                "external_id": {"type": "string"},
+                "editable": {"type": "boolean", "default": True},
+            },
+        },
+    }
+
+    field_definitions = JSONField(
+        blank=True, null=True, default=list, schema=FIELD_DEFINITIONS_SCHEMA
+    )
     # Auto-updates
     UPDATE_MAPPING_SCHEMA = {
         "type": "array",
@@ -1575,13 +1592,22 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             "Healthcheck not implemented for this data source type."
         )
 
-    def field_definitions(self) -> list[FieldDefinition]:
+    def load_field_definitions(self) -> list[FieldDefinition]:
         """
-        Get the fields for the data source.
+        Dummy implementation of loading field definitions from an external source.
         """
         raise NotImplementedError(
             "Field definitions not implemented for this data source."
         )
+
+    def refresh_field_definitions(self) -> None:
+        """
+        Get the fields for the data source, then save them to the database.
+        """
+        self.field_definitions = self.load_field_definitions()
+        # Only save the source if it already exists in the database
+        if self.created_at:
+            self.save()
 
     def remote_name(self) -> Optional[str]:
         """
@@ -2822,7 +2848,7 @@ class DatabaseJSONSource(ExternalDataSource):
     def df(self):
         return pd.DataFrame(self.data).set_index(self.id_field, drop=False)
 
-    def field_definitions(self):
+    def load_field_definitions(self):
         # get all keys from self.data
         return [
             self.FieldDefinition(label=col, value=col)
@@ -2947,7 +2973,7 @@ class UploadedCSVSource(ExternalDataSource):
     async def import_many(self, members):
         await super().import_many(members)
 
-    def field_definitions(self):
+    def load_field_definitions(self):
         return [self.FieldDefinition(label=col, value=col) for col in self.columns]
 
     def get_record_id(self, record: dict):
@@ -3037,7 +3063,7 @@ class AirtableSource(ExternalDataSource):
         self.table.first()
         return True
 
-    def field_definitions(self):
+    def load_field_definitions(self):
         return [
             self.FieldDefinition(
                 label=field.name,
@@ -3452,7 +3478,7 @@ class MailchimpSource(ExternalDataSource):
             return []
         return [webhook_payload["data[email]"]]
 
-    def field_definitions(self):
+    def load_field_definitions(self):
         """
         Mailchimp subscriber built-in fields.
         """
@@ -3740,7 +3766,7 @@ class ActionNetworkSource(ExternalDataSource):
     def get_record_field(self, record, field: str, field_type=None):
         return get(record, field)
 
-    def field_definitions(self):
+    def load_field_definitions(self):
         """
         ActionNetwork activist built-in fields.
         """
@@ -4128,7 +4154,7 @@ class EditableGoogleSheetsSource(ExternalDataSource):
             return True
         return False
 
-    def field_definitions(self):
+    def load_field_definitions(self):
         header_row = self.headers
         return [
             self.FieldDefinition(label=column, value=column) for column in header_row
@@ -4548,7 +4574,7 @@ class TicketTailorSource(ExternalDataSource):
         json = pong.json()
         return json.get("version", "X").startswith("1.")
 
-    def field_definitions(self):
+    def load_field_definitions(self):
         """
         ActionNetwork activist built-in fields.
         """

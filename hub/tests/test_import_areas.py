@@ -155,7 +155,7 @@ class ImportAreasTestCase(TestCase):
 
         call_command("import_areas", quiet=self.quiet_parameter)
 
-        areas = Area.objects.all()
+        areas = Area.objects.order_by("gss").all()
         self.assertEqual(areas.count(), 2)
 
         first = areas[0]
