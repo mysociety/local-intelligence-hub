@@ -31,7 +31,7 @@ export function EditorSelect({
         value={value || undefined}
         disabled={disabled}
       >
-        <SelectTrigger className="w-full border-none text-meepGray-100 font-medium p-0 my-0 h-8 text-left truncate">
+        <SelectTrigger className="w-full border border-meepGray-700 rounded-sm text-meepGray-100 font-medium px-2 my-0 h-8 text-left truncate">
           {!!disabled && !!disabledMessage ? (
             disabledMessage
           ) : (
