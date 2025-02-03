@@ -176,6 +176,11 @@ export const explorerDisplaySchema = z.object({
     .optional()
     .describe('Use this to display multiple big fields via the same query'),
   isPercentage: z.boolean().optional(),
+  isElectoral: z.boolean().optional(),
+  appendChoroplethStatistics: z
+    .boolean()
+    .optional()
+    .describe('Include configured variables so that visualisations match up'),
   useAdvancedStatistics: z.boolean().optional(),
   advancedStatisticsConfig: StatisticsConfigSchema()
     .optional()
@@ -244,7 +249,7 @@ const mapOptionsSchema = z.object({
       dataType: z
         .nativeEnum(StatisticalDataType)
         .default(StatisticalDataType.Continuous),
-      isParty: z
+      isElectoral: z
         .boolean()
         .optional()
         .describe(

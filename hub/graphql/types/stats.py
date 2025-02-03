@@ -102,6 +102,7 @@ class AggregationOp(Enum):
     Max = "Max"
     Min = "Min"
     Count = "Count"
+    Guess = "Guess"
 
 
 @strawberry.input
@@ -484,7 +485,7 @@ def statistics(
                 else:
                     agg_config[key] = "sum"
                 for op in conf.aggregation_operations:
-                    if op.column == key:
+                    if op.column == key and op.operation is not AggregationOp.Guess:
                         agg_config[key] = op.operation.value.lower()
                         break
         else:
@@ -496,16 +497,18 @@ def statistics(
                     else None
                 )
                 if (
-                    conf.aggregation_operation
-                ):
-                    agg_config[key] = conf.aggregation_operation.value.lower()
-                elif (
                     calculated_column
                     and calculated_column.aggregation_operation
+                    and calculated_column.aggregation_operation is not AggregationOp.Guess
                 ):
                     agg_config[key] = (
                         calculated_column.aggregation_operation.value.lower()
                     )
+                elif (
+                    conf.aggregation_operation
+                    and conf.aggregation_operation is not AggregationOp.Guess
+                ):
+                    agg_config[key] = conf.aggregation_operation.value.lower()
                 elif key in percentage_keys:
                     agg_config[key] = "mean"
                 else:
@@ -586,7 +589,9 @@ def statistics(
         agg_config = dict()
         for col in groups:
             name = col.name or col.column
-            aggop = col.aggregation_operation or (AggregationOp.Mean if col.is_percentage else AggregationOp.Sum)
+            aggop = col.aggregation_operation if (
+                col.aggregation_operation and col.aggregation_operation is not AggregationOp.Guess
+            ) else (AggregationOp.Mean if col.is_percentage else AggregationOp.Sum)
             agg_config.update(
                 **{
                     name: pd.NamedAgg(column=col.column, aggfunc=get_mode),

@@ -216,6 +216,7 @@ export type AggregationDefinition = {
 
 export enum AggregationOp {
   Count = 'Count',
+  Guess = 'Guess',
   Max = 'Max',
   Mean = 'Mean',
   Min = 'Min',

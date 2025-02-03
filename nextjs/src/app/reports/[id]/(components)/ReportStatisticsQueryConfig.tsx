@@ -156,11 +156,12 @@ export default function ReportStatisticsQueryConfig() {
             <EditorSwitch
               label="Are these electoral parties?"
               value={
-                !!viewManager.currentViewOfType.mapOptions.choropleth.isParty
+                !!viewManager.currentViewOfType.mapOptions.choropleth
+                  .isElectoral
               }
               onChange={(value) => {
                 viewManager.updateView((draft) => {
-                  draft.mapOptions.choropleth.isParty = value
+                  draft.mapOptions.choropleth.isElectoral = value
                 })
               }}
             />

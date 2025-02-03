@@ -188,7 +188,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
                 (view.mapOptions.choropleth.useAdvancedStatistics &&
                 view.mapOptions.choropleth.dataType ===
                   StatisticalDataType.Nominal
-                  ? view.mapOptions.choropleth.isParty
+                  ? view.mapOptions.choropleth.isElectoral
                     ? d.category
                       ? guessParty(d.category).shortName
                       : d.category

@@ -31,7 +31,7 @@ export function getChoroplethFill(
       new Set(dataByBoundary.map((d) => d.category).filter(Boolean))
     )
     let matches: string[] = []
-    if (mapOptions.choropleth.isParty) {
+    if (mapOptions.choropleth.isElectoral) {
       matches = keys.map((key) => [key!, guessParty(key!).colour]).flat()
     } else {
       const palette = PALETTE[Palette.ValueStringToColour]

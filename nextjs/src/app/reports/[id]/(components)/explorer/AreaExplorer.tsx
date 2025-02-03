@@ -351,14 +351,13 @@ function AreaDisplay({
 
   const relevantChoroplethConfig =
     // Is in use
-    view.currentViewOfType?.mapOptions.choropleth.useAdvancedStatistics &&
+    (view.currentViewOfType?.mapOptions.choropleth.useAdvancedStatistics &&
     // Relates to this source
     view.currentViewOfType?.mapOptions.choropleth.advancedStatisticsConfig?.sourceIds.includes(
       sourceId!
     )
-      ? view.currentViewOfType?.mapOptions.choropleth
-          .advancedStatisticsConfig || {}
-      : {}
+      ? view.currentViewOfType?.mapOptions.choropleth.advancedStatisticsConfig
+      : {}) || {}
 
   const data = useQuery<AreaLayerDataQuery, AreaLayerDataQueryVariables>(
     AREA_LAYER_DATA,
@@ -390,11 +389,12 @@ function AreaDisplay({
           ? area?.analyticalAreaType
           : undefined,
         areaQueryMode: display.areaQueryMode,
-        ...// If this display has its own config set up, use that
-        ((display.useAdvancedStatistics
+        ...((display.appendChoroplethStatistics
+          ? relevantChoroplethConfig
+          : {}) || {}),
+        ...((display.useAdvancedStatistics
           ? display.advancedStatisticsConfig
-          : // Otherwise try to sync this display with the choropleth config
-            relevantChoroplethConfig) || {}),
+          : {}) || {}),
         sourceIds: [sourceId!],
         gssCodes: gss ? [gss] : null,
       },
@@ -423,7 +423,7 @@ function AreaDisplay({
           <PopoverTrigger>
             <PencilIcon className="w-3 h-3 text-meepGray-200 cursor-pointer hover:text-meepGray-300" />
           </PopoverTrigger>
-          <PopoverContent>
+          <PopoverContent className="space-y-3">
             <EditorSelect
               label={'Display style'}
               value={display.displayType || InspectorDisplayType.Table}
@@ -528,6 +528,17 @@ function AreaDisplay({
               }}
             />
             <EditorSwitch
+              label="Is this electoral data?"
+              value={!!display.isElectoral}
+              onChange={(value) => {
+                updateReport((draft) => {
+                  draft.displayOptions.areaExplorer.displays[
+                    display.id
+                  ].isElectoral = value
+                })
+              }}
+            />
+            <EditorSwitch
               label="Use advanced statistics API"
               value={display.useAdvancedStatistics}
               onChange={(value) => {
@@ -538,6 +549,19 @@ function AreaDisplay({
                 })
               }}
             />
+
+            <EditorSwitch
+              label="Include choropleth statistics settings"
+              value={display.appendChoroplethStatistics}
+              onChange={(value) => {
+                updateReport((draft) => {
+                  draft.displayOptions.areaExplorer.displays[
+                    display.id
+                  ].appendChoroplethStatistics = value
+                })
+              }}
+            />
+
             {display.useAdvancedStatistics && !!sourceId && (
               <PopOutStatisticalQueryEditor
                 value={
@@ -1438,29 +1462,63 @@ function StatisticalCount({
     )
 
   return (
-    <div className="py-2">
-      {data
-        .slice()
-        .sort((a, b) =>
-          String(b[valueKey] || 0).localeCompare(
-            String(a[valueKey] || 0),
-            undefined,
-            {
-              numeric: true,
-              sensitivity: 'base',
-            }
-          )
-        )
-        .map((item: any) => (
-          <article>
-            <div className="text-white text-3xl">{item[valueKey]}</div>
-            <div className="text-meepGray-400 text-sm">{item[groupKey]}</div>
-          </article>
-        ))}
+    <div>
       <div className="uppercase text-xs text-meepGray-400">
-        Grouped by {display.advancedStatisticsConfig?.groupByArea || ''}{' '}
+        Grouped by{' '}
+        {display.advancedStatisticsConfig?.groupByArea
+          ? toSpaceCase(display.advancedStatisticsConfig?.groupByArea)
+          : ''}{' '}
         {toSpaceCase(column)} and {grouping.aggregationOperation}
       </div>
+      <main className="py-2 grid grid-cols-3 gap-4">
+        {data
+          .slice()
+          .sort((a, b) =>
+            String(b[valueKey] || 0).localeCompare(
+              String(a[valueKey] || 0),
+              undefined,
+              {
+                numeric: true,
+                sensitivity: 'base',
+              }
+            )
+          )
+          .map((item: any) => {
+            if (display.isElectoral) {
+              const key = item[groupKey]
+              const party = guessParty(key) || {
+                name: key,
+                colour: 'gray',
+              }
+              return (
+                <article>
+                  <div className="text-white text-3xl">{item[valueKey]}</div>
+                  <div
+                    className="px-2 py1 rounded-sm font-medium text-sm text-meepGray-950 capitalize inline-block"
+                    style={{
+                      backgroundColor: party.colour,
+                      color: contrastColor({
+                        bgColor: party.colour,
+                        defaultColor: 'white',
+                      }),
+                    }}
+                  >
+                    {party.shortName}
+                  </div>
+                </article>
+              )
+            } else {
+              return (
+                <article>
+                  <div className="text-white text-3xl">{item[valueKey]}</div>
+                  <div className="text-meepGray-400 text-sm">
+                    {item[groupKey]}
+                  </div>
+                </article>
+              )
+            }
+          })}
+      </main>
     </div>
   )
 }
