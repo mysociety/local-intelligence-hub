@@ -61,7 +61,7 @@ const TEST_DATA_SOURCE = gql`
     testDataSource(input: $input) {
       __typename
       crmType
-      fieldDefinitions {
+      fieldDefinitions(refreshFromSource: true) {
         label
         value
         description

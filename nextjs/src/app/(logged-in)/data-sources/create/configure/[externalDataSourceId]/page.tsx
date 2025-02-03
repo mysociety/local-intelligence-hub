@@ -34,7 +34,7 @@ const GET_UPDATE_CONFIG = gql`
         source
         sourcePath
       }
-      fieldDefinitions {
+      fieldDefinitions(refreshFromSource: true) {
         label
         value
         description
