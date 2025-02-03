@@ -49,11 +49,11 @@ export function useExplorer() {
   }
 
   const clear = () => {
-    setState({
+    setState((s) => ({
       entity: '',
       id: '',
-      showExplorer: false,
-    })
+      showExplorer: s.showExplorer,
+    }))
   }
 
   const client = useApolloClient()

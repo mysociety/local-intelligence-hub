@@ -3071,6 +3071,12 @@ export type UploadedCsvSource = Analytics & {
 
 
 /** A media URL */
+export type UploadedCsvSourceFieldDefinitionsArgs = {
+  refreshFromSource?: Scalars['Boolean']['input'];
+};
+
+
+/** A media URL */
 export type UploadedCsvSourceImportedDataByAreaArgs = {
   analyticalAreaType: AnalyticalAreaType;
   layerIds?: InputMaybe<Array<Scalars['String']['input']>>;
