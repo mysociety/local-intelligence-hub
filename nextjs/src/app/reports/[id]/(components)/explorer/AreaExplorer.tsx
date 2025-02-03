@@ -43,11 +43,14 @@ import { gql, useQuery } from '@apollo/client'
 import {
   DndContext,
   PointerSensor,
-  closestCenter,
+  closestCorners,
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
-import { restrictToParentElement } from '@dnd-kit/modifiers'
+import {
+  restrictToParentElement,
+  restrictToVerticalAxis,
+} from '@dnd-kit/modifiers'
 import {
   SortableContext,
   arrayMove,
@@ -95,7 +98,9 @@ export function AreaExplorer({ gss }: { gss?: string }) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 100,
+        distance: {
+          y: 100,
+        },
       },
     })
   )
@@ -181,8 +186,8 @@ export function AreaExplorer({ gss }: { gss?: string }) {
           <div className="divide-y divide-meepGray-800 border-b border-meepGray-800">
             <DndContext
               sensors={sensors}
-              collisionDetection={closestCenter}
-              modifiers={[restrictToParentElement]}
+              collisionDetection={closestCorners}
+              modifiers={[restrictToParentElement, restrictToVerticalAxis]}
               onDragEnd={({ active, over }) => {
                 if (!!over && active.id !== over.id) {
                   report.updateReport((draft) => {
@@ -297,12 +302,20 @@ function SortableAreaDisplay({
   gss?: string
   area?: AreaExplorerSummaryQuery['area']
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: display.id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
     transition,
+    isDragging,
+  } = useSortable({ id: display.id })
+
+  const style: CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    position: isDragging ? 'relative' : 'inherit',
+    zIndex: isDragging ? 1000 : 0,
   }
 
   return (

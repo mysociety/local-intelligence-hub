@@ -20,7 +20,10 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
-import { restrictToParentElement } from '@dnd-kit/modifiers'
+import {
+  restrictToHorizontalAxis,
+  restrictToParentElement,
+} from '@dnd-kit/modifiers'
 import {
   arrayMove,
   horizontalListSortingStrategy,
@@ -32,6 +35,7 @@ import { atom, useAtomValue } from 'jotai'
 import { cloneDeep } from 'lodash'
 import { PanelLeft, PanelRight } from 'lucide-react'
 import Link from 'next/link'
+import { CSSProperties } from 'react'
 import { twMerge } from 'tailwind-merge'
 import { v4 } from 'uuid'
 import { MappedIcon } from '../../../../components/icons/MappedIcon'
@@ -88,11 +92,11 @@ export default function ReportNavbar() {
             onClick={leftSidebar.toggle}
             className="text-meepGray-400 w-4 h-4 cursor-pointer"
           />{' '}
-          <div className="flex flex-row gap-2 items-center overflow-x-auto w-full">
+          <div className="flex flex-row gap-2 items-center overflow-x-auto w-full relative">
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
-              modifiers={[restrictToParentElement]}
+              modifiers={[restrictToParentElement, restrictToHorizontalAxis]}
               onDragEnd={({ active, over }) => {
                 if (!!over && active.id !== over.id) {
                   updateReport((draft) => {
@@ -150,12 +154,20 @@ function SortableViewTabItem({ view }: { view: ViewConfig }) {
   const reportManager = useReport()
   const viewManager = useView()
 
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: view.id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
     transition,
+    isDragging,
+  } = useSortable({ id: view.id })
+
+  const style: CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    position: isDragging ? 'relative' : 'inherit',
+    zIndex: isDragging ? 1000 : 0,
   }
 
   return (
@@ -171,7 +183,7 @@ function SortableViewTabItem({ view }: { view: ViewConfig }) {
         >
           <div
             className={twMerge(
-              'px-2 py-1 rounded-md cursor-pointer flex items-center gap-1 h-full',
+              'px-2 py-1 rounded-md cursor-pointer flex items-center gap-1 h-full bg-meepGray-600',
               view.id === viewManager.currentView?.id
                 ? 'text-white bg-meepGray-800'
                 : 'text-meepGray-400'
