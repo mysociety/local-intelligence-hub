@@ -372,7 +372,8 @@ export enum AnalyticalAreaType {
   ParliamentaryConstituency_2024 = 'parliamentary_constituency_2024',
   Postcode = 'postcode',
   PostcodeArea = 'postcode_area',
-  PostcodeDistrict = 'postcode_district'
+  PostcodeDistrict = 'postcode_district',
+  PostcodeSector = 'postcode_sector'
 }
 
 export type Analytics = {

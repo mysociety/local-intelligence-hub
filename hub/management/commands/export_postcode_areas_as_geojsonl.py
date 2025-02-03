@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = "Import Postcodes from GeoJSON"
+    help = "Export Postcodes to GeoJSONl (for Mapbox tileset source creation)"
 
     def handle(self, *args, **options):
         area_type_codes = ["PCS", "PCD", "PCA"]

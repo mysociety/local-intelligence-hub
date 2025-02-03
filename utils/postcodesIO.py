@@ -118,6 +118,7 @@ async def enrich_postcodes_io_result(
         ("LSOA", "lsoa"),
         ("PCA", "postcode_area"),
         ("PCD", "postcode_district"),
+        ("PCS", "postcode_sector"),
     ]:
         output_area = await Area.objects.filter(
             area_type__code=area_code, polygon__contains=point
