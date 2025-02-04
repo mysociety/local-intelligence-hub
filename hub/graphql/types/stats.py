@@ -14,7 +14,7 @@ import strawberry
 from hub import models
 from utils.geo_reference import (
     AnalyticalAreaType,
-    area_to_postcode_io_filter,
+    area_to_postcode_io_key,
     lih_to_postcodes_io_key_map,
 )
 from utils.statistics import (
@@ -141,7 +141,6 @@ class StatisticsConfig:
     # Querying
     gss_codes: Optional[List[str]] = None
     area_query_mode: Optional[AreaQueryMode] = None
-    map_bounds: Optional[MapBounds] = None
     # Grouping
     # Group absolutely: flatten all array items down to one, without any special transforms
     group_absolutely: Optional[bool] = False
@@ -222,6 +221,7 @@ def statistics(
     category_key: Optional[str] = None,
     count_key: Optional[str] = None,
     return_numeric_keys_only: Optional[bool] = False,
+    map_bounds: Optional[MapBounds] = None,
 ):
     pre_calcs = (
         [c for c in conf.pre_group_by_calculated_columns if not c.ignore]
@@ -239,38 +239,40 @@ def statistics(
         data_type__data_set__external_data_source_id__in=conf.source_ids
     )
 
-    area_type_filter = None
     # if group_by_area:
     #     area_type_filter = postcodeIOKeyAreaTypeLookup[group_by_area]
 
-    if conf.map_bounds:
-        # area_type_filter = postcodeIOKeyAreaTypeLookup[group_by_area]
+    if map_bounds:
         bbox_coords = (
-            (conf.map_bounds.west, conf.map_bounds.north),  # Top left
-            (conf.map_bounds.east, conf.map_bounds.north),  # Top right
-            (conf.map_bounds.east, conf.map_bounds.south),  # Bottom right
-            (conf.map_bounds.west, conf.map_bounds.south),  # Bottom left
+            (map_bounds.west, map_bounds.north),  # Top left
+            (map_bounds.east, map_bounds.north),  # Top right
+            (map_bounds.east, map_bounds.south),  # Bottom right
+            (map_bounds.west, map_bounds.south),  # Bottom left
             (
-                conf.map_bounds.west,
-                conf.map_bounds.north,
+                map_bounds.west,
+                map_bounds.north,
             ),  # Back to start to close polygon
         )
         bbox = Polygon(bbox_coords, srid=4326)
-        # areas = models.Area.objects.filter(**area_type_filter.query_filter).filter(
-        #     point__within=bbox
-        # )
-        # combined_area = areas.aggregate(union=GisUnion("polygon"))["union"]
-        # all geocoded GenericData should have `point` set
-        qs = qs.filter(point__within=bbox)
+        if conf.group_by_area:
+            # If group_by_area is set, the analysis must get *all* the points within relevant Areas,
+            # not just the points within the bounding box. Otherwise, data for an Area
+            # might be incomplete.
+            area_type_filter = postcodeIOKeyAreaTypeLookup[conf.group_by_area]
+            areas = models.Area.objects.filter(**area_type_filter.query_filter).filter(
+                point__within=bbox
+            )
+            combined_area = areas.aggregate(union=GisUnion("polygon"))["union"]
+            qs = qs.filter(point__within=combined_area or bbox)
+        else:
+            # all geocoded GenericData should have `point` set
+            qs = qs.filter(point__within=bbox)
 
     filters = Q()
-    if conf.gss_codes or area_type_filter:
-        if conf.gss_codes:
-            area_qs = models.Area.objects.filter(gss__in=conf.gss_codes)
-            example_area = area_qs.first()
-            combined_areas_polygon = area_qs.aggregate(union=GisUnion("polygon"))[
-                "union"
-            ]
+    if conf.gss_codes:
+        area_qs = models.Area.objects.filter(gss__in=conf.gss_codes)
+        example_area = area_qs.first()
+        combined_areas_polygon = area_qs.aggregate(union=GisUnion("polygon"))["union"]
 
         if (
             combined_areas_polygon
@@ -292,11 +294,7 @@ def statistics(
             if combined_areas_polygon:
                 filters |= Q(area__gss__in=conf.gss_codes)
                 # Or find GenericData tagged with area that is fully contained by this area's polygon
-                postcode_io_key = area_to_postcode_io_filter(example_area)
-                if postcode_io_key is None:
-                    postcode_io_key = lih_to_postcodes_io_key_map.get(
-                        example_area.area_type.code, None
-                    )
+                postcode_io_key = area_to_postcode_io_key(example_area)
                 if postcode_io_key:
                     subclause = Q()
                     # See if there's a matched postcode data field for this area
@@ -315,11 +313,7 @@ def statistics(
             if combined_areas_polygon:
                 filters |= Q(area__gss__in=conf.gss_codes)
                 # Or find GenericData tagged with area that fully contains this area's polygon
-                postcode_io_key = area_to_postcode_io_filter(example_area)
-                if postcode_io_key is None:
-                    postcode_io_key = lih_to_postcodes_io_key_map.get(
-                        example_area.area_type.code, None
-                    )
+                postcode_io_key = area_to_postcode_io_key(example_area)
                 if postcode_io_key:
                     subclause = Q()
                     # See if there's a matched postcode data field for this area
@@ -338,11 +332,7 @@ def statistics(
             if conf.gss_codes:
                 filters |= Q(area__gss__in=conf.gss_codes)
                 # Or find GenericData tagged with area that overlaps this area's polygon
-                postcode_io_key = area_to_postcode_io_filter(example_area)
-                if postcode_io_key is None:
-                    postcode_io_key = lih_to_postcodes_io_key_map.get(
-                        example_area.area_type.code, None
-                    )
+                postcode_io_key = area_to_postcode_io_key(example_area)
                 if postcode_io_key:
                     filters |= Q(
                         **{
@@ -443,6 +433,12 @@ def statistics(
                 return None, None, None
 
             # Find the key of `lih_to_postcodes_io_key_map` where the value is `group_by_area`:
+            # TODO: check this for admin_county and admin_district. For some admin_districts,
+            # we will return "DIS" when the correct value is "STC".
+            #
+            # admin_county   => MapIt CTY                     => LIH STC
+            # admin_district => MapIt LBO/UTA/COI/LGD/MTD/NMD => LIH STC
+            #                => MapIt DIS                     => LIH DIS
             area_type = next(
                 (
                     k

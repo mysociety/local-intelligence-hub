@@ -26,6 +26,9 @@ class AnalyticalAreaType(Enum):
     output_area = "output_area"
 
 
+# Note: this should not be used directly, due to mismatch between LIH
+# and postcodes.io area categorization. Instead, use area_to_postcode_io_key()
+# and stats.postcodeIOKeyAreaTypeLookup.
 lih_to_postcodes_io_key_map = {
     "WMC": AnalyticalAreaType.parliamentary_constituency,
     "WMC23": AnalyticalAreaType.parliamentary_constituency_2024,
@@ -39,7 +42,7 @@ lih_to_postcodes_io_key_map = {
 }
 
 
-def area_to_postcode_io_filter(area: "Area"):
+def area_to_postcode_io_key(area: "Area"):
     if area.mapit_type in ["LBO", "UTA", "COI", "LGD", "MTD", "DIS", "NMD"]:
         return AnalyticalAreaType.admin_district
     elif area.mapit_type in ["CTY"]:

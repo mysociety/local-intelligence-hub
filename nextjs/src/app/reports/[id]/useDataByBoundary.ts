@@ -43,9 +43,6 @@ const useDataByBoundary = ({
   getSourceFieldNames?: boolean
 }) => {
   const report = useReport()
-  const sourceId = report.report.layers.find(
-    (l) => l.id === view?.mapOptions.choropleth.layerId
-  )?.source
 
   // If mapBounds is required, send dummy empty bounds on the first request
   // This is required for fetchMore() to work, which is used to add data to
@@ -59,6 +56,11 @@ const useDataByBoundary = ({
 
   const { useAdvancedStatistics, advancedStatisticsConfig } =
     view?.mapOptions?.choropleth || {}
+
+  const sourceId =
+    report.report.layers.find(
+      (l) => l.id === view?.mapOptions.choropleth.layerId
+    )?.source || advancedStatisticsConfig?.sourceIds[0]
 
   const query = useQuery<
     SourceStatsByBoundaryQuery,
@@ -102,7 +104,6 @@ const useDataByBoundary = ({
         config: {
           ...(advancedStatisticsConfig! || {}),
           groupByArea: analyticalAreaType!,
-          mapBounds,
           returnColumns: ['gss', 'label']
             .concat(
               view?.mapOptions?.choropleth.dataType ===
@@ -125,11 +126,13 @@ const useDataByBoundary = ({
           //     []
           // ),
         },
+        mapBounds,
       },
       skip:
         !useAdvancedStatistics ||
         !advancedStatisticsConfig ||
         !analyticalAreaType,
+      notifyOnNetworkStatusChange: true, // required to mark loading: true on fetchMore()
     }
   )
 
@@ -196,11 +199,13 @@ export const STATISTICS_QUERY = gql`
     $config: StatisticsConfig!
     $categoryKey: String
     $countKey: String
+    $mapBounds: MapBounds
   ) {
     statisticsForChoropleth(
       statsConfig: $config
       categoryKey: $categoryKey
       countKey: $countKey
+      mapBounds: $mapBounds
     ) {
       label
       gss
