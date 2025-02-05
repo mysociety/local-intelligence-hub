@@ -1,7 +1,7 @@
 'use client'
 
 import ColorHash from 'color-hash'
-import { MapRef } from 'react-map-gl/dist/esm/mapbox/create-ref'
+import { useLoadedMap } from '.'
 
 var colorHash = new ColorHash()
 
@@ -21,17 +21,6 @@ export function layerIdColour(id: string) {
   return colorHash.hex(id)
 }
 
-// The @ts-ignore lines here are because the mapboxgl.Map
-// type and the react-map-gl MapInstance types have
-// slight (erroneous) inconsistencies.
-export type MapLoader = {
-  // @ts-ignore
-  loadedMap: MapRef<mapboxgl.Map> | null | undefined
-  loaded: boolean
-  // @ts-ignore
-  current?: MapRef<mapboxgl.Map> | undefined
-}
-
 export type MapboxImageSource = {
   url: () => string
   name: string
@@ -40,3 +29,8 @@ export type MapboxImageSource = {
 export * from './state'
 export { useLoadedMap } from './useLoadedMap'
 export { useMapIcons } from './useMapIcons'
+
+// The @ts-ignore lines here are because the mapboxgl.Map
+// type and the react-map-gl MapInstance types have
+// slight (erroneous) inconsistencies.
+export type MapLoader = ReturnType<typeof useLoadedMap>

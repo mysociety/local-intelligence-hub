@@ -10,7 +10,7 @@ import { IconToggle } from '@/components/ui/icon-toggle'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import { contentEditableMutation } from '@/lib/html'
-import { useActiveTileset } from '@/lib/map'
+import { useActiveTileset, useLoadedMap } from '@/lib/map'
 import { useReport } from '@/lib/map/useReport'
 import { useView } from '@/lib/map/useView'
 import { BorderSolidIcon, ReloadIcon } from '@radix-ui/react-icons'
@@ -22,6 +22,7 @@ import keyboardKey from 'keyboard-key'
 import { max } from 'lodash'
 import {
   AlertOctagonIcon,
+  CameraIcon,
   HashIcon,
   LucideBoxSelect,
   LucideChevronDown,
@@ -52,6 +53,7 @@ import { DEFAULT_MARKER_COLOUR } from '../MembersListPointMarkers'
 export default function ReportMapChoroplethLegend() {
   const reportManager = useReport()
   const viewManager = useView(ViewType.Map)
+  const map = useLoadedMap()
   const [legendOpen, setLegendOpen] = useState(true)
 
   const boundaryHierarchy = POLITICAL_BOUNDARIES.find(
@@ -77,6 +79,12 @@ export default function ReportMapChoroplethLegend() {
     viewManager.currentViewOfType.mapOptions.choropleth.layerId
   )
 
+  function downloadScreenshot() {
+    map.downloadScreenshot(
+      `mapped-${reportManager.report.name}-${viewManager.currentView.name}-${new Date().toISOString()}.png`
+    )
+  }
+
   return (
     <div className={`p-4 absolute top-12 transition-all duration-300 left-0`}>
       <Collapsible
@@ -97,22 +105,33 @@ export default function ReportMapChoroplethLegend() {
           />
         </CollapsibleTrigger>
         <CollapsibleContent className="CollapsibleContent divide-y divide-meepGray-600">
-          <div
-            {...contentEditableMutation((text) => {
-              viewManager.updateView((draft) => {
-                draft.description = text
-              })
-            }, '')}
-            className={twMerge(
-              'px-4 pb-3 text-sm',
-              viewManager.currentViewOfType.description
-                ? 'text-meepGray-200'
-                : 'text-meepGray-400'
-            )}
-          >
-            {viewManager.currentViewOfType.description ||
-              'Add a description for this view...'}
-          </div>
+          <header className="px-4 pb-3 space-y-2">
+            <div
+              {...contentEditableMutation((text) => {
+                viewManager.updateView((draft) => {
+                  draft.description = text
+                })
+              }, '')}
+              className={twMerge(
+                'text-sm',
+                viewManager.currentViewOfType.description
+                  ? 'text-meepGray-200'
+                  : 'text-meepGray-400'
+              )}
+            >
+              {viewManager.currentViewOfType.description ||
+                'Add a description for this view...'}
+            </div>
+
+            <Button
+              onClick={downloadScreenshot}
+              size="sm"
+              className="flex flex-row gap-1 h-auto py-1 text-meepGray-400"
+              variant={'outline'}
+            >
+              <CameraIcon className="w-4 h-4" /> Screenshot map
+            </Button>
+          </header>
 
           {Object.values(viewManager.currentViewOfType?.mapOptions.layers).map(
             (l) => (

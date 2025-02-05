@@ -4,12 +4,11 @@ import { useAtom } from 'jotai'
 import { useEffect } from 'react'
 import { useMap } from 'react-map-gl'
 
-import { MapLoader } from '.'
 import { mapHasLoaded } from './state'
 
 export const MAPBOX_LOAD_INTERVAL = 100
 
-export function useLoadedMap(): MapLoader {
+export function useLoadedMap() {
   const [loaded, setLoaded] = useAtom(mapHasLoaded)
   const map = useMap()
 
@@ -61,10 +60,36 @@ export function useLoadedMap(): MapLoader {
     }
   }, [map, setLoaded])
 
+  function getImageDataURL() {
+    // Implementation informed by https://github.com/mapbox/mapbox-gl-js/issues/2766
+    return new Promise<string>(function (resolve, reject) {
+      if (!map.default) return reject('Map not loaded')
+      map.default.once('render', function () {
+        if (!map.default) return reject('Map not loaded')
+        resolve(map.default.getCanvas().toDataURL())
+      })
+      /* trigger render */
+      map.default.triggerRepaint()
+    })
+  }
+
+  function downloadScreenshot(
+    name: string = `mapped-${new Date().toISOString()}`
+  ) {
+    getImageDataURL().then((dataURL) => {
+      const a = document.createElement('a')
+      a.href = dataURL
+      a.download = `${name}.png`
+      a.click()
+      a.remove()
+    })
+  }
+
   // Handle subsequent map loads
   return {
     ...map,
     loadedMap: loaded ? map.default : null,
     loaded,
+    downloadScreenshot,
   }
 }
