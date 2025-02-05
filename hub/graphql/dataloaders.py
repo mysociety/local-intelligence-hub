@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 
 class BasicFieldDataLoader(dataloaders.BaseDjangoModelDataLoader):
     field: str
-    filters: dict = {}
-    select_related: list = []
+    filters: dict
+    select_related: list
 
     @classmethod
     def queryset(cls, keys: list[str]):
