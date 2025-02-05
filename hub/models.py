@@ -1750,11 +1750,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
         loaders = await self.get_loaders()
+        geocoder_context = geocoding_config.GeocoderContext()
 
         if self.uses_valid_geocoding_config():
             await asyncio.gather(
                 *[
-                    geocoding_config.import_record(record, self, data_type, loaders)
+                    geocoding_config.import_record(
+                        record, self, data_type, loaders, geocoder_context
+                    )
                     for record in data
                 ]
             )
@@ -2044,6 +2047,25 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             data_type__data_set__external_data_source_id=self.id
         )
 
+    async def imported_data_loader(self, record_ids):
+        """
+        A dataloader function for getting already-imported GenericData
+        for a given record ID. This ID should be the result of calling
+        get_record_id(record) on the source data (i.e. the record that
+        comes from the 3rd party data source) – NOT the GenericData.id.
+        """
+        results = GenericData.objects.filter(
+            data_type__data_set__external_data_source_id=self.id, data__in=record_ids
+        )
+        results = await sync_to_async(list)(results)
+        return [
+            next(
+                (result for result in results if result.data == id),
+                None,
+            )
+            for id in record_ids
+        ]
+
     def get_analytics_queryset(self, **kwargs):
         return self.get_import_data()
 
@@ -2144,6 +2166,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             postcodesIOFromPoint=DataLoader(load_fn=get_bulk_postcode_geo_from_coords),
             fetch_record=DataLoader(load_fn=self.fetch_many_loader, cache=False),
             source_loaders=await self.get_source_loaders(),
+            generic_data=DataLoader(load_fn=self.imported_data_loader),
         )
 
         return loaders

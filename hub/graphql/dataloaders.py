@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 class BasicFieldDataLoader(dataloaders.BaseDjangoModelDataLoader):
     field: str
     filters: dict = {}
+    select_related: list = []
 
     @classmethod
     def queryset(cls, keys: list[str]):
@@ -28,7 +29,7 @@ class BasicFieldDataLoader(dataloaders.BaseDjangoModelDataLoader):
             return []
         return cls.model.objects.filter(
             **{f"{cls.field}__in": set(keys)}, **cls.filters
-        )
+        ).select_related(*cls.select_related)
 
     @classmethod
     @sync_to_async
@@ -67,27 +68,42 @@ class FieldDataLoaderFactory(factories.BaseDjangoModelDataLoaderFactory):
 
     @classmethod
     def get_loader_key(
-        cls, model: Type["DjangoModel"], field: str, filters: dict = {}, **kwargs
+        cls,
+        model: Type["DjangoModel"],
+        field: str,
+        filters: dict = {},
+        select_related: list = [],
+        **kwargs,
     ):
-        return model, field, json.dumps(filters)
+        return model, field, json.dumps(filters), json.dumps(select_related)
 
     @classmethod
     def get_loader_class_kwargs(
-        cls, model: Type["DjangoModel"], field: str, filters: dict = {}, **kwargs
+        cls,
+        model: Type["DjangoModel"],
+        field: str,
+        filters: dict = {},
+        select_related: list = [],
+        **kwargs,
     ):
-        return {"model": model, "field": field, "filters": filters}
+        return {
+            "model": model,
+            "field": field,
+            "filters": filters,
+            "select_related": select_related,
+        }
 
     @classmethod
     def as_resolver(
-        cls, field: str, filters: dict = {}
+        cls, field: str, filters: dict = {}, select_related: list = []
     ) -> Callable[["DjangoModel", Info], Coroutine]:
         async def resolver(
             root: "DjangoModel", info: "Info"
         ):  # beware, first argument needs to be called 'root'
             field_data: "StrawberryDjangoField" = info._field
-            return await cls.get_loader_class(field_data.django_model, field, filters)(
-                context=info.context
-            ).load(getattr(root, field))
+            return await cls.get_loader_class(
+                field_data.django_model, field, filters, select_related
+            )(context=info.context).load(getattr(root, field))
 
         return resolver
 
