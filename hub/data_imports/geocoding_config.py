@@ -10,6 +10,7 @@ from django.db.models import Q
 from asgiref.sync import sync_to_async
 
 from hub.data_imports.utils import get_update_data
+from hub.graphql.dataloaders import FieldDataLoaderFactory
 from utils import google_maps, mapit_types
 from utils.findthatpostcode import (
     get_example_postcode_from_area_gss,
@@ -31,6 +32,18 @@ def find_config_item(source: "ExternalDataSource", key: str, value, default=None
     )
 
 
+class GeocoderContext:
+    """
+    Context class to support DataLoader creation and re-use
+    (existing dataloaders are stored here, so each record can
+    re-use a previously created loader. This is a necessary
+    component for dataloader batching to work).
+    """
+
+    def __init__(self):
+        self.dataloaders = {}
+
+
 # enum of geocoders: postcodes_io, mapbox, google
 class Geocoder(Enum):
     POSTCODES_IO = "postcodes_io"
@@ -38,11 +51,13 @@ class Geocoder(Enum):
     MAPBOX = "mapbox"
     GOOGLE = "google"
     AREA_GEOCODER_V2 = "AREA_GEOCODER_V2"
+    AREA_CODE_GEOCODER_V2 = "AREA_CODE_GEOCODER_V2"
     ADDRESS_GEOCODER_V2 = "ADDRESS_GEOCODER_V2"
     COORDINATE_GEOCODER_V1 = "COORDINATE_GEOCODER_V1"
 
 
 LATEST_AREA_GEOCODER = Geocoder.AREA_GEOCODER_V2
+LATEST_AREA_CODE_GEOCODER = Geocoder.AREA_CODE_GEOCODER_V2
 LATEST_ADDRESS_GEOCODER = Geocoder.ADDRESS_GEOCODER_V2
 LATEST_COORDINATE_GEOCODER = Geocoder.COORDINATE_GEOCODER_V1
 
@@ -80,6 +95,7 @@ async def import_record(
     source: "ExternalDataSource",
     data_type: "DataType",
     loaders: "Loaders",
+    geocoder_context: GeocoderContext,
 ):
     from hub.models import ExternalDataSource, GenericData
 
@@ -93,8 +109,13 @@ async def import_record(
     geocoding_config_type = source.geocoding_config.get("type", None)
     importer_fn = None
     if geocoding_config_type == ExternalDataSource.GeographyTypes.AREA:
-        geocoder = LATEST_AREA_GEOCODER
-        importer_fn = import_area_data
+        components = source.geocoding_config.get("components", [])
+        if len(components) == 1 and components[0].get("type") == "area_code":
+            geocoder = LATEST_AREA_CODE_GEOCODER
+            importer_fn = import_area_code_data
+        else:
+            geocoder = LATEST_AREA_GEOCODER
+            importer_fn = import_area_data
     elif geocoding_config_type == ExternalDataSource.GeographyTypes.ADDRESS:
         geocoder = LATEST_ADDRESS_GEOCODER
         importer_fn = import_address_data
@@ -107,8 +128,7 @@ async def import_record(
 
     # check if geocoding_config and dependent fields are the same; if so, skip geocoding
     try:
-        generic_data = await GenericData.objects.aget(data_type=data_type, data=id)
-
+        generic_data = await loaders["generic_data"].load(id)
         # First check if the configs are the same
         if (
             generic_data is not None
@@ -159,6 +179,94 @@ async def import_record(
         data_type=data_type,
         loaders=loaders,
         update_data=update_data,
+        geocoder_context=geocoder_context,
+    )
+
+
+async def import_area_code_data(
+    record,
+    source: "ExternalDataSource",
+    data_type: "DataType",
+    loaders: "Loaders",
+    update_data: dict,
+    geocoder_context: GeocoderContext,
+):
+    from hub.models import Area, GenericData
+
+    update_data["geocoder"] = LATEST_AREA_CODE_GEOCODER.value
+
+    area = None
+    geocoding_data = {}
+    steps = []
+
+    components = source.geocoding_config.get("components", [])
+    if not components:
+        return
+
+    item = components[0]
+
+    literal_lih_area_type__code = item.get("metadata", {}).get(
+        "lih_area_type__code", None
+    )
+    literal_mapit_type = item.get("metadata", {}).get("mapit_type", None)
+    area_types = literal_lih_area_type__code or literal_mapit_type
+    literal_area_field = item.get("field", None)
+    area_code = str(source.get_record_field(record, literal_area_field))
+
+    if area_types is None or literal_area_field is None or area_code is None:
+        return
+
+    parsed_area_types = [str(s).upper() for s in ensure_list(area_types)]
+
+    area_filters = {}
+    if literal_lih_area_type__code:
+        area_filters["area_type__code"] = literal_lih_area_type__code
+    if literal_mapit_type:
+        area_filters["mapit_type"] = literal_mapit_type
+
+    AreaLoader = FieldDataLoaderFactory.get_loader_class(
+        Area, field="gss", filters=area_filters, select_related=["area_type"]
+    )
+
+    area = await AreaLoader(geocoder_context).load(area_code)
+    if area is None:
+        return
+
+    step = {
+        "type": "area_code_matching",
+        "area_types": parsed_area_types,
+        "result": "failed" if area is None else "success",
+        "search_term": area_code,
+        "data": (
+            {
+                "centroid": area.polygon.centroid.json,
+                "name": area.name,
+                "id": area.id,
+                "gss": area.gss,
+            }
+            if area is not None
+            else None
+        ),
+    }
+    steps.append(step)
+
+    geocoding_data["area_fields"] = geocoding_data.get("area_fields", {})
+    geocoding_data["area_fields"][area.area_type.code] = area.gss
+    update_data["geocode_data"].update({"data": geocoding_data})
+    if area is not None:
+        postcode_data = await get_postcode_data_for_area(area, loaders, steps)
+        update_data["postcode_data"] = postcode_data
+        update_data["area"] = area
+        update_data["point"] = area.point
+    else:
+        # Reset geocoding data
+        update_data["postcode_data"] = None
+
+    # Update the geocode data regardless, for debugging purposes
+    update_data["geocode_data"].update({"steps": steps})
+
+    await GenericData.objects.aupdate_or_create(
+        data_type=data_type, data=source.get_record_id(record), defaults=update_data
     )
 
 
@@ -168,6 +276,7 @@ async def import_area_data(
     data_type: "DataType",
     loaders: "Loaders",
     update_data: dict,
+    geocoder_context: GeocoderContext,
 ):
     from hub.models import Area, GenericData
 
@@ -419,6 +528,7 @@ async def import_address_data(
     data_type: "DataType",
     loaders: "Loaders",
     update_data: dict,
+    geocoder_context: GeocoderContext,
 ):
     """
     Converts a record fetched from the API into
@@ -580,6 +690,7 @@ async def import_coordinate_data(
     data_type: "DataType",
     loaders: "Loaders",
     update_data: dict,
+    geocoder_context: GeocoderContext,
 ):
     from hub.models import GenericData
 

@@ -9,7 +9,10 @@ from django.test import TestCase
 from asgiref.sync import async_to_sync
 
 from hub.models import Area, DatabaseJSONSource, ExternalDataSource
-from hub.tests.fixtures.geocoding_cases import geocoding_cases
+from hub.tests.fixtures.geocoding_cases import (
+    area_code_geocoding_cases,
+    geocoding_cases,
+)
 from hub.validation import validate_and_format_phone_number
 from utils import mapit_types
 
@@ -572,6 +575,189 @@ class TestCoordinateGeocoding(TestCase):
                         self.assertTrue(
                             d.geocode_data["skipped"], "Geocoding should be skipped."
                         )
+                except KeyError:
+                    raise AssertionError("Expected geocoding data was missing.")
+            except AssertionError as e:
+                print(e)
+                print(
+                    "Geocoding was repeated unecessarily:",
+                    d.id,
+                    json.dumps(d.json, indent=4),
+                )
+                print("--Geocode data:", d.id, json.dumps(d.geocode_data, indent=4))
+                print("--Postcode data:", d.id, json.dumps(d.postcode_data, indent=4))
+                raise
+
+
+@skipIf(ignore_geocoding_tests, "It messes up data for other tests.")
+class TestAreaCodeGeocoding(TestCase):
+    fixture = area_code_geocoding_cases
+
+    @classmethod
+    def setUpTestData(cls):
+        subprocess.call("bin/import_areas_into_test_db.sh")
+
+        cls.source = DatabaseJSONSource.objects.create(
+            name="geo_test",
+            id_field="id",
+            data=cls.fixture.copy(),
+            geocoding_config={
+                "type": ExternalDataSource.GeographyTypes.AREA,
+                "components": [
+                    {
+                        "field": "ward",
+                        "type": "area_code",
+                        "metadata": {"lih_area_type__code": "WD23"},
+                    },
+                ],
+            },
+        )
+
+    def test_geocoding_test_rig_is_valid(self):
+        self.assertGreaterEqual(Area.objects.count(), 19542)
+        self.assertGreaterEqual(
+            Area.objects.filter(polygon__isnull=False).count(), 19542
+        )
+        self.assertGreaterEqual(Area.objects.filter(area_type__code="DIS").count(), 164)
+        self.assertGreaterEqual(Area.objects.filter(area_type__code="STC").count(), 218)
+        self.assertGreaterEqual(
+            Area.objects.filter(area_type__code="WD23").count(), 8000
+        )
+
+        # re-generate GenericData records
+        async_to_sync(self.source.import_many)(self.source.data)
+
+        # load up the data for tests
+        self.data = self.source.get_import_data()
+
+        for d in self.data:
+            try:
+                if d.json["expected_area_gss"] is not None:
+                    area = Area.objects.get(gss=d.json["expected_area_gss"])
+                    self.assertIsNotNone(area)
+            except Area.DoesNotExist:
+                pass
+
+    def test_geocoding_matches(self):
+        # re-generate GenericData records
+        async_to_sync(self.source.import_many)(self.source.data)
+
+        # load up the data for tests
+        self.data = self.source.get_import_data()
+
+        self.assertEqual(
+            len(self.data),
+            len(self.source.data),
+            "All data should be imported.",
+        )
+
+        for d in self.data:
+            try:
+                try:
+                    try:
+                        self.assertEqual(
+                            d.geocode_data["data"]["area_fields"][
+                                d.json["expected_area_type_code"]
+                            ],
+                            d.json["expected_area_gss"],
+                        )
+                        self.assertFalse(
+                            d.geocode_data["skipped"], "Geocoding should be done."
+                        )
+                        self.assertIsNotNone(d.postcode_data)
+                        self.assertGreaterEqual(
+                            len(d.geocode_data["steps"]),
+                            1,
+                            "Geocoding outcomes should be debuggable, for future development.",
+                        )
+                    except KeyError:
+                        raise AssertionError("Expected geocoding data was missing.")
+                except AssertionError as e:
+                    print(e)
+                    print("Geocoding failed:", d.id, json.dumps(d.json, indent=4))
+                    print("--Geocode data:", d.id, json.dumps(d.geocode_data, indent=4))
+                    print(
+                        "--Postcode data:", d.id, json.dumps(d.postcode_data, indent=4)
+                    )
+                    raise
+            except TypeError as e:
+                print(e)
+                print("Geocoding failed:", d.id, json.dumps(d.json, indent=4))
+                print("--Geocode data:", d.id, json.dumps(d.geocode_data, indent=4))
+                print("--Postcode data:", d.id, json.dumps(d.postcode_data, indent=4))
+                raise
+
+    def test_by_mapit_types(self):
+        """
+        Geocoding should work identically on more granular mapit_types
+        """
+
+        self.source.geocoding_config = {
+            "type": ExternalDataSource.GeographyTypes.AREA,
+            "components": [
+                {
+                    "field": "ward",
+                    "type": "area_code",
+                    "metadata": {"mapit_type": mapit_types.MAPIT_WARD_TYPES},
+                },
+            ],
+        }
+        self.source.save()
+
+        # re-generate GenericData records
+        async_to_sync(self.source.import_many)(self.source.data)
+
+        # load up the data for tests
+        self.data = self.source.get_import_data()
+
+        for d in self.data:
+            try:
+                try:
+                    self.assertEqual(
+                        d.geocode_data["data"]["area_fields"][
+                            d.json["expected_area_type_code"]
+                        ],
+                        d.json["expected_area_gss"],
+                    )
+                    self.assertIsNotNone(d.postcode_data)
+                    self.assertDictEqual(
+                        dict(self.source.geocoding_config),
+                        dict(d.geocode_data.get("config", {})),
+                        "Geocoding config should be the same as the source's",
+                    )
+                    self.assertFalse(
+                        d.geocode_data["skipped"], "Geocoding should be done."
+                    )
+                except KeyError:
+                    raise AssertionError("Expected geocoding data was missing.")
+            except AssertionError as e:
+                print(e)
+                print("Geocoding failed:", d.id, json.dumps(d.json, indent=4))
+                print("--Geocode data:", d.id, json.dumps(d.geocode_data, indent=4))
+                print("--Postcode data:", d.id, json.dumps(d.postcode_data, indent=4))
+                raise
+
+    def test_skipping(self):
+        """
+        If all geocoding config is the same, and the data is the same too, then geocoding should be skipped
+        """
+        # generate GenericData records — first time they should all geocode
+        async_to_sync(self.source.import_many)(self.source.data)
+
+        # re-generate GenericData records — this time, they should all skip
+        async_to_sync(self.source.import_many)(self.source.data)
+
+        # load up the data for tests
+        self.data = self.source.get_import_data()
+
+        for d in self.data:
+            try:
+                try:
+                    if d.json["expected_area_gss"] is not None:
+                        self.assertTrue(
+                            d.geocode_data["skipped"], "Geocoding should be skipped."
+                        )
+                        self.assertIsNotNone(d.postcode_data)
                 except KeyError:
                     raise AssertionError("Expected geocoding data was missing.")
             except AssertionError as e:

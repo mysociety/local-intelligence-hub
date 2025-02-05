@@ -293,3 +293,31 @@ geocoding_cases = [
         "expected_area_gss": "E05014930",
     },
 ]
+
+
+area_code_geocoding_cases = [
+    {
+        "id": "1",
+        "ward": "E05000993",
+        "expected_area_type_code": "WD23",
+        "expected_area_gss": "E05000993",
+    },
+    {
+        "id": "2",
+        "ward": "E05015081",
+        "expected_area_type_code": "WD23",
+        "expected_area_gss": "E05015081",
+    },
+    {
+        "id": "3",
+        "ward": "E05012085",
+        "expected_area_type_code": "WD23",
+        "expected_area_gss": "E05012085",
+    },
+    {
+        "id": "4",
+        "ward": "E05007461",
+        "expected_area_type_code": "WD23",
+        "expected_area_gss": "E05007461",
+    },
+]

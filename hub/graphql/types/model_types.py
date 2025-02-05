@@ -45,10 +45,7 @@ from hub.graphql.types.geojson import MultiPolygonFeature, PointFeature
 from hub.graphql.types.postcodes import PostcodesIOResult
 from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
-from utils.geo_reference import (
-    AnalyticalAreaType,
-    area_to_postcode_io_key,
-)
+from utils.geo_reference import AnalyticalAreaType, area_to_postcode_io_key
 from utils.postcode import get_postcode_data_for_gss
 from utils.statistics import (
     attempt_interpret_series_as_float,
