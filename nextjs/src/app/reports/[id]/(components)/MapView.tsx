@@ -39,9 +39,7 @@ export default function MapView({
   // (fetchMore only triggers loading: true in its local hook)
   useEffect(() => {
     if (activeTileset.useBoundsInDataQuery) {
-      fetchMore({
-        variables: { mapBounds },
-      })
+      fetchMore({ variables: { mapBounds } })
     }
   }, [mapBounds, mapView.mapOptions, activeTileset])
 

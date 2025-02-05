@@ -481,7 +481,6 @@ export function StatisticsConfigSchema(): z.ZodObject<Properties<StatisticsConfi
     groupByArea: AnalyticalAreaTypeSchema.nullish(),
     groupByColumns: z.array(GroupByColumnSchema()).nullish(),
     gssCodes: z.array(z.string()).nullish(),
-    mapBounds: MapBoundsSchema().nullish(),
     preGroupByCalculatedColumns: z.array(CalculatedColumnSchema()).nullish(),
     returnColumns: z.array(z.string()).nullish(),
     sourceIds: z.array(z.string())

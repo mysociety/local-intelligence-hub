@@ -47,8 +47,7 @@ from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
 from utils.geo_reference import (
     AnalyticalAreaType,
-    area_to_postcode_io_filter,
-    lih_to_postcodes_io_key_map,
+    area_to_postcode_io_key,
 )
 from utils.postcode import get_postcode_data_for_gss
 from utils.statistics import (
@@ -519,7 +518,7 @@ class Area:
 
     @strawberry_django.field
     def analytical_area_type(self) -> Optional[AnalyticalAreaType]:
-        return area_to_postcode_io_filter(self)
+        return area_to_postcode_io_key(self)
 
     @strawberry_django.field
     async def last_election(self, info: Info) -> Optional[ConstituencyElectionResult]:
@@ -1488,9 +1487,7 @@ def __get_generic_data_for_area_and_external_data_source(
     elif mode is stats.AreaQueryMode.AREA_OR_CHILDREN:
         filters = Q(area__gss=area.gss)
         # Or find GenericData tagged with area that is fully contained by this area's polygon
-        postcode_io_key = area_to_postcode_io_filter(area)
-        if postcode_io_key is None:
-            postcode_io_key = lih_to_postcodes_io_key_map.get(area.area_type.code, None)
+        postcode_io_key = area_to_postcode_io_key(area)
         if postcode_io_key:
             subclause = Q()
             # See if there's a matched postcode data field for this area
@@ -1504,9 +1501,7 @@ def __get_generic_data_for_area_and_external_data_source(
     elif mode is stats.AreaQueryMode.AREA_OR_PARENTS:
         filters = Q(area__gss=area.gss)
         # Or find GenericData tagged with area that fully contains this area's polygon
-        postcode_io_key = area_to_postcode_io_filter(area)
-        if postcode_io_key is None:
-            postcode_io_key = lih_to_postcodes_io_key_map.get(area.area_type.code, None)
+        postcode_io_key = area_to_postcode_io_key(area)
         if postcode_io_key:
             subclause = Q()
             # See if there's a matched postcode data field for this area
@@ -1520,9 +1515,7 @@ def __get_generic_data_for_area_and_external_data_source(
     elif mode is stats.AreaQueryMode.OVERLAPPING:
         filters = Q(area__gss=area.gss)
         # Or find GenericData tagged with area that overlaps this area's polygon
-        postcode_io_key = area_to_postcode_io_filter(area)
-        if postcode_io_key is None:
-            postcode_io_key = lih_to_postcodes_io_key_map.get(area.area_type.code, None)
+        postcode_io_key = area_to_postcode_io_key(area)
         if postcode_io_key:
             filters |= Q(**{f"postcode_data__codes__{postcode_io_key.value}": area.gss})
 
@@ -1932,14 +1925,19 @@ def statistics_for_choropleth(
     stats_config: stats.StatisticsConfig,
     category_key: Optional[str] = None,
     count_key: Optional[str] = None,
+    map_bounds: Optional[stats.MapBounds] = None,
 ):
     user = get_current_user(info)
     for source in stats_config.source_ids:
         check_user_can_view_source(user, source)
 
-    return stats.statistics(
-        stats_config,
-        as_grouped_data=True,
-        category_key=category_key,
-        count_key=count_key,
-    )
+    return (
+        stats.statistics(
+            stats_config,
+            as_grouped_data=True,
+            category_key=category_key,
+            count_key=count_key,
+            map_bounds=map_bounds,
+        )
+        or []
+    )  # Convert None to empty list for better front-end integration
