@@ -235,8 +235,19 @@ def statistics(
     )
 
     # --- Get the required data for the source ---
-    qs = models.GenericData.objects.filter(
-        data_type__data_set__external_data_source_id__in=conf.source_ids
+    qs = (
+        models.GenericData.objects.filter(
+            data_type__data_set__external_data_source_id__in=conf.source_ids
+        )
+        .select_related("area", "area__area_type")
+        .values(
+            "id",
+            "json",
+            "postcode_data",
+            "area__gss",
+            "area__name",
+            "area__area_type__code",
+        )
     )
 
     # if group_by_area:
@@ -350,12 +361,12 @@ def statistics(
     # TODO: get columns from JSON for returning clean data
     d = [
         {
-            **record.json,
-            "postcode_data": record.postcode_data,
-            "gss": record.area.gss if record.area else None,
-            "area_type": record.area.area_type.code if record.area else None,
-            "label": record.area.name if record.area else None,
-            "id": str(record.id),
+            **record["json"],
+            "postcode_data": record["postcode_data"],
+            "gss": record.get("area__gss"),
+            "area_type": record.get("area__area_type__code"),
+            "label": record.get("area__name"),
+            "id": str(record["id"]),
         }
         for record in data
     ]
