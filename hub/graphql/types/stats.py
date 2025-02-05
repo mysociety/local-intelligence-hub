@@ -64,6 +64,10 @@ postcodeIOKeyAreaTypeLookup = {
     AnalyticalAreaType.msoa: AreaTypeFilter(lih_area_type="MSOA"),
     AnalyticalAreaType.lsoa: AreaTypeFilter(lih_area_type="LSOA"),
     AnalyticalAreaType.output_area: AreaTypeFilter(lih_area_type="OA21"),
+    AnalyticalAreaType.postcode: AreaTypeFilter(lih_area_type="PC"),
+    AnalyticalAreaType.postcode_area: AreaTypeFilter(lih_area_type="PCA"),
+    AnalyticalAreaType.postcode_district: AreaTypeFilter(lih_area_type="PCD"),
+    AnalyticalAreaType.postcode_sector: AreaTypeFilter(lih_area_type="PCS"),
 }
 
 

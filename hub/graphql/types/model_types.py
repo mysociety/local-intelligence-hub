@@ -590,8 +590,11 @@ class Area:
     async def sample_postcode(
         self, info: Info[HubDataLoaderContext]
     ) -> Optional[PostcodesIOResult]:
-        return await get_postcode_data_for_gss(self.gss)
-        # return await info.context.area_coordinate_loader.load(self.point)
+        try:
+            return await get_postcode_data_for_gss(self.gss)
+        except Exception as e:
+            logger.error(f"Failed to get sample postcode for gss {self.gss}: {e}")
+            return None
 
 
 @strawberry.type
@@ -1690,12 +1693,17 @@ def choropleth_data_for_source(
         )
 
     # Get the required data for the source
+    gss_field = (
+        "postcode_data__postcode"
+        if analytical_area_key == AnalyticalAreaType.postcode
+        else f"postcode_data__codes__{analytical_area_key.value}"
+    )
     qs = (
         external_data_source.get_import_data()
         .filter(postcode_data__codes__isnull=False)
         .annotate(
             label=F(f"postcode_data__{analytical_area_key.value}"),
-            gss=F(f"postcode_data__codes__{analytical_area_key.value}"),
+            gss=F(gss_field),
             latitude=Cast("postcode_data__latitude", output_field=FloatField()),
             longitude=Cast("postcode_data__longitude", output_field=FloatField()),
         )

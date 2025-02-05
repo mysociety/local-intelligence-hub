@@ -19,6 +19,9 @@ class AnalyticalAreaType(Enum):
     admin_county = "admin_county"
     admin_ward = "admin_ward"
     postcode = "postcode"
+    postcode_area = "postcode_area"
+    postcode_district = "postcode_district"
+    postcode_sector = "postcode_sector"
     european_electoral_region = "european_electoral_region"
     country = "country"
     msoa = "msoa"
@@ -39,6 +42,10 @@ lih_to_postcodes_io_key_map = {
     "EER": AnalyticalAreaType.european_electoral_region,
     "CTRY": AnalyticalAreaType.country,
     "OA21": AnalyticalAreaType.output_area,
+    "PC": AnalyticalAreaType.postcode,
+    "PCA": AnalyticalAreaType.postcode_area,
+    "PCD": AnalyticalAreaType.postcode_district,
+    "PCS": AnalyticalAreaType.postcode_sector,
 }
 
 

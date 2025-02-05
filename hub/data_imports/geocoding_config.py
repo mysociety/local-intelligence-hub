@@ -483,7 +483,12 @@ async def get_postcode_data_for_area(area, loaders, steps):
     # Try a few other backup strategies (example postcode, another geocoder)
     # to get postcodes.io data
     if postcode_data is None:
-        postcode = await get_example_postcode_from_area_gss(area.gss)
+        try:
+            postcode = await get_example_postcode_from_area_gss(area.gss)
+        except Exception as e:
+            logger.error(f"Failed to get example postcode for {area.gss}: {e}")
+            postcode = None
+
         steps.append(
             {
                 "task": "postcode_from_area",

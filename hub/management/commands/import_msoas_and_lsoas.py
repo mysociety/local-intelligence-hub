@@ -107,7 +107,7 @@ class Command(BaseCommand):
             if isinstance(polygon, Polygon):
                 polygon = MultiPolygon([polygon])
 
-            geom["geometry"] = polygon.json
+            geom["geometry"] = json.loads(polygon.json)
 
             a.geometry = json.dumps(geom)
             a.polygon = polygon
