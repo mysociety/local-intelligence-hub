@@ -33,7 +33,7 @@ class Command(BaseCommand):
             count_of_rows_to_process = cursor.fetchone()[0] or 0
 
             # Decide how many workers we need based on the number of rows of data
-            new_worker_count = math.max(
+            new_worker_count = max(
                 1, math.ceil(count_of_rows_to_process / settings.ROW_COUNT_PER_WORKER)
             )
 
