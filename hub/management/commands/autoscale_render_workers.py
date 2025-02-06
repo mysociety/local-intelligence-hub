@@ -1,3 +1,4 @@
+import json
 import logging
 import math
 
@@ -53,4 +54,19 @@ class Command(BaseCommand):
                 json={"numInstances": new_worker_count},
             )
 
-            logger.info(f"Render response: {res.json()}")
+            logger.info(
+                f"Render response: {res.status_code}, {render_response_dict[res.status_code]}"
+            )
+
+render_response_dict = {
+    202: "Service scaled successfully",
+    400: "The request could not be understood by the server.",
+    401: "Authorization information is missing or invalid.",
+    403: "You do not have permissions for the requested resource.",
+    404: "Unable to find the requested resource.",
+    406: "Unable to generate preferred media types as specified by Accept request header.",
+    410: "The requested resource is no longer available.",
+    429: "Rate limit has been surpassed.",
+    500: "An unexpected server error has occurred.",
+    503: "Server currently unavailable.",
+}
