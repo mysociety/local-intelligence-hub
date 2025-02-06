@@ -149,7 +149,9 @@ async def trigger_update(
     )
 
     batch_request = await BatchRequest.objects.acreate(
-        user=get_current_user(info), type=BatchRequest.BatchRequestType.Update
+        user=get_current_user(info),
+        type=BatchRequest.BatchRequestType.Update,
+        source=data_source,
     )
     request_id = str(batch_request.id)
 
@@ -253,7 +255,9 @@ async def import_all(
         await models.ExternalDataSource.objects.aget(id=external_data_source_id)
     )
     batch_request = await BatchRequest.objects.acreate(
-        user=get_current_user(info), type=BatchRequest.BatchRequestType.Import
+        user=get_current_user(info),
+        type=BatchRequest.BatchRequestType.Import,
+        source=data_source,
     )
 
     request_id = str(batch_request.id)
@@ -438,7 +442,9 @@ def create_external_data_source(
 
         if created:
             batch_request = BatchRequest.objects.create(
-                user=get_current_user(info), type=BatchRequest.BatchRequestType.Import
+                source=source,
+                user=get_current_user(info),
+                type=BatchRequest.BatchRequestType.Import,
             )
             request_id = str(batch_request.id)
             requested_at = now().isoformat()

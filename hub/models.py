@@ -2864,13 +2864,13 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         if not all:
             # Cancel all BatchRequests
             BatchRequest.objects.filter(
-                data_source=self,
+                source=self,
                 is_cancelled_by_user=None,
                 **({"type": type} if type else {}),
             ).update(is_cancelled_by_user=True)
             # Cancel all BatchRequests
             cancelled_request_ids = BatchRequest.objects.filter(
-                data_source=self,
+                source=self,
                 is_cancelled_by_user=True,
             )
             job_filters.update(
@@ -5009,6 +5009,13 @@ class BatchRequest(models.Model):
         # User requested update of data to third party data source
         Update = "Update"
 
+    source = models.ForeignKey(
+        ExternalDataSource,
+        on_delete=models.SET_NULL,
+        related_name="batch_requests",
+        null=True,
+        blank=True,
+    )
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
