@@ -1,3 +1,4 @@
+from enum import Enum
 import json
 import logging
 import math
@@ -11,8 +12,31 @@ from utils.render import get_render_client
 logger = logging.getLogger(__name__)
 
 
+# Enum for strategies
+class ScalingStrategy(Enum):
+    row_count = "row_count"
+    simple_data_source_count = "simple_data_source_count"
+    sources_and_row_count = "sources_and_row_count"
+
+
 class Command(BaseCommand):
     help = "Manage Render workers"
+
+    # Allow selecting a strategy
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--strategy",
+            type=lambda x: ScalingStrategy(x),  # Convert string to enum
+            choices=list(ScalingStrategy),      # Pass enum values directly
+            default=ScalingStrategy(settings.RENDER_WORKER_SCALING_STRATEGY)
+        )
+
+        parser.add_argument("--min-worker-count", type=int, default=settings.RENDER_MIN_WORKER_COUNT)
+
+        parser.add_argument("--max-worker-count", type=int, default=settings.RENDER_MAX_WORKER_COUNT)
+
+        parser.add_argument("--row-count-per-worker", type=int, default=settings.ROW_COUNT_PER_WORKER)
+
 
     def handle(self, *args, **options):
         if not settings.ROW_COUNT_PER_WORKER:
@@ -20,27 +44,27 @@ class Command(BaseCommand):
 
         with connection.cursor() as cursor:
             # Find out how many rows of data need importing, updating, so on, so forth
-            cursor.execute(
-                """
-                    SELECT
-                        multi + single as rows_to_process
-                    FROM (
-                        SELECT sum(jsonb_array_length(job.args->'members')) as multi, count(job.args->>'member') as single
-                        FROM procrastinate_jobs job
-                        WHERE status in ('doing', 'todo')
-                    ) as subquery
-                """
-            )
-            count_of_rows_to_process = cursor.fetchone()[0] or 0
+            if options["strategy"] == ScalingStrategy.row_count:
+                new_worker_count = self.row_count_strategy(
+                    min_worker_count=options["min_worker_count"],
+                    max_worker_count=options["max_worker_count"],
+                    row_count_per_worker=options["row_count_per_worker"],
+                )
+            elif options["strategy"] == ScalingStrategy.simple_data_source_count:
+                new_worker_count = self.simple_data_source_count_strategy(
+                    min_worker_count=options["min_worker_count"],
+                    max_worker_count=options["max_worker_count"],
+                )
+            elif options["strategy"] == ScalingStrategy.sources_and_row_count:
+                new_worker_count = self.sources_and_row_count_strategy(
+                    min_worker_count=options["min_worker_count"],
+                    max_worker_count=options["max_worker_count"],
+                    row_count_per_worker=options["row_count_per_worker"],
+                )
+            else:
+                raise ValueError(f"Unknown strategy: {options['strategy']}")
 
-            # Decide how many workers we need based on the number of rows of data
-            new_worker_count = max(
-                1, math.ceil(count_of_rows_to_process / settings.ROW_COUNT_PER_WORKER)
-            )
-
-            logger.info(
-                f"Rows to process: {count_of_rows_to_process}. Ideal worker count: {new_worker_count}."
-            )
+            logger.info(f"New worker count: {new_worker_count}.")
 
             if not settings.RENDER_API_TOKEN:
                 raise ValueError("settings.RENDER_API_TOKEN is required")
@@ -57,6 +81,93 @@ class Command(BaseCommand):
             logger.info(
                 f"Render response: {res.status_code}, {render_response_dict[res.status_code]}"
             )
+
+    def row_count_strategy(self, min_worker_count, max_worker_count, row_count_per_worker):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                    SELECT
+                        multi + single as rows_to_process
+                    FROM (
+                        SELECT sum(jsonb_array_length(job.args->'members')) as multi, count(job.args->>'member') as single
+                        FROM procrastinate_jobs job
+                        WHERE status in ('doing', 'todo')
+                    ) as subquery
+                """
+            )
+            count_of_rows_to_process = cursor.fetchone()[0] or 0
+
+            # Decide how many workers we need based on the number of rows of data
+            new_worker_count = min(
+                max_worker_count,
+                max(
+                    min_worker_count,
+                    math.ceil(count_of_rows_to_process / row_count_per_worker)
+                )
+            )
+
+            logger.info(
+                f"Strategy: Consistent global throughput.\n- Rows to process: {count_of_rows_to_process}."
+            )
+
+            return new_worker_count
+        
+    # New strategy: count of sources in jobs
+    # 1 worker per source
+    def simple_data_source_count_strategy(self, min_worker_count, max_worker_count):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                    SELECT count(distinct job.args->>'external_data_source_id') as count_of_sources
+                    FROM procrastinate_jobs job
+                    WHERE status in ('doing', 'todo')
+                """
+            )
+            count_of_data_sources = cursor.fetchone()[0] or 0
+
+            new_worker_count = min(
+                max_worker_count,
+                max(
+                    min_worker_count,
+                    count_of_data_sources
+                )
+            )
+
+            logger.info(
+                f"Strategy: Consistent global throughput.\n- Sources to process: {count_of_data_sources}."
+            )
+
+            return new_worker_count
+        
+    def sources_and_row_count_strategy(self, min_worker_count, max_worker_count, row_count_per_worker):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                    SELECT count(distinct job.args->>'external_data_source_id') as count_of_sources, sum(jsonb_array_length(job.args->'members')) as rows_to_process
+                    FROM procrastinate_jobs job
+                    WHERE status in ('doing', 'todo')
+                """
+            )
+            count_of_data_sources, count_of_rows_to_process = cursor.fetchone()
+
+            # At the least, we need one worker per source
+            # But we also want to make sure we have enough workers to process the rows
+            # So we take the max of the two
+            new_worker_count = min(
+                max_worker_count,
+                max(
+                    min_worker_count,
+                    count_of_data_sources,
+                    math.ceil(count_of_rows_to_process / row_count_per_worker)
+                )
+            )
+
+            logger.info(
+                f"Strategy: Consistent global throughput + 1 source per worker.\n- Sources to process: {count_of_data_sources}."
+            )
+
+            return new_worker_count
+            
 
 render_response_dict = {
     202: "Service scaled successfully",

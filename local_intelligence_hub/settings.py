@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import List, Tuple
 
 import environ
+from hub.management.commands.autoscale_render_workers import ScalingStrategy
 import posthog
 from gqlauth.settings_type import GqlAuthSettings
 
@@ -110,6 +111,9 @@ env = environ.Env(
     ROW_COUNT_PER_WORKER=(int, 15000),
     RENDER_API_TOKEN=(str, None),
     RENDER_WORKER_SERVICE_ID=(str, None),
+    RENDER_MIN_WORKER_COUNT=(int, 1),
+    RENDER_MAX_WORKER_COUNT=(int, 15),
+    RENDER_WORKER_SCALING_STRATEGY=(str, ScalingStrategy.sources_and_row_count.value),
 )
 
 environ.Env.read_env(BASE_DIR / ".env")
@@ -502,6 +506,9 @@ IMPORT_UPDATE_MANY_RETRY_COUNT = 3
 ROW_COUNT_PER_WORKER = env("ROW_COUNT_PER_WORKER")
 RENDER_API_TOKEN = env("RENDER_API_TOKEN")
 RENDER_WORKER_SERVICE_ID = env("RENDER_WORKER_SERVICE_ID")
+RENDER_MIN_WORKER_COUNT = env("RENDER_MIN_WORKER_COUNT")
+RENDER_WORKER_SCALING_STRATEGY = env("RENDER_WORKER_SCALING_STRATEGY")
+RENDER_MAX_WORKER_COUNT = env("RENDER_MAX_WORKER_COUNT")
 
 
 def jwt_handler(token):
