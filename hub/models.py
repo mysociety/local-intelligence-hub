@@ -2878,7 +2878,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         Cancel all imports for this data source.
         """
         job_filters = dict(
-            args__external_data_source_id=self.id,
+            args__external_data_source_id=str(self.id),
             status__in=["todo", "doing"],
         )
         if not all:
@@ -2886,7 +2886,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             BatchRequest.objects.filter(
                 source=self,
                 is_cancelled_by_user=None,
-                **({"type": type} if type else {}),
+                **({"type": type.value} if type else {}),
             ).update(is_cancelled_by_user=True)
             # Cancel all BatchRequests
             cancelled_request_ids = BatchRequest.objects.filter(
@@ -2894,7 +2894,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 is_cancelled_by_user=True,
             )
             job_filters.update(
-                args__request_id__in=cancelled_request_ids.values_list("id", flat=True)
+                args__request_id__in=[str(id) for id in cancelled_request_ids.values_list("id", flat=True)] 
             )
         # Cancel all user-requested procrastinate import jobs
         return ProcrastinateJob.objects.filter(**job_filters).update(status="cancelled")
