@@ -2848,6 +2848,37 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         """
         raise NotImplementedError("Lookup not implemented for this data source type.")
 
+    def cancel_jobs(
+        self,
+        type: "BatchRequest.BatchRequestType" = None,
+        # If ALL, then cancel all jobs, regardless of whether they're batched or not
+        all=False,
+    ):
+        """
+        Cancel all imports for this data source.
+        """
+        job_filters = dict(
+            args__external_data_source_id=self.id,
+            status__in=["todo", "doing"],
+        )
+        if not all:
+            # Cancel all BatchRequests
+            BatchRequest.objects.filter(
+                data_source=self,
+                is_cancelled_by_user=None,
+                **({"type": type} if type else {}),
+            ).update(is_cancelled_by_user=True)
+            # Cancel all BatchRequests
+            cancelled_request_ids = BatchRequest.objects.filter(
+                data_source=self,
+                is_cancelled_by_user=True,
+            )
+            job_filters.update(
+                args__request_id__in=cancelled_request_ids.values_list("id", flat=True)
+            )
+        # Cancel all user-requested procrastinate import jobs
+        return ProcrastinateJob.objects.filter(**job_filters).update(status="cancelled")
+
 
 class DatabaseJSONSource(ExternalDataSource):
     crm_type = "DatabaseJSONSource"
@@ -4971,8 +5002,19 @@ source_models: dict[str, Type[ExternalDataSource]] = {
 
 
 class BatchRequest(models.Model):
+    # enum of request types
+    class BatchRequestType(models.TextChoices):
+        # User requested import of data to Mapped
+        Import = "Import"
+        # User requested update of data to third party data source
+        Update = "Update"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     send_email = models.BooleanField(default=False)
     sent_email = models.BooleanField(default=False)
     status = models.CharField(max_length=32, default="todo")
+    is_cancelled_by_user = models.BooleanField(default=False)
+    type = TextChoicesField(choices_enum=BatchRequestType)
