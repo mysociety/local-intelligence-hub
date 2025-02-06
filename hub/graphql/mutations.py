@@ -148,7 +148,9 @@ async def trigger_update(
         await models.ExternalDataSource.objects.aget(id=external_data_source_id)
     )
 
-    batch_request = await BatchRequest.objects.acreate(user=get_current_user(info))
+    batch_request = await BatchRequest.objects.acreate(
+        user=get_current_user(info), type=BatchRequest.BatchRequestType.Update
+    )
     request_id = str(batch_request.id)
 
     await data_source.schedule_refresh_all(request_id=request_id)
@@ -250,7 +252,9 @@ async def import_all(
     data_source: models.ExternalDataSource = (
         await models.ExternalDataSource.objects.aget(id=external_data_source_id)
     )
-    batch_request = await BatchRequest.objects.acreate(user=get_current_user(info))
+    batch_request = await BatchRequest.objects.acreate(
+        user=get_current_user(info), type=BatchRequest.BatchRequestType.Import
+    )
 
     request_id = str(batch_request.id)
     requested_at = now().isoformat()
@@ -263,7 +267,7 @@ async def import_all(
 
 @strawberry_django.mutation(extensions=[IsAuthenticated()])
 def cancel_import(
-    info: Info, external_data_source_id: str, request_id: str
+    info: Info, external_data_source_id: str, request_id: str, all: bool = False
 ) -> ExternalDataSourceAction:
     data_source: models.ExternalDataSource = models.ExternalDataSource.objects.get(
         id=external_data_source_id
@@ -271,14 +275,25 @@ def cancel_import(
     # Confirm user has access to this source
     user = get_current_user(info)
     assert user_can_manage_source(user, data_source)
+    # Execute
+    data_source.cancel_jobs(type=BatchRequest.BatchRequestType.Import, all=all)
     # Update all remaining procrastinate jobs, cancel them
-    ProcrastinateJob.objects.filter(
-        args__external_data_source_id=external_data_source_id,
-        status__in=["todo", "doing"],
-        args__request_id=request_id,
-    ).update(status="cancelled")
-    BatchRequest.objects.filter(id=request_id).update(status="cancelled")
-    #
+    return ExternalDataSourceAction(id=request_id, external_data_source=data_source)
+
+
+@strawberry_django.mutation(extensions=[IsAuthenticated()])
+def cancel_update(
+    info: Info, external_data_source_id: str, request_id: str, all: bool = False
+) -> ExternalDataSourceAction:
+    data_source: models.ExternalDataSource = models.ExternalDataSource.objects.get(
+        id=external_data_source_id
+    )
+    # Confirm user has access to this source
+    user = get_current_user(info)
+    assert user_can_manage_source(user, data_source)
+    # Execute
+    data_source.cancel_jobs(type=BatchRequest.BatchRequestType.Update, all=all)
+    # Update all remaining procrastinate jobs, cancel them
     return ExternalDataSourceAction(id=request_id, external_data_source=data_source)
 
 
@@ -422,7 +437,9 @@ def create_external_data_source(
         source, created = creator_fn()
 
         if created:
-            batch_request = BatchRequest.objects.create(user=get_current_user(info))
+            batch_request = BatchRequest.objects.create(
+                user=get_current_user(info), type=BatchRequest.BatchRequestType.Import
+            )
             request_id = str(batch_request.id)
             requested_at = now().isoformat()
             async_to_sync(source.schedule_import_all)(
