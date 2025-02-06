@@ -44,6 +44,7 @@ from google.oauth2.credentials import Credentials as GoogleCredentials
 from mailchimp3 import MailChimp
 from polymorphic.models import PolymorphicModel
 from procrastinate.contrib.django.models import ProcrastinateEvent, ProcrastinateJob
+from procrastinate.exceptions import AlreadyEnqueued
 from psycopg.errors import UniqueViolation
 from pyairtable import Api as AirtableAPI
 from pyairtable import Base as AirtableBase
@@ -2396,18 +2397,22 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     # Webhooks
 
     def handle_update_webhook_view(self, member_ids):
-        if not self.allow_updates:
-            logger.error(f"Updates requested for non-updatable CRM: {self}")
-            return False
+        try:
+            if not self.allow_updates:
+                logger.error(f"Updates requested for non-updatable CRM: {self}")
+                return False
 
-        if not self.auto_update_enabled:
-            logger.error(f"Updates requested for CRM without webhooks enabled: {self}")
-            return False
+            if not self.auto_update_enabled:
+                logger.error(f"Updates requested for CRM without webhooks enabled: {self}")
+                return False
 
-        if len(member_ids) == 1:
-            async_to_sync(self.schedule_refresh_one)(member=member_ids[0])
-        else:
-            async_to_sync(self.schedule_refresh_many)(members=member_ids)
+            if len(member_ids) == 1:
+                async_to_sync(self.schedule_refresh_one)(member=member_ids[0])
+            else:
+                async_to_sync(self.schedule_refresh_many)(members=member_ids)
+        except AlreadyEnqueued:
+            # This is fine.
+            pass
         return True
 
     def handle_import_webhook_view(self, member_ids):
