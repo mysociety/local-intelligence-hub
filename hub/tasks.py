@@ -6,7 +6,6 @@ import logging
 import os
 
 from django.conf import settings
-from django.core.mail import EmailMessage
 from django.db.models import Count, Q
 
 from procrastinate.contrib.django import app
@@ -261,6 +260,7 @@ async def signal_request_complete(request_id: str, success: bool, *args, **kwarg
 # @app.periodic(cron="0 * * * *")
 # @app.task(queue="emails")
 # def send_batch_job_emails(timestamp=None):
+#     from django.core.mail import EmailMessage
 #     from hub.models import BatchRequest
 
 #     batch_requests = BatchRequest.objects.filter(
