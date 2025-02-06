@@ -12,13 +12,15 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 import json
 from datetime import timedelta
+from enum import Enum
 from pathlib import Path
 from typing import List, Tuple
 
 import environ
-from hub.management.commands.autoscale_render_workers import ScalingStrategy
 import posthog
 from gqlauth.settings_type import GqlAuthSettings
+
+from hub.management.commands.autoscale_render_workers import ScalingStrategy
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -114,6 +116,9 @@ env = environ.Env(
     RENDER_MIN_WORKER_COUNT=(int, 1),
     RENDER_MAX_WORKER_COUNT=(int, 15),
     RENDER_WORKER_SCALING_STRATEGY=(str, ScalingStrategy.sources_and_row_count.value),
+    SUPER_QUICK_IMPORT_ROW_COUNT_THRESHOLD=(int, 2000),
+    MEDIUM_PRIORITY_IMPORT_ROW_COUNT_THRESHOLD=(int, 7000),
+    LARGE_IMPORT_ROW_COUNT_THRESHOLD=(int, 20000),
 )
 
 environ.Env.read_env(BASE_DIR / ".env")
@@ -639,3 +644,9 @@ PARSONS_LIMITED_DEPENDENCIES = True
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = env("DATA_UPLOAD_MAX_MEMORY_SIZE")
 FILE_UPLOAD_MAX_MEMORY_SIZE = env("FILE_UPLOAD_MAX_MEMORY_SIZE")
+
+SUPER_QUICK_IMPORT_ROW_COUNT_THRESHOLD = env("SUPER_QUICK_IMPORT_ROW_COUNT_THRESHOLD")
+MEDIUM_PRIORITY_IMPORT_ROW_COUNT_THRESHOLD = env(
+    "MEDIUM_PRIORITY_IMPORT_ROW_COUNT_THRESHOLD"
+)
+LARGE_IMPORT_ROW_COUNT_THRESHOLD = env("LARGE_IMPORT_ROW_COUNT_THRESHOLD")

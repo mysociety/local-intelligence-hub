@@ -1,7 +1,7 @@
-from enum import Enum
 import json
 import logging
 import math
+from enum import Enum
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -27,16 +27,21 @@ class Command(BaseCommand):
         parser.add_argument(
             "--strategy",
             type=lambda x: ScalingStrategy(x),  # Convert string to enum
-            choices=list(ScalingStrategy),      # Pass enum values directly
-            default=ScalingStrategy(settings.RENDER_WORKER_SCALING_STRATEGY)
+            choices=list(ScalingStrategy),  # Pass enum values directly
+            default=ScalingStrategy(settings.RENDER_WORKER_SCALING_STRATEGY),
         )
 
-        parser.add_argument("--min-worker-count", type=int, default=settings.RENDER_MIN_WORKER_COUNT)
+        parser.add_argument(
+            "--min-worker-count", type=int, default=settings.RENDER_MIN_WORKER_COUNT
+        )
 
-        parser.add_argument("--max-worker-count", type=int, default=settings.RENDER_MAX_WORKER_COUNT)
+        parser.add_argument(
+            "--max-worker-count", type=int, default=settings.RENDER_MAX_WORKER_COUNT
+        )
 
-        parser.add_argument("--row-count-per-worker", type=int, default=settings.ROW_COUNT_PER_WORKER)
-
+        parser.add_argument(
+            "--row-count-per-worker", type=int, default=settings.ROW_COUNT_PER_WORKER
+        )
 
     def handle(self, *args, **options):
         if not settings.ROW_COUNT_PER_WORKER:
@@ -82,7 +87,9 @@ class Command(BaseCommand):
                 f"Render response: {res.status_code}, {render_response_dict[res.status_code]}"
             )
 
-    def row_count_strategy(self, min_worker_count, max_worker_count, row_count_per_worker):
+    def row_count_strategy(
+        self, min_worker_count, max_worker_count, row_count_per_worker
+    ):
         with connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -102,8 +109,8 @@ class Command(BaseCommand):
                 max_worker_count,
                 max(
                     min_worker_count,
-                    math.ceil(count_of_rows_to_process / row_count_per_worker)
-                )
+                    math.ceil(count_of_rows_to_process / row_count_per_worker),
+                ),
             )
 
             logger.info(
@@ -111,7 +118,7 @@ class Command(BaseCommand):
             )
 
             return new_worker_count
-        
+
     # New strategy: count of sources in jobs
     # 1 worker per source
     def simple_data_source_count_strategy(self, min_worker_count, max_worker_count):
@@ -126,11 +133,7 @@ class Command(BaseCommand):
             count_of_data_sources = cursor.fetchone()[0] or 0
 
             new_worker_count = min(
-                max_worker_count,
-                max(
-                    min_worker_count,
-                    count_of_data_sources
-                )
+                max_worker_count, max(min_worker_count, count_of_data_sources)
             )
 
             logger.info(
@@ -138,8 +141,10 @@ class Command(BaseCommand):
             )
 
             return new_worker_count
-        
-    def sources_and_row_count_strategy(self, min_worker_count, max_worker_count, row_count_per_worker):
+
+    def sources_and_row_count_strategy(
+        self, min_worker_count, max_worker_count, row_count_per_worker
+    ):
         with connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -158,8 +163,8 @@ class Command(BaseCommand):
                 max(
                     min_worker_count,
                     count_of_data_sources,
-                    math.ceil(count_of_rows_to_process / row_count_per_worker)
-                )
+                    math.ceil(count_of_rows_to_process / row_count_per_worker),
+                ),
             )
 
             logger.info(
@@ -167,7 +172,7 @@ class Command(BaseCommand):
             )
 
             return new_worker_count
-            
+
 
 render_response_dict = {
     202: "Service scaled successfully",

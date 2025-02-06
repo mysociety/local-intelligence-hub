@@ -88,6 +88,7 @@ from utils.postcodesIO import (
     get_bulk_postcode_geo,
     get_bulk_postcode_geo_from_coords,
 )
+from utils.procrastinate import ProcrastinateQueuePriority
 from utils.py import batched, ensure_list, get, is_maybe_id
 
 User = get_user_model()
@@ -2538,6 +2539,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
         members = await external_data_source.fetch_all()
+        priority = None
+        match len(members):
+            case _ if len(members) < settings.SUPER_QUICK_IMPORT_ROW_COUNT_THRESHOLD:
+                priority = ProcrastinateQueuePriority.SUPER_QUICK
+            case _ if len(
+                members
+            ) < settings.MEDIUM_PRIORITY_IMPORT_ROW_COUNT_THRESHOLD:
+                priority = ProcrastinateQueuePriority.MEDIUM
+            case _ if len(members) < settings.LARGE_IMPORT_ROW_COUNT_THRESHOLD:
+                priority = ProcrastinateQueuePriority.SLOW
+            case _:
+                priority = ProcrastinateQueuePriority.VERY_SLOW
         member_count = 0
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
         for i, batch in enumerate(batches):
@@ -2546,7 +2559,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             )
             member_count += len(batch)
             await external_data_source.schedule_import_many(
-                batch, request_id=request_id
+                batch, request_id=request_id, priority=priority
             )
             logger.info(f"Scheduled import batch {i} for source {external_data_source}")
         metrics.distribution(key="import_rows_requested", value=member_count)
@@ -2620,7 +2633,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         except (UniqueViolation, IntegrityError):
             pass
 
-    async def schedule_import_many(self, members: list, request_id: str = None) -> int:
+    async def schedule_import_many(
+        self, members: list, request_id: str = None, priority: int = None
+    ) -> int:
         if not members:
             logger.error("Import requested for 0 members")
             return
@@ -2633,6 +2648,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
             return await import_many.configure(
+                priority=priority,
                 # Dedupe `import_many` jobs for the same config
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"import_many_{str(self.id)}_{member_ids_hash}",
@@ -2668,6 +2684,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         external_data_source_id: str,
         current_page: int = 1,
         request_id: str = None,
+        priority: int = None,
     ) -> int:
         """
         This is a classmethod for a performance boost - the import pages
@@ -2680,6 +2697,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"import_pages_{external_data_source_id}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+                priority=priority,
             ).defer_async(
                 external_data_source_id=external_data_source_id,
                 current_page=current_page,
@@ -2694,6 +2712,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         external_data_source_id: str,
         current_page: int = 1,
         request_id: str = None,
+        priority: int = None,
     ) -> int:
         """
         This is a classmethod for a performance boost - the refresh pages
@@ -2706,6 +2725,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"refresh_pages_{external_data_source_id}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+                priority=priority,
             ).defer_async(
                 external_data_source_id=external_data_source_id,
                 current_page=current_page,
@@ -3914,7 +3934,9 @@ class ActionNetworkSource(ExternalDataSource):
         """
         # TODO: how do we measure number of rows imported with this method?
         return await cls.schedule_import_pages(
-            external_data_source_id=external_data_source_id, request_id=request_id
+            external_data_source_id=external_data_source_id,
+            request_id=request_id,
+            priority=ProcrastinateQueuePriority.UNGUESSABE,
         )
 
     @classmethod
