@@ -48,7 +48,9 @@ class Command(BaseCommand):
 
             # Tell render
             render = get_render_client()
-            render.post(
+            res = render.post(
                 f"/v1/services/{settings.RENDER_WORKER_SERVICE_ID}/scale",
                 json={"numInstances": new_worker_count},
             )
+
+            logger.info(f"Render response: {res.json()}")
