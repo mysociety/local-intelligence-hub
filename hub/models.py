@@ -17,6 +17,7 @@ from django.contrib.gis.geos import Point
 from django.contrib.postgres.fields import ArrayField
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min, Q
 from django.db.models.functions import Cast, Coalesce
@@ -2403,7 +2404,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 return False
 
             if not self.auto_update_enabled:
-                logger.error(f"Updates requested for CRM without webhooks enabled: {self}")
+                logger.error(
+                    f"Updates requested for CRM without webhooks enabled: {self}"
+                )
                 return False
 
             if len(member_ids) == 1:
@@ -2568,6 +2571,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             )
             logger.info(f"Scheduled import batch {i} for source {external_data_source}")
         metrics.distribution(key="import_rows_requested", value=member_count)
+        call_command("autoscale_render_workers")
 
     async def schedule_refresh_one(self, member) -> int:
         logger.info(f"Scheduling refresh one for source {self} and member {member}")
@@ -2899,8 +2903,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 is_cancelled_by_user=True,
             )
             job_filters.update(
-                args__request_id__in=[str(id) for id in cancelled_request_ids.values_list("id", flat=True)] 
+                args__request_id__in=[
+                    str(id) for id in cancelled_request_ids.values_list("id", flat=True)
+                ]
             )
+
+        # run command to update worker instances
+        call_command("autoscale_render_workers")
+
         # Cancel all user-requested procrastinate import jobs
         return ProcrastinateJob.objects.filter(**job_filters).update(status="cancelled")
 
@@ -3938,11 +3948,13 @@ class ActionNetworkSource(ExternalDataSource):
         Override Action Network import_all behavior to import page-by-page
         """
         # TODO: how do we measure number of rows imported with this method?
-        return await cls.schedule_import_pages(
+        # Action Network simply doesn't seem to have a way to get the number of rows imported
+        await cls.schedule_import_pages(
             external_data_source_id=external_data_source_id,
             request_id=request_id,
             priority=ProcrastinateQueuePriority.UNGUESSABE,
         )
+        call_command("autoscale_render_workers")
 
     @classmethod
     async def deferred_refresh_all(
