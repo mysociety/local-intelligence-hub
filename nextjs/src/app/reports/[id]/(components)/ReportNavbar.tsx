@@ -130,11 +130,11 @@ export default function ReportNavbar() {
             <ViewCreator />
           </div>
           <div className="flex flex-row items-center gap-0 ml-auto">
-            {viewManager.currentView.type === ViewType.Map ? (
+            {viewManager.currentView?.type === ViewType.Map ? (
               <MapComboBox />
-            ) : (
+            ) : viewManager.currentView?.type === ViewType.Table ? (
               <TableComboBox />
-            )}
+            ) : null}
             <ReportStarredItemsDropdown />
             {/* {!!explorer.isValidEntity(explorer.state) && ( */}
             <PanelRight
