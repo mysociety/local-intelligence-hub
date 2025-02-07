@@ -80,7 +80,7 @@ from hub.tasks import (
 )
 from hub.validation import validate_and_format_phone_number
 from hub.views.mapped import ExternalDataSourceWebhook
-from utils import google_maps, google_sheets
+from utils import google_maps, google_sheets, postgis_geocoder
 from utils.django_json import DBJSONEncoder, PandasMappingSafeForPG
 from utils.log import get_simple_debug_logger
 from utils.postcodesIO import (
@@ -1752,6 +1752,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         loaders = await self.get_loaders()
         geocoder_context = geocoding_config.GeocoderContext()
 
+        logger.info(f"Importing {len(members)} records")
+
         if self.uses_valid_geocoding_config():
             await asyncio.gather(
                 *[
@@ -2054,10 +2056,12 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         get_record_id(record) on the source data (i.e. the record that
         comes from the 3rd party data source) – NOT the GenericData.id.
         """
+        logger.info(f"Loading previously imported data for {len(record_ids)} records")
         results = GenericData.objects.filter(
             data_type__data_set__external_data_source_id=self.id, data__in=record_ids
         )
         results = await sync_to_async(list)(results)
+
         return [
             next(
                 (result for result in results if result.data == id),
@@ -2164,6 +2168,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         loaders = Loaders(
             postcodesIO=DataLoader(load_fn=get_bulk_postcode_geo),
             postcodesIOFromPoint=DataLoader(load_fn=get_bulk_postcode_geo_from_coords),
+            postgis_geocoder=DataLoader(
+                load_fn=postgis_geocoder.get_bulk_postcode_geo_from_coords
+            ),
             fetch_record=DataLoader(load_fn=self.fetch_many_loader, cache=False),
             source_loaders=await self.get_source_loaders(),
             generic_data=DataLoader(load_fn=self.imported_data_loader),

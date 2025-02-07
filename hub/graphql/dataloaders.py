@@ -34,15 +34,21 @@ class BasicFieldDataLoader(dataloaders.BaseDjangoModelDataLoader):
     @classmethod
     @sync_to_async
     def load_fn(cls, keys: list[str]):
+        logger.info(
+            f"Loading {len(keys)} {cls.model._meta.verbose_name_plural} by {cls.field}"
+        )
         results = cls.queryset(keys)
         results_dict = {}
         for result in results:
             key = getattr(result, cls.field)
             if key in results_dict:
-                logger.warning(f"multiple dataloader results for key {key}")
+                logger.warning(f"Multiple dataloader results for key {key}")
             else:
                 results_dict[key] = result
 
+        logger.info(
+            f"Loaded {len(keys)} {cls.model._meta.verbose_name_plural} by {cls.field}"
+        )
         return [results_dict.get(key, None) for key in keys]
 
 

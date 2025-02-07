@@ -1,5 +1,6 @@
 import logging
 import re
+import traceback
 from enum import Enum
 from typing import TYPE_CHECKING
 
@@ -47,6 +48,7 @@ class GeocoderContext:
 # enum of geocoders: postcodes_io, mapbox, google
 class Geocoder(Enum):
     POSTCODES_IO = "postcodes_io"
+    POSTGIS = "postgis"
     FINDTHATPOSTCODE = "findthatpostcode"
     MAPBOX = "mapbox"
     GOOGLE = "google"
@@ -463,25 +465,46 @@ async def import_area_data(
 
 async def get_postcode_data_for_area(area, loaders, steps):
     sample_point = area.polygon.centroid
+
     # get postcodeIO result for area.coordinates
     try:
-        postcode_data: PostcodesIOResult = await loaders["postcodesIOFromPoint"].load(
+        postcode_data: PostcodesIOResult = await loaders["postgis_geocoder"].load(
             sample_point
         )
     except Exception as e:
+        print(
+            traceback.format_exc()
+        )  # Keep for now to track tricky database errors with bad error messages
+
         logger.error(f"Failed to get postcode data for {sample_point}: {e}")
         postcode_data = None
 
     steps.append(
         {
             "task": "postcode_from_area_coordinates",
-            "service": Geocoder.POSTCODES_IO.value,
+            "service": Geocoder.POSTGIS.value,
             "result": "failed" if postcode_data is None else "success",
         }
     )
 
     # Try a few other backup strategies (example postcode, another geocoder)
     # to get postcodes.io data
+    if postcode_data is None:
+        try:
+            postcode_data: PostcodesIOResult = await loaders[
+                "postcodesIOFromPoint"
+            ].load(sample_point)
+        except Exception as e:
+            logger.error(f"Failed to get postcode data for {sample_point}: {e}")
+
+        steps.append(
+            {
+                "task": "postcode_from_area_coordinates",
+                "service": Geocoder.POSTCODES_IO.value,
+                "result": "failed" if postcode_data is None else "success",
+            }
+        )
+
     if postcode_data is None:
         try:
             postcode = await get_example_postcode_from_area_gss(area.gss)

@@ -29,11 +29,18 @@ class Codes:
     lau2: str
     pfa: str
     output_area: Optional[str]
+    postcode_sector: Optional[str]
+    postcode_district: Optional[str]
+    postcode_area: Optional[str]
+    european_electoral_region: Optional[str]
 
 
 @dataclass
 class PostcodesIOResult:
     postcode: str
+    postcode_sector: Optional[str]
+    postcode_district: Optional[str]
+    postcode_area: Optional[str]
     quality: int
     eastings: int
     northings: int
