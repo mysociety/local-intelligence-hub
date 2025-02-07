@@ -97,7 +97,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
     return () => {
       map.loadedMap?.off('moveend', onMoveEnd)
     }
-  }, [map.loaded])
+  }, [map, setMapZoom, setMapBounds])
 
   // When the map is loaded and we have the data, add the data to the boundaries
   useEffect(() => {
@@ -117,7 +117,15 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
       )
       setFillsByLayer({ ...fillsByLayer, [activeTileset.mapboxSourceId]: fill })
     }
-  }, [map.loaded, activeTileset, data, view.mapOptions])
+  }, [
+    map,
+    activeTileset,
+    data,
+    view.mapOptions,
+    dataByBoundary,
+    fillsByLayer,
+    shaderVisibility,
+  ])
 
   if (!map.loaded) return null
   if (!tilesets) return null

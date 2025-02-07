@@ -152,7 +152,7 @@ const useDataByBoundary = ({
         })
       }
     }
-  }, [view, query])
+  }, [view, query, setChoroplethErrors])
 
   return useAdvancedStatistics ? statisticsQuery : query
 }
