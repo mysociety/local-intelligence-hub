@@ -794,6 +794,9 @@ class GenericData(CommonData):
     image = models.ImageField(null=True, max_length=1000, upload_to="generic_data")
     can_display_point = models.BooleanField(default=True)
 
+    class Meta:
+        unique_together = ["data_type", "data"]
+
     def remote_url(self):
         return self.data_type.data_set.external_data_source.record_url(
             self.data, self.json
@@ -1758,14 +1761,44 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         logger.info(f"Importing {len(members)} records")
 
         if self.uses_valid_geocoding_config():
-            await asyncio.gather(
+            geocode_results = await asyncio.gather(
                 *[
-                    geocoding_config.import_record(
+                    geocoding_config.geocode_record(
                         record, self, data_type, loaders, geocoder_context
                     )
                     for record in data
                 ]
             )
+            print(f"results {[str(r) for r in geocode_results]}")
+
+            geocode_results = [r for r in geocode_results if r]
+            if not geocode_results:
+                return
+            print(f"valid results {[str(r) for r in geocode_results]}")
+
+            unique_fields = ["data_type", "data"]
+            # Update all other fields in GeocodeResult
+            update_fields = [
+                field
+                for field in geocode_results[0].__dict__.keys()
+                if field not in unique_fields
+            ]
+            generic_data = [
+                GenericData(
+                    **result.__dict__
+                )
+                for result in geocode_results
+            ]
+            logger.info(f"Geocoded {len(members)} records, first data: {generic_data[0].data}")
+
+            await GenericData.objects.abulk_create(
+                generic_data,
+                update_conflicts=True,
+                unique_fields=["data_type", "data"],
+                update_fields=update_fields,
+            )
+
+            logger.info(f"Updated {len(members)} records, first data: {generic_data[0].data}")
         elif (
             self.geography_column
             and self.geography_column_type == self.GeographyTypes.POSTCODE
@@ -2059,12 +2092,16 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         get_record_id(record) on the source data (i.e. the record that
         comes from the 3rd party data source) – NOT the GenericData.id.
         """
-        logger.info(f"Loading previously imported data for {len(record_ids)} records")
+        if not record_ids:
+            return []
+
+        logger.info(f"Loading previously imported data for {len(record_ids)} records, first ID: {record_ids[0]}")
         results = GenericData.objects.filter(
             data_type__data_set__external_data_source_id=self.id, data__in=record_ids
-        )
+        ).select_related("area")
         results = await sync_to_async(list)(results)
 
+        logger.info(f"Loaded previously imported data, first ID: {record_ids[0]}")
         return [
             next(
                 (result for result in results if result.data == id),

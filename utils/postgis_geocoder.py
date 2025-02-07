@@ -11,6 +11,9 @@ from utils.postcodesIO import Codes, PostcodesIOResult
 logger = logging.getLogger(__name__)
 
 
+CURRENT_MAPIT_GENERATION = 56
+
+
 async def get_bulk_postcode_geo_from_coords(coordinates: list[Point]):
     """
     Async wrapper for sync function, required to plug into a DataLoader() instance.
@@ -28,11 +31,16 @@ def _get_bulk_postcode_geo_from_coords(
 
     with connection.cursor() as cursor:
         # Create a temporary values table to JOIN to the area table (multiple times)
+        parameters = []
         values = []
         for i, coordinate in enumerate(coordinates):
-            values.append(
-                f"({i}, {coordinate.x}, {coordinate.y}, ST_SetSRID(ST_MakePoint({coordinate.x}, {coordinate.y}), 4326))"
-            )
+            values.append("(%s, %s, %s, ST_SetSRID(ST_MakePoint(%s, %s), 4326))")
+            parameters.append(i)
+            parameters.append(coordinate.x)
+            parameters.append(coordinate.y)
+            parameters.append(coordinate.x)
+            parameters.append(coordinate.y)
+
         values = f"VALUES {', '.join(values)}"
 
         # For each area type, add a SELECT and a LEFT JOIN
@@ -49,14 +57,18 @@ def _get_bulk_postcode_geo_from_coords(
             ("output_area", "OA21", None),
             ("lsoa", "LSOA", None),
             ("msoa", "MSOA", None),
-            ("wmc", "WMC23", 56),
-            ("ward", "WD23", 56),
+            ("wmc", "WMC23", CURRENT_MAPIT_GENERATION),
+            ("ward", "WD23", CURRENT_MAPIT_GENERATION),
             (
                 "county",
                 ["CTY"],
-                56,
+                CURRENT_MAPIT_GENERATION,
             ),  # Array is interpreted as MapIt code instead of AreaType code
-            ("district", ["LBO", "UTA", "COI", "LGD", "MTD", "DIS", "NMD"], 56),
+            (
+                "district",
+                ["LBO", "UTA", "COI", "LGD", "MTD", "DIS", "NMD"],
+                CURRENT_MAPIT_GENERATION,
+            ),
             ("eer", "EER", None),
         ]
         for alias, code, mapit_gen in area_types:
@@ -90,7 +102,7 @@ def _get_bulk_postcode_geo_from_coords(
           {'\n'.join(area_joins)}
         """
 
-        cursor.execute(query, [])
+        cursor.execute(query, parameters)
         rows = cursor.fetchall()
         columns: list[str] = [col[0] for col in cursor.description]
 
