@@ -212,7 +212,6 @@ export const STATISTICS_QUERY = gql`
       count
       formattedCount
       category
-      row
       columns
       gssArea {
         point {
