@@ -2679,6 +2679,8 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"import_all_{str(self.id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+                # So that import jobs themselves can be correctly prioritised
+                priority=ProcrastinateQueuePriority.BEFORE_ANY_MORE_IMPORT_EXPORT,
             ).defer_async(
                 external_data_source_id=str(self.id),
                 requested_at=requested_at,
