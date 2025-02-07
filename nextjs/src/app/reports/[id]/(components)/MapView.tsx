@@ -41,7 +41,7 @@ export default function MapView({
     if (activeTileset.useBoundsInDataQuery) {
       fetchMore({ variables: { mapBounds } })
     }
-  }, [mapBounds, mapView.mapOptions, activeTileset])
+  }, [mapBounds, mapView.mapOptions, activeTileset, fetchMore])
 
   return (
     <>
@@ -53,7 +53,9 @@ export default function MapView({
             </div>
           )}
           <LocalisedMap
-            showStreetDetails={mapView.mapOptions.display.streetDetails}
+            // TODO: fix MAP-846
+            // showStreetDetails={mapView.mapOptions.display.streetDetails}
+            showStreetDetails={false}
             initViewCountry="uk"
             mapKey={mapView.id}
           >

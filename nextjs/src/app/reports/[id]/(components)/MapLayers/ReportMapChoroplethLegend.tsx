@@ -28,7 +28,6 @@ import {
   LucideChevronDown,
   LucideEye,
   LucideEyeOff,
-  LucideMap,
   LucideType,
   Radical,
 } from 'lucide-react'
@@ -470,8 +469,7 @@ export default function ReportMapChoroplethLegend() {
             />
           </section>
 
-          <section className="flex flex-col gap-2 px-4 py-3">
-            {/* LegendSettings */}
+          {/* <section className="flex flex-col gap-2 px-4 py-3">
             <p className="text-sm font-medium">Base map layers</p>
 
             <MapToggleField
@@ -487,7 +485,7 @@ export default function ReportMapChoroplethLegend() {
                 })
               }}
             />
-          </section>
+          </section> */}
         </CollapsibleContent>
       </Collapsible>
     </div>
