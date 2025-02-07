@@ -35,18 +35,22 @@ def check_numeric(x):
         # check type is numeric
         return isinstance(var, (int, float))
     except Exception:
-        return False
-
+        pass
+    return False
 
 def check_percentage(x):
     try:
         if x == "" or x is None:
+            # Allow blanks
             return True
         if x[-1] == "%":
-            return True
+            # Look for percentages
+            raw_number = x[:-1]
+            return check_numeric(raw_number)
     except Exception:
-        return False
-
+        pass
+    # If it's not blank and not a percentage...
+    return False
 
 def get_mode(series: Series):
     try:
