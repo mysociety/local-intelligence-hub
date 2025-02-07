@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { login } from '@/lib/actions/auth'
+import { useQueryState } from 'nuqs'
 
 const LOGIN_MUTATION = gql`
   mutation Login($username: String!, $password: String!) {
@@ -46,13 +47,15 @@ export default function LoginForm() {
     ),
   })
 
+  const [redirect, _] = useQueryState('redirect')
+
   const [doLogin, { data, loading, error: gqlError }] =
     useMutation(LOGIN_MUTATION)
 
   const token = data?.tokenAuth?.token?.token
   const authError = data?.tokenAuth?.errors
   if (token) {
-    login(token, data?.tokenAuth?.token?.payload?.exp)
+    login(token, data?.tokenAuth?.token?.payload?.exp, redirect || '/')
   }
 
   let errorMessage = ''
