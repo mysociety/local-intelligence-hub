@@ -6,7 +6,7 @@ from pandas import DataFrame, Series
 def attempt_interpret_series_as_float(df: DataFrame):
     if all(df.apply(check_numeric)):
         # Whole value replacement
-        df = df.replace("", 0)
+        df = df.str.replace("", 0)
         # Substring replacement
         df = df.str.replace("%", "")
         df = df.astype(float)
@@ -15,7 +15,7 @@ def attempt_interpret_series_as_float(df: DataFrame):
 
 def attempt_interpret_series_as_percentage(df: DataFrame):
     if all(df.apply(check_percentage)):
-        df = df.replace("", 0)
+        df = df.str.replace("", 0)
         # Substring replacement
         df = df.str.replace("%", "")
         # Divide by 100

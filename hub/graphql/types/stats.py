@@ -385,6 +385,9 @@ def statistics(
     df = df.set_index("id", drop=False)
 
     # Format numerics
+    DEFAULT_EXCLUDE_KEYS = ["id"]
+    user_exclude_keys = ensure_list(conf.exclude_columns or [])
+    exclude_keys = [*DEFAULT_EXCLUDE_KEYS, *user_exclude_keys]
     numerical_keys = []
     percentage_keys = []
     for column in df:
@@ -399,9 +402,7 @@ def statistics(
                 df[column] = attempt_interpret_series_as_float(df[column])
                 if column not in numerical_keys:
                     numerical_keys += [str(column)]
-    DEFAULT_EXCLUDE_KEYS = ["id"]
-    user_exclude_keys = ensure_list(conf.exclude_columns or [])
-    exclude_keys = [*DEFAULT_EXCLUDE_KEYS, *user_exclude_keys]
+    # Review the attempt to interpret data as numeric, and update numerical_keys where there is in fact numeric data
     numerical_keys = [d for d in df.select_dtypes(include="number").columns.tolist() if d not in exclude_keys]
 
     if len(numerical_keys) > 0:
