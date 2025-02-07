@@ -17,6 +17,7 @@ from utils.geo_reference import (
     area_to_postcode_io_key,
     lih_to_postcodes_io_key_map,
 )
+from utils.py import ensure_list
 from utils.statistics import (
     attempt_interpret_series_as_float,
     attempt_interpret_series_as_percentage,
@@ -155,8 +156,9 @@ class StatisticsConfig:
     calculated_columns: Optional[List[CalculatedColumn]] = None
     aggregation_operation: Optional[AggregationOp] = None
     aggregation_operations: Optional[List[AggregationDefinition]] = None
+    #
     return_columns: Optional[List[str]] = None
-
+    exclude_columns: Optional[List[str]] = None
 
 """
 # Some examples of use
@@ -383,21 +385,23 @@ def statistics(
     df = df.set_index("id", drop=False)
 
     # Format numerics
+    DEFAULT_EXCLUDE_KEYS = ["id"]
+    user_exclude_keys = ensure_list(conf.exclude_columns or [])
+    exclude_keys = [*DEFAULT_EXCLUDE_KEYS, *user_exclude_keys]
+    numerical_keys = [d for d in df.select_dtypes(include="number").columns.tolist() if d not in exclude_keys]
     percentage_keys = []
-    numerical_keys = []
     for column in df:
-        if column != "id":
+        if column not in exclude_keys:
             if all(df[column].apply(check_percentage)):
                 df[column] = attempt_interpret_series_as_percentage(df[column])
-                percentage_keys += [str(column)]
+                if column not in percentage_keys:
+                    percentage_keys += [str(column)]
+                if column not in numerical_keys:
+                    numerical_keys += [str(column)]
             elif all(df[column].apply(check_numeric)):
                 df[column] = attempt_interpret_series_as_float(df[column])
-                numerical_keys += [str(column)]
-    # Narrow down the DF to just the numerical columns then
-    numerical_keys = df.select_dtypes(include="number").columns.tolist()
-    # Exclude "id" from the numerical keys
-    if "id" in numerical_keys:
-        numerical_keys = numerical_keys.drop("id")
+                if column not in numerical_keys:
+                    numerical_keys += [str(column)]
 
     if len(numerical_keys) > 0:
         # Provide some special variables to the col editor
