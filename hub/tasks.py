@@ -6,7 +6,6 @@ import logging
 import os
 
 from django.conf import settings
-from django.core.mail import EmailMessage
 from django.db.models import Count, Q
 
 from procrastinate.contrib.django import app
@@ -258,48 +257,49 @@ async def signal_request_complete(request_id: str, success: bool, *args, **kwarg
 
 
 # cron that sends batch job emails every hour
-@app.periodic(cron="0 * * * *")
-@app.task(queue="emails")
-def send_batch_job_emails(timestamp=None):
-    from hub.models import BatchRequest
+# @app.periodic(cron="0 * * * *")
+# @app.task(queue="emails")
+# def send_batch_job_emails(timestamp=None):
+#     from django.core.mail import EmailMessage
+#     from hub.models import BatchRequest
 
-    batch_requests = BatchRequest.objects.filter(
-        Q(send_email=True, sent_email=False) & ~Q(user=None)
-    )
-    for batch_request in batch_requests:
-        status = batch_request.status
-        user = batch_request.user
-        if status == "succeeded":
-            user_email = user.email
-            email_subject = "Mapped Job Progress Notification"
-            email_body = "Your job has been successfully completed."
-            try:
-                email = EmailMessage(
-                    subject=email_subject,
-                    body=email_body,
-                    from_email="noreply@example.com",
-                    to=[user_email],
-                )
-                email.send()
+#     batch_requests = BatchRequest.objects.filter(
+#         Q(send_email=True, sent_email=False) & ~Q(user=None)
+#     )
+#     for batch_request in batch_requests:
+#         status = batch_request.status
+#         user = batch_request.user
+#         if status == "succeeded":
+#             user_email = user.email
+#             email_subject = "Mapped Job Progress Notification"
+#             email_body = "Your job has been successfully completed."
+#             try:
+#                 email = EmailMessage(
+#                     subject=email_subject,
+#                     body=email_body,
+#                     from_email="noreply@example.com",
+#                     to=[user_email],
+#                 )
+#                 email.send()
 
-            except Exception as e:
-                logger.error(f"Failed to send email: {e}")
+#             except Exception as e:
+#                 logger.error(f"Failed to send email: {e}")
 
-        elif status == "failed":
-            user_email = user.email
-            email_subject = "Mapped Job Progress Notification"
-            email_body = "Your job has failed. Please check the details."
-            try:
-                email = EmailMessage(
-                    subject=email_subject,
-                    body=email_body,
-                    from_email="noreply@example.com",
-                    to=[user_email],
-                )
-                email.send()
+#         elif status == "failed":
+#             user_email = user.email
+#             email_subject = "Mapped Job Progress Notification"
+#             email_body = "Your job has failed. Please check the details."
+#             try:
+#                 email = EmailMessage(
+#                     subject=email_subject,
+#                     body=email_body,
+#                     from_email="noreply@example.com",
+#                     to=[user_email],
+#                 )
+#                 email.send()
 
-            except Exception as e:
-                logger.error(f"Failed to send email to {user_email}: {e}")
+#             except Exception as e:
+#                 logger.error(f"Failed to send email to {user_email}: {e}")
 
-        batch_request.sent_email = True
-        batch_request.save()
+#         batch_request.sent_email = True
+#         batch_request.save()

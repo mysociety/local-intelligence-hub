@@ -7,6 +7,7 @@ from django.views.generic import View
 
 from hub import models
 from hub.tasks import setup_webhooks
+from utils.procrastinate import ProcrastinateQueuePriority
 
 logger = getLogger(__name__)
 
@@ -113,6 +114,7 @@ class ExternalDataSourceCreateWebhook(View):
             return JsonResponse({"status": "Webhook is not enabled."})
 
         setup_webhooks.configure(
+            priority=ProcrastinateQueuePriority.BEFORE_ANY_MORE_IMPORT_EXPORT,
             queueing_lock=f"setup_webhooks_{str(external_data_source.id)}",
             schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
         ).defer(

@@ -19,7 +19,7 @@ class APIAnalyticsExtension(SchemaExtension):
                 payload = {
                     "context": "private_api",
                     "operation_name": self.execution_context.operation_name,
-                    "operation_type": self.execution_context.operation_type,
+                    "operation_type": self.execution_context.operation_type.value,
                     "path": request.path,
                     "method": request.method,
                     "headers": dict(request.headers),

@@ -218,6 +218,9 @@ class Mutation:
     cancel_import: mutation_types.ExternalDataSourceAction = (
         mutation_types.cancel_import
     )
+    cancel_update: mutation_types.ExternalDataSourceAction = (
+        mutation_types.cancel_update
+    )
     delete_all_records: model_types.ExternalDataSource = (
         mutation_types.delete_all_records
     )

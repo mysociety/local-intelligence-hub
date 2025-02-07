@@ -12,12 +12,15 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 import json
 from datetime import timedelta
+from enum import Enum
 from pathlib import Path
 from typing import List, Tuple
 
 import environ
 import posthog
 from gqlauth.settings_type import GqlAuthSettings
+
+from hub.management.commands.autoscale_render_workers import ScalingStrategy
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -105,6 +108,17 @@ env = environ.Env(
     NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=(str, ""),
     DATA_UPLOAD_MAX_MEMORY_SIZE=(int, 2621440),
     FILE_UPLOAD_MAX_MEMORY_SIZE=(int, 2621440),
+    # Batch
+    IMPORT_UPDATE_ALL_BATCH_SIZE=(int, 100),
+    ROW_COUNT_PER_WORKER=(int, 15000),
+    RENDER_API_TOKEN=(str, None),
+    RENDER_WORKER_SERVICE_ID=(str, None),
+    RENDER_MIN_WORKER_COUNT=(int, 1),
+    RENDER_MAX_WORKER_COUNT=(int, 15),
+    RENDER_WORKER_SCALING_STRATEGY=(str, ScalingStrategy.sources_and_row_count.value),
+    SUPER_QUICK_IMPORT_ROW_COUNT_THRESHOLD=(int, 2000),
+    MEDIUM_PRIORITY_IMPORT_ROW_COUNT_THRESHOLD=(int, 7000),
+    LARGE_IMPORT_ROW_COUNT_THRESHOLD=(int, 20000),
 )
 
 environ.Env.read_env(BASE_DIR / ".env")
@@ -492,8 +506,14 @@ if DEBUG:
 
 ASYNC_CLIENT_TIMEOUT_SECONDS = 30
 
-IMPORT_UPDATE_ALL_BATCH_SIZE = 500
+IMPORT_UPDATE_ALL_BATCH_SIZE = env("IMPORT_UPDATE_ALL_BATCH_SIZE")
 IMPORT_UPDATE_MANY_RETRY_COUNT = 3
+ROW_COUNT_PER_WORKER = env("ROW_COUNT_PER_WORKER")
+RENDER_API_TOKEN = env("RENDER_API_TOKEN")
+RENDER_WORKER_SERVICE_ID = env("RENDER_WORKER_SERVICE_ID")
+RENDER_MIN_WORKER_COUNT = env("RENDER_MIN_WORKER_COUNT")
+RENDER_WORKER_SCALING_STRATEGY = env("RENDER_WORKER_SCALING_STRATEGY")
+RENDER_MAX_WORKER_COUNT = env("RENDER_MAX_WORKER_COUNT")
 
 
 def jwt_handler(token):
@@ -624,3 +644,9 @@ PARSONS_LIMITED_DEPENDENCIES = True
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = env("DATA_UPLOAD_MAX_MEMORY_SIZE")
 FILE_UPLOAD_MAX_MEMORY_SIZE = env("FILE_UPLOAD_MAX_MEMORY_SIZE")
+
+SUPER_QUICK_IMPORT_ROW_COUNT_THRESHOLD = env("SUPER_QUICK_IMPORT_ROW_COUNT_THRESHOLD")
+MEDIUM_PRIORITY_IMPORT_ROW_COUNT_THRESHOLD = env(
+    "MEDIUM_PRIORITY_IMPORT_ROW_COUNT_THRESHOLD"
+)
+LARGE_IMPORT_ROW_COUNT_THRESHOLD = env("LARGE_IMPORT_ROW_COUNT_THRESHOLD")

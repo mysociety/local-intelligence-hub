@@ -17,6 +17,7 @@ from django.contrib.gis.geos import Point
 from django.contrib.postgres.fields import ArrayField
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
 from django.db import models
 from django.db.models import Avg, IntegerField, Max, Min, Q
 from django.db.models.functions import Cast, Coalesce
@@ -44,6 +45,7 @@ from google.oauth2.credentials import Credentials as GoogleCredentials
 from mailchimp3 import MailChimp
 from polymorphic.models import PolymorphicModel
 from procrastinate.contrib.django.models import ProcrastinateEvent, ProcrastinateJob
+from procrastinate.exceptions import AlreadyEnqueued
 from psycopg.errors import UniqueViolation
 from pyairtable import Api as AirtableAPI
 from pyairtable import Base as AirtableBase
@@ -88,6 +90,7 @@ from utils.postcodesIO import (
     get_bulk_postcode_geo,
     get_bulk_postcode_geo_from_coords,
 )
+from utils.procrastinate import ProcrastinateQueuePriority
 from utils.py import batched, ensure_list, get, is_maybe_id
 
 User = get_user_model()
@@ -2402,18 +2405,24 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     # Webhooks
 
     def handle_update_webhook_view(self, member_ids):
-        if not self.allow_updates:
-            logger.error(f"Updates requested for non-updatable CRM: {self}")
-            return False
+        try:
+            if not self.allow_updates:
+                logger.error(f"Updates requested for non-updatable CRM: {self}")
+                return False
 
-        if not self.auto_update_enabled:
-            logger.error(f"Updates requested for CRM without webhooks enabled: {self}")
-            return False
+            if not self.auto_update_enabled:
+                logger.error(
+                    f"Updates requested for CRM without webhooks enabled: {self}"
+                )
+                return False
 
-        if len(member_ids) == 1:
-            async_to_sync(self.schedule_refresh_one)(member=member_ids[0])
-        else:
-            async_to_sync(self.schedule_refresh_many)(members=member_ids)
+            if len(member_ids) == 1:
+                async_to_sync(self.schedule_refresh_one)(member=member_ids[0])
+            else:
+                async_to_sync(self.schedule_refresh_many)(members=member_ids)
+        except AlreadyEnqueued:
+            # This is fine.
+            pass
         return True
 
     def handle_import_webhook_view(self, member_ids):
@@ -2545,6 +2554,18 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
         members = await external_data_source.fetch_all()
+        priority = None
+        match len(members):
+            case _ if len(members) < settings.SUPER_QUICK_IMPORT_ROW_COUNT_THRESHOLD:
+                priority = ProcrastinateQueuePriority.SUPER_QUICK
+            case _ if len(
+                members
+            ) < settings.MEDIUM_PRIORITY_IMPORT_ROW_COUNT_THRESHOLD:
+                priority = ProcrastinateQueuePriority.MEDIUM
+            case _ if len(members) < settings.LARGE_IMPORT_ROW_COUNT_THRESHOLD:
+                priority = ProcrastinateQueuePriority.SLOW
+            case _:
+                priority = ProcrastinateQueuePriority.VERY_SLOW
         member_count = 0
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
         for i, batch in enumerate(batches):
@@ -2553,10 +2574,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             )
             member_count += len(batch)
             await external_data_source.schedule_import_many(
-                batch, request_id=request_id
+                batch, request_id=request_id, priority=priority
             )
             logger.info(f"Scheduled import batch {i} for source {external_data_source}")
         metrics.distribution(key="import_rows_requested", value=member_count)
+        call_command("autoscale_render_workers")
 
     async def schedule_refresh_one(self, member) -> int:
         logger.info(f"Scheduling refresh one for source {self} and member {member}")
@@ -2627,7 +2649,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         except (UniqueViolation, IntegrityError):
             pass
 
-    async def schedule_import_many(self, members: list, request_id: str = None) -> int:
+    async def schedule_import_many(
+        self, members: list, request_id: str = None, priority: int = None
+    ) -> int:
         if not members:
             logger.error("Import requested for 0 members")
             return
@@ -2640,6 +2664,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         member_ids_hash = hashlib.md5("".join(sorted(member_ids)).encode()).hexdigest()
         try:
             return await import_many.configure(
+                priority=priority,
                 # Dedupe `import_many` jobs for the same config
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"import_many_{str(self.id)}_{member_ids_hash}",
@@ -2675,6 +2700,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         external_data_source_id: str,
         current_page: int = 1,
         request_id: str = None,
+        priority: int = None,
     ) -> int:
         """
         This is a classmethod for a performance boost - the import pages
@@ -2687,6 +2713,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"import_pages_{external_data_source_id}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+                priority=priority,
             ).defer_async(
                 external_data_source_id=external_data_source_id,
                 current_page=current_page,
@@ -2701,6 +2728,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         external_data_source_id: str,
         current_page: int = 1,
         request_id: str = None,
+        priority: int = None,
     ) -> int:
         """
         This is a classmethod for a performance boost - the refresh pages
@@ -2713,6 +2741,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 # https://procrastinate.readthedocs.io/en/stable/howto/queueing_locks.html
                 queueing_lock=f"refresh_pages_{external_data_source_id}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
+                priority=priority,
             ).defer_async(
                 external_data_source_id=external_data_source_id,
                 current_page=current_page,
@@ -2854,6 +2883,43 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         Look up a record by a value in a column.
         """
         raise NotImplementedError("Lookup not implemented for this data source type.")
+
+    def cancel_jobs(
+        self,
+        type: "BatchRequest.BatchRequestType" = None,
+        # If ALL, then cancel all jobs, regardless of whether they're batched or not
+        all=False,
+    ):
+        """
+        Cancel all imports for this data source.
+        """
+        job_filters = dict(
+            args__external_data_source_id=str(self.id),
+            status__in=["todo", "doing"],
+        )
+        if not all:
+            # Cancel all BatchRequests
+            BatchRequest.objects.filter(
+                source=self,
+                is_cancelled_by_user=None,
+                **({"type": type.value} if type else {}),
+            ).update(is_cancelled_by_user=True)
+            # Cancel all BatchRequests
+            cancelled_request_ids = BatchRequest.objects.filter(
+                source=self,
+                is_cancelled_by_user=True,
+            )
+            job_filters.update(
+                args__request_id__in=[
+                    str(id) for id in cancelled_request_ids.values_list("id", flat=True)
+                ]
+            )
+
+        # run command to update worker instances
+        call_command("autoscale_render_workers")
+
+        # Cancel all user-requested procrastinate import jobs
+        return ProcrastinateJob.objects.filter(**job_filters).update(status="cancelled")
 
 
 class DatabaseJSONSource(ExternalDataSource):
@@ -3889,9 +3955,13 @@ class ActionNetworkSource(ExternalDataSource):
         Override Action Network import_all behavior to import page-by-page
         """
         # TODO: how do we measure number of rows imported with this method?
-        return await cls.schedule_import_pages(
-            external_data_source_id=external_data_source_id, request_id=request_id
+        # Action Network simply doesn't seem to have a way to get the number of rows imported
+        await cls.schedule_import_pages(
+            external_data_source_id=external_data_source_id,
+            request_id=request_id,
+            priority=ProcrastinateQueuePriority.UNGUESSABE,
         )
+        call_command("autoscale_render_workers")
 
     @classmethod
     async def deferred_refresh_all(
@@ -4978,8 +5048,26 @@ source_models: dict[str, Type[ExternalDataSource]] = {
 
 
 class BatchRequest(models.Model):
+    # enum of request types
+    class BatchRequestType(models.TextChoices):
+        # User requested import of data to Mapped
+        Import = "Import"
+        # User requested update of data to third party data source
+        Update = "Update"
+
+    source = models.ForeignKey(
+        ExternalDataSource,
+        on_delete=models.SET_NULL,
+        related_name="batch_requests",
+        null=True,
+        blank=True,
+    )
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     send_email = models.BooleanField(default=False)
     sent_email = models.BooleanField(default=False)
     status = models.CharField(max_length=32, default="todo")
+    is_cancelled_by_user = models.BooleanField(default=False)
+    type = TextChoicesField(choices_enum=BatchRequestType)
