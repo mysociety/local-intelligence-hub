@@ -7,6 +7,8 @@ def attempt_interpret_series_as_float(df: DataFrame):
     if all(df.apply(check_numeric)):
         # Whole value replacement
         df = df.replace("", 0)
+        # Substring replacement
+        df = df.str.replace("%", "")
         df = df.astype(float)
     return df
 
@@ -38,6 +40,8 @@ def check_numeric(x):
 
 def check_percentage(x):
     try:
+        if x == "" or x is None:
+            return True
         if x[-1] == "%":
             return True
     except Exception:
