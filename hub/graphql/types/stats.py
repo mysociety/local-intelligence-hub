@@ -680,7 +680,7 @@ def statistics(
         if as_grouped_data:
             from hub.graphql.types.model_types import GroupedDataCount
 
-            is_percentage = "count" in percentage_keys
+            is_percentage = count_key in percentage_keys
             return [
                 GroupedDataCount(
                     row=row,
