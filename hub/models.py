@@ -2547,27 +2547,27 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         )
 
         members = await external_data_source.fetch_all()
-        priority = None
+        priority_enum = None
         match len(members):
             case _ if len(members) < settings.SUPER_QUICK_IMPORT_ROW_COUNT_THRESHOLD:
-                priority = ProcrastinateQueuePriority.SUPER_QUICK
+                priority_enum = ProcrastinateQueuePriority.SUPER_QUICK
             case _ if len(
                 members
             ) < settings.MEDIUM_PRIORITY_IMPORT_ROW_COUNT_THRESHOLD:
-                priority = ProcrastinateQueuePriority.MEDIUM
+                priority_enum = ProcrastinateQueuePriority.MEDIUM
             case _ if len(members) < settings.LARGE_IMPORT_ROW_COUNT_THRESHOLD:
-                priority = ProcrastinateQueuePriority.SLOW
+                priority_enum = ProcrastinateQueuePriority.SLOW
             case _:
-                priority = ProcrastinateQueuePriority.VERY_SLOW
+                priority_enum = ProcrastinateQueuePriority.VERY_SLOW
         member_count = 0
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
         for i, batch in enumerate(batches):
             logger.info(
-                f"Scheduling import batch {i} for source {external_data_source}"
+                f"Scheduling import batch {i} for source {external_data_source} with priority {priority_enum.name}"
             )
             member_count += len(batch)
             await external_data_source.schedule_import_many(
-                batch, request_id=request_id, priority=priority
+                batch, request_id=request_id, priority=priority_enum.value
             )
             logger.info(f"Scheduled import batch {i} for source {external_data_source}")
         metrics.distribution(key="import_rows_requested", value=member_count)
@@ -2680,7 +2680,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 queueing_lock=f"import_all_{str(self.id)}",
                 schedule_in={"seconds": settings.SCHEDULED_UPDATE_SECONDS_DELAY},
                 # So that import jobs themselves can be correctly prioritised
-                priority=ProcrastinateQueuePriority.BEFORE_ANY_MORE_IMPORT_EXPORT,
+                priority=ProcrastinateQueuePriority.BEFORE_ANY_MORE_IMPORT_EXPORT.value,
             ).defer_async(
                 external_data_source_id=str(self.id),
                 requested_at=requested_at,
@@ -3954,7 +3954,7 @@ class ActionNetworkSource(ExternalDataSource):
         await cls.schedule_import_pages(
             external_data_source_id=external_data_source_id,
             request_id=request_id,
-            priority=ProcrastinateQueuePriority.UNGUESSABE,
+            priority=ProcrastinateQueuePriority.UNGUESSABLE.value,
         )
         call_command("autoscale_render_workers")
 

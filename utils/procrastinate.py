@@ -9,7 +9,7 @@ class ProcrastinateQueuePriority(Enum):
     LOWEST = 0
     # Import/export priorities
     VERY_SLOW = 5
-    UNGUESSABE = 10
+    UNGUESSABLE = 10
     SLOW = 10
     MEDIUM = 15
     SUPER_QUICK = 20
