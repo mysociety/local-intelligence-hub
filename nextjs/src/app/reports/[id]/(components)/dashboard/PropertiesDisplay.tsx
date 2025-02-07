@@ -1,4 +1,8 @@
 import { format } from 'd3-format'
+import {
+  formatIncompletePhoneNumber,
+  isPossiblePhoneNumber,
+} from 'libphonenumber-js'
 import React from 'react'
 import ReactMarkdown from 'react-markdown'
 import rehypeExternalLinks from 'rehype-external-links'
@@ -123,7 +127,13 @@ function KeyContainer({
 }
 
 function FormattedScalarValue({ value }: { value: string | number }) {
-  if (
+  if (isPossiblePhoneNumber(String(value), 'GB')) {
+    return (
+      <a href={`tel:${value}`} className="underline font-medium">
+        {formatIncompletePhoneNumber(String(value), 'GB')}
+      </a>
+    )
+  } else if (
     typeof value === 'number' ||
     // can be parsed as a number
     !isNaN(Number(value))
