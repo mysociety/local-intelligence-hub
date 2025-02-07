@@ -1,4 +1,9 @@
+import { format } from 'd3-format'
 import React from 'react'
+import ReactMarkdown from 'react-markdown'
+import rehypeExternalLinks from 'rehype-external-links'
+import remarkGfm from 'remark-gfm'
+import remarkRehype from 'remark-rehype'
 import { twMerge } from 'tailwind-merge'
 import { formatKey, isEmptyValue } from './utils'
 
@@ -30,12 +35,12 @@ function FormatValue({
   data: any
   indentLevel?: number
 }) {
-  if (data === null || data === undefined) {
+  if (data === null || data === undefined || data === '') {
     // Nothing
     return null
   } else if (typeof data === 'string' || typeof data === 'number') {
     // Raw value
-    return <span>{data}</span>
+    return <FormattedScalarValue value={data} />
   } else if (Array.isArray(data)) {
     // Array; indented
 
@@ -115,4 +120,30 @@ function KeyContainer({
       <div className="text-white">{children}</div>
     </section>
   )
+}
+
+function FormattedScalarValue({ value }: { value: string | number }) {
+  if (
+    typeof value === 'number' ||
+    // can be parsed as a number
+    !isNaN(Number(value))
+  ) {
+    // Formatted number using d3-format
+    return <span>{format(',')(Number(value))}</span>
+  } else {
+    return (
+      <>
+        <ReactMarkdown
+          children={value}
+          remarkPlugins={[
+            // Autolink any URLs or emails found
+            remarkGfm,
+            remarkRehype,
+            [rehypeExternalLinks, { target: '_blank' }],
+          ]}
+          className="prose prose-invert text-white"
+        />
+      </>
+    )
+  }
 }
