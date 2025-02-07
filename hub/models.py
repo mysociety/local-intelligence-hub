@@ -1769,12 +1769,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     for record in data
                 ]
             )
-            print(f"results {[str(r) for r in geocode_results]}")
 
             geocode_results = [r for r in geocode_results if r]
             if not geocode_results:
                 return
-            print(f"valid results {[str(r) for r in geocode_results]}")
 
             unique_fields = ["data_type", "data"]
             # Update all other fields in GeocodeResult
@@ -1784,12 +1782,11 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 if field not in unique_fields
             ]
             generic_data = [
-                GenericData(
-                    **result.__dict__
-                )
-                for result in geocode_results
+                GenericData(**result.__dict__) for result in geocode_results
             ]
-            logger.info(f"Geocoded {len(members)} records, first data: {generic_data[0].data}")
+            logger.info(
+                f"Geocoded {len(members)} records, first data: {generic_data[0].data}"
+            )
 
             await GenericData.objects.abulk_create(
                 generic_data,
@@ -1798,7 +1795,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                 update_fields=update_fields,
             )
 
-            logger.info(f"Updated {len(members)} records, first data: {generic_data[0].data}")
+            logger.info(
+                f"Updated {len(members)} records, first data: {generic_data[0].data}"
+            )
         elif (
             self.geography_column
             and self.geography_column_type == self.GeographyTypes.POSTCODE
@@ -2095,13 +2094,15 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         if not record_ids:
             return []
 
-        logger.info(f"Loading previously imported data for {len(record_ids)} records, first ID: {record_ids[0]}")
+        logger.info(
+            f"Loading previously imported data for {len(record_ids)} records, first data: {record_ids[0]}"
+        )
         results = GenericData.objects.filter(
             data_type__data_set__external_data_source_id=self.id, data__in=record_ids
         ).select_related("area")
         results = await sync_to_async(list)(results)
 
-        logger.info(f"Loaded previously imported data, first ID: {record_ids[0]}")
+        logger.info(f"Loaded previously imported data, first data: {record_ids[0]}")
         return [
             next(
                 (result for result in results if result.data == id),
@@ -2594,15 +2595,15 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         priority = None
         match len(members):
             case _ if len(members) < settings.SUPER_QUICK_IMPORT_ROW_COUNT_THRESHOLD:
-                priority = ProcrastinateQueuePriority.SUPER_QUICK
+                priority = ProcrastinateQueuePriority.SUPER_QUICK.value
             case _ if len(
                 members
             ) < settings.MEDIUM_PRIORITY_IMPORT_ROW_COUNT_THRESHOLD:
-                priority = ProcrastinateQueuePriority.MEDIUM
+                priority = ProcrastinateQueuePriority.MEDIUM.value
             case _ if len(members) < settings.LARGE_IMPORT_ROW_COUNT_THRESHOLD:
-                priority = ProcrastinateQueuePriority.SLOW
+                priority = ProcrastinateQueuePriority.SLOW.value
             case _:
-                priority = ProcrastinateQueuePriority.VERY_SLOW
+                priority = ProcrastinateQueuePriority.VERY_SLOW.value
         member_count = 0
         batches = batched(members, settings.IMPORT_UPDATE_ALL_BATCH_SIZE)
         for i, batch in enumerate(batches):
@@ -2615,7 +2616,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             )
             logger.info(f"Scheduled import batch {i} for source {external_data_source}")
         metrics.distribution(key="import_rows_requested", value=member_count)
-        call_command("autoscale_render_workers")
+        await sync_to_async(call_command)("autoscale_render_workers")
 
     async def schedule_refresh_one(self, member) -> int:
         logger.info(f"Scheduling refresh one for source {self} and member {member}")
@@ -3996,9 +3997,9 @@ class ActionNetworkSource(ExternalDataSource):
         await cls.schedule_import_pages(
             external_data_source_id=external_data_source_id,
             request_id=request_id,
-            priority=ProcrastinateQueuePriority.UNGUESSABE,
+            priority=ProcrastinateQueuePriority.UNGUESSABLE.value,
         )
-        call_command("autoscale_render_workers")
+        await sync_to_async(call_command)("autoscale_render_workers")
 
     @classmethod
     async def deferred_refresh_all(

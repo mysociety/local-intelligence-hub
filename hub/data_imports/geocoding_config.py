@@ -200,12 +200,12 @@ async def geocode_record(
                 return GeocodeResult(
                     data_type=data_type,
                     data=id,
-                    json=update_data['json'],
+                    json=update_data["json"],
                     geocoder=generic_data.geocoder,
                     geocode_data=generic_data.geocode_data,
                     postcode_data=generic_data.postcode_data,
                     area=generic_data.area,
-                    point=generic_data.point
+                    point=generic_data.point,
                 )
     except GenericData.DoesNotExist:
         # logger.debug("Generic Data doesn't exist, no equality check to be done", id)
