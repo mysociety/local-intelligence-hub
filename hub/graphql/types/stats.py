@@ -287,83 +287,8 @@ def statistics(
             # all geocoded GenericData should have `point` set
             qs = qs.filter(point__within=bbox)
 
-    filters = Q()
     if conf.gss_codes:
-        area_qs = models.Area.objects.filter(gss__in=conf.gss_codes)
-        example_area = area_qs.first()
-        combined_areas_polygon = area_qs.aggregate(union=GisUnion("polygon"))["union"]
-
-        if (
-            combined_areas_polygon
-            and conf.area_query_mode is AreaQueryMode.POINTS_WITHIN
-        ):
-            # We filter on area=None so we don't pick up statistical area data
-            # since a super-area may have a point within this area, skewing the results
-            filters |= Q(point__within=combined_areas_polygon) & Q(area=None)
-
-        if conf.area_query_mode is AreaQueryMode.AREA:
-            if combined_areas_polygon:
-                # Find only data specifically related to this GSS area — not about its children
-                filters |= Q(area__gss__in=conf.gss_codes)
-            # if area_type_filter:
-            #     # Find only data specifically related to this area type
-            #     filters |= Q(**area_type_filter.fk_filter("area"))
-
-        elif conf.area_query_mode is AreaQueryMode.AREA_OR_CHILDREN:
-            if combined_areas_polygon:
-                filters |= Q(area__gss__in=conf.gss_codes)
-                # Or find GenericData tagged with area that is fully contained by this area's polygon
-                postcode_io_key = area_to_postcode_io_key(example_area)
-                if postcode_io_key:
-                    subclause = Q()
-                    # See if there's a matched postcode data field for this area
-                    subclause &= Q(
-                        **{
-                            f"postcode_data__codes__{postcode_io_key.value}__in": conf.gss_codes
-                        }
-                    )
-                    # And see if the area is SMALLER than the current area — i.e. a child
-                    subclause &= Q(area__polygon__within=combined_areas_polygon)
-                    filters |= subclause
-            # if area_type_filter:
-            #     filters |= Q(**area_type_filter.fk_filter("area"))
-
-        elif conf.area_query_mode is AreaQueryMode.AREA_OR_PARENTS:
-            if combined_areas_polygon:
-                filters |= Q(area__gss__in=conf.gss_codes)
-                # Or find GenericData tagged with area that fully contains this area's polygon
-                postcode_io_key = area_to_postcode_io_key(example_area)
-                if postcode_io_key:
-                    subclause = Q()
-                    # See if there's a matched postcode data field for this area
-                    subclause &= Q(
-                        **{
-                            f"postcode_data__codes__{postcode_io_key.value}__in": conf.gss_codes
-                        }
-                    )
-                    # And see if the area is LARGER than the current area — i.e. a parent
-                    subclause &= Q(area__polygon__contains=combined_areas_polygon)
-                    filters |= subclause
-            # if area_type_filter:
-            #     filters |= Q(**area_type_filter.fk_filter("area"))
-
-        elif conf.area_query_mode is AreaQueryMode.OVERLAPPING:
-            if conf.gss_codes:
-                filters |= Q(area__gss__in=conf.gss_codes)
-                # Or find GenericData tagged with area that overlaps this area's polygon
-                postcode_io_key = area_to_postcode_io_key(example_area)
-                if postcode_io_key:
-                    filters |= Q(
-                        **{
-                            f"postcode_data__codes__{postcode_io_key.value}__in": conf.gss_codes
-                        }
-                    )
-            if combined_areas_polygon:
-                filters |= Q(area__polygon__contains=combined_areas_polygon)
-            # if area_type_filter:
-            #     filters |= Q(**area_type_filter.fk_filter("area"))
-
-    data = qs.filter(filters)
+        qs = qs.filter(filter_generic_data_using_gss_code(conf.gss_codes, conf.area_query_mode))
 
     # --- Load the data in to a pandas dataframe ---
     # TODO: get columns from JSON for returning clean data
@@ -376,7 +301,7 @@ def statistics(
             "label": record.get("area__name"),
             "id": str(record["id"]),
         }
-        for record in data
+        for record in qs
     ]
 
     df = pd.DataFrame(d)
@@ -745,3 +670,85 @@ def statistics(
     #     if conf.gss_codes is None or return_columns is None or len(return_columns) <= 0:
     #         raise ValueError("`gss` and `return_column` must be specified when returning a cell")
     #     return df.loc[df["gss"] == conf.gss_codes, return_columns].iloc[0]
+
+def filter_generic_data_using_gss_code(gss_codes: str | list[str], area_query_mode: AreaQueryMode) -> Q:
+    gss_codes = ensure_list(gss_codes)
+    filters = Q()
+    area_qs = models.Area.objects.filter(gss__in=gss_codes)
+    example_area = area_qs.first()
+    if len(area_qs) == 0:
+        return filters
+    if len(area_qs) == 1:
+        search_polygon = area_qs.first().polygon
+    else:
+        search_polygon = area_qs.aggregate(union=GisUnion("polygon"))["union"]
+
+    if (
+        search_polygon
+        and area_query_mode is AreaQueryMode.POINTS_WITHIN
+    ):
+        # We filter on area=None so we don't pick up statistical area data
+        # since a super-area may have a point within this area, skewing the results
+        filters |= Q(point__within=search_polygon) & Q(area=None)
+
+    if area_query_mode is AreaQueryMode.AREA:
+        if search_polygon:
+            # Find only data specifically related to this GSS area — not about its children
+            filters |= Q(area__gss__in=gss_codes)
+        # if area_type_filter:
+        #     # Find only data specifically related to this area type
+        #     filters |= Q(**area_type_filter.fk_filter("area"))
+
+    elif area_query_mode is AreaQueryMode.AREA_OR_CHILDREN:
+        if search_polygon:
+            filters |= Q(area__gss__in=gss_codes)
+            # Or find GenericData tagged with area that is fully contained by this area's polygon
+            postcode_io_key = area_to_postcode_io_key(example_area)
+            if postcode_io_key:
+                subclause = Q()
+                # See if there's a matched postcode data field for this area
+                subclause &= Q(
+                    **{
+                        f"postcode_data__codes__{postcode_io_key.value}__in": gss_codes
+                    }
+                )
+                # And see if the area is SMALLER than the current area — i.e. a child
+                subclause &= Q(area__polygon__within=search_polygon)
+                filters |= subclause
+        # if area_type_filter:
+        #     filters |= Q(**area_type_filter.fk_filter("area"))
+
+    elif area_query_mode is AreaQueryMode.AREA_OR_PARENTS:
+        if search_polygon:
+            filters |= Q(area__gss__in=gss_codes)
+            # Or find GenericData tagged with area that fully contains this area's polygon
+            postcode_io_key = area_to_postcode_io_key(example_area)
+            if postcode_io_key:
+                subclause = Q()
+                # See if there's a matched postcode data field for this area
+                subclause &= Q(
+                    **{
+                        f"postcode_data__codes__{postcode_io_key.value}__in": gss_codes
+                    }
+                )
+                # And see if the area is LARGER than the current area — i.e. a parent
+                subclause &= Q(area__polygon__contains=search_polygon)
+                filters |= subclause
+        # if area_type_filter:
+        #     filters |= Q(**area_type_filter.fk_filter("area"))
+
+    elif area_query_mode is AreaQueryMode.OVERLAPPING:
+        if gss_codes:
+            filters |= Q(area__gss__in=gss_codes)
+            # Or find GenericData tagged with area that overlaps this area's polygon
+            postcode_io_key = area_to_postcode_io_key(example_area)
+            if postcode_io_key:
+                filters |= Q(
+                    **{
+                        f"postcode_data__codes__{postcode_io_key.value}__in": gss_codes
+                    }
+                )
+        if search_polygon:
+            filters |= Q(area__polygon__contains=search_polygon)
+    
+    return filters

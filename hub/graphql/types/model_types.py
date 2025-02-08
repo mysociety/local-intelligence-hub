@@ -1466,66 +1466,6 @@ def generic_data_by_external_data_source(
     )
 
 
-def __get_generic_data_for_area_and_external_data_source(
-    external_data_source: models.ExternalDataSource,
-    gss: str,
-    mode: stats.AreaQueryMode,
-) -> List[GenericData]:
-    area = models.Area.objects.get(gss=gss)
-    data_source_records = external_data_source.get_import_data()
-
-    filters = Q()
-
-    if mode is stats.AreaQueryMode.POINTS_WITHIN:
-        # We filter on area=None so we don't pick up statistical area data
-        # since a super-area may have a point within this area, skewing the results
-        filters = Q(point__within=area.polygon) & Q(area=None)
-
-    elif mode is stats.AreaQueryMode.AREA:
-        # Find only data specifically related to this GSS area — not about its children
-        filters = Q(area__gss=area.gss)
-
-    elif mode is stats.AreaQueryMode.AREA_OR_CHILDREN:
-        filters = Q(area__gss=area.gss)
-        # Or find GenericData tagged with area that is fully contained by this area's polygon
-        postcode_io_key = area_to_postcode_io_key(area)
-        if postcode_io_key:
-            subclause = Q()
-            # See if there's a matched postcode data field for this area
-            subclause &= Q(
-                **{f"postcode_data__codes__{postcode_io_key.value}": area.gss}
-            )
-            # And see if the area is SMALLER than the current area — i.e. a child
-            subclause &= Q(area__polygon__within=area.polygon)
-            filters |= subclause
-
-    elif mode is stats.AreaQueryMode.AREA_OR_PARENTS:
-        filters = Q(area__gss=area.gss)
-        # Or find GenericData tagged with area that fully contains this area's polygon
-        postcode_io_key = area_to_postcode_io_key(area)
-        if postcode_io_key:
-            subclause = Q()
-            # See if there's a matched postcode data field for this area
-            subclause &= Q(
-                **{f"postcode_data__codes__{postcode_io_key.value}": area.gss}
-            )
-            # And see if the area is LARGER than the current area — i.e. a parent
-            subclause &= Q(area__polygon__contains=area.polygon)
-            filters |= subclause
-
-    elif mode is stats.AreaQueryMode.OVERLAPPING:
-        filters = Q(area__gss=area.gss)
-        # Or find GenericData tagged with area that overlaps this area's polygon
-        postcode_io_key = area_to_postcode_io_key(area)
-        if postcode_io_key:
-            filters |= Q(**{f"postcode_data__codes__{postcode_io_key.value}": area.gss})
-
-    else:
-        raise ValueError(f"Unknown stats.AreaQueryMode: {mode}")
-
-    return data_source_records.filter(filters)
-
-
 @strawberry_django.field()
 def generic_data_from_source_about_area(
     info: Info,
@@ -1544,9 +1484,7 @@ def generic_data_from_source_about_area(
             f"User {user} does not have permission to view this external data source's data"
         )
 
-    qs = __get_generic_data_for_area_and_external_data_source(
-        external_data_source, gss, mode
-    )
+    qs = external_data_source.get_import_data().filter(stats.filter_generic_data_using_gss_code(gss, mode))
 
     return qs
 
