@@ -63,7 +63,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { contrastColor } from 'contrast-color'
 import { format } from 'd3-format'
 import { produce } from 'immer'
-import { cloneDeep, sum } from 'lodash'
+import { cloneDeep, isUndefined, sum } from 'lodash'
 import {
   ArrowLeft,
   ArrowRight,
@@ -421,8 +421,14 @@ function AreaDisplay({
       })}
       headerClassName={
         // hide when not configuring?
-        display.hideTitle
-          ? 'opacity-0 group-hover/display:opacity-100 mt-0 mb-1 group-hover/display:mt-3 group-hover/display:mb-3 max-h-0 group-hover/display:max-h-[200px] transition-all duration-300 ease-in-out'
+        display.hideTitle || isUndefined(display.hideTitle)
+          ? `
+            [[data-state="open"]_&]:opacity-0 group-hover/display:[[data-state="open"]_&]:opacity-100
+            [[data-state="open"]_&]:mt-1 group-hover/display:[[data-state="open"]_&]:mt-3
+            [[data-state="open"]_&]:mb-1 group-hover/display:[[data-state="open"]_&]:mb-3
+            [[data-state="open"]_&]:max-h-0 group-hover/display:[[data-state="open"]_&]:max-h-[200px]
+            transition-all duration-300 ease-in-out
+          `
           : undefined
       }
       id={display.id}
@@ -618,7 +624,7 @@ function AreaDisplay({
             )}
             <EditorSwitch
               label="Hide title"
-              value={display.hideTitle}
+              value={display.hideTitle || isUndefined(display.hideTitle)}
               onChange={(value) => {
                 updateReport((draft) => {
                   draft.displayOptions.areaExplorer.displays[

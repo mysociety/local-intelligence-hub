@@ -62,7 +62,7 @@ const CollapsibleSection: React.FC<Props> = ({
           )}
         >
           <h3
-            className="text-white font-medium mr-2 gap-2 flex flex-row shrink-0"
+            className="text-white [[data-state=closed]_&]:text-meepGray-400 font-medium mr-2 gap-2 flex flex-row shrink-0"
             {...titleProps}
           >
             {title}
