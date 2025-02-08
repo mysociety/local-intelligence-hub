@@ -19,6 +19,7 @@ interface Props {
     React.HTMLAttributes<HTMLHeadingElement>,
     HTMLHeadingElement
   >
+  headerClassName?: string
 }
 
 const collapsibleSectionsAtom = atom<{ [key: string]: boolean }>({})
@@ -29,6 +30,7 @@ const CollapsibleSection: React.FC<Props> = ({
   title,
   actions,
   className,
+  headerClassName = '',
   titleProps = {},
 }) => {
   const [sections, setSections] = useAtom(collapsibleSectionsAtom)
@@ -53,7 +55,12 @@ const CollapsibleSection: React.FC<Props> = ({
       open={!!thisSectionOpen}
     >
       <div>
-        <div className="flex flex-row gap-2 items-start my-3 cursor-pointer">
+        <header
+          className={twMerge(
+            'flex flex-row gap-2 items-start my-3 cursor-pointer',
+            headerClassName
+          )}
+        >
           <h3
             className="text-white font-medium mr-2 gap-2 flex flex-row shrink-0"
             {...titleProps}
@@ -69,7 +76,7 @@ const CollapsibleSection: React.FC<Props> = ({
             />
           </CollapsibleTrigger>
           <div className="ml-auto">{actions}</div>
-        </div>
+        </header>
 
         <CollapsibleContent className="CollapsibleContent">
           {children}

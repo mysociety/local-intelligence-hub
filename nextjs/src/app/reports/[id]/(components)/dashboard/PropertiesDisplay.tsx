@@ -115,7 +115,7 @@ function KeyContainer({
     <section className={twMerge('flex flex-col', className)}>
       <header
         className={twMerge(
-          'text-meepGray-200 uppercase text-xs',
+          'text-meepGray-300 uppercase text-xs',
           titleClassName
         )}
       >

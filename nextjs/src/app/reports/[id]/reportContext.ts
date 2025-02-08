@@ -191,6 +191,7 @@ export const explorerDisplaySchema = z.object({
   advancedStatisticsConfig: StatisticsConfigSchema()
     .optional()
     .describe('Configuring this will add arguments to the statistics query'),
+  hideTitle: z.boolean().optional(),
 })
 
 export type IExplorerDisplay = z.infer<typeof explorerDisplaySchema>

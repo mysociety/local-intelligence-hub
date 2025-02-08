@@ -324,7 +324,7 @@ function SortableAreaDisplay({
 
   return (
     <div
-      className="py-1 px-4 bg-meepGray-600"
+      className="py-1 px-4 bg-meepGray-600 group/display"
       style={style}
       ref={setNodeRef}
       {...attributes}
@@ -419,6 +419,12 @@ function AreaDisplay({
           draft.displayOptions.areaExplorer.displays[display.id].name = d
         })
       })}
+      headerClassName={
+        // hide when not configuring?
+        display.hideTitle
+          ? 'opacity-0 group-hover/display:opacity-100 mt-0 mb-1 group-hover/display:mt-3 group-hover/display:mb-3 max-h-0 group-hover/display:max-h-[200px] transition-all duration-300 ease-in-out'
+          : undefined
+      }
       id={display.id}
       actions={
         // Dropdown with these two editor select options
@@ -610,6 +616,17 @@ function AreaDisplay({
                 }}
               />
             )}
+            <EditorSwitch
+              label="Hide title"
+              value={display.hideTitle}
+              onChange={(value) => {
+                updateReport((draft) => {
+                  draft.displayOptions.areaExplorer.displays[
+                    display.id
+                  ].hideTitle = value
+                })
+              }}
+            />
             <hr className="mt-4 my-2" />
             <Button
               variant="ghost"
@@ -1176,7 +1193,7 @@ function BigNumberDisplay({
   return (
     <div className="py-2">
       {!!(dataType || label) && (
-        <div className="uppercase text-xs text-meepGray-400">
+        <div className="uppercase text-xs text-meepGray-300">
           {label ? (
             label
           ) : dataType ? (
