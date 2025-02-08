@@ -1930,6 +1930,7 @@ def statistics_for_choropleth(
     stats_config: stats.StatisticsConfig,
     category_key: Optional[str] = None,
     count_key: Optional[str] = None,
+    is_count_key_percentage: Optional[bool] = False,
     map_bounds: Optional[stats.MapBounds] = None,
 ):
     user = get_current_user(info)
@@ -1943,6 +1944,7 @@ def statistics_for_choropleth(
             category_key=category_key,
             count_key=count_key,
             map_bounds=map_bounds,
+            is_count_key_percentage=is_count_key_percentage,
         )
         or []
     )  # Convert None to empty list for better front-end integration

@@ -152,6 +152,22 @@ export default function ReportStatisticsQueryConfig() {
             }
           />
           {viewManager.currentViewOfType?.mapOptions.choropleth.dataType ===
+            StatisticalDataType.Continuous && (
+            <EditorSwitch
+              label="Is it a percentage?"
+              value={
+                !!viewManager.currentViewOfType?.mapOptions.choropleth
+                  .advancedStatisticsDisplayFieldIsPercentage
+              }
+              onChange={(value) => {
+                viewManager.updateView((draft) => {
+                  draft.mapOptions.choropleth.advancedStatisticsDisplayFieldIsPercentage =
+                    value
+                })
+              }}
+            />
+          )}
+          {viewManager.currentViewOfType?.mapOptions.choropleth.dataType ===
             StatisticalDataType.Nominal && (
             <EditorSwitch
               label="Are these electoral parties?"

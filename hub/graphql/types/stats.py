@@ -228,6 +228,7 @@ def statistics(
     count_key: Optional[str] = None,
     return_numeric_keys_only: Optional[bool] = False,
     map_bounds: Optional[MapBounds] = None,
+    is_count_key_percentage: Optional[bool] = False,
 ):
     pre_calcs = (
         [c for c in conf.pre_group_by_calculated_columns if not c.ignore]
@@ -431,17 +432,19 @@ def statistics(
     # Apply the row-level cols
     if pre_calcs:
         for col in pre_calcs:
-            df[col.name] = df.eval(col.expression)
             try:
-                df[col.name] = df.eval(col.expression)
-            except ValueError:
-                # In case "where" is used, which pandas doesn't support
-                # https://github.com/pandas-dev/pandas/issues/34834
-                df[col.name] = ne.evaluate(col, local_dict=df)
-            if col.name not in numerical_keys:
-                numerical_keys += [col.name]
-            if col.is_percentage and col.name not in percentage_keys:
-                percentage_keys += [col.name]
+                try:
+                    df[col.name] = df.eval(col.expression)
+                except ValueError:
+                    # In case "where" is used, which pandas doesn't support
+                    # https://github.com/pandas-dev/pandas/issues/34834
+                    df[col.name] = ne.evaluate(col, local_dict=df)
+                if col.name not in numerical_keys:
+                    numerical_keys += [col.name]
+                if col.is_percentage and col.name not in percentage_keys:
+                    percentage_keys += [col.name]
+            except Exception as e:
+                pass
 
     # --- Group by the groupby keys ---
     # respecting aggregation operations
@@ -567,17 +570,19 @@ def statistics(
         # Apply formulas
         if post_calcs and len(post_calcs) > 0:
             for col in post_calcs:
-                df[col.name] = df.eval(col.expression)
                 try:
-                    df[col.name] = df.eval(col.expression)
-                except ValueError:
-                    # In case "where" is used, which pandas doesn't support
-                    # https://github.com/pandas-dev/pandas/issues/34834
-                    df[col.name] = ne.evaluate(col, local_dict=df)
-                if col.name not in numerical_keys:
-                    numerical_keys += [col.name]
-                if col.is_percentage and col.name not in percentage_keys:
-                    percentage_keys += [col.name]
+                    try:
+                        df[col.name] = df.eval(col.expression)
+                    except ValueError:
+                        # In case "where" is used, which pandas doesn't support
+                        # https://github.com/pandas-dev/pandas/issues/34834
+                        df[col.name] = ne.evaluate(col, local_dict=df)
+                    if col.name not in numerical_keys:
+                        numerical_keys += [col.name]
+                    if col.is_percentage and col.name not in percentage_keys:
+                        percentage_keys += [col.name]
+                except Exception as e:
+                    pass
 
             # Then recalculate based on the formula, since they may've doctored the values.
             values = df[numerical_keys].values
@@ -686,7 +691,7 @@ def statistics(
         if as_grouped_data:
             from hub.graphql.types.model_types import GroupedDataCount
 
-            is_percentage = count_key in percentage_keys
+            is_percentage = (count_key in percentage_keys) or is_count_key_percentage
             return [
                 GroupedDataCount(
                     row=row,
