@@ -656,7 +656,7 @@ def statistics(
             )
             aggop = calculated_column_aggop or simple_asserted_aggop or default_aggop
             agg_dict[col] = aggop.value.lower()
-        df_n = df[numerical_keys].reset_index().drop(columns=["id"])
+        df_n = df[[n for n in numerical_keys if n not in exclude_keys]].reset_index().drop(columns=[k for k in exclude_keys if k in df.columns])
         df_agg = df_n.agg(agg_dict).to_dict()
         return [df_agg]
     if groups and len(groups) > 0:
