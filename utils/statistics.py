@@ -1,52 +1,50 @@
-import locale
+import re
+import unicodedata
 
-from pandas import DataFrame, Series
-
-
-def attempt_interpret_series_as_float(df: DataFrame):
-    if all(df.apply(check_numeric)):
-        # Whole value replacement
-        df = df.replace("", 0)
-        # Substring replacement
-        df = df.str.replace("%", "")
-        df = df.astype(float)
-    return df
+import numpy as np
+from pandas import to_numeric, Series
 
 
-def attempt_interpret_series_as_percentage(df: DataFrame):
-    if all(df.apply(check_percentage)):
-        df = df.replace("", 0)
-        # Substring replacement
-        df = df.str.replace("%", "")
-        # Divide by 100
-        df = df.astype(float) / 100
-    return df
+currency_symbols = u''.join(chr(i) for i in range(0xffff) if unicodedata.category(chr(i)) == 'Sc')
+
+
+def attempt_interpret_series_as_number(series: Series):
+    # cleanup
+    series = series.apply(get_number_or_none)
+    return series
+
+
+def attempt_interpret_series_as_percentage(series: Series):
+    # cleanup
+    series = attempt_interpret_series_as_number(series)
+    # as percentage
+    series = series / 100
+    return series
 
 
 def check_numeric(x):
     try:
+        if isinstance(x, (int, float)):
+            return True
         if x == "" or x is None:
             return True
-        # if has a trailing %, remove it
-        if x[-1] == "%":
-            x = x[:-1]
-        var = locale.atof(x)
-        var = float(var)
-        # check type is numeric
-        return isinstance(var, (int, float))
-    except Exception:
+        # check if any numeric values are in the string at all
+        if re.search(r'\d', x):
+            x = get_number_or_none(x)
+            return isinstance(x, (int, float, np.int64, np.float64))
+    except Exception as e:
         pass
     return False
 
 def check_percentage(x):
     try:
+        if isinstance(x, (int, float)):
+            return False
         if x == "" or x is None:
             # Allow blanks
             return True
         if x[-1] == "%":
-            # Look for percentages
-            raw_number = x[:-1]
-            return check_numeric(raw_number)
+            return check_numeric(x)
     except Exception:
         pass
     # If it's not blank and not a percentage...
@@ -57,3 +55,18 @@ def get_mode(series: Series):
         return series.mode()[0]
     except KeyError:
         return None
+
+def get_number_or_none(value: str | float | int | np.int64 | np.float64):
+  try:
+      initial_value = value
+      if initial_value is None or initial_value == "":
+        return None
+      value = str(value)
+      # Remove all spaces, tabs, commas, currency symbols and %
+      # TODO: make this locale-aware
+      value = re.sub(fr"\s|\t|,|^[{currency_symbols}%]|[{currency_symbols}%]$", "", value)
+      # cast as float or int, depending on if there are any decimals:
+      value = to_numeric(value)
+      return value
+  except Exception:
+    return None

@@ -19,7 +19,7 @@ from utils.geo_reference import (
 )
 from utils.py import ensure_list
 from utils.statistics import (
-    attempt_interpret_series_as_float,
+    attempt_interpret_series_as_number,
     attempt_interpret_series_as_percentage,
     check_numeric,
     check_percentage,
@@ -400,7 +400,7 @@ def statistics(
                 if column not in numerical_keys:
                     numerical_keys += [str(column)]
             elif all(df[column].apply(check_numeric)):
-                df[column] = attempt_interpret_series_as_float(df[column])
+                df[column] = attempt_interpret_series_as_number(df[column])
                 if column not in numerical_keys:
                     numerical_keys += [str(column)]
     # Review the attempt to interpret data as numeric, and update numerical_keys where there is in fact numeric data
@@ -412,22 +412,24 @@ def statistics(
         df["first"] = values.max(axis=1)
         # column name of "first"
         df["first_label"] = df[numerical_keys].idxmax(axis=1)
-        try:
-            df["second"] = np.partition(values, -2, axis=1)[:, -2]
-            # df["second_label"] = # TODO: get the column name of the second highst value
-            # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
-            # As above, but using numpy not pandas
-            df["second_label"] = df[numerical_keys].columns[
-                df[numerical_keys].values.argsort()[:, -2]
-            ]
-            df["majority"] = df["first"] - df["second"]
-        except IndexError:
-            pass
-        try:
-            df["third"] = np.partition(values, -3, axis=1)[:, -3]
-        except IndexError:
-            pass
-        df["total"] = values.sum(axis=1)
+        if len(numerical_keys) > 1:
+            df["total"] = values.sum(axis=1)
+            try:
+                df["second"] = np.partition(values, -2, axis=1)[:, -2]
+                # df["second_label"] = # TODO: get the column name of the second highst value
+                # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
+                # As above, but using numpy not pandas
+                df["second_label"] = df[numerical_keys].columns[
+                    df[numerical_keys].values.argsort()[:, -2]
+                ]
+                df["majority"] = df["first"] - df["second"]
+            except Exception:
+                pass
+            if len(numerical_keys) > 2:
+                try:
+                    df["third"] = np.partition(values, -3, axis=1)[:, -3]
+                except Exception:
+                  pass
 
     # Apply the row-level cols
     if pre_calcs:
@@ -539,6 +541,7 @@ def statistics(
                     agg_config[key] = "mean"
                 else:
                     agg_config[key] = "sum"
+
         df_aggregated = df_stats.groupby("gss").agg(agg_config)
 
         # Merge the strings and the numericals back together
@@ -550,22 +553,24 @@ def statistics(
         df["first"] = values.max(axis=1)
         # column name of "first"
         df["first_label"] = df[numerical_keys].idxmax(axis=1)
-        try:
-            df["second"] = np.partition(values, -2, axis=1)[:, -2]
-            # df["second_label"] = # TODO: get the column name of the second highst value
-            # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
-            # As above, but using numpy not pandas
-            df["second_label"] = df[numerical_keys].columns[
-                df[numerical_keys].values.argsort()[:, -2]
-            ]
-            df["majority"] = df["first"] - df["second"]
-        except IndexError:
-            pass
-        try:
-            df["third"] = np.partition(values, -3, axis=1)[:, -3]
-        except IndexError:
-            pass
-        df["total"] = values.sum(axis=1)
+        if len(numerical_keys) > 1:
+            df["total"] = values.sum(axis=1)
+            try:
+                df["second"] = np.partition(values, -2, axis=1)[:, -2]
+                    # df["second_label"] = # TODO: get the column name of the second highst value
+                # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
+                # As above, but using numpy not pandas
+                df["second_label"] = df[numerical_keys].columns[
+                    df[numerical_keys].values.argsort()[:, -2]
+                ]
+                df["majority"] = df["first"] - df["second"]
+            except Exception:
+              pass
+        if len(numerical_keys) > 2:
+            try:
+                df["third"] = np.partition(values, -3, axis=1)[:, -3]
+            except Exception:
+              pass
 
         # Apply formulas
         if post_calcs and len(post_calcs) > 0:

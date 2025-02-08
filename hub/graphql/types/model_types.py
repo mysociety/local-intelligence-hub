@@ -48,7 +48,7 @@ from hub.management.commands.import_mps import party_shades
 from utils.geo_reference import AnalyticalAreaType, area_to_postcode_io_key
 from utils.postcode import get_postcode_data_for_gss
 from utils.statistics import (
-    attempt_interpret_series_as_float,
+    attempt_interpret_series_as_number,
     attempt_interpret_series_as_percentage,
     check_percentage,
 )
@@ -1605,7 +1605,7 @@ def generic_data_summary_from_source_about_area(
             percentage_keys += [str(column)]
             df[column] = attempt_interpret_series_as_percentage(df[column])
         else:
-            df[column] = attempt_interpret_series_as_float(df[column])
+            df[column] = attempt_interpret_series_as_number(df[column])
     numerical_keys = df.select_dtypes(include="number").columns
     # remove columns that aren't numerical_keys
     df = df[numerical_keys]
@@ -1811,7 +1811,7 @@ def choropleth_data_for_source(
                     decided_operation = stats.AggregationOp.Mean
                 df[column] = attempt_interpret_series_as_percentage(df[column])
             else:
-                df[column] = attempt_interpret_series_as_float(df[column])
+                df[column] = attempt_interpret_series_as_number(df[column])
 
         # You end up with something like:
         """
