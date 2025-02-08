@@ -11,7 +11,10 @@ export const login = (
   console.log({ Authorization: 'JWT ' + jwt })
   const cookieExpires = new Date(expiresISODate).toUTCString()
   document.cookie = `jwt=${jwt}; path=/; expires=${cookieExpires}`
-  window.location.href = redirect || '/'
+  window.location.href = new URL(
+    redirect || '/',
+    window.location.href
+  ).toString()
 }
 
 export const clearJwt = () => {
