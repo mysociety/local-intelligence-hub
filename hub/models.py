@@ -3013,9 +3013,13 @@ class UploadedCSVSource(ExternalDataSource):
     allow_updates = False
     default_data_type = ExternalDataSource.DataSourceType.AREA_STATS
 
+    def org_directory_path(instance, filename):
+        # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
+        return f"user_content/org_{instance.organisation.pk}/data_sources/{filename}"
+
     # User provided
     spreadsheet_file = SafeFileField(
-        upload_to="uploaded_data_sources", allowed_extensions=("csv",)
+        upload_to=org_directory_path, allowed_extensions=("csv",)
     )
     id_field = models.TextField()
     delimiter = models.TextField(default=",", blank=True)
