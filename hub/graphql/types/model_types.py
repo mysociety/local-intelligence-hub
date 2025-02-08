@@ -51,6 +51,7 @@ from utils.statistics import (
     attempt_interpret_series_as_number,
     attempt_interpret_series_as_percentage,
     check_percentage,
+    check_numeric
 )
 
 pd.core.computation.ops.MATHOPS = (*pd.core.computation.ops.MATHOPS, "where")
@@ -1810,7 +1811,7 @@ def choropleth_data_for_source(
                 if decided_operation is None:
                     decided_operation = stats.AggregationOp.Mean
                 df[column] = attempt_interpret_series_as_percentage(df[column])
-            else:
+            elif all(df[column].apply(check_numeric)):
                 df[column] = attempt_interpret_series_as_number(df[column])
 
         # You end up with something like:
@@ -1845,25 +1846,23 @@ def choropleth_data_for_source(
 
         # Add a "maximum" column that figures out the biggest numerical value in each row
         numerical_keys = df.select_dtypes(include="number").columns
-        try:
-            # Convert selected columns to numpy array for faster operations
-            values = df[numerical_keys].values
-            df["first"] = values.max(axis=1)
-            df["second"] = np.partition(values, -2, axis=1)[:, -2]
-            df["third"] = np.partition(values, -3, axis=1)[:, -3]
+        if len(numerical_keys) > 0:
             try:
-                df["majority"] = df["first"] - df["second"]
-            except IndexError:
-                # In case there's only one value.
+                # Convert selected columns to numpy array for faster operations
+                values = df[numerical_keys].values
+                df["first"] = values.max(axis=1)
+                if len(numerical_keys) > 1:
+                    df["second"] = np.partition(values, -2, axis=1)[:, -2]
+                    df["majority"] = df["first"] - df["second"]
+                    df["total"] = df[numerical_keys].sum(axis=1)
+                    df["count"] = df[numerical_keys].count(axis=1)
+                    df["mean"] = df[numerical_keys].mean(axis=1)
+                    df["median"] = df[numerical_keys].median(axis=1)
+                if len(numerical_keys) > 2:
+                    df["third"] = np.partition(values, -3, axis=1)[:, -3]
+                df["last"] = values.min(axis=1)
+            except Exception:
                 pass
-            df["last"] = values.min(axis=1)
-
-            df["total"] = df[numerical_keys].sum(axis=1)
-            df["count"] = df[numerical_keys].count(axis=1)
-            df["mean"] = df[numerical_keys].mean(axis=1)
-            df["median"] = df[numerical_keys].median(axis=1)
-        except IndexError:
-            pass
 
         # Now fetch the requested series from the dataframe
         # If the field is a column name, we can just return that column

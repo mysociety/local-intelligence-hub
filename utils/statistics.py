@@ -10,7 +10,7 @@ currency_symbols = u''.join(chr(i) for i in range(0xffff) if unicodedata.categor
 
 def attempt_interpret_series_as_number(series: Series):
     # cleanup
-    series = series.apply(get_number_or_none)
+    series = series.apply(parse_as_number)
     return series
 
 
@@ -30,7 +30,7 @@ def check_numeric(x):
             return True
         # check if any numeric values are in the string at all
         if re.search(r'\d', x):
-            x = get_number_or_none(x)
+            x = parse_as_number(x)
             return isinstance(x, (int, float, np.int64, np.float64))
     except Exception as e:
         pass
@@ -56,7 +56,7 @@ def get_mode(series: Series):
     except KeyError:
         return None
 
-def get_number_or_none(value: str | float | int | np.int64 | np.float64):
+def parse_as_number(value: str | float | int | np.int64 | np.float64):
   try:
       initial_value = value
       if initial_value is None or initial_value == "":
