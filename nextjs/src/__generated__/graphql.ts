@@ -2787,6 +2787,7 @@ export type StatisticsConfig = {
   areaQueryMode?: InputMaybe<AreaQueryMode>;
   calculatedColumns?: InputMaybe<Array<CalculatedColumn>>;
   excludeColumns?: InputMaybe<Array<Scalars['String']['input']>>;
+  formatNumericKeys?: InputMaybe<Scalars['Boolean']['input']>;
   groupAbsolutely?: InputMaybe<Scalars['Boolean']['input']>;
   groupByArea?: InputMaybe<AnalyticalAreaType>;
   groupByColumns?: InputMaybe<Array<GroupByColumn>>;

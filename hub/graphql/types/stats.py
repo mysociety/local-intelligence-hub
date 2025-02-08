@@ -159,6 +159,7 @@ class StatisticsConfig:
     #
     return_columns: Optional[List[str]] = None
     exclude_columns: Optional[List[str]] = None
+    format_numeric_keys: Optional[bool] = False
 
 """
 # Some examples of use
@@ -657,8 +658,18 @@ def statistics(
             aggop = calculated_column_aggop or simple_asserted_aggop or default_aggop
             agg_dict[col] = aggop.value.lower()
         df_n = df[[n for n in numerical_keys if n not in exclude_keys]].reset_index().drop(columns=[k for k in exclude_keys if k in df.columns])
-        df_agg = df_n.agg(agg_dict).to_dict()
-        return [df_agg]
+        df_agg = df_n.agg(agg_dict)
+        d = df_agg.to_dict()
+        if conf.format_numeric_keys:
+            format_dict = {}
+            for key in numerical_keys:
+                format_dict[key] = "{:,.0f}"
+            for key in percentage_keys:
+                format_dict[key] = "{:,.0%}"
+            for key in format_dict:
+                if key in d:
+                    d[key] = format_dict[key].format(d[key])
+        return [d]
     if groups and len(groups) > 0:
         agg_config = dict()
         for col in groups:
@@ -679,9 +690,13 @@ def statistics(
                     ),
                 }
             )
-        df = df.groupby(col.column, as_index=False).agg(**agg_config)
-        d = df.to_dict(orient="records")
-        return d
+        df_agg = df.groupby(col.column, as_index=False).agg(**agg_config)
+        if conf.format_numeric_keys:
+            for key in numerical_keys:
+                df_agg[key].style.format("{:,.0f}")
+            for key in percentage_keys:
+                df_agg[key].style.format("{:,.0%}")
+        return df_agg.to_dict(orient="records")
     else:
         # Return the results in the requested format
         if return_numeric_keys_only:
