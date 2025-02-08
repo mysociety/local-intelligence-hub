@@ -124,9 +124,8 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
     map.loaded,
     map.loadedMap,
     activeTileset,
-    !!data,
+    data,
     view.mapOptions,
-    dataByBoundary,
     shaderVisibility,
   ])
 
