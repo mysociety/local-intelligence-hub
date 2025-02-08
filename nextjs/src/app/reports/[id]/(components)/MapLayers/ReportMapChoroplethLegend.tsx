@@ -516,7 +516,7 @@ function MapToggleField({
         props.iconClassName
       )}
     >
-      <div className="ml-auto h-auto">
+      <div className="ml-auto h-auto items-center flex flex-row">
         <MapToggle value={value} onChange={onChange} />
       </div>
     </EditorField>
