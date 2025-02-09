@@ -94,17 +94,19 @@ export default function ReportMapChoroplethLegend() {
     variables?.config.sourceIds?.includes(l.source)
   )
 
-  const usableFields = choroplethLayer?.sourceData.fieldDefinitions?.filter(
-    // no ID fields
-    (d: any) => d.value !== choroplethLayer.sourceData.idField
+  const statisticalVariables = useStatisticalVariables(
+    viewManager.currentViewOfType.mapOptions.choropleth.advancedStatisticsConfig
   )
 
-  const defaultFormula = (): CalculatedColumn => ({
-    id: v4(),
-    name: 'simple_formula',
-    expression:
-      lastFormula || `\`${usableFields?.[usableFields.length - 1]?.value}\``,
-  })
+  const defaultFormula = (): CalculatedColumn => {
+    console.log(statisticalVariables)
+    return {
+      id: v4(),
+      name: 'simple_formula',
+      expression:
+        lastFormula || `\`${statisticalVariables.fieldDefinitionValues?.[0]}\``,
+    }
+  }
 
   const mode = viewManager.currentViewOfType?.mapOptions.choropleth.mode
 
@@ -330,7 +332,8 @@ export default function ReportMapChoroplethLegend() {
                           StatisticalDataType.Continuous
                         // draft.mapOptions.choropleth.field = 'count'
                         // delete draft.mapOptions.choropleth.field
-                        draft.mapOptions.choropleth.field = 'gss'
+                        draft.mapOptions.choropleth.field =
+                          statisticalVariables.calculatedValues?.[0]
                         // Simple mode
                         draft.mapOptions.choropleth.advancedStatisticsConfig = {
                           sourceIds:
@@ -346,7 +349,7 @@ export default function ReportMapChoroplethLegend() {
                           StatisticalDataType.Continuous
                         // Pick the first available
                         draft.mapOptions.choropleth.field =
-                          usableFields?.[usableFields.length - 1]?.value
+                          statisticalVariables.fieldDefinitionValues?.[0]
                         // Simple mode
                         draft.mapOptions.choropleth.advancedStatisticsConfig = {
                           sourceIds:
@@ -409,9 +412,9 @@ export default function ReportMapChoroplethLegend() {
                       viewManager.currentViewOfType?.mapOptions.choropleth.field
                     }
                     options={[
-                      ...(usableFields?.map((d: any) => ({
-                        label: d.label,
-                        value: d.value,
+                      ...(statisticalVariables.all?.map((d) => ({
+                        value: d,
+                        label: toSpaceCase(d),
                       })) || []),
                     ]}
                     onChange={(dataSourceField) => {
