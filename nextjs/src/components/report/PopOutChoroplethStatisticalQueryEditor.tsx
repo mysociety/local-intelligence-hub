@@ -11,11 +11,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { useReport } from '@/lib/map/useReport'
 import { useView } from '@/lib/map/useView'
 import { WritableDraft } from 'immer'
 import { BarChart2Icon } from 'lucide-react'
 import toSpaceCase from 'to-space-case'
+import { useStatisticalVariables } from './statisticalVariables'
 
 export function PopOutChoroplethStatisticalQueryEditor({
   value,
@@ -24,53 +24,14 @@ export function PopOutChoroplethStatisticalQueryEditor({
   value: StatisticsConfig
   onChange: (cb: (value: WritableDraft<StatisticsConfig>) => void) => void
 }) {
-  const reportManager = useReport()
   const viewManager = useView(ViewType.Map)
-
-  const fieldDefinitionValues =
-    reportManager.report.layers
-      .find(
-        (l) =>
-          l.source ===
-          viewManager.currentViewOfType?.mapOptions.choropleth
-            .advancedStatisticsConfig?.sourceIds?.[0]
-      )
-      ?.sourceData.fieldDefinitions?.map((field) => field.value) || []
-
-  const calculatedValues = [
-    'first',
-    'second',
-    'third',
-    'total',
-    'first_label',
-    'second_label',
-  ]
-
-  const userDefinedValues = (
-    viewManager.currentViewOfType?.mapOptions.choropleth
-      .advancedStatisticsConfig?.preGroupByCalculatedColumns || []
-  )
-    .concat(
-      viewManager.currentViewOfType?.mapOptions.choropleth
-        .advancedStatisticsConfig?.calculatedColumns || []
-    )
-    .map((column) => column.name)
-
-  const displayFieldOptions = Array.from(
-    new Set(
-      [
-        ...fieldDefinitionValues,
-        ...calculatedValues,
-        ...userDefinedValues,
-      ].filter(Boolean)
-    )
-  )
+  const variables = useStatisticalVariables(value)
 
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <BarChart2Icon className="w-4 h-4" /> Edit query
+          <BarChart2Icon className="w-4 h-4" /> Advanced settings
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto overflow-x-hidden w-full p-0 divide-y divide-meepGray-700">
@@ -99,10 +60,15 @@ export function PopOutChoroplethStatisticalQueryEditor({
           <EditorSelect
             label="Display field"
             value={viewManager.currentViewOfType?.mapOptions.choropleth.field}
-            options={displayFieldOptions.map((value) => ({
-              value: value,
-              label: value,
-            }))}
+            options={Object.entries(variables)
+              .filter(([key, _]) => key !== 'all')
+              .map(([key, value]) => ({
+                label: toSpaceCase(key),
+                options: value.map((value) => ({
+                  label: toSpaceCase(value),
+                  value: value,
+                })),
+              }))}
             onChange={(value) =>
               viewManager.updateView((draft) => {
                 draft.mapOptions.choropleth.field = value

@@ -411,12 +411,15 @@ export default function ReportMapChoroplethLegend() {
                     value={
                       viewManager.currentViewOfType?.mapOptions.choropleth.field
                     }
-                    options={[
-                      ...(statisticalVariables.all?.map((d) => ({
-                        value: d,
-                        label: toSpaceCase(d),
-                      })) || []),
-                    ]}
+                    options={Object.entries(statisticalVariables)
+                      .filter(([key, _]) => key !== 'all')
+                      .map(([key, value]) => ({
+                        label: toSpaceCase(key),
+                        options: value.map((value) => ({
+                          label: toSpaceCase(value),
+                          value: value,
+                        })),
+                      }))}
                     onChange={(dataSourceField) => {
                       viewManager.updateView((draft) => {
                         draft.mapOptions.choropleth.field = dataSourceField
