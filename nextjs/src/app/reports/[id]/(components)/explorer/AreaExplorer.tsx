@@ -351,13 +351,17 @@ function AreaDisplay({
   const sourceId = layer?.source
 
   const relevantChoroplethConfig =
-    // Relates to this source
-    ((
-      view.currentViewOfType?.mapOptions.choropleth.advancedStatisticsConfig
-        .sourceIds || []
-    ).includes(sourceId!)
-      ? view.currentViewOfType?.mapOptions.choropleth.advancedStatisticsConfig
-      : {}) || {}
+    (!!sourceId &&
+      // Relates to this source
+      ((
+        view.currentViewOfType?.mapOptions.choropleth.advancedStatisticsConfig
+          .sourceIds || []
+      ).includes(sourceId)
+        ? view.currentViewOfType?.mapOptions.choropleth.advancedStatisticsConfig
+        : {})) ||
+    {}
+
+  console.log(sourceId, relevantChoroplethConfig)
 
   const data = useQuery<AreaLayerDataQuery, AreaLayerDataQueryVariables>(
     AREA_LAYER_DATA,
@@ -398,7 +402,7 @@ function AreaDisplay({
         sourceIds: [sourceId!],
         gssCodes: gss ? [gss] : null,
         groupAbsolutely: display.dataDisplayMode === DataDisplayMode.Aggregated,
-        formatNumericKeys: true,
+        formatNumericKeys: display.formatNumericKeys,
       },
     },
     skip: !sourceId,
@@ -504,6 +508,17 @@ function AreaDisplay({
                   ].isPercentage = value
                 })
               }
+            />
+            <EditorSwitch
+              label="Format numeric values"
+              value={display.formatNumericKeys}
+              onChange={(value) => {
+                updateReport((draft) => {
+                  draft.displayOptions.areaExplorer.displays[
+                    display.id
+                  ].formatNumericKeys = value
+                })
+              }}
             />
             {display.displayType === InspectorDisplayType.BigNumber &&
               display.dataDisplayMode === DataDisplayMode.Aggregated && (
@@ -747,7 +762,6 @@ function AreaDisplay({
                 <LoadingIcon size={'32px'} />
               ) : (
                 <ElectionResultsDisplay
-                  area={area}
                   display={display}
                   data={stats.data?.statistics?.[0]}
                 />
@@ -936,19 +950,16 @@ function RelatedDataCarousel({ data }: { data: AreaLayerDataQuery['data'] }) {
 // `
 
 function ElectionResultsDisplay({
-  area,
   display,
   data,
 }: {
-  area: AreaExplorerSummaryQuery['area']
   display: IExplorerDisplay
   data?: any
 }) {
-  if (!data) {
+  if (!data || !Object.keys(data).length) {
     return <div className="text-meepGray-400 py-2">No data available</div>
   }
 
-  // TODO:
   const isPercentage = display.isPercentage
 
   const percentFormat = format('.1%')

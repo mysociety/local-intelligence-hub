@@ -170,6 +170,7 @@ export const explorerDisplaySchema = z.object({
     .default(InspectorDisplayType.Properties),
   areaQueryMode: z.nativeEnum(AreaQueryMode).default(AreaQueryMode.Overlapping),
   dataDisplayMode: z.nativeEnum(DataDisplayMode).optional(),
+  formatNumericKeys: z.boolean().optional(),
   dataSourceType: z
     .nativeEnum(DataSourceType)
     .optional()
