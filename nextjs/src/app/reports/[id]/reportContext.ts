@@ -251,7 +251,6 @@ const mapOptionsSchema = z.object({
       mode: z.nativeEnum(ChoroplethMode).default(ChoroplethMode.Count),
       field: z.string().optional(),
       formula: z.string().optional(),
-      useAdvancedStatistics: z.boolean().optional(),
       advancedStatisticsConfig: StatisticsConfigSchema().optional(),
       dataType: z
         .nativeEnum(StatisticalDataType)
@@ -262,8 +261,7 @@ const mapOptionsSchema = z.object({
         .describe(
           'If categorical data should be interpreted using party colours.'
         ),
-      advancedStatisticsDisplayField: z.string().optional(),
-      advancedStatisticsDisplayFieldIsPercentage: z.boolean().optional(),
+      fieldIsPercentage: z.boolean().optional(),
     })
     .default({}),
   display: z
@@ -329,7 +327,14 @@ export type ViewConfig = z.infer<typeof viewUnionSchema>
 // Make a version of the ViewConfig type which is generic so that providing <ViewType> asserts the union type:
 export type SpecificViewConfig<ViewType> = ViewConfig & { type: ViewType }
 
-const CURRENT_MIGRATION_VERSION = '2025-01-25'
+export const DisplayOptionsVersion = {
+  FIRST: 'FIRST',
+  '20250125': '20250125',
+  '2025-01-25': '2025-01-25',
+  '2025-02-08': '2025-02-08',
+}
+
+export const CURRENT_MIGRATION_VERSION = DisplayOptionsVersion['2025-02-08']
 
 const defaultViewId = uuid.v4()
 
@@ -348,7 +353,9 @@ export function starId(starredState: StarredStateUnique): string {
 }
 
 export const displayOptionsSchema = z.object({
-  version: z.string().default(CURRENT_MIGRATION_VERSION),
+  version: z
+    .literal(CURRENT_MIGRATION_VERSION)
+    .default(CURRENT_MIGRATION_VERSION),
   starred: z.record(z.string(), starredSchema).default({}),
   areaExplorer: z
     .object({
