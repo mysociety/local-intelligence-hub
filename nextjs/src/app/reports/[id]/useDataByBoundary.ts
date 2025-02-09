@@ -58,18 +58,12 @@ const useDataByBoundary = ({
         config: {
           ...(view?.mapOptions?.choropleth.advancedStatisticsConfig! || {}),
           groupByArea: tileset.analyticalAreaType!,
-          returnColumns: ['gss', 'label']
-            .concat(
-              view?.mapOptions?.choropleth.dataType ===
-                StatisticalDataType.Nominal
-                ? ['category']
-                : ['count']
-            )
-            .concat(
-              !!view?.mapOptions?.choropleth.field
-                ? [view?.mapOptions?.choropleth.field]
-                : []
-            ),
+          returnColumns: ['gss', 'label'].concat(
+            view?.mapOptions?.choropleth.dataType ===
+              StatisticalDataType.Nominal
+              ? ['category']
+              : ['count']
+          ),
         },
         mapBounds,
         isCountKeyPercentage:

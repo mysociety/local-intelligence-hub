@@ -358,9 +358,6 @@ def statistics(
     # --- Group by the groupby keys ---
     # respecting aggregation operations
     if conf.group_by_area:
-        # Get rid of ID index
-        df = df.reset_index(drop=True).drop(columns=["id"])
-
         def get_group_by_area_properties(row):
             if row is None:
                 return None, None, None
@@ -409,8 +406,10 @@ def statistics(
         df_mode = df[["label", "gss", "area_type"]].groupby("gss").agg(get_mode)
 
         # Aggregate the numerical columns
-        df_stats = df[numerical_keys + ["gss"]].set_index("gss")
+        df_stats = df[numerical_keys + ["gss", "id"]].set_index("gss")
         agg_config = dict()
+        df_stats["count"] = 1
+        agg_config["count"] = np.size
         if conf.aggregation_operations and len(conf.aggregation_operations) > 0:
             # Per-key config
             for key in numerical_keys:

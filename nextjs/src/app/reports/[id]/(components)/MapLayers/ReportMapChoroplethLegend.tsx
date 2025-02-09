@@ -327,14 +327,17 @@ export default function ReportMapChoroplethLegend() {
                       draft.mapOptions.choropleth.mode =
                         option as StatisticsMode
 
-                      if (option === StatisticsMode.Count) {
+                      if (option !== StatisticsMode.Advanced) {
+                        // reset: dataType / isElectoral / displayRawField / fieldIsPercentage
                         draft.mapOptions.choropleth.dataType =
                           StatisticalDataType.Continuous
-                        // draft.mapOptions.choropleth.field = 'count'
-                        // delete draft.mapOptions.choropleth.field
-                        draft.mapOptions.choropleth.field =
-                          statisticalVariables.calculatedValues?.[0]
-                        // Simple mode
+                        draft.mapOptions.choropleth.isElectoral = false
+                        draft.mapOptions.choropleth.displayRawField = false
+                        draft.mapOptions.choropleth.fieldIsPercentage = false
+                        delete draft.mapOptions.choropleth.field
+                      }
+
+                      if (option === StatisticsMode.Count) {
                         draft.mapOptions.choropleth.advancedStatisticsConfig = {
                           sourceIds:
                             draft.mapOptions.choropleth.advancedStatisticsConfig
@@ -345,8 +348,6 @@ export default function ReportMapChoroplethLegend() {
                       }
 
                       if (option === StatisticsMode.Field) {
-                        draft.mapOptions.choropleth.dataType =
-                          StatisticalDataType.Continuous
                         // Pick the first available
                         draft.mapOptions.choropleth.field =
                           statisticalVariables.dataSourceFields?.[0]
@@ -360,9 +361,6 @@ export default function ReportMapChoroplethLegend() {
                       }
 
                       if (option === StatisticsMode.Formula) {
-                        draft.mapOptions.choropleth.dataType =
-                          StatisticalDataType.Continuous
-                        //
                         draft.mapOptions.choropleth.field = 'simple_formula'
                         // Simple mode
                         draft.mapOptions.choropleth.advancedStatisticsConfig = {
