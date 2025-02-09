@@ -46,37 +46,53 @@ export function EditorSelect({
           )}
         </SelectTrigger>
         <SelectContent>
-          {options.map((key) => {
-            const label = typeof key === 'object' ? key.label : key
-            if (typeof key === 'object' && 'options' in key) {
-              if (key.options.length === 0) {
-                return null
+          {options
+            .filter((o) => {
+              if (typeof o === 'object' && 'options' in o) {
+                return o.options.length > 0
+              } else if (typeof o === 'object' && 'value' in o) {
+                return !!o.value
+              } else {
+                return !!o
               }
-              return (
-                <SelectGroup key={key.label} title={key.label} className="my-5">
-                  <SelectLabel className="text-meepGray-400 uppercase font-medium">
-                    {key.label}
-                  </SelectLabel>
-                  {key.options.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              )
-            } else {
-              const value = typeof key === 'object' ? key.value : key
-              return (
-                <SelectItem
-                  className={twMerge('font-medium', valueClassName)}
-                  key={value}
-                  value={value}
-                >
-                  {label}
-                </SelectItem>
-              )
-            }
-          })}
+            })
+            .map((key) => {
+              const label = typeof key === 'object' ? key.label : key
+              if (typeof key === 'object' && 'options' in key) {
+                if (key.options.length === 0) {
+                  return null
+                }
+                return (
+                  <SelectGroup
+                    key={key.label}
+                    title={key.label}
+                    className="my-5"
+                  >
+                    <SelectLabel className="text-meepGray-400 uppercase font-medium">
+                      {key.label}
+                    </SelectLabel>
+                    {key.options
+                      .filter((o) => !!o.value)
+                      .map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                  </SelectGroup>
+                )
+              } else {
+                const value = typeof key === 'object' ? key.value : key
+                return (
+                  <SelectItem
+                    className={twMerge('font-medium', valueClassName)}
+                    key={value}
+                    value={value}
+                  >
+                    {label}
+                  </SelectItem>
+                )
+              }
+            })}
         </SelectContent>
       </Select>
     </EditorField>
