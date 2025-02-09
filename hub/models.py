@@ -2421,7 +2421,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     def handle_import_webhook_view(self, member_ids):
         try:
             if not self.auto_import_enabled:
-                logger.error(f"Imports requested for CRM without webhooks enabled: {self}")
+                logger.error(
+                    f"Imports requested for CRM without webhooks enabled: {self}"
+                )
                 return False
 
             async_to_sync(self.schedule_import_many)(members=member_ids)

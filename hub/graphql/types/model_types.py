@@ -3,15 +3,9 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Union
 
-from django.contrib.gis.db.models import Union as GisUnion
-from django.contrib.gis.geos import Polygon
-from django.db.models import F, Q
-from django.db.models.fields import FloatField
-from django.db.models.functions import Cast
+from django.db.models import Q
 from django.http import HttpRequest
 
-import numexpr as ne
-import numpy as np
 import pandas as pd
 import procrastinate.contrib.django.models
 import strawberry
@@ -47,12 +41,6 @@ from hub.graphql.utils import attr_field, dict_key_field, fn_field
 from hub.management.commands.import_mps import party_shades
 from utils.geo_reference import AnalyticalAreaType, area_to_postcode_io_key
 from utils.postcode import get_postcode_data_for_gss
-from utils.statistics import (
-    attempt_interpret_series_as_number,
-    attempt_interpret_series_as_percentage,
-    check_percentage,
-    check_numeric
-)
 
 pd.core.computation.ops.MATHOPS = (*pd.core.computation.ops.MATHOPS, "where")
 
@@ -1484,7 +1472,9 @@ def generic_data_from_source_about_area(
             f"User {user} does not have permission to view this external data source's data"
         )
 
-    qs = external_data_source.get_import_data().filter(stats.filter_generic_data_using_gss_code(gss, mode))
+    qs = external_data_source.get_import_data().filter(
+        stats.filter_generic_data_using_gss_code(gss, mode)
+    )
 
     return qs
 

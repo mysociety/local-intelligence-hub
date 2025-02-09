@@ -1,4 +1,3 @@
-import json
 import logging
 import math
 from enum import Enum
@@ -47,45 +46,44 @@ class Command(BaseCommand):
         if not settings.ROW_COUNT_PER_WORKER:
             raise ValueError("settings.ROW_COUNT_PER_WORKER is required")
 
-        with connection.cursor() as cursor:
-            # Find out how many rows of data need importing, updating, so on, so forth
-            if options["strategy"] == ScalingStrategy.row_count:
-                new_worker_count = self.row_count_strategy(
-                    min_worker_count=options["min_worker_count"],
-                    max_worker_count=options["max_worker_count"],
-                    row_count_per_worker=options["row_count_per_worker"],
-                )
-            elif options["strategy"] == ScalingStrategy.simple_data_source_count:
-                new_worker_count = self.simple_data_source_count_strategy(
-                    min_worker_count=options["min_worker_count"],
-                    max_worker_count=options["max_worker_count"],
-                )
-            elif options["strategy"] == ScalingStrategy.sources_and_row_count:
-                new_worker_count = self.sources_and_row_count_strategy(
-                    min_worker_count=options["min_worker_count"],
-                    max_worker_count=options["max_worker_count"],
-                    row_count_per_worker=options["row_count_per_worker"],
-                )
-            else:
-                raise ValueError(f"Unknown strategy: {options['strategy']}")
-
-            logger.info(f"New worker count: {new_worker_count}.")
-
-            if not settings.RENDER_API_TOKEN:
-                raise ValueError("settings.RENDER_API_TOKEN is required")
-            if not settings.RENDER_WORKER_SERVICE_ID:
-                raise ValueError("settings.RENDER_WORKER_SERVICE_ID is required")
-
-            # Tell render
-            render = get_render_client()
-            res = render.post(
-                f"/v1/services/{settings.RENDER_WORKER_SERVICE_ID}/scale",
-                json={"numInstances": new_worker_count},
+        # Find out how many rows of data need importing, updating, so on, so forth
+        if options["strategy"] == ScalingStrategy.row_count:
+            new_worker_count = self.row_count_strategy(
+                min_worker_count=options["min_worker_count"],
+                max_worker_count=options["max_worker_count"],
+                row_count_per_worker=options["row_count_per_worker"],
             )
-
-            logger.info(
-                f"Render response: {res.status_code}, {render_response_dict[res.status_code]}"
+        elif options["strategy"] == ScalingStrategy.simple_data_source_count:
+            new_worker_count = self.simple_data_source_count_strategy(
+                min_worker_count=options["min_worker_count"],
+                max_worker_count=options["max_worker_count"],
             )
+        elif options["strategy"] == ScalingStrategy.sources_and_row_count:
+            new_worker_count = self.sources_and_row_count_strategy(
+                min_worker_count=options["min_worker_count"],
+                max_worker_count=options["max_worker_count"],
+                row_count_per_worker=options["row_count_per_worker"],
+            )
+        else:
+            raise ValueError(f"Unknown strategy: {options['strategy']}")
+
+        logger.info(f"New worker count: {new_worker_count}.")
+
+        if not settings.RENDER_API_TOKEN:
+            raise ValueError("settings.RENDER_API_TOKEN is required")
+        if not settings.RENDER_WORKER_SERVICE_ID:
+            raise ValueError("settings.RENDER_WORKER_SERVICE_ID is required")
+
+        # Tell render
+        render = get_render_client()
+        res = render.post(
+            f"/v1/services/{settings.RENDER_WORKER_SERVICE_ID}/scale",
+            json={"numInstances": new_worker_count},
+        )
+
+        logger.info(
+            f"Render response: {res.status_code}, {render_response_dict[res.status_code]}"
+        )
 
     def row_count_strategy(
         self, min_worker_count, max_worker_count, row_count_per_worker
