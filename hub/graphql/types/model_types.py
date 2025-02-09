@@ -1454,7 +1454,6 @@ def generic_data_by_external_data_source(
     )
 
 
-@strawberry_django.field()
 def generic_data_from_source_about_area(
     info: Info,
     source_id: str,
@@ -1489,7 +1488,8 @@ def statistics(
 ):
     user = get_current_user(info)
     for source in stats_config.source_ids:
-        check_user_can_view_source(user, source)
+        assert check_user_can_view_source(user, source)
+
     return stats.statistics(
         stats_config, return_numeric_keys_only=return_numeric_keys_only
     )
@@ -1508,7 +1508,7 @@ def statistics_for_choropleth(
 ):
     user = get_current_user(info)
     for source in stats_config.source_ids:
-        check_user_can_view_source(user, source)
+        assert check_user_can_view_source(user, source)
 
     return (
         stats.statistics(

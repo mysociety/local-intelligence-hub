@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractBaseUser
+from django.core.exceptions import PermissionDenied
 
 from hub import models
 
@@ -9,6 +10,7 @@ def check_user_can_view_source(user: AbstractBaseUser | str, source_id: str):
     if not permissions.get("can_display_points") or not permissions.get(
         "can_display_details"
     ):
-        raise ValueError(
-            f"User {user} does not have permission to external data source: {source_id}"
+        raise PermissionDenied(
+            f"User {user} does not have permission to explore this external data source: {source_id}"
         )
+    return True

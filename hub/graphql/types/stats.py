@@ -143,6 +143,9 @@ class GroupByColumn:
 
 @strawberry.input
 class StatisticsConfig:
+    # For debugging and caching
+    query_id: Optional[str] = None
+    #
     source_ids: Optional[List[str]] = None
     # Querying
     gss_codes: Optional[List[str]] = None
@@ -613,6 +616,7 @@ def statistics(
     else:
         # Return the results in the requested format
         if conf.group_by_area:
+            # Place the GSS column back on the dataframe
             df = df.reset_index(drop=False)
         if return_numeric_keys_only:
             d = df[numerical_keys].to_dict(orient="records")

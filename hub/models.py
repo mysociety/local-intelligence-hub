@@ -2256,7 +2256,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                     try:
                         update_fields[destination_column] = get(row, source_path, None)
                     except Exception as e:
-                        print(f"mapping exception {e}")
+                        logger.debug(f"mapping exception {e}")
                         # TODO: Sentry logging
                         pass
                     continue
@@ -2277,7 +2277,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
                         update_fields[destination_column] = loaded
                         continue
                 except Exception as e:
-                    print(f"mapping exception {e}")
+                    logger.debug(f"mapping exception {e}")
                     continue
             # Return the member and config data
             logger.debug(f"mapped member {id} {update_fields}")
@@ -2789,6 +2789,9 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         can_display_points: bool = False
         can_display_details: bool = False
 
+        def __str__(self):
+            return f"DataPermissions(can_display_points={self.can_display_points}, can_display_details={self.can_display_details})"
+
     # TODO: cache this and bust it when the db fields change
     def default_data_permissions(self):
         return ExternalDataSource.DataPermissions(
@@ -2804,10 +2807,14 @@ class ExternalDataSource(PolymorphicModel, Analytics):
     ) -> DataPermissions:
         if external_data_source is None:
             # logger.debug("No source provided, returning default permissions")
-            return cls.DataPermissions(
+            permissions = cls.DataPermissions(
                 can_display_points=False,
                 can_display_details=False,
             )
+            logger.debug(
+                "⚠️🔥 No source provided, returning default permissions", permissions
+            )
+            return permissions
 
         external_data_source_id = (
             external_data_source
@@ -2818,31 +2825,55 @@ class ExternalDataSource(PolymorphicModel, Analytics):
         source = ExternalDataSource.objects.get(pk=external_data_source_id)
         permissions: cls.DataPermissions = source.default_data_permissions()
 
-        if user is None or not user.is_authenticated:
+        if user is None:
             # logger.debug("No user provided, returning default permissions")
+            logger.debug(
+                "⚠️🔥 No user provided, returning default permissions", permissions
+            )
+            return permissions
+
+        if not user.is_authenticated:
+            logger.debug(
+                "⚠️🔥 User not authenticated, returning default permissions", permissions
+            )
             return permissions
 
         # Check for cached permissions on this source
         user_id = user if not hasattr(user, "id") else str(user.id)
+        logger.debug(
+            f"🔥 Checking for cached permissions for user {user_id} on source {external_data_source_id}"
+        )
         permission_cache_key = SharingPermission._get_cache_key(external_data_source_id)
         permissions_dict = cache.get(permission_cache_key)
+
         if permissions_dict is None:
             permissions_dict = {}
 
         # If cached permissions exist, look for this user's permissions
         elif permissions_dict.get(user_id, None) is not None:
             # logger.debug("User provided, returning cached permissions")
+            logger.debug(
+                f"🔥 Cached permissions dict found in cache", permissions_dict[user_id]
+            )
             return permissions_dict[user_id]
 
         # Calculate permissions for this source
         if not isinstance(external_data_source, ExternalDataSource):
             external_data_source = cls.objects.get(pk=external_data_source)
             if external_data_source is None:
-                return cls.DataPermissions(
+                permissions = cls.DataPermissions(
                     can_display_points=False,
                     can_display_details=False,
                 )
+                logger.debug(
+                    "⚠️🔥 Source not found, returning default permissions", permissions
+                )
+                return permissions
+
         if user_id is None or external_data_source.organisation is None:
+            logger.debug(
+                "⚠️🔥 User or org not found, returning default permissions", permissions
+            )
             return permissions
         else:
             # If the user's org owns the source, they can see everything
@@ -2852,6 +2883,10 @@ class ExternalDataSource(PolymorphicModel, Analytics):
             if is_owner:
                 permissions["can_display_points"] = True
                 permissions["can_display_details"] = True
+                logger.debug(
+                    f"🔥 User {user_id} is owner, currently looking at {permissions}"
+                )
+
         # Otherwise, check if their org has sharing permissions at any granularity
         if not is_owner:
             permission = SharingPermission.objects.filter(
@@ -2876,7 +2911,7 @@ class ExternalDataSource(PolymorphicModel, Analytics):
 
         perms = permissions_dict[user_id]
 
-        # logger.debug(f"Calculated new user permissions for user {user}: {perms}")
+        logger.debug(f"🔥 Calculated new user permissions for user {user}: {perms}")
         return perms
 
     def filter(self, filter: dict) -> dict:
