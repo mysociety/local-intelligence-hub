@@ -756,7 +756,7 @@ function FormulaConfig({
       const str = inputRef.current.value
       const idx = inputRef.current.selectionStart
       const newText = str.slice(0, idx) + text + str.slice(idx)
-      inputRef.current.value = newText
+      setInputText(newText)
       inputRef.current?.focus()
     }
   }
