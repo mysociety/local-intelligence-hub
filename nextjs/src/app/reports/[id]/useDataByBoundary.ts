@@ -1,12 +1,11 @@
 import {
-  ChoroplethMode,
-  SourceStatsByBoundaryQuery,
-  SourceStatsByBoundaryQueryVariables,
   StatisticsQuery,
   StatisticsQueryVariables,
+  StatisticsTableQuery,
+  StatisticsTableQueryVariables,
 } from '@/__generated__/graphql'
 import { useReport } from '@/lib/map/useReport'
-import { ApolloError, QueryResult, gql, useQuery } from '@apollo/client'
+import { ApolloError, gql, useQuery } from '@apollo/client'
 import { atom, useSetAtom } from 'jotai'
 import { useEffect } from 'react'
 import {
@@ -16,13 +15,7 @@ import {
 } from './reportContext'
 import { Tileset } from './types'
 
-export type DataByBoundary =
-  SourceStatsByBoundaryQuery['choroplethDataForSource']
-
-type SourceStatsByBoundaryQueryResult = QueryResult<
-  SourceStatsByBoundaryQuery,
-  SourceStatsByBoundaryQueryVariables
->
+export type DataByBoundary = StatisticsQuery['statisticsForChoropleth']
 
 export const choroplethErrorsAtom = atom<
   Record<
@@ -39,11 +32,7 @@ const useDataByBoundary = ({
 }: {
   view?: SpecificViewConfig<ViewType.Map> | null
   tileset: Tileset
-  // Source fields are the numeric data columns from the external data source
-  getSourceFieldNames?: boolean
 }) => {
-  const report = useReport()
-
   // If mapBounds is required, send dummy empty bounds on the first request
   // This is required for fetchMore() to work, which is used to add data to
   // the map when the user pans/zooms
@@ -52,41 +41,6 @@ const useDataByBoundary = ({
   const mapBounds = tileset.useBoundsInDataQuery
     ? { east: 0, west: 0, north: 0, south: 0 }
     : null
-  const analyticalAreaType = tileset.analyticalAreaType
-
-  const { useAdvancedStatistics, advancedStatisticsConfig } =
-    view?.mapOptions?.choropleth || {}
-
-  const sourceId =
-    report.report.layers.find(
-      (l) => l.id === view?.mapOptions.choropleth.layerId
-    )?.source || advancedStatisticsConfig?.sourceIds[0]
-
-  const query = useQuery<
-    SourceStatsByBoundaryQuery,
-    SourceStatsByBoundaryQueryVariables
-  >(CHOROPLETH_STATS_FOR_SOURCE, {
-    variables: {
-      sourceId: sourceId!,
-      analyticalAreaType: analyticalAreaType!,
-      mode: view?.mapOptions?.choropleth.mode,
-      field:
-        view?.mapOptions?.choropleth.mode === ChoroplethMode.Field
-          ? view?.mapOptions?.choropleth.field
-          : undefined,
-      formula:
-        view?.mapOptions?.choropleth.mode === ChoroplethMode.Formula
-          ? view?.mapOptions?.choropleth.formula
-          : undefined,
-      mapBounds,
-    },
-    skip:
-      useAdvancedStatistics ||
-      !view?.mapOptions ||
-      !sourceId ||
-      !analyticalAreaType,
-    notifyOnNetworkStatusChange: true, // required to mark loading: true on fetchMore()
-  })
 
   const statisticsQuery = useQuery<StatisticsQuery, StatisticsQueryVariables>(
     STATISTICS_QUERY,
@@ -94,16 +48,16 @@ const useDataByBoundary = ({
       variables: {
         categoryKey:
           view?.mapOptions?.choropleth.dataType === StatisticalDataType.Nominal
-            ? view?.mapOptions?.choropleth.advancedStatisticsDisplayField
+            ? view?.mapOptions?.choropleth.field
             : undefined,
         countKey:
           view?.mapOptions?.choropleth.dataType ===
           StatisticalDataType.Continuous
-            ? view?.mapOptions?.choropleth.advancedStatisticsDisplayField
+            ? view?.mapOptions?.choropleth.field
             : undefined,
         config: {
-          ...(advancedStatisticsConfig! || {}),
-          groupByArea: analyticalAreaType!,
+          ...(view?.mapOptions?.choropleth.advancedStatisticsConfig! || {}),
+          groupByArea: tileset.analyticalAreaType!,
           returnColumns: ['gss', 'label']
             .concat(
               view?.mapOptions?.choropleth.dataType ===
@@ -112,33 +66,24 @@ const useDataByBoundary = ({
                 : ['count']
             )
             .concat(
-              view?.mapOptions?.choropleth.advancedStatisticsDisplayField
-                ? [view?.mapOptions?.choropleth.advancedStatisticsDisplayField]
+              !!view?.mapOptions?.choropleth.field
+                ? [view?.mapOptions?.choropleth.field]
                 : []
             ),
-          // .concat(
-          //   advancedStatisticsConfig?.preGroupByCalculatedColumns?.map(
-          //     (c) => c.name
-          //   ) || []
-          // )
-          // .concat(
-          //   advancedStatisticsConfig?.calculatedColumns?.map((c) => c.name) ||
-          //     []
-          // ),
         },
         mapBounds,
         isCountKeyPercentage:
           view?.mapOptions?.choropleth.dataType ===
             StatisticalDataType.Continuous &&
-          !!view?.mapOptions?.choropleth.advancedStatisticsDisplayField
-            ? view?.mapOptions?.choropleth
-                .advancedStatisticsDisplayFieldIsPercentage
+          !!view?.mapOptions?.choropleth.field
+            ? view?.mapOptions?.choropleth.fieldIsPercentage
             : undefined,
       },
       skip:
-        !useAdvancedStatistics ||
-        !advancedStatisticsConfig ||
-        !analyticalAreaType,
+        !view?.mapOptions?.choropleth.advancedStatisticsConfig ||
+        !view?.mapOptions?.choropleth.advancedStatisticsConfig.sourceIds
+          ?.length ||
+        !tileset.analyticalAreaType,
       notifyOnNetworkStatusChange: true, // required to mark loading: true on fetchMore()
     }
   )
@@ -147,10 +92,10 @@ const useDataByBoundary = ({
 
   useEffect(() => {
     if (view?.id) {
-      if (query.error) {
+      if (statisticsQuery.error) {
         setChoroplethErrors((prev) => ({
           ...prev,
-          [view?.id!]: query.error,
+          [view?.id!]: statisticsQuery.error,
         }))
       } else {
         setChoroplethErrors((prev) => {
@@ -159,47 +104,32 @@ const useDataByBoundary = ({
         })
       }
     }
-  }, [view, query, setChoroplethErrors])
+  }, [view, statisticsQuery, setChoroplethErrors])
 
-  return useAdvancedStatistics ? statisticsQuery : query
+  return statisticsQuery
 }
 
-export const CHOROPLETH_STATS_FOR_SOURCE = gql`
-  query SourceStatsByBoundary(
-    $sourceId: String!
-    $analyticalAreaType: AnalyticalAreaType!
-    $mode: ChoroplethMode
-    $field: String
-    $formula: String
-    $mapBounds: MapBounds
-  ) {
-    choroplethDataForSource(
-      sourceId: $sourceId
-      analyticalAreaKey: $analyticalAreaType
-      mode: $mode
-      field: $field
-      formula: $formula
-      mapBounds: $mapBounds
-    ) {
-      label
-      gss
-      count
-      formattedCount
-      category
-      row
-      columns
-      gssArea {
-        point {
-          type
-          geometry {
-            type
-            coordinates
-          }
-        }
-      }
-    }
-  }
-`
+export const useTableDataByBoundary = (
+  view?: SpecificViewConfig<ViewType.Table>
+) => {
+  const reportManager = useReport()
+  const sourceId = reportManager.getLayer(view?.tableOptions?.layerId!)?.source
+  const statisticsQuery = useQuery<
+    StatisticsTableQuery,
+    StatisticsTableQueryVariables
+  >(STATISTICS_TABLE_QUERY, {
+    variables: {
+      config: {
+        sourceIds: [sourceId!],
+        groupByArea: view?.tableOptions.groupBy.area,
+      },
+    },
+    skip: !sourceId || !view,
+    notifyOnNetworkStatusChange: true, // required to mark loading: true on fetchMore()
+  })
+
+  return statisticsQuery
+}
 
 export const STATISTICS_QUERY = gql`
   query Statistics(
@@ -232,6 +162,12 @@ export const STATISTICS_QUERY = gql`
         }
       }
     }
+  }
+`
+
+export const STATISTICS_TABLE_QUERY = gql`
+  query StatisticsTable($config: StatisticsConfig!) {
+    statistics(statsConfig: $config)
   }
 `
 

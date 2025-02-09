@@ -1,5 +1,10 @@
-import { ChoroplethMode, DataSummaryMetadata } from '@/__generated__/graphql'
+import {
+  AggregationOp,
+  AreaQueryMode,
+  CalculatedColumn,
+} from '@/__generated__/graphql'
 import { CRMSelection } from '@/components/CRMButtonItem'
+import { PopOutChoroplethStatisticalQueryEditor } from '@/components/report/PopOutChoroplethStatisticalQueryEditor'
 import { Button } from '@/components/ui/button'
 import {
   Collapsible,
@@ -17,6 +22,7 @@ import { BorderSolidIcon, ReloadIcon } from '@radix-ui/react-icons'
 import clsx from 'clsx'
 import { format } from 'd3-format'
 import { scaleLinear, scaleSequential } from 'd3-scale'
+import { produce } from 'immer'
 import { useAtomValue } from 'jotai'
 import keyboardKey from 'keyboard-key'
 import { max } from 'lodash'
@@ -34,10 +40,12 @@ import {
 import { useState } from 'react'
 import { twMerge } from 'tailwind-merge'
 import toSpaceCase from 'to-space-case'
+import { v4 } from 'uuid'
 import { BoundaryType, POLITICAL_BOUNDARIES } from '../../politicalTilesets'
 import {
   Palette,
   StatisticalDataType,
+  StatisticsMode,
   ViewType,
   getReportInterpolatorFromPalette,
 } from '../../reportContext'
@@ -65,7 +73,11 @@ export default function ReportMapChoroplethLegend() {
     viewManager.currentViewOfType?.mapOptions.choropleth.boundaryType
   )
 
-  const { refetch: refetchChoropleth, loading } = useDataByBoundary({
+  const {
+    refetch: refetchChoropleth,
+    loading,
+    variables,
+  } = useDataByBoundary({
     view: viewManager.currentViewOfType,
     tileset: activeTileset,
   })
@@ -74,9 +86,22 @@ export default function ReportMapChoroplethLegend() {
     return null
   }
 
-  const choroplethLayer = reportManager.getLayer(
-    viewManager.currentViewOfType.mapOptions.choropleth.layerId
+  const choroplethLayer = reportManager.report.layers.find((l) =>
+    variables?.config.sourceIds?.includes(l.source)
   )
+
+  const usableFields = choroplethLayer?.sourceData.fieldDefinitions?.filter(
+    // no ID fields
+    (d: any) => d.value !== choroplethLayer.sourceData.idField
+  )
+
+  const defaultFormula = (): CalculatedColumn => ({
+    id: v4(),
+    name: 'simple_formula',
+    expression: `\`${usableFields?.[usableFields.length - 1]?.value}\``,
+  })
+
+  const mode = viewManager.currentViewOfType?.mapOptions.choropleth.mode
 
   function downloadScreenshot() {
     map.downloadScreenshot(
@@ -201,44 +226,40 @@ export default function ReportMapChoroplethLegend() {
             {viewManager.currentViewOfType?.mapOptions.display.choropleth && (
               <>
                 {/* Advanced and hide */}
-                {!viewManager.currentViewOfType?.mapOptions.choropleth
-                  .useAdvancedStatistics && (
-                  <div className="flex flex-col gap-2 w-full">
-                    <EditorSelect
-                      value={
-                        viewManager.currentViewOfType?.mapOptions.choropleth
-                          .layerId
-                      }
-                      className={'w-full'}
-                      options={reportManager.report.layers.map((layer) => ({
-                        value: layer.id,
-                        label: (
-                          <CRMSelection
-                            source={layer.sourceData}
-                            displayCount={false}
-                            className="truncate"
-                          />
-                        ),
-                      }))}
-                      onChange={(layerId) =>
-                        viewManager.updateView((draft) => {
-                          draft.mapOptions.choropleth.layerId = layerId
-                        })
-                      }
-                      valueClassName={twMerge(
-                        !viewManager.currentViewOfType?.mapOptions.display
-                          .choropleth
-                          ? '!text-meepGray-500'
-                          : ''
-                      )}
-                    />
-                  </div>
-                )}
+                <div className="flex flex-col gap-2 w-full">
+                  <EditorSelect
+                    value={
+                      viewManager.currentViewOfType?.mapOptions.choropleth
+                        .advancedStatisticsConfig?.sourceIds?.[0]
+                    }
+                    className={'w-full'}
+                    options={reportManager.report.layers.map((layer) => ({
+                      value: layer.source,
+                      label: (
+                        <CRMSelection
+                          source={layer.sourceData}
+                          displayCount={false}
+                          className="truncate"
+                        />
+                      ),
+                    }))}
+                    onChange={(sourceId) =>
+                      viewManager.updateView((draft) => {
+                        draft.mapOptions.choropleth.advancedStatisticsConfig.sourceIds =
+                          [sourceId]
+                      })
+                    }
+                    valueClassName={twMerge(
+                      !viewManager.currentViewOfType?.mapOptions.display
+                        .choropleth
+                        ? '!text-meepGray-500'
+                        : ''
+                    )}
+                  />
+                </div>
 
-                {(!viewManager.currentViewOfType?.mapOptions.choropleth
-                  .useAdvancedStatistics ||
-                  viewManager.currentViewOfType?.mapOptions.choropleth
-                    .dataType !== StatisticalDataType.Nominal) && (
+                {viewManager.currentViewOfType?.mapOptions.choropleth
+                  .dataType !== StatisticalDataType.Nominal && (
                   <>
                     <EditorSelect
                       // iconComponent={LucidePaintRoller}
@@ -285,67 +306,132 @@ export default function ReportMapChoroplethLegend() {
                   </>
                 )}
 
-                {!viewManager.currentViewOfType?.mapOptions.choropleth
-                  .useAdvancedStatistics && (
-                  <>
-                    <EditorSelect
-                      // iconComponent={LucidePaintRoller}
-                      label={'Displaying'}
-                      labelClassName="w-[100px]"
-                      value={
-                        viewManager.currentViewOfType?.mapOptions.choropleth
-                          .mode
-                      }
-                      options={Object.values(ChoroplethMode)
-                        .filter((k) => {
-                          return k !== ChoroplethMode.Table
-                        })
-                        .map((value) => ({
-                          value,
-                          label: toSpaceCase(value),
-                        }))}
-                      onChange={(option) => {
-                        viewManager.updateView((draft) => {
-                          draft.mapOptions.choropleth.mode =
-                            option as ChoroplethMode
-                        })
-                      }}
-                    />
+                <EditorSelect
+                  // iconComponent={LucidePaintRoller}
+                  label={'Displaying'}
+                  labelClassName="w-[100px]"
+                  value={mode}
+                  options={Object.values(StatisticsMode).map((value) => ({
+                    value,
+                    label: toSpaceCase(value),
+                  }))}
+                  onChange={(option) => {
+                    viewManager.updateView((draft) => {
+                      draft.mapOptions.choropleth.mode =
+                        option as StatisticsMode
 
-                    {viewManager.currentViewOfType?.mapOptions.choropleth
-                      .mode === ChoroplethMode.Formula && <FormulaConfig />}
-
-                    {viewManager.currentViewOfType?.mapOptions.choropleth
-                      .mode === ChoroplethMode.Field && (
-                      <EditorSelect
-                        label="Displayed field"
-                        labelClassName="w-[100px]"
-                        value={
-                          viewManager.currentViewOfType?.mapOptions.choropleth
-                            .field
+                      if (option === StatisticsMode.Count) {
+                        draft.mapOptions.choropleth.dataType =
+                          StatisticalDataType.Continuous
+                        // draft.mapOptions.choropleth.field = 'count'
+                        // delete draft.mapOptions.choropleth.field
+                        draft.mapOptions.choropleth.field = 'gss'
+                        // Simple mode
+                        draft.mapOptions.choropleth.advancedStatisticsConfig = {
+                          sourceIds:
+                            draft.mapOptions.choropleth.advancedStatisticsConfig
+                              .sourceIds,
+                          aggregationOperation: AggregationOp.Count,
+                          areaQueryMode: AreaQueryMode.Overlapping,
                         }
-                        options={[
-                          ...(choroplethLayer?.sourceData.fieldDefinitions
-                            ?.filter(
-                              // no ID fields
-                              (d: any) =>
-                                d.value !== choroplethLayer.sourceData.idField
-                            )
-                            .map((d: any) => ({
-                              label: d.label,
-                              value: d.value,
-                            })) || []),
-                        ]}
-                        onChange={(dataSourceField) => {
-                          viewManager.updateView((draft) => {
-                            draft.mapOptions.choropleth.field = dataSourceField
-                          })
-                        }}
-                        disabled={!choroplethLayer?.sourceData.fieldDefinitions}
-                      />
+                      }
+
+                      if (option === StatisticsMode.Field) {
+                        draft.mapOptions.choropleth.dataType =
+                          StatisticalDataType.Continuous
+                        // Pick the first available
+                        draft.mapOptions.choropleth.field =
+                          usableFields?.[usableFields.length - 1]?.value
+                        // Simple mode
+                        draft.mapOptions.choropleth.advancedStatisticsConfig = {
+                          sourceIds:
+                            draft.mapOptions.choropleth.advancedStatisticsConfig
+                              .sourceIds,
+                          areaQueryMode: AreaQueryMode.Overlapping,
+                        }
+                      }
+
+                      if (option === StatisticsMode.Formula) {
+                        draft.mapOptions.choropleth.dataType =
+                          StatisticalDataType.Continuous
+                        //
+                        draft.mapOptions.choropleth.field = 'simple_formula'
+                        // Simple mode
+                        draft.mapOptions.choropleth.advancedStatisticsConfig = {
+                          sourceIds:
+                            draft.mapOptions.choropleth.advancedStatisticsConfig
+                              .sourceIds,
+                          areaQueryMode: AreaQueryMode.Overlapping,
+                          calculatedColumns:
+                            draft.mapOptions.choropleth.advancedStatisticsConfig.calculatedColumns?.slice(
+                              0,
+                              1
+                            ) || [defaultFormula()],
+                        }
+                      }
+                    })
+                  }}
+                />
+
+                {viewManager.currentViewOfType?.mapOptions.choropleth.mode ===
+                  StatisticsMode.Formula && (
+                  <FormulaConfig
+                    key={JSON.stringify(
+                      viewManager.currentViewOfType?.mapOptions.choropleth
+                        .advancedStatisticsConfig.calculatedColumns
                     )}
-                  </>
+                    initialFormula={
+                      viewManager.currentViewOfType?.mapOptions.choropleth
+                        .advancedStatisticsConfig.calculatedColumns?.[0]
+                        ?.expression || ''
+                    }
+                    onSave={(formula) => {
+                      viewManager.updateView((draft) => {
+                        draft.mapOptions.choropleth.advancedStatisticsConfig.calculatedColumns =
+                          [{ name: 'simple_formula', expression: formula }]
+                      })
+                    }}
+                  />
                 )}
+
+                {viewManager.currentViewOfType?.mapOptions.choropleth.mode ===
+                  StatisticsMode.Field && (
+                  <EditorSelect
+                    label="Displayed field"
+                    labelClassName="w-[100px]"
+                    value={
+                      viewManager.currentViewOfType?.mapOptions.choropleth.field
+                    }
+                    options={[
+                      ...(usableFields?.map((d: any) => ({
+                        label: d.label,
+                        value: d.value,
+                      })) || []),
+                    ]}
+                    onChange={(dataSourceField) => {
+                      viewManager.updateView((draft) => {
+                        draft.mapOptions.choropleth.field = dataSourceField
+                      })
+                    }}
+                    disabled={!choroplethLayer?.sourceData.fieldDefinitions}
+                  />
+                )}
+
+                <PopOutChoroplethStatisticalQueryEditor
+                  value={
+                    viewManager.currentViewOfType?.mapOptions.choropleth
+                      .advancedStatisticsConfig
+                  }
+                  onChange={(producer) => {
+                    viewManager.updateView((draft) => {
+                      draft.mapOptions.choropleth.advancedStatisticsConfig =
+                        produce(
+                          draft.mapOptions.choropleth.advancedStatisticsConfig,
+                          producer
+                        )
+                    })
+                  }}
+                />
               </>
             )}
           </section>
@@ -562,10 +648,7 @@ export function ColourStops({
     tileset: activeTileset,
   })
 
-  const dataByBoundary =
-    data && 'choroplethDataForSource' in data
-      ? data?.choroplethDataForSource
-      : data?.statisticsForChoropleth || []
+  const dataByBoundary = data?.statisticsForChoropleth || []
 
   // Get min and max counts
   let minCount = 0 // min(dataByBoundary.map((d) => d.count || 0)) || 0
@@ -635,12 +718,16 @@ export function ColourStops({
   )
 }
 
-function FormulaConfig() {
+function FormulaConfig({
+  initialFormula,
+  onSave,
+}: {
+  initialFormula: string
+  onSave: (formula: string) => void
+}) {
   const viewManager = useView(ViewType.Map)
   const choroplethErrors = useAtomValue(choroplethErrorsAtom)
-  const [inputText, setInputText] = useState(
-    viewManager.currentViewOfType?.mapOptions.choropleth.formula || ''
-  )
+  const [inputText, setInputText] = useState(initialFormula)
 
   const editingEmpty = !inputText
   const [editing, setEditing] = useState(editingEmpty)
@@ -656,9 +743,7 @@ function FormulaConfig() {
   function handleSaveFormula() {
     if (editing) {
       setEditing(false)
-      viewManager.updateView((draft) => {
-        draft.mapOptions.choropleth.formula = inputText
-      })
+      onSave(inputText)
     } else {
       setEditing(true)
     }
@@ -667,7 +752,7 @@ function FormulaConfig() {
   //hardcoded fields for now
   const metadataFields: {
     label: string
-    value: keyof DataSummaryMetadata
+    value: string
   }[] = [
     { label: 'First', value: 'first' },
     { label: 'Second', value: 'second' },
@@ -712,12 +797,13 @@ function FormulaConfig() {
         disabled={!editing}
       />
       {choroplethErrors[viewManager.currentViewOfType.id] && (
-        <pre className="flex flex-row items-center justify-start gap-2 text-xs text-red-500 font-mono">
-          <AlertOctagonIcon className="w-4 h-4" />
+        <div className="text-xs text-red-500 font-mono">
+          <AlertOctagonIcon className="w-4 h-4 inline-block mr-1" />
+          <u>Formula error:</u>{' '}
           {typeof choroplethError === 'string'
             ? choroplethError
             : choroplethError?.message}
-        </pre>
+        </div>
       )}
       <div className="flex flex-col gap-2 ">
         {editing && (

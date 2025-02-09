@@ -351,12 +351,11 @@ function AreaDisplay({
   const sourceId = layer?.source
 
   const relevantChoroplethConfig =
-    // Is in use
-    (view.currentViewOfType?.mapOptions.choropleth.useAdvancedStatistics &&
     // Relates to this source
-    view.currentViewOfType?.mapOptions.choropleth.advancedStatisticsConfig?.sourceIds.includes(
-      sourceId!
-    )
+    ((
+      view.currentViewOfType?.mapOptions.choropleth.advancedStatisticsConfig
+        .sourceIds || []
+    ).includes(sourceId!)
       ? view.currentViewOfType?.mapOptions.choropleth.advancedStatisticsConfig
       : {}) || {}
 

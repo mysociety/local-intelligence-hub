@@ -62,10 +62,7 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
     view,
     tileset: activeTileset,
   })
-  const dataByBoundary =
-    data && 'choroplethDataForSource' in data
-      ? data?.choroplethDataForSource
-      : data?.statisticsForChoropleth || []
+  const dataByBoundary = data?.statisticsForChoropleth || []
 
   const boundaryNameVisibility =
     shaderVisibility === 'visible' && view.mapOptions.display.boundaryNames
@@ -195,9 +192,8 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
             type="geojson"
             data={getAreaGeoJSON(dataByBoundary, (d) => {
               const value =
-                (view.mapOptions.choropleth.useAdvancedStatistics &&
-                view.mapOptions.choropleth.dataType ===
-                  StatisticalDataType.Nominal
+                (view.mapOptions.choropleth.dataType ===
+                StatisticalDataType.Nominal
                   ? view.mapOptions.choropleth.isElectoral
                     ? d.category
                       ? guessParty(d.category).shortName

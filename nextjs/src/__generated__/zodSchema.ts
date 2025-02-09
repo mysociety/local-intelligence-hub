@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { ActionNetworkSourceInput, AggregationDefinition, AggregationOp, AirtableSourceInput, AnalyticalAreaType, AreaQueryMode, CalculatedColumn, ChoroplethMode, CommonDataLoaderFilter, CreateExternalDataSourceInput, CreateOrganisationInput, CrmType, DataSourceType, DatetimeFilterLookup, DjangoModelFilterInput, EditableGoogleSheetsSourceInput, ExternalDataSourceFilter, ExternalDataSourceInput, GeoJsonTypes, GeographyTypes, GroupByColumn, HubPageInput, IdFilterLookup, IdObject, IntFilterLookup, MailChimpSourceInput, MapBounds, MapLayerInput, MapReportInput, OffsetPaginationInput, OneToManyInput, OperationMessageKind, OrganisationFilters, OrganisationInputPartial, PersonFilter, ProcrastinateJobStatus, QueueFilter, ReportFilter, SharingPermissionCudInput, SharingPermissionInput, StatisticsConfig, StrFilterLookup, TicketTailorSourceInput, UpdateMappingItemInput, WebhookType } from './graphql'
+import { ActionNetworkSourceInput, AggregationDefinition, AggregationOp, AirtableSourceInput, AnalyticalAreaType, AreaQueryMode, CalculatedColumn, CommonDataLoaderFilter, CreateExternalDataSourceInput, CreateOrganisationInput, CrmType, DataSourceType, DatetimeFilterLookup, DjangoModelFilterInput, EditableGoogleSheetsSourceInput, ExternalDataSourceFilter, ExternalDataSourceInput, GeoJsonTypes, GeographyTypes, GroupByColumn, HubPageInput, IdFilterLookup, IdObject, IntFilterLookup, MailChimpSourceInput, MapBounds, MapLayerInput, MapReportInput, OffsetPaginationInput, OneToManyInput, OperationMessageKind, OrganisationFilters, OrganisationInputPartial, PersonFilter, ProcrastinateJobStatus, QueueFilter, ReportFilter, SharingPermissionCudInput, SharingPermissionInput, StatisticsConfig, StrFilterLookup, TicketTailorSourceInput, UpdateMappingItemInput, WebhookType } from './graphql'
 
 type Properties<T> = Required<{
   [K in keyof T]: z.ZodType<T[K], any, T[K]>;
@@ -16,8 +16,6 @@ export const AggregationOpSchema = z.nativeEnum(AggregationOp);
 export const AnalyticalAreaTypeSchema = z.nativeEnum(AnalyticalAreaType);
 
 export const AreaQueryModeSchema = z.nativeEnum(AreaQueryMode);
-
-export const ChoroplethModeSchema = z.nativeEnum(ChoroplethMode);
 
 export const CrmTypeSchema = z.nativeEnum(CrmType);
 
@@ -485,7 +483,7 @@ export function StatisticsConfigSchema(): z.ZodObject<Properties<StatisticsConfi
     gssCodes: z.array(z.string()).nullish(),
     preGroupByCalculatedColumns: z.array(CalculatedColumnSchema()).nullish(),
     returnColumns: z.array(z.string()).nullish(),
-    sourceIds: z.array(z.string())
+    sourceIds: z.array(z.string()).nullish()
   })
 }
 

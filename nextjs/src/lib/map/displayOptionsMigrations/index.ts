@@ -1,4 +1,5 @@
 import {
+  mapChoroplethOptionsSchema,
   MapReportWithTypedJSON,
   ViewType,
 } from '@/app/reports/[id]/reportContext'
@@ -15,21 +16,30 @@ export function cleanUpLayerReferences(migratedReport: MapReportWithTypedJSON) {
       )
     )
     // 1.2. View layers
-    for (const view of Object.values(draft.displayOptions.views)) {
-      if (view.type === ViewType.Map) {
+    for (const viewId of Object.keys(draft.displayOptions.views)) {
+      if (draft.displayOptions.views[viewId].type === ViewType.Map) {
         // check views with mapOptions with layers configured
-        view.mapOptions.layers = Object.fromEntries(
-          Object.entries(view.mapOptions.layers).filter(([k, v]) =>
-            v.layerId ? layerIds.includes(v.layerId) : true
+        draft.displayOptions.views[viewId].mapOptions.layers =
+          Object.fromEntries(
+            Object.entries(
+              draft.displayOptions.views[viewId].mapOptions.layers
+            ).filter(([k, v]) =>
+              v.layerId ? layerIds.includes(v.layerId) : true
+            )
           )
-        )
         // check choropleth layerId
-        if (view.mapOptions.choropleth?.layerId) {
-          if (!layerIds.includes(view.mapOptions.choropleth.layerId)) {
-            delete view.mapOptions.choropleth.layerId
-            delete view.mapOptions.choropleth.field
-            delete view.mapOptions.choropleth.formula
-          }
+        if (
+          draft.displayOptions.views[viewId].mapOptions.choropleth
+            ?.advancedStatisticsConfig?.sourceIds?.length &&
+          // Not all sourceIds are present in the report layer
+          !draft.displayOptions.views[
+            viewId
+          ].mapOptions.choropleth?.advancedStatisticsConfig.sourceIds.every(
+            (sourceId) => draft.layers.some((l) => l.source === sourceId)
+          )
+        ) {
+          draft.displayOptions.views[viewId].mapOptions.choropleth =
+            mapChoroplethOptionsSchema.parse({})
         }
       }
     }

@@ -1,7 +1,6 @@
 import {
   AnalyticalAreaType,
   AreaQueryMode,
-  ChoroplethMode,
   DataSourceType,
   GetMapReportQuery,
   MapLayerInput,
@@ -239,31 +238,34 @@ export const mapLayerSchema = z.object({
 
 export type IMapLayer = z.infer<typeof mapLayerSchema>
 
+export enum StatisticsMode {
+  Advanced = 'Advanced',
+  Formula = 'Formula',
+  Count = 'Count',
+  Field = 'Field',
+}
+
+export const mapChoroplethOptionsSchema = z.object({
+  boundaryType: z
+    .nativeEnum(BoundaryType)
+    .default(BoundaryType.PARLIAMENTARY_CONSTITUENCIES),
+  palette: z.nativeEnum(Palette).default(Palette.Inferno),
+  isPaletteReversed: z.boolean().optional(),
+  mode: z.nativeEnum(StatisticsMode).default(StatisticsMode.Count),
+  field: z.string().optional(),
+  advancedStatisticsConfig: StatisticsConfigSchema().default({}),
+  dataType: z
+    .nativeEnum(StatisticalDataType)
+    .default(StatisticalDataType.Continuous),
+  isElectoral: z
+    .boolean()
+    .optional()
+    .describe('If categorical data should be interpreted using party colours.'),
+  fieldIsPercentage: z.boolean().optional(),
+})
+
 const mapOptionsSchema = z.object({
-  choropleth: z
-    .object({
-      boundaryType: z
-        .nativeEnum(BoundaryType)
-        .default(BoundaryType.PARLIAMENTARY_CONSTITUENCIES),
-      palette: z.nativeEnum(Palette).default(Palette.Inferno),
-      isPaletteReversed: z.boolean().optional(),
-      layerId: z.string().uuid().optional(),
-      mode: z.nativeEnum(ChoroplethMode).default(ChoroplethMode.Count),
-      field: z.string().optional(),
-      formula: z.string().optional(),
-      advancedStatisticsConfig: StatisticsConfigSchema().optional(),
-      dataType: z
-        .nativeEnum(StatisticalDataType)
-        .default(StatisticalDataType.Continuous),
-      isElectoral: z
-        .boolean()
-        .optional()
-        .describe(
-          'If categorical data should be interpreted using party colours.'
-        ),
-      fieldIsPercentage: z.boolean().optional(),
-    })
-    .default({}),
+  choropleth: mapChoroplethOptionsSchema.default({}),
   display: z
     .object({
       choropleth: z.boolean().default(true),

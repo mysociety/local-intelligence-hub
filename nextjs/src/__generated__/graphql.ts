@@ -599,13 +599,6 @@ export type CalculatedColumn = {
   name: Scalars['String']['input'];
 };
 
-export enum ChoroplethMode {
-  Count = 'Count',
-  Field = 'Field',
-  Formula = 'Formula',
-  Table = 'Table'
-}
-
 export type CommonData = {
   data: Scalars['String']['output'];
   dataType: DataType;
@@ -731,28 +724,6 @@ export enum DataSourceType {
   Other = 'OTHER',
   Story = 'STORY'
 }
-
-export type DataSummary = {
-  __typename?: 'DataSummary';
-  aggregated: Scalars['JSON']['output'];
-  metadata: DataSummaryMetadata;
-};
-
-export type DataSummaryMetadata = {
-  __typename?: 'DataSummaryMetadata';
-  count?: Maybe<Scalars['Float']['output']>;
-  first?: Maybe<Scalars['Float']['output']>;
-  isPercentage?: Maybe<Scalars['Boolean']['output']>;
-  last?: Maybe<Scalars['Float']['output']>;
-  majority?: Maybe<Scalars['Float']['output']>;
-  mean?: Maybe<Scalars['Float']['output']>;
-  median?: Maybe<Scalars['Float']['output']>;
-  numericalKeys?: Maybe<Array<Scalars['String']['output']>>;
-  percentageKeys?: Maybe<Array<Scalars['String']['output']>>;
-  second?: Maybe<Scalars['Float']['output']>;
-  third?: Maybe<Scalars['Float']['output']>;
-  total?: Maybe<Scalars['Float']['output']>;
-};
 
 /** DataType(id, data_set, name, data_type, last_update, average, maximum, minimum, label, description, order, area_type, auto_converted, auto_converted_text) */
 export type DataType = {
@@ -2325,7 +2296,6 @@ export type Query = {
   airtableSources: Array<AirtableSource>;
   allOrganisations: Array<PublicOrganisation>;
   area?: Maybe<Area>;
-  choroplethDataForSource: Array<GroupedDataCount>;
   dataSet?: Maybe<DataSet>;
   enrichPostcode: AuthenticatedPostcodeQueryResponse;
   enrichPostcodes: Array<AuthenticatedPostcodeQueryResponse>;
@@ -2333,7 +2303,6 @@ export type Query = {
   externalDataSources: Array<ExternalDataSource>;
   genericDataByExternalDataSource: Array<GenericData>;
   genericDataFromSourceAboutArea: Array<GenericData>;
-  genericDataSummaryFromSourceAboutArea?: Maybe<DataSummary>;
   googleSheetsOauthCredentials: Scalars['String']['output'];
   googleSheetsOauthUrl: Scalars['String']['output'];
   hubByHostname?: Maybe<HubHomepage>;
@@ -2382,17 +2351,6 @@ export type QueryAreaArgs = {
 };
 
 
-export type QueryChoroplethDataForSourceArgs = {
-  aggregationOperation?: InputMaybe<AggregationOp>;
-  analyticalAreaKey: AnalyticalAreaType;
-  field?: InputMaybe<Scalars['String']['input']>;
-  formula?: InputMaybe<Scalars['String']['input']>;
-  mapBounds?: InputMaybe<MapBounds>;
-  mode?: InputMaybe<ChoroplethMode>;
-  sourceId: Scalars['String']['input'];
-};
-
-
 export type QueryDataSetArgs = {
   name: Scalars['String']['input'];
 };
@@ -2424,13 +2382,6 @@ export type QueryGenericDataByExternalDataSourceArgs = {
 
 
 export type QueryGenericDataFromSourceAboutAreaArgs = {
-  gss: Scalars['String']['input'];
-  mode?: AreaQueryMode;
-  sourceId: Scalars['String']['input'];
-};
-
-
-export type QueryGenericDataSummaryFromSourceAboutAreaArgs = {
   gss: Scalars['String']['input'];
   mode?: AreaQueryMode;
   sourceId: Scalars['String']['input'];
@@ -2794,7 +2745,7 @@ export type StatisticsConfig = {
   gssCodes?: InputMaybe<Array<Scalars['String']['input']>>;
   preGroupByCalculatedColumns?: InputMaybe<Array<CalculatedColumn>>;
   returnColumns?: InputMaybe<Array<Scalars['String']['input']>>;
-  sourceIds: Array<Scalars['String']['input']>;
+  sourceIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type StrFilterLookup = {
@@ -3562,18 +3513,6 @@ export type GetMapReportNameQueryVariables = Exact<{
 
 export type GetMapReportNameQuery = { __typename?: 'Query', mapReport: { __typename?: 'MapReport', id: any, name: string } };
 
-export type SourceStatsByBoundaryQueryVariables = Exact<{
-  sourceId: Scalars['String']['input'];
-  analyticalAreaType: AnalyticalAreaType;
-  mode?: InputMaybe<ChoroplethMode>;
-  field?: InputMaybe<Scalars['String']['input']>;
-  formula?: InputMaybe<Scalars['String']['input']>;
-  mapBounds?: InputMaybe<MapBounds>;
-}>;
-
-
-export type SourceStatsByBoundaryQuery = { __typename?: 'Query', choroplethDataForSource: Array<{ __typename?: 'GroupedDataCount', label?: string | null, gss?: string | null, count?: number | null, formattedCount?: string | null, category?: string | null, row?: any | null, columns?: Array<string> | null, gssArea?: { __typename?: 'Area', point?: { __typename?: 'PointFeature', type: GeoJsonTypes, geometry: { __typename?: 'PointGeometry', type: GeoJsonTypes, coordinates: Array<number> } } | null } | null }> };
-
 export type StatisticsQueryVariables = Exact<{
   config: StatisticsConfig;
   categoryKey?: InputMaybe<Scalars['String']['input']>;
@@ -3584,6 +3523,13 @@ export type StatisticsQueryVariables = Exact<{
 
 
 export type StatisticsQuery = { __typename?: 'Query', statisticsForChoropleth: Array<{ __typename?: 'GroupedDataCount', label?: string | null, gss?: string | null, count?: number | null, formattedCount?: string | null, category?: string | null, columns?: Array<string> | null, gssArea?: { __typename?: 'Area', point?: { __typename?: 'PointFeature', type: GeoJsonTypes, geometry: { __typename?: 'PointGeometry', type: GeoJsonTypes, coordinates: Array<number> } } | null } | null }> };
+
+export type StatisticsTableQueryVariables = Exact<{
+  config: StatisticsConfig;
+}>;
+
+
+export type StatisticsTableQuery = { __typename?: 'Query', statistics?: Array<any> | null };
 
 export type SourceMetadataQueryVariables = Exact<{
   sourceId: Scalars['ID']['input'];
@@ -3815,8 +3761,8 @@ export const PatchMapReportDocument = {"kind":"Document","definitions":[{"kind":
 export const UpdateMapReportDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateMapReport"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"MapReportInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateMapReport"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"displayOptions"}},{"kind":"Field","name":{"kind":"Name","value":"layers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"sourceData"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"inspectorType"}},{"kind":"Field","name":{"kind":"Name","value":"inspectorConfig"}},{"kind":"Field","name":{"kind":"Name","value":"mapboxPaint"}},{"kind":"Field","name":{"kind":"Name","value":"mapboxLayout"}}]}}]}}]}}]} as unknown as DocumentNode<UpdateMapReportMutation, UpdateMapReportMutationVariables>;
 export const DeleteMapReportDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteMapReport"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"IDObject"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteMapReport"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<DeleteMapReportMutation, DeleteMapReportMutationVariables>;
 export const GetMapReportNameDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetMapReportName"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"mapReport"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]} as unknown as DocumentNode<GetMapReportNameQuery, GetMapReportNameQueryVariables>;
-export const SourceStatsByBoundaryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SourceStatsByBoundary"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"sourceId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"analyticalAreaType"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"AnalyticalAreaType"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"mode"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ChoroplethMode"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"field"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"formula"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"mapBounds"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"MapBounds"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"choroplethDataForSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"sourceId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"sourceId"}}},{"kind":"Argument","name":{"kind":"Name","value":"analyticalAreaKey"},"value":{"kind":"Variable","name":{"kind":"Name","value":"analyticalAreaType"}}},{"kind":"Argument","name":{"kind":"Name","value":"mode"},"value":{"kind":"Variable","name":{"kind":"Name","value":"mode"}}},{"kind":"Argument","name":{"kind":"Name","value":"field"},"value":{"kind":"Variable","name":{"kind":"Name","value":"field"}}},{"kind":"Argument","name":{"kind":"Name","value":"formula"},"value":{"kind":"Variable","name":{"kind":"Name","value":"formula"}}},{"kind":"Argument","name":{"kind":"Name","value":"mapBounds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"mapBounds"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"gss"}},{"kind":"Field","name":{"kind":"Name","value":"count"}},{"kind":"Field","name":{"kind":"Name","value":"formattedCount"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"row"}},{"kind":"Field","name":{"kind":"Name","value":"columns"}},{"kind":"Field","name":{"kind":"Name","value":"gssArea"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"point"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"geometry"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"coordinates"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<SourceStatsByBoundaryQuery, SourceStatsByBoundaryQueryVariables>;
 export const StatisticsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"Statistics"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"config"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"StatisticsConfig"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"categoryKey"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"countKey"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"mapBounds"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"MapBounds"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"isCountKeyPercentage"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"statisticsForChoropleth"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"statsConfig"},"value":{"kind":"Variable","name":{"kind":"Name","value":"config"}}},{"kind":"Argument","name":{"kind":"Name","value":"categoryKey"},"value":{"kind":"Variable","name":{"kind":"Name","value":"categoryKey"}}},{"kind":"Argument","name":{"kind":"Name","value":"countKey"},"value":{"kind":"Variable","name":{"kind":"Name","value":"countKey"}}},{"kind":"Argument","name":{"kind":"Name","value":"mapBounds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"mapBounds"}}},{"kind":"Argument","name":{"kind":"Name","value":"isCountKeyPercentage"},"value":{"kind":"Variable","name":{"kind":"Name","value":"isCountKeyPercentage"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"gss"}},{"kind":"Field","name":{"kind":"Name","value":"count"}},{"kind":"Field","name":{"kind":"Name","value":"formattedCount"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"columns"}},{"kind":"Field","name":{"kind":"Name","value":"gssArea"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"point"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"geometry"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"coordinates"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<StatisticsQuery, StatisticsQueryVariables>;
+export const StatisticsTableDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"StatisticsTable"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"config"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"StatisticsConfig"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"statistics"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"statsConfig"},"value":{"kind":"Variable","name":{"kind":"Name","value":"config"}}}]}]}}]} as unknown as DocumentNode<StatisticsTableQuery, StatisticsTableQueryVariables>;
 export const SourceMetadataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SourceMetadata"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"sourceId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"sourceId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"fieldDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalId"}},{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"label"}}]}}]}}]}}]} as unknown as DocumentNode<SourceMetadataQuery, SourceMetadataQueryVariables>;
 export const WebhookRefreshDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"WebhookRefresh"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"refreshWebhooks"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"externalDataSourceId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"hasWebhooks"}},{"kind":"Field","name":{"kind":"Name","value":"automatedWebhooks"}},{"kind":"Field","name":{"kind":"Name","value":"webhookHealthcheck"}}]}}]}}]} as unknown as DocumentNode<WebhookRefreshMutation, WebhookRefreshMutationVariables>;
 export const ExternalDataSourceExternalDataSourceCardDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ExternalDataSourceExternalDataSourceCard"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"externalDataSource"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"DataSourceCard"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"DataSourceCard"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ExternalDataSource"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}},{"kind":"Field","name":{"kind":"Name","value":"crmType"}},{"kind":"Field","name":{"kind":"Name","value":"automatedWebhooks"}},{"kind":"Field","name":{"kind":"Name","value":"autoImportEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"autoUpdateEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"updateMapping"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"sourcePath"}},{"kind":"Field","name":{"kind":"Name","value":"destinationColumn"}}]}},{"kind":"Field","name":{"kind":"Name","value":"jobs"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pagination"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"10"}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"lastEventAt"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}},{"kind":"Field","name":{"kind":"Name","value":"sharingPermissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"organisation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<ExternalDataSourceExternalDataSourceCardQuery, ExternalDataSourceExternalDataSourceCardQueryVariables>;

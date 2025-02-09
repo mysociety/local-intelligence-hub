@@ -142,7 +142,7 @@ class GroupByColumn:
 
 @strawberry.input
 class StatisticsConfig:
-    source_ids: List[str]
+    source_ids: Optional[List[str]] = None
     # Querying
     gss_codes: Optional[List[str]] = None
     area_query_mode: Optional[AreaQueryMode] = None
@@ -231,6 +231,9 @@ def statistics(
     map_bounds: Optional[MapBounds] = None,
     is_count_key_percentage: Optional[bool] = False,
 ):
+    if not conf.source_ids or len(conf.source_ids) <= 0:
+        raise ValueError("At least one source id is required")
+
     pre_calcs = (
         [c for c in conf.pre_group_by_calculated_columns if not c.ignore]
         if conf.pre_group_by_calculated_columns
@@ -333,29 +336,7 @@ def statistics(
     numerical_keys = [d for d in df.select_dtypes(include="number").columns.tolist() if d not in exclude_keys]
 
     if len(numerical_keys) > 0:
-        # Provide some special variables to the col editor
-        values = df[numerical_keys].values
-        df["first"] = values.max(axis=1)
-        # column name of "first"
-        df["first_label"] = df[numerical_keys].idxmax(axis=1)
-        if len(numerical_keys) > 1:
-            df["total"] = values.sum(axis=1)
-            try:
-                df["second"] = np.partition(values, -2, axis=1)[:, -2]
-                # df["second_label"] = # TODO: get the column name of the second highst value
-                # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
-                # As above, but using numpy not pandas
-                df["second_label"] = df[numerical_keys].columns[
-                    df[numerical_keys].values.argsort()[:, -2]
-                ]
-                df["majority"] = df["first"] - df["second"]
-            except Exception:
-                pass
-            if len(numerical_keys) > 2:
-                try:
-                    df["third"] = np.partition(values, -3, axis=1)[:, -3]
-                except Exception:
-                  pass
+        df = add_computed_columns(df, numerical_keys)
 
     # Apply the row-level cols
     if pre_calcs:
@@ -474,29 +455,7 @@ def statistics(
         df = df_mode.join(df_aggregated, on="gss", how="left")
 
     if len(numerical_keys) > 0:
-        # Provide some special variables to the col editor
-        values = df[numerical_keys].values
-        df["first"] = values.max(axis=1)
-        # column name of "first"
-        df["first_label"] = df[numerical_keys].idxmax(axis=1)
-        if len(numerical_keys) > 1:
-            df["total"] = values.sum(axis=1)
-            try:
-                df["second"] = np.partition(values, -2, axis=1)[:, -2]
-                    # df["second_label"] = # TODO: get the column name of the second highst value
-                # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
-                # As above, but using numpy not pandas
-                df["second_label"] = df[numerical_keys].columns[
-                    df[numerical_keys].values.argsort()[:, -2]
-                ]
-                df["majority"] = df["first"] - df["second"]
-            except Exception:
-              pass
-        if len(numerical_keys) > 2:
-            try:
-                df["third"] = np.partition(values, -3, axis=1)[:, -3]
-            except Exception:
-              pass
+        df = add_computed_columns(df, numerical_keys)
 
         # Apply formulas
         if post_calcs and len(post_calcs) > 0:
@@ -516,31 +475,15 @@ def statistics(
                     pass
 
             # Then recalculate based on the formula, since they may've doctored the values.
-            values = df[numerical_keys].values
-            df["first"] = values.max(axis=1)
-            # column name of "first"
-            df["first_label"] = df[numerical_keys].idxmax(axis=1)
-            try:
-                df["second"] = np.partition(values, -2, axis=1)[:, -2]
-                # df["second_label"] = # TODO: get the column name of the second highst value
-                # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
-                # As above, but using numpy not pandas
-                df["second_label"] = df[numerical_keys].columns[
-                    df[numerical_keys].values.argsort()[:, -2]
-                ]
-                df["majority"] = df["first"] - df["second"]
-            except IndexError:
-                pass
-            try:
-                df["third"] = np.partition(values, -3, axis=1)[:, -3]
-            except IndexError:
-                pass
-            df["total"] = values.sum(axis=1)
+            df = add_computed_columns(df, numerical_keys)
 
     if category_key:
         df["category"] = df[category_key]
     if count_key:
         df["count"] = df[count_key]
+
+    # For serialisation
+    df = df.replace({np.nan: 0})
 
     # Final grouping
     groups = (
@@ -661,15 +604,32 @@ def statistics(
             ]
         return d
 
-    # elif return_shape is StatisticsReturnShape.Row:
-    #     if conf.gss_codes is None:
-    #         raise ValueError("`conf.gss_codes` must be specified when returning a row")
-    #     return df.loc[df["gss"] == conf.gss_codes].to_dict(orient="index")
-
-    # elif return_shape is StatisticsReturnShape.Cell:
-    #     if conf.gss_codes is None or return_columns is None or len(return_columns) <= 0:
-    #         raise ValueError("`gss` and `return_column` must be specified when returning a cell")
-    #     return df.loc[df["gss"] == conf.gss_codes, return_columns].iloc[0]
+def add_computed_columns(df: pd.DataFrame, numerical_keys: list[str]) -> pd.DataFrame:
+    if len(numerical_keys) > 0:
+        # Provide some special variables to the col editor
+        values = df[numerical_keys].values
+        df["first"] = values.max(axis=1)
+        # column name of "first"
+        df["first_label"] = df[numerical_keys].idxmax(axis=1)
+        if len(numerical_keys) > 1:
+            df["total"] = values.sum(axis=1)
+            try:
+                df["second"] = np.partition(values, -2, axis=1)[:, -2]
+                # df["second_label"] = # TODO: get the column name of the second highst value
+                # df["second_label"] = df[numerical_keys].apply(lambda x: x.nlargest(2).index[-1], axis=1)
+                # As above, but using numpy not pandas
+                df["second_label"] = df[numerical_keys].columns[
+                    df[numerical_keys].values.argsort()[:, -2]
+                ]
+                df["majority"] = df["first"] - df["second"]
+            except Exception:
+                pass
+            if len(numerical_keys) > 2:
+                try:
+                    df["third"] = np.partition(values, -3, axis=1)[:, -3]
+                except Exception:
+                  pass
+    return df
 
 def filter_generic_data_using_gss_code(gss_codes: str | list[str], area_query_mode: AreaQueryMode) -> Q:
     gss_codes = ensure_list(gss_codes)

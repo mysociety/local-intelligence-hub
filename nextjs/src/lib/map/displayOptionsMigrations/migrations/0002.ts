@@ -4,12 +4,12 @@ import {
   AnalyticalAreaType,
   AreaQueryMode,
   CalculatedColumn,
-  ChoroplethMode,
   DataSourceType,
   GetMapReportQuery,
   GroupByColumn,
   InputMaybe,
 } from '@/__generated__/graphql'
+import { StatisticsConfigSchema } from '@/__generated__/zodSchema'
 import { BoundaryType } from '@/app/reports/[id]/politicalTilesets'
 import {
   DataDisplayMode,
@@ -17,6 +17,7 @@ import {
   ElectionSystem,
   Palette,
   StatisticalDataType,
+  StatisticsMode,
   TableGroupByMode,
   ViewType,
 } from '@/app/reports/[id]/reportContext'
@@ -30,7 +31,7 @@ export const NEXT_VERSION = DisplayOptionsVersion['2025-02-08']
 /**
  * Move dataVisualisation and display to views[0].mapOptions.
  */
-export function upgrade20250125to20250208(original: BaseVersion): NextVersion {
+export function upgrade20250125to20250208(original: BaseVersion): AnyVersion {
   return produce(original, (draft: NextVersion) => {
     draft.displayOptions.version = NEXT_VERSION
 
@@ -41,21 +42,34 @@ export function upgrade20250125to20250208(original: BaseVersion): NextVersion {
       ) {
         if (
           !original.displayOptions.views[viewId].mapOptions.choropleth
+            .advancedStatisticsConfig
+        ) {
+          draft.displayOptions.views[
+            viewId
+          ].mapOptions.choropleth.advancedStatisticsConfig =
+            StatisticsConfigSchema().parse({})
+        }
+        if (
+          !original.displayOptions.views[viewId].mapOptions.choropleth
             .useAdvancedStatistics
         ) {
           // Migrate sourceId
           const sourceId =
             draft.layers.find(
               (l) =>
-                draft.displayOptions.views[viewId].type === ViewType.Map &&
+                original.displayOptions.views[viewId].type === ViewType.Map &&
                 l.id ===
-                  draft.displayOptions.views[viewId]?.mapOptions.choropleth
+                  original.displayOptions.views[viewId]?.mapOptions.choropleth
                     .layerId
             )?.source ||
             original.displayOptions.views[viewId]?.mapOptions.choropleth
-              .advancedStatisticsConfig?.sourceIds[0] ||
+              .advancedStatisticsConfig?.sourceIds?.[0] ||
             // pick the first source from the report
             draft.layers.find((l) => l.source)?.source
+          delete (
+            draft.displayOptions.views[viewId]
+              .mapOptions as unknown as BaseVersionMapOptions
+          ).choropleth.layerId
           if (sourceId) {
             draft.displayOptions.views[
               viewId
@@ -66,29 +80,29 @@ export function upgrade20250125to20250208(original: BaseVersion): NextVersion {
             }
             // Migrate configs
             if (
-              draft.displayOptions.views[viewId].mapOptions.choropleth.mode ===
-              'Count'
+              original.displayOptions.views[viewId].mapOptions.choropleth
+                .mode === 'Count'
             ) {
               draft.displayOptions.views[
                 viewId
               ].mapOptions.choropleth.advancedStatisticsConfig.aggregationOperation =
                 AggregationOp.Count
             } else if (
-              draft.displayOptions.views[viewId].mapOptions.choropleth.mode ===
-                'Formula' &&
-              draft.displayOptions.views[viewId].mapOptions.choropleth.formula
+              original.displayOptions.views[viewId].mapOptions.choropleth
+                .mode === 'Formula' &&
+              original.displayOptions.views[viewId].mapOptions.choropleth
+                .formula
             ) {
               draft.displayOptions.views[
                 viewId
-              ].mapOptions.choropleth.advancedStatisticsConfig.preGroupByCalculatedColumns =
+              ].mapOptions.choropleth.advancedStatisticsConfig.calculatedColumns =
                 [
                   {
                     id: v4(),
-                    name: draft.displayOptions.views[viewId].mapOptions
-                      .choropleth.formula,
+                    name: 'simple_formula',
                     expression:
-                      draft.displayOptions.views[viewId].mapOptions.choropleth
-                        .formula,
+                      original.displayOptions.views[viewId].mapOptions
+                        .choropleth.formula,
                   },
                 ]
             }
@@ -132,6 +146,65 @@ export function upgrade20250125to20250208(original: BaseVersion): NextVersion {
             ).choropleth.advancedStatisticsDisplayFieldIsPercentage
           }
         }
+        // Swap mode to StatisticsMode, factoring in any advanced statistics config
+        if (
+          // multiple calculations
+          (
+            draft.displayOptions.views[viewId].mapOptions.choropleth
+              .advancedStatisticsConfig.preGroupByCalculatedColumns || []
+          ).concat(
+            draft.displayOptions.views[viewId].mapOptions.choropleth
+              .advancedStatisticsConfig.calculatedColumns || []
+          ).length > 1 ||
+          // multiple agg ops
+          (
+            draft.displayOptions.views[viewId].mapOptions.choropleth
+              .advancedStatisticsConfig.aggregationOperations || []
+          ).length ||
+          // any group bys
+          !!draft.displayOptions.views[viewId].mapOptions.choropleth
+            .advancedStatisticsConfig.groupByArea ||
+          !!draft.displayOptions.views[viewId].mapOptions.choropleth
+            .advancedStatisticsConfig.groupAbsolutely ||
+          (
+            draft.displayOptions.views[viewId].mapOptions.choropleth
+              .advancedStatisticsConfig.groupByColumns || []
+          ).length > 0
+        ) {
+          draft.displayOptions.views[viewId].mapOptions.choropleth.mode =
+            StatisticsMode.Advanced
+        } else if (
+          (
+            draft.displayOptions.views[viewId].mapOptions.choropleth
+              .advancedStatisticsConfig.preGroupByCalculatedColumns || []
+          ).concat(
+            draft.displayOptions.views[viewId].mapOptions.choropleth
+              .advancedStatisticsConfig.calculatedColumns || []
+          ).length === 1 ||
+          original.displayOptions.views[viewId].mapOptions.choropleth.mode ===
+            'Formula'
+        ) {
+          draft.displayOptions.views[viewId].mapOptions.choropleth.mode =
+            StatisticsMode.Formula
+          delete draft.displayOptions.views[viewId].mapOptions.choropleth
+            .advancedStatisticsConfig.aggregationOperation
+        } else if (
+          draft.displayOptions.views[viewId].mapOptions.choropleth.field &&
+          original.displayOptions.views[viewId].mapOptions.choropleth.mode ===
+            'Field'
+        ) {
+          draft.displayOptions.views[viewId].mapOptions.choropleth.mode =
+            StatisticsMode.Field
+          delete draft.displayOptions.views[viewId].mapOptions.choropleth
+            .advancedStatisticsConfig.aggregationOperation
+        } else {
+          draft.displayOptions.views[viewId].mapOptions.choropleth.mode =
+            StatisticsMode.Count
+          draft.displayOptions.views[
+            viewId
+          ].mapOptions.choropleth.advancedStatisticsConfig.aggregationOperation =
+            AggregationOp.Count
+        }
       }
     }
   })
@@ -141,7 +214,7 @@ type BaseVersionMapOptions = {
   choropleth: {
     boundaryType: BoundaryType
     palette: Palette
-    mode: ChoroplethMode
+    mode: 'Count' | 'Formula' | 'Field'
     dataType: StatisticalDataType
     isPaletteReversed?: boolean | undefined
     layerId?: string | undefined
@@ -308,13 +381,12 @@ type NextVersion = Omit<GetMapReportQuery['mapReport'], 'displayOptions'> & {
         string,
         {
           id: string
-          layerId: string
           areaQueryMode: AreaQueryMode
+          layerId: string
           displayType: InspectorDisplayType
           name?: string | undefined
           advancedStatisticsConfig?:
             | {
-                sourceIds: string[]
                 aggregationOperation?: InputMaybe<AggregationOp> | undefined
                 aggregationOperations?:
                   | InputMaybe<AggregationDefinition[]>
@@ -331,6 +403,7 @@ type NextVersion = Omit<GetMapReportQuery['mapReport'], 'displayOptions'> & {
                   | InputMaybe<CalculatedColumn[]>
                   | undefined
                 returnColumns?: InputMaybe<string[]> | undefined
+                sourceIds?: InputMaybe<string[]> | undefined
               }
             | undefined
           isElectoral?: boolean | undefined
@@ -369,41 +442,6 @@ type NextVersion = Omit<GetMapReportQuery['mapReport'], 'displayOptions'> & {
                 markerSize?: number | undefined
               }
             >
-            choropleth: {
-              boundaryType: BoundaryType
-              palette: Palette
-              mode: ChoroplethMode
-              dataType: StatisticalDataType
-              isPaletteReversed?: boolean | undefined
-              layerId?: string | undefined
-              field?: string | undefined
-              formula?: string | undefined
-              advancedStatisticsConfig?:
-                | {
-                    sourceIds: string[]
-                    aggregationOperation?: InputMaybe<AggregationOp> | undefined
-                    aggregationOperations?:
-                      | InputMaybe<AggregationDefinition[]>
-                      | undefined
-                    areaQueryMode?: InputMaybe<AreaQueryMode> | undefined
-                    calculatedColumns?:
-                      | InputMaybe<CalculatedColumn[]>
-                      | undefined
-                    excludeColumns?: InputMaybe<string[]> | undefined
-                    formatNumericKeys?: InputMaybe<boolean> | undefined
-                    groupAbsolutely?: InputMaybe<boolean> | undefined
-                    groupByArea?: InputMaybe<AnalyticalAreaType> | undefined
-                    groupByColumns?: InputMaybe<GroupByColumn[]> | undefined
-                    gssCodes?: InputMaybe<string[]> | undefined
-                    preGroupByCalculatedColumns?:
-                      | InputMaybe<CalculatedColumn[]>
-                      | undefined
-                    returnColumns?: InputMaybe<string[]> | undefined
-                  }
-                | undefined
-              isElectoral?: boolean | undefined
-              fieldIsPercentage?: boolean | undefined
-            }
             display: {
               choropleth: boolean
               borders: boolean
@@ -411,10 +449,39 @@ type NextVersion = Omit<GetMapReportQuery['mapReport'], 'displayOptions'> & {
               boundaryNames: boolean
               streetDetails?: boolean | undefined
             }
+            choropleth: {
+              mode: StatisticsMode
+              boundaryType: BoundaryType
+              palette: Palette
+              advancedStatisticsConfig: {
+                aggregationOperation?: InputMaybe<AggregationOp> | undefined
+                aggregationOperations?:
+                  | InputMaybe<AggregationDefinition[]>
+                  | undefined
+                areaQueryMode?: InputMaybe<AreaQueryMode> | undefined
+                calculatedColumns?: InputMaybe<CalculatedColumn[]> | undefined
+                excludeColumns?: InputMaybe<string[]> | undefined
+                formatNumericKeys?: InputMaybe<boolean> | undefined
+                groupAbsolutely?: InputMaybe<boolean> | undefined
+                groupByArea?: InputMaybe<AnalyticalAreaType> | undefined
+                groupByColumns?: InputMaybe<GroupByColumn[]> | undefined
+                gssCodes?: InputMaybe<string[]> | undefined
+                preGroupByCalculatedColumns?:
+                  | InputMaybe<CalculatedColumn[]>
+                  | undefined
+                returnColumns?: InputMaybe<string[]> | undefined
+                sourceIds?: InputMaybe<string[]> | undefined
+              }
+              dataType: StatisticalDataType
+              isPaletteReversed?: boolean | undefined
+              field?: string | undefined
+              isElectoral?: boolean | undefined
+              fieldIsPercentage?: boolean | undefined
+            }
           }
           name?: string | undefined
-          description?: string | undefined
           icon?: string | undefined
+          description?: string | undefined
           colour?: string | undefined
         }
       | {
@@ -432,8 +499,8 @@ type NextVersion = Omit<GetMapReportQuery['mapReport'], 'displayOptions'> & {
             layerId?: string | undefined
           }
           name?: string | undefined
-          description?: string | undefined
           icon?: string | undefined
+          description?: string | undefined
           colour?: string | undefined
         }
     >

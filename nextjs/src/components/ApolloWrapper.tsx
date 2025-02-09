@@ -8,10 +8,7 @@ import {
   NextSSRInMemoryCache,
 } from '@apollo/experimental-nextjs-app-support/ssr'
 
-import {
-  SourceStatsByBoundaryQuery,
-  StatisticsQuery,
-} from '@/__generated__/graphql'
+import { StatisticsQuery } from '@/__generated__/graphql'
 import { GRAPHQL_URL } from '@/env'
 import { authenticationHeaders } from '@/lib/auth'
 
@@ -59,32 +56,6 @@ export function makeFrontEndClient() {
       typePolicies: {
         Query: {
           fields: {
-            choroplethDataForSource: {
-              // Use all argument values except mapBounds
-              // so results for different areas are merged
-              keyArgs: (_args) => {
-                const args = { ..._args }
-                delete args.mapBounds
-                let fullKey = ''
-                for (const key of Object.keys(args)) {
-                  const value = args[key]
-                  fullKey += `${key}:${JSON.stringify(value)};`
-                }
-                return fullKey
-              },
-              merge(existing = [], incoming = []) {
-                // Deduplicate data
-                const dataByGss: Record<
-                  string,
-                  SourceStatsByBoundaryQuery['choroplethDataForSource'][0]
-                > = {}
-                const allData = [...existing, ...incoming]
-                for (const d of allData) {
-                  dataByGss[d.gss || ''] = d
-                }
-                return Object.values(dataByGss)
-              },
-            },
             statisticsForChoropleth: {
               // Use all argument values except mapBounds
               // so results for different areas are merged
