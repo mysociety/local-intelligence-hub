@@ -1,7 +1,6 @@
 import {
   AggregationOp,
   AreaQueryMode,
-  CalculatedColumn,
   StatisticsConfig,
 } from '@/__generated__/graphql'
 import { CRMSelection } from '@/components/CRMButtonItem'
@@ -98,16 +97,6 @@ export default function ReportMapChoroplethLegend() {
   const statisticalVariables = useStatisticalVariables(
     viewManager.currentViewOfType.mapOptions.choropleth.advancedStatisticsConfig
   )
-
-  const defaultFormula = (): CalculatedColumn => {
-    console.log(statisticalVariables)
-    return {
-      id: v4(),
-      name: 'simple_formula',
-      expression:
-        lastFormula || `\`${statisticalVariables.dataSourceFields?.[0]}\``,
-    }
-  }
 
   const mode = viewManager.currentViewOfType?.mapOptions.choropleth.mode
 
@@ -372,10 +361,27 @@ export default function ReportMapChoroplethLegend() {
                               .sourceIds,
                           areaQueryMode: AreaQueryMode.Overlapping,
                           calculatedColumns:
+                            // If possible salvage an existing formula
                             draft.mapOptions.choropleth.advancedStatisticsConfig.calculatedColumns?.slice(
                               0,
                               1
-                            ) || [defaultFormula()],
+                            ) || [
+                              // Or else create a new one
+                              {
+                                id: v4(),
+                                name: 'simple_formula',
+                                expression:
+                                  lastFormula ||
+                                  `\`${statisticalVariables.dataSourceFields?.[0]}\``,
+                              },
+                            ],
+                        }
+                        if (
+                          draft.mapOptions.choropleth.advancedStatisticsConfig
+                            .calculatedColumns?.[0]
+                        ) {
+                          draft.mapOptions.choropleth.advancedStatisticsConfig.calculatedColumns[0].name =
+                            'simple_formula'
                         }
                       }
                     })
