@@ -361,8 +361,6 @@ function AreaDisplay({
         : {})) ||
     {}
 
-  console.log(sourceId, relevantChoroplethConfig)
-
   const data = useQuery<AreaLayerDataQuery, AreaLayerDataQueryVariables>(
     AREA_LAYER_DATA,
     {
