@@ -66,6 +66,7 @@ export default function ReportMapChoroplethLegend() {
   const map = useLoadedMap()
   const [legendOpen, setLegendOpen] = useState(true)
   const [lastFormula, setLastFormula] = useState<null | string>(null)
+  const [lastField, setLastField] = useState<null | string>(null)
 
   const boundaryHierarchy = POLITICAL_BOUNDARIES.find(
     (b) =>
@@ -350,6 +351,8 @@ export default function ReportMapChoroplethLegend() {
                       if (option === StatisticsMode.Field) {
                         // Pick the first available
                         draft.mapOptions.choropleth.field =
+                          draft.mapOptions.choropleth.field ||
+                          lastField ||
                           statisticalVariables.dataSourceFields?.[0]
                         // Simple mode
                         draft.mapOptions.choropleth.advancedStatisticsConfig = {
@@ -419,6 +422,7 @@ export default function ReportMapChoroplethLegend() {
                         })),
                       }))}
                     onChange={(dataSourceField) => {
+                      setLastField(dataSourceField)
                       viewManager.updateView((draft) => {
                         draft.mapOptions.choropleth.field = dataSourceField
                       })
