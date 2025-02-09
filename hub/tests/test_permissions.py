@@ -1,4 +1,3 @@
-import json
 from django.contrib.gis.geos import Point
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse

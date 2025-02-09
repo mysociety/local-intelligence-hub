@@ -1,12 +1,12 @@
 import { StatisticsConfig } from '@/__generated__/graphql'
 import { useReport } from '@/lib/map/useReport'
 
-export function useStatisticalVariables(statsConfig: StatisticsConfig) {
+export function useStatisticalVariables(statsConfig?: StatisticsConfig) {
   const reportManager = useReport()
 
   const dataSourceFields =
     reportManager.report.layers
-      .find((l) => l.source === statsConfig.sourceIds?.[0])
+      .find((l) => l.source === statsConfig?.sourceIds?.[0])
       ?.sourceData.fieldDefinitions?.map((field) => field.value) || []
 
   const calculatedValues = [

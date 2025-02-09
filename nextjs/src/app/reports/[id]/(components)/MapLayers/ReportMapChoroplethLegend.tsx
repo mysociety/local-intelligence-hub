@@ -86,17 +86,18 @@ export default function ReportMapChoroplethLegend() {
     tileset: activeTileset,
   })
 
-  if (!viewManager.currentViewOfType) {
-    return null
-  }
-
   const choroplethLayer = reportManager.report.layers.find((l) =>
     variables?.config.sourceIds?.includes(l.source)
   )
 
   const statisticalVariables = useStatisticalVariables(
-    viewManager.currentViewOfType.mapOptions.choropleth.advancedStatisticsConfig
+    viewManager.currentViewOfType?.mapOptions.choropleth
+      .advancedStatisticsConfig
   )
+
+  if (!viewManager.currentViewOfType) {
+    return null
+  }
 
   const mode = viewManager.currentViewOfType?.mapOptions.choropleth.mode
 
