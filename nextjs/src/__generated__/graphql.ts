@@ -226,6 +226,7 @@ export enum AggregationOp {
   Max = 'Max',
   Mean = 'Mean',
   Min = 'Min',
+  Mode = 'Mode',
   Sum = 'Sum'
 }
 

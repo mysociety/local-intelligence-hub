@@ -106,6 +106,7 @@ class AggregationOp(Enum):
     Min = "Min"
     Count = "Count"
     Guess = "Guess"
+    Mode = "Mode"
 
 
 @strawberry.input
@@ -403,13 +404,30 @@ def statistics(
 
         # Collect the mode of the string columns
         # strings = df.select_dtypes(include="object"
-        df_mode = df[["label", "gss", "area_type"]].groupby("gss").agg(get_mode)
+        mode_keys = ["label", "gss", "area_type"]
+        df_mode = df[mode_keys].groupby("gss").agg(get_mode)
 
         # Aggregate the numerical columns
-        df_stats = df[numerical_keys + ["gss", "id"]].set_index("gss")
+        string_keys_for_aggregation = [] if return_numeric_keys_only else [c for c in df.columns if c not in numerical_keys + mode_keys + ["id"]]
+        if conf.return_columns and len(conf.return_columns) > 0:
+            string_keys_for_aggregation = [c for c in string_keys_for_aggregation if c in conf.return_columns or c == category_key]
+        df_stats = df[list(set([
+          # We work with all numericals even if they're not in the return columns due to mathematical operations
+          *numerical_keys,
+          # But we don't need to aggregate the string columns if they're not in the return columns
+          *string_keys_for_aggregation,
+          # This is for joining back on the original data
+          "gss",
+          # And this is for counting
+          "id"
+        ]))].set_index("gss")
         agg_config = dict()
+        #
         df_stats["count"] = 1
         agg_config["count"] = np.size
+        #
+        for key in string_keys_for_aggregation:
+            agg_config[key] = get_mode
         if conf.aggregation_operations and len(conf.aggregation_operations) > 0:
             # Per-key config
             for key in numerical_keys:
@@ -419,7 +437,7 @@ def statistics(
                     agg_config[key] = "sum"
                 for op in conf.aggregation_operations:
                     if op.column == key and op.operation is not AggregationOp.Guess:
-                        agg_config[key] = op.operation.value.lower()
+                        agg_config[key] = aggregation_op_to_agg_func(op.operation)
                         break
         else:
             # Guess
@@ -436,13 +454,13 @@ def statistics(
                     is not AggregationOp.Guess
                 ):
                     agg_config[key] = (
-                        calculated_column.aggregation_operation.value.lower()
+                        aggregation_op_to_agg_func(calculated_column.aggregation_operation)
                     )
                 elif (
                     conf.aggregation_operation
                     and conf.aggregation_operation is not AggregationOp.Guess
                 ):
-                    agg_config[key] = conf.aggregation_operation.value.lower()
+                    agg_config[key] = aggregation_op_to_agg_func(conf.aggregation_operation)
                 elif key in percentage_keys:
                     agg_config[key] = "mean"
                 else:
@@ -523,7 +541,7 @@ def statistics(
                 AggregationOp.Mean if col in percentage_keys else AggregationOp.Sum
             )
             aggop = calculated_column_aggop or simple_asserted_aggop or default_aggop
-            agg_dict[col] = aggop.value.lower()
+            agg_dict[col] = aggregation_op_to_agg_func(aggop)
         df_n = df[[n for n in numerical_keys if n not in exclude_keys]].reset_index().drop(columns=[k for k in exclude_keys if k in df.columns])
         df_agg = df_n.agg(agg_dict)
         d = df_agg.to_dict()
@@ -553,7 +571,7 @@ def statistics(
                 **{
                     name: pd.NamedAgg(column=col.column, aggfunc=get_mode),
                     f"{name}_{aggop.value.lower()}": pd.NamedAgg(
-                        column=col.column, aggfunc=aggop.value.lower()
+                        column=col.column, aggfunc=aggregation_op_to_agg_func(aggop)
                     ),
                 }
             )
@@ -602,6 +620,14 @@ def statistics(
                 for row in d
             ]
         return d
+
+def aggregation_op_to_agg_func(agg_op: AggregationOp, guess = "sum"):
+  if agg_op == AggregationOp.Mode:
+    return get_mode
+  elif agg_op == AggregationOp.Guess:
+    return guess
+  else:
+    return agg_op.value.lower()
 
 def add_computed_columns(df: pd.DataFrame, numerical_keys: list[str]) -> pd.DataFrame:
     if len(numerical_keys) > 0:
