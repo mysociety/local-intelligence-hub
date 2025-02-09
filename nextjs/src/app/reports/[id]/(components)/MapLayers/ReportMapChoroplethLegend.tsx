@@ -2,9 +2,11 @@ import {
   AggregationOp,
   AreaQueryMode,
   CalculatedColumn,
+  StatisticsConfig,
 } from '@/__generated__/graphql'
 import { CRMSelection } from '@/components/CRMButtonItem'
 import { PopOutChoroplethStatisticalQueryEditor } from '@/components/report/PopOutChoroplethStatisticalQueryEditor'
+import { useStatisticalVariables } from '@/components/report/statisticalVariables'
 import { Button } from '@/components/ui/button'
 import {
   Collapsible,
@@ -37,7 +39,8 @@ import {
   LucideType,
   Radical,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { toast } from 'sonner'
 import { twMerge } from 'tailwind-merge'
 import toSpaceCase from 'to-space-case'
 import { v4 } from 'uuid'
@@ -62,6 +65,7 @@ export default function ReportMapChoroplethLegend() {
   const viewManager = useView(ViewType.Map)
   const map = useLoadedMap()
   const [legendOpen, setLegendOpen] = useState(true)
+  const [lastFormula, setLastFormula] = useState<null | string>(null)
 
   const boundaryHierarchy = POLITICAL_BOUNDARIES.find(
     (b) =>
@@ -98,7 +102,8 @@ export default function ReportMapChoroplethLegend() {
   const defaultFormula = (): CalculatedColumn => ({
     id: v4(),
     name: 'simple_formula',
-    expression: `\`${usableFields?.[usableFields.length - 1]?.value}\``,
+    expression:
+      lastFormula || `\`${usableFields?.[usableFields.length - 1]?.value}\``,
   })
 
   const mode = viewManager.currentViewOfType?.mapOptions.choropleth.mode
@@ -376,16 +381,17 @@ export default function ReportMapChoroplethLegend() {
                 {viewManager.currentViewOfType?.mapOptions.choropleth.mode ===
                   StatisticsMode.Formula && (
                   <FormulaConfig
-                    key={JSON.stringify(
+                    config={
                       viewManager.currentViewOfType?.mapOptions.choropleth
-                        .advancedStatisticsConfig.calculatedColumns
-                    )}
+                        .advancedStatisticsConfig
+                    }
                     initialFormula={
                       viewManager.currentViewOfType?.mapOptions.choropleth
                         .advancedStatisticsConfig.calculatedColumns?.[0]
                         ?.expression || ''
                     }
                     onSave={(formula) => {
+                      setLastFormula(formula)
                       viewManager.updateView((draft) => {
                         draft.mapOptions.choropleth.advancedStatisticsConfig.calculatedColumns =
                           [{ name: 'simple_formula', expression: formula }]
@@ -721,23 +727,35 @@ export function ColourStops({
 function FormulaConfig({
   initialFormula,
   onSave,
+  config,
 }: {
   initialFormula: string
   onSave: (formula: string) => void
+  config: StatisticsConfig
 }) {
   const viewManager = useView(ViewType.Map)
   const choroplethErrors = useAtomValue(choroplethErrorsAtom)
   const [inputText, setInputText] = useState(initialFormula)
-
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const editingEmpty = !inputText
   const [editing, setEditing] = useState(editingEmpty)
+  const statisticalVariables = useStatisticalVariables(config)
 
   if (!viewManager.currentViewOfType) {
     return null
   }
 
-  function handleVariableInsert(variable: string) {
-    setInputText((prev) => prev + `${variable}`)
+  function handleVariableClick(variable: string) {
+    const text = `\`${variable}\``
+    navigator.clipboard.writeText(text)
+    toast.success(`Copied '${variable}' to clipboard`)
+    if (!!inputRef.current) {
+      const str = inputRef.current.value
+      const idx = inputRef.current.selectionStart
+      const newText = str.slice(0, idx) + text + str.slice(idx)
+      inputRef.current.value = newText
+      inputRef.current?.focus()
+    }
   }
 
   function handleSaveFormula() {
@@ -748,21 +766,6 @@ function FormulaConfig({
       setEditing(true)
     }
   }
-
-  //hardcoded fields for now
-  const metadataFields: {
-    label: string
-    value: string
-  }[] = [
-    { label: 'First', value: 'first' },
-    { label: 'Second', value: 'second' },
-    { label: 'Third', value: 'third' },
-    // { label: 'Last', value: 'last' },
-    { label: 'Total', value: 'total' },
-    // { label: 'Count', value: 'count' },
-    // { label: 'Mean', value: 'mean' },
-    // { label: 'Median', value: 'median' },
-  ]
 
   const choroplethError = choroplethErrors[viewManager.currentViewOfType.id]
 
@@ -785,6 +788,7 @@ function FormulaConfig({
         </div>
       </div>
       <Textarea
+        ref={inputRef}
         value={inputText}
         onChange={(e) => setInputText(e.target.value)}
         onKeyDown={(e) => {
@@ -807,24 +811,36 @@ function FormulaConfig({
       )}
       <div className="flex flex-col gap-2 ">
         {editing && (
-          <>
-            <p className="text-xs font-mono text-meepGray-400">
-              Available variables
-            </p>
-            <div className="flex flex-wrap gap-1 w-full">
-              {metadataFields.map((variable) => (
-                <Button
-                  key={variable.value}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleVariableInsert(variable.value)}
-                  className="shrink-0"
+          <section className="space-y-3">
+            <h4 className="text-xs font-mono text-meepGray-400">
+              Available variables:
+            </h4>
+            <pre className="flex flex-row flex-wrap gap-1">
+              {statisticalVariables.fieldDefinitionValues?.map((field) => (
+                <div
+                  key={field}
+                  className="bg-meepGray-700 hover:bg-meepGray-500 px-2 py-1 rounded-md text-xs cursor-pointer"
+                  onClick={() => handleVariableClick(field)}
                 >
-                  {variable.label}
-                </Button>
+                  <span>{field}</span>
+                </div>
               ))}
-            </div>
-          </>
+            </pre>
+            <h4 className="text-xs font-mono text-meepGray-400">
+              Calculated variables:
+            </h4>
+            <pre className="flex flex-row flex-wrap gap-1">
+              {statisticalVariables.calculatedValues.map((field) => (
+                <div
+                  key={field}
+                  className="bg-meepGray-700 hover:bg-meepGray-500 px-2 py-1 rounded-md text-xs cursor-pointer"
+                  onClick={() => handleVariableClick(field)}
+                >
+                  <span>{field}</span>
+                </div>
+              ))}
+            </pre>
+          </section>
         )}
       </div>
     </div>
