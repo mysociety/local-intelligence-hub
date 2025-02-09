@@ -612,11 +612,11 @@ def statistics(
         return df_agg.to_dict(orient="records")
     else:
         # Return the results in the requested format
+        if conf.group_by_area:
+            df = df.reset_index(drop=False)
         if return_numeric_keys_only:
             d = df[numerical_keys].to_dict(orient="records")
         elif conf.return_columns and len(conf.return_columns) > 0:
-            if conf.group_by_area:
-                df = df.reset_index(drop=False)
             d = df[conf.return_columns].to_dict(orient="records")
         else:
             d = df.to_dict(orient="records")

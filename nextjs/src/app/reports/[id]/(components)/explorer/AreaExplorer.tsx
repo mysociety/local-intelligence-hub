@@ -404,6 +404,8 @@ function AreaDisplay({
         groupAbsolutely: display.dataDisplayMode === DataDisplayMode.Aggregated,
         formatNumericKeys: display.formatNumericKeys,
       },
+      returnNumericKeysOnly:
+        display.dataDisplayMode === DataDisplayMode.Aggregated,
     },
     skip: !sourceId,
   })
@@ -857,8 +859,14 @@ const AREA_LAYER_DATA = gql`
 `
 
 export const STATISTICS = gql`
-  query AreaDisplayStatistics($statsConfig: StatisticsConfig!) {
-    statistics(statsConfig: $statsConfig, returnNumericKeysOnly: true)
+  query AreaDisplayStatistics(
+    $statsConfig: StatisticsConfig!
+    $returnNumericKeysOnly: Boolean
+  ) {
+    statistics(
+      statsConfig: $statsConfig
+      returnNumericKeysOnly: $returnNumericKeysOnly
+    )
   }
 `
 
