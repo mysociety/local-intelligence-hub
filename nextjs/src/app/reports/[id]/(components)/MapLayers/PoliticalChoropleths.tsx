@@ -199,7 +199,12 @@ const PoliticalChoropleths: React.FC<PoliticalChoroplethsProps> = ({
                       ? guessParty(d.category).shortName
                       : d.category
                     : d.category || '?'
-                  : d.formattedCount || d.count || 0) || ''
+                  : (view.mapOptions.choropleth.displayRawField
+                      ? d.count
+                      : d.formattedCount) ||
+                    d.formattedCount ||
+                    d.count ||
+                    0) || ''
               if (boundaryNameVisibility && choroplethValueLabelsVisibility) {
                 return `${d.label}:\n${value}`
               } else if (boundaryNameVisibility) {

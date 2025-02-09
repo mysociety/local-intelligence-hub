@@ -31,7 +31,7 @@ export function PopOutChoroplethStatisticalQueryEditor({
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <BarChart2Icon className="w-4 h-4" /> Advanced settings
+          <BarChart2Icon className="w-4 h-4" /> Edit choropleth
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto overflow-x-hidden w-full p-0 divide-y divide-meepGray-700">
@@ -77,18 +77,32 @@ export function PopOutChoroplethStatisticalQueryEditor({
           />
           {viewManager.currentViewOfType?.mapOptions.choropleth.dataType ===
             StatisticalDataType.Continuous && (
-            <EditorSwitch
-              label="Is it a percentage?"
-              value={
-                !!viewManager.currentViewOfType?.mapOptions.choropleth
-                  .fieldIsPercentage
-              }
-              onChange={(value) => {
-                viewManager.updateView((draft) => {
-                  draft.mapOptions.choropleth.fieldIsPercentage = value
-                })
-              }}
-            />
+            <>
+              <EditorSwitch
+                label="Is it a percentage?"
+                value={
+                  !!viewManager.currentViewOfType?.mapOptions.choropleth
+                    .fieldIsPercentage
+                }
+                onChange={(value) => {
+                  viewManager.updateView((draft) => {
+                    draft.mapOptions.choropleth.fieldIsPercentage = value
+                  })
+                }}
+              />
+              <EditorSwitch
+                label="Display raw field?"
+                value={
+                  !!viewManager.currentViewOfType?.mapOptions.choropleth
+                    .displayRawField
+                }
+                onChange={(value) => {
+                  viewManager.updateView((draft) => {
+                    draft.mapOptions.choropleth.displayRawField = value
+                  })
+                }}
+              />
+            </>
           )}
           {viewManager.currentViewOfType?.mapOptions.choropleth.dataType ===
             StatisticalDataType.Nominal && (

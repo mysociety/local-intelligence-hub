@@ -262,6 +262,7 @@ export const mapChoroplethOptionsSchema = z.object({
     .optional()
     .describe('If categorical data should be interpreted using party colours.'),
   fieldIsPercentage: z.boolean().optional(),
+  displayRawField: z.boolean().optional(),
 })
 
 const mapOptionsSchema = z.object({

@@ -427,21 +427,25 @@ export default function ReportMapChoroplethLegend() {
                   />
                 )}
 
-                <PopOutChoroplethStatisticalQueryEditor
-                  value={
-                    viewManager.currentViewOfType?.mapOptions.choropleth
-                      .advancedStatisticsConfig
-                  }
-                  onChange={(producer) => {
-                    viewManager.updateView((draft) => {
-                      draft.mapOptions.choropleth.advancedStatisticsConfig =
-                        produce(
-                          draft.mapOptions.choropleth.advancedStatisticsConfig,
-                          producer
-                        )
-                    })
-                  }}
-                />
+                {viewManager.currentViewOfType?.mapOptions.choropleth.mode ===
+                  StatisticsMode.Advanced && (
+                  <PopOutChoroplethStatisticalQueryEditor
+                    value={
+                      viewManager.currentViewOfType?.mapOptions.choropleth
+                        .advancedStatisticsConfig
+                    }
+                    onChange={(producer) => {
+                      viewManager.updateView((draft) => {
+                        draft.mapOptions.choropleth.advancedStatisticsConfig =
+                          produce(
+                            draft.mapOptions.choropleth
+                              .advancedStatisticsConfig,
+                            producer
+                          )
+                      })
+                    }}
+                  />
+                )}
               </>
             )}
           </section>
