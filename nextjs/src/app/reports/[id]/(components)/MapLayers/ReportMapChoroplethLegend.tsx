@@ -104,7 +104,7 @@ export default function ReportMapChoroplethLegend() {
       id: v4(),
       name: 'simple_formula',
       expression:
-        lastFormula || `\`${statisticalVariables.fieldDefinitionValues?.[0]}\``,
+        lastFormula || `\`${statisticalVariables.dataSourceFields?.[0]}\``,
     }
   }
 
@@ -349,7 +349,7 @@ export default function ReportMapChoroplethLegend() {
                           StatisticalDataType.Continuous
                         // Pick the first available
                         draft.mapOptions.choropleth.field =
-                          statisticalVariables.fieldDefinitionValues?.[0]
+                          statisticalVariables.dataSourceFields?.[0]
                         // Simple mode
                         draft.mapOptions.choropleth.advancedStatisticsConfig = {
                           sourceIds:
@@ -822,7 +822,7 @@ function FormulaConfig({
               Available variables:
             </h4>
             <pre className="flex flex-row flex-wrap gap-1">
-              {statisticalVariables.fieldDefinitionValues?.map((field) => (
+              {statisticalVariables.dataSourceFields?.map((field) => (
                 <div
                   key={field}
                   className="bg-meepGray-700 hover:bg-meepGray-500 px-2 py-1 rounded-md text-xs cursor-pointer"

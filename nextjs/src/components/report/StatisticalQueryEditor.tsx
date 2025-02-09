@@ -275,7 +275,7 @@ export function StatisticalQueryEditor({
         <h3 className="text-md font-medium">Variables for formulas</h3>
         <h4 className="font-medium text-sm">Direct from the data source:</h4>
         <pre className="flex flex-row flex-wrap gap-1">
-          {statisticalVariables.fieldDefinitionValues?.map((field) => (
+          {statisticalVariables.dataSourceFields?.map((field) => (
             <div
               key={field}
               className="bg-meepGray-700 hover:bg-meepGray-500 px-2 py-1 rounded-md text-xs cursor-pointer"

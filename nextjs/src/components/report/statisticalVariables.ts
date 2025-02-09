@@ -4,7 +4,7 @@ import { useReport } from '@/lib/map/useReport'
 export function useStatisticalVariables(statsConfig: StatisticsConfig) {
   const reportManager = useReport()
 
-  const fieldDefinitionValues =
+  const dataSourceFields =
     reportManager.report.layers
       .find((l) => l.source === statsConfig.sourceIds?.[0])
       ?.sourceData.fieldDefinitions?.map((field) => field.value) || []
@@ -24,17 +24,15 @@ export function useStatisticalVariables(statsConfig: StatisticsConfig) {
 
   const all = Array.from(
     new Set(
-      [
-        ...fieldDefinitionValues,
-        ...calculatedValues,
-        ...userDefinedValues,
-      ].filter(Boolean)
+      [...dataSourceFields, ...calculatedValues, ...userDefinedValues].filter(
+        Boolean
+      )
     )
   )
 
   return {
     all,
-    fieldDefinitionValues,
+    dataSourceFields,
     calculatedValues,
     userDefinedValues,
   }
