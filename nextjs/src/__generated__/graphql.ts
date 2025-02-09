@@ -2745,6 +2745,7 @@ export type StatisticsConfig = {
   groupByColumns?: InputMaybe<Array<GroupByColumn>>;
   gssCodes?: InputMaybe<Array<Scalars['String']['input']>>;
   preGroupByCalculatedColumns?: InputMaybe<Array<CalculatedColumn>>;
+  queryId?: InputMaybe<Scalars['String']['input']>;
   returnColumns?: InputMaybe<Array<Scalars['String']['input']>>;
   sourceIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };

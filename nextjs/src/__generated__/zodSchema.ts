@@ -482,6 +482,7 @@ export function StatisticsConfigSchema(): z.ZodObject<Properties<StatisticsConfi
     groupByColumns: z.array(GroupByColumnSchema()).nullish(),
     gssCodes: z.array(z.string()).nullish(),
     preGroupByCalculatedColumns: z.array(CalculatedColumnSchema()).nullish(),
+    queryId: z.string().nullish(),
     returnColumns: z.array(z.string()).nullish(),
     sourceIds: z.array(z.string()).nullish()
   })
