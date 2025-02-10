@@ -29,7 +29,7 @@ services:
   - key: MAX_CLIENT_CONN
     value: 500
   - key: DEFAULT_POOL_SIZE
-    value: 150
+    value: 50
 - type: web
   name: meep-intelligence-hub-backend
   runtime: python
