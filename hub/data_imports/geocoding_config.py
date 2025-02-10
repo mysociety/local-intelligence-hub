@@ -53,7 +53,7 @@ class GeocodeResult:
     to be bulk saved to the database.
     """
 
-    data_type: DataType
+    data_type: "DataType"
     data: str
     json: dict
     geocoder: str = None
