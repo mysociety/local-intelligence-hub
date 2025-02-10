@@ -14,6 +14,7 @@ services:
   runtime: docker
   plan: standard
   repo: https://github.com/render-oss/docker-pgbouncer
+  region: frankfurt
   previews:
     generation: manual
   envVars:
