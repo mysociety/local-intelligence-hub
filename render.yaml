@@ -51,7 +51,7 @@ services:
       type: web
       envVarKey: RENDER_EXTERNAL_URL
   - key: DATABASE_URL
-    fromDatabase:
+    fromService:
       name: meep-database
       property: connectionString
   - key: DATABASE_CONNECTION_POOLER_HOSTPORT
